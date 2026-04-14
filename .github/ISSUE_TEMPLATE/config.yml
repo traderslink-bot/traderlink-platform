@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Project roadmap docs
+    url: https://github.com/traderslink-bot/traderslink-trader-improvement-system/tree/main/src/docs
+    about: Check the roadmap, audit, and capability docs before opening a new issue.
