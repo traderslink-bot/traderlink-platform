@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:layer2": "tsx src/scripts/verify-layer2-pattern-detection.ts",
-    "verify:layer3": "tsx src/scripts/verify-layer3-pattern-normalization.ts"
+    "verify:layer3": "tsx src/scripts/verify-layer3-pattern-normalization.ts",
+    "verify:all": "npm test && npm run verify:layer2 && npm run verify:layer3"
   },
   "dependencies": {
     "next": "16.2.3",

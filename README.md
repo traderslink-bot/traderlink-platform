@@ -31,6 +31,12 @@ Install dependencies:
 npm install
 ```
 
+Use the pinned Node version if you use `nvm`:
+
+```bash
+nvm use
+```
+
 Run the test suite:
 
 ```bash
@@ -47,6 +53,12 @@ Run Layer 3 verification:
 
 ```bash
 npm run verify:layer3
+```
+
+Run the full verification checkpoint:
+
+```bash
+npm run verify:all
 ```
 
 Run the sample raw timeline debug script:
