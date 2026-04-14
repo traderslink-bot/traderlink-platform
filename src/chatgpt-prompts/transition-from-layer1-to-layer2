@@ -1,0 +1,266 @@
+
+We are continuing development of a Trader Intelligence System.
+
+This is a brand new project built from the ground up with strict architecture rules. The previous layer (Raw Trade Timeline Layer + Pattern Input Layer) is COMPLETE.
+
+You are NOT starting from scratch. You are continuing from a fully built foundation.
+
+---
+
+# SYSTEM OVERVIEW
+
+This system analyzes trader behavior using:
+
+- execution data (buy/sell)
+- candle data (OHLCV)
+
+The goal is to eventually:
+- detect trading patterns
+- evaluate behavior
+- generate coaching
+
+BUT we build in layers.
+
+---
+
+# COMPLETED LAYERS
+
+## Layer 1: Raw Trade Timeline (COMPLETE)
+
+This layer includes:
+
+- full timeline construction (pre, between, post execution)
+- execution context windows
+- deterministic trade state tracking
+- derived factual signals:
+  - execution signals (MFE, MAE)
+  - position change signals
+  - timeline relationship signals
+  - trade-level signals
+
+This layer is:
+- fully deterministic
+- interpretation-free
+- fully tested
+- stable
+
+---
+
+## Layer 2: Pattern Input Layer (COMPLETE)
+
+We built a strict contract:
+
+👉 PatternInput
+
+This is the ONLY input allowed for pattern detection.
+
+Pattern detection MUST NOT access:
+- raw timeline
+- derived signals directly
+
+---
+
+# PATTERN INPUT TYPE
+
+```ts
+export interface PatternInput {
+  symbol: string;
+  tradeDirection: "long" | "short";
+
+  executionCount: number;
+  executionTimestamps: string[];
+
+  firstExecutionTimestamp: string;
+  lastExecutionTimestamp: string;
+
+  tradeDurationSeconds: number;
+  tradeDurationMinutes: number;
+  tradeCandleCount: number;
+
+  totalPositionIncreaseCount: number;
+  totalPositionDecreaseCount: number;
+  totalPositionUnchangedCount: number;
+
+  openedFromFlat: boolean;
+  closedToFlat: boolean;
+
+  hadMultipleIncreases: boolean;
+  hadMultipleDecreases: boolean;
+
+  maxPositionSize: number;
+  finalPositionSize: number;
+
+  entryPrice: number;
+  exitPrice: number;
+
+  tradeMfe: number | null;
+  tradeMae: number | null;
+
+  tradeMfePct: number | null;
+  tradeMaePct: number | null;
+
+  peakPriceDuringTrade: number | null;
+  worstPriceDuringTrade: number | null;
+
+  maxExecutionMfePct: number | null;
+  maxExecutionMaePct: number | null;
+
+  averageExecutionMfePct: number | null;
+  averageExecutionMaePct: number | null;
+
+  averageTimeBetweenExecutionsSeconds: number | null;
+  minTimeBetweenExecutionsSeconds: number | null;
+  maxTimeBetweenExecutionsSeconds: number | null;
+
+  averageCandlesBetweenExecutions: number | null;
+
+  executionsPerMinute: number | null;
+}
+````
+
+---
+
+# SAMPLE INPUT
+
+The system produces PatternInput like this:
+
+```json
+{
+  "symbol": "ABCD",
+  "tradeDirection": "long",
+  "executionCount": 3,
+  "tradeDurationSeconds": 340,
+  "totalPositionIncreaseCount": 2,
+  "totalPositionDecreaseCount": 1,
+  "entryPrice": 1.185,
+  "exitPrice": 1.295,
+  "tradeMfePct": 0.147679,
+  "tradeMaePct": 0.012658,
+  "averageTimeBetweenExecutionsSeconds": 170
+}
+```
+
+(This is a simplified example — full object exists.)
+
+---
+
+# CRITICAL ARCHITECTURE RULES
+
+1. Pattern detection MUST ONLY use PatternInput
+2. No direct access to raw timeline or derived signals
+3. No scoring yet
+4. No coaching yet
+5. No subjective language yet
+
+We are ONLY detecting patterns.
+
+---
+
+# WHAT WE ARE BUILDING NOW
+
+We are starting:
+
+👉 Pattern Detection Layer
+
+This layer will:
+
+* analyze PatternInput
+* detect structural trading patterns
+* output pattern signals
+
+---
+
+# IMPORTANT CONSTRAINTS
+
+Pattern detection must:
+
+* be deterministic
+* be explainable
+* use clear thresholds or rules
+* NOT assign “good/bad”
+* NOT assign scores
+* NOT generate coaching
+
+---
+
+# GOAL OF THIS STEP
+
+Design and build:
+
+👉 First Pattern Detection System
+
+We should start with:
+
+* clean architecture for pattern detection
+* pattern definition structure
+* initial pattern set (small, high quality)
+
+---
+
+# 🚨 IMMEDIATE ACTION REQUIRED
+
+Do NOT respond by asking for a new chat or repeating instructions.
+
+Start the work immediately.
+
+---
+
+## Step 1
+
+Assume the PatternInput structure is correct and complete.
+
+Using the sample provided, begin by:
+
+👉 Defining the Pattern Detection Architecture
+
+This should include:
+
+* how patterns are structured
+* how they are evaluated
+* how multiple patterns can coexist
+* how results should be returned
+
+---
+
+## Step 2
+
+Design the Pattern Definition Structure.
+
+Define:
+
+* what a pattern is
+* how rules are expressed
+* how thresholds are defined
+* how patterns remain deterministic and explainable
+
+---
+
+## Step 3
+
+List the FIRST set of patterns we should implement.
+
+Constraints:
+
+* small set (high quality only)
+* must be clearly detectable from PatternInput
+* must NOT require interpretation beyond available data
+
+---
+
+## Step 4
+
+ONLY after completing the above,
+
+request the following files if needed:
+
+* pattern-input/types/pattern-input.ts
+* pattern-input/builders/build-pattern-input.ts
+* docs/layer1-raw-data/sample-pattern-input.json
+
+---
+
+Do NOT ask for files before completing Steps 1–3.
+
+Do NOT jump to scoring or coaching.
+
+Stay strictly within pattern detection.

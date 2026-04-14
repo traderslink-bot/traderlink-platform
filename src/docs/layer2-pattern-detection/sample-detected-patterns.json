@@ -1,0 +1,171 @@
+{
+  "detectedPatterns": [
+    {
+      "patternId": "scaled_into_position",
+      "patternName": "Scaled Into Position",
+      "family": "position_building",
+      "patternType": "atomic",
+      "evidence": {
+        "totalPositionIncreaseCount": 2,
+        "hadMultipleIncreases": true
+      },
+      "thresholdsUsed": {
+        "minIncreaseEvents": 2
+      }
+    },
+    {
+      "patternId": "multi_build_full_exit",
+      "patternName": "Multi Build Full Exit",
+      "family": "position_structure",
+      "patternType": "composite",
+      "evidence": {
+        "totalPositionIncreaseCount": 2,
+        "closedToFlat": true,
+        "finalPositionSize": 0
+      },
+      "thresholdsUsed": {
+        "minIncreaseEvents": 2
+      }
+    },
+    {
+      "patternId": "high_mfe_trade",
+      "patternName": "High MFE Trade",
+      "family": "trade_excursion",
+      "patternType": "atomic",
+      "evidence": {
+        "tradeMfePct": 0.147679
+      },
+      "thresholdsUsed": {
+        "minMfePct": 0.05
+      }
+    },
+    {
+      "patternId": "fully_closed_trade",
+      "patternName": "Fully Closed Trade",
+      "family": "trade_closure",
+      "patternType": "atomic",
+      "evidence": {
+        "closedToFlat": true,
+        "finalPositionSize": 0
+      },
+      "thresholdsUsed": {}
+    },
+    {
+      "patternId": "low_range_entry",
+      "patternName": "Low Range Entry",
+      "family": "entry_context",
+      "patternType": "atomic",
+      "evidence": {
+        "firstEntryPricePositionInTradeRangePct": 0.078947
+      },
+      "thresholdsUsed": {
+        "maxRangePosition": 0.3
+      }
+    },
+    {
+      "patternId": "entry_near_trade_low",
+      "patternName": "Entry Near Trade Low",
+      "family": "entry_context",
+      "patternType": "atomic",
+      "evidence": {
+        "firstEntryWasNearTradeLow": true
+      },
+      "thresholdsUsed": {
+        "nearLowThreshold": 0.2
+      }
+    },
+    {
+      "patternId": "entry_with_favorable_remaining_upside",
+      "patternName": "Entry With Favorable Remaining Upside",
+      "family": "entry_context",
+      "patternType": "atomic",
+      "evidence": {
+        "firstEntryCapturedPercentOfTradeMfe": 1
+      },
+      "thresholdsUsed": {
+        "minCapturedMfePercent": 0.6
+      }
+    },
+    {
+      "patternId": "advantaged_entry_structure",
+      "patternName": "Advantaged Entry Structure",
+      "family": "entry_quality",
+      "patternType": "composite",
+      "evidence": {
+        "firstEntryPricePositionInTradeRangePct": 0.078947,
+        "firstEntryCapturedPercentOfTradeMfe": 1,
+        "firstEntryToWorstMovePct": 0.012658
+      },
+      "thresholdsUsed": {
+        "maxRangePosition": 0.3,
+        "minCapturedMfe": 0.6,
+        "maxAdverseAfterEntry": 0.02
+      }
+    },
+    {
+      "patternId": "efficient_entry_structure",
+      "patternName": "Efficient Entry Structure",
+      "family": "entry_quality",
+      "patternType": "composite",
+      "evidence": {
+        "firstEntryCapturedPercentOfTradeMfe": 1,
+        "firstEntryToWorstMovePct": 0.012658
+      },
+      "thresholdsUsed": {
+        "minCapturedMfe": 0.6,
+        "maxAdverseAfterEntry": 0.02
+      }
+    },
+    {
+      "patternId": "moderate_capture_exit_structure",
+      "patternName": "Moderate Capture Exit Structure",
+      "family": "exit_quality",
+      "patternType": "composite",
+      "evidence": {
+        "realizedCapturePercentOfTradeMfe": 0.628564
+      },
+      "thresholdsUsed": {
+        "minRealizedCapture": 0.5,
+        "maxRealizedCapture": 0.7
+      }
+    },
+    {
+      "patternId": "exit_with_meaningful_giveback",
+      "patternName": "Exit With Meaningful Giveback",
+      "family": "exit_quality",
+      "patternType": "composite",
+      "evidence": {
+        "favorableExcursionLeftOnTablePct": 0.054852
+      },
+      "thresholdsUsed": {
+        "minLeftOnTable": 0.05
+      }
+    },
+    {
+      "patternId": "structured_position_building",
+      "patternName": "Structured Position Building",
+      "family": "scaling_quality",
+      "patternType": "composite",
+      "evidence": {
+        "totalPositionIncreaseCount": 2
+      },
+      "thresholdsUsed": {
+        "minIncreases": 2
+      }
+    },
+    {
+      "patternId": "balanced_position_management",
+      "patternName": "Balanced Position Management",
+      "family": "scaling_quality",
+      "patternType": "composite",
+      "evidence": {
+        "totalPositionIncreaseCount": 2,
+        "totalPositionDecreaseCount": 1
+      },
+      "thresholdsUsed": {
+        "minIncreases": 2,
+        "minDecreases": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,645 @@
+# Layer 3 Overlap Suppression and Family Dominance Plan
+
+## Purpose of This Document
+
+This document defines how Layer 3 should handle:
+
+1. overlapping patterns
+2. broad vs specific patterns
+3. atomic vs composite competition
+4. family-level dominance
+5. primary vs supporting vs contextual assignment
+
+This is a planning document for Layer 3 normalization behavior.
+
+It exists so suppression and prioritization logic are designed deliberately instead of being added ad hoc in code.
+
+---
+
+# Why This Layer Is Needed
+
+Layer 2 correctly returns all true patterns.
+
+That means Layer 2 output is intentionally:
+
+- overlapping
+- multi-dimensional
+- redundant in places
+- unsorted by importance
+
+This is good for truth preservation.
+
+But it creates a problem for downstream layers.
+
+Without Layer 3 suppression and dominance handling:
+
+- scoring may double count related patterns
+- coaching may repeat the same idea in multiple forms
+- narrative may become noisy
+- UI may show too many similar patterns at once
+
+Layer 3 exists to solve that.
+
+---
+
+# Core Principle
+
+Layer 3 must be **non-destructive but selective**.
+
+That means:
+
+- true patterns should not be erased casually
+- but not every true pattern should be treated equally
+- richer patterns should dominate broader patterns
+- weaker duplicates should be demoted to supporting or contextual roles
+
+Layer 3 is not supposed to deny truth.
+
+It is supposed to organize truth by importance.
+
+---
+
+# Normalization Goals
+
+Layer 3 suppression and dominance logic should accomplish five things:
+
+## 1. Reduce redundancy
+
+If multiple patterns say roughly the same thing at different specificity levels, the richer one should lead.
+
+## 2. Preserve evidence richness
+
+Broader patterns may still be useful as supporting or contextual signals even when they are not primary.
+
+## 3. Promote richer structure
+
+Composite patterns should generally outrank their atomic ingredients when they genuinely represent a stronger higher-order structure.
+
+## 4. Avoid cross-family confusion
+
+Family-level dominance rules should prevent one family from accidentally drowning out another unrelated family.
+
+## 5. Produce stable downstream inputs
+
+Scoring, coaching, and narrative layers need consistent primary patterns and clean supporting structure.
+
+---
+
+# Definitions
+
+## Overlap suppression
+
+Overlap suppression does not mean deletion.
+
+It means one true pattern reduces the role or display priority of another true pattern because they are substantially overlapping.
+
+Example:
+
+- `entry_near_trade_low`
+- `low_range_entry`
+
+Both are true.
+But `entry_near_trade_low` is more specific.
+
+So Layer 3 should likely:
+
+- keep `entry_near_trade_low` as supporting or primary
+- demote `low_range_entry` to contextual
+
+---
+
+## Family dominance
+
+Family dominance means determining the strongest or most structurally important pattern within a family.
+
+Example in entry quality family:
+
+- `advantaged_entry_structure`
+- `efficient_entry_structure`
+
+Both may be true.
+
+But `advantaged_entry_structure` is more specific because it includes range position and efficiency.
+
+So inside that family:
+
+- `advantaged_entry_structure` should dominate
+- `efficient_entry_structure` should usually be demoted
+
+---
+
+# Suppression Philosophy
+
+Layer 3 should use **soft suppression**, not hard deletion, in most cases.
+
+Soft suppression means:
+
+- keep the pattern
+- lower its normalized role
+- preserve evidence
+- remove it from primary consideration
+
+This is safer and more explainable than hard deletion.
+
+---
+
+# Suppression Priority Rules
+
+These rules should guide Layer 3 suppression logic.
+
+## Rule 1: More specific beats more general
+
+If two patterns overlap strongly and one is clearly narrower or richer, the more specific one dominates.
+
+Example:
+
+- `entry_near_trade_low` dominates `low_range_entry`
+
+---
+
+## Rule 2: Composite usually beats atomic
+
+If a composite pattern meaningfully includes the structural information of an atomic pattern, the composite usually dominates.
+
+Example:
+
+- `advantaged_entry_structure` dominates `entry_near_trade_low`
+- `multi_build_full_exit` dominates `scaled_into_position` for lifecycle interpretation
+
+---
+
+## Rule 3: Same-family stronger pattern beats weaker same-family pattern
+
+If two patterns from the same family are both true but one is clearly richer, the stronger one should dominate.
+
+Example:
+
+- `advantaged_entry_structure` dominates `efficient_entry_structure`
+- `balanced_position_management` may dominate `structured_position_building`
+
+---
+
+## Rule 4: Cross-family suppression should be rare
+
+Patterns from different families usually describe different dimensions and should not suppress each other unless the overlap is extremely strong.
+
+Example:
+
+- entry quality should not suppress exit quality
+- scaling quality should not suppress entry context by default
+
+---
+
+## Rule 5: Context facts can survive suppression
+
+Even when a pattern is dominated, it may still remain useful as context.
+
+Example:
+
+- `low_range_entry` can remain contextual even if `advantaged_entry_structure` dominates it
+
+---
+
+# Current Known Overlap Groups
+
+These are the first suppression groups Layer 3 should support.
+
+---
+
+## Group A: Entry location overlap
+
+Patterns:
+
+- `low_range_entry`
+- `entry_near_trade_low`
+
+Dominance rule:
+
+- `entry_near_trade_low` dominates `low_range_entry`
+
+Reason:
+
+- both describe low-side entry location
+- `entry_near_trade_low` is stricter and more specific
+
+Suggested result:
+
+- stronger pattern may remain supporting or primary candidate
+- broader pattern becomes contextual
+
+---
+
+## Group B: Entry high-side overlap
+
+Patterns:
+
+- `high_range_entry`
+- `entry_near_trade_high`
+
+Dominance rule:
+
+- `entry_near_trade_high` dominates `high_range_entry`
+
+Reason:
+
+- same logic as low-side overlap
+
+Suggested result:
+
+- stronger pattern remains supporting or primary candidate
+- broader pattern becomes contextual
+
+---
+
+## Group C: Entry quality overlap
+
+Patterns:
+
+- `advantaged_entry_structure`
+- `efficient_entry_structure`
+
+Dominance rule:
+
+- `advantaged_entry_structure` dominates `efficient_entry_structure`
+
+Reason:
+
+- both signal strong entry structure
+- `advantaged_entry_structure` includes entry location plus efficiency
+- `efficient_entry_structure` is broader
+
+Suggested result:
+
+- `advantaged_entry_structure` primary
+- `efficient_entry_structure` supporting or contextual depending on output needs
+
+---
+
+## Group D: Negative entry quality overlap
+
+Patterns:
+
+- `disadvantaged_entry_structure`
+- `inefficient_entry_structure`
+
+Dominance rule:
+
+- `disadvantaged_entry_structure` dominates `inefficient_entry_structure`
+
+Reason:
+
+- same broad vs specific relationship as the positive side
+
+---
+
+## Group E: Build fact vs lifecycle structure
+
+Patterns:
+
+- `scaled_into_position`
+- `multi_build_full_exit`
+
+Dominance rule:
+
+- `multi_build_full_exit` dominates `scaled_into_position`
+
+Reason:
+
+- `scaled_into_position` is one structural ingredient
+- `multi_build_full_exit` describes the fuller lifecycle pattern
+
+Suggested result:
+
+- lifecycle pattern primary
+- build fact supporting or contextual
+
+---
+
+## Group F: Build fact vs scaling quality
+
+Patterns:
+
+- `scaled_into_position`
+- `structured_position_building`
+
+Dominance rule:
+
+- `structured_position_building` dominates `scaled_into_position`
+
+Reason:
+
+- both describe meaningful multi-add behavior
+- scaling-quality pattern is a richer interpretation of build structure
+
+Suggested result:
+
+- scaling-quality pattern supporting or primary candidate
+- raw build fact contextual or supporting
+
+---
+
+## Group G: Scaling quality overlap
+
+Patterns:
+
+- `structured_position_building`
+- `balanced_position_management`
+
+Dominance rule:
+
+- `balanced_position_management` dominates `structured_position_building`
+
+Reason:
+
+- balanced management includes build plus reduction
+- it is richer than simple structured building
+
+---
+
+## Group H: Exit quality overlap
+
+Patterns:
+
+- `high_capture_exit_structure`
+- `moderate_capture_exit_structure`
+- `low_capture_exit_structure`
+
+Dominance rule:
+
+- these are mutually exclusive outcome bands
+- only one should ever remain active as the dominant capture pattern
+
+Reason:
+
+- they represent banded versions of the same exit-capture concept
+
+Suggested result:
+
+- whichever band matches remains primary-capable
+- the others should not appear
+
+Note:
+Because these are threshold bands, proper detection already reduces overlap here, but Layer 3 should still treat them as one conceptual band family.
+
+---
+
+## Group I: Exit quality descriptor overlap
+
+Patterns:
+
+- `moderate_capture_exit_structure`
+- `exit_with_meaningful_giveback`
+- `exit_with_limited_giveback`
+- `exit_near_favorable_extreme`
+
+Dominance rule:
+
+- no universal suppression by default
+- these describe different exit dimensions:
+  - capture band
+  - giveback severity
+  - exit location
+
+Reason:
+
+- same family, but not pure duplicates
+
+Suggested result:
+
+- usually keep multiple
+- but prioritize capture band first
+
+---
+
+# Initial Family Dominance Rules
+
+These rules determine which family members are strongest by default.
+
+---
+
+## Entry Context family
+
+Strength order:
+
+1. `entry_near_trade_low` or `entry_near_trade_high`
+2. `entry_with_favorable_remaining_upside` or `entry_with_limited_remaining_upside`
+3. `low_range_entry` or `high_range_entry`
+
+Interpretation:
+
+- near-extreme location is more specific than broad range position
+- remaining-upside descriptors are important but often complementary
+- broad range labels are weakest
+
+---
+
+## Entry Quality family
+
+Strength order:
+
+1. `advantaged_entry_structure` or `disadvantaged_entry_structure`
+2. `efficient_entry_structure` or `inefficient_entry_structure`
+
+Interpretation:
+
+- advantaged/disadvantaged variants are richer because they include more structural context
+
+---
+
+## Position Structure family
+
+Strength order is context-driven, but generally:
+
+1. `scale_in_then_reduce`
+2. `multi_build_full_exit` or `multi_build_partial_exit`
+3. `aggressive_scale_in` or `passive_scale_in`
+4. `single_build_full_exit`
+5. `one_and_done_round_trip`
+
+This may need tuning later, but the key idea is:
+
+- richer lifecycle patterns outrank simpler structural ones
+
+---
+
+## Scaling Quality family
+
+Strength order:
+
+1. `balanced_position_management`
+2. `one_sided_aggressive_building`
+3. `underutilized_position_building`
+4. `structured_position_building`
+
+Interpretation:
+
+- balanced management is richer than generic structured building
+- one-sided aggressive building is also rich because it communicates more specific middle-trade structure
+
+This ordering may be adjusted later depending on how you want positive vs negative structures to compare.
+
+---
+
+## Exit Quality family
+
+Strength order:
+
+1. `high_capture_exit_structure`
+2. `moderate_capture_exit_structure`
+3. `low_capture_exit_structure`
+4. `exit_near_favorable_extreme`
+5. `exit_with_limited_giveback`
+6. `exit_with_meaningful_giveback`
+
+Important note:
+
+This is not saying “limited giveback” is less important than moderate capture in all downstream interpretations.
+It only means capture-band patterns should generally be the main family anchor.
+
+Giveback and location patterns often act as supporting descriptors.
+
+---
+
+# Default Role Guidance
+
+This section helps determine primary vs supporting vs contextual behavior.
+
+## Primary patterns should usually come from:
+
+- entry_quality
+- exit_quality
+- scaling_quality
+- strong position_structure patterns
+
+These families usually contain richer composite patterns.
+
+---
+
+## Supporting patterns should usually come from:
+
+- entry_context
+- trade_excursion
+- broad position building facts
+
+These are often useful evidence but not the best top-line summary.
+
+---
+
+## Contextual patterns should usually come from:
+
+- execution frequency
+- trade duration
+- trade closure
+- broader overlapping entry-range facts
+
+These add structure but usually should not dominate the story.
+
+---
+
+# First Version Suppression Strategy
+
+For Layer 3 v1, suppression logic should stay simple.
+
+Recommended v1 strategy:
+
+## Step 1
+Sort all patterns by:
+
+1. defaultPriority descending
+2. specificityRank descending
+3. patternType composite above atomic
+
+## Step 2
+Walk the sorted list from top to bottom
+
+## Step 3
+For each pattern:
+- check whether it is dominated by an already-kept stronger pattern in the same suppression group
+- if yes, demote it
+- if no, keep its current default role
+
+## Step 4
+Return final classified buckets:
+- primary
+- supporting
+- contextual
+
+This gives a deterministic first version without overengineering.
+
+---
+
+# What Should Wait Until Later
+
+The following should not be built in Layer 3 v1 unless clearly needed:
+
+- full dependency graph between atomic and composite patterns
+- hard deletion of dominated patterns
+- advanced cross-family suppression
+- dynamic scoring-aware normalization
+- contradictory-pattern arbitration logic
+
+These can come later once the base normalization behavior is stable.
+
+---
+
+# Practical Example Using Current Canonical Sample
+
+Current Layer 2 sample includes:
+
+- `scaled_into_position`
+- `multi_build_full_exit`
+- `high_mfe_trade`
+- `fully_closed_trade`
+- `low_range_entry`
+- `entry_near_trade_low`
+- `entry_with_favorable_remaining_upside`
+- `advantaged_entry_structure`
+- `efficient_entry_structure`
+- `moderate_capture_exit_structure`
+- `exit_with_meaningful_giveback`
+- `structured_position_building`
+- `balanced_position_management`
+
+Reasonable Layer 3 output target:
+
+## Primary
+- `advantaged_entry_structure`
+- `moderate_capture_exit_structure`
+- `balanced_position_management`
+- `multi_build_full_exit`
+
+## Supporting
+- `entry_near_trade_low`
+- `entry_with_favorable_remaining_upside`
+- `efficient_entry_structure`
+- `exit_with_meaningful_giveback`
+- `structured_position_building`
+- `high_mfe_trade`
+
+## Contextual
+- `low_range_entry`
+- `scaled_into_position`
+- `fully_closed_trade`
+
+This is not final truth yet, but it is a strong first target shape.
+
+---
+
+# Final Summary
+
+Layer 3 suppression and family dominance should:
+
+- preserve truth
+- reduce redundancy
+- promote richer patterns
+- keep overlap handling deterministic
+- prepare stable downstream inputs for scoring and coaching
+
+The first implementation should stay simple:
+
+- same-family dominance first
+- specific beats broad
+- composite usually beats atomic
+- cross-family suppression stays minimal
+
+That is enough to build a strong Layer 3 v1.
