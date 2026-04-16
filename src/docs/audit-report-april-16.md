@@ -382,6 +382,49 @@ Improve maintainability without weakening the existing engine behavior.
   `verify:layer3` passed,
   `npx tsc --noEmit` passed.
 
+### 2026-04-16 Post-Merge Follow-Up PR 1 Completed
+
+- Completed the first narrow post-merge follow-up by fully removing the flat
+  `PatternInput` compatibility layer from
+  `src/lib/pattern-input/types/pattern-input.ts`.
+- Migrated remaining Layer 2 production readers to grouped context access only.
+- Migrated the major Layer 2 and Layer 3 test helpers from flat override shape
+  to grouped `PatternInputOverrides`, so fixtures and scenario tests no longer
+  depend on flat fields.
+- Updated the Layer 2 verify loader and the sample PatternInput JSON to use the
+  grouped contract directly.
+- Removed obsolete conversion paths and helper functions that only existed for
+  backward compatibility with the flat contract.
+- Added grouped-only builder coverage so the runtime contract is protected from
+  reintroducing flat alias fields accidentally.
+- Follow-up guardrail status:
+  `npm test` passed,
+  `verify:layer2` passed,
+  `verify:layer3` passed,
+  `npx tsc --noEmit` passed.
+
+### 2026-04-16 Post-Merge Follow-Up PR 2 Completed
+
+- Completed the next narrow post-merge follow-up by mechanically splitting
+  `src/lib/pattern-normalization/pattern-suppression-rules.ts` into smaller
+  Layer 3 registry modules without changing normalization behavior.
+- Kept one thin public entrypoint and moved the rule graph into smaller files
+  for:
+  suppression groups,
+  manual entry dominance,
+  manual position dominance,
+  manual scaling dominance,
+  manual exit dominance,
+  metadata-inferred dominance assembly,
+  and lookup helpers.
+- Preserved the current exports and downstream import surface so existing
+  normalization code and integrity tests continue to read the same contract.
+- Guardrail status after the split:
+  `npm test` passed,
+  `verify:layer2` passed,
+  `verify:layer3` passed,
+  `npx tsc --noEmit` passed.
+
 ## Non Negotiable Rules
 
 - Preserve current behavior unless a real bug is identified.

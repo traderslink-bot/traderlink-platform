@@ -105,12 +105,13 @@ Important project rule:
 
 ## Current Resume Point
 
-### 2026-04-16 Audit Follow-Through Resume Point
+### 2026-04-16 Post-Merge Follow-Up Resume Point
 
 The active roadmap branch has shifted from expansion-first work to the
 maintainability-first audit order in `src/docs/audit-report-april-16.md`.
 
-The audit-ordered maintainability pass is now complete.
+The audit-ordered maintainability pass is complete, and the first dedicated
+post-merge follow-up PR is now complete too.
 
 Completed in this session:
 
@@ -138,6 +139,37 @@ Completed in this session:
 - Phase 6:
   the future UI work remains intentionally deferred, with only a lightweight
   plan captured in `src/docs/future-app-surface-plan.md`.
+
+Completed after the merge-ready audit pass:
+
+- The temporary flat `PatternInput` compatibility layer has been fully removed.
+- Layer 2 production consumers now read grouped context access only.
+- Test helpers, fixtures, and the Layer 2 verify script now use grouped
+  `PatternInput` shape directly.
+- `buildPatternInput(...)` now returns only the grouped contract, and the
+  builder regression test locks that grouped-only runtime shape.
+- `pattern-suppression-rules.ts` is now a thin Layer 3 entrypoint with the
+  suppression registry split into smaller modules for:
+  suppression groups,
+  manual entry dominance,
+  manual position dominance,
+  manual scaling dominance,
+  manual exit dominance,
+  metadata-inferred dominance assembly,
+  and lookup helpers.
+- Follow-up verification passed:
+  `npm test`,
+  `verify:layer2`,
+  `verify:layer3`,
+  `npx tsc --noEmit`.
+
+Best next step from here:
+
+- keep follow-up PRs narrow
+- continue splitting large normalization registries mechanically rather than
+  behaviorally, with `pattern-metadata.ts` the next likely compression target
+- continue shrinking manual suppression only where metadata can prove richer
+  same-lineage dominance safely
 
 Final verification after the full audit pass:
 
