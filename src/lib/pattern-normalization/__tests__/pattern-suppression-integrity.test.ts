@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { PATTERN_DEFINITIONS } from "../../pattern-detection/registry/pattern-definitions";
 import { PATTERN_METADATA } from "../pattern-metadata";
 import {
+  LEGACY_MANUAL_PATTERN_DOMINANCE_RULES,
   MANUAL_EXCEPTION_PATTERN_DOMINANCE_RULES,
+  METADATA_INFERRED_DOMINANCE_RULE_SUMMARY_BY_CLASS,
   METADATA_INFERRED_PATTERN_DOMINANCE_RULES,
   PATTERN_DOMINANCE_RULES,
 } from "../pattern-suppression-rules";
@@ -12,6 +14,24 @@ describe("pattern suppression integrity", () => {
     expect(METADATA_INFERRED_PATTERN_DOMINANCE_RULES.length).toBeGreaterThan(0);
     expect(MANUAL_EXCEPTION_PATTERN_DOMINANCE_RULES.length).toBeLessThan(
       PATTERN_DOMINANCE_RULES.length,
+    );
+  });
+
+  it("supports truly metadata-driven inference beyond legacy manual pair matches", () => {
+    const legacyManualKeys = new Set(
+      LEGACY_MANUAL_PATTERN_DOMINANCE_RULES.map(
+        (rule) => `${rule.dominantPatternId}=>${rule.suppressedPatternId}`,
+      ),
+    );
+    const inferenceOnlyKeys = METADATA_INFERRED_PATTERN_DOMINANCE_RULES.map(
+      (rule) => `${rule.dominantPatternId}=>${rule.suppressedPatternId}`,
+    ).filter((key) => !legacyManualKeys.has(key));
+
+    expect(inferenceOnlyKeys.length).toBeGreaterThan(0);
+    expect(
+      METADATA_INFERRED_DOMINANCE_RULE_SUMMARY_BY_CLASS.repeated_cycle_overlay,
+    ).toContain(
+      "repeated_balanced_management_with_premature_final_exit=>balanced_management_with_premature_final_exit",
     );
   });
 

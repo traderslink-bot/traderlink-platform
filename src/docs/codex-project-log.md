@@ -146,6 +146,26 @@ Final verification after the full audit pass:
 - `npm.cmd run verify:layer3` passed
 - `npx.cmd tsc --noEmit` passed
 
+PR review follow-up on the same branch is now complete too:
+
+- `pattern-suppression-rules.ts` no longer requires a pre-existing manual pair
+  before metadata can infer safe broader-lineage suppression
+- metadata-driven suppression now explicitly covers:
+  legacy-calibrated broader-lineage pairs,
+  repeated-cycle overlays,
+  recovery overlays,
+  support/resistance overlays,
+  and other safe richer journey-scope overlays
+- true manual exceptions remain for cross-family bridges and asymmetric
+  storyline jumps that metadata still cannot prove safely
+- `PatternInput` now carries an explicit TODO note for removing the temporary
+  flat compatibility layer after grouped-context migration finishes
+- follow-up verification passed again:
+  `npm.cmd test`,
+  `npm.cmd run verify:layer2`,
+  `npm.cmd run verify:layer3`,
+  `npx.cmd tsc --noEmit`
+
 Best next step from here:
 
 1. Keep the current maintainability gains stable and use the new metadata,

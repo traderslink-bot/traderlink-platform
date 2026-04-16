@@ -231,6 +231,10 @@ export type PatternInputLegacyFlatFields =
 export type LegacyPatternInputShape = PatternInputIdentity &
   PatternInputLegacyFlatFields;
 
+// TODO(phase-out-flat-pattern-input): once all Layer 2 consumers and fixtures
+// read from the grouped contexts directly, narrow `PatternInput` back to
+// `PatternInputCore` and remove the flattened compatibility fields plus
+// `buildPatternInputCoreFromLegacyFlat(...)`.
 export type PatternInput = PatternInputCore & PatternInputLegacyFlatFields;
 
 function hasNestedPatternInputGroups(

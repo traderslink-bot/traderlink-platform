@@ -356,10 +356,21 @@ export const PATTERN_SUPPRESSION_GROUPS: PatternSuppressionGroup[] = [
 // DOMINANCE RULES
 // 2026-04-12 08:02 PM America/Toronto
 // These are explicit richer-over-broader relationships for Layer 3 v1.
-// They are intentionally simple and same-family focused.
+//
+// 2026-04-16 PR #8 follow-up
+// The current split is intentionally:
+//
+// - metadata-driven dominance:
+//   explicit broader-lineage pairs that metadata can prove safely
+// - manual-exception dominance:
+//   cross-family bridges, asymmetric storyline jumps, and other cases where the
+//   richer-vs-broader relation is real but not fully encoded in metadata yet
+//
+// This file therefore remains large, but the long-term direction is to keep
+// shrinking the manual-exception surface as metadata captures more semantics.
 // =========================
 
-const MANUAL_PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
+export const LEGACY_MANUAL_PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
   // =========================
   // ENTRY LOCATION
   // =========================
@@ -5035,6 +5046,27 @@ function buildDominanceRuleKey(args: {
   return `${args.dominantPatternId}=>${args.suppressedPatternId}`;
 }
 
+const JOURNEY_SCOPE_RICHNESS_RANK: Record<
+  PatternMetadata["journeyScope"],
+  number
+> = {
+  atomic: 0,
+  one_cycle: 1,
+  whole_trade: 2,
+  repeated_cycle: 3,
+};
+
+export const METADATA_DRIVEN_SUPPRESSION_CLASSES = [
+  "legacy_calibrated_broader_lineage",
+  "repeated_cycle_overlay",
+  "recovery_overlay",
+  "support_resistance_overlay",
+  "journey_scope_overlay",
+] as const;
+
+export type MetadataDrivenSuppressionClass =
+  (typeof METADATA_DRIVEN_SUPPRESSION_CLASSES)[number];
+
 function inferDominanceOutcome(
   suppressedMetadata: PatternMetadata,
 ): SuppressionOutcome {
@@ -5043,14 +5075,118 @@ function inferDominanceOutcome(
     : "demote_to_supporting";
 }
 
-function buildMetadataInferredDominanceRules(): PatternDominanceRule[] {
-  const manualRulesByKey = new Map(
-    MANUAL_PATTERN_DOMINANCE_RULES.map((rule) => [
+function getMetadataDrivenSuppressionClass(args: {
+  dominantMetadata: PatternMetadata;
+  suppressedMetadata: PatternMetadata;
+  hasLegacyManualCalibration: boolean;
+}): MetadataDrivenSuppressionClass | null {
+  const { dominantMetadata, suppressedMetadata, hasLegacyManualCalibration } =
+    args;
+
+  if (hasLegacyManualCalibration) {
+    return "legacy_calibrated_broader_lineage";
+  }
+
+  const sameFamily = dominantMetadata.family === suppressedMetadata.family;
+  const sameSubFamily =
+    dominantMetadata.subFamily === suppressedMetadata.subFamily;
+  const sameOutcomeFlavor =
+    dominantMetadata.outcomeFlavor === suppressedMetadata.outcomeFlavor;
+  const samePatternType =
+    dominantMetadata.patternType === suppressedMetadata.patternType;
+  const richerJourneyScope =
+    JOURNEY_SCOPE_RICHNESS_RANK[dominantMetadata.journeyScope] >
+    JOURNEY_SCOPE_RICHNESS_RANK[suppressedMetadata.journeyScope];
+
+  if (!(sameFamily && sameSubFamily && sameOutcomeFlavor && samePatternType)) {
+    return null;
+  }
+
+  if (
+    dominantMetadata.journeyScope === "repeated_cycle" &&
+    suppressedMetadata.journeyScope !== "repeated_cycle"
+  ) {
+    return "repeated_cycle_overlay";
+  }
+
+  if (
+    dominantMetadata.isRecoveryAware &&
+    !suppressedMetadata.isRecoveryAware &&
+    dominantMetadata.isSupportResistanceAware ===
+      suppressedMetadata.isSupportResistanceAware &&
+    dominantMetadata.journeyScope === suppressedMetadata.journeyScope
+  ) {
+    return "recovery_overlay";
+  }
+
+  if (
+    dominantMetadata.isSupportResistanceAware &&
+    !suppressedMetadata.isSupportResistanceAware &&
+    dominantMetadata.isRecoveryAware === suppressedMetadata.isRecoveryAware &&
+    dominantMetadata.journeyScope === suppressedMetadata.journeyScope
+  ) {
+    return "support_resistance_overlay";
+  }
+
+  if (
+    richerJourneyScope &&
+    dominantMetadata.isRecoveryAware === suppressedMetadata.isRecoveryAware &&
+    dominantMetadata.isSupportResistanceAware ===
+      suppressedMetadata.isSupportResistanceAware
+  ) {
+    return "journey_scope_overlay";
+  }
+
+  return null;
+}
+
+function buildMetadataDrivenSuppressionReason(args: {
+  dominantMetadata: PatternMetadata;
+  suppressedMetadata: PatternMetadata;
+  inferenceClass: MetadataDrivenSuppressionClass;
+}): string {
+  const { dominantMetadata, suppressedMetadata, inferenceClass } = args;
+
+  switch (inferenceClass) {
+    case "legacy_calibrated_broader_lineage":
+      return `Metadata inferred broader-lineage suppression: ${dominantMetadata.patternId} is a richer ${dominantMetadata.journeyScope} ${dominantMetadata.subFamily} variant than ${suppressedMetadata.patternId}.`;
+    case "repeated_cycle_overlay":
+      return `Metadata inferred repeated-cycle suppression: ${dominantMetadata.patternId} is the repeated-cycle ${dominantMetadata.subFamily} variant of ${suppressedMetadata.patternId}.`;
+    case "recovery_overlay":
+      return `Metadata inferred recovery-overlay suppression: ${dominantMetadata.patternId} adds recovery-aware context to ${suppressedMetadata.patternId}.`;
+    case "support_resistance_overlay":
+      return `Metadata inferred support/resistance suppression: ${dominantMetadata.patternId} adds structural level context to ${suppressedMetadata.patternId}.`;
+    case "journey_scope_overlay":
+      return `Metadata inferred journey-scope suppression: ${dominantMetadata.patternId} is a richer ${dominantMetadata.journeyScope} expression of ${suppressedMetadata.patternId}.`;
+  }
+}
+
+function buildMetadataInferredDominanceRules(): {
+  rules: PatternDominanceRule[];
+  summaryByClass: Record<MetadataDrivenSuppressionClass, string[]>;
+} {
+  const legacyManualRulesByKey = new Map(
+    LEGACY_MANUAL_PATTERN_DOMINANCE_RULES.map((rule) => [
       buildDominanceRuleKey(rule),
       rule,
     ]),
   );
   const inferredRules: PatternDominanceRule[] = [];
+  const summaryByClass = METADATA_DRIVEN_SUPPRESSION_CLASSES.reduce<
+    Record<MetadataDrivenSuppressionClass, string[]>
+  >(
+    (accumulator, classification) => {
+      accumulator[classification] = [];
+      return accumulator;
+    },
+    {
+      legacy_calibrated_broader_lineage: [],
+      repeated_cycle_overlay: [],
+      recovery_overlay: [],
+      support_resistance_overlay: [],
+      journey_scope_overlay: [],
+    },
+  );
 
   for (const dominantMetadata of Object.values(PATTERN_METADATA_BY_ID)) {
     for (const suppressedPatternId of dominantMetadata.broaderPatternIds) {
@@ -5064,25 +5200,41 @@ function buildMetadataInferredDominanceRules(): PatternDominanceRule[] {
         dominantPatternId: dominantMetadata.patternId,
         suppressedPatternId,
       });
-      const matchingManualRule = manualRulesByKey.get(key);
+      const matchingManualRule = legacyManualRulesByKey.get(key);
+      const inferenceClass = getMetadataDrivenSuppressionClass({
+        dominantMetadata,
+        suppressedMetadata,
+        hasLegacyManualCalibration: Boolean(matchingManualRule),
+      });
 
-      if (!matchingManualRule) {
+      if (!inferenceClass) {
         continue;
       }
 
+      summaryByClass[inferenceClass].push(key);
       inferredRules.push(
         defineDominanceRule({
           dominantPatternId: dominantMetadata.patternId,
           suppressedPatternId,
           outcome:
-            matchingManualRule.outcome ?? inferDominanceOutcome(suppressedMetadata),
-          reason: `Metadata inferred broader-lineage suppression: ${dominantMetadata.patternId} is a richer ${dominantMetadata.journeyScope} ${dominantMetadata.subFamily} variant than ${suppressedPatternId}.`,
+            matchingManualRule?.outcome ??
+            inferDominanceOutcome(suppressedMetadata),
+          reason:
+            matchingManualRule?.reason ??
+            buildMetadataDrivenSuppressionReason({
+              dominantMetadata,
+              suppressedMetadata,
+              inferenceClass,
+            }),
         }),
       );
     }
   }
 
-  return inferredRules;
+  return {
+    rules: inferredRules,
+    summaryByClass,
+  };
 }
 
 function dedupeDominanceRules(
@@ -5105,13 +5257,19 @@ function dedupeDominanceRules(
   return dedupedRules;
 }
 
-export const METADATA_INFERRED_PATTERN_DOMINANCE_RULES =
+const METADATA_INFERRED_RULE_BUILD_RESULT =
   buildMetadataInferredDominanceRules();
+
+export const METADATA_INFERRED_PATTERN_DOMINANCE_RULES =
+  METADATA_INFERRED_RULE_BUILD_RESULT.rules;
 
 export const METADATA_INFERRED_DOMINANCE_RULE_SUMMARY =
   METADATA_INFERRED_PATTERN_DOMINANCE_RULES.map(
     (rule) => `${rule.dominantPatternId}=>${rule.suppressedPatternId}`,
   );
+
+export const METADATA_INFERRED_DOMINANCE_RULE_SUMMARY_BY_CLASS =
+  METADATA_INFERRED_RULE_BUILD_RESULT.summaryByClass;
 
 const METADATA_INFERRED_RULE_KEYS = new Set(
   METADATA_INFERRED_PATTERN_DOMINANCE_RULES.map((rule) =>
@@ -5119,8 +5277,13 @@ const METADATA_INFERRED_RULE_KEYS = new Set(
   ),
 );
 
+// Manual exceptions still carry the cases metadata cannot prove safely yet:
+// - cross-family bridges
+// - same-family but asymmetric storyline jumps
+// - outcome mixes where richer-vs-broader meaning depends on domain nuance not
+//   yet encoded in PatternMetadata
 export const MANUAL_EXCEPTION_PATTERN_DOMINANCE_RULES =
-  MANUAL_PATTERN_DOMINANCE_RULES.filter(
+  LEGACY_MANUAL_PATTERN_DOMINANCE_RULES.filter(
     (rule) => !METADATA_INFERRED_RULE_KEYS.has(buildDominanceRuleKey(rule)),
   );
 

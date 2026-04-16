@@ -356,6 +356,32 @@ Improve maintainability without weakening the existing engine behavior.
   metadata, less dependent on one large manual suppression table, and safer to
   refactor without weakening the existing engine foundation.
 
+### 2026-04-16 PR Review Follow-Up Completed
+
+- Tightened Task 4 further after PR review by removing the old
+  "manual match or skip" requirement from the metadata inference builder for
+  safe same-family broader-lineage cases.
+- Metadata-driven suppression now directly covers:
+  legacy-calibrated broader-lineage pairs,
+  repeated-cycle overlays,
+  recovery overlays,
+  support/resistance overlays,
+  and other same-family richer journey-scope overlays when metadata proves the
+  semantic uplift safely.
+- Manual dominance rules remain for cross-family bridges, asymmetric storyline
+  jumps, and other cases where richer-vs-broader meaning is still more specific
+  than the current metadata model can prove safely.
+- Added stronger integrity coverage to fail if metadata inference stops
+  producing any true inference-only pairs beyond the legacy manual table.
+- Added a TODO note to `PatternInput` describing the eventual removal path for
+  the temporary flat compatibility layer once grouped-context migration is
+  complete.
+- Follow-up guardrail status:
+  `npm test` passed,
+  `verify:layer2` passed,
+  `verify:layer3` passed,
+  `npx tsc --noEmit` passed.
+
 ## Non Negotiable Rules
 
 - Preserve current behavior unless a real bug is identified.
