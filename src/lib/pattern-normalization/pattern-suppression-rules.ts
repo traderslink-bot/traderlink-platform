@@ -27,6 +27,11 @@
 // - dependency metadata between atomic and composite patterns
 //
 
+import {
+  PATTERN_METADATA_BY_ID,
+  type PatternMetadata,
+} from "./pattern-metadata";
+
 export type SuppressionOutcome =
   | "demote_to_supporting"
   | "demote_to_contextual";
@@ -89,8 +94,12 @@ export const PATTERN_SUPPRESSION_GROUPS: PatternSuppressionGroup[] = [
         "breakout_into_overhead_resistance_structure",
         "breakout_with_room_above_and_constructive_final_exit",
         "breakout_with_room_above_and_failed_profit_protection",
+        "recovery_with_breakout_with_room_above_and_constructive_final_exit",
+        "recovery_with_breakout_with_room_above_and_failed_profit_protection",
         "breakout_into_overhead_resistance_with_defensive_final_exit",
         "breakout_into_overhead_resistance_with_failed_profit_protection",
+        "recovery_with_breakout_into_overhead_resistance_and_defensive_final_exit",
+        "recovery_with_breakout_into_overhead_resistance_and_failed_profit_protection",
         "disadvantaged_entry_structure",
       ],
   }),
@@ -224,6 +233,10 @@ export const PATTERN_SUPPRESSION_GROUPS: PatternSuppressionGroup[] = [
       "repeated_trim_readd_with_deteriorating_reentry",
       "repeated_balanced_management_with_missed_final_continuation",
       "repeated_balanced_management_with_constructive_final_exit",
+      "repeated_balanced_management_with_trim_into_resistance_and_constructive_final_exit",
+      "repeated_balanced_management_with_trim_into_resistance_and_premature_final_exit",
+      "repeated_balanced_management_with_exit_into_stacked_support_and_relief",
+      "repeated_balanced_management_with_exit_into_thin_support_before_breakdown",
       "repeated_constructive_reentry_with_premature_final_exit",
       "repeated_balanced_management_with_premature_final_exit",
       "repeated_balanced_management_with_stop_like_forced_exit_after_breakdown",
@@ -234,6 +247,10 @@ export const PATTERN_SUPPRESSION_GROUPS: PatternSuppressionGroup[] = [
       "repeated_rescue_attempts_with_premature_final_exit_after_constructive_reentries",
       "repeated_rescue_attempts_with_balanced_management_and_premature_final_exit",
       "repeated_rescue_attempts_with_balanced_management_and_missed_final_continuation",
+      "repeated_rescue_attempts_with_balanced_management_and_trim_into_resistance_and_constructive_final_exit",
+      "repeated_rescue_attempts_with_balanced_management_and_trim_into_resistance_and_premature_final_exit",
+      "repeated_rescue_attempts_with_balanced_management_and_exit_into_stacked_support_and_relief",
+      "repeated_rescue_attempts_with_balanced_management_and_exit_into_thin_support_before_breakdown",
       "repeated_rescue_attempts_with_balanced_management_and_stop_like_forced_exit_after_breakdown",
       "repeated_rescue_attempts_with_balanced_management_and_stop_like_forced_exit_before_rebound",
       "repeated_rescue_attempts_with_constructive_final_exit_after_constructive_reentries",
@@ -244,8 +261,24 @@ export const PATTERN_SUPPRESSION_GROUPS: PatternSuppressionGroup[] = [
       "repeated_rescue_attempts_with_defensive_final_exit_after_deterioration",
       "repeated_trim_readd_with_premature_final_exit",
       "repeated_trim_readd_with_missed_final_continuation",
+      "balanced_management_with_take_profit_into_resistance_and_constructive_final_exit",
+      "recovery_with_balanced_management_and_take_profit_into_resistance_and_constructive_final_exit",
+      "balanced_management_with_take_profit_into_resistance_and_premature_final_exit",
+      "recovery_with_balanced_management_and_take_profit_into_resistance_and_premature_final_exit",
+      "repeated_balanced_management_with_take_profit_into_resistance_and_constructive_final_exit",
+      "repeated_balanced_management_with_take_profit_into_resistance_and_premature_final_exit",
+      "repeated_rescue_attempts_with_balanced_management_and_take_profit_into_resistance_and_constructive_final_exit",
+      "repeated_rescue_attempts_with_balanced_management_and_take_profit_into_resistance_and_premature_final_exit",
         "aggressive_adding_with_failed_profit_protection",
         "add_into_resistance_structure",
+        "trim_into_resistance_with_constructive_final_exit",
+        "trim_into_resistance_with_premature_final_exit",
+        "recovery_with_trim_into_resistance_and_constructive_final_exit",
+        "recovery_with_trim_into_resistance_and_premature_final_exit",
+        "repeated_balanced_management_with_trim_into_resistance_and_constructive_final_exit",
+        "repeated_balanced_management_with_trim_into_resistance_and_premature_final_exit",
+        "repeated_rescue_attempts_with_balanced_management_and_trim_into_resistance_and_constructive_final_exit",
+        "repeated_rescue_attempts_with_balanced_management_and_trim_into_resistance_and_premature_final_exit",
         "add_above_resistance_structure",
         "add_above_resistance_with_constructive_final_exit",
         "add_above_resistance_with_failed_profit_protection",
@@ -301,7 +334,11 @@ export const PATTERN_SUPPRESSION_GROUPS: PatternSuppressionGroup[] = [
         "exit_into_support_before_breakdown",
         "exit_into_stacked_support_with_relief_after_exit",
         "exit_into_thin_support_before_breakdown",
+        "exit_into_resistance_with_reversal_after_exit",
+        "exit_into_resistance_before_breakout",
         "stabilized_recovery_with_exit_into_stacked_support_and_relief",
+        "stabilized_recovery_with_exit_into_resistance_and_reversal",
+        "stabilized_recovery_with_exit_into_resistance_before_breakout",
         "stabilized_recovery_with_exit_into_thin_support_before_breakdown",
         "missed_post_exit_continuation",
         "exit_avoided_adverse_followthrough",
@@ -322,7 +359,7 @@ export const PATTERN_SUPPRESSION_GROUPS: PatternSuppressionGroup[] = [
 // They are intentionally simple and same-family focused.
 // =========================
 
-export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
+const MANUAL_PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
   // =========================
   // ENTRY LOCATION
   // =========================
@@ -401,6 +438,38 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
       "Breakout with room above and failed profit protection is a richer breakout-specific failure storyline than broad failed profit protection alone.",
   }),
   defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_breakout_with_room_above_and_constructive_final_exit",
+    suppressedPatternId: "breakout_with_room_above_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with breakout with room above and constructive final exit is a richer breakout-specific storyline than the non-recovery room-above constructive branch because it adds the early-adversity recovery path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_breakout_with_room_above_and_constructive_final_exit",
+    suppressedPatternId: "stabilized_recovery_with_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with breakout with room above and constructive final exit is a richer recovery-aware storyline than broad stabilized recovery with constructive final exit alone because it adds breakout-clearance context at entry.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_breakout_with_room_above_and_failed_profit_protection",
+    suppressedPatternId: "breakout_with_room_above_and_failed_profit_protection",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with breakout with room above and failed profit protection is a richer breakout-specific storyline than the non-recovery room-above failed-protection branch because it adds the early-adversity recovery path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_breakout_with_room_above_and_failed_profit_protection",
+    suppressedPatternId: "failed_profit_protection_structure",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with breakout with room above and failed profit protection is a richer recovery-aware storyline than broad failed profit protection alone because it adds both early-adversity recovery context and clean breakout-clearance entry structure.",
+  }),
+  defineDominanceRule({
     dominantPatternId: "breakout_into_overhead_resistance_structure",
     suppressedPatternId: "breakout_entry_structure",
     outcome: "demote_to_supporting",
@@ -448,6 +517,38 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
     outcome: "demote_to_supporting",
     reason:
       "Breakout into overhead resistance with failed profit protection is a richer breakout-specific failure storyline than broad failed profit protection alone.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_breakout_into_overhead_resistance_and_defensive_final_exit",
+    suppressedPatternId: "breakout_into_overhead_resistance_with_defensive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with breakout into overhead resistance and defensive final exit is a richer breakout-specific storyline than the non-recovery overhead-resistance defensive-exit branch because it adds the early-adversity recovery path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_breakout_into_overhead_resistance_and_defensive_final_exit",
+    suppressedPatternId: "disciplined_defensive_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with breakout into overhead resistance and defensive final exit is a richer breakout-specific defensive-save storyline than broad disciplined defensive exit alone because it adds both recovery context and weak breakout-overhead entry structure.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_breakout_into_overhead_resistance_and_failed_profit_protection",
+    suppressedPatternId: "breakout_into_overhead_resistance_with_failed_profit_protection",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with breakout into overhead resistance and failed profit protection is a richer breakout-specific storyline than the non-recovery overhead-resistance failed-protection branch because it adds the early-adversity recovery path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_breakout_into_overhead_resistance_and_failed_profit_protection",
+    suppressedPatternId: "failed_profit_protection_structure",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with breakout into overhead resistance and failed profit protection is a richer recovery-aware storyline than broad failed profit protection alone because it adds both early-adversity recovery context and the weak breakout-overhead path.",
   }),
   defineDominanceRule({
     dominantPatternId: "advantaged_entry_structure",
@@ -1387,6 +1488,49 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
       "Recovery with balanced management and constructive final exit is a richer storyline than broad recovery after early adversity with stabilized management because it adds the constructive final-exit outcome to the balanced-management path.",
   }),
   defineDominanceRule({
+    dominantPatternId:
+      "balanced_management_with_take_profit_into_resistance_and_constructive_final_exit",
+    suppressedPatternId: "balanced_management_with_constructive_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Balanced management with take profit into resistance and constructive final exit is a richer whole-trade storyline than broad balanced management with constructive exit because it adds explicit nearby resistance context to the profit-taking path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId: "trim_into_resistance_with_constructive_final_exit",
+    suppressedPatternId:
+      "balanced_management_with_take_profit_into_resistance_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Trim into resistance with constructive final exit is a richer local management storyline than the broader balanced-management take-profit-into-resistance summary because it adds the stricter trim-specific structure.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_balanced_management_and_take_profit_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "balanced_management_with_take_profit_into_resistance_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with balanced management and take profit into resistance and constructive final exit is a richer storyline because it adds the early-adversity recovery path to the support-aware take-profit summary.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_balanced_management_and_take_profit_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "recovery_with_balanced_management_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with balanced management and take profit into resistance and constructive final exit is a richer recovery-aware storyline than broad recovery with balanced management and constructive final exit because it adds explicit nearby resistance context to the profit-taking path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_trim_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "recovery_with_balanced_management_and_take_profit_into_resistance_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with trim into resistance and constructive final exit is a richer local management storyline than the broader recovery-aware balanced-management take-profit-into-resistance summary because it adds the stricter trim-specific structure.",
+  }),
+  defineDominanceRule({
     dominantPatternId: "balanced_management_with_missed_final_continuation",
     suppressedPatternId: "missed_post_exit_continuation",
     outcome: "demote_to_supporting",
@@ -1515,6 +1659,49 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
     outcome: "demote_to_supporting",
     reason:
       "Recovery with balanced management and premature final exit is a richer storyline than broad recovery after early adversity with stabilized management because it adds the final premature-exit outcome to the balanced-management path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "balanced_management_with_take_profit_into_resistance_and_premature_final_exit",
+    suppressedPatternId: "balanced_management_with_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Balanced management with take profit into resistance and premature final exit is a richer whole-trade storyline than broad balanced management with premature final exit because it adds explicit nearby resistance context to the profit-taking path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId: "trim_into_resistance_with_premature_final_exit",
+    suppressedPatternId:
+      "balanced_management_with_take_profit_into_resistance_and_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Trim into resistance with premature final exit is a richer local management storyline than the broader balanced-management take-profit-into-resistance premature summary because it adds the stricter trim-specific structure.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_balanced_management_and_take_profit_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "balanced_management_with_take_profit_into_resistance_and_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with balanced management and take profit into resistance and premature final exit is a richer storyline because it adds the early-adversity recovery path to the support-aware premature take-profit summary.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_balanced_management_and_take_profit_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "recovery_with_balanced_management_and_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with balanced management and take profit into resistance and premature final exit is a richer recovery-aware storyline than broad recovery with balanced management and premature final exit because it adds explicit nearby resistance context to the profit-taking path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_trim_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "recovery_with_balanced_management_and_take_profit_into_resistance_and_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with trim into resistance and premature final exit is a richer local management storyline than the broader recovery-aware balanced-management take-profit-into-resistance premature summary because it adds the stricter trim-specific structure.",
   }),
   defineDominanceRule({
     dominantPatternId:
@@ -1914,6 +2101,41 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
       "Trim into strength with premature final exit is a richer whole-trade storyline than broad balanced management with premature final exit because it adds explicit trim-into-strength management context.",
   }),
   defineDominanceRule({
+    dominantPatternId: "trim_into_resistance_with_constructive_final_exit",
+    suppressedPatternId: "trim_into_strength_with_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Trim into resistance with constructive final exit is a richer constructive storyline than trim into strength with constructive final exit because it adds explicit nearby resistance context to the trim.",
+  }),
+  defineDominanceRule({
+    dominantPatternId: "trim_into_resistance_with_constructive_final_exit",
+    suppressedPatternId: "reduction_into_strength",
+    outcome: "demote_to_supporting",
+    reason:
+      "Trim into resistance with constructive final exit includes the directional trim context plus explicit nearby resistance structure and the constructive final-exit outcome.",
+  }),
+  defineDominanceRule({
+    dominantPatternId: "trim_into_resistance_with_premature_final_exit",
+    suppressedPatternId: "trim_into_strength_with_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Trim into resistance with premature final exit is a richer storyline than trim into strength with premature final exit because it adds explicit nearby resistance context to the trim.",
+  }),
+  defineDominanceRule({
+    dominantPatternId: "trim_into_resistance_with_premature_final_exit",
+    suppressedPatternId: "premature_final_exit_after_constructive_management",
+    outcome: "demote_to_supporting",
+    reason:
+      "Trim into resistance with premature final exit is a richer whole-trade storyline than broad premature final exit after constructive management because it adds explicit resistance-aware trim context.",
+  }),
+  defineDominanceRule({
+    dominantPatternId: "trim_into_resistance_with_premature_final_exit",
+    suppressedPatternId: "exit_into_resistance_before_breakout",
+    outcome: "demote_to_supporting",
+    reason:
+      "Trim into resistance with premature final exit is a richer whole-trade resistance-aware storyline than the broad exit-into-resistance-before-breakout descriptor because it adds earlier trim management context.",
+  }),
+  defineDominanceRule({
     dominantPatternId:
       "recovery_with_timely_profit_protection_and_constructive_final_exit",
     suppressedPatternId: "timely_profit_protection_with_constructive_final_exit",
@@ -2212,6 +2434,49 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
     outcome: "demote_to_supporting",
     reason:
       "Recovery with trim into strength and premature final exit is a richer recovery-aware storyline than recovery with balanced management and premature final exit because it adds explicit trim-into-strength context.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_trim_into_resistance_and_constructive_final_exit",
+    suppressedPatternId: "trim_into_resistance_with_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with trim into resistance and constructive final exit is a richer storyline because it adds the early-adversity recovery path to the resistance-aware trim and constructive-exit sequence.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_trim_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "recovery_with_trim_into_strength_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with trim into resistance and constructive final exit is a richer recovery-aware storyline than recovery with trim into strength and constructive final exit because it adds explicit nearby resistance context to the trim.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_trim_into_resistance_and_premature_final_exit",
+    suppressedPatternId: "trim_into_resistance_with_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with trim into resistance and premature final exit is a richer storyline because it adds the early-adversity recovery path to the resistance-aware trim and premature-exit sequence.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_trim_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "recovery_with_trim_into_strength_and_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with trim into resistance and premature final exit is a richer recovery-aware storyline than recovery with trim into strength and premature final exit because it adds explicit nearby resistance context to the trim.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "recovery_with_trim_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "stabilized_recovery_with_exit_into_resistance_before_breakout",
+    outcome: "demote_to_supporting",
+    reason:
+      "Recovery with trim into resistance and premature final exit is a richer recovery-aware resistance storyline than stabilized recovery with exit into resistance before breakout because it adds earlier trim management context before the premature final exit.",
   }),
   defineDominanceRule({
     dominantPatternId: "timely_trim_into_strength_with_constructive_final_exit",
@@ -2706,6 +2971,67 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
   }),
   defineDominanceRule({
     dominantPatternId:
+      "repeated_balanced_management_with_trim_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with trim into resistance and constructive final exit is a richer repeated-cycle storyline than broad repeated balanced management with constructive final exit because it adds explicit nearby resistance context to the repeated trims.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_take_profit_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with take profit into resistance and constructive final exit is a richer repeated-cycle storyline than broad repeated balanced management with constructive final exit because it adds explicit nearby resistance context to the repeated profit-taking path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_trim_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_take_profit_into_resistance_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with trim into resistance and constructive final exit is a richer local repeated-cycle storyline than the broader repeated take-profit-into-resistance summary because it adds the stricter trim-specific structure.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_take_profit_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with take profit into resistance and constructive final exit is a richer repeated-cycle storyline than broad repeated balanced management with constructive final exit because it adds explicit nearby resistance context to the repeated profit-taking path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_trim_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_take_profit_into_resistance_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with trim into resistance and constructive final exit is a richer local repeated-cycle storyline than the broader repeated take-profit-into-resistance summary because it adds the stricter trim-specific structure.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_trim_into_resistance_and_constructive_final_exit",
+    suppressedPatternId: "repeated_trim_readd_with_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with trim into resistance and constructive final exit is a richer repeated-cycle storyline than the broad repeated constructive-final-exit pattern because it captures both active repeated trim-and-readd management and repeated resistance-aware trimming.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_trim_into_resistance_and_constructive_final_exit",
+    suppressedPatternId: "repeated_trim_readd_with_constructive_management",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with trim into resistance and constructive final exit is a richer repeated-cycle storyline than broad constructive repeated trim-readd management because it adds both the constructive final-exit outcome and repeated resistance-aware trim context.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
       "repeated_constructive_reentry_with_constructive_final_exit",
     suppressedPatternId:
       "repeated_trim_readd_with_constructive_reentry_followthrough",
@@ -2875,6 +3201,38 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
       "Repeated balanced management with missed final continuation is a richer repeated-cycle storyline than broad constructive repeated trim-readd management because it adds the missed-final-continuation outcome.",
   }),
   defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_exit_into_stacked_support_and_relief",
+    suppressedPatternId: "exit_into_stacked_support_with_relief_after_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with exit into stacked support and relief is a richer repeated-cycle storyline than the raw stacked-support relief exit pattern alone.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_exit_into_stacked_support_and_relief",
+    suppressedPatternId: "repeated_balanced_management_with_missed_final_continuation",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with exit into stacked support and relief is a stricter repeated-cycle storyline than broad repeated balanced management with missed final continuation because it adds support-structure context at the final exit.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_exit_into_stacked_support_and_relief",
+    suppressedPatternId: "repeated_trim_readd_with_missed_final_continuation",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with exit into stacked support and relief is a richer repeated-cycle storyline than the broad repeated missed-continuation pattern because it captures active trim-and-readd management plus stacked-support relief context at the final exit.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_exit_into_stacked_support_and_relief",
+    suppressedPatternId: "repeated_trim_readd_with_constructive_management",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with exit into stacked support and relief is a richer repeated-cycle storyline than broad constructive repeated trim-readd management because it adds support-aware post-exit relief context.",
+  }),
+  defineDominanceRule({
     dominantPatternId: "repeated_balanced_management_with_fearful_final_exit",
     suppressedPatternId: "repeated_trim_readd_with_fearful_final_exit",
     outcome: "demote_to_supporting",
@@ -2948,6 +3306,66 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
     outcome: "demote_to_supporting",
     reason:
       "Repeated balanced management with premature final exit is a richer repeated-cycle storyline than broad constructive repeated trim-readd management because it adds the premature final-exit outcome.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_trim_into_resistance_and_premature_final_exit",
+    suppressedPatternId: "repeated_balanced_management_with_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with trim into resistance and premature final exit is a richer repeated-cycle storyline than broad repeated balanced management with premature final exit because it adds explicit nearby resistance context to the repeated trims.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_take_profit_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with take profit into resistance and premature final exit is a richer repeated-cycle storyline than broad repeated balanced management with premature final exit because it adds explicit nearby resistance context to the repeated profit-taking path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_trim_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_take_profit_into_resistance_and_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with trim into resistance and premature final exit is a richer local repeated-cycle storyline than the broader repeated take-profit-into-resistance premature summary because it adds the stricter trim-specific structure.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_take_profit_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with take profit into resistance and premature final exit is a richer repeated-cycle storyline than broad repeated balanced management with premature final exit because it adds explicit nearby resistance context to the repeated profit-taking path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_trim_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_take_profit_into_resistance_and_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with trim into resistance and premature final exit is a richer local repeated-cycle storyline than the broader repeated take-profit-into-resistance premature summary because it adds the stricter trim-specific structure.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_trim_into_resistance_and_premature_final_exit",
+    suppressedPatternId: "repeated_trim_readd_with_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with trim into resistance and premature final exit is a richer repeated-cycle storyline than the broad repeated premature-final-exit pattern because it captures both active repeated trim-and-readd management and repeated resistance-aware trimming.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_trim_into_resistance_and_premature_final_exit",
+    suppressedPatternId: "repeated_balanced_management_with_missed_final_continuation",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with trim into resistance and premature final exit is a stricter repeated-cycle storyline than broad repeated balanced management with missed final continuation because it adds explicit resistance-aware trim context and a cleaner early-exit outcome.",
   }),
   defineDominanceRule({
     dominantPatternId:
@@ -3052,6 +3470,41 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
   }),
   defineDominanceRule({
     dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_exit_into_stacked_support_and_relief",
+    suppressedPatternId:
+      "repeated_balanced_management_with_exit_into_stacked_support_and_relief",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and exit into stacked support and relief is a richer storyline than the broad repeated balanced-management stacked-support relief summary because it adds the early-adversity recovery path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_exit_into_stacked_support_and_relief",
+    suppressedPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_missed_final_continuation",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and exit into stacked support and relief is a stricter recovery-aware storyline than the broad repeated balanced-management missed-continuation summary because it adds support-structure context at the final exit.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_exit_into_stacked_support_and_relief",
+    suppressedPatternId:
+      "recovery_after_early_adversity_with_stabilized_management",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and exit into stacked support and relief is a richer recovery-aware storyline than broad recovery after early adversity with stabilized management alone.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_exit_into_stacked_support_and_relief",
+    suppressedPatternId: "repeated_trim_readd_with_missed_final_continuation",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and exit into stacked support and relief is a richer recovery-aware storyline than the broad repeated missed-continuation pattern because it adds rescue context, balanced repeated management, and stacked-support relief detail.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
       "repeated_balanced_management_with_defensive_final_exit_after_deterioration",
     suppressedPatternId:
       "repeated_trim_readd_with_defensive_final_exit_after_deterioration",
@@ -3066,6 +3519,40 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
     outcome: "demote_to_supporting",
     reason:
       "Repeated balanced management with defensive final exit after deterioration is a richer repeated-cycle storyline than broad constructive repeated trim-readd management because it adds the later defensive-save outcome.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_exit_into_thin_support_before_breakdown",
+    suppressedPatternId: "exit_into_thin_support_before_breakdown",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with exit into thin support before breakdown is a richer repeated-cycle storyline than the raw thin-support breakdown exit pattern alone.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_exit_into_thin_support_before_breakdown",
+    suppressedPatternId:
+      "repeated_balanced_management_with_defensive_final_exit_after_deterioration",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with exit into thin support before breakdown is a stricter repeated-cycle storyline than the broad repeated defensive-save summary because it adds explicit thin-support failure context at the final exit.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_exit_into_thin_support_before_breakdown",
+    suppressedPatternId:
+      "repeated_trim_readd_with_defensive_final_exit_after_deterioration",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with exit into thin support before breakdown is a richer repeated-cycle storyline than the broad repeated defensive-exit path because it captures active trim-and-readd management plus thin-support failure context.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_balanced_management_with_exit_into_thin_support_before_breakdown",
+    suppressedPatternId: "repeated_trim_readd_with_constructive_management",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated balanced management with exit into thin support before breakdown is a richer repeated-cycle failure storyline than broad constructive repeated trim-readd management because it adds the later thin-support breakdown outcome.",
   }),
   defineDominanceRule({
     dominantPatternId:
@@ -3131,6 +3618,24 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
   }),
   defineDominanceRule({
     dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_take_profit_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_take_profit_into_resistance_and_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and take profit into resistance and premature final exit is a richer recovery-aware storyline than the non-recovery repeated take-profit-into-resistance premature branch because it adds the early-adversity rescue path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_take_profit_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and take profit into resistance and premature final exit is a richer recovery-aware storyline than broad repeated rescue balanced management with premature final exit because it adds explicit nearby resistance context to the repeated profit-taking path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
       "repeated_rescue_attempts_with_balanced_management_and_premature_final_exit",
     suppressedPatternId:
       "recovery_after_early_adversity_with_stabilized_management",
@@ -3153,6 +3658,33 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
     outcome: "demote_to_supporting",
     reason:
       "Repeated rescue attempts with balanced management and premature final exit is a richer recovery-aware storyline than broad constructive repeated trim-readd management alone.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_trim_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_trim_into_resistance_and_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and trim into resistance and premature final exit is a richer recovery-aware storyline than the non-recovery repeated resistance-aware trim branch because it adds the early-adversity rescue path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_trim_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_take_profit_into_resistance_and_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and trim into resistance and premature final exit is a richer local repeated-cycle storyline than the broader recovery-aware take-profit-into-resistance premature summary because it adds the stricter trim-specific structure.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_trim_into_resistance_and_premature_final_exit",
+    suppressedPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and trim into resistance and premature final exit is a richer recovery-aware storyline than broad repeated rescue balanced management with premature final exit because it adds explicit nearby resistance context to the repeated trims.",
   }),
   defineDominanceRule({
     dominantPatternId:
@@ -3233,6 +3765,42 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
   }),
   defineDominanceRule({
     dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_exit_into_thin_support_before_breakdown",
+    suppressedPatternId:
+      "repeated_balanced_management_with_exit_into_thin_support_before_breakdown",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and exit into thin support before breakdown is a richer storyline than the broad repeated balanced-management thin-support failure summary because it adds the early-adversity recovery path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_exit_into_thin_support_before_breakdown",
+    suppressedPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_defensive_final_exit_after_deterioration",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and exit into thin support before breakdown is a stricter recovery-aware storyline than the broad repeated defensive-save summary because it adds explicit thin-support failure context at the final exit.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_exit_into_thin_support_before_breakdown",
+    suppressedPatternId:
+      "recovery_after_early_adversity_with_failed_protection",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and exit into thin support before breakdown is a richer recovery-failure storyline than broad recovery after early adversity with failed protection alone.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_exit_into_thin_support_before_breakdown",
+    suppressedPatternId:
+      "repeated_trim_readd_with_defensive_final_exit_after_deterioration",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and exit into thin support before breakdown is a richer recovery-aware storyline than the broad repeated defensive-exit path because it adds rescue context, balanced repeated management, and thin-support failure detail.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
       "repeated_rescue_attempts_with_balanced_management_and_stop_like_forced_exit_after_breakdown",
     suppressedPatternId:
       "repeated_rescue_attempts_with_balanced_management_and_defensive_final_exit_after_deterioration",
@@ -3287,6 +3855,24 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
   }),
   defineDominanceRule({
     dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_take_profit_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_take_profit_into_resistance_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and take profit into resistance and constructive final exit is a richer recovery-aware storyline than the non-recovery repeated take-profit-into-resistance branch because it adds the early-adversity rescue path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_take_profit_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and take profit into resistance and constructive final exit is a richer recovery-aware storyline than broad repeated rescue balanced management with constructive final exit because it adds explicit nearby resistance context to the repeated profit-taking path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
       "repeated_rescue_attempts_with_balanced_management_and_constructive_final_exit",
     suppressedPatternId:
       "stabilized_recovery_with_constructive_final_exit",
@@ -3318,6 +3904,33 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
     outcome: "demote_to_supporting",
     reason:
       "Repeated rescue attempts with balanced management and constructive final exit is a richer recovery-aware storyline than broad constructive repeated trim-readd management alone.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_trim_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "repeated_balanced_management_with_trim_into_resistance_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and trim into resistance and constructive final exit is a richer recovery-aware storyline than the non-recovery repeated resistance-aware trim branch because it adds the early-adversity rescue path.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_trim_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_take_profit_into_resistance_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and trim into resistance and constructive final exit is a richer local repeated-cycle storyline than the broader recovery-aware take-profit-into-resistance summary because it adds the stricter trim-specific structure.",
+  }),
+  defineDominanceRule({
+    dominantPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_trim_into_resistance_and_constructive_final_exit",
+    suppressedPatternId:
+      "repeated_rescue_attempts_with_balanced_management_and_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Repeated rescue attempts with balanced management and trim into resistance and constructive final exit is a richer recovery-aware storyline than broad repeated rescue balanced management with constructive final exit because it adds explicit nearby resistance context to the repeated trims.",
   }),
   defineDominanceRule({
     dominantPatternId:
@@ -3936,6 +4549,20 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
       "Exit into thin support before breakdown is a richer support-aware exit storyline because it adds thin-support context to the post-exit breakdown outcome.",
   }),
   defineDominanceRule({
+    dominantPatternId: "exit_into_resistance_with_reversal_after_exit",
+    suppressedPatternId: "exit_avoided_adverse_followthrough",
+    outcome: "demote_to_supporting",
+    reason:
+      "Exit into resistance with reversal after exit is a richer resistance-aware exit storyline than broad avoided-adverse-followthrough because it adds explicit resistance context at the exit.",
+  }),
+  defineDominanceRule({
+    dominantPatternId: "exit_into_resistance_before_breakout",
+    suppressedPatternId: "missed_post_exit_continuation",
+    outcome: "demote_to_supporting",
+    reason:
+      "Exit into resistance before breakout is a richer resistance-aware exit storyline than broad missed post-exit continuation because it adds explicit resistance context at the exit.",
+  }),
+  defineDominanceRule({
     dominantPatternId:
       "stabilized_recovery_with_exit_into_stacked_support_and_relief",
     suppressedPatternId: "exit_into_stacked_support_with_relief_after_exit",
@@ -3966,6 +4593,34 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
     outcome: "demote_to_supporting",
     reason:
       "Stabilized recovery with exit into thin support before breakdown is a richer recovery-exit storyline because it adds explicit thin-support breakdown context to the broader stabilized-recovery exit.",
+  }),
+  defineDominanceRule({
+    dominantPatternId: "stabilized_recovery_with_exit_into_resistance_and_reversal",
+    suppressedPatternId: "exit_into_resistance_with_reversal_after_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Stabilized recovery with exit into resistance and reversal is a richer resistance-aware exit storyline because it adds the prior recovery-stabilization path to the resistance-reversal outcome.",
+  }),
+  defineDominanceRule({
+    dominantPatternId: "stabilized_recovery_with_exit_into_resistance_and_reversal",
+    suppressedPatternId: "stabilized_recovery_with_constructive_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Stabilized recovery with exit into resistance and reversal is a richer recovery-exit storyline because it adds explicit resistance context to the constructive stabilized-recovery exit.",
+  }),
+  defineDominanceRule({
+    dominantPatternId: "stabilized_recovery_with_exit_into_resistance_before_breakout",
+    suppressedPatternId: "exit_into_resistance_before_breakout",
+    outcome: "demote_to_supporting",
+    reason:
+      "Stabilized recovery with exit into resistance before breakout is a richer resistance-aware exit storyline because it adds the prior recovery-stabilization path to the resistance-before-breakout outcome.",
+  }),
+  defineDominanceRule({
+    dominantPatternId: "stabilized_recovery_with_exit_into_resistance_before_breakout",
+    suppressedPatternId: "stabilized_recovery_with_premature_final_exit",
+    outcome: "demote_to_supporting",
+    reason:
+      "Stabilized recovery with exit into resistance before breakout is a richer recovery-exit storyline because it adds explicit resistance context to the broader stabilized-recovery premature-exit path.",
   }),
   defineDominanceRule({
     dominantPatternId: "add_above_resistance_structure",
@@ -4372,6 +5027,108 @@ export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] = [
       "Re-add after delayed risk response is a richer management-sequence pattern because it includes the later re-add behavior.",
   }),
 ];
+
+function buildDominanceRuleKey(args: {
+  dominantPatternId: string;
+  suppressedPatternId: string;
+}): string {
+  return `${args.dominantPatternId}=>${args.suppressedPatternId}`;
+}
+
+function inferDominanceOutcome(
+  suppressedMetadata: PatternMetadata,
+): SuppressionOutcome {
+  return suppressedMetadata.defaultRole === "context_only"
+    ? "demote_to_contextual"
+    : "demote_to_supporting";
+}
+
+function buildMetadataInferredDominanceRules(): PatternDominanceRule[] {
+  const manualRulesByKey = new Map(
+    MANUAL_PATTERN_DOMINANCE_RULES.map((rule) => [
+      buildDominanceRuleKey(rule),
+      rule,
+    ]),
+  );
+  const inferredRules: PatternDominanceRule[] = [];
+
+  for (const dominantMetadata of Object.values(PATTERN_METADATA_BY_ID)) {
+    for (const suppressedPatternId of dominantMetadata.broaderPatternIds) {
+      const suppressedMetadata = PATTERN_METADATA_BY_ID[suppressedPatternId];
+
+      if (!suppressedMetadata) {
+        continue;
+      }
+
+      const key = buildDominanceRuleKey({
+        dominantPatternId: dominantMetadata.patternId,
+        suppressedPatternId,
+      });
+      const matchingManualRule = manualRulesByKey.get(key);
+
+      if (!matchingManualRule) {
+        continue;
+      }
+
+      inferredRules.push(
+        defineDominanceRule({
+          dominantPatternId: dominantMetadata.patternId,
+          suppressedPatternId,
+          outcome:
+            matchingManualRule.outcome ?? inferDominanceOutcome(suppressedMetadata),
+          reason: `Metadata inferred broader-lineage suppression: ${dominantMetadata.patternId} is a richer ${dominantMetadata.journeyScope} ${dominantMetadata.subFamily} variant than ${suppressedPatternId}.`,
+        }),
+      );
+    }
+  }
+
+  return inferredRules;
+}
+
+function dedupeDominanceRules(
+  rules: PatternDominanceRule[],
+): PatternDominanceRule[] {
+  const seenRuleKeys = new Set<string>();
+  const dedupedRules: PatternDominanceRule[] = [];
+
+  for (const rule of rules) {
+    const key = buildDominanceRuleKey(rule);
+
+    if (seenRuleKeys.has(key)) {
+      continue;
+    }
+
+    seenRuleKeys.add(key);
+    dedupedRules.push(rule);
+  }
+
+  return dedupedRules;
+}
+
+export const METADATA_INFERRED_PATTERN_DOMINANCE_RULES =
+  buildMetadataInferredDominanceRules();
+
+export const METADATA_INFERRED_DOMINANCE_RULE_SUMMARY =
+  METADATA_INFERRED_PATTERN_DOMINANCE_RULES.map(
+    (rule) => `${rule.dominantPatternId}=>${rule.suppressedPatternId}`,
+  );
+
+const METADATA_INFERRED_RULE_KEYS = new Set(
+  METADATA_INFERRED_PATTERN_DOMINANCE_RULES.map((rule) =>
+    buildDominanceRuleKey(rule),
+  ),
+);
+
+export const MANUAL_EXCEPTION_PATTERN_DOMINANCE_RULES =
+  MANUAL_PATTERN_DOMINANCE_RULES.filter(
+    (rule) => !METADATA_INFERRED_RULE_KEYS.has(buildDominanceRuleKey(rule)),
+  );
+
+export const PATTERN_DOMINANCE_RULES: PatternDominanceRule[] =
+  dedupeDominanceRules([
+    ...METADATA_INFERRED_PATTERN_DOMINANCE_RULES,
+    ...MANUAL_EXCEPTION_PATTERN_DOMINANCE_RULES,
+  ]);
 
 // =========================
 // LOOKUP HELPERS
