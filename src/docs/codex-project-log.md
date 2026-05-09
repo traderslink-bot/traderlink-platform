@@ -8539,3 +8539,26 @@ Next best step:
 - Start Run 1 from that roadmap: visual chart foundation plus richer sample data
   so localhost shows enough trades/executions to judge the UI as a real end
   user.
+
+## 2026-05-09 - Competitor Dashboard Research
+
+Reviewed dashboard/product screenshots and feature surfaces from StonkJournal,
+TraderSync, Tradervue, Trademetria, TradesViz, and TradeZella after the user
+asked for visual inspiration and feature gap research.
+
+What changed:
+
+- Added `src/docs/competitor-dashboard-research-2026-05-09.md`.
+- Downloaded a small set of screenshot assets locally under
+  `artifacts/competitor-research/dashboard-screenshots/` for inspection. These
+  are research artifacts only and remain uncommitted.
+- The research concluded that Trader Intelligence needs a much stronger visual
+  report layer: P/L curve, win/loss donut, daily PnL calendar, session bars,
+  entry-hour heatmap, behavior-cost chart, execution timeline, running trade
+  P/L, and richer localhost demo data.
+
+Next best step:
+
+- Implement Run 1 from the UI overhaul: chart foundation plus richer sample
+  data, then redesign `/analytics` above the fold with real red/green visual
+  reporting.
