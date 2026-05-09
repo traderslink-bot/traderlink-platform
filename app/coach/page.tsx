@@ -26,6 +26,28 @@ function signed(value: number | null): string {
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}`;
 }
 
+function compactCoachAction(value: string, fallback: string): string {
+  const normalized = value.toLowerCase();
+
+  if (!value) {
+    return fallback;
+  }
+
+  if (normalized.includes("recurring execution risk")) {
+    return "Replay the repeated risk";
+  }
+
+  if (normalized.includes("single entry") && normalized.includes("full exit")) {
+    return "Preserve clean entry and exit";
+  }
+
+  if (value.length <= 54) {
+    return value;
+  }
+
+  return fallback;
+}
+
 const panelClass = "border border-zinc-800 bg-zinc-950 p-4 shadow-sm shadow-black/20";
 
 export default function CoachPage() {
@@ -126,20 +148,24 @@ export default function CoachPage() {
         >
           <MetricCard
             label="Avoid This Next Session"
-            value={prep.avoidBehavior}
-            detail="Based on repeated trade evidence and session timing."
+            value={compactCoachAction(prep.avoidBehavior, "Review the biggest risk")}
+            detail={prep.avoidBehavior}
             tone="warning"
           />
           <MetricCard
             label="Repeat This"
-            value={prep.repeatBehavior}
-            detail="Keep the behavior that showed better evidence."
+            value={compactCoachAction(prep.repeatBehavior, "Repeat the strongest behavior")}
+            detail={prep.repeatBehavior}
             tone="success"
           />
           <MetricCard
             label="Review This Trade"
             value={primaryReviewItem?.symbol ?? "Save an import"}
-            detail={primaryReviewItem?.nextAction ?? "Import one broker CSV to build your own review queue."}
+            detail={
+              primaryReviewItem
+                ? "Open it and write one lesson."
+                : "Import one broker CSV first."
+            }
             tone="info"
           />
         </section>
@@ -148,18 +174,18 @@ export default function CoachPage() {
           <MetricCard
             label="Review Progress"
             value={`${coach.reviewCompletionLoop.completionPct}%`}
-            detail="How much of the saved review loop is complete."
+            detail="Saved review loop completion."
             tone="info"
           />
           <MetricCard
             label="Current Pattern"
             value={archetype?.label ?? "Collecting"}
-            detail={coach.archetypeProfile.summary}
+            detail="See the pattern section below."
           />
           <MetricCard
             label="Most Expensive Habit"
             value={coach.mistakeSeverityLadder.topSeverity?.label ?? "None"}
-            detail="Ranked by frequency and gross P/L evidence."
+            detail="Frequency + gross P/L evidence."
             tone="warning"
           />
           <MetricCard

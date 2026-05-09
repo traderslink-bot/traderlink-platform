@@ -50,6 +50,7 @@ const BANNED_PRODUCT_PHRASES = [
 
 const ROUTE_SMOKE_TARGETS = [
   { path: "/", heading: "TradersLink Trading Tools" },
+  { path: "/trader-intelligence", heading: "Trader Intelligence Trade Review" },
   { path: "/analytics", heading: "Analytics" },
   { path: "/imports", heading: shell.importReview.title },
   { path: "/import-dry-run", heading: "Import Trades" },
@@ -82,6 +83,7 @@ const CORE_PRODUCT_ROUTES = [
   { path: "/review", heading: shell.guidedReview.title },
   { path: "/progress", heading: "Trader Progress" },
   { path: "/import-dry-run", heading: "Import Trades" },
+  { path: "/trader-intelligence", heading: "Trader Intelligence Trade Review" },
 ] as const;
 
 const BROKER_IMPORT_CASES: Array<{
@@ -574,6 +576,66 @@ test.describe("app feature regression", () => {
     await expect(page.locator("body")).toContainText("review prompt");
     await expect(page.locator("body")).toContainText("Open the priority trade");
     await expect(page.locator("body")).toContainText("Execution-only");
+
+    assertNoProblems();
+  });
+
+  test("shows beginner-safe Trader Intelligence mock trade reviews", async ({
+    page,
+  }, testInfo) => {
+    test.skip(!isDesktopProject(testInfo), "mock review assertions run on desktop");
+    const assertNoProblems = collectPageProblems(page);
+
+    await visitAndAssertRoute(
+      page,
+      "/trader-intelligence?case=chase-entry",
+      "Trader Intelligence Trade Review",
+    );
+    await expect(page.getByTestId("trader-intelligence-primary-review")).toContainText(
+      "Main issue: You chased the entry.",
+    );
+    await expect(page.getByRole("heading", { exact: true, name: "Evidence" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { exact: true, name: "Quick explanations" }),
+    ).toBeVisible();
+    await expect(page.getByText("Advanced analysis details", { exact: true })).toBeVisible();
+
+    const defaultCopy = await page.locator("body").innerText();
+    for (const internalTerm of [
+      "patternId",
+      "suppressedBehaviorIds",
+      "normalizedPatterns",
+      "dominantFamily",
+      "behaviorPriorityScore",
+      "structural_composite",
+      "scoreBand",
+      "conflictResolutionReason",
+      "overextended_chase_entry_structure",
+    ]) {
+      expect(defaultCopy, `Internal term leaked by default: ${internalTerm}`).not.toContain(
+        internalTerm,
+      );
+    }
+
+    for (const caseLabel of [
+      "Poor profit protection",
+      "Premature exit",
+      "Adding into weakness",
+      "Strong profit protection",
+      "Structured execution",
+      "Mixed evidence",
+      "Needs more data",
+    ]) {
+      await expect(page.getByRole("link", { exact: true, name: caseLabel })).toBeVisible();
+    }
+
+    await page.getByRole("link", { exact: true, name: "Needs more data" }).click();
+    await expect(page.getByTestId("trader-intelligence-primary-review")).toContainText(
+      "Review status: Needs more data.",
+    );
+    await expect(page.getByTestId("trader-intelligence-review-metrics")).toContainText(
+      "Needs more data",
+    );
 
     assertNoProblems();
   });

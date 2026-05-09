@@ -173,6 +173,12 @@ export default function Home() {
               >
                 Join the $30 beta
               </a>
+              <Link
+                href="/trader-intelligence"
+                className="inline-flex min-h-12 items-center justify-center border border-cyan-300/50 bg-slate-950/50 px-5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200"
+              >
+                Preview Trader Intelligence
+              </Link>
             </div>
           </div>
 

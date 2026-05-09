@@ -299,20 +299,20 @@ export default async function TradeReviewPage({
           />
           <MetricCard
             label="What To Review"
-            value={decisionReviewStatus.label}
-            detail={decisionReviewStatus.scope}
+            value={decisionReviewSnapshot ? "Chart context ready" : "Execution review"}
+            detail={decisionReviewStatus.label}
             tone={decisionReviewStatus.tone.includes("emerald") ? "success" : decisionReviewStatus.tone.includes("amber") ? "warning" : "info"}
           />
           <MetricCard
             label="What To Write Down"
             value={checklistProgress}
-            detail={checklist?.nextAction ?? "Start with the execution replay."}
+            detail={checklist ? "Use the checklist's next item." : "Start with the execution replay."}
             tone="info"
           />
           <MetricCard
             label="What Is Unavailable"
-            value={decisionReviewSnapshot ? "Nothing major" : decisionReviewStatus.scope}
-            detail={decisionReviewSnapshot ? "Chart context is attached." : "Use execution evidence while context waits."}
+            value={decisionReviewSnapshot ? "Nothing major" : "Chart context"}
+            detail={decisionReviewSnapshot ? "Context is attached." : "Use execution evidence now."}
             tone={decisionReviewSnapshot ? "success" : "warning"}
           />
         </section>

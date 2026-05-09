@@ -123,14 +123,18 @@ export function MetricCard({
   value: ReactNode;
 }) {
   return (
-    <div className="min-h-[112px] border border-zinc-800 bg-zinc-950 p-4">
+    <div className="min-h-[112px] min-w-0 border border-zinc-800 bg-zinc-950 p-4">
       <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
         {label}
       </div>
-      <div className={`mt-3 text-2xl font-semibold ${toneText[tone]}`}>
+      <div className={`mt-3 break-words text-xl font-semibold leading-7 sm:text-2xl ${toneText[tone]}`}>
         {value}
       </div>
-      {detail ? <div className="mt-2 text-sm leading-5 text-zinc-500">{detail}</div> : null}
+      {detail ? (
+        <div className="mt-2 break-words text-sm leading-5 text-zinc-500">
+          {detail}
+        </div>
+      ) : null}
     </div>
   );
 }

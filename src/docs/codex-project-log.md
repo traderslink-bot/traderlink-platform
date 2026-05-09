@@ -8473,3 +8473,47 @@ Next best step:
   `/coach`, `/review`, `/trades`, and `/trades/[tradeId]`; tighten spacing,
   reduce overlong metric-card values, and decide whether any remaining advanced
   sections should move fully under `/workspace/admin`.
+
+## 2026-05-08 - User-Facing Review Summary And Mock Single-Trade UI
+
+Continued the Trader Intelligence UX work from the new-user QC roadmap added on
+GitHub. The focus shifted from dashboards to the product translation layer:
+turning coaching/scoring output into a beginner-safe trade review summary.
+
+What changed:
+
+- Added `UserFacingTradeReviewSummary` under
+  `src/lib/user-facing-review/types/`.
+- Added `buildUserFacingTradeReviewSummary` under
+  `src/lib/user-facing-review/mappers/` so the UI can consume product-ready
+  summaries instead of raw engine internals.
+- Added mapper tests covering chase entry, strength-first profit protection,
+  mixed/moderate-confidence review, and needs-more-data review.
+- Added `/trader-intelligence` as a mock single-trade review surface with eight
+  representative cases from the roadmap.
+- Added a homepage link to preview Trader Intelligence.
+- Tightened `MetricCard` wrapping and reduced overlong first-viewport metric
+  values on `/coach` and `/trades/[tradeId]`.
+- Added Playwright coverage for beginner-safe Trader Intelligence mock reviews
+  and included `/trader-intelligence` in core route/mobile/visual smoke checks.
+- Added
+  `src/docs/trader-intelligence-user-facing-review-summary-implementation.md`
+  to document the new contract, route, UX rules, verification, and next step.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npx vitest run src/lib/user-facing-review/__tests__/build-user-facing-trade-review-summary.test.ts --reporter=dot` passed.
+- `npm run build` passed.
+- Focused desktop Playwright passed:
+  `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "beginner-safe Trader Intelligence|captures visual smoke screenshots"`.
+- Core mobile overflow Playwright passed:
+  `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable"`.
+- Desktop/mobile screenshots were captured under
+  `artifacts/visual-qc/2026-05-08-user-facing-review-final/` for
+  `/trader-intelligence`, `/coach`, and `/trades/[tradeId]`.
+
+Next best step:
+
+- Wire `UserFacingTradeReviewSummary` to real saved trade review data once the
+  mock single-trade review surface feels right.
