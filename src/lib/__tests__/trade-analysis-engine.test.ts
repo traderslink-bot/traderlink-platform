@@ -19,6 +19,7 @@ import type { NormalizedPatternResult } from "../pattern-normalization/types/nor
 const mockedPipeline = vi.hoisted(() => {
   return {
     createRawTradeTimeline: vi.fn(),
+    createRawTradeTimelineWithLevelsSystem: vi.fn(),
     buildPatternInput: vi.fn(),
     detectPatterns: vi.fn(),
     normalizeDetectedPatterns: vi.fn(),
@@ -28,6 +29,8 @@ const mockedPipeline = vi.hoisted(() => {
 vi.mock("../raw-trade-timeline/builders/create-raw-trade-timeline", () => {
   return {
     createRawTradeTimeline: mockedPipeline.createRawTradeTimeline,
+    createRawTradeTimelineWithLevelsSystem:
+      mockedPipeline.createRawTradeTimelineWithLevelsSystem,
   };
 });
 
@@ -49,7 +52,7 @@ vi.mock("../pattern-normalization/normalize-detected-patterns", () => {
   };
 });
 
-import { analyzeTrade } from "../trade-analysis-engine";
+import { analyzeTrade, analyzeTradeWithLevelsSystem } from "../trade-analysis-engine";
 
 describe("trade-analysis-engine", () => {
   // 2026-04-14 03:27 PM America/Toronto
@@ -71,7 +74,16 @@ describe("trade-analysis-engine", () => {
     const patternInput = {
       symbol: "ABCD",
       tradeDirection: "long",
-      executionCount: 3,
+      sessionBucket: "market_open",
+      tradeStructure: {
+        executionCount: 3,
+      },
+      entryContext: {},
+      exitContext: {},
+      scalingContext: {},
+      timingContext: {},
+      supportResistanceContext: {},
+      recoveryContext: {},
     } as unknown as PatternInput;
 
     const detectedPatterns = {
@@ -156,5 +168,68 @@ describe("trade-analysis-engine", () => {
     expect(result).not.toHaveProperty("feedback");
     expect(result).not.toHaveProperty("narrative");
     expect(result).not.toHaveProperty("summary");
+  });
+
+  it("wires the async levels-system analysis path without changing the Layer 1-3 return contract", async () => {
+    const rawTradeTimeline = {
+      timeline: {
+        symbol: "ABCD",
+      },
+      executionLevelRelations: [],
+    } as unknown as RawTradeTimelineBuildResult;
+    const patternInput = {
+      symbol: "ABCD",
+      tradeDirection: "long",
+      sessionBucket: "market_open",
+      tradeStructure: {},
+      entryContext: {},
+      exitContext: {},
+      scalingContext: {},
+      timingContext: {},
+      supportResistanceContext: {},
+      recoveryContext: {},
+    } as unknown as PatternInput;
+    const detectedPatterns = {
+      detectedPatterns: [],
+    } satisfies PatternDetectionResult;
+    const normalizedPatterns = {
+      primaryPatterns: [],
+      supportingPatterns: [],
+      contextualPatterns: [],
+      prioritizedPatterns: [],
+      patternsByFamily: {},
+      primaryPatternsByFamily: {},
+      topOverallAnchorPattern: null,
+    } satisfies NormalizedPatternResult;
+    const supportResistanceOptions = {
+      preferredProvider: "stub" as const,
+    };
+
+    mockedPipeline.createRawTradeTimelineWithLevelsSystem.mockResolvedValue(
+      rawTradeTimeline,
+    );
+    mockedPipeline.buildPatternInput.mockReturnValue(patternInput);
+    mockedPipeline.detectPatterns.mockReturnValue(detectedPatterns);
+    mockedPipeline.normalizeDetectedPatterns.mockReturnValue(normalizedPatterns);
+
+    const result = await analyzeTradeWithLevelsSystem(
+      sampleCreateRawTradeTimelineInput,
+      supportResistanceOptions,
+    );
+
+    expect(
+      mockedPipeline.createRawTradeTimelineWithLevelsSystem,
+    ).toHaveBeenCalledWith(
+      sampleCreateRawTradeTimelineInput,
+      supportResistanceOptions,
+    );
+    expect(result).toEqual({
+      rawTradeTimeline,
+      patternInput,
+      detectedPatterns,
+      normalizedPatterns,
+    });
+    expect(result).not.toHaveProperty("score");
+    expect(result).not.toHaveProperty("coaching");
   });
 });

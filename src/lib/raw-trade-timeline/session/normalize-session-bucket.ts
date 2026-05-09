@@ -7,6 +7,9 @@
 import type { SessionBucket } from "../types/session-context";
 
 const SESSION_BUCKET_ALIASES: Record<string, SessionBucket> = {
+  overnight: "overnight",
+  overnight_session: "overnight",
+  extended_overnight: "overnight",
   open: "market_open",
   market_open: "market_open",
   regular_open: "market_open",
@@ -23,7 +26,8 @@ const SESSION_BUCKET_ALIASES: Record<string, SessionBucket> = {
   closing: "close",
   afterhours: "after_hours",
   after_hours: "after_hours",
-  post_market: "after_hours",
+  postmarket: "post_market",
+  post_market: "post_market",
 };
 
 export function normalizeSessionBucketValue(value: string): SessionBucket | "" {

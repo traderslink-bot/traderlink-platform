@@ -1,0 +1,33 @@
+{
+  "symbol": "EFGH",
+  "tradeDirection": "short",
+  "sessionContext": {
+    "sessionDate": "2026-05-01",
+    "sessionBucket": "midday"
+  },
+  "provider": {
+    "preferredProvider": "stub",
+    "asOfTimestamp": "2026-05-01T17:00:00.000Z"
+  },
+  "tradeWindow": {
+    "timeframe": "1m",
+    "preTradeMinutes": 45,
+    "postTradeMinutes": 45
+  },
+  "executions": [
+    {
+      "symbol": "EFGH",
+      "timestamp": "2026-05-01T15:10:00.000Z",
+      "side": "sell",
+      "shares": 120,
+      "price": 20
+    },
+    {
+      "symbol": "EFGH",
+      "timestamp": "2026-05-01T15:45:00.000Z",
+      "side": "buy",
+      "shares": 120,
+      "price": 20.65
+    }
+  ]
+}

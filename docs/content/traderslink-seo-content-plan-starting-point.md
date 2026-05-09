@@ -33,6 +33,14 @@ Important positioning rule: do not make it sound like TradersLink is a live
 human trade-calling room. It is software, AI, market-data tooling, scanner
 logic, execution analysis, and trader review intelligence.
 
+Short-trading positioning rule: do not market Trader Intelligence as a
+short-seller coaching product yet. The app may defensively import and label
+short executions in the future, but the current beta content should focus on
+long-side day-trade review, broker execution imports, trade management
+feedback, mistake tracking, and performance insights. Avoid copy that says the
+coaching system is built for short sellers, borrow/locate review, squeeze-risk
+alerts, or short-specific execution coaching.
+
 ## Availability And Offer Copy
 
 Current offer:
@@ -59,6 +67,10 @@ Avoid:
 - "Trade calls"
 - "Financial advice"
 - "Fully automated trading"
+- "Short-seller coaching"
+- "Short squeeze alerts"
+- "Borrow or locate analysis"
+- "Short-specific trade signals"
 
 ## Primary SEO Goal
 
@@ -291,11 +303,21 @@ Avoid:
 - "The app tells you what to buy"
 - "Human live trading room"
 - "Financial advice"
+- "Short-seller coaching"
+- "Borrow/locate analysis"
+- "Short squeeze alerts"
 
 Good sentence pattern:
 
 > TradersLink helps active traders scan, organize, and review trade information
 > faster. It does not replace trade judgment or provide financial advice.
+
+Short-scope sentence pattern:
+
+> Trader Intelligence is currently focused on long-side execution review and
+> trade-management feedback. Short execution imports should be treated as
+> limited/defensive support until short-specific coaching is intentionally
+> added later.
 
 ## Internal Linking Map
 

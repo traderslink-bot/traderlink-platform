@@ -22,8 +22,14 @@
 
 import {
   createRawTradeTimeline,
+  createRawTradeTimelineWithLevelsSystem,
   type CreateRawTradeTimelineArgs,
 } from "./raw-trade-timeline/builders/create-raw-trade-timeline";
+import {
+  createRawTradeTimelineWithLevelsSystemCandles,
+  type CreateRawTradeTimelineWithLevelsSystemCandlesArgs,
+} from "./raw-trade-timeline/builders/create-raw-trade-timeline-with-levels-system-candles";
+import type { BuildLevelsSystemSupportResistanceContextOptions } from "./support-resistance/build-support-resistance-context";
 import type { RawTradeTimelineBuildResult } from "./raw-trade-timeline/types/raw-trade-timeline-build-result";
 import { buildPatternInput } from "./pattern-input/builders/build-pattern-input";
 import type { PatternInput } from "./pattern-input/types/pattern-input";
@@ -72,6 +78,52 @@ export function analyzeTrade(
   };
 }
 
+export async function analyzeTradeWithLevelsSystem(
+  args: CreateRawTradeTimelineArgs,
+  supportResistanceOptions?: BuildLevelsSystemSupportResistanceContextOptions,
+): Promise<TradeAnalysisEngineResult> {
+  // Preferred support/resistance path for new integration work. The legacy
+  // analyzeTrade(...) path remains sync so existing callers can migrate
+  // deliberately instead of inheriting provider/fetch behavior by surprise.
+  const rawTradeTimeline = await createRawTradeTimelineWithLevelsSystem(
+    args,
+    supportResistanceOptions,
+  );
+  const patternInput = buildPatternInput(rawTradeTimeline);
+  const detectedPatterns = detectPatterns(patternInput);
+  const normalizedPatterns = normalizeDetectedPatterns(detectedPatterns);
+
+  return {
+    rawTradeTimeline,
+    patternInput,
+    detectedPatterns,
+    normalizedPatterns,
+  };
+}
+
+export async function analyzeTradeWithLevelsSystemCandles(
+  args: CreateRawTradeTimelineWithLevelsSystemCandlesArgs,
+): Promise<TradeAnalysisEngineResult> {
+  // This is the future path for trade review requests where this app should
+  // not fetch or own chart candles. levels-system supplies the trade-window
+  // candles and the shared structural context, then this engine keeps the
+  // existing Layer 1 -> Layer 3 boundary intact.
+  const rawTradeTimeline =
+    await createRawTradeTimelineWithLevelsSystemCandles(args);
+  const patternInput = buildPatternInput(rawTradeTimeline);
+  const detectedPatterns = detectPatterns(patternInput);
+  const normalizedPatterns = normalizeDetectedPatterns(detectedPatterns);
+
+  return {
+    rawTradeTimeline,
+    patternInput,
+    detectedPatterns,
+    normalizedPatterns,
+  };
+}
+
 export type {
   CreateRawTradeTimelineArgs as TradeAnalysisEngineArgs,
+  CreateRawTradeTimelineWithLevelsSystemCandlesArgs as TradeAnalysisEngineLevelsSystemCandleArgs,
+  BuildLevelsSystemSupportResistanceContextOptions as LevelsSystemSupportResistanceOptions,
 };

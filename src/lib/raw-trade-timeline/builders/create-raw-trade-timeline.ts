@@ -28,7 +28,10 @@ import {
   type NormalizeCandleInput,
 } from "../normalizers/normalize-candle";
 import { normalizeRequiredSessionBucketValue } from "../session/normalize-session-bucket";
-import { buildSupportResistanceContext } from "../../support-resistance/build-support-resistance-context";
+import {
+  buildLevelsSystemSupportResistanceContext,
+  type BuildLevelsSystemSupportResistanceContextOptions,
+} from "../../support-resistance/build-support-resistance-context";
 import {
   normalizeExecutions,
   type NormalizeExecutionInput,
@@ -153,13 +156,14 @@ export function createRawTradeTimeline(
     tradeCandles: result.timeline.tradeCandles,
     tradeDirection: result.timeline.tradeDirection,
   });
-  const supportResistanceContext = buildSupportResistanceContext({
-    timeline: result.timeline,
-  });
-
   // 2026-04-12 08:18 PM America/Toronto
   // Build higher-value raw relationship signals after the core timeline and
   // first-pass derived signals are available.
+  //
+  // 2026-05-04:
+  // Support/resistance, VWAP, EMA, and shared candle-structure context are not
+  // built locally in this app. They are attached only by the explicit
+  // levels-system wrappers below.
   const baseBuildResult: RawTradeTimelineBuildResult = {
     ...result,
     executionDerivedSignals,
@@ -171,15 +175,6 @@ export function createRawTradeTimeline(
     readdOutcomeSignals,
     profitProtectionDerivedSignals,
     partialExitOutcomeSignals,
-    structuralContextWindow: supportResistanceContext.structuralContextWindow,
-    referenceLevels: supportResistanceContext.referenceLevels,
-    dynamicLevels: supportResistanceContext.dynamicLevels,
-    supportLevels: supportResistanceContext.supportLevels,
-    resistanceLevels: supportResistanceContext.resistanceLevels,
-    gapStructure: supportResistanceContext.gapStructure,
-    executionLevelRelations: supportResistanceContext.executionLevelRelations,
-    hadInsufficientCandleDataForStructure:
-      supportResistanceContext.hadInsufficientCandleDataForStructure,
   };
 
   const postExitDerivedSignals = buildPostExitDerivedSignals(baseBuildResult);
@@ -220,5 +215,40 @@ export function createRawTradeTimeline(
     reductionContextDerivedSignals,
     tradeLifecycleMilestoneSignals,
     dangerWindowDerivedSignals,
+  };
+}
+
+export async function createRawTradeTimelineWithLevelsSystem(
+  args: CreateRawTradeTimelineArgs,
+  supportResistanceOptions?: BuildLevelsSystemSupportResistanceContextOptions,
+): Promise<RawTradeTimelineBuildResult> {
+  const result = createRawTradeTimeline(args);
+  const supportResistanceContext =
+    await buildLevelsSystemSupportResistanceContext({
+      timeline: result.timeline,
+      ...supportResistanceOptions,
+    });
+  const sharedWarnings = supportResistanceContext.sharedEngineDiagnostics.map(
+    (diagnostic) =>
+      `levels-system ${diagnostic.severity}: ${diagnostic.message}`,
+  );
+
+  return {
+    ...result,
+    structuralContextWindow: supportResistanceContext.structuralContextWindow,
+    referenceLevels: supportResistanceContext.referenceLevels,
+    dynamicLevels: supportResistanceContext.dynamicLevels,
+    supportLevels: supportResistanceContext.supportLevels,
+    resistanceLevels: supportResistanceContext.resistanceLevels,
+    gapStructure: supportResistanceContext.gapStructure,
+    executionLevelRelations: supportResistanceContext.executionLevelRelations,
+    experimentalMarketStructure:
+      supportResistanceContext.experimentalMarketStructure,
+    hadInsufficientCandleDataForStructure:
+      supportResistanceContext.hadInsufficientCandleDataForStructure,
+    warnings:
+      result.warnings || sharedWarnings.length > 0
+        ? [...(result.warnings ?? []), ...sharedWarnings]
+        : undefined,
   };
 }

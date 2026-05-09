@@ -8,7 +8,7 @@
 import type { NormalizeExecutionInput } from "../../raw-trade-timeline/normalizers/normalize-execution";
 import type { ProviderExecution } from "../types/provider-execution";
 
-export interface ManualExecutionRow extends ProviderExecution {}
+export type ManualExecutionRow = ProviderExecution;
 
 export interface MapManualExecutionToNormalizeExecutionInputArgs {
   row: ManualExecutionRow;

@@ -15,10 +15,7 @@
 //
 
 import type { RawTradeTimelineBuildResult } from "../../raw-trade-timeline/types/raw-trade-timeline-build-result";
-import {
-  createPatternInputFromCore,
-  type PatternInput,
-} from "../types/pattern-input";
+import type { PatternInput } from "../types/pattern-input";
 
 function round(value: number, decimals = 6): number {
   return Number(value.toFixed(decimals));
@@ -33,6 +30,12 @@ function calculateDistanceFromLevelPct(
   }
 
   return round(Math.abs(price - level) / price);
+}
+
+function levelsSystemPctToPatternRatio(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value)
+    ? round(Math.abs(value) / 100)
+    : null;
 }
 
 function getSecondsBetweenTimestamps(
@@ -354,6 +357,12 @@ export function buildPatternInput(
 
   const executions = timeline.executions;
   const firstExecutionLevelRelation = result.executionLevelRelations?.[0] ?? null;
+  const firstEntryNearestSupport =
+    firstExecutionLevelRelation?.nearestSupportBelow ?? null;
+  const firstEntryNearestResistance =
+    firstExecutionLevelRelation?.nearestResistanceAbove ??
+    firstExecutionLevelRelation?.nearestResistanceBelow ??
+    null;
   const finalExecutionLevelRelation =
     result.executionLevelRelations?.[result.executionLevelRelations.length - 1] ??
     null;
@@ -822,8 +831,37 @@ export function buildPatternInput(
   // ===== ENTRY CONTEXT =====
   const firstEntryPrice = tradeDerivedSignals.firstExecutionPrice;
   const finalExitPrice = tradeDerivedSignals.lastExecutionPrice;
-  const peakPriceDuringTrade = tradeDerivedSignals.peakPriceDuringTrade;
-  const worstPriceDuringTrade = tradeDerivedSignals.worstPriceDuringTrade;
+  const levelsSystemTradeWindowFacts = result.levelsSystemTradeWindowFacts;
+  const levelsSystemFavorablePriceDuringTrade =
+    timeline.tradeDirection === "short"
+      ? levelsSystemTradeWindowFacts?.lowestLowDuringTrade?.price
+      : levelsSystemTradeWindowFacts?.highestHighDuringTrade?.price;
+  const levelsSystemAdversePriceDuringTrade =
+    timeline.tradeDirection === "short"
+      ? levelsSystemTradeWindowFacts?.highestHighDuringTrade?.price
+      : levelsSystemTradeWindowFacts?.lowestLowDuringTrade?.price;
+  const peakPriceDuringTrade =
+    levelsSystemFavorablePriceDuringTrade ??
+    tradeDerivedSignals.peakPriceDuringTrade;
+  const worstPriceDuringTrade =
+    levelsSystemAdversePriceDuringTrade ??
+    tradeDerivedSignals.worstPriceDuringTrade;
+  const tradeMfePct =
+    levelsSystemPctToPatternRatio(
+      levelsSystemTradeWindowFacts?.maxFavorableMovePct,
+    ) ?? tradeDerivedSignals.tradeMfePct;
+  const tradeMaePct =
+    levelsSystemPctToPatternRatio(
+      levelsSystemTradeWindowFacts?.maxAdverseMovePct,
+    ) ?? tradeDerivedSignals.tradeMaePct;
+  const tradeMfe =
+    peakPriceDuringTrade !== null
+      ? round(Math.abs(peakPriceDuringTrade - firstEntryPrice))
+      : tradeDerivedSignals.tradeMfe;
+  const tradeMae =
+    worstPriceDuringTrade !== null
+      ? round(Math.abs(worstPriceDuringTrade - firstEntryPrice))
+      : tradeDerivedSignals.tradeMae;
 
   const firstEntryPricePositionInTradeRangePct =
     calculatePricePositionInTradeRangePct({
@@ -865,9 +903,9 @@ export function buildPatternInput(
 
   const firstEntryCapturedPercentOfTradeMfe =
     firstEntryToPeakMovePct !== null &&
-    tradeDerivedSignals.tradeMfePct !== null &&
-    tradeDerivedSignals.tradeMfePct > 0
-      ? round(firstEntryToPeakMovePct / tradeDerivedSignals.tradeMfePct)
+    tradeMfePct !== null &&
+    tradeMfePct > 0
+      ? round(firstEntryToPeakMovePct / tradeMfePct)
       : null;
 
   const firstEntryWasNearTradeLow =
@@ -887,16 +925,16 @@ export function buildPatternInput(
 
   const realizedCapturePercentOfTradeMfe =
     realizedReturnPct !== null &&
-    tradeDerivedSignals.tradeMfePct !== null &&
-    tradeDerivedSignals.tradeMfePct > 0
-      ? round(realizedReturnPct / tradeDerivedSignals.tradeMfePct)
+    tradeMfePct !== null &&
+    tradeMfePct > 0
+      ? round(realizedReturnPct / tradeMfePct)
       : null;
 
   const favorableExcursionLeftOnTablePct =
-    tradeDerivedSignals.tradeMfePct !== null &&
+    tradeMfePct !== null &&
     realizedReturnPct !== null &&
-    tradeDerivedSignals.tradeMfePct > 0
-      ? round(tradeDerivedSignals.tradeMfePct - realizedReturnPct)
+    tradeMfePct > 0
+      ? round(tradeMfePct - realizedReturnPct)
       : null;
 
   const exitPricePositionInTradeRangePct =
@@ -936,7 +974,7 @@ export function buildPatternInput(
     tradeLifecycleMilestoneSignals?.timestampOfPeakOpenProfit ?? null,
   );
 
-  return createPatternInputFromCore({
+  return {
     symbol: timeline.symbol,
     tradeDirection: timeline.tradeDirection,
     sessionBucket: timeline.sessionContext.sessionBucket,
@@ -959,10 +997,10 @@ export function buildPatternInput(
       finalPositionSize,
       entryPrice: firstEntryPrice,
       exitPrice: finalExitPrice,
-      tradeMfe: tradeDerivedSignals.tradeMfe,
-      tradeMae: tradeDerivedSignals.tradeMae,
-      tradeMfePct: tradeDerivedSignals.tradeMfePct,
-      tradeMaePct: tradeDerivedSignals.tradeMaePct,
+      tradeMfe,
+      tradeMae,
+      tradeMfePct,
+      tradeMaePct,
       peakPriceDuringTrade,
       worstPriceDuringTrade,
       maxExecutionMfePct,
@@ -1100,11 +1138,27 @@ export function buildPatternInput(
     },
     supportResistanceContext: {
       firstEntryNearestSupportBelowPrice:
-        firstExecutionLevelRelation?.nearestSupportBelow?.price ?? null,
+        firstEntryNearestSupport?.price ?? null,
       firstEntryNearestResistanceBelowPrice:
         firstExecutionLevelRelation?.nearestResistanceBelow?.price ?? null,
       firstEntryNearestResistanceAbovePrice:
         firstExecutionLevelRelation?.nearestResistanceAbove?.price ?? null,
+      firstEntryNearestSupportStrengthBucket:
+        firstEntryNearestSupport?.strengthBucket ?? null,
+      firstEntryNearestResistanceStrengthBucket:
+        firstEntryNearestResistance?.strengthBucket ?? null,
+      firstEntryNearestSupportSourceStrengthLabel:
+        firstEntryNearestSupport?.sourceStrengthLabel ?? null,
+      firstEntryNearestResistanceSourceStrengthLabel:
+        firstEntryNearestResistance?.sourceStrengthLabel ?? null,
+      firstEntryNearestSupportReactionStrength:
+        firstEntryNearestSupport?.reactionStrength ?? null,
+      firstEntryNearestResistanceReactionStrength:
+        firstEntryNearestResistance?.reactionStrength ?? null,
+      firstEntryNearestSupportScore:
+        firstEntryNearestSupport?.score ?? null,
+      firstEntryNearestResistanceScore:
+        firstEntryNearestResistance?.score ?? null,
       firstEntryDistanceToNearestSupportPct:
         firstExecutionLevelRelation?.distanceToNearestSupportPct ?? null,
       firstEntryDistanceAboveNearestResistanceBelowPct:
@@ -1126,26 +1180,11 @@ export function buildPatternInput(
         firstExecutionLevelRelation?.occurredInOpenAir ?? false,
       firstEntryNearestReferenceLevelLabel:
         firstExecutionLevelRelation?.nearestReferenceLevelLabel ?? null,
-      firstEntryWasAboveVwap:
-        result.dynamicLevels?.vwap !== null &&
-        result.dynamicLevels?.vwap !== undefined &&
-        firstEntryPrice > result.dynamicLevels.vwap,
-      firstEntryWasBelowVwap:
-        result.dynamicLevels?.vwap !== null &&
-        result.dynamicLevels?.vwap !== undefined &&
-        firstEntryPrice < result.dynamicLevels.vwap,
-      firstEntryDistanceFromVwapPct: calculateDistanceFromLevelPct(
-        firstEntryPrice,
-        result.dynamicLevels?.vwap,
-      ),
-      firstEntryDistanceFromEma9Pct: calculateDistanceFromLevelPct(
-        firstEntryPrice,
-        result.dynamicLevels?.ema9,
-      ),
-      firstEntryDistanceFromEma20Pct: calculateDistanceFromLevelPct(
-        firstEntryPrice,
-        result.dynamicLevels?.ema20,
-      ),
+      firstEntryWasAboveVwap: false,
+      firstEntryWasBelowVwap: false,
+      firstEntryDistanceFromVwapPct: null,
+      firstEntryDistanceFromEma9Pct: null,
+      firstEntryDistanceFromEma20Pct: null,
       firstEntryHasNearbyStructureOnBothSides:
         firstExecutionLevelRelation?.hasNearbyStructureOnBothSides ?? false,
       firstEntryDistanceBetweenNearestSupportAndResistancePct:
@@ -1208,5 +1247,5 @@ export function buildPatternInput(
         dangerWindowDerivedSignals?.secondsFromPeakOpenProfitToFirstReduction ??
         null,
     },
-  });
+  };
 }

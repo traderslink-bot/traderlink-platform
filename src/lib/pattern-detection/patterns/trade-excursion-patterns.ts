@@ -25,7 +25,7 @@ export const HIGH_MFE_TRADE: PatternDefinition = {
 
   evaluate: (input) => {
     const threshold = THRESHOLDS.TRADE_EXCURSION.HIGH_MFE_MIN_PCT;
-    const value = input.tradeMfePct ?? 0;
+    const value = input.tradeStructure.tradeMfePct ?? 0;
 
     return {
       matched: value >= threshold,
@@ -48,7 +48,7 @@ export const HIGH_MAE_TRADE: PatternDefinition = {
 
   evaluate: (input) => {
     const threshold = THRESHOLDS.TRADE_EXCURSION.HIGH_MAE_MIN_PCT;
-    const value = input.tradeMaePct ?? 0;
+    const value = input.tradeStructure.tradeMaePct ?? 0;
 
     return {
       matched: value >= threshold,
@@ -66,3 +66,5 @@ export const TRADE_EXCURSION_PATTERNS: PatternDefinition[] = [
   HIGH_MFE_TRADE,
   HIGH_MAE_TRADE,
 ];
+
+

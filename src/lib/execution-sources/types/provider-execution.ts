@@ -16,6 +16,10 @@ export interface ProviderExecution {
   executionIndex?: number | string | null;
   orderId?: string | null;
   brokerExecutionId?: string | null;
+  commission?: number | string | null;
+  fees?: number | string | null;
+  netAmount?: number | string | null;
+  currency?: string | null;
   notes?: string | null;
   source?: string | null;
 }

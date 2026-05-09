@@ -42,7 +42,7 @@ export const STRUCTURED_POSITION_BUILDING: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const increases = input.totalPositionIncreaseCount;
+    const increases = input.tradeStructure.totalPositionIncreaseCount;
 
     const minIncreases =
       THRESHOLDS.SCALING_QUALITY.STRUCTURED_MIN_INCREASES;
@@ -77,8 +77,8 @@ export const BALANCED_POSITION_MANAGEMENT: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const increases = input.totalPositionIncreaseCount;
-    const decreases = input.totalPositionDecreaseCount;
+    const increases = input.tradeStructure.totalPositionIncreaseCount;
+    const decreases = input.tradeStructure.totalPositionDecreaseCount;
 
     const minIncreases =
       THRESHOLDS.SCALING_QUALITY.BALANCED_MIN_INCREASES;
@@ -119,8 +119,8 @@ export const ONE_SIDED_AGGRESSIVE_BUILDING: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const increases = input.totalPositionIncreaseCount;
-    const decreases = input.totalPositionDecreaseCount;
+    const increases = input.tradeStructure.totalPositionIncreaseCount;
+    const decreases = input.tradeStructure.totalPositionDecreaseCount;
 
     const minIncreases =
       THRESHOLDS.SCALING_QUALITY.ONE_SIDED_MIN_INCREASES;
@@ -161,8 +161,8 @@ export const UNDERUTILIZED_POSITION_BUILDING: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const increases = input.totalPositionIncreaseCount;
-    const mfe = input.tradeMfePct;
+    const increases = input.tradeStructure.totalPositionIncreaseCount;
+    const mfe = input.tradeStructure.tradeMfePct;
 
     const maxIncreases =
       THRESHOLDS.SCALING_QUALITY.UNDERUTILIZED_MAX_INCREASES;
@@ -196,12 +196,12 @@ export const UNDERUTILIZED_WINNER_WITH_CONSTRUCTIVE_EXIT: PatternDefinition = {
   structuralLevel: "storyline_composite",
 
   evaluate: (input) => {
-    const increases = input.totalPositionIncreaseCount;
-    const mfe = input.tradeMfePct;
-    const postExitCandleCount = input.postExitCandleCount;
-    const favorablePct = input.maxFavorableMovePctAfterExit;
-    const adversePct = input.maxAdverseMovePctAfterExit;
-    const netEndPct = input.netMovePctAtEndOfPostExitWindow;
+    const increases = input.tradeStructure.totalPositionIncreaseCount;
+    const mfe = input.tradeStructure.tradeMfePct;
+    const postExitCandleCount = input.exitContext.postExitCandleCount;
+    const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+    const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+    const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
 
     const maxIncreases =
       THRESHOLDS.SCALING_QUALITY.UNDERUTILIZED_MAX_INCREASES;
@@ -218,7 +218,7 @@ export const UNDERUTILIZED_WINNER_WITH_CONSTRUCTIVE_EXIT: PatternDefinition = {
       increases <= maxIncreases &&
       mfe !== null &&
       mfe >= minMfePct &&
-      input.closedToFlat &&
+      input.tradeStructure.closedToFlat &&
       postExitCandleCount > 0 &&
       adversePct !== null &&
       adversePct >= minAdversePct &&
@@ -231,7 +231,7 @@ export const UNDERUTILIZED_WINNER_WITH_CONSTRUCTIVE_EXIT: PatternDefinition = {
       evidence: {
         totalPositionIncreaseCount: increases,
         tradeMfePct: mfe,
-        closedToFlat: input.closedToFlat,
+        closedToFlat: input.tradeStructure.closedToFlat,
         postExitCandleCount,
         maxAdverseMovePctAfterExit: adversePct,
         maxFavorableMovePctAfterExit: favorablePct,
@@ -256,12 +256,12 @@ export const RECOVERY_TO_UNDERUTILIZED_WINNER_WITH_CONSTRUCTIVE_EXIT: PatternDef
     structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const increases = input.totalPositionIncreaseCount;
-      const mfe = input.tradeMfePct;
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
+      const increases = input.tradeStructure.totalPositionIncreaseCount;
+      const mfe = input.tradeStructure.tradeMfePct;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
 
       const maxIncreases =
         THRESHOLDS.SCALING_QUALITY.UNDERUTILIZED_MAX_INCREASES;
@@ -280,17 +280,17 @@ export const RECOVERY_TO_UNDERUTILIZED_WINNER_WITH_CONSTRUCTIVE_EXIT: PatternDef
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
         increases <= maxIncreases &&
         mfe !== null &&
         mfe >= minMfePct &&
-        input.closedToFlat &&
+        input.tradeStructure.closedToFlat &&
         postExitCandleCount > 0 &&
         adversePct !== null &&
         adversePct >= minAdversePct &&
@@ -302,14 +302,14 @@ export const RECOVERY_TO_UNDERUTILIZED_WINNER_WITH_CONSTRUCTIVE_EXIT: PatternDef
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           totalPositionIncreaseCount: increases,
           tradeMfePct: mfe,
-          closedToFlat: input.closedToFlat,
+          closedToFlat: input.tradeStructure.closedToFlat,
           postExitCandleCount,
           maxAdverseMovePctAfterExit: adversePct,
           maxFavorableMovePctAfterExit: favorablePct,
@@ -336,12 +336,12 @@ export const UNDERUTILIZED_WINNER_WITH_TIMELY_PROFIT_PROTECTION_AND_CONSTRUCTIVE
     structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const increases = input.totalPositionIncreaseCount;
-      const mfe = input.tradeMfePct;
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
+      const increases = input.tradeStructure.totalPositionIncreaseCount;
+      const mfe = input.tradeStructure.tradeMfePct;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
 
       const maxIncreases =
         THRESHOLDS.SCALING_QUALITY.UNDERUTILIZED_MAX_INCREASES;
@@ -364,14 +364,14 @@ export const UNDERUTILIZED_WINNER_WITH_TIMELY_PROFIT_PROTECTION_AND_CONSTRUCTIVE
         increases <= maxIncreases &&
         mfe !== null &&
         mfe >= minMfePct &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
         postExitCandleCount > 0 &&
         adversePct !== null &&
         adversePct >= minAdversePct &&
@@ -385,14 +385,14 @@ export const UNDERUTILIZED_WINNER_WITH_TIMELY_PROFIT_PROTECTION_AND_CONSTRUCTIVE
           totalPositionIncreaseCount: increases,
           tradeMfePct: mfe,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
           postExitCandleCount,
           maxAdverseMovePctAfterExit: adversePct,
           maxFavorableMovePctAfterExit: favorablePct,
@@ -419,12 +419,12 @@ export const UNDERUTILIZED_WINNER_WITH_PREMATURE_FINAL_EXIT: PatternDefinition =
     structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const increases = input.totalPositionIncreaseCount;
-      const mfe = input.tradeMfePct;
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
+      const increases = input.tradeStructure.totalPositionIncreaseCount;
+      const mfe = input.tradeStructure.tradeMfePct;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
 
       const maxIncreases =
         THRESHOLDS.SCALING_QUALITY.UNDERUTILIZED_MAX_INCREASES;
@@ -443,9 +443,9 @@ export const UNDERUTILIZED_WINNER_WITH_PREMATURE_FINAL_EXIT: PatternDefinition =
         increases <= maxIncreases &&
         mfe !== null &&
         mfe >= minMfePct &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
         postExitCandleCount > 0 &&
         favorablePct !== null &&
         favorablePct >= minFavorablePct &&
@@ -459,8 +459,8 @@ export const UNDERUTILIZED_WINNER_WITH_PREMATURE_FINAL_EXIT: PatternDefinition =
           totalPositionIncreaseCount: increases,
           tradeMfePct: mfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
           postExitCandleCount,
           maxFavorableMovePctAfterExit: favorablePct,
           maxAdverseMovePctAfterExit: adversePct,
@@ -486,12 +486,12 @@ export const RECOVERY_TO_UNDERUTILIZED_WINNER_WITH_TIMELY_PROFIT_PROTECTION_AND_
     structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const increases = input.totalPositionIncreaseCount;
-      const mfe = input.tradeMfePct;
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
+      const increases = input.tradeStructure.totalPositionIncreaseCount;
+      const mfe = input.tradeStructure.tradeMfePct;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
 
       const maxIncreases =
         THRESHOLDS.SCALING_QUALITY.UNDERUTILIZED_MAX_INCREASES;
@@ -514,22 +514,22 @@ export const RECOVERY_TO_UNDERUTILIZED_WINNER_WITH_TIMELY_PROFIT_PROTECTION_AND_
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
         increases <= maxIncreases &&
         mfe !== null &&
         mfe >= minMfePct &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
         postExitCandleCount > 0 &&
         adversePct !== null &&
         adversePct >= minAdversePct &&
@@ -541,20 +541,20 @@ export const RECOVERY_TO_UNDERUTILIZED_WINNER_WITH_TIMELY_PROFIT_PROTECTION_AND_
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           totalPositionIncreaseCount: increases,
           tradeMfePct: mfe,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
           postExitCandleCount,
           maxAdverseMovePctAfterExit: adversePct,
           maxFavorableMovePctAfterExit: favorablePct,
@@ -582,12 +582,12 @@ export const RECOVERY_TO_UNDERUTILIZED_WINNER_WITH_PREMATURE_FINAL_EXIT: Pattern
     structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const increases = input.totalPositionIncreaseCount;
-      const mfe = input.tradeMfePct;
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
+      const increases = input.tradeStructure.totalPositionIncreaseCount;
+      const mfe = input.tradeStructure.tradeMfePct;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
 
       const maxIncreases =
         THRESHOLDS.SCALING_QUALITY.UNDERUTILIZED_MAX_INCREASES;
@@ -606,17 +606,17 @@ export const RECOVERY_TO_UNDERUTILIZED_WINNER_WITH_PREMATURE_FINAL_EXIT: Pattern
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
         increases <= maxIncreases &&
         mfe !== null &&
         mfe >= minMfePct &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
         postExitCandleCount > 0 &&
         favorablePct !== null &&
         favorablePct >= minFavorablePct &&
@@ -628,14 +628,14 @@ export const RECOVERY_TO_UNDERUTILIZED_WINNER_WITH_PREMATURE_FINAL_EXIT: Pattern
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           totalPositionIncreaseCount: increases,
           tradeMfePct: mfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
           postExitCandleCount,
           maxFavorableMovePctAfterExit: favorablePct,
           maxAdverseMovePctAfterExit: adversePct,
@@ -662,12 +662,12 @@ export const UNDERUTILIZED_WINNER_WITH_MISSED_FINAL_CONTINUATION: PatternDefinit
     structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const increases = input.totalPositionIncreaseCount;
-      const mfe = input.tradeMfePct;
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
+      const increases = input.tradeStructure.totalPositionIncreaseCount;
+      const mfe = input.tradeStructure.tradeMfePct;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
 
       const maxIncreases =
         THRESHOLDS.SCALING_QUALITY.UNDERUTILIZED_MAX_INCREASES;
@@ -684,7 +684,7 @@ export const UNDERUTILIZED_WINNER_WITH_MISSED_FINAL_CONTINUATION: PatternDefinit
         increases <= maxIncreases &&
         mfe !== null &&
         mfe >= minMfePct &&
-        input.closedToFlat &&
+        input.tradeStructure.closedToFlat &&
         postExitCandleCount > 0 &&
         favorablePct !== null &&
         favorablePct >= minFavorablePct &&
@@ -697,7 +697,7 @@ export const UNDERUTILIZED_WINNER_WITH_MISSED_FINAL_CONTINUATION: PatternDefinit
         evidence: {
           totalPositionIncreaseCount: increases,
           tradeMfePct: mfe,
-          closedToFlat: input.closedToFlat,
+          closedToFlat: input.tradeStructure.closedToFlat,
           postExitCandleCount,
           maxFavorableMovePctAfterExit: favorablePct,
           maxAdverseMovePctAfterExit: adversePct,
@@ -722,12 +722,12 @@ export const RECOVERY_TO_UNDERUTILIZED_WINNER_WITH_MISSED_FINAL_CONTINUATION: Pa
     structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const increases = input.totalPositionIncreaseCount;
-      const mfe = input.tradeMfePct;
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
+      const increases = input.tradeStructure.totalPositionIncreaseCount;
+      const mfe = input.tradeStructure.tradeMfePct;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
 
       const maxIncreases =
         THRESHOLDS.SCALING_QUALITY.UNDERUTILIZED_MAX_INCREASES;
@@ -744,15 +744,15 @@ export const RECOVERY_TO_UNDERUTILIZED_WINNER_WITH_MISSED_FINAL_CONTINUATION: Pa
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
         increases <= maxIncreases &&
         mfe !== null &&
         mfe >= minMfePct &&
-        input.closedToFlat &&
+        input.tradeStructure.closedToFlat &&
         postExitCandleCount > 0 &&
         favorablePct !== null &&
         favorablePct >= minFavorablePct &&
@@ -764,12 +764,12 @@ export const RECOVERY_TO_UNDERUTILIZED_WINNER_WITH_MISSED_FINAL_CONTINUATION: Pa
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           totalPositionIncreaseCount: increases,
           tradeMfePct: mfe,
-          closedToFlat: input.closedToFlat,
+          closedToFlat: input.tradeStructure.closedToFlat,
           postExitCandleCount,
           maxFavorableMovePctAfterExit: favorablePct,
           maxAdverseMovePctAfterExit: adversePct,
@@ -799,10 +799,10 @@ export const READD_AFTER_REDUCTION: PatternDefinition = {
 
   evaluate: (input) => {
     return {
-      matched: input.hadReaddAfterReduction,
+      matched: input.scalingContext.hadReaddAfterReduction,
       evidence: {
-        hadReaddAfterReduction: input.hadReaddAfterReduction,
-        readdAfterReductionCount: input.readdAfterReductionCount,
+        hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+        readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
       },
       thresholdsUsed: {
         minReaddAfterReductionCount: 1,
@@ -823,9 +823,9 @@ export const ADDING_ABOVE_PRIOR_BASIS: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const addCount = input.addCountAfterInitialEntry;
-    const addAboveBasisCount = input.addAbovePreviousAverageEntryCount;
-    const averageAddPct = input.averageAddPriceVsPreviousAverageEntryPct;
+    const addCount = input.scalingContext.addCountAfterInitialEntry;
+    const addAboveBasisCount = input.scalingContext.addAbovePreviousAverageEntryCount;
+    const averageAddPct = input.scalingContext.averageAddPriceVsPreviousAverageEntryPct;
 
     const minAverageAddPct =
       THRESHOLDS.SCALING_QUALITY.ADD_ABOVE_BASIS_MIN_AVERAGE_PCT;
@@ -862,11 +862,11 @@ export const ADD_INTO_STRENGTH: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const addCount = input.addCountAfterInitialEntry;
-    const addAboveBasisCount = input.addAbovePreviousAverageEntryCount;
-    const averageAddPct = input.averageAddPriceVsPreviousAverageEntryPct;
+    const addCount = input.scalingContext.addCountAfterInitialEntry;
+    const addAboveBasisCount = input.scalingContext.addAbovePreviousAverageEntryCount;
+    const averageAddPct = input.scalingContext.averageAddPriceVsPreviousAverageEntryPct;
     const averageAddRangePosition =
-      input.averageAddPricePositionInRecentRangePct;
+      input.scalingContext.averageAddPricePositionInRecentRangePct;
 
     const minRangePosition =
       THRESHOLDS.SCALING_QUALITY.ADD_INTO_STRENGTH_MIN_RANGE_POSITION;
@@ -909,11 +909,11 @@ export const ADD_INTO_WEAKNESS: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const addCount = input.addCountAfterInitialEntry;
-    const addBelowBasisCount = input.addBelowPreviousAverageEntryCount;
-    const averageAddPct = input.averageAddPriceVsPreviousAverageEntryPct;
+    const addCount = input.scalingContext.addCountAfterInitialEntry;
+    const addBelowBasisCount = input.scalingContext.addBelowPreviousAverageEntryCount;
+    const averageAddPct = input.scalingContext.averageAddPriceVsPreviousAverageEntryPct;
     const averageAddRangePosition =
-      input.averageAddPricePositionInRecentRangePct;
+      input.scalingContext.averageAddPricePositionInRecentRangePct;
 
     const maxRangePosition =
       THRESHOLDS.SCALING_QUALITY.ADD_INTO_WEAKNESS_MAX_RANGE_POSITION;
@@ -956,9 +956,9 @@ export const ADD_AFTER_RECENT_RUN_UP: PatternDefinition = {
   structuralLevel: "atomic",
 
   evaluate: (input) => {
-    const addCount = input.addCountAfterInitialEntry;
-    const addsWithRecentRunUpCount = input.addsWithRecentRunUpCount;
-    const averageRunUp = input.averageAddRecentRunUpPctBeforeExecution;
+    const addCount = input.scalingContext.addCountAfterInitialEntry;
+    const addsWithRecentRunUpCount = input.scalingContext.addsWithRecentRunUpCount;
+    const averageRunUp = input.scalingContext.averageAddRecentRunUpPctBeforeExecution;
 
     const minRunUp =
       THRESHOLDS.SCALING_QUALITY.ADD_AFTER_RECENT_RUN_UP_MIN_PCT;
@@ -995,9 +995,9 @@ export const ADD_AFTER_RECENT_DROP: PatternDefinition = {
   structuralLevel: "atomic",
 
   evaluate: (input) => {
-    const addCount = input.addCountAfterInitialEntry;
-    const addsWithRecentDropCount = input.addsWithRecentDropCount;
-    const averageDrop = input.averageAddRecentDropPctBeforeExecution;
+    const addCount = input.scalingContext.addCountAfterInitialEntry;
+    const addsWithRecentDropCount = input.scalingContext.addsWithRecentDropCount;
+    const averageDrop = input.scalingContext.averageAddRecentDropPctBeforeExecution;
 
     const minDrop =
       THRESHOLDS.SCALING_QUALITY.ADD_AFTER_RECENT_DROP_MIN_PCT;
@@ -1034,9 +1034,9 @@ export const BALANCED_SCALING_WITH_PROFIT_PROTECTION: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const addCount = input.addCountAfterInitialEntry;
-    const reductionCount = input.totalPositionDecreaseCount;
-    const maxGivebackPct = input.maxGivebackFromPeakOpenProfitPct;
+    const addCount = input.scalingContext.addCountAfterInitialEntry;
+    const reductionCount = input.tradeStructure.totalPositionDecreaseCount;
+    const maxGivebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
 
     const maxAllowedGivebackPct =
       THRESHOLDS.SCALING_QUALITY.BALANCED_WITH_PROFIT_PROTECTION_MAX_GIVEBACK_PCT;
@@ -1085,42 +1085,42 @@ export const ADD_INTO_STRENGTH_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternDefinition =
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.addCountAfterInitialEntry > 0 &&
-        input.addAbovePreviousAverageEntryCount ===
-          input.addCountAfterInitialEntry &&
-        input.averageAddPriceVsPreviousAverageEntryPct !== null &&
-        input.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
-        input.averageAddPricePositionInRecentRangePct !== null &&
-        input.averageAddPricePositionInRecentRangePct >= minRangePosition &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.scalingContext.addAbovePreviousAverageEntryCount ===
+          input.scalingContext.addCountAfterInitialEntry &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct !== null &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct !== null &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct >= minRangePosition &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
           addAbovePreviousAverageEntryCount:
-            input.addAbovePreviousAverageEntryCount,
+            input.scalingContext.addAbovePreviousAverageEntryCount,
           averageAddPriceVsPreviousAverageEntryPct:
-            input.averageAddPriceVsPreviousAverageEntryPct,
+            input.scalingContext.averageAddPriceVsPreviousAverageEntryPct,
           averageAddPricePositionInRecentRangePct:
-            input.averageAddPricePositionInRecentRangePct,
+            input.scalingContext.averageAddPricePositionInRecentRangePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minRangePosition,
@@ -1160,51 +1160,51 @@ export const RECOVERY_WITH_ADD_INTO_STRENGTH_AND_CONSTRUCTIVE_FINAL_EXIT: Patter
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.addCountAfterInitialEntry > 0 &&
-        input.addAbovePreviousAverageEntryCount ===
-          input.addCountAfterInitialEntry &&
-        input.averageAddPriceVsPreviousAverageEntryPct !== null &&
-        input.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
-        input.averageAddPricePositionInRecentRangePct !== null &&
-        input.averageAddPricePositionInRecentRangePct >= minRangePosition &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.scalingContext.addAbovePreviousAverageEntryCount ===
+          input.scalingContext.addCountAfterInitialEntry &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct !== null &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct !== null &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct >= minRangePosition &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
           addAbovePreviousAverageEntryCount:
-            input.addAbovePreviousAverageEntryCount,
+            input.scalingContext.addAbovePreviousAverageEntryCount,
           averageAddPriceVsPreviousAverageEntryPct:
-            input.averageAddPriceVsPreviousAverageEntryPct,
+            input.scalingContext.averageAddPriceVsPreviousAverageEntryPct,
           averageAddPricePositionInRecentRangePct:
-            input.averageAddPricePositionInRecentRangePct,
+            input.scalingContext.averageAddPricePositionInRecentRangePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -1245,53 +1245,53 @@ export const ADD_INTO_STRENGTH_WITH_TIMELY_PROFIT_PROTECTION_AND_CONSTRUCTIVE_FI
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.addCountAfterInitialEntry > 0 &&
-        input.addAbovePreviousAverageEntryCount ===
-          input.addCountAfterInitialEntry &&
-        input.averageAddPriceVsPreviousAverageEntryPct !== null &&
-        input.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
-        input.averageAddPricePositionInRecentRangePct !== null &&
-        input.averageAddPricePositionInRecentRangePct >= minRangePosition &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.scalingContext.addAbovePreviousAverageEntryCount ===
+          input.scalingContext.addCountAfterInitialEntry &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct !== null &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct !== null &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct >= minRangePosition &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
           addAbovePreviousAverageEntryCount:
-            input.addAbovePreviousAverageEntryCount,
+            input.scalingContext.addAbovePreviousAverageEntryCount,
           averageAddPriceVsPreviousAverageEntryPct:
-            input.averageAddPriceVsPreviousAverageEntryPct,
+            input.scalingContext.averageAddPriceVsPreviousAverageEntryPct,
           averageAddPricePositionInRecentRangePct:
-            input.averageAddPricePositionInRecentRangePct,
+            input.scalingContext.averageAddPricePositionInRecentRangePct,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minRangePosition,
@@ -1328,42 +1328,42 @@ export const ADD_INTO_STRENGTH_WITH_PREMATURE_FINAL_EXIT: PatternDefinition =
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.addCountAfterInitialEntry > 0 &&
-        input.addAbovePreviousAverageEntryCount ===
-          input.addCountAfterInitialEntry &&
-        input.averageAddPriceVsPreviousAverageEntryPct !== null &&
-        input.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
-        input.averageAddPricePositionInRecentRangePct !== null &&
-        input.averageAddPricePositionInRecentRangePct >= minRangePosition &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.scalingContext.addAbovePreviousAverageEntryCount ===
+          input.scalingContext.addCountAfterInitialEntry &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct !== null &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct !== null &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct >= minRangePosition &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
           addAbovePreviousAverageEntryCount:
-            input.addAbovePreviousAverageEntryCount,
+            input.scalingContext.addAbovePreviousAverageEntryCount,
           averageAddPriceVsPreviousAverageEntryPct:
-            input.averageAddPriceVsPreviousAverageEntryPct,
+            input.scalingContext.averageAddPriceVsPreviousAverageEntryPct,
           averageAddPricePositionInRecentRangePct:
-            input.averageAddPricePositionInRecentRangePct,
+            input.scalingContext.averageAddPricePositionInRecentRangePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minRangePosition,
@@ -1406,62 +1406,62 @@ export const RECOVERY_WITH_ADD_INTO_STRENGTH_AND_TIMELY_PROFIT_PROTECTION_AND_CO
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.addCountAfterInitialEntry > 0 &&
-        input.addAbovePreviousAverageEntryCount ===
-          input.addCountAfterInitialEntry &&
-        input.averageAddPriceVsPreviousAverageEntryPct !== null &&
-        input.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
-        input.averageAddPricePositionInRecentRangePct !== null &&
-        input.averageAddPricePositionInRecentRangePct >= minRangePosition &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.scalingContext.addAbovePreviousAverageEntryCount ===
+          input.scalingContext.addCountAfterInitialEntry &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct !== null &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct !== null &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct >= minRangePosition &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
           addAbovePreviousAverageEntryCount:
-            input.addAbovePreviousAverageEntryCount,
+            input.scalingContext.addAbovePreviousAverageEntryCount,
           averageAddPriceVsPreviousAverageEntryPct:
-            input.averageAddPriceVsPreviousAverageEntryPct,
+            input.scalingContext.averageAddPriceVsPreviousAverageEntryPct,
           averageAddPricePositionInRecentRangePct:
-            input.averageAddPricePositionInRecentRangePct,
+            input.scalingContext.averageAddPricePositionInRecentRangePct,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -1502,51 +1502,51 @@ export const RECOVERY_WITH_ADD_INTO_STRENGTH_AND_PREMATURE_FINAL_EXIT: PatternDe
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.addCountAfterInitialEntry > 0 &&
-        input.addAbovePreviousAverageEntryCount ===
-          input.addCountAfterInitialEntry &&
-        input.averageAddPriceVsPreviousAverageEntryPct !== null &&
-        input.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
-        input.averageAddPricePositionInRecentRangePct !== null &&
-        input.averageAddPricePositionInRecentRangePct >= minRangePosition &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.scalingContext.addAbovePreviousAverageEntryCount ===
+          input.scalingContext.addCountAfterInitialEntry &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct !== null &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct !== null &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct >= minRangePosition &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
           addAbovePreviousAverageEntryCount:
-            input.addAbovePreviousAverageEntryCount,
+            input.scalingContext.addAbovePreviousAverageEntryCount,
           averageAddPriceVsPreviousAverageEntryPct:
-            input.averageAddPriceVsPreviousAverageEntryPct,
+            input.scalingContext.averageAddPriceVsPreviousAverageEntryPct,
           averageAddPricePositionInRecentRangePct:
-            input.averageAddPricePositionInRecentRangePct,
+            input.scalingContext.averageAddPricePositionInRecentRangePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -1581,38 +1581,38 @@ export const ADD_INTO_STRENGTH_WITH_MISSED_FINAL_CONTINUATION: PatternDefinition
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.addCountAfterInitialEntry > 0 &&
-        input.addAbovePreviousAverageEntryCount ===
-          input.addCountAfterInitialEntry &&
-        input.averageAddPriceVsPreviousAverageEntryPct !== null &&
-        input.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
-        input.averageAddPricePositionInRecentRangePct !== null &&
-        input.averageAddPricePositionInRecentRangePct >= minRangePosition &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.scalingContext.addAbovePreviousAverageEntryCount ===
+          input.scalingContext.addCountAfterInitialEntry &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct !== null &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct !== null &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct >= minRangePosition &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
           addAbovePreviousAverageEntryCount:
-            input.addAbovePreviousAverageEntryCount,
+            input.scalingContext.addAbovePreviousAverageEntryCount,
           averageAddPriceVsPreviousAverageEntryPct:
-            input.averageAddPriceVsPreviousAverageEntryPct,
+            input.scalingContext.averageAddPriceVsPreviousAverageEntryPct,
           averageAddPricePositionInRecentRangePct:
-            input.averageAddPricePositionInRecentRangePct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.scalingContext.averageAddPricePositionInRecentRangePct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minRangePosition,
@@ -1648,47 +1648,47 @@ export const RECOVERY_WITH_ADD_INTO_STRENGTH_AND_MISSED_FINAL_CONTINUATION: Patt
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.addCountAfterInitialEntry > 0 &&
-        input.addAbovePreviousAverageEntryCount ===
-          input.addCountAfterInitialEntry &&
-        input.averageAddPriceVsPreviousAverageEntryPct !== null &&
-        input.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
-        input.averageAddPricePositionInRecentRangePct !== null &&
-        input.averageAddPricePositionInRecentRangePct >= minRangePosition &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.scalingContext.addAbovePreviousAverageEntryCount ===
+          input.scalingContext.addCountAfterInitialEntry &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct !== null &&
+        input.scalingContext.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct !== null &&
+        input.scalingContext.averageAddPricePositionInRecentRangePct >= minRangePosition &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
           addAbovePreviousAverageEntryCount:
-            input.addAbovePreviousAverageEntryCount,
+            input.scalingContext.addAbovePreviousAverageEntryCount,
           averageAddPriceVsPreviousAverageEntryPct:
-            input.averageAddPriceVsPreviousAverageEntryPct,
+            input.scalingContext.averageAddPriceVsPreviousAverageEntryPct,
           averageAddPricePositionInRecentRangePct:
-            input.averageAddPricePositionInRecentRangePct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.scalingContext.averageAddPricePositionInRecentRangePct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -1717,27 +1717,27 @@ export const CONSTRUCTIVE_READD_AFTER_REDUCTION: PatternDefinition = {
       THRESHOLDS.SCALING_QUALITY.CONSTRUCTIVE_READD_MAX_GIVEBACK_PCT;
 
     const matched =
-      input.hadReaddAfterReduction &&
-      input.addAbovePreviousAverageEntryCount > 0 &&
-      input.averageAddPriceVsPreviousAverageEntryPct !== null &&
-      input.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
-      input.averageAddPricePositionInRecentRangePct !== null &&
-      input.averageAddPricePositionInRecentRangePct >= minRangePosition &&
-      input.maxGivebackFromPeakOpenProfitPct !== null &&
-      input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct;
+      input.scalingContext.hadReaddAfterReduction &&
+      input.scalingContext.addAbovePreviousAverageEntryCount > 0 &&
+      input.scalingContext.averageAddPriceVsPreviousAverageEntryPct !== null &&
+      input.scalingContext.averageAddPriceVsPreviousAverageEntryPct >= minAverageAddPct &&
+      input.scalingContext.averageAddPricePositionInRecentRangePct !== null &&
+      input.scalingContext.averageAddPricePositionInRecentRangePct >= minRangePosition &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct;
 
     return {
       matched,
       evidence: {
-        hadReaddAfterReduction: input.hadReaddAfterReduction,
+        hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
         addAbovePreviousAverageEntryCount:
-          input.addAbovePreviousAverageEntryCount,
+          input.scalingContext.addAbovePreviousAverageEntryCount,
         averageAddPriceVsPreviousAverageEntryPct:
-          input.averageAddPriceVsPreviousAverageEntryPct,
+          input.scalingContext.averageAddPriceVsPreviousAverageEntryPct,
         averageAddPricePositionInRecentRangePct:
-          input.averageAddPricePositionInRecentRangePct,
+          input.scalingContext.averageAddPricePositionInRecentRangePct,
         maxGivebackFromPeakOpenProfitPct:
-          input.maxGivebackFromPeakOpenProfitPct,
+          input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
       },
       thresholdsUsed: {
         minRangePosition,
@@ -1766,32 +1766,32 @@ export const BALANCED_MANAGEMENT_WITH_CONSTRUCTIVE_EXIT: PatternDefinition = {
         .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
     const matched =
-      input.addCountAfterInitialEntry > 0 &&
-      input.totalPositionDecreaseCount > 0 &&
-      input.maxGivebackFromPeakOpenProfitPct !== null &&
-      input.maxGivebackFromPeakOpenProfitPct <= maxAllowedGivebackPct &&
-      input.closedToFlat &&
-      input.postExitCandleCount > 0 &&
-      input.maxAdverseMovePctAfterExit !== null &&
-      input.maxAdverseMovePctAfterExit >= minAdversePct &&
-      input.netMovePctAtEndOfPostExitWindow !== null &&
-      input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-      input.maxAdverseMovePctAfterExit >
-        (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+      input.scalingContext.addCountAfterInitialEntry > 0 &&
+      input.tradeStructure.totalPositionDecreaseCount > 0 &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxAllowedGivebackPct &&
+      input.tradeStructure.closedToFlat &&
+      input.exitContext.postExitCandleCount > 0 &&
+      input.exitContext.maxAdverseMovePctAfterExit !== null &&
+      input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+      input.exitContext.maxAdverseMovePctAfterExit >
+        (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
     return {
       matched,
       evidence: {
-        addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-        totalPositionDecreaseCount: input.totalPositionDecreaseCount,
+        addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+        totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
         maxGivebackFromPeakOpenProfitPct:
-          input.maxGivebackFromPeakOpenProfitPct,
-        closedToFlat: input.closedToFlat,
-        postExitCandleCount: input.postExitCandleCount,
-        maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-        maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+          input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+        closedToFlat: input.tradeStructure.closedToFlat,
+        postExitCandleCount: input.exitContext.postExitCandleCount,
+        maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+        maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
         netMovePctAtEndOfPostExitWindow:
-          input.netMovePctAtEndOfPostExitWindow,
+          input.exitContext.netMovePctAtEndOfPostExitWindow,
       },
       thresholdsUsed: {
         maxAllowedGivebackPct,
@@ -1825,38 +1825,38 @@ export const RECOVERY_WITH_BALANCED_MANAGEMENT_AND_CONSTRUCTIVE_FINAL_EXIT: Patt
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.addCountAfterInitialEntry > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxAllowedGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxAllowedGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -1887,35 +1887,35 @@ export const BALANCED_MANAGEMENT_WITH_PREMATURE_FINAL_EXIT: PatternDefinition =
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.addCountAfterInitialEntry > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          realizedReturnPct: input.realizedReturnPct,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           maxGivebackPct,
@@ -1948,41 +1948,41 @@ export const RECOVERY_WITH_BALANCED_MANAGEMENT_AND_PREMATURE_FINAL_EXIT: Pattern
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.addCountAfterInitialEntry > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -2011,31 +2011,31 @@ export const BALANCED_MANAGEMENT_WITH_MISSED_FINAL_CONTINUATION: PatternDefiniti
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.addCountAfterInitialEntry > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          realizedReturnPct: input.realizedReturnPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minFavorablePct,
@@ -2065,37 +2065,37 @@ export const RECOVERY_WITH_BALANCED_MANAGEMENT_AND_MISSED_FINAL_CONTINUATION: Pa
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.addCountAfterInitialEntry > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          realizedReturnPct: input.realizedReturnPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -2123,34 +2123,34 @@ export const BALANCED_MANAGEMENT_WITH_FEARFUL_FINAL_EXIT: PatternDefinition = {
       THRESHOLDS.EXIT_QUALITY.MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
     const matched =
-      input.addCountAfterInitialEntry > 0 &&
-      input.totalPositionDecreaseCount > 0 &&
-      input.closedToFlat &&
-      input.exitWasNearTradeLow &&
-      input.realizedCapturePercentOfTradeMfe !== null &&
-      input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-      input.postExitCandleCount > 0 &&
-      input.maxFavorableMovePctAfterExit !== null &&
-      input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-      input.netMovePctAtEndOfPostExitWindow !== null &&
-      input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-      input.maxFavorableMovePctAfterExit >
-        (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+      input.scalingContext.addCountAfterInitialEntry > 0 &&
+      input.tradeStructure.totalPositionDecreaseCount > 0 &&
+      input.tradeStructure.closedToFlat &&
+      input.exitContext.exitWasNearTradeLow &&
+      input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+      input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+      input.exitContext.postExitCandleCount > 0 &&
+      input.exitContext.maxFavorableMovePctAfterExit !== null &&
+      input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+      input.exitContext.maxFavorableMovePctAfterExit >
+        (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
     return {
       matched,
       evidence: {
-        addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-        totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-        closedToFlat: input.closedToFlat,
-        exitWasNearTradeLow: input.exitWasNearTradeLow,
+        addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+        totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+        closedToFlat: input.tradeStructure.closedToFlat,
+        exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
         realizedCapturePercentOfTradeMfe:
-          input.realizedCapturePercentOfTradeMfe,
-        postExitCandleCount: input.postExitCandleCount,
-        maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-        maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+          input.exitContext.realizedCapturePercentOfTradeMfe,
+        postExitCandleCount: input.exitContext.postExitCandleCount,
+        maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+        maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
         netMovePctAtEndOfPostExitWindow:
-          input.netMovePctAtEndOfPostExitWindow,
+          input.exitContext.netMovePctAtEndOfPostExitWindow,
       },
       thresholdsUsed: {
         maxRealizedCapture,
@@ -2184,40 +2184,40 @@ export const RECOVERY_WITH_BALANCED_MANAGEMENT_AND_FEARFUL_FINAL_EXIT: PatternDe
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.addCountAfterInitialEntry > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.closedToFlat &&
-        input.exitWasNearTradeLow &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          closedToFlat: input.closedToFlat,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -2249,35 +2249,35 @@ export const BALANCED_MANAGEMENT_WITH_DEFENSIVE_FINAL_EXIT_AFTER_DETERIORATION: 
           .DEFENSIVE_EXIT_AFTER_DETERIORATION_MIN_GIVEBACK_PCT;
 
       const matched =
-        input.addCountAfterInitialEntry > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          realizedReturnPct: input.realizedReturnPct,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minAdversePct,
@@ -2311,41 +2311,41 @@ export const RECOVERY_WITH_BALANCED_MANAGEMENT_AND_DEFENSIVE_FINAL_EXIT_AFTER_DE
           .DEFENSIVE_EXIT_AFTER_DETERIORATION_MIN_GIVEBACK_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.addCountAfterInitialEntry > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -2382,42 +2382,42 @@ export const BALANCED_MANAGEMENT_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: Pat
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.addCountAfterInitialEntry > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.closedToFlat &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          closedToFlat: input.closedToFlat,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minAdversePct,
@@ -2455,42 +2455,42 @@ export const BALANCED_MANAGEMENT_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: Patt
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.addCountAfterInitialEntry > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.closedToFlat &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          closedToFlat: input.closedToFlat,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minFavorablePct,
@@ -2531,51 +2531,51 @@ export const RECOVERY_WITH_BALANCED_MANAGEMENT_AND_STOP_LIKE_FORCED_EXIT_AFTER_B
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.addCountAfterInitialEntry > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.closedToFlat &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          realizedReturnPct: input.realizedReturnPct,
-          closedToFlat: input.closedToFlat,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -2617,51 +2617,51 @@ export const RECOVERY_WITH_BALANCED_MANAGEMENT_AND_STOP_LIKE_FORCED_EXIT_BEFORE_
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.addCountAfterInitialEntry > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.closedToFlat &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.scalingContext.addCountAfterInitialEntry > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          realizedReturnPct: input.realizedReturnPct,
-          closedToFlat: input.closedToFlat,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -2697,39 +2697,39 @@ export const TRIM_INTO_STRENGTH_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternDefinition 
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadPartialExit &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.reductionsNearRecentHighCount > 0 &&
-        input.averageReductionPriceVsPreviousAverageEntryPct !== null &&
-        input.averageReductionPriceVsPreviousAverageEntryPct >=
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.reductionsNearRecentHighCount > 0 &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct !== null &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct >=
           minAverageReductionPct &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          hadPartialExit: input.hadPartialExit,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearRecentHighCount: input.reductionsNearRecentHighCount,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearRecentHighCount: input.exitContext.reductionsNearRecentHighCount,
           averageReductionPriceVsPreviousAverageEntryPct:
-            input.averageReductionPriceVsPreviousAverageEntryPct,
+            input.exitContext.averageReductionPriceVsPreviousAverageEntryPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minAverageReductionPct,
@@ -2762,39 +2762,39 @@ export const TRIM_INTO_STRENGTH_WITH_PREMATURE_FINAL_EXIT: PatternDefinition =
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadPartialExit &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.reductionsNearRecentHighCount > 0 &&
-        input.averageReductionPriceVsPreviousAverageEntryPct !== null &&
-        input.averageReductionPriceVsPreviousAverageEntryPct >=
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.reductionsNearRecentHighCount > 0 &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct !== null &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct >=
           minAverageReductionPct &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          hadPartialExit: input.hadPartialExit,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearRecentHighCount: input.reductionsNearRecentHighCount,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearRecentHighCount: input.exitContext.reductionsNearRecentHighCount,
           averageReductionPriceVsPreviousAverageEntryPct:
-            input.averageReductionPriceVsPreviousAverageEntryPct,
+            input.exitContext.averageReductionPriceVsPreviousAverageEntryPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minAverageReductionPct,
@@ -2829,39 +2829,39 @@ export const TIMELY_PROFIT_PROTECTION_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternDefin
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           maxGivebackPct,
@@ -2895,39 +2895,39 @@ export const TIMELY_PROFIT_PROTECTION_WITH_PREMATURE_FINAL_EXIT: PatternDefiniti
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           maxGivebackPct,
@@ -2962,42 +2962,42 @@ export const TIMELY_RISK_RESPONSE_WITH_DEFENSIVE_FINAL_EXIT_AFTER_DETERIORATION:
           .DEFENSIVE_EXIT_AFTER_DETERIORATION_MIN_GIVEBACK_PCT;
 
       const matched =
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           maxSecondsToFirstReduction,
@@ -3040,54 +3040,54 @@ export const TIMELY_RISK_RESPONSE_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: Pa
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minDrawdownFromPeakPctOfBasis &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <
           maxSecondsToFirstReduction &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minStopLikeDrawdownPctOfBasis &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
-          closedToFlat: input.closedToFlat,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minDrawdownFromPeakPctOfBasis,
@@ -3133,54 +3133,54 @@ export const TIMELY_RISK_RESPONSE_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: Pat
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minDrawdownFromPeakPctOfBasis &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <
           maxSecondsToFirstReduction &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minStopLikeDrawdownPctOfBasis &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
-          closedToFlat: input.closedToFlat,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minDrawdownFromPeakPctOfBasis,
@@ -3220,48 +3220,48 @@ export const RECOVERY_WITH_TRIM_INTO_STRENGTH_AND_CONSTRUCTIVE_FINAL_EXIT: Patte
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadPartialExit &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.reductionsNearRecentHighCount > 0 &&
-        input.averageReductionPriceVsPreviousAverageEntryPct !== null &&
-        input.averageReductionPriceVsPreviousAverageEntryPct >=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.reductionsNearRecentHighCount > 0 &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct !== null &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct >=
           minAverageReductionPct &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
-          hadPartialExit: input.hadPartialExit,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearRecentHighCount: input.reductionsNearRecentHighCount,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearRecentHighCount: input.exitContext.reductionsNearRecentHighCount,
           averageReductionPriceVsPreviousAverageEntryPct:
-            input.averageReductionPriceVsPreviousAverageEntryPct,
+            input.exitContext.averageReductionPriceVsPreviousAverageEntryPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -3298,48 +3298,48 @@ export const RECOVERY_WITH_TRIM_INTO_STRENGTH_AND_PREMATURE_FINAL_EXIT: PatternD
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadPartialExit &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.reductionsNearRecentHighCount > 0 &&
-        input.averageReductionPriceVsPreviousAverageEntryPct !== null &&
-        input.averageReductionPriceVsPreviousAverageEntryPct >=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.reductionsNearRecentHighCount > 0 &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct !== null &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct >=
           minAverageReductionPct &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
-          hadPartialExit: input.hadPartialExit,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearRecentHighCount: input.reductionsNearRecentHighCount,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearRecentHighCount: input.exitContext.reductionsNearRecentHighCount,
           averageReductionPriceVsPreviousAverageEntryPct:
-            input.averageReductionPriceVsPreviousAverageEntryPct,
+            input.exitContext.averageReductionPriceVsPreviousAverageEntryPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -3377,50 +3377,50 @@ export const TIMELY_TRIM_INTO_STRENGTH_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternDefi
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadPartialExit &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.reductionsNearRecentHighCount > 0 &&
-        input.averageReductionPriceVsPreviousAverageEntryPct !== null &&
-        input.averageReductionPriceVsPreviousAverageEntryPct >=
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.reductionsNearRecentHighCount > 0 &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct !== null &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct >=
           minAverageReductionPct &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          hadPartialExit: input.hadPartialExit,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearRecentHighCount: input.reductionsNearRecentHighCount,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearRecentHighCount: input.exitContext.reductionsNearRecentHighCount,
           averageReductionPriceVsPreviousAverageEntryPct:
-            input.averageReductionPriceVsPreviousAverageEntryPct,
+            input.exitContext.averageReductionPriceVsPreviousAverageEntryPct,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minAverageReductionPct,
@@ -3461,59 +3461,59 @@ export const RECOVERY_WITH_TIMELY_TRIM_INTO_STRENGTH_AND_CONSTRUCTIVE_FINAL_EXIT
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadPartialExit &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.reductionsNearRecentHighCount > 0 &&
-        input.averageReductionPriceVsPreviousAverageEntryPct !== null &&
-        input.averageReductionPriceVsPreviousAverageEntryPct >=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.reductionsNearRecentHighCount > 0 &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct !== null &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct >=
           minAverageReductionPct &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
-          hadPartialExit: input.hadPartialExit,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearRecentHighCount: input.reductionsNearRecentHighCount,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearRecentHighCount: input.exitContext.reductionsNearRecentHighCount,
           averageReductionPriceVsPreviousAverageEntryPct:
-            input.averageReductionPriceVsPreviousAverageEntryPct,
+            input.exitContext.averageReductionPriceVsPreviousAverageEntryPct,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -3553,48 +3553,48 @@ export const RECOVERY_WITH_TIMELY_PROFIT_PROTECTION_AND_CONSTRUCTIVE_FINAL_EXIT:
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -3632,48 +3632,48 @@ export const RECOVERY_WITH_TIMELY_PROFIT_PROTECTION_AND_PREMATURE_FINAL_EXIT: Pa
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -3712,48 +3712,48 @@ export const RECOVERY_WITH_TIMELY_RISK_RESPONSE_AND_DEFENSIVE_FINAL_EXIT_AFTER_D
           .DEFENSIVE_EXIT_AFTER_DETERIORATION_MIN_GIVEBACK_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -3800,63 +3800,63 @@ export const RECOVERY_WITH_TIMELY_RISK_RESPONSE_AND_STOP_LIKE_FORCED_EXIT_AFTER_
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minDrawdownFromPeakPctOfBasis &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <
           maxSecondsToFirstReduction &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minStopLikeDrawdownPctOfBasis &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
-          closedToFlat: input.closedToFlat,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -3906,63 +3906,63 @@ export const RECOVERY_WITH_TIMELY_RISK_RESPONSE_AND_STOP_LIKE_FORCED_EXIT_BEFORE
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minDrawdownFromPeakPctOfBasis &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <
           maxSecondsToFirstReduction &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minStopLikeDrawdownPctOfBasis &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
-          closedToFlat: input.closedToFlat,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -3996,32 +3996,32 @@ export const TRIM_READD_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternDefinition = {
         .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
     const matched =
-      input.hadPartialExit &&
-      input.hadReaddAfterReduction &&
-      input.closedToFlat &&
-      input.maxGivebackFromPeakOpenProfitPct !== null &&
-      input.maxGivebackFromPeakOpenProfitPct <= maxAllowedGivebackPct &&
-      input.postExitCandleCount > 0 &&
-      input.maxAdverseMovePctAfterExit !== null &&
-      input.maxAdverseMovePctAfterExit >= minAdversePct &&
-      input.netMovePctAtEndOfPostExitWindow !== null &&
-      input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-      input.maxAdverseMovePctAfterExit >
-        (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+      input.exitContext.hadPartialExit &&
+      input.scalingContext.hadReaddAfterReduction &&
+      input.tradeStructure.closedToFlat &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxAllowedGivebackPct &&
+      input.exitContext.postExitCandleCount > 0 &&
+      input.exitContext.maxAdverseMovePctAfterExit !== null &&
+      input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+      input.exitContext.maxAdverseMovePctAfterExit >
+        (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
     return {
       matched,
       evidence: {
-        hadPartialExit: input.hadPartialExit,
-        hadReaddAfterReduction: input.hadReaddAfterReduction,
-        closedToFlat: input.closedToFlat,
+        hadPartialExit: input.exitContext.hadPartialExit,
+        hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+        closedToFlat: input.tradeStructure.closedToFlat,
         maxGivebackFromPeakOpenProfitPct:
-          input.maxGivebackFromPeakOpenProfitPct,
-        postExitCandleCount: input.postExitCandleCount,
-        maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-        maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+          input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+        postExitCandleCount: input.exitContext.postExitCandleCount,
+        maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+        maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
         netMovePctAtEndOfPostExitWindow:
-          input.netMovePctAtEndOfPostExitWindow,
+          input.exitContext.netMovePctAtEndOfPostExitWindow,
       },
       thresholdsUsed: {
         maxAllowedGivebackPct,
@@ -4046,28 +4046,28 @@ export const TRIM_READD_WITH_MISSED_FINAL_CONTINUATION: PatternDefinition = {
       THRESHOLDS.EXIT_QUALITY.MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
     const matched =
-      input.hadPartialExit &&
-      input.hadReaddAfterReduction &&
-      input.closedToFlat &&
-      input.postExitCandleCount > 0 &&
-      input.maxFavorableMovePctAfterExit !== null &&
-      input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-      input.netMovePctAtEndOfPostExitWindow !== null &&
-      input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-      input.maxFavorableMovePctAfterExit >
-        (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+      input.exitContext.hadPartialExit &&
+      input.scalingContext.hadReaddAfterReduction &&
+      input.tradeStructure.closedToFlat &&
+      input.exitContext.postExitCandleCount > 0 &&
+      input.exitContext.maxFavorableMovePctAfterExit !== null &&
+      input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+      input.exitContext.maxFavorableMovePctAfterExit >
+        (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
     return {
       matched,
       evidence: {
-        hadPartialExit: input.hadPartialExit,
-        hadReaddAfterReduction: input.hadReaddAfterReduction,
-        closedToFlat: input.closedToFlat,
-        postExitCandleCount: input.postExitCandleCount,
-        maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-        maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+        hadPartialExit: input.exitContext.hadPartialExit,
+        hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+        closedToFlat: input.tradeStructure.closedToFlat,
+        postExitCandleCount: input.exitContext.postExitCandleCount,
+        maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+        maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
         netMovePctAtEndOfPostExitWindow:
-          input.netMovePctAtEndOfPostExitWindow,
+          input.exitContext.netMovePctAtEndOfPostExitWindow,
       },
       thresholdsUsed: {
         minFavorablePct,
@@ -4092,24 +4092,24 @@ export const CONSTRUCTIVE_RECOVERY_AFTER_EARLY_ADVERSITY: PatternDefinition = {
       THRESHOLDS.SCALING_QUALITY.CONSTRUCTIVE_RECOVERY_MAX_GIVEBACK_PCT;
 
     const matched =
-      input.hadOpenLossBeforePeakOpenProfit &&
-      input.peakOpenProfitPctOfBasis !== null &&
-      input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-      input.realizedReturnPct !== null &&
-      input.realizedReturnPct > 0 &&
-      input.maxGivebackFromPeakOpenProfitPct !== null &&
-      input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct;
+      input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+      input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+      input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+      input.exitContext.realizedReturnPct !== null &&
+      input.exitContext.realizedReturnPct > 0 &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct;
 
     return {
       matched,
       evidence: {
-        hadOpenLossBeforePeakOpenProfit: input.hadOpenLossBeforePeakOpenProfit,
+        hadOpenLossBeforePeakOpenProfit: input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
         secondsFromFirstOpenLossToPeakOpenProfit:
-          input.secondsFromFirstOpenLossToPeakOpenProfit,
-        peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-        realizedReturnPct: input.realizedReturnPct,
+          input.recoveryContext.secondsFromFirstOpenLossToPeakOpenProfit,
+        peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+        realizedReturnPct: input.exitContext.realizedReturnPct,
         maxGivebackFromPeakOpenProfitPct:
-          input.maxGivebackFromPeakOpenProfitPct,
+          input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
       },
       thresholdsUsed: {
         minPeakOpenProfitPctOfBasis,
@@ -4136,22 +4136,22 @@ export const RECOVERY_AFTER_EARLY_ADVERSITY_WITH_FAILED_PROTECTION: PatternDefin
           .RECOVERY_FAILED_PROTECTION_MIN_GIVEBACK_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct;
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct;
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           secondsFromFirstOpenLossToPeakOpenProfit:
-            input.secondsFromFirstOpenLossToPeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.secondsFromFirstOpenLossToPeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -4180,34 +4180,34 @@ export const RECOVERY_AFTER_EARLY_ADVERSITY_WITH_STABILIZED_MANAGEMENT: PatternD
           .TIMELY_RISK_RESPONSE_MAX_SECONDS_TO_FIRST_REDUCTION;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct;
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct;
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -4242,30 +4242,30 @@ export const REPEATED_TRIM_READD_WITH_CONSTRUCTIVE_MANAGEMENT: PatternDefinition
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -4294,18 +4294,18 @@ export const REPEATED_TRIM_READD_WITH_UNSTABLE_MANAGEMENT: PatternDefinition = {
       THRESHOLDS.SCALING_QUALITY.MULTI_CYCLE_UNSTABLE_MIN_GIVEBACK_PCT;
 
     const matched =
-      input.partialExitCount >= minPartialExits &&
-      input.readdAfterReductionCount >= minReadds &&
-      input.maxGivebackFromPeakOpenProfitPct !== null &&
-      input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct;
+      input.exitContext.partialExitCount >= minPartialExits &&
+      input.scalingContext.readdAfterReductionCount >= minReadds &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct;
 
     return {
       matched,
       evidence: {
-        partialExitCount: input.partialExitCount,
-        readdAfterReductionCount: input.readdAfterReductionCount,
+        partialExitCount: input.exitContext.partialExitCount,
+        readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
         maxGivebackFromPeakOpenProfitPct:
-          input.maxGivebackFromPeakOpenProfitPct,
+          input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
       },
       thresholdsUsed: {
         minPartialExits,
@@ -4336,27 +4336,27 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_RENEWED_DETERIORATION: PatternDefinit
         THRESHOLDS.SCALING_QUALITY.MULTI_CYCLE_UNSTABLE_MIN_GIVEBACK_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct;
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct;
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -4383,23 +4383,23 @@ export const LATE_CHASE_REENTRY_AFTER_CONSTRUCTIVE_TRIM: PatternDefinition = {
         .LATE_CHASE_REENTRY_MIN_FAVORABLE_MOVE_AFTER_TRIM_PCT;
 
     const matched =
-      input.hadPartialExit &&
-      input.hadReaddAfterReduction &&
-      input.readdsAfterRecentRunUpCount >= minReaddRunUpCount &&
-      input.averageFavorableMovePctAfterPartialExitBeforeReadd !== null &&
-      input.averageFavorableMovePctAfterPartialExitBeforeReadd >=
+      input.exitContext.hadPartialExit &&
+      input.scalingContext.hadReaddAfterReduction &&
+      input.scalingContext.readdsAfterRecentRunUpCount >= minReaddRunUpCount &&
+      input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd !== null &&
+      input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd >=
         minFavorableMoveAfterTrimPct;
 
     return {
       matched,
       evidence: {
-        hadPartialExit: input.hadPartialExit,
-        hadReaddAfterReduction: input.hadReaddAfterReduction,
-        readdsAfterRecentRunUpCount: input.readdsAfterRecentRunUpCount,
+        hadPartialExit: input.exitContext.hadPartialExit,
+        hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+        readdsAfterRecentRunUpCount: input.scalingContext.readdsAfterRecentRunUpCount,
         averageFavorableMovePctAfterPartialExitBeforeReadd:
-          input.averageFavorableMovePctAfterPartialExitBeforeReadd,
+          input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd,
         averageReaddPriceChangeFromPriorReductionPct:
-          input.averageReaddPriceChangeFromPriorReductionPct,
+          input.scalingContext.averageReaddPriceChangeFromPriorReductionPct,
       },
       thresholdsUsed: {
         minReaddRunUpCount,
@@ -4424,23 +4424,23 @@ export const GOOD_PULLBACK_REENTRY_AFTER_CONSTRUCTIVE_TRIM: PatternDefinition = 
         .GOOD_PULLBACK_REENTRY_MAX_ADVERSE_MOVE_AFTER_TRIM_PCT;
 
     const matched =
-      input.hadPartialExit &&
-      input.hadReaddAfterReduction &&
-      input.readdsAfterRecentDropCount >= minReaddDropCount &&
-      input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-      input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+      input.exitContext.hadPartialExit &&
+      input.scalingContext.hadReaddAfterReduction &&
+      input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+      input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+      input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
         maxAdverseMoveAfterTrimPct;
 
     return {
       matched,
       evidence: {
-        hadPartialExit: input.hadPartialExit,
-        hadReaddAfterReduction: input.hadReaddAfterReduction,
-        readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+        hadPartialExit: input.exitContext.hadPartialExit,
+        hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+        readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
         averageAdverseMovePctAfterPartialExitBeforeReadd:
-          input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+          input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
         averageReaddPriceChangeFromPriorReductionPct:
-          input.averageReaddPriceChangeFromPriorReductionPct,
+          input.scalingContext.averageReaddPriceChangeFromPriorReductionPct,
       },
       thresholdsUsed: {
         minReaddDropCount,
@@ -4471,35 +4471,35 @@ export const CONSTRUCTIVE_REENTRY_FOLLOWTHROUGH_AFTER_TRIM: PatternDefinition = 
         .CONSTRUCTIVE_REENTRY_MIN_FAVORABLE_FOLLOWTHROUGH_PCT;
 
     const matched =
-      input.hadPartialExit &&
-      input.hadReaddAfterReduction &&
-      input.readdsAfterRecentDropCount >= minReaddDropCount &&
-      input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-      input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+      input.exitContext.hadPartialExit &&
+      input.scalingContext.hadReaddAfterReduction &&
+      input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+      input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+      input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
         maxAdverseMoveAfterTrimPct &&
-      input.readdsWithStrongerFavorableFollowthroughCount >=
+      input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
         minStrongerFavorableCount &&
-      input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-      input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+      input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+      input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
         minFavorableFollowthroughPct &&
-      input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-        (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+      input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+        (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
           Number.NEGATIVE_INFINITY);
 
     return {
       matched,
       evidence: {
-        hadPartialExit: input.hadPartialExit,
-        hadReaddAfterReduction: input.hadReaddAfterReduction,
-        readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+        hadPartialExit: input.exitContext.hadPartialExit,
+        hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+        readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
         averageAdverseMovePctAfterPartialExitBeforeReadd:
-          input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+          input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
         readdsWithStrongerFavorableFollowthroughCount:
-          input.readdsWithStrongerFavorableFollowthroughCount,
+          input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
         averageFavorableMovePctAfterReaddBeforeNextExecution:
-          input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+          input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
         averageAdverseMovePctAfterReaddBeforeNextExecution:
-          input.averageAdverseMovePctAfterReaddBeforeNextExecution,
+          input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
       },
       thresholdsUsed: {
         minReaddDropCount,
@@ -4542,52 +4542,52 @@ export const CONSTRUCTIVE_REENTRY_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternDefinitio
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadPartialExit &&
-        input.hadReaddAfterReduction &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.exitContext.hadPartialExit &&
+        input.scalingContext.hadReaddAfterReduction &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          hadPartialExit: input.hadPartialExit,
-          hadReaddAfterReduction: input.hadReaddAfterReduction,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minReaddDropCount,
@@ -4632,52 +4632,52 @@ export const CONSTRUCTIVE_REENTRY_WITH_PREMATURE_FINAL_EXIT: PatternDefinition =
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadPartialExit &&
-        input.hadReaddAfterReduction &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.exitContext.hadPartialExit &&
+        input.scalingContext.hadReaddAfterReduction &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          hadPartialExit: input.hadPartialExit,
-          hadReaddAfterReduction: input.hadReaddAfterReduction,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minReaddDropCount,
@@ -4728,64 +4728,64 @@ export const CONSTRUCTIVE_REENTRY_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: Pa
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadPartialExit &&
-        input.hadReaddAfterReduction &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.exitContext.hadPartialExit &&
+        input.scalingContext.hadReaddAfterReduction &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          hadPartialExit: input.hadPartialExit,
-          hadReaddAfterReduction: input.hadReaddAfterReduction,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minReaddDropCount,
@@ -4838,64 +4838,64 @@ export const CONSTRUCTIVE_REENTRY_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: Pat
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadPartialExit &&
-        input.hadReaddAfterReduction &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.exitContext.hadPartialExit &&
+        input.scalingContext.hadReaddAfterReduction &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          hadPartialExit: input.hadPartialExit,
-          hadReaddAfterReduction: input.hadReaddAfterReduction,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minReaddDropCount,
@@ -4946,61 +4946,61 @@ export const RECOVERY_WITH_CONSTRUCTIVE_FINAL_EXIT_AFTER_CONSTRUCTIVE_REENTRY: P
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadPartialExit &&
-        input.hadReaddAfterReduction &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.hadPartialExit &&
+        input.scalingContext.hadReaddAfterReduction &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          hadPartialExit: input.hadPartialExit,
-          hadReaddAfterReduction: input.hadReaddAfterReduction,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -5049,61 +5049,61 @@ export const RECOVERY_WITH_PREMATURE_FINAL_EXIT_AFTER_CONSTRUCTIVE_REENTRY: Patt
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadPartialExit &&
-        input.hadReaddAfterReduction &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.exitContext.hadPartialExit &&
+        input.scalingContext.hadReaddAfterReduction &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
-          hadPartialExit: input.hadPartialExit,
-          hadReaddAfterReduction: input.hadReaddAfterReduction,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -5158,73 +5158,73 @@ export const RECOVERY_WITH_STOP_LIKE_FORCED_EXIT_AFTER_CONSTRUCTIVE_REENTRY: Pat
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadPartialExit &&
-        input.hadReaddAfterReduction &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.exitContext.hadPartialExit &&
+        input.scalingContext.hadReaddAfterReduction &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
-          hadPartialExit: input.hadPartialExit,
-          hadReaddAfterReduction: input.hadReaddAfterReduction,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -5281,73 +5281,73 @@ export const RECOVERY_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND_AFTER_CONSTRUCTI
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadPartialExit &&
-        input.hadReaddAfterReduction &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.exitContext.hadPartialExit &&
+        input.scalingContext.hadReaddAfterReduction &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
-          hadPartialExit: input.hadPartialExit,
-          hadReaddAfterReduction: input.hadReaddAfterReduction,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -5386,35 +5386,35 @@ export const DETERIORATING_REENTRY_AFTER_TRIM: PatternDefinition = {
         .DETERIORATING_REENTRY_MIN_ADVERSE_FOLLOWTHROUGH_PCT;
 
     const matched =
-      input.hadPartialExit &&
-      input.hadReaddAfterReduction &&
-      input.readdsAfterRecentRunUpCount >= minReaddRunUpCount &&
-      input.averageFavorableMovePctAfterPartialExitBeforeReadd !== null &&
-      input.averageFavorableMovePctAfterPartialExitBeforeReadd >=
+      input.exitContext.hadPartialExit &&
+      input.scalingContext.hadReaddAfterReduction &&
+      input.scalingContext.readdsAfterRecentRunUpCount >= minReaddRunUpCount &&
+      input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd !== null &&
+      input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd >=
         minFavorableMoveAfterTrimPct &&
-      input.readdsWithStrongerAdverseFollowthroughCount >=
+      input.scalingContext.readdsWithStrongerAdverseFollowthroughCount >=
         minStrongerAdverseCount &&
-      input.averageAdverseMovePctAfterReaddBeforeNextExecution !== null &&
-      input.averageAdverseMovePctAfterReaddBeforeNextExecution >=
+      input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution !== null &&
+      input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution >=
         minAdverseFollowthroughPct &&
-      input.averageAdverseMovePctAfterReaddBeforeNextExecution >
-        (input.averageFavorableMovePctAfterReaddBeforeNextExecution ??
+      input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution >
+        (input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution ??
           Number.NEGATIVE_INFINITY);
 
     return {
       matched,
       evidence: {
-        hadPartialExit: input.hadPartialExit,
-        hadReaddAfterReduction: input.hadReaddAfterReduction,
-        readdsAfterRecentRunUpCount: input.readdsAfterRecentRunUpCount,
+        hadPartialExit: input.exitContext.hadPartialExit,
+        hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
+        readdsAfterRecentRunUpCount: input.scalingContext.readdsAfterRecentRunUpCount,
         averageFavorableMovePctAfterPartialExitBeforeReadd:
-          input.averageFavorableMovePctAfterPartialExitBeforeReadd,
+          input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd,
         readdsWithStrongerAdverseFollowthroughCount:
-          input.readdsWithStrongerAdverseFollowthroughCount,
+          input.scalingContext.readdsWithStrongerAdverseFollowthroughCount,
         averageAdverseMovePctAfterReaddBeforeNextExecution:
-          input.averageAdverseMovePctAfterReaddBeforeNextExecution,
+          input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
         averageFavorableMovePctAfterReaddBeforeNextExecution:
-          input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+          input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
       },
       thresholdsUsed: {
         minReaddRunUpCount,
@@ -5452,35 +5452,35 @@ export const REPEATED_TRIM_READD_WITH_CONSTRUCTIVE_REENTRY_FOLLOWTHROUGH: Patter
           .CONSTRUCTIVE_REENTRY_MIN_FAVORABLE_FOLLOWTHROUGH_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -5520,35 +5520,35 @@ export const REPEATED_TRIM_READD_WITH_DETERIORATING_REENTRY: PatternDefinition =
           .DETERIORATING_REENTRY_MIN_ADVERSE_FOLLOWTHROUGH_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.readdsAfterRecentRunUpCount >= minReaddRunUpCount &&
-        input.averageFavorableMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageFavorableMovePctAfterPartialExitBeforeReadd >=
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.scalingContext.readdsAfterRecentRunUpCount >= minReaddRunUpCount &&
+        input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd >=
           minFavorableMoveAfterTrimPct &&
-        input.readdsWithStrongerAdverseFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerAdverseFollowthroughCount >=
           minStrongerAdverseCount &&
-        input.averageAdverseMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageAdverseMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution >=
           minAdverseFollowthroughPct &&
-        input.averageAdverseMovePctAfterReaddBeforeNextExecution >
-          (input.averageFavorableMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          readdsAfterRecentRunUpCount: input.readdsAfterRecentRunUpCount,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          readdsAfterRecentRunUpCount: input.scalingContext.readdsAfterRecentRunUpCount,
           averageFavorableMovePctAfterPartialExitBeforeReadd:
-            input.averageFavorableMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerAdverseFollowthroughCount:
-            input.readdsWithStrongerAdverseFollowthroughCount,
+            input.scalingContext.readdsWithStrongerAdverseFollowthroughCount,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -5594,48 +5594,48 @@ export const REPEATED_CONSTRUCTIVE_REENTRY_WITH_PREMATURE_FINAL_EXIT: PatternDef
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -5674,34 +5674,34 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_PREMATURE_FINAL_EXIT: PatternDefi
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          realizedReturnPct: input.realizedReturnPct,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -5738,31 +5738,31 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternD
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -5796,27 +5796,27 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_MISSED_FINAL_CONTINUATION: Patter
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -5852,34 +5852,34 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_DEFENSIVE_FINAL_EXIT_AFTER_DETERI
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          realizedReturnPct: input.realizedReturnPct,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -5919,43 +5919,43 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_DEFENSIVE_FIN
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -5993,34 +5993,34 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_FEARFUL_FINAL_EXIT: PatternDefini
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.closedToFlat &&
-        input.exitWasNearTradeLow &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          closedToFlat: input.closedToFlat,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -6060,43 +6060,43 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_FEARFUL_FINAL
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.closedToFlat &&
-        input.exitWasNearTradeLow &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          closedToFlat: input.closedToFlat,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -6139,44 +6139,44 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREAK
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.closedToFlat &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          closedToFlat: input.closedToFlat,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -6220,44 +6220,44 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBO
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.closedToFlat &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          closedToFlat: input.closedToFlat,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -6307,52 +6307,52 @@ export const REPEATED_CONSTRUCTIVE_REENTRY_WITH_CONSTRUCTIVE_FINAL_EXIT: Pattern
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -6409,64 +6409,64 @@ export const REPEATED_CONSTRUCTIVE_REENTRY_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREA
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -6525,64 +6525,64 @@ export const REPEATED_CONSTRUCTIVE_REENTRY_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REB
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -6636,52 +6636,52 @@ export const REPEATED_DETERIORATING_REENTRY_WITH_DEFENSIVE_FINAL_EXIT: PatternDe
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.readdsAfterRecentRunUpCount >= minReaddRunUpCount &&
-        input.averageFavorableMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageFavorableMovePctAfterPartialExitBeforeReadd >=
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.scalingContext.readdsAfterRecentRunUpCount >= minReaddRunUpCount &&
+        input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd >=
           minFavorableMoveAfterTrimPct &&
-        input.readdsWithStrongerAdverseFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerAdverseFollowthroughCount >=
           minStrongerAdverseCount &&
-        input.averageAdverseMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageAdverseMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution >=
           minAdverseFollowthroughPct &&
-        input.averageAdverseMovePctAfterReaddBeforeNextExecution >
-          (input.averageFavorableMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          readdsAfterRecentRunUpCount: input.readdsAfterRecentRunUpCount,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          readdsAfterRecentRunUpCount: input.scalingContext.readdsAfterRecentRunUpCount,
           averageFavorableMovePctAfterPartialExitBeforeReadd:
-            input.averageFavorableMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerAdverseFollowthroughCount:
-            input.readdsWithStrongerAdverseFollowthroughCount,
+            input.scalingContext.readdsWithStrongerAdverseFollowthroughCount,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -6733,57 +6733,57 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_PREMATURE_FINAL_EXIT_AFTER_CONSTRUCTI
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -6826,43 +6826,43 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_PREMATURE_FIN
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -6903,40 +6903,40 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_CONSTRUCTIVE_
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -6974,36 +6974,36 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_MISSED_FINAL_
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -7048,53 +7048,53 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_STOP_LIKE_FOR
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.closedToFlat &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          closedToFlat: input.closedToFlat,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -7142,53 +7142,53 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_STOP_LIKE_FOR
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.closedToFlat &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          closedToFlat: input.closedToFlat,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -7242,61 +7242,61 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_CONSTRUCTIVE_FINAL_EXIT_AFTER_CONSTRU
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -7357,73 +7357,73 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_STOP_LIKE_FORCED_EXIT_AFTER_CONSTRUCT
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -7486,73 +7486,73 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND_
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.readdsAfterRecentDropCount >= minReaddDropCount &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageAdverseMovePctAfterPartialExitBeforeReadd <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.scalingContext.readdsAfterRecentDropCount >= minReaddDropCount &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd <=
           maxAdverseMoveAfterTrimPct &&
-        input.readdsWithStrongerFavorableFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerFavorableFollowthroughCount >=
           minStrongerFavorableCount &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >=
           minFavorableFollowthroughPct &&
-        input.averageFavorableMovePctAfterReaddBeforeNextExecution >
-          (input.averageAdverseMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >= minDrawdownFromPeakPct &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          readdsAfterRecentDropCount: input.readdsAfterRecentDropCount,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          readdsAfterRecentDropCount: input.scalingContext.readdsAfterRecentDropCount,
           averageAdverseMovePctAfterPartialExitBeforeReadd:
-            input.averageAdverseMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageAdverseMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerFavorableFollowthroughCount:
-            input.readdsWithStrongerFavorableFollowthroughCount,
+            input.scalingContext.readdsWithStrongerFavorableFollowthroughCount,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -7610,61 +7610,61 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_DEFENSIVE_FINAL_EXIT_AFTER_DETERIORAT
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.readdsAfterRecentRunUpCount >= minReaddRunUpCount &&
-        input.averageFavorableMovePctAfterPartialExitBeforeReadd !== null &&
-        input.averageFavorableMovePctAfterPartialExitBeforeReadd >=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.scalingContext.readdsAfterRecentRunUpCount >= minReaddRunUpCount &&
+        input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd !== null &&
+        input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd >=
           minFavorableMoveAfterTrimPct &&
-        input.readdsWithStrongerAdverseFollowthroughCount >=
+        input.scalingContext.readdsWithStrongerAdverseFollowthroughCount >=
           minStrongerAdverseCount &&
-        input.averageAdverseMovePctAfterReaddBeforeNextExecution !== null &&
-        input.averageAdverseMovePctAfterReaddBeforeNextExecution >=
+        input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution !== null &&
+        input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution >=
           minAdverseFollowthroughPct &&
-        input.averageAdverseMovePctAfterReaddBeforeNextExecution >
-          (input.averageFavorableMovePctAfterReaddBeforeNextExecution ??
+        input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution >
+          (input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution ??
             Number.NEGATIVE_INFINITY) &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          readdsAfterRecentRunUpCount: input.readdsAfterRecentRunUpCount,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          readdsAfterRecentRunUpCount: input.scalingContext.readdsAfterRecentRunUpCount,
           averageFavorableMovePctAfterPartialExitBeforeReadd:
-            input.averageFavorableMovePctAfterPartialExitBeforeReadd,
+            input.scalingContext.averageFavorableMovePctAfterPartialExitBeforeReadd,
           readdsWithStrongerAdverseFollowthroughCount:
-            input.readdsWithStrongerAdverseFollowthroughCount,
+            input.scalingContext.readdsWithStrongerAdverseFollowthroughCount,
           averageAdverseMovePctAfterReaddBeforeNextExecution:
-            input.averageAdverseMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageAdverseMovePctAfterReaddBeforeNextExecution,
           averageFavorableMovePctAfterReaddBeforeNextExecution:
-            input.averageFavorableMovePctAfterReaddBeforeNextExecution,
+            input.scalingContext.averageFavorableMovePctAfterReaddBeforeNextExecution,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -7706,31 +7706,31 @@ export const REPEATED_TRIM_READD_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternDefinition
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -7763,32 +7763,32 @@ export const REPEATED_TRIM_READD_WITH_FEARFUL_FINAL_EXIT: PatternDefinition = {
       THRESHOLDS.EXIT_QUALITY.FEARFUL_EXIT_AFTER_WEAKENING_MAX_REALIZED_CAPTURE;
 
     const matched =
-      input.partialExitCount >= minPartialExits &&
-      input.readdAfterReductionCount >= minReadds &&
-      input.closedToFlat &&
-      input.exitWasNearTradeLow &&
-      input.realizedCapturePercentOfTradeMfe !== null &&
-      input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-      input.postExitCandleCount > 0 &&
-      input.maxFavorableMovePctAfterExit !== null &&
-      input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-      input.netMovePctAtEndOfPostExitWindow !== null &&
-      input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-      input.maxFavorableMovePctAfterExit >
-        (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+      input.exitContext.partialExitCount >= minPartialExits &&
+      input.scalingContext.readdAfterReductionCount >= minReadds &&
+      input.tradeStructure.closedToFlat &&
+      input.exitContext.exitWasNearTradeLow &&
+      input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+      input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+      input.exitContext.postExitCandleCount > 0 &&
+      input.exitContext.maxFavorableMovePctAfterExit !== null &&
+      input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+      input.exitContext.maxFavorableMovePctAfterExit >
+        (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
     return {
       matched,
       evidence: {
-        partialExitCount: input.partialExitCount,
-        readdAfterReductionCount: input.readdAfterReductionCount,
-        exitWasNearTradeLow: input.exitWasNearTradeLow,
-        realizedCapturePercentOfTradeMfe: input.realizedCapturePercentOfTradeMfe,
-        postExitCandleCount: input.postExitCandleCount,
-        maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-        maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+        partialExitCount: input.exitContext.partialExitCount,
+        readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+        exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
+        realizedCapturePercentOfTradeMfe: input.exitContext.realizedCapturePercentOfTradeMfe,
+        postExitCandleCount: input.exitContext.postExitCandleCount,
+        maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+        maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
         netMovePctAtEndOfPostExitWindow:
-          input.netMovePctAtEndOfPostExitWindow,
+          input.exitContext.netMovePctAtEndOfPostExitWindow,
       },
       thresholdsUsed: {
         minPartialExits,
@@ -7825,31 +7825,31 @@ export const REPEATED_TRIM_READD_WITH_DEFENSIVE_FINAL_EXIT_AFTER_DETERIORATION: 
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -7889,40 +7889,40 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_DEFENSIVE_FINAL_EXIT_AFTER_DETERIORAT
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.closedToFlat &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -7954,27 +7954,27 @@ export const REPEATED_TRIM_READD_WITH_PREMATURE_FINAL_EXIT: PatternDefinition = 
       THRESHOLDS.EXIT_QUALITY.MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
     const matched =
-      input.partialExitCount >= minPartialExits &&
-      input.readdAfterReductionCount >= minReadds &&
-      input.closedToFlat &&
-      input.postExitCandleCount > 0 &&
-      input.maxFavorableMovePctAfterExit !== null &&
-      input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-      input.netMovePctAtEndOfPostExitWindow !== null &&
-      input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-      input.maxFavorableMovePctAfterExit >
-        (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+      input.exitContext.partialExitCount >= minPartialExits &&
+      input.scalingContext.readdAfterReductionCount >= minReadds &&
+      input.tradeStructure.closedToFlat &&
+      input.exitContext.postExitCandleCount > 0 &&
+      input.exitContext.maxFavorableMovePctAfterExit !== null &&
+      input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+      input.exitContext.maxFavorableMovePctAfterExit >
+        (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
     return {
       matched,
       evidence: {
-        partialExitCount: input.partialExitCount,
-        readdAfterReductionCount: input.readdAfterReductionCount,
-        postExitCandleCount: input.postExitCandleCount,
-        maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-        maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+        partialExitCount: input.exitContext.partialExitCount,
+        readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+        postExitCandleCount: input.exitContext.postExitCandleCount,
+        maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+        maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
         netMovePctAtEndOfPostExitWindow:
-          input.netMovePctAtEndOfPostExitWindow,
+          input.exitContext.netMovePctAtEndOfPostExitWindow,
       },
       thresholdsUsed: {
         minPartialExits,
@@ -8007,28 +8007,28 @@ export const REPEATED_TRIM_READD_WITH_MISSED_FINAL_CONTINUATION: PatternDefiniti
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -8053,9 +8053,9 @@ export const AGGRESSIVE_ADDING_WITH_FAILED_PROFIT_PROTECTION: PatternDefinition 
     structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const addCount = input.addCountAfterInitialEntry;
-      const maxGivebackPct = input.maxGivebackFromPeakOpenProfitPct;
-      const peakOpenProfitPctOfBasis = input.peakOpenProfitPctOfBasis;
+      const addCount = input.scalingContext.addCountAfterInitialEntry;
+      const maxGivebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
+      const peakOpenProfitPctOfBasis = input.recoveryContext.peakOpenProfitPctOfBasis;
 
       const minAddEvents =
         THRESHOLDS.SCALING_QUALITY.AGGRESSIVE_ADDING_MIN_ADD_EVENTS;
@@ -8097,14 +8097,14 @@ export const REVENGE_ADDING_AFTER_WEAKNESS: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const addCount = input.addCountAfterInitialEntry;
-    const addBelowBasisCount = input.addBelowPreviousAverageEntryCount;
-    const averageAddPct = input.averageAddPriceVsPreviousAverageEntryPct;
+    const addCount = input.scalingContext.addCountAfterInitialEntry;
+    const addBelowBasisCount = input.scalingContext.addBelowPreviousAverageEntryCount;
+    const averageAddPct = input.scalingContext.averageAddPriceVsPreviousAverageEntryPct;
     const averageAddRangePosition =
-      input.averageAddPricePositionInRecentRangePct;
-    const addsWithRecentDropCount = input.addsWithRecentDropCount;
-    const averageAddDrop = input.averageAddRecentDropPctBeforeExecution;
-    const decreaseCount = input.totalPositionDecreaseCount;
+      input.scalingContext.averageAddPricePositionInRecentRangePct;
+    const addsWithRecentDropCount = input.scalingContext.addsWithRecentDropCount;
+    const averageAddDrop = input.scalingContext.averageAddRecentDropPctBeforeExecution;
+    const decreaseCount = input.tradeStructure.totalPositionDecreaseCount;
 
     const minAddEvents =
       THRESHOLDS.SCALING_QUALITY.AGGRESSIVE_ADDING_MIN_ADD_EVENTS;
@@ -8156,16 +8156,16 @@ export const REVENGE_ADDING_WITH_FAILED_PROFIT_PROTECTION: PatternDefinition = {
   structuralLevel: "storyline_composite",
 
   evaluate: (input) => {
-    const addCount = input.addCountAfterInitialEntry;
-    const addBelowBasisCount = input.addBelowPreviousAverageEntryCount;
-    const averageAddPct = input.averageAddPriceVsPreviousAverageEntryPct;
+    const addCount = input.scalingContext.addCountAfterInitialEntry;
+    const addBelowBasisCount = input.scalingContext.addBelowPreviousAverageEntryCount;
+    const averageAddPct = input.scalingContext.averageAddPriceVsPreviousAverageEntryPct;
     const averageAddRangePosition =
-      input.averageAddPricePositionInRecentRangePct;
-    const addsWithRecentDropCount = input.addsWithRecentDropCount;
-    const averageAddDrop = input.averageAddRecentDropPctBeforeExecution;
-    const decreaseCount = input.totalPositionDecreaseCount;
-    const maxGivebackPct = input.maxGivebackFromPeakOpenProfitPct;
-    const peakOpenProfitPctOfBasis = input.peakOpenProfitPctOfBasis;
+      input.scalingContext.averageAddPricePositionInRecentRangePct;
+    const addsWithRecentDropCount = input.scalingContext.addsWithRecentDropCount;
+    const averageAddDrop = input.scalingContext.averageAddRecentDropPctBeforeExecution;
+    const decreaseCount = input.tradeStructure.totalPositionDecreaseCount;
+    const maxGivebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
+    const peakOpenProfitPctOfBasis = input.recoveryContext.peakOpenProfitPctOfBasis;
 
     const minAddEvents =
       THRESHOLDS.SCALING_QUALITY.AGGRESSIVE_ADDING_MIN_ADD_EVENTS;
@@ -8232,20 +8232,20 @@ export const ADD_INTO_RESISTANCE_STRUCTURE: PatternDefinition = {
 
   evaluate: (input) => {
     const matched =
-      input.hadSupportResistanceContextAvailable &&
-      input.addCountAfterInitialEntry >= 1 &&
-      input.addsNearResistanceCount >= 1;
+      input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+      input.scalingContext.addCountAfterInitialEntry >= 1 &&
+      input.supportResistanceContext.addsNearResistanceCount >= 1;
 
     return {
       matched,
       evidence: {
         hadSupportResistanceContextAvailable:
-          input.hadSupportResistanceContextAvailable,
-        addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-        addsNearResistanceCount: input.addsNearResistanceCount,
-        addsAboveResistanceCount: input.addsAboveResistanceCount,
+          input.supportResistanceContext.hadSupportResistanceContextAvailable,
+        addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+        addsNearResistanceCount: input.supportResistanceContext.addsNearResistanceCount,
+        addsAboveResistanceCount: input.supportResistanceContext.addsAboveResistanceCount,
         averageAddDistanceToNearestResistancePct:
-          input.averageAddDistanceToNearestResistancePct,
+          input.supportResistanceContext.averageAddDistanceToNearestResistancePct,
       },
         thresholdsUsed: {
           minAddCountAfterInitialEntry: 1,
@@ -8264,21 +8264,21 @@ export const ADD_ABOVE_RESISTANCE_STRUCTURE: PatternDefinition = {
 
   evaluate: (input) => {
     const matched =
-      input.hadSupportResistanceContextAvailable &&
-      input.addCountAfterInitialEntry >= 1 &&
-      input.addsAboveResistanceWithRoomCount >= 1;
+      input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+      input.scalingContext.addCountAfterInitialEntry >= 1 &&
+      input.supportResistanceContext.addsAboveResistanceWithRoomCount >= 1;
 
     return {
       matched,
       evidence: {
         hadSupportResistanceContextAvailable:
-          input.hadSupportResistanceContextAvailable,
-        addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-        addsAboveResistanceCount: input.addsAboveResistanceCount,
+          input.supportResistanceContext.hadSupportResistanceContextAvailable,
+        addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+        addsAboveResistanceCount: input.supportResistanceContext.addsAboveResistanceCount,
         addsAboveResistanceWithRoomCount:
-          input.addsAboveResistanceWithRoomCount,
+          input.supportResistanceContext.addsAboveResistanceWithRoomCount,
         averageAddRoomToNextResistancePct:
-          input.averageAddRoomToNextResistancePct,
+          input.supportResistanceContext.averageAddRoomToNextResistancePct,
       },
       thresholdsUsed: {
         minAddCountAfterInitialEntry: 1,
@@ -8308,37 +8308,37 @@ export const ADD_ABOVE_RESISTANCE_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternDefinitio
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.addCountAfterInitialEntry >= 1 &&
-        input.addsAboveResistanceWithRoomCount >= 1 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.scalingContext.addCountAfterInitialEntry >= 1 &&
+        input.supportResistanceContext.addsAboveResistanceWithRoomCount >= 1 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
           addsAboveResistanceWithRoomCount:
-            input.addsAboveResistanceWithRoomCount,
+            input.supportResistanceContext.addsAboveResistanceWithRoomCount,
           averageAddRoomToNextResistancePct:
-            input.averageAddRoomToNextResistancePct,
+            input.supportResistanceContext.averageAddRoomToNextResistancePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           maxGivebackPct,
@@ -8366,27 +8366,27 @@ export const ADD_ABOVE_RESISTANCE_WITH_FAILED_PROFIT_PROTECTION: PatternDefiniti
           .AGGRESSIVE_ADDING_FAILED_PROTECTION_MIN_PEAK_OPEN_PROFIT_PCT_OF_BASIS;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.addCountAfterInitialEntry >= 1 &&
-        input.addsAboveResistanceWithRoomCount >= 1 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis;
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.scalingContext.addCountAfterInitialEntry >= 1 &&
+        input.supportResistanceContext.addsAboveResistanceWithRoomCount >= 1 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis;
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
           addsAboveResistanceWithRoomCount:
-            input.addsAboveResistanceWithRoomCount,
+            input.supportResistanceContext.addsAboveResistanceWithRoomCount,
           averageAddRoomToNextResistancePct:
-            input.averageAddRoomToNextResistancePct,
+            input.supportResistanceContext.averageAddRoomToNextResistancePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
         },
         thresholdsUsed: {
           minGivebackPct,
@@ -8419,46 +8419,46 @@ export const RECOVERY_WITH_ADD_ABOVE_RESISTANCE_AND_CONSTRUCTIVE_FINAL_EXIT: Pat
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadSupportResistanceContextAvailable &&
-        input.addCountAfterInitialEntry >= 1 &&
-        input.addsAboveResistanceWithRoomCount >= 1 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.scalingContext.addCountAfterInitialEntry >= 1 &&
+        input.supportResistanceContext.addsAboveResistanceWithRoomCount >= 1 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
           addsAboveResistanceWithRoomCount:
-            input.addsAboveResistanceWithRoomCount,
+            input.supportResistanceContext.addsAboveResistanceWithRoomCount,
           averageAddRoomToNextResistancePct:
-            input.averageAddRoomToNextResistancePct,
+            input.supportResistanceContext.averageAddRoomToNextResistancePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -8490,31 +8490,31 @@ export const RECOVERY_WITH_ADD_ABOVE_RESISTANCE_AND_FAILED_PROFIT_PROTECTION: Pa
           .AGGRESSIVE_ADDING_FAILED_PROTECTION_MIN_PEAK_OPEN_PROFIT_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minRecoveryPeakOpenProfitPctOfBasis &&
-        input.hadSupportResistanceContextAvailable &&
-        input.addCountAfterInitialEntry >= 1 &&
-        input.addsAboveResistanceWithRoomCount >= 1 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitForFailurePctOfBasis;
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minRecoveryPeakOpenProfitPctOfBasis &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.scalingContext.addCountAfterInitialEntry >= 1 &&
+        input.supportResistanceContext.addsAboveResistanceWithRoomCount >= 1 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitForFailurePctOfBasis;
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
           addsAboveResistanceWithRoomCount:
-            input.addsAboveResistanceWithRoomCount,
+            input.supportResistanceContext.addsAboveResistanceWithRoomCount,
           averageAddRoomToNextResistancePct:
-            input.averageAddRoomToNextResistancePct,
+            input.supportResistanceContext.averageAddRoomToNextResistancePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
         },
         thresholdsUsed: {
           minRecoveryPeakOpenProfitPctOfBasis,
@@ -8545,38 +8545,38 @@ export const REPEATED_ADDS_ABOVE_RESISTANCE_WITH_CONSTRUCTIVE_FINAL_EXIT: Patter
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.addCountAfterInitialEntry >= 2 &&
-        input.addsAboveResistanceWithRoomCount >= 2 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.scalingContext.addCountAfterInitialEntry >= 2 &&
+        input.supportResistanceContext.addsAboveResistanceWithRoomCount >= 2 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          addsAboveResistanceCount: input.addsAboveResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          addsAboveResistanceCount: input.supportResistanceContext.addsAboveResistanceCount,
           addsAboveResistanceWithRoomCount:
-            input.addsAboveResistanceWithRoomCount,
+            input.supportResistanceContext.addsAboveResistanceWithRoomCount,
           averageAddRoomToNextResistancePct:
-            input.averageAddRoomToNextResistancePct,
+            input.supportResistanceContext.averageAddRoomToNextResistancePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minAddCountAfterInitialEntry: 2,
@@ -8606,28 +8606,28 @@ export const REPEATED_ADDS_ABOVE_RESISTANCE_WITH_FAILED_PROFIT_PROTECTION: Patte
           .AGGRESSIVE_ADDING_FAILED_PROTECTION_MIN_PEAK_OPEN_PROFIT_PCT_OF_BASIS;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.addCountAfterInitialEntry >= 2 &&
-        input.addsAboveResistanceWithRoomCount >= 2 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis;
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.scalingContext.addCountAfterInitialEntry >= 2 &&
+        input.supportResistanceContext.addsAboveResistanceWithRoomCount >= 2 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis;
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          addCountAfterInitialEntry: input.addCountAfterInitialEntry,
-          addsAboveResistanceCount: input.addsAboveResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          addCountAfterInitialEntry: input.scalingContext.addCountAfterInitialEntry,
+          addsAboveResistanceCount: input.supportResistanceContext.addsAboveResistanceCount,
           addsAboveResistanceWithRoomCount:
-            input.addsAboveResistanceWithRoomCount,
+            input.supportResistanceContext.addsAboveResistanceWithRoomCount,
           averageAddRoomToNextResistancePct:
-            input.averageAddRoomToNextResistancePct,
+            input.supportResistanceContext.averageAddRoomToNextResistancePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
         },
         thresholdsUsed: {
           minAddCountAfterInitialEntry: 2,
@@ -8661,42 +8661,42 @@ export const TRIM_INTO_RESISTANCE_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternDefinitio
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.hadPartialExit &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.reductionsNearResistanceCount > 0 &&
-        input.averageReductionPriceVsPreviousAverageEntryPct !== null &&
-        input.averageReductionPriceVsPreviousAverageEntryPct >=
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.supportResistanceContext.reductionsNearResistanceCount > 0 &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct !== null &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct >=
           minAverageReductionPct &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          hadPartialExit: input.hadPartialExit,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           averageReductionPriceVsPreviousAverageEntryPct:
-            input.averageReductionPriceVsPreviousAverageEntryPct,
+            input.exitContext.averageReductionPriceVsPreviousAverageEntryPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minAverageReductionPct,
@@ -8729,42 +8729,42 @@ export const TRIM_INTO_RESISTANCE_WITH_PREMATURE_FINAL_EXIT: PatternDefinition =
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.hadPartialExit &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.reductionsNearResistanceCount > 0 &&
-        input.averageReductionPriceVsPreviousAverageEntryPct !== null &&
-        input.averageReductionPriceVsPreviousAverageEntryPct >=
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.supportResistanceContext.reductionsNearResistanceCount > 0 &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct !== null &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct >=
           minAverageReductionPct &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          hadPartialExit: input.hadPartialExit,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           averageReductionPriceVsPreviousAverageEntryPct:
-            input.averageReductionPriceVsPreviousAverageEntryPct,
+            input.exitContext.averageReductionPriceVsPreviousAverageEntryPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minAverageReductionPct,
@@ -8800,39 +8800,39 @@ export const BALANCED_MANAGEMENT_WITH_TAKE_PROFIT_INTO_RESISTANCE_AND_CONSTRUCTI
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.hadPartialExit &&
-        input.totalPositionIncreaseCount >= minIncreases &&
-        input.totalPositionDecreaseCount >= minDecreases &&
-        input.reductionsNearResistanceCount > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionIncreaseCount >= minIncreases &&
+        input.tradeStructure.totalPositionDecreaseCount >= minDecreases &&
+        input.supportResistanceContext.reductionsNearResistanceCount > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          hadPartialExit: input.hadPartialExit,
-          totalPositionIncreaseCount: input.totalPositionIncreaseCount,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minIncreases,
@@ -8868,39 +8868,39 @@ export const BALANCED_MANAGEMENT_WITH_TAKE_PROFIT_INTO_RESISTANCE_AND_PREMATURE_
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.hadPartialExit &&
-        input.totalPositionIncreaseCount >= minIncreases &&
-        input.totalPositionDecreaseCount >= minDecreases &&
-        input.reductionsNearResistanceCount > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionIncreaseCount >= minIncreases &&
+        input.tradeStructure.totalPositionDecreaseCount >= minDecreases &&
+        input.supportResistanceContext.reductionsNearResistanceCount > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          hadPartialExit: input.hadPartialExit,
-          totalPositionIncreaseCount: input.totalPositionIncreaseCount,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minIncreases,
@@ -8938,51 +8938,51 @@ export const RECOVERY_WITH_TRIM_INTO_RESISTANCE_AND_CONSTRUCTIVE_FINAL_EXIT: Pat
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadSupportResistanceContextAvailable &&
-        input.hadPartialExit &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.reductionsNearResistanceCount > 0 &&
-        input.averageReductionPriceVsPreviousAverageEntryPct !== null &&
-        input.averageReductionPriceVsPreviousAverageEntryPct >=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.supportResistanceContext.reductionsNearResistanceCount > 0 &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct !== null &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct >=
           minAverageReductionPct &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          hadPartialExit: input.hadPartialExit,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           averageReductionPriceVsPreviousAverageEntryPct:
-            input.averageReductionPriceVsPreviousAverageEntryPct,
+            input.exitContext.averageReductionPriceVsPreviousAverageEntryPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -9019,51 +9019,51 @@ export const RECOVERY_WITH_TRIM_INTO_RESISTANCE_AND_PREMATURE_FINAL_EXIT: Patter
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadSupportResistanceContextAvailable &&
-        input.hadPartialExit &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.reductionsNearResistanceCount > 0 &&
-        input.averageReductionPriceVsPreviousAverageEntryPct !== null &&
-        input.averageReductionPriceVsPreviousAverageEntryPct >=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.supportResistanceContext.reductionsNearResistanceCount > 0 &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct !== null &&
+        input.exitContext.averageReductionPriceVsPreviousAverageEntryPct >=
           minAverageReductionPct &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          hadPartialExit: input.hadPartialExit,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           averageReductionPriceVsPreviousAverageEntryPct:
-            input.averageReductionPriceVsPreviousAverageEntryPct,
+            input.exitContext.averageReductionPriceVsPreviousAverageEntryPct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -9103,48 +9103,48 @@ export const RECOVERY_WITH_BALANCED_MANAGEMENT_AND_TAKE_PROFIT_INTO_RESISTANCE_A
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadSupportResistanceContextAvailable &&
-        input.hadPartialExit &&
-        input.totalPositionIncreaseCount >= minIncreases &&
-        input.totalPositionDecreaseCount >= minDecreases &&
-        input.reductionsNearResistanceCount > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionIncreaseCount >= minIncreases &&
+        input.tradeStructure.totalPositionDecreaseCount >= minDecreases &&
+        input.supportResistanceContext.reductionsNearResistanceCount > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          hadPartialExit: input.hadPartialExit,
-          totalPositionIncreaseCount: input.totalPositionIncreaseCount,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -9184,48 +9184,48 @@ export const RECOVERY_WITH_BALANCED_MANAGEMENT_AND_TAKE_PROFIT_INTO_RESISTANCE_A
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadSupportResistanceContextAvailable &&
-        input.hadPartialExit &&
-        input.totalPositionIncreaseCount >= minIncreases &&
-        input.totalPositionDecreaseCount >= minDecreases &&
-        input.reductionsNearResistanceCount > 0 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.hadPartialExit &&
+        input.tradeStructure.totalPositionIncreaseCount >= minIncreases &&
+        input.tradeStructure.totalPositionDecreaseCount >= minDecreases &&
+        input.supportResistanceContext.reductionsNearResistanceCount > 0 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          hadPartialExit: input.hadPartialExit,
-          totalPositionIncreaseCount: input.totalPositionIncreaseCount,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          hadPartialExit: input.exitContext.hadPartialExit,
+          totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          closedToFlat: input.closedToFlat,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -9254,33 +9254,33 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_EXIT_INTO_STACKED_SUPPORT_AND_REL
         THRESHOLDS.SCALING_QUALITY.MULTI_CYCLE_MIN_READD_COUNT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.finalExitOccurredNearSupport &&
-        input.finalExitHasStackedSupportBelow &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= 0.02 &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= 0 &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.supportResistanceContext.finalExitOccurredNearSupport &&
+        input.supportResistanceContext.finalExitHasStackedSupportBelow &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= 0.02 &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          finalExitOccurredNearSupport: input.finalExitOccurredNearSupport,
-          finalExitHasStackedSupportBelow: input.finalExitHasStackedSupportBelow,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          finalExitOccurredNearSupport: input.supportResistanceContext.finalExitOccurredNearSupport,
+          finalExitHasStackedSupportBelow: input.supportResistanceContext.finalExitHasStackedSupportBelow,
           finalExitSupportLevelsBelowWithinClusterCount:
-            input.finalExitSupportLevelsBelowWithinClusterCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.supportResistanceContext.finalExitSupportLevelsBelowWithinClusterCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -9307,33 +9307,33 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_EXIT_INTO_THIN_SUPPORT_BEFORE_BRE
         THRESHOLDS.SCALING_QUALITY.MULTI_CYCLE_MIN_READD_COUNT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.finalExitOccurredNearSupport &&
-        !input.finalExitHasStackedSupportBelow &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= 0.02 &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow < 0 &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.supportResistanceContext.finalExitOccurredNearSupport &&
+        !input.supportResistanceContext.finalExitHasStackedSupportBelow &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= 0.02 &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow < 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          finalExitOccurredNearSupport: input.finalExitOccurredNearSupport,
-          finalExitHasStackedSupportBelow: input.finalExitHasStackedSupportBelow,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          finalExitOccurredNearSupport: input.supportResistanceContext.finalExitOccurredNearSupport,
+          finalExitHasStackedSupportBelow: input.supportResistanceContext.finalExitHasStackedSupportBelow,
           finalExitSupportLevelsBelowWithinClusterCount:
-            input.finalExitSupportLevelsBelowWithinClusterCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.supportResistanceContext.finalExitSupportLevelsBelowWithinClusterCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -9369,35 +9369,35 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_TRIM_INTO_RESISTANCE_AND_CONSTRUC
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.reductionsNearResistanceCount >= minPartialExits &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.supportResistanceContext.reductionsNearResistanceCount >= minPartialExits &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -9433,35 +9433,35 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_TRIM_INTO_RESISTANCE_AND_PREMATUR
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.reductionsNearResistanceCount >= minPartialExits &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.supportResistanceContext.reductionsNearResistanceCount >= minPartialExits &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -9498,35 +9498,35 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_TAKE_PROFIT_INTO_RESISTANCE_AND_C
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.reductionsNearResistanceCount >= 1 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.supportResistanceContext.reductionsNearResistanceCount >= 1 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -9562,35 +9562,35 @@ export const REPEATED_BALANCED_MANAGEMENT_WITH_TAKE_PROFIT_INTO_RESISTANCE_AND_P
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.reductionsNearResistanceCount >= 1 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.supportResistanceContext.reductionsNearResistanceCount >= 1 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPartialExits,
@@ -9621,42 +9621,42 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_EXIT_INTO_STA
           .CONSTRUCTIVE_RECOVERY_MIN_PEAK_OPEN_PROFIT_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadSupportResistanceContextAvailable &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.finalExitOccurredNearSupport &&
-        input.finalExitHasStackedSupportBelow &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= 0.02 &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= 0 &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.supportResistanceContext.finalExitOccurredNearSupport &&
+        input.supportResistanceContext.finalExitHasStackedSupportBelow &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= 0.02 &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          finalExitOccurredNearSupport: input.finalExitOccurredNearSupport,
-          finalExitHasStackedSupportBelow: input.finalExitHasStackedSupportBelow,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          finalExitOccurredNearSupport: input.supportResistanceContext.finalExitOccurredNearSupport,
+          finalExitHasStackedSupportBelow: input.supportResistanceContext.finalExitHasStackedSupportBelow,
           finalExitSupportLevelsBelowWithinClusterCount:
-            input.finalExitSupportLevelsBelowWithinClusterCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.supportResistanceContext.finalExitSupportLevelsBelowWithinClusterCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -9687,42 +9687,42 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_EXIT_INTO_THI
           .CONSTRUCTIVE_RECOVERY_MIN_PEAK_OPEN_PROFIT_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadSupportResistanceContextAvailable &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.finalExitOccurredNearSupport &&
-        !input.finalExitHasStackedSupportBelow &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= 0.02 &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow < 0 &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.supportResistanceContext.finalExitOccurredNearSupport &&
+        !input.supportResistanceContext.finalExitHasStackedSupportBelow &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= 0.02 &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow < 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          finalExitOccurredNearSupport: input.finalExitOccurredNearSupport,
-          finalExitHasStackedSupportBelow: input.finalExitHasStackedSupportBelow,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          finalExitOccurredNearSupport: input.supportResistanceContext.finalExitOccurredNearSupport,
+          finalExitHasStackedSupportBelow: input.supportResistanceContext.finalExitHasStackedSupportBelow,
           finalExitSupportLevelsBelowWithinClusterCount:
-            input.finalExitSupportLevelsBelowWithinClusterCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.supportResistanceContext.finalExitSupportLevelsBelowWithinClusterCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -9762,42 +9762,42 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_TRIM_INTO_RES
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadSupportResistanceContextAvailable &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.reductionsNearResistanceCount >= minPartialExits &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.supportResistanceContext.reductionsNearResistanceCount >= minPartialExits &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -9837,42 +9837,42 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_TRIM_INTO_RES
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadSupportResistanceContextAvailable &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.reductionsNearResistanceCount >= minPartialExits &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.supportResistanceContext.reductionsNearResistanceCount >= minPartialExits &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -9913,42 +9913,42 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_TAKE_PROFIT_I
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadSupportResistanceContextAvailable &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.reductionsNearResistanceCount >= 1 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.supportResistanceContext.reductionsNearResistanceCount >= 1 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -9988,42 +9988,42 @@ export const REPEATED_RESCUE_ATTEMPTS_WITH_BALANCED_MANAGEMENT_AND_TAKE_PROFIT_I
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadSupportResistanceContextAvailable &&
-        input.partialExitCount >= minPartialExits &&
-        input.readdAfterReductionCount >= minReadds &&
-        input.reductionsNearResistanceCount >= 1 &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.exitContext.partialExitCount >= minPartialExits &&
+        input.scalingContext.readdAfterReductionCount >= minReadds &&
+        input.supportResistanceContext.reductionsNearResistanceCount >= 1 &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          partialExitCount: input.partialExitCount,
-          readdAfterReductionCount: input.readdAfterReductionCount,
-          reductionsNearResistanceCount: input.reductionsNearResistanceCount,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          partialExitCount: input.exitContext.partialExitCount,
+          readdAfterReductionCount: input.scalingContext.readdAfterReductionCount,
+          reductionsNearResistanceCount: input.supportResistanceContext.reductionsNearResistanceCount,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -10056,32 +10056,32 @@ export const READD_AFTER_DELAYED_RISK_RESPONSE: PatternDefinition = {
         .DELAYED_RISK_RESPONSE_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
     const matched =
-      input.hadPeakOpenProfitBeforeWorstDrawdown &&
-      input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-      input.drawdownFromPeakOpenProfitPctOfBasis >=
+      input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+      input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+      input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
         minDrawdownFromPeakPctOfBasis &&
-      input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-      input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-      input.secondsFromPeakOpenProfitToFirstReduction >=
+      input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+      input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+      input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction >=
         minSecondsToFirstReduction &&
-      input.hadReaddAfterReduction &&
-      input.maxGivebackFromPeakOpenProfitPct !== null &&
-      input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct;
+      input.scalingContext.hadReaddAfterReduction &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct;
 
     return {
       matched,
       evidence: {
         hadPeakOpenProfitBeforeWorstDrawdown:
-          input.hadPeakOpenProfitBeforeWorstDrawdown,
+          input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
         drawdownFromPeakOpenProfitPctOfBasis:
-          input.drawdownFromPeakOpenProfitPctOfBasis,
+          input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
         hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-          input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+          input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
         secondsFromPeakOpenProfitToFirstReduction:
-          input.secondsFromPeakOpenProfitToFirstReduction,
-        hadReaddAfterReduction: input.hadReaddAfterReduction,
+          input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+        hadReaddAfterReduction: input.scalingContext.hadReaddAfterReduction,
         maxGivebackFromPeakOpenProfitPct:
-          input.maxGivebackFromPeakOpenProfitPct,
+          input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
       },
       thresholdsUsed: {
         minDrawdownFromPeakPctOfBasis,
@@ -10236,3 +10236,5 @@ export const SCALING_QUALITY_PATTERNS: PatternDefinition[] = [
   REVENGE_ADDING_WITH_FAILED_PROFIT_PROTECTION,
   READD_AFTER_DELAYED_RISK_RESPONSE,
 ];
+
+

@@ -1,0 +1,171 @@
+import {
+  buildCsvDryRunImportExperience,
+  buildImportCommitPlan,
+  type ImportCommitPlannerAcknowledgements,
+  type ImportCommitPlanResult,
+  type ImportCommitRepairSource,
+} from "../index";
+import {
+  DEMO_ACCOUNT_ID,
+  DEMO_USER_ID,
+  DEMO_WORKSPACE_ID,
+  SqliteImportCommitRepository,
+} from "../product/import-commit/sqlite-import-commit-repository";
+import type {
+  BrokerExecutionCsvColumnMapping,
+  BrokerExecutionCsvFormat,
+} from "../../execution-sources/csv";
+
+const VALID_BROKERS = new Set<BrokerExecutionCsvFormat>([
+  "auto",
+  "ibkr_activity_statement",
+  "moomoo_trade_history",
+  "webull_order_history",
+  "robinhood_transaction_history",
+  "schwab_transactions",
+  "generic_execution_csv",
+]);
+
+export interface ImportCommitRequestInput {
+  csvText: string;
+  broker: BrokerExecutionCsvFormat;
+  accountTimezone?: string;
+  columnMapping?: BrokerExecutionCsvColumnMapping;
+  acknowledgements?: ImportCommitPlannerAcknowledgements;
+  repairSource?: ImportCommitRepairSource;
+}
+
+export interface ImportCommitApiPlanResponse {
+  contractVersion: "import_commit_api_plan_v1";
+  plan: ImportCommitPlanResult;
+}
+
+export interface ImportCommitApiError {
+  contractVersion: "import_commit_api_error_v1";
+  error: {
+    code: "invalid_json" | "invalid_request" | "not_found" | "commit_rejected";
+    message: string;
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseColumnMapping(value: unknown): BrokerExecutionCsvColumnMapping | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!isRecord(value)) {
+    throw new Error("columnMapping must be an object.");
+  }
+  return value as BrokerExecutionCsvColumnMapping;
+}
+
+function parseAcknowledgements(
+  value: unknown,
+): ImportCommitPlannerAcknowledgements | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!isRecord(value)) {
+    throw new Error("acknowledgements must be an object.");
+  }
+  return value as ImportCommitPlannerAcknowledgements;
+}
+
+function parseRepairSource(value: unknown): ImportCommitRepairSource | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === "original_csv" || value === "repaired_csv") {
+    return value;
+  }
+  throw new Error("repairSource must be original_csv or repaired_csv.");
+}
+
+export function parseImportCommitRequestInput(
+  document: unknown,
+): ImportCommitRequestInput {
+  if (!isRecord(document)) {
+    throw new Error("Request body must be an object.");
+  }
+  if (typeof document.csvText !== "string") {
+    throw new Error("csvText is required.");
+  }
+  if (
+    typeof document.broker !== "string" ||
+    !VALID_BROKERS.has(document.broker as BrokerExecutionCsvFormat)
+  ) {
+    throw new Error("broker must be a supported CSV broker id.");
+  }
+  if (
+    document.accountTimezone !== undefined &&
+    typeof document.accountTimezone !== "string"
+  ) {
+    throw new Error("accountTimezone must be a string.");
+  }
+
+  return {
+    csvText: document.csvText,
+    broker: document.broker as BrokerExecutionCsvFormat,
+    accountTimezone: document.accountTimezone as string | undefined,
+    columnMapping: parseColumnMapping(document.columnMapping),
+    acknowledgements: parseAcknowledgements(document.acknowledgements),
+    repairSource: parseRepairSource(document.repairSource),
+  };
+}
+
+export function buildDurableImportCommitPlan(args: {
+  input: ImportCommitRequestInput;
+  repository: SqliteImportCommitRepository;
+  batchId?: string;
+  generatedAt?: string;
+}): ImportCommitPlanResult {
+  const experience = buildCsvDryRunImportExperience({
+    csvText: args.input.csvText,
+    broker: args.input.broker,
+    accountTimezone: args.input.accountTimezone,
+    columnMapping: args.input.columnMapping,
+  });
+
+  return buildImportCommitPlan({
+    workspaceId: DEMO_WORKSPACE_ID,
+    userId: DEMO_USER_ID,
+    accountId: DEMO_ACCOUNT_ID,
+    batchId: args.batchId,
+    experience,
+    generatedAt: args.generatedAt,
+    existingFileFingerprints: args.repository.listCommittedFileFingerprints(
+      DEMO_ACCOUNT_ID,
+    ),
+    existingTradeFingerprints: args.repository.listCommittedTradeFingerprints(
+      DEMO_ACCOUNT_ID,
+    ),
+    acknowledgements: args.input.acknowledgements,
+    repairSource: args.input.repairSource,
+  });
+}
+
+export function importCommitErrorResponse(
+  status: number,
+  code: ImportCommitApiError["error"]["code"],
+  message: string,
+): Response {
+  return Response.json(
+    {
+      contractVersion: "import_commit_api_error_v1",
+      error: { code, message },
+    } satisfies ImportCommitApiError,
+    { status },
+  );
+}
+
+export async function readJsonRequest(request: Request): Promise<unknown> {
+  try {
+    return await request.json();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid JSON: ${message}`);
+  }
+}

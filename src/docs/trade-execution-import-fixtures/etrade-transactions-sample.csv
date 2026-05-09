@@ -1,0 +1,3 @@
+Transaction Date,Transaction Type,Security Type,Symbol,Quantity,Price,Commission,Amount,Currency
+2026-05-01,Buy,Stock,MSFT,20,400.00,0.00,-8000.00,USD
+2026-05-01,Sell,Stock,MSFT,20,402.00,0.00,8040.00,USD

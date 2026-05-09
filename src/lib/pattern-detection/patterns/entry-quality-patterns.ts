@@ -125,9 +125,9 @@ function createFavorableExtensionEntryPattern(
     structuralLevel: config.structuralLevel,
 
     evaluate: (input) => {
-      const rangePosition = input.firstEntryPricePositionInTradeRangePct;
-      const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-      const adverseAfterEntry = input.firstEntryToWorstMovePct;
+      const rangePosition = input.entryContext.firstEntryPricePositionInTradeRangePct;
+      const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+      const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
       const {
         favorableMovePct,
         directionalCandles,
@@ -135,11 +135,11 @@ function createFavorableExtensionEntryPattern(
         normalizedNetMovePct,
       } = getPreEntryDirectionalContext({
         tradeDirection: input.tradeDirection,
-        recentRunUpPct: input.firstEntryRecentRunUpPctBeforeEntry,
-        recentDropPct: input.firstEntryRecentDropPctBeforeEntry,
-        bullishCandles: input.firstEntryBullishCandlesBeforeEntryCount,
-        bearishCandles: input.firstEntryBearishCandlesBeforeEntryCount,
-        recentNetMovePct: input.firstEntryRecentNetMovePctBeforeEntry,
+        recentRunUpPct: input.entryContext.firstEntryRecentRunUpPctBeforeEntry,
+        recentDropPct: input.entryContext.firstEntryRecentDropPctBeforeEntry,
+        bullishCandles: input.entryContext.firstEntryBullishCandlesBeforeEntryCount,
+        bearishCandles: input.entryContext.firstEntryBearishCandlesBeforeEntryCount,
+        recentNetMovePct: input.entryContext.firstEntryRecentNetMovePctBeforeEntry,
       });
 
       const directionalCandleEdge =
@@ -224,9 +224,9 @@ export const ADVANTAGED_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const rangePosition = input.firstEntryPricePositionInTradeRangePct;
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
+    const rangePosition = input.entryContext.firstEntryPricePositionInTradeRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
 
     const maxRangePosition =
       THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MAX_RANGE_POSITION;
@@ -276,9 +276,9 @@ export const DISADVANTAGED_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const rangePosition = input.firstEntryPricePositionInTradeRangePct;
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
+    const rangePosition = input.entryContext.firstEntryPricePositionInTradeRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
 
     const minRangePosition =
       THRESHOLDS.ENTRY_QUALITY.DISADVANTAGED_MIN_RANGE_POSITION;
@@ -331,8 +331,8 @@ export const EFFICIENT_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
 
     const minCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.EFFICIENT_MIN_CAPTURED_MFE;
@@ -379,8 +379,8 @@ export const INEFFICIENT_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
 
     const maxCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.INEFFICIENT_MAX_CAPTURED_MFE;
@@ -470,9 +470,9 @@ export const CONSTRUCTIVE_PULLBACK_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const rangePosition = input.firstEntryPricePositionInTradeRangePct;
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
+    const rangePosition = input.entryContext.firstEntryPricePositionInTradeRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
     const {
       adverseMovePct,
       directionalCandles,
@@ -480,11 +480,11 @@ export const CONSTRUCTIVE_PULLBACK_ENTRY_STRUCTURE: PatternDefinition = {
       normalizedNetMovePct,
     } = getPreEntryDirectionalContext({
       tradeDirection: input.tradeDirection,
-      recentRunUpPct: input.firstEntryRecentRunUpPctBeforeEntry,
-      recentDropPct: input.firstEntryRecentDropPctBeforeEntry,
-      bullishCandles: input.firstEntryBullishCandlesBeforeEntryCount,
-      bearishCandles: input.firstEntryBearishCandlesBeforeEntryCount,
-      recentNetMovePct: input.firstEntryRecentNetMovePctBeforeEntry,
+      recentRunUpPct: input.entryContext.firstEntryRecentRunUpPctBeforeEntry,
+      recentDropPct: input.entryContext.firstEntryRecentDropPctBeforeEntry,
+      bullishCandles: input.entryContext.firstEntryBullishCandlesBeforeEntryCount,
+      bearishCandles: input.entryContext.firstEntryBearishCandlesBeforeEntryCount,
+      recentNetMovePct: input.entryContext.firstEntryRecentNetMovePctBeforeEntry,
     });
 
     const maxRangePosition =
@@ -732,9 +732,9 @@ export const FAILED_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const rangePosition = input.firstEntryPricePositionInTradeRangePct;
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
+    const rangePosition = input.entryContext.firstEntryPricePositionInTradeRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
     const {
       favorableMovePct,
       directionalCandles,
@@ -742,11 +742,11 @@ export const FAILED_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = {
       normalizedNetMovePct,
     } = getPreEntryDirectionalContext({
       tradeDirection: input.tradeDirection,
-      recentRunUpPct: input.firstEntryRecentRunUpPctBeforeEntry,
-      recentDropPct: input.firstEntryRecentDropPctBeforeEntry,
-      bullishCandles: input.firstEntryBullishCandlesBeforeEntryCount,
-      bearishCandles: input.firstEntryBearishCandlesBeforeEntryCount,
-      recentNetMovePct: input.firstEntryRecentNetMovePctBeforeEntry,
+      recentRunUpPct: input.entryContext.firstEntryRecentRunUpPctBeforeEntry,
+      recentDropPct: input.entryContext.firstEntryRecentDropPctBeforeEntry,
+      bullishCandles: input.entryContext.firstEntryBullishCandlesBeforeEntryCount,
+      bearishCandles: input.entryContext.firstEntryBearishCandlesBeforeEntryCount,
+      recentNetMovePct: input.entryContext.firstEntryRecentNetMovePctBeforeEntry,
     });
 
     const minDirectionalMovePct =
@@ -825,16 +825,16 @@ export const RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const breakDepthPct = input.firstEntryRecentReferenceBreakDepthPctBeforeEntry;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const breakDepthPct = input.entryContext.firstEntryRecentReferenceBreakDepthPctBeforeEntry;
     const confirmationCandles =
-      input.firstEntryRecentReferenceConfirmationCandlesCount;
+      input.entryContext.firstEntryRecentReferenceConfirmationCandlesCount;
     const distanceFromReference =
-      input.firstEntryDistanceFromRecentReferenceLevelPct;
-    const hadReclaim = input.firstEntryHadRecentReferenceReclaimBeforeEntry;
+      input.entryContext.firstEntryDistanceFromRecentReferenceLevelPct;
+    const hadReclaim = input.entryContext.firstEntryHadRecentReferenceReclaimBeforeEntry;
     const heldIntoEntry =
-      input.firstEntryRecentReferenceReclaimHeldIntoEntry;
+      input.entryContext.firstEntryRecentReferenceReclaimHeldIntoEntry;
 
     const minCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MIN_CAPTURED_MFE;
@@ -873,7 +873,7 @@ export const RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
         firstEntryHadRecentReferenceReclaimBeforeEntry: hadReclaim,
         firstEntryRecentReferenceReclaimHeldIntoEntry: heldIntoEntry,
         firstEntryRecentReferenceLevelBeforeEntry:
-          input.firstEntryRecentReferenceLevelBeforeEntry,
+          input.entryContext.firstEntryRecentReferenceLevelBeforeEntry,
       },
       thresholdsUsed: {
         minCapturedMfe,
@@ -903,16 +903,16 @@ export const FAILED_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const breakDepthPct = input.firstEntryRecentReferenceBreakDepthPctBeforeEntry;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const breakDepthPct = input.entryContext.firstEntryRecentReferenceBreakDepthPctBeforeEntry;
     const confirmationCandles =
-      input.firstEntryRecentReferenceConfirmationCandlesCount;
+      input.entryContext.firstEntryRecentReferenceConfirmationCandlesCount;
     const distanceFromReference =
-      input.firstEntryDistanceFromRecentReferenceLevelPct;
-    const hadReclaim = input.firstEntryHadRecentReferenceReclaimBeforeEntry;
+      input.entryContext.firstEntryDistanceFromRecentReferenceLevelPct;
+    const hadReclaim = input.entryContext.firstEntryHadRecentReferenceReclaimBeforeEntry;
     const heldIntoEntry =
-      input.firstEntryRecentReferenceReclaimHeldIntoEntry;
+      input.entryContext.firstEntryRecentReferenceReclaimHeldIntoEntry;
 
     const maxCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.FAILED_RECLAIM_MAX_CAPTURED_MFE;
@@ -951,7 +951,7 @@ export const FAILED_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
         firstEntryHadRecentReferenceReclaimBeforeEntry: hadReclaim,
         firstEntryRecentReferenceReclaimHeldIntoEntry: heldIntoEntry,
         firstEntryRecentReferenceLevelBeforeEntry:
-          input.firstEntryRecentReferenceLevelBeforeEntry,
+          input.entryContext.firstEntryRecentReferenceLevelBeforeEntry,
       },
       thresholdsUsed: {
         maxCapturedMfe,
@@ -982,26 +982,26 @@ export const MEAN_REVERSION_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const breakDepthPct = input.firstEntryRecentReferenceBreakDepthPctBeforeEntry;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const breakDepthPct = input.entryContext.firstEntryRecentReferenceBreakDepthPctBeforeEntry;
     const confirmationCandles =
-      input.firstEntryRecentReferenceConfirmationCandlesCount;
+      input.entryContext.firstEntryRecentReferenceConfirmationCandlesCount;
     const distanceFromReference =
-      input.firstEntryDistanceFromRecentReferenceLevelPct;
-    const hadReclaim = input.firstEntryHadRecentReferenceReclaimBeforeEntry;
+      input.entryContext.firstEntryDistanceFromRecentReferenceLevelPct;
+    const hadReclaim = input.entryContext.firstEntryHadRecentReferenceReclaimBeforeEntry;
     const heldIntoEntry =
-      input.firstEntryRecentReferenceReclaimHeldIntoEntry;
+      input.entryContext.firstEntryRecentReferenceReclaimHeldIntoEntry;
     const {
       adverseMovePct,
       normalizedNetMovePct,
     } = getPreEntryDirectionalContext({
       tradeDirection: input.tradeDirection,
-      recentRunUpPct: input.firstEntryRecentRunUpPctBeforeEntry,
-      recentDropPct: input.firstEntryRecentDropPctBeforeEntry,
-      bullishCandles: input.firstEntryBullishCandlesBeforeEntryCount,
-      bearishCandles: input.firstEntryBearishCandlesBeforeEntryCount,
-      recentNetMovePct: input.firstEntryRecentNetMovePctBeforeEntry,
+      recentRunUpPct: input.entryContext.firstEntryRecentRunUpPctBeforeEntry,
+      recentDropPct: input.entryContext.firstEntryRecentDropPctBeforeEntry,
+      bullishCandles: input.entryContext.firstEntryBullishCandlesBeforeEntryCount,
+      bearishCandles: input.entryContext.firstEntryBearishCandlesBeforeEntryCount,
+      recentNetMovePct: input.entryContext.firstEntryRecentNetMovePctBeforeEntry,
     });
 
     const minCapturedMfe =
@@ -1051,7 +1051,7 @@ export const MEAN_REVERSION_ENTRY_STRUCTURE: PatternDefinition = {
         adverseMovePctBeforeEntry: adverseMovePct,
         normalizedRecentNetMovePctBeforeEntry: normalizedNetMovePct,
         firstEntryRecentReferenceLevelBeforeEntry:
-          input.firstEntryRecentReferenceLevelBeforeEntry,
+          input.entryContext.firstEntryRecentReferenceLevelBeforeEntry,
       },
       thresholdsUsed: {
         minCapturedMfe,
@@ -1083,26 +1083,26 @@ export const FAILED_MEAN_REVERSION_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const breakDepthPct = input.firstEntryRecentReferenceBreakDepthPctBeforeEntry;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const breakDepthPct = input.entryContext.firstEntryRecentReferenceBreakDepthPctBeforeEntry;
     const confirmationCandles =
-      input.firstEntryRecentReferenceConfirmationCandlesCount;
+      input.entryContext.firstEntryRecentReferenceConfirmationCandlesCount;
     const distanceFromReference =
-      input.firstEntryDistanceFromRecentReferenceLevelPct;
-    const hadReclaim = input.firstEntryHadRecentReferenceReclaimBeforeEntry;
+      input.entryContext.firstEntryDistanceFromRecentReferenceLevelPct;
+    const hadReclaim = input.entryContext.firstEntryHadRecentReferenceReclaimBeforeEntry;
     const heldIntoEntry =
-      input.firstEntryRecentReferenceReclaimHeldIntoEntry;
+      input.entryContext.firstEntryRecentReferenceReclaimHeldIntoEntry;
     const {
       adverseMovePct,
       normalizedNetMovePct,
     } = getPreEntryDirectionalContext({
       tradeDirection: input.tradeDirection,
-      recentRunUpPct: input.firstEntryRecentRunUpPctBeforeEntry,
-      recentDropPct: input.firstEntryRecentDropPctBeforeEntry,
-      bullishCandles: input.firstEntryBullishCandlesBeforeEntryCount,
-      bearishCandles: input.firstEntryBearishCandlesBeforeEntryCount,
-      recentNetMovePct: input.firstEntryRecentNetMovePctBeforeEntry,
+      recentRunUpPct: input.entryContext.firstEntryRecentRunUpPctBeforeEntry,
+      recentDropPct: input.entryContext.firstEntryRecentDropPctBeforeEntry,
+      bullishCandles: input.entryContext.firstEntryBullishCandlesBeforeEntryCount,
+      bearishCandles: input.entryContext.firstEntryBearishCandlesBeforeEntryCount,
+      recentNetMovePct: input.entryContext.firstEntryRecentNetMovePctBeforeEntry,
     });
 
     const maxCapturedMfe =
@@ -1152,7 +1152,7 @@ export const FAILED_MEAN_REVERSION_ENTRY_STRUCTURE: PatternDefinition = {
         adverseMovePctBeforeEntry: adverseMovePct,
         normalizedRecentNetMovePctBeforeEntry: normalizedNetMovePct,
         firstEntryRecentReferenceLevelBeforeEntry:
-          input.firstEntryRecentReferenceLevelBeforeEntry,
+          input.entryContext.firstEntryRecentReferenceLevelBeforeEntry,
       },
       thresholdsUsed: {
         maxCapturedMfe,
@@ -1186,9 +1186,9 @@ export const OPENING_RANGE_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const distanceBeyondRange = input.firstEntryDistanceBeyondOpeningRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const distanceBeyondRange = input.entryContext.firstEntryDistanceBeyondOpeningRangePct;
 
     const minCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MIN_CAPTURED_MFE;
@@ -1198,9 +1198,9 @@ export const OPENING_RANGE_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = {
       THRESHOLDS.ENTRY_QUALITY.OPENING_RANGE_BREAKOUT_MAX_DISTANCE_BEYOND_RANGE_PCT;
 
     const matched =
-      input.firstEntryOccurredDuringMarketOpenSession &&
-      input.firstEntryOpeningRangeCandlesCountBeforeEntry >= 3 &&
-      input.firstEntryOccurredBeyondOpeningRangeInTradeDirection &&
+      input.entryContext.firstEntryOccurredDuringMarketOpenSession &&
+      input.entryContext.firstEntryOpeningRangeCandlesCountBeforeEntry >= 3 &&
+      input.entryContext.firstEntryOccurredBeyondOpeningRangeInTradeDirection &&
       capturedMfe !== null &&
       adverseAfterEntry !== null &&
       distanceBeyondRange !== null &&
@@ -1213,11 +1213,11 @@ export const OPENING_RANGE_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = {
       evidence: {
         sessionBucket: input.sessionBucket,
         firstEntryOpeningRangeCandlesCountBeforeEntry:
-          input.firstEntryOpeningRangeCandlesCountBeforeEntry,
+          input.entryContext.firstEntryOpeningRangeCandlesCountBeforeEntry,
         firstEntryOccurredDuringMarketOpenSession:
-          input.firstEntryOccurredDuringMarketOpenSession,
+          input.entryContext.firstEntryOccurredDuringMarketOpenSession,
         firstEntryOccurredBeyondOpeningRangeInTradeDirection:
-          input.firstEntryOccurredBeyondOpeningRangeInTradeDirection,
+          input.entryContext.firstEntryOccurredBeyondOpeningRangeInTradeDirection,
         firstEntryDistanceBeyondOpeningRangePct: distanceBeyondRange,
         firstEntryCapturedPercentOfTradeMfe: capturedMfe,
         firstEntryToWorstMovePct: adverseAfterEntry,
@@ -1242,9 +1242,9 @@ export const OPENING_RANGE_BREAKOUT_CHASE_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const distanceBeyondRange = input.firstEntryDistanceBeyondOpeningRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const distanceBeyondRange = input.entryContext.firstEntryDistanceBeyondOpeningRangePct;
 
     const maxCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.DISADVANTAGED_MAX_CAPTURED_MFE;
@@ -1254,9 +1254,9 @@ export const OPENING_RANGE_BREAKOUT_CHASE_ENTRY_STRUCTURE: PatternDefinition = {
       THRESHOLDS.ENTRY_QUALITY.OPENING_RANGE_BREAKOUT_CHASE_MIN_DISTANCE_BEYOND_RANGE_PCT;
 
     const matched =
-      input.firstEntryOccurredDuringMarketOpenSession &&
-      input.firstEntryOpeningRangeCandlesCountBeforeEntry >= 3 &&
-      input.firstEntryOccurredBeyondOpeningRangeInTradeDirection &&
+      input.entryContext.firstEntryOccurredDuringMarketOpenSession &&
+      input.entryContext.firstEntryOpeningRangeCandlesCountBeforeEntry >= 3 &&
+      input.entryContext.firstEntryOccurredBeyondOpeningRangeInTradeDirection &&
       capturedMfe !== null &&
       adverseAfterEntry !== null &&
       distanceBeyondRange !== null &&
@@ -1269,11 +1269,11 @@ export const OPENING_RANGE_BREAKOUT_CHASE_ENTRY_STRUCTURE: PatternDefinition = {
       evidence: {
         sessionBucket: input.sessionBucket,
         firstEntryOpeningRangeCandlesCountBeforeEntry:
-          input.firstEntryOpeningRangeCandlesCountBeforeEntry,
+          input.entryContext.firstEntryOpeningRangeCandlesCountBeforeEntry,
         firstEntryOccurredDuringMarketOpenSession:
-          input.firstEntryOccurredDuringMarketOpenSession,
+          input.entryContext.firstEntryOccurredDuringMarketOpenSession,
         firstEntryOccurredBeyondOpeningRangeInTradeDirection:
-          input.firstEntryOccurredBeyondOpeningRangeInTradeDirection,
+          input.entryContext.firstEntryOccurredBeyondOpeningRangeInTradeDirection,
         firstEntryDistanceBeyondOpeningRangePct: distanceBeyondRange,
         firstEntryCapturedPercentOfTradeMfe: capturedMfe,
         firstEntryToWorstMovePct: adverseAfterEntry,
@@ -1298,9 +1298,9 @@ export const FAILED_OPENING_RANGE_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = 
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const distanceBeyondRange = input.firstEntryDistanceBeyondOpeningRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const distanceBeyondRange = input.entryContext.firstEntryDistanceBeyondOpeningRangePct;
 
     const maxCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.FAILED_BREAKOUT_MAX_CAPTURED_MFE;
@@ -1310,9 +1310,9 @@ export const FAILED_OPENING_RANGE_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = 
       THRESHOLDS.ENTRY_QUALITY.OPENING_RANGE_BREAKOUT_MAX_DISTANCE_BEYOND_RANGE_PCT;
 
     const matched =
-      input.firstEntryOccurredDuringMarketOpenSession &&
-      input.firstEntryOpeningRangeCandlesCountBeforeEntry >= 3 &&
-      input.firstEntryOccurredBeyondOpeningRangeInTradeDirection &&
+      input.entryContext.firstEntryOccurredDuringMarketOpenSession &&
+      input.entryContext.firstEntryOpeningRangeCandlesCountBeforeEntry >= 3 &&
+      input.entryContext.firstEntryOccurredBeyondOpeningRangeInTradeDirection &&
       capturedMfe !== null &&
       adverseAfterEntry !== null &&
       distanceBeyondRange !== null &&
@@ -1325,11 +1325,11 @@ export const FAILED_OPENING_RANGE_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = 
       evidence: {
         sessionBucket: input.sessionBucket,
         firstEntryOpeningRangeCandlesCountBeforeEntry:
-          input.firstEntryOpeningRangeCandlesCountBeforeEntry,
+          input.entryContext.firstEntryOpeningRangeCandlesCountBeforeEntry,
         firstEntryOccurredDuringMarketOpenSession:
-          input.firstEntryOccurredDuringMarketOpenSession,
+          input.entryContext.firstEntryOccurredDuringMarketOpenSession,
         firstEntryOccurredBeyondOpeningRangeInTradeDirection:
-          input.firstEntryOccurredBeyondOpeningRangeInTradeDirection,
+          input.entryContext.firstEntryOccurredBeyondOpeningRangeInTradeDirection,
         firstEntryDistanceBeyondOpeningRangePct: distanceBeyondRange,
         firstEntryCapturedPercentOfTradeMfe: capturedMfe,
         firstEntryToWorstMovePct: adverseAfterEntry,
@@ -1351,14 +1351,14 @@ export const OPENING_RANGE_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
     const breakDepthPct =
-      input.firstEntryOpeningRangeReferenceBreakDepthPctBeforeEntry;
+      input.entryContext.firstEntryOpeningRangeReferenceBreakDepthPctBeforeEntry;
     const confirmationCandles =
-      input.firstEntryOpeningRangeConfirmationCandlesCount;
+      input.entryContext.firstEntryOpeningRangeConfirmationCandlesCount;
     const distanceFromReference =
-      input.firstEntryDistanceFromOpeningRangeReferenceLevelPct;
+      input.entryContext.firstEntryDistanceFromOpeningRangeReferenceLevelPct;
 
     const minCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MIN_CAPTURED_MFE;
@@ -1372,10 +1372,10 @@ export const OPENING_RANGE_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
       THRESHOLDS.ENTRY_QUALITY.RECLAIM_ENTRY_MIN_CONFIRMATION_CANDLES;
 
     const matched =
-      input.firstEntryOccurredDuringMarketOpenSession &&
-      input.firstEntryOpeningRangeCandlesCountBeforeEntry >= 3 &&
-      input.firstEntryHadOpeningRangeReclaimBeforeEntry &&
-      input.firstEntryOpeningRangeReclaimHeldIntoEntry &&
+      input.entryContext.firstEntryOccurredDuringMarketOpenSession &&
+      input.entryContext.firstEntryOpeningRangeCandlesCountBeforeEntry >= 3 &&
+      input.entryContext.firstEntryHadOpeningRangeReclaimBeforeEntry &&
+      input.entryContext.firstEntryOpeningRangeReclaimHeldIntoEntry &&
       capturedMfe !== null &&
       adverseAfterEntry !== null &&
       breakDepthPct !== null &&
@@ -1391,11 +1391,11 @@ export const OPENING_RANGE_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
       evidence: {
         sessionBucket: input.sessionBucket,
         firstEntryOpeningRangeCandlesCountBeforeEntry:
-          input.firstEntryOpeningRangeCandlesCountBeforeEntry,
+          input.entryContext.firstEntryOpeningRangeCandlesCountBeforeEntry,
         firstEntryHadOpeningRangeReclaimBeforeEntry:
-          input.firstEntryHadOpeningRangeReclaimBeforeEntry,
+          input.entryContext.firstEntryHadOpeningRangeReclaimBeforeEntry,
         firstEntryOpeningRangeReclaimHeldIntoEntry:
-          input.firstEntryOpeningRangeReclaimHeldIntoEntry,
+          input.entryContext.firstEntryOpeningRangeReclaimHeldIntoEntry,
         firstEntryOpeningRangeReferenceBreakDepthPctBeforeEntry: breakDepthPct,
         firstEntryOpeningRangeConfirmationCandlesCount: confirmationCandles,
         firstEntryDistanceFromOpeningRangeReferenceLevelPct:
@@ -1422,14 +1422,14 @@ export const FAILED_OPENING_RANGE_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
     const breakDepthPct =
-      input.firstEntryOpeningRangeReferenceBreakDepthPctBeforeEntry;
+      input.entryContext.firstEntryOpeningRangeReferenceBreakDepthPctBeforeEntry;
     const confirmationCandles =
-      input.firstEntryOpeningRangeConfirmationCandlesCount;
+      input.entryContext.firstEntryOpeningRangeConfirmationCandlesCount;
     const distanceFromReference =
-      input.firstEntryDistanceFromOpeningRangeReferenceLevelPct;
+      input.entryContext.firstEntryDistanceFromOpeningRangeReferenceLevelPct;
 
     const maxCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.FAILED_RECLAIM_MAX_CAPTURED_MFE;
@@ -1443,10 +1443,10 @@ export const FAILED_OPENING_RANGE_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
       THRESHOLDS.ENTRY_QUALITY.RECLAIM_ENTRY_MIN_CONFIRMATION_CANDLES;
 
     const matched =
-      input.firstEntryOccurredDuringMarketOpenSession &&
-      input.firstEntryOpeningRangeCandlesCountBeforeEntry >= 3 &&
-      input.firstEntryHadOpeningRangeReclaimBeforeEntry &&
-      input.firstEntryOpeningRangeReclaimHeldIntoEntry &&
+      input.entryContext.firstEntryOccurredDuringMarketOpenSession &&
+      input.entryContext.firstEntryOpeningRangeCandlesCountBeforeEntry >= 3 &&
+      input.entryContext.firstEntryHadOpeningRangeReclaimBeforeEntry &&
+      input.entryContext.firstEntryOpeningRangeReclaimHeldIntoEntry &&
       capturedMfe !== null &&
       adverseAfterEntry !== null &&
       breakDepthPct !== null &&
@@ -1462,11 +1462,11 @@ export const FAILED_OPENING_RANGE_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
       evidence: {
         sessionBucket: input.sessionBucket,
         firstEntryOpeningRangeCandlesCountBeforeEntry:
-          input.firstEntryOpeningRangeCandlesCountBeforeEntry,
+          input.entryContext.firstEntryOpeningRangeCandlesCountBeforeEntry,
         firstEntryHadOpeningRangeReclaimBeforeEntry:
-          input.firstEntryHadOpeningRangeReclaimBeforeEntry,
+          input.entryContext.firstEntryHadOpeningRangeReclaimBeforeEntry,
         firstEntryOpeningRangeReclaimHeldIntoEntry:
-          input.firstEntryOpeningRangeReclaimHeldIntoEntry,
+          input.entryContext.firstEntryOpeningRangeReclaimHeldIntoEntry,
         firstEntryOpeningRangeReferenceBreakDepthPctBeforeEntry: breakDepthPct,
         firstEntryOpeningRangeConfirmationCandlesCount: confirmationCandles,
         firstEntryDistanceFromOpeningRangeReferenceLevelPct:
@@ -1503,9 +1503,9 @@ export const MARKET_OPEN_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const distanceBeyondRange = input.firstEntryDistanceBeyondPreEntryRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const distanceBeyondRange = input.entryContext.firstEntryDistanceBeyondPreEntryRangePct;
 
     const minCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MIN_CAPTURED_MFE;
@@ -1515,8 +1515,8 @@ export const MARKET_OPEN_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = {
       THRESHOLDS.ENTRY_QUALITY.MARKET_OPEN_BREAKOUT_MAX_DISTANCE_BEYOND_RANGE_PCT;
 
     const matched =
-      input.firstEntryOccurredDuringMarketOpenSession &&
-      input.firstEntryOccurredBeyondPreEntryRangeInTradeDirection &&
+      input.entryContext.firstEntryOccurredDuringMarketOpenSession &&
+      input.entryContext.firstEntryOccurredBeyondPreEntryRangeInTradeDirection &&
       capturedMfe !== null &&
       adverseAfterEntry !== null &&
       distanceBeyondRange !== null &&
@@ -1529,9 +1529,9 @@ export const MARKET_OPEN_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = {
       evidence: {
         sessionBucket: input.sessionBucket,
         firstEntryOccurredDuringMarketOpenSession:
-          input.firstEntryOccurredDuringMarketOpenSession,
+          input.entryContext.firstEntryOccurredDuringMarketOpenSession,
         firstEntryOccurredBeyondPreEntryRangeInTradeDirection:
-          input.firstEntryOccurredBeyondPreEntryRangeInTradeDirection,
+          input.entryContext.firstEntryOccurredBeyondPreEntryRangeInTradeDirection,
         firstEntryDistanceBeyondPreEntryRangePct: distanceBeyondRange,
         firstEntryCapturedPercentOfTradeMfe: capturedMfe,
         firstEntryToWorstMovePct: adverseAfterEntry,
@@ -1563,9 +1563,9 @@ export const MARKET_OPEN_BREAKOUT_CHASE_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const distanceBeyondRange = input.firstEntryDistanceBeyondPreEntryRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const distanceBeyondRange = input.entryContext.firstEntryDistanceBeyondPreEntryRangePct;
 
     const maxCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.DISADVANTAGED_MAX_CAPTURED_MFE;
@@ -1575,8 +1575,8 @@ export const MARKET_OPEN_BREAKOUT_CHASE_ENTRY_STRUCTURE: PatternDefinition = {
       THRESHOLDS.ENTRY_QUALITY.MARKET_OPEN_BREAKOUT_CHASE_MIN_DISTANCE_BEYOND_RANGE_PCT;
 
     const matched =
-      input.firstEntryOccurredDuringMarketOpenSession &&
-      input.firstEntryOccurredBeyondPreEntryRangeInTradeDirection &&
+      input.entryContext.firstEntryOccurredDuringMarketOpenSession &&
+      input.entryContext.firstEntryOccurredBeyondPreEntryRangeInTradeDirection &&
       capturedMfe !== null &&
       adverseAfterEntry !== null &&
       distanceBeyondRange !== null &&
@@ -1589,9 +1589,9 @@ export const MARKET_OPEN_BREAKOUT_CHASE_ENTRY_STRUCTURE: PatternDefinition = {
       evidence: {
         sessionBucket: input.sessionBucket,
         firstEntryOccurredDuringMarketOpenSession:
-          input.firstEntryOccurredDuringMarketOpenSession,
+          input.entryContext.firstEntryOccurredDuringMarketOpenSession,
         firstEntryOccurredBeyondPreEntryRangeInTradeDirection:
-          input.firstEntryOccurredBeyondPreEntryRangeInTradeDirection,
+          input.entryContext.firstEntryOccurredBeyondPreEntryRangeInTradeDirection,
         firstEntryDistanceBeyondPreEntryRangePct: distanceBeyondRange,
         firstEntryCapturedPercentOfTradeMfe: capturedMfe,
         firstEntryToWorstMovePct: adverseAfterEntry,
@@ -1623,9 +1623,9 @@ export const FAILED_MARKET_OPEN_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const distanceBeyondRange = input.firstEntryDistanceBeyondPreEntryRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const distanceBeyondRange = input.entryContext.firstEntryDistanceBeyondPreEntryRangePct;
 
     const maxCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.FAILED_BREAKOUT_MAX_CAPTURED_MFE;
@@ -1635,8 +1635,8 @@ export const FAILED_MARKET_OPEN_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = {
       THRESHOLDS.ENTRY_QUALITY.MARKET_OPEN_BREAKOUT_MAX_DISTANCE_BEYOND_RANGE_PCT;
 
     const matched =
-      input.firstEntryOccurredDuringMarketOpenSession &&
-      input.firstEntryOccurredBeyondPreEntryRangeInTradeDirection &&
+      input.entryContext.firstEntryOccurredDuringMarketOpenSession &&
+      input.entryContext.firstEntryOccurredBeyondPreEntryRangeInTradeDirection &&
       capturedMfe !== null &&
       adverseAfterEntry !== null &&
       distanceBeyondRange !== null &&
@@ -1649,9 +1649,9 @@ export const FAILED_MARKET_OPEN_BREAKOUT_ENTRY_STRUCTURE: PatternDefinition = {
       evidence: {
         sessionBucket: input.sessionBucket,
         firstEntryOccurredDuringMarketOpenSession:
-          input.firstEntryOccurredDuringMarketOpenSession,
+          input.entryContext.firstEntryOccurredDuringMarketOpenSession,
         firstEntryOccurredBeyondPreEntryRangeInTradeDirection:
-          input.firstEntryOccurredBeyondPreEntryRangeInTradeDirection,
+          input.entryContext.firstEntryOccurredBeyondPreEntryRangeInTradeDirection,
         firstEntryDistanceBeyondPreEntryRangePct: distanceBeyondRange,
         firstEntryCapturedPercentOfTradeMfe: capturedMfe,
         firstEntryToWorstMovePct: adverseAfterEntry,
@@ -1683,13 +1683,13 @@ export const MARKET_OPEN_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const breakDepthPct = input.firstEntryRecentReferenceBreakDepthPctBeforeEntry;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const breakDepthPct = input.entryContext.firstEntryRecentReferenceBreakDepthPctBeforeEntry;
     const confirmationCandles =
-      input.firstEntryRecentReferenceConfirmationCandlesCount;
+      input.entryContext.firstEntryRecentReferenceConfirmationCandlesCount;
     const distanceFromReference =
-      input.firstEntryDistanceFromRecentReferenceLevelPct;
+      input.entryContext.firstEntryDistanceFromRecentReferenceLevelPct;
 
     const minCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MIN_CAPTURED_MFE;
@@ -1703,9 +1703,9 @@ export const MARKET_OPEN_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
       THRESHOLDS.ENTRY_QUALITY.RECLAIM_ENTRY_MIN_CONFIRMATION_CANDLES;
 
     const matched =
-      input.firstEntryOccurredDuringMarketOpenSession &&
-      input.firstEntryHadRecentReferenceReclaimBeforeEntry &&
-      input.firstEntryRecentReferenceReclaimHeldIntoEntry &&
+      input.entryContext.firstEntryOccurredDuringMarketOpenSession &&
+      input.entryContext.firstEntryHadRecentReferenceReclaimBeforeEntry &&
+      input.entryContext.firstEntryRecentReferenceReclaimHeldIntoEntry &&
       capturedMfe !== null &&
       adverseAfterEntry !== null &&
       breakDepthPct !== null &&
@@ -1721,7 +1721,7 @@ export const MARKET_OPEN_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
       evidence: {
         sessionBucket: input.sessionBucket,
         firstEntryOccurredDuringMarketOpenSession:
-          input.firstEntryOccurredDuringMarketOpenSession,
+          input.entryContext.firstEntryOccurredDuringMarketOpenSession,
         firstEntryCapturedPercentOfTradeMfe: capturedMfe,
         firstEntryToWorstMovePct: adverseAfterEntry,
         firstEntryRecentReferenceBreakDepthPctBeforeEntry: breakDepthPct,
@@ -1729,9 +1729,9 @@ export const MARKET_OPEN_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
           confirmationCandles,
         firstEntryDistanceFromRecentReferenceLevelPct: distanceFromReference,
         firstEntryHadRecentReferenceReclaimBeforeEntry:
-          input.firstEntryHadRecentReferenceReclaimBeforeEntry,
+          input.entryContext.firstEntryHadRecentReferenceReclaimBeforeEntry,
         firstEntryRecentReferenceReclaimHeldIntoEntry:
-          input.firstEntryRecentReferenceReclaimHeldIntoEntry,
+          input.entryContext.firstEntryRecentReferenceReclaimHeldIntoEntry,
       },
       thresholdsUsed: {
         minCapturedMfe,
@@ -1762,13 +1762,13 @@ export const FAILED_MARKET_OPEN_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const breakDepthPct = input.firstEntryRecentReferenceBreakDepthPctBeforeEntry;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const breakDepthPct = input.entryContext.firstEntryRecentReferenceBreakDepthPctBeforeEntry;
     const confirmationCandles =
-      input.firstEntryRecentReferenceConfirmationCandlesCount;
+      input.entryContext.firstEntryRecentReferenceConfirmationCandlesCount;
     const distanceFromReference =
-      input.firstEntryDistanceFromRecentReferenceLevelPct;
+      input.entryContext.firstEntryDistanceFromRecentReferenceLevelPct;
 
     const maxCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.FAILED_RECLAIM_MAX_CAPTURED_MFE;
@@ -1782,9 +1782,9 @@ export const FAILED_MARKET_OPEN_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
       THRESHOLDS.ENTRY_QUALITY.RECLAIM_ENTRY_MIN_CONFIRMATION_CANDLES;
 
     const matched =
-      input.firstEntryOccurredDuringMarketOpenSession &&
-      input.firstEntryHadRecentReferenceReclaimBeforeEntry &&
-      input.firstEntryRecentReferenceReclaimHeldIntoEntry &&
+      input.entryContext.firstEntryOccurredDuringMarketOpenSession &&
+      input.entryContext.firstEntryHadRecentReferenceReclaimBeforeEntry &&
+      input.entryContext.firstEntryRecentReferenceReclaimHeldIntoEntry &&
       capturedMfe !== null &&
       adverseAfterEntry !== null &&
       breakDepthPct !== null &&
@@ -1800,7 +1800,7 @@ export const FAILED_MARKET_OPEN_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
       evidence: {
         sessionBucket: input.sessionBucket,
         firstEntryOccurredDuringMarketOpenSession:
-          input.firstEntryOccurredDuringMarketOpenSession,
+          input.entryContext.firstEntryOccurredDuringMarketOpenSession,
         firstEntryCapturedPercentOfTradeMfe: capturedMfe,
         firstEntryToWorstMovePct: adverseAfterEntry,
         firstEntryRecentReferenceBreakDepthPctBeforeEntry: breakDepthPct,
@@ -1808,9 +1808,9 @@ export const FAILED_MARKET_OPEN_RECLAIM_ENTRY_STRUCTURE: PatternDefinition = {
           confirmationCandles,
         firstEntryDistanceFromRecentReferenceLevelPct: distanceFromReference,
         firstEntryHadRecentReferenceReclaimBeforeEntry:
-          input.firstEntryHadRecentReferenceReclaimBeforeEntry,
+          input.entryContext.firstEntryHadRecentReferenceReclaimBeforeEntry,
         firstEntryRecentReferenceReclaimHeldIntoEntry:
-          input.firstEntryRecentReferenceReclaimHeldIntoEntry,
+          input.entryContext.firstEntryRecentReferenceReclaimHeldIntoEntry,
       },
       thresholdsUsed: {
         maxCapturedMfe,
@@ -1831,21 +1831,21 @@ export const BREAKOUT_WITH_ROOM_ABOVE_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
-    const roomAbovePct = input.firstEntryDistanceToNearestResistancePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+    const roomAbovePct = input.supportResistanceContext.firstEntryDistanceToNearestResistancePct;
     const distanceAboveBrokenResistancePct =
-      input.firstEntryDistanceAboveNearestResistanceBelowPct;
+      input.supportResistanceContext.firstEntryDistanceAboveNearestResistanceBelowPct;
     const minCapturedMfe =
       THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MIN_CAPTURED_MFE;
     const maxAdverseAfterEntry =
       THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MAX_ADVERSE_AFTER_ENTRY_PCT;
 
     const matched =
-      input.hadSupportResistanceContextAvailable &&
-      input.firstEntryClearedNearestResistanceBelow &&
-      input.firstEntryHadRoomAboveAfterClearingResistance &&
-      !input.firstEntryOccurredNearResistance &&
+      input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+      input.supportResistanceContext.firstEntryClearedNearestResistanceBelow &&
+      input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance &&
+      !input.supportResistanceContext.firstEntryOccurredNearResistance &&
       capturedMfe !== null &&
       adverseAfterEntry !== null &&
       capturedMfe >= minCapturedMfe &&
@@ -1855,11 +1855,11 @@ export const BREAKOUT_WITH_ROOM_ABOVE_STRUCTURE: PatternDefinition = {
       matched,
       evidence: {
         hadSupportResistanceContextAvailable:
-          input.hadSupportResistanceContextAvailable,
+          input.supportResistanceContext.hadSupportResistanceContextAvailable,
         firstEntryClearedNearestResistanceBelow:
-          input.firstEntryClearedNearestResistanceBelow,
+          input.supportResistanceContext.firstEntryClearedNearestResistanceBelow,
         firstEntryHadRoomAboveAfterClearingResistance:
-          input.firstEntryHadRoomAboveAfterClearingResistance,
+          input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance,
         firstEntryDistanceAboveNearestResistanceBelowPct:
           distanceAboveBrokenResistancePct,
         firstEntryDistanceToNearestResistancePct: roomAbovePct,
@@ -1882,14 +1882,14 @@ export const BREAKOUT_INTO_OVERHEAD_RESISTANCE_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
 
     const matched =
-      input.hadSupportResistanceContextAvailable &&
-      input.firstEntryClearedNearestResistanceBelow &&
-      input.firstEntryHasStackedResistanceAbove &&
-      !input.firstEntryHadRoomAboveAfterClearingResistance &&
+      input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+      input.supportResistanceContext.firstEntryClearedNearestResistanceBelow &&
+      input.supportResistanceContext.firstEntryHasStackedResistanceAbove &&
+      !input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance &&
       capturedMfe !== null &&
       adverseAfterEntry !== null &&
       capturedMfe <=
@@ -1901,15 +1901,15 @@ export const BREAKOUT_INTO_OVERHEAD_RESISTANCE_STRUCTURE: PatternDefinition = {
       matched,
       evidence: {
         hadSupportResistanceContextAvailable:
-          input.hadSupportResistanceContextAvailable,
+          input.supportResistanceContext.hadSupportResistanceContextAvailable,
         firstEntryClearedNearestResistanceBelow:
-          input.firstEntryClearedNearestResistanceBelow,
+          input.supportResistanceContext.firstEntryClearedNearestResistanceBelow,
         firstEntryHasStackedResistanceAbove:
-          input.firstEntryHasStackedResistanceAbove,
+          input.supportResistanceContext.firstEntryHasStackedResistanceAbove,
         firstEntryResistanceLevelsAboveWithinClusterCount:
-          input.firstEntryResistanceLevelsAboveWithinClusterCount,
+          input.supportResistanceContext.firstEntryResistanceLevelsAboveWithinClusterCount,
         firstEntryHadRoomAboveAfterClearingResistance:
-          input.firstEntryHadRoomAboveAfterClearingResistance,
+          input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance,
         firstEntryCapturedPercentOfTradeMfe: capturedMfe,
         firstEntryToWorstMovePct: adverseAfterEntry,
       },
@@ -1932,8 +1932,8 @@ export const BREAKOUT_WITH_ROOM_ABOVE_AND_CONSTRUCTIVE_FINAL_EXIT: PatternDefini
     structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-      const adverseAfterEntry = input.firstEntryToWorstMovePct;
+      const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+      const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
       const maxGivebackPct =
         THRESHOLDS.SCALING_QUALITY
           .BALANCED_WITH_PROFIT_PROTECTION_MAX_GIVEBACK_PCT;
@@ -1945,47 +1945,47 @@ export const BREAKOUT_WITH_ROOM_ABOVE_AND_CONSTRUCTIVE_FINAL_EXIT: PatternDefini
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.firstEntryClearedNearestResistanceBelow &&
-        input.firstEntryHadRoomAboveAfterClearingResistance &&
-        !input.firstEntryOccurredNearResistance &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.firstEntryClearedNearestResistanceBelow &&
+        input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance &&
+        !input.supportResistanceContext.firstEntryOccurredNearResistance &&
         capturedMfe !== null &&
         adverseAfterEntry !== null &&
         capturedMfe >= THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MIN_CAPTURED_MFE &&
         adverseAfterEntry <=
           THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MAX_ADVERSE_AFTER_ENTRY_PCT &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
           firstEntryClearedNearestResistanceBelow:
-            input.firstEntryClearedNearestResistanceBelow,
+            input.supportResistanceContext.firstEntryClearedNearestResistanceBelow,
           firstEntryHadRoomAboveAfterClearingResistance:
-            input.firstEntryHadRoomAboveAfterClearingResistance,
+            input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance,
           firstEntryDistanceAboveNearestResistanceBelowPct:
-            input.firstEntryDistanceAboveNearestResistanceBelowPct,
+            input.supportResistanceContext.firstEntryDistanceAboveNearestResistanceBelowPct,
           firstEntryDistanceToNearestResistancePct:
-            input.firstEntryDistanceToNearestResistancePct,
+            input.supportResistanceContext.firstEntryDistanceToNearestResistancePct,
           firstEntryCapturedPercentOfTradeMfe: capturedMfe,
           firstEntryToWorstMovePct: adverseAfterEntry,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minCapturedMfe:
@@ -2009,8 +2009,8 @@ export const BREAKOUT_WITH_ROOM_ABOVE_AND_FAILED_PROFIT_PROTECTION: PatternDefin
     structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-      const adverseAfterEntry = input.firstEntryToWorstMovePct;
+      const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+      const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
       const minGivebackPct =
         THRESHOLDS.SCALING_QUALITY
           .AGGRESSIVE_ADDING_FAILED_PROTECTION_MIN_GIVEBACK_PCT;
@@ -2019,38 +2019,38 @@ export const BREAKOUT_WITH_ROOM_ABOVE_AND_FAILED_PROFIT_PROTECTION: PatternDefin
           .AGGRESSIVE_ADDING_FAILED_PROTECTION_MIN_PEAK_OPEN_PROFIT_PCT_OF_BASIS;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.firstEntryClearedNearestResistanceBelow &&
-        input.firstEntryHadRoomAboveAfterClearingResistance &&
-        !input.firstEntryOccurredNearResistance &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.firstEntryClearedNearestResistanceBelow &&
+        input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance &&
+        !input.supportResistanceContext.firstEntryOccurredNearResistance &&
         capturedMfe !== null &&
         adverseAfterEntry !== null &&
         capturedMfe >= THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MIN_CAPTURED_MFE &&
         adverseAfterEntry <=
           THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MAX_ADVERSE_AFTER_ENTRY_PCT &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis;
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis;
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
           firstEntryClearedNearestResistanceBelow:
-            input.firstEntryClearedNearestResistanceBelow,
+            input.supportResistanceContext.firstEntryClearedNearestResistanceBelow,
           firstEntryHadRoomAboveAfterClearingResistance:
-            input.firstEntryHadRoomAboveAfterClearingResistance,
+            input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance,
           firstEntryDistanceAboveNearestResistanceBelowPct:
-            input.firstEntryDistanceAboveNearestResistanceBelowPct,
+            input.supportResistanceContext.firstEntryDistanceAboveNearestResistanceBelowPct,
           firstEntryDistanceToNearestResistancePct:
-            input.firstEntryDistanceToNearestResistancePct,
+            input.supportResistanceContext.firstEntryDistanceToNearestResistancePct,
           firstEntryCapturedPercentOfTradeMfe: capturedMfe,
           firstEntryToWorstMovePct: adverseAfterEntry,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
         },
         thresholdsUsed: {
           minCapturedMfe: THRESHOLDS.ENTRY_QUALITY.BREAKOUT_ENTRY_MIN_NET_MOVE_PCT,
@@ -2072,12 +2072,12 @@ export const BREAKOUT_INTO_OVERHEAD_RESISTANCE_WITH_DEFENSIVE_FINAL_EXIT: Patter
     structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-      const adverseAfterEntry = input.firstEntryToWorstMovePct;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-      const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
+      const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+      const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+      const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
 
       const maxCapturedMfe =
         THRESHOLDS.ENTRY_QUALITY.DISADVANTAGED_MAX_CAPTURED_MFE;
@@ -2093,17 +2093,17 @@ export const BREAKOUT_INTO_OVERHEAD_RESISTANCE_WITH_DEFENSIVE_FINAL_EXIT: Patter
         THRESHOLDS.EXIT_QUALITY.DISCIPLINED_DEFENSIVE_EXIT_MAX_GIVEBACK_PCT;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.firstEntryClearedNearestResistanceBelow &&
-        input.firstEntryHasStackedResistanceAbove &&
-        !input.firstEntryHadRoomAboveAfterClearingResistance &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.firstEntryClearedNearestResistanceBelow &&
+        input.supportResistanceContext.firstEntryHasStackedResistanceAbove &&
+        !input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance &&
         capturedMfe !== null &&
         capturedMfe <= maxCapturedMfe &&
         adverseAfterEntry !== null &&
         adverseAfterEntry >= minAdverseAfterEntry &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.postExitCandleCount > 0 &&
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.postExitCandleCount > 0 &&
         adversePct !== null &&
         adversePct >= minAdversePct &&
         netEndPct !== null &&
@@ -2116,13 +2116,13 @@ export const BREAKOUT_INTO_OVERHEAD_RESISTANCE_WITH_DEFENSIVE_FINAL_EXIT: Patter
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
           firstEntryClearedNearestResistanceBelow:
-            input.firstEntryClearedNearestResistanceBelow,
+            input.supportResistanceContext.firstEntryClearedNearestResistanceBelow,
           firstEntryHasStackedResistanceAbove:
-            input.firstEntryHasStackedResistanceAbove,
+            input.supportResistanceContext.firstEntryHasStackedResistanceAbove,
           firstEntryResistanceLevelsAboveWithinClusterCount:
-            input.firstEntryResistanceLevelsAboveWithinClusterCount,
+            input.supportResistanceContext.firstEntryResistanceLevelsAboveWithinClusterCount,
           firstEntryCapturedPercentOfTradeMfe: capturedMfe,
           firstEntryToWorstMovePct: adverseAfterEntry,
           maxGivebackFromPeakOpenProfitPct: givebackPct,
@@ -2150,8 +2150,8 @@ export const BREAKOUT_INTO_OVERHEAD_RESISTANCE_WITH_FAILED_PROFIT_PROTECTION: Pa
     structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-      const adverseAfterEntry = input.firstEntryToWorstMovePct;
+      const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+      const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
       const minGivebackPct =
         THRESHOLDS.SCALING_QUALITY
           .AGGRESSIVE_ADDING_FAILED_PROTECTION_MIN_GIVEBACK_PCT;
@@ -2160,36 +2160,36 @@ export const BREAKOUT_INTO_OVERHEAD_RESISTANCE_WITH_FAILED_PROFIT_PROTECTION: Pa
           .AGGRESSIVE_ADDING_FAILED_PROTECTION_MIN_PEAK_OPEN_PROFIT_PCT_OF_BASIS;
 
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.firstEntryClearedNearestResistanceBelow &&
-        input.firstEntryHasStackedResistanceAbove &&
-        !input.firstEntryHadRoomAboveAfterClearingResistance &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.firstEntryClearedNearestResistanceBelow &&
+        input.supportResistanceContext.firstEntryHasStackedResistanceAbove &&
+        !input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance &&
         capturedMfe !== null &&
         capturedMfe <= THRESHOLDS.ENTRY_QUALITY.DISADVANTAGED_MAX_CAPTURED_MFE &&
         adverseAfterEntry !== null &&
         adverseAfterEntry >=
           THRESHOLDS.ENTRY_QUALITY.DISADVANTAGED_MIN_ADVERSE_AFTER_ENTRY_PCT &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis;
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis;
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
           firstEntryClearedNearestResistanceBelow:
-            input.firstEntryClearedNearestResistanceBelow,
+            input.supportResistanceContext.firstEntryClearedNearestResistanceBelow,
           firstEntryHasStackedResistanceAbove:
-            input.firstEntryHasStackedResistanceAbove,
+            input.supportResistanceContext.firstEntryHasStackedResistanceAbove,
           firstEntryResistanceLevelsAboveWithinClusterCount:
-            input.firstEntryResistanceLevelsAboveWithinClusterCount,
+            input.supportResistanceContext.firstEntryResistanceLevelsAboveWithinClusterCount,
           firstEntryCapturedPercentOfTradeMfe: capturedMfe,
           firstEntryToWorstMovePct: adverseAfterEntry,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
         },
         thresholdsUsed: {
           maxCapturedMfe:
@@ -2226,58 +2226,58 @@ export const RECOVERY_WITH_BREAKOUT_WITH_ROOM_ABOVE_AND_CONSTRUCTIVE_FINAL_EXIT:
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadSupportResistanceContextAvailable &&
-        input.firstEntryClearedNearestResistanceBelow &&
-        input.firstEntryHadRoomAboveAfterClearingResistance &&
-        !input.firstEntryOccurredNearResistance &&
-        input.firstEntryCapturedPercentOfTradeMfe !== null &&
-        input.firstEntryCapturedPercentOfTradeMfe >=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.firstEntryClearedNearestResistanceBelow &&
+        input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance &&
+        !input.supportResistanceContext.firstEntryOccurredNearResistance &&
+        input.entryContext.firstEntryCapturedPercentOfTradeMfe !== null &&
+        input.entryContext.firstEntryCapturedPercentOfTradeMfe >=
           THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MIN_CAPTURED_MFE &&
-        input.firstEntryToWorstMovePct !== null &&
-        input.firstEntryToWorstMovePct <=
+        input.entryContext.firstEntryToWorstMovePct !== null &&
+        input.entryContext.firstEntryToWorstMovePct <=
           THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MAX_ADVERSE_AFTER_ENTRY_PCT &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
-        input.closedToFlat &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct &&
+        input.tradeStructure.closedToFlat &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
           firstEntryClearedNearestResistanceBelow:
-            input.firstEntryClearedNearestResistanceBelow,
+            input.supportResistanceContext.firstEntryClearedNearestResistanceBelow,
           firstEntryHadRoomAboveAfterClearingResistance:
-            input.firstEntryHadRoomAboveAfterClearingResistance,
+            input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance,
           firstEntryDistanceAboveNearestResistanceBelowPct:
-            input.firstEntryDistanceAboveNearestResistanceBelowPct,
+            input.supportResistanceContext.firstEntryDistanceAboveNearestResistanceBelowPct,
           firstEntryDistanceToNearestResistancePct:
-            input.firstEntryDistanceToNearestResistancePct,
+            input.supportResistanceContext.firstEntryDistanceToNearestResistancePct,
           firstEntryCapturedPercentOfTradeMfe:
-            input.firstEntryCapturedPercentOfTradeMfe,
-          firstEntryToWorstMovePct: input.firstEntryToWorstMovePct,
+            input.entryContext.firstEntryCapturedPercentOfTradeMfe,
+          firstEntryToWorstMovePct: input.entryContext.firstEntryToWorstMovePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -2313,44 +2313,44 @@ export const RECOVERY_WITH_BREAKOUT_WITH_ROOM_ABOVE_AND_FAILED_PROFIT_PROTECTION
           .AGGRESSIVE_ADDING_FAILED_PROTECTION_MIN_PEAK_OPEN_PROFIT_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minRecoveryPeakOpenProfitPctOfBasis &&
-        input.hadSupportResistanceContextAvailable &&
-        input.firstEntryClearedNearestResistanceBelow &&
-        input.firstEntryHadRoomAboveAfterClearingResistance &&
-        !input.firstEntryOccurredNearResistance &&
-        input.firstEntryCapturedPercentOfTradeMfe !== null &&
-        input.firstEntryCapturedPercentOfTradeMfe >=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minRecoveryPeakOpenProfitPctOfBasis &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.firstEntryClearedNearestResistanceBelow &&
+        input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance &&
+        !input.supportResistanceContext.firstEntryOccurredNearResistance &&
+        input.entryContext.firstEntryCapturedPercentOfTradeMfe !== null &&
+        input.entryContext.firstEntryCapturedPercentOfTradeMfe >=
           THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MIN_CAPTURED_MFE &&
-        input.firstEntryToWorstMovePct !== null &&
-        input.firstEntryToWorstMovePct <=
+        input.entryContext.firstEntryToWorstMovePct !== null &&
+        input.entryContext.firstEntryToWorstMovePct <=
           THRESHOLDS.ENTRY_QUALITY.ADVANTAGED_MAX_ADVERSE_AFTER_ENTRY_PCT &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitForFailurePctOfBasis;
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitForFailurePctOfBasis;
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
           firstEntryClearedNearestResistanceBelow:
-            input.firstEntryClearedNearestResistanceBelow,
+            input.supportResistanceContext.firstEntryClearedNearestResistanceBelow,
           firstEntryHadRoomAboveAfterClearingResistance:
-            input.firstEntryHadRoomAboveAfterClearingResistance,
+            input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance,
           firstEntryDistanceAboveNearestResistanceBelowPct:
-            input.firstEntryDistanceAboveNearestResistanceBelowPct,
+            input.supportResistanceContext.firstEntryDistanceAboveNearestResistanceBelowPct,
           firstEntryDistanceToNearestResistancePct:
-            input.firstEntryDistanceToNearestResistancePct,
+            input.supportResistanceContext.firstEntryDistanceToNearestResistancePct,
           firstEntryCapturedPercentOfTradeMfe:
-            input.firstEntryCapturedPercentOfTradeMfe,
-          firstEntryToWorstMovePct: input.firstEntryToWorstMovePct,
+            input.entryContext.firstEntryCapturedPercentOfTradeMfe,
+          firstEntryToWorstMovePct: input.entryContext.firstEntryToWorstMovePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
         },
         thresholdsUsed: {
           minRecoveryPeakOpenProfitPctOfBasis,
@@ -2391,55 +2391,55 @@ export const RECOVERY_WITH_BREAKOUT_INTO_OVERHEAD_RESISTANCE_AND_DEFENSIVE_FINAL
         THRESHOLDS.EXIT_QUALITY.DISCIPLINED_DEFENSIVE_EXIT_MAX_GIVEBACK_PCT;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.realizedReturnPct !== null &&
-        input.realizedReturnPct > 0 &&
-        input.hadSupportResistanceContextAvailable &&
-        input.firstEntryClearedNearestResistanceBelow &&
-        input.firstEntryHasStackedResistanceAbove &&
-        !input.firstEntryHadRoomAboveAfterClearingResistance &&
-        input.firstEntryCapturedPercentOfTradeMfe !== null &&
-        input.firstEntryCapturedPercentOfTradeMfe <= maxCapturedMfe &&
-        input.firstEntryToWorstMovePct !== null &&
-        input.firstEntryToWorstMovePct >= minAdverseAfterEntry &&
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.postExitCandleCount > 0 &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY) &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct;
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.exitContext.realizedReturnPct !== null &&
+        input.exitContext.realizedReturnPct > 0 &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.firstEntryClearedNearestResistanceBelow &&
+        input.supportResistanceContext.firstEntryHasStackedResistanceAbove &&
+        !input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance &&
+        input.entryContext.firstEntryCapturedPercentOfTradeMfe !== null &&
+        input.entryContext.firstEntryCapturedPercentOfTradeMfe <= maxCapturedMfe &&
+        input.entryContext.firstEntryToWorstMovePct !== null &&
+        input.entryContext.firstEntryToWorstMovePct >= minAdverseAfterEntry &&
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY) &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct;
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
-          realizedReturnPct: input.realizedReturnPct,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          realizedReturnPct: input.exitContext.realizedReturnPct,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
           firstEntryClearedNearestResistanceBelow:
-            input.firstEntryClearedNearestResistanceBelow,
+            input.supportResistanceContext.firstEntryClearedNearestResistanceBelow,
           firstEntryHasStackedResistanceAbove:
-            input.firstEntryHasStackedResistanceAbove,
+            input.supportResistanceContext.firstEntryHasStackedResistanceAbove,
           firstEntryResistanceLevelsAboveWithinClusterCount:
-            input.firstEntryResistanceLevelsAboveWithinClusterCount,
+            input.supportResistanceContext.firstEntryResistanceLevelsAboveWithinClusterCount,
           firstEntryCapturedPercentOfTradeMfe:
-            input.firstEntryCapturedPercentOfTradeMfe,
-          firstEntryToWorstMovePct: input.firstEntryToWorstMovePct,
+            input.entryContext.firstEntryCapturedPercentOfTradeMfe,
+          firstEntryToWorstMovePct: input.entryContext.firstEntryToWorstMovePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minPeakOpenProfitPctOfBasis,
@@ -2473,42 +2473,42 @@ export const RECOVERY_WITH_BREAKOUT_INTO_OVERHEAD_RESISTANCE_AND_FAILED_PROFIT_P
           .AGGRESSIVE_ADDING_FAILED_PROTECTION_MIN_PEAK_OPEN_PROFIT_PCT_OF_BASIS;
 
       const matched =
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minRecoveryPeakOpenProfitPctOfBasis &&
-        input.hadSupportResistanceContextAvailable &&
-        input.firstEntryClearedNearestResistanceBelow &&
-        input.firstEntryHasStackedResistanceAbove &&
-        !input.firstEntryHadRoomAboveAfterClearingResistance &&
-        input.firstEntryCapturedPercentOfTradeMfe !== null &&
-        input.firstEntryCapturedPercentOfTradeMfe <=
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minRecoveryPeakOpenProfitPctOfBasis &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.firstEntryClearedNearestResistanceBelow &&
+        input.supportResistanceContext.firstEntryHasStackedResistanceAbove &&
+        !input.supportResistanceContext.firstEntryHadRoomAboveAfterClearingResistance &&
+        input.entryContext.firstEntryCapturedPercentOfTradeMfe !== null &&
+        input.entryContext.firstEntryCapturedPercentOfTradeMfe <=
           THRESHOLDS.ENTRY_QUALITY.DISADVANTAGED_MAX_CAPTURED_MFE &&
-        input.firstEntryToWorstMovePct !== null &&
-        input.firstEntryToWorstMovePct >=
+        input.entryContext.firstEntryToWorstMovePct !== null &&
+        input.entryContext.firstEntryToWorstMovePct >=
           THRESHOLDS.ENTRY_QUALITY.DISADVANTAGED_MIN_ADVERSE_AFTER_ENTRY_PCT &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitForFailurePctOfBasis;
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitForFailurePctOfBasis;
 
       return {
         matched,
         evidence: {
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
           firstEntryClearedNearestResistanceBelow:
-            input.firstEntryClearedNearestResistanceBelow,
+            input.supportResistanceContext.firstEntryClearedNearestResistanceBelow,
           firstEntryHasStackedResistanceAbove:
-            input.firstEntryHasStackedResistanceAbove,
+            input.supportResistanceContext.firstEntryHasStackedResistanceAbove,
           firstEntryResistanceLevelsAboveWithinClusterCount:
-            input.firstEntryResistanceLevelsAboveWithinClusterCount,
+            input.supportResistanceContext.firstEntryResistanceLevelsAboveWithinClusterCount,
           firstEntryCapturedPercentOfTradeMfe:
-            input.firstEntryCapturedPercentOfTradeMfe,
-          firstEntryToWorstMovePct: input.firstEntryToWorstMovePct,
+            input.entryContext.firstEntryCapturedPercentOfTradeMfe,
+          firstEntryToWorstMovePct: input.entryContext.firstEntryToWorstMovePct,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
         },
         thresholdsUsed: {
           minRecoveryPeakOpenProfitPctOfBasis,
@@ -2532,24 +2532,24 @@ export const ENTRY_NEAR_SUPPORT_STRUCTURE: PatternDefinition = {
 
   evaluate: (input) => {
     const matched =
-      input.hadSupportResistanceContextAvailable &&
-      input.firstEntryOccurredNearSupport &&
-      !input.firstEntryOccurredNearResistance;
+      input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+      input.supportResistanceContext.firstEntryOccurredNearSupport &&
+      !input.supportResistanceContext.firstEntryOccurredNearResistance;
 
     return {
       matched,
       evidence: {
         hadSupportResistanceContextAvailable:
-          input.hadSupportResistanceContextAvailable,
-        firstEntryOccurredNearSupport: input.firstEntryOccurredNearSupport,
+          input.supportResistanceContext.hadSupportResistanceContextAvailable,
+        firstEntryOccurredNearSupport: input.supportResistanceContext.firstEntryOccurredNearSupport,
         firstEntryOccurredNearResistance:
-          input.firstEntryOccurredNearResistance,
+          input.supportResistanceContext.firstEntryOccurredNearResistance,
         firstEntryNearestSupportBelowPrice:
-          input.firstEntryNearestSupportBelowPrice,
+          input.supportResistanceContext.firstEntryNearestSupportBelowPrice,
         firstEntryDistanceToNearestSupportPct:
-          input.firstEntryDistanceToNearestSupportPct,
+          input.supportResistanceContext.firstEntryDistanceToNearestSupportPct,
         firstEntryNearestReferenceLevelLabel:
-          input.firstEntryNearestReferenceLevelLabel,
+          input.supportResistanceContext.firstEntryNearestReferenceLevelLabel,
       },
       thresholdsUsed: {},
     };
@@ -2565,22 +2565,22 @@ export const ENTRY_UNDER_RESISTANCE_STRUCTURE: PatternDefinition = {
 
   evaluate: (input) => {
     const matched =
-      input.hadSupportResistanceContextAvailable &&
-      input.firstEntryOccurredNearResistance &&
-      !input.firstEntryOccurredNearSupport;
+      input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+      input.supportResistanceContext.firstEntryOccurredNearResistance &&
+      !input.supportResistanceContext.firstEntryOccurredNearSupport;
 
     return {
       matched,
       evidence: {
         hadSupportResistanceContextAvailable:
-          input.hadSupportResistanceContextAvailable,
+          input.supportResistanceContext.hadSupportResistanceContextAvailable,
         firstEntryOccurredNearResistance:
-          input.firstEntryOccurredNearResistance,
-        firstEntryOccurredNearSupport: input.firstEntryOccurredNearSupport,
+          input.supportResistanceContext.firstEntryOccurredNearResistance,
+        firstEntryOccurredNearSupport: input.supportResistanceContext.firstEntryOccurredNearSupport,
         firstEntryNearestResistanceAbovePrice:
-          input.firstEntryNearestResistanceAbovePrice,
+          input.supportResistanceContext.firstEntryNearestResistanceAbovePrice,
         firstEntryDistanceToNearestResistancePct:
-          input.firstEntryDistanceToNearestResistancePct,
+          input.supportResistanceContext.firstEntryDistanceToNearestResistancePct,
       },
       thresholdsUsed: {},
     };
@@ -2596,20 +2596,20 @@ export const ENTRY_FAR_FROM_SUPPORT_STRUCTURE: PatternDefinition = {
 
   evaluate: (input) => {
     const matched =
-      input.hadSupportResistanceContextAvailable &&
-      input.firstEntryDistanceToNearestSupportPct !== null &&
-      input.firstEntryDistanceToNearestSupportPct >= 0.03 &&
-      !input.firstEntryOccurredNearSupport;
+      input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+      input.supportResistanceContext.firstEntryDistanceToNearestSupportPct !== null &&
+      input.supportResistanceContext.firstEntryDistanceToNearestSupportPct >= 0.03 &&
+      !input.supportResistanceContext.firstEntryOccurredNearSupport;
 
     return {
       matched,
       evidence: {
         hadSupportResistanceContextAvailable:
-          input.hadSupportResistanceContextAvailable,
+          input.supportResistanceContext.hadSupportResistanceContextAvailable,
         firstEntryDistanceToNearestSupportPct:
-          input.firstEntryDistanceToNearestSupportPct,
-        firstEntryOccurredNearSupport: input.firstEntryOccurredNearSupport,
-        firstEntryOccurredInOpenAir: input.firstEntryOccurredInOpenAir,
+          input.supportResistanceContext.firstEntryDistanceToNearestSupportPct,
+        firstEntryOccurredNearSupport: input.supportResistanceContext.firstEntryOccurredNearSupport,
+        firstEntryOccurredInOpenAir: input.supportResistanceContext.firstEntryOccurredInOpenAir,
       },
       thresholdsUsed: {
         minDistanceToNearestSupportPct: 0.03,
@@ -2635,9 +2635,9 @@ export const WEAK_PULLBACK_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const rangePosition = input.firstEntryPricePositionInTradeRangePct;
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
+    const rangePosition = input.entryContext.firstEntryPricePositionInTradeRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
     const {
       adverseMovePct,
       directionalCandles,
@@ -2645,11 +2645,11 @@ export const WEAK_PULLBACK_ENTRY_STRUCTURE: PatternDefinition = {
       normalizedNetMovePct,
     } = getPreEntryDirectionalContext({
       tradeDirection: input.tradeDirection,
-      recentRunUpPct: input.firstEntryRecentRunUpPctBeforeEntry,
-      recentDropPct: input.firstEntryRecentDropPctBeforeEntry,
-      bullishCandles: input.firstEntryBullishCandlesBeforeEntryCount,
-      bearishCandles: input.firstEntryBearishCandlesBeforeEntryCount,
-      recentNetMovePct: input.firstEntryRecentNetMovePctBeforeEntry,
+      recentRunUpPct: input.entryContext.firstEntryRecentRunUpPctBeforeEntry,
+      recentDropPct: input.entryContext.firstEntryRecentDropPctBeforeEntry,
+      bullishCandles: input.entryContext.firstEntryBullishCandlesBeforeEntryCount,
+      bearishCandles: input.entryContext.firstEntryBearishCandlesBeforeEntryCount,
+      recentNetMovePct: input.entryContext.firstEntryRecentNetMovePctBeforeEntry,
     });
 
     const minRangePosition =
@@ -2721,9 +2721,9 @@ export const DEEP_CONSTRUCTIVE_PULLBACK_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const rangePosition = input.firstEntryPricePositionInTradeRangePct;
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
+    const rangePosition = input.entryContext.firstEntryPricePositionInTradeRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
     const {
       adverseMovePct,
       directionalCandles,
@@ -2731,11 +2731,11 @@ export const DEEP_CONSTRUCTIVE_PULLBACK_ENTRY_STRUCTURE: PatternDefinition = {
       normalizedNetMovePct,
     } = getPreEntryDirectionalContext({
       tradeDirection: input.tradeDirection,
-      recentRunUpPct: input.firstEntryRecentRunUpPctBeforeEntry,
-      recentDropPct: input.firstEntryRecentDropPctBeforeEntry,
-      bullishCandles: input.firstEntryBullishCandlesBeforeEntryCount,
-      bearishCandles: input.firstEntryBearishCandlesBeforeEntryCount,
-      recentNetMovePct: input.firstEntryRecentNetMovePctBeforeEntry,
+      recentRunUpPct: input.entryContext.firstEntryRecentRunUpPctBeforeEntry,
+      recentDropPct: input.entryContext.firstEntryRecentDropPctBeforeEntry,
+      bullishCandles: input.entryContext.firstEntryBullishCandlesBeforeEntryCount,
+      bearishCandles: input.entryContext.firstEntryBearishCandlesBeforeEntryCount,
+      recentNetMovePct: input.entryContext.firstEntryRecentNetMovePctBeforeEntry,
     });
 
     const maxRangePosition =
@@ -2807,9 +2807,9 @@ export const DEEP_WEAK_PULLBACK_ENTRY_STRUCTURE: PatternDefinition = {
   structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const rangePosition = input.firstEntryPricePositionInTradeRangePct;
-    const capturedMfe = input.firstEntryCapturedPercentOfTradeMfe;
-    const adverseAfterEntry = input.firstEntryToWorstMovePct;
+    const rangePosition = input.entryContext.firstEntryPricePositionInTradeRangePct;
+    const capturedMfe = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
+    const adverseAfterEntry = input.entryContext.firstEntryToWorstMovePct;
     const {
       adverseMovePct,
       directionalCandles,
@@ -2817,11 +2817,11 @@ export const DEEP_WEAK_PULLBACK_ENTRY_STRUCTURE: PatternDefinition = {
       normalizedNetMovePct,
     } = getPreEntryDirectionalContext({
       tradeDirection: input.tradeDirection,
-      recentRunUpPct: input.firstEntryRecentRunUpPctBeforeEntry,
-      recentDropPct: input.firstEntryRecentDropPctBeforeEntry,
-      bullishCandles: input.firstEntryBullishCandlesBeforeEntryCount,
-      bearishCandles: input.firstEntryBearishCandlesBeforeEntryCount,
-      recentNetMovePct: input.firstEntryRecentNetMovePctBeforeEntry,
+      recentRunUpPct: input.entryContext.firstEntryRecentRunUpPctBeforeEntry,
+      recentDropPct: input.entryContext.firstEntryRecentDropPctBeforeEntry,
+      bullishCandles: input.entryContext.firstEntryBullishCandlesBeforeEntryCount,
+      bearishCandles: input.entryContext.firstEntryBearishCandlesBeforeEntryCount,
+      recentNetMovePct: input.entryContext.firstEntryRecentNetMovePctBeforeEntry,
     });
 
     const minRangePosition =
@@ -2920,3 +2920,5 @@ export const ENTRY_QUALITY_PATTERNS: PatternDefinition[] = [
   DEEP_CONSTRUCTIVE_PULLBACK_ENTRY_STRUCTURE,
   DEEP_WEAK_PULLBACK_ENTRY_STRUCTURE,
 ];
+
+

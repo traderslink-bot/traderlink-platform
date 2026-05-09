@@ -7,6 +7,11 @@ import type { ReferenceLevelLabel } from "./reference-level-label";
 
 export type StructuralLevelSide = "support" | "resistance";
 export type StructuralLevelStrengthBucket = "strong" | "medium" | "weak";
+export type StructuralLevelSourceStrengthLabel =
+  | "weak"
+  | "moderate"
+  | "strong"
+  | "major";
 export type StructuralLevelReactionStrength =
   | "none"
   | "weak"
@@ -23,6 +28,7 @@ export interface StructuralLevel {
   side: StructuralLevelSide;
   score: number;
   strengthBucket: StructuralLevelStrengthBucket;
+  sourceStrengthLabel?: StructuralLevelSourceStrengthLabel | null;
   timeframeSources: string[];
   pivotSources: StructuralLevelPivotSource[];
   touchCount: number;

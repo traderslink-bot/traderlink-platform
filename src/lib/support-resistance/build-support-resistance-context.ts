@@ -1,8 +1,8 @@
 // 2026-04-14
 // PURPOSE:
-// Builds the first factual support/resistance context slice for Layer 1.
-// This initial slice intentionally includes the context window, named
-// reference levels, and dynamic levels before pivots/ladders/relations exist.
+// Legacy local support/resistance builder kept for old module tests and
+// comparison work only. App-facing analysis must get support/resistance, VWAP,
+// EMA, and candle-structure context from levels-system.
 
 import { SUPPORT_RESISTANCE_CONFIG } from "./config/support-resistance-config";
 import { buildDynamicLevels } from "./dynamic-levels/build-dynamic-levels";
@@ -41,6 +41,18 @@ export interface SupportResistanceContext {
 export interface BuildSupportResistanceContextArgs {
   timeline: TradeTimeline;
 }
+
+export {
+  buildLevelsSystemSupportResistanceContext,
+  mapFinalLevelZoneToStructuralLevel,
+  mapLevelEngineOutputToStructuralLevels,
+  mapSupportResistanceSymbolContextToLocalContext,
+  mapSharedDynamicLevels,
+  mapSharedReferenceLevels,
+  type BuildLevelsSystemSupportResistanceContextArgs,
+  type BuildLevelsSystemSupportResistanceContextOptions,
+  type LevelsSystemSupportResistanceContext,
+} from "./levels-system-adapter";
 
 export function buildSupportResistanceContext(
   args: BuildSupportResistanceContextArgs,

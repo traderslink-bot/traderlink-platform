@@ -12,6 +12,8 @@ describe("session normalization boundary", () => {
     expect(normalizeSessionBucketValue("regular_open")).toBe("market_open");
     expect(normalizeSessionBucketValue("premarket")).toBe("pre_market");
     expect(normalizeSessionBucketValue("afterhours")).toBe("after_hours");
+    expect(normalizeSessionBucketValue("post_market")).toBe("post_market");
+    expect(normalizeSessionBucketValue("overnight")).toBe("overnight");
   });
 
   it("maps unknown provider session labels into explicit unknown", () => {

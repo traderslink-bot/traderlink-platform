@@ -52,6 +52,11 @@ import type { StructuralContextWindow } from "./structural-context-window";
 import type { StructuralLevel } from "./structural-level";
 import type { TradeTimeline } from "./trade-timeline";
 import type { TradeTimelineInput } from "./trade-timeline-input";
+import type {
+  CandleMarketStructureContext,
+  TradeAnalysisCandleContext,
+  TradeAnalysisExecutionRelationFact,
+} from "levels-system-phase1/support-resistance-engine";
 
 export interface RawTradeTimelineBuildResult {
   input: TradeTimelineInput;
@@ -63,7 +68,11 @@ export interface RawTradeTimelineBuildResult {
   resistanceLevels?: StructuralLevel[];
   gapStructure?: GapStructure;
   executionLevelRelations?: ExecutionLevelRelation[];
+  levelsSystemTradeWindowFacts?: TradeAnalysisCandleContext["tradeWindowFacts"];
+  levelsSystemExecutionRelations?: TradeAnalysisExecutionRelationFact[];
+  levelsSystemMarketFacts?: TradeAnalysisCandleContext["marketFacts"];
   hadInsufficientCandleDataForStructure?: boolean;
+  experimentalMarketStructure?: CandleMarketStructureContext;
 
   executionDerivedSignals?: ExecutionDerivedSignal[];
   positionChangeDerivedSignals?: PositionChangeDerivedSignal[];

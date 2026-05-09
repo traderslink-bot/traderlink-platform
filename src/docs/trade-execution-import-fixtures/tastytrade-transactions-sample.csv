@@ -1,0 +1,3 @@
+Date,Symbol,Action,Quantity,Price,Commission,Fees,Amount,Currency
+2026-05-01,AMD,Buy,50,95.00,0.00,0.02,-4750.02,USD
+2026-05-01,AMD,Sell,50,97.50,0.00,0.02,4874.98,USD
