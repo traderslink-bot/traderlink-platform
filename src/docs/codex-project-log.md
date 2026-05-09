@@ -8517,3 +8517,25 @@ Next best step:
 
 - Wire `UserFacingTradeReviewSummary` to real saved trade review data once the
   mock single-trade review surface feels right.
+
+## 2026-05-08 - End-User UI Overhaul Roadmap
+
+Added a more complete implementation roadmap after the user clarified that the
+app still does not look visually strong enough and needs charts, clearer
+red/green presentation, richer localhost data, and stronger new-trader UX.
+
+What changed:
+
+- Added
+  `src/docs/trader-intelligence-end-user-ui-overhaul-plan-2026-05-08.md`.
+- The roadmap explicitly separates what the prior pass improved from what still
+  needs work.
+- The plan prioritizes reusable chart/report components, richer demo data,
+  real trade-detail integration, analytics redesign, coach/review queue
+  redesign, import onboarding, beginner education, and admin/debug isolation.
+
+Next best step:
+
+- Start Run 1 from that roadmap: visual chart foundation plus richer sample data
+  so localhost shows enough trades/executions to judge the UI as a real end
+  user.
