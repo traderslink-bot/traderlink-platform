@@ -252,7 +252,7 @@ export async function runPersistedDecisionReviewJobs(args: {
         status,
         reason:
           item.failure?.message ??
-          `${trade.symbol} did not complete saved decision-review analysis.`,
+          `${trade.symbol} did not complete saved chart review analysis.`,
       };
 
       args.repository.updateDecisionReviewJob(updated);
@@ -387,7 +387,7 @@ export function buildSavedDecisionReviewReadModel(args: {
       queuedCount > 0
         ? "Run saved decision review for queued closed trades."
         : analysisFailedCount > 0 || marketContextUnavailableCount > 0
-          ? "Execution review is available now; keep market-context conclusions unavailable until technical follow-up is resolved."
+          ? "Execution review is available now; keep chart conclusions unavailable until technical follow-up is resolved."
           : completedCount > 0
             ? "Use persisted decision-review snapshots in guided review."
             : "Decision review has no completed saved snapshots yet.",

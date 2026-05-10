@@ -1,10 +1,13 @@
 # Superseded
 
-This May 5 handoff is superseded by:
+This May 5 handoff is historical context. Do not use it as the current resume
+point. Start from root `plan.md`, then the plan index and latest project log.
+
+It was previously superseded by:
 
 `src/docs/trader-intelligence-next-chat-handoff-2026-05-06.md`
 
-Read the May 6 file first. Keep this file only as older historical context.
+Keep this file only as older historical context.
 
 # Trader Intelligence Next Chat Handoff
 
@@ -12,7 +15,8 @@ Date: 2026-05-05
 
 ## Start Here
 
-Read this file first in the next chat.
+Historical note: this file originally told the next chat to start here, but it
+is no longer the current resume point.
 
 Then read, only as needed:
 

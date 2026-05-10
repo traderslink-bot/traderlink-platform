@@ -11,11 +11,13 @@ export function getSavedTraderAnalyticsRepository(): SqliteImportCommitRepositor
   return new SqliteImportCommitRepository();
 }
 
-export function buildSavedOrSampleTraderAnalyticsViewModel() {
+export function buildSavedOrSampleTraderAnalyticsViewModel(options?: {
+  preferSample?: boolean;
+}) {
   const repository = getSavedTraderAnalyticsRepository();
   const reports = repository.listReports(DEMO_USER_ID);
 
-  if (reports.length > 0) {
+  if (reports.length > 0 && !options?.preferSample) {
     return {
       mode: "saved" as const,
       repository,

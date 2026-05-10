@@ -119,6 +119,90 @@ describe("end-user product intelligence helpers", () => {
     expect(recommendations[0].relatedTradeIds.length).toBeGreaterThan(0);
   });
 
+  it("uses repair-first rule language for adverse-add cost drivers", () => {
+    const recommendations = buildTraderRuleBuilderRecommendations({
+      focusQueue: [],
+      ruleEvaluations: [],
+      recurrenceAlerts: [],
+      costEstimates: {
+        source: "execution_only",
+        totalEstimatedGrossCost: 120,
+        limitation: "execution-only test fixture",
+        items: [],
+        topCostDriver: {
+          taxonomyId: "add_after_adverse_move",
+          label: "Adds after price moved against you",
+          affectedTradeCount: 2,
+          relatedTradeIds: ["trade-1", "trade-2"],
+          estimatedGrossCost: 120,
+          averageCostPerAffectedTrade: 60,
+          confidence: "medium",
+          calculationNote: "fixture",
+        },
+      },
+    });
+
+    expect(recommendations[0]).toMatchObject({
+      suggestedRuleTitle: "Require repair before adding size",
+      suggestedTemplateId: "no_adverse_price_adds",
+    });
+    expect(recommendations[0]?.suggestedRuleTitle.toLowerCase()).not.toMatch(
+      /avoid|no adds/,
+    );
+  });
+
+  it("does not let review-prompt behaviors drive cost, recurrence, or rule recommendations", () => {
+    const sample = buildSampleSavedTraderAnalyticsData();
+    const analytics = buildProductTraderAnalyticsViewModel({
+      repository: sample.repository,
+      userId: sample.userId,
+      importRequests: sample.importRequests,
+    });
+    const promptOnlyIds = new Set([
+      "chased_entry",
+      "revenge_reentry_cluster",
+      "early_winner_exit",
+      "partialed_without_plan",
+      "repeated_rule_violation",
+      "scaled_loser",
+      "add_after_adverse_move",
+    ]);
+    const primaryProductText = [
+      ...analytics.productIntelligence.mistakeCostEstimates.items.flatMap(
+        (item) => [item.label, item.calculationNote],
+      ),
+      ...analytics.productIntelligence.recurrenceAlerts.flatMap((alert) => [
+        alert.title,
+        alert.detail,
+        alert.nextAction,
+      ]),
+      ...analytics.productIntelligence.ruleBuilderRecommendations.flatMap(
+        (recommendation) => [
+          recommendation.suggestedRuleTitle,
+          recommendation.label,
+          recommendation.reason,
+          recommendation.expectedSuccessMetric,
+        ],
+      ),
+    ].join("\n");
+
+    expect(
+      analytics.productIntelligence.mistakeCostEstimates.items.some((item) =>
+        promptOnlyIds.has(item.taxonomyId),
+      ),
+    ).toBe(false);
+    expect(
+      analytics.productIntelligence.recurrenceAlerts.some((alert) =>
+        [...promptOnlyIds].some((id) => alert.id.includes(id)),
+      ),
+    ).toBe(false);
+    expect(primaryProductText).not.toMatch(/added after failed premise/i);
+    expect(primaryProductText).not.toMatch(/\bpremise\b/i);
+    expect(primaryProductText).not.toMatch(/revenge-like/i);
+    expect(primaryProductText).not.toMatch(/chased entry/i);
+    expect(primaryProductText).not.toMatch(/early winner exit/i);
+  });
+
   it("builds a unified review queue and market-context readiness gate", () => {
     const sample = buildSampleSavedTraderAnalyticsData();
     const analytics = buildProductTraderAnalyticsViewModel({

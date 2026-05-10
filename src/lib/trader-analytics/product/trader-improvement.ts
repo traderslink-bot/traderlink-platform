@@ -25,6 +25,7 @@ import type {
 } from "./types";
 import { buildSavedTradeReviewViewModel } from "./selectors";
 import type { ExecutionFeedbackSummary } from "../../execution-feedback/summary/build-execution-feedback-summary";
+import { mapUserFacingBehavior } from "../../user-facing-behavior";
 
 const TRADE_QUALITY_LIMITATIONS = [
   "Trade quality is execution-only.",
@@ -52,6 +53,42 @@ function average(values: number[]): number | null {
 
 function unique<T>(values: T[]): T[] {
   return [...new Set(values)];
+}
+
+function mapImprovementBehavior(observation: TraderMistakeObservation) {
+  return mapUserFacingBehavior({
+    behaviorId: observation.taxonomyId,
+    rawLabel: observation.label,
+    route: "/coach",
+  });
+}
+
+function primaryTradeReviewPointLabel(
+  point:
+    | ExecutionFeedbackSummary["points"]["risks"][number]
+    | ExecutionFeedbackSummary["points"]["strengths"][number]
+    | null
+    | undefined,
+): string | null {
+  if (!point) {
+    return null;
+  }
+
+  const behavior = mapUserFacingBehavior({
+    behaviorId: point.id,
+    rawLabel: point.label,
+    route: "/trades/[tradeId]",
+  });
+
+  return behavior.canDrivePrimaryConclusion ? behavior.label : null;
+}
+
+function certifiedImprovementObservations(
+  observations: TraderMistakeObservation[],
+): TraderMistakeObservation[] {
+  return observations.filter((observation) =>
+    mapImprovementBehavior(observation).canDrivePrimaryConclusion,
+  );
 }
 
 function rowsWithTradeIds(
@@ -142,10 +179,10 @@ export function buildTradeQualityScorecard(args: {
       label: "Entry Discipline",
       score: 82 + (cleanTrade ? 8 : 0) - rapidFire * 14,
       detail:
-        "Entry discipline uses rapid execution clustering and clean single-entry evidence.",
+        "Entry discipline looks for unusually tight execution timing and clean single-entry evidence.",
       evidence: [
-        `${rapidFire} rapid-fire gap${rapidFire === 1 ? "" : "s"}`,
-        cleanTrade ? "Clean single-entry/full-exit strength detected." : "",
+        `${rapidFire} tight execution gap${rapidFire === 1 ? "" : "s"}`,
+        cleanTrade ? "Clean single-entry and full-exit strength found." : "",
       ],
     }),
     qualityDimension({
@@ -156,10 +193,10 @@ export function buildTradeQualityScorecard(args: {
           ? 88
           : 82 - adverseAdds * 18 - Math.max(addsBeforeReduction - 1, 0) * 8,
       detail:
-        "Add discipline rewards controlled scaling and penalizes adverse adds before risk reduction.",
+        "Add discipline rewards controlled scaling and flags adds made after price moved against the position.",
       evidence: [
         `${addCount} add${addCount === 1 ? "" : "s"} after initial entry`,
-        `${adverseAdds} adverse add${adverseAdds === 1 ? "" : "s"}`,
+        `${adverseAdds} add${adverseAdds === 1 ? "" : "s"} after price moved against the position`,
         `${addsBeforeReduction} add${addsBeforeReduction === 1 ? "" : "s"} before first reduction`,
       ],
     }),
@@ -174,13 +211,13 @@ export function buildTradeQualityScorecard(args: {
         (allOrNothing ? 18 : 0) -
         (smallFirstReduction ? 10 : 0),
       detail:
-        "Exit discipline uses decisive exits, structured reductions, open leftovers, and weak first reductions.",
+        "Exit discipline looks for clean full exits, structured partial exits, shares left open, and weak first reductions.",
       evidence: [
-        decisiveExit ? "Decisive full-exit strength detected." : "",
-        structuredExit ? "Structured partial-exit strength detected." : "",
+        decisiveExit ? "Clean full-exit strength found." : "",
+        structuredExit ? "Structured partial-exit strength found." : "",
         openPosition ? "Position was left open." : "",
-        allOrNothing ? "All-or-nothing exit after many adds detected." : "",
-        smallFirstReduction ? "Small first risk reduction detected." : "",
+        allOrNothing ? "All-or-nothing exit after many adds found." : "",
+        smallFirstReduction ? "Small first risk reduction found." : "",
       ],
     }),
     qualityDimension({
@@ -192,9 +229,9 @@ export function buildTradeQualityScorecard(args: {
         (openPosition ? 22 : 0) -
         (expansionRatio && expansionRatio > 3 ? 12 : 0),
       detail:
-        "Risk control focuses on adverse adds, leftover exposure, and aggressive size expansion.",
+        "Risk control focuses on adds after price moved against the position, shares left open, and aggressive size expansion.",
       evidence: [
-        `${adverseAdds} adverse add${adverseAdds === 1 ? "" : "s"}`,
+        `${adverseAdds} add${adverseAdds === 1 ? "" : "s"} after price moved against the position`,
         openPosition ? "Open shares remained after the execution sequence." : "",
         expansionRatio && expansionRatio > 1
           ? `${roundMetric(expansionRatio)}x max-size expansion from initial entry.`
@@ -237,9 +274,14 @@ export function buildTradeQualityScorecard(args: {
         evidence: [`Overall execution quality is ${overallScore}/100.`],
       }),
     ],
-    topRiskLabel: row?.topRisk?.label ?? summary?.points.risks[0]?.label ?? null,
+    topRiskLabel:
+      row?.topRisk?.label ??
+      primaryTradeReviewPointLabel(summary?.points.risks[0]) ??
+      null,
     topStrengthLabel:
-      row?.topStrength?.label ?? summary?.points.strengths[0]?.label ?? null,
+      row?.topStrength?.label ??
+      primaryTradeReviewPointLabel(summary?.points.strengths[0]) ??
+      null,
     limitations: [...TRADE_QUALITY_LIMITATIONS],
   };
 }
@@ -259,7 +301,7 @@ function classifyDecision(args: {
   }
 
   if (args.isLast && after > 0) {
-    return { role: "open_leftover", label: "Open leftover", tone: "negative" };
+    return { role: "open_leftover", label: "Shares left open", tone: "negative" };
   }
 
   if (before > 0 && after === 0) {
@@ -386,8 +428,8 @@ const PLAYBOOK_BUCKETS: Array<{ id: PlaybookBucketId; label: string }> = [
   { id: "clean_single_entry_trade", label: "Clean Single-Entry Trade" },
   { id: "scale_in_management_trade", label: "Scale-In Management Trade" },
   { id: "partial_exit_management_trade", label: "Partial-Exit Management Trade" },
-  { id: "rapid_fire_problem_trade", label: "Rapid-Fire Problem Trade" },
-  { id: "open_position_problem_trade", label: "Open-Position Problem Trade" },
+  { id: "rapid_fire_problem_trade", label: "Fast Execution Cluster Trade" },
+  { id: "open_position_problem_trade", label: "Trade Left Open" },
 ];
 
 function primaryPlaybookBucket(row: ProductTraderAnalyticsTradeRow): {
@@ -404,7 +446,7 @@ function primaryPlaybookBucket(row: ProductTraderAnalyticsTradeRow): {
   if (row.topRisk?.id === "rapid_fire_execution_cluster") {
     return {
       id: "rapid_fire_problem_trade",
-      reason: "The top risk was a rapid-fire execution cluster.",
+      reason: "The top risk was several executions close together in time.",
     };
   }
 
@@ -546,8 +588,11 @@ export function buildDailyCoachReport(args: {
     [...sessionRows].sort((left, right) => left.grossRealizedPnl - right.grossRealizedPnl)[0] ??
     null;
   const sessionTradeIds = new Set(sessionRows.map((row) => row.tradeId));
+  const certifiedObservations = certifiedImprovementObservations(
+    args.mistakeObservations,
+  );
   const biggestMistake =
-    args.mistakeObservations.find((observation) =>
+    certifiedObservations.find((observation) =>
       observation.tradeIds.some((tradeId) => sessionTradeIds.has(tradeId)),
     ) ?? null;
   const worstRule =
@@ -701,19 +746,25 @@ export function buildTraderImprovementVisuals(args: {
       id: "mistake_frequency",
       title: "Mistake Frequency",
       kind: "bar",
-      items: args.mistakeObservations.map((observation) => ({
-        id: observation.taxonomyId,
-        label: observation.label,
-        value: observation.occurrenceCount,
-        secondaryValue: null,
-        tone:
-          observation.confidence === "high"
-            ? "negative"
-            : observation.confidence === "medium"
-              ? "warning"
-              : "neutral",
-        relatedTradeIds: observation.tradeIds,
-      })),
+      items: certifiedImprovementObservations(args.mistakeObservations).map(
+        (observation) => {
+          const behavior = mapImprovementBehavior(observation);
+
+          return {
+            id: observation.taxonomyId,
+            label: behavior.label,
+            value: observation.occurrenceCount,
+            secondaryValue: null,
+            tone:
+              observation.confidence === "high"
+                ? "negative"
+                : observation.confidence === "medium"
+                  ? "warning"
+                  : "neutral",
+            relatedTradeIds: observation.tradeIds,
+          };
+        },
+      ),
     }),
     ruleViolationFrequency: visual({
       id: "rule_violation_frequency",
@@ -777,7 +828,9 @@ export function buildBestWorstPatternFinder(args: {
       (left, right) => left.grossTotalRealizedPnl - right.grossTotalRealizedPnl,
     )[0] ?? null;
   const topCost = args.productIntelligence.mistakeCostEstimates.topCostDriver;
-  const mostRepeated = args.mistakeObservations[0] ?? null;
+  const mostRepeated = certifiedImprovementObservations(
+    args.mistakeObservations,
+  )[0] ?? null;
   const topStrength = args.report.report.topStrengths[0] ?? null;
   const lossRows = rowsWithTradeIds(args.report).filter(
     (row) => row.grossRealizedPnl < 0,
@@ -826,8 +879,8 @@ export function buildBestWorstPatternFinder(args: {
     mostRepeatedMistake: mostRepeated
       ? patternItem({
           id: `repeated:${mostRepeated.taxonomyId}`,
-          label: mostRepeated.label,
-          detail: mostRepeated.reason,
+          label: mapImprovementBehavior(mostRepeated).label,
+          detail: mapImprovementBehavior(mostRepeated).evidenceSentence,
           relatedTradeIds: mostRepeated.tradeIds,
           value: mostRepeated.occurrenceCount,
         })

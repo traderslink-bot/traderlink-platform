@@ -1,5 +1,8 @@
 # End-User Trader Analytics Product Roadmap
 
+Status: Historical roadmap. Do not use as the current implementation plan;
+start from root `plan.md` and the plan index.
+
 ## Purpose
 
 This document is the continuous work plan for turning the current trader
@@ -1254,7 +1257,7 @@ This roadmap branch is complete when:
   - `GET /` returned `200` and linked to `/analytics`.
 - Current pointer is complete.
 
-## Current Best Next Step
+## Historical Best Next Step
 
 Replace the fixture/in-memory repository with a real authenticated storage
 adapter when backend and auth decisions are ready. Until then, use `/analytics`

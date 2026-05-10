@@ -4,6 +4,7 @@ import {
 } from "./import-preview";
 import { buildProductCopyQualitySystem } from "./import-trial-experience";
 import { runExecutionFeedback } from "../../execution-feedback";
+import type { ExecutionFeedbackPoint } from "../../execution-feedback/types/execution-feedback-point";
 import type {
   CsvDryRunBrokerHelpPanel,
   CsvDryRunBrokerCoveragePanel,
@@ -64,6 +65,7 @@ import type {
   BrokerExecutionCsvImportIssueCode,
   BrokerExecutionCsvTradeGroupingRules,
 } from "../../execution-sources/csv";
+import { mapUserFacingBehavior } from "../../user-facing-behavior";
 
 type DryRunAnalyticsContext = Omit<
   ProductTraderAnalyticsViewModel,
@@ -86,6 +88,22 @@ const REVIEW_MAPPING_FIELDS: BrokerExecutionCsvCanonicalField[] = [
   "fees",
   "netAmount",
 ];
+
+function primaryExecutionFeedbackPreviewLabel(
+  point: ExecutionFeedbackPoint | null | undefined,
+): string | null {
+  if (!point) {
+    return null;
+  }
+
+  const behavior = mapUserFacingBehavior({
+    behaviorId: point.id,
+    rawLabel: point.label,
+    route: "/trades",
+  });
+
+  return behavior.canDrivePrimaryConclusion ? behavior.label : null;
+}
 
 const SAMPLE_PRESETS: CsvDryRunSamplePreset[] = [
   {
@@ -912,9 +930,15 @@ function buildExecutionFeedbackPreview(
           ? `${summary.symbol} ${summary.tradeDirection}`
           : result.symbol ?? `Trade ${requestIndex + 1}`,
         grossRealizedPnl: summary?.executionOnlyPnl.grossRealizedPnl ?? null,
-        primaryFocusLabel: summary?.points.primaryFocus?.label ?? null,
-        topRiskLabel: summary?.points.risks[0]?.label ?? null,
-        topStrengthLabel: summary?.points.strengths[0]?.label ?? null,
+        primaryFocusLabel: primaryExecutionFeedbackPreviewLabel(
+          summary?.points.primaryFocus,
+        ),
+        topRiskLabel: primaryExecutionFeedbackPreviewLabel(
+          summary?.points.risks[0],
+        ),
+        topStrengthLabel: primaryExecutionFeedbackPreviewLabel(
+          summary?.points.strengths[0],
+        ),
         warningCount:
           (summary?.warnings.length ?? 0) + result.validation.issues.length,
         limitations: summary?.limitations ?? [

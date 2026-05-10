@@ -220,6 +220,84 @@ function decisionReviewCategoryPriority(category: string): number {
   }
 }
 
+function humanizeEvidenceKey(key: string): string {
+  const knownLabels: Record<string, string> = {
+    addCountAfterInitialEntry: "Adds after first entry",
+    addsNearResistanceCount: "Adds near resistance",
+    averageAddDistanceToNearestResistancePct: "Average add distance to resistance",
+    averageAddPricePositionInRecentRangePct: "Later add location in recent range",
+    distanceToResistance: "Distance to resistance",
+    distanceToSupport: "Distance to support",
+    favorableExcursionLeftOnTablePct: "Move left after exit",
+    firstEntryCapturedPercentOfTradeMfe: "Move remaining after entry",
+    firstEntryRecentRunUpPctBeforeEntry: "Run-up before entry",
+    firstEntryToPeakMovePct: "Move after first entry",
+    maxAdverseMovePctAfterExit: "Adverse move after exit",
+    maxFavorableMovePctAfterExit: "Move after exit",
+    nearestResistance: "Nearest resistance",
+    nearestResistanceReaction: "Resistance reaction",
+    nearestResistanceScore: "Resistance score",
+    nearestResistanceStrength: "Resistance strength",
+    nearestSupport: "Nearest support",
+    nearestSupportReaction: "Support reaction",
+    nearestSupportScore: "Support score",
+    nearestSupportStrength: "Support strength",
+    realizedCapturePercentOfTradeMfe: "Move captured",
+    tradeMaePct: "Adverse move during trade",
+    tradeMfePct: "Favorable move during trade",
+    tradeWindowEvidenceSource: "Movement evidence",
+  };
+
+  if (knownLabels[key]) {
+    return knownLabels[key];
+  }
+
+  return key
+    .replace(/Pct$/u, " percent")
+    .replace(/Mfe/gu, "favorable move")
+    .replace(/Mae/gu, "adverse move")
+    .replace(/([a-z])([A-Z])/gu, "$1 $2")
+    .replace(/_/gu, " ")
+    .toLowerCase()
+    .replace(/^\w/u, (letter) => letter.toUpperCase());
+}
+
+function humanizeEvidenceValue(value: string): string {
+  switch (value) {
+    case "levels_system_trade_window":
+      return "during-trade candles";
+    case "execution_only_fallback":
+      return "executions and P/L only";
+    case "true":
+      return "yes";
+    case "false":
+      return "no";
+    case "n/a":
+      return "unavailable";
+    default:
+      return value;
+  }
+}
+
+function decisionReviewEvidenceLabel(evidence: string): string {
+  const trimmed = evidence.trim();
+
+  if (trimmed.toLowerCase().includes("levels-system trade-window")) {
+    return candleQualityNoteDisplay(trimmed).summary;
+  }
+
+  const match = trimmed.match(/^([A-Za-z0-9_]+)=([^=]+)$/u);
+
+  if (!match) {
+    return trimmed;
+  }
+
+  const key = match[1] ?? "";
+  const value = match[2] ?? "";
+
+  return `${humanizeEvidenceKey(key)}: ${humanizeEvidenceValue(value)}`;
+}
+
 function groupedDecisionReviewInsights(review: DecisionReviewSnapshot) {
   const groups = new Map<string, DecisionReviewSnapshot["insights"]>();
 
@@ -291,7 +369,7 @@ function candleQualityNoteDisplay(note: string): CandleQualityNoteDisplay {
       note,
       label: "Lower-resolution candle window",
       summary:
-        "The review used 5m candles because complete 1m trade-window candles were unavailable.",
+        "The review used 5m candles because complete 1m during-trade candles were unavailable.",
       tone: "notice",
     };
   }
@@ -299,9 +377,9 @@ function candleQualityNoteDisplay(note: string): CandleQualityNoteDisplay {
   if (normalized.includes("trade-window candles were ignored")) {
     return {
       note,
-      label: "Trade-window candles ignored",
+      label: "During-trade candles ignored",
       summary:
-        "Trade-window candles were not used for movement review because they were unsafe for this trade.",
+        "During-trade candles were not used for movement review because they were unsafe for this trade.",
       tone: "warning",
     };
   }
@@ -382,7 +460,7 @@ function decisionReviewStatusBadges(
 
   if (review.tradeWindowEvidenceSource === "levels_system_trade_window") {
     badges.push({
-      label: "Trade-window evidence",
+      label: "During-trade candle evidence",
       detail: "During-trade candles were used for movement review.",
       tone: "emerald",
     });
@@ -417,7 +495,7 @@ function decisionReviewStatusBadges(
   } else if (review.tradeWindowEvidenceSource === "execution_only_fallback") {
     badges.push({
       label: "Execution/P&L only",
-      detail: "Trade-window candle evidence was unavailable for movement review.",
+      detail: "During-trade candle evidence was unavailable for movement review.",
       tone: "amber",
     });
   }
@@ -588,7 +666,7 @@ function buildDecisionReviewEvidenceGateSummary(args: {
       status: "blocked",
       label: "Evidence blocked",
       detail:
-        "No completed chart-context reviews were attached; technical notes explain which data gate stopped review.",
+        "No completed chart reviews were attached; technical notes explain which data gate stopped review.",
       totalReviewCount,
       fullMarketContextCount,
       tradeWindowEvidenceCount,
@@ -606,7 +684,7 @@ function buildDecisionReviewEvidenceGateSummary(args: {
     label: hasLimitation ? "Evidence-gated review" : "Evidence gates clear",
     detail: hasLimitation
       ? "Completed reviews stay visible, with candle or market-data limits called out before coaching."
-      : "Completed reviews have daily/4h context, trade-window evidence, and no candle-basis warnings.",
+      : "Completed reviews have daily/4h context, during-trade evidence, and no candle-basis warnings.",
     totalReviewCount,
     fullMarketContextCount,
     tradeWindowEvidenceCount,
@@ -653,14 +731,17 @@ function decisionReviewDiagnosticDisplay(diagnostic: DecisionReviewDiagnostic): 
     case "analysis_failed":
       return {
         label: "Needs technical follow-up",
-        summary: diagnostic.message,
-        detail: null,
+        summary:
+          "Chart analysis needs technical follow-up before it can support coaching.",
+        detail:
+          "Use execution review now and keep support, resistance, candle, and setup conclusions unavailable until this is resolved.",
         tone: "rose",
       };
     case "trade_open":
       return {
         label: "Open trade skipped",
-        summary: diagnostic.message,
+        summary:
+          "This trade was still open, so completed-trade coaching waits until the position is flat.",
         detail:
           "Open positions stay out of completed-trade coaching until the position is flat.",
         tone: "zinc",
@@ -668,15 +749,17 @@ function decisionReviewDiagnosticDisplay(diagnostic: DecisionReviewDiagnostic): 
     case "limit_reached":
       return {
         label: "Review limit reached",
-        summary: diagnostic.message,
-        detail: null,
+        summary:
+          "The review pass reached its limit before this trade could receive chart review.",
+        detail: "Resume the review pass later or keep the trade in execution-only review.",
         tone: "zinc",
       };
     default:
       return {
-        label: diagnostic.code.replaceAll("_", " "),
-        summary: diagnostic.message,
-        detail: null,
+        label: "Technical follow-up",
+        summary:
+          "This chart item needs follow-up before it can support coaching.",
+        detail: "Use execution evidence only until the technical item is resolved.",
         tone: "amber",
       };
   }
@@ -857,7 +940,7 @@ function DecisionReviewDiagnosticRow({
       ) : null}
       {display.summary !== diagnostic.message ? (
         <details className="mt-2 text-zinc-500">
-          <summary className="cursor-pointer text-zinc-500">Provider detail</summary>
+          <summary className="cursor-pointer text-zinc-500">Technical detail</summary>
           <div className="mt-1">{diagnostic.message}</div>
         </details>
       ) : null}
@@ -2438,15 +2521,34 @@ function PrototypeAnalysisPanel({
                                 </span>
                               </div>
                               {(insight.evidence ?? []).length > 0 ? (
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  {(insight.evidence ?? []).map((item) => (
-                                    <span
-                                      key={`${insight.id}:${item}`}
-                                      className="border border-zinc-800 px-2 py-1 font-mono text-[11px] text-sky-300"
-                                    >
-                                      {item}
-                                    </span>
-                                  ))}
+                                <div className="mt-3 grid gap-2">
+                                  <div className="flex flex-wrap gap-2">
+                                    {(insight.evidence ?? [])
+                                      .slice(0, 3)
+                                      .map((item) => (
+                                        <span
+                                          key={`${insight.id}:${item}:plain`}
+                                          className="border border-zinc-800 bg-zinc-900/70 px-2 py-1 text-[11px] text-sky-200"
+                                        >
+                                          {decisionReviewEvidenceLabel(item)}
+                                        </span>
+                                      ))}
+                                  </div>
+                                  <details className="text-[11px] text-zinc-500">
+                                    <summary className="cursor-pointer text-zinc-400">
+                                      Show calculation details
+                                    </summary>
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                      {(insight.evidence ?? []).map((item) => (
+                                        <span
+                                          key={`${insight.id}:${item}:technical`}
+                                          className="border border-zinc-800 px-2 py-1 font-mono text-[11px] text-zinc-400"
+                                        >
+                                          {item}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </details>
                                 </div>
                               ) : null}
                             </div>
@@ -2506,7 +2608,7 @@ function PrototypeAnalysisPanel({
                   </div>
                   {finding.evidence[0] ? (
                     <div className="mt-2 text-xs text-sky-300">
-                      {finding.evidence[0]}
+                      {decisionReviewEvidenceLabel(finding.evidence[0])}
                     </div>
                   ) : null}
                 </div>
@@ -2542,7 +2644,7 @@ function PrototypeAnalysisPanel({
                   </div>
                   {finding.evidence[0] ? (
                     <div className="mt-2 text-xs text-sky-300">
-                      {finding.evidence[0]}
+                      {decisionReviewEvidenceLabel(finding.evidence[0])}
                     </div>
                   ) : null}
                 </div>
@@ -3217,8 +3319,9 @@ export function ImportDryRunClient({
             ? `${body.completedReviewCount} decision review snapshot(s) attached.`
             : marketContextDiagnostic
               ? decisionReviewDiagnosticDisplay(marketContextDiagnostic).summary
-            : body.diagnostics[0]?.message ??
-              "No completed decision review snapshots were available.",
+              : body.diagnostics[0]
+                ? decisionReviewDiagnosticDisplay(body.diagnostics[0]).summary
+                : "No completed decision review snapshots were available.",
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

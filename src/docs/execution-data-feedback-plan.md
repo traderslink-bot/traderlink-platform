@@ -1,5 +1,8 @@
 # Execution Data Feedback Plan
 
+Status: Historical execution-feedback plan. Do not use as the current
+implementation plan; start from root `plan.md` and the plan index.
+
 ## Purpose
 
 This document tracks the execution-data feedback lane.
@@ -1084,7 +1087,7 @@ This file does not need to be updated for tiny implementation details, but it
 should always reflect the current roadmap branch and best next step for the
 execution-data feedback lane.
 
-## Current Best Next Step
+## Historical Best Next Step
 
 Execution-data feedback lane complete.
 

@@ -47,7 +47,7 @@ export const COACHING_TEMPLATES: Record<string, CoachingTemplate> = {
       "Keep building size only when price confirms strength and risk stays defined.",
   },
   poor_profit_protection: {
-    headline: "Profit protection failed after the trade offered open profit.",
+    headline: "Open profit was not protected after the trade offered a gain.",
     coreIssue: "Open profit was not protected once the trade had enough room to justify defense.",
     whatWentWrongOrRight:
       "The management and exit evidence shows too much giveback relative to available protection opportunities.",

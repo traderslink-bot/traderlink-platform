@@ -96,13 +96,23 @@ describe("buildTraderAnalyticsReport", () => {
     expect(report.executionBehavior.inconsistentShareSizingTradeCount).toBeGreaterThan(
       0,
     );
+    expect(report.executionBehavior.losingReductionSequenceTradeCount).toBeGreaterThan(
+      0,
+    );
     expect(report.topRisks.map((risk) => risk.id)).toEqual(
       expect.arrayContaining([
-        "size_expansion_after_adverse_price",
         "open_position_leftover",
-        "rapid_fire_execution_cluster",
         "inconsistent_share_sizing",
       ]),
+    );
+    expect(report.topRisks.map((risk) => risk.id)).not.toContain(
+      "size_expansion_after_adverse_price",
+    );
+    expect(report.topRisks.map((risk) => risk.id)).not.toContain(
+      "rapid_fire_execution_cluster",
+    );
+    expect(report.topRisks.map((risk) => risk.label).join(" ")).not.toContain(
+      "Adverse Price",
     );
     expect(report.topStrengths.length).toBeGreaterThan(0);
     expect(report.strengths.decisiveFullExitCount).toBeGreaterThan(0);
@@ -133,10 +143,56 @@ describe("buildTraderAnalyticsReport", () => {
     expect(report.charts.entryHourPerformance.data.length).toBeGreaterThan(0);
     expect(report.charts.behaviorRiskRates.data).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: "adverse_price_adds" }),
-        expect.objectContaining({ id: "rapid_fire_execution_cluster" }),
+        expect.objectContaining({
+          id: "size_expansion_after_adverse_price",
+          label: "Review adds that need chart context",
+          category: "Review prompt",
+        }),
+        expect.objectContaining({
+          id: "rapid_fire_execution_cluster",
+          label: "Review fast execution clusters",
+          category: "Review prompt",
+        }),
+        expect.objectContaining({
+          id: "losing_reduction_sequence",
+          label: "Reduced after price was against the entry",
+        }),
       ]),
     );
+  });
+
+  it("does not let unmapped or prompt-only behavior drive primary analytics conclusions", () => {
+    const completed = completedSummaries();
+    const source = completed.find((item) => item.summary.points.risks[0]);
+
+    expect(source?.summary.points.risks[0]).toBeTruthy();
+
+    const unknownRisk = {
+      ...source!.summary.points.risks[0],
+      id: "dominant_internal_pattern_42",
+      label: "Dominant Internal Pattern 42",
+      summary: "Internal scoring trace should not reach user analytics.",
+    };
+    const report = buildTraderAnalyticsReport({
+      source: "unit-test",
+      summaries: [
+        {
+          ...source!.summary,
+          points: {
+            ...source!.summary.points,
+            primaryFocus: unknownRisk,
+            risks: [unknownRisk],
+          },
+        },
+      ],
+    });
+
+    expect(report.topRisks).toHaveLength(0);
+    expect(report.primaryFocusCounts).toHaveLength(0);
+    expect(report.trades[0]?.primaryFocus).toBeNull();
+    expect(report.trades[0]?.topRisk).toBeNull();
+    expect(JSON.stringify(report)).not.toContain("Dominant Internal Pattern 42");
+    expect(JSON.stringify(report)).not.toContain("Internal scoring trace");
   });
 
   it("keeps execution-only metrics stable when extra market context is present", () => {

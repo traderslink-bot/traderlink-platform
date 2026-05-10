@@ -32,6 +32,18 @@ describe("trader product polish", () => {
   it("builds evidence cards with traceable actions and no market-context conclusions", () => {
     const { analytics } = buildAnalytics();
     const cards = analytics.productPolish.evidenceCards;
+    const promptOnlyIds = new Set([
+      "chased_entry",
+      "revenge_reentry_cluster",
+      "early_winner_exit",
+      "partialed_without_plan",
+      "repeated_rule_violation",
+    ]);
+    const evidenceCopy = cards.flatMap((card) => [
+      card.title,
+      card.whatHappened,
+      card.reviewAction,
+    ]).join("\n");
 
     expect(cards.length).toBeGreaterThan(0);
     expect(
@@ -45,6 +57,18 @@ describe("trader product polish", () => {
           card.marketContextUsedForConclusion === false,
       ),
     ).toBe(true);
+    expect(
+      cards.some(
+        (card) =>
+          card.source === "mistake" &&
+          promptOnlyIds.has(card.id.replace("evidence:mistake:", "")),
+      ),
+    ).toBe(false);
+    expect(evidenceCopy).not.toMatch(/added after failed premise/i);
+    expect(evidenceCopy).not.toMatch(/\bpremise\b/i);
+    expect(evidenceCopy).not.toMatch(/revenge-like/i);
+    expect(evidenceCopy).not.toMatch(/chased entry/i);
+    expect(evidenceCopy).not.toMatch(/early winner exit/i);
   });
 
   it("explains trade grades with bounded driver scores", () => {

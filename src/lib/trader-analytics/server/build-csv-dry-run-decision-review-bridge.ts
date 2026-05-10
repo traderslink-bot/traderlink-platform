@@ -228,7 +228,7 @@ export async function buildCsvDryRunDecisionReviewBridge(
           : "trade_not_completed",
         message:
           item.failure?.message ??
-          `${symbol ?? "Trade"} did not complete decision-review analysis.`,
+          `${symbol ?? "Trade"} did not complete chart review analysis.`,
       });
       return;
     }

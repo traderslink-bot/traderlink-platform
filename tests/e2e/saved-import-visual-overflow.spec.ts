@@ -180,7 +180,10 @@ test.describe("saved import visual and overflow pass", () => {
         path: "/analytics",
         assert: async () => {
           await expect(
-            page.getByRole("heading", { exact: true, name: "Analytics" }),
+            page.getByRole("heading", {
+              exact: true,
+              name: "Trading Performance Dashboard",
+            }),
           ).toBeVisible();
           await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
         },
@@ -190,7 +193,7 @@ test.describe("saved import visual and overflow pass", () => {
         path: "/coach",
         assert: async () => {
           await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
-          await expect(page.getByText("market claims gated")).toBeVisible();
+          await expect(page.getByText("chart claims gated")).toBeVisible();
         },
       },
       {

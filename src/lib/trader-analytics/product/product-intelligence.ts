@@ -29,6 +29,7 @@ import type {
   UnifiedReviewQueueLane,
 } from "./types";
 import { buildFilteredTraderAnalyticsView } from "./selectors";
+import { mapUserFacingBehavior } from "../../user-facing-behavior";
 
 export const TRADER_MISTAKE_TAXONOMY: TraderMistakeTaxonomyItem[] = [
   {
@@ -42,9 +43,9 @@ export const TRADER_MISTAKE_TAXONOMY: TraderMistakeTaxonomyItem[] = [
   },
   {
     id: "scaled_loser",
-    label: "Scaled Losing Position",
+    label: "Review Add After Adverse Movement",
     description:
-      "Size was increased after price moved against the existing entry.",
+      "Size was increased after adverse movement; chart context decides whether this was a planned dip buy or added risk.",
     severity: "high",
     sourceKind: "execution_only",
     relatedRiskIds: ["size_expansion_after_adverse_price"],
@@ -60,9 +61,9 @@ export const TRADER_MISTAKE_TAXONOMY: TraderMistakeTaxonomyItem[] = [
   },
   {
     id: "add_after_adverse_move",
-    label: "Added After Adverse Move",
+    label: "Review Add After Adverse Movement",
     description:
-      "The trader added size after price had already moved against the position.",
+      "The trader added size after adverse movement; market context is needed before calling the add weak or constructive.",
     severity: "high",
     sourceKind: "execution_only",
     relatedRiskIds: ["size_expansion_after_adverse_price"],
@@ -144,9 +145,9 @@ export const TRADER_MISTAKE_TAXONOMY: TraderMistakeTaxonomyItem[] = [
   },
   {
     id: "added_after_failed_premise",
-    label: "Added After Failed Premise",
+    label: "Added Several Times Before Reducing Size",
     description:
-      "Multiple adds occurred before the first meaningful risk reduction.",
+      "Multiple adds occurred before the first meaningful size reduction.",
     severity: "high",
     sourceKind: "execution_only",
     relatedRiskIds: [
@@ -255,6 +256,27 @@ function rowMatchesTaxonomy(args: {
   }
 }
 
+function mapProductBehavior(args: {
+  label: string;
+  route?: "/coach" | "/analytics" | "/review" | "/progress" | "/trades" | "/trades/[tradeId]";
+  taxonomyId: string;
+}) {
+  return mapUserFacingBehavior({
+    behaviorId: args.taxonomyId,
+    rawLabel: args.label,
+    route: args.route ?? "/coach",
+  });
+}
+
+function certifiedProductBehavior(observation: TraderMistakeObservation) {
+  const behavior = mapProductBehavior({
+    label: observation.label,
+    taxonomyId: observation.taxonomyId,
+  });
+
+  return behavior.canDrivePrimaryConclusion ? behavior : null;
+}
+
 function overtradedSameTickerObservation(
   rows: ProductTraderAnalyticsTradeRow[],
 ): TraderMistakeObservation | null {
@@ -348,7 +370,10 @@ export function buildTraderMistakeTaxonomySummary(
     return [
       {
         taxonomyId: taxonomy.id,
-        label: taxonomy.label,
+        label: mapProductBehavior({
+          label: taxonomy.label,
+          taxonomyId: taxonomy.id,
+        }).label,
         tradeIds: matchedRows.map((row) => row.tradeId),
         requestIndexes: matchedRows.map((row) => row.requestIndex),
         occurrenceCount: matchedRows.length,
@@ -362,7 +387,10 @@ export function buildTraderMistakeTaxonomySummary(
           ),
         ],
         confidence: matchedRows.length >= 3 ? "high" : "medium",
-        reason: `${taxonomy.label} matched ${matchedRows.length} reviewed trade${matchedRows.length === 1 ? "" : "s"} from execution-only evidence.`,
+        reason: `${mapProductBehavior({
+          label: taxonomy.label,
+          taxonomyId: taxonomy.id,
+        }).evidenceSentence} Matched ${matchedRows.length} reviewed trade${matchedRows.length === 1 ? "" : "s"} from execution-only evidence.`,
         suggestedReviewAction: suggestedReviewActionForTaxonomy({
           taxonomyId: taxonomy.id,
           matchedRows,
@@ -430,7 +458,7 @@ function buildScoreDimensions(
       ),
       sampleSizeWarning,
       detail:
-        "Execution-only discipline score penalizes adverse adds, rapid-fire clusters, and repeated adds before reduction.",
+        "Execution-only discipline score flags adds after price moved against the position, unusually tight execution clusters, and repeated adds before reduction.",
     },
     {
       id: "exit_quality",
@@ -442,7 +470,7 @@ function buildScoreDimensions(
       ),
       sampleSizeWarning,
       detail:
-        "Exit quality uses decisive exits, structured reductions, open leftovers, and all-or-nothing exits.",
+        "Exit quality uses clean full exits, structured reductions, shares left open, and all-or-nothing exits.",
     },
     {
       id: "risk_control",
@@ -455,7 +483,7 @@ function buildScoreDimensions(
       ),
       sampleSizeWarning,
       detail:
-        "Risk control focuses on adverse adds, open leftovers, and overbuilt positions.",
+        "Risk control focuses on adds after price moved against the position, shares left open, and overbuilt positions.",
     },
     {
       id: "consistency",
@@ -465,7 +493,7 @@ function buildScoreDimensions(
       ),
       sampleSizeWarning,
       detail:
-        "Consistency rewards clean single-entry exits and penalizes sizing swings and rapid-fire execution.",
+        "Consistency rewards clean single-entry exits and flags sizing swings and unusually tight execution timing.",
     },
     {
       id: "pnl_quality",
@@ -553,6 +581,11 @@ export function buildTraderMistakeCostEstimates(args: {
   const rowsByTradeId = new Map(rows.map((row) => [row.tradeId, row]));
   const items: TraderMistakeCostEstimate[] = args.taxonomySummary.observations
     .map((observation) => {
+      const behavior = certifiedProductBehavior(observation);
+      if (!behavior) {
+        return null;
+      }
+
       const affectedRows = observation.tradeIds
         .map((tradeId) => rowsByTradeId.get(tradeId))
         .filter((row): row is ProductTraderAnalyticsTradeRow => row !== undefined);
@@ -566,7 +599,7 @@ export function buildTraderMistakeCostEstimates(args: {
 
       return {
         taxonomyId: observation.taxonomyId,
-        label: observation.label,
+        label: behavior.label,
         affectedTradeCount: affectedRows.length,
         relatedTradeIds: affectedRows.map((row) => row.tradeId),
         estimatedGrossCost,
@@ -580,6 +613,7 @@ export function buildTraderMistakeCostEstimates(args: {
           "Estimate uses gross execution-only losses on trades where this behavior appeared; it is not an exact avoidable-loss calculation.",
       } satisfies TraderMistakeCostEstimate;
     })
+    .filter((item): item is TraderMistakeCostEstimate => item !== null)
     .filter((item) => item.affectedTradeCount > 0)
     .sort((left, right) => right.estimatedGrossCost - left.estimatedGrossCost);
 
@@ -619,6 +653,28 @@ function templateForTaxonomy(
   }
 }
 
+function ruleTitleForCostDriver(
+  costDriver: TraderMistakeCostEstimate,
+): string {
+  switch (costDriver.taxonomyId) {
+    case "scaled_loser":
+    case "add_after_adverse_move":
+      return "Require repair before adding size";
+    case "added_after_failed_premise":
+    case "all_or_nothing_exit_after_many_adds":
+      return "Reduce size before the third add";
+    case "poor_first_reduction":
+    case "partialed_without_plan":
+    case "early_winner_exit":
+      return "Define the first profit-protection trigger";
+    case "held_loser_too_long":
+    case "left_open_position":
+      return "Define when the trade must be flat";
+    default:
+      return `Review ${costDriver.label}`;
+  }
+}
+
 export function buildTraderRuleBuilderRecommendations(args: {
   focusQueue: TraderFocusQueueItem[];
   ruleEvaluations: TraderRuleEvaluation[];
@@ -648,10 +704,12 @@ export function buildTraderRuleBuilderRecommendations(args: {
   const costTemplate = topCost ? templateForTaxonomy(topCost.taxonomyId) : null;
 
   if (topCost && costTemplate) {
+    const suggestedRuleTitle = ruleTitleForCostDriver(topCost);
+
     recommendations.push({
       id: `rule-builder:cost:${topCost.taxonomyId}`,
       suggestedTemplateId: costTemplate,
-      suggestedRuleTitle: `Avoid ${topCost.label}`,
+      suggestedRuleTitle,
       label: `Create rule for ${topCost.label}`,
       reason: `${topCost.label} has the largest estimated gross cost in this sample.`,
       defaultParameters:
@@ -712,6 +770,11 @@ export function buildBehaviorRecurrenceAlerts(args: {
   const alerts: BehaviorRecurrenceAlert[] = [];
 
   for (const observation of args.taxonomySummary.observations) {
+    const behavior = certifiedProductBehavior(observation);
+    if (!behavior) {
+      continue;
+    }
+
     if (observation.occurrenceCount < 2) {
       continue;
     }
@@ -719,8 +782,8 @@ export function buildBehaviorRecurrenceAlerts(args: {
     alerts.push({
       id: `recurrence:taxonomy:${observation.taxonomyId}`,
       severity: observation.occurrenceCount >= 3 ? "urgent" : "review",
-      title: `${observation.label} repeated`,
-      detail: `${observation.label} appeared in ${observation.occurrenceCount} reviewed trade(s).`,
+      title: `${behavior.label} repeated`,
+      detail: `${behavior.label} appeared in ${observation.occurrenceCount} reviewed trade(s).`,
       relatedTradeIds: observation.tradeIds,
       occurrenceCount: observation.occurrenceCount,
       nextAction:

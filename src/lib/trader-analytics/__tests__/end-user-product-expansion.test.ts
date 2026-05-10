@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildBehaviorTrendCards,
   buildProductTraderAnalyticsViewModel,
   buildSampleSavedTradeImportRequests,
   buildSampleSavedTraderAnalyticsData,
@@ -114,12 +115,64 @@ describe("end-user analytics product expansion", () => {
     );
 
     expect(adverseAddStreak).toBeDefined();
+    expect(adverseAddStreak?.label).toBe("Require Repair Before Adding Size");
+    expect(adverseAddStreak?.summary.toLowerCase()).not.toContain("no adds");
     expect(closeToFlatStreak).toBeDefined();
     expect(
       streaks.every((streak) =>
         ["active", "broken", "insufficient_data"].includes(streak.status),
       ),
     ).toBe(true);
+  });
+
+  it("keeps behavior trend labels human and describes positive habits correctly", () => {
+    const sample = buildSampleSavedTraderAnalyticsData();
+    const previous = {
+      ...sample.reports[1],
+      report: {
+        ...sample.reports[1].report,
+        sampleSize: {
+          ...sample.reports[1].report.sampleSize,
+          completedTradeCount: 10,
+        },
+        strengths: {
+          ...sample.reports[1].report.strengths,
+          decisiveFullExitCount: 1,
+        },
+      },
+    };
+    const current = {
+      ...sample.reports[0],
+      report: {
+        ...sample.reports[0].report,
+        sampleSize: {
+          ...sample.reports[0].report.sampleSize,
+          completedTradeCount: 10,
+        },
+        strengths: {
+          ...sample.reports[0].report.strengths,
+          decisiveFullExitCount: 4,
+        },
+      },
+    };
+
+    const trends = buildBehaviorTrendCards({
+      previousReport: previous,
+      currentReport: current,
+    });
+    const visibleCopy = trends
+      .flatMap((trend) => [trend.label, trend.copy])
+      .join("\n");
+    const cleanExitTrend = trends.find(
+      (trend) => trend.behaviorId === "decisive_full_exit",
+    );
+
+    expect(visibleCopy).not.toMatch(/adverse add|adverse-price|rapid-fire|open leftover/i);
+    expect(cleanExitTrend).toMatchObject({
+      label: "Clean full exits",
+      direction: "improving",
+    });
+    expect(cleanExitTrend?.copy).toContain("more often");
   });
 
   it("summarizes rule compliance and weekly review from the same saved report", () => {

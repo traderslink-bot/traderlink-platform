@@ -4,6 +4,12 @@ import type {
   SessionBucket,
   SessionExposureSegment,
 } from "../../raw-trade-timeline/types/session-context";
+import type {
+  UserFacingBehaviorEvidenceChannel,
+  UserFacingBehaviorOpportunityType,
+  UserFacingBehaviorState,
+  UserFacingBehaviorTone,
+} from "../../user-facing-behavior/types/user-facing-behavior-contract";
 import type { TraderAnalyticsChartData } from "./trader-analytics-chart";
 
 export type TraderAnalyticsInputMode =
@@ -19,6 +25,13 @@ export interface TraderAnalyticsPointDigest {
   category: TraderAnalyticsPointCategory;
   label: string;
   summary: string;
+  behaviorState: UserFacingBehaviorState;
+  behaviorTone: UserFacingBehaviorTone;
+  opportunityType: UserFacingBehaviorOpportunityType;
+  evidenceChannel: UserFacingBehaviorEvidenceChannel;
+  canDrivePrimaryConclusion: boolean;
+  missingDataSentence: string;
+  fixFirstAction: string;
   severity: ExecutionFeedbackPoint["severity"];
   confidence: ExecutionFeedbackPoint["confidence"];
   priorityScore: number;
@@ -162,8 +175,10 @@ export interface TraderAnalyticsExecutionBehaviorMetrics {
   openPositionLeftoverTradeCount: number;
   rapidFireExecutionTradeCount: number;
   inconsistentShareSizingTradeCount: number;
+  largeLateAddTradeCount: number;
   smallFirstRiskReductionTradeCount: number;
   allOrNothingExitAfterManyAddsTradeCount: number;
+  losingReductionSequenceTradeCount: number;
 }
 
 export interface TraderAnalyticsStrengthMetrics {

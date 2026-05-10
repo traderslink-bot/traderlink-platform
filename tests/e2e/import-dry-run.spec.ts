@@ -400,7 +400,7 @@ test.describe("CSV dry-run import route", () => {
                   id: "trade_window_excursion_measured",
                   tone: "neutral",
                   category: "trade_window",
-                  title: "Trade-window movement was measured",
+                  title: "During-trade movement was measured",
                   summary:
                     "The review has bounded trade-window evidence for favorable and adverse movement.",
                   evidence: ["tradeMfePct=6.2%", "tradeMaePct=1.3%"],
@@ -466,6 +466,11 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("decision-review-details")).toContainText(
       "Trade-window candles were ignored",
     );
+    await expect(page.getByText("Resistance strength: major").first()).toBeVisible();
+    await expect(
+      page.getByText("Later add location in recent range: 84.0%").first(),
+    ).toBeVisible();
+    await expect(page.getByText("nearestResistanceStrength=major").first()).toBeHidden();
     await expect(page.getByTestId("decision-review-details")).toContainText(
       "nearestResistanceStrength=major",
     );
@@ -562,7 +567,7 @@ test.describe("CSV dry-run import route", () => {
                   id: "trade_window_excursion_measured",
                   tone: "neutral",
                   category: "trade_window",
-                  title: "Trade-window movement was measured",
+                  title: "During-trade movement was measured",
                   summary: "The review has bounded trade-window evidence.",
                   evidence: ["tradeMfePct=2.0%"],
                 },
@@ -639,7 +644,7 @@ test.describe("CSV dry-run import route", () => {
                   id: "trade_window_excursion_measured",
                   tone: "neutral",
                   category: "trade_window",
-                  title: "Trade-window movement was measured",
+                  title: "During-trade movement was measured",
                   summary: "The review uses execution-only movement evidence.",
                   evidence: ["tradeMfePct=0.0%"],
                 },
@@ -704,7 +709,7 @@ test.describe("CSV dry-run import route", () => {
                   id: "trade_window_excursion_measured",
                   tone: "neutral",
                   category: "trade_window",
-                  title: "Trade-window movement was measured",
+                  title: "During-trade movement was measured",
                   summary: "The review has bounded trade-window evidence.",
                   evidence: ["tradeMfePct=2.0%"],
                 },
@@ -775,7 +780,7 @@ test.describe("CSV dry-run import route", () => {
                   id: "exit_left_continuation",
                   tone: "risk",
                   category: "exit",
-                  title: "Exit left continuation on the table",
+                  title: "Exit came before more continuation",
                   summary:
                     "The trade continued meaningfully after the exit while risk stayed bounded.",
                   evidence: ["maxFavorableMovePctAfterExit=226.8%"],
@@ -784,7 +789,7 @@ test.describe("CSV dry-run import route", () => {
                   id: "trade_window_excursion_measured",
                   tone: "neutral",
                   category: "trade_window",
-                  title: "Trade-window movement was measured",
+                  title: "During-trade movement was measured",
                   summary: "The review has bounded trade-window evidence.",
                   evidence: ["tradeMfePct=226.8%", "tradeMaePct=0.0%"],
                 },
@@ -847,7 +852,7 @@ test.describe("CSV dry-run import route", () => {
                   id: "entry_far_from_daily_4h_support",
                   tone: "risk",
                   category: "market_context",
-                  title: "Entry was not close to support",
+                  title: "Entry had little nearby support",
                   summary:
                     "Daily/4h context was present, but the first fill was not sitting on nearby support.",
                   evidence: ["nearestSupport=n/a", "distanceToSupport=n/a"],
@@ -856,7 +861,7 @@ test.describe("CSV dry-run import route", () => {
                   id: "trade_window_excursion_measured",
                   tone: "neutral",
                   category: "trade_window",
-                  title: "Trade-window movement was measured",
+                  title: "During-trade movement was measured",
                   summary: "The review has bounded trade-window evidence.",
                   evidence: ["tradeMfePct=3.0%"],
                 },
@@ -1020,13 +1025,13 @@ test.describe("CSV dry-run import route", () => {
       "repaired CSV rows",
     );
     await expect(page.getByTestId("trade-feedback-scope")).toContainText(
-      /Chart review needs technical follow-up|Market context waiting/,
+      /Chart review needs technical follow-up|Chart context waiting/,
     );
     await expect(page.getByTestId("trade-feedback-scope")).toContainText(
       "Execution-only fallback",
     );
     await expect(page.getByTestId("trade-feedback-scope")).toContainText(
-      "Do not treat market-context conclusions as available",
+      "Do not treat chart conclusions as available",
     );
 
     await page.goto("/imports");

@@ -9,7 +9,10 @@ import type { NormalizeExecutionInput } from "../normalizers/normalize-execution
 import type { RawTradeTimelineBuildResult } from "../types/raw-trade-timeline-build-result";
 import type { SessionContextInput } from "../types/session-context";
 import type { TradeDirection } from "../types/trade-timeline-input";
-import { mapSupportResistanceSymbolContextToLocalContext } from "../../support-resistance/build-support-resistance-context";
+import {
+  mapLevelsSystemExecutionRelationsToLocalRelations,
+  mapSupportResistanceSymbolContextToLocalContext,
+} from "../../support-resistance/build-support-resistance-context";
 import { mapSharedDynamicLevels } from "../../support-resistance/levels-system-adapter";
 import {
   buildLevelsSystemSupportResistanceOptions,
@@ -384,7 +387,12 @@ export async function createRawTradeTimelineWithLevelsSystemCandles(
     supportLevels: supportResistanceContext?.supportLevels,
     resistanceLevels: supportResistanceContext?.resistanceLevels,
     gapStructure: supportResistanceContext?.gapStructure,
-    executionLevelRelations: supportResistanceContext?.executionLevelRelations,
+    executionLevelRelations: isImplicitStubProvider
+      ? undefined
+      : mapLevelsSystemExecutionRelationsToLocalRelations({
+          timeline: result.timeline,
+          relations: context.executionRelations,
+        }),
     levelsSystemTradeWindowFacts: useTradeWindowCandles
       ? context.tradeWindowFacts
       : undefined,

@@ -16,6 +16,7 @@ import {
   buildDefaultTraderRuleInstances,
   evaluateTraderRules,
 } from "./rule-tracker";
+import { buildTraderAnalyticsReport } from "../build-trader-analytics-report";
 import {
   buildSavedReportSnapshotCards,
   buildSavedTradeImportInbox,
@@ -37,12 +38,80 @@ import { previewSavedTradeImport } from "./import-preview";
 import type {
   ProductTraderAnalyticsViewModel,
   SavedTraderAnalyticsReport,
+  SavedTraderAnalyticsSummaryRef,
   SavedTraderAnalyticsRepository,
   TraderAnalyticsFilter,
   TraderAnalyticsStorageMode,
   TraderAnalyticsUserId,
 } from "./types";
 import type { UserTradeAnalysisRequest } from "../../trade-analysis/request/trade-analysis-request-contract";
+import type { ExecutionFeedbackSummary } from "../../execution-feedback/summary/build-execution-feedback-summary";
+
+function buildAllSavedTradesReport(
+  reportHistory: SavedTraderAnalyticsReport[],
+): SavedTraderAnalyticsReport | null {
+  const latestReport = getLatestSavedTraderAnalyticsReport(reportHistory);
+
+  if (!latestReport) {
+    return null;
+  }
+
+  const sourceSummaries: SavedTraderAnalyticsSummaryRef[] = [];
+  const seenTradeIds = new Set<string>();
+
+  for (const report of [...reportHistory].reverse()) {
+    for (const summaryRef of report.sourceSummaries) {
+      if (seenTradeIds.has(summaryRef.tradeId)) {
+        continue;
+      }
+
+      seenTradeIds.add(summaryRef.tradeId);
+      sourceSummaries.push({
+        ...summaryRef,
+        requestIndex: sourceSummaries.length,
+      });
+    }
+  }
+
+  if (sourceSummaries.length <= latestReport.sourceTradeIds.length) {
+    return latestReport;
+  }
+
+  const dates = reportHistory.flatMap((report) => [
+    report.reportPeriod.startDate,
+    report.reportPeriod.endDate,
+  ]);
+  const sortedDates = dates.filter(Boolean).sort();
+  const generatedAt = latestReport.generatedAt;
+  const report = buildTraderAnalyticsReport({
+    source: "saved_import:all_saved_trades",
+    generatedAt,
+    inputMode: "execution_feedback_summaries",
+    summaries: sourceSummaries.map((summaryRef, requestIndex) => ({
+      requestIndex,
+      summary: summaryRef.summary as ExecutionFeedbackSummary,
+    })),
+    requestCount: sourceSummaries.length,
+  });
+
+  return {
+    id: "report:all-saved-trades",
+    userId: latestReport.userId,
+    accountId: latestReport.accountId,
+    generatedAt,
+    reportPeriod: {
+      startDate: sortedDates[0] ?? latestReport.reportPeriod.startDate,
+      endDate: sortedDates[sortedDates.length - 1] ?? latestReport.reportPeriod.endDate,
+      label: "All saved trades",
+    },
+    sourceTradeIds: sourceSummaries.map((summaryRef) => summaryRef.tradeId),
+    sourceSummaries,
+    report,
+    reviewStatus: "new",
+    notes: latestReport.notes,
+    sampleData: latestReport.sampleData,
+  };
+}
 
 export function buildProductTraderAnalyticsViewModel(args: {
   repository: SavedTraderAnalyticsRepository;
@@ -52,7 +121,7 @@ export function buildProductTraderAnalyticsViewModel(args: {
   importRequests?: UserTradeAnalysisRequest[];
 }): ProductTraderAnalyticsViewModel {
   const reportHistory = args.repository.listReports(args.userId);
-  const latestReport = getLatestSavedTraderAnalyticsReport(reportHistory);
+  const latestReport = buildAllSavedTradesReport(reportHistory);
 
   if (!latestReport) {
     throw new Error("No saved trader analytics report is available.");

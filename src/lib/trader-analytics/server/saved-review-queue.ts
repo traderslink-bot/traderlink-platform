@@ -13,6 +13,8 @@ import type {
 } from "../product/import-commit/import-commit-planner";
 import type { SavedExecutionTrade } from "../product/types";
 import { getLatestSavedTraderAnalyticsReport } from "../product/selectors";
+import { mapDecisionReviewInsightForUser } from "../../user-facing-behavior";
+import type { UserFacingDecisionReviewInsight } from "../../user-facing-behavior";
 
 export type SavedReviewQueueFilter =
   | "all"
@@ -54,6 +56,12 @@ export interface SavedReviewQueueItem {
   priorityLabel: "urgent" | "high" | "medium" | "low";
   priorityReason: string;
   marketContextSource: string;
+  chartFindingCount: number;
+  chartRiskCount: number;
+  chartStrengthCount: number;
+  chartReviewPromptCount: number;
+  primaryChartFindingLabel: string | null;
+  primaryChartFindingAction: string | null;
   grossRealizedPnl: number | null;
   reviewStatus: string;
   notesCount: number;
@@ -113,18 +121,84 @@ function priorityLabel(score: number): SavedReviewQueueItem["priorityLabel"] {
   return "low";
 }
 
+function chartFindingsForSnapshot(
+  snapshot: PersistedDecisionReviewSnapshot,
+): UserFacingDecisionReviewInsight[] {
+  return snapshot.review.insights
+    .map((insight) => mapDecisionReviewInsightForUser(insight, "/review"))
+    .filter(
+      (insight) =>
+        insight.canShowPrimary && insight.evidenceChannel !== "execution_only",
+    );
+}
+
+function primaryChartFinding(
+  findings: UserFacingDecisionReviewInsight[],
+): UserFacingDecisionReviewInsight | null {
+  return (
+    findings.find(
+      (finding) =>
+        finding.canDrivePrimaryConclusion &&
+        finding.opportunityType === "risk_to_reduce",
+    ) ??
+    findings.find(
+      (finding) =>
+        finding.canDrivePrimaryConclusion &&
+        finding.opportunityType === "strength_to_repeat",
+    ) ??
+    findings.find((finding) => finding.opportunityType === "review_prompt") ??
+    null
+  );
+}
+
 function snapshotPriority(snapshot: PersistedDecisionReviewSnapshot): {
   score: number;
   reason: string;
 } {
-  const riskCount = snapshot.review.insights.filter(
-    (insight) => insight.tone !== "strength",
+  const findings = chartFindingsForSnapshot(snapshot);
+  const primary = primaryChartFinding(findings);
+  const riskCount = findings.filter(
+    (finding) =>
+      finding.canDrivePrimaryConclusion &&
+      finding.opportunityType === "risk_to_reduce",
+  ).length;
+  const strengthCount = findings.filter(
+    (finding) =>
+      finding.canDrivePrimaryConclusion &&
+      finding.opportunityType === "strength_to_repeat",
+  ).length;
+  const promptCount = findings.filter(
+    (finding) => finding.opportunityType === "review_prompt",
   ).length;
 
   if (riskCount > 0) {
     return {
       score: Math.min(85, 62 + riskCount * 7),
-      reason: `${riskCount} decision-review risk insight(s) need follow-up.`,
+      reason: primary
+        ? `${riskCount} chart-backed risk${
+            riskCount === 1 ? "" : "s"
+          } to review. Start with: ${primary.label}.`
+        : `${riskCount} chart-backed risk${
+            riskCount === 1 ? "" : "s"
+          } need review.`,
+    };
+  }
+
+  if (strengthCount > 0) {
+    return {
+      score: 48,
+      reason: primary
+        ? `Chart-backed strength ready to repeat: ${primary.label}.`
+        : "Chart-backed strength is ready for normal review rotation.",
+    };
+  }
+
+  if (promptCount > 0) {
+    return {
+      score: 44,
+      reason: primary
+        ? `Chart context has a supporting review prompt: ${primary.label}.`
+        : "Chart context has supporting measurements for review.",
     };
   }
 
@@ -141,7 +215,7 @@ function diagnosticPriority(
   if (status === "analysis_failed") {
     return {
       score: 96,
-      reason: "Technical follow-up is needed before chart-context feedback is trusted.",
+      reason: "Technical follow-up is needed before chart feedback is trusted.",
     };
   }
 
@@ -169,7 +243,9 @@ function diagnosticPriority(
 
   return {
     score: diagnostic ? 70 : 52,
-    reason: diagnostic?.message ?? "Queued trade is waiting for decision review.",
+    reason: diagnostic
+      ? "Technical follow-up is needed before chart feedback is trusted."
+      : "Queued trade is waiting for trade review.",
   };
 }
 
@@ -210,8 +286,8 @@ function queueStateCopy(lane: SavedReviewQueueItem["lane"]): {
       return {
         stateLabel: "Execution review is available",
         stateDetail:
-          "Chart-context review completed. Use the saved snapshot with the execution replay.",
-        reviewScopeLabel: "chart-context review",
+          "Chart review completed. Use the saved snapshot with the execution replay.",
+        reviewScopeLabel: "chart review",
         nextAction: "Open the trade detail and complete the saved review checklist.",
       };
     case "blocked_open_trade":
@@ -227,7 +303,7 @@ function queueStateCopy(lane: SavedReviewQueueItem["lane"]): {
       return {
         stateLabel: "Chart context waiting",
         stateDetail:
-          "Execution review is available, but levels or candle context are waiting on a market-data backfill.",
+          "Execution review is available, but levels or candle context are waiting on a market data backfill.",
         reviewScopeLabel: "execution-only",
         nextAction:
           "Review entries, adds, reductions, exits, timing, and P/L now; backfill market context later.",
@@ -236,10 +312,10 @@ function queueStateCopy(lane: SavedReviewQueueItem["lane"]): {
       return {
         stateLabel: "Needs technical follow-up",
         stateDetail:
-          "Execution review is available, but chart-context analysis needs a technical follow-up before that feedback is trusted.",
+          "Execution review is available, but chart analysis needs a technical follow-up before that feedback is trusted.",
         reviewScopeLabel: "execution-only fallback",
         nextAction:
-          "Use the execution replay now and keep market-context conclusions unavailable until the technical follow-up is resolved.",
+          "Use the execution replay now and keep chart context conclusions unavailable until the technical follow-up is resolved.",
       };
     case "skipped_limit":
       return {
@@ -251,9 +327,9 @@ function queueStateCopy(lane: SavedReviewQueueItem["lane"]): {
       };
     case "queued":
       return {
-        stateLabel: "Waiting for decision review",
+        stateLabel: "Waiting for trade review",
         stateDetail:
-          "This saved trade is queued for decision review when the review job runs.",
+          "This saved trade is queued for trade review when the review job runs.",
         reviewScopeLabel: "queued",
         nextAction: "Run or resume saved decision review when market context is ready.",
       };
@@ -299,11 +375,27 @@ function buildQueueItem(args: {
     reason: "Review item is ready for triage.",
   };
   const symbol = args.trade?.symbol ?? args.savedTrade?.symbol ?? args.job.symbol;
-  const headline =
-    args.snapshot?.review.coachingHeadline ??
-    args.diagnostic?.message ??
-    args.job.reason;
   const stateCopy = queueStateCopy(lane);
+  const chartFindings = args.snapshot
+    ? chartFindingsForSnapshot(args.snapshot)
+    : [];
+  const chartPrimary = primaryChartFinding(chartFindings);
+  const chartRiskCount = chartFindings.filter(
+    (finding) =>
+      finding.canDrivePrimaryConclusion &&
+      finding.opportunityType === "risk_to_reduce",
+  ).length;
+  const chartStrengthCount = chartFindings.filter(
+    (finding) =>
+      finding.canDrivePrimaryConclusion &&
+      finding.opportunityType === "strength_to_repeat",
+  ).length;
+  const chartReviewPromptCount = chartFindings.filter(
+    (finding) => finding.opportunityType === "review_prompt",
+  ).length;
+  const headline = chartPrimary
+    ? `${chartPrimary.label}. ${chartPrimary.detail}`
+    : args.snapshot?.review.coachingHeadline ?? stateCopy.stateDetail;
 
   return {
     id: args.job.id,
@@ -315,7 +407,7 @@ function buildQueueItem(args: {
     stateLabel: stateCopy.stateLabel,
     stateDetail: stateCopy.stateDetail,
     reviewScopeLabel: stateCopy.reviewScopeLabel,
-    title: `${symbol} decision review`,
+    title: `${symbol} trade review`,
     detail: headline,
     nextAction: stateCopy.nextAction,
     href: `/trades/${encodeURIComponent(args.job.savedTradeId)}?from=review-queue&queue=${lane}`,
@@ -326,6 +418,12 @@ function buildQueueItem(args: {
       args.snapshot?.review.marketContextSource ??
       args.diagnostic?.code ??
       "none",
+    chartFindingCount: chartFindings.length,
+    chartRiskCount,
+    chartStrengthCount,
+    chartReviewPromptCount,
+    primaryChartFindingLabel: chartPrimary?.label ?? null,
+    primaryChartFindingAction: chartPrimary?.reviewAction ?? null,
     grossRealizedPnl: reportPnl({
       trade: args.trade,
       repository: args.repository,

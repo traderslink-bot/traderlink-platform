@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { SavedTraderAnalyticsReport } from "../index";
+import type {
+  SavedTraderAnalyticsReport,
+  TraderMistakeObservation,
+} from "../index";
 import {
   buildCoachEmptyState,
   buildCoachMistakeTimeline,
@@ -14,6 +17,50 @@ import {
 } from "../index";
 
 describe("trader coach action loop", () => {
+  function buildAnalytics() {
+    const sample = buildSampleSavedTraderAnalyticsData();
+    const analytics = buildProductTraderAnalyticsViewModel({
+      repository: sample.repository,
+      userId: sample.userId,
+      importRequests: sample.importRequests,
+    });
+
+    return { analytics, sample };
+  }
+
+  function visibleCoachCopy(analytics: ReturnType<typeof buildAnalytics>["analytics"]) {
+    const coach = analytics.coachActionLoop;
+
+    return [
+      coach.coachHome.primaryAction.label,
+      coach.coachHome.primaryAction.detail,
+      coach.coachHome.headline,
+      coach.coachHome.subhead,
+      ...coach.coachHome.actions.flatMap((action) => [
+        action.label,
+        action.detail,
+      ]),
+      coach.sessionPrepCard.avoidBehavior,
+      coach.sessionPrepCard.repeatBehavior,
+      coach.sessionPrepCard.ruleFocus,
+      coach.sessionPrepCard.sessionTimeInsight,
+      ...coach.sessionPrepCard.checklist,
+      ...coach.mistakeSeverityLadder.items.flatMap((item) => [
+        item.label,
+        item.nextAction,
+      ]),
+      ...coach.mistakeTimeline.items.flatMap((item) => [
+        item.label,
+        item.detail,
+        item.suggestedReviewAction,
+      ]),
+      ...coach.archetypeProfile.signals.flatMap((signal) => [
+        signal.label,
+        ...signal.evidence,
+      ]),
+    ].join("\n");
+  }
+
   it("places repeated mistakes onto trade replay timelines", () => {
     const sample = buildSampleSavedTraderAnalyticsData();
     const analytics = buildProductTraderAnalyticsViewModel({
@@ -227,5 +274,67 @@ describe("trader coach action loop", () => {
     expect(profile.signals.length).toBeGreaterThan(0);
     expect(similarity.groups.length).toBeGreaterThan(0);
     expect(severity.topSeverity).not.toBeNull();
+  });
+
+  it("keeps raw behavior taxonomy language out of visible coach copy", () => {
+    const { analytics } = buildAnalytics();
+    const visibleText = visibleCoachCopy(analytics);
+
+    expect(visibleText).not.toMatch(/added after failed premise/i);
+    expect(visibleText).not.toMatch(/\bfailed premise\b/i);
+    expect(visibleText).not.toMatch(/\bpremise\b/i);
+    expect(visibleText).not.toMatch(/revenge-like/i);
+    expect(visibleText).not.toMatch(/chased entry/i);
+    expect(visibleText).not.toMatch(/early winner exit/i);
+  });
+
+  it("keeps prompt-only behaviors out of the primary severity ladder", () => {
+    const { analytics } = buildAnalytics();
+    const severityIds = analytics.coachActionLoop.mistakeSeverityLadder.items.map(
+      (item) => item.taxonomyId,
+    );
+
+    expect(severityIds).not.toContain("chased_entry");
+    expect(severityIds).not.toContain("revenge_reentry_cluster");
+    expect(severityIds).not.toContain("early_winner_exit");
+    expect(severityIds).not.toContain("partialed_without_plan");
+    expect(severityIds).not.toContain("repeated_rule_violation");
+  });
+
+  it("does not build a primary severity conclusion from review-prompt observations only", () => {
+    const { analytics } = buildAnalytics();
+    const promptOnlyObservations: TraderMistakeObservation[] = [
+      {
+        taxonomyId: "chased_entry",
+        label: "Chased Entry",
+        tradeIds: ["trade-review-prompt-1"],
+        requestIndexes: [0],
+        occurrenceCount: 3,
+        sourceRiskIds: ["rapid_entries"],
+        confidence: "high",
+        reason: "Execution clustering needs chart context before a chase call.",
+        suggestedReviewAction:
+          "Check whether the entry was far from a cleaner decision point.",
+      },
+      {
+        taxonomyId: "revenge_reentry_cluster",
+        label: "Revenge-Like Re-Entry Cluster",
+        tradeIds: ["trade-review-prompt-2"],
+        requestIndexes: [1],
+        occurrenceCount: 2,
+        sourceRiskIds: ["rapid_reentry"],
+        confidence: "high",
+        reason: "Quick re-entry needs same-symbol thread evidence.",
+        suggestedReviewAction:
+          "Compare the re-entry attempts before calling this a repeated behavior.",
+      },
+    ];
+    const severity = buildMistakeSeverityLadder({
+      observations: promptOnlyObservations,
+      productIntelligence: analytics.productIntelligence,
+    });
+
+    expect(severity.items).toEqual([]);
+    expect(severity.topSeverity).toBeNull();
   });
 });

@@ -8,11 +8,14 @@ import type {
   SupportResistanceSymbolContext,
   SupportResistanceSymbolContextDiagnostic,
   SupportResistanceSymbolFetchSummary,
+  TradeAnalysisExecutionRelationFact,
 } from "levels-system-phase1/support-resistance-engine";
+import { SUPPORT_RESISTANCE_CONFIG } from "./config/support-resistance-config";
 import { buildGapStructure } from "./gaps/build-gap-structure";
 import { buildExecutionLevelRelations } from "./relations/build-execution-level-relations";
 import { buildStructuralContextWindow } from "./windowing/build-structural-context-window";
 import type { DynamicLevels } from "../raw-trade-timeline/types/dynamic-levels";
+import type { ExecutionLevelRelation } from "../raw-trade-timeline/types/execution-level-relation";
 import type { ReferenceLevelLabel } from "../raw-trade-timeline/types/reference-level-label";
 import type { ReferenceLevels } from "../raw-trade-timeline/types/reference-levels";
 import type {
@@ -149,6 +152,50 @@ function getSourcePrices(zone: FinalLevelZone): number[] {
     .sort((left, right) => left - right);
 }
 
+function mapSharedReferenceLabel(
+  label: string | null | undefined,
+): ReferenceLevelLabel | null {
+  switch (label) {
+    case "previousDayHigh":
+      return "previous_day_high";
+    case "previousDayLow":
+      return "previous_day_low";
+    case "previousDayClose":
+      return "previous_day_close";
+    case "premarketHigh":
+      return "premarket_high";
+    case "premarketLow":
+      return "premarket_low";
+    case "premarketBase":
+      return "premarket_base";
+    default:
+      return null;
+  }
+}
+
+function pctDistanceBetweenPrices(
+  left: number | null,
+  right: number | null,
+  basisPrice: number,
+): number | null {
+  if (
+    left === null ||
+    right === null ||
+    !Number.isFinite(basisPrice) ||
+    basisPrice <= 0
+  ) {
+    return null;
+  }
+
+  return Number(((Math.abs(left - right) / basisPrice) * 100).toFixed(6));
+}
+
+function mapSharedLevel(
+  zone: FinalLevelZone | null | undefined,
+): StructuralLevel | null {
+  return zone ? mapFinalLevelZoneToStructuralLevel(zone) : null;
+}
+
 export function mapFinalLevelZoneToStructuralLevel(
   zone: FinalLevelZone,
 ): StructuralLevel {
@@ -173,6 +220,88 @@ export function mapFinalLevelZoneToStructuralLevel(
     referenceLabel: deriveReferenceLabel(zone),
     sourcePrices: getSourcePrices(zone),
   };
+}
+
+export function mapLevelsSystemExecutionRelationsToLocalRelations(args: {
+  timeline: TradeTimeline;
+  relations: TradeAnalysisExecutionRelationFact[] | undefined;
+}): ExecutionLevelRelation[] | undefined {
+  if (!args.relations) {
+    return undefined;
+  }
+
+  return args.relations.map((relation, index) => {
+    const execution =
+      args.timeline.executions.find(
+        (candidate) =>
+          candidate.timestamp === relation.timestampIso &&
+          candidate.price === relation.price,
+      ) ??
+      args.timeline.executions.find(
+        (candidate) => candidate.timestamp === relation.timestampIso,
+      ) ??
+      args.timeline.executions[index];
+    const levelRelations = relation.levelRelations;
+    const executionPrice = relation.price ?? execution?.price ?? 0;
+    const nearestSupportBelow = mapSharedLevel(
+      levelRelations?.nearestSupportBelow,
+    );
+    const nearestResistanceBelow = mapSharedLevel(
+      levelRelations?.nearestResistanceBelow,
+    );
+    const nearestResistanceAbove = mapSharedLevel(
+      levelRelations?.nearestResistanceAbove,
+    );
+    const distanceBetweenNearestSupportAndResistancePct =
+      pctDistanceBetweenPrices(
+        nearestSupportBelow?.price ?? null,
+        nearestResistanceAbove?.price ?? null,
+        executionPrice,
+      );
+
+    return {
+      executionIndex: execution?.executionIndex ?? index,
+      executionTimestamp: execution?.timestamp ?? relation.timestampIso,
+      executionPrice,
+      nearestSupportBelow,
+      nearestResistanceBelow,
+      nearestResistanceAbove,
+      distanceToNearestSupportPct:
+        levelRelations?.distanceToSupportPct ?? null,
+      distanceAboveNearestResistanceBelowPct:
+        levelRelations?.distanceAboveResistanceBelowPct ?? null,
+      distanceToNearestResistancePct:
+        levelRelations?.distanceToResistancePct ?? null,
+      isNearSupport: levelRelations?.isNearSupport ?? false,
+      isNearResistance: levelRelations?.isNearResistance ?? false,
+      clearedNearestResistanceBelow:
+        levelRelations?.clearedNearestResistanceBelow ?? false,
+      hasRoomAboveAfterClearingResistance:
+        (levelRelations?.clearedNearestResistanceBelow ?? false) &&
+        !(levelRelations?.isNearResistance ?? false),
+      occurredBelowNearestSupport:
+        levelRelations?.occurredBelowNearestSupport ?? false,
+      occurredInOpenAir: levelRelations?.occurredInOpenAir ?? false,
+      hasNearbyStructureOnBothSides:
+        nearestSupportBelow !== null && nearestResistanceAbove !== null,
+      distanceBetweenNearestSupportAndResistancePct,
+      roomToNearestResistancePct: levelRelations?.roomAbovePct ?? null,
+      roomToNearestSupportPct: levelRelations?.roomBelowPct ?? null,
+      resistanceLevelsAboveWithinClusterCount:
+        levelRelations?.stackedResistanceAboveCount ?? 0,
+      supportLevelsBelowWithinClusterCount:
+        levelRelations?.stackedSupportBelowCount ?? 0,
+      hasStackedResistanceAbove:
+        (levelRelations?.stackedResistanceAboveCount ?? 0) >=
+        SUPPORT_RESISTANCE_CONFIG.stackedLevelMinimumCount,
+      hasStackedSupportBelow:
+        (levelRelations?.stackedSupportBelowCount ?? 0) >=
+        SUPPORT_RESISTANCE_CONFIG.stackedLevelMinimumCount,
+      nearestReferenceLevelLabel: mapSharedReferenceLabel(
+        levelRelations?.nearestReference?.label,
+      ),
+    };
+  });
 }
 
 function uniqueLevelsById(levels: StructuralLevel[]): StructuralLevel[] {

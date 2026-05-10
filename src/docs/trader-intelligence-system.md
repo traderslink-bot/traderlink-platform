@@ -322,7 +322,7 @@ The repo now has:
 - substantial Layer 3 normalization and suppression
 - verification scripts for Layer 2 and Layer 3
 
-The current active focus has been:
+At the time of this system snapshot, the active focus had been:
 
 - expanding support/resistance-aware structural truth
 - extending support/resistance-aware pattern families

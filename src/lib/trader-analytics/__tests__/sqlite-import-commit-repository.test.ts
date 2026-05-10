@@ -527,7 +527,7 @@ describe("SqliteImportCommitRepository", () => {
       diagnosticCodeCounts: { market_context_unavailable: 2 },
       diagnosticStatusCounts: { market_context_unavailable: 2 },
       nextAction:
-        "Execution review is available now; keep market-context conclusions unavailable until technical follow-up is resolved.",
+        "Execution review is available now; keep chart conclusions unavailable until technical follow-up is resolved.",
     });
     expect(readModel.snapshots).toEqual([]);
     expect(readModel.diagnostics.map((diagnostic) => diagnostic.symbol)).toEqual([

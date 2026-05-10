@@ -236,14 +236,15 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
     },
     {
       id: "adverse_add_loser",
-      label: "Adverse add loser emphasizes size expansion after adverse price",
+      label:
+        "Adverse add loser keeps adverse adds visible as a review prompt until chart context confirms the story",
       fixtureSource: "sample_trade_fixture",
       tradeId: "trade-repeated-adds",
       expected: {
         pnlSign: "negative",
         tradeDirection: "long",
         isOpenPosition: false,
-        topRiskId: "size_expansion_after_adverse_price",
+        topRiskId: null,
         topStrengthId: "decisive_full_exit",
         entrySessionBucket: "market_open",
       },
@@ -285,7 +286,7 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
         pnlSign: "positive",
         tradeDirection: "long",
         isOpenPosition: false,
-        topRiskId: "rapid_fire_execution_cluster",
+        topRiskId: null,
         topStrengthId: "structured_partial_exit_sequence",
         entrySessionBucket: "market_open",
       },

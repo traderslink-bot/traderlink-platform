@@ -44,7 +44,7 @@ describe("buildTradeCoachingOutput", () => {
       priority: "fix_first",
     });
     expect(coachingOutput.fixNext).toBeNull();
-    expect(coachingOutput.headline).toContain("Profit protection failed");
+    expect(coachingOutput.headline).toContain("Open profit was not protected");
     expect(coachingOutput.supportingEvidence[0]?.patternId).toBe(
       "failed_profit_protection_structure",
     );

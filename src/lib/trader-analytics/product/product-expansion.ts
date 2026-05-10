@@ -220,12 +220,13 @@ export function buildTraderBehaviorStreaks(
   return [
     buildStreak({
       id: "no_adverse_price_adds",
-      label: "No Adverse Adds",
+      label: "Require Repair Before Adding Size",
       report,
       predicate: (summary) => summary.riskFacts.adversePriceAddCount === 0,
       activeSummary: (count) =>
-        `${count} recent trade${count === 1 ? "" : "s"} without adverse-price adds.`,
-      brokenSummary: "The latest reviewed trade included an adverse-price add.",
+        `${count} recent trade${count === 1 ? "" : "s"} without adding after price moved against the position.`,
+      brokenSummary:
+        "The latest reviewed trade added size after price moved against the position. Check whether the chart repaired or the add only increased exposure.",
     }),
     buildStreak({
       id: "closed_to_flat",
@@ -238,21 +239,23 @@ export function buildTraderBehaviorStreaks(
     }),
     buildStreak({
       id: "no_rapid_fire_cluster",
-      label: "No Rapid-Fire Clusters",
+      label: "No Fast Execution Clusters",
       report,
       predicate: (summary) => summary.sequencing.rapidFireGapCount === 0,
       activeSummary: (count) =>
-        `${count} recent trade${count === 1 ? "" : "s"} without rapid-fire clusters.`,
-      brokenSummary: "The latest reviewed trade had rapid-fire execution gaps.",
+        `${count} recent trade${count === 1 ? "" : "s"} without unusually tight execution clusters.`,
+      brokenSummary:
+        "The latest reviewed trade had several executions close together in time.",
     }),
     buildStreak({
       id: "decisive_full_exit",
-      label: "Decisive Full Exit",
+      label: "Clean Full Exit",
       report,
       predicate: (summary) => summaryHasPoint(summary, "decisive_full_exit"),
       activeSummary: (count) =>
-        `${count} recent trade${count === 1 ? "" : "s"} with decisive full-exit behavior.`,
-      brokenSummary: "The latest reviewed trade did not show decisive full-exit behavior.",
+        `${count} recent trade${count === 1 ? "" : "s"} closed cleanly to flat.`,
+      brokenSummary:
+        "The latest reviewed trade did not show a clean full exit.",
     }),
   ];
 }

@@ -36,6 +36,7 @@ import type {
   TraderRuleBuilderRecommendation,
   TraderRuleEvaluation,
 } from "./types";
+import { mapUserFacingBehavior } from "../../user-facing-behavior";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -100,6 +101,14 @@ function pickDecisionForMistake(
   }
 }
 
+function mapCoachObservation(observation: TraderMistakeObservation) {
+  return mapUserFacingBehavior({
+    behaviorId: observation.taxonomyId,
+    rawLabel: observation.label,
+    route: "/coach",
+  });
+}
+
 export function buildCoachMistakeTimeline(args: {
   improvement: TraderImprovementIntelligence;
 }): CoachMistakeTimeline {
@@ -121,11 +130,11 @@ export function buildCoachMistakeTimeline(args: {
         id: `mistake-timeline:${tradeId}:${observation.taxonomyId}`,
         tradeId,
         taxonomyId: observation.taxonomyId,
-        label: observation.label,
+        label: mapCoachObservation(observation).label,
         executionIndex: decision.executionIndex,
         timestamp: null,
         role: decision.role,
-        detail: `${observation.reason} Likely review point: ${decision.label}.`,
+        detail: `${mapCoachObservation(observation).evidenceSentence} Likely review point: ${decision.label}.`,
         confidence: observation.confidence,
         suggestedReviewAction: observation.suggestedReviewAction,
       });
@@ -224,19 +233,24 @@ export function buildTraderArchetypeProfile(args: {
     id: TraderArchetypeId,
     label: string,
     items: TraderMistakeObservation[],
-  ) =>
-    archetypeSignal({
+  ) => {
+    const certifiedItems = items.filter((item) =>
+      mapCoachObservation(item).canDrivePrimaryConclusion,
+    );
+
+    return archetypeSignal({
       id,
       label,
       score:
         completed > 0
-          ? (items.reduce((total, item) => total + item.occurrenceCount, 0) /
+          ? (certifiedItems.reduce((total, item) => total + item.occurrenceCount, 0) /
               completed) *
             100
           : 0,
-      evidence: items.map((item) => item.reason),
-      relatedTradeIds: items.flatMap((item) => item.tradeIds),
+      evidence: certifiedItems.map((item) => mapCoachObservation(item).evidenceSentence),
+      relatedTradeIds: certifiedItems.flatMap((item) => item.tradeIds),
     });
+  };
 
   const signals = [
     signalFromObservations("reactive_scaler", "Reactive Scaler", reactive),
@@ -428,6 +442,11 @@ export function buildMistakeSeverityLadder(args: {
   productIntelligence: TraderProductIntelligenceViewModel;
 }): MistakeSeverityLadder {
   const items: MistakeSeverityLadderItem[] = args.observations.map((observation) => {
+    const behavior = mapCoachObservation(observation);
+    if (!behavior.canDrivePrimaryConclusion) {
+      return null;
+    }
+
     const cost = costForMistake(
       args.productIntelligence.mistakeCostEstimates.items,
       observation.taxonomyId,
@@ -462,7 +481,7 @@ export function buildMistakeSeverityLadder(args: {
     return {
       id: `severity:${observation.taxonomyId}`,
       taxonomyId: observation.taxonomyId,
-      label: observation.label,
+      label: behavior.label,
       severityScore,
       frequency: observation.occurrenceCount,
       estimatedGrossCost,
@@ -470,14 +489,24 @@ export function buildMistakeSeverityLadder(args: {
       ruleViolationLinked,
       recurrenceLinked,
       relatedTradeIds: observation.tradeIds,
-      nextAction: `Review ${observation.label.toLowerCase()} against the linked execution replays: ${observation.suggestedReviewAction}`,
+      nextAction: `${behavior.fixFirstAction} Evidence check from the saved execution replay and linked trades: ${observation.suggestedReviewAction}`,
     };
-  });
+  }).filter((item): item is MistakeSeverityLadderItem => item !== null);
   const sorted = items.sort((left, right) => right.severityScore - left.severityScore);
+  const deduped = sorted.filter((item, index, list) => {
+    const key = `${item.label}|${[...item.relatedTradeIds].sort().join(",")}`;
+    return (
+      list.findIndex(
+        (candidate) =>
+          `${candidate.label}|${[...candidate.relatedTradeIds].sort().join(",")}` ===
+          key,
+      ) === index
+    );
+  });
 
   return {
-    topSeverity: sorted[0] ?? null,
-    items: sorted,
+    topSeverity: deduped[0] ?? null,
+    items: deduped,
   };
 }
 
@@ -575,7 +604,7 @@ export function buildCoachEmptyState(args: {
     return {
       kind: "sample_data",
       title: "Sample coach is ready",
-      message: "This is fixture data, but the coach loop is ready for real imported executions.",
+      message: "This is sample data until you save an import.",
       nextAction: "Use the sample coach flow, then replace it with imported trades.",
     };
   }
@@ -596,6 +625,13 @@ export function buildCoachSessionPrepCard(args: {
 }): CoachSessionPrepCard {
   const coach = args.improvement.dailyCoachReport;
   const topSeverity = args.severityLadder.topSeverity;
+  const biggestMistakeBehavior = coach.biggestMistake
+    ? mapUserFacingBehavior({
+        behaviorId: coach.biggestMistake.taxonomyId,
+        rawLabel: coach.biggestMistake.label,
+        route: "/coach",
+      })
+    : null;
   const rule = args.ruleSimulations[0] ?? null;
   const reviewTradeIds = unique([
     ...(coach.relatedTradeIds ?? []),
@@ -610,8 +646,8 @@ export function buildCoachSessionPrepCard(args: {
     avoidBehavior:
       topSeverity
         ? `Watch for ${topSeverity.label.toLowerCase()} in the saved execution replay.`
-        : coach.biggestMistake
-          ? `Watch for ${coach.biggestMistake.label.toLowerCase()} in the saved execution replay.`
+        : biggestMistakeBehavior
+          ? `Review ${biggestMistakeBehavior.label.toLowerCase()} in the saved execution replay.`
           : "Watch for the clearest recurring execution risk in the saved execution replay.",
     repeatBehavior:
       coach.bestRepeatableBehavior

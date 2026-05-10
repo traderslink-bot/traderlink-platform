@@ -143,6 +143,56 @@ describe("trader improvement intelligence", () => {
     ).toBe(true);
   });
 
+  it("keeps prompt-only detections out of primary improvement visuals and session leak copy", () => {
+    const sample = buildSampleSavedTraderAnalyticsData();
+    const analytics = buildProductTraderAnalyticsViewModel({
+      repository: sample.repository,
+      userId: sample.userId,
+      importRequests: sample.importRequests,
+    });
+    const improvement = analytics.improvementIntelligence;
+    const promptOnlyIds = new Set([
+      "chased_entry",
+      "revenge_reentry_cluster",
+      "early_winner_exit",
+      "partialed_without_plan",
+      "repeated_rule_violation",
+    ]);
+    const visibleImprovementCopy = [
+      improvement.dailyCoachReport.biggestMistake?.label ?? "",
+      improvement.dailyCoachReport.fixNextSession,
+      improvement.dailyCoachReport.preserveNextSession,
+      ...(improvement.bestWorstPatterns.mostRepeatedMistake
+        ? [
+            improvement.bestWorstPatterns.mostRepeatedMistake.label,
+            improvement.bestWorstPatterns.mostRepeatedMistake.detail,
+          ]
+        : []),
+      ...improvement.visuals.mistakeFrequency.items.map((item) => item.label),
+    ].join("\n");
+
+    expect(
+      improvement.visuals.mistakeFrequency.items.some((item) =>
+        promptOnlyIds.has(item.id),
+      ),
+    ).toBe(false);
+    expect(
+      improvement.bestWorstPatterns.mostRepeatedMistake
+        ? promptOnlyIds.has(
+            improvement.bestWorstPatterns.mostRepeatedMistake.id.replace(
+              "repeated:",
+              "",
+            ),
+          )
+        : false,
+    ).toBe(false);
+    expect(visibleImprovementCopy).not.toMatch(/added after failed premise/i);
+    expect(visibleImprovementCopy).not.toMatch(/\bpremise\b/i);
+    expect(visibleImprovementCopy).not.toMatch(/revenge-like/i);
+    expect(visibleImprovementCopy).not.toMatch(/chased entry/i);
+    expect(visibleImprovementCopy).not.toMatch(/early winner exit/i);
+  });
+
   it("does not let market-context readiness alter execution-only quality scoring", () => {
     const sample = buildSampleSavedTraderAnalyticsData();
     const analytics = buildProductTraderAnalyticsViewModel({

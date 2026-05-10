@@ -29,6 +29,7 @@ import type {
   TraderProductIntelligenceViewModel,
   TraderProductPolishViewModel,
 } from "./types";
+import { mapUserFacingBehavior } from "../../user-facing-behavior";
 
 function roundMetric(value: number): number {
   return Number(value.toFixed(4));
@@ -176,20 +177,31 @@ export function buildProductEvidenceCards(args: {
 }): ProductEvidenceCard[] {
   const sampleSize = args.report.report.sampleSize.completedTradeCount;
   const mistakeCards: ProductEvidenceCard[] =
-    args.improvement.mistakeObservations.slice(0, 5).map((observation) => ({
-      id: `evidence:mistake:${observation.taxonomyId}`,
-      source: "mistake",
-      title: observation.label,
-      whatHappened: observation.reason,
-      whyItMatters:
-        "Repeated execution-only mistakes can turn into personal rules and review drills.",
-      confidence: observation.confidence,
-      confidenceCopy: confidenceCopy(observation.confidence),
-      relatedTradeIds: observation.tradeIds,
-      primaryRoute: routeForTradeIds(observation.tradeIds),
-      reviewAction: observation.suggestedReviewAction,
-      marketContextUsedForConclusion: false,
-    }));
+    args.improvement.mistakeObservations
+      .map((observation) => ({
+        observation,
+        behavior: mapUserFacingBehavior({
+          behaviorId: observation.taxonomyId,
+          rawLabel: observation.label,
+          route: "/coach",
+        }),
+      }))
+      .filter(({ behavior }) => behavior.canDrivePrimaryConclusion)
+      .slice(0, 5)
+      .map(({ observation, behavior }) => ({
+        id: `evidence:mistake:${observation.taxonomyId}`,
+        source: "mistake",
+        title: behavior.label,
+        whatHappened: behavior.evidenceSentence,
+        whyItMatters:
+          "Repeated execution-only mistakes can turn into personal rules and review drills.",
+        confidence: observation.confidence,
+        confidenceCopy: confidenceCopy(observation.confidence),
+        relatedTradeIds: observation.tradeIds,
+        primaryRoute: routeForTradeIds(observation.tradeIds),
+        reviewAction: behavior.fixFirstAction,
+        marketContextUsedForConclusion: false,
+      }));
 
   const qualityCards: ProductEvidenceCard[] = args.gradeExplainability
     .filter((grade) => grade.negativeDrivers.length > 0)

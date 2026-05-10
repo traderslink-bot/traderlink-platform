@@ -351,7 +351,7 @@ export function buildExecutionReplayVisual(
         role === "initial_entry"
           ? "Initial entry"
           : role === "open_leftover"
-            ? "Open leftover"
+            ? "Shares left open"
             : role === "readd"
               ? "Re-added size"
               : role === "add"

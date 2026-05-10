@@ -14,6 +14,7 @@ import type {
   TraderAnalyticsChartKind,
   TraderAnalyticsChartTone,
 } from "../types/trader-analytics-chart";
+import { mapUserFacingBehavior } from "../../user-facing-behavior";
 
 export interface BuildTraderAnalyticsChartDataArgs {
   trades: TraderAnalyticsTradeRow[];
@@ -322,31 +323,73 @@ function buildBehaviorRiskRates(args: {
 }): TraderAnalyticsChart {
   const rows = [
     {
-      id: "adverse_price_adds",
-      label: "Adverse Adds",
+      id: "size_expansion_after_adverse_price",
+      rawLabel: "Adverse price add",
       value: args.executionBehavior.adversePriceAddTradeCount,
     },
     {
-      id: "multiple_adds_before_reduction",
-      label: "Repeated Adds",
+      id: "multiple_adds_before_first_reduction",
+      rawLabel: "Repeated adds before first reduction",
       value: args.executionBehavior.multipleAddsBeforeReductionTradeCount,
     },
     {
       id: "open_position_leftover",
-      label: "Left Open",
+      rawLabel: "Open position leftover",
       value: args.executionBehavior.openPositionLeftoverTradeCount,
     },
     {
       id: "rapid_fire_execution_cluster",
-      label: "Rapid Fire",
+      rawLabel: "Rapid fire execution cluster",
       value: args.executionBehavior.rapidFireExecutionTradeCount,
     },
     {
       id: "inconsistent_share_sizing",
-      label: "Sizing Swings",
+      rawLabel: "Inconsistent share sizing",
       value: args.executionBehavior.inconsistentShareSizingTradeCount,
     },
-  ];
+    {
+      id: "large_late_add",
+      rawLabel: "Large late add",
+      value: args.executionBehavior.largeLateAddTradeCount,
+    },
+    {
+      id: "small_first_risk_reduction",
+      rawLabel: "Small first risk reduction",
+      value: args.executionBehavior.smallFirstRiskReductionTradeCount,
+    },
+    {
+      id: "all_or_nothing_exit_after_many_adds",
+      rawLabel: "All or nothing exit after many adds",
+      value: args.executionBehavior.allOrNothingExitAfterManyAddsTradeCount,
+    },
+    {
+      id: "losing_reduction_sequence",
+      rawLabel: "Losing reduction sequence",
+      value: args.executionBehavior.losingReductionSequenceTradeCount,
+    },
+  ].map((row) => {
+    const behavior = mapUserFacingBehavior({
+      behaviorId: row.id,
+      rawLabel: row.rawLabel,
+      route: "/analytics",
+    });
+    const tone: TraderAnalyticsChartTone =
+      row.value > 0
+        ? behavior.canDrivePrimaryConclusion
+          ? "warning"
+          : "info"
+        : "neutral";
+
+    return {
+      id: row.id,
+      label: behavior.label,
+      value: row.value,
+      category: behavior.canDrivePrimaryConclusion
+        ? "Certified execution evidence"
+        : "Review prompt",
+      tone,
+    };
+  });
 
   return chart({
     id: "behavior_risk_rates",
@@ -356,7 +399,6 @@ function buildBehaviorRiskRates(args: {
     data: rows.map((row) => ({
       ...row,
       pctOfTotal: pctOfTotal(row.value, args.totalTrades),
-      tone: row.value > 0 ? "warning" : "neutral",
     })),
   });
 }

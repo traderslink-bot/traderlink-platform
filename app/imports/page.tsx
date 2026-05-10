@@ -308,9 +308,6 @@ export default function ImportsPage() {
                     >
                       {state.label}
                     </span>
-                    <span className="mt-1 block text-xs text-zinc-500">
-                      raw: {item.summaryStatus}
-                    </span>
                   </span>
                   <span className="text-zinc-400">
                     {item.savedTradeCount} trade(s),{" "}

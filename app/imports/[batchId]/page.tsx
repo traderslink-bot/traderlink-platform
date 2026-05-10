@@ -48,12 +48,60 @@ function readableStatus(value: string): string {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function readableDecisionReviewStatus(value: string): string {
+  if (value === "completed") {
+    return "Reviewed With Chart Context";
+  }
+
+  if (value === "queued") {
+    return "Waiting For Decision Review";
+  }
+
+  if (value === "blocked_open_trade" || value === "trade_open") {
+    return "Open Trade";
+  }
+
+  if (value === "market_context_unavailable") {
+    return "Chart Context Waiting";
+  }
+
+  if (value === "analysis_failed") {
+    return "Needs Technical Follow-Up";
+  }
+
+  if (value === "skipped_limit" || value === "limit_reached") {
+    return "Review Limit Reached";
+  }
+
+  return "Technical Follow-Up";
+}
+
 function batchStateLabel(status: string): string {
   return status === "committed"
     ? "Saved import"
     : status === "discarded"
       ? "Discarded preview"
       : readableStatus(status);
+}
+
+function batchStateDetail(status: string): string {
+  if (status === "committed") {
+    return "Saved trades are ready for review, analytics, and coaching.";
+  }
+
+  if (status === "ready_to_commit" || status === "ready_to_save") {
+    return "Import rows are ready to save after final review.";
+  }
+
+  if (status === "needs_repair" || status === "blocked_by_repairs") {
+    return "Repair the highlighted rows before saving this import.";
+  }
+
+  if (status === "discarded") {
+    return "This preview was discarded and should not drive coaching.";
+  }
+
+  return "Use the action panel to continue this import.";
 }
 
 function diagnosticGuidance(status: string): string {
@@ -74,6 +122,22 @@ function diagnosticGuidance(status: string): string {
   }
 
   return "Decision review status is tracked so the user can see which coaching outputs are ready and which need follow-up.";
+}
+
+function diagnosticUserMessage(status: string, code: string): string {
+  if (status === "market_context_unavailable" || code === "market_context_unavailable") {
+    return "Chart context was not available for this trade. Use execution review now and backfill chart context later.";
+  }
+
+  if (status === "blocked_open_trade" || code === "trade_open") {
+    return "This trade was still open, so completed-trade coaching waits until the position is flat.";
+  }
+
+  if (status === "skipped_limit" || code === "limit_reached") {
+    return "The review pass reached its limit before this trade could receive chart review.";
+  }
+
+  return "Chart analysis needs technical follow-up before it can support coaching.";
 }
 
 export default async function ImportBatchPage({
@@ -243,7 +307,7 @@ export default async function ImportBatchPage({
               {batchStateLabel(batch.status)}
             </div>
             <div className="mt-1 text-xs text-zinc-500">
-              raw: {batch.status}
+              {batchStateDetail(batch.status)}
             </div>
           </div>
           <div className="border border-zinc-800 bg-zinc-950 p-4">
@@ -293,7 +357,7 @@ export default async function ImportBatchPage({
             </h2>
             <p className="mt-1 text-xs leading-5 text-zinc-500">
               These statuses explain whether saved trades received completed
-              chart-context review snapshots or stayed in conservative follow-up
+              chart review snapshots or stayed in conservative follow-up
               lanes. These are evidence limits, not instructions.
             </p>
             <div className="mt-4 grid gap-2">
@@ -331,7 +395,7 @@ export default async function ImportBatchPage({
                     <div key={code} className="border-t border-zinc-900 py-2">
                       <div className="flex items-center justify-between gap-3">
                         <span className={decisionReviewToneClass(code)}>
-                          {readableStatus(code)}
+                          {readableDecisionReviewStatus(code)}
                         </span>
                         <span className="font-mono text-xs text-zinc-300">
                           {count}
@@ -346,10 +410,10 @@ export default async function ImportBatchPage({
                 {decisionReviewDiagnostics.slice(0, 5).map((diagnostic) => (
                   <div key={diagnostic.id} className="border-t border-zinc-900 py-3">
                     <div className={decisionReviewToneClass(diagnostic.status)}>
-                      {diagnostic.symbol ?? "Import"} / {readableStatus(diagnostic.code)}
+                      {diagnostic.symbol ?? "Import"} / {readableDecisionReviewStatus(diagnostic.code)}
                     </div>
                     <div className="mt-1 text-xs text-zinc-500">
-                      {diagnostic.message}
+                      {diagnosticUserMessage(diagnostic.status, diagnostic.code)}
                     </div>
                   </div>
                 ))}
@@ -366,7 +430,7 @@ export default async function ImportBatchPage({
             </h2>
             <p className="mt-1 text-xs leading-5 text-zinc-500">
               Open a saved trade to review executions, notes, checklist state,
-              session timing, and any chart-context review notes.
+              session timing, and any chart review notes.
             </p>
             <div className="mt-4 grid gap-2">
               {plan.savedTrades.length === 0 ? (

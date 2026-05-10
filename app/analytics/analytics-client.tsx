@@ -1,12 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   AdvancedDisclosure,
+  EquityCurveChart,
   MetricCard,
   MixBar,
+  OutcomeDonut,
+  PnlCalendarGrid,
   SimpleBarChart,
+  TradeOutcomeTape,
+  WorkflowHandoffPanel,
 } from "../app-ui";
 import { SavedImportSourceCaution } from "../saved-import-source-caution";
 import { SavedReviewQueueSummary } from "../saved-review-queue-summary";
@@ -35,6 +40,69 @@ import type {
   TraderWeeklyReviewDashboard,
 } from "../../src/lib/trader-analytics";
 
+interface AnalyticsTickerStorySummary {
+  addQualityFindingCount: number;
+  addQualityRiskCount: number;
+  addQualityReviewPromptCount: number;
+  addQualityStrengthCount: number;
+  exitLevelFindingCount: number;
+  exitLevelRiskCount: number;
+  exitLevelReviewPromptCount: number;
+  exitLevelStrengthCount: number;
+  givebackThreadCount: number;
+  marketContextFindingCount: number;
+  marketContextRiskCount: number;
+  marketContextReviewPromptCount: number;
+  marketContextStrengthCount: number;
+  multiRoundTripThreadCount: number;
+  openReentryThreadCount: number;
+  postExitFindingCount: number;
+  postExitFindingThreadCount: number;
+  postExitRiskCount: number;
+  postExitRiskThreadCount: number;
+  postExitReviewPromptCount: number;
+  postExitStrengthCount: number;
+  postExitStrengthThreadCount: number;
+  protectedProfitBeforeFadeFindingCount: number;
+  protectedProfitBeforeFadeThreadCount: number;
+  priority: {
+    href: string;
+    label: string;
+    pnl: number;
+    question: string;
+  } | null;
+  repeatedLossThreadCount: number;
+  swingThreadCount: number;
+  levelFindingCount: number;
+  threadWithAddQualityFindingCount: number;
+  threadWithExitLevelFindingCount: number;
+  threadWithExitLevelRiskCount: number;
+  threadWithExitLevelStrengthCount: number;
+  threadWithLevelFindingCount: number;
+  threadWithVolumeFindingCount: number;
+  threadWithVolumeRiskCount: number;
+  threadWithVolumeStrengthCount: number;
+  volumeFindingCount: number;
+  volumeRiskCount: number;
+  volumeReviewPromptCount: number;
+  volumeStrengthCount: number;
+}
+
+interface AnalyticsSessionStorySummary {
+  greenToRedSessionCount: number;
+  highTradeCountSessionCount: number;
+  sameSymbolManyAttemptsSessionCount: number;
+  sessionStoryCount: number;
+  priority: {
+    date: string;
+    href: string;
+    label: string;
+    pnl: number;
+    prompt: string;
+    tradeCount: number;
+  } | null;
+}
+
 function formatNumber(value: number | null, digits = 2): string {
   return typeof value === "number" ? value.toFixed(digits) : "n/a";
 }
@@ -53,6 +121,23 @@ function formatPercent(value: number | null): string {
 
 function toneForPnl(value: number): string {
   return value >= 0 ? "text-emerald-300" : "text-rose-300";
+}
+
+function visualRows(
+  rows: Array<
+    Pick<
+      ProductTraderAnalyticsTradeRow,
+      "grossRealizedPnl" | "sessionDate" | "symbol" | "tradeIndex"
+    > & { tradeId?: string }
+  >,
+) {
+  return rows.map((row) => ({
+    id: row.tradeId ?? `${row.symbol}-${row.tradeIndex}`,
+    label: `${row.symbol} #${row.tradeIndex}`,
+    pnl: row.grossRealizedPnl,
+    sessionDate: row.sessionDate,
+    symbol: row.symbol,
+  }));
 }
 
 function outcome(row: ProductTraderAnalyticsTradeRow): "winner" | "loser" | "flat" {
@@ -189,10 +274,336 @@ function TimeOfDayPanel({
   );
 }
 
+function TickerStoryAnalyticsPanel({
+  summary,
+}: {
+  summary: AnalyticsTickerStorySummary;
+}) {
+  const handoffs = [
+    {
+      count: summary.exitLevelFindingCount,
+      detail: `${summary.exitLevelRiskCount} risk, ${summary.exitLevelStrengthCount} strength, ${summary.exitLevelReviewPromptCount} prompt`,
+      href: "/trades?storyFilter=levels#ticker-stories",
+      label: "Open support/resistance exit reviews",
+      tone:
+        summary.exitLevelRiskCount > 0
+          ? "border-amber-500/30 bg-amber-500/10 text-amber-100"
+          : summary.exitLevelStrengthCount > 0
+            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+            : "border-sky-500/30 bg-sky-500/10 text-sky-100",
+    },
+    {
+      count: summary.volumeFindingCount,
+      detail: `${summary.volumeRiskCount} risk, ${summary.volumeStrengthCount} strength, ${summary.volumeReviewPromptCount} prompt`,
+      href: "/trades?storyFilter=volume#ticker-stories",
+      label: "Open volume comparison stories",
+      tone:
+        summary.volumeRiskCount > 0
+          ? "border-amber-500/30 bg-amber-500/10 text-amber-100"
+          : summary.volumeStrengthCount > 0
+            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+            : "border-sky-500/30 bg-sky-500/10 text-sky-100",
+    },
+    {
+      count: summary.protectedProfitBeforeFadeFindingCount,
+      detail: `${summary.protectedProfitBeforeFadeThreadCount} ticker stor${summary.protectedProfitBeforeFadeThreadCount === 1 ? "y" : "ies"}`,
+      href: "/trades?storyFilter=protected_profit#ticker-stories",
+      label: "Open protected-profit stories",
+      tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
+    },
+    {
+      count: summary.postExitFindingCount,
+      detail: `${summary.postExitRiskCount} risk, ${summary.postExitStrengthCount} strength, ${summary.postExitReviewPromptCount} prompt`,
+      href: "/trades?storyFilter=post_exit#ticker-stories",
+      label: "Open after-exit review stories",
+      tone:
+        summary.postExitRiskCount > 0
+          ? "border-amber-500/30 bg-amber-500/10 text-amber-100"
+          : summary.postExitStrengthCount > 0
+            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+            : "border-sky-500/30 bg-sky-500/10 text-sky-100",
+    },
+  ].filter((handoff) => handoff.count > 0);
+
+  return (
+    <section
+      className="ti-panel p-5"
+      data-testid="analytics-ticker-story-panel"
+    >
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-zinc-100">
+            Ticker Story Analytics
+          </h2>
+          <div className="mt-1 max-w-3xl text-sm leading-6 text-zinc-500">
+            Same-symbol re-entries are tracked separately from flat-to-flat P/L
+            so you can see whether later attempts added profit, gave back profit,
+            stayed open, or turned into swing exposure.
+          </div>
+        </div>
+        <Link
+          className="border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+          href="/trades?view=ticker_stories#ticker-stories"
+        >
+          Open ticker stories
+        </Link>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-5">
+        <MetricCard
+          label="Ticker Stories"
+          value={String(summary.multiRoundTripThreadCount)}
+          detail="Same-symbol same-day re-entry groups"
+          tone="info"
+        />
+        <MetricCard
+          label="Gave Back Profit"
+          value={String(summary.givebackThreadCount)}
+          detail="Later attempts reduced earlier gains"
+          tone={summary.givebackThreadCount > 0 ? "warning" : "default"}
+        />
+        <MetricCard
+          label="Repeated Losses"
+          value={String(summary.repeatedLossThreadCount)}
+          detail="Later same-symbol attempts stayed red"
+          tone={summary.repeatedLossThreadCount > 0 ? "danger" : "default"}
+        />
+        <MetricCard
+          label="Open Re-entries"
+          value={String(summary.openReentryThreadCount)}
+          detail="Need closing executions before full review"
+          tone={summary.openReentryThreadCount > 0 ? "warning" : "default"}
+        />
+        <MetricCard
+          label="Turned Swing"
+          value={String(summary.swingThreadCount)}
+          detail="Day-trade ideas held overnight"
+          tone={summary.swingThreadCount > 0 ? "info" : "default"}
+        />
+      </div>
+      <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-8">
+        <MetricCard
+          label="Chart Findings"
+          value={String(summary.marketContextFindingCount)}
+          detail={`${summary.marketContextReviewPromptCount} prompt${summary.marketContextReviewPromptCount === 1 ? "" : "s"}, ${summary.levelFindingCount} level check${summary.levelFindingCount === 1 ? "" : "s"}`}
+          tone={summary.marketContextFindingCount > 0 ? "info" : "default"}
+        />
+        <MetricCard
+          label="Add Quality"
+          value={String(summary.addQualityFindingCount)}
+          detail={`${summary.addQualityRiskCount} risk, ${summary.addQualityStrengthCount} strength, ${summary.addQualityReviewPromptCount} prompt`}
+          tone={
+            summary.addQualityRiskCount > 0
+              ? "warning"
+              : summary.addQualityStrengthCount > 0
+                ? "success"
+                : summary.addQualityFindingCount > 0
+                  ? "info"
+                  : "default"
+          }
+        />
+        <MetricCard
+          label="Chart Risks"
+          value={String(summary.marketContextRiskCount)}
+          detail="Level, add, exit, or profit-protection risks"
+          tone={summary.marketContextRiskCount > 0 ? "warning" : "default"}
+        />
+        <MetricCard
+          label="Chart Strengths"
+          value={String(summary.marketContextStrengthCount)}
+          detail="Chart context strengths worth repeating"
+          tone={summary.marketContextStrengthCount > 0 ? "success" : "default"}
+        />
+        <MetricCard
+          label="After-Exit Review"
+          value={String(summary.postExitFindingCount)}
+          detail={`${summary.postExitRiskCount} risk, ${summary.postExitStrengthCount} strength, ${summary.postExitReviewPromptCount} prompt`}
+          tone={
+            summary.postExitRiskCount > 0
+              ? "warning"
+              : summary.postExitStrengthCount > 0
+                ? "success"
+                : summary.postExitFindingThreadCount > 0
+                  ? "info"
+              : "default"
+          }
+        />
+        <MetricCard
+          label="Protected Profit"
+          value={String(summary.protectedProfitBeforeFadeFindingCount)}
+          detail={`${summary.protectedProfitBeforeFadeThreadCount} ticker stor${summary.protectedProfitBeforeFadeThreadCount === 1 ? "y" : "ies"}`}
+          tone={
+            summary.protectedProfitBeforeFadeFindingCount > 0
+              ? "success"
+              : "default"
+          }
+        />
+        <MetricCard
+          label="Support/Resistance Exits"
+          value={String(summary.exitLevelFindingCount)}
+          detail={`${summary.exitLevelRiskCount} risk, ${summary.exitLevelStrengthCount} strength, ${summary.exitLevelReviewPromptCount} prompt`}
+          tone={
+            summary.exitLevelRiskCount > 0
+              ? "warning"
+              : summary.exitLevelStrengthCount > 0
+                ? "success"
+                : summary.exitLevelFindingCount > 0
+                  ? "info"
+                  : "default"
+          }
+        />
+        <MetricCard
+          label="Volume Evidence"
+          value={String(summary.volumeFindingCount)}
+          detail={`${summary.volumeRiskCount} risk, ${summary.volumeStrengthCount} strength, ${summary.volumeReviewPromptCount} prompt`}
+          tone={
+            summary.volumeRiskCount > 0
+              ? "warning"
+              : summary.volumeStrengthCount > 0
+                ? "success"
+                : summary.volumeFindingCount > 0
+                  ? "info"
+                  : "default"
+          }
+        />
+      </div>
+      {handoffs.length > 0 ? (
+        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+          {handoffs.map((handoff) => (
+            <Link
+              className={`border p-4 transition hover:border-sky-400 ${handoff.tone}`}
+              href={handoff.href}
+              key={handoff.label}
+            >
+              <div className="text-xs font-semibold uppercase tracking-wide opacity-80">
+                What to open next
+              </div>
+              <div className="mt-2 text-sm font-semibold">{handoff.label}</div>
+              <div className="mt-2 text-xs leading-5 opacity-80">
+                {handoff.detail}
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : null}
+      {summary.priority ? (
+        <div className="mt-4 border-t border-zinc-900 pt-4">
+          <div className="text-xs uppercase tracking-wide text-zinc-500">
+            Story to inspect next
+          </div>
+          <div className="mt-2 text-sm font-semibold text-zinc-100">
+            {summary.priority.label} / {formatSigned(summary.priority.pnl)}
+          </div>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-500">
+            {summary.priority.question}
+          </p>
+          <Link
+            className="mt-3 inline-flex text-sm text-sky-300 hover:text-sky-200"
+            href={summary.priority.href}
+          >
+            Open this ticker story
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-4 border-t border-zinc-900 pt-4 text-sm text-zinc-500">
+          No same-symbol re-entry stories yet.
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SessionStoryAnalyticsPanel({
+  summary,
+}: {
+  summary: AnalyticsSessionStorySummary;
+}) {
+  return (
+    <section
+      className="ti-panel p-5"
+      data-testid="analytics-session-story-panel"
+    >
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-zinc-100">
+            Session Story Analytics
+          </h2>
+          <div className="mt-1 max-w-3xl text-sm leading-6 text-zinc-500">
+            Session stories look across all saved trades from one trading day.
+            They catch green-to-red days, many attempts on one ticker, high
+            trade-count sessions, and open or overnight exposure.
+          </div>
+        </div>
+        <Link
+          className="border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+          href="/coach#session-story-coach"
+        >
+          Open session coach
+        </Link>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-4">
+        <MetricCard
+          label="Sessions Reviewed"
+          value={String(summary.sessionStoryCount)}
+          detail="Trading days with saved execution data"
+          tone="info"
+        />
+        <MetricCard
+          label="Green To Red"
+          value={String(summary.greenToRedSessionCount)}
+          detail="Session was positive before finishing red"
+          tone={summary.greenToRedSessionCount > 0 ? "danger" : "default"}
+        />
+        <MetricCard
+          label="Many Ticker Attempts"
+          value={String(summary.sameSymbolManyAttemptsSessionCount)}
+          detail="One ticker was traded repeatedly"
+          tone={
+            summary.sameSymbolManyAttemptsSessionCount > 0
+              ? "warning"
+              : "default"
+          }
+        />
+        <MetricCard
+          label="High Trade Count"
+          value={String(summary.highTradeCountSessionCount)}
+          detail="Many round trips or symbols in one session"
+          tone={summary.highTradeCountSessionCount > 0 ? "warning" : "default"}
+        />
+      </div>
+      {summary.priority ? (
+        <div className="mt-4 border-t border-zinc-900 pt-4">
+          <div className="text-xs uppercase tracking-wide text-zinc-500">
+            Session to inspect next
+          </div>
+          <div className="mt-2 text-sm font-semibold text-zinc-100">
+            {summary.priority.date} / {summary.priority.label} /{" "}
+            {formatSigned(summary.priority.pnl)}
+          </div>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-500">
+            {summary.priority.prompt}
+          </p>
+          <Link
+            className="mt-3 inline-flex text-sm text-sky-300 hover:text-sky-200"
+            href={summary.priority.href}
+          >
+            Open the main ticker story from this session
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-4 border-t border-zinc-900 pt-4 text-sm text-zinc-500">
+          Save a broker CSV to build session stories from your own trades.
+        </div>
+      )}
+    </section>
+  );
+}
+
 function AnalyticsStoryPanel({
+  showSecondaryCharts = true,
   viewModel,
   savedReviewQueue,
 }: {
+  showSecondaryCharts?: boolean;
   viewModel: ProductTraderAnalyticsViewModel;
   savedReviewQueue?: SavedReviewQueueReadModel | null;
 }) {
@@ -210,53 +621,77 @@ function AnalyticsStoryPanel({
     savedReviewQueue?.items[0] ?? savedReviewQueue?.allItems[0] ?? null;
   const topRisk = report.topRisks[0] ?? null;
   const topStrength = report.topStrengths[0] ?? null;
+  const tradeVisualRows = visualRows(report.trades);
 
   return (
     <section
-      className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)]"
+      className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]"
       data-testid="analytics-story-panel"
     >
-      <div className="border border-zinc-800 bg-zinc-950 p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-400">
+      <div className="ti-panel p-5">
+        <p className="text-xs font-semibold uppercase text-emerald-400">
           Analytics Overview
         </p>
         <h2 className="mt-2 text-2xl font-semibold text-zinc-50">
-          What happened in this trade set
+          What happened in this trade set?
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
-          Start with outcome, then review the biggest behavior pattern. These
-          numbers are gross execution P/L only, so they are review prompts, not
-          trade instructions.
+          Read the account like a trading screen: green is progress, red is cost,
+          and the next review should explain the biggest behavior behind the move.
         </p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard
-            label="Gross Result"
-            value={formatSigned(report.pnl.grossTotalRealizedPnl)}
-            detail={`${report.sampleSize.completedTradeCount} completed trades`}
-            tone={report.pnl.grossTotalRealizedPnl >= 0 ? "success" : "danger"}
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_260px]">
+          <EquityCurveChart
+            formatter={formatSigned}
+            rows={tradeVisualRows}
+            subtitle={`${report.sampleSize.completedTradeCount} completed trades, gross execution P/L`}
+            title="Gross P/L Curve"
           />
-          <MetricCard
-            label="Win Rate"
-            value={formatPercent(report.pnl.grossWinRate)}
-            detail={`${report.pnl.grossWinnerCount} winners / ${report.pnl.grossLoserCount} losers`}
-            tone="info"
-          />
-          <MetricCard
-            label="Best Trade"
-            value={bestTrade ? formatSigned(bestTrade.grossRealizedPnl) : "n/a"}
-            detail={bestTrade ? `${bestTrade.symbol} #${bestTrade.tradeIndex}` : "No trades yet"}
-            tone={bestTrade && bestTrade.grossRealizedPnl >= 0 ? "success" : "muted"}
-          />
-          <MetricCard
-            label="Worst Trade"
-            value={worstTrade ? formatSigned(worstTrade.grossRealizedPnl) : "n/a"}
-            detail={worstTrade ? `${worstTrade.symbol} #${worstTrade.tradeIndex}` : "No trades yet"}
-            tone={worstTrade && worstTrade.grossRealizedPnl < 0 ? "danger" : "muted"}
+          <OutcomeDonut
+            flat={report.pnl.grossFlatCount}
+            losses={report.pnl.grossLoserCount}
+            wins={report.pnl.grossWinnerCount}
           />
         </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
-          <div className="border border-zinc-800 bg-black/20 p-3">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="ti-panel-soft p-4">
+            <div className="text-xs uppercase text-zinc-500">
+              Gross Result
+            </div>
+            <div className={`mt-2 font-mono text-2xl font-semibold ${toneForPnl(report.pnl.grossTotalRealizedPnl)}`}>
+              {formatSigned(report.pnl.grossTotalRealizedPnl)}
+            </div>
+            <div className="mt-1 text-xs text-zinc-500">
+              {report.sampleSize.completedTradeCount} completed trades
+            </div>
+          </div>
+          <div className="ti-panel-soft p-4">
+            <div className="text-xs uppercase text-zinc-500">
+              Best Trade
+            </div>
+            <div className="mt-2 text-sm font-semibold text-emerald-300">
+              {bestTrade
+                ? `${bestTrade.symbol} ${formatSigned(bestTrade.grossRealizedPnl)}`
+                : "No winner yet"}
+            </div>
+            <div className="mt-1 text-xs text-zinc-500">
+              strongest green result
+            </div>
+          </div>
+          <div className="ti-panel-soft p-4">
+            <div className="text-xs uppercase text-zinc-500">
+              Worst Trade
+            </div>
+            <div className="mt-2 text-sm font-semibold text-rose-300">
+              {worstTrade
+                ? `${worstTrade.symbol} ${formatSigned(worstTrade.grossRealizedPnl)}`
+                : "No loser yet"}
+            </div>
+            <div className="mt-1 text-xs text-zinc-500">
+              biggest red cost
+            </div>
+          </div>
+          <div className="ti-panel-soft p-4">
+            <div className="text-xs uppercase text-zinc-500">
               Review First
             </div>
             <div className="mt-2 text-sm font-semibold text-zinc-100">
@@ -274,33 +709,15 @@ function AnalyticsStoryPanel({
               {nextReview ? "Open Trade Review" : "Import trades"}
             </Link>
           </div>
-          <div className="border border-zinc-800 bg-black/20 p-3">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Biggest Risk
-            </div>
-            <div className="mt-2 text-sm font-semibold text-amber-300">
-              {topRisk?.label ?? "No repeated risk yet"}
-            </div>
-            <div className="mt-1 text-xs text-zinc-500">
-              {topRisk ? `${topRisk.count} occurrence(s)` : "Save more closed trades."}
-            </div>
-          </div>
-          <div className="border border-zinc-800 bg-black/20 p-3">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Best Strength
-            </div>
-            <div className="mt-2 text-sm font-semibold text-emerald-300">
-              {topStrength?.label ?? "No repeated strength yet"}
-            </div>
-            <div className="mt-1 text-xs text-zinc-500">
-              {topStrength ? `${topStrength.count} occurrence(s)` : "Save more closed trades."}
-            </div>
-          </div>
         </div>
       </div>
 
       <div className="grid gap-4">
-        <MixBar chart={charts.winLossDonut} title="Win/Loss Mix" />
+        <TradeOutcomeTape
+          formatter={formatSigned}
+          rows={tradeVisualRows}
+          title="Latest Trade Results"
+        />
         <SimpleBarChart
           chart={charts.entrySessionPerformance}
           formatter={formatSigned}
@@ -309,27 +726,332 @@ function AnalyticsStoryPanel({
         />
       </div>
 
-      <div className="xl:col-span-2 grid gap-4 xl:grid-cols-3">
-        <SimpleBarChart
-          chart={charts.grossPnlByTrade}
-          formatter={formatSigned}
-          maxItems={8}
-          title="P/L by Trade"
-        />
-        <SimpleBarChart
-          chart={charts.entryHourPerformance}
-          formatter={formatSigned}
-          maxItems={8}
-          title="P/L by Entry Hour"
-        />
-        <SimpleBarChart
-          chart={charts.behaviorRiskRates}
-          formatter={(value) => String(value)}
-          maxItems={5}
-          title="Execution Habits To Review"
-        />
-      </div>
+      {showSecondaryCharts ? (
+        <>
+          <div className="grid gap-4 xl:col-span-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+            <PnlCalendarGrid
+              formatter={formatSigned}
+              rows={tradeVisualRows}
+              title="Daily P/L Calendar"
+            />
+            <SimpleBarChart
+              chart={charts.grossPnlByTrade}
+              formatter={formatSigned}
+              maxItems={8}
+              title="P/L by Trade"
+            />
+          </div>
+          <div className="grid gap-4 xl:col-span-2 xl:grid-cols-3">
+            <MixBar chart={charts.winLossDonut} title="Outcome Mix" />
+            <SimpleBarChart
+              chart={charts.entryHourPerformance}
+              formatter={formatSigned}
+              maxItems={8}
+              title="P/L by Entry Hour"
+            />
+            <SimpleBarChart
+              chart={charts.behaviorRiskRates}
+              formatter={(value) => String(value)}
+              maxItems={5}
+              title="Execution Habits To Review"
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
+            <div className="ti-panel p-5">
+              <div className="text-xs uppercase text-zinc-500">Biggest Risk</div>
+              <div className="mt-2 text-lg font-semibold text-rose-300">
+                {topRisk?.label ?? "No repeated risk yet"}
+              </div>
+              <div className="mt-2 text-sm text-zinc-400">
+                {topRisk
+                  ? `${topRisk.count} occurrence(s). Review the red cost before adding new rules.`
+                  : "Save more closed trades to see repeated behavior cost."}
+              </div>
+            </div>
+            <div className="ti-panel p-5">
+              <div className="text-xs uppercase text-zinc-500">Best Strength</div>
+              <div className="mt-2 text-lg font-semibold text-emerald-300">
+                {topStrength?.label ?? "No repeated strength yet"}
+              </div>
+              <div className="mt-2 text-sm text-zinc-400">
+                {topStrength
+                  ? `${topStrength.count} occurrence(s). This is the green behavior to repeat.`
+                  : "Save more closed trades to see repeated strengths."}
+              </div>
+            </div>
+          </div>
+        </>
+      ) : null}
     </section>
+  );
+}
+
+function ChartLegendStrip() {
+  return (
+    <div className="grid gap-3 text-sm md:grid-cols-3">
+      {[
+        {
+          label: "Green",
+          body: "Profit, strength, or a behavior worth repeating.",
+          className: "border-emerald-900/70 bg-emerald-950/30 text-emerald-200",
+        },
+        {
+          label: "Red",
+          body: "Loss, risk, giveback, or a behavior to review first.",
+          className: "border-rose-900/70 bg-rose-950/30 text-rose-200",
+        },
+        {
+          label: "Amber",
+          body: "Caution, incomplete context, or a review prompt.",
+          className: "border-amber-900/70 bg-amber-950/30 text-amber-200",
+        },
+      ].map((item) => (
+        <div className={`rounded-md border p-3 ${item.className}`} key={item.label}>
+          <div className="text-xs font-semibold uppercase tracking-wide">
+            {item.label}
+          </div>
+          <div className="mt-1 text-xs leading-5 text-zinc-300">{item.body}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ChartSectionFrame({
+  actionLabel,
+  body,
+  children,
+  eyebrow,
+  onAction,
+  title,
+}: {
+  actionLabel?: string;
+  body: ReactNode;
+  children: ReactNode;
+  eyebrow: string;
+  onAction?: () => void;
+  title: string;
+}) {
+  return (
+    <section className="ti-panel p-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-sky-300">
+            {eyebrow}
+          </p>
+          <h2 className="mt-2 text-xl font-semibold text-zinc-50">{title}</h2>
+          <div className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+            {body}
+          </div>
+        </div>
+        {actionLabel && onAction ? (
+          <button
+            className="inline-flex items-center justify-center rounded-md border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+            onClick={onAction}
+            type="button"
+          >
+            {actionLabel}
+          </button>
+        ) : null}
+      </div>
+      <div className="mt-5">{children}</div>
+    </section>
+  );
+}
+
+function AnalyticsChartGalleryPanel({
+  onOpenTrades,
+  viewModel,
+}: {
+  onOpenTrades: () => void;
+  viewModel: ProductTraderAnalyticsViewModel;
+}) {
+  const report = viewModel.latestReport.report;
+  const charts = report.charts;
+  const tradeVisualRows = visualRows(report.trades);
+  const topRisk = report.topRisks[0] ?? null;
+  const topStrength = report.topStrengths[0] ?? null;
+
+  return (
+    <div className="grid gap-6">
+      <section className="ti-panel p-5" id="chart-workbench">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase text-sky-300">
+              Chart Workbench
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-zinc-50">
+              Stats and graphs, grouped by question
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+              Start with outcome, then timing, then behavior. If a number
+              needs investigation, open the trade explorer or the review queue
+              instead of treating the chart as the final answer.
+            </p>
+          </div>
+          <div className="rounded-md border border-zinc-700 bg-slate-900/70 px-3 py-2 font-mono text-sm text-zinc-300">
+            {report.sampleSize.completedTradeCount} trades
+          </div>
+        </div>
+        <div className="mt-5">
+          <ChartLegendStrip />
+        </div>
+      </section>
+
+      <WorkflowHandoffPanel
+        body="Use this flow when a chart catches your eye: inspect the chart, open the trades behind it, write the review, then check whether the coach focus changes."
+        eyebrow="Chart Workflow"
+        items={[
+          {
+            action: "Stay in charts",
+            body: "Find the trades behind the chart bar, session, hour, or behavior.",
+            href: "#chart-workbench",
+            label: "1. Inspect",
+            title: "Find trades behind a number",
+          },
+          {
+            action: "Open review",
+            body: "Turn the chart into a written trade review instead of just a statistic.",
+            href: "/review?queue=highest_priority",
+            label: "2. Review",
+            title: "Open the review queue",
+            tone: "warning",
+          },
+          {
+            action: "Open coach",
+            body: "See whether the same behavior becomes the current coaching focus.",
+            href: "/coach#next-action",
+            label: "3. Coach",
+            title: "Compare against the focus",
+            tone: "success",
+          },
+          {
+            action: "Check progress",
+            body: "Use progress only after reviews are written and tracked.",
+            href: "/progress#progress-follow-through",
+            label: "4. Track",
+            title: "Measure follow-through",
+          },
+        ]}
+        testId="analytics-chart-workflow"
+        title="Charts should lead to a review, not stop at a number."
+      />
+
+      <ChartSectionFrame
+        actionLabel="Open trade explorer"
+        body="These charts answer whether the saved trade set made or lost money and which individual trades moved the result the most."
+        eyebrow="Outcome"
+        onAction={onOpenTrades}
+        title="Where did the P/L come from?"
+      >
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+          <PnlCalendarGrid
+            formatter={formatSigned}
+            rows={tradeVisualRows}
+            title="Daily P/L Calendar"
+          />
+          <SimpleBarChart
+            chart={charts.grossPnlByTrade}
+            formatter={formatSigned}
+            maxItems={12}
+            title="P/L by Trade"
+          />
+        </div>
+        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <MixBar chart={charts.winLossDonut} title="Outcome Mix" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="ti-panel-soft p-5">
+              <div className="text-xs uppercase text-zinc-500">Biggest Risk</div>
+              <div className="mt-2 text-lg font-semibold text-rose-300">
+                {topRisk?.label ?? "No repeated risk yet"}
+              </div>
+              <div className="mt-2 text-sm leading-6 text-zinc-400">
+                {topRisk
+                  ? `${topRisk.count} occurrence(s). Open the related trades before writing a new rule.`
+                  : "No repeated red behavior is showing in this report."}
+              </div>
+            </div>
+            <div className="ti-panel-soft p-5">
+              <div className="text-xs uppercase text-zinc-500">Best Strength</div>
+              <div className="mt-2 text-lg font-semibold text-emerald-300">
+                {topStrength?.label ?? "No repeated strength yet"}
+              </div>
+              <div className="mt-2 text-sm leading-6 text-zinc-400">
+                {topStrength
+                  ? `${topStrength.count} occurrence(s). This is the green behavior to preserve.`
+                  : "No repeated green behavior is showing in this report."}
+              </div>
+            </div>
+          </div>
+        </div>
+      </ChartSectionFrame>
+
+      <ChartSectionFrame
+        actionLabel="Open trade explorer"
+        body="Timing charts show whether the same results cluster around premarket, the open, midday, late day, or specific entry hours."
+        eyebrow="Timing"
+        onAction={onOpenTrades}
+        title="When did the results happen?"
+      >
+        <div className="grid gap-4 xl:grid-cols-2">
+          <SimpleBarChart
+            chart={charts.entrySessionPerformance}
+            formatter={formatSigned}
+            maxItems={8}
+            title="P/L by Session"
+          />
+          <SimpleBarChart
+            chart={charts.entryHourPerformance}
+            formatter={formatSigned}
+            maxItems={10}
+            title="P/L by Entry Hour"
+          />
+        </div>
+        <div className="mt-4">
+          <TimeOfDayPanel report={report} />
+        </div>
+      </ChartSectionFrame>
+
+      <ChartSectionFrame
+        actionLabel="Find trades behind this"
+        body="Behavior charts are review prompts. A red bar should send you to the evidence trades; a green pattern should be checked before you try to preserve it."
+        eyebrow="Behavior"
+        onAction={onOpenTrades}
+        title="Which execution habits need review?"
+      >
+        <div className="grid gap-4 xl:grid-cols-[minmax(320px,0.8fr)_minmax(0,1.2fr)]">
+          <SimpleBarChart
+            chart={charts.behaviorRiskRates}
+            formatter={(value) => String(value)}
+            maxItems={8}
+            title="Execution Habits To Review"
+          />
+          <div className="ti-panel-soft p-5">
+            <h3 className="text-sm font-semibold text-zinc-100">
+              How to use this section
+            </h3>
+            <div className="mt-3 grid gap-3 text-sm leading-6 text-zinc-400">
+              <p>
+                Red behavior means the app found repeated execution evidence
+                worth reviewing. It does not tell you what to trade next.
+              </p>
+              <p>
+                If chart context is needed, open the review item and check
+                whether support, resistance, volume, and after-exit movement are
+                actually available.
+              </p>
+              <button
+                className="mt-1 w-fit rounded-md border border-sky-800 bg-sky-950/40 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+                onClick={onOpenTrades}
+                type="button"
+              >
+                Find trades behind this
+              </button>
+            </div>
+          </div>
+        </div>
+      </ChartSectionFrame>
+    </div>
   );
 }
 
@@ -1767,15 +2489,106 @@ function ImportTrialExperiencePanel({
   );
 }
 
+type AnalyticsDashboardSection =
+  | "overview"
+  | "charts"
+  | "review"
+  | "trades"
+  | "advanced";
+
+const ANALYTICS_DASHBOARD_SECTIONS: Array<{
+  id: AnalyticsDashboardSection;
+  label: string;
+  summary: string;
+}> = [
+  {
+    id: "overview",
+    label: "Overview",
+    summary: "P/L curve, win/loss mix, and the trade tape.",
+  },
+  {
+    id: "charts",
+    label: "Charts",
+    summary: "Time, sessions, behavior, and report charts.",
+  },
+  {
+    id: "review",
+    label: "Review Plan",
+    summary: "What to review next and what behavior to watch.",
+  },
+  {
+    id: "trades",
+    label: "Trade Explorer",
+    summary: "Filter trades and find what sits behind each number.",
+  },
+  {
+    id: "advanced",
+    label: "Advanced",
+    summary: "Import setup, technical follow-up, and rule detail.",
+  },
+];
+
+function AnalyticsDashboardNav({
+  activeSection,
+  onChange,
+}: {
+  activeSection: AnalyticsDashboardSection;
+  onChange: (section: AnalyticsDashboardSection) => void;
+}) {
+  return (
+    <aside className="ti-panel h-fit p-3 lg:sticky lg:top-6">
+      <div className="px-2 py-2">
+        <div className="text-xs font-semibold uppercase text-sky-300">
+          Analytics Menu
+        </div>
+        <div className="mt-1 text-xs leading-5 text-zinc-500">
+          Choose the view you want instead of scrolling through every report.
+        </div>
+      </div>
+      <div className="mt-2 grid gap-2">
+        {ANALYTICS_DASHBOARD_SECTIONS.map((section) => {
+          const active = section.id === activeSection;
+
+          return (
+            <button
+              className={`rounded-md border px-3 py-3 text-left transition focus:outline-none ${
+                active
+                  ? "border-sky-500 bg-sky-950/60 text-zinc-50 shadow-[inset_3px_0_0_#38bdf8]"
+                  : "border-zinc-800/40 bg-transparent text-zinc-400 hover:border-zinc-700 hover:bg-slate-800/40 hover:text-zinc-100"
+              }`}
+              key={section.id}
+              onClick={() => onChange(section.id)}
+              type="button"
+            >
+              <span className="block text-sm font-semibold">{section.label}</span>
+              <span className="mt-1 block text-xs leading-5 text-zinc-500">
+                {section.summary}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}
+
 export function AnalyticsClient({
   initialViewModel,
   savedReviewQueue,
   importSourceCaution,
+  isSamplePreview = false,
+  tickerStorySummary,
+  sessionStorySummary,
 }: {
   initialViewModel: ProductTraderAnalyticsViewModel;
   savedReviewQueue?: SavedReviewQueueReadModel | null;
   importSourceCaution?: SavedImportSourceCautionReadModel | null;
+  isSamplePreview?: boolean;
+  tickerStorySummary: AnalyticsTickerStorySummary;
+  sessionStorySummary: AnalyticsSessionStorySummary;
 }) {
+  const [activeSection, setActiveSection] =
+    useState<AnalyticsDashboardSection>("overview");
   const [filters, setFilters] = useState<TraderAnalyticsFilter>({});
   const [selectedDrillDownId, setSelectedDrillDownId] = useState(
     initialViewModel.drillDowns[0]?.id ?? "",
@@ -1801,27 +2614,40 @@ export function AnalyticsClient({
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-5 py-8 text-zinc-100 sm:px-8">
+    <main className="ti-dashboard-bg min-h-screen px-5 py-8 text-zinc-100 sm:px-8">
       <div className="mx-auto flex w-full min-w-0 max-w-[1480px] flex-col gap-8">
-        <header className="border-b border-zinc-800 pb-6">
+        <header className="ti-panel p-6">
           <Link className="text-sm text-sky-300 hover:text-sky-200" href="/workspace">
             Back to workspace
           </Link>
-          <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-sky-300">
+          <p className="mt-4 text-xs font-semibold uppercase text-sky-300">
             Trader Intelligence
           </p>
           <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1 className="text-3xl font-semibold text-zinc-50">
-                Analytics
+              <h1 className="text-3xl font-semibold text-zinc-50 sm:text-4xl">
+                Trading Performance Dashboard
               </h1>
-              <p className="mt-2 max-w-3xl text-sm text-zinc-500">
-                Saved in-app execution analytics. Reports, comparisons, focus
-                items, and trade review links stay inside the product.
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+                A trader-facing report view for results, red/green behavior cost,
+                and the next trade to review. This is analysis of saved executions,
+                not trading advice.
               </p>
             </div>
-            <div className="border border-sky-900 bg-sky-950/30 px-4 py-3 text-sm text-sky-100">
-              {initialViewModel.onboarding.title}
+            <div className="grid gap-2 text-sm">
+              <div className="rounded-md border border-sky-900 bg-sky-950/30 px-4 py-3 text-sky-100">
+                {isSamplePreview
+                  ? "Previewing fuller demo data"
+                  : initialViewModel.onboarding.title}
+              </div>
+              {!isSamplePreview && report.sampleSize.completedTradeCount < 6 ? (
+                <Link
+                  className="rounded-md border border-emerald-900 bg-emerald-950/20 px-4 py-3 text-center text-emerald-200 hover:border-emerald-500"
+                  href="/analytics?demo=sample"
+                >
+                  Preview fuller dashboard
+                </Link>
+              ) : null}
             </div>
           </div>
         </header>
@@ -1835,10 +2661,22 @@ export function AnalyticsClient({
           surface="analytics"
         />
 
+        <section className="grid min-w-0 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+          <AnalyticsDashboardNav
+            activeSection={activeSection}
+            onChange={setActiveSection}
+          />
+          <div className="min-w-0">
+            {activeSection === "overview" ? (
+              <div className="grid gap-6">
         <AnalyticsStoryPanel
+          showSecondaryCharts={false}
           viewModel={initialViewModel}
           savedReviewQueue={savedReviewQueue}
         />
+
+        <TickerStoryAnalyticsPanel summary={tickerStorySummary} />
+        <SessionStoryAnalyticsPanel summary={sessionStorySummary} />
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <MetricCard
@@ -1863,9 +2701,9 @@ export function AnalyticsClient({
             tone="info"
           />
           <MetricCard
-            label="Adverse Add Rate"
+            label="Adds Needing Review"
             value={formatPercent(report.executionBehavior.adversePriceAddRate)}
-            detail={`${report.executionBehavior.adversePriceAddTradeCount} trades`}
+            detail={`${report.executionBehavior.adversePriceAddTradeCount} trades where chart context decides whether the add repaired or added exposure`}
             tone="warning"
           />
           <MetricCard
@@ -1875,9 +2713,18 @@ export function AnalyticsClient({
             tone="info"
           />
         </section>
+              </div>
+            ) : null}
 
-        <TimeOfDayPanel report={report} />
+            {activeSection === "charts" ? (
+              <AnalyticsChartGalleryPanel
+                onOpenTrades={() => setActiveSection("trades")}
+                viewModel={initialViewModel}
+              />
+            ) : null}
 
+            {activeSection === "review" ? (
+              <div className="grid gap-6">
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.75fr)]">
           <WeeklyReviewPanel weeklyReview={initialViewModel.weeklyReview} />
           <MarketContextPanel status={initialViewModel.marketContextAddOn} />
@@ -1925,10 +2772,10 @@ export function AnalyticsClient({
               Report History
             </h2>
             <div className="mt-4 grid gap-3">
-              {initialViewModel.reportHistory.map((savedReport) => (
+              {initialViewModel.reportHistory.map((savedReport, index) => (
                 <div key={savedReport.id} className="border-t border-zinc-900 py-3">
                   <div className="font-medium text-zinc-100">
-                    {savedReport.reportPeriod.label}
+                    Saved report {index + 1}
                   </div>
                   <div className="mt-1 text-xs text-zinc-500">
                     {savedReport.report.sampleSize.completedTradeCount} trades /
@@ -1988,7 +2835,11 @@ export function AnalyticsClient({
             )}
           </div>
         </section>
+              </div>
+            ) : null}
 
+            {activeSection === "advanced" ? (
+              <div className="grid gap-6">
         <AdvancedDisclosure
           summary="Advanced setup details"
           testId="analytics-advanced-details"
@@ -2011,8 +2862,15 @@ export function AnalyticsClient({
             />
             <TagsCalibrationPanel productization={initialViewModel.productization} />
         </AdvancedDisclosure>
+              </div>
+            ) : null}
 
-        <section className="border border-zinc-800 bg-zinc-950 p-4">
+            {activeSection === "trades" ? (
+              <div className="grid gap-6">
+        <section
+          className="border border-zinc-800 bg-zinc-950 p-4"
+          id="trades-behind-number"
+        >
           <h2 className="text-sm font-semibold text-zinc-100">Filters</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-6">
             <select
@@ -2171,7 +3029,10 @@ export function AnalyticsClient({
             />
           </div>
         </section>
+              </div>
+            ) : null}
 
+            {activeSection === "advanced" ? (
         <section className="border border-zinc-800 bg-zinc-950 p-4">
           <h2 className="text-sm font-semibold text-zinc-100">Rule Tracker</h2>
           <RuleCompliancePanel
@@ -2189,6 +3050,9 @@ export function AnalyticsClient({
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+            ) : null}
           </div>
         </section>
       </div>

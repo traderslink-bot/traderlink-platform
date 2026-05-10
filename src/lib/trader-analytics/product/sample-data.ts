@@ -225,7 +225,7 @@ export function buildSampleSavedTraderAnalyticsData(): {
 } {
   const trades = SAMPLE_REQUESTS.map(toSavedTrade);
   const priorTrades = trades.slice(0, 4);
-  const latestTrades = trades.slice(4);
+  const latestTrades = trades;
   const reports = [
     buildSavedReport({
       id: "report-latest-sample",

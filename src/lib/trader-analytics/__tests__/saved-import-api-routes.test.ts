@@ -174,7 +174,7 @@ describe("saved import API routes", () => {
       diagnosticCodeCounts: { market_context_unavailable: 1 },
       diagnosticStatusCounts: { market_context_unavailable: 1 },
       nextAction:
-        "Execution review is available now; keep market-context conclusions unavailable until technical follow-up is resolved.",
+        "Execution review is available now; keep chart conclusions unavailable until technical follow-up is resolved.",
     });
     expect(review.savedReviewQueue).toMatchObject({
       activeFilter: "highest_priority",
@@ -476,7 +476,7 @@ describe("saved import API routes", () => {
           stateLabel: "Chart context waiting",
           reviewScopeLabel: "execution-only",
           stateDetail:
-            "Execution review is available, but levels or candle context are waiting on a market-data backfill.",
+            "Execution review is available, but levels or candle context are waiting on a market data backfill.",
           nextAction:
             "Review entries, adds, reductions, exits, timing, and P/L now; backfill market context later.",
         }),

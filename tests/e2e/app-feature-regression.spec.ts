@@ -48,16 +48,25 @@ const BANNED_PRODUCT_PHRASES = [
   "short-seller coaching",
 ];
 
+const CONFUSING_PRIMARY_UI_PHRASES = [
+  "chart-context",
+  "post-exit check",
+  "post-exit checks",
+  "risk-backed",
+  "strength-backed",
+  "volume note",
+];
+
 const ROUTE_SMOKE_TARGETS = [
   { path: "/", heading: "TradersLink Trading Tools" },
   { path: "/trader-intelligence", heading: "Trader Intelligence Trade Review" },
-  { path: "/analytics", heading: "Analytics" },
+  { path: "/analytics", heading: "Trading Performance Dashboard" },
   { path: "/imports", heading: shell.importReview.title },
   { path: "/import-dry-run", heading: "Import Trades" },
   { path: "/review", heading: shell.guidedReview.title },
   { path: "/progress", heading: "Trader Progress" },
   { path: "/trades", heading: "Saved Trades" },
-  { path: "/coach", heading: /^Review/ },
+  { path: "/coach", heading: "Your Trading Coach" },
   { path: "/session-recap", heading: analytics.productPolish.sessionRecap.headline },
   { path: "/import-health", heading: "Import Health Center" },
   { path: "/import-trials", heading: "Import Trials" },
@@ -77,8 +86,8 @@ const ROUTE_SMOKE_TARGETS = [
 ] as const;
 
 const CORE_PRODUCT_ROUTES = [
-  { path: "/analytics", heading: "Analytics" },
-  { path: "/coach", heading: /^Review/ },
+  { path: "/analytics", heading: "Trading Performance Dashboard" },
+  { path: "/coach", heading: "Your Trading Coach" },
   { path: "/trades", heading: "Saved Trades" },
   { path: "/review", heading: shell.guidedReview.title },
   { path: "/progress", heading: "Trader Progress" },
@@ -295,13 +304,13 @@ test.describe("app feature regression", () => {
       },
       {
         path: "/coach",
-        heading: /^Review/,
+        heading: "Your Trading Coach",
         testId: "saved-review-summary-strip",
         text: /Saved Review Work|Save one broker CSV/,
       },
       {
         path: "/analytics",
-        heading: "Analytics",
+        heading: "Trading Performance Dashboard",
         testId: "saved-review-summary-strip",
         text: /Saved Review Work|Save one broker CSV/,
       },
@@ -515,10 +524,32 @@ test.describe("app feature regression", () => {
     test.skip(!isDesktopProject(testInfo), "deep product assertions run on desktop");
     const assertNoProblems = collectPageProblems(page);
 
-    await visitAndAssertRoute(page, "/analytics", "Analytics");
+    await visitAndAssertRoute(page, "/analytics", "Trading Performance Dashboard");
     await expect(page.getByTestId("analytics-story-panel")).toContainText(
       "What happened in this trade set",
     );
+    await expect(page.getByTestId("analytics-ticker-story-panel")).toContainText(
+      "Ticker Story Analytics",
+    );
+    await expect(page.getByTestId("analytics-ticker-story-panel")).toContainText(
+      "Same-symbol re-entries",
+    );
+    await expect(page.getByTestId("analytics-ticker-story-panel")).toContainText(
+      "Repeated Losses",
+    );
+    await expect(page.getByTestId("analytics-ticker-story-panel")).toContainText(
+      "Support/Resistance Exits",
+    );
+    await expect(page.getByTestId("analytics-session-story-panel")).toContainText(
+      "Session Story Analytics",
+    );
+    await expect(page.getByTestId("analytics-session-story-panel")).toContainText(
+      "Green To Red",
+    );
+    await expect(page.getByTestId("analytics-session-story-panel")).toContainText(
+      "High Trade Count",
+    );
+    await page.getByRole("button", { name: /Charts/ }).click();
     for (const chartId of [
       "analytics-chart-gross_win_loss_flat",
       "analytics-chart-entry_session_performance",
@@ -528,6 +559,7 @@ test.describe("app feature regression", () => {
     ]) {
       await expect(page.getByTestId(chartId)).toBeVisible();
     }
+    await page.getByRole("button", { name: /Review Plan/ }).click();
     for (const heading of [
       "Daily Coach Report",
       "Best / Worst Finder",
@@ -536,6 +568,13 @@ test.describe("app feature regression", () => {
       "Rule Builder",
       "Coach Review Queue",
       "Behavior Trends",
+    ]) {
+      await expect(
+        page.getByRole("heading", { exact: true, name: heading }),
+      ).toBeVisible();
+    }
+    await page.getByRole("button", { name: /Advanced/ }).click();
+    for (const heading of [
       "Rule Tracker",
     ]) {
       await expect(
@@ -552,27 +591,112 @@ test.describe("app feature regression", () => {
     test.skip(!isDesktopProject(testInfo), "deep coach assertions run on desktop");
     const assertNoProblems = collectPageProblems(page);
 
-    await visitAndAssertRoute(page, "/coach", /^Review/);
+    await visitAndAssertRoute(page, "/coach", "Your Trading Coach");
     for (const heading of [
-      "Coach Review Queue",
-      "Evidence Cards",
+      "Work the focus, then prove it with trades.",
+      "Check whether re-entries helped or hurt the first idea.",
+      "Review the full trading day, not only one trade.",
+      "Work the evidence queue after the focus is clear.",
+      "Repeat Pattern",
+      "Proof Queue",
+      "Evidence Cards To Open",
       "Session Timing",
       "Session Prep",
       "Do This Now",
-      "Advanced Rule Details",
-      "Personal Pattern Memory",
-      "Most Expensive Habit",
-      "Advanced Rule Tests",
-      "Current Pattern",
-      "Review Completion",
+      "Behavior Impact",
     ]) {
       await expect(
         page.getByRole("heading", { exact: true, name: heading }),
       ).toBeVisible();
     }
+    await expect(page.getByTestId("coach-featured-trade-session")).toContainText(
+      "Featured Evidence Trade",
+    );
+    await expect(page.getByTestId("coach-primary-action")).toContainText(
+      "Current Coaching Focus",
+    );
+    await expect(page.getByTestId("coach-primary-action")).toContainText(
+      "Pattern Across Trades",
+    );
+    await expect(page.getByTestId("coach-primary-action")).toContainText(
+      "Evidence Trades",
+    );
+    await expect(page.getByTestId("coach-review-backlog-preview")).toContainText(
+      "Trades To Review Next",
+    );
+    await expect(page.getByTestId("coach-ticker-story-panel")).toContainText(
+      "Ticker Story Coach",
+    );
+    await expect(page.getByTestId("coach-ticker-story-panel")).toContainText(
+      "Round trips stay separate for accounting",
+    );
+    await expect(page.getByTestId("coach-ticker-story-panel")).toContainText(
+      "Support/Resistance Exits",
+    );
+    await expect(page.getByTestId("coach-ticker-story-panel")).not.toContainText(
+      "revenge",
+    );
+    await expect(page.getByTestId("coach-session-story-panel")).toContainText(
+      "Session Story Coach",
+    );
+    await expect(page.getByTestId("coach-session-story-panel")).toContainText(
+      "green-to-red",
+    );
+    await expect(page.getByTestId("coach-session-story-panel")).not.toContainText(
+      "revenge",
+    );
+    await expect(page.locator("body")).not.toContainText("Today's review card");
+    await expect(page.locator("body")).not.toContainText("What to work on today");
     await expect(
-      page.getByText("Advanced coach details", { exact: true }),
+      page.getByText("Supporting coach details", { exact: true }),
     ).toBeVisible();
+    await expect(page.getByTestId("coach-featured-trade-session")).toContainText(
+      /Main behavior|Import a broker CSV/,
+    );
+    await expect(page.getByTestId("coach-featured-trade-session")).toContainText(
+      "What this means",
+    );
+    await expect(page.getByTestId("coach-featured-trade-session")).toContainText(
+      "Why this matters",
+    );
+    await expect(page.getByTestId("coach-featured-trade-session")).toContainText(
+      "Fix first",
+    );
+    await expect(page.getByTestId("coach-guided-session")).toContainText(
+      "Work the focus, then prove it with trades.",
+    );
+    const coachPrimaryHref = await page
+      .getByTestId("coach-primary-action")
+      .getByRole("link", { name: /Open best evidence trade|Import trades/ })
+      .getAttribute("href");
+    expect(coachPrimaryHref).toBeTruthy();
+    if (coachPrimaryHref?.startsWith("/trades/")) {
+      expect(coachPrimaryHref).toContain("#writing-flow");
+      await page.goto(coachPrimaryHref);
+      await page.waitForLoadState("networkidle");
+      await expect(page.getByTestId("trade-coach-handoff")).toContainText(
+        "Coach Handoff",
+      );
+      await expect(page.getByTestId("trade-coach-handoff")).toContainText(
+        "Current coaching focus",
+      );
+      await expect(page.getByTestId("trade-review-workspace")).toContainText(
+        "Prove or reject the coaching focus",
+      );
+      await expect(
+        page.getByRole("link", { exact: true, name: "Back to coach" }),
+      ).toBeVisible();
+      await visitAndAssertRoute(page, "/coach", "Your Trading Coach");
+    }
+    const coachReplayHref = await page
+      .getByTestId("coach-session-workflow")
+      .getByRole("link", { name: /Replay trade|Import trades/ })
+      .first()
+      .getAttribute("href");
+    expect(coachReplayHref).toBeTruthy();
+    if (coachReplayHref?.startsWith("/trades/")) {
+      expect(coachReplayHref).toContain("#execution");
+    }
     await expect(page.locator("body")).toContainText("review prompt");
     await expect(page.locator("body")).toContainText("Open the priority trade");
     await expect(page.locator("body")).toContainText("Execution-only");
@@ -646,18 +770,124 @@ test.describe("app feature regression", () => {
 
     await visitAndAssertRoute(page, "/trades", "Saved Trades");
     await expect(
+      page.getByRole("heading", { exact: true, name: "Browse Saved Trades" }),
+    ).toBeVisible();
+    await expect(page.getByTestId("saved-trade-browse-modes")).toContainText(
+      "Round Trips",
+    );
+    await expect(page.getByTestId("saved-trade-browse-modes")).toContainText(
+      "Ticker Stories",
+    );
+    await expect(page.getByTestId("saved-trade-browse-modes")).toContainText(
+      "Session Stories",
+    );
+    await expect(page.getByTestId("saved-trade-browse-modes")).toContainText(
+      "Open/Swing",
+    );
+    await expect(page.getByTestId("saved-trade-browse-modes")).toContainText(
+      "Needs Review",
+    );
+    await expect(page.getByTestId("saved-trade-browse-modes")).toContainText(
+      "flat-to-flat trade",
+    );
+    await expect(
       page.getByRole("heading", { exact: true, name: "Find Saved Trades" }),
     ).toBeVisible();
     await expect(page.locator("body")).toContainText("Open review queue");
     await expect(page.locator("body")).toContainText("All Saved Trades");
+
+    await page.goto("/trades?view=ticker_stories#ticker-stories");
+    await expect(page.getByTestId("saved-trade-thread-stories")).toContainText(
+      "Ticker Stories",
+    );
+    await expect(page.getByTestId("saved-trade-thread-stories")).toContainText(
+      "Support/resistance exits",
+    );
+    await expect(page.locator("body")).toContainText("Round trip");
+    await expect(page.locator("body")).toContainText("re-entry");
+    await page.goto("/trades?view=session_stories#session-stories");
+    await expect(page.getByTestId("saved-trade-session-stories")).toContainText(
+      "Session Stories",
+    );
+    await expect(page.getByTestId("saved-trade-session-stories")).toContainText(
+      "green-to-red",
+    );
 
     assertNoProblems();
   });
 
   test("shows the guided review workflow", async ({ page }, testInfo) => {
     test.skip(!isDesktopProject(testInfo), "deep product assertions run on desktop");
+    test.setTimeout(90_000);
     const assertNoProblems = collectPageProblems(page);
 
+    await visitAndAssertRoute(page, "/review", shell.guidedReview.title);
+    await expect(page.getByTestId("review-work-order")).toContainText(
+      "Open Trade Review",
+    );
+    await expect(page.getByTestId("review-work-order")).toContainText(
+      "Replay executions",
+    );
+    await expect(page.getByTestId("review-work-order")).toContainText(
+      "before using chart or level findings",
+    );
+    await expect(page.getByTestId("review-work-order")).toContainText(
+      "Check progress",
+    );
+    await expect(page.getByTestId("review-session-story-handoff")).toContainText(
+      "Session Review Handoff",
+    );
+    await expect(page.getByTestId("review-session-story-handoff")).toContainText(
+      "strengths worth repeating",
+    );
+    await expect(page.getByTestId("saved-review-queue")).toContainText(
+      "Why it is here",
+    );
+    await expect(page.getByTestId("saved-review-queue")).toContainText(
+      "What to review",
+    );
+    await expect(page.getByTestId("saved-review-queue")).toContainText(
+      "Evidence",
+    );
+    const reviewHref = await page
+      .getByTestId("review-continuation-panel")
+      .getByRole("link", { name: "Open Trade Review" })
+      .getAttribute("href");
+    expect(reviewHref).toBeTruthy();
+    expect(reviewHref).toContain("#writing-flow");
+    const replayHref = await page
+      .getByTestId("review-work-order")
+      .getByRole("link", { name: "Replay executions" })
+      .getAttribute("href");
+    expect(replayHref).toBeTruthy();
+    expect(replayHref).toContain("#execution");
+    await page.goto(reviewHref!);
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("trade-review-writing-flow")).toContainText(
+      "Behavior to name",
+    );
+    await expect(page.getByTestId("trade-review-writing-flow")).toContainText(
+      "Fix first",
+    );
+    await expect(page.getByTestId("trade-session-story-handoff")).toContainText(
+      "Session Story",
+    );
+    await expect(page.getByTestId("trade-session-story-handoff")).toContainText(
+      "Open session stories",
+    );
+    await expect(page.getByTestId("trade-visual-replay")).toBeVisible();
+    await expect(page.getByTestId("trade-position-progression")).toContainText(
+      "Realized P/L path",
+    );
+    await expect(page.getByTestId("persisted-review-actions")).toContainText(
+      "Write The Review Note",
+    );
+    await expect(page.getByTestId("review-completion-handoff")).toContainText(
+      "After Saving This Review",
+    );
+    await expect(page.getByTestId("review-completion-handoff")).toContainText(
+      "Check Progress",
+    );
     await visitAndAssertRoute(page, "/review", shell.guidedReview.title);
     for (const heading of [
       "Playbook Drafts",
@@ -682,6 +912,48 @@ test.describe("app feature regression", () => {
     const assertNoProblems = collectPageProblems(page);
 
     await visitAndAssertRoute(page, "/progress", "Trader Progress");
+    await expect(page.getByTestId("progress-saved-source")).toContainText(
+      /Saved import data|Progress unlocks/,
+    );
+    await expect(page.getByTestId("progress-saved-data-strip")).toContainText(
+      "Saved Trades",
+    );
+    await expect(page.getByTestId("progress-saved-data-strip")).toContainText(
+      "Completed Round Trips",
+    );
+    await expect(page.getByTestId("progress-review-completion")).toContainText(
+      "Review Completion",
+    );
+    await expect(page.getByTestId("progress-ticker-stories")).toContainText(
+      "Ticker Story Progress",
+    );
+    await expect(page.getByTestId("progress-ticker-stories")).toContainText(
+      "Track whether re-entries are improving.",
+    );
+    await expect(page.getByTestId("progress-ticker-stories")).toContainText(
+      "Repeated Losses",
+    );
+    await expect(page.getByTestId("progress-ticker-stories")).toContainText(
+      "Support/Resistance Exits",
+    );
+    await expect(page.getByTestId("progress-session-stories")).toContainText(
+      "Session Story Progress",
+    );
+    await expect(page.getByTestId("progress-session-stories")).toContainText(
+      "Green To Red",
+    );
+    await expect(page.getByTestId("progress-coach-focus")).toContainText(
+      "Active Coaching Focus",
+    );
+    await expect(page.getByTestId("progress-coach-focus")).toContainText(
+      "Open coaching focus",
+    );
+    const progressTradeLinks = page.locator('[data-testid^="progress-quality-link-"]');
+    if ((await progressTradeLinks.count()) > 0) {
+      const href = await progressTradeLinks.first().getAttribute("href");
+      expect(href).toBeTruthy();
+      expect(href).toContain("#writing-flow");
+    }
     for (const heading of [
       "Score Dimensions",
       "Rule Effectiveness",
@@ -740,6 +1012,7 @@ test.describe("app feature regression", () => {
     page,
   }, testInfo) => {
     test.skip(!isDesktopProject(testInfo), "market-context text scan runs on desktop");
+    test.setTimeout(90_000);
     const assertNoProblems = collectPageProblems(page);
 
     for (const route of CORE_PRODUCT_ROUTES) {
@@ -752,13 +1025,15 @@ test.describe("app feature regression", () => {
         ).not.toContain(phrase);
       }
       if (route.path === "/analytics") {
+        await page.getByRole("button", { name: /Review Plan/ }).click();
         await expect(
           page.getByRole("heading", {
             exact: true,
             name: "Chart Context Status",
           }),
         ).toBeVisible();
-        expect(body).toContain("separate");
+        const analyticsBody = lowerBodyText(await page.locator("body").innerText());
+        expect(analyticsBody).toContain("separate");
       }
       if (route.path === "/import-dry-run") {
         expect(body).toContain("market context used: false");
@@ -775,6 +1050,7 @@ test.describe("app feature regression", () => {
     page,
   }, testInfo) => {
     test.skip(!isDesktopProject(testInfo), "copy safety scan runs on desktop");
+    test.setTimeout(90_000);
     const assertNoProblems = collectPageProblems(page);
 
     for (const route of CORE_PRODUCT_ROUTES) {
@@ -784,6 +1060,12 @@ test.describe("app feature regression", () => {
         expect(body, `Banned phrase appeared on ${route.path}: ${phrase}`).not.toContain(
           phrase,
         );
+      }
+      for (const phrase of CONFUSING_PRIMARY_UI_PHRASES) {
+        expect(
+          body,
+          `Confusing product phrase appeared on ${route.path}: ${phrase}`,
+        ).not.toContain(phrase);
       }
     }
 
@@ -825,8 +1107,8 @@ test.describe("app feature regression", () => {
       }),
     ).toBeVisible();
 
-    await visitAndAssertRoute(page, "/analytics", "Analytics");
-    await visitAndAssertRoute(page, "/coach", /^Review/);
+    await visitAndAssertRoute(page, "/analytics", "Trading Performance Dashboard");
+    await visitAndAssertRoute(page, "/coach", "Your Trading Coach");
     await visitAndAssertRoute(page, "/trades", "Saved Trades");
 
     await visitAndAssertRoute(page, "/review", shell.guidedReview.title);

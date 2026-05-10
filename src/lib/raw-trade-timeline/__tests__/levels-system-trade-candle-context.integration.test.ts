@@ -144,6 +144,26 @@ describe("createRawTradeTimelineWithLevelsSystemCandles", () => {
         side: execution.side,
       })),
     );
+    expect(result.executionLevelRelations?.map((relation) => ({
+      timestamp: relation.executionTimestamp,
+      price: relation.executionPrice,
+      nearestSupportId: relation.nearestSupportBelow?.levelId ?? null,
+      nearestResistanceAboveId:
+        relation.nearestResistanceAbove?.levelId ?? null,
+      isNearSupport: relation.isNearSupport,
+      isNearResistance: relation.isNearResistance,
+    }))).toEqual(
+      result.levelsSystemExecutionRelations?.map((relation) => ({
+        timestamp: relation.timestampIso,
+        price: relation.price,
+        nearestSupportId:
+          relation.levelRelations?.nearestSupportBelow?.id ?? null,
+        nearestResistanceAboveId:
+          relation.levelRelations?.nearestResistanceAbove?.id ?? null,
+        isNearSupport: relation.levelRelations?.isNearSupport ?? false,
+        isNearResistance: relation.levelRelations?.isNearResistance ?? false,
+      })),
+    );
     expect(result.timeline.preTradeCandles.length).toBeGreaterThan(0);
     expect(result.timeline.tradeCandles.length).toBeGreaterThan(0);
     expect(result.timeline.postTradeCandles.length).toBeGreaterThan(0);

@@ -32,6 +32,7 @@ import type {
   UserFacingDataQualityCheck,
   UserFacingDataQualityScore,
 } from "./types";
+import { mapUserFacingBehavior } from "../../user-facing-behavior";
 
 const FORBIDDEN_SAFETY_PHRASES = [
   "guaranteed",
@@ -140,16 +141,25 @@ export function buildMistakeRuleConversionFlow(args: {
   const drafts: MistakeRuleConversionDraft[] =
     args.productIntelligence.mistakeTaxonomy.observations
       .filter((observation) => observation.tradeIds.length > 0)
+      .map((observation) => ({
+        observation,
+        behavior: mapUserFacingBehavior({
+          behaviorId: observation.taxonomyId,
+          rawLabel: observation.label,
+          route: "/progress",
+        }),
+      }))
+      .filter(({ behavior }) => behavior.canDrivePrimaryConclusion)
       .map((observation) => {
         const labItem = args.productPolish.ruleCandidateLab.items.find((item) =>
           item.flaggedTradeIds.some((tradeId) =>
-            observation.tradeIds.includes(tradeId),
+            observation.observation.tradeIds.includes(tradeId),
           ),
         );
         const readiness: MistakeRuleConversionDraft["readiness"] =
-          observation.occurrenceCount >= 3 && args.sampleSize >= 8
+          observation.observation.occurrenceCount >= 3 && args.sampleSize >= 8
             ? "ready_to_review"
-            : observation.occurrenceCount >= 2
+            : observation.observation.occurrenceCount >= 2
               ? "needs_manual_review"
               : "needs_more_trades";
 
@@ -157,22 +167,22 @@ export function buildMistakeRuleConversionFlow(args: {
           readiness === "ready_to_review" ? "review_ready" : "draft_not_saved";
 
         return {
-          id: `mistake-rule:${observation.taxonomyId}`,
-          taxonomyId: observation.taxonomyId,
-          mistakeLabel: observation.label,
+          id: `mistake-rule:${observation.observation.taxonomyId}`,
+          taxonomyId: observation.observation.taxonomyId,
+          mistakeLabel: observation.behavior.label,
           suggestedRuleTitle:
             labItem?.suggestedRuleTitle ??
-            `Reduce ${observation.label.toLowerCase()}`,
-          reason: observation.reason,
+            `Reduce ${observation.behavior.label.toLowerCase()}`,
+          reason: observation.behavior.evidenceSentence,
           defaultParameters:
             labItem?.defaultParameters ?? {
               maxOccurrencesPerSession: 0,
               reviewRequired: true,
             },
-          affectedTradeIds: observation.tradeIds,
+          affectedTradeIds: observation.observation.tradeIds,
           measurementMetric:
             labItem?.expectedSuccessMetric ??
-            `Reduce ${observation.label.toLowerCase()} occurrence count.`,
+            `Reduce ${observation.behavior.label.toLowerCase()} occurrence count.`,
           readiness,
           reviewStatus,
           limitation:
@@ -253,16 +263,17 @@ export function buildTradeReviewChecklists(args: {
           id: "add_review",
           label: "Add Review",
           status: statusFromAttention(row.adversePriceAddCount > 0),
-          evidence: `${row.addCountAfterInitialEntry} add(s), ${row.adversePriceAddCount} adverse add(s).`,
+          evidence: `${row.addCountAfterInitialEntry} add(s), ${row.adversePriceAddCount} add(s) after adverse movement.`,
           linkedLabels: addDriver?.evidence ?? [],
-          nextAction: "Review every add before the first reduction.",
+          nextAction:
+            "Review whether each add had repair evidence or only increased exposure.",
         },
         {
           id: "exit_review",
           label: "Exit Review",
           status: statusFromAttention(row.isOpenPosition || row.reductionCount === 0),
           evidence: row.isOpenPosition
-            ? "Trade ended with an open-position leftover."
+            ? "Trade ended with shares still open."
             : `${row.reductionCount} reduction(s) found.`,
           linkedLabels: exitDriver?.evidence ?? strengthLabels.slice(0, 2),
           nextAction: "Check whether the exit reduced risk at the right moment.",
@@ -342,7 +353,7 @@ export function buildBehaviorChangeTracker(args: {
   const items = [
     metricItem({
       id: "adverse_add_rate",
-      label: "Adverse Add Rate",
+      label: "Adds Needing Review",
       currentValue: current.executionBehavior.adversePriceAddRate,
       previousValue: previous?.executionBehavior.adversePriceAddRate ?? null,
       favorableDirection: "down",
@@ -351,11 +362,12 @@ export function buildBehaviorChangeTracker(args: {
       relatedTradeIds: rows
         .filter((row) => row.adversePriceAddCount > 0)
         .map((row) => row.tradeId),
-      nextAction: "Compare adverse-add trades and tighten the add rule.",
+      nextAction:
+        "Compare trades where you added after price moved against the position and tighten the add rule.",
     }),
     metricItem({
       id: "rapid_fire_rate",
-      label: "Rapid-Fire Trade Rate",
+      label: "Fast Execution Cluster Rate",
       currentValue:
         currentSampleSize > 0
           ? current.executionBehavior.rapidFireExecutionTradeCount /
@@ -370,7 +382,8 @@ export function buildBehaviorChangeTracker(args: {
       currentSampleSize,
       previousSampleSize,
       relatedTradeIds: riskTradeIds("rapid_fire_execution_cluster"),
-      nextAction: "Review rapid-fire clusters before creating a cooldown rule.",
+      nextAction:
+        "Review trades with several executions close together before creating a cooldown rule.",
     }),
     metricItem({
       id: "open_position_rate",

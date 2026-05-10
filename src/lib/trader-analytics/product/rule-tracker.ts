@@ -10,22 +10,22 @@ import { buildFilteredTraderAnalyticsView } from "./selectors";
 export const TRADER_RULE_TEMPLATES: TraderRuleTemplate[] = [
   {
     id: "no_adverse_price_adds",
-    label: "No Adverse-Price Adds",
+    label: "Require Repair Before Adding Size",
     description:
-      "Flags trades where size was increased after price moved against the entry side.",
+      "Reviews trades where size increased after price moved against the position. Use chart context to decide whether the add was a planned dip buy, a repaired trade, or added risk.",
     evaluationKey: "no_adverse_price_adds",
     supportedParameters: [],
   },
   {
     id: "limit_rapid_fire_gaps",
-    label: "Limit Rapid-Fire Executions",
+    label: "Limit Fast Execution Clusters",
     description:
-      "Flags trades with more rapid-fire execution gaps than the configured threshold.",
+      "Flags trades with more executions close together in time than the configured threshold.",
     evaluationKey: "limit_rapid_fire_gaps",
     supportedParameters: [
       {
         id: "maxRapidFireGaps",
-        label: "Maximum rapid-fire gaps",
+        label: "Maximum fast execution gaps",
         type: "number",
         defaultValue: 0,
       },

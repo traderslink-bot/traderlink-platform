@@ -2,9 +2,13 @@
 
 Date: 2026-05-06
 
+Status: Historical handoff. Do not use as the current resume point; start from
+root `plan.md`, then the plan index and latest project log.
+
 ## Start Here
 
-Read this file first in the next chat.
+For the current project state, do not read this file first. Use it only as
+older context if the active plans point to May 2026 calibration details.
 
 Then read, as needed:
 
@@ -132,9 +136,9 @@ Best immediate next step:
 
 `trader-intelligence-v2` is on branch `audit-refactor-apr16`.
 
-The current active branch of work is real IBKR CSV decision-review calibration
-using the sibling `levels-system` candle warehouse in replay mode. The intended
-market-data path is:
+At the time of this historical handoff, the active branch of work was real IBKR
+CSV decision-review calibration using the sibling `levels-system` candle
+warehouse in replay mode. The intended market-data path was:
 
 - IBKR provider
 - `levels-system/data/candles` warehouse replay

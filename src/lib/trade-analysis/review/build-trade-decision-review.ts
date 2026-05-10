@@ -242,7 +242,7 @@ function buildMarketContextInsights(
       id: "entry_limited_clean_room_to_resistance",
       category: "market_context",
       tone: "risk",
-      title: "Entry had limited clean room",
+      title: "Entry had limited room before resistance",
       summary:
         `The nearest ${levelPhrase(
           "resistance",
@@ -367,7 +367,7 @@ function buildMarketContextInsights(
       id: "entry_far_from_daily_4h_support",
       category: "market_context",
       tone: "risk",
-      title: "Entry was not close to support",
+      title: "Entry had little nearby support",
       summary:
         "Daily/4h context was present, but the first fill was not sitting on nearby support, so the entry had less structural cushion underneath it.",
       evidence: [
@@ -486,7 +486,8 @@ function isProfitProtectionHeadline(headline: string): boolean {
   const lowerHeadline = headline.toLowerCase();
 
   return lowerHeadline.includes("profit protection failed") ||
-    lowerHeadline.includes("profit protection was the main review issue");
+    lowerHeadline.includes("profit protection was the main review issue") ||
+    lowerHeadline.includes("open profit was not protected");
 }
 
 function sentenceFromInsightTitle(title: string): string {
@@ -511,14 +512,28 @@ function buildMarketAwareFallbackHeadline(
   const lateAdd = hasInsight(insights, "adds_after_trade_already_used_range");
   const weakAdd = hasInsight(insights, "adds_increased_risk_into_weakness");
   const failedProtection = hasInsight(insights, "profit_protection_failed");
+  const protectedBeforeFade = hasInsight(insights, "protected_profit_before_fade");
   const continuationLeft = hasInsight(insights, "exit_left_continuation");
+  const avoidedFade = hasInsight(insights, "exit_avoided_adverse_followthrough");
+  const resistanceReversal = hasInsight(
+    insights,
+    "exit_into_resistance_with_reversal_after_exit",
+  );
+  const resistanceBreakout = hasInsight(
+    insights,
+    "exit_into_resistance_before_breakout",
+  );
+  const supportBreakdown = hasInsight(
+    insights,
+    "exit_into_support_before_breakdown",
+  );
 
   if (resistance && limitedRoom && lateAdd) {
-    return `${resistance.title}, the trade had limited clean room, and later adds increased size after much of the move was already used.`;
+    return `${resistance.title}, the trade had limited room before resistance, and later adds increased size after much of the move was already used.`;
   }
 
   if (resistance && limitedRoom) {
-    return `${resistance.title} with limited clean room.`;
+    return `${resistance.title} with limited room before resistance.`;
   }
 
   if (shortSupport) {
@@ -530,21 +545,37 @@ function buildMarketAwareFallbackHeadline(
   }
 
   if (weakAdd) {
-    return "Adds increased risk into weakness.";
+    return "Adds happened before the trade repaired.";
   }
 
   if (failedProtection) {
-    return "Profit protection was the main review issue.";
+    return "Open profit was not protected.";
+  }
+
+  if (protectedBeforeFade) {
+    return "Profit was protected before the later fade.";
+  }
+
+  if (resistanceBreakout) {
+    return "The exit came before resistance broke.";
   }
 
   if (continuationLeft) {
     return "The exit left useful continuation behind.";
   }
 
+  if (resistanceReversal) {
+    return "The exit protected profit near resistance.";
+  }
+
+  if (supportBreakdown || avoidedFade) {
+    return "The exit avoided a later fade.";
+  }
+
   const firstRisk = insights.find((insight) => insight.tone === "risk");
 
   if (firstRisk?.id === "entry_far_from_daily_4h_support") {
-    return "Entry was not close to daily/4h support.";
+    return "Entry had little nearby daily/4h support.";
   }
 
   if (firstRisk) {
@@ -573,7 +604,8 @@ function selectReviewFixFirstBehaviorId(args: {
 
   if (
     args.defaultFixFirstBehaviorId !== "premature_exit" ||
-    hasInsight(args.insights, "exit_left_continuation")
+    hasInsight(args.insights, "exit_left_continuation") ||
+    hasInsight(args.insights, "exit_into_resistance_before_breakout")
   ) {
     return args.defaultFixFirstBehaviorId;
   }
@@ -645,6 +677,13 @@ function shouldSuppressInsight(
   insightIds: Set<string>,
 ): boolean {
   if (
+    insight.id === "exit_avoided_adverse_followthrough" &&
+    insightIds.has("protected_profit_before_fade")
+  ) {
+    return true;
+  }
+
+  if (
     insight.id === "adds_aligned_with_strength" &&
     (insightIds.has("adds_increased_risk_into_weakness") ||
       insightIds.has("adds_after_trade_already_used_range") ||
@@ -670,6 +709,11 @@ function insightPriority(insight: TradeDecisionReviewInsight): number {
     short_adds_near_daily_4h_support: 22,
     profit_protection_failed: 30,
     exit_left_continuation: 31,
+    exit_into_resistance_before_breakout: 32,
+    exit_needs_post_exit_context: 33,
+    exit_large_post_exit_move_needs_review: 34,
+    exit_into_support_with_relief_after_exit: 35,
+    protected_profit_before_fade: 70,
     entry_chase_or_late_extension: 40,
     entry_breakout_failed: 41,
     entry_near_daily_4h_support: 60,
@@ -677,8 +721,12 @@ function insightPriority(insight: TradeDecisionReviewInsight): number {
     short_entry_had_room_to_support: 61,
     short_entry_had_nearby_daily_4h_resistance: 62,
     adds_above_resistance_with_room: 62,
+    reductions_near_resistance: 63,
     entry_had_constructive_location: 70,
     exit_captured_trade_well: 71,
+    exit_avoided_adverse_followthrough: 72,
+    exit_into_resistance_with_reversal_after_exit: 73,
+    exit_into_support_before_breakdown: 74,
     trade_window_excursion_measured: 90,
   };
 
@@ -714,7 +762,7 @@ function buildEntryInsights(
       id: "entry_chase_or_late_extension",
       category: "entry",
       tone: "risk",
-      title: "Entry had chase/late-extension risk",
+      title: "Entry came after the move was extended",
       summary:
         "The entry evidence points to participation after extension rather than from a clearly advantaged location.",
       evidence: [
@@ -751,7 +799,7 @@ function buildEntryInsights(
       id: "entry_breakout_failed",
       category: "entry",
       tone: "risk",
-      title: "Breakout attempt failed",
+      title: "Breakout did not hold",
       summary:
         "The trade had breakout-style participation, but the follow-through did not hold after entry.",
       evidence: ["matchedPattern=failed_breakout_entry_structure"],
@@ -783,12 +831,26 @@ function buildScalingInsights(
       id: "winner_stayed_undersized",
       category: "scaling",
       tone: "risk",
-      title: "Winner stayed undersized",
+      title: "Winner stayed too small",
       summary:
         "The trade produced meaningful favorable movement, but position building stayed limited relative to the opportunity.",
       evidence: [
         `totalPositionIncreaseCount=${input.tradeStructure.totalPositionIncreaseCount}`,
         `winnerOpportunityMovePct=${pct(input.tradeStructure.tradeMfePct)}`,
+      ],
+    });
+  }
+
+  if (!isShort && supportResistance.reductionsNearResistanceCount > 0) {
+    insights.push({
+      id: "reductions_near_resistance",
+      category: "scaling",
+      tone: "strength",
+      title: "Reduced size near daily/4h resistance",
+      summary:
+        "One or more reductions took size off while price was near higher-timeframe resistance.",
+      evidence: [
+        `reductionsNearResistanceCount=${supportResistance.reductionsNearResistanceCount}`,
       ],
     });
   }
@@ -809,9 +871,9 @@ function buildScalingInsights(
       id: "adds_increased_risk_into_weakness",
       category: "scaling",
       tone: "risk",
-      title: "Adds increased risk into weakness",
+      title: "Added before the trade repaired",
       summary:
-        "The trade added size after adverse movement instead of waiting for the trade to repair first.",
+        "The trade added size after adverse movement, and the chart evidence did not show a clear repair before size increased.",
       evidence: [
         `addCountAfterInitialEntry=${scaling.addCountAfterInitialEntry}`,
         `addsWithRecentDropCount=${scaling.addsWithRecentDropCount}`,
@@ -912,34 +974,188 @@ function buildScalingInsights(
 function buildExitInsights(
   result: AppTradeAnalysisResult,
 ): TradeDecisionReviewInsight[] {
-  const exit = result.patternInput.exitContext;
+  const input = result.patternInput;
+  const exit = input.exitContext;
+  const supportResistance = input.supportResistanceContext;
   const insights: TradeDecisionReviewInsight[] = [];
+  const isShort = input.tradeDirection === "short";
   const maxNormalPostExitContinuationRatio = 0.05;
+  const maxFavorableMoveAfterExit = exit.maxFavorableMovePctAfterExit;
+  const hasPrematureExitPattern = hasAnyPattern(result, [
+    "premature_final_exit_after_constructive_management",
+    "missed_post_exit_continuation",
+    "balanced_management_with_premature_final_exit",
+    "underutilized_winner_with_premature_final_exit",
+    "underutilized_winner_with_missed_final_continuation",
+  ]);
+  const hasPostExitContinuationEvidence =
+    exit.postExitCandleCount > 0 &&
+    maxFavorableMoveAfterExit !== null &&
+    Number.isFinite(maxFavorableMoveAfterExit);
   const hasPlausiblePostExitContinuation =
-    exit.maxFavorableMovePctAfterExit === null ||
-    Math.abs(exit.maxFavorableMovePctAfterExit) <=
+    hasPostExitContinuationEvidence &&
+    Math.abs(maxFavorableMoveAfterExit ?? Number.POSITIVE_INFINITY) <=
       maxNormalPostExitContinuationRatio;
 
-  if (
-    hasPlausiblePostExitContinuation &&
-    hasAnyPattern(result, [
-      "premature_final_exit_after_constructive_management",
-      "missed_post_exit_continuation",
-      "balanced_management_with_premature_final_exit",
-      "underutilized_winner_with_premature_final_exit",
-      "underutilized_winner_with_missed_final_continuation",
-    ])
-  ) {
+  if (hasPrematureExitPattern && hasPlausiblePostExitContinuation) {
     insights.push({
       id: "exit_left_continuation",
       category: "exit",
       tone: "risk",
-      title: "Exit left continuation behind",
+      title: "Exit came before more continuation",
       summary:
         "The exit evidence shows useful trade potential remained after the final exit.",
       evidence: [
         `maxFavorableMovePctAfterExit=${pct(exit.maxFavorableMovePctAfterExit)}`,
         `favorableExcursionLeftOnTablePct=${pct(exit.favorableExcursionLeftOnTablePct)}`,
+        `postExitCandleCount=${exit.postExitCandleCount}`,
+        `netMovePctAtEndOfPostExitWindow=${pct(exit.netMovePctAtEndOfPostExitWindow)}`,
+      ],
+    });
+  } else if (hasPrematureExitPattern && !hasPostExitContinuationEvidence) {
+    insights.push({
+      id: "exit_needs_post_exit_context",
+      category: "exit",
+      tone: "neutral",
+      title: "Exit needs after-exit chart check",
+      summary:
+        "The execution pattern makes the exit worth reviewing, but after-exit candles are not available enough to prove continuation.",
+      evidence: [
+        `postExitCandleCount=${exit.postExitCandleCount}`,
+        `maxFavorableMovePctAfterExit=${pct(exit.maxFavorableMovePctAfterExit)}`,
+        `favorableExcursionLeftOnTablePct=${pct(exit.favorableExcursionLeftOnTablePct)}`,
+      ],
+    });
+  } else if (hasPrematureExitPattern) {
+    insights.push({
+      id: "exit_large_post_exit_move_needs_review",
+      category: "exit",
+      tone: "neutral",
+      title: "Large after-exit move needs review",
+      summary:
+        "The after-exit move was larger than the current calibrated safe range, so the app should prompt review instead of making a confident continuation claim.",
+      evidence: [
+        `postExitCandleCount=${exit.postExitCandleCount}`,
+        `maxFavorableMovePctAfterExit=${pct(exit.maxFavorableMovePctAfterExit)}`,
+        `netMovePctAtEndOfPostExitWindow=${pct(exit.netMovePctAtEndOfPostExitWindow)}`,
+        `calibratedSafePostExitMovePct=${pct(maxNormalPostExitContinuationRatio)}`,
+      ],
+    });
+  }
+
+  if (
+    !isShort &&
+    hasAnyPattern(result, [
+      "exit_avoided_adverse_followthrough",
+      "disciplined_defensive_exit",
+    ])
+  ) {
+    pushUniqueInsight(insights, {
+      id: "exit_avoided_adverse_followthrough",
+      category: "exit",
+      tone: "strength",
+      title: "Exit avoided a later fade",
+      summary:
+        "After the final exit, the after-exit chart moved against the trade more than it continued.",
+      evidence: [
+        `maxAdverseMovePctAfterExit=${pct(exit.maxAdverseMovePctAfterExit)}`,
+        `maxFavorableMovePctAfterExit=${pct(exit.maxFavorableMovePctAfterExit)}`,
+        `netMovePctAtEndOfPostExitWindow=${pct(exit.netMovePctAtEndOfPostExitWindow)}`,
+        `postExitCandleCount=${exit.postExitCandleCount}`,
+      ],
+    });
+  }
+
+  if (
+    !isShort &&
+    hasAnyPattern(result, [
+      "exit_into_resistance_with_reversal_after_exit",
+      "stabilized_recovery_with_exit_into_resistance_and_reversal",
+    ])
+  ) {
+    pushUniqueInsight(insights, {
+      id: "exit_into_resistance_with_reversal_after_exit",
+      category: "exit",
+      tone: "strength",
+      title: "Exit protected profit near resistance",
+      summary:
+        "The final exit happened near higher-timeframe resistance and the after-exit chart reversed instead of continuing cleanly.",
+      evidence: [
+        `finalExitOccurredNearResistance=${supportResistance.finalExitOccurredNearResistance}`,
+        `finalExitDistanceToNearestResistancePct=${pctPoints(supportResistance.finalExitDistanceToNearestResistancePct)}`,
+        `maxAdverseMovePctAfterExit=${pct(exit.maxAdverseMovePctAfterExit)}`,
+        `netMovePctAtEndOfPostExitWindow=${pct(exit.netMovePctAtEndOfPostExitWindow)}`,
+      ],
+    });
+  }
+
+  if (
+    !isShort &&
+    hasAnyPattern(result, [
+      "exit_into_resistance_before_breakout",
+      "stabilized_recovery_with_exit_into_resistance_before_breakout",
+    ])
+  ) {
+    pushUniqueInsight(insights, {
+      id: "exit_into_resistance_before_breakout",
+      category: "exit",
+      tone: "risk",
+      title: "Exit came before resistance broke",
+      summary:
+        "The final exit happened near resistance, then the after-exit chart cleared or continued through that area.",
+      evidence: [
+        `finalExitOccurredNearResistance=${supportResistance.finalExitOccurredNearResistance}`,
+        `finalExitDistanceToNearestResistancePct=${pctPoints(supportResistance.finalExitDistanceToNearestResistancePct)}`,
+        `maxFavorableMovePctAfterExit=${pct(exit.maxFavorableMovePctAfterExit)}`,
+        `netMovePctAtEndOfPostExitWindow=${pct(exit.netMovePctAtEndOfPostExitWindow)}`,
+      ],
+    });
+  }
+
+  if (
+    !isShort &&
+    hasAnyPattern(result, [
+      "exit_into_support_before_breakdown",
+      "exit_into_thin_support_before_breakdown",
+      "stabilized_recovery_with_exit_into_thin_support_before_breakdown",
+    ])
+  ) {
+    pushUniqueInsight(insights, {
+      id: "exit_into_support_before_breakdown",
+      category: "exit",
+      tone: "strength",
+      title: "Exit avoided a support break",
+      summary:
+        "The final exit happened near support before the after-exit chart broke lower.",
+      evidence: [
+        `finalExitOccurredNearSupport=${supportResistance.finalExitOccurredNearSupport}`,
+        `finalExitDistanceToNearestSupportPct=${pctPoints(supportResistance.finalExitDistanceToNearestSupportPct)}`,
+        `maxAdverseMovePctAfterExit=${pct(exit.maxAdverseMovePctAfterExit)}`,
+        `netMovePctAtEndOfPostExitWindow=${pct(exit.netMovePctAtEndOfPostExitWindow)}`,
+      ],
+    });
+  }
+
+  if (
+    !isShort &&
+    hasAnyPattern(result, [
+      "exit_into_support_with_relief_after_exit",
+      "exit_into_stacked_support_with_relief_after_exit",
+      "stabilized_recovery_with_exit_into_stacked_support_and_relief",
+    ])
+  ) {
+    pushUniqueInsight(insights, {
+      id: "exit_into_support_with_relief_after_exit",
+      category: "exit",
+      tone: "neutral",
+      title: "Review the exit near support",
+      summary:
+        "The final exit happened near support and the after-exit chart later bounced, so the exit reason should be checked against the plan.",
+      evidence: [
+        `finalExitOccurredNearSupport=${supportResistance.finalExitOccurredNearSupport}`,
+        `finalExitDistanceToNearestSupportPct=${pctPoints(supportResistance.finalExitDistanceToNearestSupportPct)}`,
+        `maxFavorableMovePctAfterExit=${pct(exit.maxFavorableMovePctAfterExit)}`,
+        `netMovePctAtEndOfPostExitWindow=${pct(exit.netMovePctAtEndOfPostExitWindow)}`,
       ],
     });
   }
@@ -947,6 +1163,48 @@ function buildExitInsights(
   const exitHadPositiveCapture =
     exit.realizedCapturePercentOfTradeMfe !== null &&
     exit.realizedCapturePercentOfTradeMfe >= 0.6;
+  const afterExitFadeWasMeasured =
+    !isShort &&
+    exit.postExitCandleCount > 0 &&
+    exit.maxAdverseMovePctAfterExit !== null &&
+    exit.maxFavorableMovePctAfterExit !== null &&
+    exit.netMovePctAtEndOfPostExitWindow !== null &&
+    Number.isFinite(exit.maxAdverseMovePctAfterExit) &&
+    Number.isFinite(exit.maxFavorableMovePctAfterExit) &&
+    Number.isFinite(exit.netMovePctAtEndOfPostExitWindow) &&
+    exit.maxAdverseMovePctAfterExit > exit.maxFavorableMovePctAfterExit &&
+    exit.netMovePctAtEndOfPostExitWindow <= 0;
+
+  if (
+    exitHadPositiveCapture &&
+    afterExitFadeWasMeasured &&
+    hasAnyPattern(result, [
+      "high_capture_exit_structure",
+      "exit_near_favorable_extreme",
+      "exit_with_limited_giveback",
+      "timely_profit_protection_with_constructive_final_exit",
+      "balanced_management_with_constructive_exit",
+      "exit_avoided_adverse_followthrough",
+      "disciplined_defensive_exit",
+    ])
+  ) {
+    pushUniqueInsight(insights, {
+      id: "protected_profit_before_fade",
+      category: "exit",
+      tone: "strength",
+      title: "Protected profit before the fade",
+      summary:
+        "The exit protected a meaningful part of the trade before the after-exit chart faded.",
+      evidence: [
+        `realizedCapturePercentOfTradeMfe=${pct(exit.realizedCapturePercentOfTradeMfe)}`,
+        `finalExitToPeakDistancePct=${pct(exit.finalExitToPeakDistancePct)}`,
+        `maxAdverseMovePctAfterExit=${pct(exit.maxAdverseMovePctAfterExit)}`,
+        `maxFavorableMovePctAfterExit=${pct(exit.maxFavorableMovePctAfterExit)}`,
+        `netMovePctAtEndOfPostExitWindow=${pct(exit.netMovePctAtEndOfPostExitWindow)}`,
+        `postExitCandleCount=${exit.postExitCandleCount}`,
+      ],
+    });
+  }
 
   if (
     exitHadPositiveCapture &&
@@ -984,7 +1242,7 @@ function buildExitInsights(
       id: "profit_protection_failed",
       category: "exit",
       tone: "risk",
-      title: "Profit protection failed",
+      title: "Open profit was not protected",
       summary:
         "The trade gave back too much available open profit before risk was reduced or closed.",
       evidence: [
@@ -1010,7 +1268,7 @@ function buildTradeWindowInsights(
       id: "trade_window_excursion_measured",
       category: "trade_window",
       tone: "neutral",
-      title: "Trade-window movement was measured",
+      title: "During-trade movement was measured",
       summary:
         "The review has bounded trade-window evidence for favorable and adverse movement during the hold.",
       evidence: [

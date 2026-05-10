@@ -226,6 +226,7 @@ export type TraderAnalyticsDrillDownKind =
   | "risk"
   | "strength"
   | "primary_focus"
+  | "review_prompt"
   | "lifecycle"
   | "pnl";
 

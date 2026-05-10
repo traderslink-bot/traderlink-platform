@@ -1343,7 +1343,7 @@ The full Layer 2 composite set is now much broader than the early family section
 
 - broad capture and giveback descriptors:
   `high_capture_exit_structure`, `moderate_capture_exit_structure`, `low_capture_exit_structure`, `exit_with_limited_giveback`, `exit_with_meaningful_giveback`, `exit_near_favorable_extreme`
-- richer post-exit descriptors:
+- post-exit descriptors:
   `peak_profit_giveback_structure`, `partial_exit_with_adverse_followthrough`, `missed_post_exit_continuation`, `exit_avoided_adverse_followthrough`
 - richer final-exit storylines:
   `defensive_exit_after_deterioration`, `premature_final_exit_after_constructive_management`, `fearful_exit_after_weakening`, `disciplined_defensive_exit`

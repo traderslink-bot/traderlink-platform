@@ -16,6 +16,7 @@
 
 # local app persistence
 /data/trader-intelligence.sqlite*
+/data/db-backups/
 
 # next.js
 /.next/

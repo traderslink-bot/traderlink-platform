@@ -7,10 +7,12 @@ import {
   buildProductTraderAnalyticsViewModel,
   buildSampleSavedTraderAnalyticsData,
   buildSavedTradeReviewViewModel,
+  buildTraderAnalyticsReport,
   buildTraderAnalyticsComparison,
   buildTraderAnalyticsDrillDowns,
   buildTraderFocusQueue,
   evaluateTraderRules,
+  InMemorySavedTraderAnalyticsRepository,
   previewSavedTradeImport,
 } from "../index";
 import type { UserTradeAnalysisRequest } from "../../trade-analysis/request/trade-analysis-request-contract";
@@ -51,6 +53,57 @@ describe("end-user trader analytics product roadmap helpers", () => {
     expect(viewModel.ruleEvaluations.length).toBeGreaterThan(0);
   });
 
+  it("uses all saved trades for the main analytics dashboard when imports saved one-report-per-trade", () => {
+    const sample = buildSampleSavedTraderAnalyticsData();
+    const source = sample.repository.getReport(sample.userId, "report-all-sample");
+
+    expect(source).not.toBeNull();
+
+    const splitReports = source!.sourceSummaries.slice(0, 4).map((summaryRef, index) => {
+      const generatedAt = `2026-05-0${index + 1}T20:00:00.000Z`;
+      const report = buildTraderAnalyticsReport({
+        source: `saved_import:split-${index}`,
+        generatedAt,
+        inputMode: "execution_feedback_summaries",
+        summaries: [
+          {
+            requestIndex: 0,
+            summary: summaryRef.summary,
+          },
+        ],
+        requestCount: 1,
+      });
+
+      return {
+        ...source!,
+        id: `report:split-${index}`,
+        generatedAt,
+        reportPeriod: {
+          startDate: `2026-05-0${index + 1}`,
+          endDate: `2026-05-0${index + 1}`,
+          label: `Split ${index + 1}`,
+        },
+        sourceTradeIds: [summaryRef.tradeId],
+        sourceSummaries: [{ ...summaryRef, requestIndex: 0 }],
+        report,
+      };
+    });
+    const repository = new InMemorySavedTraderAnalyticsRepository({
+      trades: sample.trades.slice(0, 4),
+      reports: splitReports,
+    });
+    const viewModel = buildProductTraderAnalyticsViewModel({
+      repository,
+      userId: sample.userId,
+    });
+
+    expect(viewModel.latestReport.id).toBe("report:all-saved-trades");
+    expect(viewModel.latestReport.reportPeriod.label).toBe("All saved trades");
+    expect(viewModel.latestReport.sourceTradeIds).toHaveLength(4);
+    expect(viewModel.latestReport.report.sampleSize.completedTradeCount).toBe(4);
+    expect(viewModel.filteredView.totalTradeCount).toBe(4);
+  });
+
   it("filters saved report rows while preserving original sample size visibility", () => {
     const sample = buildSampleSavedTraderAnalyticsData();
     const report = sample.repository.getReport(sample.userId, "report-all-sample");
@@ -84,6 +137,7 @@ describe("end-user trader analytics product roadmap helpers", () => {
     );
 
     expect(adverseAdds).toBeDefined();
+    expect(adverseAdds?.kind).toBe("review_prompt");
     expect(adverseAdds?.rows.length).toBeGreaterThan(0);
     expect(adverseAdds?.tradeIds.length).toBe(adverseAdds?.rows.length);
   });

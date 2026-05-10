@@ -778,7 +778,7 @@ function buildTradeReplayVisualUpgradeContract(): TradeReplayVisualUpgradeContra
       {
         role: "open_leftover",
         tone: "warning",
-        label: "Open leftover",
+        label: "Shares left open",
         copy: "Shares remained open at the end of the imported sequence.",
       },
     ],
@@ -804,7 +804,8 @@ function buildTradeReplayVisualUpgradeContract(): TradeReplayVisualUpgradeContra
       {
         id: "warnings",
         label: "Warnings",
-        meaning: "Highlights open leftovers, adverse adds, or import repair context.",
+        meaning:
+          "Highlights shares left open, adds after price moved against the position, or import repair context.",
         canRenderWithCss: true,
       },
     ],

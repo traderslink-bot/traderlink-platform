@@ -6839,6 +6839,13 @@ Verification:
 
 - `npx tsc --noEmit --pretty false` passed.
 - `npm run build` passed.
+- Broad library verification
+  `npx vitest run src/lib/user-facing-behavior src/lib/trader-analytics src/lib/user-facing-review`
+  still fails only in the existing decision-review level-context tests:
+  `csv-dry-run-decision-review-bridge.test.ts` and
+  `csv-dry-run-decision-review-quality-dashboard.test.ts`. The coaching
+  language/readiness and fixture expectation failures encountered during this
+  slice were fixed.
 - Focused repair/review persistence Vitest passed: `6/6`.
 - Broader importer/product Vitest passed: `39/39`.
 - Full Vitest with slow-test timeout passed: `883/883`.
@@ -8562,3 +8569,3740 @@ Next best step:
 - Implement Run 1 from the UI overhaul: chart foundation plus richer sample
   data, then redesign `/analytics` above the fold with real red/green visual
   reporting.
+
+## 2026-05-09 - Coach Flow, Progress Saved Data, And Trade Replay Clarity
+
+Responded to the first real saved April IBKR import review from localhost. The
+user confirmed analytics is moving in the right direction, but coach/progress
+and saved-trade presentation were still confusing.
+
+What changed:
+
+- Reworked `/coach` so the first user-facing surface is a four-step coaching
+  session:
+  1. replay one trade,
+  2. name the main behavior,
+  3. choose one fix-first rule,
+  4. check progress.
+- Kept the existing coach evidence and advanced panels, but made the coaching
+  process visible before the supporting data.
+- Fixed `/progress` so it builds from the saved-import analytics read model
+  instead of the sample product shell.
+- Updated `/trades` so saved trade cards open directly to the trade replay
+  section and show round-trip context.
+- Fixed `/trades` P/L display by matching report rows back to the exact saved
+  trade order instead of matching only by symbol/date/direction, which made
+  repeated same-symbol trades look like duplicated results.
+- Added user-facing handling for imported rows that start with a sell: the UI
+  now labels them as position-history review instead of showing short-side
+  coaching language.
+- Renamed the trade-detail replay heading to "Trade Replay" and added clearer
+  copy for buys, adds, reductions, and exits.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed after stopping the dev server so `.next` was not
+  locked.
+- Restarted localhost on port `3000` with
+  `LEVELS_SYSTEM_PROVIDER=ibkr`,
+  `LEVELS_SYSTEM_WAREHOUSE_DIRECTORY=..\levels-system\data\candles`, and
+  `LEVELS_SYSTEM_WAREHOUSE_MODE=replay`.
+- `/workspace`, `/coach`, `/progress`, `/trades`, and a saved trade-detail
+  route returned `200` during smoke checks.
+
+Important product note:
+
+- Current grouping treats a trade as one flat-to-flat round trip. If the trader
+  fully exits and later re-enters the same ticker, the importer currently starts
+  a new saved trade. That is useful for round-trip analytics, but the product
+  also needs a higher-level same-symbol "trade idea/thread" layer so the app can
+  tell stories like "the second re-entry gave back earlier profit" and compare
+  volume/market context across the re-entry.
+
+## 2026-05-09 - Saved Trade Thread Read Model
+
+Started the higher-level trade idea/thread layer requested after reviewing the
+April IBKR import. The importer still treats a completed position as a
+flat-to-flat round trip, but the UI now has a product read model above that
+accounting layer.
+
+What changed:
+
+- Added `src/lib/trader-analytics/server/saved-trade-threads.ts`.
+- The read model groups same-symbol, same-session-date saved trades into ticker
+  stories while preserving each original round trip.
+- The story output names beginner-friendly cases such as "Re-entry gave back
+  profit", "Re-entry added profit", "Repeated attempts lost money", and
+  "Multiple round trips".
+- Added `/trades` "Ticker Stories" UI so users can see same-ticker re-entry
+  stories before scanning the full saved trade list.
+- Added `/trades/[tradeId]` ticker-story context so an individual trade review
+  can show the larger same-day story, story P/L, best push, weakest push,
+  giveback, and related round trips.
+- Added focused tests for same-symbol same-day grouping and same-symbol
+  different-date separation.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Restarted localhost on port `3000` with replay candle settings. `/workspace`
+  returned 200, and `/trades` rendered the new "Ticker Stories" and
+  "Re-entry stories" copy.
+
+Next best step:
+
+- Add the next layer of story evidence: volume/context comparison across
+  re-entries, especially "second entry happened after volume faded" and
+  "re-entry gave back the first push" language. Keep it as a product read model
+  above the existing round-trip importer instead of changing the importer
+  contract.
+
+## 2026-05-09 - Trade Thread Lifecycle Classification
+
+Extended the saved trade thread layer after the user clarified that a closed
+day-trade re-entry can either close intraday again or turn into swing/overnight
+exposure.
+
+What changed:
+
+- Added `SavedTradeThreadLifecycleClassification` with:
+  `single_round_trip`, `closed_day_trade_reentry`, `open_intraday_reentry`,
+  `day_trade_turned_swing`, and `multi_day_ticker_thread`.
+- Added round-trip level story facts for `entrySessionDate`, `exitSessionDate`,
+  `heldOvernight`, and `crossedSessionDate`.
+- `/trades` now shows a lifecycle badge and lifecycle explanation on each
+  ticker story card.
+- `/trades/[tradeId]` now shows the same lifecycle context inside the individual
+  trade review workspace.
+- The model explicitly distinguishes "re-entry is still open" from "day trade
+  turned swing", so open imported executions do not get over-reviewed as
+  completed trades.
+- Added focused tests for closed re-entry, open intraday re-entry, day-trade
+  turned swing/overnight exposure, same-symbol different-date separation, and
+  product-copy safety.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts`
+  passed with 5 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Restarted localhost on port `3000`; `/workspace` returned 200 and `/trades`
+  rendered ticker-story lifecycle copy including "Closed day-trade re-entry" and
+  "Day trade turned swing" where present in the saved data.
+
+Next best step:
+
+- Add volume/context comparison evidence across re-entries. This should answer:
+  did the second entry happen after volume faded, did it happen after the main
+  push, and did it give back profit from the first completed round trip.
+
+## 2026-05-09 - Trade Thread Review Evidence
+
+Continued the ticker-story branch so the same-symbol re-entry layer does more
+than classify the trade. It now gives the user a review question, a fix-first
+action, and concrete evidence cards.
+
+What changed:
+
+- Added thread-level review evidence to
+  `src/lib/trader-analytics/server/saved-trade-threads.ts`.
+- Each ticker story can now expose:
+  - `primaryReviewQuestion`
+  - `fixFirstAction`
+  - `reviewEvidence`
+- Evidence currently uses already available saved-import facts:
+  execution timestamps, P/L by round trip, time between exit and re-entry,
+  open/flat status, overnight/session-date crossing, and execution counts.
+- Evidence cards cover cases such as:
+  - later trading gave back earlier profit
+  - re-entry is still open
+  - re-entry changed the trade type
+  - time between exit and re-entry
+  - re-entry had more executions than the first push
+  - chart/volume context still needs review
+- `/trades` now shows the review question, fix-first action, and top evidence
+  cards inside ticker-story cards.
+- `/trades/[tradeId]` now shows the full evidence list for the active ticker
+  story.
+- Tests now assert evidence IDs, fix-first language, primary review questions,
+  and copy safety across the richer thread story output.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts`
+  passed with 5 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Restarted localhost on port `3000`; `/workspace` returned 200 and `/trades`
+  rendered `Review Question`, `Fix first`, `Chart context to check next`, and
+  `Ticker Stories`.
+
+Next best step:
+
+- Connect the thread evidence to real chart/volume context when available from
+  saved decision-review snapshots or candle summaries. Until then, the UI only
+  asks the user to compare volume/context and does not claim that conclusion.
+
+## 2026-05-09 - Continuous UX/Product Plan Added
+
+Added a durable execution roadmap so Codex can continue the end-user app
+improvement work without stopping after each small slice.
+
+Plan file:
+
+- `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+
+The plan consolidates the current direction into ten continuous runs:
+
+- re-entry story evidence and chart/volume context
+- coach as a guided coaching session
+- review queue as a real work queue
+- trade detail as the main review workspace
+- saved trades navigation and grouping
+- analytics report polish
+- progress page improvements
+- visual design system pass
+- copy QA and safety
+- verification and regression harness
+
+Current best next step:
+
+- Start Run 1.1 by inspecting saved decision-review snapshots and candle/context
+  outputs for factual chart/volume evidence that can safely enrich ticker-story
+  review evidence.
+
+## 2026-05-09 - Continuous UX Plan Run 1.1 And Coach Visual Slice
+
+Worked from
+`src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+without requiring additional user direction.
+
+What changed:
+
+- Connected saved decision-review snapshots into the ticker-story read model.
+- Ticker story round trips now expose chart-context status, chart-context
+  summary, and saved decision-review insight count.
+- Ticker story evidence now distinguishes:
+  - chart context attached,
+  - market-context insights available,
+  - chart context still waiting,
+  - volume context still requiring comparison.
+- The model does not claim volume faded or level failure unless saved evidence
+  explicitly supports it.
+- `/trades` now passes saved decision-review snapshots into ticker stories,
+  displays evidence source labels, and adds ticker-story filters:
+  All ticker stories, Gave back profit, Turned swing, Open re-entry, Added
+  profit, and Needs chart context.
+- `/trades/[tradeId]` now shows chart-context evidence source labels and
+  round-trip chart-context summaries in the ticker-story panel.
+- `/coach` now includes a visual `Behavior Cost` section using the existing
+  mistake severity ladder so the fix-first coaching flow is supported by a
+  simple red/amber cost chart.
+- Coach visible section names were softened from internal/advanced wording:
+  "Advanced Rule Details" became "Rule Ideas To Consider", and
+  "Advanced Rule Tests" became "Rule Evidence Check".
+- Added Playwright coverage requiring the `Behavior Cost` coach section.
+- Expanded saved trade thread tests to cover chart-context evidence attachment
+  without unsupported volume claims.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts`
+  passed with 6 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Focused Playwright coach regression passed:
+  `npx playwright test tests/e2e/app-feature-regression.spec.ts -g "shows the coach product loop" --project=chromium-desktop`.
+- Restarted localhost on port `3000`; `/workspace` returned 200.
+- Smoke checks confirmed:
+  - `/trades` renders `Chart context is attached`, `All ticker stories`, and
+    `Needs chart context`.
+  - `/coach` renders `Behavior Cost`, `Start here`, `Fix first`,
+    `Rule Ideas To Consider`, and `Rule Evidence Check`.
+
+Next best step:
+
+- Continue Run 2 from the continuous plan: make `/coach` feel even more like a
+  guided coaching session by reducing visible advanced panel weight and adding a
+  clearer behavior-to-rule-to-progress flow.
+
+## 2026-05-09 - Continuous Work Autonomy Plan Update
+
+Updated
+`src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+so future Codex runs have a stronger instruction to keep working through
+multiple related implementation slices instead of stopping after one small
+change.
+
+What changed:
+
+- Added an explicit autonomy instruction for Codex.
+- Defined the expected size of a good continuous work block:
+  - one read-model or data improvement,
+  - one or more route/UI improvements,
+  - focused tests or Playwright coverage,
+  - typecheck/build,
+  - localhost restart/smoke,
+  - project log update.
+- Added clear early-stop conditions so Codex only pauses for destructive
+  actions, meaningful architecture risk, missing credentials/API access,
+  verification failures, or unsafe product-copy risk.
+- Expanded the long continuous run checklist into six blocks:
+  - Coach Guided Session,
+  - Review Queue,
+  - Trade Detail Workspace,
+  - Saved Trades Browser,
+  - Analytics And Progress,
+  - Cross-Route Polish.
+- Clarified that when one item is complete and verified, Codex should
+  immediately continue to the next item unless a stop condition applies.
+
+Current best next step:
+
+- Continue Run 2 from the plan and rebuild `/coach` into a clearer guided
+  coaching session, then continue into `/review` and `/trades/[tradeId]` if the
+  same flow/design work carries forward cleanly.
+
+## 2026-05-09 - Local Blocker Bypass Added To Continuous Plan
+
+Updated
+`src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+again to reduce unnecessary stopping.
+
+What changed:
+
+- The plan now treats blockers as local by default.
+- If one route, chart, test, or data field is blocked, Codex should park that
+  item and continue to the next independent improvement instead of ending the
+  run.
+- The plan now distinguishes local blockers from true global blockers.
+- True stop conditions are limited to destructive actions, shared contract risk,
+  unavailable credentials/API access that blocks every useful next step,
+  verification failures that make further work unsafe, or product-copy safety
+  risk.
+- The suggested execution order and long-run checklist now explicitly say to
+  skip forward when a step is locally blocked.
+
+Current best next step:
+
+- Continue Run 2 from the plan, starting with `/coach`, and keep moving into
+  `/review`, `/trades/[tradeId]`, `/trades`, `/analytics`, and `/progress` as
+  long as each next slice can be safely completed and verified.
+
+## 2026-05-09 - Continuous Plan Acceptance Criteria Review
+
+Reviewed and strengthened
+`src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+so it is more useful for long autonomous implementation runs.
+
+What changed:
+
+- Added a `User Levels` section so routes are designed for new traders,
+  intermediate traders, and advanced users without exposing raw internals by
+  default.
+- Replaced duplicate/older stop guidance with a `Continuous Run Definition Of
+  Done`.
+- Added `Design Acceptance Criteria` covering visual hierarchy, red/green
+  trading semantics, charts near the decisions they support, left-side/section
+  navigation, and reduced card sprawl.
+- Added `Data Correctness Acceptance Criteria` for flat-to-flat round trips,
+  ticker stories, same-symbol re-entries, open/swing detection, missing
+  chart/volume evidence, and neutral handling of sell-side/short-looking data.
+- Added `Do Not Spend Time On Yet` to keep future runs focused away from auth,
+  billing, deployment, importer rewrites, backend persistence, admin/debug
+  surfaces, and SEO while the end-user UI still needs work.
+- Added a `Long Run Batch Strategy` so future work runs can move through whole
+  route families:
+  - coaching batch,
+  - data browsing batch,
+  - reporting batch,
+  - polish batch.
+
+Current best next step:
+
+- Start a coaching batch from the plan: improve `/coach`, carry the same
+  evidence/review-flow language into `/review`, then improve
+  `/trades/[tradeId]` where the review flow lands.
+
+## 2026-05-09 - Second Engineer Plan Review Patch
+
+Applied the second-engineer review findings to
+`src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`.
+
+What changed:
+
+- Corrected `/progress` status from completed saved-data behavior to partially
+  complete pending verification against the latest saved CSV/import.
+- Added a hard `/coach` acceptance rule: one concrete coaching session, one
+  specific trade, one main behavior or strength, one evidence set, and one
+  fix-first action.
+- Added a saved-trade grouping audit before `/trades` view-mode work so future
+  changes distinguish true duplicates, round trips, execution rows, re-entries,
+  open trades, and grouping artifacts.
+- Resolved the Run 1 vs Run 2 ambiguity: Run 1.1 is complete enough for the
+  current UI pass; remaining chart/volume enrichment is parked unless it blocks
+  safe wording in the coaching/review/ticker-story UI.
+- Strengthened Run 10 with:
+  - batch-specific Playwright expectations,
+  - saved-data verification for `/trades`, `/analytics`, `/progress`, and
+    `/coach`,
+  - desktop/mobile screenshot review for `/coach`, `/review`, `/trades`,
+    `/trades/[tradeId]`, `/analytics`, and `/progress`.
+- Updated the long-run verification checklist to require saved-data and
+  screenshot checks for touched routes.
+
+Current best next step:
+
+- Begin the coaching batch from Run 2: rebuild `/coach` around one concrete
+  saved-trade coaching session, then carry the same review-flow language into
+  `/review` and `/trades/[tradeId]`, with saved-data and screenshot checks at
+  the end of the batch.
+
+## 2026-05-09 - Final Engineer Plan Readiness Pass
+
+Reviewed the continuous UX/product plan again as another engineer would and
+made the final improvements needed before implementation.
+
+What changed:
+
+- Added `Implementation Safety Rules`:
+  - do not push/commit/upload unless the user asks,
+  - do not delete/reset/dedupe/rewrite saved trade data during UI work,
+  - do not modify candle warehouse or imported CSV source files unless the user
+    explicitly asks for data repair,
+  - do not stop the dev server just because the user is clicking around,
+  - preserve replay settings if the dev server must be restarted.
+- Added `Data Source Priority`:
+  1. current saved imports and saved review data,
+  2. saved decision-review snapshots and candle/context summaries,
+  3. product-safe read models derived from saved data,
+  4. sample/mock data only when no saved data exists or clearly labeled.
+- Added `Parked Work Format` so local blockers are recorded consistently
+  without ending a long run.
+- Strengthened the definition of done so touched routes must not silently fall
+  back to sample/mock data when saved imports exist.
+- Updated the long-run batch strategy so each route batch starts by confirming
+  whether the route is using saved imports, saved review snapshots, or
+  sample/mock data.
+- Clarified current state wording around chart/volume context: saved
+  decision-review facts can be used when present, but deeper comparison remains
+  incomplete and should not produce unsupported claims.
+
+Current best next step:
+
+- The plan is ready to work from. Start the coaching batch from Run 2 and keep
+  moving through `/coach`, `/review`, and `/trades/[tradeId]` with saved-data,
+  screenshot, typecheck, build, and focused Playwright verification.
+
+## 2026-05-09 - Continuous Planning Method Guide Added
+
+Added `src/docs/how_to_create_plan_to_work_continuously.md`.
+
+Purpose:
+
+- Document how the continuous Trader Intelligence implementation plan was
+  created.
+- Give future Codex instances a repeatable method for turning a user's "keep
+  working without making me keep prompting you" request into a durable project
+  plan.
+- Capture the key planning moves:
+  - start from the user's frustration,
+  - define the product loop,
+  - write autonomy and local-blocker rules,
+  - add implementation safety rules,
+  - add data-source priority,
+  - define done,
+  - add design and data correctness criteria,
+  - create implementation runs and route batches,
+  - require saved-data checks, screenshots, tests, typecheck, build, and log
+    updates,
+  - review the plan like another engineer until it is ready to work from.
+
+Current best next step:
+
+- Use `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+  for the next implementation run. Use
+  `src/docs/how_to_create_plan_to_work_continuously.md` only as the planning
+  method reference.
+
+## 2026-05-09 - Coaching Batch Run 2 First Implementation Slice
+
+Started the continuous UX/product implementation plan from
+`src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`.
+
+What changed:
+
+- Rebuilt `/coach` into a guided coaching session instead of a flat panel dump:
+  one trade, one behavior or strength, one fix-first action, and one evidence
+  set before the supporting detail panels.
+- Added coach-side visual summaries for behavior cost and repeat pattern so the
+  page reads more like a coaching workspace and less like raw analytics output.
+- Moved deeper coach details, rule evidence, personal pattern memory, and
+  confidence wording into a collapsed `Supporting coach details` section.
+- Added a review work-order strip to `/review`: open the trade, replay the
+  executions, write one lesson, then track the behavior.
+- Collapsed advanced coach wording checks on `/review` so the primary queue
+  remains beginner-friendly.
+- Added a trade-detail writing flow to `/trades/[tradeId]` with:
+  - what happened,
+  - behavior or strength to name,
+  - fix first,
+  - evidence to check.
+- Kept the new user-facing direction wording for sell-starting imports: the
+  end-user UI treats these as position-history review, not short-side coaching.
+- Updated the focused Playwright regression assertions for the new coach,
+  review, analytics, and trade-detail language.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed after stopping the locked local Next dev process, then
+  the dev server was restarted on `http://127.0.0.1:3000` with replay candle
+  settings preserved.
+- Focused Playwright passed:
+  - `coach product loop`,
+  - `guided review workflow`,
+  - `saved trade routing`,
+  - desktop and mobile visual smoke screenshots,
+  - mobile core route usability.
+- Direct route smoke passed on the running localhost app for:
+  - `/coach`,
+  - `/review`,
+  - `/analytics`,
+  - `/progress`,
+  - `/trades`.
+- A React best-practices sanity pass found one small trade-detail cleanup; the
+  review summary label now uses a strength label for profitable trades and a
+  risk/behavior label for losing trades.
+
+Current best next step:
+
+- Continue the same coaching/data-browsing batch with deeper `/review` queue
+  presentation cleanup and a saved-trade grouping audit on `/trades`, especially
+  around same-symbol same-day round trips, re-entries, open trades, and
+  day-trade-to-swing detection wording.
+
+## 2026-05-09 - Data Browsing And Progress Slice
+
+Continued from the same continuous UX/product plan instead of stopping after
+the first coaching slice.
+
+What changed:
+
+- Added a clearer `/trades` browsing control surface:
+  - `Round Trips`,
+  - `Ticker Stories`,
+  - `Open/Swing`,
+  - `Needs Review`.
+- `/trades` now shows how many saved trades are visible under the active view
+  and explains that round trips are flat-to-flat while ticker stories group
+  same-symbol re-entries.
+- The `/trades` list can now be filtered non-destructively by ticker-story
+  membership, open/swing exposure, or needs-review state without hiding the
+  underlying saved data or rewriting imports.
+- Strengthened `/review` queue cards so each item explicitly shows:
+  - why it is in the queue,
+  - what to review,
+  - what evidence exists,
+  - the `Open Trade Review` action.
+- Sanitized saved review queue item headlines so raw candle warehouse/backfill
+  diagnostics do not dominate the beginner-facing queue cards.
+- `/progress` now has a top saved-data source panel and metric strip showing:
+  - saved trades,
+  - completed round trips,
+  - open/swing items,
+  - review completion.
+- `/progress` now makes the distinction between imported trade history and
+  finished trade reviews explicit, which should reduce confusion when a new CSV
+  import appears in analytics but review/progress completion is still low.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts`
+  passed.
+- `npx vitest run src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed after restarting around locked dev output.
+- Focused Playwright passed:
+  - `saved trade routing`,
+  - `guided review workflow`,
+  - `progress and behavior`.
+- Mobile Playwright passed:
+  - `keeps core mobile routes usable`.
+- Direct localhost smoke passed for:
+  - `/coach`,
+  - `/review`,
+  - `/trades`,
+  - `/progress`,
+  - `/analytics`.
+- Direct `/review` smoke confirmed the primary queue no longer renders the raw
+  `Durable candle warehouse miss` diagnostic string.
+
+Current best next step:
+
+- Continue into the next product pass on `/trades/[tradeId]`: improve the
+  visual trade replay/timeline, make realized P/L and position-size progression
+  easier to understand, and keep ticker-story evidence near the writing flow.
+
+## 2026-05-09 - Next Run Scope Expanded
+
+Updated `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+so the next continuation is broader than a single trade-detail tweak.
+
+What changed:
+
+- Replaced the narrow current best next step with a full **Trade Review
+  Workspace Batch**.
+- The next run should follow one saved trade through:
+  - `/trades`,
+  - `/trades/[tradeId]`,
+  - `/review`,
+  - `/coach`,
+  - `/progress`.
+- The batch now includes:
+  - visual trade replay,
+  - position-size and realized P/L progression,
+  - writing flow,
+  - ticker-story context,
+  - similar-trade cards,
+  - review queue anchors,
+  - coach featured-trade links,
+  - progress/review-completion linkage,
+  - focused tests, build, mobile checks, and localhost smoke.
+- The plan explicitly says not to stop if a replay field is missing; park that
+  local blocker and continue with safe UI/copy improvements on adjacent routes.
+
+Current best next step:
+
+- Start the Trade Review Workspace Batch and carry the work through the whole
+  saved-trade review loop instead of stopping after one page.
+
+## 2026-05-09 - Engineer Review Of Next Run Plan
+
+Reviewed `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+again as another engineer would before implementation.
+
+Findings:
+
+- The next batch direction was good, but the plan still had stale state notes
+  that made `/coach`, `/review`, and `/progress` sound less complete than they
+  are after the latest run.
+- The next run was broad enough, but it needed sharper execution criteria so it
+  does not drift into vague UI polish.
+- The plan needed a clear rule for selecting a representative saved trade
+  before editing `/trades/[tradeId]`.
+- The plan needed explicit hard acceptance criteria and out-of-scope items for
+  the Trade Review Workspace Batch.
+
+Changes made:
+
+- Updated `Current State` to reflect the completed `/coach`, `/review`,
+  `/trades`, and `/progress` improvements.
+- Replaced stale weakness notes with the remaining real risks:
+  - trade-detail replay and writing flow,
+  - review/coach anchors into useful trade-detail sections,
+  - behavior-trend depth after reviews are complete,
+  - optional day/session/symbol filters if `/trades` remains dense.
+- Updated the suggested execution order so the next priority is the Trade
+  Review Workspace Batch, followed by analytics/report polish, progress trend
+  depth, trade filters, visual cleanup, copy QA, and regression coverage.
+- Added representative saved-trade selection criteria:
+  - saved import data,
+  - completed round trip,
+  - saved decision-review snapshot,
+  - multi-round-trip ticker story,
+  - non-zero P/L,
+  - multiple executions.
+- Added edge-case inspection guidance for open re-entry, day-trade-to-swing,
+  and sell-starting/position-history items.
+- Added hard acceptance criteria for `/trades/[tradeId]`, including first-screen
+  clarity, execution replay, position/P/L progression, ticker-story placement,
+  note/action placement, collapsed technical limits, and review/coach anchors.
+- Added explicit out-of-scope boundaries:
+  - no importer rewrites,
+  - no saved data repair/dedupe,
+  - no new broker import behavior,
+  - no auth/billing/admin work,
+  - no unsupported candle/volume claims,
+  - no broad analytics redesign unless required by the trade-review workflow.
+
+Current best next step:
+
+- The Trade Review Workspace Batch is ready to work from. Start by selecting a
+  representative saved trade, then improve `/trades/[tradeId]` and carry the
+  resulting anchors/language through `/review`, `/coach`, and `/progress`.
+
+## 2026-05-09 - Final Readiness Review Of Continuous Plan
+
+Reviewed the plan one more time specifically for whether a future Codex run can
+work from it continuously without asking for another planning confirmation.
+
+Finding:
+
+- The plan was ready overall, but the generic `Preferred batches` section still
+  did not name the newly expanded Trade Review Workspace Batch. That left a
+  small risk that a future run would follow an older coaching/data-browsing
+  batch instead of the current active batch.
+
+Changes made:
+
+- Added **Trade Review Workspace batch** as the first preferred batch:
+  `/trades/[tradeId]` -> `/review` -> `/coach` -> `/progress`, with `/trades`
+  as the source route.
+- Added a `Ready-to-work checklist` to the current best next step so the next
+  run starts by selecting a representative saved trade, inspecting the current
+  trade-detail output, implementing the smallest high-value replay/writing/story
+  improvement, carrying anchors into adjacent routes, and verifying.
+- Added an explicit readiness decision: the next run should start
+  implementation, not another planning pass, unless new information changes the
+  repo state or makes representative trade selection unsafe.
+
+Current best next step:
+
+- Start implementation from the Trade Review Workspace Batch. Do not spend
+  another turn reviewing the plan unless the repo state materially changes.
+
+## 2026-05-09 - Trade Review Workspace Batch Implementation
+
+Continued the active Trade Review Workspace Batch from
+`src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`.
+
+Representative saved trade used for this pass:
+
+- `OMEX` on `2026-04-08`
+- saved import data
+- completed round trip
+- saved decision-review snapshot attached
+- part of an 8-round-trip ticker story
+- first winning push followed by re-entries that gave back some profit
+- multiple executions, so replay and position movement are meaningful
+
+What changed:
+
+- `/trades/[tradeId]` now has a clearer review workspace flow:
+  - `#writing-flow` anchor added
+  - write-note/checklist actions moved near the top of the human review flow
+  - side nav now points to summary, replay, ticker story, writing, notes, and
+    evidence sections
+  - primary action now lands on the writing flow or replay instead of a missing
+    checklist anchor
+- Rebuilt the trade replay presentation:
+  - plain entry/add/reduce/exit labels
+  - ET timestamps
+  - position-before to position-after movement
+  - visible position-size bars
+  - execution-derived realized P/L when available
+  - risk/strength labels attached to individual executions
+- Improved similar-trade cards so they explain why a trade is similar, show
+  outcome, and link into the review workspace.
+- `/review` now sends the primary queue action to `#writing-flow`, the replay
+  step to `#execution`, and evidence/completed-review links to useful trade
+  sections.
+- `/coach` now separates review-writing and replay anchors:
+  - primary coach action opens the review workspace
+  - replay actions land on `#execution`
+  - evidence links land on `#evidence` when they target a trade page
+- `/progress` quality links now land on the trade writing workspace.
+- End-user sell-starting wording was softened on `/trades` and
+  `/trades/[tradeId]` so it stays neutral position-history language instead of
+  implying supported direction-specific coaching.
+- Updated focused Playwright assertions for:
+  - coach review/replay anchors
+  - review queue writing/replay anchors
+  - trade visual replay
+  - trade position/P/L progression
+  - moved review-note actions
+  - progress trade links
+- Updated stale saved-import visual-smoke expectations for the current
+  analytics heading and coach `chart claims gated` copy.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed after stopping the locked local Next dev process.
+- Localhost was restarted on `http://127.0.0.1:3000` with replay candle
+  settings preserved:
+  - `LEVELS_SYSTEM_PROVIDER=ibkr`
+  - `LEVELS_SYSTEM_WAREHOUSE_DIRECTORY=..\levels-system\data\candles`
+  - `LEVELS_SYSTEM_WAREHOUSE_MODE=replay`
+- Focused Playwright passed:
+  - coach product loop
+  - guided review workflow
+  - progress and behavior visual surfaces
+  - mobile core route usability
+  - desktop visual smoke screenshots for core product routes
+- Direct localhost smoke returned `200` for:
+  - `/analytics`
+  - `/trades`
+  - selected OMEX `/trades/[tradeId]#writing-flow`
+  - `/review`
+  - `/coach`
+  - `/progress`
+
+Implementation note:
+
+- A saved-import visual smoke test seeded one temporary `VS...` import before
+  hitting a stale expectation. That generated test batch was removed from the
+  local SQLite store because it was a Codex-created test artifact, not user
+  import data. Saved trade count returned to `208`.
+
+Current best next step:
+
+- Continue with visual tuning and report polish:
+  - inspect `/trades/[tradeId]`, `/review`, `/coach`, and `/progress` in the
+    browser and tighten any remaining card sprawl or long-copy issues
+  - then continue into `/analytics` lower-page chart/report cleanup and
+    `/progress` behavior-trend depth.
+
+## 2026-05-09 - Coaching Plan Recentered For End-User Flow
+
+Reviewed `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+as both an engineer and an end user, with `/coach` as the current product
+center of gravity.
+
+What changed:
+
+- Removed stale planning emphasis that still treated the first Trade Review
+  Workspace pass as the active batch.
+- Kept the completed trade-detail/review anchor work as the evidence foundation
+  for coaching.
+- Made **Coaching Product Session Batch** the active next batch:
+  `/coach` -> `/trades/[tradeId]` -> `/review` -> `/progress`.
+- Expanded the `/coach` plan around a human coaching flow:
+  - what to work on today,
+  - which trade proves it,
+  - what happened,
+  - why it mattered,
+  - one fix-first action,
+  - repeat check,
+  - progress follow-through.
+- Added coach-specific acceptance criteria for:
+  - saved-data priority,
+  - one obvious first action,
+  - beginner-readable behavior language,
+  - red/green/amber/neutral visual meaning,
+  - collapsed advanced/internal engine details,
+  - evidence-backed wording,
+  - banned-claim and raw-diagnostic avoidance.
+- Deprioritized broad analytics/progress polish until the coaching session path
+  is easier for a real trader to understand.
+
+Verification:
+
+- Docs-only plan update. No build or test commands were run.
+
+Current best next step:
+
+- Start implementation from the Coaching Product Session Batch. Inspect
+  `/coach` with saved import data, identify where it feels like a card dump or
+  diagnostic report, then rebuild the first screen around one featured trade,
+  one behavior/strength, one evidence path, and one fix-first action.
+
+## 2026-05-09 - Second Engineer Readiness Review And Feature Plan Library
+
+Reviewed the coaching-centered continuous UX/product plan again as another
+engineer would.
+
+Finding:
+
+- The active coaching plan is ready to work from, but the same product lessons
+  need to be reusable by other feature surfaces without bloating the top-level
+  plan.
+- Older analytics/review/coach docs are useful history, but several are marked
+  complete for prototype or fixture-era work. They should not be the only future
+  planning source for the saved-data end-user UI.
+
+What changed:
+
+- Added a `Feature-Specific Follow-Up Plans` section to
+  `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`.
+- Added `src/docs/trader-intelligence-analytics-continuous-product-plan-2026-05-09.md`
+  for future `/analytics` report hierarchy, chart polish, saved-data
+  correctness, drill-downs, and trader-readable metric explanations.
+- Added `src/docs/trader-intelligence-review-queue-continuous-product-plan-2026-05-09.md`
+  for future `/review` work-queue flow, lane language, coach handoff, trade
+  anchors, and collapsed diagnostics.
+- Added `src/docs/trader-intelligence-progress-continuous-product-plan-2026-05-09.md`
+  for future `/progress` work around imported-vs-reviewed separation, active
+  coaching focus, behavior trend honesty, and follow-through.
+- Updated the top-level readiness decision to say the next run should start
+  implementation from the Coaching Product Session Batch, while future
+  analytics/review/progress perfection work has its own follow-up plans.
+
+Verification:
+
+- Docs-only plan update. No build or test commands were run.
+
+Current best next step:
+
+- Start implementation from the Coaching Product Session Batch. The plan is
+  ready for a continuous run: inspect `/coach` with saved data, rebuild the page
+  around one featured trade and one fix-first action, then carry the flow into
+  `/trades/[tradeId]`, `/review`, and `/progress` before moving to the new
+  analytics/review/progress feature plans.
+
+## 2026-05-09 - Plan Index Added And Planning Method Updated
+
+Reviewed the continuous UX/product plan again as another engineer would, with
+the user's request to keep future plan files organized.
+
+Finding:
+
+- The active coaching plan and feature follow-up plans are ready to work from,
+  but the repo needed a plan index so future Codex runs do not confuse old
+  completed prototype plans with the current saved-data UX roadmap.
+
+What changed:
+
+- Added `src/docs/trader-intelligence-plan-index.md`.
+- The index now identifies:
+  - the active top-level plan,
+  - the active Coaching Product Session Batch,
+  - active feature plans for analytics, review queue, and progress,
+  - likely future feature plans to create only when needed,
+  - planning-method docs,
+  - context docs,
+  - historical/completed prototype plans,
+  - operational and QA plans.
+- Added maintenance instructions at the top of the index for future Codex:
+  - read the project log first,
+  - use the index as the map,
+  - update the index when plans are created/retired/replaced,
+  - create separate feature plans only when a feature needs its own acceptance
+    criteria or verification ladder.
+- Linked the active continuous UX/product plan back to the index.
+- Updated `src/docs/how_to_create_plan_to_work_continuously.md` with guidance
+  for creating a plan index and splitting large roadmaps into feature-specific
+  plans.
+
+Verification:
+
+- Docs-only organization update. No build or test commands were run.
+
+Current best next step:
+
+- Start implementation from the Coaching Product Session Batch. Use
+  `src/docs/trader-intelligence-plan-index.md` as the plan map, then work from
+  `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+  without another planning pass unless the repo state changes materially.
+
+## 2026-05-09 - Coaching Session First-Screen Product Pass
+
+Started implementation from the active Coaching Product Session Batch.
+
+What changed:
+
+- Rebuilt the top of `/coach` around one clear coaching session instead of a
+  stack of equal-weight panels:
+  - what to work on today,
+  - which saved trade proves it,
+  - why the behavior mattered,
+  - the fix-first action,
+  - the repeat/progress check.
+- Added beginner-readable behavior translation for the featured coaching
+  behavior so the page explains the idea before showing supporting evidence.
+- Added a light `ti-coach-brief` presentation surface to reduce the older
+  black-card dashboard feel on the first coaching screen.
+- Moved saved review queue and import-source caution support below the guided
+  coaching session so the first screen starts with the user's next action.
+- Added section breaks for supporting coach checks, proof, and next-session
+  planning so the lower page reads like a coaching path instead of a long panel
+  dump.
+- Renamed the lower evidence area from generic queue/cards language to "Proof
+  Queue" and "Evidence Cards To Open".
+- Mapped raw queue lane ids into user-facing lane labels inside the coach proof
+  queue, including chart-context waiting, open trade, reviewed, and technical
+  follow-up states.
+- Linked `/review` step 4 into `/coach#coaching-session` so the review queue
+  hands off to coaching after the user writes a lesson.
+- Added an `/progress` "Active Coaching Focus" panel so progress can track the
+  reviewed behavior, not just imported trade count.
+- Updated focused Playwright assertions for the coaching session brief,
+  behavior explanation, why-it-mattered copy, progress coaching focus, and the
+  analytics tabbed market-context check.
+- Increased copy-safety test timeouts for saved-data route scans, which are
+  slower now that real saved imports are present.
+- Carried the same beginner-facing vocabulary into trade detail evidence
+  surfaces by mapping raw source strings such as levels-system context and
+  saved storage labels into plain labels like "Chart context evidence",
+  "Execution replay", and "Saved import data".
+- Renamed the trade detail chart-waiting state from "Market context waiting" to
+  "Chart context waiting" in the end-user review copy.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "coach product loop|progress and behavior visual surfaces|guided end-user path"`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable"`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "keeps banned product claims out of core product routes|keeps market context observational"`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "guided review workflow|saved trade routing and review entry points|coach product loop"`
+  passed after the trade detail source-label pass.
+
+Current best next step:
+
+- Continue the Coaching Product Session Batch by doing a visual/readability
+  browser pass on `/coach`, `/trades/[tradeId]`, and `/review` side by side.
+  The next high-value implementation step is to make the review queue's saved
+  item cards match the same coaching order: what to review, why it matters,
+  open trade review, then technical limits.
+
+## 2026-05-09 - Coaching Plan Resume Point Review
+
+Reviewed the active continuous UX/product plan from both an engineering and
+end-user coaching perspective.
+
+Finding:
+
+- The plan structure was still right, but the exact resume point was stale. It
+  still read as if the next run should restart the `/coach` first-screen
+  rebuild, even though that work is now complete enough to use as the coaching
+  pattern.
+- The next coaching-focused work should continue into the adjacent surfaces
+  that make coaching usable: `/review`, `/trades/[tradeId]`, and `/progress`.
+
+What changed:
+
+- Updated `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+  so the active batch is now **Coaching Product Session Continuation**.
+- Marked the completed `/coach` first-screen work as done in the plan.
+- Reframed the next active implementation slice around `/review` queue cards:
+  what to review, why it matters, evidence, `Open Trade Review`, then technical
+  limits.
+- Updated `src/docs/trader-intelligence-plan-index.md` with the current resume
+  point.
+- Updated `src/docs/trader-intelligence-review-queue-continuous-product-plan-2026-05-09.md`
+  so it is active inside the coaching batch, not merely a later follow-up.
+
+Verification:
+
+- Docs-only plan update. No build or test commands were run.
+- Opened the user dashboard at `http://127.0.0.1:3000/workspace`.
+
+Current best next step:
+
+- Implement the next coaching continuation slice in `/review`: make saved queue
+  item cards follow the coaching order and link cleanly into
+  `/trades/[tradeId]#writing-flow`, `/trades/[tradeId]#execution`, and
+  `/coach#coaching-session` where useful.
+
+## 2026-05-09 - Second Engineer Readiness Pass For Coaching Continuation
+
+Reviewed the active coaching-continuation plan again as another engineer would.
+
+Finding:
+
+- The resume point was mostly correct, but one small block still named `/coach`
+  as the primary next route. That could cause a future run to repeat the
+  completed first-screen coaching work instead of moving into `/review`.
+
+What changed:
+
+- Updated the active plan so the next primary implementation route is `/review`
+  and `/coach` remains the product center of gravity.
+- Marked the older Run 2 coach section as completed enough/reference guidance
+  and marked Run 3 review queue work as the active next implementation target.
+- Updated the plan index route order to:
+  `/review` -> `/trades/[tradeId]` -> `/coach` -> `/progress`.
+- Added hard acceptance criteria that `/review` must show one obvious queue
+  action and use the coaching order: what to review, why it matters, evidence,
+  `Open Trade Review`, then technical limits.
+- Cleaned the review-queue feature plan wording so it is active inside the
+  coaching batch rather than a later follow-up.
+
+Verification:
+
+- Docs-only plan readiness update. No build or test commands were run.
+
+Current best next step:
+
+- Proceed with implementation from `/review` queue cards. Keep the work
+  coaching-centered, carry useful anchors into `/trades/[tradeId]`, and link
+  back into `/coach#coaching-session` only where the handoff helps the user.
+
+## 2026-05-09 - Review Queue Coaching-Order Implementation
+
+Continued the Coaching Product Session Continuation from the active plan, using
+`/review` as the next coaching-adjacent route.
+
+What changed:
+
+- Rebuilt the saved review queue presentation so it appears before secondary
+  chart-context status/support material.
+- Each saved queue item now follows the coaching order:
+  - trade symbol and gross result,
+  - why the trade is in the queue,
+  - what the user should review,
+  - available evidence,
+  - `Open Trade Review` and `Replay executions`,
+  - technical review limits collapsed below the card.
+- Collapsed advanced queue status and technical limits by default.
+- Mapped saved chart-context source labels through user-facing copy instead of
+  showing raw source values.
+- Changed queue action button language from terse/internal wording to:
+  `Mark reviewed`, `Mark solved`, and `Skip for now`.
+- Updated the review-queue feature plan, top-level continuous plan, and plan
+  index so the next continuation starts from coach/review/progress handoff work
+  rather than repeating this `/review` card pass.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Focused Playwright passed:
+  - `shows the coach product loop with calibrated coaching surfaces`
+  - `shows the guided review workflow`
+  - `shows the progress and behavior visual surfaces`
+  - `keeps market context observational and out of execution-only conclusions`
+  - `keeps banned product claims out of core product routes`
+  - `captures visual smoke screenshots for core product routes`
+
+Current best next step:
+
+- Continue the Coaching Product Session Continuation from `/coach` as the
+  product center of gravity. Inspect `/coach`, `/review`, and `/progress`
+  together and tune the handoff from queue item to trade review note to coaching
+  focus to progress follow-through. Do not redo the first `/review` queue-card
+  implementation unless visual/browser QA exposes a clear issue.
+
+## 2026-05-09 - Continuous Run Readiness Tightening
+
+Reviewed the active plan again as another engineer would, specifically looking
+for instructions that could cause Codex to stop after one small route-sized
+improvement.
+
+Finding:
+
+- The plan was directionally correct, but it still had a stale readiness note
+  pointing back to `/review` queue cards even though that implementation pass
+  is already complete.
+- The next run needed an explicit continuous work ladder so Codex keeps moving
+  through related coaching surfaces instead of treating one route improvement as
+  a natural stopping point.
+
+What changed:
+
+- Added a **Continuous Work Ladder For The Next Run** to
+  `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`.
+- The ladder now directs the next run through:
+  - `/coach` coaching-flow audit,
+  - `/coach` lower-page grouping,
+  - `/review` handoff check,
+  - `/trades/[tradeId]` writing-flow check,
+  - `/progress` follow-through pass,
+  - visual/readability sweep,
+  - regression coverage,
+  - verification and logging.
+- Added continuation rules that tell Codex to park isolated blockers and keep
+  working on independent ladder steps unless the blocker affects saved data,
+  architecture, or verification reliability.
+- Updated the plan index with the same continuous-run rule.
+- Removed stale review-queue wording that still described the completed queue
+  card pass as the first implementation slice.
+
+Verification:
+
+- Docs-only plan readiness update. No build or test commands were run.
+
+Current best next step:
+
+- Proceed with the continuous implementation ladder. Start on `/coach`, keep
+  `/coach` as the product center of gravity, and continue through `/review`,
+  `/trades/[tradeId]`, and `/progress` in the same run as long as the work
+  remains safe and independently actionable.
+
+## 2026-05-09 - Coach Plan Reframed Around Overall Trading Focus
+
+Reviewed the coaching direction after the user clarified that `/coach` should
+not feel like a single-trade review page. The top card currently pointing at one
+trade is useful, but it should be evidence beneath a broader trading-coach
+summary.
+
+Finding:
+
+- The active plan still treated one concrete review session and one featured
+  trade as the core `/coach` experience.
+- That is too narrow for the main coach page. Users may import a week or month
+  of trades at once, so literal daily wording and a single "review this trade
+  next" top card can make the coach feel random instead of strategic.
+
+What changed:
+
+- Added `src/docs/trader-intelligence-coach-continuous-product-plan-2026-05-09.md`.
+- The new coach feature plan says `/coach` should lead with:
+  - overall coaching focus across saved trades,
+  - frequency/evidence count,
+  - why it matters,
+  - one fix-first action,
+  - trades to review next,
+  - featured evidence trade,
+  - progress follow-through,
+  - advanced analysis collapsed.
+- Updated the top-level continuous UX/product plan so the next run starts by
+  reframing `/coach` as an overall trading coach, not a single-trade review
+  card.
+- Added naming rules:
+  - "Today's review card" -> "Current Review Plan" or "Review Session",
+  - "What to work on today" -> "Current Coaching Focus",
+  - "Review one trade" as the top page concept -> "Trades To Review Next" under
+    the aggregate focus.
+- Updated the continuous work ladder so the next run starts with:
+  - aggregate coach focus first,
+  - trades-to-review/evidence grouping second,
+  - lower-page grouping,
+  - review/trade/progress handoffs.
+- Updated the plan index to include the new coach feature plan.
+- Added a continuation rule to the coach feature plan: if the aggregate
+  coaching read model is missing a field, park that missing field and continue
+  with safe rename/reframe, review-queue preview, advanced-section demotion,
+  tests, and verification.
+
+Verification:
+
+- Docs-only plan update. No build or test commands were run.
+
+Current best next step:
+
+- Proceed with the coach implementation run using
+  `src/docs/trader-intelligence-coach-continuous-product-plan-2026-05-09.md`.
+  Start by replacing daily/single-trade-first language on `/coach` with an
+  overall coaching focus, then keep going into trades-to-review preview,
+  evidence trade placement, progress follow-through, tests, and verification.
+
+## 2026-05-09 - Second Engineer Coach Plan Readiness Pass
+
+Reviewed the active coaching plans again as another engineer would, looking for
+contradictions that could send the next run back into completed `/review` work
+or the older single-trade-first coach shape.
+
+Finding:
+
+- The dedicated coach plan was clear, but the top-level plan still had three
+  stale signals:
+  - `/review` was still described as the main continuation point in the
+    "Still weak" section.
+  - Run 2 described itself as completed reference guidance for an old
+    `/review -> trade detail -> coach` flow.
+  - Run 3 still called `/review` the active next implementation target.
+- The long-run batch order also still listed `/trades/[tradeId]` before
+  `/review`, which conflicted with the active plan index and the new coach-first
+  queue-preview direction.
+
+What changed:
+
+- Updated the top-level plan so `/coach` is explicitly active again, but for
+  the new overall-focus pass rather than the old single-trade-first rebuild.
+- Reframed `/review` as a completed first queue-card pass with follow-up handoff
+  and mobile-density work after the coach overall-focus pass.
+- Aligned the long-run coaching batch order to:
+  `/coach` -> `/review` -> `/trades/[tradeId]` -> `/progress`.
+
+Verification:
+
+- Docs-only readiness update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready for implementation. Start with `/coach` overall-focus
+  reframing, then continue through review-backlog preview, trade-detail anchors,
+  progress follow-through, visual/copy QA, tests, and verification in one
+  continuous run where safe.
+
+## 2026-05-09 - Coach Overall-Focus Implementation Pass
+
+Implemented the first `/coach` overall-coaching pass from the active Coaching
+Product Session plan.
+
+What changed:
+
+- Reframed `/coach` from a single-trade-first page into "Your Trading Coach".
+- Changed the primary coach card to lead with "Current Coaching Focus" and the
+  behavior across saved trades before the evidence trade.
+- Removed literal daily wording from the default coach UI.
+- Demoted the featured trade into "Featured Evidence Trade".
+- Added a compact "Trades To Review Next" preview so large catch-up imports can
+  move from overall focus into evidence trades.
+- Updated `/review` and `/progress` handoffs to point to the coaching focus
+  anchor instead of the old session-first anchor.
+- Cleaned saved review queue summary lane copy so preview items map internal
+  lanes into trader-facing labels.
+- Updated focused Playwright assertions to lock the new coach-first contract.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Focused Playwright passed:
+  - `shows the coach product loop with calibrated coaching surfaces`
+  - `shows the guided review workflow`
+  - `shows the progress and behavior visual surfaces`
+  - `keeps market context observational and out of execution-only conclusions`
+  - `keeps banned product claims out of core product routes`
+  - `keeps core mobile routes usable without page-level horizontal overflow`
+  - `captures visual smoke screenshots for core product routes`
+
+Current best next step:
+
+- Continue the coaching batch without redoing the first-screen reframe. Inspect
+  `/coach` with screenshots/browser view, tighten the aggregate coaching
+  read-model if the route-local translation feels too crowded, improve lower
+  coach page visual rhythm, then deepen `/progress` follow-through around
+  imported-vs-reviewed trades and active coaching focus.
+
+## 2026-05-09 - Coach Progress Follow-Through And Readability Pass
+
+Continued the active Coaching Product Session Batch after the overall-focus
+implementation.
+
+What changed:
+
+- Added a shared coach follow-through helper in
+  `src/lib/trader-analytics/product/coach-overall-focus.ts`.
+- The helper now separates:
+  - saved imported trades,
+  - finished reviews,
+  - in-progress reviews,
+  - review backlog,
+  - honest insufficient-data progress states,
+  - next action labels and links.
+- `/coach` now shows a dedicated "Progress Follow-Through" panel after the
+  evidence queue so users understand that imports are history, while finished
+  reviews are what make progress measurable.
+- `/progress` uses the same follow-through model, so coach and progress now
+  explain the same saved-trades-vs-reviewed-trades idea.
+- `/progress` no longer renders every saved trade in the execution-quality
+  trendline by default. It shows a focused preview and links to saved trades or
+  analytics for the full list.
+- Coach impact wording no longer calls positive gross P/L evidence "cost"; it
+  uses evidence/impact language and asks the user to review whether the behavior
+  helped or simply appeared in winners.
+- Extra `/coach` tool cards for rule count, trade compare, and onboarding were
+  moved behind the collapsed supporting coach details disclosure.
+- The evidence trade writing surface now prompts the user to write what
+  happened, what behavior mattered, and the fix-first rule instead of showing a
+  generic empty note box.
+- Focused tests now cover the coach follow-through helper.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/coach-overall-focus.test.ts`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `git diff --check -- app/coach/page.tsx app/progress/page.tsx src/lib/trader-analytics/product/coach-overall-focus.ts src/lib/trader-analytics/__tests__/coach-overall-focus.test.ts tests/e2e/app-feature-regression.spec.ts`
+  passed.
+- Focused Playwright passed:
+  - `shows the coach product loop with calibrated coaching surfaces`
+  - `shows the guided review workflow`
+  - `shows the progress and behavior visual surfaces`
+  - `keeps market context observational and out of execution-only conclusions`
+  - `keeps banned product claims out of core product routes`
+  - `keeps core mobile routes usable without page-level horizontal overflow`
+  - `captures visual smoke screenshots for core product routes`
+
+Current best next step:
+
+- Do not redo the `/coach` overall-focus or first follow-through pass. Continue
+  with directly related coaching-loop handoffs: inspect one evidence trade from
+  `/coach` into `/trades/[tradeId]#writing-flow`, tighten the writing prompt if
+  needed, then make sure `/review` and `/progress` link back to the same
+  evidence path without adding broad analytics redesign.
+
+## 2026-05-09 - Engineer Readiness Pass After Coach Follow-Through
+
+Reviewed the active coaching plans again as another engineer would.
+
+Finding:
+
+- The active plans were close, but the plan index and top-level plan still had
+  stale wording that could make the next run repeat the completed `/coach`
+  overall-focus reframe.
+- The correct next implementation point is now the handoff from `/coach` to an
+  evidence trade, then the trade-detail writing/checklist/review-completion
+  flow, followed by `/review` and `/progress` follow-through.
+
+What changed:
+
+- Updated `src/docs/trader-intelligence-plan-index.md` so the route order is
+  `/coach` smoke -> `/trades/[tradeId]` -> `/review` -> `/progress`.
+- Updated
+  `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md` so
+  the next continuous ladder starts with the evidence-trade handoff instead of
+  another coach first-screen rebuild.
+- Updated
+  `src/docs/trader-intelligence-coach-continuous-product-plan-2026-05-09.md`
+  so the current next step is review writing/completion and progress
+  follow-through, not the already-completed reframe.
+- Updated `src/docs/how_to_create_plan_to_work_continuously.md` with the rule
+  to retire completed slices before the next run.
+
+Verification:
+
+- Docs-only readiness update. No build or test commands were run.
+
+Current best next step:
+
+- Proceed with the next implementation run from the coach evidence-trade
+  handoff: smoke `/coach`, open the first real evidence/next-review trade,
+  tighten `/trades/[tradeId]` replay/writing/checklist/completion if needed,
+  then verify `/review` and `/progress` explain the same coaching completion
+  loop.
+
+## 2026-05-09 - Final Engineer Plan Readiness Pass
+
+Reviewed the active plan one more time as another engineer would.
+
+Finding:
+
+- The active current-next-step sections were aligned, but older batch-strategy
+  examples still listed the previous coaching route order. That could make a
+  future run work `/review` before following the coach evidence trade into the
+  trade-detail writing flow.
+
+What changed:
+
+- Updated the batch assertion and long-run examples in
+  `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md` to
+  use the current route order:
+  `/coach` smoke -> `/trades/[tradeId]` -> `/review` -> `/progress`.
+- Updated `src/docs/how_to_create_plan_to_work_continuously.md` so its generic
+  coaching-batch example matches the current evidence-trade handoff pattern.
+
+Verification:
+
+- Docs-only readiness update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Proceed with the coaching evidence-trade
+  handoff and keep moving through trade-detail writing/completion, review queue
+  language, and progress follow-through in one continuous implementation run.
+
+## 2026-05-09 - Coach Evidence-Trade Handoff Implementation
+
+Continued the active Coaching Product Session Batch from the approved plan.
+
+What changed:
+
+- `/coach` now selects the primary evidence trade from the active overall
+  coaching focus instead of defaulting to the first unrelated saved-review queue
+  item.
+- Coach trade links now carry `from=coach` and the current focus label into
+  `/trades/[tradeId]`, preserving the reason the user opened the trade.
+- `/trades/[tradeId]` now shows a dedicated "Coach Handoff" panel when opened
+  from coach. It separates the overall coaching focus from the behavior visible
+  in the individual trade, then tells the user to replay, write the lesson, and
+  mark checklist progress.
+- The saved note/checklist client component now includes an "After Saving This
+  Review" handoff back to coach, progress, review queue, and saved trades.
+- `/coach` lower "Proof Queue" and "Evidence Cards To Open" now use the focused
+  evidence set instead of generic proof lists, so the lower page does not drift
+  away from the current coaching focus.
+- `/review` work order now includes a fifth "Check progress" step, making the
+  loop explicit after a saved review.
+- `/progress` active coaching focus now links back to the coaching focus and
+  the review queue instead of acting like a disconnected report.
+- Focused tests now cover the coach -> trade detail handoff and the review
+  completion return path.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/coach-overall-focus.test.ts`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Local Playwright smoke confirmed `/coach` links to a focused evidence trade
+  and `/trades/[tradeId]` shows the coach handoff, writing flow, and completion
+  handoff.
+- Focused Playwright passed:
+  - `shows the coach product loop with calibrated coaching surfaces`
+  - `shows the guided review workflow`
+  - `shows the progress and behavior visual surfaces`
+  - `keeps market context observational and out of execution-only conclusions`
+  - `keeps banned product claims out of core product routes`
+
+Current best next step:
+
+- Do not redo the coach first-screen reframe, first follow-through model, or
+  coach evidence-trade handoff. The review/progress completion loop now has
+  contextual links. Continue the coaching batch with a lower-page
+  visual/readability pass where browser QA shows real friction, especially on
+  `/coach`, `/review`, `/trades/[tradeId]`, and `/progress`.
+
+## 2026-05-09 - Behavior Language And Detection Audit
+
+Reviewed the coaching plan again as another engineer and as an end-user
+advocate after the "Added After Failed Premise" language concern.
+
+Finding:
+
+- The plan was ready structurally, but it was missing an explicit behavior
+  translation pass.
+- The app already has useful detection coverage for chase entries, adding into
+  weakness, open-profit giveback, premature exits, profit protection,
+  same-symbol re-entry clusters, overtrading, and support/resistance-aware
+  context when candle/level data exists.
+- The main current weakness is that some internal behavior labels can leak into
+  user-facing coach or analytics surfaces.
+- "Added After Failed Premise" does not prove a trader's idea objectively
+  failed. In current detection terms it means the trader kept adding after the
+  first entry before meaningfully reducing risk. The primary UI should say
+  "Kept adding before reducing risk" or "Added multiple times before taking
+  risk off."
+
+What changed:
+
+- Added
+  `src/docs/trader-intelligence-behavior-language-and-detection-audit-2026-05-09.md`
+  as the source-of-truth behavior language and detection audit.
+- Updated the coach plan so Run G is now the next highest-value continuation:
+  human trader language and behavior translation before more visual polish.
+- Updated the analytics plan with behavior deep dives for self-review:
+  winners turned losers, giveback, missed continuation, scale-out quality,
+  same-symbol overtrading, day/session overtrading, support/resistance entry
+  quality, and volume-fade context when available.
+- Updated the top-level continuous plan and plan index so the next run starts
+  with the behavior-language pass, then continues the coaching handoff and
+  readability ladder.
+
+Verification:
+
+- Docs-only planning and audit update. No build or test commands were run.
+
+Current best next step:
+
+- Implement the shared trader-facing behavior language mapper and wire it into
+  `/coach` first, then analytics/trade-detail/review surfaces where labels are
+  reused. Add regression tests that block phrases such as "Added After Failed
+  Premise", raw pattern IDs, scoring traces, and other internal wording from
+  primary user UI.
+
+## 2026-05-09 - Detection Hardening Plan Elevated
+
+Reviewed the active plan again as another engineer after the user clarified
+that partial detections should no longer drive the product.
+
+Finding:
+
+- The prior behavior-language plan was directionally right, but it still
+  treated "partial support" as an acceptable planning concept.
+- That is not good enough for the end-user app. If a behavior detection is
+  uncertain, it should not appear as a firm coach or analytics conclusion.
+- The product now needs a detection contract layer before additional UI polish:
+  certified detection, review prompt, or internal signal.
+
+What changed:
+
+- Added
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  as the active prerequisite plan.
+- Added root `plan.md` as the app-level planning entry point. It links to
+  `src/docs/trader-intelligence-plan-index.md` and names the current detection
+  hardening priority.
+- Updated `src/docs/trader-intelligence-plan-index.md` so the active batch is
+  now Detection And Language Hardening before returning to coach UI polish.
+- Updated
+  `src/docs/trader-intelligence-behavior-language-and-detection-audit-2026-05-09.md`
+  with the rule that no partial detection should drive primary UI.
+- Updated the coach, analytics, and top-level continuous plans so the next run
+  starts with detection inventory, detection contracts, and shared language
+  mapping.
+
+Verification:
+
+- Docs-only planning update. No build or test commands were run.
+
+Current best next step:
+
+- Start the Detection And Language Hardening Batch. Inventory all user-visible
+  behavior labels, classify each as certified detection, review prompt, or
+  internal signal, then implement the first detection contract and language
+  mapper slice starting with "Added After Failed Premise" ->
+  "Kept adding before reducing risk."
+
+## 2026-05-09 - Second Engineer Review Of Detection Plans
+
+Reviewed the newly created detection/language plan set again as another
+engineer.
+
+Finding:
+
+- The active direction was correct, but a few doc details could still steer a
+  future run too quickly into UI language mapping before detection
+  certification.
+- The behavior audit still used "some support" in one section, which was weaker
+  than the new certified/review-prompt/internal model.
+- The plan index still described active feature plans as being used alongside
+  the coaching batch instead of the new detection hardening batch.
+- The detection plan needed a concrete "files to inspect first" list so the
+  next run can start with the real code surfaces and not wander back into
+  dashboard design.
+
+What changed:
+
+- Updated the plan index wording to reference the active detection hardening
+  batch.
+- Updated the behavior audit so re-entry/ticker-story behavior is described as
+  signals to certify, and its next step now points to the detection hardening
+  plan before language mapping.
+- Expanded the detection hardening plan with:
+  - primary code paths to inspect,
+  - supporting docs to compare against,
+  - route surfaces to audit,
+  - route/evidence-state inventory requirements,
+  - a rule not to alter importer grouping, saved data, candle warehouse files,
+    or lower-layer engine contracts just to make UI language easier.
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Start with Run A in
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`:
+  inventory every user-visible behavior label, classify it as certified,
+  review prompt, or internal, then build the first product-facing detection
+  contract for the highest-risk label.
+
+## 2026-05-09 - Third Engineer Review Of Detection Plans
+
+Reviewed the active plan files again as another engineer.
+
+Finding:
+
+- The plan path was correct, but the default resume order could still make a
+  future run read the broad top-level plan before the active detailed detection
+  plan and accidentally drift into UI polish.
+- The detection plan allowed label replacement as a run step, but it needed to
+  say explicitly that replacement happens only after classification.
+- Review prompts needed a stronger boundary: they can ask the trader to inspect
+  something, but they cannot drive top coach headlines, largest-risk cards,
+  fix-first actions, or analytics warning counts.
+
+What changed:
+
+- Updated `src/docs/trader-intelligence-plan-index.md` so the resume order
+  opens the current detailed plan named under `Current active batch`, and the
+  detailed plan plus newest project-log entry win if docs conflict.
+- Updated
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  so review prompts cannot drive primary conclusions, and confusing-label
+  replacement happens only after classification.
+- Updated root `plan.md` so if it ever disagrees with the index, future Codex
+  should trust the index and latest project log.
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Start the implementation run with Run A:
+  inspect the listed code paths, inventory user-visible behavior labels, classify
+  them as certified/review-prompt/internal, and only then create the first
+  product-facing detection contract and language mapping slice.
+
+## 2026-05-09 - Fourth Engineer Review Of Detection Plans
+
+Reviewed the active plan files again as another engineer.
+
+Finding:
+
+- The active detailed plan and index were aligned, but the broad top-level plan
+  still had one stale note saying the next active batch should prioritize
+  coaching flow before broader report polish.
+- The detection plan's label replacement run could still be misread as "rename
+  after inventory" even when a behavior remains a primary UI conclusion.
+
+What changed:
+
+- Updated
+  `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md` so
+  the next active batch explicitly prioritizes detection certification and
+  language hardening before coaching-flow or report polish.
+- Updated
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  so confusing labels that remain in primary UI as conclusions can be replaced
+  only after the behavior has a product-facing detection contract.
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Start with detection inventory, then create
+  product-facing contracts before any certified behavior is renamed or wired
+  into primary UI conclusions.
+
+## 2026-05-09 - Fifth Engineer Review Of Detection Plans
+
+Reviewed the active plan files again as another engineer.
+
+Finding:
+
+- The detection plan's top product rule still said "primary user-facing
+  coaching", which was too narrow. The rule must apply to all primary user-
+  facing conclusions across coach, analytics, review, progress, saved trades,
+  and trade detail.
+- Certified detection wording listed only some route surfaces.
+- The broad top-level suggested execution order still started from the older UI
+  pass sequence instead of explicitly starting from the active detection
+  hardening batch.
+
+What changed:
+
+- Updated
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  so no partial, uncertain, or uncertified detection can drive any primary
+  user-facing conclusion anywhere in the app.
+- Expanded certified-detection route wording to include progress and saved
+  trades.
+- Clarified internal signals may appear only in admin or advanced/collapsed
+  builder diagnostics.
+- Updated
+  `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+  so the suggested execution order starts with the Detection And Language
+  Hardening Batch, then returns to coaching, analytics, progress, trades, and
+  visual polish.
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Start with detection inventory and contract
+  creation before any behavior can drive a primary UI conclusion.
+
+## 2026-05-09 - Sixth Engineer Review Of Detection Plans
+
+Reviewed the active plan files again as another engineer.
+
+Finding:
+
+- A few support docs still narrowed the certification rule to coach/analytics
+  conclusions even though the active detection plan now applies app-wide.
+- The detection plan's Run E rules specifically named coach headlines, but the
+  same rule must apply to review, progress, saved trades, analytics, and trade
+  detail primary conclusions.
+
+What changed:
+
+- Updated `src/docs/trader-intelligence-plan-index.md` so the current resume
+  point says detections must be certified before driving any confident primary
+  user-facing conclusion.
+- Updated
+  `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md` so
+  the continuous ladder blocks uncertain/uncertified detections from any primary
+  user-facing conclusion, not only coach/analytics.
+- Updated
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  so Run E says primary conclusions on `/coach`, `/analytics`, `/review`,
+  `/progress`, `/trades`, and `/trades/[tradeId]` can use only certified
+  detections.
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Begin Run A detection inventory and keep the
+  certification gate app-wide for every primary user-facing conclusion.
+
+## 2026-05-09 - Seventh Engineer Review Of Detection Plans
+
+Reviewed the active plan files again as another engineer.
+
+Finding:
+
+- A final grep found three remaining narrow phrases:
+  - detection hardening before "coach/analytics UI polish",
+  - registry coverage for "primary coach/analytics label",
+  - certification before "coach or analytics conclusions".
+- These phrases were not fatal, but they were weaker than the app-wide rule and
+  could cause future work to miss review, progress, saved trades, or trade
+  detail.
+
+What changed:
+
+- Updated
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  so detection hardening comes before user-facing UI polish and every primary
+  user-facing behavior label must come from the registry.
+- Updated
+  `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md` so
+  certification gates apply to primary user-facing conclusions, not only coach
+  or analytics.
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Start Run A detection inventory and preserve
+  the app-wide certification gate for all primary user-facing behavior labels
+  and conclusions.
+
+## 2026-05-09 - Eighth Engineer Review Of Detection Plans
+
+Reviewed the active plan files again as another engineer.
+
+Finding:
+
+- The app-wide certification rule was now correct, but the review-prompt
+  boundary still used mostly coach/analytics examples. A future run could have
+  allowed uncertain prompts to drive review queue priority, progress status,
+  saved-trade badges, or trade-detail summaries.
+- Run A said to produce a table "in this plan or a companion catalog", but did
+  not name the preferred companion artifact. That could make the inventory hard
+  to find later.
+
+What changed:
+
+- Updated
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  so review prompts cannot drive top headlines, risk/strength cards, fix-first
+  actions, review queue priority, chart warning counts, progress status,
+  saved-trade badges, or trade-detail summary conclusions.
+- Updated Run A with the preferred inventory artifact path:
+  `src/docs/trader-intelligence-detection-contract-inventory-2026-05-09.md`.
+- Updated Run E so any route can show review prompts, but only as things to
+  inspect, not conclusions.
+- Tightened acceptance criteria from "coach headline" to "primary coaching
+  conclusion."
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Start Run A and create or update the detection
+  contract inventory artifact before changing user-facing behavior conclusions.
+
+## 2026-05-09 - Ninth Engineer Review Of Detection Plans
+
+Reviewed the active plan files again as another engineer.
+
+Finding:
+
+- One final narrow rule remained under `Research/internal signal`: it still said
+  internal signals must not drive coach headlines, analytics warnings, or
+  fix-first actions. That was directionally right but not broad enough for the
+  app-wide certification gate.
+- The acceptance criterion "Every primary coaching conclusion has evidence and
+  a fix-first action" was slightly too broad for non-action observations and
+  slightly too narrow for certified coaching conclusions.
+
+What changed:
+
+- Updated
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  so internal signals cannot drive any primary user-facing conclusion,
+  priority, warning, badge, progress state, or fix-first action.
+- Tightened the acceptance criterion to require every certified coaching
+  conclusion to have evidence and, when action-oriented, a fix-first action.
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Start Run A detection inventory, classify each
+  visible behavior, and keep the certified/review-prompt/internal gate app-wide.
+
+## 2026-05-09 - Tenth Engineer Review Of Detection Plans
+
+Reviewed the active plan files and supporting audit again as another engineer.
+
+Finding:
+
+- The active detection plan was clean, but the supporting behavior-language
+  audit still used the older examples "coach headlines, analytics warnings,
+  review queue reasons, and trade-detail summaries."
+- That was narrower than the current app-wide certification rule.
+
+What changed:
+
+- Updated
+  `src/docs/trader-intelligence-behavior-language-and-detection-audit-2026-05-09.md`
+  so partial support is not good enough for any confident primary user-facing
+  conclusion.
+- Updated the certified-detection bullet in that audit to cover primary
+  user-facing conclusions across coach, analytics, review, progress, saved
+  trades, and trade detail.
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Start Run A detection inventory and use the
+  app-wide certification gate in both the implementation plan and supporting
+  audit.
+
+## 2026-05-09 - Eleventh Engineer Review Of Detection Plans
+
+Reviewed the active detection and language plan again as another engineer.
+
+Finding:
+
+- The plan's direction was sound, but key terms were still slightly too loose
+  for implementation. In particular, `primary user-facing conclusion`,
+  `primary UI`, `review prompt`, and `certified detection` needed exact
+  definitions so future route work cannot interpret them differently.
+- Run A named the preferred inventory artifact, but did not define the table
+  columns needed to turn the inventory into a registry/contract implementation.
+- The acceptance criteria still emphasized coaching evidence more than
+  app-wide certified conclusions.
+
+What changed:
+
+- Added a `Definitions` section to
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  covering primary conclusions, primary UI, review prompts, certified
+  detections, research/internal signals, and evidence sources.
+- Added the required Run A inventory table columns so the next implementation
+  run can create
+  `src/docs/trader-intelligence-detection-contract-inventory-2026-05-09.md`
+  without guessing the schema.
+- Updated acceptance criteria so every certified primary user-facing conclusion
+  must name or link to its evidence source, while action-oriented coaching
+  conclusions also need a fix-first action.
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Start Run A by creating the detection
+  contract inventory artifact with the documented columns, then build the first
+  product-facing detection contracts for the highest-risk visible labels.
+
+## 2026-05-09 - Twelfth Engineer Review Of Detection Plans
+
+Reviewed the active detection/language plan again as another engineer, this
+time looking for route-level loopholes.
+
+Finding:
+
+- The plan correctly required user-facing behavior labels to come from the
+  registry, but it did not explicitly say the registry must fail closed.
+- Without that rule, a route could accidentally fall back to a raw engine label
+  when a behavior ID is missing, unknown, or not certified.
+- The supporting behavior-language audit still narrowed raw-label replacement
+  to coach and analytics instead of all primary user routes.
+
+What changed:
+
+- Updated
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  so the shared mapper/registry must fail closed: unknown or unmapped behavior
+  can become a neutral review prompt or advanced/internal diagnostic, but it
+  cannot render as a primary UI conclusion.
+- Added a Run B allowlist rule: the product-facing registry controls primary
+  behavior conclusions, and missing/review-prompt/internal behavior must not
+  fall back to raw labels.
+- Expanded copy-safety and acceptance criteria to cover unmapped raw labels.
+- Updated
+  `src/docs/trader-intelligence-behavior-language-and-detection-audit-2026-05-09.md`
+  so raw-label replacement applies across coach, analytics, review, progress,
+  saved trades, and trade detail.
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Start Run A by creating the detection
+  contract inventory, then implement the registry as an allowlist/fail-closed
+  mapper before wiring any behavior conclusion into primary UI.
+
+## 2026-05-09 - Thirteenth Engineer Review Of Detection Plans
+
+Reviewed the active plan set again as another engineer, focused on advanced
+and collapsed UI surfaces.
+
+Finding:
+
+- The plan allowed raw/internal details in advanced or collapsed diagnostics,
+  but did not explicitly treat the visible collapsed heading, summary, pill, or
+  badge as primary UI.
+- That was a real product-safety loophole: a route could hide raw details in a
+  disclosure but still expose an internal label in the disclosure title.
+
+What changed:
+
+- Updated
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  so advanced disclosure titles, closed-state summaries, visible badges, and
+  visible pills count as primary UI for copy-safety purposes.
+- Clarified that raw/internal labels can appear only inside the expanded
+  advanced detail, not in the collapsed wrapper a normal user sees.
+- Updated
+  `src/docs/trader-intelligence-behavior-language-and-detection-audit-2026-05-09.md`
+  with the same advanced/collapsed UI rule.
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan is ready to work from. Start Run A inventory, then implement the
+  fail-closed behavior mapper and make copy-safety tests cover both normal UI
+  and visible collapsed disclosure labels.
+
+## 2026-05-09 - Comprehensive Engineer Review Of Plan Set
+
+Reviewed the active plan set again as another engineer after the user correctly
+called out that prior review passes were too narrow.
+
+Scope reviewed:
+
+- `plan.md`
+- `src/docs/trader-intelligence-plan-index.md`
+- `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+- `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+- `src/docs/trader-intelligence-behavior-language-and-detection-audit-2026-05-09.md`
+- `src/docs/trader-intelligence-coach-continuous-product-plan-2026-05-09.md`
+- `src/docs/trader-intelligence-review-queue-continuous-product-plan-2026-05-09.md`
+- `src/docs/trader-intelligence-analytics-continuous-product-plan-2026-05-09.md`
+- `src/docs/trader-intelligence-progress-continuous-product-plan-2026-05-09.md`
+- `src/docs/how_to_create_plan_to_work_continuously.md`
+
+Findings:
+
+- Some feature plans still described themselves as active coaching-batch plans,
+  even though the current active gate is Detection And Language Hardening.
+- The top-level continuous plan still called the Coaching Product Session batch
+  the current active batch in one section.
+- The detection plan was product-safe, but it did not name concrete
+  implementation artifact paths or the expected mapper/registry return shape.
+- Feature plans for coach, review, analytics, and progress did not all carry
+  the same fail-closed detection gate and collapsed-disclosure wrapper rule.
+- The plan-creation guide did not yet tell future Codex to do a full cross-plan
+  audit before saying a plan is ready, which encouraged narrow one-issue review
+  passes.
+
+What changed:
+
+- Added implementation artifact/API direction to the active detection plan,
+  including suggested `src/lib/user-facing-behavior/...` paths and an explicit
+  mapper result shape with `state` and `canDrivePrimaryConclusion`.
+- Added a full Run A audit checklist and search commands to the active
+  detection plan so future implementation starts by finding all visible labels,
+  fallback strings, route-local maps, and collapsed-wrapper labels.
+- Updated the top-level continuous plan so Detection And Language Hardening is
+  clearly the current active batch and the Coaching Product Session batch is
+  the next product-flow batch after behavior labels are inventoried/gated.
+- Updated the coach and review feature plans to mark them as secondary until
+  detection hardening is complete.
+- Added fail-closed mapper and collapsed-wrapper copy-safety rules to coach,
+  review, analytics, progress, the behavior-language audit, and root `plan.md`.
+- Updated the plan index with an explicit instruction that future plan reviews
+  should audit the active plan set together rather than patching one narrow
+  issue per prompt.
+- Updated `src/docs/how_to_create_plan_to_work_continuously.md` with a
+  full-plan audit matrix.
+
+Verification:
+
+- Docs-only review update. No build or test commands were run.
+
+Current best next step:
+
+- The plan set is ready to work from. Start implementation with Run A from the
+  detection hardening plan: create the detection contract inventory, audit all
+  visible behavior labels and fallback strings, then build the shared
+  fail-closed mapper/registry before wiring behavior conclusions into primary
+  UI.
+
+## 2026-05-09 - Final Readiness Audit Of Plan Set
+
+Reviewed the plan set again as another engineer to confirm it is actually ready
+to work from, not just directionally correct.
+
+Findings:
+
+- The active entrypoints and project log agreed that Detection And Language
+  Hardening is the current gate.
+- The active detection plan had enough implementation detail to start Run A and
+  Run B.
+- A few secondary feature plans still had wording that could narrow the active
+  app-wide inventory to coach labels or make `/review` sound like the current
+  active batch.
+
+What changed:
+
+- Updated the coach plan's current-next-step section so it cannot shrink the
+  active Run A inventory to coach only. It now says to complete the app-wide
+  inventory first, then use the coach-specific steps as the first route slice.
+- Updated the review queue plan so `/review` is clearly a continuation point
+  after the active detection/language batch creates the shared fail-closed
+  mapper.
+- Updated the analytics and progress plans so they follow the active Detection
+  And Language Hardening Batch, not an old "active coaching batch" phrase.
+- Updated the plan index so feature plans are route context during detection
+  hardening or next detailed plans afterward.
+
+Verification:
+
+- Docs-only readiness update. No build or test commands were run.
+
+Current best next step:
+
+- The plan set is ready to work from. Start implementation now with Run A from
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`.
+  Create `src/docs/trader-intelligence-detection-contract-inventory-2026-05-09.md`,
+  audit visible behavior labels/fallbacks across the core routes, then build
+  the shared fail-closed mapper/registry.
+
+## 2026-05-09 - Readiness Audit Cleanup
+
+Reviewed the plan set again as another engineer to check practical
+implementation friction.
+
+Findings:
+
+- Root `plan.md` skipped the active top-level plan in its resume order even
+  though the plan index includes it.
+- The active detection plan's suggested `rg` command referenced
+  `src/components`, which does not currently exist in this repo.
+- The verification command did not explicitly include the planned
+  `src/lib/user-facing-behavior` module tests.
+
+What changed:
+
+- Updated root `plan.md` so the resume order matches the plan index:
+  project log -> index -> active top-level plan -> active detailed plan.
+- Updated the active detection plan's audit command to search existing paths
+  and added a note to include any component directory if one exists.
+- Updated the active detection plan's verification command to include
+  `src/lib/user-facing-behavior` alongside trader analytics and user-facing
+  review tests.
+
+Verification:
+
+- Docs-only readiness cleanup. No build or test commands were run.
+
+Current best next step:
+
+- The plan set is ready to work from. Start implementation with Run A from the
+  detection hardening plan: create the detection contract inventory, audit
+  visible behavior labels/fallbacks across the core routes, then build and test
+  the shared fail-closed mapper/registry.
+
+## 2026-05-09 - Expanded Next Implementation Run Scope
+
+Reviewed the active detection/language plan for whether it supports the user's
+goal of longer autonomous runs.
+
+Finding:
+
+- The next step was correct, but still too easy to execute as a short stop
+  after only creating the inventory artifact.
+- The plan needed an explicit minimum useful work block so future Codex can
+  keep going from inventory into mapper scaffolding, first route wiring, tests,
+  and the next safe route slice without asking the user to say "continue."
+
+What changed:
+
+- Added a `Long Continuous Implementation Run Scope` section to
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`.
+- Updated the plan index and root `plan.md` so the next run is expected to move
+  from detection inventory into the shared behavior contract/registry/mapper,
+  first highest-risk behavior contracts, `/coach` wiring, focused tests, and
+  then the next route slice when reuse is mechanical and safe.
+- Updated `src/docs/how_to_create_plan_to_work_continuously.md` so future plans
+  define a minimum useful work block and explicitly say what not to stop after.
+
+Verification:
+
+- Docs-only planning update. No build or app tests were run.
+
+Current best next step:
+
+- Start the expanded detection/language implementation run. Complete the
+  inventory, scaffold and test the shared fail-closed mapper/registry, wire the
+  first `/coach` route slice, and continue to the next safe route or behavior
+  contract if no global blocker appears.
+
+## 2026-05-09 - Detection Language Implementation Slice Started
+
+Worked from the active Detection And Language Hardening plan.
+
+What changed:
+
+- Created `src/docs/trader-intelligence-detection-contract-inventory-2026-05-09.md`.
+- Added the shared `src/lib/user-facing-behavior` contract, registry, mapper,
+  and fail-closed tests.
+- Mapped the first certified detections and prompt-only behaviors into
+  trader-readable copy. The mapper now blocks unknown or route-disallowed
+  behavior labels from primary conclusions.
+- Wired the mapper into the coach action loop so top severity, coach actions,
+  timeline labels, and session prep use product-safe labels.
+- Wired product intelligence, improvement intelligence, and review-habit rule
+  drafts so prompt-only behaviors no longer drive cost estimates, recurrence
+  alerts, mistake-frequency visuals, session leak copy, best/worst repeated
+  mistake copy, or mistake-to-rule drafts.
+- Wired product evidence cards so prompt-only behaviors no longer become
+  primary mistake evidence cards.
+- Added copy-safety tests for raw labels such as "failed premise",
+  "revenge-like", "Chased Entry", and "Early Winner Exit".
+
+Verification:
+
+- `npx vitest run src/lib/user-facing-behavior src/lib/trader-analytics/__tests__/trader-coach-action-loop.test.ts src/lib/trader-analytics/__tests__/end-user-product-intelligence.test.ts src/lib/trader-analytics/__tests__/trader-improvement-intelligence.test.ts src/lib/trader-analytics/__tests__/trader-review-habit-loop.test.ts src/lib/trader-analytics/__tests__/trader-product-polish.test.ts src/lib/trader-analytics/__tests__/coach-overall-focus.test.ts`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+
+Current best next step:
+
+- Continue Run E from the detection plan into route-level surfaces:
+  `/trades/[tradeId]`, `/review`, `/analytics`, `/progress`, and `/trades`.
+  Reuse the shared mapper and add route-facing copy-safety tests after each
+  slice.
+
+## 2026-05-09 - Coaching Evidence Model Documentation
+
+Updated docs after clarifying the product model for coaching opportunities.
+
+What changed:
+
+- Added
+  `src/docs/trader-intelligence-coaching-evidence-model-2026-05-09.md`.
+- Updated the active Detection And Language Hardening plan so every future
+  behavior contract should declare:
+  - risk to reduce vs strength to repeat vs review prompt vs internal-only,
+  - execution-only vs market-context vs combined evidence,
+  - fallback copy when the needed evidence channel is missing.
+- Updated the coach plan to make `/coach` an overall coach that can lead with a
+  risk or a strength, and to require evidence-channel labeling.
+- Updated the analytics plan so analytics supports self-coaching across both
+  execution evidence and chart/levels market context.
+- Updated the progress plan so progress can track strengths preserved as well
+  as risks reduced.
+- Updated the plan index and root `plan.md` to link the evidence model and
+  reflect the current route-level continuation point.
+
+Important product rule captured:
+
+- Execution evidence comes from imported buys/sells and saved trade
+  reconstruction.
+- Market context evidence comes from support/resistance levels, candles, volume,
+  and chart context before entry, during the trade, and after exit.
+- The app must not make support/resistance, candle, volume, or post-exit
+  continuation claims unless that market context is attached.
+- The app should identify things the trader is doing well, not only mistakes.
+
+Verification:
+
+- Docs-only update. No build or test commands were run.
+
+Current best next step:
+
+- Continue implementation from the detection plan, using the evidence model as
+  the gate for whether each behavior can be certified as execution-only,
+  market-context, combined, or only a review prompt.
+
+## 2026-05-09 - Next Continuous Implementation Run Plan Added
+
+Created a larger execution-control plan so the next implementation run can
+continue through multiple safe blocks without stopping after one small route or
+label change.
+
+What changed:
+
+- Added
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
+- Linked the new plan from `src/docs/trader-intelligence-plan-index.md`.
+- Linked the new plan from root `plan.md`.
+- Updated the root and index resume order so future runs explicitly open the
+  next-run execution plan after the active top-level and detailed plans.
+- The new plan turns the next run into a ladder:
+  - reorient/search for raw language leaks,
+  - strengthen the user-facing behavior contract,
+  - add certified strengths,
+  - wire `/trades/[tradeId]`,
+  - wire `/review`,
+  - wire `/analytics`,
+  - wire `/progress`,
+  - wire `/trades`,
+  - investigate decision-review level-context failures,
+  - add cross-route copy-safety tests,
+  - run browser smoke and verification,
+  - update docs/logs.
+
+Verification:
+
+- Docs-only update. No build or test commands were run.
+
+Current best next step:
+
+- When the user says to proceed, start from
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`
+  Block 1 and keep moving through the implementation ladder. Do not stop after
+  one small slice unless a global stop condition appears.
+
+## 2026-05-09 - Engineer Readiness Review After Next-Run Plan
+
+Reviewed the active plan set again as another engineer to confirm the new
+next-run execution plan is actually ready to work from.
+
+Findings:
+
+- The new next-run plan was strong enough to control the next implementation
+  run.
+- The plan index still summarized the next scope as "continue Run E", which was
+  too narrow because the new plan intentionally starts with leak search,
+  contract hardening, and certified strengths before route wiring.
+- The top-level continuous UX/product plan still had a stale `Current Best Next
+  Step` section that described the coaching product batch as the next active
+  run, even though the current active gate is detection/language hardening.
+
+What changed:
+
+- Updated `src/docs/trader-intelligence-plan-index.md` so plan precedence is
+  explicit:
+  newest project-log entry -> next-run execution plan -> current detailed plan
+  -> active top-level plan -> route-specific feature plans.
+- Updated the plan index current route order and next-run scope to point to
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`
+  instead of the narrower Run E shortcut.
+- Updated
+  `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md` so
+  its stale coaching-batch "Current Best Next Step" is clearly historical
+  context, and the active execution ladder is the new next-run plan.
+- Updated
+  `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  so its next implementation slice points to the new next-run plan before
+  route wiring.
+- Updated the top-level suggested execution order so the first item is the
+  next-run execution plan, with the detection/language plan as detailed
+  prerequisite context.
+- Updated the next-run plan's required-reading list so it includes the active
+  top-level plan and tells future Codex to open route-specific feature plans
+  before editing `/coach`, `/review`, `/analytics`, or `/progress`.
+- Updated the historical trade-review workspace checklist so it points to the
+  active next-run plan first instead of asking future Codex to start from the
+  old `Current Best Next Step` section.
+- Renamed the stale top-level `Current Best Next Step` heading to historical
+  product-flow context and removed the remaining `Continue Run E` shortcut from
+  the active detection plan's tail.
+
+Verification:
+
+- Docs-only readiness review. No build or test commands were run.
+
+Current best next step:
+
+- The plan set is now aligned. When implementation resumes, work from
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`
+  Block 1, then continue through contract hardening, certified strengths,
+  route wiring, copy-safety tests, verification, and docs/logging without
+  stopping after one small slice.
+
+## 2026-05-09 - Historical Plan Breadcrumb Cleanup
+
+Reviewed the plan set again as another engineer, this time including older
+roadmap and handoff files that could still mislead a cold resume.
+
+Findings:
+
+- Active entrypoints were aligned, but several older docs still said things
+  like "next implementation roadmap", "active working plan", or "read this file
+  first".
+- The plan index maintenance rule still named the active top-level plan instead
+  of the full precedence order, which could weaken the new next-run plan's
+  authority.
+
+What changed:
+
+- Updated the plan index maintenance rule to use the same precedence order as
+  the instructions section.
+- Marked these older docs as historical or superseded at the top:
+  - `src/docs/trader-intelligence-end-user-ui-overhaul-plan-2026-05-08.md`
+  - `src/docs/end-user-analytics-product-expansion-plan.md`
+  - `src/docs/end-user-productization-implementation-plan.md`
+  - `src/docs/end-user-trader-analytics-product-roadmap.md`
+  - `src/docs/trader-analytics-reports-plan.md`
+  - `src/docs/execution-data-feedback-plan.md`
+  - `src/docs/trader-intelligence-next-chat-handoff-2026-05-05.md`
+  - `src/docs/trader-intelligence-next-chat-handoff-2026-05-06.md`
+- Updated `src/docs/trader-intelligence-system.md` so its old "current active
+  focus" wording reads as a historical system snapshot.
+- Removed remaining stale phrases from historical docs, including old
+  `Current Best Next Step`, `active working plan`, `read this file first`, and
+  `current active branch` wording.
+- Aligned the next-run plan header with its required-reading body so it also
+  names the active top-level plan before the active detailed detection plan.
+- Fixed the next-run Block 9 command so the decision-review tests point at
+  `src/lib/trader-analytics/__tests__`, which is where those tests actually
+  live.
+- Added an explicit note that `/trades` and `/trades/[tradeId]` do not need
+  separate feature plans before implementation; next-run Blocks 4 and 8 are the
+  controlling plans for those routes.
+- Reworded the plan index resume point from "next blocker" to "next
+  implementation focus" so future work does not stop unnecessarily.
+
+Verification:
+
+- Docs-only readiness cleanup. No build or test commands were run.
+
+Current best next step:
+
+- The active plan stack is ready to work from. Start from
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`
+  Block 1 and continue through the long implementation ladder.
+
+## 2026-05-09 - Behavior Contract And Route Copy Hardening Continuation
+
+Continued the detection/language implementation branch from the active
+next-run plan.
+
+What changed:
+
+- Hardened the shared user-facing behavior contract with explicit opportunity
+  type and evidence channel fields.
+- Added first-pass certified execution-only strengths for clean entry/full
+  exit, controlled scale-in, structured partial exits, early risk reduction,
+  clean full exits, consistent sizing, and profitable reductions.
+- Expanded alias coverage for existing execution-feedback IDs so raw labels
+  such as multiple-add, adverse-add, overbuilt-position, and reduction-sequence
+  signals map into trader-readable language.
+- Wired report and saved-trade selectors through the shared behavior mapper so
+  trade detail, review, analytics, progress, and saved trades reuse the same
+  product-safe point labels.
+- Replaced primary product copy using "adverse add", "rapid-fire",
+  "open leftover", and "decisive full exit" with clearer trader language.
+- Fixed behavior trend narration so risk reductions and strength increases are
+  described in the correct direction.
+- Added a product-expansion regression test that checks trend labels stay
+  human-readable and that improving clean exits say they appeared more often.
+- Updated the active next-run, detection/language, and plan-index docs with the
+  new resume point.
+
+Verification:
+
+- `npx vitest run src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts src/lib/trader-analytics/__tests__/build-trader-analytics-report.test.ts src/lib/trader-analytics/__tests__/end-user-product-expansion.test.ts src/lib/trader-analytics/__tests__/end-user-product-roadmap.test.ts src/lib/trader-analytics/__tests__/trader-improvement-intelligence.test.ts src/lib/trader-analytics/__tests__/trader-review-habit-loop.test.ts src/lib/trader-analytics/__tests__/trader-product-polish.test.ts`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+
+Current best next step:
+
+- Continue from the active next-run plan after Blocks 1-3. Re-run leak search
+  only as a safety check, then harden route-level UI on `/trades/[tradeId]`,
+  `/review`, `/analytics`, `/progress`, and `/trades`; keep review prompts
+  separate from certified conclusions and keep chart/level/volume claims gated
+  behind market-context evidence.
+
+## 2026-05-09 - Continuous Run Stop-Condition Correction
+
+Updated the active plan stack after the user correctly pointed out that the
+last implementation run stopped at a clean verification checkpoint instead of
+continuing into the next safe slice.
+
+What changed:
+
+- Updated
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`
+  so passing focused tests, TypeScript, or build after one slice is treated as
+  a checkpoint to continue from, not a stopping condition.
+- Added a minimum target for the next implementation run:
+  - quick leak search,
+  - full route-family hardening across `/trades/[tradeId]`, `/review`,
+    `/analytics`, `/progress`, and `/trades`,
+  - route-facing copy-safety tests,
+  - focused Vitest and TypeScript,
+  - then either the next certifiable execution-only behavior family or the
+    decision-review level-context investigation.
+- Updated the active detection/language plan so the next pass is a completion
+  run, not another one-slice hardening pass.
+- Updated the plan index so future Codex does not treat one green test/build
+  checkpoint as enough to report back when the next safe work is already
+  defined.
+
+Why the last run stopped:
+
+- It reached a clean checkpoint after contract hardening, copy replacements,
+  focused tests, TypeScript, build, and docs updates. That was useful, but not
+  the right stopping threshold for this project because the next route and
+  behavior slices were already known.
+
+Current best next step:
+
+- Proceed with the larger detection/language completion run: sweep the full
+  route family, keep every current execution-only behavior certified/review
+  prompt/internal-only, add route-facing copy-safety tests, then continue into
+  market-context gating or the next certifiable detection family before
+  reporting back.
+
+## 2026-05-09 - Work Verify Continue Loop Made Explicit
+
+Reviewed the run plan again after the user clarified that verification should
+not require a handoff. Codex should do work, verify locally, keep going, and
+repeat.
+
+What changed:
+
+- Added a `Work, Verify, Continue Loop` to
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
+- Updated the active detection/language plan so the next run explicitly works
+  a route or behavior family, verifies it, fixes failures, and then continues
+  into the next safe route or behavior family.
+- Updated the plan index with a verification rule: passing tests, typecheck,
+  build, or route smoke is a checkpoint to keep going, not a reason to ask the
+  user to review.
+- Updated `src/docs/how_to_create_plan_to_work_continuously.md` so future plans
+  include the same loop and do not accidentally turn verification into a stop.
+
+Current best next step:
+
+- Proceed with implementation using the work -> verify -> continue loop. The
+  next run should complete a full route-family hardening pass, verify it,
+  continue into the next certifiable behavior family or market-context gate,
+  verify again, and only then report unless a true global blocker appears.
+
+## 2026-05-09 - Final Continuous Run Plan Certainty Pass
+
+Reviewed the active run plan one more time for stale wording that could make
+Codex stop too early or repeat already-completed setup work.
+
+Finding:
+
+- Root `plan.md` still described the next run as if the behavior contract
+  needed opportunity type and evidence channel added, even though that work is
+  now complete.
+- The next-run acceptance criteria still phrased those completed contract
+  fields as future work instead of something to preserve and extend.
+
+What changed:
+
+- Updated root `plan.md` so the current next run expectation is explicitly:
+  work -> verify -> continue; sweep the full route family; add route-family
+  tests; verify locally; continue into the next certifiable behavior family or
+  market-context gate before reporting back unless a true global blocker
+  appears.
+- Updated the next-run acceptance criteria so opportunity/evidence-channel
+  fields and certified strengths are treated as existing capabilities to
+  preserve and extend.
+
+Current best next step:
+
+- The run plan is aligned for continuous implementation. Proceed with the
+  larger route-family detection/language hardening pass and continue after
+  verification checkpoints.
+
+## 2026-05-09 - Final Soft-Wording Tightening Pass
+
+Reviewed the active run plan one more time for soft wording that could still
+permit a short partial run.
+
+What changed:
+
+- Replaced "as many of these as practical should be true" in the next-run
+  acceptance criteria with a stronger target: make all listed items true, and
+  only park items with a reason when they cannot be completed safely.
+- Replaced "before stopping" language in route/visual continue conditions with
+  "before any final response" and "patch, re-smoke, and keep going unless the
+  larger batch target has already been met."
+- Replaced the continuous-plan guide's soft "continue if time/context remains"
+  wording with "continue unless a true global blocker appears."
+- Replaced the guide's final-readiness prompt "What do I log before stopping?"
+  with "What do I log before the final response?"
+
+Current best next step:
+
+- Proceed with implementation. The active run plan now explicitly favors
+  completing the full batch over stopping at partial success, clean
+  verification, or one route-sized improvement.
+
+## 2026-05-09 - Required Long-Run Shape Tightened
+
+Reviewed the active run plan again for wording that could still let Codex
+treat "several slices" as enough.
+
+What changed:
+
+- Replaced the next-run section named `Definition Of A Good Long Run` with
+  `Required Shape Of The Next Long Run`.
+- Removed the soft "good run" and "better target" wording.
+- Made the next implementation shape explicit: full route-family pass, verify,
+  behavior-family pass, verify, market-context gate or known-failure
+  investigation, verify, docs/logs, then final response.
+- Updated root `plan.md` so the next run must target the full route-family
+  sweep instead of merely saying it should.
+
+Current best next step:
+
+- Proceed with implementation from
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
+  The first green verification checkpoint is a midpoint, not the finish line.
+
+## 2026-05-09 - Continuation Language Certainty Pass
+
+Reviewed the active plan stack again for softer wording in the operating mode,
+plan index, and detection/language plan.
+
+What changed:
+
+- Replaced "should normally trigger" with a must-level instruction: green
+  verification after one slice must trigger the next independent slice unless a
+  true global stop condition applies.
+- Replaced the plan index's "should not stop / should keep going" wording with
+  "must not stop / must keep going."
+- Clarified that the detection/language plan's older ladder is context, not a
+  command to restart completed inventory or mapper work. Current work resumes
+  from the next-run plan and project log.
+- Replaced "The user should not need to approve..." with "The user does not
+  need..." and made Codex's verify-and-continue duty explicit.
+
+Current best next step:
+
+- Proceed with implementation. The controlling docs now agree: do the full
+  route-family pass, verify it, keep going into behavior-family and
+  market-context work when safe, and only final-answer after the batch target or
+  a true global stop condition.
+
+## 2026-05-09 - Must-Level Plan Language Pass
+
+Reviewed the controlling docs and the continuous-plan guide again for remaining
+"should" language that governed autonomy or product safety.
+
+What changed:
+
+- Updated the next-run plan so Codex must verify its own checkpoints and
+  continue.
+- Updated the continuous-plan guide so future plans must include the
+  work-verify-continue loop, and the user does not need to approve each
+  checkpoint.
+- Updated the plan index and root `plan.md` so uncertain behavior must become a
+  review prompt or stay internal.
+- Updated the detection/language plan so it must run before additional UI
+  polish, market context must use the defined windows, and unknown behaviors
+  must fail closed.
+- Tightened remaining product-safety wording so uncertified detections,
+  behavior contracts, mapper output, route consumption, review queue items,
+  market-context gates, and project-log handoffs are must-level requirements
+  rather than suggestions.
+
+Current best next step:
+
+- Proceed with implementation. Remaining "should" language in the active docs
+  is descriptive guidance, not permission to stop early or overclaim behavior.
+
+## 2026-05-09 - Detection Language Route Family And Level Context Pass
+
+Continued from the active next-run plan and completed the larger
+detection/language hardening batch instead of stopping at the first green
+checkpoint.
+
+What changed:
+
+- Hardened analytics/report behavior digests so unmapped or prompt-only
+  behaviors fail closed and cannot drive primary risks, strengths, fix-first
+  copy, category distributions, or chart counts.
+- Routed analytics behavior charts, saved-trade selectors, import-preview
+  labels, improvement/report copy, review queue diagnostics, import
+  diagnostics, and trade-detail chart-context status through product-safe
+  mapper or plain state copy.
+- Added behavior metadata to analytics point digests so routes can distinguish
+  certified detections, review prompts, internal-only signals, evidence
+  channels, and opportunity types.
+- Added current execution-feedback behavior coverage to the mapper tests,
+  including certified risk-to-reduce behaviors, strength-to-repeat behaviors,
+  and prompt-only rapid execution clusters.
+- Added `adverse_price_adds` as a safe alias for the adverse-add execution
+  behavior so trend/focus IDs can resolve to trader-readable language when they
+  pass through the shared mapper.
+- Fixed the deterministic decision-review CSV scenarios that had drifted away
+  from the current sample daily/4h support/resistance map. The scenarios now
+  use entry prices that are actually near the current generated levels, so the
+  tests prove level-location insight behavior without weakening detector
+  thresholds.
+- Updated `plan.md`, the plan index, the next-run plan, the detection/language
+  hardening plan, and the detection contract inventory with the new resume
+  point.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-bridge.test.ts src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-quality-dashboard.test.ts --reporter=dot`
+  passed.
+- `npx vitest run src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts src/lib/trader-analytics/__tests__/build-trader-analytics-report.test.ts src/lib/trader-analytics/__tests__/end-user-product-expansion.test.ts --reporter=dot`
+  passed.
+- `npx vitest run src/lib/user-facing-behavior src/lib/trader-analytics src/lib/user-facing-review --reporter=dot`
+  passed: 38 files, 277 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+
+Current best next step:
+
+- Continue from the updated next-run plan. Do not restart the completed mapper
+  or route-language sweep. The next implementation focus should be certifying
+  the next market-context behavior family or tightening same-symbol
+  trade-thread/day-trade-to-swing detection, then wiring those safe conclusions
+  into coach, analytics, progress, saved trades, review, and trade detail.
+
+## 2026-05-09 - Evidence Labels And Ticker Story Surfacing Pass
+
+Continued from the active next-run plan and worked through another
+detection/language product slice without stopping at the first green checkpoint.
+
+What changed:
+
+- Import dry-run decision-review cards now show plain evidence labels in
+  primary UI, for example "Resistance strength: major" and "Later add location
+  in recent range: 84.0%". Raw calculation strings remain available only inside
+  collapsed calculation details.
+- Saved import history and import-batch detail copy no longer exposes raw
+  commit/status strings in normal user-facing text.
+- The existing same-symbol trade-thread model is now surfaced in:
+  - `/coach` as a Ticker Story Coach panel,
+  - `/analytics` as Ticker Story Analytics,
+  - `/progress` as Ticker Story Progress.
+- Ticker stories now give the app a user-facing layer above flat-to-flat round
+  trips for same-symbol re-entries, open re-entries, later profit giveback, and
+  day-trade-to-swing/overnight transitions.
+- Decision-review and coaching copy was tightened from engine wording to
+  trader-readable wording:
+  - "limited clean room" -> "limited room before resistance"
+  - "Profit protection failed" -> "Open profit was not protected"
+  - "Trade-window movement was measured" -> "During-trade movement was measured"
+  - "Adds increased risk into weakness" -> "Added while price was moving
+    against the trade"
+  - "Entry was not close to support" -> "Entry had little nearby support"
+- `/analytics` restored the P/L-by-session chart in the Charts menu after the
+  menu-based layout split, preserving the intended report coverage.
+- Added the first certified market-context behavior contracts to the shared
+  user-facing behavior registry:
+  - entry close to daily/4h resistance,
+  - limited room before resistance,
+  - entry close to daily/4h support,
+  - entry with little nearby support,
+  - post-exit continuation,
+  - adding before the trade repaired.
+  These contracts require market-context evidence and keep chart claims out of
+  primary UI when chart context is waiting.
+- Updated the active next-run plan, detection/language plan, and plan index
+  with this new resume point.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-bridge.test.ts src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-quality-dashboard.test.ts src/lib/coaching/__tests__/build-trade-coaching-output.test.ts --reporter=dot`
+  passed: 3 files, 25 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts src/lib/trader-analytics/__tests__/coach-overall-focus.test.ts src/lib/trader-analytics/__tests__/build-trader-analytics-report.test.ts src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts --reporter=dot`
+  passed: 4 files, 46 tests.
+- `npx vitest run src/lib/trader-analytics src/lib/user-facing-behavior src/lib/user-facing-review src/lib/coaching --reporter=dot`
+  passed: 40 files, 293 tests after the market-context contract additions.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop`
+  passed: 14 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop`
+  passed: 15 tests, 1 desktop-skipped mobile-only test.
+
+Current best next step:
+
+- Continue from the active next-run plan into the next certifiable behavior
+  family. Highest-value options are:
+  - wiring the newly certified market-context contracts into the next
+    route/read-model consumers that see decision-review insight IDs,
+  - extending market-context certification into volume, profit protection
+    before a fade, support/resistance-aware exits, or post-exit fade/relief
+    behavior not covered by the later completed after-exit continuation gate,
+    or
+  - deeper same-symbol/thread lifecycle detection contracts for repeated
+    attempts, day-trade-to-swing transitions, and re-entry profit giveback.
+- Do not restart the completed route-language, evidence-label, ticker-story
+  surfacing, or first market-context contract passes. Preserve them and wire
+  the next certified behavior outputs through coach, analytics, progress,
+  saved trades, review, and trade detail.
+
+## 2026-05-09 - Next.js Docs And Plan Handoff Sanity Check
+
+Checked the project handoff chain after the user asked about the earlier note
+that `node_modules/next/dist/docs` was missing.
+
+Findings:
+
+- The local Next.js docs do exist in this checkout at
+  `node_modules/next/dist/docs/`.
+- The installed package checked during this pass is `next@16.2.3`.
+- The root `plan.md`, plan index, active detection/language plan, and current
+  next-run execution plan all exist locally.
+- The worktree is dirty because it contains intentional local implementation
+  and planning changes. That is not an app runtime problem, but untracked files
+  will not be included in GitHub until they are added and committed.
+
+Docs updated:
+
+- Added `src/docs/nextjs-local-docs-guide.md`.
+- Linked it from `src/docs/trader-intelligence-plan-index.md`.
+
+Current best next step:
+
+- Continue implementation from
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
+  Do not redo the completed handoff/planning setup. Before touching Next.js
+  route or App Router behavior, use the local docs guide and then read the
+  relevant files under `node_modules/next/dist/docs/`.
+
+## 2026-05-09 - Ticker Story Detection And User Copy Hardening
+
+Continued the active detection/language run after confirming the local Next.js
+docs path and plan handoff chain.
+
+Changes:
+
+- Fixed same-symbol thread detection so repeated losing attempts are no longer
+  classified as profit giveback when the thread never had a positive peak.
+- Added explicit ticker-story kinds for single round trip, swing transition,
+  open re-entry, profit giveback, re-entry adding profit, repeated losing
+  attempts, and multiple round trips.
+- Wired those story kinds through `/coach`, `/analytics`, `/progress`, and
+  `/trades` so route logic no longer infers story type from loose P/L/lifecycle
+  checks.
+- Added repeated-loss story metrics to analytics and progress.
+- Routed saved chart-context insight titles through the user-facing behavior
+  mapper before they appear in ticker-story evidence.
+- Tightened primary questions so repeated losing attempts ask whether later
+  attempts happened after setup or volume had faded, instead of asking a
+  profit-giveback question.
+- Cleaned remaining visible copy:
+  - `raw import panels` -> `import review panels`,
+  - `trade-window` UI labels -> `during-trade` wording,
+  - short-direction fallback label -> `position-history review`,
+  - sample fixture coach copy -> `Sample data until you save an import`.
+- Added `src/docs/nextjs-local-docs-guide.md` and linked it from the plan index
+  so future route work knows where the local Next docs live.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts src/lib/trader-analytics/__tests__/coach-overall-focus.test.ts src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts --reporter=dot`
+  passed: 3 files, 48 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop --grep "analytics product intelligence|coach product loop|saved trade routing|progress and behavior|guided review workflow|market context observational|banned product claims|demo user path"`
+  passed: 8 tests.
+
+Current best next step:
+
+- Continue from the active next-run plan without restarting the completed
+  route-language, evidence-label, ticker-story surfacing, or first
+  thread-story hardening slices. The next highest-value work is to deepen
+  same-symbol thread detection into richer session-level behavior, such as
+  same-symbol overtrading, repeated losing re-entries, day-trade-to-swing
+  transitions, and market-context-backed volume/level comparisons, then route
+  only certified conclusions into coach, analytics, progress, trades, review,
+  and trade detail.
+
+## 2026-05-09 - Next Continuous Run Plan Readiness Check
+
+Reviewed and updated the active planning chain after the user asked to make
+sure completed plan sections were marked and the next run was ready before the
+next coding batch.
+
+Docs updated:
+
+- `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`
+  now has a completed block tracker and a new **Next Continuous Run Starts
+  Here** ladder.
+- `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  now records the completed same-symbol thread-story hardening slice and points
+  the next implementation run to the new next-start section.
+- `src/docs/trader-intelligence-detection-contract-inventory-2026-05-09.md`
+  now includes product contracts/inventory rows for profit giveback, repeated
+  losing attempts, day-trade-to-swing, and open re-entry ticker stories.
+- `src/docs/trader-intelligence-continuous-ux-product-plan-2026-05-09.md`
+  now reflects the explicit ticker-story kinds and repeated-loss/profit-giveback
+  guard.
+- `src/docs/trader-intelligence-coaching-evidence-model-2026-05-09.md`
+  now separates completed evidence-model work from the next implementation
+  requirements.
+
+Current next-run plan:
+
+- Do not restart completed route-language, evidence-label, ticker-story
+  surfacing, first market-context, or first same-symbol hardening work.
+- Start at **Next Continuous Run Starts Here** in
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
+- Next coding run should work continuously through:
+  1. same-symbol/session behavior contracts,
+  2. market-context volume and level gates,
+  3. route wiring for new certified outputs,
+  4. focused verification,
+  5. docs/log update.
+
+Verification:
+
+- Docs-only readiness pass. No code tests were run.
+
+Current best next step:
+
+- Check in with the user before starting the next coding run, per the user's
+  request. When they say to proceed, start from the next-run plan's **Next
+  Continuous Run Starts Here** section and work through the continuous
+  implementation ladder.
+
+## 2026-05-09 - Session Story Detection And Route Wiring
+
+Continued the active continuous implementation plan from the same-symbol/session
+behavior block.
+
+Changes:
+
+- Extended `src/lib/trader-analytics/server/saved-trade-threads.ts` with
+  session-level stories above ticker stories.
+- Added execution-only session story kinds for:
+  - green-to-red session,
+  - many attempts on one ticker,
+  - high trade-count session,
+  - open or swing exposure to review,
+  - positive controlled session,
+  - mixed session review.
+- Added evidence cards for session-level facts such as cumulative P/L peak,
+  final session P/L, number of round trips, number of symbols, same-symbol
+  attempt counts, and open/overnight lifecycle.
+- Added tests proving:
+  - a positive peak followed by a red finish becomes a green-to-red session,
+  - repeated same-symbol losses become many attempts on one ticker without
+    using revenge-trading language,
+  - high trade-count sessions require explicit counts,
+  - open/overnight exposure stays a separate hold-review story.
+- Wired session stories into:
+  - `/analytics` through a Session Story Analytics panel,
+  - `/coach` through a Session Story Coach panel,
+  - `/progress` through Session Story Progress counts,
+  - `/trades` through a Session Stories browse mode and panel.
+- Extended focused Playwright assertions for the analytics, coach, saved trades,
+  and progress route surfaces.
+- Updated the active plan, plan index, root `plan.md`, detection/language plan,
+  detection contract inventory, and coaching evidence model so future runs do
+  not redo the completed ticker-story or first session-story layer.
+
+Verification:
+
+- `npm test -- --run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts`
+  passed: 1 file, 11 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "shows the analytics product intelligence surfaces|shows the coach product loop|shows saved trade routing|shows the progress"`
+  passed: 4 tests.
+
+Current best next step:
+
+- Do not rebuild route-language hardening, ticker stories, explicit ticker-story
+  kinds, or first session stories.
+- Continue from the active next-run plan into market-context volume/post-exit
+  gates, route handoffs for certified outputs, or deeper strength-to-repeat
+  behavior only when the evidence is explicit.
+
+## 2026-05-10 - Next Run Long-Batch Setup Correction
+
+Reviewed the active plan chain after the user correctly pointed out that the
+last coding continuation still stopped too soon.
+
+Problem found:
+
+- The next-run plan had a long implementation ladder lower in the file, but the
+  controlling "next step" wording near the top was still too compact. That made
+  it easy to treat "market-context gates and route handoffs" as one small
+  vertical slice instead of a longer chained batch.
+
+Docs updated:
+
+- `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`
+  now has a **Required Long-Run Batch Shape** and **Next Run Phase Plan** before
+  the older block list.
+- `plan.md` now points the next coding run to those long-batch sections, not
+  only the short next-block summary.
+- `src/docs/trader-intelligence-plan-index.md` now includes an anti-short-run
+  rule and says the next run must chain market-context evidence inventory,
+  certification/downgrade, read-model bridging, route-family handoffs, focused
+  verification, and at least one independent second slice before docs/logs and
+  final response.
+- `src/docs/how_to_create_plan_to_work_continuously.md` now records the lesson:
+  the active execution plan needs a top-level minimum batch target, not only a
+  buried long checklist.
+- `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`
+  now points to the next-run plan's **Required Long-Run Batch Shape** and
+  states that a green focused test is a checkpoint, not the end of the run.
+
+Current next-run instruction:
+
+- When the user says to proceed, start from
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`
+  at **Required Long-Run Batch Shape**.
+- Do not stop after one mapper contract, one read-model change, one route panel,
+  one green focused test, or one docs update.
+- The next coding run should continue through as many phases as possible:
+  1. reorientation and leak scan,
+  2. market-context evidence inventory,
+  3. certification or downgrade of one market-context behavior family,
+  4. product read-model bridge,
+  5. route-family handoffs across multiple user routes,
+  6. strength-to-repeat follow-up if verification is green,
+  7. focused and broader verification,
+  8. docs/log update.
+
+Verification:
+
+- Docs-only setup correction. No code tests were run.
+
+## 2026-05-10 - Chart Context Finding Bridge And Route Handoffs
+
+Continued from the active long-batch plan and completed the first product-safe
+chart-context finding bridge instead of stopping after one mapper or route
+change.
+
+Changes:
+
+- Saved decision-review market-context insights now pass through the shared
+  user-facing behavior mapper before route read models consume them.
+- `src/lib/trader-analytics/server/saved-trade-threads.ts` now exposes
+  product-ready chart-context findings with opportunity type, evidence channel,
+  finding source, label, detail, review action, tone, and primary-conclusion
+  eligibility.
+- Chart-context finding counts now include risk, strength, review-prompt,
+  post-exit, level, and volume-evidence splits.
+- `/trades/[tradeId]` now shows mapped Chart Context Review cards and moves
+  hidden/unmapped chart notes into a technical disclosure.
+- `/review` queue reasons and evidence cards now use mapped chart-context
+  findings and show risk/strength/prompt splits.
+- `/coach`, `/analytics`, `/progress`, and `/trades` now consume the
+  chart-context finding read model for ticker-story metrics, filters, stats,
+  and story badges.
+- Short-specific chart-context findings fail closed in normal user routes.
+- Prompt-only during-trade measurements remain review prompts and cannot drive
+  primary risk or strength counts.
+- Updated the active next-run plan, plan index, root `plan.md`, detection and
+  language plan, detection inventory, and coaching evidence model so future
+  runs do not rebuild this completed bridge.
+
+Verification:
+
+- `npx vitest run src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts --reporter=dot`
+  passed: 73 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "analytics product intelligence|coach product loop|saved trade routing|progress and behavior|guided review workflow|market context observational|banned product claims"`
+  passed: 7 tests.
+
+Current best next step:
+
+- Do not rebuild route-language hardening, evidence-label mapping, ticker
+  stories, session stories, or the first chart-context finding bridge.
+- Continue from
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`
+  into a not-yet-covered market-context behavior family: volume fade between
+  attempts, profit protection before a measured fade, support/resistance-aware
+  exit behavior, post-exit fade/relief behavior not covered by the later
+  completed after-exit continuation gate, or a strength-to-repeat
+  session/ticker story with explicit evidence.
+- If volume bars or candle windows are missing, downgrade the behavior to a
+  review prompt and continue with the next independent certified route or
+  behavior slice.
+
+## 2026-05-10 - Add Quality Prompt Split And Evidence Counts
+
+Continued the active long-batch implementation plan after the user clarified
+that the old blanket add-risk wording was too easy to misread. The product
+distinction is now explicit: execution-only adverse-add evidence can ask the
+trader to review add quality, but it cannot call the add bad, weak, or a failed
+dip buy until chart context proves that.
+
+Changes:
+
+- Downgraded `scaled_loser` and `add_after_adverse_move` to review prompts in
+  `src/lib/user-facing-behavior`.
+- Kept chart-backed add conclusions separate:
+  - `adds_increased_risk_into_weakness` remains a certified risk;
+  - `adds_aligned_with_strength` remains a certified strength.
+- Reworded the user-facing `added_after_failed_premise` copy to
+  "Added several times before reducing size" and updated the product taxonomy
+  label to avoid "premise" wording by default.
+- Filtered coach archetype scoring to certified observations so prompt-only
+  adverse-add observations cannot inflate the main coach "current pattern."
+- Extended `src/lib/trader-analytics/server/saved-trade-threads.ts` with
+  aggregate add-quality, post-exit, level, and volume-evidence counts.
+- Routed the new evidence splits into:
+  - `/analytics`,
+  - `/progress`,
+  - `/trades`,
+  - `/trades/[tradeId]`,
+  - `/coach`.
+- Added `/trades` ticker-story filters for add quality, post-exit, levels, and
+  volume evidence.
+- Updated the active next-run plan, detection/language plan, detection contract
+  inventory, plan index, and root `plan.md`.
+
+Verification:
+
+- `npx vitest run src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts src/lib/trader-analytics/__tests__/build-trader-analytics-report.test.ts src/lib/trader-analytics/__tests__/end-user-product-expansion.test.ts src/lib/trader-analytics/__tests__/end-user-product-intelligence.test.ts src/lib/trader-analytics/__tests__/trader-review-habit-loop.test.ts src/lib/trader-analytics/__tests__/trader-coach-action-loop.test.ts --reporter=dot`
+  passed: 7 files / 106 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "analytics product intelligence|coach product loop|saved trade routing|progress and behavior|guided review workflow|market context observational|banned product claims"`
+  passed: 7 tests.
+
+Current best next step:
+
+- Do not rebuild the route-language pass, ticker stories, session stories,
+  chart-context bridge, or the add-quality prompt/certification split.
+- Continue with a new evidence-backed market-context family, preferably
+  first-entry versus re-entry volume comparison, support/resistance-aware
+  exit behavior, or post-exit fade/relief behavior not already covered by the
+  completed after-exit continuation gate.
+- If explicit candle, level, volume, or post-exit evidence is missing, keep the
+  behavior as a review prompt or internal-only diagnostic and continue to the
+  next certifiable slice.
+
+## 2026-05-10 - Post-Exit And Volume Evidence Hardening
+
+Continued the long-batch plan from the add-quality split and completed the
+next safe evidence/read-model/route-language slice instead of stopping at the
+first green focused test.
+
+Changes:
+
+- Saved trade-thread read models now split post-exit and volume evidence into
+  risk, strength, and review-prompt counts at both thread and aggregate level.
+- Profit-protection findings now surface as after-exit evidence instead of
+  being counted silently.
+- Volume evidence cards now use the actual certified finding when one exists:
+  risk findings read as "Volume-backed risk is attached," strength findings
+  read as "Volume-backed strength is attached," and prompt-only findings stay
+  informational.
+- Added explicit tests for volume-backed risk, volume-backed strength, post-exit
+  risk, post-exit strength, and profit-protection after-exit evidence.
+- User routes now use beginner-readable copy:
+  - "After-Exit Review" / "After Exit" instead of "Post-Exit Checks";
+  - "risk to review" and "strength to repeat" instead of "risk-backed" and
+    "strength-backed";
+  - "chart review" / "chart findings" instead of visible hyphenated
+    "chart-context" wording.
+- Review queue priority reasons now use "chart-backed risk/strength" and
+  "trade review" wording where the user sees it.
+- The core route Playwright copy-safety scan now blocks the confusing UI
+  phrases that were removed in this slice.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts --reporter=dot`
+  passed: 19 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-bridge.test.ts --reporter=dot`
+  passed: 4 files / 55 tests.
+- `npx vitest run src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts src/lib/trader-analytics/__tests__/build-trader-analytics-report.test.ts src/lib/trader-analytics/__tests__/end-user-product-expansion.test.ts src/lib/trader-analytics/__tests__/end-user-product-intelligence.test.ts src/lib/trader-analytics/__tests__/trader-review-habit-loop.test.ts src/lib/trader-analytics/__tests__/trader-coach-action-loop.test.ts src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-bridge.test.ts --reporter=dot`
+  passed: 10 files / 146 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "analytics product intelligence|coach product loop|saved trade routing|progress and behavior|guided review workflow|market context observational|banned product claims"`
+  passed: 7 tests.
+- `npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop -g "repairs a missing-quantity row"`
+  passed: 1 test.
+
+Current best next step:
+
+- Do not rebuild post-exit/volume count splitting, route copy cleanup, or the
+  new confusing-phrase copy-safety guard.
+- Continue with a truly new market-context behavior family only when the input
+  evidence supports a certified claim. Highest-value candidates remain:
+  first-entry versus re-entry volume comparison, support/resistance-aware
+  entry/exit behaviors, or post-exit fade/relief behavior not already covered
+  by the completed after-exit continuation gate.
+- If the available data cannot prove the claim, preserve it as a review prompt
+  and move to the next independent certifiable slice.
+
+## 2026-05-10 - After-Exit Certification Gate And Add-Repair Language
+
+Continued the post-exit/market-context branch and completed a hardening slice
+that prevents premature-exit language from becoming overconfident when
+after-exit candles are missing or outside the current calibrated range.
+
+Changes:
+
+- `exit_left_continuation` now requires actual post-exit candles and a
+  calibrated favorable after-exit move before it can appear as a certified
+  continuation finding.
+- Missing after-exit candle evidence now maps to the prompt-only finding
+  `exit_needs_post_exit_context`.
+- Oversized after-exit moves now map to the prompt-only finding
+  `exit_large_post_exit_move_needs_review` until that case is calibrated
+  safely.
+- Saved trade-thread evidence cards surface those after-exit prompts without
+  counting them as proven risk or strength.
+- Chart-confirmed weak-add language was tightened to "Added before the trade
+  repaired." This makes room for the legitimate dip-buy case: support can
+  hold, price can reclaim, or the trade can repair before an add becomes
+  constructive.
+- Rule-builder recommendations for adverse-add cost drivers now suggest
+  "Require repair before adding size" instead of blanket "Avoid ..." language.
+
+Verification:
+
+- `npx vitest run src/lib/trade-analysis/review/__tests__/build-trade-decision-review.test.ts src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts src/lib/trader-analytics/__tests__/end-user-product-intelligence.test.ts --reporter=dot`
+  passed: 4 files / 86 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "coach product loop|market context observational|banned product claims"`
+  passed: 3 tests.
+- `git diff --check` passed with only existing line-ending warnings for
+  `.gitignore` and `src/docs/codex-project-log.md`.
+
+Current best next step:
+
+- Do not rebuild the after-exit certification gate, prompt-only after-exit
+  contracts, saved-thread after-exit prompt card, or add-repair language.
+- Continue to the next independent market-context family. Highest-value next
+  candidates are support/resistance-aware exit behavior, first-entry versus
+  re-entry volume comparison, or strength-to-repeat story language when
+  explicit chart/level/candle evidence supports the claim.
+- If the evidence only says "review this," keep it prompt-only and move to the
+  next certifiable slice instead of forcing a coaching conclusion.
+
+## 2026-05-10 - Plan Freshness Audit
+
+Reviewed the root plan, plan index, active continuous run plan, detection and
+language hardening plan, coaching evidence model, behavior language audit,
+Layer 2 catalog, and this project log for stale next-work language that could
+cause duplicate implementation.
+
+Updates:
+
+- Marked after-exit continuation certification, prompt-only missing/oversized
+  after-exit findings, add-quality prompt/certification split, post-exit/volume
+  evidence splitting, and add-repair language as completed work that should not
+  be rebuilt.
+- Replaced older "richer continuation gate" next-step wording with the current
+  scope: support/resistance-aware exit behavior, first-entry versus re-entry
+  volume comparison, post-exit fade/relief behavior not already covered by the
+  completed after-exit gate, or strength-to-repeat story language when explicit
+  evidence exists.
+- Tightened remaining add-quality docs so execution-only adverse movement stays
+  a review prompt and chart-confirmed weak-add copy uses "Added before the
+  trade repaired."
+
+Current best next step:
+
+- Start the next coding run from `plan.md` ->
+  `src/docs/trader-intelligence-plan-index.md` ->
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
+- Preserve completed route-language, ticker-story, session-story, chart-context
+  bridge, add-quality, post-exit/volume split, and after-exit gate work.
+- Implement the next independent evidence-backed market-context family, with
+  support/resistance-aware exit behavior or first-entry versus re-entry volume
+  comparison as the cleanest next candidates.
+
+## 2026-05-10 - Support/Resistance Exit And Re-Entry Volume Certification
+
+Continued the next continuous implementation run without creating another plan.
+This pass completed two independent evidence families and then cleaned up the
+analytics review-prompt expectation so prompt-only execution evidence stays
+visible without becoming a certified risk.
+
+Changes:
+
+- Added user-facing behavior contracts for support/resistance-aware exit
+  outcomes:
+  - reductions near resistance,
+  - exits that avoided later adverse follow-through,
+  - exits into resistance followed by reversal,
+  - exits into resistance before measured breakout,
+  - exits into support before measured breakdown,
+  - exits into support followed by relief as a review prompt.
+- Added user-facing behavior contracts for same-symbol re-entry volume
+  comparison:
+  - later re-entry volume faded and the outcome weakened,
+  - later re-entry volume confirmed and the outcome held up.
+- Extended `build-trade-decision-review` so daily/4h support and resistance
+  exit insights can become risks, strengths, or prompts only when the attached
+  market-context evidence supports that story.
+- Extended saved trade-thread read models with first-entry versus re-entry
+  volume comparison findings based on saved snapshot evidence. Missing or
+  insufficient volume remains silent instead of becoming a claim.
+- Updated post-exit/ticker-story evidence titles so support/resistance exit
+  and re-entry volume findings use product-ready copy instead of generic
+  volume or after-exit wording.
+- Kept execution-only adverse-add findings as review prompts in analytics
+  drilldowns. They are visible for self-review but no longer expected as the
+  top proven risk in fixture expectations.
+
+Verification:
+
+- `npx vitest run src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts src/lib/trade-analysis/review/__tests__/build-trade-decision-review.test.ts src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts --reporter=dot`
+  passed: 3 files / 93 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/trader-coach-action-loop.test.ts src/lib/trader-analytics/__tests__/trader-product-polish.test.ts src/lib/trader-analytics/__tests__/trader-improvement-intelligence.test.ts --reporter=dot`
+  passed: 3 files / 25 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/coaching-fixture-expectation-matrix.test.ts --reporter=dot`
+  passed: 1 test.
+- `npx vitest run src/lib/trader-analytics/__tests__/end-user-product-roadmap.test.ts --reporter=dot`
+  passed: 10 tests.
+- `npx vitest run src/lib/user-facing-behavior src/lib/trader-analytics src/lib/user-facing-review --reporter=dot`
+  passed: 38 files / 331 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop`
+  passed: 15 tests with the mobile-only case skipped on the desktop project.
+
+Current best next step:
+
+- Do not rebuild support/resistance-aware exit contracts, re-entry volume
+  comparison findings, the analytics review-prompt drilldown expectation, the
+  after-exit certification gate, the add-quality split, ticker stories,
+  session stories, or the chart-context finding bridge.
+- Continue with a new independent slice:
+  - route handoffs that make the newly certified support/resistance and volume
+    findings easier to act on in `/trades/[tradeId]` and `/review`,
+  - strength-to-repeat ticker/session stories backed by explicit chart or
+    volume evidence,
+  - analytics drilldown/presentation polish that consumes the certified
+    outputs already created,
+  - or mobile visual regression for the routes touched by these evidence
+    families.
+- Keep uncertain chart, level, volume, and after-exit behavior as a review
+  prompt or internal-only diagnostic until the saved evidence can prove it.
+
+## 2026-05-10 - Certified Finding Route Handoffs
+
+Continued the next continuous implementation run from the active plan without
+creating another plan file. This pass did not rebuild the support/resistance
+exit or re-entry volume detectors. It wired their certified outputs into route
+handoffs so the end-user app makes the next action clearer.
+
+Changes:
+
+- Added `priorityMarketContextFindings` to the saved trade-thread read model so
+  routes can open the most actionable certified chart, level, volume, or prompt
+  finding without route-local behavior maps.
+- Added explicit support/resistance exit counters to saved trade threads and
+  aggregate read models:
+  - `exitLevelFindingCount`,
+  - `exitLevelRiskCount`,
+  - `exitLevelStrengthCount`,
+  - `exitLevelReviewPromptCount`,
+  - thread-with-finding/risk/strength counts.
+- `/trades/[tradeId]` now shows a chart-and-volume handoff for both single
+  round-trip trades and multi-round-trip ticker stories when certified saved
+  market-context findings exist.
+- `/review` now links chart evidence queue items to the trade page's chart
+  handoff anchor and removed the confusing "support panels" wording from the
+  review work order.
+- `/analytics`, `/coach`, `/progress`, and `/trades` now expose
+  support/resistance exit counts separately from generic chart findings.
+- `/analytics` adds "what to open next" handoffs for support/resistance exit
+  reviews, volume comparison stories, and after-exit review stories when those
+  certified read-model counts are present.
+- `/trades` now has a direct support/resistance exit story filter and story
+  badges so saved ticker stories can be browsed by that evidence family.
+- App-feature Playwright coverage now asserts the new support/resistance exit
+  copy and review work-order language.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts --reporter=dot`
+  passed: 1 file / 23 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts --reporter=dot`
+  passed: 2 files / 86 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts src/lib/trader-analytics/__tests__/coach-overall-focus.test.ts src/lib/trader-analytics/__tests__/trader-coach-action-loop.test.ts src/lib/trader-analytics/__tests__/trader-product-polish.test.ts src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts --reporter=dot`
+  passed: 5 files / 112 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "analytics product intelligence|coach product loop|saved trade routing|progress and behavior|guided review workflow|market context observational|banned product claims"`
+  passed: 7 tests.
+- `npx vitest run src/lib/user-facing-behavior src/lib/trader-analytics src/lib/user-facing-review --reporter=dot`
+  passed: 38 files / 331 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop`
+  passed: 15 tests, with the mobile-only case skipped on the desktop project.
+- `git diff --check` passed with only existing line-ending warnings for
+  `.gitignore`, `src/docs/codex-project-log.md`, and
+  `src/docs/layer2-pattern-detection/layer2-implemented-pattern-catalog.md`.
+
+Current best next step:
+
+- Do not rebuild `priorityMarketContextFindings`, support/resistance exit
+  counters, the chart handoff anchor, the `/trades` support/resistance exit
+  filter, or the analytics/coach/progress support-resistance exit metric cards.
+- Continue with the next independent slice:
+  - profit-protection-before-later-fade behavior if the saved candle and
+    after-exit evidence can certify it,
+  - strength-to-repeat ticker or session stories backed by explicit execution,
+    level, volume, or after-exit evidence,
+  - route handoffs for session stories in `/review` or `/trades/[tradeId]` only
+    where there is a clear evidence handoff,
+  - mobile visual regression or overflow polish for the touched route family.
+
+## 2026-05-10 - Protected-Profit Before Fade Certification And Handoffs
+
+Continued the next continuous implementation run from the active plan without
+creating another plan file. This pass completed the profit-protection-before-
+fade slice and then wired that certified strength into the route surfaces that
+already consume saved trade-thread read models.
+
+Changes:
+
+- Added a certified user-facing behavior contract for
+  `protected_profit_before_fade`.
+- Extended `build-trade-decision-review` so "Protected profit before the fade"
+  appears only when:
+  - realized capture clears the current capture threshold,
+  - an aligned after-exit candle window exists,
+  - after-exit adverse movement is larger than favorable continuation,
+  - the after-exit window ends flat-to-adverse for the trade direction.
+- Suppressed the older generic `exit_avoided_adverse_followthrough` card when
+  the stricter protected-profit finding is available, so the user sees one
+  clearer repeatable strength instead of duplicate fade language.
+- Added saved trade-thread and aggregate counts:
+  - `protectedProfitBeforeFadeFindingCount`,
+  - `threadWithProtectedProfitBeforeFadeFindingCount`.
+- Routed the count through `/analytics`, `/coach`, `/progress`,
+  `/trades`, and `/trades/[tradeId]`.
+- Added a `/trades` story filter for protected-before-fade stories and a
+  ticker-story badge for that evidence family.
+- Kept uncertain profit-protection/fade claims out of primary UI when
+  after-exit candles are missing or the chart continued after the exit.
+
+Verification:
+
+- `npx vitest run src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts src/lib/trade-analysis/review/__tests__/build-trade-decision-review.test.ts src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts --reporter=dot`
+  passed: 3 files / 99 tests.
+- `npx vitest run src/lib/user-facing-behavior src/lib/trader-analytics src/lib/user-facing-review --reporter=dot`
+  passed: 38 files / 334 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop`
+  passed: 15 tests, with the mobile-only case skipped on the desktop project.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "mobile routes"`
+  passed: 1 test.
+- `git diff --check` passed with only existing line-ending warnings for
+  `.gitignore`, `src/docs/codex-project-log.md`, and
+  `src/docs/layer2-pattern-detection/layer2-implemented-pattern-catalog.md`.
+
+Current best next step:
+
+- Do not rebuild protected-profit-before-fade certification, the duplicate
+  generic fade suppression, protected-profit saved-thread counts, or the route
+  handoffs added in this pass.
+- Continue with the next independent slice:
+  - strength-to-repeat ticker or session stories backed by explicit execution,
+    level, volume, or after-exit evidence,
+  - session-story handoffs in `/review` or `/trades/[tradeId]` where a clear
+    evidence action exists,
+  - analytics/coach presentation polish that consumes existing certified
+    read-model counts,
+  - or another market-context family only if the current saved evidence can
+    prove it without inference.
+
+## 2026-05-10 - Strength-To-Repeat Session Stories And Add-Repair Copy
+
+Continued the next continuous implementation run from the active plan. This
+pass completed the first strength-to-repeat session story slice and tightened
+the coaching language around adds after price moved against the trade.
+
+Changes:
+
+- Added `strengths_to_repeat_session` as a saved session-story kind when the
+  session finished green, has certified chart/level/volume/after-exit
+  strengths, and does not have higher-priority open/swing, repeated-loss, or
+  profit-giveback session concerns.
+- Added session-story strength counters:
+  - `marketContextStrengthCount`,
+  - `protectedProfitBeforeFadeFindingCount`,
+  - `exitLevelStrengthCount`,
+  - `volumeStrengthCount`,
+  - `addQualityStrengthCount`,
+  - aggregate `strengthsToRepeatSessionCount`.
+- Added session-story evidence cards for strengths worth repeating, protected
+  profit before a later fade, level-aware exits, volume-confirmed attempts, and
+  adds that followed strength.
+- Wired strength-session output through `/coach`, `/progress`, `/trades`,
+  `/review`, and `/trades/[tradeId]`.
+- Added a trade-detail session story handoff so an individual trade can show
+  the broader trading-day story, not only its isolated execution replay.
+- Updated route copy from "Protected Before Fade" and
+  "protected-before-fade finding" to plainer "Protected Profit" and
+  "profit-protection strength" language.
+- Tightened adverse-add coaching language:
+  - "Require Repair Before Adding Size" is the visible rule label.
+  - Coach explanations now say execution evidence only proves size was added
+    after price moved against the position.
+  - The copy explicitly says this is not automatically a mistake or a bad dip
+    buy; the user should check whether support held, price reclaimed, or the
+    trade repaired before the add.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts --reporter=dot`
+  passed: 1 file / 25 tests.
+- `npx vitest run src/lib/user-facing-behavior src/lib/trader-analytics src/lib/user-facing-review --reporter=dot`
+  passed: 38 files / 336 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "mobile routes"`
+  passed: 1 test.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop`
+  passed: 15 tests, with the mobile-only case skipped on the desktop project.
+
+Current best next step:
+
+- Do not rebuild strength-to-repeat session story kind/counters/evidence,
+  `/review` session-story handoff, `/trades/[tradeId]` session-story handoff,
+  protected-profit wording, or the adverse-add repair/dip-buy copy tightening.
+- Continue with the next independent slice:
+  - analytics/coach presentation polish that consumes existing certified
+    read-model counts,
+  - another certifiable market-context behavior family only if saved chart,
+    level, volume, candle, or after-exit evidence can prove it,
+  - or mobile/visual polish for the touched route family.
+
+## 2026-05-10 - Plan Architecture Audit And De-Dupe
+
+Reviewed the active planning set from a project planner/engineer perspective:
+root `plan.md`, the plan index, the next continuous implementation run, the
+top-level UX plan, detection/language hardening, and the coach, analytics,
+review queue, and progress feature plans.
+
+Changes:
+
+- Reclassified the active batch from first-pass detection hardening to
+  post-hardening product presentation and evidence polish.
+- Updated `plan.md` so the next-run execution plan is the immediate priority,
+  while the detection/language plan remains the evidence-gating reference for
+  new behavior claims.
+- Marked completed slices as non-rebuild work across the plan set:
+  overall coach focus, evidence-trade handoff, review-completion
+  follow-through, ticker stories, session stories, chart-context bridge,
+  add-quality split, after-exit certification, support/resistance exits,
+  first-entry versus re-entry volume comparison, protected-profit-before-fade,
+  strength-to-repeat session stories, and adverse-add repair wording.
+- Updated route feature plans so the next useful work is lower-page
+  coach/analytics presentation polish, mobile/visual polish, route anchor/copy
+  repairs, or a new evidence family only when saved chart/level/candle/volume
+  evidence proves it.
+- Removed stale active-next wording that could have restarted completed
+  support/resistance, volume, protected-profit, strength-session, or first
+  detection inventory work.
+
+Verification:
+
+- Documentation consistency searches for stale active-batch wording and old
+  next-slice directions were run after the edits.
+
+Current best next step:
+
+- Proceed from
+  `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`
+  using the updated Required Long-Run Batch Shape.
+- Start with a quick leak/copy scan, then continue into coach/analytics
+  presentation polish using certified read-model counts, visual/mobile polish,
+  route anchor/copy repairs, or a new evidence family only when saved evidence
+  can prove it.
+- Do not restart the completed detection and route-handoff slices listed
+  above unless a regression is found.
+
+## 2026-05-10 - Historical Support/Resistance Context Audit And Handoff Fix
+
+Investigated the user concern that imported historical trades could be reviewed
+with current support/resistance levels from the sibling `levels-system` app.
+
+Findings:
+
+- `levels-system` already has the correct historical boundary:
+  `buildTradeAnalysisCandleContext(...)` accepts `asOfTimestamp`, trade bounds,
+  executions, and per-timeframe cutoffs.
+- `levels-system` fetches execution-time support/resistance contexts for each
+  fill and has tests proving future candles are excluded.
+- Trader Intelligence's modern levels-system candle path already passes
+  historical trade bounds and derives `asOfTimestamp` from trade end plus the
+  bounded post-trade review window when no explicit timestamp is supplied.
+- Weak spot found: Trader Intelligence stored safe
+  `levelsSystemExecutionRelations`, but app-facing PatternInput still read
+  `executionLevelRelations` rebuilt from the broader mapped
+  support/resistance snapshot.
+
+Changes:
+
+- Added
+  `src/docs/trader-intelligence-historical-level-context-audit-2026-05-10.md`
+  documenting the historical no-lookahead contract, ownership split, and
+  operational notes.
+- Updated `src/lib/support-resistance/levels-system-adapter.ts` with a mapper
+  from levels-system execution-time relation facts to local
+  `ExecutionLevelRelation` objects.
+- Updated
+  `src/lib/raw-trade-timeline/builders/create-raw-trade-timeline-with-levels-system-candles.ts`
+  so local `executionLevelRelations` now come from
+  `levelsSystemExecutionRelations`.
+- Added integration coverage that local execution-level relation IDs and
+  near-level booleans match the shared per-execution historical facts.
+- Linked the new audit from the plan index and detection/language hardening
+  plan.
+
+Verification:
+
+- `npx vitest run src/lib/raw-trade-timeline/__tests__/levels-system-trade-candle-context.integration.test.ts src/lib/raw-trade-timeline/__tests__/levels-system-pattern-input.integration.test.ts --reporter=dot`
+  passed: 2 files / 6 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- In `../levels-system`:
+  `npx tsx --test src/tests/support-resistance-shared-api.test.ts` passed:
+  28 tests.
+
+Current best next step:
+
+- Do not rebuild the historical level-context handoff. Treat it as a guardrail:
+  all future support/resistance, candle, volume, and after-exit behavior
+  families must use the levels-system historical trade-analysis context and
+  saved evidence.
+- Continue with the previously active next slice: coach/analytics presentation
+  polish using certified read models, visual/mobile polish, route anchor/copy
+  repairs, or another market-context family only when saved historical evidence
+  proves it.
+
+## 2026-05-10 - Coach And Analytics Presentation Polish
+
+Completed a product-facing polish run focused on the user routes, not new
+detection claims.
+
+Changes:
+
+- Added shared workflow handoff cards in `app/app-ui.tsx` and lighter shared
+  metric/chart/advanced panel surfaces in `app/globals.css`.
+- `/coach` now shows an explicit coaching flow below the overall focus:
+  overall pattern -> evidence trade -> review queue -> progress.
+- `/coach` session-plan cards now read as `Fix First`, `Repeat First`, and
+  `Review Next Trade` so the page feels more like a coaching session and less
+  like a card dump.
+- `/analytics` chart mode is now grouped by outcome, timing, and behavior, with
+  red/green/amber meaning explained and chart-to-review workflow handoffs.
+- `/analytics` behavior copy now uses neutral add-review language:
+  `Adds Needing Review` / `Review adds that need chart context`, because
+  execution-only add evidence cannot decide whether an add was a good dip buy,
+  a repaired trade, or added exposure.
+- `/progress` now has a shared workflow handoff tying coach focus, review queue,
+  analytics, and progress together.
+- The adverse-add user-facing behavior mapper and contract inventory were
+  updated so future routes do not bring back "adds after price moved against
+  you" as the primary label.
+
+Verification:
+
+- Quick route/copy leak scan found only code constants, advanced/internal
+  surfaces, or state IDs passed through plain-label mappers.
+- `npx vitest run src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts src/lib/trader-analytics/__tests__/coach-overall-focus.test.ts src/lib/trader-analytics/__tests__/build-trader-analytics-report.test.ts --reporter=dot`
+  passed: 3 files / 79 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "analytics product intelligence|coach product loop|progress and behavior|guided review workflow|banned product claims"`
+  passed: 5 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable without page-level horizontal overflow"`
+  passed: 1 test.
+
+Current best next step:
+
+- Do not rebuild the shared workflow handoff component, coach flow strip,
+  analytics outcome/timing/behavior chart grouping, progress workflow handoff,
+  or adverse-add primary-label cleanup.
+- Continue with a browser/screenshot-guided visual refinement pass for
+  `/coach`, `/analytics`, `/review`, `/progress`, and `/trades/[tradeId]`, or
+  with a new market-context behavior family only if saved historical
+  chart/level/volume/after-exit evidence proves it.
+
+## 2026-05-10 - Screenshot-Guided UI Polish Pass
+
+Completed the follow-up visual/product polish run using local Playwright
+screenshots for `/coach`, `/analytics`, `/review`, `/progress`, and a saved
+`/trades/[tradeId]` review workspace.
+
+Changes:
+
+- Lightened the shared Trader Intelligence app surfaces in `app/globals.css`
+  so core dashboard cards read as slate report panels instead of near-black
+  terminal panels.
+- Tightened shared metric and chart components in `app/app-ui.tsx`:
+  shorter KPI cards, softer chart wells, rounded red/green bars, and cleaner
+  win/loss chart interiors.
+- Shortened certified chart/level/volume metric copy in `/analytics`,
+  `/coach`, and `/progress` so lower-page grids are less cramped.
+- Replaced visible raw trade IDs in `/review` Review Flow links with plain
+  `Open trade 1`, `Open trade 2`, etc., while preserving the test IDs and
+  deep links.
+- Replaced visible raw-looking report history labels in analytics/progress
+  with `Saved report 1`, `Saved report 2`, etc.
+- Tightened review/supporting copy that still looked internal, including
+  workflow lane labels and hyphenated `chart-context` wording.
+- Verified the trade-detail page still presents a readable review workspace
+  after the shared surface changes.
+
+Verification:
+
+- Screenshot smoke captured:
+  - `artifacts/manual-visual/coach-dev-after.png`
+  - `artifacts/manual-visual/analytics-dev-after.png`
+  - `artifacts/manual-visual/review-dev-after.png`
+  - `artifacts/manual-visual/progress-dev-after.png`
+  - `artifacts/manual-visual/trade-detail-dev-after.png`
+  - mobile screenshots for coach, analytics, and review.
+- Rendered-text safety scan passed for `/coach`, `/analytics`, `/review`,
+  `/progress`, and the sampled `/trades/[tradeId]` route.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/saved-import-visual-overflow.spec.ts --project=chromium-mobile`
+  passed: 1 test.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "analytics product intelligence|coach product loop|guided review workflow|progress and behavior|saved trade routing|banned product claims"`
+  passed: 6 tests.
+
+Current best next step:
+
+- Do not redo the completed shared surface lightening, metric-card copy
+  tightening, review-flow raw-ID cleanup, report-history label cleanup, or
+  chart-context wording repair.
+- Continue with either:
+  - `/trades` and `/trades/[tradeId]` detail polish using the same visual
+    system,
+  - deeper `/coach` lower-page reduction once route-specific tests are updated
+    for hidden/collapsed supporting panels,
+  - or a new market-context behavior family only if saved historical evidence
+    proves the claim.
+
+## 2026-05-10 - GitHub Review Upload Prep And Browser Tooling Note
+
+Prepared the branch for GitHub review after the screenshot-guided UI polish
+pass.
+
+Browser tooling note:
+
+- The Browser Use skill document described a Node REPL helper command named
+  `js`, but the active tool list in this Codex session did not expose a
+  `node_repl` or equivalent Browser Use runtime namespace.
+- Tool discovery was attempted for `node_repl js JavaScript execution` and
+  `browser use node repl js`; discovery did not return a callable Node REPL
+  tool. It only exposed unrelated deferred GitHub/Vercel tool groups.
+- This appears to be a session/tool-runtime availability issue, not an app
+  issue. The Browser Use skill instructions were present on disk, but the
+  corresponding callable runtime was not registered for this session.
+- Fallback used: local Playwright CLI screenshots and rendered-text checks
+  against the localhost app.
+- Future Codex runs should try Browser Use again when the callable tool exists,
+  but Playwright CLI remains an acceptable fallback for localhost visual and
+  text verification.

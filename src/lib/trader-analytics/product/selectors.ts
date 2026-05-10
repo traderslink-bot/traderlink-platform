@@ -1,5 +1,6 @@
 import type { ExecutionFeedbackPoint } from "../../execution-feedback/types/execution-feedback-point";
 import type { ExecutionFeedbackSummary } from "../../execution-feedback/summary/build-execution-feedback-summary";
+import type { TraderAnalyticsPointDigest } from "../types/trader-analytics-report";
 import type {
   BehaviorTrendCard,
   FilteredTraderAnalyticsView,
@@ -15,6 +16,7 @@ import type {
   TraderFocusQueueItem,
 } from "./types";
 import { buildTradeJournalPrompts } from "./product-expansion";
+import { mapUserFacingBehavior } from "../../user-facing-behavior";
 
 function roundMetric(value: number): number {
   return Number(value.toFixed(6));
@@ -56,13 +58,28 @@ function tradeRowsWithIds(
   }));
 }
 
-function pointDigest(point: ExecutionFeedbackPoint) {
+function pointDigest(point: ExecutionFeedbackPoint): TraderAnalyticsPointDigest {
+  const behavior = mapUserFacingBehavior({
+    behaviorId: point.id,
+    rawLabel: point.label,
+    route: "/trades/[tradeId]",
+  });
+
   return {
     id: point.id,
     kind: point.kind,
     category: point.category,
-    label: point.label,
-    summary: point.summary,
+    label: behavior.label,
+    summary: behavior.canDrivePrimaryConclusion
+      ? behavior.plainExplanation
+      : behavior.unsupportedFallback,
+    behaviorState: behavior.state,
+    behaviorTone: behavior.tone,
+    opportunityType: behavior.opportunityType,
+    evidenceChannel: behavior.evidenceChannel,
+    canDrivePrimaryConclusion: behavior.canDrivePrimaryConclusion,
+    missingDataSentence: behavior.missingDataSentence,
+    fixFirstAction: behavior.fixFirstAction,
     severity: point.severity,
     confidence: point.confidence,
     priorityScore: point.priorityScore,
@@ -277,6 +294,39 @@ export function buildTraderAnalyticsDrillDowns(
     });
   }
 
+  const reviewPromptPoints = new Map<string, TraderAnalyticsPointDigest>();
+
+  for (const summaryRef of savedReport.sourceSummaries) {
+    for (const point of summaryRef.summary.points.risks) {
+      const digest = pointDigest(point);
+
+      if (digest.opportunityType === "review_prompt") {
+        reviewPromptPoints.set(digest.id, digest);
+      }
+    }
+  }
+
+  for (const point of reviewPromptPoints.values()) {
+    const rows = uniqueRows(
+      sourceRowsForSummaryRefs({
+        savedReport,
+        predicate: (summary) =>
+          summary.points.risks.some((risk) => risk.id === point.id),
+      }),
+    );
+
+    drillDowns.push({
+      id: `review-prompt:${point.id}`,
+      kind: "review_prompt",
+      label: point.label,
+      summary: point.summary,
+      sourceMetricId: point.id,
+      category: point.category,
+      tradeIds: rows.map((row) => row.tradeId),
+      rows,
+    });
+  }
+
   const allRows = tradeRowsWithIds(savedReport);
   const lifecycleRows = allRows.filter((row) => row.isOpenPosition);
   const loserRows = allRows.filter((row) => row.grossRealizedPnl < 0);
@@ -286,8 +336,8 @@ export function buildTraderAnalyticsDrillDowns(
     {
       id: "lifecycle:open_position",
       kind: "lifecycle",
-      label: "Open Position Leftovers",
-      summary: "Trades that still had open shares at the end of the execution sequence.",
+      label: "Trades Left Open",
+      summary: "Trades that still had shares open at the end of the execution sequence.",
       sourceMetricId: "open_position_leftover",
       category: "lifecycle",
       tradeIds: lifecycleRows.map((row) => row.tradeId),
@@ -368,6 +418,7 @@ function trendCard(args: {
       : rawDirection === args.favorableDirection
         ? "improving"
         : "worsening";
+  const appearedMoreOften = rawDirection === "up";
 
   return {
     behaviorId: args.behaviorId,
@@ -379,9 +430,9 @@ function trendCard(args: {
     sampleSizeWarning: args.sampleSizeWarning,
     copy:
       direction === "improving"
-        ? `${args.label} appeared less often in the newer sample.`
+        ? `${args.label} appeared ${appearedMoreOften ? "more" : "less"} often in the newer sample.`
         : direction === "worsening"
-          ? `${args.label} appeared more often in the newer sample.`
+          ? `${args.label} appeared ${appearedMoreOften ? "more" : "less"} often in the newer sample.`
           : direction === "flat"
             ? `${args.label} was unchanged across the compared samples.`
             : `More reviewed trades are needed before comparing ${args.label}.`,
@@ -399,7 +450,7 @@ export function buildBehaviorTrendCards(args: {
   return [
     trendCard({
       behaviorId: "adverse_price_adds",
-      label: "Adverse Adds",
+      label: "Adds after adverse movement to review",
       previousRate: args.previousReport.report.executionBehavior.adversePriceAddRate,
       currentRate: args.currentReport.report.executionBehavior.adversePriceAddRate,
       favorableDirection: "down",
@@ -407,7 +458,7 @@ export function buildBehaviorTrendCards(args: {
     }),
     trendCard({
       behaviorId: "open_position_leftover",
-      label: "Open Position Leftovers",
+      label: "Trades left open",
       previousRate: args.previousReport.report.lifecycle.openPositionRate,
       currentRate: args.currentReport.report.lifecycle.openPositionRate,
       favorableDirection: "down",
@@ -415,7 +466,7 @@ export function buildBehaviorTrendCards(args: {
     }),
     trendCard({
       behaviorId: "rapid_fire_execution_cluster",
-      label: "Rapid-Fire Clusters",
+      label: "Fast execution clusters to review",
       previousRate:
         args.previousReport.report.sampleSize.completedTradeCount > 0
           ? args.previousReport.report.executionBehavior.rapidFireExecutionTradeCount /
@@ -431,7 +482,7 @@ export function buildBehaviorTrendCards(args: {
     }),
     trendCard({
       behaviorId: "decisive_full_exit",
-      label: "Decisive Full Exits",
+      label: "Clean full exits",
       previousRate:
         args.previousReport.report.sampleSize.completedTradeCount > 0
           ? args.previousReport.report.strengths.decisiveFullExitCount /
@@ -481,7 +532,7 @@ export function buildTraderAnalyticsComparison(args: {
       }),
       metricDelta({
         id: "adverse_add_rate",
-        label: "Adverse Add Rate",
+        label: "Adds Needing Review",
         previousValue:
           args.previousReport.report.executionBehavior.adversePriceAddRate,
         currentValue:

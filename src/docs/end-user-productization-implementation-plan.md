@@ -2,10 +2,13 @@
 
 Date: 2026-05-02
 
+Status: Historical productization plan. Do not use as the current
+implementation plan; start from root `plan.md` and the plan index.
+
 ## Purpose
 
-This file is the active working plan for turning the analytics prototype into a
-real end-user product loop.
+This historical file was the working plan for turning the analytics prototype
+into a real end-user product loop.
 
 It follows the previous completed plans:
 
@@ -383,7 +386,7 @@ Smoke checks:
   - `GET /` returned `200` and linked to `/analytics`.
 - Current implementation pointer: complete.
 
-## Current Best Next Step
+## Historical Best Next Step
 
 The productization prototype is complete. The remaining real-product gate is
 choosing authenticated storage and a database provider, then replacing the

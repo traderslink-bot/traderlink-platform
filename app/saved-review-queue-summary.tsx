@@ -14,7 +14,30 @@ function tabCount(
 }
 
 function laneLabel(value: string): string {
-  return value.replaceAll("_", " ");
+  switch (value) {
+    case "completed":
+      return "Reviewed with chart context";
+    case "market_context_unavailable":
+      return "Chart context waiting";
+    case "blocked_open_trade":
+      return "Open trade";
+    case "analysis_failed":
+      return "Needs technical follow-up";
+    case "highest_priority":
+      return "Highest priority";
+    case "unresolved":
+      return "Needs review";
+    case "queued":
+      return "Waiting for review";
+    case "skipped_limit":
+      return "Review skipped";
+    default:
+      return value
+        .split(/[_-]/)
+        .filter(Boolean)
+        .map((part) => part[0]?.toUpperCase() + part.slice(1))
+        .join(" ");
+  }
 }
 
 export function SavedReviewQueueSummary({
@@ -27,7 +50,7 @@ export function SavedReviewQueueSummary({
   if (!queue) {
     return (
       <section
-        className="border border-zinc-800 bg-zinc-950 p-4 shadow-sm shadow-black/20"
+        className="ti-panel p-4"
         data-testid="saved-review-summary-strip"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -72,7 +95,7 @@ export function SavedReviewQueueSummary({
 
   return (
     <section
-      className="border border-zinc-800 bg-zinc-950 p-4 shadow-sm shadow-black/20"
+      className="ti-panel p-4"
       data-testid="saved-review-summary-strip"
     >
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
@@ -82,11 +105,11 @@ export function SavedReviewQueueSummary({
           </p>
           <h2 className="mt-2 text-lg font-semibold text-zinc-100">{title}</h2>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-400">
-            Jump from {surface} into the trades that most need saved review,
-            market-context follow-up, or open-position handling.
+            Jump from {surface} into the trades that most need review, chart
+            context follow-up, or open-position handling.
           </p>
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="border border-zinc-800 bg-zinc-950 px-3 py-2">
+            <div className="ti-panel-soft px-3 py-2">
               <div className="text-xs uppercase tracking-wide text-zinc-500">
                 Highest Priority
               </div>
@@ -94,7 +117,7 @@ export function SavedReviewQueueSummary({
                 {highestPriorityCount}
               </div>
             </div>
-            <div className="border border-zinc-800 bg-zinc-950 px-3 py-2">
+            <div className="ti-panel-soft px-3 py-2">
               <div className="text-xs uppercase tracking-wide text-zinc-500">
                 Unresolved
               </div>
@@ -102,7 +125,7 @@ export function SavedReviewQueueSummary({
                 {unresolvedCount}
               </div>
             </div>
-            <div className="border border-zinc-800 bg-zinc-950 px-3 py-2">
+            <div className="ti-panel-soft px-3 py-2">
               <div className="text-xs uppercase tracking-wide text-zinc-500">
                 Chart Context Waiting
               </div>
@@ -110,7 +133,7 @@ export function SavedReviewQueueSummary({
                 {marketGapCount}
               </div>
             </div>
-            <div className="border border-zinc-800 bg-zinc-950 px-3 py-2">
+            <div className="ti-panel-soft px-3 py-2">
               <div className="text-xs uppercase tracking-wide text-zinc-500">
                 Open Trades
               </div>
@@ -141,7 +164,7 @@ export function SavedReviewQueueSummary({
             <div className="grid gap-2">
               {previewItems.map((item) => (
                 <Link
-                  className="block border border-zinc-800 bg-black/20 px-3 py-2 transition hover:border-sky-500"
+                  className="ti-panel-soft block px-3 py-2 transition hover:border-sky-500"
                   href={item.href}
                   key={item.id}
                 >
@@ -160,7 +183,7 @@ export function SavedReviewQueueSummary({
               ))}
             </div>
           ) : (
-            <div className="border border-zinc-800 bg-black/20 px-3 py-2 text-sm text-zinc-400">
+            <div className="ti-panel-soft px-3 py-2 text-sm text-zinc-400">
               {queue.emptyState.body}
             </div>
           )}

@@ -7,8 +7,8 @@ type QueueAction = "reviewed" | "resolved" | "ignored";
 
 const ACTION_LABELS: Record<QueueAction, string> = {
   reviewed: "Mark reviewed",
-  resolved: "Resolve",
-  ignored: "Ignore",
+  resolved: "Mark solved",
+  ignored: "Skip for now",
 };
 
 export function SavedReviewQueueActions({
@@ -40,7 +40,7 @@ export function SavedReviewQueueActions({
       return;
     }
 
-    setMessage(`Saved as ${status}.`);
+    setMessage(`Saved as ${ACTION_LABELS[status].toLowerCase()}.`);
     setPending(null);
     router.refresh();
   }

@@ -1,5 +1,8 @@
 # Trader Analytics Reports Plan
 
+Status: Historical reports-lane plan. Do not use as the current implementation
+plan; start from root `plan.md` and the plan index.
+
 ## Purpose
 
 This document tracks the trader analytics report lane.
@@ -841,7 +844,7 @@ The trader analytics report lane is complete when:
   `GET /debug/trader-analytics`.
 - The trader analytics roadmap branch is complete.
 
-## Current Best Next Step
+## Historical Best Next Step
 
 Use `/debug/trader-analytics` and `POST /api/trader-analytics/debug` with
 future saved execution batches. Next useful product additions are filters,

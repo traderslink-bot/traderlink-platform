@@ -58,7 +58,7 @@ const endUserRoutes = [
   {
     href: "/review",
     label: "Review queue",
-    detail: "Highest-priority trades, chart-context waiting items, lesson drafts, and review flow.",
+    detail: "Highest-priority trades, chart context waiting items, lesson drafts, and review flow.",
   },
   {
     href: "/progress",

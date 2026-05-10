@@ -1,4 +1,5 @@
 import { buildTraderAnalyticsChartData } from "./charts/build-trader-analytics-chart-data";
+import { mapUserFacingBehavior } from "../user-facing-behavior";
 import type { ExecutionFeedbackSummary } from "../execution-feedback/summary/build-execution-feedback-summary";
 import type { ExecutionFeedbackPoint } from "../execution-feedback/types/execution-feedback-point";
 import type {
@@ -51,11 +52,13 @@ const RISK_POINT_IDS = {
   multipleAddsBeforeReduction: "multiple_adds_before_first_reduction",
   adversePriceAdd: "size_expansion_after_adverse_price",
   overbuiltPosition: "overbuilt_position",
+  largeLateAdd: "large_late_add",
   openPositionLeftover: "open_position_leftover",
   rapidFireExecution: "rapid_fire_execution_cluster",
   inconsistentShareSizing: "inconsistent_share_sizing",
   smallFirstRiskReduction: "small_first_risk_reduction",
   allOrNothingExitAfterManyAdds: "all_or_nothing_exit_after_many_adds",
+  losingReductionSequence: "losing_reduction_sequence",
 } as const;
 
 const STRENGTH_POINT_IDS = {
@@ -104,16 +107,43 @@ function uniqueSorted(values: string[]): string[] {
 }
 
 function toPointDigest(point: ExecutionFeedbackPoint): TraderAnalyticsPointDigest {
+  const behavior = mapUserFacingBehavior({
+    behaviorId: point.id,
+    rawLabel: point.label,
+    route: "/analytics",
+  });
+
   return {
     id: point.id,
     kind: point.kind,
     category: point.category,
-    label: point.label,
-    summary: point.summary,
+    label: behavior.label,
+    summary: behavior.canDrivePrimaryConclusion
+      ? behavior.plainExplanation
+      : behavior.unsupportedFallback,
+    behaviorState: behavior.state,
+    behaviorTone: behavior.tone,
+    opportunityType: behavior.opportunityType,
+    evidenceChannel: behavior.evidenceChannel,
+    canDrivePrimaryConclusion: behavior.canDrivePrimaryConclusion,
+    missingDataSentence: behavior.missingDataSentence,
+    fixFirstAction: behavior.fixFirstAction,
     severity: point.severity,
     confidence: point.confidence,
     priorityScore: point.priorityScore,
   };
+}
+
+function toPrimaryPointDigest(
+  point: ExecutionFeedbackPoint | null | undefined,
+): TraderAnalyticsPointDigest | null {
+  if (!point) {
+    return null;
+  }
+
+  const digest = toPointDigest(point);
+
+  return digest.canDrivePrimaryConclusion ? digest : null;
 }
 
 function isCompletedSummaryInput(
@@ -180,6 +210,10 @@ function buildPointCounts(args: {
 
       const existing = counts.get(point.id);
       const digest = toPointDigest(point);
+
+      if (!digest.canDrivePrimaryConclusion) {
+        continue;
+      }
 
       counts.set(point.id, {
         ...(existing && existing.priorityScore > digest.priorityScore
@@ -263,15 +297,9 @@ function buildTradeRows(
       reductionCount: summary.lifecycle.reductionCount,
       durationSeconds: summary.lifecycle.durationSeconds,
       adversePriceAddCount: summary.riskFacts.adversePriceAddCount,
-      primaryFocus: summary.points.primaryFocus
-        ? toPointDigest(summary.points.primaryFocus)
-        : null,
-      topRisk: summary.points.risks[0]
-        ? toPointDigest(summary.points.risks[0])
-        : null,
-      topStrength: summary.points.strengths[0]
-        ? toPointDigest(summary.points.strengths[0])
-        : null,
+      primaryFocus: toPrimaryPointDigest(summary.points.primaryFocus),
+      topRisk: toPrimaryPointDigest(summary.points.risks[0]),
+      topStrength: toPrimaryPointDigest(summary.points.strengths[0]),
       warnings: [...summary.warnings],
     };
   });
@@ -578,6 +606,10 @@ function buildExecutionBehaviorMetrics(
       summaries,
       RISK_POINT_IDS.inconsistentShareSizing,
     ),
+    largeLateAddTradeCount: countSummariesWithPoint(
+      summaries,
+      RISK_POINT_IDS.largeLateAdd,
+    ),
     smallFirstRiskReductionTradeCount: countSummariesWithPoint(
       summaries,
       RISK_POINT_IDS.smallFirstRiskReduction,
@@ -585,6 +617,10 @@ function buildExecutionBehaviorMetrics(
     allOrNothingExitAfterManyAddsTradeCount: countSummariesWithPoint(
       summaries,
       RISK_POINT_IDS.allOrNothingExitAfterManyAdds,
+    ),
+    losingReductionSequenceTradeCount: countSummariesWithPoint(
+      summaries,
+      RISK_POINT_IDS.losingReductionSequence,
     ),
   };
 }
@@ -668,14 +704,21 @@ function buildCategoryDistributions(
     }
 
     for (const point of summary.points.risks) {
-      update(point.category, "riskCount");
+      if (toPointDigest(point).canDrivePrimaryConclusion) {
+        update(point.category, "riskCount");
+      }
     }
 
     for (const point of summary.points.strengths) {
-      update(point.category, "strengthCount");
+      if (toPointDigest(point).canDrivePrimaryConclusion) {
+        update(point.category, "strengthCount");
+      }
     }
 
-    if (summary.points.primaryFocus) {
+    if (
+      summary.points.primaryFocus &&
+      toPointDigest(summary.points.primaryFocus).canDrivePrimaryConclusion
+    ) {
       update(summary.points.primaryFocus.category, "primaryFocusCount");
     }
   }

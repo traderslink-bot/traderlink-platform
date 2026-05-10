@@ -33,6 +33,21 @@ describe("trader review habit loop", () => {
   it("builds mistake-to-rule drafts without alternate P/L claims", () => {
     const { analytics } = buildAnalytics();
     const flow = analytics.reviewHabitLoop.mistakeRuleConversion;
+    const promptOnlyIds = new Set([
+      "chased_entry",
+      "revenge_reentry_cluster",
+      "early_winner_exit",
+      "partialed_without_plan",
+      "repeated_rule_violation",
+      "scaled_loser",
+      "add_after_adverse_move",
+    ]);
+    const visibleDraftCopy = flow.drafts.flatMap((draft) => [
+      draft.mistakeLabel,
+      draft.suggestedRuleTitle,
+      draft.reason,
+      draft.measurementMetric,
+    ]).join("\n");
 
     expect(flow.totalDrafts).toBeGreaterThan(0);
     expect(
@@ -43,6 +58,14 @@ describe("trader review habit loop", () => {
           draft.limitation.includes("does not estimate alternate P/L"),
       ),
     ).toBe(true);
+    expect(flow.drafts.some((draft) => promptOnlyIds.has(draft.taxonomyId))).toBe(
+      false,
+    );
+    expect(visibleDraftCopy).not.toMatch(/added after failed premise/i);
+    expect(visibleDraftCopy).not.toMatch(/\bpremise\b/i);
+    expect(visibleDraftCopy).not.toMatch(/revenge-like/i);
+    expect(visibleDraftCopy).not.toMatch(/chased entry/i);
+    expect(visibleDraftCopy).not.toMatch(/early winner exit/i);
   });
 
   it("builds a seven-step checklist for each latest-report trade", () => {

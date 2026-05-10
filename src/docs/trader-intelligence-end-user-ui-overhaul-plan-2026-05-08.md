@@ -2,7 +2,8 @@
 
 **Date:** 2026-05-08  
 **Branch:** `codex/trader-ui-product-pass`  
-**Status:** Next implementation roadmap  
+**Status:** Historical broad UI roadmap. Do not use as the current
+implementation plan; start from root `plan.md` and the plan index.
 **Primary goal:** Make Trader Intelligence feel clear, visual, useful, and human
 for newer traders while still giving intermediate and advanced users enough
 depth.

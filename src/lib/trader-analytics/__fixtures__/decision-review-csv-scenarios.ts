@@ -57,7 +57,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     broker: "generic_execution_csv",
     csvText: [
       "Date,Time,Symbol,Side,Quantity,Price",
-      "2024-04-12,09:33:30,ABCD,Buy,100,1.2692",
+      "2024-04-12,09:33:30,ABCD,Buy,100,1.2767",
       "2024-04-12,09:39:10,ABCD,Sell,100,1.2950",
     ].join("\n"),
     levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
@@ -67,7 +67,9 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
       "trade_window_excursion_measured",
     ],
     expectedMarketContextSource: "levels_system_daily_4h",
-    requiredHeadlineFragments: ["major daily/4h resistance with limited clean room"],
+    requiredHeadlineFragments: [
+      "major daily/4h resistance with limited room before resistance",
+    ],
     requiredTitleFragments: ["major daily/4h resistance"],
     requiredEvidenceFragments: [
       "nearestResistanceStrength=major",
@@ -80,7 +82,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     broker: "generic_execution_csv",
     csvText: [
       "Date,Time,Symbol,Side,Quantity,Price",
-      "2024-04-12,09:33:30,ABCD,Buy,100,1.2692",
+      "2024-04-12,09:33:30,ABCD,Buy,100,1.2767",
       "2024-04-12,09:39:10,ABCD,Sell,100,1.2350",
     ].join("\n"),
     levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
@@ -90,7 +92,9 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
       "trade_window_excursion_measured",
     ],
     expectedMarketContextSource: "levels_system_daily_4h",
-    requiredHeadlineFragments: ["major daily/4h resistance with limited clean room"],
+    requiredHeadlineFragments: [
+      "major daily/4h resistance with limited room before resistance",
+    ],
     requiredTitleFragments: ["major daily/4h resistance"],
     requiredEvidenceFragments: [
       "nearestResistanceStrength=major",
@@ -103,7 +107,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     broker: "generic_execution_csv",
     csvText: [
       "Date,Time,Symbol,Side,Quantity,Price",
-      "2024-04-12,09:33:30,ABCD,Buy,100,1.2692",
+      "2024-04-12,09:33:30,ABCD,Buy,100,1.2767",
       "2024-04-12,09:36:15,ABCD,Buy,100,1.2950",
       "2024-04-12,09:39:10,ABCD,Sell,200,1.3050",
     ].join("\n"),
@@ -117,7 +121,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     expectedMarketContextSource: "levels_system_daily_4h",
     requiredHeadlineFragments: [
       "major daily/4h resistance",
-      "limited clean room",
+      "limited room before resistance",
       "adds increased size after much of the move was already used",
     ],
     requiredTitleFragments: [
@@ -136,7 +140,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     broker: "generic_execution_csv",
     csvText: [
       "Date,Time,Symbol,Side,Quantity,Price",
-      "2024-04-12,09:33:30,ABCD,Buy,100,1.1650",
+      "2024-04-12,09:33:30,ABCD,Buy,100,1.1528",
       "2024-04-12,09:39:10,ABCD,Sell,100,1.2250",
     ].join("\n"),
     levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
@@ -148,7 +152,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     expectedMarketContextSource: "levels_system_daily_4h",
     requiredTitleFragments: ["daily/4h support"],
     requiredEvidenceFragments: [
-      "nearestSupportStrength=moderate",
+      "nearestSupportStrength=major",
       "distanceToSupport=0.24%",
     ],
   },
@@ -158,7 +162,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     broker: "generic_execution_csv",
     csvText: [
       "Date,Time,Symbol,Side,Quantity,Price",
-      "2024-04-12,09:33:30,ABCD,Buy,100,1.1650",
+      "2024-04-12,09:33:30,ABCD,Buy,100,1.1528",
       "2024-04-12,09:36:15,ABCD,Sell,50,1.2050",
       "2024-04-12,09:39:10,ABCD,Sell,50,1.2250",
     ].join("\n"),
@@ -171,7 +175,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     expectedMarketContextSource: "levels_system_daily_4h",
     requiredTitleFragments: ["daily/4h support"],
     requiredEvidenceFragments: [
-      "nearestSupportStrength=moderate",
+      "nearestSupportStrength=major",
       "distanceToSupport=0.24%",
     ],
   },

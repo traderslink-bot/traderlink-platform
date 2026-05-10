@@ -2,6 +2,9 @@
 
 Date: 2026-05-02
 
+Status: Historical product-expansion plan. Do not use as the current
+implementation plan; start from root `plan.md` and the plan index.
+
 ## Purpose
 
 This file is the working plan for the next end-user product layer on top of
@@ -375,7 +378,7 @@ Stop and update this file before proceeding if:
   - `GET /` returned `200` and linked to `/analytics`.
 - Current implementation pointer: complete.
 
-## Current Best Next Step
+## Historical Best Next Step
 
 The next real product step is choosing authenticated storage and wiring the
 repository boundary to it. Until that backend/auth choice is made, the
