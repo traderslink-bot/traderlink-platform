@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { buildSavedReviewQueueReadModel } from "../../src/lib/trader-analytics/server/saved-review-queue";
 import { buildSavedOrSampleTraderAnalyticsViewModel } from "../../src/lib/trader-analytics/server/saved-trader-analytics-data";
 import { buildLatestSavedImportSourceCautionReadModel } from "../../src/lib/trader-analytics/server/saved-import-source-caution";
+import { buildAnalyticsBehaviorReport } from "../../src/lib/trader-analytics/server/analytics-behavior-report";
 import { buildSavedTradeThreadReadModel } from "../../src/lib/trader-analytics/server/saved-trade-threads";
 import { AnalyticsClient } from "./analytics-client";
 
@@ -53,6 +54,7 @@ export default async function AnalyticsPage(props: {
     source: analyticsData.mode === "saved" ? "saved_sqlite" : "sample",
     trades: allTrades,
   });
+  const behaviorReport = buildAnalyticsBehaviorReport(tradeThreadModel);
   const tickerStoryPriority =
     tradeThreadModel.threads.find(
       (thread) => thread.storyKind === "profit_giveback",
@@ -171,6 +173,7 @@ export default async function AnalyticsPage(props: {
       savedReviewQueue={savedReviewQueue}
       importSourceCaution={importSourceCaution}
       isSamplePreview={analyticsData.mode === "sample"}
+      behaviorReport={behaviorReport}
       tickerStorySummary={tickerStorySummary}
       sessionStorySummary={sessionStorySummary}
     />

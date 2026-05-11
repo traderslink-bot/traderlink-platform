@@ -9,6 +9,9 @@ export interface CoachOverallFocusBehavior {
 
 export interface CoachOverallFocusSummary {
   evidenceCountLabel: string;
+  focusActionDetail: string;
+  focusActionLabel: string;
+  focusActionTone: "risk" | "review";
   impactLabel: string;
   label: string;
   nextAction: string;
@@ -153,6 +156,10 @@ export function buildCoachOverallFocusSummary(args: {
   if (!args.behavior) {
     return {
       evidenceCountLabel: "No saved evidence yet",
+      focusActionDetail:
+        "Save one broker CSV before the coach can choose a rule from your own trades.",
+      focusActionLabel: "Start here",
+      focusActionTone: "review",
       impactLabel:
         "Import and review more trades before the coach can measure a recurring behavior.",
       label: "Save trades to build a coaching focus",
@@ -171,8 +178,20 @@ export function buildCoachOverallFocusSummary(args: {
     typeof impact === "number" && impact < 0
       ? ` It is tied to ${signed(impact)} gross P/L in the current evidence set.`
       : typeof impact === "number" && impact > 0
-        ? ` The related trades are ${signed(impact)} gross P/L in the current evidence set, so review whether the behavior helped or simply appeared in winners.`
+        ? ` The related trades are ${signed(impact)} gross P/L in the current evidence set, so test whether the behavior helped or simply appeared in winners.`
         : "";
+  const focusActionLabel =
+    typeof impact === "number" && impact < 0
+      ? "Fix first"
+      : typeof impact === "number" && impact > 0
+        ? "Review first"
+        : "Rule to test";
+  const focusActionDetail =
+    typeof impact === "number" && impact < 0
+      ? `${signed(impact)} evidence P/L`
+      : typeof impact === "number" && impact > 0
+        ? `${signed(impact)} evidence P/L. Confirm whether this was useful before turning it into a rule.`
+        : "Impact needs review before the rule changes.";
   const tradeCount = Math.max(
     args.behavior.relatedTradeIds.length,
     args.behavior.frequency,
@@ -180,6 +199,9 @@ export function buildCoachOverallFocusSummary(args: {
 
   return {
     evidenceCountLabel: `${tradeCount} saved trade${tradeCount === 1 ? "" : "s"}`,
+    focusActionDetail,
+    focusActionLabel,
+    focusActionTone: focusActionLabel === "Fix first" ? "risk" : "review",
     impactLabel:
       impact === null || impact === 0
         ? "Impact needs review"

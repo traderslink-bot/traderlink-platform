@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import {
+  importCountLabel,
+  importStatusDetail,
+  importStatusLabel,
+  importStorageLabel,
+  importTradeDirectionLabel,
+} from "../../../src/lib/trader-analytics/product/import-user-copy";
 import { buildImportRecoveryReadModel } from "../../../src/lib/trader-analytics/server/import-recovery-read-model";
 import { SqliteImportCommitRepository } from "../../../src/lib/trader-analytics/product/import-commit/sqlite-import-commit-repository";
 import { ImportWorkflowStrip } from "../../import-workflow-strip";
@@ -42,12 +49,6 @@ function countBy(values: string[]): Record<string, number> {
   }, {});
 }
 
-function readableStatus(value: string): string {
-  return value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
 function readableDecisionReviewStatus(value: string): string {
   if (value === "completed") {
     return "Reviewed With Chart Context";
@@ -77,31 +78,14 @@ function readableDecisionReviewStatus(value: string): string {
 }
 
 function batchStateLabel(status: string): string {
-  return status === "committed"
-    ? "Saved import"
-    : status === "discarded"
-      ? "Discarded preview"
-      : readableStatus(status);
+  return importStatusLabel(status);
 }
 
 function batchStateDetail(status: string): string {
-  if (status === "committed") {
-    return "Saved trades are ready for review, analytics, and coaching.";
-  }
-
-  if (status === "ready_to_commit" || status === "ready_to_save") {
-    return "Import rows are ready to save after final review.";
-  }
-
-  if (status === "needs_repair" || status === "blocked_by_repairs") {
-    return "Repair the highlighted rows before saving this import.";
-  }
-
-  if (status === "discarded") {
-    return "This preview was discarded and should not drive coaching.";
-  }
-
-  return "Use the action panel to continue this import.";
+  return importStatusDetail(
+    status,
+    "Use the action panel to continue this import.",
+  );
 }
 
 function diagnosticGuidance(status: string): string {
@@ -178,7 +162,7 @@ export default async function ImportBatchPage({
   const workflowCurrentStep = batch.status === "committed" ? "review" : "recover";
   const workflowSummary =
     batch.status === "committed"
-      ? "This import is saved. Continue into saved trades, the review queue, analytics, or coach from the saved-output links below."
+      ? "This import is saved. Continue into saved trades, the review queue, analytics, or coach from the saved-data links below."
       : "This import is still in the save-or-repair step. Resolve the visible blocker, duplicate, or acknowledgement before moving into saved trade review.";
   const firstSavedTrade = plan.savedTrades[0] ?? null;
   const savedPrimaryLink =
@@ -208,7 +192,7 @@ export default async function ImportBatchPage({
       : [];
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-5 py-8 text-zinc-100 sm:px-8">
+    <main className="min-h-screen ti-dashboard-bg px-5 py-8 text-zinc-100 sm:px-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <header className="border-b border-zinc-800 pb-6">
           <Link className="text-sm text-sky-300 hover:text-sky-200" href="/imports">
@@ -228,7 +212,7 @@ export default async function ImportBatchPage({
         />
 
         <section
-          className="border border-zinc-800 bg-zinc-950 p-4"
+          className="ti-panel p-4"
           data-testid="import-batch-action-summary"
         >
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
@@ -250,7 +234,7 @@ export default async function ImportBatchPage({
                   {batch.acceptedExecutionCount} accepted executions
                 </span>
                 <span className="border border-zinc-800 bg-zinc-950 px-2 py-1 text-zinc-400">
-                  {plan.savedTrades.length} saved trade records
+                  {importCountLabel(plan.savedTrades.length, "saved trade")}
                 </span>
                 {recovery.duplicate.duplicateFile ? (
                   <span className="border border-amber-900 bg-amber-950/20 px-2 py-1 text-amber-300">
@@ -267,7 +251,7 @@ export default async function ImportBatchPage({
                 {recovery.primaryAction.label}
               </div>
               <div className="mt-1 text-xs leading-5 text-zinc-500">
-                {recovery.primaryAction.detail}
+                {importStorageLabel(recovery.primaryAction.detail)}
               </div>
               {savedPrimaryLink ? (
                 <Link
@@ -299,7 +283,7 @@ export default async function ImportBatchPage({
         </section>
 
         <section className="grid gap-4 md:grid-cols-4">
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
               Batch Status
             </div>
@@ -310,7 +294,7 @@ export default async function ImportBatchPage({
               {batchStateDetail(batch.status)}
             </div>
           </div>
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
               Executions
             </div>
@@ -318,7 +302,7 @@ export default async function ImportBatchPage({
               {batch.acceptedExecutionCount}
             </div>
           </div>
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
               Trades
             </div>
@@ -326,7 +310,7 @@ export default async function ImportBatchPage({
               {batch.requestCount}
             </div>
           </div>
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
               Review Snapshots
             </div>
@@ -334,7 +318,8 @@ export default async function ImportBatchPage({
               {decisionReviewSnapshots.length}
             </div>
             <div className="mt-1 text-xs text-zinc-500">
-              {decisionReviewJobs.length} review job(s), {decisionReviewDiagnostics.length} technical note(s)
+              {importCountLabel(decisionReviewJobs.length, "chart review item")},{" "}
+              {importCountLabel(decisionReviewDiagnostics.length, "technical note")}
             </div>
           </div>
         </section>
@@ -348,7 +333,7 @@ export default async function ImportBatchPage({
 
         <section className="grid gap-6 xl:grid-cols-2">
           <div
-            className="border border-zinc-800 bg-zinc-950 p-4"
+            className="ti-panel p-4"
             data-testid="decision-review-diagnostics"
             id="commit-decisions"
           >
@@ -363,7 +348,7 @@ export default async function ImportBatchPage({
             <div className="mt-4 grid gap-2">
               {decisionReviewJobs.length === 0 ? (
                 <div className="text-sm text-zinc-500">
-                  No decision-review jobs were created for this import.
+                  No chart review items were created for this import.
                 </div>
               ) : (
                 decisionReviewStatusOrder
@@ -372,7 +357,7 @@ export default async function ImportBatchPage({
                   <div key={status} className="border-t border-zinc-900 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <span className={`text-sm ${decisionReviewToneClass(status)}`}>
-                        {readableStatus(status)}
+                        {readableDecisionReviewStatus(status)}
                       </span>
                       <span className="font-mono text-xs text-sky-300">
                         {decisionReviewStatusCounts[status]}
@@ -422,7 +407,7 @@ export default async function ImportBatchPage({
           </div>
 
           <div
-            className="border border-zinc-800 bg-zinc-950 p-4"
+            className="ti-panel p-4"
             data-testid="import-batch-saved-trades"
           >
             <h2 className="text-sm font-semibold text-zinc-100">
@@ -435,7 +420,7 @@ export default async function ImportBatchPage({
             <div className="mt-4 grid gap-2">
               {plan.savedTrades.length === 0 ? (
                 <div className="text-sm text-zinc-500">
-                  No saved trade records are available for this import yet.
+                  No saved trades are available for this import yet.
                 </div>
               ) : (
                 plan.savedTrades.map((trade) => (
@@ -445,10 +430,10 @@ export default async function ImportBatchPage({
                     href={`/trades/${encodeURIComponent(trade.id)}`}
                   >
                     <div className="font-medium text-zinc-100">
-                      {trade.symbol} / {trade.tradeDirection}
+                      {trade.symbol} / {importTradeDirectionLabel(trade.tradeDirection)}
                     </div>
                     <div className="mt-1 text-xs text-zinc-500">
-                      {readableStatus(trade.lifecycleStatus)} /{" "}
+                      {importStatusLabel(trade.lifecycleStatus)} /{" "}
                       {trade.entryHourLabelEt}
                     </div>
                     <div className="mt-2 text-xs text-sky-300">
@@ -460,7 +445,7 @@ export default async function ImportBatchPage({
             </div>
           </div>
 
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <h2 className="text-sm font-semibold text-zinc-100">
               Import Decisions
             </h2>
@@ -471,13 +456,13 @@ export default async function ImportBatchPage({
             <div className="mt-4 grid gap-2">
               {plan.requiredDecisions.length === 0 ? (
                 <div className="text-sm text-emerald-300">
-                  No unresolved commit decisions.
+                  No unresolved save decisions.
                 </div>
               ) : (
                 plan.requiredDecisions.map((decision) => (
                   <div key={decision.id} className="border-t border-zinc-900 py-3">
                     <div className={toneClass(decision.severity)}>
-                      {readableStatus(decision.kind)}
+                      {importStatusLabel(decision.kind)}
                     </div>
                     <div className="mt-1 text-xs text-zinc-500">
                       {decision.message}

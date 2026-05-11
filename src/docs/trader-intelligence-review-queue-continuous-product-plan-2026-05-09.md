@@ -226,6 +226,10 @@ Completed enough to avoid duplicate work:
   relevant to the trade.
 - The review work order includes the progress/coach loop instead of ending at
   the queue.
+- Mobile queue tabs are now compacted into two columns.
+- The saved review queue now shows the first 6 cards in the active lane with
+  first-batch copy, so the page feels like a work queue instead of another long
+  dashboard.
 
 Do not rebuild in the next run:
 
@@ -234,12 +238,13 @@ Do not rebuild in the next run:
 - base saved queue card shape,
 - chart-evidence handoff link,
 - session-story handoff,
-- completed coach/progress review loop.
+- completed coach/progress review loop,
+- mobile queue-tab compaction,
+- first-batch queue-card limit.
 
 Best next review-queue work:
 
 - add session/date labels only if the current read model exposes them safely,
-- reduce mobile tab/card density if screenshot QA shows crowding,
 - fix broken or missing anchors to replay, writing, chart evidence, or coach,
 - add queue reasons only for newly certified evidence families,
 - keep diagnostics collapsed.

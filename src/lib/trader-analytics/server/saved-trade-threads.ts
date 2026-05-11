@@ -5,6 +5,7 @@ import type {
 import {
   mapDecisionReviewInsightForUser,
 } from "../../user-facing-behavior";
+import { userFacingTradeSymbol } from "../product/trade-display-copy";
 import type {
   UserFacingBehaviorEvidenceChannel,
   UserFacingBehaviorOpportunityType,
@@ -1362,7 +1363,7 @@ function buildSessionStory(args: {
     evidence.push({
       id: "session-same-symbol-many-attempts",
       title: "One ticker had multiple attempts",
-      detail: `${sameSymbolThread.symbol} had ${sameSymbolThread.roundTripCount} round trips for ${formatSigned(sameSymbolThread.totalGrossRealizedPnl)}.`,
+      detail: `${userFacingTradeSymbol(sameSymbolThread.symbol)} had ${sameSymbolThread.roundTripCount} round trips for ${formatSigned(sameSymbolThread.totalGrossRealizedPnl)}.`,
       reviewAction:
         "Separate fresh setups from attempts to remake the same move.",
       evidenceSource: "saved same-symbol round trips",
@@ -1472,7 +1473,7 @@ function buildSessionStory(args: {
     evidence.push({
       id: "session-best-thread",
       title: "Best ticker story",
-      detail: `${bestThread.symbol} contributed ${formatSigned(bestThread.totalGrossRealizedPnl)}.`,
+      detail: `${userFacingTradeSymbol(bestThread.symbol)} contributed ${formatSigned(bestThread.totalGrossRealizedPnl)}.`,
       reviewAction:
         "Write down what was repeatable in this ticker story before reviewing the weaker spots.",
       evidenceSource: "saved P/L by ticker story",
@@ -1484,7 +1485,7 @@ function buildSessionStory(args: {
     evidence.push({
       id: "session-worst-thread",
       title: "Weakest ticker story",
-      detail: `${worstThread.symbol} finished ${formatSigned(worstThread.totalGrossRealizedPnl)}.`,
+      detail: `${userFacingTradeSymbol(worstThread.symbol)} finished ${formatSigned(worstThread.totalGrossRealizedPnl)}.`,
       reviewAction:
         "Open this ticker story and compare its entries, exits, adds, and re-entries to the session plan.",
       evidenceSource: "saved P/L by ticker story",
@@ -1508,7 +1509,7 @@ function buildSessionStory(args: {
     same_symbol_many_attempts: {
       storyLabel: "Many attempts on one ticker",
       storyDetail: sameSymbolThread
-        ? `${sameSymbolThread.symbol} had ${sameSymbolThread.roundTripCount} round trips, so review whether later entries were fresh setups or repeat attempts.`
+        ? `${userFacingTradeSymbol(sameSymbolThread.symbol)} had ${sameSymbolThread.roundTripCount} round trips, so review whether later entries were fresh setups or repeat attempts.`
         : "A same-symbol thread needs review before using the session result as the whole story.",
       reviewPrompt:
         "Compare the first entry with each later re-entry and mark which ones had a fresh reason.",

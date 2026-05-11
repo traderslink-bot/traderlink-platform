@@ -55,11 +55,20 @@ const CONFUSING_PRIMARY_UI_PHRASES = [
   "risk-backed",
   "strength-backed",
   "volume note",
+  "ready_to_save",
+  "ready_to_commit",
+  "analysis_failed",
+  "market_context_unavailable",
+  "saved_sqlite",
+  "local sqlite",
+  "commit readiness",
+  "review job",
 ];
 
 const ROUTE_SMOKE_TARGETS = [
   { path: "/", heading: "TradersLink Trading Tools" },
   { path: "/trader-intelligence", heading: "Trader Intelligence Trade Review" },
+  { path: "/workspace", heading: "Trader Workspace" },
   { path: "/analytics", heading: "Trading Performance Dashboard" },
   { path: "/imports", heading: shell.importReview.title },
   { path: "/import-dry-run", heading: "Import Trades" },
@@ -86,12 +95,14 @@ const ROUTE_SMOKE_TARGETS = [
 ] as const;
 
 const CORE_PRODUCT_ROUTES = [
+  { path: "/workspace", heading: "Trader Workspace" },
   { path: "/analytics", heading: "Trading Performance Dashboard" },
   { path: "/coach", heading: "Your Trading Coach" },
   { path: "/trades", heading: "Saved Trades" },
   { path: "/review", heading: shell.guidedReview.title },
   { path: "/progress", heading: "Trader Progress" },
   { path: "/import-dry-run", heading: "Import Trades" },
+  { path: "/imports", heading: shell.importReview.title },
   { path: "/trader-intelligence", heading: "Trader Intelligence Trade Review" },
 ] as const;
 
@@ -200,6 +211,35 @@ async function assertNoPageOverflow(page: Page, path: string): Promise<void> {
   ).toBeLessThanOrEqual(dimensions.clientWidth + 2);
 }
 
+async function assertNoLargeOldDarkCards(page: Page, path: string): Promise<void> {
+  const darkCards = await page.locator("main section, main div, main aside, main a").evaluateAll(
+    (elements) =>
+      elements
+        .map((element) => {
+          const style = window.getComputedStyle(element);
+          const rect = element.getBoundingClientRect();
+          return {
+            area: Math.round(rect.width * rect.height),
+            background: style.backgroundColor,
+            text: (element.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 80),
+          };
+        })
+        .filter(
+          (item) =>
+            item.area > 12000 &&
+            item.text.length > 35 &&
+            [
+              "rgb(2, 6, 23)",
+              "rgb(9, 9, 11)",
+              "rgb(10, 10, 10)",
+              "rgb(24, 24, 27)",
+            ].includes(item.background),
+        ),
+  );
+
+  expect(darkCards, `Old near-black dashboard cards on ${path}`).toEqual([]);
+}
+
 async function visitAndAssertRoute(
   page: Page,
   path: string,
@@ -282,7 +322,7 @@ test.describe("app feature regression", () => {
         path: "/import-dry-run",
         heading: "Import Trades",
         testId: "import-workflow-strip",
-        text: "Upload executions",
+        text: "Upload CSV",
       },
       {
         path: "/imports",
@@ -320,6 +360,44 @@ test.describe("app feature regression", () => {
       await visitAndAssertRoute(page, step.path, step.heading);
       await expect(page.getByTestId(step.testId)).toContainText(step.text);
       await assertNoPageOverflow(page, step.path);
+    }
+
+    assertNoProblems();
+  });
+
+  test("keeps workspace and coach on the updated dashboard surface", async ({
+    page,
+  }, testInfo) => {
+    test.skip(!isDesktopProject(testInfo), "visual surface scan runs on desktop");
+    const assertNoProblems = collectPageProblems(page);
+
+    for (const route of [
+      { path: "/workspace", heading: "Trader Workspace" },
+      { path: "/coach", heading: "Your Trading Coach" },
+    ]) {
+      await visitAndAssertRoute(page, route.path, route.heading);
+      await expect(page.locator("main")).toHaveClass(/ti-dashboard-bg/);
+      await assertNoLargeOldDarkCards(page, route.path);
+      await expect(page.locator("body")).not.toContainText("Local SQLite");
+      await expect(page.locator("body")).not.toContainText("committed");
+
+      if (route.path === "/workspace") {
+        const reviewTile = page
+          .getByTestId("workspace-primary-actions")
+          .getByRole("link", { name: /Review next trade/ });
+        await expect(reviewTile).toHaveAttribute(
+          "href",
+          /#writing-flow|\/review\?queue=highest_priority/,
+        );
+        await expect(page.getByRole("link", { exact: true, name: "Session Recap" })).toHaveCount(0);
+        await expect(page.getByRole("link", { exact: true, name: "Compare Trades" })).toHaveCount(0);
+        await expect(page.getByRole("link", { exact: true, name: "Onboarding" })).toHaveCount(0);
+        await expect(page.getByText("Trade review workflow", { exact: true })).toBeVisible();
+        await expect(page.getByText("More review tools", { exact: true })).toBeVisible();
+        await expect(page.getByText("Beta storage and admin notes", { exact: true })).toBeVisible();
+        await expect(page.getByText("Current Beta Boundary", { exact: true })).toHaveCount(0);
+        await expect(page.getByText("Internal tools", { exact: true })).toHaveCount(0);
+      }
     }
 
     assertNoProblems();
@@ -528,6 +606,24 @@ test.describe("app feature regression", () => {
     await expect(page.getByTestId("analytics-story-panel")).toContainText(
       "What happened in this trade set",
     );
+    await expect(page.getByTestId("analytics-behavior-report")).toContainText(
+      "Behavior Report",
+    );
+    await expect(page.getByTestId("analytics-behavior-report")).toContainText(
+      "Entries Near Resistance",
+    );
+    await expect(page.getByTestId("analytics-behavior-report")).toContainText(
+      "Support-Based Entries",
+    );
+    await expect(page.getByTestId("analytics-behavior-report")).toContainText(
+      "Chase And Extension Review",
+    );
+    await expect(page.getByTestId("analytics-behavior-report")).toContainText(
+      "Dip-Buy And Add Review",
+    );
+    await expect(page.getByTestId("analytics-behavior-report")).toContainText(
+      "Profit Protection",
+    );
     await expect(page.getByTestId("analytics-ticker-story-panel")).toContainText(
       "Ticker Story Analytics",
     );
@@ -539,6 +635,9 @@ test.describe("app feature regression", () => {
     );
     await expect(page.getByTestId("analytics-ticker-story-panel")).toContainText(
       "Support/Resistance Exits",
+    );
+    await expect(page.getByTestId("analytics-ticker-story-panel")).toContainText(
+      "Show chart evidence counts",
     );
     await expect(page.getByTestId("analytics-session-story-panel")).toContainText(
       "Session Story Analytics",
@@ -597,13 +696,7 @@ test.describe("app feature regression", () => {
       "Check whether re-entries helped or hurt the first idea.",
       "Review the full trading day, not only one trade.",
       "Work the evidence queue after the focus is clear.",
-      "Repeat Pattern",
-      "Proof Queue",
-      "Evidence Cards To Open",
-      "Session Timing",
-      "Session Prep",
-      "Do This Now",
-      "Behavior Impact",
+      "Use the coaching focus before the next session.",
     ]) {
       await expect(
         page.getByRole("heading", { exact: true, name: heading }),
@@ -623,6 +716,21 @@ test.describe("app feature regression", () => {
     );
     await expect(page.getByTestId("coach-review-backlog-preview")).toContainText(
       "Trades To Review Next",
+    );
+    await expect(page.getByTestId("coach-behavior-report")).toContainText(
+      "Behavior Coaching Map",
+    );
+    await expect(page.getByTestId("coach-behavior-report")).toContainText(
+      "Fix first",
+    );
+    await expect(page.getByTestId("coach-behavior-report")).toContainText(
+      "Repeat first",
+    );
+    await expect(page.getByTestId("coach-behavior-report")).toContainText(
+      "Entries Near Resistance",
+    );
+    await expect(page.getByTestId("coach-behavior-report")).toContainText(
+      "Dip-Buy And Add Review",
     );
     await expect(page.getByTestId("coach-ticker-story-panel")).toContainText(
       "Ticker Story Coach",
@@ -648,8 +756,16 @@ test.describe("app feature regression", () => {
     await expect(page.locator("body")).not.toContainText("Today's review card");
     await expect(page.locator("body")).not.toContainText("What to work on today");
     await expect(
-      page.getByText("Supporting coach details", { exact: true }),
+      page.getByText("More coach evidence, queue totals, and rule checks", {
+        exact: true,
+      }),
     ).toBeVisible();
+    await expect(page.getByTestId("coach-next-session-plan")).toContainText(
+      "Rule To Use",
+    );
+    await expect(page.getByTestId("coach-next-session-plan")).toContainText(
+      "Quick Checklist",
+    );
     await expect(page.getByTestId("coach-featured-trade-session")).toContainText(
       /Main behavior|Import a broker CSV/,
     );
@@ -662,12 +778,18 @@ test.describe("app feature regression", () => {
     await expect(page.getByTestId("coach-featured-trade-session")).toContainText(
       "Fix first",
     );
+    await expect(page.getByTestId("coach-featured-trade-session")).toContainText(
+      "What happened",
+    );
+    await expect(page.getByTestId("coach-featured-trade-session")).toContainText(
+      "What to do next",
+    );
     await expect(page.getByTestId("coach-guided-session")).toContainText(
       "Work the focus, then prove it with trades.",
     );
     const coachPrimaryHref = await page
       .getByTestId("coach-primary-action")
-      .getByRole("link", { name: /Open best evidence trade|Import trades/ })
+      .getByRole("link", { name: /Open evidence trade|Import trades/ })
       .getAttribute("href");
     expect(coachPrimaryHref).toBeTruthy();
     if (coachPrimaryHref?.startsWith("/trades/")) {
@@ -790,11 +912,18 @@ test.describe("app feature regression", () => {
     await expect(page.getByTestId("saved-trade-browse-modes")).toContainText(
       "flat-to-flat trade",
     );
+    await expect(page.getByTestId("saved-trades-workflow")).toContainText(
+      "Browse saved trades without losing the review path",
+    );
+    await expect(page.getByTestId("saved-trades-workflow")).toContainText(
+      "Open workspace",
+    );
     await expect(
       page.getByRole("heading", { exact: true, name: "Find Saved Trades" }),
     ).toBeVisible();
     await expect(page.locator("body")).toContainText("Open review queue");
     await expect(page.locator("body")).toContainText("All Saved Trades");
+    await expect(page.locator("#trade-list")).toContainText("Showing cards");
 
     await page.goto("/trades?view=ticker_stories#ticker-stories");
     await expect(page.getByTestId("saved-trade-thread-stories")).toContainText(
@@ -863,6 +992,12 @@ test.describe("app feature regression", () => {
     expect(replayHref).toContain("#execution");
     await page.goto(reviewHref!);
     await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("trade-detail-workflow-handoff")).toContainText(
+      "Review this trade in one clear loop",
+    );
+    await expect(page.getByTestId("trade-detail-workflow-handoff")).toContainText(
+      "Replay executions",
+    );
     await expect(page.getByTestId("trade-review-writing-flow")).toContainText(
       "Behavior to name",
     );
@@ -878,6 +1013,9 @@ test.describe("app feature regression", () => {
     await expect(page.getByTestId("trade-visual-replay")).toBeVisible();
     await expect(page.getByTestId("trade-position-progression")).toContainText(
       "Realized P/L path",
+    );
+    await expect(page.getByTestId("trade-supporting-details")).toContainText(
+      "More evidence, comparisons, and writing prompts",
     );
     await expect(page.getByTestId("persisted-review-actions")).toContainText(
       "Write The Review Note",
@@ -1055,7 +1193,12 @@ test.describe("app feature regression", () => {
 
     for (const route of CORE_PRODUCT_ROUTES) {
       await visitAndAssertRoute(page, route.path, route.heading);
-      const body = lowerBodyText(await page.locator("body").innerText());
+      const rawBody = await page.locator("body").innerText();
+      const body = lowerBodyText(rawBody);
+      expect(
+        rawBody,
+        `Import-id-like trade label appeared on ${route.path}`,
+      ).not.toMatch(/\b[A-Z]\d{5,}[A-Z]+\b/);
       for (const phrase of BANNED_PRODUCT_PHRASES) {
         expect(body, `Banned phrase appeared on ${route.path}: ${phrase}`).not.toContain(
           phrase,

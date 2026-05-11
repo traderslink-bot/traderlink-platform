@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { importStatusLabel } from "../../../src/lib/trader-analytics/product/import-user-copy";
 import type {
   ImportRecoveryAction,
   ImportRecoveryReadModel,
@@ -28,12 +29,6 @@ function statusTone(status: ImportRecoveryReadModel["status"]): string {
       : status === "discarded"
         ? "text-zinc-400"
         : "text-amber-300";
-}
-
-function readableStatus(value: string): string {
-  return value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export function ImportRecoveryActions({
@@ -112,7 +107,7 @@ export function ImportRecoveryActions({
 
   return (
     <section
-      className="border border-zinc-800 bg-zinc-950 p-4"
+      className="ti-panel p-4"
       data-testid="import-recovery-actions"
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -124,7 +119,7 @@ export function ImportRecoveryActions({
             {recovery.title}
           </h2>
           <div className="mt-1 text-xs uppercase tracking-wide text-zinc-500">
-            {readableStatus(recovery.status)}
+            {importStatusLabel(recovery.status)}
           </div>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
             {recovery.detail}
@@ -174,7 +169,7 @@ export function ImportRecoveryActions({
             Duplicate Review Details
           </h3>
           <p className="mt-1 text-xs leading-5 text-zinc-500">
-            Duplicate matches are review blocks. Use the original committed
+            Duplicate matches are review blocks. Use the original saved
             import or existing saved trade unless there is a deliberate reason
             to re-import.
           </p>
@@ -184,11 +179,11 @@ export function ImportRecoveryActions({
                 className="text-sky-300 hover:text-sky-200"
                 href={recovery.duplicate.originalBatchHref}
               >
-                Original committed import: {recovery.duplicate.originalBatchId}
+                Original saved import: {recovery.duplicate.originalBatchId}
               </Link>
             ) : recovery.duplicate.duplicateFile ? (
               <div className="text-amber-300">
-                File fingerprint matched a committed import, but the original
+                File fingerprint matched a saved import, but the original
                 batch could not be linked.
               </div>
             ) : null}
@@ -198,7 +193,7 @@ export function ImportRecoveryActions({
                 href={trade.href}
                 key={trade.id}
               >
-                Existing trade: {trade.symbol} / {trade.lifecycleStatus} /{" "}
+                Existing trade: {trade.symbol} / {importStatusLabel(trade.lifecycleStatus)} /{" "}
                 {trade.openedAt.slice(0, 10)}
               </Link>
             ))}

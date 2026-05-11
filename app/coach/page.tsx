@@ -8,8 +8,10 @@ import {
   WorkflowHandoffPanel,
   withPageAnchor,
 } from "../app-ui";
+import { BehaviorReportPanel } from "../behavior-report-panel";
 import { SavedReviewQueueSummary } from "../saved-review-queue-summary";
 import { SavedImportSourceCaution } from "../saved-import-source-caution";
+import { buildAnalyticsBehaviorReport } from "../../src/lib/trader-analytics/server/analytics-behavior-report";
 import { buildSavedReviewQueueReadModel } from "../../src/lib/trader-analytics/server/saved-review-queue";
 import type { SavedReviewQueueItem } from "../../src/lib/trader-analytics/server/saved-review-queue";
 import { buildLatestSavedImportSourceCautionReadModel } from "../../src/lib/trader-analytics/server/saved-import-source-caution";
@@ -24,6 +26,7 @@ import {
   type CoachProgressFollowThroughSummary,
   type CoachProgressFollowThroughTone,
 } from "../../src/lib/trader-analytics/product/coach-overall-focus";
+import { userFacingTradeSymbol } from "../../src/lib/trader-analytics/product/trade-display-copy";
 
 type SavedTradeThread = ReturnType<typeof buildSavedTradeThreadReadModel>["threads"][number];
 type SavedTradeSessionStory = ReturnType<
@@ -324,7 +327,9 @@ function TickerStoryCoachPanel({
             <div className="text-xs font-semibold uppercase tracking-wide opacity-80">
               Story to review
             </div>
-            <div className="mt-2 text-2xl font-semibold">{thread.symbol}</div>
+            <div className="mt-2 text-2xl font-semibold">
+              {userFacingTradeSymbol(thread.symbol)}
+            </div>
             <div className="mt-1 text-sm opacity-90">
               {thread.roundTripCount} round trips /{" "}
               {signed(thread.totalGrossRealizedPnl)}
@@ -619,8 +624,10 @@ function CoachSessionBriefPanel({
   evidenceLabel,
   evidenceSummary,
   fixFirst,
+  focusActionDetail,
+  focusActionLabel,
+  focusActionTone,
   hasSavedTrade,
-  impactSummary,
   repeatCheck,
   reviewHref,
   sampleWarning,
@@ -635,8 +642,10 @@ function CoachSessionBriefPanel({
   evidenceLabel: string;
   evidenceSummary: string;
   fixFirst: string;
+  focusActionDetail: string;
+  focusActionLabel: string;
+  focusActionTone: "risk" | "review";
   hasSavedTrade: boolean;
-  impactSummary: string;
   repeatCheck: string;
   reviewHref: string;
   sampleWarning: string;
@@ -691,10 +700,11 @@ function CoachSessionBriefPanel({
             tone: "text-sky-700",
           },
           {
-            label: "Fix first",
+            label: focusActionLabel,
             value: fixFirst,
-            detail: impactSummary,
-            tone: "text-rose-700",
+            detail: focusActionDetail,
+            tone:
+              focusActionTone === "risk" ? "text-rose-700" : "text-amber-700",
           },
           {
             label: "Progress Follow-Through",
@@ -777,7 +787,7 @@ function TradesToReviewNextPanel({
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-base font-semibold text-zinc-50">
-                      {item.symbol}
+                      {userFacingTradeSymbol(item.symbol)}
                     </span>
                     <span
                       className={`font-mono text-sm ${
@@ -1108,6 +1118,128 @@ function CoachProgressFollowThroughPanel({
   );
 }
 
+function CoachNextSessionPlanPanel({
+  avoidBehavior,
+  checklist,
+  primaryActionDetail,
+  primaryActionHref,
+  primaryActionLabel,
+  repeatBehavior,
+  ruleFocus,
+  sessionTimeInsight,
+}: {
+  avoidBehavior: string;
+  checklist: string[];
+  primaryActionDetail: string;
+  primaryActionHref: string;
+  primaryActionLabel: string;
+  repeatBehavior: string;
+  ruleFocus: string;
+  sessionTimeInsight: string;
+}) {
+  const visibleChecklist = checklist.slice(0, 4);
+
+  return (
+    <section
+      id="next-session-plan"
+      className="ti-coach-brief p-5 sm:p-6"
+      data-testid="coach-next-session-plan"
+    >
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Before Next Session
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold text-slate-950">
+            Use the coaching focus before the next session.
+          </h2>
+          <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-600">
+            Keep the plan small: one rule to follow, one behavior to reduce, and
+            one strength to repeat. The detailed charts stay below as supporting
+            evidence.
+          </p>
+        </div>
+        <Link
+          className="inline-flex items-center justify-center rounded-md border border-slate-950 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+          href={primaryActionHref}
+        >
+          {primaryActionLabel}
+        </Link>
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-4">
+        <div className="ti-coach-brief-cell">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Rule To Use
+          </div>
+          <div className="mt-2 text-sm font-semibold leading-6 text-sky-700">
+            {ruleFocus}
+          </div>
+        </div>
+        <div className="ti-coach-brief-cell">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Reduce
+          </div>
+          <div className="mt-2 text-sm font-semibold leading-6 text-rose-700">
+            {avoidBehavior}
+          </div>
+        </div>
+        <div className="ti-coach-brief-cell">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Repeat
+          </div>
+          <div className="mt-2 text-sm font-semibold leading-6 text-emerald-700">
+            {repeatBehavior}
+          </div>
+        </div>
+        <div className="ti-coach-brief-cell">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Timing Check
+          </div>
+          <div className="mt-2 text-sm font-semibold leading-6 text-amber-700">
+            {sessionTimeInsight}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.35fr)]">
+        <div className="ti-coach-brief-cell">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Quick Checklist
+          </div>
+          <div className="mt-3 grid gap-2">
+            {visibleChecklist.length === 0 ? (
+              <div className="text-sm leading-6 text-slate-500">
+                Save more reviewed trades to build a personal checklist.
+              </div>
+            ) : (
+              visibleChecklist.map((item) => (
+                <div
+                  className="border-t border-slate-200 pt-2 text-sm leading-6 text-slate-700"
+                  key={item}
+                >
+                  {item}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+        <div className="ti-coach-brief-cell">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Next Action
+          </div>
+          <div className="mt-2 text-sm font-semibold leading-6 text-slate-900">
+            {primaryActionLabel}
+          </div>
+          <div className="mt-2 text-xs leading-5 text-slate-500">
+            {primaryActionDetail}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function CoachPage() {
   const analyticsData = buildSavedOrSampleTraderAnalyticsViewModel();
   const analytics = analyticsData.viewModel;
@@ -1139,6 +1271,7 @@ export default function CoachPage() {
     source: analyticsData.mode === "saved" ? "saved_sqlite" : "sample",
     trades: savedTradesForProgress,
   });
+  const behaviorReport = buildAnalyticsBehaviorReport(tradeThreadModel);
   const priorityTickerStory = choosePriorityTickerStory(tradeThreadModel.threads);
   const prioritySessionStory = choosePrioritySessionStory(
     tradeThreadModel.sessionStories,
@@ -1213,10 +1346,11 @@ export default function CoachPage() {
   const sessionBehaviorExplanation = overallFocus.plainExplanation;
   const sessionWhyItMatters = overallFocus.whyItMatters;
   const evidenceSummary = overallFocus.evidenceCountLabel;
-  const impactSummary = overallFocus.impactLabel;
   const sampleWarning = overallFocus.sampleWarning;
+  const primaryEvidenceDisplayName =
+    userFacingTradeSymbol(primaryEvidenceItem?.symbol);
   const sessionTradeTitle = primaryEvidenceItem
-    ? `${primaryEvidenceItem.symbol} evidence trade`
+    ? `${primaryEvidenceDisplayName} evidence trade`
     : "Import a broker CSV to start coaching";
   const sessionTradeDetail = primaryEvidenceItem
     ? `Use this trade to prove or reject the current focus. ${primaryEvidenceItem.stateDetail}`
@@ -1224,7 +1358,7 @@ export default function CoachPage() {
   const coachPageTitle = "Your Trading Coach";
   const repeatCheck = coachProgress.trendLabel;
   const evidenceLabel = primaryEvidenceItem
-    ? `${primaryEvidenceItem.symbol} / ${signed(primaryEvidenceItem.grossRealizedPnl)}`
+    ? `${primaryEvidenceDisplayName} / ${signed(primaryEvidenceItem.grossRealizedPnl)}`
     : "No saved trade yet";
 
   return (
@@ -1252,7 +1386,7 @@ export default function CoachPage() {
               className="border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
               href={reviewWritingHref}
             >
-              {primaryEvidenceItem ? "Open best evidence trade" : "Import trades"}
+              {primaryEvidenceItem ? "Open evidence trade" : "Import trades"}
             </Link>
           </div>
           <div className="mt-5 flex flex-wrap gap-2 text-xs uppercase tracking-wide">
@@ -1280,7 +1414,12 @@ export default function CoachPage() {
               {
                 href: "#coaching-session",
                 label: "Review Session",
-                summary: "Understand why it mattered, then use the evidence trade.",
+                summary: "Understand why it mattered, then review the evidence trade.",
+              },
+              {
+                href: "#behavior-map",
+                label: "Behavior Map",
+                summary: "Chart-backed groups for what to fix, repeat, or review.",
               },
               {
                 href: "#review-backlog",
@@ -1298,19 +1437,19 @@ export default function CoachPage() {
                 summary: "Full-day review for green-to-red, high activity, and hold exposure.",
               },
               {
+                href: "#next-session-plan",
+                label: "Next Session",
+                summary: "One rule, one behavior to reduce, and one strength to repeat.",
+              },
+              {
                 href: "#progress-follow-through",
                 label: "Progress",
                 summary: "What must be reviewed before progress means anything.",
               },
               {
-                href: "#evidence",
-                label: "Evidence",
-                summary: "Queue items, patterns, and behavior proof.",
-              },
-              {
                 href: "#advanced",
-                label: "Advanced",
-                summary: "Rule tests and confidence wording.",
+                label: "More Details",
+                summary: "Supporting charts, queue totals, and rule checks.",
               },
             ]}
             summary="Use this as a coaching workspace instead of scrolling every panel."
@@ -1319,15 +1458,17 @@ export default function CoachPage() {
             <div id="next-action">
               <CoachSessionBriefPanel
                 actionHref={reviewWritingHref}
-                actionLabel={primaryEvidenceItem ? "Open best evidence trade" : "Import trades"}
+                actionLabel={primaryEvidenceItem ? "Open evidence trade" : "Import trades"}
                 behaviorLabel={sessionBehaviorLabel}
                 dataLabel={dataLabel}
                 evidenceHref={reviewReplayHref}
                 evidenceLabel={evidenceLabel}
                 evidenceSummary={evidenceSummary}
                 fixFirst={prep.ruleFocus}
+                focusActionDetail={overallFocus.focusActionDetail}
+                focusActionLabel={overallFocus.focusActionLabel}
+                focusActionTone={overallFocus.focusActionTone}
                 hasSavedTrade={Boolean(primaryEvidenceItem)}
-                impactSummary={impactSummary}
                 repeatCheck={repeatCheck}
                 reviewHref="/review?queue=highest_priority"
                 sampleWarning={sampleWarning}
@@ -1359,7 +1500,9 @@ export default function CoachPage() {
                     : "Save one broker CSV before the coach can use your own trades.",
                   href: reviewWritingHref,
                   label: "2. Evidence",
-                  title: primaryEvidenceItem ? primaryEvidenceItem.symbol : "Saved import needed",
+                  title: primaryEvidenceItem
+                    ? primaryEvidenceDisplayName
+                    : "Saved import needed",
                   tone: "warning",
                 },
                 {
@@ -1380,7 +1523,7 @@ export default function CoachPage() {
                 },
               ]}
               testId="coach-workflow-handoff"
-              title="Overall coach -> evidence trade -> review queue -> progress"
+              title="Overall coaching workflow"
             />
 
         <section
@@ -1416,12 +1559,12 @@ export default function CoachPage() {
                 actionLabel={primaryEvidenceItem ? "Replay trade" : "Import trades"}
                 body={
                   primaryEvidenceItem
-                    ? `Use ${primaryEvidenceItem.symbol} as evidence. Watch the executions first so the coaching starts from what actually happened.`
+                    ? `Use ${primaryEvidenceDisplayName} as evidence. Watch the executions first so the coaching starts from what actually happened.`
                     : "Save one broker CSV before the coach can use your own trades."
                 }
                 label="Start here"
                 step={1}
-                title="Open the best evidence trade"
+                title="Open the evidence trade"
               />
               <CoachStepCard
                 actionHref="#main-behavior"
@@ -1434,17 +1577,29 @@ export default function CoachPage() {
               />
               <CoachStepCard
                 actionHref="#fix-first"
-                actionLabel="Create rule"
-                body={prep.avoidBehavior}
-                label="Fix first"
+                actionLabel={
+                  overallFocus.focusActionLabel === "Fix first"
+                    ? "Create rule"
+                    : "Test rule"
+                }
+                body={
+                  overallFocus.focusActionLabel === "Fix first"
+                    ? prep.avoidBehavior
+                    : overallFocus.focusActionDetail
+                }
+                label={overallFocus.focusActionLabel}
                 step={3}
-                title="Choose one rule for next session"
+                title={
+                  overallFocus.focusActionLabel === "Fix first"
+                    ? "Choose one rule for next session"
+                    : "Check the evidence before changing rules"
+                }
                 tone="warning"
               />
               <CoachStepCard
                 actionHref="/progress"
                 actionLabel="Check progress"
-                body="After reviews are saved, check whether the same behavior is showing up less often."
+                body="After reviews are saved, check whether the focus is improving, staying the same, or needs more review."
                 label="Follow through"
                 step={4}
                 title="Track the behavior"
@@ -1521,11 +1676,23 @@ export default function CoachPage() {
                       }
                       key={card.id}
                     >
-                      <div className="text-sm font-medium text-zinc-200">
-                        {card.title}
+                      <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                        What happened
+                      </div>
+                      <div className="mt-1 text-sm font-medium text-zinc-200">
+                        {card.whatHappened}
+                      </div>
+                      <div className="mt-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                        Why it mattered
                       </div>
                       <div className="mt-1 text-xs leading-5 text-zinc-500">
                         {card.whyItMatters}
+                      </div>
+                      <div className="mt-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                        What to do next
+                      </div>
+                      <div className="mt-1 text-xs leading-5 text-sky-300">
+                        {card.reviewAction}
                       </div>
                     </Link>
                   ))
@@ -1534,6 +1701,10 @@ export default function CoachPage() {
             </div>
           </aside>
         </section>
+
+        <div id="behavior-map">
+          <BehaviorReportPanel mode="coach" report={behaviorReport} />
+        </div>
 
         <div id="review-backlog">
             <TradesToReviewNextPanel
@@ -1560,40 +1731,34 @@ export default function CoachPage() {
           <CoachProgressFollowThroughPanel summary={coachProgress} />
         </div>
 
-        <section
-          id="session-plan"
-          className="grid gap-4 md:grid-cols-3"
-          data-testid="coach-session-plan"
-        >
-          <MetricCard
-            label="Fix First"
-            value={compactCoachAction(prep.avoidBehavior, "Review the biggest risk")}
-            detail="One behavior to reduce before adding more rules."
-            tone="warning"
-          />
-          <MetricCard
-            label="Repeat First"
-            value={compactCoachAction(prep.repeatBehavior, "Repeat the strongest behavior")}
-            detail="One behavior to preserve if the evidence supports it."
-            tone="success"
-          />
-          <MetricCard
-            label="Review Next Trade"
-            value={primaryEvidenceItem?.symbol ?? "Save an import"}
-            detail={
-              primaryEvidenceItem
-                ? "Open it to prove or challenge the focus."
-                : "Import one broker CSV first."
-            }
-            tone="info"
-          />
-        </section>
+        <CoachNextSessionPlanPanel
+          avoidBehavior={compactCoachAction(
+            prep.avoidBehavior,
+            "Review the biggest risk",
+          )}
+          checklist={prep.checklist}
+          primaryActionDetail={home.primaryAction.detail}
+          primaryActionHref={home.primaryAction.href}
+          primaryActionLabel={home.primaryAction.label}
+          repeatBehavior={compactCoachAction(
+            prep.repeatBehavior,
+            "Repeat the strongest behavior",
+          )}
+          ruleFocus={prep.ruleFocus}
+          sessionTimeInsight={prep.sessionTimeInsight}
+        />
 
-        <SavedReviewQueueSummary queue={savedReviewQueue} surface="coach" />
         <SavedImportSourceCaution
           caution={importSourceCaution}
           surface="coach"
         />
+
+        <div id="advanced">
+        <AdvancedDisclosure
+          summary="More coach evidence, queue totals, and rule checks"
+          testId="coach-supporting-details"
+        >
+        <SavedReviewQueueSummary queue={savedReviewQueue} surface="coach" />
 
         <CoachSectionHeader
           eyebrow="Coach Checks"
@@ -1671,7 +1836,7 @@ export default function CoachPage() {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-sm text-zinc-300">
-                        {item.symbol} / {signed(item.grossRealizedPnl)}
+                        {userFacingTradeSymbol(item.symbol)} / {signed(item.grossRealizedPnl)}
                       </span>
                       <span className="text-xs uppercase tracking-wide text-zinc-500">
                         {coachLaneLabel(item.lane)}
@@ -1716,91 +1881,6 @@ export default function CoachPage() {
           </div>
         </section>
 
-        <CoachSectionHeader
-          eyebrow="Next Session"
-          title="Turn the review into a simple plan before trading again."
-          body="Keep this plain: one rule to focus on, one behavior to avoid, and one behavior worth repeating. More detailed rule checks stay in advanced."
-        />
-
-        <section className={panelClass}>
-          <h2 className="text-sm font-semibold text-zinc-100">
-            Session Timing
-          </h2>
-          <div className="mt-2 text-sm text-zinc-400">
-            {prep.sessionTimeInsight}
-          </div>
-          <div className="mt-3 text-xs text-zinc-500">
-            Execution-only, Eastern Time, and sample-size gated.
-          </div>
-        </section>
-
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.45fr)]">
-          <div className={panelClass}>
-            <h2 className="text-sm font-semibold text-zinc-100">
-              Session Prep
-            </h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <div className="border-t border-zinc-900 py-3">
-                <div className="text-xs uppercase tracking-wide text-zinc-500">
-                  Rule
-                </div>
-                <div className="mt-2 text-sm text-sky-200">{prep.ruleFocus}</div>
-              </div>
-              <div className="border-t border-zinc-900 py-3">
-                <div className="text-xs uppercase tracking-wide text-zinc-500">
-                  Avoid
-                </div>
-                <div className="mt-2 text-sm text-amber-200">
-                  {prep.avoidBehavior}
-                </div>
-              </div>
-              <div className="border-t border-zinc-900 py-3">
-                <div className="text-xs uppercase tracking-wide text-zinc-500">
-                  Repeat
-                </div>
-                <div className="mt-2 text-sm text-emerald-200">
-                  {prep.repeatBehavior}
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 grid gap-2">
-              {prep.checklist.map((item) => (
-                <div key={item} className="border-t border-zinc-900 py-2 text-sm text-zinc-400">
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={panelClass}>
-            <h2 className="text-sm font-semibold text-zinc-100">
-              Do This Now
-            </h2>
-            <Link
-              className="mt-4 block border border-sky-800 bg-sky-950/40 p-4 text-sky-100 transition hover:border-sky-400"
-              href={home.primaryAction.href}
-            >
-              <div className="font-medium">{home.primaryAction.label}</div>
-              <div className="mt-2 text-sm text-sky-200/80">
-                {home.primaryAction.detail}
-              </div>
-            </Link>
-            <div className="mt-4 grid gap-2">
-              {home.actions.slice(1).map((action) => (
-                <Link
-                  key={action.id}
-                  className="border-t border-zinc-900 py-3 text-sm text-zinc-300 hover:text-sky-200"
-                  href={action.href}
-                >
-                  {action.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <div id="advanced">
-        <AdvancedDisclosure summary="Supporting coach details">
         <section className="grid gap-6 xl:grid-cols-3">
           <div className={panelClass}>
             <h2 className="text-sm font-semibold text-zinc-100">

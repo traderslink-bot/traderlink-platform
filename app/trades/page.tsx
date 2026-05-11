@@ -5,6 +5,7 @@ import {
   MetricCard,
   PlainStateBadge,
   PrimaryActionPanel,
+  WorkflowHandoffPanel,
   userFacingTradeDirection,
 } from "../app-ui";
 import { buildSavedOrSampleTraderAnalyticsViewModel } from "../../src/lib/trader-analytics/server/saved-trader-analytics-data";
@@ -101,6 +102,8 @@ type TradeBrowseMode =
   | "open_swing"
   | "needs_review";
 
+const TRADE_LIST_PAGE_SIZE = 18;
+
 function normalizeBrowseMode(value: string | undefined): TradeBrowseMode {
   const allowed = new Set([
     "round_trips",
@@ -111,6 +114,16 @@ function normalizeBrowseMode(value: string | undefined): TradeBrowseMode {
   ]);
 
   return value && allowed.has(value) ? (value as TradeBrowseMode) : "round_trips";
+}
+
+function normalizeTradeListPage(value: string | undefined, totalPages: number): number {
+  const parsed = Number.parseInt(value ?? "1", 10);
+
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return 1;
+  }
+
+  return Math.min(parsed, totalPages);
 }
 
 function normalizeStoryFilter(value: string | undefined): TradeStoryFilter {
@@ -232,10 +245,131 @@ function primaryTriageItem(
   return queue.items[0] ?? queue.allItems[0] ?? null;
 }
 
+function activeBrowseModeCopy(mode: TradeBrowseMode): {
+  detail: string;
+  label: string;
+  nextAction: string;
+} {
+  if (mode === "ticker_stories") {
+    return {
+      detail:
+        "Showing trades that belong to same-symbol stories. Use this when a ticker was entered, exited, and then entered again.",
+      label: "Ticker stories",
+      nextAction: "Open one ticker story and compare the later attempts against the first one.",
+    };
+  }
+
+  if (mode === "session_stories") {
+    return {
+      detail:
+        "Showing trades that belong to full-day stories. Use this when the question is about overtrading, green-to-red days, or strengths to repeat.",
+      label: "Session stories",
+      nextAction: "Open a trade from the session and use the session handoff before writing the lesson.",
+    };
+  }
+
+  if (mode === "open_swing") {
+    return {
+      detail:
+        "Showing trades that stayed open or crossed into another session. Use this to review whether the hold plan was clear.",
+      label: "Open or swing reviews",
+      nextAction: "Check whether the position is flat before using completed-trade coaching.",
+    };
+  }
+
+  if (mode === "needs_review") {
+    return {
+      detail:
+        "Showing saved trades that still have review work waiting. Use this to clear the queue after an import.",
+      label: "Needs review",
+      nextAction: "Open the first trade, replay executions, then save the note and checklist.",
+    };
+  }
+
+  return {
+    detail:
+      "Showing each flat-to-flat round trip. Use this when you want the basic trade record before grouping by ticker or session.",
+    label: "Round trips",
+    nextAction: "Open a trade card and start from the execution replay.",
+  };
+}
+
+function tradeReviewReason(args: {
+  isOpenOrSwing: boolean;
+  isSessionStoryTrade: boolean;
+  isTickerStoryTrade: boolean;
+  queueItem: SavedReviewQueueItem | undefined;
+  row: ReturnType<typeof buildSavedOrSampleTraderAnalyticsViewModel>["viewModel"]["latestReport"]["report"]["trades"][number] | undefined;
+}): {
+  action: string;
+  label: string;
+  tone: "default" | "info" | "success" | "warning" | "danger";
+} {
+  if (args.queueItem) {
+    return {
+      action: args.queueItem.nextAction,
+      label: args.queueItem.stateDetail,
+      tone:
+        args.queueItem.lane === "completed"
+          ? "success"
+          : args.queueItem.lane === "blocked_open_trade"
+            ? "info"
+            : "warning",
+    };
+  }
+
+  if (args.isOpenOrSwing) {
+    return {
+      action: "Check the hold plan and whether the trade is flat yet.",
+      label: "Open or swing exposure is the main review question.",
+      tone: "info",
+    };
+  }
+
+  if (args.isTickerStoryTrade) {
+    return {
+      action: "Compare this round trip with the other same-ticker attempts.",
+      label: "This trade belongs to a same-symbol story.",
+      tone: "info",
+    };
+  }
+
+  if (args.isSessionStoryTrade) {
+    return {
+      action: "Use the session story to review the full trading day.",
+      label: "This trade contributes to a full-day review.",
+      tone: "info",
+    };
+  }
+
+  if (typeof args.row?.grossRealizedPnl === "number" && args.row.grossRealizedPnl < 0) {
+    return {
+      action: "Replay entries, adds, reductions, and exits before writing the lesson.",
+      label: "Closed red. Review what caused the loss.",
+      tone: "danger",
+    };
+  }
+
+  if (typeof args.row?.grossRealizedPnl === "number" && args.row.grossRealizedPnl > 0) {
+    return {
+      action: "Replay the exit choices and note what is worth repeating.",
+      label: "Closed green. Look for the strongest decision.",
+      tone: "success",
+    };
+  }
+
+  return {
+    action: "Replay executions and write the main lesson.",
+    label: "Execution review is available.",
+    tone: "default",
+  };
+}
+
 export default async function TradesPage({
   searchParams,
 }: {
   searchParams?: Promise<{
+    page?: string;
     reviewLane?: string;
     storyFilter?: string;
     thread?: string;
@@ -333,7 +467,7 @@ export default async function TradesPage({
     },
     {
       id: "post_exit",
-      label: "Post-exit",
+      label: "After exit",
       count: tradeThreadModel.threads.filter((thread) => storyMatchesFilter(thread, "post_exit")).length,
     },
     {
@@ -479,6 +613,43 @@ export default async function TradesPage({
 
     return true;
   });
+  const totalTradePages = Math.max(
+    1,
+    Math.ceil(trades.length / TRADE_LIST_PAGE_SIZE),
+  );
+  const activeTradePage = normalizeTradeListPage(query?.page, totalTradePages);
+  const tradeStartIndex = (activeTradePage - 1) * TRADE_LIST_PAGE_SIZE;
+  const tradeEndIndex = Math.min(
+    tradeStartIndex + TRADE_LIST_PAGE_SIZE,
+    trades.length,
+  );
+  const paginatedTrades = trades.slice(tradeStartIndex, tradeEndIndex);
+  const tradePageHref = (page: number) => {
+    const params = new URLSearchParams();
+
+    if (activeBrowseMode !== "round_trips") {
+      params.set("view", activeBrowseMode);
+    }
+
+    if (activeReviewLane !== "none") {
+      params.set("reviewLane", activeReviewLane);
+    }
+
+    if (activeStoryFilter !== "all") {
+      params.set("storyFilter", activeStoryFilter);
+    }
+
+    if (activeThread) {
+      params.set("thread", activeThread.id);
+    }
+
+    if (page > 1) {
+      params.set("page", String(page));
+    }
+
+    const queryString = params.toString();
+    return `/trades${queryString ? `?${queryString}` : ""}#trade-list`;
+  };
   const triageItem = primaryTriageItem(savedReviewQueue);
   const highestPriorityCount =
     savedReviewQueue?.tabs.find((tab) => tab.id === "highest_priority")?.count ?? 0;
@@ -486,6 +657,7 @@ export default async function TradesPage({
     savedReviewQueue?.tabs.find((tab) => tab.id === "market_context_unavailable")?.count ?? 0;
   const openBlockCount =
     savedReviewQueue?.tabs.find((tab) => tab.id === "blocked_open_trade")?.count ?? 0;
+  const browseModeCopy = activeBrowseModeCopy(activeBrowseMode);
 
   return (
     <main className="ti-dashboard-bg min-h-screen px-5 py-8 text-zinc-100 sm:px-8">
@@ -585,6 +757,47 @@ export default async function TradesPage({
         />
             </div>
 
+            <WorkflowHandoffPanel
+              body={
+                <>
+                  Start with the priority trade when you want coaching
+                  direction. Use ticker and session stories when repeated
+                  entries or the full day matter. Open a trade card when you
+                  are ready to replay the executions and write the actual
+                  lesson.
+                </>
+              }
+              eyebrow="Saved Trade Workflow"
+              items={[
+                {
+                  action: "Open queue",
+                  body: "Use this when the app has already found the next trade to review.",
+                  href: "/review?queue=highest_priority",
+                  label: "1. Prioritize",
+                  title: "Review the highest-priority trade",
+                  tone: "warning",
+                },
+                {
+                  action: "Compare stories",
+                  body: "Use repeated ticker and session stories when one round trip does not tell the whole trading story.",
+                  href: "/trades?view=ticker_stories#ticker-stories",
+                  label: "2. Group",
+                  title: "Check re-entries and full-day behavior",
+                  tone: "info",
+                },
+                {
+                  action: "Open workspace",
+                  body: "Use the trade detail page to replay executions, write the note, and save checklist progress.",
+                  href: triageItem?.href ?? "#trade-list",
+                  label: "3. Review",
+                  title: "Finish one trade review at a time",
+                  tone: "success",
+                },
+              ]}
+              testId="saved-trades-workflow"
+              title="Browse saved trades without losing the review path"
+            />
+
         <section className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
           <MetricCard
             label="All Saved Trades"
@@ -650,6 +863,17 @@ export default async function TradesPage({
               Showing {trades.length} of {allTrades.length} saved trade
               {allTrades.length === 1 ? "" : "s"}
             </div>
+          </div>
+          <div className="mt-4 rounded-md border border-sky-800/60 bg-sky-950/20 p-4">
+            <div className="text-xs font-semibold uppercase tracking-wide text-sky-300">
+              Current view: {browseModeCopy.label}
+            </div>
+            <p className="mt-2 text-sm leading-6 text-zinc-300">
+              {browseModeCopy.detail}
+            </p>
+            <p className="mt-2 text-sm text-sky-300">
+              Next: {browseModeCopy.nextAction}
+            </p>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {browseModes.map((mode) => (
@@ -744,7 +968,7 @@ export default async function TradesPage({
                 >
                   {tradeThreadModel.postExitFindingCount}
                 </div>
-                <div>Post-exit</div>
+                <div>After exit</div>
               </div>
               <div className="ti-panel-soft px-3 py-2">
                 <div
@@ -1194,12 +1418,79 @@ export default async function TradesPage({
         ) : null}
 
         <section id="trade-list" className="ti-panel p-4">
+          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-100">
+                Trade Cards
+              </h2>
+              <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-500">
+                Each card answers why this trade is worth opening. Use the
+                detail page for the actual replay, note, and checklist work.
+              </p>
+            </div>
+            <Link
+              className="text-sm text-sky-300 hover:text-sky-200"
+              href="/coach#next-action"
+            >
+              Open coach focus
+            </Link>
+          </div>
+          <div className="mb-4 rounded-md border border-sky-900/60 bg-sky-950/20 p-4 text-sm leading-6 text-zinc-400">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                {trades.length === 0 ? (
+                  "No cards are showing in this view."
+                ) : (
+                  <>
+                    Showing cards {tradeStartIndex + 1}-{tradeEndIndex} of{" "}
+                    {trades.length} in this view. Keep one page small, then use
+                    the next page or a story filter when you need more.
+                  </>
+                )}
+              </div>
+              {totalTradePages > 1 ? (
+                <div
+                  className="flex flex-wrap items-center gap-2"
+                  data-testid="saved-trade-pagination"
+                >
+                  {activeTradePage > 1 ? (
+                    <Link
+                      className="rounded-md border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200 transition hover:border-sky-400 hover:text-sky-200"
+                      href={tradePageHref(activeTradePage - 1)}
+                    >
+                      Previous
+                    </Link>
+                  ) : (
+                    <span className="rounded-md border border-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-600">
+                      Previous
+                    </span>
+                  )}
+                  <span className="px-2 text-xs uppercase tracking-wide text-zinc-500">
+                    Page {activeTradePage} of {totalTradePages}
+                  </span>
+                  {activeTradePage < totalTradePages ? (
+                    <Link
+                      className="rounded-md border border-sky-800 bg-sky-950/40 px-3 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-400"
+                      href={tradePageHref(activeTradePage + 1)}
+                    >
+                      Next
+                    </Link>
+                  ) : (
+                    <span className="rounded-md border border-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-600">
+                      Next
+                    </span>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {trades.length === 0 ? (
               <div className="border-t border-zinc-900 py-4 text-sm text-zinc-500 md:col-span-2 xl:col-span-3">
-                No saved trades match this review lane.
+                No saved trades match this view. Try all saved trades or the
+                highest-priority review queue.
               </div>
-            ) : trades.map((trade) => {
+            ) : paginatedTrades.map((trade) => {
               const reportTradeIndex = latestReport.sourceTradeIds.indexOf(trade.id) + 1;
               const reportRow =
                 reportRowsByTradeId.get(trade.id) ??
@@ -1214,13 +1505,21 @@ export default async function TradesPage({
               const firstExecution = trade.request.executions[0] ?? null;
               const lastExecution =
                 trade.request.executions[trade.request.executions.length - 1] ?? null;
+              const queueItem = queueByTradeId.get(trade.id);
+              const reviewReason = tradeReviewReason({
+                isOpenOrSwing: openOrSwingTradeIds.has(trade.id),
+                isSessionStoryTrade: sessionStoryTradeIds.has(trade.id),
+                isTickerStoryTrade: multiRoundTripTradeIds.has(trade.id),
+                queueItem,
+                row: reportRow,
+              });
 
               return (
                 <Link
                   key={trade.id}
                   className="ti-panel-soft block p-4 transition hover:border-sky-500 hover:text-sky-200"
                   data-testid={`saved-trade-link-${trade.id}`}
-                  href={`/trades/${encodeURIComponent(trade.id)}#execution`}
+                  href={`/trades/${encodeURIComponent(trade.id)}#summary`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -1241,11 +1540,31 @@ export default async function TradesPage({
                       {signed(reportRow?.grossRealizedPnl)}
                     </div>
                   </div>
-                  <div className="mt-4 text-sm text-zinc-300">
-                    {queueByTradeId.get(trade.id)?.stateLabel ?? "Execution review is available"}
-                    {queueByTradeId.get(trade.id) ? (
+                  <div className="mt-4 rounded-md border border-sky-900/50 bg-sky-950/20 p-3 text-sm text-zinc-300">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                      Why review this
+                    </div>
+                    <div
+                      className={`mt-2 leading-6 ${
+                        reviewReason.tone === "danger"
+                          ? "text-rose-300"
+                          : reviewReason.tone === "success"
+                            ? "text-emerald-300"
+                            : reviewReason.tone === "warning"
+                              ? "text-amber-300"
+                              : reviewReason.tone === "info"
+                                ? "text-sky-300"
+                                : "text-zinc-300"
+                      }`}
+                    >
+                      {reviewReason.label}
+                    </div>
+                    <div className="mt-1 text-xs leading-5 text-zinc-500">
+                      {reviewReason.action}
+                    </div>
+                    {queueItem ? (
                       <div className="mt-1 text-xs text-amber-300">
-                        {queueByTradeId.get(trade.id)?.priorityLabel}
+                        {queueItem.priorityLabel}
                       </div>
                     ) : null}
                   </div>
@@ -1274,20 +1593,20 @@ export default async function TradesPage({
                         Starts with a sell in the CSV. Treat as position-history review, not a supported direction-specific coaching surface.
                       </div>
                     ) : null}
-                    <div className="text-sky-300">Open trade replay</div>
+                    <div className="text-sky-300">Open review workspace</div>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2 text-xs uppercase tracking-wide">
                     <PlainStateBadge
                       state={trade.sampleData ? "sample_fallback" : "saved_sqlite"}
                       tone={trade.sampleData ? "warning" : "success"}
                     />
-                    {queueByTradeId.get(trade.id) ? (
+                    {queueItem ? (
                       <span
                         className={`border border-zinc-800 px-2 py-1 ${laneToneClass(
-                          queueByTradeId.get(trade.id)?.lane ?? "",
+                          queueItem.lane,
                         )}`}
                       >
-                        {queueByTradeId.get(trade.id)?.reviewScopeLabel}
+                        {queueItem.reviewScopeLabel}
                       </span>
                     ) : null}
                   </div>

@@ -96,10 +96,28 @@ describe("coach overall focus read model", () => {
     expect(summary.label).toBe("Adding into weakness");
     expect(summary.evidenceCountLabel).toBe("4 saved trades");
     expect(summary.impactLabel).toBe("-325.25 evidence P/L");
+    expect(summary.focusActionLabel).toBe("Fix first");
+    expect(summary.focusActionDetail).toBe("-325.25 evidence P/L");
+    expect(summary.focusActionTone).toBe("risk");
     expect(summary.whyItMatters).toContain("appears in 4 saved trades");
     expect(summary.sampleWarning).toContain("Use the linked trades as evidence");
     expect(summary.plainExplanation).toContain("size was added");
     expect(summary.plainExplanation).toContain("not automatically a mistake");
+  });
+
+  it("does not call a profitable evidence set a fix-first conclusion", () => {
+    const summary = buildCoachOverallFocusSummary({
+      behavior: behaviors[1],
+      fallbackAction: "Import trades",
+      primarySymbol: "OMEX",
+    });
+
+    expect(summary.focusActionLabel).toBe("Review first");
+    expect(summary.focusActionDetail).toContain("+210.00 evidence P/L");
+    expect(summary.focusActionDetail).toContain("Confirm whether this was useful");
+    expect(summary.focusActionTone).toBe("review");
+    expect(summary.whyItMatters).toContain("test whether the behavior helped");
+    expect(summary.whyItMatters).not.toContain("fix");
   });
 
   it("explains adverse-add focus without calling every dip buy a mistake", () => {
@@ -123,6 +141,8 @@ describe("coach overall focus read model", () => {
 
     expect(summary.label).toBe("Save trades to build a coaching focus");
     expect(summary.evidenceCountLabel).toBe("No saved evidence yet");
+    expect(summary.focusActionLabel).toBe("Start here");
+    expect(summary.focusActionTone).toBe("review");
     expect(summary.sampleWarning).toBe(
       "Save one broker CSV to unlock coaching from your own trades.",
     );

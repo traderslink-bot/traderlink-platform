@@ -1187,3 +1187,22 @@ Do not rebuild this slice in the next run. The next implementation should
 continue with coach/analytics presentation polish that consumes the certified
 read models, or with a new evidence family only when chart, level, candle,
 volume, or after-exit data can prove the claim.
+
+## 2026-05-10 Analytics Behavior Report Consumption Update
+
+Latest completed presentation slice:
+
+- `/analytics` now consumes certified saved trade-thread market-context
+  findings through `buildAnalyticsBehaviorReport(...)`.
+- The report groups certified evidence into human trader questions:
+  resistance-entry review, support-based entry review, chase/extension review,
+  dip-buy/add review, profit protection, level-based exit review, and
+  volume/re-entry review.
+- This did not add a new detector. It is a presentation/read-model layer over
+  existing certified contracts.
+- The dip-buy/add group keeps the evidence boundary explicit: execution-only
+  adverse adds are not treated as bad dip buys unless chart/level context proves
+  support, repair, or weakness.
+- Future analytics work should not duplicate this grouping logic. Extend it
+  only when a new shared behavior contract is certified and saved evidence can
+  prove the claim.

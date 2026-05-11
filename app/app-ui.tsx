@@ -242,28 +242,58 @@ export function DashboardSideNav({
   summary?: string;
 }) {
   return (
-    <aside className="ti-panel h-fit p-3 lg:sticky lg:top-6">
-      <div className="px-2 py-2">
-        <div className="text-xs font-semibold uppercase text-sky-300">
-          {eyebrow}
+    <>
+      <details className="ti-panel p-3 lg:hidden">
+        <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-100">
+          <span className="text-xs uppercase tracking-wide text-sky-300">
+            {eyebrow}
+          </span>
+          <span className="mt-1 block text-sm text-zinc-100">
+            Page sections
+          </span>
+          <span className="mt-1 block text-xs font-normal leading-5 text-zinc-500">
+            Tap to jump around this page.
+          </span>
+        </summary>
+        <nav
+          className="mt-3 grid grid-cols-2 gap-2"
+          aria-label={`${eyebrow} mobile`}
+        >
+          {items.map((item) => (
+            <a
+              className="rounded-md border border-zinc-800/50 bg-slate-950/30 px-3 py-2 text-sm font-medium text-zinc-300 transition hover:border-sky-700 hover:text-sky-200"
+              href={item.href}
+              key={`mobile-${item.href}-${item.label}`}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+      </details>
+
+      <aside className="ti-panel hidden h-fit p-3 lg:sticky lg:top-6 lg:block">
+        <div className="px-2 py-2">
+          <div className="text-xs font-semibold uppercase text-sky-300">
+            {eyebrow}
+          </div>
+          <div className="mt-1 text-xs leading-5 text-zinc-500">{summary}</div>
         </div>
-        <div className="mt-1 text-xs leading-5 text-zinc-500">{summary}</div>
-      </div>
-      <nav className="mt-2 grid gap-2" aria-label={eyebrow}>
-        {items.map((item) => (
-          <a
-            className="rounded-md border border-zinc-800/40 px-3 py-3 text-left text-zinc-400 transition hover:border-sky-700 hover:bg-sky-950/30 hover:text-zinc-100"
-            href={item.href}
-            key={`${item.href}-${item.label}`}
-          >
-            <span className="block text-sm font-semibold">{item.label}</span>
-            <span className="mt-1 block text-xs leading-5 text-zinc-500">
-              {item.summary}
-            </span>
-          </a>
-        ))}
-      </nav>
-    </aside>
+        <nav className="mt-2 grid gap-2" aria-label={eyebrow}>
+          {items.map((item) => (
+            <a
+              className="rounded-md border border-zinc-800/40 px-3 py-3 text-left text-zinc-400 transition hover:border-sky-700 hover:bg-sky-950/30 hover:text-zinc-100"
+              href={item.href}
+              key={`${item.href}-${item.label}`}
+            >
+              <span className="block text-sm font-semibold">{item.label}</span>
+              <span className="mt-1 block text-xs leading-5 text-zinc-500">
+                {item.summary}
+              </span>
+            </a>
+          ))}
+        </nav>
+      </aside>
+    </>
   );
 }
 

@@ -193,6 +193,11 @@ Completed enough to avoid duplicate work:
   strength-to-repeat session counters from the saved trade-thread read model.
 - The route keeps trend claims conservative when completed-review history is
   thin.
+- The ticker-story progress section now keeps chart risks, chart strengths, and
+  needs-review prompts visible while collapsing detailed evidence-family counts
+  behind `Show chart evidence counts`.
+- The workflow heading now uses `Follow the review loop` so it reads cleanly on
+  mobile.
 
 Do not rebuild in the next run:
 
@@ -203,11 +208,12 @@ Do not rebuild in the next run:
 - ticker/session story counters,
 - protected-profit, support/resistance, volume, and strength-session metric
   wiring,
-- insufficient-data honesty.
+- insufficient-data honesty,
+- the chart evidence-count disclosure,
+- the `Follow the review loop` heading cleanup.
 
 Best next progress work:
 
-- improve visual polish and mobile density for the existing cards,
 - add deeper behavior trend charts only when there is enough completed-review
   history or saved report history to support the trend,
 - preserve strength-to-repeat trends as first-class progress items,

@@ -50,6 +50,42 @@ Next polish target:
 - Move any remaining internal-only sections fully under admin if they still
   distract from the end-user review flow.
 
+## May 10 Import Trust Polish Update
+
+Status: completed for the current import/save/repair route family.
+
+Completed improvements:
+
+- Added a shared import user-copy layer so import pages can display readable
+  labels such as `Ready to save`, `Repair needed`, `Saved import`, and
+  `Chart context waiting` instead of raw save-state or review-state strings.
+- Tightened the import workflow strip into a clearer three-step flow:
+  upload CSV -> save or repair import -> review saved trades.
+- Updated `/import-dry-run`, `/imports`, and `/imports/[batchId]` so normal
+  user areas say "save" and "saved import data" instead of commit/SQLite
+  language.
+- Improved route handoff copy after import save/recovery so the user is guided
+  toward saved trades, review queue, analytics, and coach.
+- Applied the lighter shared dashboard surface to the import route family so
+  the import flow no longer drops back into black terminal-style cards.
+- Extended Playwright copy-safety coverage so core product routes also block
+  raw import state terms such as `ready_to_save`, `ready_to_commit`,
+  `analysis_failed`, `market_context_unavailable`, `saved_sqlite`,
+  `local sqlite`, and `review job` in primary UI.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "import reporting|broker CSV|banned product claims"`
+  passed: 3 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "core mobile routes usable"`
+  passed: 1 test.
+- `npx playwright test tests/e2e/saved-import-visual-overflow.spec.ts --project=chromium-mobile`
+  passed: 1 test.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "demo user path|saved trade routing|guided review workflow"`
+  passed: 3 tests.
+
 ## Implementation Checklist
 
 - [x] Create coach evidence cards.

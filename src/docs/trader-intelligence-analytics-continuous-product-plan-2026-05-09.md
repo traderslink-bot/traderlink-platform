@@ -55,9 +55,17 @@ import data. It still needs a deeper report pass:
 2026-05-10 implementation note:
 
 - The first report-navigation and screenshot-guided polish pass is complete.
+- The certified behavior report grouping is complete and now lives in shared
+  `app/behavior-report-panel.tsx`, so `/analytics` and `/coach` render the
+  same grouped market-context evidence instead of maintaining separate route
+  presentations.
+- User QA found that the `/coach` reuse looks too similar to analytics. Keep
+  `/analytics` as the broad grouped report surface; coach should transform the
+  shared data into a guided coaching sequence in its own plan.
 - Do not rebuild the completed top report, analytics menu, outcome/timing/
   behavior chart grouping, ticker/session-story counters, or shared red/green
-  chart components.
+  chart components. Do not rebuild the seven behavior-report groups unless QA
+  finds a concrete grouping, copy, or density regression.
 - The next analytics work should focus on deeper trade-explorer/report-plan
   refinement, better drill-down handoffs, or route copy found by QA. Any new
   market-context metric still needs saved evidence and the detection/language
@@ -290,6 +298,16 @@ Completed enough to avoid duplicate work:
   rebuilding route-local behavior labels.
 - P/L by trade, outcome mix, P/L by session, P/L by entry hour, and execution
   habit sections are already covered by focused route regression tests.
+- The lower ticker-story section now has a cleaner report hierarchy:
+  story counts and plain-language explanation stay visible, chart risks/chart
+  strengths/needs-review prompts are the primary summary, and detailed
+  evidence-family counters are collapsed behind `Show chart evidence counts`.
+- The behavior report grouping slice is complete: `/analytics` now has a
+  certified-read-model `Behavior Report` with groups for entries near
+  resistance, support-based entries, chase/extension review, dip-buy/add
+  review, profit protection, level-based exits, and volume/re-entry review.
+  It consumes existing saved market-context findings instead of creating
+  route-local detections.
 
 Do not rebuild in the next run:
 
@@ -303,14 +321,16 @@ Do not rebuild in the next run:
 - first-entry versus re-entry volume comparison counters,
 - protected-profit-before-fade counters,
 - strength-session counters,
-- generic raw-label cleanup already handled by the shared mapper.
+- generic raw-label cleanup already handled by the shared mapper,
+- the ticker-story summary/evidence-count collapse unless browser QA shows a
+  concrete regression,
+- the analytics behavior report read model and seven group cards unless
+  browser QA shows a concrete regression.
 
 Best next analytics work:
 
-- polish lower-page section hierarchy where the report still feels like stacked
-  cards,
-- make self-review deep dives more chart-first and trader-readable using
-  certified read-model counts,
+- tune behavior-report card density and vertical rhythm with screenshots if a
+  large saved import feels too busy,
 - improve drill-down links from charts/metrics to `/trades`, `/review`, or
   `/trades/[tradeId]`,
 - tighten mobile/desktop visual density after screenshot QA,

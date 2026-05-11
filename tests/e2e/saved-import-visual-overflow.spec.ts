@@ -192,6 +192,15 @@ test.describe("saved import visual and overflow pass", () => {
         label: "coach",
         path: "/coach",
         assert: async () => {
+          await expect(page.getByTestId("coach-next-session-plan")).toBeVisible();
+          await expect(page.getByTestId("coach-supporting-details")).toContainText(
+            "More coach evidence, queue totals, and rule checks",
+          );
+          await page
+            .getByText("More coach evidence, queue totals, and rule checks", {
+              exact: true,
+            })
+            .click();
           await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
           await expect(page.getByText("chart claims gated")).toBeVisible();
         },

@@ -67,21 +67,61 @@ Current next run expectation:
   implemented for green sessions with certified chart/level/volume/after-exit
   strengths, and `/review` plus `/trades/[tradeId]` now have session-story
   handoffs. Adverse-add coaching copy now explains the dip-buy ambiguity and
-  uses "Require Repair Before Adding Size" as the visible rule label. It
-  should continue with a new independent slice: analytics/coach presentation
-  polish that consumes certified read models, another market-context family
-  only if saved evidence can prove it, or visual/mobile polish for the touched
-  route family.
+  uses "Require Repair Before Adding Size" as the visible rule label. The first
+  saved-trades and trade-detail workflow-polish pass is also complete:
+  `/trades` has the saved-trade workflow panel, current-view browse copy, and
+  trade-card `Why review this` blocks; `/trades/[tradeId]` has a four-step
+  review-flow handoff, clearer workspace framing, cleaned lower-section labels,
+  and analytics trade-detail links now land on useful anchors. The deeper
+  coach lower-page reduction and trade-detail supporting-details collapse are
+  complete too: `/coach` now has a `Before Next Session` plan and evidence
+  cards that answer what happened / why it mattered / what to do next, while
+  duplicate coach details and optional trade-detail support sections are
+  collapsed by default. The screenshot-guided follow-up is also complete:
+  `/trades` paginates the saved-trade card wall 18 cards at a time and
+  `/analytics` lower ticker-story evidence counts are collapsed behind a
+  trader-readable summary. The review/progress mobile-density pass is also
+  complete: shared page menus collapse on mobile, `/review` queue tabs are
+  compact, `/review` shows the first work batch, and `/progress` detailed chart
+  evidence counts are collapsed. Import-flow trust polish is also complete:
+  `/import-dry-run`, `/imports`, and `/imports/[batchId]` use shared readable
+  import state labels, save/saved-import wording, lighter dashboard panels, and
+  copy-safety guards. The workspace/coach visual-system QA slice is also
+  complete: `/workspace` now uses the lighter dashboard shell and primary
+  workflow handoff panel, workspace import copy uses saved-import language, and
+  `/coach`/dashboard old-card styling is covered by the updated dashboard
+  surface plus Playwright guard. The workspace route-handoff and coach
+  review-first split are complete too: primary workspace App Areas now focus on
+  the core loop, secondary review tools are collapsed under `More review
+  tools`, the `Review next trade` workflow action links to the actual next
+  review anchor when available, and profitable coach evidence uses
+  `Review first` instead of `Fix first`. The route screenshot QA and
+  trade-label copy slice is complete too: workspace beta/admin notes are
+  collapsed, the workspace flow title is trader-readable, and primary UI hides
+  import-ID-like trade labels behind `Selected trade` unless the value looks
+  like a real ticker. The analytics behavior report grouping slice is now
+  complete too: `/analytics` groups certified market-context findings into
+  resistance entries, support-based entries, chase/extension review,
+  dip-buy/add review, profit protection, level-based exits, and volume/re-entry
+  review. The coach behavior-map reuse slice is complete too: `/coach` now
+  consumes the same shared certified report as `Behavior Coaching Map` with
+  fix-first, repeat-first, and needs-review framing. User QA found that this
+  coach presentation is too similar to analytics, so the shared report should
+  remain the evidence source while the next coach run redesigns the behavior
+  section into a true coaching sequence. It should continue with a new
+  independent slice: coach behavior-section redesign, route copy/anchor repairs
+  found by QA, focused screenshot fixes only if concrete issues appear, or
+  another market-context family only if saved evidence can prove it.
   Verify locally, update docs, and keep moving through the next safe slice
   unless a true global blocker appears.
 - The next implementation start point remains the next-run plan's
   **Required Long-Run Batch Shape** and **Next Run Phase Plan** sections, not
   only the shorter block summary. The next run should complete multiple
-  phases before reporting back. Current best slices are coach/analytics
-  presentation polish using certified read models, visual/mobile polish for
-  touched routes, route anchor/copy repairs, or a new behavior/evidence family
-  only when saved chart, level, candle, volume, or after-exit evidence can
-  prove it.
+  phases before reporting back. Current best slices are route anchor/copy
+  repairs, focused screenshot fixes only if concrete issues appear, or a new
+  behavior/evidence family only when saved chart, level, candle, volume, or
+  after-exit evidence can prove it. Do not redo the completed workspace visual
+  migration or coach old-card cleanup unless QA finds a concrete regression.
 
 If this file and the plan index ever disagree, trust the plan index and the
 latest entry in `src/docs/codex-project-log.md`.

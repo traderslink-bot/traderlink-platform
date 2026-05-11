@@ -1423,11 +1423,20 @@ Current status:
 - `/review` and `/progress` now have explicit handoff links in the same loop:
   review work order -> progress follow-through, and progress active focus ->
   coach/review.
+- The deeper `/coach` lower-page reduction is complete: the default coach page
+  now has a `Before Next Session` plan and hides duplicate/heavy supporting
+  checks behind one supporting-details disclosure.
+- Featured coach evidence cards now answer what happened, why it mattered, and
+  what to do next.
+- `/trades/[tradeId]` now keeps replay/checklist/notes/chart/ticker/session
+  handoffs visible while collapsing optional score explanation, supporting
+  evidence, behavior timeline, similar trades, and journal prompts.
 - The next high-value work is not to restart the first-screen coach rebuild,
-  redo the review queue card shape, rebuild progress follow-through, or redo
-  the coach -> trade-detail handoff. It is to centralize human trader behavior
-  language, remove awkward/internal labels from primary UI, and then tighten
-  lower-page visual rhythm where browser QA shows real friction.
+  redo the review queue card shape, rebuild progress follow-through, redo the
+  coach -> trade-detail handoff, or redo the new collapsed support sections.
+  It is screenshot-led visual/mobile polish for the changed coach and
+  trade-detail surfaces, then `/analytics` lower-page polish or route
+  copy/anchor repairs when QA shows concrete friction.
 
 End-user questions the page must answer before lower analytics:
 
@@ -1469,33 +1478,28 @@ Completed in the first coaching-session pass:
 Continue from here:
 
 1. Work from
-   `src/docs/trader-intelligence-detection-and-language-hardening-plan-2026-05-09.md`.
-   Inventory user-visible behavior labels and certify detection contracts
-   before those behaviors can drive primary user-facing conclusions.
+   `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
+   Use the detection/language hardening plan only as the evidence gate when a
+   new behavior claim appears.
 2. Keep `/coach` stable and smoke it only to confirm the current overall focus,
-   focused evidence trade, trades-to-review preview, focused proof queue, and
-   follow-through panel still render correctly.
-3. Build or tighten the shared trader-facing behavior language layer using
-   `src/docs/trader-intelligence-behavior-language-and-detection-audit-2026-05-09.md`.
-   Replace labels such as "Added After Failed Premise" with trader language
-   like "Kept adding before reducing risk".
-4. Tighten or extract remaining aggregate coaching translation if it duplicates
-   the shared helper or leaks route-local wording into multiple pages.
-5. Refine "Trades To Review Next" only if the preview does not clearly explain
-   why each trade is evidence for the current focus.
-6. Tighten `/coach` visual/readability improvements when they support this
-   review flow:
-   - shorten overly long metric/card copy,
-   - preserve the proof/next-session grouping,
-   - keep rule/simulation/confidence material collapsed.
-7. Add only contextual handoffs:
+   focused evidence trade, trades-to-review preview, progress follow-through,
+   `Before Next Session` plan, and supporting-details disclosure still render
+   correctly.
+3. Inspect screenshots before changing `/coach` again. Touch it only for
+   visible density, mobile overflow, unclear copy, or handoff regressions.
+4. Inspect `/trades/[tradeId]` screenshots for the collapsed supporting-details
+   section and mobile reading order. Keep replay, checklist, notes, and
+   chart/ticker/session handoffs prominent.
+5. Continue into `/analytics` lower-page polish when coach/trade detail are
+   visually stable.
+6. Add only contextual handoffs:
    - `/review` item -> `/trades/[tradeId]#writing-flow`,
    - trade writing flow -> coach session where useful,
    - `/coach` -> `/progress` when it explains follow-through,
    - avoid generic page dumping.
-8. Keep `/progress` focused on imported history vs finished reviews. Add deeper
+7. Keep `/progress` focused on imported history vs finished reviews. Add deeper
    trend logic only after completed-review history exists.
-9. Collapse or demote advanced/internal material:
+8. Collapse or demote advanced/internal material:
    - rule labs,
    - simulations,
    - confidence language,
@@ -1504,10 +1508,7 @@ Continue from here:
    - scoring traces,
    - suppressed behavior IDs,
    - normalization details.
-10. Use `/analytics` only for small links or chart/report context that directly
-    supports the coaching point. Do not start a broad analytics redesign inside
-    this coaching batch.
-11. Add or update focused tests for:
+9. Add or update focused tests for:
     - one obvious coach primary action,
     - overall coaching focus appears before single-trade evidence,
     - no literal daily wording unless the data is actually current-day scoped,
@@ -1520,7 +1521,7 @@ Continue from here:
     - no banned product claims,
     - saved-data empty state,
     - mobile usability.
-12. Run verification:
+10. Run verification:
     - focused coach/review/progress Playwright,
     - `npx tsc --noEmit --pretty false`,
     - `npm run build`,
@@ -1548,7 +1549,8 @@ Work in this order:
    - Open the saved-data coach page.
    - Confirm the page still leads with an overall coaching focus, one reason,
       one fix-first action, focused evidence trade, trades-to-review preview,
-      focused proof queue, and progress follow-through.
+      `Before Next Session` plan, collapsed supporting details, and progress
+      follow-through.
    - Treat a missing overall focus as a regression, not as the normal first
       implementation task.
    - Do not rebuild the coach first screen unless the smoke check finds a clear
@@ -1831,9 +1833,12 @@ Readiness decision:
   stories, first session-story layer, chart-context bridge, add-quality split,
   after-exit certification, support/resistance exits, re-entry volume
   comparison, protected-profit-before-fade, or strength-to-repeat session
-  stories.
-- The best next work is now analytics/coach presentation polish that consumes
-  certified read models, mobile/visual polish for touched routes, or a new
+  stories. Also do not rebuild saved-trade pagination, the analytics
+  ticker-story summary/evidence-count collapse, the shared mobile page-section
+  menu collapse, `/review` queue first-batch limit, or `/progress` chart
+  evidence-count collapse unless a regression appears.
+- The best next work is now route anchor/copy repairs, import-flow trust
+  polish, focused screenshot fixes only when a concrete issue appears, or a new
   market-context evidence family only when saved chart, level, candle, volume,
   or after-exit evidence can prove the claim.
 - If a route asks for a new behavior statement and the evidence is not strong

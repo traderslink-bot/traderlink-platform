@@ -15,28 +15,28 @@ const IMPORT_WORKFLOW_STEPS: Array<{
 }> = [
   {
     id: "upload",
-    label: "Upload executions",
+    label: "Upload CSV",
     href: "/import-dry-run",
-    detail: "Paste or upload a broker CSV and check the grouped trades.",
+    detail: "Paste or upload broker executions and check how trades are grouped.",
   },
   {
     id: "recover",
-    label: "Save or repair",
+    label: "Save or repair import",
     href: "/imports",
-    detail: "Resolve repairs, duplicate checks, and save readiness.",
+    detail: "Fix rejected rows if needed, then save the import.",
   },
   {
     id: "review",
-    label: "Review trades",
+    label: "Review saved trades",
     href: "/trades",
-    detail: "Open saved trades, review queues, analytics, and coach.",
+    detail: "Open trades, review queues, analytics, and the coach.",
   },
 ];
 
 function stepClass(active: boolean): string {
   return active
-    ? "border-sky-700 bg-sky-950/30 text-sky-100"
-    : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200";
+    ? "border-sky-500 bg-sky-500/15 text-sky-100"
+    : "border-slate-500/35 bg-slate-900/25 text-slate-300 hover:border-sky-500 hover:text-sky-100";
 }
 
 export function ImportWorkflowStrip({
@@ -45,13 +45,13 @@ export function ImportWorkflowStrip({
 }: ImportWorkflowStripProps) {
   return (
     <section
-      className="border border-zinc-800 bg-zinc-950 p-4"
+      className="ti-panel p-4"
       data-testid="import-workflow-strip"
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="text-xs uppercase tracking-wide text-zinc-500">
-            Import Workflow
+            Import workflow
           </div>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
             {summary}

@@ -241,20 +241,44 @@ Completed in the latest product hardening runs:
   - adverse-add execution-only primary labels now use `Review adds that need
     chart context` / `Adds Needing Review`.
 
+Completed in the latest import-trust route run:
+
+- A shared import user-copy layer now maps raw import, save, repair, and chart
+  review states into user-facing labels before they reach `/import-dry-run`,
+  `/imports`, or `/imports/[batchId]`.
+- The import workflow strip now presents the user path as upload CSV -> save or
+  repair import -> review saved trades.
+- Import dry-run, import history, import recovery, and import batch detail copy
+  now uses "save", "saved import", "chart review item", and "saved import
+  data" instead of commit/SQLite/raw status language in primary UI.
+- The import route family now uses the lighter shared dashboard background and
+  panel surfaces instead of returning to black terminal-style cards.
+- Copy-safety Playwright coverage now includes `/imports` and blocks raw
+  import-state terms such as `ready_to_save`, `ready_to_commit`,
+  `analysis_failed`, `market_context_unavailable`, `saved_sqlite`,
+  `local sqlite`, `commit readiness`, and `review job`.
+- Browser checks confirmed `/import-dry-run` and `/imports` show no visible
+  `ready_to`, `local SQLite`, `commit readiness`, or `review job` text.
+- TypeScript, production build, focused import Playwright, mobile overflow,
+  saved-import overflow, and workflow handoff Playwright checks pass.
+
 Current remaining work:
 
 - Continue from the next independent product slice rather than repeating the
   completed mapper/route-language, ticker-story, first session-story,
   chart-context bridge, support/resistance exit, re-entry volume comparison,
-  protected-profit, strength-session, or adverse-add repair wording passes.
+  protected-profit, strength-session, adverse-add repair wording, import-flow
+  trust polish, workspace visual migration, or coach old-card cleanup passes.
 - The next high-value work is now one of:
-  - screenshot-guided visual/mobile polish for `/coach`, `/analytics`,
-    `/review`, `/progress`, `/trades`, and `/trades/[tradeId]`,
-  - remaining coach/analytics lower-page presentation polish that consumes
-    certified read-model counts and improves a real user-facing flow,
+  - route copy/anchor repairs found by QA,
+  - focused screenshot fixes only if concrete visual defects appear on the
+    already-updated route family,
+  - analytics or coach presentation refinements only when they consume
+    certified read-model counts and improve a specific visible user flow,
   - a new market-context behavior family only if saved chart, level, candle,
     volume, or after-exit evidence can prove it without inference,
-  - route copy/anchor fixes discovered by browser QA.
+  - focused import-route touch-ups only if future screenshots or tests find a
+    concrete regression.
 - Continue route UI polish only when it consumes safe read models or when
   visual overflow/copy scan finds a concrete defect.
 
@@ -281,6 +305,10 @@ Use this tracker to avoid restarting completed slices.
 | Strength-to-repeat session stories | Completed | Green sessions with certified strengths now have session-story counts/evidence and `/review` plus trade-detail handoffs. Do not rebuild unless regression appears. |
 | Historical level context handoff | Completed guardrail | levels-system owns historical as-of level calculation; Trader Intelligence consumes per-execution historical relation facts for app-facing review. Do not build new support/resistance claims from a current/live snapshot. |
 | Coach/analytics first presentation polish | Completed first slice | Shared workflow handoff cards, lighter chart/metric surfaces, `/coach` workflow strip, `/analytics` outcome/timing/behavior chart grouping, `/progress` workflow handoff, and adverse-add primary-label cleanup are complete. Continue with screenshot QA and remaining lower-page polish, not a rebuild. |
+| Saved trades and trade detail workflow polish | Completed first slice | `/trades` now has the saved-trade workflow panel, current-view browse explanations, trade-card `Why review this` blocks, and summary-anchor links. `/trades/[tradeId]` now has the trade-review flow handoff, clearer workspace framing, cleaned lower-section labels, and analytics links land on useful anchors. Do not rebuild unless route QA finds a concrete defect. |
+| Coach lower-page reduction and trade-detail support collapse | Completed | `/coach` now has the `Before Next Session` plan, collapsed supporting coach details, and evidence-card what/why/next-action structure. `/trades/[tradeId]` now collapses optional score/evidence/timeline/similar/prompt sections. Do not rebuild unless screenshot QA finds a concrete defect. |
+| Import-flow trust polish | Completed | `/import-dry-run`, `/imports`, and `/imports/[batchId]` now use shared user-facing import labels, save/saved-import wording, lighter dashboard panels, and copy-safety guards. Do not rebuild unless import-route QA finds a concrete defect. |
+| Workspace and coach visual-system QA slice | Completed | `/workspace` now uses the shared lighter dashboard shell, primary workflow handoff panel, saved-import wording, and route anchors. Dashboard-scoped old-card overrides align `/coach` and touched dashboard surfaces with the updated visual system. Playwright guards against large old near-black cards on `/workspace` and `/coach`. Do not rebuild unless QA finds a concrete regression. |
 
 ## Next Continuous Run Starts Here
 
@@ -1603,18 +1631,222 @@ Next run should not rebuild:
 - protected-profit wording changes,
 - adverse-add repair/dip-buy copy tightening.
 
+## 2026-05-10 Screenshot-Guided Saved Trades And Analytics Lower-Page Polish
+
+Completed in the latest continuation:
+
+- `/trades` now paginates saved trade cards 18 at a time instead of rendering
+  the full saved-trade wall.
+- Saved-trade pagination preserves browse mode, review lane, story filter, and
+  active ticker-story thread context.
+- `/trades` now explains the visible card range so a trader can choose the next
+  page or a better story filter instead of scrolling endlessly.
+- Saved-trade `Why review this` blocks were softened visually while preserving
+  the review reason and next action.
+- `/analytics` lower ticker-story analytics now keeps only the story summary,
+  "How to read these stories," chart risks, chart strengths, and needs-review
+  prompts visible by default.
+- Detailed ticker-story evidence-family counts are still available, but are
+  collapsed behind `Show chart evidence counts`.
+- Focused Playwright coverage now checks the analytics evidence-count disclosure
+  and the saved-trade visible-card range copy.
+
+Verification completed:
+
+```powershell
+npx tsc --noEmit --pretty false
+npm run build
+npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "analytics product intelligence|saved trade routing|guided review workflow|coach product loop|progress and behavior|banned product claims"
+npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable without page-level horizontal overflow"
+npx playwright test tests/e2e/saved-import-visual-overflow.spec.ts --project=chromium-mobile
+git diff --check
+```
+
+Next run should not rebuild:
+
+- saved-trade pagination,
+- saved-trade range copy,
+- softened saved-trade `Why review this` styling,
+- analytics ticker-story summary/evidence-count collapse.
+
+## 2026-05-10 Mobile Navigation, Review Queue, And Progress Density Polish
+
+Completed in the latest continuation:
+
+- Shared `DashboardSideNav` now renders as a collapsed `Page sections`
+  disclosure on mobile and remains a sticky side menu on desktop.
+- `/review` queue tabs now use a compact two-column mobile layout.
+- `/review` queue items now show the first 6 cards in the active lane with
+  first-batch copy, keeping the page focused on work to do next.
+- `/progress` ticker-story progress now keeps primary story counts plus chart
+  risks, chart strengths, and needs-review prompts visible.
+- Detailed `/progress` chart evidence-family counts are collapsed behind
+  `Show chart evidence counts`.
+- `/progress` workflow heading now uses `Follow the review loop` instead of an
+  arrow-chain title that wrapped poorly on mobile.
+
+Verification completed:
+
+```powershell
+npx tsc --noEmit --pretty false
+npm run build
+npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "guided review workflow|progress and behavior|coach product loop|analytics product intelligence|saved trade routing|banned product claims"
+npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable without page-level horizontal overflow"
+npx playwright test tests/e2e/saved-import-visual-overflow.spec.ts --project=chromium-mobile
+git diff --check
+```
+
+Next run should not rebuild:
+
+- shared mobile `DashboardSideNav` collapse,
+- `/review` queue first-batch limit,
+- `/review` mobile queue-tab compaction,
+- `/progress` chart evidence-count collapse,
+- progress workflow title cleanup.
+
+## 2026-05-10 Workspace Route Handoff And Coach Review-First Completion
+
+Completed in the latest continuation:
+
+- `/workspace` App Areas now keep the core app loop visible first: saved
+  trades, analytics, review queue, progress, coach, import, and import history.
+- Session recap, compare trades, and onboarding are still available, but are
+  collapsed under `More review tools` instead of reading like primary next
+  actions.
+- The `/workspace` `Review next trade` workflow handoff now links to the
+  actual next trade-review anchor when available, not only the generic saved
+  trades page.
+- The coach overall-focus read model now splits evidence tone:
+  - negative evidence becomes `Fix first`,
+  - positive evidence becomes `Review first`,
+  - neutral/uncertain evidence becomes `Rule to test`.
+- `/coach` consumes that focus label, detail, and tone so a profitable evidence
+  set is not presented as a confident problem to fix.
+- The coach next-session step copy now adapts between creating a fix-first rule
+  and testing whether a positive behavior is worth repeating.
+
+Verification completed:
+
+```powershell
+npx vitest run src/lib/trader-analytics/__tests__/coach-overall-focus.test.ts --reporter=dot
+npx tsc --noEmit --pretty false
+npm run build
+npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "updated dashboard surface|coach product loop|guided end-user path|banned product claims"
+npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "core mobile routes usable"
+git diff --check
+```
+
+Next run should not rebuild:
+
+- workspace core app-area demotion,
+- workspace next-review anchor handoff,
+- coach positive-evidence `Review first` split,
+- coach focus-action tone labels.
+
+## 2026-05-10 Route Screenshot QA And Trade Label Copy Completion
+
+Completed in the latest continuation:
+
+- `/workspace` now uses `Trade review workflow` instead of arrow-chain
+  workflow copy.
+- `/workspace` chart-context metric copy now says `Chart Context Waiting` and
+  explains whether open trades are blocking review.
+- `/workspace` beta/admin details are collapsed under `Beta storage and admin
+  notes`; the old `Current Beta Boundary` and `Internal tools` primary labels
+  are removed from the normal route body.
+- Added shared trade display copy in
+  `src/lib/trader-analytics/product/trade-display-copy.ts`.
+- `/coach`, `/trades/[tradeId]`, and saved session-story evidence now hide
+  import-ID-like trade labels such as `V516374MD` behind `Selected trade`
+  unless the value looks like a real ticker.
+- Real ticker-looking values remain visible.
+- Playwright now guards core product routes against ID-like trade-label leaks.
+
+Verification completed:
+
+```powershell
+npx vitest run src/lib/trader-analytics/__tests__/trade-display-copy.test.ts src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts src/lib/trader-analytics/__tests__/coach-overall-focus.test.ts --reporter=dot
+npx tsc --noEmit --pretty false
+npm run build
+npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "updated dashboard surface|coach product loop|guided end-user path|banned product claims"
+npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "core mobile routes usable"
+```
+
+Next run should not rebuild:
+
+- workspace beta/admin-note collapse,
+- workspace `Trade review workflow` copy,
+- shared user-facing trade-symbol display helper,
+- route copy-safety guard for import-ID-like trade labels.
+
 Next best slice:
 
 - The first certified-read-model presentation polish and screenshot-guided
   visual polish passes are now complete. Do not rebuild the shared workflow
   handoffs, analytics chart grouping, lighter report surfaces, metric-card
   copy tightening, review-flow raw-ID cleanup, or report-history label cleanup.
+- The first `/trades` and `/trades/[tradeId]` workflow-polish pass is now
+  complete too. Do not rebuild the saved-trade workflow panel, current-view
+  browse copy, trade-card `Why review this` block, trade-detail review-flow
+  handoff, lower-section label cleanup, or analytics trade-detail anchor
+  repairs.
+- The deeper `/coach` lower-page reduction and trade-detail support collapse
+  are now complete:
+  `/coach` has a `Before Next Session` plan, featured evidence cards answer
+  what happened / why it mattered / what to do next, duplicate/heavy coach
+  details are collapsed into one support disclosure, and `/trades/[tradeId]`
+  collapses optional score explanation, supporting evidence, behavior
+  timeline, similar trades, and journal prompts behind one support disclosure.
+  Do not rebuild those unless route QA finds a concrete regression.
+- The screenshot-led saved-trades and analytics lower-page polish is complete:
+  `/trades` card browsing is paginated and `/analytics` ticker-story evidence
+  counts are summarized/collapsed by default. Do not rebuild those unless route
+  QA finds a concrete regression.
+- The review/progress mobile-density pass is complete: mobile page menus
+  collapse, `/review` queue tabs are compact, `/review` shows the first work
+  batch, and `/progress` detailed chart evidence counts are collapsed. Do not
+  rebuild those unless route QA finds a concrete regression.
+- The import-flow trust polish is complete: `/import-dry-run`, `/imports`, and
+  `/imports/[batchId]` use shared readable import state labels, save/saved
+  import wording, lighter dashboard panels, and Playwright copy-safety guards.
+  Do not rebuild those unless route QA finds a concrete regression.
+- The `/workspace` and `/coach` visual-system QA slice is complete:
+  `/workspace` now uses the shared lighter dashboard shell, primary workflow
+  handoff panel, saved-import wording, and route anchors; dashboard-scoped
+  old-card overrides keep `/coach` and touched dashboard surfaces aligned with
+  the updated visual system. Playwright now guards against large old near-black
+  cards on `/workspace` and `/coach`. Do not rebuild those unless route QA
+  finds a concrete regression.
+- The workspace route-handoff and coach review-first split are complete:
+  primary workspace app areas now stay focused on the core workflow, secondary
+  review tools are collapsed, the next-review tile lands on an actual review
+  anchor, and profitable coach evidence now says `Review first` rather than
+  `Fix first`. Do not rebuild those unless route QA finds a concrete
+  regression.
+- The route screenshot QA and trade-label copy slice is complete:
+  workspace beta/admin notes are collapsed, the workspace flow title is
+  trader-readable, and coach/trade-detail/session-story surfaces hide
+  import-ID-like labels behind `Selected trade`. Do not rebuild those unless
+  route QA finds a concrete regression.
+- The analytics behavior report grouping slice is complete:
+  `/analytics` now has a certified-read-model `Behavior Report` that groups
+  existing market-context findings into entry resistance, support-based entry,
+  chase/extension, dip-buy/add, profit-protection, level-based exit, and
+  volume/re-entry report sections. Do not rebuild this grouping model or the
+  seven report cards unless QA finds a concrete regression.
+- The coach behavior-map reuse slice is complete:
+  `/coach` now consumes the same certified behavior report through shared
+  `app/behavior-report-panel.tsx`, renders `Behavior Coaching Map`, and frames
+  the groups as `Fix first`, `Repeat first`, or `Needs review`.
+  User QA found that this presentation is too close to `/analytics`, so treat
+  this as a certified evidence-source bridge, not the final coach experience.
+  Do not rebuild the analytics grouping model, but do replace the coach-facing
+  mirrored cards with a distinct coaching flow in the next coach-specific run.
 - Next UI/product slices should be either:
-  - `/trades` browser and `/trades/[tradeId]` review-workspace polish using
-    the same shared visual system,
-  - deeper `/coach` lower-page reduction after tests are adjusted to allow
-    supporting panels to be collapsed by default,
+  - `/coach` behavior-section redesign that turns the shared report into a
+    focused coaching sequence rather than duplicated analytics cards,
   - route copy/anchor repairs found by QA,
+  - focused screenshot fixes only if concrete issues appear,
   - or a new market-context behavior family only if saved evidence can prove it
     without inference.
 - Keep uncertain behavior prompt-only or internal.

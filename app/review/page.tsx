@@ -27,6 +27,7 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
+const REVIEW_QUEUE_VISIBLE_COUNT = 6;
 
 function savedReviewToneClass(status: string): string {
   return status === "completed"
@@ -608,7 +609,7 @@ export default async function GuidedReviewPage({
               </div>
             </div>
 
-            <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-4" data-testid="saved-review-queue-tabs">
+            <div className="mt-5 grid grid-cols-2 gap-2 xl:grid-cols-4" data-testid="saved-review-queue-tabs">
               {savedReviewQueue.tabs.map((tab) => (
                 <Link
                   key={tab.id}
@@ -648,7 +649,19 @@ export default async function GuidedReviewPage({
                   <div className="mt-2 leading-6">{savedReviewQueue.emptyState.body}</div>
                 </div>
               ) : (
-                savedReviewQueue.items.slice(0, 12).map((item, index) => {
+                <>
+                  <div className="rounded-md border border-sky-900/60 bg-sky-950/20 p-3 text-sm leading-6 text-zinc-400">
+                    Showing the first{" "}
+                    {Math.min(
+                      REVIEW_QUEUE_VISIBLE_COUNT,
+                      savedReviewQueue.items.length,
+                    )}{" "}
+                    of {savedReviewQueue.items.length} trades in this lane.
+                    Finish one review, then come back for the next batch.
+                  </div>
+                  {savedReviewQueue.items
+                    .slice(0, REVIEW_QUEUE_VISIBLE_COUNT)
+                    .map((item, index) => {
                   const evidence = reviewQueueEvidenceCopy(item);
 
                   return (
@@ -792,7 +805,8 @@ export default async function GuidedReviewPage({
                       </details>
                     </article>
                   );
-                })
+                })}
+                </>
               )}
             </div>
           </section>

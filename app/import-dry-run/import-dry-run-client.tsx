@@ -5,6 +5,9 @@ import {
   applyCsvDryRunCellEdit,
   buildCsvDryRunImportExperience,
   buildCsvDryRunPrototypeAnalysisPanel,
+  importStatusLabel,
+  importStorageLabel,
+  importTradeDirectionLabel,
   type CsvDryRunEvidenceRecord,
   type CsvDryRunGroupingDecisionKind,
   type CsvDryRunImportExperience,
@@ -824,7 +827,7 @@ function Kpi({
   tone?: string;
 }) {
   return (
-    <div className="border border-zinc-800 bg-zinc-950 p-4">
+    <div className="ti-panel p-4">
       <div className="text-xs uppercase tracking-wide text-zinc-500">{label}</div>
       <div className={`mt-3 text-2xl font-semibold ${tone}`}>{value}</div>
       <div className="mt-2 text-xs text-zinc-500">{detail}</div>
@@ -868,7 +871,7 @@ function ExecutionReadinessSummary({
 
   return (
     <section
-      className={`border bg-zinc-950 p-4 ${borderTone(status)}`}
+      className={`ti-panel p-4 ${borderTone(status)}`}
       data-testid="execution-readiness-summary"
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -1166,8 +1169,8 @@ function DecisionReviewEvidenceGates({
       <div className="mt-3 grid gap-2 text-xs text-zinc-500 sm:grid-cols-2 lg:grid-cols-4">
         <div>verified basis: {summary.verifiedBasisCount}</div>
         <div>lower-resolution windows: {summary.limitedCandleCount}</div>
-        <div>market-data unavailable: {summary.unavailableDiagnosticCount}</div>
-        <div>open trades skipped: {summary.openTradeDiagnosticCount}</div>
+        <div>chart context waiting: {summary.unavailableDiagnosticCount}</div>
+        <div>open trades waiting: {summary.openTradeDiagnosticCount}</div>
       </div>
     </div>
   );
@@ -1181,7 +1184,7 @@ function ConfidenceGate({
   const gate = experience.confidenceGate;
 
   return (
-    <section className={`border bg-zinc-950 p-4 ${borderTone(gate.status)}`}>
+    <section className={`ti-panel p-4 ${borderTone(gate.status)}`}>
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
@@ -1216,7 +1219,7 @@ function SessionState({
   experience: CsvDryRunImportExperience;
 }) {
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <h2 className="text-sm font-semibold text-zinc-100">Import Session State</h2>
       <div className="mt-2 text-sm text-zinc-500">
         {experience.sessionState.nextAction}
@@ -1227,7 +1230,7 @@ function SessionState({
             <div className="flex items-center justify-between gap-3">
               <span className="text-sm text-zinc-300">{stage.label}</span>
               <span className={`text-xs uppercase tracking-wide ${toneClass(stage.status)}`}>
-                {stage.status}
+                {importStatusLabel(stage.status)}
               </span>
             </div>
             <div className="mt-1 text-xs text-zinc-500">{stage.detail}</div>
@@ -1246,7 +1249,7 @@ function ImportSessionSummary({
   const summary = experience.importSessionSummary;
 
   return (
-    <section className={`border bg-zinc-950 p-4 ${borderTone(summary.status)}`}>
+    <section className={`ti-panel p-4 ${borderTone(summary.status)}`}>
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
@@ -1254,7 +1257,7 @@ function ImportSessionSummary({
           </h2>
           <div className={`mt-2 text-2xl font-semibold ${toneClass(summary.status)}`}>
             <span data-testid="import-session-summary-status">
-              {summary.status}
+              {importStatusLabel(summary.status)}
             </span>
           </div>
           <div className="mt-2 text-sm text-zinc-500">{summary.summary}</div>
@@ -1299,7 +1302,7 @@ function ReadinessScoreBreakdown({
   const readiness = experience.readinessScoreBreakdown;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
@@ -1349,7 +1352,7 @@ function RepairImpactDiff({
   const diff = experience.repairImpactDiff;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <h2 className="text-sm font-semibold text-zinc-100">
         Before / After Repair Impact
       </h2>
@@ -1403,7 +1406,7 @@ function RepairCarryForwardPanel({
 
   return (
     <section
-      className="border border-zinc-800 bg-zinc-950 p-4"
+      className="ti-panel p-4"
       data-testid="repair-carry-forward-panel"
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -1413,7 +1416,7 @@ function RepairCarryForwardPanel({
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-zinc-500">
             Row edits update the CSV text used by preview, save, grouping,
-            analytics, and review jobs. The original file text is not stored.
+            analytics, and chart review items. The original file text is not stored.
           </p>
         </div>
         <div
@@ -1475,7 +1478,7 @@ function ColumnMappingAssistant({
   const assistant = experience.columnMappingAssistant;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
@@ -1484,7 +1487,7 @@ function ColumnMappingAssistant({
           <div className="mt-1 text-sm text-zinc-500">{assistant.nextAction}</div>
         </div>
         <div className={`text-xs uppercase tracking-wide ${toneClass(assistant.status)}`}>
-          {assistant.status}
+          {importStatusLabel(assistant.status)}
         </div>
       </div>
 
@@ -1554,7 +1557,7 @@ function RowRepairTable({
   const headers = importantHeaders.length > 0 ? importantHeaders : table.headers;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
@@ -1656,7 +1659,7 @@ function TradeGroupingReview({
   );
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
@@ -1679,10 +1682,10 @@ function TradeGroupingReview({
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
                   <div className="font-medium text-zinc-100">
-                    {item.symbol} / {item.tradeDirection}
+                    {item.symbol} / {importTradeDirectionLabel(item.tradeDirection)}
                   </div>
                   <div className="mt-1 text-xs text-zinc-500">
-                    {item.lifecycleStatus} / {item.groupingReason} / rows{" "}
+                    {importStatusLabel(item.lifecycleStatus)} / {item.groupingReason} / rows{" "}
                     {item.rowIndexes.join(", ")}
                   </div>
                   <div className="mt-1 text-xs text-sky-300">
@@ -1693,7 +1696,7 @@ function TradeGroupingReview({
                   </div>
                 </div>
                 <div className={`text-xs uppercase tracking-wide ${item.needsReview ? "text-amber-300" : "text-emerald-300"}`}>
-                  {item.needsReview ? "review" : "ready"}
+                  {item.needsReview ? "Needs review" : "Ready"}
                 </div>
               </div>
               {decisionsByIndex.has(item.requestIndex) ? (
@@ -1775,7 +1778,7 @@ function Walkthrough({
   const walkthrough = experience.firstTradeWalkthrough;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <h2 className="text-sm font-semibold text-zinc-100">{walkthrough.title}</h2>
       <div className="mt-1 text-sm text-zinc-500">{walkthrough.nextAction}</div>
       <div className="mt-4 grid gap-3">
@@ -1789,7 +1792,7 @@ function Walkthrough({
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm text-zinc-300">{step.label}</span>
                   <span className={`text-xs uppercase tracking-wide ${toneClass(step.status)}`}>
-                    {step.status}
+                    {importStatusLabel(step.status)}
                   </span>
                 </div>
                 <div className="mt-1 text-xs text-zinc-500">{step.detail}</div>
@@ -1814,7 +1817,7 @@ function ExecutionFeedbackPreview({
   const feedback = experience.executionFeedbackPreview;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
@@ -1856,7 +1859,7 @@ function ExecutionFeedbackPreview({
                   </div>
                 </div>
                 <div className={`text-xs uppercase tracking-wide ${toneClass(item.status)}`}>
-                  {item.status}
+                  {importStatusLabel(item.status)}
                 </div>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-3">
@@ -1904,12 +1907,13 @@ function ReplayPreview({
   const replay = experience.replayPreview;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <h2 className="text-sm font-semibold text-zinc-100">
         Dry-Run Replay Preview
       </h2>
       <div className="mt-1 text-sm text-zinc-500">
-        {replay.tradeLabel ?? "No grouped trade ready"} / {replay.lifecycleStatus}
+        {replay.tradeLabel ?? "No grouped trade ready"} /{" "}
+        {importStatusLabel(replay.lifecycleStatus)}
       </div>
       {replay.openPositionWarning ? (
         <div className="mt-3 border border-amber-900 bg-amber-950/20 p-3 text-xs text-amber-300">
@@ -1953,7 +1957,7 @@ function PnlReconciliationAssistant({
   const pnl = experience.pnlReconciliationAssistant;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
@@ -1962,7 +1966,7 @@ function PnlReconciliationAssistant({
           <div className="mt-1 text-sm text-zinc-500">{pnl.summary}</div>
         </div>
         <div className={`text-xs uppercase tracking-wide ${toneClass(pnl.status)}`}>
-          {pnl.status}
+          {importStatusLabel(pnl.status)}
         </div>
       </div>
       <div className="mt-4 grid gap-3">
@@ -1976,14 +1980,14 @@ function PnlReconciliationAssistant({
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
                   <div className="text-sm font-medium text-zinc-100">
-                    {item.symbol} / {item.lifecycleStatus}
+                    {item.symbol} / {importStatusLabel(item.lifecycleStatus)}
                   </div>
                   <div className="mt-1 text-xs text-zinc-500">
                     {item.explanation}
                   </div>
                 </div>
                 <div className="text-xs uppercase tracking-wide text-zinc-500">
-                  {item.status}
+                  {importStatusLabel(item.status)}
                 </div>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-3">
@@ -2021,7 +2025,7 @@ function CostVisibilityPanel({
 
   return (
     <section
-      className="border border-zinc-800 bg-zinc-950 p-4"
+      className="ti-panel p-4"
       data-testid="cost-visibility-panel"
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -2038,7 +2042,7 @@ function CostVisibilityPanel({
               ? "ready"
               : "complete",
         )}`}>
-          {costs.status}
+          {importStatusLabel(costs.status)}
         </div>
       </div>
 
@@ -2087,12 +2091,12 @@ function CostVisibilityPanel({
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
                   <div className="text-sm font-medium text-zinc-100">
-                    {item.symbol} / {item.lifecycleStatus}
+                    {item.symbol} / {importStatusLabel(item.lifecycleStatus)}
                   </div>
                   <div className="mt-1 text-xs text-zinc-500">{item.detail}</div>
                 </div>
                 <div className="text-xs uppercase tracking-wide text-zinc-500">
-                  {item.status}
+                  {importStatusLabel(item.status)}
                 </div>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-3">
@@ -2129,7 +2133,7 @@ function PostImportReviewQueuePreview({
   const queue = experience.postImportReviewQueuePreview;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
@@ -2173,7 +2177,7 @@ function FeedbackComparison({
   const comparison = experience.feedbackComparison;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <h2 className="text-sm font-semibold text-zinc-100">
         Trade Feedback Preview Comparison
       </h2>
@@ -2235,7 +2239,7 @@ function PrototypeAnalysisPanel({
 
   return (
     <section
-      className="border border-zinc-800 bg-zinc-950 p-4"
+      className="ti-panel p-4"
       data-testid="prototype-analysis-panel"
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -2691,7 +2695,7 @@ function ExecutionAnomalyDetector({
   const anomalies = experience.executionAnomalyDetector;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
@@ -2744,7 +2748,7 @@ function SetupTagging({
   const setup = experience.setupTagging;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <h2 className="text-sm font-semibold text-zinc-100">
         Setup / Playbook Tagging
       </h2>
@@ -2807,7 +2811,7 @@ function EvidenceDrillIn({
   ];
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <h2 className="text-sm font-semibold text-zinc-100">
         Why Am I Seeing This
       </h2>
@@ -2847,7 +2851,7 @@ function BrokerAndCalibration({
 }) {
   return (
     <section className="grid gap-6 xl:grid-cols-2">
-      <div className="border border-zinc-800 bg-zinc-950 p-4">
+      <div className="ti-panel p-4">
         <h2 className="text-sm font-semibold text-zinc-100">
           Broker Coverage Confidence
         </h2>
@@ -2869,7 +2873,7 @@ function BrokerAndCalibration({
         </div>
       </div>
 
-      <div className="border border-zinc-800 bg-zinc-950 p-4">
+      <div className="ti-panel p-4">
         <h2 className="text-sm font-semibold text-zinc-100">
           Real Import Calibration Queue
         </h2>
@@ -2904,7 +2908,7 @@ function BrokerHelpAndErrorLibrary({
 
   return (
     <section className="grid gap-6 xl:grid-cols-2">
-      <div className="border border-zinc-800 bg-zinc-950 p-4">
+      <div className="ti-panel p-4">
         <h2 className="text-sm font-semibold text-zinc-100">{help.title}</h2>
         <div className="mt-2 text-sm text-zinc-500">
           Expected source: {help.expectedExportName}
@@ -2929,7 +2933,7 @@ function BrokerHelpAndErrorLibrary({
         <div className="mt-4 text-xs text-zinc-500">{help.fallbackPath}</div>
       </div>
 
-      <div className="border border-zinc-800 bg-zinc-950 p-4">
+      <div className="ti-panel p-4">
         <h2 className="text-sm font-semibold text-zinc-100">
           Import Error Library
         </h2>
@@ -2971,7 +2975,7 @@ function BrokerMappingLearningConsole({
   const consoleModel = experience.brokerMappingLearningConsole;
 
   return (
-    <section className="border border-zinc-800 bg-zinc-950 p-4">
+    <section className="ti-panel p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
@@ -3011,7 +3015,7 @@ function BrokerMappingLearningConsole({
                 {field.field}
               </span>
               <span className={`text-xs ${toneClass(field.status)}`}>
-                {field.status}
+                {importStatusLabel(field.status)}
               </span>
             </div>
             <div className="mt-1 text-xs text-zinc-400">
@@ -3035,7 +3039,7 @@ function PrivacyDecisionAndMobile({
 }) {
   return (
     <section className="grid gap-6 xl:grid-cols-3">
-      <div className="border border-zinc-800 bg-zinc-950 p-4">
+      <div className="ti-panel p-4">
         <h2 className="text-sm font-semibold text-zinc-100">
           {experience.privacyNotice.title}
         </h2>
@@ -3051,7 +3055,7 @@ function PrivacyDecisionAndMobile({
         </div>
       </div>
 
-      <div className="border border-zinc-800 bg-zinc-950 p-4">
+      <div className="ti-panel p-4">
         <h2 className="text-sm font-semibold text-zinc-100">
           User Decision Capture
         </h2>
@@ -3074,7 +3078,7 @@ function PrivacyDecisionAndMobile({
         </div>
       </div>
 
-      <div className="border border-zinc-800 bg-zinc-950 p-4">
+      <div className="ti-panel p-4">
         <h2 className="text-sm font-semibold text-zinc-100">Mobile QA Notes</h2>
         <div className="mt-2 text-sm text-zinc-500">
           {experience.mobileQaPanel.totalCount} rough UI panels have mobile checks.
@@ -3083,7 +3087,7 @@ function PrivacyDecisionAndMobile({
           {experience.mobileQaPanel.items.slice(0, 5).map((item) => (
             <div key={item.id} className="border-t border-zinc-900 py-2">
               <div className="text-xs uppercase tracking-wide text-zinc-500">
-                {item.status}
+                {importStatusLabel(item.status)}
               </div>
               <div className="mt-1 text-xs text-zinc-400">
                 {item.checks[0]}
@@ -3349,7 +3353,7 @@ export function ImportDryRunClient({
     setSaveImportState({
       status: "previewing",
       batchId: null,
-      message: "Checking commit readiness.",
+      message: "Checking save readiness.",
     });
 
     try {
@@ -3399,7 +3403,7 @@ export function ImportDryRunClient({
       const commitBody = await commitResponse.json();
 
       if (!commitResponse.ok || !("result" in commitBody)) {
-        throw new Error(commitBody.error?.message ?? "Import commit failed.");
+        throw new Error(commitBody.error?.message ?? "Import save failed.");
       }
 
       setSaveImportState({
@@ -3420,7 +3424,7 @@ export function ImportDryRunClient({
   return (
     <div className="flex flex-col gap-8" data-testid="import-dry-run-client">
       <section className="grid gap-6 xl:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)]">
-        <div className="border border-zinc-800 bg-zinc-950 p-4">
+        <div className="ti-panel p-4">
           <h2 className="text-sm font-semibold text-zinc-100">
             CSV Input
           </h2>
@@ -3548,7 +3552,7 @@ export function ImportDryRunClient({
               tone={experience.copyAudit.passed ? "text-emerald-300" : "text-amber-300"}
             />
           </div>
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="text-xs uppercase tracking-wide text-zinc-500">
@@ -3556,7 +3560,7 @@ export function ImportDryRunClient({
                 </div>
                 <div className="mt-1 text-sm text-zinc-400">
                   Saves normalized executions, grouped trades, feedback, and the
-                  latest analytics snapshot to local SQLite.
+                  latest analytics snapshot to the saved import store.
                 </div>
                 {saveImportState.message ? (
                   <div

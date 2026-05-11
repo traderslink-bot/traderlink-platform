@@ -7,6 +7,7 @@ import {
   buildTradeExecutionAutopsy,
   buildSavedTradeReviewViewModel,
   getLatestSavedTraderAnalyticsReport,
+  userFacingTradeSymbol,
 } from "../../../src/lib/trader-analytics";
 import { buildSavedOrSampleTraderAnalyticsViewModel } from "../../../src/lib/trader-analytics/server/saved-trader-analytics-data";
 import { buildTradeImportSourceCautionReadModel } from "../../../src/lib/trader-analytics/server/saved-import-source-caution";
@@ -19,6 +20,7 @@ import {
   MetricCard,
   PlainStateBadge,
   PrimaryActionPanel,
+  WorkflowHandoffPanel,
   userFacingTradeDirection,
   withPageAnchor,
 } from "../../app-ui";
@@ -419,6 +421,7 @@ export default async function TradeReviewPage({
     notFound();
   }
 
+  const tradeDisplaySymbol = userFacingTradeSymbol(trade.symbol);
   const view = buildSavedTradeReviewViewModel({
     trade,
     report: containingReport,
@@ -539,13 +542,13 @@ export default async function TradeReviewPage({
       ? "/coach#next-action"
       : cameFromReviewQueue
       ? `/review?queue=${encodeURIComponent(query.queue ?? "highest_priority")}`
-      : "/analytics";
+      : "/trades#trade-list";
   const backLabel =
     cameFromCoach
       ? "Back to coach"
       : cameFromReviewQueue
       ? "Back to review queue"
-      : "Back to analytics";
+      : "Back to saved trades";
   const grossRealizedPnl = view.reportRow?.grossRealizedPnl ?? null;
   const mainBehaviorLabel =
     grossRealizedPnl !== null && grossRealizedPnl >= 0
@@ -589,11 +592,12 @@ export default async function TradeReviewPage({
             {backLabel}
           </Link>
           <h1 className="mt-3 text-3xl font-semibold text-zinc-50">
-            {trade.symbol} Trade Review
+            {tradeDisplaySymbol} Review Workspace
           </h1>
           <p className="mt-2 text-sm text-zinc-500">
-            {decisionReviewStatus.scope} for {directionLabel} /{" "}
-            {trade.sessionDate} / {trade.sessionBucket}
+            Replay the trade, decide what it proves, write the lesson, and
+            move back into the review queue. {decisionReviewStatus.scope} for{" "}
+            {directionLabel} / {trade.sessionDate} / {trade.sessionBucket}
           </p>
           {trade.tradeDirection === "short" ? (
             <p className="mt-2 max-w-3xl text-sm text-amber-300">
@@ -643,8 +647,8 @@ export default async function TradeReviewPage({
               },
               {
                 href: "#evidence",
-                label: "Evidence",
-                summary: "Risks, strengths, and similar trades.",
+                label: "Supporting Details",
+                summary: "Optional score details, evidence, and comparisons.",
               },
             ]}
             summary="Use the trade page as a review workspace."
@@ -654,7 +658,7 @@ export default async function TradeReviewPage({
               <PrimaryActionPanel
                 actionHref={primaryReviewAnchor}
                 actionLabel={checklist ? "Write review note" : "Review execution replay"}
-                body={`${trade.symbol} ${directionLabel} trade from ${
+                body={`${tradeDisplaySymbol} ${directionLabel} trade from ${
                   trade.sessionDate
                 }. Gross P/L is ${formatSigned(
                   view.reportRow?.grossRealizedPnl ?? null,
@@ -677,6 +681,54 @@ export default async function TradeReviewPage({
                 tone={cameFromCoach ? "warning" : "info"}
               />
             </div>
+
+            <WorkflowHandoffPanel
+              body={
+                <>
+                  This page is the workbench for one saved trade. Replay the
+                  buys and sells first, use chart context only when it is saved,
+                  then write one practical lesson before moving to the next
+                  trade.
+                </>
+              }
+              eyebrow="Trade Review Flow"
+              items={[
+                {
+                  action: "Replay executions",
+                  body: "Start here so the note is based on what the trader actually did.",
+                  href: "#execution",
+                  label: "1. Replay",
+                  title: "See the entry, adds, reductions, and exit",
+                  tone: "info",
+                },
+                {
+                  action: "Use context",
+                  body: "Check ticker, session, chart, and volume handoffs only when the saved evidence exists.",
+                  href: activeThread ? "#ticker-story" : "#summary",
+                  label: "2. Compare",
+                  title: "Decide what this trade can prove",
+                  tone: "warning",
+                },
+                {
+                  action: "Write lesson",
+                  body: "Save the note and checklist so coach and progress know the work is done.",
+                  href: "#writing-flow",
+                  label: "3. Save",
+                  title: "Record one fix or one strength to repeat",
+                  tone: "success",
+                },
+                {
+                  action: "Next trade",
+                  body: "Return to the queue after this review instead of wandering through unrelated stats.",
+                  href: "/review?queue=highest_priority",
+                  label: "4. Continue",
+                  title: "Move to the next saved review",
+                  tone: "default",
+                },
+              ]}
+              testId="trade-detail-workflow-handoff"
+              title="Review this trade in one clear loop"
+            />
 
             {cameFromCoach ? (
               <section
@@ -875,7 +927,7 @@ export default async function TradeReviewPage({
           <MetricCard
             label="What Happened"
             value={formatSigned(view.reportRow?.grossRealizedPnl ?? null)}
-            detail={`${trade.symbol} / ${trade.sessionBucket}`}
+            detail={`${tradeDisplaySymbol} / ${trade.sessionBucket}`}
             tone={(view.reportRow?.grossRealizedPnl ?? 0) >= 0 ? "success" : "danger"}
           />
           <MetricCard
@@ -958,7 +1010,7 @@ export default async function TradeReviewPage({
             {
               label: "Fix first",
               value: fixFirstAction,
-              detail: "Write one next-session rule before reviewing every support panel.",
+              detail: "Write one next-session rule before opening supporting details.",
               tone: "info",
             },
             {
@@ -1010,10 +1062,10 @@ export default async function TradeReviewPage({
           >
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Chart And Volume Handoff
+                Chart, Levels, And Volume Handoff
               </div>
               <h2 className="mt-2 text-lg font-semibold text-zinc-50">
-                Use the certified chart finding while writing the trade lesson.
+                Use certified market context while writing the trade lesson.
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">
                 These findings come from saved market context and should be
@@ -1065,7 +1117,7 @@ export default async function TradeReviewPage({
                   Ticker Story
                 </div>
                 <h2 className="mt-2 text-lg font-semibold text-zinc-50">
-                  {activeThread.symbol} had {activeThread.roundTripCount} round trips on {activeThread.sessionDate}
+                  {userFacingTradeSymbol(activeThread.symbol)} had {activeThread.roundTripCount} round trips on {activeThread.sessionDate}
                 </h2>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
                   {activeThread.storyDetail}
@@ -1223,7 +1275,7 @@ export default async function TradeReviewPage({
                 }
               />
               <MetricCard
-                label="After Exit"
+                label="After Exit Review"
                 value={activeThread.postExitFindingCount}
                 detail={`${activeThread.postExitRiskCount} risk to review, ${activeThread.postExitStrengthCount} strength to repeat, ${activeThread.postExitReviewPromptCount} prompt`}
                 tone={
@@ -1239,7 +1291,7 @@ export default async function TradeReviewPage({
               <MetricCard
                 label="Protected Profit"
                 value={activeThread.protectedProfitBeforeFadeFindingCount}
-                detail="Repeatable exit strength from capture plus after-exit fade"
+                detail="Repeatable exit strength from captured profit plus a measured later fade"
                 tone={
                   activeThread.protectedProfitBeforeFadeFindingCount > 0
                     ? "success"
@@ -1814,7 +1866,7 @@ export default async function TradeReviewPage({
               data-testid="trade-quality"
             >
               <h2 className="text-sm font-semibold text-zinc-100">
-                Trade Quality
+                Execution Score Detail
               </h2>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {autopsy.quality.dimensions.map((dimension) => (
@@ -1846,7 +1898,7 @@ export default async function TradeReviewPage({
               data-testid="trade-decision-autopsy"
             >
               <h2 className="text-sm font-semibold text-zinc-100">
-                Decision Autopsy
+                Execution Decision Notes
               </h2>
               <div className="mt-4 grid gap-3">
                 {autopsy.decisions.map((decision) => (
@@ -1874,10 +1926,15 @@ export default async function TradeReviewPage({
           </section>
         ) : null}
 
-        <section id="evidence" className="grid gap-6 xl:grid-cols-[minmax(0,0.55fr)_minmax(320px,0.45fr)]">
+        <div id="evidence">
+        <AdvancedDisclosure
+          summary="More evidence, comparisons, and writing prompts"
+          testId="trade-supporting-details"
+        >
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,0.55fr)_minmax(320px,0.45fr)]">
           <div className="ti-panel p-4">
             <h2 className="text-sm font-semibold text-zinc-100">
-              Grade Explainability
+              Score Explanation
             </h2>
             {gradeExplanation ? (
               <div className="mt-4">
@@ -1923,7 +1980,7 @@ export default async function TradeReviewPage({
 
           <div className="ti-panel p-4">
             <h2 className="text-sm font-semibold text-zinc-100">
-              Evidence Cards
+              Supporting Evidence
             </h2>
             <div className="mt-4 grid gap-3">
               {evidenceCards.length === 0 ? (
@@ -1955,12 +2012,12 @@ export default async function TradeReviewPage({
         <section className="grid gap-6 xl:grid-cols-2">
           <div className="ti-panel p-4">
             <h2 className="text-sm font-semibold text-zinc-100">
-              Mistake Timeline
+              Behavior Timeline
             </h2>
             <div className="mt-4 grid gap-3">
               {mistakeTimeline.length === 0 ? (
                 <div className="text-sm text-zinc-500">
-                  No mapped mistake timeline items for this trade.
+                  No mapped behavior timeline items for this trade.
                 </div>
               ) : (
                 mistakeTimeline.slice(0, 6).map((item) => (
@@ -2007,7 +2064,7 @@ export default async function TradeReviewPage({
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-sm text-zinc-300">
-                        {similar.symbol}
+                        {userFacingTradeSymbol(similar.symbol)}
                       </span>
                       <span className={`font-mono text-xs ${
                         (similar.grossRealizedPnl ?? 0) >= 0
@@ -2054,6 +2111,8 @@ export default async function TradeReviewPage({
             </div>
           </div>
         </section>
+        </AdvancedDisclosure>
+        </div>
           </div>
         </section>
       </div>

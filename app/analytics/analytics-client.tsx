@@ -12,10 +12,13 @@ import {
   SimpleBarChart,
   TradeOutcomeTape,
   WorkflowHandoffPanel,
+  withPageAnchor,
 } from "../app-ui";
+import { BehaviorReportPanel } from "../behavior-report-panel";
 import { SavedImportSourceCaution } from "../saved-import-source-caution";
 import { SavedReviewQueueSummary } from "../saved-review-queue-summary";
 import type { SavedImportSourceCautionReadModel } from "../../src/lib/trader-analytics/server/saved-import-source-caution";
+import type { AnalyticsBehaviorReport } from "../../src/lib/trader-analytics/server/analytics-behavior-report";
 import type { SavedReviewQueueReadModel } from "../../src/lib/trader-analytics/server/saved-review-queue";
 import type {
   ProductTraderAnalyticsTradeRow,
@@ -324,6 +327,9 @@ function TickerStoryAnalyticsPanel({
             : "border-sky-500/30 bg-sky-500/10 text-sky-100",
     },
   ].filter((handoff) => handoff.count > 0);
+  const certifiedRiskCount = summary.marketContextRiskCount;
+  const certifiedStrengthCount = summary.marketContextStrengthCount;
+  const reviewPromptCount = summary.marketContextReviewPromptCount;
 
   return (
     <section
@@ -380,91 +386,131 @@ function TickerStoryAnalyticsPanel({
           tone={summary.swingThreadCount > 0 ? "info" : "default"}
         />
       </div>
-      <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-8">
-        <MetricCard
-          label="Chart Findings"
-          value={String(summary.marketContextFindingCount)}
-          detail={`${summary.marketContextReviewPromptCount} prompt${summary.marketContextReviewPromptCount === 1 ? "" : "s"}, ${summary.levelFindingCount} level check${summary.levelFindingCount === 1 ? "" : "s"}`}
-          tone={summary.marketContextFindingCount > 0 ? "info" : "default"}
-        />
-        <MetricCard
-          label="Add Quality"
-          value={String(summary.addQualityFindingCount)}
-          detail={`${summary.addQualityRiskCount} risk, ${summary.addQualityStrengthCount} strength, ${summary.addQualityReviewPromptCount} prompt`}
-          tone={
-            summary.addQualityRiskCount > 0
-              ? "warning"
-              : summary.addQualityStrengthCount > 0
-                ? "success"
-                : summary.addQualityFindingCount > 0
-                  ? "info"
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <div className="rounded-md border border-sky-900/60 bg-sky-950/20 p-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-sky-300">
+            How to read these stories
+          </div>
+          <div className="mt-2 text-sm leading-6 text-zinc-400">
+            These are not extra trades. They group same-symbol re-entries so a
+            trader can ask whether a later attempt protected profit, gave back
+            profit, stayed open, or needs chart context before the lesson is
+            written.
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricCard
+            label="Chart Risks"
+            value={String(certifiedRiskCount)}
+            detail="Certified risks to inspect before writing a rule"
+            tone={certifiedRiskCount > 0 ? "warning" : "default"}
+          />
+          <MetricCard
+            label="Chart Strengths"
+            value={String(certifiedStrengthCount)}
+            detail="Certified strengths worth repeating"
+            tone={certifiedStrengthCount > 0 ? "success" : "default"}
+          />
+          <MetricCard
+            label="Needs Review"
+            value={String(reviewPromptCount)}
+            detail="Chart prompts waiting for enough context"
+            tone={reviewPromptCount > 0 ? "info" : "default"}
+          />
+        </div>
+      </div>
+      <div className="mt-3">
+        <AdvancedDisclosure
+          summary="Show chart evidence counts"
+          testId="analytics-ticker-story-evidence-counts"
+        >
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <MetricCard
+              label="Chart Findings"
+              value={String(summary.marketContextFindingCount)}
+              detail={`${summary.marketContextReviewPromptCount} prompt${summary.marketContextReviewPromptCount === 1 ? "" : "s"}, ${summary.levelFindingCount} level check${summary.levelFindingCount === 1 ? "" : "s"}`}
+              tone={summary.marketContextFindingCount > 0 ? "info" : "default"}
+            />
+            <MetricCard
+              label="Add Quality"
+              value={String(summary.addQualityFindingCount)}
+              detail={`${summary.addQualityRiskCount} risk, ${summary.addQualityStrengthCount} strength, ${summary.addQualityReviewPromptCount} prompt`}
+              tone={
+                summary.addQualityRiskCount > 0
+                  ? "warning"
+                  : summary.addQualityStrengthCount > 0
+                    ? "success"
+                    : summary.addQualityFindingCount > 0
+                      ? "info"
+                      : "default"
+              }
+            />
+            <MetricCard
+              label="Chart Risks"
+              value={String(summary.marketContextRiskCount)}
+              detail="Level, add, exit, or profit-protection risks"
+              tone={summary.marketContextRiskCount > 0 ? "warning" : "default"}
+            />
+            <MetricCard
+              label="Chart Strengths"
+              value={String(summary.marketContextStrengthCount)}
+              detail="Chart context strengths worth repeating"
+              tone={summary.marketContextStrengthCount > 0 ? "success" : "default"}
+            />
+            <MetricCard
+              label="After-Exit Review"
+              value={String(summary.postExitFindingCount)}
+              detail={`${summary.postExitRiskCount} risk, ${summary.postExitStrengthCount} strength, ${summary.postExitReviewPromptCount} prompt`}
+              tone={
+                summary.postExitRiskCount > 0
+                  ? "warning"
+                  : summary.postExitStrengthCount > 0
+                    ? "success"
+                    : summary.postExitFindingThreadCount > 0
+                      ? "info"
+                    : "default"
+              }
+            />
+            <MetricCard
+              label="Protected Profit"
+              value={String(summary.protectedProfitBeforeFadeFindingCount)}
+              detail={`${summary.protectedProfitBeforeFadeThreadCount} ticker stor${summary.protectedProfitBeforeFadeThreadCount === 1 ? "y" : "ies"}`}
+              tone={
+                summary.protectedProfitBeforeFadeFindingCount > 0
+                  ? "success"
                   : "default"
-          }
-        />
-        <MetricCard
-          label="Chart Risks"
-          value={String(summary.marketContextRiskCount)}
-          detail="Level, add, exit, or profit-protection risks"
-          tone={summary.marketContextRiskCount > 0 ? "warning" : "default"}
-        />
-        <MetricCard
-          label="Chart Strengths"
-          value={String(summary.marketContextStrengthCount)}
-          detail="Chart context strengths worth repeating"
-          tone={summary.marketContextStrengthCount > 0 ? "success" : "default"}
-        />
-        <MetricCard
-          label="After-Exit Review"
-          value={String(summary.postExitFindingCount)}
-          detail={`${summary.postExitRiskCount} risk, ${summary.postExitStrengthCount} strength, ${summary.postExitReviewPromptCount} prompt`}
-          tone={
-            summary.postExitRiskCount > 0
-              ? "warning"
-              : summary.postExitStrengthCount > 0
-                ? "success"
-                : summary.postExitFindingThreadCount > 0
-                  ? "info"
-              : "default"
-          }
-        />
-        <MetricCard
-          label="Protected Profit"
-          value={String(summary.protectedProfitBeforeFadeFindingCount)}
-          detail={`${summary.protectedProfitBeforeFadeThreadCount} ticker stor${summary.protectedProfitBeforeFadeThreadCount === 1 ? "y" : "ies"}`}
-          tone={
-            summary.protectedProfitBeforeFadeFindingCount > 0
-              ? "success"
-              : "default"
-          }
-        />
-        <MetricCard
-          label="Support/Resistance Exits"
-          value={String(summary.exitLevelFindingCount)}
-          detail={`${summary.exitLevelRiskCount} risk, ${summary.exitLevelStrengthCount} strength, ${summary.exitLevelReviewPromptCount} prompt`}
-          tone={
-            summary.exitLevelRiskCount > 0
-              ? "warning"
-              : summary.exitLevelStrengthCount > 0
-                ? "success"
-                : summary.exitLevelFindingCount > 0
-                  ? "info"
-                  : "default"
-          }
-        />
-        <MetricCard
-          label="Volume Evidence"
-          value={String(summary.volumeFindingCount)}
-          detail={`${summary.volumeRiskCount} risk, ${summary.volumeStrengthCount} strength, ${summary.volumeReviewPromptCount} prompt`}
-          tone={
-            summary.volumeRiskCount > 0
-              ? "warning"
-              : summary.volumeStrengthCount > 0
-                ? "success"
-                : summary.volumeFindingCount > 0
-                  ? "info"
-                  : "default"
-          }
-        />
+              }
+            />
+            <MetricCard
+              label="Support/Resistance Exits"
+              value={String(summary.exitLevelFindingCount)}
+              detail={`${summary.exitLevelRiskCount} risk, ${summary.exitLevelStrengthCount} strength, ${summary.exitLevelReviewPromptCount} prompt`}
+              tone={
+                summary.exitLevelRiskCount > 0
+                  ? "warning"
+                  : summary.exitLevelStrengthCount > 0
+                    ? "success"
+                    : summary.exitLevelFindingCount > 0
+                      ? "info"
+                      : "default"
+              }
+            />
+            <MetricCard
+              label="Volume Evidence"
+              value={String(summary.volumeFindingCount)}
+              detail={`${summary.volumeRiskCount} risk, ${summary.volumeStrengthCount} strength, ${summary.volumeReviewPromptCount} prompt`}
+              tone={
+                summary.volumeRiskCount > 0
+                  ? "warning"
+                  : summary.volumeStrengthCount > 0
+                    ? "success"
+                    : summary.volumeFindingCount > 0
+                      ? "info"
+                      : "default"
+              }
+            />
+          </div>
+        </AdvancedDisclosure>
       </div>
       {handoffs.length > 0 ? (
         <div className="mt-4 grid gap-3 lg:grid-cols-3">
@@ -1744,7 +1790,10 @@ function ImprovementIntelligencePanel({
               {coach.bestTrade ? (
                 <Link
                   className="text-sky-300 hover:text-sky-200"
-                  href={`/trades/${coach.bestTrade.tradeId}`}
+                  href={withPageAnchor(
+                    `/trades/${encodeURIComponent(coach.bestTrade.tradeId)}`,
+                    "summary",
+                  )}
                 >
                   {coach.bestTrade.symbol} / {formatSigned(coach.bestTrade.grossRealizedPnl)}
                 </Link>
@@ -1761,7 +1810,10 @@ function ImprovementIntelligencePanel({
               {coach.worstTrade ? (
                 <Link
                   className="text-sky-300 hover:text-sky-200"
-                  href={`/trades/${coach.worstTrade.tradeId}`}
+                  href={withPageAnchor(
+                    `/trades/${encodeURIComponent(coach.worstTrade.tradeId)}`,
+                    "summary",
+                  )}
                 >
                   {coach.worstTrade.symbol} / {formatSigned(coach.worstTrade.grossRealizedPnl)}
                 </Link>
@@ -1906,7 +1958,11 @@ function ProductPolishPanel({
                 <Link
                   key={card.id}
                   className="block border-t border-zinc-900 py-3 hover:text-sky-200"
-                  href={card.primaryRoute}
+                  href={
+                    card.primaryRoute.startsWith("/trades/")
+                      ? withPageAnchor(card.primaryRoute, "evidence")
+                      : card.primaryRoute
+                  }
                 >
                   <div className="text-sm text-zinc-300">{card.title}</div>
                   <div className="mt-1 text-xs text-zinc-500">
@@ -1945,7 +2001,10 @@ function ProductPolishPanel({
                 <Link
                   key={point.tradeId}
                   className="block border-t border-zinc-900 py-2"
-                  href={`/trades/${point.tradeId}`}
+                  href={withPageAnchor(
+                    `/trades/${encodeURIComponent(point.tradeId)}`,
+                    "writing-flow",
+                  )}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-xs text-zinc-300">{point.label}</span>
@@ -2017,7 +2076,14 @@ function ReviewHabitLoopPanel({
             <Link
               key={draft.id}
               className="block border-t border-zinc-900 py-3 hover:text-sky-200"
-              href={draft.affectedTradeIds[0] ? `/trades/${draft.affectedTradeIds[0]}` : "/coach"}
+              href={
+                draft.affectedTradeIds[0]
+                  ? withPageAnchor(
+                      `/trades/${encodeURIComponent(draft.affectedTradeIds[0])}`,
+                      "writing-flow",
+                    )
+                  : "/coach"
+              }
             >
               <div className="text-sm text-zinc-300">
                 {draft.suggestedRuleTitle}
@@ -2378,7 +2444,10 @@ function TradeRows({
                 <Link
                   className="text-sky-300 hover:text-sky-200"
                   data-testid={`${testIdPrefix}-open-${row.tradeId}`}
-                  href={`/trades/${row.tradeId}`}
+                  href={withPageAnchor(
+                    `/trades/${encodeURIComponent(row.tradeId)}`,
+                    "summary",
+                  )}
                 >
                   Open
                 </Link>
@@ -2577,6 +2646,7 @@ export function AnalyticsClient({
   savedReviewQueue,
   importSourceCaution,
   isSamplePreview = false,
+  behaviorReport,
   tickerStorySummary,
   sessionStorySummary,
 }: {
@@ -2584,6 +2654,7 @@ export function AnalyticsClient({
   savedReviewQueue?: SavedReviewQueueReadModel | null;
   importSourceCaution?: SavedImportSourceCautionReadModel | null;
   isSamplePreview?: boolean;
+  behaviorReport: AnalyticsBehaviorReport;
   tickerStorySummary: AnalyticsTickerStorySummary;
   sessionStorySummary: AnalyticsSessionStorySummary;
 }) {
@@ -2675,6 +2746,7 @@ export function AnalyticsClient({
           savedReviewQueue={savedReviewQueue}
         />
 
+        <BehaviorReportPanel report={behaviorReport} />
         <TickerStoryAnalyticsPanel summary={tickerStorySummary} />
         <SessionStoryAnalyticsPanel summary={sessionStorySummary} />
 

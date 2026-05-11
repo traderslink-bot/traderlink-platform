@@ -117,8 +117,37 @@ Current active batch:
   classification/counters/evidence, `/review` and `/trades/[tradeId]`
   session-story handoffs, protected-profit route wording cleanup, and
   adverse-add repair/dip-buy copy tightening -> continue with analytics/coach
-  polish, visual/mobile polish, or another market-context family only when
-  saved evidence can prove it.
+  polish, visual/mobile polish -> completed `/trades` and
+  `/trades/[tradeId]` first workflow-polish pass for saved-trade browsing,
+  trade-card review reasons, trade-detail workflow handoff, lower-section label
+  cleanup, and analytics trade-detail anchor repairs -> completed deeper coach
+  lower-page reduction, coach next-session plan, coach evidence-card question
+  structure, and trade-detail supporting-details collapse -> completed
+  screenshot-guided saved-trades pagination, saved-trade range copy, softened
+  `Why review this` block, and `/analytics` ticker-story summary/evidence-count
+  collapse -> completed shared mobile `DashboardSideNav` collapse, `/review`
+  queue first-batch limit and mobile tab compaction, `/progress` chart evidence
+  collapse, and progress workflow title cleanup -> completed import-flow trust
+  polish for `/import-dry-run`, `/imports`, and `/imports/[batchId]` shared
+  labels, save/saved-import wording, lighter panels, and copy-safety guards ->
+  completed `/workspace` visual-system migration, shared workflow handoff,
+  saved-import workspace wording, route anchors, and `/coach`/dashboard old-card
+  visual-system cleanup -> completed workspace core app-area demotion,
+  workspace next-review anchor handoff, and coach positive-evidence
+  `Review first` split -> completed route screenshot QA for workspace
+  beta/admin-note collapse, trader-readable workflow copy, and shared
+  user-facing trade-symbol display for import-ID-like labels -> completed
+  `/analytics` behavior report grouping for resistance entries,
+  support-based entries, chase/extension review, dip-buy/add review,
+  profit protection, level-based exits, and volume/re-entry review -> completed
+  shared `/coach` Behavior Coaching Map reuse of that certified report for
+  fix-first, repeat-first, and needs-review grouping, but user QA says the
+  coach UI now looks too much like duplicated analytics cards -> next coach
+  run should redesign the behavior section into a coach-specific sequence while
+  keeping the shared report as the evidence source -> continue with focused
+  coach behavior-section redesign, route copy/anchor repairs found by QA,
+  focused screenshot fixes only if concrete issues appear, or another
+  market-context family only when saved evidence can prove it.
 - Next continuous implementation run scope: work from
   `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
   The completed route-family language and mapper pass should be preserved, not
@@ -127,9 +156,11 @@ Current active batch:
   short next-block summary. The next coding run should chain a coherent
   route/evidence slice, focused verification, at least one independent second
   slice, broader verification when code changes require it, and docs/logs
-  before final response. Current best slices are analytics/coach presentation
-  polish, visual/mobile polish, route anchor/copy repairs, or a new
-  market-context family only when saved evidence proves it.
+  before final response. Current best slices are route anchor/copy repairs,
+  focused route screenshot fixes only if concrete issues appear, or a new
+  market-context family only when saved evidence proves it. Do not redo the
+  completed `/workspace` visual-system migration or `/coach` old-card cleanup
+  unless QA finds a concrete regression.
 - Current resume point: the shared behavior contract carries opportunity type
   and evidence channel, current execution-only risks/strengths/review prompts
   have mapper coverage, first market-context support/resistance contracts are
@@ -185,10 +216,47 @@ Current active batch:
   use cleaner red/green semantics, `/review` no longer exposes raw trade IDs
   in the Review Flow links, analytics/progress report history labels are
   user-facing, and visible hyphenated `chart-context` wording was removed.
-  Continue with `/trades` and `/trades/[tradeId]` detail polish, deeper
-  `/coach` lower-page reduction after route tests are ready for collapsed
-  support panels, route copy/anchor repairs found by QA, or another
-  market-context family only when saved evidence can prove it.
+  The first `/trades` and `/trades/[tradeId]` workflow-polish pass is complete:
+  saved trades now explain the browse workflow and current view, trade cards
+  show `Why review this`, trade detail has a four-step review-flow handoff,
+  lower trade-detail section labels are more user-facing, and analytics links
+  land on useful trade-detail anchors. The deeper `/coach` lower-page
+  reduction is now complete too: the main coach page has a `Before Next
+  Session` plan, evidence cards answer what happened / why it mattered / what
+  to do next, duplicate coach details are collapsed, and trade detail now
+  collapses optional score explanation, supporting evidence, behavior
+  timeline, similar trades, and journal prompts. The screenshot-led follow-up
+  is also complete: `/trades` paginates saved trade cards 18 at a time and
+  `/analytics` lower ticker-story evidence counts are collapsed behind a
+  trader-readable summary. The review/progress mobile-density pass is also
+  complete: mobile page menus collapse, `/review` queue lanes are more compact,
+  the queue shows the first batch of cards, and `/progress` detailed chart
+  evidence counts are collapsed. Import-flow trust polish is also complete for
+  shared state labels, save/saved-import wording, lighter panels, and
+  copy-safety guards. The `/workspace` visual-system migration and `/coach`
+  old-card cleanup are also complete, with workspace workflow handoffs,
+  saved-import wording, route anchors, dashboard-scoped old-card cleanup, and
+  Playwright visual-surface guards. The workspace route-handoff and coach
+  review-first split are complete too: primary workspace app areas now focus on
+  the core loop, secondary review tools are collapsed, the next-review tile
+  lands on an actual review anchor, and profitable coach evidence says
+  `Review first` instead of `Fix first`. The route screenshot QA and
+  trade-label copy slice is complete too: workspace beta/admin notes are
+  collapsed, the workspace flow title is trader-readable, and
+  coach/trade-detail/session-story surfaces hide import-ID-like labels behind
+  `Selected trade`. The analytics behavior report grouping slice is complete:
+  `/analytics` now groups certified market-context findings into resistance
+  entries, support-based entries, chase/extension review, dip-buy/add review,
+  profit protection, level-based exits, and volume/re-entry review without
+  adding route-local detection logic. The coach behavior-map reuse slice is
+  complete too: `/coach` consumes the same shared behavior report as a
+  coaching map with fix-first, repeat-first, and needs-review framing. User QA
+  found that the coach version is too visually and structurally close to
+  analytics, so the next coach-specific run should transform that same
+  evidence into a guided coaching sequence instead of broad report cards.
+  Continue with focused coach behavior-section redesign, route copy/anchor repairs found by QA,
+  focused route screenshot fixes only if concrete issues appear,
+  or another market-context family only when saved evidence can prove it.
   Uncertain behavior must become a review prompt or stay internal. The next run
   must not stop after one verified slice; it must keep
   going through the next safe route or behavior family.

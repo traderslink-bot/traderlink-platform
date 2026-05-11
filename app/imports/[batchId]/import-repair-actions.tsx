@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { importStatusLabel } from "../../../src/lib/trader-analytics/product/import-user-copy";
 import type { ImportCommitRepairItemRecord } from "../../../src/lib/trader-analytics/product/import-commit/import-commit-planner";
 
 function toneClass(status: string): string {
@@ -51,7 +52,7 @@ export function ImportRepairActions({
 
   return (
     <section
-      className="border border-zinc-800 bg-zinc-950 p-4"
+      className="ti-panel p-4"
       data-testid="import-repair-actions"
       id="repair-actions"
     >
@@ -90,7 +91,7 @@ export function ImportRepairActions({
                       className={toneClass(item.status)}
                       data-testid={`repair-item-${item.id}-status`}
                     >
-                      {item.status}
+                      {importStatusLabel(item.status)}
                     </span>
                   </div>
                 </div>

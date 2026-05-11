@@ -7,6 +7,13 @@ import {
   type ImportBatchHistoryItem,
   SqliteImportCommitRepository,
 } from "../../src/lib/trader-analytics/product/import-commit/sqlite-import-commit-repository";
+import {
+  importCountLabel,
+  importStatusDetail,
+  importStatusLabel,
+  importStorageLabel,
+  importTradeDirectionLabel,
+} from "../../src/lib/trader-analytics/product/import-user-copy";
 import type { ImportRecoveryReadModel } from "../../src/lib/trader-analytics/server/import-recovery-read-model";
 import { ImportWorkflowStrip } from "../import-workflow-strip";
 
@@ -49,6 +56,10 @@ function recoveryActionLabel(item: ImportRecoveryReadModel): string {
   return item.primaryAction.label;
 }
 
+function importRepairSeverityLabel(value: string): string {
+  return importStatusLabel(value === "warning" ? "needs_review" : value);
+}
+
 function historyState(item: ImportBatchHistoryItem): {
   label: string;
   detail: string;
@@ -66,7 +77,7 @@ function historyState(item: ImportBatchHistoryItem): {
   if (item.summaryStatus === "committed") {
     return {
       label: "Saved import",
-      detail: "Trades, analytics, coach, and review jobs were persisted.",
+      detail: "Trades, analytics, coach, and chart review items were saved.",
       action: "Review saved trades",
     };
   }
@@ -156,7 +167,7 @@ export default function ImportsPage() {
   const dataQuality = shell.analytics.reviewHabitLoop.dataQualityScore;
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-5 py-8 text-zinc-100 sm:px-8">
+    <main className="min-h-screen ti-dashboard-bg px-5 py-8 text-zinc-100 sm:px-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <header className="border-b border-zinc-800 pb-6">
           <Link className="text-sm text-sky-300 hover:text-sky-200" href="/workspace">
@@ -166,8 +177,8 @@ export default function ImportsPage() {
             {view.title}
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-zinc-500">
-            Review broker mappings, grouped executions, P/L checks, and commit
-            readiness before saving imported trades.
+            Review broker mappings, grouped executions, P/L checks, and save
+            readiness before trusting imported trades.
           </p>
           <Link
             className="mt-4 inline-block text-sm text-sky-300 hover:text-sky-200"
@@ -179,11 +190,11 @@ export default function ImportsPage() {
 
         <ImportWorkflowStrip
           currentStep="recover"
-          summary="Use this middle step when an import needs repair, duplicate review, or a saved-output check before you trust it for trade review."
+          summary="Use this middle step when an import needs repair, duplicate review, or a saved-data check before you trust it for trade review."
         />
 
         <section
-          className="border border-zinc-800 bg-zinc-950 p-4"
+          className="ti-panel p-4"
           data-testid="import-recovery-queue"
         >
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -192,8 +203,8 @@ export default function ImportsPage() {
                 Import Recovery Queue
               </h2>
               <p className="mt-1 text-xs text-zinc-500">
-                Active import attempts that need repair, duplicate review, or
-                acknowledgement before they should be trusted.
+                Import attempts that need row repair, duplicate review, or a
+                final acknowledgement before they should be trusted.
               </p>
             </div>
             <div className="font-mono text-xl text-amber-300">
@@ -220,29 +231,29 @@ export default function ImportsPage() {
                     </span>
                     <span className="mt-2 block text-xs text-zinc-400">
                       {item.duplicate.duplicateFile
-                        ? "Matches a committed file fingerprint."
+                        ? "Matches a saved file fingerprint."
                         : item.counts.duplicateTrades > 0
                           ? `${item.counts.duplicateTrades} duplicate saved trade(s) detected.`
                           : item.counts.fixRequiredRepairs > 0
                             ? `${item.counts.fixRequiredRepairs} fix-required repair(s) remain.`
                             : item.status === "ready_to_save"
-                              ? "Stored preview is ready to commit to local SQLite."
+                              ? "This preview is ready to save."
                               : "Open the import detail to continue."}
                     </span>
                   </span>
                   <span>
                     <span className={`block font-medium ${toneClass(item.status)}`}>
-                      {item.status}
+                      {importStatusLabel(item.status)}
                     </span>
                     <span className="mt-1 block text-xs text-zinc-500">
-                      {item.counts.openRepairs} repair(s),{" "}
-                      {item.counts.reviewDecisions} review(s)
+                      {importCountLabel(item.counts.openRepairs, "repair")},{" "}
+                      {importCountLabel(item.counts.reviewDecisions, "review")}
                     </span>
                   </span>
                   <span className="text-sky-300">
                     {recoveryActionLabel(item)}
                     <span className="mt-1 block text-xs text-zinc-500">
-                      {item.primaryAction.detail}
+                      {importStorageLabel(item.primaryAction.detail)}
                     </span>
                   </span>
                 </Link>
@@ -251,7 +262,7 @@ export default function ImportsPage() {
           </div>
         </section>
 
-        <section className="border border-zinc-800 bg-zinc-950 p-4">
+        <section className="ti-panel p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-sm font-semibold text-zinc-100">
@@ -259,8 +270,8 @@ export default function ImportsPage() {
               </h2>
               <p className="mt-1 text-xs text-zinc-500">
                 {importHistory.length > 0
-                  ? "Local SQLite import attempts are available for review."
-                  : "No saved local imports yet. Save one from CSV dry run."}
+                  ? "Saved import attempts are available for review."
+                  : "No saved imports yet. Save one from CSV dry run."}
               </p>
             </div>
             <Link className="text-sm text-sky-300 hover:text-sky-200" href="/import-dry-run">
@@ -269,7 +280,7 @@ export default function ImportsPage() {
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-4">
             {[
-              ["Committed", committedCount],
+              ["Saved", committedCount],
               ["Needs Review", needsReviewCount],
               ["Blocked", blockedCount],
               ["Duplicates", duplicateCount],
@@ -310,14 +321,17 @@ export default function ImportsPage() {
                     </span>
                   </span>
                   <span className="text-zinc-400">
-                    {item.savedTradeCount} trade(s),{" "}
+                    {importCountLabel(item.savedTradeCount, "trade")},{" "}
                     {item.batch.acceptedExecutionCount} execs
                     <span className="mt-1 block text-xs text-zinc-500">
-                      {item.decisionReviewJobCount} review job(s)
+                      {importCountLabel(
+                        item.decisionReviewJobCount,
+                        "chart review item",
+                      )}
                     </span>
                   </span>
                   <span className="text-zinc-400">
-                    {item.duplicateFile ? "duplicate file" : "file ok"}
+                    {item.duplicateFile ? "Duplicate file" : "File ok"}
                     {item.duplicateTradeCount > 0
                       ? ` / ${item.duplicateTradeCount} duplicate trade(s)`
                       : ""}
@@ -340,7 +354,7 @@ export default function ImportsPage() {
         </section>
 
         <section
-          className="border border-zinc-800 bg-zinc-950 p-4"
+          className="ti-panel p-4"
           data-testid="unresolved-repair-inbox"
         >
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -377,7 +391,7 @@ export default function ImportsPage() {
                     </span>
                   </span>
                   <span className={toneClass(item.severity)}>
-                    {item.severity}
+                    {importRepairSeverityLabel(item.severity)}
                   </span>
                   <span className="text-zinc-400">{item.brokerLabel}</span>
                   <span className="text-zinc-500">
@@ -390,7 +404,7 @@ export default function ImportsPage() {
         </section>
 
         <section className="grid gap-4 md:grid-cols-4">
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
               Quality Score
             </div>
@@ -402,10 +416,13 @@ export default function ImportsPage() {
               {diagnostics.qualityScore.score}/100
             </div>
             <div className="mt-2 text-xs text-zinc-500">
-              {diagnostics.qualityScore.status}
+              {importStatusDetail(
+                diagnostics.qualityScore.status,
+                importStatusLabel(diagnostics.qualityScore.status),
+              )}
             </div>
           </div>
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
               Mapping
             </div>
@@ -416,7 +433,7 @@ export default function ImportsPage() {
               score {view.preview.importResult.mappingConfidence.score}
             </div>
           </div>
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
               Trades
             </div>
@@ -427,25 +444,25 @@ export default function ImportsPage() {
               {view.preview.importResult.acceptedExecutionCount} executions
             </div>
           </div>
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Commit
+              Save Readiness
             </div>
             <div
               className={`mt-3 text-xl font-semibold ${toneClass(
                 diagnostics.commitPlan.status,
               )}`}
             >
-              {diagnostics.commitPlan.status}
+              {importStatusLabel(diagnostics.commitPlan.status)}
             </div>
             <div className="mt-2 text-xs text-zinc-500">
-              {view.commitDisabledReason ?? "Ready to save"}
+              {importStorageLabel(view.commitDisabledReason ?? "Ready to save")}
             </div>
           </div>
         </section>
 
         <section
-          className="grid gap-4 border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-3"
+          className="ti-panel grid gap-4 p-4 md:grid-cols-3"
           data-testid="imports-safety-policy"
         >
           <div>
@@ -456,7 +473,7 @@ export default function ImportsPage() {
               Review-only prototype
             </div>
             <div className="mt-1 text-xs text-zinc-500">
-              This screen previews commit readiness; it does not save broker
+              This screen previews save readiness; it does not save broker
               rows to production storage.
             </div>
           </div>
@@ -486,7 +503,7 @@ export default function ImportsPage() {
           </div>
         </section>
 
-        <section className="border border-zinc-800 bg-zinc-950 p-4">
+        <section className="ti-panel p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
               <h2 className="text-sm font-semibold text-zinc-100">
@@ -506,7 +523,7 @@ export default function ImportsPage() {
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm text-zinc-300">{check.label}</span>
                   <span className="text-xs uppercase tracking-wide text-zinc-500">
-                    {check.passed ? "pass" : check.severity}
+                    {check.passed ? "Passed" : importRepairSeverityLabel(check.severity)}
                   </span>
                 </div>
                 <div className="mt-1 text-xs text-zinc-500">{check.detail}</div>
@@ -516,7 +533,7 @@ export default function ImportsPage() {
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)]">
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <h2 className="text-sm font-semibold text-zinc-100">
               First Import Path
             </h2>
@@ -529,7 +546,7 @@ export default function ImportsPage() {
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-sm text-zinc-300">{step.label}</span>
                     <span className={`text-xs uppercase tracking-wide ${toneClass(step.status)}`}>
-                      {step.status}
+                      {importStatusLabel(step.status)}
                     </span>
                   </div>
                   <div className="mt-1 text-xs text-zinc-500">
@@ -540,7 +557,7 @@ export default function ImportsPage() {
             </div>
           </div>
 
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <h2 className="text-sm font-semibold text-zinc-100">
               Trade Repair Inbox
             </h2>
@@ -558,7 +575,7 @@ export default function ImportsPage() {
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-sm text-zinc-300">{item.title}</span>
                       <span className="text-xs uppercase tracking-wide text-zinc-500">
-                        {item.severity}
+                        {importRepairSeverityLabel(item.severity)}
                       </span>
                     </div>
                     <div className="mt-1 text-xs text-zinc-500">
@@ -575,7 +592,7 @@ export default function ImportsPage() {
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)]">
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <h2 className="text-sm font-semibold text-zinc-100">
               Column Mapping
             </h2>
@@ -600,7 +617,7 @@ export default function ImportsPage() {
             </div>
           </div>
 
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
+          <div className="ti-panel p-4">
             <h2 className="text-sm font-semibold text-zinc-100">
               Repair Workflow
             </h2>
@@ -615,7 +632,7 @@ export default function ImportsPage() {
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-sm text-zinc-200">{item.title}</span>
                       <span className="text-xs uppercase tracking-wide text-zinc-500">
-                        {item.severity}
+                        {importRepairSeverityLabel(item.severity)}
                       </span>
                     </div>
                     <div className="mt-1 text-xs text-zinc-500">
@@ -628,7 +645,7 @@ export default function ImportsPage() {
           </div>
         </section>
 
-        <section className="border border-zinc-800 bg-zinc-950 p-4">
+        <section className="ti-panel p-4">
           <h2 className="text-sm font-semibold text-zinc-100">
             Trade Reconstruction Preview
           </h2>
@@ -638,10 +655,10 @@ export default function ImportsPage() {
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="font-medium text-zinc-100">
-                      {item.symbol} / {item.tradeDirection}
+                      {item.symbol} / {importTradeDirectionLabel(item.tradeDirection)}
                     </div>
                     <div className="mt-1 text-xs text-zinc-500">
-                      {item.lifecycleStatus} / {item.groupingReason}
+                      {importStatusLabel(item.lifecycleStatus)} / {item.groupingReason}
                     </div>
                   </div>
                   <div className="font-mono text-sm text-zinc-400">

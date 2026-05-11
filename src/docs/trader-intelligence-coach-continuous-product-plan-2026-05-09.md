@@ -33,12 +33,18 @@ Current gate:
 - The first screenshot-guided visual pass is complete: shared dashboard
   surfaces are lighter, lower metric copy is shorter, and visible
   `chart-context` hyphenation was removed.
-- Do not restart those completed passes. Use this plan next for deeper
-  lower-page reduction, certified evidence presentation, mobile polish, and
-  any coach copy regression found by browser/copy QA. If supporting sections
-  should become collapsed by default, update route-specific Playwright
-  expectations first so hidden support panels do not look like missing product
-  coverage.
+- The deeper lower-page reduction is complete: the coach has a `Before Next
+  Session` plan, duplicate supporting checks are collapsed, and featured
+  evidence cards answer what happened / why it mattered / what to do next.
+- The behavior-map reuse pass is complete: `/coach` now consumes the same
+  certified behavior report as `/analytics` and frames grouped market-context
+  findings as `Fix first`, `Repeat first`, or `Needs review`.
+- User QA found that this pass still looks too much like duplicated analytics.
+  Keep the shared report as the evidence source, but redesign the default
+  coach presentation so it feels like coaching rather than another analytics
+  card grid.
+- Do not restart those completed passes. Use this plan next for screenshot-led
+  visual/mobile polish and any coach copy regression found by browser/copy QA.
 
 The coach page should feel like an overall trading coach first. It should not
 open as if one single trade, such as "Review AVEX next", is the whole coaching
@@ -502,18 +508,73 @@ Completed in the first coach presentation-polish pass:
 - Verified coach route coverage, banned-claim coverage, TypeScript, build, and
   mobile overflow after the pass.
 
-Remaining work after the 2026-05-10 plan audit:
+Completed in the coach lower-page reduction pass:
+
+- `/coach` now keeps duplicate/heavy supporting material collapsed by default:
+  review summary totals, behavior-impact charts, proof queue, extra evidence
+  cards, rule ideas, pattern memory, score details, rule evidence checks,
+  current pattern internals, review-completion detail, and confidence wording.
+- Added a visible `Before Next Session` plan panel with one rule to use, one
+  behavior to reduce, one strength to repeat, timing check, quick checklist,
+  and one next action.
+- Featured coach evidence cards now answer:
+  - what happened,
+  - why it mattered,
+  - what to do next.
+- The saved-review summary remains available inside the supporting-details
+  disclosure instead of competing with the main coaching flow.
+- Focused desktop Playwright, mobile overflow, TypeScript, and build passed
+  after this pass.
+
+Completed in the coach behavior-map reuse pass:
+
+- Added shared `app/behavior-report-panel.tsx` so `/coach` and `/analytics`
+  render the same certified behavior-report groups.
+- `/coach` now renders `Behavior Coaching Map` between the review-session flow
+  and the review backlog.
+- The coaching map summarizes certified risks as `Fix first`, certified
+  strengths as `Repeat first`, and uncertain/prompt-only chart behavior as
+  `Needs review`.
+- The side menu now links to `Behavior Map`.
+- The pass does not add new behavior detections. It consumes the existing
+  certified saved trade-thread market-context findings through
+  `buildAnalyticsBehaviorReport(...)`.
+- Focused unit, TypeScript, production build, desktop coach/analytics
+  Playwright, banned-claim Playwright, browser smoke, and `git diff --check`
+  passed after this pass.
+
+User QA follow-up after the behavior-map reuse pass:
+
+- The evidence source is correct, but the default `/coach` presentation is not
+  distinct enough from `/analytics`.
+- `/analytics` should remain the broad report surface where all behavior
+  groups can appear as cards.
+- `/coach` should use the same shared report to select and guide one small
+  coaching path:
+  - top behavior family to reduce,
+  - top behavior family to repeat,
+  - plain explanation of what that means,
+  - one fix-first or repeat-first action,
+  - two to five evidence trades,
+  - links into trade detail and review queue.
+- The next coach implementation run should replace the mirrored behavior-card
+  section with a coach-specific sequence, not delete the certified data source.
+
+Remaining work after the 2026-05-10 lower-page reduction:
 
 - Keep the shared behavior mapper as the allowlist. If a behavior is not mapped
   as a certified detection, `/coach` must not show it as a confident conclusion.
+- Do not rebuild the shared behavior report data grouping unless QA finds a
+  concrete regression. Do redesign the coach-specific behavior presentation so
+  it does not mirror the analytics card grid.
 - Do not let uncertified detections drive coach headlines, proof cards,
   fix-first actions, or progress claims.
 - Continue extracting route-local coach wording only when it duplicates the
   shared helper or creates a copy-safety risk.
-- Improve remaining lower `/coach` visual rhythm when browser QA shows dense or
-  confusing sections. Focus on card length, section grouping, chart/counter
-  clarity, and mobile reading order. Do not rebuild the new shared workflow
-  handoff strip.
+- Use screenshots for the next `/coach` pass. Focus only on real visual/mobile
+  defects in the top flow, `Before Next Session` panel, or supporting-details
+  disclosure. Do not rebuild the new shared workflow handoff strip or the
+  lower-page collapse.
 - Use certified read-model counts for evidence cards. If a route wants a new
   chart, counter, or statement, first verify the evidence family is certified
   or present it as a neutral review prompt.
@@ -556,19 +617,21 @@ Important:
 The next coding pass should:
 
 1. Smoke `/coach` long enough to confirm the current overall-focus card,
-   focused evidence trade, trades-to-review preview, focused proof queue, and
-   follow-through panel still render correctly.
+   focused evidence trade, trades-to-review preview, progress follow-through,
+   and `Before Next Session` panel still render correctly.
 2. Audit visible coach behavior labels for any new confusing/internal wording.
    Replace through the shared trader-facing mapper/read model, not a route-local
    table.
 3. Add or update tests only where the route copy or behavior family changed.
    Existing guards already block phrases such as "Added After Failed Premise"
    and raw pattern/taxonomy wording from primary coach UI.
-4. Touch `/coach` again for lower-page readability, handoff link regressions,
-   or a clear browser QA regression after the language pass is safe.
-5. Do a desktop/mobile readability pass across `/coach`, `/review`,
-   `/trades/[tradeId]`, and `/progress`, shortening long card copy and keeping
-   advanced/diagnostic sections collapsed.
+4. Touch `/coach` again only for screenshot-proven visual density, handoff link
+   regressions, or a clear browser QA regression after the lower-page collapse.
+   The first screenshot-led follow-up found no coach rebuild requirement, so
+   do not keep returning to `/coach` unless a concrete issue appears.
+5. Do a desktop/mobile readability pass across `/coach`, `/trades/[tradeId]`,
+   `/review`, and `/progress`, shortening long card copy and keeping
+   advanced/supporting sections collapsed.
 
 `/progress` should only receive deeper trend logic after real completed-review
 history exists.
