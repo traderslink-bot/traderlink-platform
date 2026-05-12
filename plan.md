@@ -8,6 +8,16 @@ implementation run:
 
 - `src/docs/trader-intelligence-plan-index.md`
 
+Product/engineering suggestions from the latest human review:
+
+- `src/docs/suggestions-for-codex.md`
+
+Read the suggestions file before the next product/UI implementation pass. It
+captures the requested direction for `/coach`, `/analytics`, `/review`,
+`/trades/[tradeId]`, `/workspace`, short/sell-starting copy, route hierarchy,
+and data-density handling. It does not replace the evidence-gating plans; it
+adds product and UX guidance for how the certified evidence should be presented.
+
 Current immediate priority:
 
 - `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`
@@ -111,7 +121,11 @@ Current next run expectation:
   section into a true coaching sequence. It should continue with a new
   independent slice: coach behavior-section redesign, route copy/anchor repairs
   found by QA, focused screenshot fixes only if concrete issues appear, or
-  another market-context family only if saved evidence can prove it.
+  another market-context family only if saved evidence can prove it. The
+  product/engineering review in `src/docs/suggestions-for-codex.md` should be
+  read before the next route/UI pass so the redesign preserves useful data,
+  improves hierarchy, clarifies sell-starting/short-feature limitations, and
+  separates coach, analytics, review, trade-detail, and workspace route roles.
   Verify locally, update docs, and keep moving through the next safe slice
   unless a true global blocker appears.
 - The next implementation start point remains the next-run plan's
@@ -148,9 +162,10 @@ Resume order:
 
 1. Read `src/docs/codex-project-log.md`.
 2. Read `src/docs/trader-intelligence-plan-index.md`.
-3. Open the active top-level plan named in the index.
-4. Open the active detailed plan named in the index.
-5. Open the current next-run execution plan named in the index.
-6. Work continuously from that plan using the work -> verify -> continue loop
+3. Read `src/docs/suggestions-for-codex.md` before product/UI route work.
+4. Open the active top-level plan named in the index.
+5. Open the active detailed plan named in the index.
+6. Open the current next-run execution plan named in the index.
+7. Work continuously from that plan using the work -> verify -> continue loop
    until the current batch target is met or a true global blocker appears.
-7. Update the project log and relevant plans after meaningful work.
+8. Update the project log and relevant plans after meaningful work.
