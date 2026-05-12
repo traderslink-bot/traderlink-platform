@@ -156,8 +156,13 @@ Current next run expectation:
   `Import Batch`, `/imports` uses `Imports To Finish`, `/import-dry-run`
   tucks P/L/cost and broker mapping/calibration details behind advanced
   disclosures, and core routes use chart data/evidence wording instead of
-  visible chart-context phrasing. Verify locally, update docs, and keep moving
-  through the next safe slice unless a true global blocker appears.
+  visible chart-context phrasing. The final PR screenshot/copy QA pass is also
+  complete: all ten requested routes were reviewed, the only concrete issue
+  found was `/import-dry-run` still showing mapping confidence and `Copy Audit`
+  in primary summary cards, and that default summary now uses `Rows To Fix` and
+  `Import Check` while mapping confidence remains in technical import setup
+  details. Verify locally, update docs, and keep moving through the next safe
+  slice unless a true global blocker appears.
 - The next implementation start point remains the next-run plan's
   **Required Long-Run Batch Shape** and **Next Run Phase Plan** sections, not
   only the shorter block summary. The next run should complete multiple
@@ -167,7 +172,8 @@ Current next run expectation:
   saved-trade handoffs, or deterministic follow-up constructive-management
   variants only when saved chart, level, candle, volume, or after-exit evidence
   can prove them. Do not redo the completed import IA disclosure pass,
-  import wording/advanced-detail polish, analytics category-access pass,
+  import wording/advanced-detail polish, final import summary-card fix,
+  analytics category-access pass,
   constructive-management storylines, workspace visual migration, coach
   old-card cleanup, May 11 coach sequence, review queue simplification,
   sell-starting limitation copy, route copy/anchor repairs, or trade-detail

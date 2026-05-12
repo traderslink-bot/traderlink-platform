@@ -170,10 +170,14 @@ Current active batch:
   `/imports/[batchId]` uses `Saved Import` / `Import Details`, `/imports` uses
   `Imports To Finish`, `/import-dry-run` keeps P/L/cost and mapping/calibration
   details behind advanced disclosures, and primary routes use chart data/evidence
-  wording instead of visible chart-context phrasing -> continue with focused
-  screenshot fixes only if concrete route issues appear, or inspect only
-  genuinely distinct constructive-management variants if saved evidence can
-  certify them without broader claims.
+  wording instead of visible chart-context phrasing -> completed final PR
+  screenshot/copy QA: all ten requested routes were reviewed, `/import-dry-run`
+  was the only route with a concrete issue, and its primary summary now uses
+  `Rows To Fix` / `Import Check` instead of mapping confidence / `Copy Audit`
+  while keeping mapping confidence in technical import setup details -> continue
+  with focused screenshot fixes only if new concrete route issues appear, or
+  inspect only genuinely distinct constructive-management variants if saved
+  evidence can certify them without broader claims.
 - Next continuous implementation run scope: work from
   `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
   The completed route-family language and mapper pass should be preserved, not
@@ -188,7 +192,7 @@ Current active batch:
   handoffs, or a follow-up
   constructive-management variant only when saved evidence proves it. Do not
   redo the completed import IA disclosure pass, import wording/advanced-detail
-  polish, analytics category-access pass,
+  polish, final import summary-card fix, analytics category-access pass,
   `/workspace` visual-system migration, `/coach` old-card cleanup, May 11 coach
   behavior sequence, review queue task-card simplification, sell-starting
   limitation copy, workspace chart-data wording, route copy/anchor repairs,
@@ -308,9 +312,14 @@ Current active batch:
   Session Stories, and Chart Evidence; `/imports/[batchId]` uses
   `Saved Import` / `Import Details`; `/imports` uses `Imports To Finish`; and
   `/import-dry-run` keeps P/L/cost and mapping/calibration details behind
-  advanced disclosures. Continue with focused screenshot fixes only if concrete
-  route issues appear, or extend constructive-management coverage only when
-  saved evidence can certify a genuinely distinct deterministic variant.
+  advanced disclosures. The final PR screenshot/copy QA pass is also complete:
+  all ten requested routes were reviewed, and the only concrete route issue was
+  `/import-dry-run` still showing mapping confidence / `Copy Audit` in primary
+  summary cards; the default summary now uses `Rows To Fix` and `Import Check`
+  while mapping confidence remains behind technical import setup details.
+  Continue with focused screenshot fixes only if new concrete route issues
+  appear, or extend constructive-management coverage only when saved evidence
+  can certify a genuinely distinct deterministic variant.
   Uncertain behavior must become a review prompt or stay internal. The next run
   must not stop after one verified slice; it must keep
   going through the next safe route or behavior family.

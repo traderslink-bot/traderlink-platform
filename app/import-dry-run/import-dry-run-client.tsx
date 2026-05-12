@@ -3540,16 +3540,28 @@ export function ImportDryRunClient({
               detail={`${experience.preview.importResult.rejectedRowCount} rejected rows`}
             />
             <Kpi
-              label="Mapping"
-              value={experience.preview.importResult.mappingConfidence.level}
-              detail={`score ${experience.preview.importResult.mappingConfidence.score}`}
-              tone="text-emerald-300"
+              label="Rows To Fix"
+              value={String(experience.preview.importResult.rejectedRowCount)}
+              detail={
+                experience.preview.importResult.rejectedRowCount > 0
+                  ? "Repair these before saving"
+                  : "No rejected rows"
+              }
+              tone={
+                experience.preview.importResult.rejectedRowCount > 0
+                  ? "text-amber-300"
+                  : "text-emerald-300"
+              }
             />
             <Kpi
-              label="Copy Audit"
-              value={experience.copyAudit.passed ? "Pass" : "Review"}
-              detail={`${experience.copyAudit.checkedTextCount} text checks`}
-              tone={experience.copyAudit.passed ? "text-emerald-300" : "text-amber-300"}
+              label="Import Check"
+              value={canTrySaveImport ? "Ready" : "Review"}
+              detail={
+                canTrySaveImport
+                  ? "Save this import or inspect details first"
+                  : "Fix rows or column choices before saving"
+              }
+              tone={canTrySaveImport ? "text-emerald-300" : "text-amber-300"}
             />
           </div>
           <div className="ti-panel p-4">
@@ -3674,7 +3686,7 @@ export function ImportDryRunClient({
         data-testid="import-dry-run-advanced-cost-details"
       >
         <summary className="cursor-pointer text-sm font-semibold text-zinc-300">
-          Advanced P/L and cost details
+          Show advanced P/L and cost details
         </summary>
         <section className="mt-5 grid gap-6 xl:grid-cols-2">
           <PnlReconciliationAssistant experience={experience} />
@@ -3697,7 +3709,7 @@ export function ImportDryRunClient({
         data-testid="import-dry-run-advanced-mapping-details"
       >
         <summary className="cursor-pointer text-sm font-semibold text-zinc-300">
-          Advanced mapping and calibration details
+          Show technical import setup details
         </summary>
         <div className="mt-5 grid gap-6">
           <BrokerMappingLearningConsole experience={experience} />

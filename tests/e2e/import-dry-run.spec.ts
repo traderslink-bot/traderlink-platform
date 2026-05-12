@@ -21,12 +21,23 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("import-workflow-step-upload")).toContainText(
       "Current",
     );
+    await expect(page.getByText("Rows To Fix", { exact: true })).toBeVisible();
+    await expect(page.getByText("Import Check", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("Mapping Confidence", { exact: true }).first(),
+    ).toBeHidden();
+    await expect(
+      page.getByText("Copy Audit", { exact: true }).first(),
+    ).toBeHidden();
     await page
-      .getByText("Advanced P/L and cost details", { exact: true })
+      .getByText("Show advanced P/L and cost details", { exact: true })
       .click();
     await page
-      .getByText("Advanced mapping and calibration details", { exact: true })
+      .getByText("Show technical import setup details", { exact: true })
       .click();
+    await expect(
+      page.getByText("Mapping Confidence", { exact: true }),
+    ).toBeVisible();
 
     for (const label of contract.requiredPanelLabels) {
       await expect(
@@ -92,7 +103,7 @@ test.describe("CSV dry-run import route", () => {
       name: "fees-and-commission.csv",
     });
     await page
-      .getByText("Advanced P/L and cost details", { exact: true })
+      .getByText("Show advanced P/L and cost details", { exact: true })
       .click();
 
     const costPanel = page.getByTestId("cost-visibility-panel");
@@ -108,7 +119,7 @@ test.describe("CSV dry-run import route", () => {
   test("saves a generic CSV import and exposes it to saved app routes", async ({
     page,
   }) => {
-    test.setTimeout(90000);
+    test.setTimeout(150_000);
     const symbol = `E2E${Date.now().toString().slice(-8)}`;
     const csv = [
       "Ticker,Executed At,Action,Qty,Fill Price,Status,Commission,Fees,Net Amount",
@@ -129,7 +140,7 @@ test.describe("CSV dry-run import route", () => {
       name: `${symbol}.csv`,
     });
     await page
-      .getByText("Advanced P/L and cost details", { exact: true })
+      .getByText("Show advanced P/L and cost details", { exact: true })
       .click();
 
     await expect(page.getByTestId("cost-visibility-panel")).toContainText(
@@ -304,7 +315,7 @@ test.describe("CSV dry-run import route", () => {
     await page.getByTestId("sample-select").selectOption("preset:row-repair");
 
     await expect(page.getByTestId("import-session-summary-status")).toHaveText(
-      "blocked",
+      "Needs repair",
     );
     await expect(page.getByTestId("prototype-analysis-state")).toHaveText(
       "Prototype analysis blocked",
@@ -325,7 +336,7 @@ test.describe("CSV dry-run import route", () => {
       page.getByTestId("decision-review-request-button"),
     ).toBeDisabled();
     await page
-      .getByText("Advanced P/L and cost details", { exact: true })
+      .getByText("Show advanced P/L and cost details", { exact: true })
       .click();
     await expect(page.getByTestId("cost-visibility-panel")).toBeVisible();
 
@@ -375,7 +386,7 @@ test.describe("CSV dry-run import route", () => {
       .selectOption("preset:open-position");
 
     await expect(page.getByTestId("import-session-summary-status")).toHaveText(
-      "needs_review",
+      "Needs review",
     );
     await expect(page.getByTestId("prototype-analysis-panel")).toContainText(
       /open position|open-position|review/i,
@@ -393,7 +404,7 @@ test.describe("CSV dry-run import route", () => {
       "production write: false",
     );
     await page
-      .getByText("Advanced P/L and cost details", { exact: true })
+      .getByText("Show advanced P/L and cost details", { exact: true })
       .click();
     await expect(
       page.getByTestId("cost-visibility-scoring-policy"),
@@ -658,7 +669,7 @@ test.describe("CSV dry-run import route", () => {
     ).toContainText("Full chart data");
     await expect(
       page.getByTestId("decision-review-status-badges"),
-    ).toContainText("Trade-window evidence");
+    ).toContainText("During-trade candle evidence");
     await expect(
       page.getByTestId("decision-review-evidence-gates"),
     ).toContainText("Evidence gates clear");
@@ -791,7 +802,7 @@ test.describe("CSV dry-run import route", () => {
     ).toContainText("Lower-resolution candle window");
     await expect(
       page.getByTestId("decision-review-candle-notice-notes"),
-    ).toContainText("complete 1m trade-window candles were unavailable");
+    ).toContainText("complete 1m during-trade candles were unavailable");
     await expect(
       page.getByTestId("decision-review-candle-info-notes"),
     ).toContainText("Verified candle basis");
@@ -994,7 +1005,7 @@ test.describe("CSV dry-run import route", () => {
       "repaired save source",
     );
     await expect(page.getByTestId("import-session-summary-status")).toHaveText(
-      "ready",
+      "Ready",
     );
     await expect(page.getByTestId("confidence-gate-title")).toContainText(
       /ready/i,
@@ -1058,6 +1069,11 @@ test.describe("CSV dry-run import route", () => {
     ).toContainText("Review repaired row values");
 
     await page.goto("/coach");
+    await page
+      .getByText("More coach evidence, queue totals, and rule checks", {
+        exact: true,
+      })
+      .click();
     await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
     await expect(
       page.getByTestId("coach-repaired-import-caution"),

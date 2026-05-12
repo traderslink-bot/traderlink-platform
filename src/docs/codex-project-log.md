@@ -13155,3 +13155,53 @@ Current best next step:
   screenshot/browser issues found on `/workspace`, `/analytics`, `/trades`, or
   saved-trade handoffs. Only move into new behavior work if saved evidence can
   certify a genuinely distinct deterministic claim.
+
+## 2026-05-12 - Final PR Screenshot And Copy QA
+
+Completed the PR #9 follow-up review pass from GitHub comment `4431532125`.
+This was a screenshot/copy consistency pass only; it preserved the completed
+route IA, detection layer, behavior mapper, coach sequence, analytics category
+access, and import disclosure work.
+
+Changes:
+
+- Ran screenshot/DOM QA over `/workspace`, `/import-dry-run`, `/imports`,
+  `/imports/[batchId]`, `/trades`, `/trades/[tradeId]`, `/review`,
+  `/analytics`, `/coach`, and `/progress` with a seeded saved import/trade.
+- The only concrete UI issue found was `/import-dry-run` still showing mapping
+  confidence and `Copy Audit` in the primary summary cards.
+- Replaced those primary cards with beginner-facing `Rows To Fix` and
+  `Import Check` cards.
+- Kept mapping confidence, broker mapping, calibration, P/L, and cost policy
+  available behind advanced disclosures.
+- Renamed the advanced disclosure summaries to `Show advanced P/L and cost
+  details` and `Show technical import setup details`.
+- Extended import dry-run Playwright coverage so mapping confidence and copy
+  audit stay hidden from the default path while mapping confidence remains
+  visible after opening technical import setup details.
+- Updated stale import-route test expectations that still asserted raw
+  statuses or old trade-window wording instead of the current user-facing copy.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Screenshot QA against the updated production bundle confirmed the
+  `/import-dry-run` primary summary now shows `Rows To Fix` and `Import Check`
+  with no visible mapping score or copy-audit card.
+- `npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop --grep "guided end-user path|workspace and coach|analytics product intelligence|coach product loop|guided review workflow|saved trade routing|progress and behavior|banned product claims|market context observational" --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/saved-import-visual-overflow.spec.ts --project=chromium-desktop --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile --grep "keeps core mobile routes usable|mobile usability" --timeout=150000`
+  passed.
+
+Current best next step:
+
+- No known concrete route issue remains from the PR screenshot/copy QA pass.
+- Do not redo the May 12 import IA pass, import wording/advanced-detail polish,
+  final import summary-card fix, analytics category access, May 11
+  coach/review/trade-detail work, or constructive-management storylines unless
+  new screenshots/tests reveal a real regression.
