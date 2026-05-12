@@ -58,7 +58,7 @@ Completed improvements:
 
 - Added a shared import user-copy layer so import pages can display readable
   labels such as `Ready to save`, `Repair needed`, `Saved import`, and
-  `Chart context waiting` instead of raw save-state or review-state strings.
+  `Chart data still missing` instead of raw save-state or review-state strings.
 - Tightened the import workflow strip into a clearer three-step flow:
   upload CSV -> save or repair import -> review saved trades.
 - Updated `/import-dry-run`, `/imports`, and `/imports/[batchId]` so normal

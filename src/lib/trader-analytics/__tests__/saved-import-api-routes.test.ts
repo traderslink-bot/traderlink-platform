@@ -473,12 +473,12 @@ describe("saved import API routes", () => {
         expect.objectContaining({
           symbol: "RAPI",
           lane: "market_context_unavailable",
-          stateLabel: "Chart context waiting",
+          stateLabel: "Chart data still missing",
           reviewScopeLabel: "execution-only",
           stateDetail:
-            "Execution review is available, but levels or candle context are waiting on a market data backfill.",
+            "Execution review is available, but chart, level, or volume evidence is still missing.",
           nextAction:
-            "Review entries, adds, reductions, exits, timing, and P/L now; backfill market context later.",
+            "Review entries, adds, reductions, exits, timing, and P/L now; add chart data later.",
         }),
       ]),
     );

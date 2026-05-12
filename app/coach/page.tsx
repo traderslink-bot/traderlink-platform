@@ -9,6 +9,7 @@ import {
   withPageAnchor,
 } from "../app-ui";
 import { BehaviorReportPanel } from "../behavior-report-panel";
+import { CoachBehaviorSequence } from "./coach-behavior-sequence";
 import { SavedReviewQueueSummary } from "../saved-review-queue-summary";
 import { SavedImportSourceCaution } from "../saved-import-source-caution";
 import { buildAnalyticsBehaviorReport } from "../../src/lib/trader-analytics/server/analytics-behavior-report";
@@ -77,7 +78,7 @@ function coachLaneLabel(lane: string): string {
   }
 
   if (lane === "market_context_unavailable") {
-    return "Chart context waiting";
+    return "Chart data still missing";
   }
 
   if (lane === "blocked_open_trade") {
@@ -732,7 +733,7 @@ function CoachSessionBriefPanel({
           Open review queue
         </Link>
         <span className="text-slate-400">/</span>
-        <Link className="text-slate-700 underline-offset-4 hover:underline" href="/progress">
+        <Link className="text-slate-700 underline-offset-4 hover:underline" href="/progress#progress-follow-through">
           Track progress after review
         </Link>
       </div>
@@ -982,7 +983,7 @@ function BehaviorCountChart({
             This shows whether the same behavior is appearing across multiple saved trades.
           </p>
         </div>
-        <Link className="text-sm text-sky-300 hover:text-sky-200" href="/progress">
+        <Link className="text-sm text-sky-300 hover:text-sky-200" href="/progress#progress-follow-through">
           Track progress
         </Link>
       </div>
@@ -1418,8 +1419,8 @@ export default function CoachPage() {
               },
               {
                 href: "#behavior-map",
-                label: "Behavior Map",
-                summary: "Chart-backed groups for what to fix, repeat, or review.",
+                label: "Behavior Sequence",
+                summary: "One chart-backed path for what to fix, repeat, or review.",
               },
               {
                 href: "#review-backlog",
@@ -1597,7 +1598,7 @@ export default function CoachPage() {
                 tone="warning"
               />
               <CoachStepCard
-                actionHref="/progress"
+                actionHref="/progress#progress-follow-through"
                 actionLabel="Check progress"
                 body="After reviews are saved, check whether the focus is improving, staying the same, or needs more review."
                 label="Follow through"
@@ -1703,7 +1704,7 @@ export default function CoachPage() {
         </section>
 
         <div id="behavior-map">
-          <BehaviorReportPanel mode="coach" report={behaviorReport} />
+          <CoachBehaviorSequence report={behaviorReport} />
         </div>
 
         <div id="review-backlog">
@@ -1758,6 +1759,8 @@ export default function CoachPage() {
           summary="More coach evidence, queue totals, and rule checks"
           testId="coach-supporting-details"
         >
+        <BehaviorReportPanel mode="coach" report={behaviorReport} />
+
         <SavedReviewQueueSummary queue={savedReviewQueue} surface="coach" />
 
         <CoachSectionHeader

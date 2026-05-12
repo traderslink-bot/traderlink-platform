@@ -14,3 +14,21 @@ export function userFacingTradeSymbol(
 
   return isUserFacingTickerSymbol(normalized) ? normalized : fallback;
 }
+
+export function userFacingTradeDirection(
+  value: string | null | undefined,
+): string {
+  if (value === "short") {
+    return "Limited sell-side review";
+  }
+
+  if (value === "long") {
+    return "Long trade";
+  }
+
+  return value ? value.replaceAll("_", " ") : "Unknown direction";
+}
+
+export function sellStartingReviewLimitationCopy(): string {
+  return "This saved item starts with a sell-side execution. The app can replay the position history, but full short-trade coaching is not supported yet.";
+}

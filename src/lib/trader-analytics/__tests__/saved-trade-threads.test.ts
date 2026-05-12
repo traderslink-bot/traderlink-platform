@@ -916,6 +916,129 @@ describe("saved trade thread read model", () => {
     expect(postExitCard?.reviewAction).toContain("exit cue");
   });
 
+  it("surfaces balanced full-trade management as a repeatable chart-backed strength", () => {
+    const trades = [
+      trade({ id: "cycn-1", pnl: 100 }),
+      trade({
+        id: "cycn-2",
+        pnl: 80,
+        timestamps: ["2026-04-01T14:30:00.000Z", "2026-04-01T14:50:00.000Z"],
+      }),
+    ];
+    const model = buildSavedTradeThreadReadModel({
+      decisionReviewSnapshots: [
+        decisionReviewSnapshot({
+          category: "management",
+          evidence: [
+            "addCountAfterInitialEntry=1",
+            "totalPositionDecreaseCount=1",
+            "postExitCandleCount=4",
+          ],
+          id: "balanced_management_with_constructive_exit",
+          savedTradeId: "cycn-2",
+          title: "Managed the full trade constructively",
+          tone: "strength",
+        }),
+      ],
+      report: report({
+        rows: [
+          { id: "cycn-1", pnl: 100 },
+          { id: "cycn-2", pnl: 80 },
+        ],
+      }),
+      trades,
+    });
+    const thread = model.threads[0];
+    const postExitCard = thread?.reviewEvidence.find(
+      (item) => item.id === "post-exit-context-finding",
+    );
+    const copy = [
+      thread?.marketContextFindings[0]?.label,
+      thread?.marketContextFindings[0]?.detail,
+      thread?.marketContextFindings[0]?.reviewAction,
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    expect(thread?.marketContextFindings[0]?.label).toBe(
+      "Managed the full trade constructively",
+    );
+    expect(thread?.marketContextFindings[0]?.evidenceChannel).toBe("combined");
+    expect(thread?.marketContextStrengthCount).toBe(1);
+    expect(thread?.postExitFindingCount).toBe(1);
+    expect(thread?.postExitStrengthCount).toBe(1);
+    expect(model.postExitStrengthCount).toBe(1);
+    expect(thread?.priorityMarketContextFindings[0]?.sourceInsightId).toBe(
+      "balanced_management_with_constructive_exit",
+    );
+    expect(postExitCard?.title).toBe("Full-trade management was constructive");
+    expect(postExitCard?.reviewAction).toContain("management sequence");
+    expect(copy).not.toContain("perfect");
+    expect(copy).not.toContain("top tick");
+    expect(copy).not.toContain("signal");
+  });
+
+  it("surfaces add-into-strength constructive exits as repeatable chart-backed strengths", () => {
+    const trades = [
+      trade({ id: "cycn-1", pnl: 100 }),
+      trade({
+        id: "cycn-2",
+        pnl: 80,
+        timestamps: ["2026-04-01T14:30:00.000Z", "2026-04-01T14:50:00.000Z"],
+      }),
+    ];
+    const model = buildSavedTradeThreadReadModel({
+      decisionReviewSnapshots: [
+        decisionReviewSnapshot({
+          category: "exit",
+          evidence: [
+            "addCountAfterInitialEntry=1",
+            "averageAddPriceVsPreviousAverageEntryPct=4.0%",
+            "postExitCandleCount=4",
+          ],
+          id: "add_into_strength_with_constructive_final_exit",
+          savedTradeId: "cycn-2",
+          title: "Added into strength and exited constructively",
+          tone: "strength",
+        }),
+      ],
+      report: report({
+        rows: [
+          { id: "cycn-1", pnl: 100 },
+          { id: "cycn-2", pnl: 80 },
+        ],
+      }),
+      trades,
+    });
+    const thread = model.threads[0];
+    const postExitCard = thread?.reviewEvidence.find(
+      (item) => item.id === "post-exit-context-finding",
+    );
+    const copy = [
+      thread?.marketContextFindings[0]?.label,
+      thread?.marketContextFindings[0]?.detail,
+      thread?.marketContextFindings[0]?.reviewAction,
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    expect(thread?.marketContextFindings[0]?.label).toBe(
+      "Added into strength and exited constructively",
+    );
+    expect(thread?.marketContextFindings[0]?.evidenceChannel).toBe("combined");
+    expect(thread?.marketContextStrengthCount).toBe(1);
+    expect(thread?.postExitStrengthCount).toBe(1);
+    expect(postExitCard?.title).toBe(
+      "Strength add and final exit were constructive",
+    );
+    expect(postExitCard?.reviewAction.toLowerCase()).toContain(
+      "confirmed strength",
+    );
+    expect(copy).not.toContain("buy signal");
+    expect(copy).not.toContain("perfect");
+    expect(copy).not.toContain("top tick");
+  });
+
   it("surfaces support and resistance exit-quality findings as post-exit evidence", () => {
     const trades = [
       trade({ id: "cycn-1", pnl: 100 }),

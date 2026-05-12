@@ -15,6 +15,7 @@ export type AnalyticsBehaviorReportGroupId =
   | "entry-support"
   | "entry-extension"
   | "dip-buy-adds"
+  | "full-trade-management"
   | "profit-protection"
   | "profit-taking-exits"
   | "volume-reentry";
@@ -150,6 +151,20 @@ const BEHAVIOR_REPORT_GROUPS: readonly BehaviorReportGroupDefinition[] = [
     ],
     question: "Was open profit protected or given back?",
     title: "Profit Protection",
+  },
+  {
+    actionLabel: "Open full-trade management reviews",
+    description:
+      "This group looks for trades where active management, controlled giveback, final exit, and after-exit evidence line up as one constructive management story.",
+    emptyState:
+      "No certified full-trade management strength yet. The app needs active-management evidence, controlled giveback, a flat exit, and after-exit candles before praising the whole trade.",
+    id: "full-trade-management",
+    ids: [
+      "balanced_management_with_constructive_exit",
+      "add_into_strength_with_constructive_final_exit",
+    ],
+    question: "Which trades showed constructive management into the final exit?",
+    title: "Full-Trade Management",
   },
   {
     actionLabel: "Open exit-location trades",
@@ -298,6 +313,14 @@ function evidenceDetail(args: {
     if (args.finding.opportunityType === "risk_to_reduce") {
       return "Open profit was available but not fully protected. Review where a trim, stop move, or runner rule should have been defined.";
     }
+  }
+
+  if (args.definition.id === "full-trade-management") {
+    if (args.finding.opportunityType === "strength_to_repeat") {
+      return "The active-management, final-exit, and after-exit evidence lined up. Review the cues that made the whole management path repeatable.";
+    }
+
+    return "Review whether the active-management, final-exit, and after-exit evidence support a repeatable management rule.";
   }
 
   if (args.definition.id === "profit-taking-exits") {

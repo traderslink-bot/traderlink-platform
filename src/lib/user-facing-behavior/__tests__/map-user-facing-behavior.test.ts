@@ -257,6 +257,18 @@ describe("mapUserFacingBehavior", () => {
       expectedOpportunityType: "strength_to_repeat",
     },
     {
+      behaviorId: "balanced_management_with_constructive_exit",
+      expectedEvidenceChannel: "combined",
+      expectedLabel: "Managed the full trade constructively",
+      expectedOpportunityType: "strength_to_repeat",
+    },
+    {
+      behaviorId: "add_into_strength_with_constructive_final_exit",
+      expectedEvidenceChannel: "combined",
+      expectedLabel: "Added into strength and exited constructively",
+      expectedOpportunityType: "strength_to_repeat",
+    },
+    {
       behaviorId: "exit_avoided_adverse_followthrough",
       expectedEvidenceChannel: "market_context",
       expectedLabel: "Exit avoided a later fade",
@@ -594,6 +606,66 @@ describe("mapUserFacingBehavior", () => {
     expect(`${finding.detail} ${finding.reviewAction}`.toLowerCase()).not.toContain(
       "top tick",
     );
+  });
+
+  it("translates balanced full-trade management without perfect-exit or signal claims", () => {
+    const finding = mapDecisionReviewInsightForUser(
+      {
+        category: "management",
+        evidence: [
+          "addCountAfterInitialEntry=1",
+          "totalPositionDecreaseCount=1",
+          "postExitCandleCount=4",
+        ],
+        id: "balanced_management_with_constructive_exit",
+        summary: "The full trade was managed constructively.",
+        title: "Managed the full trade constructively",
+        tone: "strength",
+      },
+      "/analytics",
+    );
+    const copy = `${finding.label} ${finding.detail} ${finding.reviewAction}`.toLowerCase();
+
+    expect(finding.canShowPrimary).toBe(true);
+    expect(finding.canDrivePrimaryConclusion).toBe(true);
+    expect(finding.evidenceChannel).toBe("combined");
+    expect(finding.opportunityType).toBe("strength_to_repeat");
+    expect(finding.label).toBe("Managed the full trade constructively");
+    expect(finding.reviewAction).toContain("management sequence");
+    expect(copy).not.toContain("perfect");
+    expect(copy).not.toContain("top tick");
+    expect(copy).not.toContain("buy signal");
+    expect(copy).not.toContain("sell signal");
+  });
+
+  it("translates constructive add-into-strength management without instruction or perfect-exit claims", () => {
+    const finding = mapDecisionReviewInsightForUser(
+      {
+        category: "exit",
+        evidence: [
+          "addCountAfterInitialEntry=1",
+          "averageAddPriceVsPreviousAverageEntryPct=4.0%",
+          "postExitCandleCount=4",
+        ],
+        id: "add_into_strength_with_constructive_final_exit",
+        summary: "The add and final exit were constructive.",
+        title: "Added into strength and exited constructively",
+        tone: "strength",
+      },
+      "/coach",
+    );
+    const copy = `${finding.label} ${finding.detail} ${finding.reviewAction}`.toLowerCase();
+
+    expect(finding.canShowPrimary).toBe(true);
+    expect(finding.canDrivePrimaryConclusion).toBe(true);
+    expect(finding.evidenceChannel).toBe("combined");
+    expect(finding.opportunityType).toBe("strength_to_repeat");
+    expect(finding.label).toBe("Added into strength and exited constructively");
+    expect(finding.reviewAction.toLowerCase()).toContain("confirmed strength");
+    expect(copy).not.toContain("always correct");
+    expect(copy).not.toContain("buy signal");
+    expect(copy).not.toContain("perfect");
+    expect(copy).not.toContain("top tick");
   });
 
   it("translates decision-review support notes without letting them drive conclusions", () => {

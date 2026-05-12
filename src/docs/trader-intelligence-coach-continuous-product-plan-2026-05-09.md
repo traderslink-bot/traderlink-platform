@@ -557,16 +557,29 @@ User QA follow-up after the behavior-map reuse pass:
   - one fix-first or repeat-first action,
   - two to five evidence trades,
   - links into trade detail and review queue.
-- The next coach implementation run should replace the mirrored behavior-card
-  section with a coach-specific sequence, not delete the certified data source.
+- This follow-up is complete: the mirrored behavior-card section has been
+  replaced by a coach-specific sequence without deleting the certified data
+  source.
+
+Completed in the coach behavior-sequence pass:
+
+- `/coach` now renders `Behavior Coaching Sequence` as the default behavior
+  section instead of the mirrored analytics-style behavior-card grid.
+- The sequence consumes the same certified `buildAnalyticsBehaviorReport(...)`
+  source, selects top risk, top strength, and top review prompt, and keeps
+  uncertain chart behavior as a review prompt rather than a conclusion.
+- Evidence trades link into `/trades/[tradeId]#writing-flow`, with review queue
+  and progress follow-through available from the same panel.
+- The previous `Behavior Coaching Map` remains available only in supporting
+  details so the evidence audit trail is still reachable without dominating the
+  coach experience.
 
 Remaining work after the 2026-05-10 lower-page reduction:
 
 - Keep the shared behavior mapper as the allowlist. If a behavior is not mapped
   as a certified detection, `/coach` must not show it as a confident conclusion.
-- Do not rebuild the shared behavior report data grouping unless QA finds a
-  concrete regression. Do redesign the coach-specific behavior presentation so
-  it does not mirror the analytics card grid.
+- Do not rebuild the shared behavior report data grouping or the May 11 coach
+  behavior sequence unless QA finds a concrete regression.
 - Do not let uncertified detections drive coach headlines, proof cards,
   fix-first actions, or progress claims.
 - Continue extracting route-local coach wording only when it duplicates the
@@ -626,9 +639,8 @@ The next coding pass should:
    Existing guards already block phrases such as "Added After Failed Premise"
    and raw pattern/taxonomy wording from primary coach UI.
 4. Touch `/coach` again only for screenshot-proven visual density, handoff link
-   regressions, or a clear browser QA regression after the lower-page collapse.
-   The first screenshot-led follow-up found no coach rebuild requirement, so
-   do not keep returning to `/coach` unless a concrete issue appears.
+   regressions, or a clear browser QA regression after the lower-page collapse
+   and May 11 behavior sequence.
 5. Do a desktop/mobile readability pass across `/coach`, `/trades/[tradeId]`,
    `/review`, and `/progress`, shortening long card copy and keeping
    advanced/supporting sections collapsed.

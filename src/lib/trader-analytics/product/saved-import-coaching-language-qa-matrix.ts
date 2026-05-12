@@ -180,11 +180,15 @@ export function buildSavedImportCoachingLanguageQaMatrix(): SavedImportCoachingL
       texts: [
         textEntry(
           "market-gap:execution-only",
-          "Execution review is available, but market context is waiting on a backfill. Review entries, exits, timing, and P/L now; backfill market context later.",
+          "Execution-only review is available, but chart, level, or volume evidence is still missing. Review entries, exits, timing, and P/L now; add chart data later.",
           "market_context_unavailable",
         ),
       ],
-      requiredFragments: ["execution review is available", "market context", "backfill"],
+      requiredFragments: [
+        "execution-only review is available",
+        "chart, level, or volume evidence",
+        "add chart data later",
+      ],
       forbiddenFragments: ["support held", "breakout confirmed", "setup failed"],
     },
     {

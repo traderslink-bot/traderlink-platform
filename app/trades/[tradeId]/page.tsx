@@ -7,6 +7,7 @@ import {
   buildTradeExecutionAutopsy,
   buildSavedTradeReviewViewModel,
   getLatestSavedTraderAnalyticsReport,
+  sellStartingReviewLimitationCopy,
   userFacingTradeSymbol,
 } from "../../../src/lib/trader-analytics";
 import { buildSavedOrSampleTraderAnalyticsViewModel } from "../../../src/lib/trader-analytics/server/saved-trader-analytics-data";
@@ -198,12 +199,12 @@ function decisionReviewStatusCopy(args: {
     args.diagnosticCode === "market_context_unavailable"
   ) {
     return {
-      label: "Chart context waiting",
+      label: "Chart data still missing",
       detail:
-        "Execution review is available now, but levels or candle context were not available. Do not treat chart conclusions as available until context is backfilled.",
+        "Execution review is available now, but chart, level, or volume evidence was not available. Do not treat chart conclusions as available until that evidence is added.",
       scope: "Execution-only fallback",
       nextAction:
-        "Review entries, adds, reductions, exits, timing, and P/L evidence now; backfill market context later.",
+        "Review entries, adds, reductions, exits, timing, and P/L evidence now; add chart data later.",
       tone: "text-amber-300",
     };
   }
@@ -257,7 +258,7 @@ function decisionReviewDiagnosticUserMessage(diagnostic: {
   const state = decisionReviewDiagnosticBadgeState(diagnostic);
 
   if (state === "market_context_unavailable") {
-    return "Chart context was not available for this trade yet. Use execution replay now and backfill chart context later.";
+    return "Chart, level, or volume evidence was not available for this trade yet. Use execution replay now and add chart data later.";
   }
 
   if (state === "blocked_open_trade") {
@@ -325,8 +326,8 @@ function executionActionLabel(
 ): string {
   if (tradeDirection === "short") {
     return point.side.toLowerCase().includes("sell")
-      ? "Position opened from sell-side history"
-      : "Position reduced from buy-side history";
+      ? "Opened from sell-side execution"
+      : "Reduced from buy-side execution";
   }
 
   switch (point.role) {
@@ -601,7 +602,7 @@ export default async function TradeReviewPage({
           </p>
           {trade.tradeDirection === "short" ? (
             <p className="mt-2 max-w-3xl text-sm text-amber-300">
-              This saved item starts with a sell in the imported CSV. The current end-user app treats that as position-history review, not a supported direction-specific coaching surface.
+              {sellStartingReviewLimitationCopy()}
             </p>
           ) : null}
         </header>
@@ -705,7 +706,7 @@ export default async function TradeReviewPage({
                   action: "Use context",
                   body: "Check ticker, session, chart, and volume handoffs only when the saved evidence exists.",
                   href: activeThread ? "#ticker-story" : "#summary",
-                  label: "2. Compare",
+                  label: "2. Decide",
                   title: "Decide what this trade can prove",
                   tone: "warning",
                 },
@@ -713,7 +714,7 @@ export default async function TradeReviewPage({
                   action: "Write lesson",
                   body: "Save the note and checklist so coach and progress know the work is done.",
                   href: "#writing-flow",
-                  label: "3. Save",
+                  label: "3. Write",
                   title: "Record one fix or one strength to repeat",
                   tone: "success",
                 },
@@ -727,7 +728,7 @@ export default async function TradeReviewPage({
                 },
               ]}
               testId="trade-detail-workflow-handoff"
-              title="Review this trade in one clear loop"
+              title="Replay, decide, write, then continue"
             />
 
             {cameFromCoach ? (
@@ -1558,7 +1559,7 @@ export default async function TradeReviewPage({
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <h2 className="text-sm font-semibold text-zinc-100">
-                  Chart Context Review
+                  Chart Data Review
                 </h2>
                 <div className="mt-1 text-sm text-zinc-500">
                   {decisionReviewSnapshot?.review.coachingHeadline ??

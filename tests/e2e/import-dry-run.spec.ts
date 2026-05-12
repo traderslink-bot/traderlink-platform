@@ -522,7 +522,7 @@ test.describe("CSV dry-run import route", () => {
       "Daily/4h market data was unavailable or insufficient",
     );
     await expect(page.getByTestId("decision-review-diagnostics")).toContainText(
-      "Chart context waiting / AVEX",
+      "Chart data still missing / AVEX",
     );
     await expect(page.getByTestId("decision-review-diagnostics")).toContainText(
       "market-data limitation, not a trade error",
@@ -534,7 +534,7 @@ test.describe("CSV dry-run import route", () => {
       "Evidence blocked",
     );
     await expect(page.getByTestId("decision-review-evidence-gates")).toContainText(
-      "market-data unavailable: 1",
+      "chart data still missing: 1",
     );
   });
 
@@ -1004,7 +1004,7 @@ test.describe("CSV dry-run import route", () => {
       "Highest Priority",
     );
     await expect(page.getByTestId("saved-review-queue")).toContainText(
-      "Chart context waiting",
+      "Chart data still missing",
     );
     await expect(page.getByTestId("saved-review-queue")).toContainText(
       "execution-only",
@@ -1025,7 +1025,7 @@ test.describe("CSV dry-run import route", () => {
       "repaired CSV rows",
     );
     await expect(page.getByTestId("trade-feedback-scope")).toContainText(
-      /Chart review needs technical follow-up|Chart context waiting/,
+      /Chart review needs technical follow-up|Chart data still missing/,
     );
     await expect(page.getByTestId("trade-feedback-scope")).toContainText(
       "Execution-only fallback",

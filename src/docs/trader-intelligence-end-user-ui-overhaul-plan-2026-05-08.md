@@ -210,7 +210,7 @@ Add a richer demo dataset with:
   - strong profit protection,
   - structured execution,
   - open trade,
-  - chart context waiting,
+  - chart data still missing,
   - needs more data.
 
 ### Product Reason

@@ -126,6 +126,18 @@ describe("analytics behavior report", () => {
               opportunityType: "strength_to_repeat",
               tradeId: "win-1",
             }),
+            finding({
+              id: "balanced_management_with_constructive_exit",
+              label: "Managed the full trade constructively",
+              opportunityType: "strength_to_repeat",
+              tradeId: "win-1",
+            }),
+            finding({
+              id: "add_into_strength_with_constructive_final_exit",
+              label: "Added into strength and exited constructively",
+              opportunityType: "strength_to_repeat",
+              tradeId: "win-1",
+            }),
           ],
           pnl: 117,
           symbol: "AVEX",
@@ -146,11 +158,14 @@ describe("analytics behavior report", () => {
     const profitProtection = report.groups.find(
       (group) => group.id === "profit-protection",
     );
+    const fullTradeManagement = report.groups.find(
+      (group) => group.id === "full-trade-management",
+    );
     const visibleCopy = JSON.stringify(report).toLowerCase();
 
     expect(report.contractVersion).toBe("analytics_behavior_report_v1");
     expect(report.riskCount).toBe(2);
-    expect(report.strengthCount).toBe(2);
+    expect(report.strengthCount).toBe(4);
     expect(resistance?.title).toBe("Entries Near Resistance");
     expect(support?.title).toBe("Support-Based Entries");
     expect(extension?.title).toBe("Chase And Extension Review");
@@ -165,6 +180,11 @@ describe("analytics behavior report", () => {
       "planned dip buy or size added before repair",
     );
     expect(profitProtection?.title).toBe("Profit Protection");
+    expect(fullTradeManagement?.title).toBe("Full-Trade Management");
+    expect(fullTradeManagement?.count).toBe(2);
+    expect(fullTradeManagement?.evidence[0]?.detail).toContain(
+      "whole management path repeatable",
+    );
     expect(visibleCopy).not.toContain("signals");
     expect(visibleCopy).not.toContain("trade calls");
     expect(visibleCopy).not.toContain("financial advice");

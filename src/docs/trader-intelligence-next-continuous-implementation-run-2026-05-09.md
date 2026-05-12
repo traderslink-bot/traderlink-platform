@@ -270,7 +270,6 @@ Current remaining work:
   protected-profit, strength-session, adverse-add repair wording, import-flow
   trust polish, workspace visual migration, or coach old-card cleanup passes.
 - The next high-value work is now one of:
-  - route copy/anchor repairs found by QA,
   - focused screenshot fixes only if concrete visual defects appear on the
     already-updated route family,
   - analytics or coach presentation refinements only when they consume
@@ -486,7 +485,7 @@ Priority order:
 3. `/coach`: session/ticker story handoff should point to evidence, not just
    a generic trade.
 4. `/analytics`: self-coaching panels should separate execution evidence,
-   chart context available, and chart context waiting.
+   chart data available, and chart data still missing.
 5. `/progress`: progress should track completed reviews and active coaching
    focus without pretending imported trades are completed coaching.
 6. `/trades`: browse modes should expose session/ticker/market-context filters
@@ -504,8 +503,8 @@ Preferred second slices:
 - analytics lower-report polish and drill-down clarity,
 - mobile/desktop screenshot fixes for `/coach`, `/analytics`, `/review`,
   `/progress`, `/trades`, or `/trades/[tradeId]`,
-- route anchor/copy repairs for completed session-story or chart-context
-  handoffs,
+- route anchor/copy repairs only when QA finds a new concrete route handoff
+  regression,
 - a genuinely new evidence family only when saved chart, level, candle,
   volume, or after-exit data proves it.
 
@@ -942,7 +941,7 @@ Actions:
    - position still open,
    - re-entered after closing.
 6. Keep chart-context claims gated:
-   - "chart context waiting" when candles/levels are missing,
+   - "Chart data still missing" when candles/levels are missing,
    - no support/resistance/volume/post-exit continuation claim without data.
 7. Collapse technical review limits.
 
@@ -1012,7 +1011,7 @@ Actions:
 3. Separate analytics into:
    - execution evidence,
    - chart context available,
-   - chart context waiting,
+   - chart data still missing,
    - risks to reduce,
    - strengths to repeat.
 4. Ensure charts use red/green/amber/blue consistently:
@@ -1096,7 +1095,7 @@ Actions:
    - ticker stories,
    - open/swing,
    - needs review,
-   - chart context waiting.
+   - chart data still missing.
 
 Tests:
 
@@ -1779,6 +1778,49 @@ Next run should not rebuild:
 - shared user-facing trade-symbol display helper,
 - route copy-safety guard for import-ID-like trade labels.
 
+## 2026-05-11 Product Clarity Completion
+
+Completed in the latest continuation:
+
+- `/coach` now renders a distinct `Behavior Coaching Sequence` from the
+  certified analytics behavior report instead of defaulting to duplicated
+  analytics-style behavior cards.
+- The old coach behavior map remains available inside supporting details, while
+  `/analytics` keeps the broad grouped report surface.
+- Shared trade display copy now labels sell-starting/short-side items as
+  `Limited sell-side review` and says full short-trade coaching is not
+  supported yet.
+- `/review` queue cards now lead with `Why it is here`, `Do this now`, and
+  `Evidence status`; technical evidence counts are collapsed by default.
+- `/trades/[tradeId]` now frames the top review loop as `Replay, decide, write,
+  then continue`.
+- Active waiting-chart labels now say `Chart data still missing`; `/workspace`
+  also uses `Your next step` for the home-base handoff.
+
+Verification completed:
+
+```powershell
+npx vitest run src/lib/trader-analytics/__tests__/trade-display-copy.test.ts --reporter=dot
+npx vitest run src/lib/trader-analytics/__tests__/analytics-behavior-report.test.ts src/lib/trader-analytics/__tests__/trade-display-copy.test.ts --reporter=dot
+npx tsc --noEmit --pretty false
+npm run build
+npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "coach product loop|analytics product intelligence|guided review workflow|saved trade routing|progress and behavior|banned product claims|market context observational|updated dashboard surface"
+npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable"
+git diff --check
+```
+
+Browser smoke also checked `/coach`, `/review`, `/workspace`, and a real
+`/trades/[tradeId]#writing-flow` route against `http://127.0.0.1:3100`.
+
+Next run should not rebuild:
+
+- coach behavior sequence,
+- analytics behavior report grouping,
+- sell-starting limitation copy,
+- `/review` task-card simplification,
+- `/trades/[tradeId]` replay/decide/write loop,
+- chart-data wording.
+
 Next best slice:
 
 - The first certified-read-model presentation polish and screenshot-guided
@@ -1840,13 +1882,66 @@ Next best slice:
   the groups as `Fix first`, `Repeat first`, or `Needs review`.
   User QA found that this presentation is too close to `/analytics`, so treat
   this as a certified evidence-source bridge, not the final coach experience.
-  Do not rebuild the analytics grouping model, but do replace the coach-facing
-  mirrored cards with a distinct coaching flow in the next coach-specific run.
+  The May 11 pass replaced the default coach-facing mirrored cards with a
+  distinct guided coaching sequence. Do not rebuild the analytics grouping
+  model or coach sequence unless QA finds a concrete regression.
 - Next UI/product slices should be either:
-  - `/coach` behavior-section redesign that turns the shared report into a
-    focused coaching sequence rather than duplicated analytics cards,
-  - route copy/anchor repairs found by QA,
   - focused screenshot fixes only if concrete issues appear,
-  - or a new market-context behavior family only if saved evidence can prove it
-    without inference.
+  - or deterministic follow-up constructive-management variants only if saved
+    evidence can prove them without inference.
+- The first positive constructive-management storylines are complete:
+  `balanced_management_with_constructive_exit` now maps to `Managed the full
+  trade constructively`, and
+  `add_into_strength_with_constructive_final_exit` maps to `Added into strength
+  and exited constructively` through decision review, user-facing behavior
+  mapping, saved trade threads, and the analytics behavior report. Do not
+  rebuild those slices unless QA finds a concrete regression.
 - Keep uncertain behavior prompt-only or internal.
+
+## 2026-05-11 Route Copy And Anchor QA Completion
+
+Completed in the latest continuation:
+
+- Replaced remaining visible `Chart context waiting` / chart-context-waiting
+  route language with `Chart data still missing`, `Needs Chart Data`, and
+  `Chart Data Review` wording across shared copy helpers and touched routes.
+- Updated `/coach` progress handoffs so progress links that mean
+  follow-through land on `/progress#progress-follow-through`.
+- Updated regression coverage so the stale phrase is banned from core product
+  routes and import dry-run expectations match the new chart-data wording.
+- Browser-smoked `/workspace`, `/trades`, `/review`, `/coach`, `/analytics`,
+  `/import-dry-run`, `/imports`, one `/imports/[batchId]`, and one
+  `/trades/[tradeId]`.
+
+Verification completed:
+
+```powershell
+npx vitest run src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts src/lib/trader-analytics/__tests__/saved-import-coaching-language-qa-matrix.test.ts src/lib/trader-analytics/__tests__/trade-display-copy.test.ts --testTimeout=30000
+npx tsc --noEmit --pretty false
+npm run build
+npx playwright test tests/e2e/app-feature-regression.spec.ts tests/e2e/import-dry-run.spec.ts --project=chromium-desktop --grep "keeps workspace and coach|shows the coach product loop|shows saved trade routing|shows the guided review workflow|keeps market context observational|keeps banned product claims|shows unavailable daily/4h market context"
+npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile --grep "keeps core mobile routes usable without page-level horizontal overflow|keeps banned product claims"
+```
+
+Next run should not rebuild:
+
+- the May 11 coach sequence,
+- review queue task-card simplification,
+- sell-starting limitation copy,
+- trade-detail replay/decide/write loop,
+- chart-data terminology pass,
+- route copy/anchor repairs,
+- coach progress anchors.
+
+Next best slice:
+
+- Use screenshot-guided route fixes only when a concrete visual issue appears.
+- The first deterministic positive constructive-management storylines are
+  complete: `balanced_management_with_constructive_exit` now maps to `Managed
+  the full trade constructively`, and
+  `add_into_strength_with_constructive_final_exit` maps to `Added into strength
+  and exited constructively` through decision review, user-facing behavior
+  mapping, saved trade threads, and the analytics behavior report.
+- If route QA stays clean, inspect only genuinely distinct
+  constructive-management variants that can reuse deterministic evidence. Do
+  not add a broader behavior claim unless saved evidence can certify it.

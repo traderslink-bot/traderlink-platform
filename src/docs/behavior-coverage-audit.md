@@ -196,12 +196,13 @@ Layer 3 is in good shape, but will need more family arbitration as the storyline
 
 ### Highest Value
 
-1. Positive full-trade management storylines
+1. Distinct constructive-management storylines beyond the completed base pair
 
 Why:
 
 - failure-side and repeated rescue coverage are now much stronger
-- the biggest balance gap is still broader constructive management narratives that span most of the trade lifecycle beyond the current timely-protection, trim-into-strength, under-pressed-winner, and add-into-strength branches
+- the first product-safe positive constructive-management storylines are complete for balanced management and add-into-strength constructive exits
+- the remaining gap is genuinely distinct broader lifecycle narratives, not redoing the completed balanced/add-into-strength product mapping
 
 2. Broader setup coverage beyond breakout, reclaim, mean reversion, the first opening-range breakout/reclaim lanes, and the first market-open setup lanes
 
@@ -221,7 +222,7 @@ Why:
 
 1. Under-sizing / not pressing winners with better nuance beyond the first constructive and timely-protected under-pressed winner branches
 2. More session-aware context
-3. Richer cross-family full-trade management storylines that summarize a larger journey without only adding local constructive variants
+3. Richer cross-family full-trade management storylines that summarize a larger journey without only cloning the completed balanced/add-into-strength variants
 
 ---
 
@@ -232,7 +233,8 @@ The best next move is:
 - use the current Layer 1 facts to keep building richer cross-family
   lifecycle stories, especially broader constructive whole-trade summaries
   and any new exit-side composites that summarize more than a single local
-  behavior without just cloning the current trim / protect / add ladders
+  behavior without just cloning the completed trim / protect / add or
+  balanced-management product mappings
 
 That should be done before returning to Layer 1 expansion, unless a concrete new storyline proves the current factual inputs are no longer enough.
 

@@ -74,7 +74,7 @@ const endUserRoutes = [
   {
     href: "/review",
     label: "Review queue",
-    detail: "Highest-priority trades, chart context waiting items, lesson drafts, and review flow.",
+    detail: "Highest-priority trades, chart data gaps, lesson drafts, and review flow.",
   },
   {
     href: "/progress",
@@ -235,15 +235,15 @@ export default function WorkspacePage() {
             href="/review?queue=market_context_unavailable"
           >
             <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Chart Context Waiting
+              Chart data still missing
             </div>
             <div className="mt-3 text-2xl font-semibold text-amber-300">
               {marketGapCount}
             </div>
             <div className="mt-1 text-xs text-zinc-500">
               {openBlockCount === 0
-                ? "No open trades blocking review"
-                : `${openBlockCount} open trade${openBlockCount === 1 ? "" : "s"} still need execution review`}
+                ? "Some trades can be replayed now, while chart, level, or volume evidence may still be waiting."
+                : `${openBlockCount} open trade${openBlockCount === 1 ? "" : "s"} can be replayed now but still need execution review`}
             </div>
           </Link>
         </section>
@@ -256,7 +256,7 @@ export default function WorkspacePage() {
               savedReviewQueue?.items[0]?.nextAction ??
               "Import a broker CSV, save the preview, then review the first saved trade."
             }
-            eyebrow="Next step"
+            eyebrow="Your next step"
             title={data.mode === "saved" ? "Review this trade next" : "Import trades first"}
             tone="info"
           />

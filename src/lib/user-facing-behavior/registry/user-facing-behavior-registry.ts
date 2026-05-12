@@ -1450,6 +1450,64 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     testCases: ["captured exit maps to repeatable strength"],
   },
   {
+    behaviorId: "balanced_management_with_constructive_exit",
+    aliases: [
+      "Managed the full trade constructively",
+      "Balanced management with constructive exit",
+      "recovery_with_balanced_management_and_constructive_final_exit",
+    ],
+    state: "certified_detection",
+    tone: "strength",
+    opportunityType: "strength_to_repeat",
+    evidenceChannel: "combined",
+    userFacingLabel: "Managed the full trade constructively",
+    plainExplanation:
+      "The trade added, reduced, returned flat, kept giveback controlled, and after-exit candles later faded.",
+    fixFirstAction:
+      "Write down the add, trim, and final-exit cues so this management sequence can be repeated intentionally.",
+    evidenceSentence:
+      "Detected from add and reduction sequence, controlled open-profit giveback, flat final exit, and after-exit candles.",
+    missingDataSentence:
+      "Needs add/reduction sequence, controlled-giveback evidence, a flat final exit, and after-exit candles before the app can praise the whole trade.",
+    requiredEvidence: [
+      "add execution",
+      "reduction execution",
+      "controlled open-profit giveback",
+      "flat final exit",
+      "after-exit candle window",
+    ],
+    optionalEvidence: [
+      "support/resistance context",
+      "saved trade plan",
+      "partial reduction notes",
+    ],
+    triggerRules: [
+      "position increased after initial entry",
+      "position was reduced before or at the final exit",
+      "open-profit giveback stayed inside the calibrated threshold",
+      "after-exit adverse movement was larger than favorable continuation",
+    ],
+    negativeGuards: [
+      "Do not call the trade perfect.",
+      "Do not say the final exit was top tick.",
+      "Do not call this a buy signal or sell signal.",
+    ],
+    confidenceRules: [
+      "High when add, reduction, giveback, realized-capture, and after-exit evidence all agree.",
+    ],
+    unsupportedFallback:
+      "Wait for full trade-management and after-exit evidence, then review whether the management path was repeatable.",
+    advancedHowDetected:
+      "Mapped from balanced_management_with_constructive_exit when sequence, giveback, final-exit, and after-exit evidence agree.",
+    routesAllowed: CORE_ROUTES,
+    copySafetyNotes: [
+      "Praise the reviewed management process without implying a perfect exit or a future trade decision.",
+    ],
+    testCases: [
+      "balanced management maps to repeatable full-trade strength",
+    ],
+  },
+  {
     behaviorId: "exit_avoided_adverse_followthrough",
     aliases: ["Exit avoided adverse followthrough", "Disciplined defensive exit"],
     state: "certified_detection",
@@ -1488,6 +1546,67 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     routesAllowed: CORE_ROUTES,
     copySafetyNotes: ["Frame as a repeatable exit cue, not hindsight perfection."],
     testCases: ["exit avoided adverse followthrough maps to strength copy"],
+  },
+  {
+    behaviorId: "add_into_strength_with_constructive_final_exit",
+    aliases: [
+      "Added into strength and exited constructively",
+      "Add Into Strength With Constructive Final Exit",
+      "recovery_with_add_into_strength_and_constructive_final_exit",
+      "add_into_strength_with_timely_profit_protection_and_constructive_final_exit",
+      "recovery_with_add_into_strength_and_timely_profit_protection_and_constructive_final_exit",
+    ],
+    state: "certified_detection",
+    tone: "strength",
+    opportunityType: "strength_to_repeat",
+    evidenceChannel: "combined",
+    userFacingLabel: "Added into strength and exited constructively",
+    plainExplanation:
+      "The trade increased size into strength, kept giveback controlled, returned flat, and after-exit candles later faded.",
+    fixFirstAction:
+      "Write down what confirmed strength before adding and what confirmed the final exit.",
+    evidenceSentence:
+      "Detected from add location, controlled giveback, flat final exit, realized capture, and after-exit candles.",
+    missingDataSentence:
+      "Needs add-location evidence, controlled-giveback evidence, a flat exit, realized capture, and after-exit candles before the app can praise pressing strength.",
+    requiredEvidence: [
+      "add execution",
+      "add versus prior average entry",
+      "recent range location",
+      "controlled open-profit giveback",
+      "after-exit candle window",
+    ],
+    optionalEvidence: [
+      "recovery evidence",
+      "timely profit-protection evidence",
+      "support/resistance context",
+    ],
+    triggerRules: [
+      "adds occurred after initial entry",
+      "adds were above prior average entry",
+      "average add location was high enough in the recent range",
+      "open-profit giveback stayed inside the calibrated threshold",
+      "after-exit adverse movement was larger than favorable continuation",
+    ],
+    negativeGuards: [
+      "Do not say adding into strength is always correct.",
+      "Do not call this a buy signal.",
+      "Do not call the exit perfect or top tick.",
+    ],
+    confidenceRules: [
+      "High when add location, giveback, realized-capture, and after-exit evidence all agree.",
+    ],
+    unsupportedFallback:
+      "Wait for add-location and after-exit evidence, then review whether pressing strength was repeatable.",
+    advancedHowDetected:
+      "Mapped from add_into_strength_with_constructive_final_exit when add-location, giveback, final-exit, and after-exit evidence agree.",
+    routesAllowed: CORE_ROUTES,
+    copySafetyNotes: [
+      "Praise the reviewed management sequence without implying a future trade instruction.",
+    ],
+    testCases: [
+      "add into strength with constructive final exit maps to repeatable management strength",
+    ],
   },
   {
     behaviorId: "exit_into_resistance_with_reversal_after_exit",

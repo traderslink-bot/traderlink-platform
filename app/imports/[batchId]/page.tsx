@@ -51,7 +51,7 @@ function countBy(values: string[]): Record<string, number> {
 
 function readableDecisionReviewStatus(value: string): string {
   if (value === "completed") {
-    return "Reviewed With Chart Context";
+    return "Reviewed With Chart Data";
   }
 
   if (value === "queued") {
@@ -63,7 +63,7 @@ function readableDecisionReviewStatus(value: string): string {
   }
 
   if (value === "market_context_unavailable") {
-    return "Chart Context Waiting";
+    return "Chart data still missing";
   }
 
   if (value === "analysis_failed") {
@@ -110,7 +110,7 @@ function diagnosticGuidance(status: string): string {
 
 function diagnosticUserMessage(status: string, code: string): string {
   if (status === "market_context_unavailable" || code === "market_context_unavailable") {
-    return "Chart context was not available for this trade. Use execution review now and backfill chart context later.";
+    return "Chart, level, or volume evidence was not available for this trade. Use execution review now and add chart data later.";
   }
 
   if (status === "blocked_open_trade" || code === "trade_open") {
@@ -338,7 +338,7 @@ export default async function ImportBatchPage({
             id="commit-decisions"
           >
             <h2 className="text-sm font-semibold text-zinc-100">
-              Chart Context Review Status
+              Chart Data Review Status
             </h2>
             <p className="mt-1 text-xs leading-5 text-zinc-500">
               These statuses explain whether saved trades received completed

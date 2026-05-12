@@ -724,7 +724,7 @@ function decisionReviewDiagnosticDisplay(diagnostic: DecisionReviewDiagnostic): 
   switch (diagnostic.code) {
     case "market_context_unavailable":
       return {
-        label: "Chart context waiting",
+        label: "Chart data still missing",
         summary:
           "Daily/4h market data was unavailable or insufficient for this symbol.",
         detail:
@@ -1169,7 +1169,7 @@ function DecisionReviewEvidenceGates({
       <div className="mt-3 grid gap-2 text-xs text-zinc-500 sm:grid-cols-2 lg:grid-cols-4">
         <div>verified basis: {summary.verifiedBasisCount}</div>
         <div>lower-resolution windows: {summary.limitedCandleCount}</div>
-        <div>chart context waiting: {summary.unavailableDiagnosticCount}</div>
+        <div>chart data still missing: {summary.unavailableDiagnosticCount}</div>
         <div>open trades waiting: {summary.openTradeDiagnosticCount}</div>
       </div>
     </div>
@@ -2574,7 +2574,7 @@ function PrototypeAnalysisPanel({
           data-testid="decision-review-diagnostics"
         >
           <div className="text-xs uppercase tracking-wide text-amber-300">
-            Chart Context Review Notes
+            Chart Data Review Notes
           </div>
           <div className="mt-2 grid gap-2">
             {decisionReviewDiagnostics.slice(0, 5).map((diagnostic, index) => (
@@ -2623,7 +2623,7 @@ function PrototypeAnalysisPanel({
 
         <div>
           <div className="text-xs uppercase tracking-wide text-zinc-500">
-            Daily/4h Chart Context Review
+            Daily/4h Chart Data Review
           </div>
           <div className="mt-2 grid gap-2">
             {panel.topDecisionReviewInsights.length === 0 ? (

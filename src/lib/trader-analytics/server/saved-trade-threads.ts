@@ -878,6 +878,10 @@ function postExitEvidenceTitle(sourceInsightId: string): string {
       return "Profit was protected before a later fade";
     case "exit_captured_trade_well":
       return "Exit capture was measured";
+    case "balanced_management_with_constructive_exit":
+      return "Full-trade management was constructive";
+    case "add_into_strength_with_constructive_final_exit":
+      return "Strength add and final exit were constructive";
     case "exit_avoided_adverse_followthrough":
       return "Exit avoided a later fade";
     case "exit_into_resistance_with_reversal_after_exit":
@@ -1082,6 +1086,8 @@ function buildReviewEvidence(thread: {
       finding.sourceInsightId === "exit_large_post_exit_move_needs_review" ||
       finding.sourceInsightId === "protected_profit_before_fade" ||
       finding.sourceInsightId === "exit_captured_trade_well" ||
+      finding.sourceInsightId === "balanced_management_with_constructive_exit" ||
+      finding.sourceInsightId === "add_into_strength_with_constructive_final_exit" ||
       finding.sourceInsightId === "exit_avoided_adverse_followthrough" ||
       finding.sourceInsightId ===
         "exit_into_resistance_with_reversal_after_exit" ||
@@ -1153,7 +1159,7 @@ function buildReviewEvidence(thread: {
           ? primaryVolumeFinding?.evidenceSource ?? "saved volume evidence"
           : availableContextCount === thread.roundTrips.length
             ? "saved decision-review snapshots"
-            : "chart context waiting",
+            : "chart data still missing",
       tone: primaryVolumeFinding?.tone ?? "info",
     });
   }
@@ -1695,7 +1701,7 @@ export function buildSavedTradeThreadReadModel(args: {
           ? `${reviewSnapshot.review.insights.length} saved chart insight${
               reviewSnapshot.review.insights.length === 1 ? "" : "s"
             }`
-          : "Chart context waiting",
+          : "Chart data still missing",
         decisionReviewInsightCount: reviewSnapshot?.review.insights.length ?? 0,
         executionCount: trade.request.executions.length,
         lifecycleStatus,

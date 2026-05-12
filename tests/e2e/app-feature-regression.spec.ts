@@ -50,6 +50,7 @@ const BANNED_PRODUCT_PHRASES = [
 
 const CONFUSING_PRIMARY_UI_PHRASES = [
   "chart-context",
+  "chart context waiting",
   "post-exit check",
   "post-exit checks",
   "risk-backed",
@@ -393,6 +394,8 @@ test.describe("app feature regression", () => {
         await expect(page.getByRole("link", { exact: true, name: "Compare Trades" })).toHaveCount(0);
         await expect(page.getByRole("link", { exact: true, name: "Onboarding" })).toHaveCount(0);
         await expect(page.getByText("Trade review workflow", { exact: true })).toBeVisible();
+        await expect(page.getByText("Your next step", { exact: true })).toBeVisible();
+        await expect(page.getByText("Chart data still missing", { exact: true }).first()).toBeVisible();
         await expect(page.getByText("More review tools", { exact: true })).toBeVisible();
         await expect(page.getByText("Beta storage and admin notes", { exact: true })).toBeVisible();
         await expect(page.getByText("Current Beta Boundary", { exact: true })).toHaveCount(0);
@@ -717,21 +720,19 @@ test.describe("app feature regression", () => {
     await expect(page.getByTestId("coach-review-backlog-preview")).toContainText(
       "Trades To Review Next",
     );
-    await expect(page.getByTestId("coach-behavior-report")).toContainText(
-      "Behavior Coaching Map",
+    await expect(page.getByTestId("coach-behavior-sequence")).toContainText(
+      "Behavior Coaching Sequence",
     );
-    await expect(page.getByTestId("coach-behavior-report")).toContainText(
-      "Fix first",
+    await expect(page.getByTestId("coach-behavior-sequence")).toContainText(
+      "Top risk to reduce",
     );
-    await expect(page.getByTestId("coach-behavior-report")).toContainText(
-      "Repeat first",
+    await expect(page.getByTestId("coach-behavior-sequence")).toContainText(
+      "Top strength to repeat",
     );
-    await expect(page.getByTestId("coach-behavior-report")).toContainText(
-      "Entries Near Resistance",
+    await expect(page.getByTestId("coach-behavior-sequence")).toContainText(
+      "Trades that prove it",
     );
-    await expect(page.getByTestId("coach-behavior-report")).toContainText(
-      "Dip-Buy And Add Review",
-    );
+    await expect(page.getByTestId("coach-behavior-report")).toBeHidden();
     await expect(page.getByTestId("coach-ticker-story-panel")).toContainText(
       "Ticker Story Coach",
     );
@@ -973,10 +974,13 @@ test.describe("app feature regression", () => {
       "Why it is here",
     );
     await expect(page.getByTestId("saved-review-queue")).toContainText(
-      "What to review",
+      "Do this now",
     );
     await expect(page.getByTestId("saved-review-queue")).toContainText(
-      "Evidence",
+      "Evidence status",
+    );
+    await expect(page.getByTestId("saved-review-queue")).toContainText(
+      "Evidence counts and technical limits",
     );
     const reviewHref = await page
       .getByTestId("review-continuation-panel")
@@ -993,7 +997,7 @@ test.describe("app feature regression", () => {
     await page.goto(reviewHref!);
     await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("trade-detail-workflow-handoff")).toContainText(
-      "Review this trade in one clear loop",
+      "Replay, decide, write, then continue",
     );
     await expect(page.getByTestId("trade-detail-workflow-handoff")).toContainText(
       "Replay executions",
@@ -1167,7 +1171,7 @@ test.describe("app feature regression", () => {
         await expect(
           page.getByRole("heading", {
             exact: true,
-            name: "Chart Context Status",
+            name: "Chart Data Status",
           }),
         ).toBeVisible();
         const analyticsBody = lowerBodyText(await page.locator("body").innerText());

@@ -66,6 +66,11 @@ function normalizedPatterns(
 function patternInput(
   exitOverrides: Partial<PatternInput["exitContext"]>,
   supportResistanceOverrides: Partial<PatternInput["supportResistanceContext"]> = {},
+  options: {
+    recoveryOverrides?: Partial<PatternInput["recoveryContext"]>;
+    scalingOverrides?: Partial<PatternInput["scalingContext"]>;
+    tradeStructureOverrides?: Partial<PatternInput["tradeStructure"]>;
+  } = {},
 ): PatternInput {
   return {
     sessionBucket: "market_open",
@@ -85,8 +90,12 @@ function patternInput(
       realizedCapturePercentOfTradeMfe: 0.25,
       ...exitOverrides,
     },
-    recoveryContext: {},
-    scalingContext: {},
+    recoveryContext: {
+      ...options.recoveryOverrides,
+    },
+    scalingContext: {
+      ...options.scalingOverrides,
+    },
     supportResistanceContext: {
       firstEntryNearestResistanceAbovePrice: null,
       firstEntryNearestResistanceBelowPrice: null,
@@ -107,7 +116,9 @@ function patternInput(
       peakPriceDuringTrade: 1.3,
       tradeMaePct: 0.01,
       tradeMfePct: 0.08,
+      totalPositionDecreaseCount: 0,
       worstPriceDuringTrade: 1.1,
+      ...options.tradeStructureOverrides,
     },
   } as unknown as PatternInput;
 }
@@ -115,7 +126,10 @@ function patternInput(
 function appTradeAnalysisResult(args: {
   exitOverrides: Partial<PatternInput["exitContext"]>;
   patternIds: string[];
+  recoveryOverrides?: Partial<PatternInput["recoveryContext"]>;
+  scalingOverrides?: Partial<PatternInput["scalingContext"]>;
   supportResistanceOverrides?: Partial<PatternInput["supportResistanceContext"]>;
+  tradeStructureOverrides?: Partial<PatternInput["tradeStructure"]>;
 }): AppTradeAnalysisResult {
   const normalized = normalizedPatterns(args.patternIds);
 
@@ -128,6 +142,11 @@ function appTradeAnalysisResult(args: {
     patternInput: patternInput(
       args.exitOverrides,
       args.supportResistanceOverrides,
+      {
+        recoveryOverrides: args.recoveryOverrides,
+        scalingOverrides: args.scalingOverrides,
+        tradeStructureOverrides: args.tradeStructureOverrides,
+      },
     ),
     rawTradeTimeline: {
       timeline: {
@@ -250,6 +269,89 @@ describe("buildTradeDecisionReview exit evidence gates", () => {
     expect(insightIds).toContain("protected_profit_before_fade");
     expect(insightIds).not.toContain("exit_avoided_adverse_followthrough");
     expect(review.coaching.headline).toContain("Profit was protected");
+  });
+
+  it("surfaces certified full-trade management when adds, reductions, capture, and after-exit fade align", () => {
+    const review = buildTradeDecisionReview(
+      appTradeAnalysisResult({
+        exitOverrides: {
+          finalExitToPeakDistancePct: 0.012,
+          maxAdverseMovePctAfterExit: 0.035,
+          maxFavorableMovePctAfterExit: 0.004,
+          netMovePctAtEndOfPostExitWindow: -0.025,
+          postExitCandleCount: 4,
+          realizedCapturePercentOfTradeMfe: 0.74,
+        },
+        patternIds: ["balanced_management_with_constructive_exit"],
+        recoveryOverrides: {
+          maxGivebackFromPeakOpenProfitPct: 0.18,
+        },
+        scalingOverrides: {
+          addCountAfterInitialEntry: 1,
+        },
+        tradeStructureOverrides: {
+          totalPositionDecreaseCount: 1,
+        },
+      }),
+    );
+    const insight = review.insights.find(
+      (candidate) =>
+        candidate.id === "balanced_management_with_constructive_exit",
+    );
+    const copy = `${insight?.title} ${insight?.summary}`.toLowerCase();
+
+    expect(insight?.tone).toBe("strength");
+    expect(insight?.category).toBe("exit");
+    expect(insight?.title).toBe("Managed the full trade constructively");
+    expect(insight?.evidence).toContain("addCountAfterInitialEntry=1");
+    expect(insight?.evidence).toContain("totalPositionDecreaseCount=1");
+    expect(insight?.evidence).toContain("postExitCandleCount=4");
+    expect(copy).not.toContain("perfect");
+    expect(copy).not.toContain("top tick");
+    expect(copy).not.toContain("buy signal");
+    expect(copy).not.toContain("sell signal");
+  });
+
+  it("surfaces add-into-strength management when add location, capture, and after-exit fade align", () => {
+    const review = buildTradeDecisionReview(
+      appTradeAnalysisResult({
+        exitOverrides: {
+          finalExitToPeakDistancePct: 0.012,
+          maxAdverseMovePctAfterExit: 0.035,
+          maxFavorableMovePctAfterExit: 0.004,
+          netMovePctAtEndOfPostExitWindow: -0.025,
+          postExitCandleCount: 4,
+          realizedCapturePercentOfTradeMfe: 0.74,
+        },
+        patternIds: ["add_into_strength_with_constructive_final_exit"],
+        recoveryOverrides: {
+          maxGivebackFromPeakOpenProfitPct: 0.18,
+        },
+        scalingOverrides: {
+          addAbovePreviousAverageEntryCount: 1,
+          addCountAfterInitialEntry: 1,
+          averageAddPricePositionInRecentRangePct: 0.82,
+          averageAddPriceVsPreviousAverageEntryPct: 0.04,
+        },
+      }),
+    );
+    const insight = review.insights.find(
+      (candidate) =>
+        candidate.id === "add_into_strength_with_constructive_final_exit",
+    );
+    const copy = `${insight?.title} ${insight?.summary}`.toLowerCase();
+
+    expect(insight?.tone).toBe("strength");
+    expect(insight?.title).toBe(
+      "Added into strength and exited constructively",
+    );
+    expect(insight?.evidence).toContain("addCountAfterInitialEntry=1");
+    expect(insight?.evidence).toContain("addAbovePreviousAverageEntryCount=1");
+    expect(insight?.evidence).toContain("postExitCandleCount=4");
+    expect(copy).not.toContain("perfect");
+    expect(copy).not.toContain("top tick");
+    expect(copy).not.toContain("buy signal");
+    expect(copy).not.toContain("sell signal");
   });
 
   it("does not certify protected-profit fade language without after-exit candles", () => {

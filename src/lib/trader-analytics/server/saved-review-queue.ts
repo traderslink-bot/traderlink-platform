@@ -91,8 +91,8 @@ export interface SavedReviewQueueReadModel {
 
 const FILTER_LABELS: Record<SavedReviewQueueFilter, string> = {
   all: "All",
-  completed: "Reviewed With Chart Context",
-  market_context_unavailable: "Chart Context Waiting",
+  completed: "Reviewed With Chart Data",
+  market_context_unavailable: "Chart data still missing",
   blocked_open_trade: "Open Trades",
   analysis_failed: "Needs Technical Follow-Up",
   highest_priority: "Highest Priority",
@@ -223,7 +223,7 @@ function diagnosticPriority(
     return {
       score: 90,
       reason:
-        "Execution review is available now; market context is waiting on a backfill.",
+        "Execution review is available now; chart, level, or volume evidence is still missing.",
     };
   }
 
@@ -301,12 +301,12 @@ function queueStateCopy(lane: SavedReviewQueueItem["lane"]): {
       };
     case "market_context_unavailable":
       return {
-        stateLabel: "Chart context waiting",
+        stateLabel: "Chart data still missing",
         stateDetail:
-          "Execution review is available, but levels or candle context are waiting on a market data backfill.",
+          "Execution review is available, but chart, level, or volume evidence is still missing.",
         reviewScopeLabel: "execution-only",
         nextAction:
-          "Review entries, adds, reductions, exits, timing, and P/L now; backfill market context later.",
+          "Review entries, adds, reductions, exits, timing, and P/L now; add chart data later.",
       };
     case "analysis_failed":
       return {

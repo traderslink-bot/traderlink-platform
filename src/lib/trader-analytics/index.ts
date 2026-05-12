@@ -164,6 +164,8 @@ export {
 } from "./product/import-user-copy";
 export {
   isUserFacingTickerSymbol,
+  sellStartingReviewLimitationCopy,
+  userFacingTradeDirection,
   userFacingTradeSymbol,
 } from "./product/trade-display-copy";
 export {

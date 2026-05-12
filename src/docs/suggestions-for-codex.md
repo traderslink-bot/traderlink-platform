@@ -259,7 +259,7 @@ Use aside menu sections or clear category panels:
   - Volume comparison.
   - After-exit movement.
   - Protected-profit-before-fade.
-  - Chart context waiting.
+  - Chart data still missing.
 
 ### Analytics Should Keep Deeper Data Accessible
 

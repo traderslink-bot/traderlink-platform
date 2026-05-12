@@ -342,7 +342,7 @@ export default async function GuidedReviewPage({
                   tone: "warning" as const,
                 },
                 {
-                  label: "Chart Context Waiting",
+                  label: "Chart data still missing",
                   count: marketGapCount,
                   href: "/review?queue=market_context_unavailable",
                   tone: "warning" as const,
@@ -670,7 +670,7 @@ export default async function GuidedReviewPage({
                       className="ti-panel-soft p-4"
                       data-testid={`saved-review-queue-item-${item.savedTradeId}`}
                     >
-                      <div className="grid gap-4 xl:grid-cols-[180px_minmax(0,1fr)_minmax(0,1fr)_220px] xl:items-start">
+                      <div className="grid gap-4 xl:grid-cols-[180px_minmax(0,1fr)_220px] xl:items-start">
                         <div>
                           <div className="text-xs font-semibold uppercase tracking-wide text-sky-300">
                             Trade {index + 1}
@@ -693,7 +693,7 @@ export default async function GuidedReviewPage({
                         </div>
 
                         <div
-                          className="grid gap-3 md:grid-cols-3 xl:col-span-2"
+                          className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
                           data-testid={`saved-review-queue-work-card-${item.savedTradeId}`}
                         >
                           <div className="border border-zinc-800 bg-slate-950/40 p-3">
@@ -706,40 +706,34 @@ export default async function GuidedReviewPage({
                           </div>
                           <div className="border border-zinc-800 bg-slate-950/40 p-3">
                             <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                              What to review
+                              Do this now
                             </div>
                             <div className="mt-2 text-sm leading-6 text-zinc-300">
                               {item.nextAction}
                             </div>
                           </div>
-                          <div className="border border-zinc-800 bg-slate-950/40 p-3">
-                            <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                              Evidence
-                            </div>
-                            <div className={`mt-2 text-sm font-medium ${savedReviewStateTone(item.lane)}`}>
-                              {evidence.label}
-                            </div>
-                            <div className="mt-1 text-xs leading-5 text-zinc-500">
-                              {evidence.body}
-                            </div>
-                            {item.chartFindingCount > 0 ? (
-                              <>
-                                <div className="mt-2 text-[11px] leading-5 text-zinc-500">
-                                  {item.chartRiskCount} risk
-                                  {item.chartRiskCount === 1 ? "" : "s"} /{" "}
-                                  {item.chartStrengthCount} strength
-                                  {item.chartStrengthCount === 1 ? "" : "s"} /{" "}
-                                  {item.chartReviewPromptCount} prompt
-                                  {item.chartReviewPromptCount === 1 ? "" : "s"}
+                          <div className="border border-zinc-800 bg-slate-950/40 p-3 lg:col-span-2">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                              <div>
+                                <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                                  Evidence status
                                 </div>
+                                <div className={`mt-2 text-sm font-medium ${savedReviewStateTone(item.lane)}`}>
+                                  {evidence.label}
+                                </div>
+                                <div className="mt-1 text-xs leading-5 text-zinc-500">
+                                  {evidence.body}
+                                </div>
+                              </div>
+                              {item.chartFindingCount > 0 ? (
                                 <Link
-                                  className="mt-2 inline-flex text-xs text-sky-300 hover:text-sky-200"
+                                  className="w-fit text-xs font-semibold text-sky-300 hover:text-sky-200"
                                   href={withPageAnchor(item.href, "chart-handoff")}
                                 >
                                   Open chart and volume evidence
                                 </Link>
-                              </>
-                            ) : null}
+                              ) : null}
+                            </div>
                           </div>
                         </div>
 
@@ -763,23 +757,58 @@ export default async function GuidedReviewPage({
                         </div>
                       </div>
 
-                      <div
-                        className="mt-4 border-t border-zinc-800 pt-3"
-                        data-testid={`saved-review-queue-state-${item.savedTradeId}`}
-                      >
-                        <div className="text-sm font-semibold text-zinc-100">
-                          {item.detail}
-                        </div>
-                        <div className="mt-1 text-sm leading-6 text-zinc-500">
-                          {item.stateDetail}
-                        </div>
-                      </div>
-
                       <details className="mt-4 border-t border-zinc-800 pt-3 text-xs text-zinc-500">
                         <summary className="cursor-pointer font-semibold text-zinc-400">
-                          Technical review limits
+                          Evidence counts and technical limits
                         </summary>
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                        <div
+                          className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4"
+                          data-testid={`saved-review-queue-state-${item.savedTradeId}`}
+                        >
+                          {item.chartFindingCount > 0 ? (
+                            <>
+                              <div className="border border-zinc-900 p-2">
+                                <div className="uppercase tracking-wide text-zinc-600">
+                                  Chart risks
+                                </div>
+                                <div className="mt-1 text-zinc-400">
+                                  {item.chartRiskCount}
+                                </div>
+                              </div>
+                              <div className="border border-zinc-900 p-2">
+                                <div className="uppercase tracking-wide text-zinc-600">
+                                  Chart strengths
+                                </div>
+                                <div className="mt-1 text-zinc-400">
+                                  {item.chartStrengthCount}
+                                </div>
+                              </div>
+                              <div className="border border-zinc-900 p-2">
+                                <div className="uppercase tracking-wide text-zinc-600">
+                                  Review prompts
+                                </div>
+                                <div className="mt-1 text-zinc-400">
+                                  {item.chartReviewPromptCount}
+                                </div>
+                              </div>
+                            </>
+                          ) : null}
+                          <div className="border border-zinc-900 p-2">
+                            <div className="uppercase tracking-wide text-zinc-600">
+                              Queue detail
+                            </div>
+                            <div className="mt-1 text-zinc-400">
+                              {item.detail}
+                            </div>
+                          </div>
+                          <div className="border border-zinc-900 p-2 sm:col-span-2 lg:col-span-4">
+                            <div className="uppercase tracking-wide text-zinc-600">
+                              State detail
+                            </div>
+                            <div className="mt-1 text-zinc-400">
+                              {item.stateDetail}
+                            </div>
+                          </div>
                           {[
                             ["Review state", plainStateLabel(item.reviewStatus)],
                             ["Review scope", item.reviewScopeLabel],
@@ -832,7 +861,7 @@ export default async function GuidedReviewPage({
           >
             <div>
               <h2 className="text-sm font-semibold text-zinc-100">
-                Chart Context Review
+                Chart Data Review
               </h2>
               {savedDecisionReview ? (
                 <>
@@ -847,7 +876,7 @@ export default async function GuidedReviewPage({
                   </div>
                   <div className="border-t border-zinc-900 py-3">
                     <div className="text-xs uppercase tracking-wide text-zinc-500">
-                      Chart Context Waiting
+                      Chart data still missing
                     </div>
                     <div className="mt-2 text-2xl font-semibold text-amber-300">
                       {savedDecisionReview.marketContextUnavailableCount}

@@ -16,9 +16,9 @@ function tabCount(
 function laneLabel(value: string): string {
   switch (value) {
     case "completed":
-      return "Reviewed with chart context";
+      return "Reviewed with chart data";
     case "market_context_unavailable":
-      return "Chart context waiting";
+      return "Chart data still missing";
     case "blocked_open_trade":
       return "Open trade";
     case "analysis_failed":
@@ -127,7 +127,7 @@ export function SavedReviewQueueSummary({
             </div>
             <div className="ti-panel-soft px-3 py-2">
               <div className="text-xs uppercase tracking-wide text-zinc-500">
-                Chart Context Waiting
+                Chart data still missing
               </div>
               <div className="mt-1 text-xl font-semibold text-violet-300">
                 {marketGapCount}

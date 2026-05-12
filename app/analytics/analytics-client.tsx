@@ -1405,7 +1405,7 @@ function MarketContextPanel({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
-            Chart Context Status
+            Chart Data Status
           </h2>
           <div className="mt-1 text-sm text-zinc-500">
             {status.calibrationStatus}

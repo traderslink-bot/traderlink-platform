@@ -1,5 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import {
+  userFacingTradeDirection as productUserFacingTradeDirection,
+} from "../src/lib/trader-analytics/product/trade-display-copy";
 
 export type AppTone = "default" | "info" | "success" | "warning" | "danger" | "muted";
 
@@ -79,13 +82,13 @@ export function plainStateLabel(value: string | null | undefined): string {
     case "sample_in_memory":
       return "Sample data until you save an import";
     case "market_context_unavailable":
-      return "Chart context waiting";
+      return "Chart data still missing";
     case "analysis_failed":
       return "Needs technical follow-up";
     case "blocked_open_trade":
       return "Open trade";
     case "completed":
-      return "Reviewed with chart context";
+      return "Reviewed with chart data";
     case "queued":
       return "Waiting for review";
     case "skipped_limit":
@@ -96,15 +99,7 @@ export function plainStateLabel(value: string | null | undefined): string {
 }
 
 export function userFacingTradeDirection(value: string | null | undefined): string {
-  if (value === "short") {
-    return "position-history review";
-  }
-
-  if (value === "long") {
-    return "long";
-  }
-
-  return value ? value.replaceAll("_", " ") : "unknown";
+  return productUserFacingTradeDirection(value);
 }
 
 export function withPageAnchor(href: string, anchor: string): string {

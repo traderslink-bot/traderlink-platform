@@ -15,6 +15,7 @@ import {
   type SavedReviewQueueFilter,
 } from "../../src/lib/trader-analytics/server/saved-review-queue";
 import { buildSavedTradeThreadReadModel } from "../../src/lib/trader-analytics/server/saved-trade-threads";
+import { sellStartingReviewLimitationCopy } from "../../src/lib/trader-analytics/product/trade-display-copy";
 import { ImportWorkflowStrip } from "../import-workflow-strip";
 
 export const metadata: Metadata = {
@@ -492,7 +493,7 @@ export default async function TradesPage({
     },
     {
       id: "needs_context",
-      label: "Needs chart context",
+      label: "Needs chart data",
       count: tradeThreadModel.threads.filter((thread) => storyMatchesFilter(thread, "needs_context")).length,
     },
   ];
@@ -812,9 +813,9 @@ export default async function TradesPage({
             tone="warning"
           />
           <MetricCard
-            label="Needs Chart Context"
+            label="Needs Chart Data"
             value={marketGapCount}
-            detail="Execution review is available while chart context waits."
+            detail="Execution review is available while chart data is still missing."
             tone="warning"
           />
           <MetricCard
@@ -1378,7 +1379,7 @@ export default async function TradesPage({
                   Find Saved Trades
                 </h2>
                 <div className="mt-1 text-sm text-zinc-500">
-                  Use these filters when you want all saved trades, trades waiting on chart context, or open trades.
+                  Use these filters when you want all saved trades, trades missing chart data, or open trades.
                 </div>
               </div>
               <Link
@@ -1590,7 +1591,7 @@ export default async function TradesPage({
                     </div>
                     {trade.tradeDirection === "short" ? (
                       <div className="text-amber-300">
-                        Starts with a sell in the CSV. Treat as position-history review, not a supported direction-specific coaching surface.
+                        {sellStartingReviewLimitationCopy()}
                       </div>
                     ) : null}
                     <div className="text-sky-300">Open review workspace</div>

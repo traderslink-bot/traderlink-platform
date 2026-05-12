@@ -126,7 +126,7 @@ The main report should then split into clear sections:
    - trades behind a chart bar or metric
    - links to trade replay and review writing flow
 6. Advanced Context
-   - chart context waiting/available
+   - chart data still missing/available
    - storage/import/readiness details collapsed or admin-only
 
 Market-context analytics should be separate from execution-only analytics until

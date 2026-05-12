@@ -119,25 +119,42 @@ Current next run expectation:
   consumes the same shared certified report as `Behavior Coaching Map` with
   fix-first, repeat-first, and needs-review framing. User QA found that this
   coach presentation is too similar to analytics, so the shared report should
-  remain the evidence source while the next coach run redesigns the behavior
-  section into a true coaching sequence. It should continue with a new
-  independent slice: coach behavior-section redesign, route copy/anchor repairs
-  found by QA, focused screenshot fixes only if concrete issues appear, or
-  another market-context family only if saved evidence can prove it. The
-  product/engineering review in `src/docs/suggestions-for-codex.md` should be
-  read before the next route/UI pass so the redesign preserves useful data,
-  improves hierarchy, clarifies sell-starting/short-feature limitations, and
-  separates coach, analytics, review, trade-detail, and workspace route roles.
+  remain the evidence source while the coach route becomes a true coaching
+  sequence. The May 11 product clarity pass is now complete: `/coach` defaults
+  to `Behavior Coaching Sequence`, `/analytics` keeps the broad grouped report,
+  `/review` queue cards are task-first with evidence counts collapsed,
+  `/trades/[tradeId]` leads with `Replay, decide, write, then continue`,
+  active waiting-chart labels say `Chart data still missing`, and
+  sell-starting items use `Limited sell-side review` copy. The follow-on route
+  copy/anchor QA pass is complete too: stale chart-context-waiting language was
+  replaced with chart-data wording across shared status helpers and touched
+  routes, coach progress handoffs now land on
+  `/progress#progress-follow-through`, and Playwright bans the stale phrase. It
+  should continue with a new independent slice: focused screenshot fixes only
+  if concrete issues appear. The first deterministic positive
+  constructive-management storylines are complete:
+  `balanced_management_with_constructive_exit` maps to `Managed the full trade
+  constructively`, and `add_into_strength_with_constructive_final_exit` maps to
+  `Added into strength and exited constructively` through decision review,
+  user-facing behavior mapping, saved trade threads, and the analytics behavior
+  report. Follow-up constructive-management variants should be added only when
+  saved evidence can prove them without broader claims. The
+  product/engineering review in
+  `src/docs/suggestions-for-codex.md` remains useful context for preserving
+  route hierarchy and data-density handling.
   Verify locally, update docs, and keep moving through the next safe slice
   unless a true global blocker appears.
 - The next implementation start point remains the next-run plan's
   **Required Long-Run Batch Shape** and **Next Run Phase Plan** sections, not
   only the shorter block summary. The next run should complete multiple
-  phases before reporting back. Current best slices are route anchor/copy
-  repairs, focused screenshot fixes only if concrete issues appear, or a new
-  behavior/evidence family only when saved chart, level, candle, volume, or
-  after-exit evidence can prove it. Do not redo the completed workspace visual
-  migration or coach old-card cleanup unless QA finds a concrete regression.
+  phases before reporting back. Current best slices are focused screenshot
+  fixes only if concrete issues appear, or deterministic follow-up
+  constructive-management variants only when saved chart, level, candle,
+  volume, or after-exit evidence can prove them. Do not redo the completed
+  constructive-management storylines, workspace
+  visual migration, coach old-card cleanup, May 11 coach sequence, review queue
+  simplification, sell-starting limitation copy, route copy/anchor repairs, or
+  trade-detail replay loop unless QA finds a concrete regression.
 
 If this file and the plan index ever disagree, trust the plan index and the
 latest entry in `src/docs/codex-project-log.md`.

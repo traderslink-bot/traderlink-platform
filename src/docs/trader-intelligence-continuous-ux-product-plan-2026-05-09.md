@@ -776,7 +776,7 @@ Add or refine:
 - P/L filter,
 - open trades,
 - swing/overnight,
-- chart context waiting,
+- chart data still missing,
 - reviewed/unreviewed.
 
 ### 5.3 User Explanation
@@ -961,7 +961,7 @@ Use:
 - sample data until you save an import,
 - execution review,
 - trade replay,
-- chart context waiting,
+- chart data still missing,
 - evidence-backed review,
 - saved review queue,
 - trade management feedback,
@@ -1759,7 +1759,7 @@ Do as much of this batch as practical in one run:
    - re-entry attempts,
    - giveback/additional-profit evidence,
    - day-trade-to-swing warning when supported,
-   - chart context waiting/available wording.
+   - chart data still missing/available wording.
 6. Improve similar-trade cards:
    - explain why the trade is similar,
    - show outcome,
@@ -1837,10 +1837,9 @@ Readiness decision:
   ticker-story summary/evidence-count collapse, the shared mobile page-section
   menu collapse, `/review` queue first-batch limit, or `/progress` chart
   evidence-count collapse unless a regression appears.
-- The best next work is now route anchor/copy repairs, import-flow trust
-  polish, focused screenshot fixes only when a concrete issue appears, or a new
-  market-context evidence family only when saved chart, level, candle, volume,
-  or after-exit evidence can prove the claim.
+- The best next work is now focused screenshot fixes only when a concrete issue
+  appears, or a genuinely distinct evidence family only when saved chart,
+  level, candle, volume, or after-exit evidence can prove the claim.
 - If a route asks for a new behavior statement and the evidence is not strong
   enough, present it as a neutral review prompt or keep it internal.
 - Coaching lessons that apply to other features have been split into

@@ -1,6 +1,6 @@
 # Trader Intelligence Plan Index
 
-**Last updated:** 2026-05-10
+**Last updated:** 2026-05-12
 **Purpose:** Keep Trader Intelligence planning organized so future Codex runs
 can find the right plan, continue the current work, and avoid drifting into old
 prototype docs.
@@ -145,9 +145,24 @@ Current active batch:
   coach UI now looks too much like duplicated analytics cards -> next coach
   run should redesign the behavior section into a coach-specific sequence while
   keeping the shared report as the evidence source -> continue with focused
-  coach behavior-section redesign, route copy/anchor repairs found by QA,
-  focused screenshot fixes only if concrete issues appear, or another
-  market-context family only when saved evidence can prove it.
+  coach behavior-section redesign -> completed May 11 product clarity pass:
+  `/coach` now uses the shared certified report to render a distinct guided
+  `Behavior Coaching Sequence`, `/review` queue cards are task-first with
+  evidence counts collapsed, `/trades/[tradeId]` leads with
+  `Replay, decide, write, then continue`, active waiting-chart labels use
+  `Chart data still missing`, and sell-starting items use
+  `Limited sell-side review` copy -> completed route copy/anchor QA:
+  chart-context-waiting language is replaced by chart-data wording across
+  shared helpers and touched routes, coach progress links land on
+  `/progress#progress-follow-through`, and Playwright bans the stale phrase ->
+  completed first positive constructive-management storylines:
+  `balanced_management_with_constructive_exit` and
+  `add_into_strength_with_constructive_final_exit` now map through decision
+  review, the user-facing registry, saved trade threads, and the analytics
+  behavior report as combined-evidence repeatable strengths -> continue with
+  focused screenshot fixes only if concrete issues appear, or inspect only
+  genuinely distinct constructive-management variants if saved evidence can
+  certify them without broader claims.
 - Next continuous implementation run scope: work from
   `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
   The completed route-family language and mapper pass should be preserved, not
@@ -156,11 +171,14 @@ Current active batch:
   short next-block summary. The next coding run should chain a coherent
   route/evidence slice, focused verification, at least one independent second
   slice, broader verification when code changes require it, and docs/logs
-  before final response. Current best slices are route anchor/copy repairs,
-  focused route screenshot fixes only if concrete issues appear, or a new
-  market-context family only when saved evidence proves it. Do not redo the
-  completed `/workspace` visual-system migration or `/coach` old-card cleanup
-  unless QA finds a concrete regression.
+  before final response. Current best slices are focused route screenshot fixes
+  only if concrete issues appear, or a follow-up constructive-management
+  variant only when saved evidence proves it. Do not redo the completed
+  `/workspace` visual-system migration, `/coach` old-card cleanup, May 11 coach
+  behavior sequence, review queue task-card simplification, sell-starting
+  limitation copy, workspace chart-data wording, route copy/anchor repairs,
+  trade-detail replay/decide/write flow, or the completed constructive
+  management storylines unless QA finds a concrete regression.
 - Current resume point: the shared behavior contract carries opportunity type
   and evidence channel, current execution-only risks/strengths/review prompts
   have mapper coverage, first market-context support/resistance contracts are
@@ -251,12 +269,24 @@ Current active batch:
   adding route-local detection logic. The coach behavior-map reuse slice is
   complete too: `/coach` consumes the same shared behavior report as a
   coaching map with fix-first, repeat-first, and needs-review framing. User QA
-  found that the coach version is too visually and structurally close to
-  analytics, so the next coach-specific run should transform that same
-  evidence into a guided coaching sequence instead of broad report cards.
-  Continue with focused coach behavior-section redesign, route copy/anchor repairs found by QA,
-  focused route screenshot fixes only if concrete issues appear,
-  or another market-context family only when saved evidence can prove it.
+  found that the coach version was too visually and structurally close to
+  analytics, so the follow-up transformed that same evidence into a guided
+  coaching sequence instead of broad report cards. That
+  coach-specific transformation is now complete: `/coach` defaults to the
+  guided sequence while the old map stays in supporting details, `/review`
+  reads like a work queue with collapsed diagnostics, `/trades/[tradeId]`
+  leads with a replay/decide/write/continue loop, waiting-chart labels use
+  simpler chart-data copy, and sell-starting items use limited sell-side
+  review language. The route copy/anchor QA pass is now complete too:
+  chart-context-waiting copy is replaced with chart-data wording, coach
+  progress links land on the follow-through anchor, and the stale phrase is
+  covered by Playwright. The first positive constructive-management storylines
+  are complete too: `balanced_management_with_constructive_exit` and
+  `add_into_strength_with_constructive_final_exit` now surface as
+  combined-evidence strengths through decision review, saved threads, and the
+  analytics behavior report. Continue with focused screenshot fixes only if
+  concrete issues appear, or extend constructive-management coverage only when
+  saved evidence can certify a genuinely distinct deterministic variant.
   Uncertain behavior must become a review prompt or stay internal. The next run
   must not stop after one verified slice; it must keep
   going through the next safe route or behavior family.

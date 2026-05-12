@@ -140,8 +140,8 @@ Do not build new coaching claims from a single current/live level snapshot.
 - Never certify "bought near resistance," "bought near support," "sold near the
   top," "missed continuation," "added into weakness," or volume/context claims
   unless historical market context is attached.
-- If candle/level context is missing, show "Chart context waiting" or a review
-  prompt.
+- If candle/level context is missing, show "Chart data still missing" or a
+  review prompt.
 - Execution-only evidence can still support execution-sequence coaching, but it
   cannot become a chart-specific conclusion.
 - Advanced diagnostics may mention provider/warehouse issues, but normal UI

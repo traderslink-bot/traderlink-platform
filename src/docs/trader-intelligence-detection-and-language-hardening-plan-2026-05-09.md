@@ -582,8 +582,8 @@ User-facing output:
 
 Safety rule:
 
-- If levels/candles/volume are missing, the UI must say "chart context waiting"
-  or "execution-only review" instead of making a chart claim.
+- If levels/candles/volume are missing, the UI must say "Chart data still
+  missing" or "execution-only review" instead of making a chart claim.
 
 ## Language Layer
 

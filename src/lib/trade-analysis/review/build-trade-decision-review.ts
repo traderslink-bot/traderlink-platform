@@ -714,6 +714,8 @@ function insightPriority(insight: TradeDecisionReviewInsight): number {
     exit_large_post_exit_move_needs_review: 34,
     exit_into_support_with_relief_after_exit: 35,
     protected_profit_before_fade: 70,
+    balanced_management_with_constructive_exit: 75,
+    add_into_strength_with_constructive_final_exit: 76,
     entry_chase_or_late_extension: 40,
     entry_breakout_failed: 41,
     entry_near_daily_4h_support: 60,
@@ -1202,6 +1204,66 @@ function buildExitInsights(
         `maxFavorableMovePctAfterExit=${pct(exit.maxFavorableMovePctAfterExit)}`,
         `netMovePctAtEndOfPostExitWindow=${pct(exit.netMovePctAtEndOfPostExitWindow)}`,
         `postExitCandleCount=${exit.postExitCandleCount}`,
+      ],
+    });
+  }
+
+  if (
+    exitHadPositiveCapture &&
+    afterExitFadeWasMeasured &&
+    hasAnyPattern(result, [
+      "balanced_management_with_constructive_exit",
+      "recovery_with_balanced_management_and_constructive_final_exit",
+    ])
+  ) {
+    pushUniqueInsight(insights, {
+      id: "balanced_management_with_constructive_exit",
+      category: "exit",
+      tone: "strength",
+      title: "Managed the full trade constructively",
+      summary:
+        "The trade added, reduced, returned flat, kept giveback controlled, and after-exit candles later faded.",
+      evidence: [
+        `addCountAfterInitialEntry=${input.scalingContext.addCountAfterInitialEntry}`,
+        `totalPositionDecreaseCount=${input.tradeStructure.totalPositionDecreaseCount}`,
+        `maxGivebackFromPeakOpenProfitPct=${pct(input.recoveryContext.maxGivebackFromPeakOpenProfitPct)}`,
+        `realizedCapturePercentOfTradeMfe=${pct(exit.realizedCapturePercentOfTradeMfe)}`,
+        `postExitCandleCount=${exit.postExitCandleCount}`,
+        `maxAdverseMovePctAfterExit=${pct(exit.maxAdverseMovePctAfterExit)}`,
+        `maxFavorableMovePctAfterExit=${pct(exit.maxFavorableMovePctAfterExit)}`,
+        `netMovePctAtEndOfPostExitWindow=${pct(exit.netMovePctAtEndOfPostExitWindow)}`,
+      ],
+    });
+  }
+
+  if (
+    exitHadPositiveCapture &&
+    afterExitFadeWasMeasured &&
+    hasAnyPattern(result, [
+      "add_into_strength_with_constructive_final_exit",
+      "recovery_with_add_into_strength_and_constructive_final_exit",
+      "add_into_strength_with_timely_profit_protection_and_constructive_final_exit",
+      "recovery_with_add_into_strength_and_timely_profit_protection_and_constructive_final_exit",
+    ])
+  ) {
+    pushUniqueInsight(insights, {
+      id: "add_into_strength_with_constructive_final_exit",
+      category: "exit",
+      tone: "strength",
+      title: "Added into strength and exited constructively",
+      summary:
+        "The trade pressed strength, kept giveback controlled, returned flat, and after-exit candles later faded.",
+      evidence: [
+        `addCountAfterInitialEntry=${input.scalingContext.addCountAfterInitialEntry}`,
+        `addAbovePreviousAverageEntryCount=${input.scalingContext.addAbovePreviousAverageEntryCount}`,
+        `averageAddPriceVsPreviousAverageEntryPct=${pct(input.scalingContext.averageAddPriceVsPreviousAverageEntryPct)}`,
+        `averageAddPricePositionInRecentRangePct=${pct(input.scalingContext.averageAddPricePositionInRecentRangePct)}`,
+        `maxGivebackFromPeakOpenProfitPct=${pct(input.recoveryContext.maxGivebackFromPeakOpenProfitPct)}`,
+        `realizedCapturePercentOfTradeMfe=${pct(exit.realizedCapturePercentOfTradeMfe)}`,
+        `postExitCandleCount=${exit.postExitCandleCount}`,
+        `maxAdverseMovePctAfterExit=${pct(exit.maxAdverseMovePctAfterExit)}`,
+        `maxFavorableMovePctAfterExit=${pct(exit.maxFavorableMovePctAfterExit)}`,
+        `netMovePctAtEndOfPostExitWindow=${pct(exit.netMovePctAtEndOfPostExitWindow)}`,
       ],
     });
   }
