@@ -8,6 +8,8 @@ implementation run:
 
 - `src/docs/trader-intelligence-plan-index.md`
 
+new note may 11
+
 Product/engineering suggestions from the latest human review:
 
 - `src/docs/suggestions-for-codex.md`
