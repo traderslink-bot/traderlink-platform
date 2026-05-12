@@ -29,6 +29,124 @@ The next improvement should not be more metrics by default. The next improvement
 
 Do not remove useful data just to make pages shorter. Instead, move the most important guidance first and organize deeper data into categories, disclosures, tabs, or aside-menu sections where it remains accessible.
 
+## Product Learning Curve: Automated First, Advanced Later
+
+The end-user experience should start extremely easy.
+
+For a new user, the main path should feel almost automatic:
+
+```text
+Upload CSV -> app checks and saves the import -> app shows saved trades -> app tells the user what to review first -> app explains the data in plain language -> app opens coach/progress when enough review work exists
+```
+
+A new user should not need to understand mapping confidence, raw diagnostics, decision-review jobs, chart-data status codes, reconstruction internals, or evidence categories before seeing value.
+
+The default experience should be:
+
+1. Upload or paste broker CSV.
+2. Fix only the rows that need user attention.
+3. Save the import.
+4. Land in a friendly dashboard/report state.
+5. See the next best action.
+6. Open the next trade review.
+7. Read analytics in plain language.
+8. Use coach for one fix/repeat/review path.
+9. Track progress after reviews are completed.
+
+Advanced features are still important. The app should let users grow into them.
+
+Use a progressive model:
+
+- **Beginner default:** simple next action, plain summaries, no internal terms.
+- **Intermediate:** browse saved trades, ticker stories, session stories, behavior groups, chart-data states, and review queue lanes.
+- **Advanced end-user:** open evidence counts, chart/level/volume/post-exit details, import reconstruction, mapping details, quality checks, and technical notes.
+- **Admin/operator:** calibration, debug consoles, platform readiness, broker mapping admin, QA/import trials, and dev-only diagnostics.
+
+Do not move real trader evidence into admin just because it is complex. Instead, put it behind an advanced end-user area or disclosure.
+
+The product should feel simple first and powerful later.
+
+## Admin Versus Advanced End-User Boundary
+
+Use three buckets for features.
+
+### 1. Admin / QA / Developer Only
+
+These should live in `/workspace/admin` or other admin-only navigation. They should not be part of the default trader dashboard.
+
+Examples:
+
+- `/import-trials`
+- `/import-health`
+- `/repair-wizard` unless rebuilt as a true end-user repair flow
+- `/review-cockpit`
+- `/calibration`
+- `/platform-readiness`
+- `/account` while it is operator/account-plan scaffolding
+- `/admin/broker-mappings`
+- `/debug/trade-analysis`
+- `/debug/execution-feedback`
+- `/debug/trader-analytics`
+
+These are useful for development, QA, support, calibration, and operations, but they are not the trading-improvement workflow.
+
+### 2. Advanced End-User Details
+
+These are useful and should not be deleted. They should be available through `Advanced`, `Technical details`, `Show evidence`, or route-specific details panels.
+
+Examples:
+
+- batch ID
+- import fingerprint/duplicate diagnostics
+- technical review buckets
+- decision-review job counts
+- diagnostic code counts
+- mapping confidence score
+- column mapping table
+- trade reconstruction preview
+- execution basis explanation
+- cost policy
+- write safety
+- quality score breakdowns
+- chart risk/strength/review-prompt counts
+- raw-ish candle or chart-data technical notes
+- support/resistance/volume/post-exit evidence counts
+- technical follow-up details
+
+These are not first-screen beginner content. They are power-user trust and audit tools.
+
+### 3. Core End-User Features
+
+These should stay visible in the normal app flow, but with clean hierarchy.
+
+Examples:
+
+- import trades
+- save/repair import
+- saved trades
+- review next trade
+- why review this
+- replay executions
+- write lesson
+- coach behavior sequence
+- analytics report
+- progress follow-through
+- chart data still missing
+- open/swing trade review
+- limited sell-side review notice
+- ticker stories
+- session stories
+- support/resistance exit evidence
+- volume evidence
+- after-exit evidence
+- constructive-management strengths
+
+The rule is:
+
+```text
+Beginner view first. Advanced evidence second. Admin/debug never visible by default.
+```
+
 ## Important Product Clarification: Short Selling Is Not A Feature Yet
 
 The current wording `position-history review` is unclear.
@@ -494,6 +612,8 @@ CoachRuleCard
 ReviewTaskCard
 ChartContextStatusCard
 NotEnoughEvidenceNotice
+AdvancedEndUserDisclosure
+AdminOnlyRouteGroup
 ```
 
 Use these where they make routes feel less like generic metric dashboards.
@@ -533,15 +653,55 @@ Avoid:
 
 ## Suggested Next Implementation Pass
 
-### Primary Slice: Coach-Specific Behavior Sequence
+### Primary Slice: Beginner-To-Advanced Dashboard Flow
 
-Implement a coach-specific sequence using the existing behavior report data.
+Implement the product learning curve explicitly.
+
+The default app should feel automated after CSV upload:
+
+1. import CSV,
+2. repair only what needs user action,
+3. save import,
+4. land on friendly saved-trade/report state,
+5. open the next recommended trade,
+6. review and write the lesson,
+7. use coach and analytics,
+8. track progress.
+
+Advanced end-user details should be accessible but visually tucked away.
+
+Admin/QA/dev surfaces should stay out of the default dashboard and live under admin/internal navigation.
+
+### Secondary Slice: Import Information Architecture
+
+Simplify `/imports` and `/imports/[batchId]` so the default user path is:
+
+1. what was imported,
+2. what needs repair,
+3. whether it can be saved,
+4. where to go after saving.
+
+Move these behind advanced end-user disclosures:
+
+- batch id,
+- mapping confidence,
+- column mapping,
+- trade reconstruction preview,
+- execution basis,
+- cost policy,
+- write safety,
+- technical review buckets,
+- diagnostic code counts.
+
+### Tertiary Slice: Coach-Specific Behavior Sequence
+
+Implement or preserve a coach-specific sequence using the existing behavior report data.
 
 Steps:
 
 1. Keep analytics behavior report card grid on `/analytics`.
 2. Stop using the same broad card grid as the default `/coach` behavior section.
-3. Create a coach-specific component that selects:
+3. Create or preserve a coach-specific component that selects:
    - top risk group,
    - top strength group,
    - top review-prompt group.
@@ -550,7 +710,7 @@ Steps:
 6. Link to trade detail, review queue, and progress.
 7. Move full behavior-map/card-grid details into a collapsed supporting section if still useful.
 
-### Secondary Slice: Review Queue Density
+### Fourth Slice: Review Queue Density
 
 Simplify default review queue cards.
 
@@ -569,7 +729,7 @@ Collapsed:
 - technical limits,
 - updated timestamps.
 
-### Third Slice: Trade Detail Top Flow
+### Fifth Slice: Trade Detail Top Flow
 
 Make the top of `/trades/[tradeId]` read as:
 
@@ -581,7 +741,7 @@ Keep supporting evidence lower or collapsed.
 
 Replace unclear sell-starting wording.
 
-### Fourth Slice: Analytics Category Hierarchy
+### Sixth Slice: Analytics Category Hierarchy
 
 Keep the data. Improve organization.
 
@@ -596,7 +756,7 @@ Add or refine categories:
 
 Make the first analytics screen identify the most important report story before showing dense details.
 
-### Fifth Slice: Workspace Simplicity
+### Seventh Slice: Workspace Simplicity
 
 Make the workspace feel like a beginner home base:
 
@@ -628,8 +788,9 @@ A newer trader should be able to answer these without understanding the engine:
 4. What lesson should I write?
 5. What pattern exists across my trades?
 6. What should I fix or repeat next session?
-7. Is chart context available or still waiting?
+7. Is chart data available or still missing?
 8. Is progress measurable yet?
+9. Where do I find deeper evidence when I am ready?
 
 A power user should still be able to access:
 
@@ -641,6 +802,16 @@ A power user should still be able to access:
 6. support/resistance exit filters,
 7. import diagnostics,
 8. advanced technical details.
+
+An admin/operator should still be able to access:
+
+1. import trials,
+2. import health,
+3. calibration,
+4. platform readiness,
+5. broker mapping admin,
+6. debug consoles,
+7. QA/cockpit surfaces.
 
 The product should feel simpler without becoming less powerful.
 
@@ -668,3 +839,5 @@ The engine can know a lot.
 The UI should decide what matters first.
 
 Do not remove useful data. Organize it so the user sees the next decision first, then can drill into the evidence when they are ready.
+
+The product should start as an easy automated CSV-to-insight workflow and grow into advanced evidence review as the trader becomes more comfortable.
