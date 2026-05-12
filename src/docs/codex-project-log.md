@@ -13050,3 +13050,61 @@ Current best next step:
   appears, or with a genuinely distinct evidence family that saved evidence can
   certify. Do not redo the completed May 11 product pass or the May 12
   constructive-management mappings.
+
+## 2026-05-12 - Beginner-To-Advanced Import IA And Analytics Category Access
+
+Continued from the refreshed `src/docs/suggestions-for-codex.md` product
+direction after pulling the latest branch updates. This was a route hierarchy
+and copy-safety pass, not a new behavior-detection pass.
+
+Changes:
+
+- `/imports` now keeps the beginner path focused on saved imports, active
+  recovery work, unresolved repairs, and where to go next after saving.
+  Mapping confidence, quality score breakdowns, write safety, cost policy,
+  execution basis, column mapping, repair workflow, and trade reconstruction
+  preview are still available behind `Advanced import details`.
+- `/imports/[batchId]` no longer shows the batch ID, chart-review counts,
+  technical buckets, or duplicate internals in the primary header/default path.
+  The default path now leads with import state, next action, saved trades,
+  repair actions, import decisions, and review links that land on
+  `#writing-flow`; the technical import and chart-review data moved behind
+  `Advanced import and chart details`.
+- Duplicate import copy now says the import looks like a duplicate saved
+  import instead of exposing fingerprint language by default.
+- Import-route trade-direction copy now uses `Limited sell-side review` for
+  sell-starting/short-side imports, matching the completed trade-detail copy.
+- `/analytics` now has explicit category access for Results, Timing, Behavior,
+  Ticker Stories, Session Stories, and Chart Evidence while preserving the
+  richer report sections.
+- Regression coverage now opens the relevant advanced disclosures before
+  asserting advanced policy/technical panels, so future tests preserve the
+  beginner-first default instead of forcing advanced details into primary UI.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npx vitest run src/lib/trader-analytics/__tests__/trade-display-copy.test.ts src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts src/lib/trader-analytics/__tests__/saved-import-coaching-language-qa-matrix.test.ts --reporter=dot --testTimeout=30000`
+  passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts tests/e2e/import-dry-run.spec.ts tests/e2e/saved-import-visual-overflow.spec.ts --project=chromium-desktop --grep "keeps import reporting surfaces|shows the analytics product intelligence|walks the guided end-user path|keeps banned product claims|saves a generic CSV import|keeps saved-import routes readable"`
+  passed after updating the stale coach-support test expectation and rerunning
+  the affected import-save path.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile --grep "keeps core mobile routes usable" --timeout=120000`
+  passed. The first combined mobile run timed out loading `/imports` under
+  parallel load while the saved-import mobile route check passed; the single
+  rerun completed in 32.8s.
+- `npx playwright test tests/e2e/saved-import-visual-overflow.spec.ts --project=chromium-mobile --grep "keeps saved-import routes readable"`
+  passed as part of the combined mobile run.
+- `git diff --check` passed.
+
+Current best next step:
+
+- Do not redo this import IA disclosure pass, analytics category-access pass,
+  May 11 coach/review/trade-detail work, route copy/anchor QA, or the May 12
+  constructive-management storylines unless QA finds a concrete regression.
+- Continue the beginner-to-advanced product flow with screenshot-guided fixes
+  only when a route proves a real issue. The likely next UI candidates are
+  `/import-dry-run` advanced-detail demotion, `/progress` follow-through
+  clarity, or any concrete workspace/dashboard handoff issue found in browser
+  QA.

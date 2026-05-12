@@ -79,11 +79,7 @@ export interface SavedReviewQueueReadModel {
   items: SavedReviewQueueItem[];
   allItems: SavedReviewQueueItem[];
   emptyState: {
-    kind:
-      | "no_saved_import"
-      | "no_saved_review_jobs"
-      | "filter_empty"
-      | "ready";
+    kind: "no_saved_import" | "no_saved_review_jobs" | "filter_empty" | "ready";
     title: string;
     body: string;
   };
@@ -99,7 +95,9 @@ const FILTER_LABELS: Record<SavedReviewQueueFilter, string> = {
   unresolved: "Needs Review",
 };
 
-function normalizeFilter(value: string | null | undefined): SavedReviewQueueFilter {
+function normalizeFilter(
+  value: string | null | undefined,
+): SavedReviewQueueFilter {
   return value && value in FILTER_LABELS
     ? (value as SavedReviewQueueFilter)
     : "highest_priority";
@@ -288,7 +286,8 @@ function queueStateCopy(lane: SavedReviewQueueItem["lane"]): {
         stateDetail:
           "Chart review completed. Use the saved snapshot with the execution replay.",
         reviewScopeLabel: "chart review",
-        nextAction: "Open the trade detail and complete the saved review checklist.",
+        nextAction:
+          "Open the trade detail and complete the saved review checklist.",
       };
     case "blocked_open_trade":
       return {
@@ -321,17 +320,16 @@ function queueStateCopy(lane: SavedReviewQueueItem["lane"]): {
       return {
         stateLabel: "Review skipped",
         stateDetail:
-          "This trade was saved, but the review run limit skipped it before analysis.",
+          "This trade was saved, but chart-data review did not finish yet.",
         reviewScopeLabel: "waiting for review",
-        nextAction: "Run or resume saved decision review when market context is ready.",
+        nextAction: "Refresh chart-data review when market context is ready.",
       };
     case "queued":
       return {
         stateLabel: "Waiting for trade review",
-        stateDetail:
-          "This saved trade is queued for trade review when the review job runs.",
+        stateDetail: "This saved trade is waiting for chart-data review.",
         reviewScopeLabel: "queued",
-        nextAction: "Run or resume saved decision review when market context is ready.",
+        nextAction: "Refresh chart-data review when market context is ready.",
       };
   }
 }
@@ -354,7 +352,9 @@ function reportPnl(args: {
       candidate.tradeDirection === args.trade?.tradeDirection,
   );
 
-  return typeof row?.grossRealizedPnl === "number" ? row.grossRealizedPnl : null;
+  return typeof row?.grossRealizedPnl === "number"
+    ? row.grossRealizedPnl
+    : null;
 }
 
 function buildQueueItem(args: {
@@ -370,11 +370,13 @@ function buildQueueItem(args: {
   const diagnosticScore = !args.snapshot
     ? diagnosticPriority(args.diagnostic ?? null, args.job.status)
     : null;
-  const priority = snapshotScore ?? diagnosticScore ?? {
-    score: 50,
-    reason: "Review item is ready for triage.",
-  };
-  const symbol = args.trade?.symbol ?? args.savedTrade?.symbol ?? args.job.symbol;
+  const priority = snapshotScore ??
+    diagnosticScore ?? {
+      score: 50,
+      reason: "Review item is ready for triage.",
+    };
+  const symbol =
+    args.trade?.symbol ?? args.savedTrade?.symbol ?? args.job.symbol;
   const stateCopy = queueStateCopy(lane);
   const chartFindings = args.snapshot
     ? chartFindingsForSnapshot(args.snapshot)
@@ -395,7 +397,7 @@ function buildQueueItem(args: {
   ).length;
   const headline = chartPrimary
     ? `${chartPrimary.label}. ${chartPrimary.detail}`
-    : args.snapshot?.review.coachingHeadline ?? stateCopy.stateDetail;
+    : (args.snapshot?.review.coachingHeadline ?? stateCopy.stateDetail);
 
   return {
     id: args.job.id,
@@ -432,7 +434,8 @@ function buildQueueItem(args: {
     notesCount: args.trade?.notes.length ?? 0,
     hasSnapshot: Boolean(args.snapshot),
     hasDiagnostics: Boolean(args.diagnostic),
-    generatedAt: args.snapshot?.generatedAt ?? args.diagnostic?.generatedAt ?? null,
+    generatedAt:
+      args.snapshot?.generatedAt ?? args.diagnostic?.generatedAt ?? null,
   };
 }
 
@@ -453,7 +456,10 @@ function filterItems(
           item.reviewStatus !== "ignored" &&
           item.reviewStatus !== "reviewed",
       )
-      .sort((a, b) => b.priorityScore - a.priorityScore || a.symbol.localeCompare(b.symbol));
+      .sort(
+        (a, b) =>
+          b.priorityScore - a.priorityScore || a.symbol.localeCompare(b.symbol),
+      );
   }
 
   if (filter === "unresolved") {
@@ -484,8 +490,8 @@ function emptyState(args: {
   if (args.allCount === 0) {
     return {
       kind: "no_saved_review_jobs",
-      title: "No saved decision-review jobs",
-      body: "Saved trades exist, but this import did not create decision-review queue items. Open saved trades for execution review.",
+      title: "No saved chart-review work",
+      body: "Saved trades exist, but this import did not create chart-review queue items. Open saved trades for execution review.",
     };
   }
 
@@ -521,12 +527,14 @@ export function buildSavedReviewQueueReadModel(args: {
       source: "saved_sqlite",
       importBatchId: null,
       activeFilter,
-      tabs: (Object.keys(FILTER_LABELS) as SavedReviewQueueFilter[]).map((id) => ({
-        id,
-        label: FILTER_LABELS[id],
-        count: 0,
-        href: `/review?queue=${id}`,
-      })),
+      tabs: (Object.keys(FILTER_LABELS) as SavedReviewQueueFilter[]).map(
+        (id) => ({
+          id,
+          label: FILTER_LABELS[id],
+          count: 0,
+          href: `/review?queue=${id}`,
+        }),
+      ),
       items: [],
       allItems: [],
       emptyState: emptyState({
@@ -551,12 +559,18 @@ export function buildSavedReviewQueueReadModel(args: {
       .listDecisionReviewSnapshotsForBatch(batch.id)
       .map((snapshot) => [snapshot.savedTradeId, snapshot]),
   );
-  const diagnosticsByTrade = new Map<string, PersistedDecisionReviewDiagnostic>();
+  const diagnosticsByTrade = new Map<
+    string,
+    PersistedDecisionReviewDiagnostic
+  >();
 
   for (const diagnostic of args.repository.listDecisionReviewDiagnosticsForBatch(
     batch.id,
   )) {
-    if (diagnostic.savedTradeId && !diagnosticsByTrade.has(diagnostic.savedTradeId)) {
+    if (
+      diagnostic.savedTradeId &&
+      !diagnosticsByTrade.has(diagnostic.savedTradeId)
+    ) {
       diagnosticsByTrade.set(diagnostic.savedTradeId, diagnostic);
     }
   }
@@ -579,12 +593,14 @@ export function buildSavedReviewQueueReadModel(args: {
         a.symbol.localeCompare(b.symbol),
     );
   const filtered = filterItems(allItems, activeFilter);
-  const tabs = (Object.keys(FILTER_LABELS) as SavedReviewQueueFilter[]).map((id) => ({
-    id,
-    label: FILTER_LABELS[id],
-    count: filterItems(allItems, id).length,
-    href: `/review?queue=${id}`,
-  }));
+  const tabs = (Object.keys(FILTER_LABELS) as SavedReviewQueueFilter[]).map(
+    (id) => ({
+      id,
+      label: FILTER_LABELS[id],
+      count: filterItems(allItems, id).length,
+      href: `/review?queue=${id}`,
+    }),
+  );
 
   return {
     contractVersion: "saved_review_queue_read_model_v1",

@@ -7,6 +7,7 @@ import {
   type ImportBatchHistoryItem,
   SqliteImportCommitRepository,
 } from "../../src/lib/trader-analytics/product/import-commit/sqlite-import-commit-repository";
+import { AdvancedDisclosure } from "../app-ui";
 import {
   importCountLabel,
   importStatusDetail,
@@ -35,7 +36,9 @@ function toneClass(status: string): string {
 }
 
 function borderToneClass(status: string): string {
-  return status === "committed" || status === "ready_to_save" || status === "ready"
+  return status === "committed" ||
+    status === "ready_to_save" ||
+    status === "ready"
     ? "border-emerald-900/70 bg-emerald-950/20"
     : status === "blocked_by_repairs" ||
         status === "blocked" ||
@@ -77,7 +80,7 @@ function historyState(item: ImportBatchHistoryItem): {
   if (item.summaryStatus === "committed") {
     return {
       label: "Saved import",
-      detail: "Trades, analytics, coach, and chart review items were saved.",
+      detail: "Saved trades, analytics, coach, and review work are ready.",
       action: "Review saved trades",
     };
   }
@@ -85,9 +88,9 @@ function historyState(item: ImportBatchHistoryItem): {
   if (item.duplicateFile || item.duplicateTradeCount > 0) {
     return {
       label: "Duplicate review",
-      detail: `${item.duplicateFile ? "File fingerprint already exists" : "Trade fingerprint already exists"}${
+      detail: `${item.duplicateFile ? "This file looks like a saved import" : "A saved trade looks like this import"}${
         item.duplicateTradeCount > 0
-          ? `; ${item.duplicateTradeCount} duplicate trade(s) found`
+          ? `; ${item.duplicateTradeCount} possible duplicate trade(s) found`
           : ""
       }.`,
       action: "Open original import",
@@ -154,9 +157,7 @@ export default function ImportsPage() {
       return [buildImportRecoveryReadModel({ repository, plan, batch })];
     })
     .filter(
-      (item) =>
-        item.status !== "committed" &&
-        item.status !== "discarded",
+      (item) => item.status !== "committed" && item.status !== "discarded",
     )
     .slice(0, 8);
   const shell = buildProductWorkflowShellViewModel();
@@ -170,15 +171,18 @@ export default function ImportsPage() {
     <main className="min-h-screen ti-dashboard-bg px-5 py-8 text-zinc-100 sm:px-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <header className="border-b border-zinc-800 pb-6">
-          <Link className="text-sm text-sky-300 hover:text-sky-200" href="/workspace">
+          <Link
+            className="text-sm text-sky-300 hover:text-sky-200"
+            href="/workspace"
+          >
             Back to workspace
           </Link>
           <h1 className="mt-3 text-3xl font-semibold text-zinc-50">
             {view.title}
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-zinc-500">
-            Review broker mappings, grouped executions, P/L checks, and save
-            readiness before trusting imported trades.
+            See saved imports, unfinished repairs, and the next place to go
+            after an import is ready.
           </p>
           <Link
             className="mt-4 inline-block text-sm text-sky-300 hover:text-sky-200"
@@ -190,13 +194,10 @@ export default function ImportsPage() {
 
         <ImportWorkflowStrip
           currentStep="recover"
-          summary="Use this middle step when an import needs repair, duplicate review, or a saved-data check before you trust it for trade review."
+          summary="The app keeps import work here when something still needs repair, duplicate review, or a final save before the trades power review."
         />
 
-        <section
-          className="ti-panel p-4"
-          data-testid="import-recovery-queue"
-        >
+        <section className="ti-panel p-4" data-testid="import-recovery-queue">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
               <h2 className="text-sm font-semibold text-zinc-100">
@@ -231,9 +232,9 @@ export default function ImportsPage() {
                     </span>
                     <span className="mt-2 block text-xs text-zinc-400">
                       {item.duplicate.duplicateFile
-                        ? "Matches a saved file fingerprint."
+                        ? "Looks like a duplicate saved import."
                         : item.counts.duplicateTrades > 0
-                          ? `${item.counts.duplicateTrades} duplicate saved trade(s) detected.`
+                          ? `${item.counts.duplicateTrades} possible duplicate saved trade(s) detected.`
                           : item.counts.fixRequiredRepairs > 0
                             ? `${item.counts.fixRequiredRepairs} fix-required repair(s) remain.`
                             : item.status === "ready_to_save"
@@ -242,7 +243,9 @@ export default function ImportsPage() {
                     </span>
                   </span>
                   <span>
-                    <span className={`block font-medium ${toneClass(item.status)}`}>
+                    <span
+                      className={`block font-medium ${toneClass(item.status)}`}
+                    >
                       {importStatusLabel(item.status)}
                     </span>
                     <span className="mt-1 block text-xs text-zinc-500">
@@ -274,7 +277,10 @@ export default function ImportsPage() {
                   : "No saved imports yet. Save one from CSV dry run."}
               </p>
             </div>
-            <Link className="text-sm text-sky-300 hover:text-sky-200" href="/import-dry-run">
+            <Link
+              className="text-sm text-sky-300 hover:text-sky-200"
+              href="/import-dry-run"
+            >
               Open CSV dry run
             </Link>
           </div>
@@ -302,7 +308,7 @@ export default function ImportsPage() {
               return (
                 <Link
                   key={item.batch.id}
-                  className="grid gap-2 border-t border-zinc-900 py-3 text-sm hover:text-sky-200 md:grid-cols-[1fr_170px_150px_170px_120px]"
+                  className="grid gap-2 border-t border-zinc-900 py-3 text-sm hover:text-sky-200 md:grid-cols-[1fr_160px_140px_130px]"
                   data-testid={`import-history-row-${item.batch.id}`}
                   href={`/imports/${encodeURIComponent(item.batch.id)}`}
                 >
@@ -321,20 +327,7 @@ export default function ImportsPage() {
                     </span>
                   </span>
                   <span className="text-zinc-400">
-                    {importCountLabel(item.savedTradeCount, "trade")},{" "}
-                    {item.batch.acceptedExecutionCount} execs
-                    <span className="mt-1 block text-xs text-zinc-500">
-                      {importCountLabel(
-                        item.decisionReviewJobCount,
-                        "chart review item",
-                      )}
-                    </span>
-                  </span>
-                  <span className="text-zinc-400">
-                    {item.duplicateFile ? "Duplicate file" : "File ok"}
-                    {item.duplicateTradeCount > 0
-                      ? ` / ${item.duplicateTradeCount} duplicate trade(s)`
-                      : ""}
+                    {importCountLabel(item.savedTradeCount, "trade")}
                     {item.resolvedRepairCount > 0 ? (
                       <span className="mt-1 block text-xs text-emerald-300">
                         {item.resolvedRepairCount} repair(s) resolved
@@ -353,10 +346,7 @@ export default function ImportsPage() {
           </div>
         </section>
 
-        <section
-          className="ti-panel p-4"
-          data-testid="unresolved-repair-inbox"
-        >
+        <section className="ti-panel p-4" data-testid="unresolved-repair-inbox">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
               <h2 className="text-sm font-semibold text-zinc-100">
@@ -395,7 +385,9 @@ export default function ImportsPage() {
                   </span>
                   <span className="text-zinc-400">{item.brokerLabel}</span>
                   <span className="text-zinc-500">
-                    {item.rowIndex === null ? "row n/a" : `row ${item.rowIndex}`}
+                    {item.rowIndex === null
+                      ? "row n/a"
+                      : `row ${item.rowIndex}`}
                   </span>
                 </Link>
               ))
@@ -403,296 +395,328 @@ export default function ImportsPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-4">
-          <div className="ti-panel p-4">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Quality Score
-            </div>
-            <div
-              className={`mt-3 text-2xl font-semibold ${toneClass(
-                diagnostics.qualityScore.status,
-              )}`}
-            >
-              {diagnostics.qualityScore.score}/100
-            </div>
-            <div className="mt-2 text-xs text-zinc-500">
-              {importStatusDetail(
-                diagnostics.qualityScore.status,
-                importStatusLabel(diagnostics.qualityScore.status),
-              )}
-            </div>
-          </div>
-          <div className="ti-panel p-4">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Mapping
-            </div>
-            <div className="mt-3 text-2xl font-semibold text-sky-300">
-              {view.preview.importResult.mappingConfidence.level}
-            </div>
-            <div className="mt-2 text-xs text-zinc-500">
-              score {view.preview.importResult.mappingConfidence.score}
-            </div>
-          </div>
-          <div className="ti-panel p-4">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Trades
-            </div>
-            <div className="mt-3 text-2xl font-semibold text-zinc-100">
-              {view.preview.importResult.requestCount}
-            </div>
-            <div className="mt-2 text-xs text-zinc-500">
-              {view.preview.importResult.acceptedExecutionCount} executions
-            </div>
-          </div>
-          <div className="ti-panel p-4">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Save Readiness
-            </div>
-            <div
-              className={`mt-3 text-xl font-semibold ${toneClass(
-                diagnostics.commitPlan.status,
-              )}`}
-            >
-              {importStatusLabel(diagnostics.commitPlan.status)}
-            </div>
-            <div className="mt-2 text-xs text-zinc-500">
-              {importStorageLabel(view.commitDisabledReason ?? "Ready to save")}
-            </div>
-          </div>
-        </section>
-
-        <section
-          className="ti-panel grid gap-4 p-4 md:grid-cols-3"
-          data-testid="imports-safety-policy"
+        <AdvancedDisclosure
+          summary="Advanced import details"
+          testId="imports-advanced-details"
         >
-          <div>
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Write Safety
+          <section className="grid gap-4 md:grid-cols-4">
+            <div className="ti-panel p-4">
+              <div className="text-xs uppercase tracking-wide text-zinc-500">
+                Quality Score
+              </div>
+              <div
+                className={`mt-3 text-2xl font-semibold ${toneClass(
+                  diagnostics.qualityScore.status,
+                )}`}
+              >
+                {diagnostics.qualityScore.score}/100
+              </div>
+              <div className="mt-2 text-xs text-zinc-500">
+                {importStatusDetail(
+                  diagnostics.qualityScore.status,
+                  importStatusLabel(diagnostics.qualityScore.status),
+                )}
+              </div>
             </div>
-            <div className="mt-2 text-sm font-medium text-emerald-300">
-              Review-only prototype
+            <div className="ti-panel p-4">
+              <div className="text-xs uppercase tracking-wide text-zinc-500">
+                Mapping
+              </div>
+              <div className="mt-3 text-2xl font-semibold text-sky-300">
+                {view.preview.importResult.mappingConfidence.level}
+              </div>
+              <div className="mt-2 text-xs text-zinc-500">
+                score {view.preview.importResult.mappingConfidence.score}
+              </div>
             </div>
-            <div className="mt-1 text-xs text-zinc-500">
-              This screen previews save readiness; it does not save broker
-              rows to production storage.
+            <div className="ti-panel p-4">
+              <div className="text-xs uppercase tracking-wide text-zinc-500">
+                Trades
+              </div>
+              <div className="mt-3 text-2xl font-semibold text-zinc-100">
+                {view.preview.importResult.requestCount}
+              </div>
+              <div className="mt-2 text-xs text-zinc-500">
+                {view.preview.importResult.acceptedExecutionCount} executions
+              </div>
             </div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Cost Policy
+            <div className="ti-panel p-4">
+              <div className="text-xs uppercase tracking-wide text-zinc-500">
+                Save Readiness
+              </div>
+              <div
+                className={`mt-3 text-xl font-semibold ${toneClass(
+                  diagnostics.commitPlan.status,
+                )}`}
+              >
+                {importStatusLabel(diagnostics.commitPlan.status)}
+              </div>
+              <div className="mt-2 text-xs text-zinc-500">
+                {importStorageLabel(
+                  view.commitDisabledReason ?? "Ready to save",
+                )}
+              </div>
             </div>
-            <div className="mt-2 text-sm font-medium text-sky-300">
-              gross-only feedback
-            </div>
-            <div className="mt-1 text-xs text-zinc-500">
-              Fees and broker net amounts are visible for reconciliation, not
-              used to rescore execution coaching.
-            </div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Execution Basis
-            </div>
-            <div className="mt-2 text-sm font-medium text-zinc-300">
-              execution grouping
-            </div>
-            <div className="mt-1 text-xs text-zinc-500">
-              Reconstruction is based on parsed execution side, shares, price,
-              timestamp, and final position.
-            </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="ti-panel p-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <section
+            className="ti-panel grid gap-4 p-4 md:grid-cols-3"
+            data-testid="imports-safety-policy"
+          >
             <div>
-              <h2 className="text-sm font-semibold text-zinc-100">
-                Data Quality Score
-              </h2>
-              <div className="mt-1 text-sm text-zinc-500">
-                {dataQuality.nextAction}
+              <div className="text-xs uppercase tracking-wide text-zinc-500">
+                Write Safety
+              </div>
+              <div className="mt-2 text-sm font-medium text-emerald-300">
+                Review-only prototype
+              </div>
+              <div className="mt-1 text-xs text-zinc-500">
+                This screen previews save readiness; it does not save broker
+                rows to production storage.
               </div>
             </div>
-            <div className="font-mono text-2xl text-sky-300">
-              {dataQuality.score}/100
-            </div>
-          </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {dataQuality.checks.map((check) => (
-              <div key={check.id} className="border-t border-zinc-900 py-3">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-300">{check.label}</span>
-                  <span className="text-xs uppercase tracking-wide text-zinc-500">
-                    {check.passed ? "Passed" : importRepairSeverityLabel(check.severity)}
-                  </span>
-                </div>
-                <div className="mt-1 text-xs text-zinc-500">{check.detail}</div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-zinc-500">
+                Cost Policy
               </div>
-            ))}
-          </div>
-        </section>
+              <div className="mt-2 text-sm font-medium text-sky-300">
+                gross-only feedback
+              </div>
+              <div className="mt-1 text-xs text-zinc-500">
+                Fees and broker net amounts are visible for reconciliation, not
+                used to rescore execution coaching.
+              </div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-zinc-500">
+                Execution Basis
+              </div>
+              <div className="mt-2 text-sm font-medium text-zinc-300">
+                execution grouping
+              </div>
+              <div className="mt-1 text-xs text-zinc-500">
+                Reconstruction is based on parsed execution side, shares, price,
+                timestamp, and final position.
+              </div>
+            </div>
+          </section>
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)]">
-          <div className="ti-panel p-4">
-            <h2 className="text-sm font-semibold text-zinc-100">
-              First Import Path
-            </h2>
-            <div className="mt-2 text-sm text-zinc-500">
-              {importExperience.summary}
+          <section className="ti-panel p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-100">
+                  Data Quality Score
+                </h2>
+                <div className="mt-1 text-sm text-zinc-500">
+                  {dataQuality.nextAction}
+                </div>
+              </div>
+              <div className="font-mono text-2xl text-sky-300">
+                {dataQuality.score}/100
+              </div>
             </div>
-            <div className="mt-4 grid gap-2">
-              {importExperience.steps.map((step) => (
-                <div key={step.id} className="border-t border-zinc-900 py-2">
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {dataQuality.checks.map((check) => (
+                <div key={check.id} className="border-t border-zinc-900 py-3">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-zinc-300">{step.label}</span>
-                    <span className={`text-xs uppercase tracking-wide ${toneClass(step.status)}`}>
-                      {importStatusLabel(step.status)}
+                    <span className="text-sm text-zinc-300">{check.label}</span>
+                    <span className="text-xs uppercase tracking-wide text-zinc-500">
+                      {check.passed
+                        ? "Passed"
+                        : importRepairSeverityLabel(check.severity)}
                     </span>
                   </div>
                   <div className="mt-1 text-xs text-zinc-500">
-                    {step.detail}
+                    {check.detail}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div className="ti-panel p-4">
-            <h2 className="text-sm font-semibold text-zinc-100">
-              Trade Repair Inbox
-            </h2>
-            <div className="mt-2 text-sm text-zinc-500">
-              {repairInbox.nextAction}
-            </div>
-            <div className="mt-4 grid gap-3">
-              {repairInbox.items.length === 0 ? (
-                <div className="text-sm text-zinc-500">
-                  No repair items in the current import preview.
-                </div>
-              ) : (
-                repairInbox.items.slice(0, 6).map((item) => (
-                  <div key={item.id} className="border-t border-zinc-900 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm text-zinc-300">{item.title}</span>
-                      <span className="text-xs uppercase tracking-wide text-zinc-500">
-                        {importRepairSeverityLabel(item.severity)}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-xs text-zinc-500">
-                      {item.issueSummary}
-                    </div>
-                    <div className="mt-2 text-xs text-sky-300">
-                      {item.suggestedFix}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)]">
-          <div className="ti-panel p-4">
-            <h2 className="text-sm font-semibold text-zinc-100">
-              Column Mapping
-            </h2>
-            <div className="mt-4 grid gap-2">
-              {view.columnMappingRows.map((row) => (
-                <div
-                  key={`${row.field}:${row.header ?? "missing"}`}
-                  className="flex items-center justify-between gap-3 border-t border-zinc-900 py-2"
-                >
-                  <span className="text-xs text-zinc-400">{row.field}</span>
-                  <span
-                    className={`text-xs ${
-                      row.status === "mapped"
-                        ? "text-emerald-300"
-                        : "text-rose-300"
-                    }`}
-                  >
-                    {row.header ?? "missing"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="ti-panel p-4">
-            <h2 className="text-sm font-semibold text-zinc-100">
-              Repair Workflow
-            </h2>
-            <div className="mt-4 grid gap-3">
-              {diagnostics.repairWorkflow.items.length === 0 ? (
-                <div className="text-sm text-zinc-500">
-                  No repair items for this sample import.
-                </div>
-              ) : (
-                diagnostics.repairWorkflow.items.map((item) => (
-                  <div key={item.id} className="border-t border-zinc-900 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm text-zinc-200">{item.title}</span>
-                      <span className="text-xs uppercase tracking-wide text-zinc-500">
-                        {importRepairSeverityLabel(item.severity)}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-xs text-zinc-500">
-                      {item.suggestedFix}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className="ti-panel p-4">
-          <h2 className="text-sm font-semibold text-zinc-100">
-            Trade Reconstruction Preview
-          </h2>
-          <div className="mt-4 grid gap-4">
-            {diagnostics.reconstructionPreview.items.map((item) => (
-              <div key={item.requestIndex} className="border-t border-zinc-900 py-4">
-                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <div className="font-medium text-zinc-100">
-                      {item.symbol} / {importTradeDirectionLabel(item.tradeDirection)}
-                    </div>
-                    <div className="mt-1 text-xs text-zinc-500">
-                      {importStatusLabel(item.lifecycleStatus)} / {item.groupingReason}
-                    </div>
-                  </div>
-                  <div className="font-mono text-sm text-zinc-400">
-                    {item.estimatedNetPnl === null
-                      ? "P/L n/a"
-                      : `${item.estimatedNetPnl >= 0 ? "+" : ""}${item.estimatedNetPnl.toFixed(2)}`}
-                  </div>
-                </div>
-                <div className="mt-4 grid gap-2">
-                  {item.timeline.map((step) => (
-                    <div
-                      key={step.index}
-                      className="grid gap-2 text-xs md:grid-cols-[170px_70px_90px_90px_1fr] md:items-center"
-                    >
-                      <span className="font-mono text-zinc-500">
-                        {step.timestamp}
-                      </span>
-                      <span className="uppercase text-zinc-300">
-                        {step.side}
-                      </span>
-                      <span className="text-zinc-500">{step.shares} shares</span>
-                      <span className="text-zinc-500">
-                        ${step.price.toFixed(2)}
-                      </span>
-                      <span className="text-zinc-400">
-                        position {step.positionAfterExecution}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+          <section className="grid gap-6 xl:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)]">
+            <div className="ti-panel p-4">
+              <h2 className="text-sm font-semibold text-zinc-100">
+                First Import Path
+              </h2>
+              <div className="mt-2 text-sm text-zinc-500">
+                {importExperience.summary}
               </div>
-            ))}
-          </div>
-        </section>
+              <div className="mt-4 grid gap-2">
+                {importExperience.steps.map((step) => (
+                  <div key={step.id} className="border-t border-zinc-900 py-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-zinc-300">
+                        {step.label}
+                      </span>
+                      <span
+                        className={`text-xs uppercase tracking-wide ${toneClass(step.status)}`}
+                      >
+                        {importStatusLabel(step.status)}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-zinc-500">
+                      {step.detail}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="ti-panel p-4">
+              <h2 className="text-sm font-semibold text-zinc-100">
+                Trade Repair Inbox
+              </h2>
+              <div className="mt-2 text-sm text-zinc-500">
+                {repairInbox.nextAction}
+              </div>
+              <div className="mt-4 grid gap-3">
+                {repairInbox.items.length === 0 ? (
+                  <div className="text-sm text-zinc-500">
+                    No repair items in the current import preview.
+                  </div>
+                ) : (
+                  repairInbox.items.slice(0, 6).map((item) => (
+                    <div
+                      key={item.id}
+                      className="border-t border-zinc-900 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm text-zinc-300">
+                          {item.title}
+                        </span>
+                        <span className="text-xs uppercase tracking-wide text-zinc-500">
+                          {importRepairSeverityLabel(item.severity)}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-xs text-zinc-500">
+                        {item.issueSummary}
+                      </div>
+                      <div className="mt-2 text-xs text-sky-300">
+                        {item.suggestedFix}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section className="grid gap-6 xl:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)]">
+            <div className="ti-panel p-4">
+              <h2 className="text-sm font-semibold text-zinc-100">
+                Column Mapping
+              </h2>
+              <div className="mt-4 grid gap-2">
+                {view.columnMappingRows.map((row) => (
+                  <div
+                    key={`${row.field}:${row.header ?? "missing"}`}
+                    className="flex items-center justify-between gap-3 border-t border-zinc-900 py-2"
+                  >
+                    <span className="text-xs text-zinc-400">{row.field}</span>
+                    <span
+                      className={`text-xs ${
+                        row.status === "mapped"
+                          ? "text-emerald-300"
+                          : "text-rose-300"
+                      }`}
+                    >
+                      {row.header ?? "missing"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="ti-panel p-4">
+              <h2 className="text-sm font-semibold text-zinc-100">
+                Repair Workflow
+              </h2>
+              <div className="mt-4 grid gap-3">
+                {diagnostics.repairWorkflow.items.length === 0 ? (
+                  <div className="text-sm text-zinc-500">
+                    No repair items for this sample import.
+                  </div>
+                ) : (
+                  diagnostics.repairWorkflow.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="border-t border-zinc-900 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm text-zinc-200">
+                          {item.title}
+                        </span>
+                        <span className="text-xs uppercase tracking-wide text-zinc-500">
+                          {importRepairSeverityLabel(item.severity)}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-xs text-zinc-500">
+                        {item.suggestedFix}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section className="ti-panel p-4">
+            <h2 className="text-sm font-semibold text-zinc-100">
+              Trade Reconstruction Preview
+            </h2>
+            <div className="mt-4 grid gap-4">
+              {diagnostics.reconstructionPreview.items.map((item) => (
+                <div
+                  key={item.requestIndex}
+                  className="border-t border-zinc-900 py-4"
+                >
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <div className="font-medium text-zinc-100">
+                        {item.symbol} /{" "}
+                        {importTradeDirectionLabel(item.tradeDirection)}
+                      </div>
+                      <div className="mt-1 text-xs text-zinc-500">
+                        {importStatusLabel(item.lifecycleStatus)} /{" "}
+                        {item.groupingReason}
+                      </div>
+                    </div>
+                    <div className="font-mono text-sm text-zinc-400">
+                      {item.estimatedNetPnl === null
+                        ? "P/L n/a"
+                        : `${item.estimatedNetPnl >= 0 ? "+" : ""}${item.estimatedNetPnl.toFixed(2)}`}
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-2">
+                    {item.timeline.map((step) => (
+                      <div
+                        key={step.index}
+                        className="grid gap-2 text-xs md:grid-cols-[170px_70px_90px_90px_1fr] md:items-center"
+                      >
+                        <span className="font-mono text-zinc-500">
+                          {step.timestamp}
+                        </span>
+                        <span className="uppercase text-zinc-300">
+                          {step.side}
+                        </span>
+                        <span className="text-zinc-500">
+                          {step.shares} shares
+                        </span>
+                        <span className="text-zinc-500">
+                          ${step.price.toFixed(2)}
+                        </span>
+                        <span className="text-zinc-400">
+                          position {step.positionAfterExecution}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </AdvancedDisclosure>
       </div>
     </main>
   );

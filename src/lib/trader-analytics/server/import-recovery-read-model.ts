@@ -66,7 +66,9 @@ function makeAction(action: ImportRecoveryAction): ImportRecoveryAction {
   return action;
 }
 
-function uniqueActions(actions: ImportRecoveryAction[]): ImportRecoveryAction[] {
+function uniqueActions(
+  actions: ImportRecoveryAction[],
+): ImportRecoveryAction[] {
   const seen = new Set<string>();
   return actions.filter((action) => {
     if (seen.has(action.id)) {
@@ -150,7 +152,7 @@ export function buildImportRecoveryReadModel(args: {
       status: "committed",
       title: "Import is saved",
       detail:
-        "Trades, analytics, coach outputs, and review jobs are available from this batch.",
+        "Saved trades, analytics, coach outputs, and review work are available from this import.",
       canSaveStoredPlan: false,
       canDiscard: false,
       counts: {
@@ -275,7 +277,7 @@ export function buildImportRecoveryReadModel(args: {
         ? makeAction({
             id: "open_original_import",
             label: "Open original import",
-            detail: "Review the committed import that already used this file.",
+            detail: "Review the saved import that already used this file.",
             kind: "link",
             href: `/imports/${encodeURIComponent(originalBatch.id)}`,
             tone: "primary",
@@ -328,7 +330,10 @@ export function buildImportRecoveryReadModel(args: {
           href: "#duplicate-details",
           tone: "warning",
         }),
-      secondaryActions: uniqueActions([...duplicateActions.slice(1), ...secondaryActions]),
+      secondaryActions: uniqueActions([
+        ...duplicateActions.slice(1),
+        ...secondaryActions,
+      ]),
     };
   }
 
@@ -363,7 +368,7 @@ export function buildImportRecoveryReadModel(args: {
         label: "Review decisions",
         detail: "Inspect the required decisions before saving this import.",
         kind: "section_anchor",
-        href: "#commit-decisions",
+        href: "#import-decisions",
         tone: "warning",
       }),
       secondaryActions: uniqueActions(secondaryActions),
@@ -377,7 +382,7 @@ export function buildImportRecoveryReadModel(args: {
       status: "ready_to_save",
       title: "Import is ready to save",
       detail:
-        "The stored preview can be committed now. Saving will persist executions, trades, reports, and review jobs.",
+        "The preview can be saved now. Saving will create saved executions, trades, reports, and review work.",
       canSaveStoredPlan,
       canDiscard,
       counts: {
@@ -399,7 +404,7 @@ export function buildImportRecoveryReadModel(args: {
       primaryAction: makeAction({
         id: "save_import",
         label: "Save import",
-        detail: "Commit this stored preview to local persistence.",
+        detail: "Save this preview to saved import data.",
         kind: "save_import",
         href: null,
         tone: "success",

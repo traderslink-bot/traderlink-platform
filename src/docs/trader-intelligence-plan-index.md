@@ -159,10 +159,17 @@ Current active batch:
   `balanced_management_with_constructive_exit` and
   `add_into_strength_with_constructive_final_exit` now map through decision
   review, the user-facing registry, saved trade threads, and the analytics
-  behavior report as combined-evidence repeatable strengths -> continue with
-  focused screenshot fixes only if concrete issues appear, or inspect only
-  genuinely distinct constructive-management variants if saved evidence can
-  certify them without broader claims.
+  behavior report as combined-evidence repeatable strengths -> completed
+  beginner-to-advanced import IA and analytics category access: `/imports` and
+  `/imports/[batchId]` now keep import state, repairs, saved trades, decisions,
+  and next actions primary while hiding batch IDs, mapping confidence, write
+  safety, quality breakdowns, reconstruction previews, duplicate internals,
+  and chart-review counts behind advanced disclosures; `/analytics` now exposes
+  Results, Timing, Behavior, Ticker Stories, Session Stories, and Chart Evidence
+  category access -> continue with focused screenshot fixes only if concrete
+  route issues appear, or inspect only genuinely distinct
+  constructive-management variants if saved evidence can certify them without
+  broader claims.
 - Next continuous implementation run scope: work from
   `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
   The completed route-family language and mapper pass should be preserved, not
@@ -171,9 +178,12 @@ Current active batch:
   short next-block summary. The next coding run should chain a coherent
   route/evidence slice, focused verification, at least one independent second
   slice, broader verification when code changes require it, and docs/logs
-  before final response. Current best slices are focused route screenshot fixes
-  only if concrete issues appear, or a follow-up constructive-management
-  variant only when saved evidence proves it. Do not redo the completed
+  before final response. Current best slices are focused beginner-to-advanced
+  route fixes only if screenshot/browser QA finds a concrete issue,
+  particularly around `/import-dry-run`, `/workspace`, `/analytics`,
+  `/progress`, or saved-trade handoffs, or a follow-up
+  constructive-management variant only when saved evidence proves it. Do not
+  redo the completed import IA disclosure pass, analytics category-access pass,
   `/workspace` visual-system migration, `/coach` old-card cleanup, May 11 coach
   behavior sequence, review queue task-card simplification, sell-starting
   limitation copy, workspace chart-data wording, route copy/anchor repairs,
@@ -284,15 +294,22 @@ Current active batch:
   are complete too: `balanced_management_with_constructive_exit` and
   `add_into_strength_with_constructive_final_exit` now surface as
   combined-evidence strengths through decision review, saved threads, and the
-  analytics behavior report. Continue with focused screenshot fixes only if
-  concrete issues appear, or extend constructive-management coverage only when
-  saved evidence can certify a genuinely distinct deterministic variant.
+  analytics behavior report. The refreshed suggestions-file route hierarchy is
+  now partially implemented: `/imports` and `/imports/[batchId]` default to
+  beginner-safe import state, repair, save, saved-trade, and next-action
+  surfaces, while technical import/chart details stay behind advanced
+  disclosures; `/analytics` adds explicit category access for Results, Timing,
+  Behavior, Ticker Stories, Session Stories, and Chart Evidence. Continue with
+  focused screenshot fixes only if concrete route issues appear, or extend
+  constructive-management coverage only when saved evidence can certify a
+  genuinely distinct deterministic variant.
   Uncertain behavior must become a review prompt or stay internal. The next run
   must not stop after one verified slice; it must keep
   going through the next safe route or behavior family.
-- Primary goal: improve coach/analytics/review/progress presentation using the
-  certified detection contracts already built, while keeping any new behavior
-  family gated by the detection/language plan.
+- Primary goal: preserve the beginner-first CSV-to-insight flow from the
+  refreshed suggestions doc while keeping advanced end-user evidence available
+  behind disclosures and keeping any new behavior family gated by the
+  detection/language plan.
 - Evidence model: use
   `src/docs/trader-intelligence-coaching-evidence-model-2026-05-09.md` to
   decide whether a coaching opportunity is execution-only, market-context,

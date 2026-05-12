@@ -103,7 +103,7 @@ export function importTradeDirectionLabel(
   }
 
   if (value === "short") {
-    return "Direction needs review";
+    return "Limited sell-side review";
   }
 
   return "Execution review";

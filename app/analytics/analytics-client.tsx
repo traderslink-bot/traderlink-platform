@@ -143,7 +143,9 @@ function visualRows(
   }));
 }
 
-function outcome(row: ProductTraderAnalyticsTradeRow): "winner" | "loser" | "flat" {
+function outcome(
+  row: ProductTraderAnalyticsTradeRow,
+): "winner" | "loser" | "flat" {
   return row.grossRealizedPnl > 0
     ? "winner"
     : row.grossRealizedPnl < 0
@@ -160,7 +162,10 @@ function filteredRows(
       return false;
     }
 
-    if (filters.tradeDirection && row.tradeDirection !== filters.tradeDirection) {
+    if (
+      filters.tradeDirection &&
+      row.tradeDirection !== filters.tradeDirection
+    ) {
       return false;
     }
 
@@ -198,22 +203,18 @@ function TimeOfDayPanel({
 }) {
   const bestSession =
     [...report.timeOfDay.entrySessionBuckets].sort(
-      (left, right) =>
-        right.grossTotalRealizedPnl - left.grossTotalRealizedPnl,
+      (left, right) => right.grossTotalRealizedPnl - left.grossTotalRealizedPnl,
     )[0] ?? null;
   const bestHour =
     [...report.timeOfDay.entryHoursEt].sort(
-      (left, right) =>
-        right.grossTotalRealizedPnl - left.grossTotalRealizedPnl,
+      (left, right) => right.grossTotalRealizedPnl - left.grossTotalRealizedPnl,
     )[0] ?? null;
   const cross = report.timeOfDay.crossSessionHolds;
 
   return (
     <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.45fr)]">
       <div className="border border-zinc-800 bg-zinc-950 p-4">
-        <h2 className="text-sm font-semibold text-zinc-100">
-          Time Of Day
-        </h2>
+        <h2 className="text-sm font-semibold text-zinc-100">Time Of Day</h2>
         <div className="mt-1 text-sm text-zinc-500">Eastern Time</div>
         <div className="mt-3 grid gap-2 text-sm text-zinc-400">
           <div>{report.timeOfDay.entryInsight}</div>
@@ -225,11 +226,14 @@ function TimeOfDayPanel({
               <div className="text-xs uppercase tracking-wide text-zinc-500">
                 {bucket.label}
               </div>
-              <div className={`mt-2 font-mono text-lg ${toneForPnl(bucket.grossTotalRealizedPnl)}`}>
+              <div
+                className={`mt-2 font-mono text-lg ${toneForPnl(bucket.grossTotalRealizedPnl)}`}
+              >
                 {formatSigned(bucket.grossTotalRealizedPnl)}
               </div>
               <div className="mt-1 text-xs text-zinc-500">
-                {bucket.tradeCount} trades / {formatPercent(bucket.grossWinRate)}
+                {bucket.tradeCount} trades /{" "}
+                {formatPercent(bucket.grossWinRate)}
               </div>
             </div>
           ))}
@@ -237,9 +241,7 @@ function TimeOfDayPanel({
       </div>
 
       <div className="border border-zinc-800 bg-zinc-950 p-4">
-        <h2 className="text-sm font-semibold text-zinc-100">
-          Hour And Holds
-        </h2>
+        <h2 className="text-sm font-semibold text-zinc-100">Hour And Holds</h2>
         <div className="mt-4 grid gap-3">
           <div className="border-t border-zinc-900 py-3">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
@@ -335,6 +337,7 @@ function TickerStoryAnalyticsPanel({
     <section
       className="ti-panel p-5"
       data-testid="analytics-ticker-story-panel"
+      id="analytics-ticker-stories"
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
@@ -343,8 +346,8 @@ function TickerStoryAnalyticsPanel({
           </h2>
           <div className="mt-1 max-w-3xl text-sm leading-6 text-zinc-500">
             Same-symbol re-entries are tracked separately from flat-to-flat P/L
-            so you can see whether later attempts added profit, gave back profit,
-            stayed open, or turned into swing exposure.
+            so you can see whether later attempts added profit, gave back
+            profit, stayed open, or turned into swing exposure.
           </div>
         </div>
         <Link
@@ -419,7 +422,7 @@ function TickerStoryAnalyticsPanel({
           />
         </div>
       </div>
-      <div className="mt-3">
+      <div className="mt-3" id="analytics-chart-evidence">
         <AdvancedDisclosure
           summary="Show chart evidence counts"
           testId="analytics-ticker-story-evidence-counts"
@@ -455,7 +458,9 @@ function TickerStoryAnalyticsPanel({
               label="Chart Strengths"
               value={String(summary.marketContextStrengthCount)}
               detail="Chart context strengths worth repeating"
-              tone={summary.marketContextStrengthCount > 0 ? "success" : "default"}
+              tone={
+                summary.marketContextStrengthCount > 0 ? "success" : "default"
+              }
             />
             <MetricCard
               label="After-Exit Review"
@@ -468,7 +473,7 @@ function TickerStoryAnalyticsPanel({
                     ? "success"
                     : summary.postExitFindingThreadCount > 0
                       ? "info"
-                    : "default"
+                      : "default"
               }
             />
             <MetricCard
@@ -567,6 +572,7 @@ function SessionStoryAnalyticsPanel({
     <section
       className="ti-panel p-5"
       data-testid="analytics-session-story-panel"
+      id="analytics-session-stories"
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
@@ -673,6 +679,7 @@ function AnalyticsStoryPanel({
     <section
       className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]"
       data-testid="analytics-story-panel"
+      id="analytics-results"
     >
       <div className="ti-panel p-5">
         <p className="text-xs font-semibold uppercase text-emerald-400">
@@ -682,8 +689,9 @@ function AnalyticsStoryPanel({
           What happened in this trade set?
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
-          Read the account like a trading screen: green is progress, red is cost,
-          and the next review should explain the biggest behavior behind the move.
+          Read the account like a trading screen: green is progress, red is
+          cost, and the next review should explain the biggest behavior behind
+          the move.
         </p>
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_260px]">
           <EquityCurveChart
@@ -700,10 +708,10 @@ function AnalyticsStoryPanel({
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div className="ti-panel-soft p-4">
-            <div className="text-xs uppercase text-zinc-500">
-              Gross Result
-            </div>
-            <div className={`mt-2 font-mono text-2xl font-semibold ${toneForPnl(report.pnl.grossTotalRealizedPnl)}`}>
+            <div className="text-xs uppercase text-zinc-500">Gross Result</div>
+            <div
+              className={`mt-2 font-mono text-2xl font-semibold ${toneForPnl(report.pnl.grossTotalRealizedPnl)}`}
+            >
               {formatSigned(report.pnl.grossTotalRealizedPnl)}
             </div>
             <div className="mt-1 text-xs text-zinc-500">
@@ -711,9 +719,7 @@ function AnalyticsStoryPanel({
             </div>
           </div>
           <div className="ti-panel-soft p-4">
-            <div className="text-xs uppercase text-zinc-500">
-              Best Trade
-            </div>
+            <div className="text-xs uppercase text-zinc-500">Best Trade</div>
             <div className="mt-2 text-sm font-semibold text-emerald-300">
               {bestTrade
                 ? `${bestTrade.symbol} ${formatSigned(bestTrade.grossRealizedPnl)}`
@@ -724,22 +730,16 @@ function AnalyticsStoryPanel({
             </div>
           </div>
           <div className="ti-panel-soft p-4">
-            <div className="text-xs uppercase text-zinc-500">
-              Worst Trade
-            </div>
+            <div className="text-xs uppercase text-zinc-500">Worst Trade</div>
             <div className="mt-2 text-sm font-semibold text-rose-300">
               {worstTrade
                 ? `${worstTrade.symbol} ${formatSigned(worstTrade.grossRealizedPnl)}`
                 : "No loser yet"}
             </div>
-            <div className="mt-1 text-xs text-zinc-500">
-              biggest red cost
-            </div>
+            <div className="mt-1 text-xs text-zinc-500">biggest red cost</div>
           </div>
           <div className="ti-panel-soft p-4">
-            <div className="text-xs uppercase text-zinc-500">
-              Review First
-            </div>
+            <div className="text-xs uppercase text-zinc-500">Review First</div>
             <div className="mt-2 text-sm font-semibold text-zinc-100">
               {nextReview ? nextReview.title : "Save an import"}
             </div>
@@ -804,7 +804,9 @@ function AnalyticsStoryPanel({
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
             <div className="ti-panel p-5">
-              <div className="text-xs uppercase text-zinc-500">Biggest Risk</div>
+              <div className="text-xs uppercase text-zinc-500">
+                Biggest Risk
+              </div>
               <div className="mt-2 text-lg font-semibold text-rose-300">
                 {topRisk?.label ?? "No repeated risk yet"}
               </div>
@@ -815,7 +817,9 @@ function AnalyticsStoryPanel({
               </div>
             </div>
             <div className="ti-panel p-5">
-              <div className="text-xs uppercase text-zinc-500">Best Strength</div>
+              <div className="text-xs uppercase text-zinc-500">
+                Best Strength
+              </div>
               <div className="mt-2 text-lg font-semibold text-emerald-300">
                 {topStrength?.label ?? "No repeated strength yet"}
               </div>
@@ -852,11 +856,16 @@ function ChartLegendStrip() {
           className: "border-amber-900/70 bg-amber-950/30 text-amber-200",
         },
       ].map((item) => (
-        <div className={`rounded-md border p-3 ${item.className}`} key={item.label}>
+        <div
+          className={`rounded-md border p-3 ${item.className}`}
+          key={item.label}
+        >
           <div className="text-xs font-semibold uppercase tracking-wide">
             {item.label}
           </div>
-          <div className="mt-1 text-xs leading-5 text-zinc-300">{item.body}</div>
+          <div className="mt-1 text-xs leading-5 text-zinc-300">
+            {item.body}
+          </div>
         </div>
       ))}
     </div>
@@ -930,9 +939,9 @@ function AnalyticsChartGalleryPanel({
               Stats and graphs, grouped by question
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
-              Start with outcome, then timing, then behavior. If a number
-              needs investigation, open the trade explorer or the review queue
-              instead of treating the chart as the final answer.
+              Start with outcome, then timing, then behavior. If a number needs
+              investigation, open the trade explorer or the review queue instead
+              of treating the chart as the final answer.
             </p>
           </div>
           <div className="rounded-md border border-zinc-700 bg-slate-900/70 px-3 py-2 font-mono text-sm text-zinc-300">
@@ -1007,7 +1016,9 @@ function AnalyticsChartGalleryPanel({
           <MixBar chart={charts.winLossDonut} title="Outcome Mix" />
           <div className="grid gap-4 md:grid-cols-2">
             <div className="ti-panel-soft p-5">
-              <div className="text-xs uppercase text-zinc-500">Biggest Risk</div>
+              <div className="text-xs uppercase text-zinc-500">
+                Biggest Risk
+              </div>
               <div className="mt-2 text-lg font-semibold text-rose-300">
                 {topRisk?.label ?? "No repeated risk yet"}
               </div>
@@ -1018,7 +1029,9 @@ function AnalyticsChartGalleryPanel({
               </div>
             </div>
             <div className="ti-panel-soft p-5">
-              <div className="text-xs uppercase text-zinc-500">Best Strength</div>
+              <div className="text-xs uppercase text-zinc-500">
+                Best Strength
+              </div>
               <div className="mt-2 text-lg font-semibold text-emerald-300">
                 {topStrength?.label ?? "No repeated strength yet"}
               </div>
@@ -1156,12 +1169,12 @@ function WeeklyReviewPanel({
     <section className="border border-zinc-800 bg-zinc-950 p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-100">
-            Weekly Review
-          </h2>
+          <h2 className="text-sm font-semibold text-zinc-100">Weekly Review</h2>
           <div className="mt-1 text-sm text-zinc-500">{weeklyReview.label}</div>
         </div>
-        <div className={`font-mono text-xl ${toneForPnl(weeklyReview.grossTotalRealizedPnl)}`}>
+        <div
+          className={`font-mono text-xl ${toneForPnl(weeklyReview.grossTotalRealizedPnl)}`}
+        >
           {formatSigned(weeklyReview.grossTotalRealizedPnl)}
         </div>
       </div>
@@ -1218,7 +1231,9 @@ function ImportInboxPanel({ inbox }: { inbox: SavedTradeImportInbox }) {
         </div>
         <div className="grid grid-cols-3 gap-3 text-right font-mono text-xs">
           <span className="text-emerald-300">{inbox.readyCount} ready</span>
-          <span className="text-amber-300">{inbox.needsReviewCount} review</span>
+          <span className="text-amber-300">
+            {inbox.needsReviewCount} review
+          </span>
           <span className="text-rose-300">{inbox.rejectedCount} reject</span>
         </div>
       </div>
@@ -1231,7 +1246,9 @@ function ImportInboxPanel({ inbox }: { inbox: SavedTradeImportInbox }) {
             <div className="font-mono text-xs text-zinc-500">
               #{item.requestIndex + 1}
             </div>
-            <div className="text-sm text-zinc-200">{item.symbol ?? "Unknown"}</div>
+            <div className="text-sm text-zinc-200">
+              {item.symbol ?? "Unknown"}
+            </div>
             <div className="text-xs text-zinc-500">
               {item.messages[0] ?? "Ready for saved analytics."}
             </div>
@@ -1260,15 +1277,17 @@ function SnapshotPanel({
 }) {
   return (
     <section className="border border-zinc-800 bg-zinc-950 p-4">
-      <h2 className="text-sm font-semibold text-zinc-100">
-        Saved Snapshots
-      </h2>
+      <h2 className="text-sm font-semibold text-zinc-100">Saved Snapshots</h2>
       <div className="mt-4 grid gap-3 lg:grid-cols-3">
         {snapshots.slice(0, 6).map((snapshot) => (
           <div key={snapshot.id} className="border-t border-zinc-900 py-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="font-medium text-zinc-100">{snapshot.label}</span>
-              <span className={`font-mono text-xs ${toneForPnl(snapshot.grossTotalRealizedPnl)}`}>
+              <span className="font-medium text-zinc-100">
+                {snapshot.label}
+              </span>
+              <span
+                className={`font-mono text-xs ${toneForPnl(snapshot.grossTotalRealizedPnl)}`}
+              >
                 {formatSigned(snapshot.grossTotalRealizedPnl)}
               </span>
             </div>
@@ -1324,11 +1343,7 @@ function BehaviorStreaksPanel({
   );
 }
 
-function JournalPromptsPanel({
-  prompts,
-}: {
-  prompts: TraderJournalPrompt[];
-}) {
+function JournalPromptsPanel({ prompts }: { prompts: TraderJournalPrompt[] }) {
   return (
     <section className="border border-zinc-800 bg-zinc-950 p-4">
       <h2 className="text-sm font-semibold text-zinc-100">Journal Prompts</h2>
@@ -1418,7 +1433,10 @@ function MarketContextPanel({
       <div className="mt-4 text-sm text-zinc-400">{status.summary}</div>
       <div className="mt-4 grid gap-2 md:grid-cols-3">
         {status.sources.map((source) => (
-          <div key={source} className="border-t border-zinc-900 py-2 text-xs text-zinc-500">
+          <div
+            key={source}
+            className="border-t border-zinc-900 py-2 text-xs text-zinc-500"
+          >
             {source}
           </div>
         ))}
@@ -1439,9 +1457,7 @@ function ProductizationPanel({
   return (
     <section className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
       <div className="border border-zinc-800 bg-zinc-950 p-4">
-        <h2 className="text-sm font-semibold text-zinc-100">
-          Workspace Scope
-        </h2>
+        <h2 className="text-sm font-semibold text-zinc-100">Workspace Scope</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <div className="border-t border-zinc-900 py-3">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
@@ -1583,7 +1599,8 @@ function IntelligencePanel({
           Mistake Cost Estimate
         </h2>
         <div className="mt-4 font-mono text-2xl text-rose-300">
-          ${intelligence.mistakeCostEstimates.totalEstimatedGrossCost.toFixed(2)}
+          $
+          {intelligence.mistakeCostEstimates.totalEstimatedGrossCost.toFixed(2)}
         </div>
         <div className="mt-2 text-sm text-zinc-500">
           {topCost
@@ -1615,9 +1632,7 @@ function IntelligencePanel({
               {intelligence.recurrenceAlerts.slice(0, 4).map((alert) => (
                 <div key={alert.id} className="border-t border-zinc-900 py-3">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-zinc-300">
-                      {alert.title}
-                    </span>
+                    <span className="text-sm text-zinc-300">{alert.title}</span>
                     <span className="font-mono text-xs text-zinc-500">
                       {alert.occurrenceCount}
                     </span>
@@ -1635,14 +1650,16 @@ function IntelligencePanel({
               Rule Builder
             </h2>
             <div className="mt-4 grid gap-3">
-              {intelligence.ruleBuilderRecommendations.slice(0, 4).map((item) => (
-                <div key={item.id} className="border-t border-zinc-900 py-3">
-                  <div className="text-sm text-zinc-300">{item.label}</div>
-                  <div className="mt-1 text-xs text-zinc-500">
-                    {item.reason}
+              {intelligence.ruleBuilderRecommendations
+                .slice(0, 4)
+                .map((item) => (
+                  <div key={item.id} className="border-t border-zinc-900 py-3">
+                    <div className="text-sm text-zinc-300">{item.label}</div>
+                    <div className="mt-1 text-xs text-zinc-500">
+                      {item.reason}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
 
@@ -1654,9 +1671,7 @@ function IntelligencePanel({
               {intelligence.unifiedReviewQueue.items.slice(0, 5).map((item) => (
                 <div key={item.id} className="border-t border-zinc-900 py-3">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-zinc-300">
-                      {item.title}
-                    </span>
+                    <span className="text-sm text-zinc-300">{item.title}</span>
                     <span className="text-xs uppercase tracking-wide text-zinc-500">
                       {item.lane}
                     </span>
@@ -1795,7 +1810,8 @@ function ImprovementIntelligencePanel({
                     "summary",
                   )}
                 >
-                  {coach.bestTrade.symbol} / {formatSigned(coach.bestTrade.grossRealizedPnl)}
+                  {coach.bestTrade.symbol} /{" "}
+                  {formatSigned(coach.bestTrade.grossRealizedPnl)}
                 </Link>
               ) : (
                 "n/a"
@@ -1815,7 +1831,8 @@ function ImprovementIntelligencePanel({
                     "summary",
                   )}
                 >
-                  {coach.worstTrade.symbol} / {formatSigned(coach.worstTrade.grossRealizedPnl)}
+                  {coach.worstTrade.symbol} /{" "}
+                  {formatSigned(coach.worstTrade.grossRealizedPnl)}
                 </Link>
               ) : (
                 "n/a"
@@ -1867,7 +1884,9 @@ function ImprovementIntelligencePanel({
                 {bucket.tradeCount} trades / quality{" "}
                 {bucket.averageQualityScore?.toFixed(1) ?? "n/a"}
               </div>
-              <div className={`mt-1 font-mono text-xs ${toneForPnl(bucket.grossTotalRealizedPnl)}`}>
+              <div
+                className={`mt-1 font-mono text-xs ${toneForPnl(bucket.grossTotalRealizedPnl)}`}
+              >
                 {formatSigned(bucket.grossTotalRealizedPnl)}
               </div>
             </div>
@@ -1941,7 +1960,9 @@ function ProductPolishPanel({
                   {step.status}
                 </span>
               </div>
-              <div className="mt-1 text-xs text-zinc-500">{step.nextAction}</div>
+              <div className="mt-1 text-xs text-zinc-500">
+                {step.nextAction}
+              </div>
             </div>
           ))}
         </div>
@@ -2065,9 +2086,7 @@ function ReviewHabitLoopPanel({
       </div>
 
       <div className="border border-zinc-800 bg-zinc-950 p-4">
-            <h2 className="text-sm font-semibold text-zinc-100">
-              Rule To Create
-            </h2>
+        <h2 className="text-sm font-semibold text-zinc-100">Rule To Create</h2>
         <div className="mt-1 text-sm text-zinc-500">
           {habit.mistakeRuleConversion.nextAction}
         </div>
@@ -2146,18 +2165,20 @@ function ReconciliationJobsPanel({
       </div>
 
       <div className="border border-zinc-800 bg-zinc-950 p-4">
-        <h2 className="text-sm font-semibold text-zinc-100">
-          Analysis Jobs
-        </h2>
+        <h2 className="text-sm font-semibold text-zinc-100">Analysis Jobs</h2>
         <div className="mt-4 grid grid-cols-4 gap-3 text-xs">
-          <span className="font-mono text-sky-300">{jobs.queuedCount} queued</span>
+          <span className="font-mono text-sky-300">
+            {jobs.queuedCount} queued
+          </span>
           <span className="font-mono text-zinc-300">
             {jobs.completedCount} done
           </span>
           <span className="font-mono text-amber-300">
             {jobs.needsUserFixCount} fix
           </span>
-          <span className="font-mono text-rose-300">{jobs.failedCount} failed</span>
+          <span className="font-mono text-rose-300">
+            {jobs.failedCount} failed
+          </span>
         </div>
         <div className="mt-4 grid gap-2">
           {jobs.jobs.slice(0, 4).map((job) => (
@@ -2190,9 +2211,7 @@ function WorkflowActionPlanPanel({
   return (
     <section className="grid gap-6 xl:grid-cols-2">
       <div className="border border-zinc-800 bg-zinc-950 p-4">
-        <h2 className="text-sm font-semibold text-zinc-100">
-          Review Workflow
-        </h2>
+        <h2 className="text-sm font-semibold text-zinc-100">Review Workflow</h2>
         <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
           <span className="font-mono text-amber-300">
             {workflow.needsReviewCount} review
@@ -2236,7 +2255,9 @@ function WorkflowActionPlanPanel({
             </div>
           ))}
         </div>
-        <div className="mt-3 text-xs text-zinc-500">{actionPlan.nextAction}</div>
+        <div className="mt-3 text-xs text-zinc-500">
+          {actionPlan.nextAction}
+        </div>
       </div>
     </section>
   );
@@ -2254,20 +2275,21 @@ function TagsCalibrationPanel({
   return (
     <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
       <div className="border border-zinc-800 bg-zinc-950 p-4">
-        <h2 className="text-sm font-semibold text-zinc-100">
-          Setup Tags
-        </h2>
+        <h2 className="text-sm font-semibold text-zinc-100">Setup Tags</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {tagging.segments.slice(0, 6).map((segment) => (
             <div key={segment.tagId} className="border-t border-zinc-900 py-3">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm text-zinc-300">{segment.label}</span>
-                <span className={`font-mono text-xs ${toneForPnl(segment.grossTotalRealizedPnl)}`}>
+                <span
+                  className={`font-mono text-xs ${toneForPnl(segment.grossTotalRealizedPnl)}`}
+                >
                   {formatSigned(segment.grossTotalRealizedPnl)}
                 </span>
               </div>
               <div className="mt-2 text-xs text-zinc-500">
-                {segment.tradeCount} trades / {segment.topRiskLabel ?? "no top risk"}
+                {segment.tradeCount} trades /{" "}
+                {segment.topRiskLabel ?? "no top risk"}
               </div>
             </div>
           ))}
@@ -2332,7 +2354,8 @@ function MetricDelta({ delta }: { delta: TraderAnalyticsMetricDelta }) {
         </span>
       </div>
       <div className="mt-1 text-xs text-zinc-500">
-        {formatNumber(delta.previousValue)} to {formatNumber(delta.currentValue)}
+        {formatNumber(delta.previousValue)} to{" "}
+        {formatNumber(delta.currentValue)}
       </div>
     </div>
   );
@@ -2405,7 +2428,10 @@ function TradeRows({
         </thead>
         <tbody className="divide-y divide-zinc-900">
           {rows.map((row) => (
-            <tr key={row.tradeId} data-testid={`${testIdPrefix}-row-${row.tradeId}`}>
+            <tr
+              key={row.tradeId}
+              data-testid={`${testIdPrefix}-row-${row.tradeId}`}
+            >
               <td className="py-3 pr-4">
                 <div className="font-semibold text-zinc-100">
                   #{row.tradeIndex} {row.symbol}
@@ -2415,7 +2441,9 @@ function TradeRows({
               <td className="py-3 pr-4 text-zinc-300">{row.tradeDirection}</td>
               <td className="py-3 pr-4 text-zinc-400">
                 <div>{row.sessionDate}</div>
-                <div className="font-mono text-zinc-500">{row.sessionBucket}</div>
+                <div className="font-mono text-zinc-500">
+                  {row.sessionBucket}
+                </div>
               </td>
               <td className="py-3 pr-4 text-zinc-400">
                 <div>{row.entryHourLabelEt ?? "n/a"}</div>
@@ -2572,30 +2600,110 @@ const ANALYTICS_DASHBOARD_SECTIONS: Array<{
 }> = [
   {
     id: "overview",
-    label: "Overview",
+    label: "Results",
     summary: "P/L curve, win/loss mix, and the trade tape.",
   },
   {
     id: "charts",
-    label: "Charts",
+    label: "Timing And Charts",
     summary: "Time, sessions, behavior, and report charts.",
   },
   {
     id: "review",
-    label: "Review Plan",
+    label: "Behavior Review Plan",
     summary: "What to review next and what behavior to watch.",
   },
   {
     id: "trades",
-    label: "Trade Explorer",
-    summary: "Filter trades and find what sits behind each number.",
+    label: "Trade Stories",
+    summary: "Saved trades, ticker stories, and sessions behind each number.",
   },
   {
     id: "advanced",
-    label: "Advanced",
-    summary: "Import setup, technical follow-up, and rule detail.",
+    label: "Chart Evidence And Advanced",
+    summary: "Quality checks, chart evidence, import setup, and rule detail.",
   },
 ];
+
+const ANALYTICS_CATEGORY_ACCESS: Array<{
+  anchor?: string;
+  label: string;
+  section: AnalyticsDashboardSection;
+  summary: string;
+}> = [
+  {
+    anchor: "analytics-results",
+    label: "Results",
+    section: "overview",
+    summary: "P/L, win rate, and the trades that moved the account.",
+  },
+  {
+    anchor: "chart-workbench",
+    label: "Timing",
+    section: "charts",
+    summary: "Session, entry-hour, and hold-time charts.",
+  },
+  {
+    anchor: "analytics-behavior",
+    label: "Behavior",
+    section: "overview",
+    summary: "Risk, strength, and uncertain behavior groups.",
+  },
+  {
+    anchor: "analytics-ticker-stories",
+    label: "Ticker Stories",
+    section: "overview",
+    summary: "Same-symbol re-entry and giveback stories.",
+  },
+  {
+    anchor: "analytics-session-stories",
+    label: "Session Stories",
+    section: "overview",
+    summary: "Full-day stories like green-to-red or high trade count.",
+  },
+  {
+    anchor: "analytics-chart-evidence",
+    label: "Chart Evidence",
+    section: "overview",
+    summary: "Support, resistance, volume, and after-exit counts.",
+  },
+];
+
+function AnalyticsCategoryAccessPanel({
+  onOpen,
+}: {
+  onOpen: (section: AnalyticsDashboardSection, anchor?: string) => void;
+}) {
+  return (
+    <section className="ti-panel p-5" data-testid="analytics-category-access">
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-sky-300">
+          Report Categories
+        </p>
+        <h2 className="text-xl font-semibold text-zinc-50">
+          Open the part of the report you need.
+        </h2>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {ANALYTICS_CATEGORY_ACCESS.map((item) => (
+          <button
+            className="rounded-md border border-zinc-800/60 bg-slate-950/30 px-4 py-3 text-left transition hover:border-sky-600 hover:bg-sky-950/20"
+            key={item.label}
+            onClick={() => onOpen(item.section, item.anchor)}
+            type="button"
+          >
+            <span className="block text-sm font-semibold text-zinc-100">
+              {item.label}
+            </span>
+            <span className="mt-1 block text-xs leading-5 text-zinc-500">
+              {item.summary}
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function AnalyticsDashboardNav({
   activeSection,
@@ -2629,7 +2737,9 @@ function AnalyticsDashboardNav({
               onClick={() => onChange(section.id)}
               type="button"
             >
-              <span className="block text-sm font-semibold">{section.label}</span>
+              <span className="block text-sm font-semibold">
+                {section.label}
+              </span>
               <span className="mt-1 block text-xs leading-5 text-zinc-500">
                 {section.summary}
               </span>
@@ -2684,11 +2794,30 @@ export function AnalyticsClient({
     }));
   }
 
+  function openAnalyticsCategory(
+    section: AnalyticsDashboardSection,
+    anchor?: string,
+  ) {
+    setActiveSection(section);
+
+    if (anchor) {
+      window.setTimeout(() => {
+        document.getElementById(anchor)?.scrollIntoView({
+          block: "start",
+          behavior: "smooth",
+        });
+      }, 0);
+    }
+  }
+
   return (
     <main className="ti-dashboard-bg min-h-screen px-5 py-8 text-zinc-100 sm:px-8">
       <div className="mx-auto flex w-full min-w-0 max-w-[1480px] flex-col gap-8">
         <header className="ti-panel p-6">
-          <Link className="text-sm text-sky-300 hover:text-sky-200" href="/workspace">
+          <Link
+            className="text-sm text-sky-300 hover:text-sky-200"
+            href="/workspace"
+          >
             Back to workspace
           </Link>
           <p className="mt-4 text-xs font-semibold uppercase text-sky-300">
@@ -2700,9 +2829,9 @@ export function AnalyticsClient({
                 Trading Performance Dashboard
               </h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
-                A trader-facing report view for results, red/green behavior cost,
-                and the next trade to review. This is analysis of saved executions,
-                not trading advice.
+                A trader-facing report view for results, red/green behavior
+                cost, and the next trade to review. This is analysis of saved
+                executions, not trading advice.
               </p>
             </div>
             <div className="grid gap-2 text-sm">
@@ -2723,14 +2852,13 @@ export function AnalyticsClient({
           </div>
         </header>
 
-        <SavedReviewQueueSummary
-          queue={savedReviewQueue}
-          surface="analytics"
-        />
+        <SavedReviewQueueSummary queue={savedReviewQueue} surface="analytics" />
         <SavedImportSourceCaution
           caution={importSourceCaution}
           surface="analytics"
         />
+
+        <AnalyticsCategoryAccessPanel onOpen={openAnalyticsCategory} />
 
         <section className="grid min-w-0 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
           <AnalyticsDashboardNav
@@ -2740,51 +2868,55 @@ export function AnalyticsClient({
           <div className="min-w-0">
             {activeSection === "overview" ? (
               <div className="grid gap-6">
-        <AnalyticsStoryPanel
-          showSecondaryCharts={false}
-          viewModel={initialViewModel}
-          savedReviewQueue={savedReviewQueue}
-        />
+                <AnalyticsStoryPanel
+                  showSecondaryCharts={false}
+                  viewModel={initialViewModel}
+                  savedReviewQueue={savedReviewQueue}
+                />
 
-        <BehaviorReportPanel report={behaviorReport} />
-        <TickerStoryAnalyticsPanel summary={tickerStorySummary} />
-        <SessionStoryAnalyticsPanel summary={sessionStorySummary} />
+                <div id="analytics-behavior">
+                  <BehaviorReportPanel report={behaviorReport} />
+                </div>
+                <TickerStoryAnalyticsPanel summary={tickerStorySummary} />
+                <SessionStoryAnalyticsPanel summary={sessionStorySummary} />
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <MetricCard
-            label="Completed Trades"
-            value={String(report.sampleSize.completedTradeCount)}
-            detail={latest.reportPeriod.label}
-          />
-          <MetricCard
-            label="Total Gross P/L"
-            value={formatSigned(report.pnl.grossTotalRealizedPnl)}
-            detail="fees excluded"
-            tone={
-              report.pnl.grossTotalRealizedPnl >= 0
-                ? "success"
-                : "danger"
-            }
-          />
-          <MetricCard
-            label="Win Rate"
-            value={formatPercent(report.pnl.grossWinRate)}
-            detail={`${report.pnl.grossWinnerCount} gross winners`}
-            tone="info"
-          />
-          <MetricCard
-            label="Adds Needing Review"
-            value={formatPercent(report.executionBehavior.adversePriceAddRate)}
-            detail={`${report.executionBehavior.adversePriceAddTradeCount} trades where chart context decides whether the add repaired or added exposure`}
-            tone="warning"
-          />
-          <MetricCard
-            label="Open Position Rate"
-            value={formatPercent(report.lifecycle.openPositionRate)}
-            detail={`${report.lifecycle.openPositionTradeCount} trades left open`}
-            tone="info"
-          />
-        </section>
+                <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                  <MetricCard
+                    label="Completed Trades"
+                    value={String(report.sampleSize.completedTradeCount)}
+                    detail={latest.reportPeriod.label}
+                  />
+                  <MetricCard
+                    label="Total Gross P/L"
+                    value={formatSigned(report.pnl.grossTotalRealizedPnl)}
+                    detail="fees excluded"
+                    tone={
+                      report.pnl.grossTotalRealizedPnl >= 0
+                        ? "success"
+                        : "danger"
+                    }
+                  />
+                  <MetricCard
+                    label="Win Rate"
+                    value={formatPercent(report.pnl.grossWinRate)}
+                    detail={`${report.pnl.grossWinnerCount} gross winners`}
+                    tone="info"
+                  />
+                  <MetricCard
+                    label="Adds Needing Review"
+                    value={formatPercent(
+                      report.executionBehavior.adversePriceAddRate,
+                    )}
+                    detail={`${report.executionBehavior.adversePriceAddTradeCount} trades where chart context decides whether the add repaired or added exposure`}
+                    tone="warning"
+                  />
+                  <MetricCard
+                    label="Open Position Rate"
+                    value={formatPercent(report.lifecycle.openPositionRate)}
+                    detail={`${report.lifecycle.openPositionTradeCount} trades left open`}
+                    tone="info"
+                  />
+                </section>
               </div>
             ) : null}
 
@@ -2797,333 +2929,388 @@ export function AnalyticsClient({
 
             {activeSection === "review" ? (
               <div className="grid gap-6">
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.75fr)]">
-          <WeeklyReviewPanel weeklyReview={initialViewModel.weeklyReview} />
-          <MarketContextPanel status={initialViewModel.marketContextAddOn} />
-        </section>
+                <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.75fr)]">
+                  <WeeklyReviewPanel
+                    weeklyReview={initialViewModel.weeklyReview}
+                  />
+                  <MarketContextPanel
+                    status={initialViewModel.marketContextAddOn}
+                  />
+                </section>
 
-        <ImprovementIntelligencePanel
-          improvement={initialViewModel.improvementIntelligence}
-        />
+                <ImprovementIntelligencePanel
+                  improvement={initialViewModel.improvementIntelligence}
+                />
 
-        <IntelligencePanel
-          intelligence={initialViewModel.productIntelligence}
-        />
+                <IntelligencePanel
+                  intelligence={initialViewModel.productIntelligence}
+                />
 
-        <ReviewHabitLoopPanel habit={initialViewModel.reviewHabitLoop} />
+                <ReviewHabitLoopPanel
+                  habit={initialViewModel.reviewHabitLoop}
+                />
 
-        <ProductPolishPanel polish={initialViewModel.productPolish} />
+                <ProductPolishPanel polish={initialViewModel.productPolish} />
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.5fr)]">
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
-            <h2 className="text-sm font-semibold text-zinc-100">
-              Focus Queue
-            </h2>
-            <div className="mt-4 grid gap-3">
-              {initialViewModel.focusQueue.map((item) => (
-                <div key={item.id} className="border-t border-zinc-900 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="font-medium text-zinc-100">
-                      {item.rank}. {item.title}
+                <section className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.5fr)]">
+                  <div className="border border-zinc-800 bg-zinc-950 p-4">
+                    <h2 className="text-sm font-semibold text-zinc-100">
+                      Focus Queue
+                    </h2>
+                    <div className="mt-4 grid gap-3">
+                      {initialViewModel.focusQueue.map((item) => (
+                        <div
+                          key={item.id}
+                          className="border-t border-zinc-900 py-3"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="font-medium text-zinc-100">
+                              {item.rank}. {item.title}
+                            </div>
+                            <div className="text-xs uppercase tracking-wide text-zinc-500">
+                              {item.kind}
+                            </div>
+                          </div>
+                          <div className="mt-1 text-sm text-zinc-400">
+                            {item.summary}
+                          </div>
+                          <div className="mt-2 text-xs text-zinc-500">
+                            {item.suggestedReviewAction}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="text-xs uppercase tracking-wide text-zinc-500">
-                      {item.kind}
+                  </div>
+
+                  <div className="border border-zinc-800 bg-zinc-950 p-4">
+                    <h2 className="text-sm font-semibold text-zinc-100">
+                      Report History
+                    </h2>
+                    <div className="mt-4 grid gap-3">
+                      {initialViewModel.reportHistory.map(
+                        (savedReport, index) => (
+                          <div
+                            key={savedReport.id}
+                            className="border-t border-zinc-900 py-3"
+                          >
+                            <div className="font-medium text-zinc-100">
+                              Saved report {index + 1}
+                            </div>
+                            <div className="mt-1 text-xs text-zinc-500">
+                              {
+                                savedReport.report.sampleSize
+                                  .completedTradeCount
+                              }{" "}
+                              trades / generated {savedReport.generatedAt}
+                            </div>
+                          </div>
+                        ),
+                      )}
                     </div>
                   </div>
-                  <div className="mt-1 text-sm text-zinc-400">{item.summary}</div>
-                  <div className="mt-2 text-xs text-zinc-500">
-                    {item.suggestedReviewAction}
+                </section>
+
+                <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+                  <SnapshotPanel snapshots={initialViewModel.reportSnapshots} />
+                  <BehaviorStreaksPanel
+                    streaks={initialViewModel.behaviorStreaks}
+                  />
+                </section>
+
+                <JournalPromptsPanel
+                  prompts={initialViewModel.journalPrompts}
+                />
+
+                <section className="grid gap-6 xl:grid-cols-2">
+                  <div className="border border-zinc-800 bg-zinc-950 p-4">
+                    <h2 className="text-sm font-semibold text-zinc-100">
+                      Behavior Trends
+                    </h2>
+                    <div className="mt-4 grid gap-3">
+                      {initialViewModel.behaviorTrends.map((trend) => (
+                        <div
+                          key={trend.behaviorId}
+                          className="border-t border-zinc-900 py-3"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-sm text-zinc-300">
+                              {trend.label}
+                            </span>
+                            <span className="font-mono text-xs text-zinc-500">
+                              {formatPercent(trend.previousRate)} to{" "}
+                              {formatPercent(trend.currentRate)}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-sm text-zinc-500">
+                            {trend.copy}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
-            <h2 className="text-sm font-semibold text-zinc-100">
-              Report History
-            </h2>
-            <div className="mt-4 grid gap-3">
-              {initialViewModel.reportHistory.map((savedReport, index) => (
-                <div key={savedReport.id} className="border-t border-zinc-900 py-3">
-                  <div className="font-medium text-zinc-100">
-                    Saved report {index + 1}
+                  <div className="border border-zinc-800 bg-zinc-950 p-4">
+                    <h2 className="text-sm font-semibold text-zinc-100">
+                      Latest Comparison
+                    </h2>
+                    {initialViewModel.comparison ? (
+                      <div className="mt-4">
+                        <div className="mb-3 text-sm text-zinc-500">
+                          {initialViewModel.comparison.label}
+                        </div>
+                        {initialViewModel.comparison.metricDeltas.map(
+                          (delta) => (
+                            <MetricDelta key={delta.id} delta={delta} />
+                          ),
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-4 text-sm text-zinc-500">
+                        More saved reports are needed for comparison.
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-1 text-xs text-zinc-500">
-                    {savedReport.report.sampleSize.completedTradeCount} trades /
-                    generated {savedReport.generatedAt}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
-          <SnapshotPanel snapshots={initialViewModel.reportSnapshots} />
-          <BehaviorStreaksPanel streaks={initialViewModel.behaviorStreaks} />
-        </section>
-
-        <JournalPromptsPanel prompts={initialViewModel.journalPrompts} />
-
-        <section className="grid gap-6 xl:grid-cols-2">
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
-            <h2 className="text-sm font-semibold text-zinc-100">
-              Behavior Trends
-            </h2>
-            <div className="mt-4 grid gap-3">
-              {initialViewModel.behaviorTrends.map((trend) => (
-                <div key={trend.behaviorId} className="border-t border-zinc-900 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-zinc-300">{trend.label}</span>
-                    <span className="font-mono text-xs text-zinc-500">
-                      {formatPercent(trend.previousRate)} to{" "}
-                      {formatPercent(trend.currentRate)}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-sm text-zinc-500">{trend.copy}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="border border-zinc-800 bg-zinc-950 p-4">
-            <h2 className="text-sm font-semibold text-zinc-100">
-              Latest Comparison
-            </h2>
-            {initialViewModel.comparison ? (
-              <div className="mt-4">
-                <div className="mb-3 text-sm text-zinc-500">
-                  {initialViewModel.comparison.label}
-                </div>
-                {initialViewModel.comparison.metricDeltas.map((delta) => (
-                  <MetricDelta key={delta.id} delta={delta} />
-                ))}
-              </div>
-            ) : (
-              <div className="mt-4 text-sm text-zinc-500">
-                More saved reports are needed for comparison.
-              </div>
-            )}
-          </div>
-        </section>
+                </section>
               </div>
             ) : null}
 
             {activeSection === "advanced" ? (
               <div className="grid gap-6">
-        <AdvancedDisclosure
-          summary="Advanced setup details"
-          testId="analytics-advanced-details"
-        >
-            <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.75fr)]">
-              <StorageReadinessPanel
-                readiness={initialViewModel.storageReadiness}
-              />
-              <ImportInboxPanel inbox={initialViewModel.importInbox} />
-            </section>
-            <ProductizationPanel productization={initialViewModel.productization} />
-            <ImportTrialExperiencePanel
-              experience={initialViewModel.importTrialExperience}
-            />
-            <ReconciliationJobsPanel
-              productization={initialViewModel.productization}
-            />
-            <WorkflowActionPlanPanel
-              productization={initialViewModel.productization}
-            />
-            <TagsCalibrationPanel productization={initialViewModel.productization} />
-        </AdvancedDisclosure>
+                <AdvancedDisclosure
+                  summary="Advanced setup details"
+                  testId="analytics-advanced-details"
+                >
+                  <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.75fr)]">
+                    <StorageReadinessPanel
+                      readiness={initialViewModel.storageReadiness}
+                    />
+                    <ImportInboxPanel inbox={initialViewModel.importInbox} />
+                  </section>
+                  <ProductizationPanel
+                    productization={initialViewModel.productization}
+                  />
+                  <ImportTrialExperiencePanel
+                    experience={initialViewModel.importTrialExperience}
+                  />
+                  <ReconciliationJobsPanel
+                    productization={initialViewModel.productization}
+                  />
+                  <WorkflowActionPlanPanel
+                    productization={initialViewModel.productization}
+                  />
+                  <TagsCalibrationPanel
+                    productization={initialViewModel.productization}
+                  />
+                </AdvancedDisclosure>
               </div>
             ) : null}
 
             {activeSection === "trades" ? (
               <div className="grid gap-6">
-        <section
-          className="border border-zinc-800 bg-zinc-950 p-4"
-          id="trades-behind-number"
-        >
-          <h2 className="text-sm font-semibold text-zinc-100">Filters</h2>
-          <div className="mt-4 grid gap-3 md:grid-cols-6">
-            <select
-              aria-label="Filter by symbol"
-              className="h-10 border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100"
-              data-testid="analytics-filter-symbol"
-              value={filters.symbol ?? ""}
-              onChange={(event) => updateFilter("symbol", event.target.value)}
-            >
-              <option value="">All symbols</option>
-              {initialViewModel.filterOptions.symbols.map((symbol) => (
-                <option key={symbol} value={symbol}>
-                  {symbol}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label="Filter by entry hour"
-              className="h-10 border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100"
-              data-testid="analytics-filter-entry-hour"
-              value={
-                filters.entryHourEt === undefined
-                  ? ""
-                  : String(filters.entryHourEt)
-              }
-              onChange={(event) =>
-                updateFilter(
-                  "entryHourEt",
-                  event.target.value === ""
-                    ? ""
-                    : Number(event.target.value),
-                )
-              }
-            >
-              <option value="">All hours</option>
-              {initialViewModel.filterOptions.entryHoursEt.map((hour) => (
-                <option key={hour.value} value={hour.value}>
-                  {hour.label}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label="Filter by trade direction"
-              className="h-10 border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100"
-              data-testid="analytics-filter-direction"
-              value={filters.tradeDirection ?? ""}
-              onChange={(event) =>
-                updateFilter("tradeDirection", event.target.value)
-              }
-            >
-              <option value="">All directions</option>
-              {initialViewModel.filterOptions.tradeDirections.map((direction) => (
-                <option key={direction} value={direction}>
-                  {direction}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label="Filter by session"
-              className="h-10 border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100"
-              data-testid="analytics-filter-session"
-              value={filters.sessionBucket ?? ""}
-              onChange={(event) =>
-                updateFilter("sessionBucket", event.target.value)
-              }
-            >
-              <option value="">All sessions</option>
-              {initialViewModel.filterOptions.sessionBuckets.map((session) => (
-                <option key={session} value={session}>
-                  {session}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label="Filter by outcome"
-              className="h-10 border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100"
-              data-testid="analytics-filter-outcome"
-              value={filters.outcome ?? ""}
-              onChange={(event) =>
-                updateFilter(
-                  "outcome",
-                  event.target.value as TraderAnalyticsFilter["outcome"] | "",
-                )
-              }
-            >
-              <option value="">All outcomes</option>
-              {initialViewModel.filterOptions.outcomes.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label="Filter by lifecycle"
-              className="h-10 border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100"
-              data-testid="analytics-filter-lifecycle"
-              value={filters.lifecycle ?? ""}
-              onChange={(event) =>
-                updateFilter(
-                  "lifecycle",
-                  event.target.value as TraderAnalyticsFilter["lifecycle"] | "",
-                )
-              }
-            >
-              <option value="">All lifecycle</option>
-              {initialViewModel.filterOptions.lifecycles.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="mt-3 text-xs text-zinc-500">
-            Showing {visibleRows.length} of{" "}
-            {initialViewModel.filteredView.totalTradeCount} trades. Sample size
-            remains visible when filtering.
-          </div>
-        </section>
+                <section
+                  className="border border-zinc-800 bg-zinc-950 p-4"
+                  id="trades-behind-number"
+                >
+                  <h2 className="text-sm font-semibold text-zinc-100">
+                    Filters
+                  </h2>
+                  <div className="mt-4 grid gap-3 md:grid-cols-6">
+                    <select
+                      aria-label="Filter by symbol"
+                      className="h-10 border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100"
+                      data-testid="analytics-filter-symbol"
+                      value={filters.symbol ?? ""}
+                      onChange={(event) =>
+                        updateFilter("symbol", event.target.value)
+                      }
+                    >
+                      <option value="">All symbols</option>
+                      {initialViewModel.filterOptions.symbols.map((symbol) => (
+                        <option key={symbol} value={symbol}>
+                          {symbol}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      aria-label="Filter by entry hour"
+                      className="h-10 border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100"
+                      data-testid="analytics-filter-entry-hour"
+                      value={
+                        filters.entryHourEt === undefined
+                          ? ""
+                          : String(filters.entryHourEt)
+                      }
+                      onChange={(event) =>
+                        updateFilter(
+                          "entryHourEt",
+                          event.target.value === ""
+                            ? ""
+                            : Number(event.target.value),
+                        )
+                      }
+                    >
+                      <option value="">All hours</option>
+                      {initialViewModel.filterOptions.entryHoursEt.map(
+                        (hour) => (
+                          <option key={hour.value} value={hour.value}>
+                            {hour.label}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                    <select
+                      aria-label="Filter by trade direction"
+                      className="h-10 border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100"
+                      data-testid="analytics-filter-direction"
+                      value={filters.tradeDirection ?? ""}
+                      onChange={(event) =>
+                        updateFilter("tradeDirection", event.target.value)
+                      }
+                    >
+                      <option value="">All directions</option>
+                      {initialViewModel.filterOptions.tradeDirections.map(
+                        (direction) => (
+                          <option key={direction} value={direction}>
+                            {direction}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                    <select
+                      aria-label="Filter by session"
+                      className="h-10 border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100"
+                      data-testid="analytics-filter-session"
+                      value={filters.sessionBucket ?? ""}
+                      onChange={(event) =>
+                        updateFilter("sessionBucket", event.target.value)
+                      }
+                    >
+                      <option value="">All sessions</option>
+                      {initialViewModel.filterOptions.sessionBuckets.map(
+                        (session) => (
+                          <option key={session} value={session}>
+                            {session}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                    <select
+                      aria-label="Filter by outcome"
+                      className="h-10 border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100"
+                      data-testid="analytics-filter-outcome"
+                      value={filters.outcome ?? ""}
+                      onChange={(event) =>
+                        updateFilter(
+                          "outcome",
+                          event.target.value as
+                            | TraderAnalyticsFilter["outcome"]
+                            | "",
+                        )
+                      }
+                    >
+                      <option value="">All outcomes</option>
+                      {initialViewModel.filterOptions.outcomes.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      aria-label="Filter by lifecycle"
+                      className="h-10 border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100"
+                      data-testid="analytics-filter-lifecycle"
+                      value={filters.lifecycle ?? ""}
+                      onChange={(event) =>
+                        updateFilter(
+                          "lifecycle",
+                          event.target.value as
+                            | TraderAnalyticsFilter["lifecycle"]
+                            | "",
+                        )
+                      }
+                    >
+                      <option value="">All lifecycle</option>
+                      {initialViewModel.filterOptions.lifecycles.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mt-3 text-xs text-zinc-500">
+                    Showing {visibleRows.length} of{" "}
+                    {initialViewModel.filteredView.totalTradeCount} trades.
+                    Sample size remains visible when filtering.
+                  </div>
+                </section>
 
-        <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(300px,0.4fr)_minmax(0,0.6fr)]">
-          <DrillDownList
-            drillDowns={initialViewModel.drillDowns}
-            selectedId={selectedDrillDownId}
-            onSelect={setSelectedDrillDownId}
-          />
-          <div className="min-w-0 border border-zinc-800 bg-zinc-950 p-4">
-            <h2
-              className="text-sm font-semibold text-zinc-100"
-              data-testid="analytics-selected-drilldown-title"
-            >
-              {selectedDrillDown?.label ?? "Drill-Down"}
-            </h2>
-            <div className="mt-2 text-sm text-zinc-500">
-              {selectedDrillDown?.summary ?? "Select a metric."}
-            </div>
-            <div className="mt-4 min-w-0">
-              <TradeRows
-                rows={selectedDrillDown?.rows ?? []}
-                testIdPrefix="analytics-drilldown"
-              />
-            </div>
-          </div>
-        </section>
+                <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(300px,0.4fr)_minmax(0,0.6fr)]">
+                  <DrillDownList
+                    drillDowns={initialViewModel.drillDowns}
+                    selectedId={selectedDrillDownId}
+                    onSelect={setSelectedDrillDownId}
+                  />
+                  <div className="min-w-0 border border-zinc-800 bg-zinc-950 p-4">
+                    <h2
+                      className="text-sm font-semibold text-zinc-100"
+                      data-testid="analytics-selected-drilldown-title"
+                    >
+                      {selectedDrillDown?.label ?? "Drill-Down"}
+                    </h2>
+                    <div className="mt-2 text-sm text-zinc-500">
+                      {selectedDrillDown?.summary ?? "Select a metric."}
+                    </div>
+                    <div className="mt-4 min-w-0">
+                      <TradeRows
+                        rows={selectedDrillDown?.rows ?? []}
+                        testIdPrefix="analytics-drilldown"
+                      />
+                    </div>
+                  </div>
+                </section>
 
-        <section
-          className="min-w-0 border border-zinc-800 bg-zinc-950 p-4"
-          data-testid="analytics-filtered-trade-review"
-        >
-          <h2 className="text-sm font-semibold text-zinc-100">
-            Trades Matching Filters
-          </h2>
-          <div className="mt-4 min-w-0">
-            <TradeRows
-              rows={visibleRows}
-              testIdPrefix="analytics-filtered"
-            />
-          </div>
-        </section>
+                <section
+                  className="min-w-0 border border-zinc-800 bg-zinc-950 p-4"
+                  data-testid="analytics-filtered-trade-review"
+                >
+                  <h2 className="text-sm font-semibold text-zinc-100">
+                    Trades Matching Filters
+                  </h2>
+                  <div className="mt-4 min-w-0">
+                    <TradeRows
+                      rows={visibleRows}
+                      testIdPrefix="analytics-filtered"
+                    />
+                  </div>
+                </section>
               </div>
             ) : null}
 
             {activeSection === "advanced" ? (
-        <section className="border border-zinc-800 bg-zinc-950 p-4">
-          <h2 className="text-sm font-semibold text-zinc-100">Rule Tracker</h2>
-          <RuleCompliancePanel
-            summary={initialViewModel.ruleComplianceSummary}
-          />
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {initialViewModel.ruleEvaluations.map((evaluation) => (
-              <div key={evaluation.ruleId} className="border-t border-zinc-900 py-3">
-                <div className="font-medium text-zinc-100">
-                  {evaluation.label}
+              <section className="border border-zinc-800 bg-zinc-950 p-4">
+                <h2 className="text-sm font-semibold text-zinc-100">
+                  Rule Tracker
+                </h2>
+                <RuleCompliancePanel
+                  summary={initialViewModel.ruleComplianceSummary}
+                />
+                <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {initialViewModel.ruleEvaluations.map((evaluation) => (
+                    <div
+                      key={evaluation.ruleId}
+                      className="border-t border-zinc-900 py-3"
+                    >
+                      <div className="font-medium text-zinc-100">
+                        {evaluation.label}
+                      </div>
+                      <div className="mt-1 text-sm text-zinc-500">
+                        {evaluation.violatedTradeCount} violations /{" "}
+                        {evaluation.passedTradeCount} passes
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="mt-1 text-sm text-zinc-500">
-                  {evaluation.violatedTradeCount} violations /{" "}
-                  {evaluation.passedTradeCount} passes
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              </section>
             ) : null}
           </div>
         </section>

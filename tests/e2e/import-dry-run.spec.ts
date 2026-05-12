@@ -50,16 +50,19 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("decision-review-status")).toContainText(
       "Run server-side daily/4h decision review",
     );
-    await expect(page.getByTestId("decision-review-request-button")).toBeEnabled();
-    await expect(page.getByTestId("cost-visibility-scoring-policy")).toContainText(
-      "gross-only",
-    );
+    await expect(
+      page.getByTestId("decision-review-request-button"),
+    ).toBeEnabled();
+    await expect(
+      page.getByTestId("cost-visibility-scoring-policy"),
+    ).toContainText("gross-only");
 
     const bodyText = await page.locator("body").innerText();
     for (const phrase of contract.bannedSurfacePhrases) {
-      expect(bodyText, `Banned product phrase surfaced: ${phrase}`).not.toContain(
-        phrase,
-      );
+      expect(
+        bodyText,
+        `Banned product phrase surfaced: ${phrase}`,
+      ).not.toContain(phrase);
     }
   });
 
@@ -68,7 +71,9 @@ test.describe("CSV dry-run import route", () => {
   }) => {
     await page.goto("/import-dry-run");
     await page.waitForLoadState("networkidle");
-    await page.getByTestId("broker-select").selectOption("generic_execution_csv");
+    await page
+      .getByTestId("broker-select")
+      .selectOption("generic_execution_csv");
     const feeCsv = [
       "Date,Time,Symbol,Side,Quantity,Price,Commission,Fees,Amount,Currency",
       "2026-05-01,09:30:00,ABCD,Buy,100,10.00,1.25,0.08,-1001.33,USD",
@@ -86,9 +91,9 @@ test.describe("CSV dry-run import route", () => {
     await expect(costPanel).toContainText("$2.50");
     await expect(costPanel).toContainText("$0.18");
     await expect(costPanel).toContainText("present");
-    await expect(page.getByTestId("cost-visibility-scoring-policy")).toContainText(
-      "Execution feedback scoring remains gross-only",
-    );
+    await expect(
+      page.getByTestId("cost-visibility-scoring-policy"),
+    ).toContainText("Execution feedback scoring remains gross-only");
   });
 
   test("saves a generic CSV import and exposes it to saved app routes", async ({
@@ -106,7 +111,9 @@ test.describe("CSV dry-run import route", () => {
 
     await page.goto("/import-dry-run");
     await page.waitForLoadState("networkidle");
-    await page.getByTestId("broker-select").selectOption("generic_execution_csv");
+    await page
+      .getByTestId("broker-select")
+      .selectOption("generic_execution_csv");
     await page.getByTestId("local-csv-input").setInputFiles({
       buffer: Buffer.from(csv),
       mimeType: "text/csv",
@@ -116,18 +123,18 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("cost-visibility-panel")).toContainText(
       "present",
     );
-    await expect(page.getByTestId("cost-visibility-scoring-policy")).toContainText(
-      "gross-only",
-    );
+    await expect(
+      page.getByTestId("cost-visibility-scoring-policy"),
+    ).toContainText("gross-only");
     await expect(page.getByTestId("save-import-button")).toBeEnabled();
     await page.getByTestId("save-import-button").click();
     await page.waitForURL(/\/imports\/.+/, { timeout: 30000 });
     await expect(page.getByTestId("import-workflow-step-review")).toContainText(
       "Current",
     );
-    await expect(page.getByTestId("import-batch-primary-review-action")).toContainText(
-      /Review first saved trade|Open highest-priority queue/,
-    );
+    await expect(
+      page.getByTestId("import-batch-primary-review-action"),
+    ).toContainText(/Review first saved trade|Open highest-priority queue/);
     await expect(page.getByTestId("import-batch-saved-trades")).toContainText(
       symbol,
     );
@@ -168,7 +175,9 @@ test.describe("CSV dry-run import route", () => {
         .first(),
     ).toBeVisible();
 
-    const analytics = await (await page.request.get("/api/analytics/latest")).json();
+    const analytics = await (
+      await page.request.get("/api/analytics/latest")
+    ).json();
     expect(analytics.source).toBe("saved_sqlite");
     expect(analytics.latestReport.sampleData).toBe(false);
 
@@ -183,6 +192,11 @@ test.describe("CSV dry-run import route", () => {
     ).toBeVisible();
 
     await page.goto("/coach");
+    await page
+      .getByText("More coach evidence, queue totals, and rule checks", {
+        exact: true,
+      })
+      .click();
     await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Open highest-priority queue" }),
@@ -191,9 +205,9 @@ test.describe("CSV dry-run import route", () => {
     const review = await (await page.request.get("/api/review/latest")).json();
     expect(review.source).toBe("saved_sqlite");
     expect(review.savedReviewQueue.allItems.length).toBeGreaterThan(0);
-    expect(
-      JSON.stringify(review.savedReviewQueue).toLowerCase(),
-    ).not.toContain("sample fallback");
+    expect(JSON.stringify(review.savedReviewQueue).toLowerCase()).not.toContain(
+      "sample fallback",
+    );
 
     await page.goto("/review?queue=highest_priority");
     await expect(page.getByTestId("review-continuation-panel")).toContainText(
@@ -203,16 +217,22 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("saved-review-queue-tabs")).toContainText(
       "Highest Priority",
     );
-    const queueItem = page.locator('[data-testid^="saved-review-queue-item-"]').first();
+    const queueItem = page
+      .locator('[data-testid^="saved-review-queue-item-"]')
+      .first();
     await expect(queueItem).toBeVisible();
-    await expect(queueItem.getByRole("button", { name: "Mark reviewed" })).toBeVisible();
+    await expect(
+      queueItem.getByRole("button", { name: "Mark reviewed" }),
+    ).toBeVisible();
     await queueItem.getByRole("link").first().click();
     await page.waitForURL(/\/trades\/.+from=review-queue/);
     await expect(page.getByText("Back to review queue")).toBeVisible();
 
     await page.goto("/import-dry-run");
     await page.waitForLoadState("networkidle");
-    await page.getByTestId("broker-select").selectOption("generic_execution_csv");
+    await page
+      .getByTestId("broker-select")
+      .selectOption("generic_execution_csv");
     await page.getByTestId("local-csv-input").setInputFiles({
       buffer: Buffer.from(csv),
       mimeType: "text/csv",
@@ -224,10 +244,12 @@ test.describe("CSV dry-run import route", () => {
     );
 
     await page.goto("/imports");
-    await expect(page.getByTestId("import-workflow-step-recover")).toContainText(
-      "Current",
-    );
-    await expect(page.getByText("duplicate file").first()).toBeVisible();
+    await expect(
+      page.getByTestId("import-workflow-step-recover"),
+    ).toContainText("Current");
+    await expect(
+      page.getByText(/duplicate saved import/i).first(),
+    ).toBeVisible();
     await expect(page.getByText("Saved import").first()).toBeVisible();
     await expect(page.getByText("Review saved trades").first()).toBeVisible();
     await expect(page.getByText("Duplicate review").first()).toBeVisible();
@@ -236,24 +258,29 @@ test.describe("CSV dry-run import route", () => {
       "Import looks like a duplicate",
     );
     await expect(page.getByTestId("import-recovery-queue")).toContainText(
-      "Matches a committed file fingerprint",
+      "Looks like a duplicate saved import",
     );
 
-    const duplicateHistory = await (await page.request.get("/api/import-batches")).json();
+    const duplicateHistory = await (
+      await page.request.get("/api/import-batches")
+    ).json();
     const duplicateRecovery = duplicateHistory.recoveryQueue.find(
       (item: { status: string }) => item.status === "duplicate_review",
     );
     expect(duplicateRecovery).toBeTruthy();
 
-    await page.goto(`/imports/${encodeURIComponent(duplicateRecovery.batchId)}`);
+    await page.goto(
+      `/imports/${encodeURIComponent(duplicateRecovery.batchId)}`,
+    );
     await expect(page.getByTestId("import-batch-action-summary")).toContainText(
       "Import looks like a duplicate",
     );
     await expect(page.getByTestId("duplicate-details")).toContainText(
-      "Duplicate Review Details",
+      "Advanced duplicate details",
     );
+    await page.getByText("Advanced duplicate details", { exact: true }).click();
     await expect(page.getByTestId("duplicate-details")).toContainText(
-      "Use the original committed import",
+      "Use the original saved import",
     );
   });
 
@@ -282,7 +309,9 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("prototype-analysis-panel")).toContainText(
       "production write: false",
     );
-    await expect(page.getByTestId("decision-review-request-button")).toBeDisabled();
+    await expect(
+      page.getByTestId("decision-review-request-button"),
+    ).toBeDisabled();
     await expect(page.getByTestId("cost-visibility-panel")).toBeVisible();
 
     await page.getByTestId("save-import-button").click();
@@ -301,7 +330,9 @@ test.describe("CSV dry-run import route", () => {
     );
     await expect(page.getByText("Repair required").first()).toBeVisible();
 
-    const repairHistory = await (await page.request.get("/api/import-batches")).json();
+    const repairHistory = await (
+      await page.request.get("/api/import-batches")
+    ).json();
     const blockedRecovery = repairHistory.recoveryQueue.find(
       (item: { status: string }) => item.status === "blocked_by_repairs",
     );
@@ -324,7 +355,9 @@ test.describe("CSV dry-run import route", () => {
   }) => {
     await page.goto("/import-dry-run");
     await page.waitForLoadState("networkidle");
-    await page.getByTestId("sample-select").selectOption("preset:open-position");
+    await page
+      .getByTestId("sample-select")
+      .selectOption("preset:open-position");
 
     await expect(page.getByTestId("import-session-summary-status")).toHaveText(
       "needs_review",
@@ -344,9 +377,9 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("prototype-analysis-panel")).toContainText(
       "production write: false",
     );
-    await expect(page.getByTestId("cost-visibility-scoring-policy")).toContainText(
-      "gross-only",
-    );
+    await expect(
+      page.getByTestId("cost-visibility-scoring-policy"),
+    ).toContainText("gross-only");
   });
 
   test("attaches server decision-review snapshots to prototype analysis", async ({
@@ -442,18 +475,18 @@ test.describe("CSV dry-run import route", () => {
     await expect(
       page.getByTestId("decision-review-evidence-alignment"),
     ).toContainText("Evidence aligned");
-    await expect(page.getByTestId("decision-review-evidence-gates")).toContainText(
-      "Evidence-gated review",
-    );
-    await expect(page.getByTestId("decision-review-evidence-gates")).toContainText(
-      "Daily/4h Context",
-    );
-    await expect(page.getByTestId("decision-review-evidence-gates")).toContainText(
-      "Trade Window",
-    );
-    await expect(page.getByTestId("decision-review-evidence-gates")).toContainText(
-      "Execution Only",
-    );
+    await expect(
+      page.getByTestId("decision-review-evidence-gates"),
+    ).toContainText("Evidence-gated review");
+    await expect(
+      page.getByTestId("decision-review-evidence-gates"),
+    ).toContainText("Daily/4h Context");
+    await expect(
+      page.getByTestId("decision-review-evidence-gates"),
+    ).toContainText("Trade Window");
+    await expect(
+      page.getByTestId("decision-review-evidence-gates"),
+    ).toContainText("Execution Only");
     await expect(
       page.getByTestId("decision-review-evidence-alignment"),
     ).toContainText("0/1 flagged");
@@ -466,11 +499,15 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("decision-review-details")).toContainText(
       "Trade-window candles were ignored",
     );
-    await expect(page.getByText("Resistance strength: major").first()).toBeVisible();
+    await expect(
+      page.getByText("Resistance strength: major").first(),
+    ).toBeVisible();
     await expect(
       page.getByText("Later add location in recent range: 84.0%").first(),
     ).toBeVisible();
-    await expect(page.getByText("nearestResistanceStrength=major").first()).toBeHidden();
+    await expect(
+      page.getByText("nearestResistanceStrength=major").first(),
+    ).toBeHidden();
     await expect(page.getByTestId("decision-review-details")).toContainText(
       "nearestResistanceStrength=major",
     );
@@ -530,12 +567,12 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("decision-review-diagnostics")).toContainText(
       "use executions and P&L",
     );
-    await expect(page.getByTestId("decision-review-evidence-gates")).toContainText(
-      "Evidence blocked",
-    );
-    await expect(page.getByTestId("decision-review-evidence-gates")).toContainText(
-      "chart data still missing: 1",
-    );
+    await expect(
+      page.getByTestId("decision-review-evidence-gates"),
+    ).toContainText("Evidence blocked");
+    await expect(
+      page.getByTestId("decision-review-evidence-gates"),
+    ).toContainText("chart data still missing: 1");
   });
 
   test("keeps aligned candle basis as quiet verification detail", async ({
@@ -589,27 +626,27 @@ test.describe("CSV dry-run import route", () => {
     await expect(
       page.getByTestId("decision-review-candle-warning-notes"),
     ).toHaveCount(0);
-    await expect(page.getByTestId("decision-review-candle-info-notes")).toContainText(
-      "Verified candle basis",
-    );
-    await expect(page.getByTestId("decision-review-candle-info-notes")).toContainText(
-      "Nearby candle prices were compatible",
-    );
-    await expect(page.getByTestId("decision-review-status-badges")).toContainText(
-      "Verified candle basis",
-    );
-    await expect(page.getByTestId("decision-review-status-badges")).toContainText(
-      "Full market context",
-    );
-    await expect(page.getByTestId("decision-review-status-badges")).toContainText(
-      "Trade-window evidence",
-    );
-    await expect(page.getByTestId("decision-review-evidence-gates")).toContainText(
-      "Evidence gates clear",
-    );
-    await expect(page.getByTestId("decision-review-evidence-gates")).toContainText(
-      "1/1",
-    );
+    await expect(
+      page.getByTestId("decision-review-candle-info-notes"),
+    ).toContainText("Verified candle basis");
+    await expect(
+      page.getByTestId("decision-review-candle-info-notes"),
+    ).toContainText("Nearby candle prices were compatible");
+    await expect(
+      page.getByTestId("decision-review-status-badges"),
+    ).toContainText("Verified candle basis");
+    await expect(
+      page.getByTestId("decision-review-status-badges"),
+    ).toContainText("Full market context");
+    await expect(
+      page.getByTestId("decision-review-status-badges"),
+    ).toContainText("Trade-window evidence");
+    await expect(
+      page.getByTestId("decision-review-evidence-gates"),
+    ).toContainText("Evidence gates clear");
+    await expect(
+      page.getByTestId("decision-review-evidence-gates"),
+    ).toContainText("1/1");
     await expect(page.getByTestId("decision-review-details")).not.toContainText(
       "Movement review unavailable",
     );
@@ -666,18 +703,18 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("decision-review-details")).toContainText(
       "movement: executions only",
     );
-    await expect(page.getByTestId("decision-review-status-badges")).toContainText(
-      "Execution/P&L only",
-    );
+    await expect(
+      page.getByTestId("decision-review-status-badges"),
+    ).toContainText("Execution/P&L only");
     await expect(
       page.getByTestId("decision-review-candle-warning-notes"),
     ).toContainText("Movement review unavailable");
     await expect(
       page.getByTestId("decision-review-candle-warning-notes"),
     ).toContainText("different split-adjusted basis");
-    await expect(page.getByTestId("decision-review-candle-info-notes")).toHaveCount(
-      0,
-    );
+    await expect(
+      page.getByTestId("decision-review-candle-info-notes"),
+    ).toHaveCount(0);
   });
 
   test("shows 5m fallback as lower-resolution notice", async ({ page }) => {
@@ -737,15 +774,17 @@ test.describe("CSV dry-run import route", () => {
     await expect(
       page.getByTestId("decision-review-candle-notice-notes"),
     ).toContainText("complete 1m trade-window candles were unavailable");
-    await expect(page.getByTestId("decision-review-candle-info-notes")).toContainText(
-      "Verified candle basis",
-    );
-    await expect(page.getByTestId("decision-review-status-badges")).toContainText(
-      "Lower-resolution candle window",
-    );
+    await expect(
+      page.getByTestId("decision-review-candle-info-notes"),
+    ).toContainText("Verified candle basis");
+    await expect(
+      page.getByTestId("decision-review-status-badges"),
+    ).toContainText("Lower-resolution candle window");
   });
 
-  test("labels verified extreme moves without hiding the review", async ({ page }) => {
+  test("labels verified extreme moves without hiding the review", async ({
+    page,
+  }) => {
     await page.route("**/api/import-dry-run/decision-review", async (route) => {
       await route.fulfill({
         contentType: "application/json",
@@ -773,7 +812,8 @@ test.describe("CSV dry-run import route", () => {
                   tone: "strength",
                   category: "entry",
                   title: "Entry had constructive location evidence",
-                  summary: "The entry left meaningful room for the trade to work.",
+                  summary:
+                    "The entry left meaningful room for the trade to work.",
                   evidence: ["firstEntryToPeakMovePct=226.8%"],
                 },
                 {
@@ -808,12 +848,12 @@ test.describe("CSV dry-run import route", () => {
     await page.waitForLoadState("networkidle");
     await page.getByTestId("decision-review-request-button").click();
 
-    await expect(page.getByTestId("decision-review-status-badges")).toContainText(
-      "Verified extreme move",
-    );
-    await expect(page.getByTestId("decision-review-status-badges")).toContainText(
-      "Verified candle basis",
-    );
+    await expect(
+      page.getByTestId("decision-review-status-badges"),
+    ).toContainText("Verified extreme move");
+    await expect(
+      page.getByTestId("decision-review-status-badges"),
+    ).toContainText("Verified candle basis");
     await expect(
       page.getByTestId("decision-review-evidence-alignment"),
     ).toContainText("Evidence aligned");
@@ -825,7 +865,9 @@ test.describe("CSV dry-run import route", () => {
     );
   });
 
-  test("labels weak context as present but not supportive", async ({ page }) => {
+  test("labels weak context as present but not supportive", async ({
+    page,
+  }) => {
     await page.route("**/api/import-dry-run/decision-review", async (route) => {
       await route.fulfill({
         contentType: "application/json",
@@ -880,9 +922,9 @@ test.describe("CSV dry-run import route", () => {
     await page.waitForLoadState("networkidle");
     await page.getByTestId("decision-review-request-button").click();
 
-    await expect(page.getByTestId("decision-review-status-badges")).toContainText(
-      "Context present, not supportive",
-    );
+    await expect(
+      page.getByTestId("decision-review-status-badges"),
+    ).toContainText("Context present, not supportive");
     await expect(page.getByTestId("decision-review-details")).toContainText(
       "Daily/4h context was present",
     );
@@ -893,7 +935,9 @@ test.describe("CSV dry-run import route", () => {
   }, testInfo) => {
     await page.goto("/import-dry-run");
     await page.waitForLoadState("networkidle");
-    await page.getByTestId("broker-select").selectOption("generic_execution_csv");
+    await page
+      .getByTestId("broker-select")
+      .selectOption("generic_execution_csv");
     const projectSuffix = testInfo.project.name.includes("mobile")
       ? "M"
       : testInfo.project.name.includes("tablet")
@@ -914,13 +958,17 @@ test.describe("CSV dry-run import route", () => {
 
     await expect(page.getByTestId("csv-textarea")).toHaveValue(customCsv);
 
-    await expect(page.getByTestId("row-repair-2-status")).toHaveText("rejected");
+    await expect(page.getByTestId("row-repair-2-status")).toHaveText(
+      "rejected",
+    );
     await expect(page.getByTestId("row-repair-2-quantity")).toHaveValue("");
 
     await page.getByTestId("row-repair-2-quantity").fill("100");
 
     await expect(page.getByTestId("row-repair-2-quantity")).toHaveValue("100");
-    await expect(page.getByTestId("row-repair-2-status")).toHaveText("accepted");
+    await expect(page.getByTestId("row-repair-2-status")).toHaveText(
+      "accepted",
+    );
     await expect(page.getByTestId("repair-carry-forward-panel")).toContainText(
       "Repaired CSV",
     );
@@ -958,7 +1006,9 @@ test.describe("CSV dry-run import route", () => {
     await page.goto("/trades");
     await expect(page.getByText(symbol).first()).toBeVisible();
 
-    const analytics = await (await page.request.get("/api/analytics/latest")).json();
+    const analytics = await (
+      await page.request.get("/api/analytics/latest")
+    ).json();
     expect(analytics.source).toBe("saved_sqlite");
     expect(analytics.latestReport.sampleData).toBe(false);
     expect(analytics.savedImportSourceCaution).toMatchObject({
@@ -979,26 +1029,26 @@ test.describe("CSV dry-run import route", () => {
       repairedImport: true,
     });
     expect(review.savedReviewQueue.allItems.length).toBeGreaterThan(0);
-    expect(
-      JSON.stringify(review.savedReviewQueue).toLowerCase(),
-    ).not.toContain("sample fallback");
+    expect(JSON.stringify(review.savedReviewQueue).toLowerCase()).not.toContain(
+      "sample fallback",
+    );
 
     await page.goto("/analytics");
     await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
-    await expect(page.getByTestId("analytics-repaired-import-caution")).toContainText(
-      "Review repaired row values",
-    );
+    await expect(
+      page.getByTestId("analytics-repaired-import-caution"),
+    ).toContainText("Review repaired row values");
 
     await page.goto("/coach");
     await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
-    await expect(page.getByTestId("coach-repaired-import-caution")).toContainText(
-      "Review repaired row values",
-    );
+    await expect(
+      page.getByTestId("coach-repaired-import-caution"),
+    ).toContainText("Review repaired row values");
 
     await page.goto("/review?queue=highest_priority");
-    await expect(page.getByTestId("review-repaired-import-caution")).toContainText(
-      "Review repaired row values",
-    );
+    await expect(
+      page.getByTestId("review-repaired-import-caution"),
+    ).toContainText("Review repaired row values");
     await expect(page.getByTestId("saved-review-queue")).toBeVisible();
     await expect(page.getByTestId("saved-review-queue-tabs")).toContainText(
       "Highest Priority",
@@ -1021,9 +1071,9 @@ test.describe("CSV dry-run import route", () => {
       repairSource: "repaired_csv",
     });
     await page.goto(`/trades/${encodeURIComponent(savedTrade.id)}`);
-    await expect(page.getByTestId("trade-repaired-import-caution")).toContainText(
-      "repaired CSV rows",
-    );
+    await expect(
+      page.getByTestId("trade-repaired-import-caution"),
+    ).toContainText("repaired CSV rows");
     await expect(page.getByTestId("trade-feedback-scope")).toContainText(
       /Chart review needs technical follow-up|Chart data still missing/,
     );
@@ -1038,7 +1088,9 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByText("Saved import").first()).toBeVisible();
     await expect(page.getByText("Review saved trades").first()).toBeVisible();
 
-    const savedHistory = await (await page.request.get("/api/import-batches")).json();
+    const savedHistory = await (
+      await page.request.get("/api/import-batches")
+    ).json();
     const committed = savedHistory.history.find(
       (item: { summaryStatus: string; batch: { brokerLabel: string } }) =>
         item.summaryStatus === "committed" &&
@@ -1067,7 +1119,9 @@ test.describe("CSV dry-run import route", () => {
       : testInfo.project.name.includes("tablet")
         ? "tablet"
         : "desktop";
-    const target = visual.targets.find((candidate) => candidate.viewport === viewport);
+    const target = visual.targets.find(
+      (candidate) => candidate.viewport === viewport,
+    );
 
     expect(visual.screenshotDependency).toBe("playwright_chromium");
     expect(target).toBeDefined();
@@ -1079,7 +1133,10 @@ test.describe("CSV dry-run import route", () => {
     expect(viewportSize?.height).toBe(target?.height);
 
     await expect(
-      page.getByRole("heading", { exact: true, name: "Import Session Summary" }),
+      page.getByRole("heading", {
+        exact: true,
+        name: "Import Session Summary",
+      }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { exact: true, name: "User Decision Capture" }),

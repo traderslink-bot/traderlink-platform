@@ -6,6 +6,7 @@ import {
   userFacingTradeDirection,
   userFacingTradeSymbol,
 } from "../product/trade-display-copy";
+import { importTradeDirectionLabel } from "../product/import-user-copy";
 
 describe("trade display copy", () => {
   it("keeps normal ticker symbols visible", () => {
@@ -29,5 +30,10 @@ describe("trade display copy", () => {
     expect(sellStartingReviewLimitationCopy().toLowerCase()).not.toContain(
       "short-seller coaching",
     );
+  });
+
+  it("uses the same limited sell-side language on import routes", () => {
+    expect(importTradeDirectionLabel("short")).toBe("Limited sell-side review");
+    expect(importTradeDirectionLabel("long")).toBe("Long-side review");
   });
 });

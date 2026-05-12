@@ -73,9 +73,7 @@ export function ImportRecoveryActions({
       );
       setPendingAction(null);
       setMessage(
-        response.ok
-          ? "Preview discarded."
-          : "Preview could not be discarded.",
+        response.ok ? "Preview discarded." : "Preview could not be discarded.",
       );
       router.refresh();
     }
@@ -106,16 +104,15 @@ export function ImportRecoveryActions({
   }
 
   return (
-    <section
-      className="ti-panel p-4"
-      data-testid="import-recovery-actions"
-    >
+    <section className="ti-panel p-4" data-testid="import-recovery-actions">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
             Recovery Lane
           </p>
-          <h2 className={`mt-2 text-lg font-semibold ${statusTone(recovery.status)}`}>
+          <h2
+            className={`mt-2 text-lg font-semibold ${statusTone(recovery.status)}`}
+          >
             {recovery.title}
           </h2>
           <div className="mt-1 text-xs uppercase tracking-wide text-zinc-500">
@@ -152,7 +149,10 @@ export function ImportRecoveryActions({
               {recovery.secondaryActions.map((action) => renderAction(action))}
             </div>
           ) : null}
-          <div className="min-h-5 text-xs text-zinc-500" data-testid="import-recovery-message">
+          <div
+            className="min-h-5 text-xs text-zinc-500"
+            data-testid="import-recovery-message"
+          >
             {message}
           </div>
         </div>
@@ -165,39 +165,42 @@ export function ImportRecoveryActions({
           data-testid="duplicate-details"
           id="duplicate-details"
         >
-          <h3 className="text-sm font-semibold text-zinc-100">
-            Duplicate Review Details
-          </h3>
-          <p className="mt-1 text-xs leading-5 text-zinc-500">
-            Duplicate matches are review blocks. Use the original saved
-            import or existing saved trade unless there is a deliberate reason
-            to re-import.
-          </p>
-          <div className="mt-3 grid gap-2 text-sm">
-            {recovery.duplicate.originalBatchHref ? (
-              <Link
-                className="text-sky-300 hover:text-sky-200"
-                href={recovery.duplicate.originalBatchHref}
-              >
-                Original saved import: {recovery.duplicate.originalBatchId}
-              </Link>
-            ) : recovery.duplicate.duplicateFile ? (
-              <div className="text-amber-300">
-                File fingerprint matched a saved import, but the original
-                batch could not be linked.
-              </div>
-            ) : null}
-            {recovery.duplicate.duplicateTrades.map((trade) => (
-              <Link
-                className="text-sky-300 hover:text-sky-200"
-                href={trade.href}
-                key={trade.id}
-              >
-                Existing trade: {trade.symbol} / {importStatusLabel(trade.lifecycleStatus)} /{" "}
-                {trade.openedAt.slice(0, 10)}
-              </Link>
-            ))}
-          </div>
+          <details>
+            <summary className="cursor-pointer text-sm font-semibold text-zinc-100">
+              Advanced duplicate details
+            </summary>
+            <p className="mt-3 text-xs leading-5 text-zinc-500">
+              Duplicate matches are review blocks. Use the original saved import
+              or existing saved trade unless there is a deliberate reason to
+              re-import.
+            </p>
+            <div className="mt-3 grid gap-2 text-sm">
+              {recovery.duplicate.originalBatchHref ? (
+                <Link
+                  className="text-sky-300 hover:text-sky-200"
+                  href={recovery.duplicate.originalBatchHref}
+                >
+                  Original saved import: {recovery.duplicate.originalBatchId}
+                </Link>
+              ) : recovery.duplicate.duplicateFile ? (
+                <div className="text-amber-300">
+                  A saved import appears to use the same source file, but the
+                  original import could not be linked.
+                </div>
+              ) : null}
+              {recovery.duplicate.duplicateTrades.map((trade) => (
+                <Link
+                  className="text-sky-300 hover:text-sky-200"
+                  href={`${trade.href}#writing-flow`}
+                  key={trade.id}
+                >
+                  Existing trade: {trade.symbol} /{" "}
+                  {importStatusLabel(trade.lifecycleStatus)} /{" "}
+                  {trade.openedAt.slice(0, 10)}
+                </Link>
+              ))}
+            </div>
+          </details>
         </div>
       ) : null}
     </section>

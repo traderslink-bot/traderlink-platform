@@ -140,18 +140,29 @@ Current next run expectation:
   report. Follow-up constructive-management variants should be added only when
   saved evidence can prove them without broader claims. The
   product/engineering review in
-  `src/docs/suggestions-for-codex.md` remains useful context for preserving
-  route hierarchy and data-density handling.
-  Verify locally, update docs, and keep moving through the next safe slice
-  unless a true global blocker appears.
+  `src/docs/suggestions-for-codex.md` is the current product direction for
+  preserving beginner-first route hierarchy, advanced end-user disclosures, and
+  admin/internal boundaries. The May 12 beginner-to-advanced route IA pass is
+  now complete: `/imports` and `/imports/[batchId]` keep saved imports,
+  repairs, saved trades, decisions, and next actions in the default path while
+  batch IDs, mapping confidence, write safety, execution basis, quality
+  breakdowns, reconstruction previews, chart-review counts, and duplicate
+  internals are tucked behind advanced disclosures. `/analytics` now exposes
+  category access for Results, Timing, Behavior, Ticker Stories, Session
+  Stories, and Chart Evidence without removing the richer report. Import
+  routes also use the completed `Limited sell-side review` language for
+  sell-starting imports. Verify locally, update docs, and keep moving through
+  the next safe slice unless a true global blocker appears.
 - The next implementation start point remains the next-run plan's
   **Required Long-Run Batch Shape** and **Next Run Phase Plan** sections, not
   only the shorter block summary. The next run should complete multiple
-  phases before reporting back. Current best slices are focused screenshot
-  fixes only if concrete issues appear, or deterministic follow-up
-  constructive-management variants only when saved chart, level, candle,
-  volume, or after-exit evidence can prove them. Do not redo the completed
-  constructive-management storylines, workspace
+  phases before reporting back. Current best slices are screenshot-guided
+  beginner-to-advanced flow fixes only when route QA finds a concrete issue,
+  especially on `/import-dry-run`, `/workspace`, `/analytics`, `/progress`, or
+  saved-trade handoffs, or deterministic follow-up constructive-management
+  variants only when saved chart, level, candle, volume, or after-exit evidence
+  can prove them. Do not redo the completed import IA disclosure pass,
+  analytics category-access pass, constructive-management storylines, workspace
   visual migration, coach old-card cleanup, May 11 coach sequence, review queue
   simplification, sell-starting limitation copy, route copy/anchor repairs, or
   trade-detail replay loop unless QA finds a concrete regression.

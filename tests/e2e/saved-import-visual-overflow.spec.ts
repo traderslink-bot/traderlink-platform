@@ -23,7 +23,10 @@ function visualSymbol(testInfo: TestInfo): string {
   return `VS${Date.now().toString().slice(-5)}${project}${testInfo.workerIndex}`;
 }
 
-async function seedSavedImport(page: Page, testInfo: TestInfo): Promise<SeededSavedImport> {
+async function seedSavedImport(
+  page: Page,
+  testInfo: TestInfo,
+): Promise<SeededSavedImport> {
   const symbol = visualSymbol(testInfo);
   const csvText = [
     "Date,Time,Symbol,Side,Quantity,Price",
@@ -79,9 +82,10 @@ async function assertHealthyPage(page: Page, label: string): Promise<void> {
   const bodyText = await page.locator("body").innerText();
 
   for (const phrase of BROKEN_PAGE_PHRASES) {
-    expect(bodyText, `Broken page phrase appeared on ${label}: ${phrase}`).not.toContain(
-      phrase,
-    );
+    expect(
+      bodyText,
+      `Broken page phrase appeared on ${label}: ${phrase}`,
+    ).not.toContain(phrase);
   }
 
   await assertNoPageOverflow(page, label);
@@ -130,7 +134,10 @@ test.describe("saved import visual and overflow pass", () => {
         path: "/imports",
         assert: async () => {
           await expect(
-            page.getByRole("heading", { exact: true, name: "CSV Import Review" }),
+            page.getByRole("heading", {
+              exact: true,
+              name: "CSV Import Review",
+            }),
           ).toBeVisible();
           await expect(page.getByTestId("import-recovery-queue")).toBeVisible();
           await expect(page.getByText("Saved import").first()).toBeVisible();
@@ -143,16 +150,21 @@ test.describe("saved import visual and overflow pass", () => {
           await expect(
             page.getByRole("heading", { exact: true, name: "Import Batch" }),
           ).toBeVisible();
-          await expect(page.getByTestId("import-batch-action-summary")).toContainText(
-            "Saved import",
-          );
-          await expect(page.getByTestId("import-recovery-actions")).toBeVisible();
-          await expect(page.getByTestId("decision-review-diagnostics")).toContainText(
-            "evidence limits",
-          );
-          await expect(page.getByTestId("import-batch-saved-trades")).toContainText(
-            "Open trade review",
-          );
+          await expect(
+            page.getByTestId("import-batch-action-summary"),
+          ).toContainText("Saved import");
+          await expect(
+            page.getByTestId("import-recovery-actions"),
+          ).toBeVisible();
+          await page
+            .getByText("Advanced import and chart details", { exact: true })
+            .click();
+          await expect(
+            page.getByTestId("decision-review-diagnostics"),
+          ).toContainText("evidence limits");
+          await expect(
+            page.getByTestId("import-batch-saved-trades"),
+          ).toContainText("Open trade review");
           await expect(page.getByText(seeded.symbol).first()).toBeVisible();
         },
       },
@@ -172,7 +184,9 @@ test.describe("saved import visual and overflow pass", () => {
         assert: async () => {
           await expect(page.getByTestId("trade-review-page")).toBeVisible();
           await expect(page.getByText(seeded.symbol).first()).toBeVisible();
-          await expect(page.getByTestId("trade-execution-replay")).toBeVisible();
+          await expect(
+            page.getByTestId("trade-execution-replay"),
+          ).toBeVisible();
         },
       },
       {
@@ -185,23 +199,29 @@ test.describe("saved import visual and overflow pass", () => {
               name: "Trading Performance Dashboard",
             }),
           ).toBeVisible();
-          await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
+          await expect(
+            page.getByTestId("saved-review-summary-strip"),
+          ).toBeVisible();
         },
       },
       {
         label: "coach",
         path: "/coach",
         assert: async () => {
-          await expect(page.getByTestId("coach-next-session-plan")).toBeVisible();
-          await expect(page.getByTestId("coach-supporting-details")).toContainText(
-            "More coach evidence, queue totals, and rule checks",
-          );
+          await expect(
+            page.getByTestId("coach-next-session-plan"),
+          ).toBeVisible();
+          await expect(
+            page.getByTestId("coach-supporting-details"),
+          ).toContainText("More coach evidence, queue totals, and rule checks");
           await page
             .getByText("More coach evidence, queue totals, and rule checks", {
               exact: true,
             })
             .click();
-          await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
+          await expect(
+            page.getByTestId("saved-review-summary-strip"),
+          ).toBeVisible();
           await expect(page.getByText("chart claims gated")).toBeVisible();
         },
       },
@@ -210,9 +230,9 @@ test.describe("saved import visual and overflow pass", () => {
         path: "/review?queue=highest_priority",
         assert: async () => {
           await expect(page.getByTestId("saved-review-queue")).toBeVisible();
-          await expect(page.getByTestId("saved-review-queue-tabs")).toContainText(
-            "Highest Priority",
-          );
+          await expect(
+            page.getByTestId("saved-review-queue-tabs"),
+          ).toContainText("Highest Priority");
         },
       },
     ];
