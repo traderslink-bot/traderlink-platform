@@ -45,7 +45,7 @@ export const TRADER_MISTAKE_TAXONOMY: TraderMistakeTaxonomyItem[] = [
     id: "scaled_loser",
     label: "Review Add After Adverse Movement",
     description:
-      "Size was increased after adverse movement; chart context decides whether this was a planned dip buy or added risk.",
+      "Size was increased after adverse movement; chart evidence decides whether this was a planned dip buy or added risk.",
     severity: "high",
     sourceKind: "execution_only",
     relatedRiskIds: ["size_expansion_after_adverse_price"],

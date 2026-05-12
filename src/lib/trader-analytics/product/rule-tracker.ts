@@ -12,7 +12,7 @@ export const TRADER_RULE_TEMPLATES: TraderRuleTemplate[] = [
     id: "no_adverse_price_adds",
     label: "Require Repair Before Adding Size",
     description:
-      "Reviews trades where size increased after price moved against the position. Use chart context to decide whether the add was a planned dip buy, a repaired trade, or added risk.",
+      "Reviews trades where size increased after price moved against the position. Use chart evidence to decide whether the add was a planned dip buy, a repaired trade, or added risk.",
     evaluationKey: "no_adverse_price_adds",
     supportedParameters: [],
   },

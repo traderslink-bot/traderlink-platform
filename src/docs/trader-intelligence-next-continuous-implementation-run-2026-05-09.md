@@ -296,7 +296,7 @@ Use this tracker to avoid restarting completed slices.
 | Block 11: visual smoke | Completed first slice, ongoing guard | Main desktop route regressions pass. Use browser checks after UI layout changes. |
 | Blocks 12-13: verification/docs | Always required | Run after each multi-slice batch and update docs/log. |
 | Next Block A: same-symbol/session behavior contracts | Completed first session-story slice | Ticker stories and session stories exist. Do not rebuild them; extend only for new certified behaviors or route handoffs. |
-| Market-context read-model bridge | Completed first route-family slice | Product-safe chart-context findings now flow through saved trade threads, review queue, trade detail, analytics, coach, progress, and saved trades. Do not rebuild this bridge; extend it only for new evidence families. |
+| Market-context read-model bridge | Completed first route-family slice | Product-safe chart evidence findings now flow through saved trade threads, review queue, trade detail, analytics, coach, progress, and saved trades. Do not rebuild this bridge; extend it only for new evidence families. |
 | Add-quality ambiguity split | Completed | Execution-only adverse adds stay prompt-only; chart-backed add risk now uses "Added before the trade repaired." Do not rebuild unless regression appears. |
 | After-exit continuation gate | Completed | `exit_left_continuation` requires safe post-exit candles; missing or oversized after-exit evidence is prompt-only. Do not rebuild; extend only into distinct fade/relief behavior if evidence supports it. |
 | Certified finding route handoffs | Completed | `priorityMarketContextFindings`, support/resistance exit counters, trade-detail chart handoff anchor, `/review` chart handoff links, `/trades` support/resistance exit filter, and analytics/coach/progress metric cards are complete. Do not rebuild unless a route regression appears. |
@@ -312,7 +312,7 @@ Use this tracker to avoid restarting completed slices.
 ## Next Continuous Run Starts Here
 
 The next coding run should not redo the completed route-language,
-ticker-story, first session-story setup, first chart-context finding bridge,
+ticker-story, first session-story setup, first chart evidence finding bridge,
 support/resistance exit behavior, re-entry volume comparison,
 protected-profit-before-fade certification, strength-to-repeat session-story
 handoffs, or adverse-add repair wording.
@@ -971,10 +971,10 @@ Actions:
 2. Route queue reasons through the mapper where they reference behaviors.
 3. Keep lane language trader-readable:
    - Highest Priority,
-   - Chart Context Waiting,
+   - Chart data still missing,
    - Open Trades,
    - Needs Technical Follow-Up,
-   - Reviewed With Chart Context.
+   - Reviewed With Chart Evidence.
 4. Each queue item must show:
    - symbol,
    - result/status,
@@ -990,7 +990,7 @@ Tests:
 - review queue does not show raw internal labels,
 - lane language is the approved language,
 - queue item has an `Open Trade Review` action,
-- missing chart context is framed as waiting, not failure,
+- missing chart data is framed as waiting, not failure,
 - prompt-only behavior is not counted as a proven mistake.
 
 Continue condition:
@@ -1010,7 +1010,8 @@ Actions:
 2. Route behavior labels in charts, cards, and drilldowns through the mapper.
 3. Separate analytics into:
    - execution evidence,
-   - chart context available,
+   - chart data available,
+   - chart evidence available,
    - chart data still missing,
    - risks to reduce,
    - strengths to repeat.
@@ -1028,7 +1029,7 @@ Tests:
 
 - analytics behavior chart labels use mapped copy,
 - strengths and risks are separate when supported,
-- chart-context waiting state does not produce level/volume claims,
+- chart-data waiting state does not produce level/volume claims,
 - drilldown language does not expose raw behavior IDs.
 
 Continue condition:
@@ -1748,7 +1749,7 @@ Completed in the latest continuation:
 
 - `/workspace` now uses `Trade review workflow` instead of arrow-chain
   workflow copy.
-- `/workspace` chart-context metric copy now says `Chart Context Waiting` and
+- `/workspace` chart-data metric copy now says `Chart data still missing` and
   explains whether open trades are blocking review.
 - `/workspace` beta/admin details are collapsed under `Beta storage and admin
   notes`; the old `Current Beta Boundary` and `Internal tools` primary labels

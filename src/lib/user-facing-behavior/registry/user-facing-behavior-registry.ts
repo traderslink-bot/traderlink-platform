@@ -39,7 +39,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     evidenceSentence:
       "Detected from the execution sequence: several adds happened before the first meaningful reduction.",
     missingDataSentence:
-      "Chart context can explain whether the trade idea weakened, but it is not required to review the add sequence.",
+      "Chart evidence can explain whether the trade idea weakened, but it is not required to review the add sequence.",
     requiredEvidence: [
       "ordered executions",
       "at least three adds after the first entry",
@@ -80,7 +80,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     tone: "warning",
     opportunityType: "review_prompt",
     evidenceChannel: "execution_only",
-    userFacingLabel: "Review adds that need chart context",
+    userFacingLabel: "Review adds that need chart data",
     plainExplanation:
       "The trade increased size after price had moved against the current position.",
     fixFirstAction:
@@ -88,7 +88,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     evidenceSentence:
       "Detected from adverse-price add evidence in the saved execution summary.",
     missingDataSentence:
-      "Chart context is needed to tell whether this was a planned dip buy, a repaired trade, or added risk into weakness.",
+      "Chart data is needed to tell whether this was a planned dip buy, a repaired trade, or added risk into weakness.",
     requiredEvidence: ["ordered executions", "adverse price add count"],
     optionalEvidence: ["candle structure after the add", "nearest level context"],
     triggerRules: ["adversePriceAddCount is greater than zero"],
@@ -99,7 +99,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: [
       "High confidence that an adverse-price add happened when executions and adverse add count agree.",
-      "Low confidence on whether the add was good or bad until chart context is attached.",
+      "Low confidence on whether the add was good or bad until chart data is attached.",
     ],
     unsupportedFallback:
       "Review each add and decide whether it was a planned dip buy, a repaired trade, or only increased exposure.",
@@ -124,7 +124,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     tone: "warning",
     opportunityType: "review_prompt",
     evidenceChannel: "execution_only",
-    userFacingLabel: "Review adds that need chart context",
+    userFacingLabel: "Review adds that need chart data",
     plainExplanation:
       "The trade added size after the position already had adverse movement.",
     fixFirstAction:
@@ -132,7 +132,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     evidenceSentence:
       "Detected from saved execution facts that count adds after adverse movement.",
     missingDataSentence:
-      "Chart context is needed before calling this a weak add, a planned dip buy, or a constructive add.",
+      "Chart data is needed before calling this a weak add, a planned dip buy, or a constructive add.",
     requiredEvidence: ["ordered executions", "adverse movement before add"],
     optionalEvidence: ["candles after add", "support/resistance context"],
     triggerRules: ["risk IDs or adversePriceAddCount show an adverse add"],
@@ -416,7 +416,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     evidenceSentence:
       "Detected from add executions that happened after the first reduction.",
     missingDataSentence:
-      "Chart context can explain whether the late add had room, but the add timing is execution evidence.",
+      "Chart evidence can explain whether the late add had room, but the add timing is execution evidence.",
     requiredEvidence: ["first reduction", "later add", "meaningful add size"],
     optionalEvidence: ["chart structure after re-add", "volume after re-add"],
     triggerRules: ["addsAfterFirstReductionCount is present and add size is meaningful"],
@@ -480,12 +480,12 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     evidenceSentence:
       "Detected from one entry-side execution, one full exit, and a return to flat.",
     missingDataSentence:
-      "Chart context can judge setup quality, but the clean execution structure is visible from executions.",
+      "Chart evidence can judge setup quality, but the clean execution structure is visible from executions.",
     requiredEvidence: ["one entry-side execution", "one full exit", "closed flat"],
     optionalEvidence: ["setup context", "exit context"],
     triggerRules: ["positionIncreaseCount is one, reductionCount is one, and closedToFlat is true"],
     negativeGuards: [
-      "Do not imply the entry was good without chart context.",
+      "Do not imply the entry was good without chart evidence.",
       "Do not imply this structure fits every trade.",
     ],
     confidenceRules: ["High when the round trip is closed and the execution count is clear."],
@@ -512,7 +512,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     evidenceSentence:
       "Detected from add executions that did not occur at adverse prices versus the prior average entry.",
     missingDataSentence:
-      "Chart context is needed before saying the adds were near support or strength.",
+      "Chart data is needed before saying the adds were near support or strength.",
     requiredEvidence: ["add executions", "no adverse-price adds"],
     optionalEvidence: ["candle structure", "support/resistance context"],
     triggerRules: ["addCountAfterInitialEntry is present and adversePriceAddCount is zero"],
@@ -544,12 +544,12 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     evidenceSentence:
       "Detected from multiple reductions followed by a final exit to flat.",
     missingDataSentence:
-      "Chart context can explain whether those exits matched levels or a fade.",
+      "Chart evidence can explain whether those exits matched levels or a fade.",
     requiredEvidence: ["partial reductions", "closed flat"],
     optionalEvidence: ["planned targets", "post-exit candles"],
     triggerRules: ["partialReductionCount is greater than zero and closedToFlat is true"],
     negativeGuards: [
-      "Do not say each partial was optimal without plan or chart context.",
+      "Do not say each partial was optimal without plan or chart evidence.",
     ],
     confidenceRules: ["High when reductions and flat close are clear."],
     unsupportedFallback:
@@ -606,7 +606,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     evidenceSentence:
       "Detected from a final full-exit execution and flat ending position.",
     missingDataSentence:
-      "Chart context is needed before saying the exit was near the best part of the move.",
+      "Chart data is needed before saying the exit was near the best part of the move.",
     requiredEvidence: ["full exit", "final flat position"],
     optionalEvidence: ["post-exit candles", "planned target"],
     triggerRules: ["closedToFlat is true and fullExitCount is one"],
@@ -669,7 +669,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     evidenceSentence:
       "Detected from reduction executions that realized favorable prices versus the prior average entry.",
     missingDataSentence:
-      "Chart context is needed before saying the reductions were near resistance or before a fade.",
+      "Chart data is needed before saying the reductions were near resistance or before a fade.",
     requiredEvidence: ["reduction executions", "favorable reduction prices"],
     optionalEvidence: ["post-reduction candles", "support/resistance context"],
     triggerRules: ["profitableReductionCount equals reductionCount"],
@@ -718,7 +718,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when distance and level strength are both present."],
     unsupportedFallback:
-      "Wait for chart context, then review whether the entry was too close to resistance.",
+      "Wait for chart data, then review whether the entry was too close to resistance.",
     advancedHowDetected:
       "Mapped from entry_near_daily_4h_resistance when the decision-review layer finds the first fill near daily/4h resistance.",
     routesAllowed: CORE_ROUTES,
@@ -802,7 +802,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when distance and level strength are both present."],
     unsupportedFallback:
-      "Wait for chart context, then review whether the entry had nearby support.",
+      "Wait for chart data, then review whether the entry had nearby support.",
     advancedHowDetected:
       "Mapped from entry_near_daily_4h_support when the decision-review layer finds the first fill near daily/4h support.",
     routesAllowed: CORE_ROUTES,
@@ -841,7 +841,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High only when market context is present but not supportive."],
     unsupportedFallback:
-      "Wait for chart context, then review whether the entry had nearby support.",
+      "Wait for chart data, then review whether the entry had nearby support.",
     advancedHowDetected:
       "Mapped from entry_far_from_daily_4h_support when support context is present but not close enough.",
     routesAllowed: CORE_ROUTES,
@@ -880,7 +880,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when post-exit candle evidence is aligned and complete."],
     unsupportedFallback:
-      "Review whether the exit was early once post-exit chart context is available.",
+      "Review whether the exit was early once after-exit chart evidence is available.",
     advancedHowDetected:
       "Mapped from exit_left_continuation when post-exit candles show favorable continuation after the final exit.",
     routesAllowed: CORE_ROUTES,
@@ -919,7 +919,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["Prompt-only until after-exit candle evidence is aligned."],
     unsupportedFallback:
-      "Review whether the exit had a planned reason, then wait for after-exit chart context before making a continuation conclusion.",
+      "Review whether the exit had a planned reason, then wait for after-exit chart evidence before making a continuation conclusion.",
     advancedHowDetected:
       "Mapped from exit_needs_post_exit_context when exit-quality patterns exist but post-exit candles are missing or incomplete.",
     routesAllowed: CORE_ROUTES,
@@ -990,7 +990,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     evidenceSentence:
       "Detected from add timing plus during-trade chart evidence showing the trade had not clearly repaired before size increased.",
     missingDataSentence:
-      "Execution data can show that size was added after adverse movement, but chart context is needed before calling it unrepaired.",
+      "Execution data can show that size was added after adverse movement, but chart data is needed before calling it unrepaired.",
     requiredEvidence: [
       "add executions",
       "during-trade chart movement around the add",
@@ -1040,12 +1040,12 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when level count and distance evidence are present."],
     unsupportedFallback:
-      "Wait for chart context, then review whether overhead resistance was crowded.",
+      "Wait for chart data, then review whether overhead resistance was crowded.",
     advancedHowDetected:
       "Mapped from stacked_daily_4h_resistance_above_entry when levels-system finds multiple resistance areas above entry.",
     routesAllowed: CORE_ROUTES,
     copySafetyNotes: ["Use overhead structure language, not trade-call language."],
-    testCases: ["stacked resistance maps to certified chart-context copy"],
+    testCases: ["stacked resistance maps to certified chart-evidence copy"],
   },
   {
     behaviorId: "breakout_had_room_above",
@@ -1072,7 +1072,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when both cleared-resistance and room evidence are present."],
     unsupportedFallback:
-      "Wait for chart context, then review whether the breakout had room to continue.",
+      "Wait for chart data, then review whether the breakout had room to continue.",
     advancedHowDetected:
       "Mapped from breakout_had_room_above after levels-system confirms room above cleared resistance.",
     routesAllowed: CORE_ROUTES,
@@ -1106,7 +1106,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     unsupportedFallback:
       "Review whether the entry came after the easy part of the move was already gone.",
     advancedHowDetected:
-      "Mapped from entry_chase_or_late_extension when chart context shows the first entry followed extension.",
+      "Mapped from entry_chase_or_late_extension when chart evidence shows the first entry followed extension.",
     routesAllowed: TRADE_REVIEW_ROUTES,
     copySafetyNotes: ["Use extension language, not an accusation."],
     testCases: ["late-extension entry maps to safe review language"],
@@ -1136,9 +1136,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when entry structure and remaining-room evidence agree."],
     unsupportedFallback:
-      "Review whether the entry had enough room to work once chart context is available.",
+      "Review whether the entry had enough room to work once chart evidence is available.",
     advancedHowDetected:
-      "Mapped from entry_had_constructive_location after chart-context entry structure is available.",
+      "Mapped from entry_had_constructive_location after chart-evidence entry structure is available.",
     routesAllowed: CORE_ROUTES,
     copySafetyNotes: ["Use repeatable structure language without future guarantees."],
     testCases: ["constructive entry location maps to strength copy"],
@@ -1158,7 +1158,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     evidenceSentence:
       "Detected from breakout structure and chart follow-through after the entry.",
     missingDataSentence:
-      "Needs chart context before failed breakout structure can be reviewed.",
+      "Needs chart data before failed breakout structure can be reviewed.",
     requiredEvidence: ["breakout-style entry", "post-entry follow-through"],
     optionalEvidence: ["support/resistance level", "volume context"],
     triggerRules: ["failed breakout entry structure is present"],
@@ -1168,9 +1168,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when breakout structure and failed follow-through are both present."],
     unsupportedFallback:
-      "Review whether the breakout held after entry once chart context is available.",
+      "Review whether the breakout held after entry once chart evidence is available.",
     advancedHowDetected:
-      "Mapped from entry_breakout_failed when chart context identifies failed breakout structure.",
+      "Mapped from entry_breakout_failed when chart evidence identifies failed breakout structure.",
     routesAllowed: TRADE_REVIEW_ROUTES,
     copySafetyNotes: ["Use observed follow-through language only."],
     testCases: ["failed breakout maps to supportable risk copy"],
@@ -1296,7 +1296,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when add-to-level distance is available."],
     unsupportedFallback:
-      "Wait for chart context, then review whether adds happened too close to resistance.",
+      "Wait for chart data, then review whether adds happened too close to resistance.",
     advancedHowDetected:
       "Mapped from adds_near_daily_4h_resistance when levels-system compares add executions to resistance.",
     routesAllowed: CORE_ROUTES,
@@ -1328,7 +1328,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when cleared level and room evidence are present."],
     unsupportedFallback:
-      "Wait for chart context, then review whether the add cleared resistance with room.",
+      "Wait for chart data, then review whether the add cleared resistance with room.",
     advancedHowDetected:
       "Mapped from adds_above_resistance_with_room when levels-system confirms cleared resistance plus room.",
     routesAllowed: CORE_ROUTES,
@@ -1360,7 +1360,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when reduction-to-level distance is available."],
     unsupportedFallback:
-      "Wait for chart context, then review whether reductions happened near resistance.",
+      "Wait for chart data, then review whether reductions happened near resistance.",
     advancedHowDetected:
       "Mapped from reductions_near_resistance when levels-system compares reduction executions to resistance.",
     routesAllowed: CORE_ROUTES,
@@ -1442,7 +1442,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when capture and giveback evidence agree."],
     unsupportedFallback:
-      "Review whether the exit protected enough of the move once chart context is available.",
+      "Review whether the exit protected enough of the move once chart evidence is available.",
     advancedHowDetected:
       "Mapped from exit_captured_trade_well when trade-window exit evidence shows strong capture.",
     routesAllowed: CORE_ROUTES,
@@ -1644,7 +1644,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when final-exit level location and after-exit direction agree."],
     unsupportedFallback:
-      "Review the resistance exit after chart context is available.",
+      "Review the resistance exit after chart evidence is available.",
     advancedHowDetected:
       "Mapped from exit_into_resistance_with_reversal_after_exit or the stabilized recovery variant.",
     routesAllowed: CORE_ROUTES,
@@ -1687,7 +1687,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when resistance location and post-exit continuation agree."],
     unsupportedFallback:
-      "Review whether the exit plan had a runner rule once after-exit chart context is available.",
+      "Review whether the exit plan had a runner rule once after-exit chart evidence is available.",
     advancedHowDetected:
       "Mapped from exit_into_resistance_before_breakout or the stabilized recovery variant.",
     routesAllowed: CORE_ROUTES,
@@ -1731,7 +1731,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when support location and post-exit breakdown agree."],
     unsupportedFallback:
-      "Wait for after-exit chart context, then review whether the exit avoided a support break.",
+      "Wait for after-exit chart evidence, then review whether the exit avoided a support break.",
     advancedHowDetected:
       "Mapped from exit_into_support_before_breakdown, exit_into_thin_support_before_breakdown, or the stabilized recovery variant.",
     routesAllowed: CORE_ROUTES,
@@ -1834,7 +1834,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "first round-trip entry volume",
       "later re-entry volume",
       "same-symbol thread",
-      "saved chart context for both attempts",
+      "saved chart evidence for both attempts",
     ],
     optionalEvidence: ["level location on each attempt", "P/L by round trip"],
     triggerRules: ["later re-entry volume is materially lower than first-push volume"],
@@ -1871,7 +1871,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "first round-trip entry volume",
       "later re-entry volume",
       "same-symbol thread",
-      "saved chart context for both attempts",
+      "saved chart evidence for both attempts",
     ],
     optionalEvidence: ["level location on each attempt", "P/L by round trip"],
     triggerRules: ["later re-entry volume is comparable to or stronger than first-push volume"],
@@ -1943,13 +1943,13 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not call it chasing from speed alone.",
       "Do not say buy/sell signal.",
     ],
-    confidenceRules: ["Remain a prompt until chart context proves extension."],
+    confidenceRules: ["Remain a prompt until chart evidence proves extension."],
     unsupportedFallback:
       "Review whether the entry was rushed or far from a cleaner decision point.",
     advancedHowDetected:
-      "Mapped from chased_entry/chasing but downgraded to a review prompt without chart-context proof.",
+      "Mapped from chased_entry/chasing but downgraded to a review prompt without chart-evidence proof.",
     routesAllowed: TRADE_REVIEW_ROUTES,
-    copySafetyNotes: ["Use review wording unless chart context is attached."],
+    copySafetyNotes: ["Use review wording unless chart evidence is attached."],
     testCases: ["chased_entry cannot drive primary conclusion by default"],
   },
   {

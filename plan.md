@@ -50,10 +50,10 @@ Current next run expectation:
   explicit story kinds, repeated losing attempts no longer masquerade as profit
   giveback, and session stories now cover green-to-red sessions, many attempts
   on one ticker, high trade-count sessions, and open/swing exposure from
-  execution evidence. Product-safe chart-context findings now flow through
+  execution evidence. Product-safe chart evidence findings now flow through
   saved trade threads, review queue, trade detail, analytics, coach, progress,
   and saved trades. Adverse-add execution-only detections now stay as review
-  prompts until chart context proves weak-add risk or constructive-add
+  prompts until chart data proves weak-add risk or constructive-add
   strength, and saved thread read models expose add-quality, post-exit, level,
   and volume evidence counts. Post-exit and volume evidence now split risk,
   strength, and review prompts; profit-protection findings surface as
@@ -61,7 +61,7 @@ Current next run expectation:
   "risk-backed," "strength-backed," "post-exit checks," and visible hyphenated
   "chart-context" wording. The next run should not restart the completed
   route-language, evidence-label, ticker-story surfacing, first thread-story
-  hardening, first session-story pass, first chart-context finding bridge,
+  hardening, first session-story pass, first chart evidence finding bridge,
   add-quality prompt/certification split, or post-exit/volume evidence
   hardening. The after-exit certification gate is also complete:
   `exit_left_continuation` now requires safe post-exit candles, while missing
@@ -151,21 +151,27 @@ Current next run expectation:
   category access for Results, Timing, Behavior, Ticker Stories, Session
   Stories, and Chart Evidence without removing the richer report. Import
   routes also use the completed `Limited sell-side review` language for
-  sell-starting imports. Verify locally, update docs, and keep moving through
-  the next safe slice unless a true global blocker appears.
+  sell-starting imports. The focused follow-up polish pass is complete too:
+  `/imports/[batchId]` now uses `Saved Import` / `Import Details` instead of
+  `Import Batch`, `/imports` uses `Imports To Finish`, `/import-dry-run`
+  tucks P/L/cost and broker mapping/calibration details behind advanced
+  disclosures, and core routes use chart data/evidence wording instead of
+  visible chart-context phrasing. Verify locally, update docs, and keep moving
+  through the next safe slice unless a true global blocker appears.
 - The next implementation start point remains the next-run plan's
   **Required Long-Run Batch Shape** and **Next Run Phase Plan** sections, not
   only the shorter block summary. The next run should complete multiple
   phases before reporting back. Current best slices are screenshot-guided
   beginner-to-advanced flow fixes only when route QA finds a concrete issue,
-  especially on `/import-dry-run`, `/workspace`, `/analytics`, `/progress`, or
+  especially on `/workspace`, `/analytics`, `/progress`, or
   saved-trade handoffs, or deterministic follow-up constructive-management
   variants only when saved chart, level, candle, volume, or after-exit evidence
   can prove them. Do not redo the completed import IA disclosure pass,
-  analytics category-access pass, constructive-management storylines, workspace
-  visual migration, coach old-card cleanup, May 11 coach sequence, review queue
-  simplification, sell-starting limitation copy, route copy/anchor repairs, or
-  trade-detail replay loop unless QA finds a concrete regression.
+  import wording/advanced-detail polish, analytics category-access pass,
+  constructive-management storylines, workspace visual migration, coach
+  old-card cleanup, May 11 coach sequence, review queue simplification,
+  sell-starting limitation copy, route copy/anchor repairs, or trade-detail
+  replay loop unless QA finds a concrete regression.
 
 If this file and the plan index ever disagree, trust the plan index and the
 latest entry in `src/docs/codex-project-log.md`.

@@ -389,7 +389,7 @@ function TickerStoryCoachPanel({
               <MetricCard
                 label="Chart Strengths"
                 value={thread.marketContextStrengthCount}
-                detail="Chart context strengths worth repeating"
+                detail="Chart evidence strengths worth repeating"
                 tone={thread.marketContextStrengthCount > 0 ? "success" : "default"}
               />
               <MetricCard

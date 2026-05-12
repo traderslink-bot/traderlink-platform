@@ -122,7 +122,7 @@ describe("coach overall focus read model", () => {
 
   it("explains adverse-add focus without calling every dip buy a mistake", () => {
     const copy = plainCoachBehaviorExplanation(
-      "Review adds that need chart context",
+      "Review adds that need chart data",
     );
 
     expect(copy).toContain("not automatically a mistake");

@@ -111,7 +111,7 @@ function plainEvidenceSourceLabel(value: string | null | undefined): string {
     normalized.includes("daily_4h") ||
     normalized.includes("market_context")
   ) {
-    return "Chart context evidence";
+    return "Chart evidence";
   }
 
   if (normalized.includes("execution")) {
@@ -174,10 +174,10 @@ function decisionReviewStatusCopy(args: {
 } {
   if (args.hasSnapshot) {
     return {
-      label: "Chart context review ready",
+      label: "Chart evidence ready",
       detail:
-        "Chart review completed. Use it alongside the execution replay and checklist.",
-      scope: "Chart review",
+        "Chart evidence is available. Use it alongside the execution replay and checklist.",
+      scope: "Chart evidence",
       nextAction: "Work the saved checklist and record the final trade lesson.",
       tone: "text-emerald-300",
     };
@@ -223,7 +223,7 @@ function decisionReviewStatusCopy(args: {
   return {
     label: "Execution-only review",
     detail:
-      "No saved decision-review snapshot is attached yet, so this page is limited to execution evidence.",
+      "No saved chart evidence is attached yet, so this page is limited to execution evidence.",
     scope: "Execution-only",
     nextAction: "Review entries, adds, reductions, exits, timing, and P/L evidence.",
     tone: "text-zinc-300",
@@ -687,7 +687,7 @@ export default async function TradeReviewPage({
               body={
                 <>
                   This page is the workbench for one saved trade. Replay the
-                  buys and sells first, use chart context only when it is saved,
+                  buys and sells first, use chart evidence only when it is saved,
                   then write one practical lesson before moving to the next
                   trade.
                 </>
@@ -937,7 +937,7 @@ export default async function TradeReviewPage({
               primaryDecisionReviewInsight
                 ? primaryDecisionReviewInsight.label
                 : decisionReviewSnapshot
-                  ? "Chart context ready"
+                  ? "Chart evidence ready"
                   : "Execution review"
             }
             detail={
@@ -969,12 +969,12 @@ export default async function TradeReviewPage({
                 ? hiddenDecisionReviewInsightCount > 0
                   ? "Some advanced notes"
                   : "Nothing major"
-                : "Chart context"
+                : "Chart data"
             }
             detail={
               decisionReviewSnapshot
                 ? hiddenDecisionReviewInsightCount > 0
-                  ? `${hiddenDecisionReviewInsightCount} chart context note${
+                  ? `${hiddenDecisionReviewInsightCount} chart evidence note${
                       hiddenDecisionReviewInsightCount === 1 ? "" : "s"
                     } stayed in advanced details because normal coaching needs a certified contract.`
                   : "Context is attached."
@@ -1066,10 +1066,10 @@ export default async function TradeReviewPage({
                 Chart, Levels, And Volume Handoff
               </div>
               <h2 className="mt-2 text-lg font-semibold text-zinc-50">
-                Use certified market context while writing the trade lesson.
+                Use certified chart evidence while writing the trade lesson.
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">
-                These findings come from saved market context and should be
+                These findings come from saved chart evidence and should be
                 checked against the execution replay before you write the final
                 review note.
               </p>
@@ -1566,7 +1566,7 @@ export default async function TradeReviewPage({
                     (decisionReviewDiagnostics[0]
                       ? decisionReviewDiagnosticUserMessage(decisionReviewDiagnostics[0])
                       : null) ??
-                    "Chart context review has not completed for this trade yet."}
+                    "Chart data review has not completed for this trade yet."}
                 </div>
               </div>
               <div className="font-mono text-xs text-sky-300">
@@ -1611,7 +1611,7 @@ export default async function TradeReviewPage({
                   </div>
                 ) : (
                   <div className="mt-4 border-t border-zinc-900 pt-3 text-sm text-zinc-500">
-                    Chart context was saved, but no certified normal coaching
+                    Chart evidence was saved, but no certified normal coaching
                     finding is ready for this trade yet. Use the execution
                     replay and checklist first.
                   </div>
@@ -1619,7 +1619,7 @@ export default async function TradeReviewPage({
                 {hiddenDecisionReviewInsightCount > 0 ? (
                   <AdvancedDisclosure summary="Technical chart notes">
                     <div className="mt-3 text-xs leading-5 text-zinc-500">
-                      {hiddenDecisionReviewInsightCount} saved chart context note
+                      {hiddenDecisionReviewInsightCount} saved chart evidence note
                       {hiddenDecisionReviewInsightCount === 1 ? "" : "s"} stayed
                       out of normal coaching because they do not have a
                       user-facing contract for this route yet.

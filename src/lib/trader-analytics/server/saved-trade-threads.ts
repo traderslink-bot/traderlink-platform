@@ -369,7 +369,7 @@ function marketContextEvidenceSourceLabel(
     normalized.includes("daily_4h") ||
     normalized.includes("market_context")
   ) {
-    return "levels and chart context";
+    return "levels and chart evidence";
   }
 
   if (normalized.includes("trade_window")) {
@@ -1048,7 +1048,7 @@ function buildReviewEvidence(thread: {
   if (availableContextCount > 0) {
     evidence.push({
       id: "chart-context-available",
-      title: "Chart context is attached",
+      title: "Chart evidence is attached",
       detail: `${availableContextCount} of ${thread.roundTrips.length} round trip${
         thread.roundTrips.length === 1 ? " has" : "s have"
       } saved chart review with ${insightCount} insight${
@@ -1056,7 +1056,7 @@ function buildReviewEvidence(thread: {
       }.`,
       reviewAction:
         "Use the saved chart insights alongside the execution replay, but keep volume conclusions limited to what the evidence states.",
-      evidenceSource: "saved decision-review snapshots",
+      evidenceSource: "saved chart evidence",
       tone: "success",
     });
   }
@@ -1066,7 +1066,7 @@ function buildReviewEvidence(thread: {
       id: "market-context-insights-available",
       title: certifiedMarketFindings.length > 0
         ? "Chart findings are available"
-        : "Chart context can support review",
+        : "Chart evidence can support review",
       detail: thread.marketContextFindings
         .slice(0, 2)
         .map((finding) => finding.label)
@@ -1143,14 +1143,14 @@ function buildReviewEvidence(thread: {
               ? "Volume context is attached"
           : availableContextCount === thread.roundTrips.length
             ? "Volume context still needs comparison"
-            : "Chart context to check next",
+            : "Chart data to check next",
       detail:
         hasVolumeFinding
           ? primaryVolumeFinding?.label ??
-            "Saved chart context includes volume evidence. Use only the attached evidence before drawing a volume conclusion."
+            "Saved chart evidence includes volume evidence. Use only the attached evidence before drawing a volume conclusion."
           : availableContextCount === thread.roundTrips.length
-            ? "Saved chart context is attached, but this thread model does not yet have a direct first-entry vs re-entry volume comparison."
-            : "This story needs chart and volume context before making a market-context conclusion.",
+            ? "Saved chart evidence is attached, but this thread model does not yet have a direct first-entry vs re-entry volume comparison."
+            : "This story needs chart and volume data before making a market-context conclusion.",
       reviewAction:
         primaryVolumeFinding?.reviewAction ??
         "Compare volume, level location, and price follow-through between the first push and later re-entry.",
@@ -1158,7 +1158,7 @@ function buildReviewEvidence(thread: {
         hasVolumeFinding
           ? primaryVolumeFinding?.evidenceSource ?? "saved volume evidence"
           : availableContextCount === thread.roundTrips.length
-            ? "saved decision-review snapshots"
+            ? "saved chart evidence"
             : "chart data still missing",
       tone: primaryVolumeFinding?.tone ?? "info",
     });

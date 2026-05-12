@@ -195,8 +195,8 @@ function snapshotPriority(snapshot: PersistedDecisionReviewSnapshot): {
     return {
       score: 44,
       reason: primary
-        ? `Chart context has a supporting review prompt: ${primary.label}.`
-        : "Chart context has supporting measurements for review.",
+        ? `Chart evidence has a supporting review prompt: ${primary.label}.`
+        : "Chart evidence has supporting measurements for review.",
     };
   }
 
@@ -314,7 +314,7 @@ function queueStateCopy(lane: SavedReviewQueueItem["lane"]): {
           "Execution review is available, but chart analysis needs a technical follow-up before that feedback is trusted.",
         reviewScopeLabel: "execution-only fallback",
         nextAction:
-          "Use the execution replay now and keep chart context conclusions unavailable until the technical follow-up is resolved.",
+          "Use the execution replay now and keep chart evidence conclusions unavailable until the technical follow-up is resolved.",
       };
     case "skipped_limit":
       return {

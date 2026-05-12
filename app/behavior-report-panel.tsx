@@ -84,7 +84,7 @@ function CoachBehaviorSummary({ report }: { report: AnalyticsBehaviorReport }) {
         </div>
         <div className="mt-2 text-xs leading-5 text-slate-500">
           {riskGroup?.description ??
-            "Keep collecting saved trades and chart context before the coach turns this into a risk rule."}
+            "Keep collecting saved trades and chart data before the coach turns this into a risk rule."}
         </div>
       </div>
       <div className="ti-coach-brief-cell">
@@ -130,7 +130,7 @@ export function BehaviorReportPanel({
   const eyebrow = isCoach ? "Behavior Coaching Map" : "Behavior Report";
   const title = isCoach
     ? "Use chart-backed behavior groups to choose what to fix or repeat."
-    : "What should the trader study from the chart context?";
+    : "What should the trader study from the chart evidence?";
   const body = isCoach
     ? "This uses the same certified evidence as analytics, but turns it into coaching order: reduce the clearest risk, repeat the strongest behavior, and keep uncertain chart behavior as a review prompt."
     : "These groups translate saved executions, support/resistance levels, candle context, volume, and after-exit movement into review questions. Green means repeatable strength, red means risk to inspect, and amber means the evidence is a prompt rather than a conclusion.";

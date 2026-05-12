@@ -152,10 +152,10 @@ function decisionReviewSnapshot(args: {
       insights: [
         {
           category: args.category ?? "market_context",
-          evidence: args.evidence ?? ["Saved chart-context evidence for this test trade."],
+          evidence: args.evidence ?? ["Saved chart evidence for this test trade."],
           id: args.id ?? "entry_near_level",
-          summary: "Entry was reviewed against saved chart context.",
-          title: args.title ?? "Entry location had saved chart context",
+          summary: "Entry was reviewed against saved chart evidence.",
+          title: args.title ?? "Entry location had saved chart evidence",
           tone: args.tone ?? "risk",
         },
       ],
@@ -391,7 +391,7 @@ describe("saved trade thread read model", () => {
     expect(copy).not.toContain("short-seller coaching");
   });
 
-  it("attaches saved chart-context evidence without making unsupported volume claims", () => {
+  it("attaches saved chart evidence without making unsupported volume claims", () => {
     const trades = [
       trade({ id: "cycn-1", pnl: 100 }),
       trade({
@@ -515,7 +515,7 @@ describe("saved trade thread read model", () => {
     expect(thread?.marketContextFindings[0]?.reviewAction).toContain("proof");
   });
 
-  it("counts volume evidence only when saved chart context explicitly mentions volume", () => {
+  it("counts volume evidence only when saved chart evidence explicitly mentions volume", () => {
     const trades = [
       trade({ id: "cycn-1", pnl: 100 }),
       trade({
@@ -530,7 +530,7 @@ describe("saved trade thread read model", () => {
           category: "scaling",
           evidence: [
             "Add happened after the recent move was extended.",
-            "Volume evidence was attached for this saved chart-context review.",
+            "Volume evidence was attached for this saved chart evidence review.",
           ],
           id: "adds_after_trade_already_used_range",
           savedTradeId: "cycn-2",
@@ -816,7 +816,7 @@ describe("saved trade thread read model", () => {
     expect(postExitCard?.title).toBe("After-exit chart check is needed");
     expect(postExitCard?.detail).toBe("Exit needs after-exit chart check");
     expect(postExitCard?.reviewAction.toLowerCase()).toContain(
-      "after-exit chart context",
+      "after-exit chart evidence",
     );
   });
 

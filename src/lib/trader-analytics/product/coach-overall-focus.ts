@@ -78,7 +78,8 @@ export function plainCoachBehaviorExplanation(label: string): string {
       value.includes("adverse") ||
       value.includes("price moved against") ||
       value.includes("repair") ||
-      value.includes("chart context"))
+      value.includes("chart context") ||
+      value.includes("chart data"))
   ) {
     return "The execution replay shows size was added after price had moved against the position. That is not automatically a mistake or a bad dip buy. Check whether support held, price reclaimed, or the trade repaired before the add; if it did not, the add likely increased risk.";
   }

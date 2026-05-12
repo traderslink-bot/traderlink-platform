@@ -201,11 +201,11 @@ export default function ImportsPage() {
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
               <h2 className="text-sm font-semibold text-zinc-100">
-                Import Recovery Queue
+                Imports To Finish
               </h2>
               <p className="mt-1 text-xs text-zinc-500">
                 Import attempts that need row repair, duplicate review, or a
-                final acknowledgement before they should be trusted.
+                final acknowledgement before the saved trades are ready.
               </p>
             </div>
             <div className="font-mono text-xl text-amber-300">
@@ -215,7 +215,7 @@ export default function ImportsPage() {
           <div className="mt-4 grid gap-3">
             {recoveryQueue.length === 0 ? (
               <div className="text-sm text-emerald-300">
-                No active import recovery work.
+                No imports need attention right now.
               </div>
             ) : (
               recoveryQueue.map((item) => (

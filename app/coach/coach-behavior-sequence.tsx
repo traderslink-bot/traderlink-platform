@@ -103,7 +103,7 @@ function focusWhy(
   group: AnalyticsBehaviorReportGroup | null,
 ): string {
   if (!group) {
-    return "The coach will only pick a confident path when saved trade evidence is strong enough. Until then, keep reviewing the next trade and collecting chart context.";
+    return "The coach will only pick a confident path when saved trade evidence is strong enough. Until then, keep reviewing the next trade and collecting chart data.";
   }
 
   if (focusKind === "risk") {
@@ -115,7 +115,7 @@ function focusWhy(
   }
 
   if (focusKind === "review") {
-    return "The evidence is useful, but it is not strong enough for a conclusion yet. Treat it as a review task until the replay, chart context, or written review proves what happened.";
+    return "The evidence is useful, but it is not strong enough for a conclusion yet. Treat it as a review task until the replay, chart evidence, or written review proves what happened.";
   }
 
   return group.description;

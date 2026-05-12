@@ -50,6 +50,7 @@ const BANNED_PRODUCT_PHRASES = [
 
 const CONFUSING_PRIMARY_UI_PHRASES = [
   "chart-context",
+  "chart context",
   "chart context waiting",
   "post-exit check",
   "post-exit checks",

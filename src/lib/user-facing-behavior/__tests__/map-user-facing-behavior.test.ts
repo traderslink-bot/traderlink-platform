@@ -27,13 +27,13 @@ describe("mapUserFacingBehavior", () => {
       behaviorId: "size_expansion_after_adverse_price",
       rawLabel: "Size Expansion After Adverse Price",
       expectedState: "review_prompt",
-      expectedLabel: "Review adds that need chart context",
+      expectedLabel: "Review adds that need chart data",
     },
     {
       behaviorId: "adverse_price_adds",
       rawLabel: "Adds After Price Moved Against You",
       expectedState: "review_prompt",
-      expectedLabel: "Review adds that need chart context",
+      expectedLabel: "Review adds that need chart data",
     },
     {
       behaviorId: "overbuilt_position",
@@ -371,7 +371,7 @@ describe("mapUserFacingBehavior", () => {
     expect(visibleCopy(behavior).toLowerCase()).not.toContain("revenge");
   });
 
-  it("does not certify chase-entry language without chart context", () => {
+  it("does not certify chase-entry language without chart evidence", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "chased_entry",
       rawLabel: "Chased Entry",
@@ -398,7 +398,7 @@ describe("mapUserFacingBehavior", () => {
     expect(visibleCopy(behavior).toLowerCase()).not.toContain("revenge");
   });
 
-  it("keeps execution-only adverse adds as review prompts until chart context proves quality", () => {
+  it("keeps execution-only adverse adds as review prompts until chart evidence proves quality", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "size_expansion_after_adverse_price",
       rawLabel: "Size Expansion After Adverse Price",
@@ -410,7 +410,7 @@ describe("mapUserFacingBehavior", () => {
     expect(behavior.state).toBe("review_prompt");
     expect(behavior.opportunityType).toBe("review_prompt");
     expect(behavior.evidenceChannel).toBe("execution_only");
-    expect(behavior.label).toBe("Review adds that need chart context");
+    expect(behavior.label).toBe("Review adds that need chart data");
     const copy = visibleCopy(behavior).toLowerCase();
     expect(copy).toContain("planned dip buy");
     expect(copy).toContain("repair");
@@ -520,7 +520,7 @@ describe("mapUserFacingBehavior", () => {
     expect(finding.canDrivePrimaryConclusion).toBe(false);
     expect(finding.opportunityType).toBe("review_prompt");
     expect(finding.label).toBe("Exit needs after-exit chart check");
-    expect(finding.reviewAction.toLowerCase()).toContain("after-exit chart context");
+    expect(finding.reviewAction.toLowerCase()).toContain("after-exit chart evidence");
     expect(`${finding.detail} ${finding.reviewAction}`.toLowerCase()).not.toContain(
       "money left behind",
     );

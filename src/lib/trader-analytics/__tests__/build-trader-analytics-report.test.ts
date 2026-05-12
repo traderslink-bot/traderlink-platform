@@ -145,7 +145,7 @@ describe("buildTraderAnalyticsReport", () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: "size_expansion_after_adverse_price",
-          label: "Review adds that need chart context",
+          label: "Review adds that need chart data",
           category: "Review prompt",
         }),
         expect.objectContaining({

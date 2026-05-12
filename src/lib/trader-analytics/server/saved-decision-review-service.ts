@@ -385,11 +385,11 @@ export function buildSavedDecisionReviewReadModel(args: {
     jobs,
     nextAction:
       queuedCount > 0
-        ? "Run saved decision review for queued closed trades."
+        ? "Run saved chart data review for queued closed trades."
         : analysisFailedCount > 0 || marketContextUnavailableCount > 0
           ? "Execution review is available now; keep chart conclusions unavailable until technical follow-up is resolved."
           : completedCount > 0
-            ? "Use persisted decision-review snapshots in guided review."
-            : "Decision review has no completed saved snapshots yet.",
+            ? "Use saved chart evidence snapshots in guided review."
+            : "Chart data review has no completed saved snapshots yet.",
   };
 }

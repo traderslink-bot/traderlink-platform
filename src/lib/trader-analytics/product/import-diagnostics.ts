@@ -738,11 +738,11 @@ export function buildBrokerCsvImportCommitPlan(args: {
   const steps: BrokerCsvImportCommitStep[] = [
     {
       id: "create_import_batch",
-      label: "Create import batch",
+      label: "Create saved import",
       status: fileAlreadyImported ? "blocked" : guardedStatus,
       detail: fileAlreadyImported
-        ? "Duplicate file should not create a new committed batch."
-        : "Save batch metadata, file fingerprint, timezone, confidence, and counts.",
+        ? "Duplicate file should not create another saved import."
+        : "Save import metadata, file fingerprint, timezone, confidence, and counts.",
     },
     {
       id: "save_rows_and_issues",

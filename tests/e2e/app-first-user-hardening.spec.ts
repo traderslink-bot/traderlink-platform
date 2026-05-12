@@ -267,7 +267,7 @@ test.describe("first-user and hardening", () => {
       }),
     ).toBeVisible();
     await expect(page.locator("body")).toContainText(
-      "No production import batch is created here.",
+      "No saved import is created here.",
     );
 
     assertNoProblems();

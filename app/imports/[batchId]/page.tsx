@@ -16,7 +16,7 @@ import { ImportRepairActions } from "./import-repair-actions";
 import { ImportRecoveryActions } from "./import-recovery-actions";
 
 export const metadata: Metadata = {
-  title: "Import Batch | Trader Intelligence",
+  title: "Import Details | Trader Intelligence",
 };
 
 export const dynamic = "force-dynamic";
@@ -56,7 +56,7 @@ function readableDecisionReviewStatus(value: string): string {
   }
 
   if (value === "queued") {
-    return "Waiting For Chart Review";
+    return "Waiting For Chart Data";
   }
 
   if (value === "blocked_open_trade" || value === "trade_open") {
@@ -106,7 +106,7 @@ function diagnosticGuidance(status: string): string {
     return "This chart-data review was skipped by the run limit and can be resumed later.";
   }
 
-  return "Chart review status shows which coaching outputs are ready and which need follow-up.";
+  return "Chart data status shows which coaching outputs are ready and which need follow-up.";
 }
 
 function diagnosticUserMessage(status: string, code: string): string {
@@ -207,7 +207,7 @@ export default async function ImportBatchPage({
             Back to imports
           </Link>
           <h1 className="mt-3 text-3xl font-semibold text-zinc-50">
-            Import Batch
+            {batch.status === "committed" ? "Saved Import" : "Import Details"}
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-zinc-500">
             {batch.brokerLabel}
@@ -297,7 +297,7 @@ export default async function ImportBatchPage({
         <section className="grid gap-4 md:grid-cols-4">
           <div className="ti-panel p-4">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Batch Status
+              Import Status
             </div>
             <div
               className={`mt-3 text-xl font-semibold ${toneClass(batch.status)}`}
@@ -362,7 +362,7 @@ export default async function ImportBatchPage({
             </h2>
             <p className="mt-1 text-xs leading-5 text-zinc-500">
               Open a saved trade to review executions, notes, checklist state,
-              session timing, and any chart review notes.
+              session timing, and any chart evidence notes.
             </p>
             <div className="mt-4 grid gap-2">
               {plan.savedTrades.length === 0 ? (
@@ -481,7 +481,7 @@ export default async function ImportBatchPage({
               </h2>
               <p className="mt-1 text-xs leading-5 text-zinc-500">
                 These statuses explain whether saved trades received completed
-                chart review snapshots or stayed in conservative follow-up
+                chart data snapshots or stayed in conservative follow-up
                 lanes. These are evidence limits, not instructions.
               </p>
               <div className="mt-4 grid gap-2">

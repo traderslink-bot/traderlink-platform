@@ -118,9 +118,9 @@ const BEHAVIOR_REPORT_GROUPS: readonly BehaviorReportGroupDefinition[] = [
   {
     actionLabel: "Open add and dip reviews",
     description:
-      "Dip buys and adds are only scored when chart context shows whether support held, price repaired, or the add increased risk into weakness.",
+      "Dip buys and adds are only scored when chart evidence shows whether support held, price repaired, or the add increased risk into weakness.",
     emptyState:
-      "No certified dip-buy or add-quality evidence yet. Execution-only adverse adds stay as review prompts until chart context proves support, repair, or weakness.",
+      "No certified dip-buy or add-quality evidence yet. Execution-only adverse adds stay as review prompts until chart evidence proves support, repair, or weakness.",
     id: "dip-buy-adds",
     ids: [
       "adds_increased_risk_into_weakness",

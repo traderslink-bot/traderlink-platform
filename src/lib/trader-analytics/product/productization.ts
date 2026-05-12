@@ -183,7 +183,7 @@ export function buildDefaultProductDataRetentionPolicy(): ProductDataRetentionPo
     deletionActions: [
       {
         id: "delete_import_batch",
-        label: "Delete an import batch",
+        label: "Delete a saved import",
         deletesRawData: true,
         deletesNormalizedData: false,
         deletesReports: false,

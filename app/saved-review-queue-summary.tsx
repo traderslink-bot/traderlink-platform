@@ -106,7 +106,7 @@ export function SavedReviewQueueSummary({
           <h2 className="mt-2 text-lg font-semibold text-zinc-100">{title}</h2>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-400">
             Jump from {surface} into the trades that most need review, chart
-            context follow-up, or open-position handling.
+            data follow-up, or open-position handling.
           </p>
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <div className="ti-panel-soft px-3 py-2">

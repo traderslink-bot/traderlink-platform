@@ -148,14 +148,14 @@ function reviewQueueEvidenceCopy(item: SavedReviewQueueItem): {
 
     return {
       body: "Saved chart review is attached. Use it after the execution replay.",
-      label: "Chart context ready",
+      label: "Chart evidence ready",
       tone: "success",
     };
   }
 
   if (item.hasDiagnostics) {
     return {
-      body: "Execution data is saved. Chart context needs technical follow-up.",
+      body: "Execution data is saved. Chart data needs technical follow-up.",
       label: "Execution review now",
       tone: "warning",
     };
@@ -956,7 +956,7 @@ export default async function GuidedReviewPage({
                       </div>
                       <div className="mt-1 text-xs text-zinc-500">
                         {snapshot.review.coachingHeadline ??
-                          "Chart context review saved."}
+                          "Chart evidence review saved."}
                       </div>
                     </Link>
                   ))}
@@ -964,7 +964,7 @@ export default async function GuidedReviewPage({
                 </>
               ) : (
                 <div className="mt-4 text-sm text-zinc-500">
-                  Save an import to persist decision-review snapshots.
+                  Save an import to persist chart evidence snapshots.
                 </div>
               )}
             </div>

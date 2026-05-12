@@ -192,7 +192,7 @@ function insightBorderTone(tone: string): string {
 function decisionReviewCategoryLabel(category: string): string {
   switch (category) {
     case "market_context":
-      return "Market Context";
+      return "Chart Evidence";
     case "entry":
       return "Entry";
     case "scaling":
@@ -200,7 +200,7 @@ function decisionReviewCategoryLabel(category: string): string {
     case "exit":
       return "Exit";
     case "trade_window":
-      return "Trade Window";
+      return "During Trade";
     default:
       return "Other";
   }
@@ -455,8 +455,8 @@ function decisionReviewStatusBadges(
 
   if (review.marketContextSource === "levels_system_daily_4h") {
     badges.push({
-      label: "Full market context",
-      detail: "Daily/4h levels-system context was available for this review.",
+      label: "Full chart data",
+      detail: "Daily/4h levels-system chart data was available for this review.",
       tone: "emerald",
     });
   }
@@ -533,7 +533,7 @@ function buildDecisionReviewEvidenceAlignmentSummary(
     return {
       status: "empty",
       label: "Evidence alignment pending",
-      detail: "Run server decision review to check fix-first labels against visible insights.",
+      detail: "Run chart data review to check fix-first labels against visible insights.",
       checkedReviewCount: 0,
       issueCount: 0,
       issues: [],
@@ -543,7 +543,7 @@ function buildDecisionReviewEvidenceAlignmentSummary(
   const issues: string[] = [];
 
   for (const review of reviews) {
-    const tradeLabel = review.tradeId ?? "decision review";
+    const tradeLabel = review.tradeId ?? "chart data review";
 
     if (
       reviewHasInsight(review, "profit_protection_failed") &&
@@ -651,7 +651,7 @@ function buildDecisionReviewEvidenceGateSummary(args: {
     return {
       status: "pending",
       label: "Evidence gates pending",
-      detail: "Run the server decision review to attach market evidence.",
+      detail: "Run the chart data review to attach chart evidence.",
       totalReviewCount,
       fullMarketContextCount,
       tradeWindowEvidenceCount,
@@ -669,7 +669,7 @@ function buildDecisionReviewEvidenceGateSummary(args: {
       status: "blocked",
       label: "Evidence blocked",
       detail:
-        "No completed chart reviews were attached; technical notes explain which data gate stopped review.",
+        "No completed chart data reviews were attached; technical notes explain which data gate stopped review.",
       totalReviewCount,
       fullMarketContextCount,
       tradeWindowEvidenceCount,
@@ -1110,9 +1110,9 @@ function DecisionReviewEvidenceGates({
 
       <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <EvidenceGateMetric
-          label="Daily/4h Context"
+          label="Daily/4h Chart Data"
           value={`${summary.fullMarketContextCount}/${summary.totalReviewCount}`}
-          detail="full market context"
+          detail="full chart data"
           tone={
             hasCompletedReviews &&
             summary.fullMarketContextCount === summary.totalReviewCount
@@ -2271,14 +2271,14 @@ function PrototypeAnalysisPanel({
       <div className="mt-4 flex flex-col gap-3 border border-zinc-900 bg-zinc-950 p-3 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="text-xs uppercase tracking-wide text-zinc-500">
-            Server Decision Review
+            Chart Data Review
           </div>
           <div
             className="mt-1 text-sm text-zinc-400"
             data-testid="decision-review-status"
           >
             {decisionReviewMessage ??
-              "Run server-side daily/4h decision review for completed grouped trades."}
+              "Run daily/4h chart data review for completed grouped trades."}
           </div>
         </div>
         <button
@@ -2306,15 +2306,15 @@ function PrototypeAnalysisPanel({
           tone={panel.reviewQueueItemCount > 0 ? "text-amber-300" : "text-emerald-300"}
         />
         <Kpi
-          label="Decision Review"
+          label="Chart Data Review"
           value={panel.topDecisionReviewInsights.length > 0 ? "attached" : "pending"}
           detail={panel.coachingHeadline ?? "daily/4h facts attach server-side"}
           tone={panel.topDecisionReviewInsights.length > 0 ? "text-emerald-300" : "text-zinc-400"}
         />
         <Kpi
-          label="Market Context"
+          label="Chart Data"
           value={panel.marketContextSource}
-          detail="VWAP/EMA feedback off"
+          detail="support/resistance evidence only when available"
           tone={panel.marketContextUsed ? "text-emerald-300" : "text-zinc-400"}
         />
       </div>
@@ -2347,8 +2347,8 @@ function PrototypeAnalysisPanel({
           className="mt-4 border border-zinc-900 bg-zinc-950 p-3 text-sm text-zinc-500"
           data-testid="prototype-analysis-coaching"
         >
-          Execution-only prototype preview. Daily/4h decision review facts can
-          attach after server-side trade analysis runs with levels-system data.
+          Execution-only prototype preview. Daily/4h chart data facts can
+          attach after server-side chart data review runs with levels-system data.
         </div>
       )}
 
@@ -2374,12 +2374,12 @@ function PrototypeAnalysisPanel({
                       {review.tradeId ?? `review ${reviewIndex + 1}`}
                     </div>
                     <div className="mt-2 text-base font-semibold text-zinc-100">
-                      {review.coachingHeadline ?? "Decision review attached"}
+                      {review.coachingHeadline ?? "Chart evidence attached"}
                     </div>
                   </div>
                   <div className="grid gap-1 text-xs text-zinc-400 md:text-right">
                     <span>
-                      market: {review.marketContextSource ?? "none"}
+                      chart data: {review.marketContextSource ?? "none"}
                     </span>
                     <span>
                       movement:{" "}
@@ -3280,7 +3280,7 @@ export function ImportDryRunClient({
       requestKey: decisionReviewRequestKey,
       decisionReviews: [],
       diagnostics: [],
-      message: "Running server-side daily/4h decision review.",
+      message: "Running daily/4h chart data review.",
     });
 
     try {
@@ -3305,7 +3305,7 @@ export function ImportDryRunClient({
         throw new Error(
           "error" in body && body.error?.message
             ? body.error.message
-            : "Decision review request failed.",
+            : "Chart data review request failed.",
         );
       }
 
@@ -3320,12 +3320,12 @@ export function ImportDryRunClient({
         diagnostics: body.diagnostics,
         message:
           body.completedReviewCount > 0
-            ? `${body.completedReviewCount} decision review snapshot(s) attached.`
+            ? `${body.completedReviewCount} chart evidence snapshot(s) attached.`
             : marketContextDiagnostic
               ? decisionReviewDiagnosticDisplay(marketContextDiagnostic).summary
               : body.diagnostics[0]
                 ? decisionReviewDiagnosticDisplay(body.diagnostics[0]).summary
-                : "No completed decision review snapshots were available.",
+                : "No completed chart evidence snapshots were available.",
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -3669,10 +3669,18 @@ export function ImportDryRunClient({
         <ReplayPreview experience={experience} />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-2">
-        <PnlReconciliationAssistant experience={experience} />
-        <CostVisibilityPanel experience={experience} />
-      </section>
+      <details
+        className="ti-advanced-panel p-4"
+        data-testid="import-dry-run-advanced-cost-details"
+      >
+        <summary className="cursor-pointer text-sm font-semibold text-zinc-300">
+          Advanced P/L and cost details
+        </summary>
+        <section className="mt-5 grid gap-6 xl:grid-cols-2">
+          <PnlReconciliationAssistant experience={experience} />
+          <CostVisibilityPanel experience={experience} />
+        </section>
+      </details>
 
       <section className="grid gap-6 xl:grid-cols-2">
         <FeedbackComparison experience={experience} />
@@ -3684,8 +3692,18 @@ export function ImportDryRunClient({
       </section>
 
       <BrokerHelpAndErrorLibrary experience={experience} />
-      <BrokerMappingLearningConsole experience={experience} />
-      <BrokerAndCalibration experience={experience} />
+      <details
+        className="ti-advanced-panel p-4"
+        data-testid="import-dry-run-advanced-mapping-details"
+      >
+        <summary className="cursor-pointer text-sm font-semibold text-zinc-300">
+          Advanced mapping and calibration details
+        </summary>
+        <div className="mt-5 grid gap-6">
+          <BrokerMappingLearningConsole experience={experience} />
+          <BrokerAndCalibration experience={experience} />
+        </div>
+      </details>
       <PrivacyDecisionAndMobile
         experience={experience}
         feedbackApproved={feedbackApproved}

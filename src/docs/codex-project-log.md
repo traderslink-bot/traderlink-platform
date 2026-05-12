@@ -13108,3 +13108,50 @@ Current best next step:
   `/import-dry-run` advanced-detail demotion, `/progress` follow-through
   clarity, or any concrete workspace/dashboard handoff issue found in browser
   QA.
+
+## 2026-05-12 - Import Polish And Chart Wording Consistency
+
+Completed the focused post-review polish pass from the latest ChatGPT prompt.
+This was copy, hierarchy, and test coverage work only; no behavior detection or
+evidence-gating logic was rebuilt.
+
+Changes:
+
+- `/imports/[batchId]` now uses `Saved Import` or `Import Details` as the
+  primary route title instead of `Import Batch`; batch ID remains available only
+  inside advanced import/chart details.
+- `/imports` now labels the recovery area `Imports To Finish` with friendlier
+  supporting copy while preserving repair, duplicate review, acknowledgement,
+  and save-continuation logic.
+- `/import-dry-run` now keeps P/L/cost details plus broker mapping/calibration
+  details behind advanced disclosures, so mapping confidence and cost-policy
+  detail are accessible without living in the beginner path.
+- Primary route copy now uses chart data/evidence wording instead of chart
+  context wording across analytics, coach, review, saved review summaries,
+  trade detail, import dry run, and shared user-facing behavior labels.
+- Analytics import-trial access inside advanced details is explicitly marked
+  internal, preserving the admin/QA boundary without deleting the route.
+- Playwright copy-safety now bans visible `chart context` on core product
+  routes, while internal IDs remain unchanged.
+
+Verification:
+
+- `npx vitest run src/lib/user-facing-behavior/__tests__/map-user-facing-behavior.test.ts src/lib/trader-analytics/__tests__/build-trader-analytics-report.test.ts src/lib/trader-analytics/__tests__/coach-overall-focus.test.ts src/lib/trader-analytics/__tests__/analytics-behavior-report.test.ts src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts --reporter=dot --testTimeout=30000`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Focused desktop Playwright for import dry run, saved import routes, saved
+  trade routing, analytics, review, coach, progress, banned product claims, and
+  market-context observational coverage passed.
+- Focused mobile Playwright for core routes and saved-import route readability
+  passed.
+
+Current best next step:
+
+- Do not redo the May 12 import IA pass, this import wording/advanced-detail
+  polish, analytics category access, May 11 coach/review/trade-detail work, or
+  the constructive-management storylines unless QA finds a concrete regression.
+- Next safe UI candidates are `/progress` follow-through clarity or concrete
+  screenshot/browser issues found on `/workspace`, `/analytics`, `/trades`, or
+  saved-trade handoffs. Only move into new behavior work if saved evidence can
+  certify a genuinely distinct deterministic claim.

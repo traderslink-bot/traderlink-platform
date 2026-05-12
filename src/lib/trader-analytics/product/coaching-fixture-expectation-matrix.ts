@@ -237,7 +237,7 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
     {
       id: "adverse_add_loser",
       label:
-        "Adverse add loser keeps adverse adds visible as a review prompt until chart context confirms the story",
+        "Adverse add loser keeps adverse adds visible as a review prompt until chart evidence confirms the story",
       fixtureSource: "sample_trade_fixture",
       tradeId: "trade-repeated-adds",
       expected: {

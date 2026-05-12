@@ -16,11 +16,17 @@ test.describe("CSV dry-run import route", () => {
       page.getByRole("heading", { exact: true, name: "Import Trades" }),
     ).toBeVisible();
     await expect(page.getByTestId("import-workflow-strip")).toContainText(
-      "Upload executions",
+      "Upload CSV",
     );
     await expect(page.getByTestId("import-workflow-step-upload")).toContainText(
       "Current",
     );
+    await page
+      .getByText("Advanced P/L and cost details", { exact: true })
+      .click();
+    await page
+      .getByText("Advanced mapping and calibration details", { exact: true })
+      .click();
 
     for (const label of contract.requiredPanelLabels) {
       await expect(
@@ -48,7 +54,7 @@ test.describe("CSV dry-run import route", () => {
     );
     await expect(page.getByTestId("prototype-analysis-state")).toBeVisible();
     await expect(page.getByTestId("decision-review-status")).toContainText(
-      "Run server-side daily/4h decision review",
+      "Run daily/4h chart data review",
     );
     await expect(
       page.getByTestId("decision-review-request-button"),
@@ -85,6 +91,9 @@ test.describe("CSV dry-run import route", () => {
       mimeType: "text/csv",
       name: "fees-and-commission.csv",
     });
+    await page
+      .getByText("Advanced P/L and cost details", { exact: true })
+      .click();
 
     const costPanel = page.getByTestId("cost-visibility-panel");
 
@@ -119,6 +128,9 @@ test.describe("CSV dry-run import route", () => {
       mimeType: "text/csv",
       name: `${symbol}.csv`,
     });
+    await page
+      .getByText("Advanced P/L and cost details", { exact: true })
+      .click();
 
     await expect(page.getByTestId("cost-visibility-panel")).toContainText(
       "present",
@@ -312,6 +324,9 @@ test.describe("CSV dry-run import route", () => {
     await expect(
       page.getByTestId("decision-review-request-button"),
     ).toBeDisabled();
+    await page
+      .getByText("Advanced P/L and cost details", { exact: true })
+      .click();
     await expect(page.getByTestId("cost-visibility-panel")).toBeVisible();
 
     await page.getByTestId("save-import-button").click();
@@ -377,6 +392,9 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("prototype-analysis-panel")).toContainText(
       "production write: false",
     );
+    await page
+      .getByText("Advanced P/L and cost details", { exact: true })
+      .click();
     await expect(
       page.getByTestId("cost-visibility-scoring-policy"),
     ).toContainText("gross-only");
@@ -461,7 +479,7 @@ test.describe("CSV dry-run import route", () => {
     await page.getByTestId("decision-review-request-button").click();
 
     await expect(page.getByTestId("decision-review-status")).toContainText(
-      "1 decision review snapshot(s) attached.",
+      "1 chart evidence snapshot(s) attached.",
     );
     await expect(page.getByTestId("prototype-analysis-panel")).toContainText(
       "attached",
@@ -480,7 +498,7 @@ test.describe("CSV dry-run import route", () => {
     ).toContainText("Evidence-gated review");
     await expect(
       page.getByTestId("decision-review-evidence-gates"),
-    ).toContainText("Daily/4h Context");
+    ).toContainText("Daily/4h Chart Data");
     await expect(
       page.getByTestId("decision-review-evidence-gates"),
     ).toContainText("Trade Window");
@@ -491,7 +509,7 @@ test.describe("CSV dry-run import route", () => {
       page.getByTestId("decision-review-evidence-alignment"),
     ).toContainText("0/1 flagged");
     await expect(page.getByTestId("decision-review-details")).toContainText(
-      "Market Context",
+      "Chart Evidence",
     );
     await expect(page.getByTestId("decision-review-details")).toContainText(
       "movement: executions only",
@@ -637,7 +655,7 @@ test.describe("CSV dry-run import route", () => {
     ).toContainText("Verified candle basis");
     await expect(
       page.getByTestId("decision-review-status-badges"),
-    ).toContainText("Full market context");
+    ).toContainText("Full chart data");
     await expect(
       page.getByTestId("decision-review-status-badges"),
     ).toContainText("Trade-window evidence");

@@ -107,7 +107,7 @@ const faqItems = [
   {
     question: "Does TradersLink make trade calls?",
     answer:
-      "No. TradersLink is built for scanning, alerts, summaries, chart context, preparation, and trade review. It is not financial advice.",
+      "No. TradersLink is built for scanning, alerts, summaries, chart data, preparation, and trade review. It is not financial advice.",
   },
 ];
 

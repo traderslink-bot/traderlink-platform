@@ -312,7 +312,7 @@ describe("trader coach action loop", () => {
         occurrenceCount: 3,
         sourceRiskIds: ["rapid_entries"],
         confidence: "high",
-        reason: "Execution clustering needs chart context before a chase call.",
+        reason: "Execution clustering needs chart evidence before a chase call.",
         suggestedReviewAction:
           "Check whether the entry was far from a cleaner decision point.",
       },

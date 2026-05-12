@@ -704,7 +704,7 @@ export function buildAccountPlanFoundationViewModel(
       },
       {
         id: "market_context",
-        label: "Chart Context",
+        label: "Chart Evidence",
         importsPerMonth: 100,
         savedTradeHistoryMonths: 60,
         activeRuleLimit: 50,
@@ -742,7 +742,7 @@ export function buildStorageImplementationBoundaryViewModel(args: {
       },
       {
         id: "import_batches",
-        label: "Import Batches",
+        label: "Saved Imports",
         status: "contract_ready",
         recordCount: args.importReview.preview.importResult.rowCount,
         notes: "Import diagnostics, repair state, quality score, and commit plan are ready.",
@@ -772,13 +772,13 @@ export function buildStorageImplementationBoundaryViewModel(args: {
       },
     ],
     transactionBoundaries: [
-      "Commit import batch metadata, row outcomes, repair state, and normalized executions together.",
+      "Save import metadata, row outcomes, repair state, and normalized executions together.",
       "Save grouped trades before queueing execution analysis jobs.",
       "Save notes, lessons, and rule updates as independent user actions.",
-      "Attach market-context outputs only after saved trades exist.",
+      "Attach chart-evidence outputs only after saved trades exist.",
     ],
     deletionBehavior: [
-      "Deleting an import batch removes raw row data and repair state.",
+      "Deleting a saved import removes raw row data and repair state.",
       "Deleting a saved trade removes normalized executions from user analytics.",
       "Deleting an account removes saved trades, reports, notes, rules, and review queue items.",
     ],

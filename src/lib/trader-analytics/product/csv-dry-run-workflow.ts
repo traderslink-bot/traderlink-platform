@@ -1557,7 +1557,7 @@ function buildPrivacyNotice(): CsvDryRunPrivacyNotice {
     body:
       "This flow previews pasted or local CSV text in the current app session and does not save imported trades.",
     bullets: [
-      "No production import batch is created here.",
+      "No saved import is created here.",
       "No broker CSV export or download feature is added.",
       "Full analytics starts later after persistence exists.",
     ],
@@ -2577,7 +2577,7 @@ function buildDecisionCaptureModel(args: {
     items,
     nextAction:
       items.length > 0
-        ? "These local decisions show what future import-batch events should capture."
+        ? "These local decisions show what future saved-import events should capture."
         : "No decisions are ready to capture yet.",
   };
 }

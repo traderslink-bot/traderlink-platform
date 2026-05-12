@@ -166,10 +166,14 @@ Current active batch:
   safety, quality breakdowns, reconstruction previews, duplicate internals,
   and chart-review counts behind advanced disclosures; `/analytics` now exposes
   Results, Timing, Behavior, Ticker Stories, Session Stories, and Chart Evidence
-  category access -> continue with focused screenshot fixes only if concrete
-  route issues appear, or inspect only genuinely distinct
-  constructive-management variants if saved evidence can certify them without
-  broader claims.
+  category access -> completed focused import wording and chart-language polish:
+  `/imports/[batchId]` uses `Saved Import` / `Import Details`, `/imports` uses
+  `Imports To Finish`, `/import-dry-run` keeps P/L/cost and mapping/calibration
+  details behind advanced disclosures, and primary routes use chart data/evidence
+  wording instead of visible chart-context phrasing -> continue with focused
+  screenshot fixes only if concrete route issues appear, or inspect only
+  genuinely distinct constructive-management variants if saved evidence can
+  certify them without broader claims.
 - Next continuous implementation run scope: work from
   `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
   The completed route-family language and mapper pass should be preserved, not
@@ -180,10 +184,11 @@ Current active batch:
   slice, broader verification when code changes require it, and docs/logs
   before final response. Current best slices are focused beginner-to-advanced
   route fixes only if screenshot/browser QA finds a concrete issue,
-  particularly around `/import-dry-run`, `/workspace`, `/analytics`,
-  `/progress`, or saved-trade handoffs, or a follow-up
+  particularly around `/workspace`, `/analytics`, `/progress`, or saved-trade
+  handoffs, or a follow-up
   constructive-management variant only when saved evidence proves it. Do not
-  redo the completed import IA disclosure pass, analytics category-access pass,
+  redo the completed import IA disclosure pass, import wording/advanced-detail
+  polish, analytics category-access pass,
   `/workspace` visual-system migration, `/coach` old-card cleanup, May 11 coach
   behavior sequence, review queue task-card simplification, sell-starting
   limitation copy, workspace chart-data wording, route copy/anchor repairs,
@@ -199,10 +204,10 @@ Current active batch:
   thread stories now have explicit story kinds, repeated losing attempts no
   longer masquerade as profit giveback, touched route copy uses plain user
   language, session stories now surface execution-only full-day review, and
-  product-safe chart-context findings now flow through saved trade threads,
+  product-safe chart evidence findings now flow through saved trade threads,
   review queue, trade detail, analytics, coach, progress, and saved trades.
   Adverse-add execution-only detections now stay as review prompts until
-  chart context proves weak-add risk or constructive-add strength. Saved thread
+  chart data proves weak-add risk or constructive-add strength. Saved thread
   read models expose add-quality, post-exit, level, and volume evidence counts.
   Post-exit and volume findings now split risk, strength, and review prompts;
   profit-protection findings surface as after-exit evidence; and core route
@@ -211,7 +216,7 @@ Current active batch:
   After-exit continuation certification is now gated behind safe post-exit
   candles, while missing or oversized after-exit cases stay prompt-only. The
   next run should not rebuild ticker stories, the first session-story layer,
-  the chart-context finding bridge, the add-quality split, the first
+  the chart evidence finding bridge, the add-quality split, the first
   post-exit/volume evidence hardening pass, or the after-exit certification
   gate. Support/resistance-aware exit behavior and first-entry versus re-entry
   volume comparison are now also implemented and verified. The route handoff
@@ -238,7 +243,7 @@ Current active batch:
   review -> progress flow, `/analytics` chart mode is grouped by outcome,
   timing, and behavior with red/green/amber meaning, `/progress` has a workflow
   handoff, and adverse-add primary labels now say `Review adds that need chart
-  context` / `Adds Needing Review`.
+  data` / `Adds Needing Review`.
   The first screenshot-guided visual/mobile polish pass is complete too:
   shared dashboard surfaces are lighter, metric cards are shorter, chart bars
   use cleaner red/green semantics, `/review` no longer exposes raw trade IDs
@@ -295,14 +300,17 @@ Current active batch:
   `add_into_strength_with_constructive_final_exit` now surface as
   combined-evidence strengths through decision review, saved threads, and the
   analytics behavior report. The refreshed suggestions-file route hierarchy is
-  now partially implemented: `/imports` and `/imports/[batchId]` default to
-  beginner-safe import state, repair, save, saved-trade, and next-action
-  surfaces, while technical import/chart details stay behind advanced
-  disclosures; `/analytics` adds explicit category access for Results, Timing,
-  Behavior, Ticker Stories, Session Stories, and Chart Evidence. Continue with
-  focused screenshot fixes only if concrete route issues appear, or extend
-  constructive-management coverage only when saved evidence can certify a
-  genuinely distinct deterministic variant.
+  now implemented and polished for the current import/analytics slice:
+  `/imports` and `/imports/[batchId]` default to beginner-safe import state,
+  repair, save, saved-trade, and next-action surfaces, while technical
+  import/chart details stay behind advanced disclosures; `/analytics` adds
+  explicit category access for Results, Timing, Behavior, Ticker Stories,
+  Session Stories, and Chart Evidence; `/imports/[batchId]` uses
+  `Saved Import` / `Import Details`; `/imports` uses `Imports To Finish`; and
+  `/import-dry-run` keeps P/L/cost and mapping/calibration details behind
+  advanced disclosures. Continue with focused screenshot fixes only if concrete
+  route issues appear, or extend constructive-management coverage only when
+  saved evidence can certify a genuinely distinct deterministic variant.
   Uncertain behavior must become a review prompt or stay internal. The next run
   must not stop after one verified slice; it must keep
   going through the next safe route or behavior family.
@@ -354,7 +362,7 @@ Future likely feature plans to create when needed:
   explanation, open/swing views, and dense saved-data navigation.
 - `trader-intelligence-trade-detail-continuous-product-plan-YYYY-MM-DD.md`
   for `/trades/[tradeId]` replay, writing flow, evidence, notes, similar
-  trades, and chart-context review.
+  trades, and chart evidence review.
 - `trader-intelligence-import-flow-continuous-product-plan-YYYY-MM-DD.md`
   for `/import-dry-run`, `/imports`, repair/save flow, import trust, and
   user-facing CSV state language.

@@ -397,7 +397,7 @@ function TickerStoryAnalyticsPanel({
           <div className="mt-2 text-sm leading-6 text-zinc-400">
             These are not extra trades. They group same-symbol re-entries so a
             trader can ask whether a later attempt protected profit, gave back
-            profit, stayed open, or needs chart context before the lesson is
+            profit, stayed open, or needs chart data before the lesson is
             written.
           </div>
         </div>
@@ -457,7 +457,7 @@ function TickerStoryAnalyticsPanel({
             <MetricCard
               label="Chart Strengths"
               value={String(summary.marketContextStrengthCount)}
-              detail="Chart context strengths worth repeating"
+              detail="Chart evidence strengths worth repeating"
               tone={
                 summary.marketContextStrengthCount > 0 ? "success" : "default"
               }
@@ -1095,7 +1095,7 @@ function AnalyticsChartGalleryPanel({
                 worth reviewing. It does not tell you what to trade next.
               </p>
               <p>
-                If chart context is needed, open the review item and check
+                If chart data is needed, open the review item and check
                 whether support, resistance, volume, and after-exit movement are
                 actually available.
               </p>
@@ -2499,17 +2499,17 @@ function ImportTrialExperiencePanel({
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 className="text-sm font-semibold text-zinc-100">
-              Import Trial Readiness
+              Internal Import Trial Readiness
             </h2>
             <div className="mt-1 text-sm text-zinc-500">
-              {experience.harness.fixtureStrategy}
+              Admin-only QA checks. {experience.harness.fixtureStrategy}
             </div>
           </div>
           <Link
             className="text-sm text-sky-300 hover:text-sky-200"
             href="/import-trials"
           >
-            Open trials
+            Open internal trials
           </Link>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-4">
@@ -2907,7 +2907,7 @@ export function AnalyticsClient({
                     value={formatPercent(
                       report.executionBehavior.adversePriceAddRate,
                     )}
-                    detail={`${report.executionBehavior.adversePriceAddTradeCount} trades where chart context decides whether the add repaired or added exposure`}
+                    detail={`${report.executionBehavior.adversePriceAddTradeCount} trades where chart data decides whether the add repaired or added exposure`}
                     tone="warning"
                   />
                   <MetricCard

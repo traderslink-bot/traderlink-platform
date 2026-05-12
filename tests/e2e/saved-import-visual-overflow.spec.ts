@@ -20,7 +20,12 @@ function visualSymbol(testInfo: TestInfo): string {
     : testInfo.project.name.includes("tablet")
       ? "T"
       : "D";
-  return `VS${Date.now().toString().slice(-5)}${project}${testInfo.workerIndex}`;
+  const seed = Date.now() + testInfo.workerIndex;
+  const first = String.fromCharCode(65 + (seed % 26));
+  const second = String.fromCharCode(65 + (Math.floor(seed / 26) % 26));
+  const worker = String.fromCharCode(65 + (testInfo.workerIndex % 26));
+
+  return `VS${first}${second}${project}${worker}`;
 }
 
 async function seedSavedImport(
@@ -148,7 +153,7 @@ test.describe("saved import visual and overflow pass", () => {
         path: `/imports/${encodeURIComponent(seeded.batchId)}`,
         assert: async () => {
           await expect(
-            page.getByRole("heading", { exact: true, name: "Import Batch" }),
+            page.getByRole("heading", { exact: true, name: "Saved Import" }),
           ).toBeVisible();
           await expect(
             page.getByTestId("import-batch-action-summary"),
