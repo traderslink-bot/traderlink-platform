@@ -126,7 +126,7 @@ describe("CSV dry-run import UI workflow", () => {
     );
   });
 
-  it("covers richer generic fixture shapes for shorts, partial exits, and extended hours", () => {
+  it("covers richer generic fixture shapes for unsupported sell starts, partial exits, and extended hours", () => {
     const presets = Object.fromEntries(
       getCsvDryRunSamplePresets().map((preset) => [preset.id, preset]),
     );
@@ -143,12 +143,10 @@ describe("CSV dry-run import UI workflow", () => {
       broker: presets["preset:generic-extended-hours"].broker,
     });
 
-    expect(shortCover.tradeGroupingReview.items[0]).toMatchObject({
-      symbol: "IWM",
-      tradeDirection: "short",
-      lifecycleStatus: "closed",
-    });
-    expect(shortCover.costVisibility.totalCosts).toBeCloseTo(2.24);
+    expect(shortCover.tradeGroupingReview.totalCount).toBe(0);
+    expect(
+      shortCover.preview.importResult.issues.map((item) => item.code),
+    ).toContain("sell_starting_trade_skipped");
 
     expect(partialExits.tradeGroupingReview.items[0]).toMatchObject({
       symbol: "MSFT",
@@ -169,6 +167,36 @@ describe("CSV dry-run import UI workflow", () => {
     expect(
       extendedHours.tradeGroupingReview.items.map((item) => item.entryHourLabelEt),
     ).toEqual(expect.arrayContaining(["04:00-04:59 ET", "16:00-16:59 ET"]));
+  });
+
+  it("applies IBKR grouping rules after automatic broker detection", () => {
+    const csvText = [
+      "Statement,Account,U123456",
+      "Generated,2026-05-02",
+      "Trades,Header,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,Trade ID,Proceeds,Comm/Fee",
+      'Trades,Data,Stocks,USD,SIDU,"2026-04-02, 18:00:57",200,3.03,IB-1,-606.00,-1.00',
+      'Trades,Data,Stocks,USD,SIDU,"2026-04-02, 18:01:30",20,3.035,IB-2,-60.70,-1.00',
+      'Trades,Data,Stocks,USD,SIDU,"2026-04-06, 12:43:35",-100,3.14,IB-3,314.00,-1.00',
+      'Trades,Data,Stocks,USD,SIDU,"2026-04-08, 14:33:10",-120,3.92,IB-4,470.40,-1.00',
+    ].join("\n");
+    const experience = buildCsvDryRunImportExperience({
+      csvText,
+      broker: "auto",
+      accountTimezone: "America/New_York",
+    });
+
+    expect(experience.broker).toBe("ibkr_activity_statement");
+    expect(experience.tradeGroupingReview.items).toMatchObject([
+      {
+        symbol: "SIDU",
+        lifecycleStatus: "closed",
+        groupingReason: "flat_position",
+        finalPositionShares: 0,
+      },
+    ]);
+    expect(
+      experience.executionAnomalyDetector.items.map((item) => item.type),
+    ).not.toContain("open_leftover");
   });
 
   it("covers broker-specific synthetic fixtures for partial fills and mixed activity", () => {

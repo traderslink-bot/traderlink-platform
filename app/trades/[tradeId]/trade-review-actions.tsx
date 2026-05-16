@@ -222,7 +222,7 @@ export function TradeReviewActions({
           <div className="flex flex-wrap gap-2 lg:justify-end">
             <Link
               className="inline-flex items-center justify-center rounded-md border border-slate-950 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-              href="/coach#progress-follow-through"
+              href="/coach/progress"
             >
               Back to Coach
             </Link>

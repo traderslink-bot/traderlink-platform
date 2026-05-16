@@ -23,6 +23,7 @@ export type SavedReviewQueueFilter =
   | "blocked_open_trade"
   | "analysis_failed"
   | "highest_priority"
+  | "queued"
   | "unresolved";
 
 export interface SavedReviewQueueTab {
@@ -92,6 +93,7 @@ const FILTER_LABELS: Record<SavedReviewQueueFilter, string> = {
   blocked_open_trade: "Open Trades",
   analysis_failed: "Needs Technical Follow-Up",
   highest_priority: "Highest Priority",
+  queued: "Chart Data Waiting",
   unresolved: "Needs Review",
 };
 
@@ -243,7 +245,7 @@ function diagnosticPriority(
     score: diagnostic ? 70 : 52,
     reason: diagnostic
       ? "Technical follow-up is needed before chart feedback is trusted."
-      : "Queued trade is waiting for trade review.",
+      : "Queued trade is waiting for chart-data review.",
   };
 }
 
@@ -326,10 +328,12 @@ function queueStateCopy(lane: SavedReviewQueueItem["lane"]): {
       };
     case "queued":
       return {
-        stateLabel: "Waiting for trade review",
-        stateDetail: "This saved trade is waiting for chart-data review.",
-        reviewScopeLabel: "queued",
-        nextAction: "Refresh chart-data review when market context is ready.",
+        stateLabel: "Chart data waiting",
+        stateDetail:
+          "Execution review is available now. Chart evidence has not been attached to this saved trade yet.",
+        reviewScopeLabel: "execution now, chart data waiting",
+        nextAction:
+          "Open the execution review now, or resume chart-data review from the saved import details.",
       };
   }
 }

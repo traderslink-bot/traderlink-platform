@@ -13205,3 +13205,1207 @@ Current best next step:
   final import summary-card fix, analytics category access, May 11
   coach/review/trade-detail work, or constructive-management storylines unless
   new screenshots/tests reveal a real regression.
+
+## 2026-05-12 - Normalized Analytics Conclusions Plan Added
+
+User flagged an important analytics interpretation issue: raw total P/L by
+session can be true but misleading when one large trade dominates a smaller
+bucket. Created a dedicated feature plan so future analytics and coaching work
+does not turn total-dollar rankings into overconfident "best/worst time"
+claims.
+
+New plan:
+
+- `src/docs/trader-intelligence-normalized-analytics-conclusions-plan-2026-05-12.md`
+
+Current best next step:
+
+- When analytics work resumes, use this plan to add bucket-level normalized
+  context such as average P/L, median P/L, win rate, sample-size labels, largest
+  trade impact, and outlier-dominated wording before changing coach/review
+  conclusions. Keep the current total P/L charts, but make broad feedback more
+  careful and evidence-aware.
+
+## 2026-05-12 - Normalized Timing Analytics Read Model And UI Slice
+
+Started the normalized analytics conclusions plan after user QA raised the
+raw-total P/L interpretation risk.
+
+Changes:
+
+- Time-of-day buckets now expose median P/L, absolute P/L movement, largest
+  winner, largest loser, largest absolute driver trade, outlier share,
+  sample-size label, and a normalized conclusion kind.
+- Timing conclusions now distinguish insufficient samples,
+  outlier-dominated totals, consistent weakness, consistent strength, and mixed
+  evidence.
+- Session-time insight copy no longer calls total-dollar buckets `Best entry
+session` or `Weakest entry session`; it uses highest/lowest total-result
+  language with sample-size, median, win-rate, and outlier caveats.
+- `/analytics` now labels the chart `Total P/L by Session`, shows average and
+  median in timing cards, and adds an `Outlier Check` in the timing panel.
+- The normalized analytics plan and plan index were tightened so future work
+  uses `abs(largestTradePnl) / sum(abs(eachTradePnl))`, requires driver trade
+  references, and avoids turning statistical observations into trade advice.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/build-trader-analytics-report.test.ts src/lib/trader-analytics/__tests__/trader-coach-action-loop.test.ts src/lib/trader-analytics/__tests__/coaching-language-readiness.test.ts --reporter=dot --testTimeout=30000`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npx vitest run src/lib/trader-analytics/__tests__/trader-improvement-intelligence.test.ts src/lib/trader-analytics/__tests__/end-user-product-intelligence.test.ts src/lib/trader-analytics/__tests__/build-trader-analytics-report.test.ts --reporter=dot --testTimeout=30000`
+  passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "analytics product intelligence|coach product loop|guided review workflow|progress and behavior|banned product claims" --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable|mobile usability" --timeout=150000`
+  passed.
+
+Current best next step:
+
+- Continue the normalized analytics plan with driver-trade handoffs from timing
+  conclusions into `/analytics`, `/coach`, and `/review`, then add progress
+  follow-through only when review data can prove the timing issue was actually
+  reviewed.
+
+## 2026-05-12 - Beginner-First Import Dry Run Start
+
+User walked the app like a new trader and flagged `/import-dry-run` as still
+feeling too much like an import/admin QA dashboard. Simplified the default
+journey so the first screen is upload/check/save oriented while preserving the
+advanced evidence and operator details behind disclosures.
+
+Changes:
+
+- `/workspace` now describes the import step as uploading a broker CSV, letting
+  the app check it, and saving clean trades for review.
+- `/import-dry-run` now starts with `Upload Your CSV`, beginner upload copy,
+  a local CSV picker, and the large raw CSV textarea collapsed behind
+  `Paste CSV instead or view parsed text`.
+- Added a simple `What happens after upload` section: app checks rows, save
+  import, then review trades.
+- Row repair and column mapping are only promoted in the beginner path when the
+  import actually has rejected rows or a blocked confidence gate.
+- Import session summary, execution readiness, grouping review, walkthrough,
+  evidence drill-in, feedback preview, replay preview, P/L/cost detail,
+  prototype analysis, readiness scoring, repair carry-forward, confidence gate,
+  session state, technical diagnostics, broker mapping/calibration, privacy,
+  decision capture, and QA notes remain available behind advanced disclosures.
+- Updated Playwright coverage so tests follow the new disclosure model instead
+  of expecting advanced import panels or analytics trade filters on the first
+  screen.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-first-user-hardening.spec.ts --project=chromium-desktop -g "guides a first user|keeps core controls accessible|handles abusive CSV" --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop -g "renders the required product panels|captures screenshot-ready visual smoke" --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "parses representative broker CSV files|guided end-user path|core mobile routes|keeps banned product claims" --timeout=150000`
+  passed with the mobile-only case skipped on the desktop project.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable" --timeout=150000`
+  passed.
+
+Current best next step:
+
+- Do not rebuild the beginner-to-advanced import IA or re-expose the dry-run
+  QA console as the default import page. If import work continues, focus on the
+  real save/repair handoff clarity: after a clean upload, the user should be
+  sent naturally into saved trades or the first trade review; if rows need
+  attention, only the needed repair fields should become prominent.
+- Separately, continue the normalized analytics conclusions plan with
+  driver-trade handoffs only after the import flow remains stable.
+
+## 2026-05-12 - Import Auto-Detect And Demo/Admin Demotion
+
+User questioned whether a trader should have to pick a broker, why `Try a
+sample` was visible, and whether timezone should be a default responsibility.
+The answer is that the app should detect the broker from CSV headers when it
+can, keep samples as demo/admin fixtures, and treat timezone as an advanced
+correction only when CSV timestamps lack timezone information.
+
+Changes:
+
+- `/import-dry-run` now defaults to no sample data and broker `auto` instead of
+  preloading the IBKR sample.
+- The default upload card shows a CSV picker; the broker selector is no longer
+  part of the beginner path.
+- Broker override and CSV timezone moved behind `Show advanced import
+settings`, with copy that tells users to leave them alone unless the app
+  asks for help.
+- Sample fixtures moved behind `Show demo/admin sample files`; they remain
+  available for product QA without looking like a normal trader action.
+- Uploading a real local CSV resets the broker mode back to `auto` so the app
+  attempts detection from the actual file.
+- Focused Playwright helpers were updated to open advanced/demo controls only
+  when tests intentionally need them.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop -g "renders the required product panels|captures screenshot-ready visual smoke" --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/app-first-user-hardening.spec.ts --project=chromium-desktop -g "guides a first user|keeps core controls accessible|handles abusive CSV" --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "parses representative broker CSV files|guided end-user path|core mobile routes|keeps banned product claims" --timeout=150000`
+  passed with the mobile-only case skipped on desktop.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable" --timeout=150000`
+  passed.
+
+Current best next step:
+
+- Keep import defaults automatic. Do not reintroduce sample files, broker
+  selection, or timezone as first-screen trader responsibilities.
+- A future import hardening slice can improve confidence messaging when broker
+  auto-detection falls back to the generic mapper, but that should still be an
+  app-led repair prompt rather than a required pre-upload choice.
+
+## 2026-05-12 - Minimal CSV Upload Start Page
+
+User reviewed the `/import-dry-run` first screen again and correctly flagged
+the visible broker-detection explanation as unnecessary end-user copy. Created
+a fresh minimal upload route and moved the normal import entry point there,
+while keeping `/import-dry-run` available as the advanced/import QA surface.
+
+Changes:
+
+- Removed the visible broker auto-detect notice from `/import-dry-run`.
+- Replaced the `/import-dry-run` first status tile with a plain `File` tile.
+- Added `/upload-csv`, a one-card route with only a CSV file input and submit
+  button before any status message appears.
+- The `/upload-csv` submit path reads the selected CSV, sends it through the
+  existing import preview API with broker `auto`, commits clean imports, and
+  redirects to the saved import detail route. Imports that need repair/review
+  redirect to their import detail page instead of exposing the advanced dry-run
+  UI first.
+- Updated `/workspace` and `/first-run` so the normal start action goes to
+  `/upload-csv`. `/import-dry-run` remains available for advanced testing,
+  repair, and QA.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop -g "renders the required product panels|captures screenshot-ready visual smoke" --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/app-first-user-hardening.spec.ts --project=chromium-desktop -g "guides a first user|keeps core controls accessible|handles abusive CSV" --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "loads the main end-user routes|guided end-user path|completes the demo user path|keeps banned product claims" --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable" --timeout=150000`
+  passed.
+
+Current best next step:
+
+- Treat `/upload-csv` as the end-user first import page and `/import-dry-run`
+  as the advanced/import QA page. The next import UX work should make the
+  post-upload redirect feel natural after save or repair, not add more controls
+  to the upload card.
+
+## 2026-05-12 - Upload Result Alert And Skipped-Row Demotion
+
+User tested the new `/upload-csv` route with the April CSV and correctly liked
+the duplicate detection, but the immediate redirect into import details felt too
+abrupt. The import detail page also showed repeated `Non-execution row skipped`
+items as if the end user needed to resolve them, even though the app had already
+handled those rows safely.
+
+Changes:
+
+- Updated `/upload-csv` so submit stays on the upload page and shows a clear
+  result card after the app checks the CSV.
+- Clean imports show a saved-import alert with an `Open saved import` action.
+- Duplicate or repair/review cases show a needs-attention alert with an import
+  details action, rather than surprise-redirecting.
+- Updated `/imports/[batchId]` so default repair actions only show actionable
+  open/fix-required items.
+- Automatically handled informational row notes, including skipped non-execution
+  rows, stay available behind `Advanced import and chart details` as traceability
+  instead of default trader work.
+- Updated the guided end-user Playwright path to expect the upload result alert
+  before opening import details.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/saved-import-visual-overflow.spec.ts --project=chromium-desktop --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "completes the demo user path|guided end-user path|loads the main end-user routes" --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/app-first-user-hardening.spec.ts --project=chromium-desktop -g "guides a first user|keeps no-trades empty state" --timeout=150000`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable" --timeout=150000`
+  passed.
+- `git diff --check` passed with existing CRLF warnings in docs/import tests.
+
+Current best next step:
+
+- Reset the local demo SQLite store after verification when the user wants a
+  fresh manual upload test. Continue treating `/upload-csv` as the beginner
+  start and `/import-dry-run` as the advanced/QA import surface.
+
+## 2026-05-12 - Workspace Empty-State No Longer Looks Like Imported Data
+
+User noticed the clean workspace could show `ABCD`/`EFGH` sample trades after
+reset and reasonably worried the IBKR CSV upload had produced fake data. Local
+inspection showed the live SQLite/API state was empty (`trades=0`,
+`imports=0`) and the private IBKR artifact file was intact:
+`artifacts/real-csv-calibration/private/U21845737_202604_202604.csv` parses as
+IBKR with 574 accepted executions, 207 grouped trade requests, and 79 unique
+symbols, with no `ABCD` or `EFGH`.
+
+Changes:
+
+- Updated `/workspace` so an empty local account shows `No saved import yet`
+  and `0` saved trades instead of counting sample fallback trades.
+- Empty workspace metric cards and primary actions now link to `/upload-csv`,
+  not `/import-dry-run` or sample-backed trade/review routes.
+- Verified the rendered `/workspace` HTML includes the empty-state copy and no
+  longer includes `ABCD`, `EFGH`, or the sample fallback label.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `git diff --check` passed with existing CRLF warnings in docs/import tests.
+
+Current best next step:
+
+- Retry the private IBKR CSV through `/upload-csv`. If the upload succeeds, the
+  saved workspace should switch from empty state to the real imported symbols
+  and counts. If it does not, inspect the upload result alert before changing
+  import parsing logic.
+
+## 2026-05-12 - Coach Empty-State Matches Workspace
+
+User noticed `/workspace` showed no trades after reset while `/coach` still
+showed `ABCD`/`EFGH` sample coaching trades. Live API state was empty
+(`trades=0`, `imports=0`), so this was not a reset or cache problem; `/coach`
+was still using sample fallback content as the default empty state.
+
+Changes:
+
+- Updated `/coach` so the normal end-user route shows an honest empty coach
+  state when no saved import exists: `No saved import yet`, `0 saved trades`,
+  and an `Import trades` action to `/upload-csv`.
+- Kept the full sample coach experience available only through
+  `/coach?demo=sample` for explicit demo/testing use.
+- Updated focused coach Playwright coverage to use `/coach?demo=sample` for
+  deep sample-coach assertions.
+- Restarted the local dev server on port `3100`.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Restarted dev server response check confirmed `/coach` contains the empty
+  state and does not contain `ABCD`, `EFGH`, or `Sample data until you save an
+import`.
+
+Current best next step:
+
+- Retry the IBKR CSV through `/upload-csv`; after a saved import, `/workspace`
+  and `/coach` should both switch from empty state to the same saved local data.
+
+## 2026-05-12 - Upload Duplicate Alert Uses Structured Import Evidence
+
+User retried the private IBKR CSV after a local reset and `/upload-csv` still
+reported `This CSV may already be saved`, even though saved trades were empty.
+Inspection showed the new preview had 574 accepted executions, 217 trade
+groups, `duplicateFile=false`, `duplicateTradeCount=0`, and 52 review
+acknowledgements; it was not a saved duplicate.
+
+Changes:
+
+- Updated `/upload-csv` result classification so duplicate messaging only uses
+  structured duplicate fields (`duplicateFile`, `duplicateTradeCount`, or
+  duplicate-specific decision kinds), not broad text matching in review copy.
+- Non-duplicate imports that need acknowledgement now show `CSV uploaded and
+needs review` with an `Open import details` action.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `git diff --check` passed with existing CRLF warnings in docs/import tests.
+
+Current best next step:
+
+- Keep the current uploaded IBKR preview instead of deleting it. The next UX
+  step is to reduce or automate the 52 import review acknowledgements so a
+  normal trader can save clean broker CSVs without feeling responsible for
+  technical import validation.
+
+## 2026-05-12 - IBKR Auto-Grouping And Import Review Noise Fix
+
+User tested `/upload-csv` with the private April IBKR CSV and found two real
+UX/data issues:
+
+- Preview trade links said `Open trade review` before the import was saved,
+  which sent preview trade IDs to `/trades/[tradeId]` and produced a 404.
+- Auto-detected IBKR uploads still used generic grouping rules, creating many
+  false `open-position leftover` review decisions and `large size jump` save
+  acknowledgements.
+
+Changes:
+
+- `/imports/[batchId]` now shows preview rows as `Trades Ready To Save` and
+  disables individual trade-review links until the import is committed.
+- CSV dry-run now reruns grouping with the resolved broker rules after
+  automatic broker detection. The private IBKR file drops from 217 preview
+  trades / 52 review decisions to 208 preview trades / 0 required decisions.
+- `open_leftover` is now an advanced import-window note (`not flat inside this
+CSV`) instead of proof the live account still has an open position.
+- `huge_size_jump` and non-generic broker duplicate-like fill clusters stay
+  available as advanced notes but no longer block a clean broker import.
+- Discarded stale local unsaved previews created before this fix so the next
+  manual upload starts from a clean recovery queue.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/trader-csv-dry-run-import-ui.test.ts src/lib/trader-analytics/__tests__/import-commit-planner.test.ts src/lib/trader-analytics/__tests__/buy-sell-execution-fixture-matrix.test.ts --reporter=dot`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Live API preview of
+  `artifacts/real-csv-calibration/private/U21845737_202604_202604.csv` after
+  restart returned `brokerKey=ibkr_activity_statement`, `requestCount=208`,
+  `requiredDecisionCount=0`, and `canCommitNow=true`.
+- `/api/trades` is still empty and `/api/import-batches` has an empty active
+  recovery queue after discarding the test preview.
+
+Current best next step:
+
+- Retry the April IBKR CSV through `/upload-csv`. It should auto-detect IBKR,
+  save directly, and then show the saved import/trades instead of sending the
+  user through review acknowledgements.
+
+## 2026-05-12 - Levels-System Replay Default And IBKR Prior-Close Handling
+
+User tested the saved April IBKR upload and found `/analytics` showing nearly
+all saved reviews as `Chart data still missing` plus two open trades. The chart
+failure was not an analytics display issue: persisted decision-review jobs were
+failing with durable candle warehouse misses because the trader app defaulted
+to its local `data/candles` stub/demo folder instead of the sibling
+levels-system backfilled IBKR warehouse.
+
+Changes:
+
+- `readLevelsSystemRuntimeConfigFromEnv({})` now defaults to the sibling
+  `../levels-system/data/candles` warehouse when it exists, with provider
+  `ibkr` and warehouse mode `replay`.
+- Explicit `LEVELS_SYSTEM_*` env overrides and on-demand IBKR hydration still
+  win when configured.
+- Avoided defaulting to the package `node_modules` candle warehouse because
+  Turbopack tries to crawl its symlinked candle files during production build.
+- Added IBKR position-effect parsing for the statement `Code` column so a row
+  marked as closing shares from before the CSV window is not reconstructed as a
+  new open short trade.
+- The private April CSV smoke now reconstructs 207 trades with only one open
+  trade left: SKYQ row 804 for 2 shares, matching the IBKR Open Positions line.
+  The ANNA prior-position close is recorded as an advanced import issue instead
+  of a false open trade.
+
+Verification:
+
+- Targeted runtime/import tests passed:
+  `npx vitest run src/lib/execution-sources/csv/__tests__/broker-execution-csv-import.test.ts src/lib/trade-analysis/__tests__/run-trade-analysis.test.ts -t "prior position|levels-system runtime options" --reporter=dot`.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Local chart-pipeline smoke reran one previously failed saved ANNA review
+  through `runBatchTradeAnalysis(...)` with the new default runtime config and
+  completed with a summary instead of `market_context_unavailable`.
+- Private April CSV smoke returned `broker=ibkr_activity_statement`,
+  `acceptedExecutionCount=574`, `requestCount=207`, `openTrades=[SKYQ row 804]`,
+  and `prior_position_close_skipped=1`.
+
+Current best next step:
+
+- Reset the local account, restart the dev server, and retest `/upload-csv`
+  with the April IBKR CSV. Expected result: most saved reviews should complete
+  with replayed chart evidence from levels-system; SKYQ may remain open unless
+  a later statement row closes the 2-share position.
+
+## 2026-05-12 - Unsupported Short Import Guard And Empty Analytics State
+
+User clarified that short trades are not currently part of the end-user app
+and that `/analytics` was still showing ABCD/EFGH sample tickers after the
+local account reset.
+
+Changes:
+
+- Normal broker CSV imports no longer reconstruct sell-starting rows as short
+  trades by default. Unmatched sell-side sequences are skipped with a plain
+  import issue instead of being saved as short trades.
+- Over-reducing long exits still close the long-side trade, but any leftover
+  sell-side remainder is skipped unless an explicit internal fixture opt-in is
+  used.
+- Import commit planning now blocks an upload that has accepted executions but
+  reconstructs zero saved trades, preventing empty/unsupported imports from
+  being committed as ready.
+- `/analytics` now shows an empty real-account state with `Upload CSV` and an
+  explicit demo-preview link when there are no saved reports. Sample ABCD/EFGH
+  analytics only appear through `/analytics?demo=sample`.
+
+Verification:
+
+- `npx vitest run src/lib/execution-sources/csv/__tests__/broker-execution-csv-import.test.ts src/lib/trader-analytics/__tests__/trader-csv-dry-run-import-ui.test.ts src/lib/trader-analytics/__tests__/import-commit-planner.test.ts src/lib/trader-analytics/__tests__/trader-functional-product-readiness.test.ts --reporter=dot`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Local `/analytics` smoke after the reset rendered the empty upload state and
+  did not show ABCD/EFGH sample tickers.
+
+Current best next step:
+
+- Retry the April IBKR CSV through `/upload-csv` and inspect the saved import
+  plus `/analytics`/`/coach`. If chart evidence is still missing, inspect the
+  persisted decision-review job payloads against the levels-system replay
+  context rather than treating it as a UI-only issue.
+
+## 2026-05-12 - Import Window Carryover Rows Demoted To Advanced Info
+
+User asked whether a sell-first row could be a March-to-April carryover rather
+than a short trade, and whether the importer should set that aside for normal
+long-side analytics.
+
+Changes:
+
+- Confirmed the private April IBKR file has one IBKR-marked closing row from
+  before the uploaded CSV window.
+- Sell-first rows and IBKR prior-position closes now use clearer messages that
+  explain the row was set aside from normal long-side analytics because the
+  opening buy is outside the uploaded window or unavailable.
+- Prior-window sell/close rows are `info` repair items, so they do not create
+  beginner repair work, do not block save, and stay in advanced import details.
+- `/imports/[batchId]` shows a compact beginner note only when carryover rows
+  were set aside, with exact row details kept inside advanced import details.
+
+Verification:
+
+- Targeted import/commit/readiness tests passed:
+  `npx vitest run src/lib/execution-sources/csv/__tests__/broker-execution-csv-import.test.ts src/lib/trader-analytics/__tests__/trader-csv-dry-run-import-ui.test.ts src/lib/trader-analytics/__tests__/import-commit-planner.test.ts src/lib/trader-analytics/__tests__/trader-functional-product-readiness.test.ts --reporter=dot`.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Private April CSV smoke returned `canCommitNow=true`, `status=ready_to_commit`,
+  `savedTrades=207`, and one info-level `prior_position_close_skipped` advanced
+  row note.
+
+Current best next step:
+
+- Re-upload the April IBKR CSV through `/upload-csv`. Expected result: the CSV
+  should save without a short-trade claim; the one outside-window close should
+  appear only as a lightweight note/advanced import detail.
+
+## 2026-05-12 - Non-Blocking CSV Commit And Queued Chart Review
+
+User saw the minimal `/upload-csv` page sit on `Saving...` for several minutes
+after uploading the April IBKR CSV and asked whether candle/support-resistance
+work was happening during upload.
+
+Findings:
+
+- The commit API was saving the import and then synchronously running
+  `runPersistedDecisionReviewJobs(...)` before returning to the browser.
+- That meant the beginner upload card waited for chart-data review across the
+  saved trades instead of returning as soon as executions/trades were saved.
+- The April upload did commit before the local restart: 207 saved trades, 1
+  report, 206 queued chart-review jobs, and 1 blocked-open-trade job.
+- The levels-system trade-window builder currently requests candles from trade
+  start through trade end plus pre/post padding. For multi-day holds this means
+  the current implementation can request the full intraday gap, not only local
+  candles around each buy/sell execution.
+
+Changes:
+
+- `/api/import-batches/[batchId]/commit` now returns immediately after the
+  import is committed and schedules persisted chart-data review after the
+  response with Next `after(...)`.
+- The commit response reports
+  `persisted_decision_review_run_scheduled_v1` with queued/open job counts
+  instead of waiting for chart-review diagnostics.
+- `/upload-csv` success copy now says trades are saved and chart evidence can
+  keep loading in the background.
+- Saved-import API tests now expect newly committed trades to start in the
+  queued chart-data-review lane.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts --reporter=dot`
+  passed.
+- `npx vitest run src/lib/execution-sources/csv/__tests__/broker-execution-csv-import.test.ts src/lib/trader-analytics/__tests__/trader-csv-dry-run-import-ui.test.ts src/lib/trader-analytics/__tests__/import-commit-planner.test.ts src/lib/trader-analytics/__tests__/trader-functional-product-readiness.test.ts --reporter=dot`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Restarted local dev server on `http://127.0.0.1:3100`; `/upload-csv` returns
+  200 after restart.
+
+Current best next step:
+
+- The current local account already contains the April import. Decide whether
+  to keep it and inspect the queued chart-review dashboard state, or reset the
+  local account before another clean upload test.
+- A follow-up levels-system/trade-analysis slice should replace full-hold
+  intraday candle windows for multi-day holds with execution-local windows
+  around buys/sells plus higher-timeframe support/resistance context.
+
+## 2026-05-12 - Saved Import Chart Data Resume
+
+User asked for the next improvement to resume chart data after the upload flow
+was made non-blocking.
+
+Changes:
+
+- Added `/api/import-batches/[batchId]/decision-review/resume` so a saved
+  import can run the next small batch of queued chart-data review jobs on
+  demand.
+- Added `deferRemaining` support to `runPersistedDecisionReviewJobs(...)` so a
+  limited resume run leaves unprocessed queued trades queued instead of
+  converting them to `skipped_limit`.
+- `/imports/[batchId]` now shows a plain beginner note when chart evidence is
+  still loading and exposes `Resume chart data review` only inside advanced
+  chart/import details.
+- Browser QA confirmed the saved import page shows the beginner note, keeps the
+  resume action in advanced details, and the resume button posts successfully.
+- Local API QA confirmed a resume run moves completed up and queued down while
+  preserving the remaining queue.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts --reporter=dot`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Local resume API smoke returned
+  `persisted_decision_review_resume_result_v1` with `mode=completed`; the
+  saved import status counts changed from queued to completed for the processed
+  job while the rest remained queued.
+
+Current best next step:
+
+- Reset the local account and re-upload the April IBKR CSV from `/upload-csv`.
+  Expected result: the import save should return quickly, the saved import page
+  should show chart evidence still loading when jobs remain, and advanced
+  details should allow resuming queued chart data review in small batches.
+- Follow-up technical slice: improve the levels-system/trade-analysis candle
+  window for multi-day holds so intraday context requests focus around
+  executions rather than the full hold gap.
+
+## 2026-05-12 - Review Queue Chart Data Waiting Clarification
+
+User noticed `/analytics` showed 207 unresolved trades, 0 chart-data-missing
+trades, and no obvious chart evidence after a fresh April IBKR upload.
+
+Findings:
+
+- `Unresolved` meant user review status, not chart-data status. All 207 saved
+  trades were unresolved because no written review/checklist item had been
+  completed yet.
+- `Chart data still missing` only counted jobs already marked
+  `market_context_unavailable`; queued chart-data jobs were not included, which
+  made the analytics strip look like nothing was waiting.
+- The latest April import initially had 206 queued chart-data jobs and 1
+  open-trade block. Running resume confirmed the pipeline can produce real
+  levels-system evidence.
+- Current local data after the queued work completed: 204 completed
+  chart-evidence snapshots, 2 true higher-timeframe chart-data misses, and 1
+  open trade. The completed snapshots use `levels_system_daily_4h`; 199 also
+  use `levels_system_trade_window`.
+
+Changes:
+
+- Added a first-class `queued` saved-review-queue filter labelled
+  `Chart Data Waiting`.
+- `/analytics` and `/coach` saved-review summary strips now say
+  `Needs Your Review` for unresolved user review work and show queued chart
+  work as `Chart Data Waiting` instead of incorrectly showing 0 missing.
+- `/review` now links the chart-data card to the queued lane while jobs are
+  waiting.
+- `/upload-csv` now starts one small chart-data resume pass immediately after a
+  successful save, without blocking the CSV save result.
+- The saved import resume action and resume API default to one chart-data job
+  per request so the explicit action does not hang on large real imports.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts --reporter=dot`
+  passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Browser smoke on `/analytics` confirmed the summary now says
+  `Needs Your Review`; after chart-data completion it shows the two true
+  `Chart Data Still Missing` items.
+- Focused Playwright route regression could not run because the configured
+  Playwright web server refuses to reuse the already-running local server on
+  port 3100.
+
+Current best next step:
+
+- Inspect the two true chart-data misses (`AVEX`, `ELMT`) in the levels-system
+  warehouse/backfill path. Both are missing enough daily/4h candles for full
+  support/resistance context.
+- Regenerate or refresh the saved analytics report after chart snapshots finish
+  so top-level analytics limitations no longer read as execution-only when
+  persisted chart evidence exists.
+
+## 2026-05-15 - Execution-Only Trade Replay Chart
+
+User asked whether individual trade replays could show the trade playout on a
+chart, then asked to build the first version.
+
+Changes:
+
+- Added an execution-only SVG chart to `/trades/[tradeId]` inside the existing
+  `Trade Replay` section.
+- The chart plots saved fill prices over time and marks entries/adds,
+  reductions, and exits using the existing execution replay model.
+- The chart copy explicitly says it uses saved fills only, so it does not imply
+  candle movement, support/resistance, VWAP, or EMA evidence is available.
+- Focused route regression coverage now checks that the trade replay chart is
+  visible on the guided review path.
+
+Current best next step:
+
+- Keep this as the beginner-safe replay visual while the chart-data pipeline is
+  improved.
+- A later candle replay should use a persisted chart payload containing
+  candles, executions, support/resistance levels, and evidence markers after
+  the multi-day candle-window and chart-data refresh work is complete.
+
+## 2026-05-15 - Candle-Ready Trade Replay Payload
+
+User asked whether the individual trade replay chart could use candles and
+asked Codex to choose the best implementation path.
+
+Changes:
+
+- Added a factual `replayCandleWindow` payload to the trade-analysis summary
+  and persisted decision-review snapshot. It stores only trusted replay chart
+  data: timestamp, OHLC, volume, timeframe, and whether each candle is before,
+  during, or after the trade.
+- `/trades/[tradeId]` now renders candlesticks behind execution markers when a
+  saved review snapshot includes that candle payload.
+- Older saved review snapshots continue to use the execution-only fallback. A
+  page-render attempt to recover old candle windows was intentionally removed
+  because it can make the route slow or hang; candle replay should come from
+  saved chart-review data, not a trade-detail page fetch.
+- Updated the decision-review bridge test to prove new review snapshots carry
+  the replay candle window.
+- Updated the stale short-trade fixture expectation so sell-starting uploads
+  stay out of long-trade coaching instead of expecting short coaching.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npx vitest run src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-bridge.test.ts`
+  passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "shows the guided review workflow"`
+  passed.
+- Browser smoke on the current legacy saved trade confirmed the chart remains in
+  execution-only fallback because its old snapshot does not yet include
+  `replayCandleWindow`.
+
+Current best next step:
+
+- Refresh or regenerate chart-review snapshots for saved trades after the
+  chart-data resume path completes so existing trades can receive the new candle
+  replay payload without making the trade-detail route fetch candles on render.
+
+## 2026-05-15 - Targeted Candle Replay Refresh
+
+User refreshed the trade detail page but still saw the execution-only line
+chart. The reason was correct but confusing: the page code was candle-ready, but
+the selected saved trade still had an older completed chart-review snapshot
+without `replayCandleWindow`.
+
+Changes:
+
+- The saved chart-data resume endpoint can now refresh completed snapshots that
+  are missing the replay candle payload.
+- Added a targeted `savedTradeId` refresh path so one open trade page can be
+  refreshed directly instead of processing every old completed snapshot first.
+- Refreshed the currently open CYCN trade snapshot locally. It now has 113
+  saved 1m replay candles and the trade detail chart switches to candle mode.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npx vitest run src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts`
+  passed.
+- `npm run build` passed.
+- Browser smoke on the open trade detail page confirmed `Trusted candles from
+  saved chart review` and `113 1m candles`.
+
+Current best next step:
+
+- Add a visible user action or background maintenance path to refresh the
+  remaining older completed snapshots that still lack `replayCandleWindow`.
+
+## 2026-05-15 - Day Session Saved-Trades Hierarchy And Replay Marker Polish
+
+User noticed clustered execution labels overlapping on the candle replay and
+that repeated CYCN round-trip cards felt like unrelated trades instead of one
+ticker/day story.
+
+Changes:
+
+- `/trades` now defaults to a Day Sessions browse mode. The saved-trade library
+  starts from the trading day, then opens a ticker story, then individual
+  round-trip cards.
+- Saved session stories now expose ticker summaries for the day: symbol, net
+  P/L, round-trip count, lifecycle/open status, review priority, and ticker
+  story link. The underlying flat-to-flat round-trip math was not changed.
+- `/trades` day-session cards now open a day detail section where repeated
+  same-ticker activity stays grouped before the user drills into round trips.
+- `/trades/[tradeId]` now shows a context trail: Day Session -> Ticker Story ->
+  current Round Trip.
+- The trade replay chart keeps candles and execution markers, but clustered
+  marker numbers are suppressed when they would collide. A compact execution
+  strip below the chart carries the readable fill order, action, time, price,
+  shares, and position change.
+- `/review` handoff copy now points to day sessions instead of the older
+  session-stories label.
+- The broad mobile route smoke helper now waits for `domcontentloaded` plus the
+  expected heading instead of brittle full `networkidle`, and the mobile route
+  loop has a realistic timeout for the current data-heavy saved account.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts`
+  passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "saved trade routing|guided review workflow"`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable|mobile usability"`
+  passed.
+- Browser smoke on `/trades` confirmed Day Sessions is the default and opening
+  a day shows ticker stories. Browser smoke on the current trade detail
+  confirmed the candle chart, execution strip, and context trail render.
+
+Current best next step:
+
+- Continue with the chart-data/backfill reliability path for the remaining true
+  chart-data misses and older saved snapshots missing replay candles. Do not
+  rebuild the saved-trades hierarchy unless route QA finds a concrete issue.
+
+## 2026-05-15 - Dedicated Ticker Story Drilldown
+
+User noticed that ticker story cards should open a deeper ticker-story page
+showing only the round trips for that ticker/session, not just jump back into a
+mixed `/trades` section.
+
+Changes:
+
+- Added `/trades/ticker-story/[threadId]` as a dedicated ticker-story detail
+  route.
+- Updated saved ticker-story hrefs so day-session ticker cards, trade-detail
+  breadcrumbs, analytics/coach/progress handoffs, and saved-trade story cards
+  can land on the focused ticker-story page.
+- The new page keeps the beginner path simple: story summary first, then only
+  that ticker's round trips, then supporting evidence.
+- Added explicit `Open ticker story` actions to `/trades` ticker story cards.
+- Left the underlying flat-to-flat round-trip accounting, reconstruction, chart
+  evidence, and behavior mapping unchanged.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts`
+  passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "saved trade routing|guided review workflow"`
+  passed.
+- Browser smoke confirmed `/trades?view=session_stories&session=2026-04-17#day-session`
+  exposes ticker-story links and `/trades/ticker-story/PBM%3A2026-04-17`
+  renders round trips with replay links.
+
+Current best next step:
+
+- Continue with chart-data/backfill reliability and remaining saved snapshot
+  refresh work. Do not rebuild the saved-trades hierarchy or dedicated
+  ticker-story drilldown unless route QA finds a concrete regression.
+
+## 2026-05-15 - Ticker Story Hold Continuation Classification
+
+User reviewed the CYCN ticker-story page and noted that when a day trade turns
+into a late-session hold or true swing, the story needs a clear continuation
+path instead of leaving the carried trade buried in the round-trip list.
+
+Changes:
+
+- Split same-date overnight-hours continuation from true cross-session swing
+  exposure in the saved-trade-thread read model. True `Day trade turned swing`
+  wording now requires a carry into another trading session/date; CYCN-style
+  same-date late-session trades classify as `Extended same-day hold`.
+- Added a `Hold Continuation` section to `/trades/ticker-story/[threadId]`
+  whenever a round trip is open, crosses into another session, or is marked as
+  an extended hold.
+- The section keeps the continuation inside the ticker story instead of adding
+  another page: it shows the carried round trip, open/close timestamps, hold
+  span, chart evidence state, P/L, and an `Open continuation replay` link.
+- Updated ticker-story, saved-trades, and trade-detail copy so same-date
+  after-hours/extended holds do not say `Carried overnight`; only true
+  cross-session records say `Carried into next session`.
+- Updated saved-trade-thread copy to frame this as an extended-hold or
+  multi-session review, not always overnight exposure.
+- Follow-up wording pass removed assumptions that the trader intended a quick
+  intraday idea. Extended same-day hold copy now asks whether the hold was
+  planned and had invalidation, because the CSV proves exposure timing but not
+  trader intent.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts`
+  passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "saved trade routing|guided review workflow"`
+  passed.
+- Browser smoke on `/trades/ticker-story/CYCN%3A2026-04-01` confirmed the
+  continuation section, `Extended hold` label, hold span, and continuation
+  replay link.
+
+Current best next step:
+
+- Continue with chart-data/backfill reliability and older saved snapshot
+  refresh work. Treat ticker-story continuation UI as completed unless QA finds
+  a concrete regression.
+
+## 2026-05-15 - Saved Trades Month Calendar View
+
+User liked the current `/trades#session-stories` day-session page and asked for
+an additional month calendar that keeps one month visible at a time, marks
+green/red trading days, shows the tickers behind each day, and summarizes the
+month's P/L.
+
+Changes:
+
+- Added a `Calendar` browse mode to `/trades` at
+  `/trades?view=calendar&month=YYYY-MM#calendar`.
+- Added a month summary above the calendar with Month P/L, trading days, green
+  days, red days, best day, and worst day.
+- Added previous/next month links plus chips for months that have saved trade
+  data.
+- Calendar days use the existing day-session read model and link into the
+  existing day-session drilldown instead of creating a separate accounting
+  model. Ticker chips are green/red based on ticker-story P/L for that day.
+- Screenshot QA tightened the calendar day cells: shorter card height,
+  full-width desktop grid, no repeated `Day Session`/count/open-link copy
+  inside each day, smaller one-line ticker chips, and non-wrapping day P/L.
+- Follow-up desktop polish changed the month grid to a market-week layout
+  (`Sun` through `Fri`) because Saturdays are not trading days, widened the
+  visible day columns, and balanced the day-cell height/padding so four ticker
+  chips are not clipped while the bottom gap stays small.
+- Kept the wide month grid inside a local horizontal-scroll container so mobile
+  does not get page-level overflow.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "saved trade routing"`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable|mobile usability"`
+  passed.
+- Browser smoke confirmed `/trades?view=calendar&month=2026-04#calendar`
+  shows April 2026, Month P/L, CYCN ticker chips, and day-session links.
+
+Current best next step:
+
+- Continue with chart-data/backfill reliability and older saved snapshot
+  refresh work. Treat the saved-trades month calendar as completed unless QA
+  finds a concrete regression.
+
+## 2026-05-16 - Workspace Dashboard Homepage And Logo Palette
+
+User approved the logo-based dashboard palette and asked for the logged-in home
+page to feel like a polished, production-ready SaaS dashboard instead of a
+basic route list.
+
+Changes:
+
+- Rebuilt `/workspace` as the main dashboard homepage with a branded top bar,
+  section navigation, hero/overview, one primary next action, real metric
+  cards, product-area cards, analytics preview, recent activity, and status
+  summaries.
+- Copied the supplied TradersLink horizontal logo into `public/` and used it in
+  the workspace top bar.
+- Matched the dashboard blues to the logo navy (`#011E56`) and moved shared
+  dashboard surfaces, borders, profit, and loss tones to a darker professional
+  palette.
+- Kept beginner actions first: Upload, Calendar, Review, Analytics, Coach,
+  Progress. Supporting/admin/internal routes stay below the primary flow and
+  behind demoted sections.
+- Wired dashboard values to real saved data: saved trades, day sessions, ticker
+  stories, gross P/L, win rate, review queue counts, chart-data gaps, latest
+  import, latest day session, and next review item.
+- Preserved existing workspace route-contract labels used by regression tests:
+  `Trader Workspace`, `Trade review workflow`, `Your next step`, `More review
+  tools`, `Beta storage and admin notes`, and `Chart data still missing`.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "guided end-user path|workspace and coach"`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable|mobile usability"`
+  passed.
+- Browser smoke opened `/workspace` and confirmed the branded dashboard renders.
+- `npm run lint` was attempted but timed out/fails on existing project lint
+  issues outside this new page, including generated `vercel-landing/.next`
+  files and an existing `app/app-ui.tsx` React immutability warning.
+
+Current best next step:
+
+- Continue with chart-data/backfill reliability and older saved snapshot
+  refresh work. Treat the workspace dashboard homepage and logo palette pass as
+  completed unless QA finds a concrete regression.
+
+## 2026-05-16 - Saved Trades Subfeature Route Split
+
+User asked to stop showing every saved-trade subfeature in one `/trades` view.
+The desired hierarchy is now: `/trades` is the feature chooser, and Calendar,
+Day Sessions, Ticker Stories, Round Trips, Open/Swing, and Needs Review each
+have their own page.
+
+Changes:
+
+- Added dedicated routes:
+  - `/trades/calendar`
+  - `/trades/day-sessions`
+  - `/trades/day-session/[sessionDate]`
+  - `/trades/ticker-stories`
+  - `/trades/round-trips`
+  - `/trades/open-swing`
+  - `/trades/review-needed`
+- Kept the existing saved-trade read models, P/L math, grouping rules, ticker
+  story detail page, and round-trip detail pages intact.
+- Updated `/trades` so it is a category landing page with the priority panel,
+  workflow, metrics, and feature cards only. It no longer renders Calendar,
+  Day Sessions, Ticker Stories, and Round Trip Cards all together by default.
+- Updated the calendar day click flow to land on
+  `/trades/day-session/[sessionDate]`, where the user sees only that day
+  session drilldown instead of the full day-session list plus the detail.
+- Updated links from workspace, review, progress, coach, analytics, trade
+  detail breadcrumbs, ticker-story breadcrumbs, and saved-trade thread read
+  models to use the new route hierarchy.
+- Added/updated regression coverage for the new flow:
+  `/trades` feature chooser -> `/trades/calendar` -> day session route ->
+  `/trades/ticker-stories` -> ticker story detail.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts`
+  passed.
+- `npm run build` passed and showed the new trade routes in the App Router
+  route list.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "saved trade routing"`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "guided end-user path|workspace and coach|guided review workflow"`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable|mobile usability"`
+  passed.
+
+Current best next step:
+
+- Continue the broader app IA cleanup by applying the same "category page ->
+  focused subfeature page -> drilldown page" model to other crowded route
+  groups only where the current UI still mixes multiple tasks into one screen.
+
+## 2026-05-16 - Saved Trades Section Navigation Follow-Up
+
+User caught an IA regression after the route split: `/trades` had focused
+subfeature pages, but the left aside menu no longer exposed those feature
+routes. That made Calendar, Day Sessions, Ticker Stories, Round Trips,
+Needs Review, and Open/Swing harder to navigate from inside the Saved Trades
+area.
+
+Changes:
+
+- Updated the shared `DashboardSideNav` to support an active page state with
+  `aria-current="page"` and a stronger highlighted style.
+- Updated `/trades` so the `Trades Menu` always includes route links for:
+  Overview, Calendar, Day Sessions, Ticker Stories, Round Trips, Needs Review,
+  and Open/Swing.
+- Kept the route split intact. The menu now moves between focused pages instead
+  of bringing all trade subfeatures back into one combined page.
+- Added focused Playwright assertions so the `/trades` menu must keep those
+  subfeature links and mark Calendar active on the Calendar page.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "saved trade routing"`
+  passed.
+- `git diff --check -- app\app-ui.tsx app\trades\page.tsx tests\e2e\app-feature-regression.spec.ts`
+  passed.
+
+Current best next step:
+
+- Use the same local-section navigation pattern when Analytics and Coach are
+  split into deeper subfeature pages, so each main category has its own
+  persistent section menu.
+
+## 2026-05-16 - Coach Subfeature Route Split
+
+User asked to apply the same category/subfeature IA pattern from `/trades` to
+`/coach`. The coach now keeps a clear overview page while deeper coaching work
+opens on focused pages instead of stacking every panel into one scrolling view.
+
+Changes:
+
+- Kept `/coach` as the coaching overview with the current focus, overall
+  workflow, and cards that open specific coaching views.
+- Added focused routes for review session, behavior sequence, review backlog,
+  ticker stories, session stories, next-session planning, progress, and more
+  details.
+- Updated the `Coach Menu` so it is route navigation with active page state,
+  matching the Saved Trades menu pattern.
+- Moved old coach anchor handoffs from workspace, review, progress, analytics,
+  imports, trades, and trade detail pages to the new focused coach routes where
+  appropriate.
+- Preserved the existing behavior coaching sequence, evidence queue, ticker
+  story coach, session story coach, next-session plan, progress summary, and
+  supporting details. This was an IA/routing split, not a behavior engine
+  rewrite.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed and showed the new `/coach/*` routes.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "coach product loop"`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable|mobile usability"`
+  passed.
+- `npx playwright test tests/e2e/saved-import-visual-overflow.spec.ts --project=chromium-desktop -g "keeps saved-import routes readable"`
+  passed.
+- `git diff --check` passed for the coach route split files.
+
+Current best next step:
+
+- Apply the same focused route/navigation pattern to `/analytics` next if the
+  user wants the analytics categories separated into pages instead of an
+  in-page section switcher.
+
+## 2026-05-16 - Analytics Subfeature Route Split
+
+User asked to apply the same category/subfeature IA pattern from `/trades` and
+`/coach` to `/analytics`. Analytics now keeps an overview page while the
+major report categories open on their own focused pages instead of relying on
+one dense in-page switcher.
+
+Changes:
+
+- Kept `/analytics` as the analytics overview with report-category access cards
+  and a persistent `Analytics Menu`.
+- Added focused analytics routes for results, timing, behavior, ticker stories,
+  session stories, chart evidence, behavior review plan, trade explorer, and
+  supporting details:
+  - `/analytics/results`
+  - `/analytics/timing`
+  - `/analytics/behavior`
+  - `/analytics/ticker-stories`
+  - `/analytics/session-stories`
+  - `/analytics/chart-evidence`
+  - `/analytics/review-plan`
+  - `/analytics/trade-explorer`
+  - `/analytics/details`
+- Updated analytics cards, side navigation, workspace handoffs, and tests to
+  use route links instead of old `/analytics#...` or in-page section switching.
+- Preserved the existing analytics read models and report panels. This was an
+  IA/routing split, not an analytics-engine rewrite.
+- Carried `demo=sample` through analytics trade-explorer links and allowed
+  trade detail pages to honor sample preview mode so demo analytics rows do not
+  404 when real saved data exists locally.
+- Kept chart evidence, behavior reports, ticker/session story analytics, review
+  planning, trade filters, and advanced details available on focused pages.
+- Follow-up QA tightened the page boundaries: `/analytics/results` keeps the
+  outcome views such as `Daily P/L Calendar` and `P/L by Trade`, while
+  `/analytics/timing` now shows only timing/session/hour analysis instead of
+  repeating the Results and Behavior chart blocks.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed and showed the new `/analytics/*` routes.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "analytics product intelligence"`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "market context observational"`
+  passed.
+- `npx playwright test tests/e2e/app-acceptance.spec.ts --project=chromium-desktop -g "filters analytics"`
+  passed.
+- `npx playwright test tests/e2e/app-first-user-hardening.spec.ts --project=chromium-desktop -g "core controls accessible"`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable|mobile usability"`
+  passed.
+- Follow-up after the timing/results boundary fix: `npx tsc --noEmit --pretty false`,
+  `npm run build`, and
+  `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "analytics product intelligence"`
+  passed.
+- `git diff --check` passed with only an unrelated line-ending warning for
+  `src/lib/execution-sources/types/provider-execution.ts`.
+
+Current best next step:
+
+- Continue the same section-by-section IA cleanup only where a main route still
+  stacks unrelated subfeatures into one page. Good candidates are `/progress`
+  or `/review` if user QA says those screens feel too crowded.
+
+## 2026-05-16 - Beginner Flow UI Polish After Expert Audit
+
+User asked to apply the UI audit recommendations that kept the product moving
+toward beginner-first pages, advanced evidence second, and admin/debug outside
+the default workflow.
+
+Changes:
+
+- Reworked `/upload-csv` into the branded beginner entry page with the
+  TradersLink logo, workspace return link, a concise explanation, and the
+  existing single upload card. The card now says `Select your CSV file` and
+  `Upload and save trades` instead of feeling like an isolated technical tool.
+- Demoted `/import-dry-run` into `Advanced Import Check` with a clear handoff
+  back to `/upload-csv`, while preserving the existing advanced diagnostics and
+  import workbench below it.
+- Simplified `/imports` to `Import History`, changed actions to `Upload another
+  CSV`, and removed the repeated import workflow strip so the first screen is
+  imports to finish plus history.
+- Removed the import workflow strip from `/trades` so the saved-trades landing
+  page starts with the trade menu, priority trade, and saved-trade workflow.
+- Updated import workflow links and empty-review import links to route normal
+  users to `/upload-csv` instead of `/import-dry-run`.
+- Made analytics subpage headers route-specific. `/analytics/results` now opens
+  with `Results` and compact saved-review queue context instead of the full
+  generic analytics dashboard header.
+- Tightened coach subpage headers by using a smaller subpage header and hiding
+  the repeated data badges on narrow subpage screens.
+- Refocused the trade-detail execution section by making the replay chart and
+  execution strip full-width first, then demoting `Risks And Strengths` into a
+  secondary disclosure below the replay.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- Browser smoke passed for `/upload-csv`, `/imports`, `/import-dry-run`,
+  `/trades`, `/analytics/results`, and `/coach/behavior-sequence`.
+- Direct Playwright smoke against the already-running local server passed for
+  `/review` -> trade detail `#execution`, confirming the replay chart,
+  execution strip, execution anchor, and risk/strength text remain available.
+- The configured Playwright test command could not start because port 3100 was
+  already occupied and `playwright.config.ts` has `reuseExistingServer: false`.
+  The direct Playwright smoke was used against the existing server instead.
+
+Current best next step:
+
+- Continue route-specific simplification only where user QA proves a page is
+  still too crowded. Likely next candidates are `/review` and `/progress`;
+  avoid further import/trades/analytics/coach rewrites unless a concrete
+  regression appears.

@@ -95,6 +95,29 @@ export interface TraderAnalyticsTradeExtreme {
   grossRealizedPnl: number;
 }
 
+export type TraderAnalyticsTimeBucketSampleSizeLabel =
+  | "insufficient"
+  | "limited"
+  | "sufficient";
+
+export type TraderAnalyticsTimeBucketConclusionKind =
+  | "insufficient_sample"
+  | "outlier_dominated_total"
+  | "consistent_weakness"
+  | "consistent_strength"
+  | "mixed";
+
+export type TraderAnalyticsTimeBucketConclusionConfidence =
+  | "low"
+  | "medium"
+  | "high";
+
+export interface TraderAnalyticsTimeBucketConclusion {
+  kind: TraderAnalyticsTimeBucketConclusionKind;
+  confidence: TraderAnalyticsTimeBucketConclusionConfidence;
+  summary: string;
+}
+
 export interface TraderAnalyticsSampleSizeMetrics {
   requestCount: number;
   validatedTradeCount: number;
@@ -130,10 +153,18 @@ export interface TraderAnalyticsTimeBucketMetrics {
   tradeCount: number;
   grossTotalRealizedPnl: number;
   grossAverageRealizedPnl: number | null;
+  grossMedianRealizedPnl: number | null;
+  grossAbsoluteRealizedPnl: number;
   grossWinnerCount: number;
   grossLoserCount: number;
   grossFlatCount: number;
   grossWinRate: number | null;
+  largestWinner: TraderAnalyticsTradeExtreme | null;
+  largestLoser: TraderAnalyticsTradeExtreme | null;
+  largestAbsoluteTrade: TraderAnalyticsTradeExtreme | null;
+  largestAbsoluteTradeShareOfAbsolutePnl: number | null;
+  sampleSizeLabel: TraderAnalyticsTimeBucketSampleSizeLabel;
+  conclusion: TraderAnalyticsTimeBucketConclusion;
 }
 
 export interface TraderAnalyticsTimeOfDayMetrics {

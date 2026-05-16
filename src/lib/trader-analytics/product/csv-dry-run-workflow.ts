@@ -1,5 +1,6 @@
 import {
   previewBrokerExecutionCsvImport,
+  type BrokerExecutionCsvSavedTradeImportPreview,
   type PreviewBrokerExecutionCsvImportArgs,
 } from "./import-preview";
 import { buildProductCopyQualitySystem } from "./import-trial-experience";
@@ -2067,13 +2068,14 @@ function buildExecutionAnomalyDetector(args: {
       items.push({
         id: `anomaly:open-leftover:${item.requestIndex}`,
         type: "open_leftover",
-        severity: "review",
+        severity: "info",
         confidence: "high",
-        title: `${item.symbol} open-position leftover`,
-        evidence: [`Final position is ${item.finalPositionShares} share(s).`],
+        title: `${item.symbol} was not flat inside this CSV`,
+        evidence: [`The selected CSV window ends with ${item.finalPositionShares} unmatched share(s).`],
         relatedRowIndexes: item.rowIndexes,
         relatedRequestIndexes: [item.requestIndex],
-        suggestedAction: "Review this as open until closing executions exist.",
+        suggestedAction:
+          "Keep as an import-window note; completed-trade coaching should wait for a matched open and close.",
       });
     });
 
@@ -2103,15 +2105,15 @@ function buildExecutionAnomalyDetector(args: {
       items.push({
         id: `anomaly:size-jump:${item.requestIndex}:${sizeJump.index}`,
         type: "huge_size_jump",
-        severity: "review",
+        severity: "info",
         confidence: "medium",
-        title: `${item.symbol} large size jump`,
+        title: `${item.symbol} share size changed`,
         evidence: [
           `Execution #${sizeJump.index + 1} used ${sizeJump.shares} shares vs first fill ${firstShares}.`,
         ],
         relatedRowIndexes: sizeJump.rowIndex ? [sizeJump.rowIndex] : item.rowIndexes,
         relatedRequestIndexes: [item.requestIndex],
-        suggestedAction: "Confirm share size and split/merge choice before saving later.",
+        suggestedAction: "Keep as an advanced note unless the broker file itself looks wrong.",
       });
     }
   });
@@ -2130,7 +2132,10 @@ function buildExecutionAnomalyDetector(args: {
       items.push({
         id: `anomaly:duplicate-like:${key}`,
         type: "duplicate_like_fill",
-        severity: "review",
+        severity:
+          args.preview.importResult.broker === "generic_execution_csv"
+            ? "review"
+            : "info",
         confidence: "medium",
         title: "Duplicate-like fill cluster",
         evidence: [`${count} fills share the same symbol, timestamp, side, shares, and price.`],
@@ -2629,6 +2634,23 @@ function dryRunTradeGroupingRulesForBroker(
   };
 }
 
+function previewBrokerExecutionCsvImportWithResolvedGrouping(
+  args: PreviewBrokerExecutionCsvImportArgs,
+): BrokerExecutionCsvSavedTradeImportPreview {
+  const firstPreview = previewBrokerExecutionCsvImport(args);
+  const resolvedBroker = firstPreview.importResult.broker;
+
+  if (args.broker !== "auto") {
+    return firstPreview;
+  }
+
+  return previewBrokerExecutionCsvImport({
+    ...args,
+    broker: resolvedBroker,
+    tradeGroupingRules: dryRunTradeGroupingRulesForBroker(resolvedBroker),
+  });
+}
+
 export function buildCsvDryRunImportExperience(args: {
   csvText: string;
   broker: BrokerExecutionCsvFormat;
@@ -2647,7 +2669,8 @@ export function buildCsvDryRunImportExperience(args: {
     optionsHandling: "reject",
     tradeGroupingRules: dryRunTradeGroupingRulesForBroker(args.broker),
   };
-  const preview = previewBrokerExecutionCsvImport(previewArgs);
+  const preview = previewBrokerExecutionCsvImportWithResolvedGrouping(previewArgs);
+  const effectiveBroker = preview.importResult.broker;
   const confidenceGate = buildConfidenceGate(preview);
   const columnMappingAssistant = buildColumnMappingAssistant(
     preview,
@@ -2660,8 +2683,8 @@ export function buildCsvDryRunImportExperience(args: {
     mapping: columnMappingAssistant,
     grouping: tradeGroupingReview,
   });
-  const brokerCoverage = buildBrokerCoveragePanel(args.broker);
-  const brokerHelp = buildBrokerHelpPanel(args.broker);
+  const brokerCoverage = buildBrokerCoveragePanel(effectiveBroker);
+  const brokerHelp = buildBrokerHelpPanel(effectiveBroker);
   const calibrationQueue = buildCalibrationQueue();
   const rowRepairTable = buildRowRepairTable(args.csvText, preview);
   const groupingDecisionReview = buildGroupingDecisionReview(
@@ -2689,7 +2712,7 @@ export function buildCsvDryRunImportExperience(args: {
   const brokerMappingLearningConsole = buildBrokerMappingLearningConsole({
     preview,
     mapping: columnMappingAssistant,
-    broker: args.broker,
+    broker: effectiveBroker,
     columnMapping,
   });
   const repairImpactDiff = buildRepairImpactDiff({
@@ -2752,7 +2775,7 @@ export function buildCsvDryRunImportExperience(args: {
 
   return {
     source: "client_dry_run",
-    broker: args.broker,
+    broker: effectiveBroker,
     accountTimezone: args.accountTimezone ?? "America/New_York",
     csvText: args.csvText,
     columnMapping,

@@ -1,4 +1,7 @@
-import type { BrokerExecutionCsvColumnMapping, BrokerExecutionCsvFormat } from "../../execution-sources/csv";
+import type {
+  BrokerExecutionCsvColumnMapping,
+  BrokerExecutionCsvFormat,
+} from "../../execution-sources/csv";
 import type { LevelsSystemRuntimeConfig } from "../../support-resistance/levels-system-runtime-options";
 import { runBatchTradeAnalysis } from "../../trade-analysis/batch/run-trade-analysis-batch";
 import { buildCsvDryRunImportExperience } from "../product/csv-dry-run-workflow";
@@ -46,7 +49,9 @@ function increment(counts: Record<string, number>, key: string): void {
 }
 
 function importStatusFromGate(
-  status: ReturnType<typeof buildCsvDryRunImportExperience>["confidenceGate"]["status"],
+  status: ReturnType<
+    typeof buildCsvDryRunImportExperience
+  >["confidenceGate"]["status"],
 ): CsvDryRunDecisionReviewBridgeResult["importStatus"] {
   return status === "blocked"
     ? "blocked"
@@ -64,7 +69,9 @@ function isCandleQualityWarning(warning: string): boolean {
     normalized.includes("5m fallback candles were used") ||
     normalized.includes("no pre-trade candles") ||
     normalized.includes("no post-trade candles") ||
-    normalized.includes("default provider resolved to deterministic stub data") ||
+    normalized.includes(
+      "default provider resolved to deterministic stub data",
+    ) ||
     normalized.includes("validated ibkr alias") ||
     normalized.includes("resolved through") ||
     normalized.includes("otc/pink data path") ||
@@ -83,11 +90,15 @@ export function buildDecisionReviewSnapshotFromTradeAnalysisSummary(args: {
   requestIndex: number;
   symbol: string | null;
   summary: NonNullable<
-    Awaited<ReturnType<typeof runBatchTradeAnalysis>>["items"][number]["summary"]
+    Awaited<
+      ReturnType<typeof runBatchTradeAnalysis>
+    >["items"][number]["summary"]
   >;
 }): CsvDryRunPrototypeDecisionReviewInput {
   const review = args.summary.decisionReview;
-  const candleQualityNotes = args.summary.warnings.filter(isCandleQualityWarning);
+  const candleQualityNotes = args.summary.warnings.filter(
+    isCandleQualityWarning,
+  );
 
   return {
     tradeId: args.tradeId,
@@ -99,6 +110,7 @@ export function buildDecisionReviewSnapshotFromTradeAnalysisSummary(args: {
         ? "levels_system_trade_window"
         : "execution_only_fallback",
     candleQualityNotes,
+    replayCandleWindow: args.summary.replayCandleWindow,
     insights: review.insights.map((insight) => ({
       id: insight.id,
       tone: insight.tone,
@@ -111,7 +123,9 @@ export function buildDecisionReviewSnapshotFromTradeAnalysisSummary(args: {
 }
 
 function diagnosticCodeForFailure(
-  failure: Awaited<ReturnType<typeof runBatchTradeAnalysis>>["items"][number]["failure"],
+  failure: Awaited<
+    ReturnType<typeof runBatchTradeAnalysis>
+  >["items"][number]["failure"],
 ): Extract<
   CsvDryRunDecisionReviewBridgeDiagnosticCode,
   "market_context_unavailable" | "analysis_failed"
@@ -125,7 +139,9 @@ function decisionReviewSnapshot(args: {
   requestIndex: number;
   symbol: string | null;
   summary: NonNullable<
-    Awaited<ReturnType<typeof runBatchTradeAnalysis>>["items"][number]["summary"]
+    Awaited<
+      ReturnType<typeof runBatchTradeAnalysis>
+    >["items"][number]["summary"]
   >;
 }): CsvDryRunPrototypeDecisionReviewInput {
   return buildDecisionReviewSnapshotFromTradeAnalysisSummary({

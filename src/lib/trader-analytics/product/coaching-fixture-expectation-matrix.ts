@@ -1,6 +1,4 @@
-import {
-  buildProductTraderAnalyticsViewModel,
-} from "./view-model";
+import { buildProductTraderAnalyticsViewModel } from "./view-model";
 import { buildSampleSavedTraderAnalyticsData } from "./sample-data";
 import { runExecutionFeedback } from "../../execution-feedback/run-execution-feedback";
 import type { ExecutionFeedbackSummary } from "../../execution-feedback/summary/build-execution-feedback-summary";
@@ -194,7 +192,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
   return [
     {
       id: "clean_long_winner",
-      label: "Clean long winner keeps structured execution as the main strength",
+      label:
+        "Clean long winner keeps structured execution as the main strength",
       fixtureSource: "sample_trade_fixture",
       tradeId: "trade-long-winner",
       expected: {
@@ -208,7 +207,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
     },
     {
       id: "short_winner_directional",
-      label: "Short winner stays direction-aware and still recognizes clean execution",
+      label:
+        "Short winner stays direction-aware and still recognizes clean execution",
       fixtureSource: "sample_trade_fixture",
       tradeId: "trade-short-winner",
       expected: {
@@ -222,7 +222,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
     },
     {
       id: "open_position_review_gated",
-      label: "Open position is review-gated instead of treated as a clean completed trade",
+      label:
+        "Open position is review-gated instead of treated as a clean completed trade",
       fixtureSource: "sample_trade_fixture",
       tradeId: "trade-open-position",
       expected: {
@@ -251,7 +252,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
     },
     {
       id: "structured_partial_exit",
-      label: "Partial exit fixture preserves staged exit management as a strength",
+      label:
+        "Partial exit fixture preserves staged exit management as a strength",
       fixtureSource: "sample_trade_fixture",
       tradeId: "trade-partial-exits",
       expected: {
@@ -279,7 +281,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
     },
     {
       id: "rapid_fire_management",
-      label: "Rapid-fire management remains visible beside partial-exit strength",
+      label:
+        "Rapid-fire management remains visible beside partial-exit strength",
       fixtureSource: "sample_trade_fixture",
       tradeId: "trade-rapid-fire",
       expected: {
@@ -297,8 +300,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
       fixtureSource: "sample_report_fixture",
       expected: {
         dailyCoachTextIncludes: [
-          "Best entry session",
-          "Best entry hour",
+          "Highest total entry-session",
+          "Highest total entry-hour",
           "review prompt",
         ],
       },
@@ -347,7 +350,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
     },
     {
       id: "market_open_to_midday_hold",
-      label: "Market-open trade held past 11:00 ET marks open-to-midday exposure",
+      label:
+        "Market-open trade held past 11:00 ET marks open-to-midday exposure",
       fixtureSource: "generated_execution_feedback_fixture",
       request: executionRequest({
         symbol: "OMID",
@@ -440,7 +444,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
     },
     {
       id: "overnight_to_premarket_hold",
-      label: "Overnight entry held through 4:00 ET marks overnight plus premarket",
+      label:
+        "Overnight entry held through 4:00 ET marks overnight plus premarket",
       fixtureSource: "generated_execution_feedback_fixture",
       request: executionRequest({
         symbol: "ONPM",
@@ -505,7 +510,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
     },
     {
       id: "positive_full_trade_management",
-      label: "Constructive scale-in plus staged exits can be a positive primary story",
+      label:
+        "Constructive scale-in plus staged exits can be a positive primary story",
       fixtureSource: "generated_execution_feedback_fixture",
       request: executionRequest({
         symbol: "GOOD",
@@ -552,7 +558,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
     },
     {
       id: "decision_review_full_context_clean",
-      label: "Decision review with full context stays clear and evidence-backed",
+      label:
+        "Decision review with full context stays clear and evidence-backed",
       fixtureSource: "decision_review_evidence_fixture",
       decisionReviewReport: decisionReport({
         reviews: [
@@ -597,7 +604,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
         reviews: [
           decisionReview({
             tradeId: "synthetic-review-near-resistance",
-            headline: "Your first entry was close to major 4h resistance.",
+            headline:
+              "Your first entry started just below major 4h resistance.",
             fixFirstBehaviorId: "chasing",
             insights: [
               decisionInsight({
@@ -659,7 +667,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
     },
     {
       id: "decision_review_unsafe_candle_basis",
-      label: "Decision review blocks movement claims when candle basis is unsafe",
+      label:
+        "Decision review blocks movement claims when candle basis is unsafe",
       fixtureSource: "decision_review_evidence_fixture",
       decisionReviewReport: decisionReport({
         reviews: [
@@ -688,7 +697,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
     },
     {
       id: "decision_review_market_context_unavailable",
-      label: "Decision review unavailable market context is diagnostic, not coaching",
+      label:
+        "Decision review unavailable market context is diagnostic, not coaching",
       fixtureSource: "decision_review_evidence_fixture",
       decisionReviewReport: decisionReport({
         importStatus: "needs_review",
@@ -697,7 +707,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
             requestIndex: 0,
             symbol: "MCTX",
             code: "market_context_unavailable",
-            message: "Daily/4h candles were unavailable for this synthetic symbol.",
+            message:
+              "Daily/4h candles were unavailable for this synthetic symbol.",
           },
         ],
       }),
@@ -718,7 +729,8 @@ export function buildCoachingFixtureExpectationMatrix(): CoachingFixtureExpectat
             requestIndex: 1,
             symbol: "OPEN",
             code: "trade_open",
-            message: "Trade is still open and cannot receive completed-trade review.",
+            message:
+              "Trade is still open and cannot receive completed-trade review.",
           },
         ],
       }),
@@ -832,8 +844,8 @@ function assertReportExpectation(args: {
   }
 
   if (expected.coachQueueTitleIncludes) {
-    const found = args.analytics.productPolish.coachReviewQueue.items.some((item) =>
-      item.title.includes(expected.coachQueueTitleIncludes ?? ""),
+    const found = args.analytics.productPolish.coachReviewQueue.items.some(
+      (item) => item.title.includes(expected.coachQueueTitleIncludes ?? ""),
     );
 
     if (!found) {
@@ -858,13 +870,19 @@ function assertSummaryExpectation(args: {
     return ["Generated execution-feedback fixture did not complete."];
   }
 
-  if (expected.pnlSign === "positive" && summary.executionOnlyPnl.grossRealizedPnl <= 0) {
+  if (
+    expected.pnlSign === "positive" &&
+    summary.executionOnlyPnl.grossRealizedPnl <= 0
+  ) {
     failures.push(
       `Expected positive P/L, got ${summary.executionOnlyPnl.grossRealizedPnl}.`,
     );
   }
 
-  if (expected.pnlSign === "negative" && summary.executionOnlyPnl.grossRealizedPnl >= 0) {
+  if (
+    expected.pnlSign === "negative" &&
+    summary.executionOnlyPnl.grossRealizedPnl >= 0
+  ) {
     failures.push(
       `Expected negative P/L, got ${summary.executionOnlyPnl.grossRealizedPnl}.`,
     );
@@ -1059,7 +1077,9 @@ function assertDecisionReviewExpectation(args: {
   );
 
   for (const code of expected.decisionDiagnosticCodes ?? []) {
-    if (!report.result.diagnostics.some((diagnostic) => diagnostic.code === code)) {
+    if (
+      !report.result.diagnostics.some((diagnostic) => diagnostic.code === code)
+    ) {
       failures.push(`Expected diagnostic code ${code}.`);
     }
   }
@@ -1094,7 +1114,9 @@ export function runCoachingFixtureExpectationMatrix(): CoachingFixtureExpectatio
           : [
               `Generated fixture status ${result.status}: ${
                 result.failure?.message ??
-                result.validation.issues.map((issue) => issue.message).join(" | ")
+                result.validation.issues
+                  .map((issue) => issue.message)
+                  .join(" | ")
               }`,
             ];
     } else {

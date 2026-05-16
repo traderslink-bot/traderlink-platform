@@ -444,12 +444,12 @@ export function buildTraderAnalyticsChartData(
     }),
     entrySessionPerformance: buildTimeBucketChart({
       id: "entry_session_performance",
-      title: "Entry Session P/L",
+      title: "Total Entry Session P/L",
       buckets: args.timeOfDay.entrySessionBuckets,
     }),
     entryHourPerformance: buildTimeBucketChart({
       id: "entry_hour_performance",
-      title: "Entry Hour P/L",
+      title: "Total Entry Hour P/L",
       buckets: args.timeOfDay.entryHoursEt,
     }),
   };

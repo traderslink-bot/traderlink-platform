@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { buildSavedReviewQueueReadModel } from "../../src/lib/trader-analytics/server/saved-review-queue";
 import { buildSavedOrSampleTraderAnalyticsViewModel } from "../../src/lib/trader-analytics/server/saved-trader-analytics-data";
 import { buildLatestSavedImportSourceCautionReadModel } from "../../src/lib/trader-analytics/server/saved-import-source-caution";
 import { buildAnalyticsBehaviorReport } from "../../src/lib/trader-analytics/server/analytics-behavior-report";
 import { buildSavedTradeThreadReadModel } from "../../src/lib/trader-analytics/server/saved-trade-threads";
-import { AnalyticsClient } from "./analytics-client";
+import {
+  AnalyticsClient,
+  type AnalyticsDashboardSection,
+} from "./analytics-client";
 
 export const metadata: Metadata = {
   title: "Analytics | Trader Intelligence",
@@ -12,16 +16,85 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+function normalizeAnalyticsSection(
+  value: string | string[] | undefined,
+): AnalyticsDashboardSection {
+  const raw = Array.isArray(value) ? value[0] : value;
+
+  switch (raw) {
+    case "results":
+    case "timing":
+    case "behavior":
+    case "ticker_stories":
+    case "session_stories":
+    case "chart_evidence":
+    case "review":
+    case "trades":
+    case "advanced":
+      return raw;
+    default:
+      return "overview";
+  }
+}
+
+function EmptyAnalyticsPage() {
+  return (
+    <main className="ti-dashboard-bg min-h-screen px-5 py-8 text-zinc-100 sm:px-8">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+        <header className="ti-panel p-6">
+          <Link
+            className="text-sm text-sky-300 hover:text-sky-200"
+            href="/workspace"
+          >
+            Back to workspace
+          </Link>
+          <p className="mt-4 text-xs font-semibold uppercase text-sky-300">
+            Analytics
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold text-zinc-50 sm:text-4xl">
+            Your analytics will appear after you upload a CSV
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
+            Import your broker CSV first. Once trades are saved, this page will
+            show your real results, timing, behavior, ticker stories, session
+            stories, and chart evidence.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link className="ti-button-primary" href="/upload-csv">
+              Upload CSV
+            </Link>
+            <Link
+              className="rounded-md border border-sky-900 bg-sky-950/20 px-4 py-2 text-sm font-semibold text-sky-200 hover:border-sky-500"
+              href="/analytics?demo=sample"
+            >
+              Preview demo analytics
+            </Link>
+          </div>
+        </header>
+      </div>
+    </main>
+  );
+}
+
 export default async function AnalyticsPage(props: {
-  searchParams: Promise<{ demo?: string | string[] | undefined }>;
+  searchParams: Promise<{
+    demo?: string | string[] | undefined;
+    view?: string | string[] | undefined;
+  }>;
 }) {
   const searchParams = await props.searchParams;
   const demoParam = Array.isArray(searchParams.demo)
     ? searchParams.demo[0]
     : searchParams.demo;
+  const activeSection = normalizeAnalyticsSection(searchParams.view);
   const analyticsData = buildSavedOrSampleTraderAnalyticsViewModel({
     preferSample: demoParam === "sample",
   });
+
+  if (analyticsData.mode !== "saved" && demoParam !== "sample") {
+    return <EmptyAnalyticsPage />;
+  }
+
   const savedReviewQueue =
     analyticsData.mode === "saved"
       ? buildSavedReviewQueueReadModel({
@@ -61,6 +134,9 @@ export default async function AnalyticsPage(props: {
     ) ??
     tradeThreadModel.threads.find(
       (thread) => thread.storyKind === "swing_transition",
+    ) ??
+    tradeThreadModel.threads.find(
+      (thread) => thread.storyKind === "extended_same_day_hold",
     ) ??
     tradeThreadModel.threads.find(
       (thread) => thread.storyKind === "repeated_losing_attempts",
@@ -120,7 +196,9 @@ export default async function AnalyticsPage(props: {
       (thread) => thread.storyKind === "repeated_losing_attempts",
     ).length,
     swingThreadCount: tradeThreadModel.threads.filter(
-      (thread) => thread.storyKind === "swing_transition",
+      (thread) =>
+        thread.storyKind === "swing_transition" ||
+        thread.storyKind === "extended_same_day_hold",
     ).length,
     levelFindingCount: tradeThreadModel.levelFindingCount,
     threadWithLevelFindingCount: tradeThreadModel.threadWithLevelFindingCount,
@@ -169,6 +247,7 @@ export default async function AnalyticsPage(props: {
 
   return (
     <AnalyticsClient
+      initialSection={activeSection}
       initialViewModel={analyticsData.viewModel}
       savedReviewQueue={savedReviewQueue}
       importSourceCaution={importSourceCaution}

@@ -1,6 +1,6 @@
 # Trader Intelligence Plan Index
 
-**Last updated:** 2026-05-12
+**Last updated:** 2026-05-15
 **Purpose:** Keep Trader Intelligence planning organized so future Codex runs
 can find the right plan, continue the current work, and avoid drifting into old
 prototype docs.
@@ -174,10 +174,27 @@ Current active batch:
   screenshot/copy QA: all ten requested routes were reviewed, `/import-dry-run`
   was the only route with a concrete issue, and its primary summary now uses
   `Rows To Fix` / `Import Check` instead of mapping confidence / `Copy Audit`
-  while keeping mapping confidence in technical import setup details -> continue
-  with focused screenshot fixes only if new concrete route issues appear, or
+  while keeping mapping confidence in technical import setup details -> completed
+  minimal end-user upload start: `/upload-csv` is the normal one-card CSV upload
+  entry, broker choice stays automatic, the upload result now stays on the page
+  with a saved/duplicate/needs-attention alert and an import-detail action, and
+  `/imports/[batchId]` keeps automatically skipped informational row notices out
+  of default repair actions while retaining them behind advanced import details
+  -> completed saved-import chart-data resume: `/imports/[batchId]` tells the
+  user when chart evidence is still loading, advanced chart/import details expose
+  `Resume chart data review`, and limited resume runs leave unprocessed
+  chart-review jobs queued instead of marking them skipped
+  -> completed saved-trades day-session hierarchy and replay marker polish:
+  `/trades` now defaults to Day Sessions, day cards open ticker-story drilldown,
+  individual flat-to-flat cards remain Round Trips, `/trades/[tradeId]` has a
+  Day Session -> Ticker Story -> Round Trip context trail, and clustered
+  execution labels use a readable execution strip under the candle chart
+  -> continue
+  with focused screenshot fixes only if new concrete route issues appear,
   inspect only genuinely distinct constructive-management variants if saved
-  evidence can certify them without broader claims.
+  evidence can certify them without broader claims, or use the normalized
+  analytics conclusions plan when timing/session feedback risks overstating raw
+  total P/L without sample-size, average, median, win-rate, and outlier context.
 - Next continuous implementation run scope: work from
   `src/docs/trader-intelligence-next-continuous-implementation-run-2026-05-09.md`.
   The completed route-family language and mapper pass should be preserved, not
@@ -189,10 +206,19 @@ Current active batch:
   before final response. Current best slices are focused beginner-to-advanced
   route fixes only if screenshot/browser QA finds a concrete issue,
   particularly around `/workspace`, `/analytics`, `/progress`, or saved-trade
-  handoffs, or a follow-up
-  constructive-management variant only when saved evidence proves it. Do not
+  handoffs, a follow-up constructive-management variant only when saved
+  evidence proves it, or the normalized analytics conclusions slice when timing
+  feedback needs statistical/outlier context before broad user-facing claims.
+  Do not
   redo the completed import IA disclosure pass, import wording/advanced-detail
-  polish, final import summary-card fix, analytics category-access pass,
+  polish, final import summary-card fix, minimal upload route/result-alert fix,
+  saved-import chart-data resume,
+  saved-trades day-session hierarchy and replay marker polish,
+  dedicated ticker-story drilldown route,
+  ticker-story hold-continuation classification and section,
+  saved-trades month calendar view,
+  review-queue chart-data waiting labels,
+  analytics category-access pass,
   `/workspace` visual-system migration, `/coach` old-card cleanup, May 11 coach
   behavior sequence, review queue task-card simplification, sell-starting
   limitation copy, workspace chart-data wording, route copy/anchor repairs,
@@ -317,9 +343,22 @@ Current active batch:
   `/import-dry-run` still showing mapping confidence / `Copy Audit` in primary
   summary cards; the default summary now uses `Rows To Fix` and `Import Check`
   while mapping confidence remains behind technical import setup details.
+  The minimal end-user upload start is complete too: `/upload-csv` is the
+  normal one-card CSV upload entry, broker detection is automatic, upload
+  results now show a saved/duplicate/needs-attention alert before the user opens
+  import details, and automatically skipped informational rows are no longer
+  shown as default repair work on `/imports/[batchId]`. Saved imports now also
+  expose a demoted `Resume chart data review` action in advanced chart/import
+  details, and limited resume runs leave remaining chart-review jobs queued
+  instead of marking them skipped. The review queue and analytics/coach summary
+  strips now distinguish user review work (`Needs Your Review`) from queued
+  chart-data work (`Chart Data Waiting`), and `/upload-csv` starts one small
+  chart-data resume pass after save without blocking the upload result.
   Continue with focused screenshot fixes only if new concrete route issues
-  appear, or extend constructive-management coverage only when saved evidence
-  can certify a genuinely distinct deterministic variant.
+  appear, extend constructive-management coverage only when saved evidence can
+  certify a genuinely distinct deterministic variant, or work the normalized
+  analytics conclusions plan when raw total P/L could produce misleading
+  timing/session feedback.
   Uncertain behavior must become a review prompt or stay internal. The next run
   must not stop after one verified slice; it must keep
   going through the next safe route or behavior family.
@@ -359,6 +398,7 @@ evidence polish batch.
 | Coaching Evidence Model | `src/docs/trader-intelligence-coaching-evidence-model-2026-05-09.md` | Use whenever deciding whether a coaching opportunity is based on execution evidence, chart/levels market context, or both. Also use when deciding whether a finding is a risk to reduce or a strength to repeat. |
 | Coach | `src/docs/trader-intelligence-coach-continuous-product-plan-2026-05-09.md` | Use for lower-page readability, certified evidence presentation, visual rhythm, mobile polish, and advanced-section demotion. Do not redo the completed overall-focus, evidence-trade handoff, review-completion follow-through, or adverse-add wording passes unless a regression is found. |
 | Analytics | `src/docs/trader-intelligence-analytics-continuous-product-plan-2026-05-09.md` | Use for lower-page report polish, self-review deep dives, chart/drill-down refinement, and mobile/visual cleanup. Do not rebuild the completed top report, section navigation, saved-data counts, or certified read-model counters unless they regress. |
+| Normalized Analytics Conclusions | `src/docs/trader-intelligence-normalized-analytics-conclusions-plan-2026-05-12.md` | Use when analytics or coaching feedback might overstate raw total P/L, especially timing/session/hour feedback where sample size, average outcome, median result, win rate, or one large outlier changes the conclusion. |
 | Review Queue | `src/docs/trader-intelligence-review-queue-continuous-product-plan-2026-05-09.md` | Use for queue card density, missing anchors, mobile tab reduction, and route-specific copy regressions. Do not rebuild the completed first review card, lane language, session-story handoff, chart-evidence handoff, or coach/progress loop unless a regression is found. |
 | Progress | `src/docs/trader-intelligence-progress-continuous-product-plan-2026-05-09.md` | Use for deeper trend modeling, visual polish, and strength/risk follow-through once enough review history exists. Do not redo imported-vs-reviewed separation, active focus handoff, ticker/session story counters, or current insufficient-data honesty unless they regress. |
 | Behavior Language Audit | `src/docs/trader-intelligence-behavior-language-and-detection-audit-2026-05-09.md` | Supporting audit for unclear wording and label replacement. Use with the active detection/language hardening plan. |
@@ -408,6 +448,12 @@ not pause to create those feature plans before implementing Blocks 4 and 8.
 - `src/docs/future-app-surface-plan.md`
   High-level app surface plan. Use for route/surface context, not as the active
   implementation plan.
+
+- `src/docs/trader-intelligence-ui-change-summary-and-next-steps-2026-05-16.md`
+  Compact summary of the recent UI/product IA work across workspace, upload,
+  imports, trades, trade detail, analytics, coach, and remaining UX priorities.
+  Read this before asking Codex to redo route hierarchy, dashboard, or
+  beginner-to-advanced UI work.
 
 ## Current Product Context
 

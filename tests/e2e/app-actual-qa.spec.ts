@@ -23,7 +23,7 @@ const CORE_VISUAL_ROUTES = [
   { heading: "TradersLink Trading Tools", path: "/" },
   { heading: "First Run Setup", path: "/first-run" },
   { heading: "Import Trades", path: "/import-dry-run" },
-  { heading: "Analytics", path: "/analytics" },
+  { heading: "Trading Performance Dashboard", path: "/analytics" },
   { heading: shell.guidedReview.title, path: "/review" },
   { heading: "Trader Progress", path: "/progress" },
   { heading: "Saved Trades", path: "/trades" },
@@ -254,6 +254,7 @@ async function uploadCsv(
 ): Promise<void> {
   await page.goto("/import-dry-run");
   await page.waitForLoadState("networkidle");
+  await openAdvancedUploadSettings(page);
   await page.getByTestId("broker-select").selectOption(args.broker);
   await page.getByTestId("local-csv-input").setInputFiles({
     buffer: Buffer.from(args.csvText),
@@ -261,6 +262,40 @@ async function uploadCsv(
     name: args.fileName,
   });
   await expect(page.getByTestId("csv-textarea")).toHaveValue(args.csvText);
+}
+
+async function openAdvancedUploadSettings(page: Page): Promise<void> {
+  const details = page.getByTestId("import-dry-run-advanced-upload-settings");
+
+  if ((await details.count()) === 0) {
+    return;
+  }
+
+  const trigger = details.getByText("Show advanced import settings", {
+    exact: true,
+  });
+  const isOpen = (await details.getAttribute("open")) !== null;
+
+  if (!isOpen && (await trigger.isVisible())) {
+    await trigger.click();
+  }
+}
+
+async function openImportReviewDetails(page: Page): Promise<void> {
+  const details = page.getByTestId("import-dry-run-review-details");
+
+  if ((await details.count()) === 0) {
+    return;
+  }
+
+  const trigger = details.getByText("Show import review details", {
+    exact: true,
+  });
+  const isOpen = (await details.getAttribute("open")) !== null;
+
+  if (!isOpen && (await trigger.isVisible())) {
+    await trigger.click();
+  }
 }
 
 async function assertNoBrokenPageCopy(page: Page): Promise<void> {
@@ -361,7 +396,10 @@ async function expectAnyBodyText(
 
 async function assertTradeDetailEvidence(page: Page, symbol: string): Promise<void> {
   await expect(
-    page.getByRole("heading", { exact: true, name: `${symbol} Trade Review` }),
+    page.getByRole("heading", {
+      exact: true,
+      name: `${symbol} Review Workspace`,
+    }),
   ).toBeVisible();
   await expect(page.getByTestId("trade-execution-replay")).toBeVisible();
   await expect(page.locator('[data-testid^="trade-replay-step-"]')).not.toHaveCount(
@@ -416,6 +454,7 @@ test.describe("actual app QA", () => {
     await expect(page.locator("body")).toContainText(
       "Broker mapping confidence is low",
     );
+    await openImportReviewDetails(page);
 
     const mappings = {
       price: "Fill Price",
@@ -490,7 +529,11 @@ test.describe("actual app QA", () => {
       throw new Error("Sample data is missing metric-to-evidence fixtures.");
     }
 
-    await visitAndAssert(page, "/analytics", "Analytics");
+    await visitAndAssert(
+      page,
+      "/analytics/trade-explorer?demo=sample",
+      "Trading Performance Dashboard",
+    );
     await page.getByTestId("analytics-filter-symbol").selectOption("ABCD");
     await page.getByTestId("analytics-filter-outcome").selectOption("loser");
     await page
@@ -534,6 +577,7 @@ test.describe("actual app QA", () => {
     await expect(page.getByTestId("row-repair-2-status")).toHaveText("rejected");
     await page.getByTestId("row-repair-2-quantity").fill("100");
     await expect(page.getByTestId("row-repair-2-status")).toHaveText("accepted");
+    await openImportReviewDetails(page);
     await expect(
       page.getByRole("heading", {
         exact: true,
@@ -565,6 +609,7 @@ test.describe("actual app QA", () => {
       csvText: presetCsv("preset:open-position"),
       fileName: "actual-qa-truth-open-position.csv",
     });
+    await openImportReviewDetails(page);
     await expect(page.locator("body")).toContainText("Market context used: false");
     await assertNoProductOverclaims(page);
 
@@ -584,6 +629,7 @@ test.describe("actual app QA", () => {
         csvText: csvCase.csvText,
         fileName: `actual-qa-${csvCase.name}.csv`,
       });
+      await openImportReviewDetails(page);
       await expect(
         page.getByRole("heading", {
           exact: true,
@@ -614,11 +660,16 @@ test.describe("actual app QA", () => {
       page.getByRole("heading", { exact: true, name: "First Run Setup" }),
     ).toBeVisible();
 
-    await page.getByTestId("first-run-action-import-dry-run").click();
+    await page.getByTestId("first-run-action-upload-csv").click();
     await page.waitForLoadState("networkidle");
     await expect(
-      page.getByRole("heading", { exact: true, name: "Import Trades" }),
+      page.getByRole("heading", { exact: true, name: "Upload CSV" }),
     ).toBeVisible();
+    await expect(page.getByTestId("upload-csv-card")).toBeVisible();
+
+    await page.goto("/import-dry-run");
+    await page.waitForLoadState("networkidle");
+    await openAdvancedUploadSettings(page);
     await page.getByTestId("broker-select").selectOption("generic_execution_csv");
     await page.getByTestId("local-csv-input").setInputFiles({
       buffer: Buffer.from(missingQuantityCsv),
@@ -628,6 +679,7 @@ test.describe("actual app QA", () => {
     await expect(page.getByTestId("row-repair-2-status")).toHaveText("rejected");
     await page.getByTestId("row-repair-2-quantity").fill("100");
     await expect(page.getByTestId("row-repair-2-status")).toHaveText("accepted");
+    await openImportReviewDetails(page);
     await expect(
       page.getByRole("heading", {
         exact: true,
@@ -635,7 +687,7 @@ test.describe("actual app QA", () => {
       }),
     ).toBeVisible();
 
-    await visitAndAssert(page, "/analytics", "Analytics");
+    await visitAndAssert(page, "/analytics", "Trading Performance Dashboard");
     await visitAndAssert(page, "/trades", "Saved Trades");
     await visitAndAssert(page, "/review", shell.guidedReview.title);
     await visitAndAssert(page, "/progress", "Trader Progress");

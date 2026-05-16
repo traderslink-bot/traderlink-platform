@@ -161,7 +161,14 @@ Current next run expectation:
   found was `/import-dry-run` still showing mapping confidence and `Copy Audit`
   in primary summary cards, and that default summary now uses `Rows To Fix` and
   `Import Check` while mapping confidence remains in technical import setup
-  details. Verify locally, update docs, and keep moving through the next safe
+  details. The end-user CSV start page is also complete: `/upload-csv` is the
+  normal one-card upload entry, it uses broker auto-detection through the
+  existing import API, it now shows a result/duplicate/repair alert instead of
+  surprise-redirecting, and `/imports/[batchId]` no longer shows automatically
+  skipped informational row notices as default repair work. Saved imports now
+  also have a small-batch `Resume chart data review` action inside advanced
+  chart/import details, and limited resume runs keep unprocessed chart jobs
+  queued instead of marking them skipped. Keep moving through the next safe
   slice unless a true global blocker appears.
 - The next implementation start point remains the next-run plan's
   **Required Long-Run Batch Shape** and **Next Run Phase Plan** sections, not
@@ -173,6 +180,13 @@ Current next run expectation:
   variants only when saved chart, level, candle, volume, or after-exit evidence
   can prove them. Do not redo the completed import IA disclosure pass,
   import wording/advanced-detail polish, final import summary-card fix,
+  minimal upload route and upload-result alert,
+  saved-import chart-data resume,
+  saved-trades day-session hierarchy and replay marker polish,
+  dedicated ticker-story drilldown route,
+  ticker-story hold-continuation classification and section,
+  saved-trades month calendar view,
+  review-queue chart-data waiting labels,
   analytics category-access pass,
   constructive-management storylines, workspace visual migration, coach
   old-card cleanup, May 11 coach sequence, review queue simplification,

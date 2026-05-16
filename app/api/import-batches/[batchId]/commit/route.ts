@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import {
   buildDurableImportCommitPlan,
   importCommitErrorResponse,
@@ -10,6 +11,39 @@ import { SqliteImportCommitRepository } from "../../../../../src/lib/trader-anal
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function scheduleDecisionReviewRun(args: {
+  importBatchId: string;
+  generatedAt: string;
+}): void {
+  const run = async () => {
+    try {
+      await runPersistedDecisionReviewJobs({
+        repository: new SqliteImportCommitRepository(),
+        importBatchId: args.importBatchId,
+        levelsSystem: readLevelsSystemRuntimeConfigFromEnv(),
+        generatedAt: args.generatedAt,
+      });
+    } catch (error) {
+      console.error("Saved chart data review failed after import commit.", {
+        error: error instanceof Error ? error.message : String(error),
+        importBatchId: args.importBatchId,
+      });
+    }
+  };
+
+  try {
+    after(run);
+  } catch (error) {
+    if (process.env.NODE_ENV !== "test") {
+      void run();
+      console.warn("Scheduled chart data review without Next after().", {
+        error: error instanceof Error ? error.message : String(error),
+        importBatchId: args.importBatchId,
+      });
+    }
+  }
+}
 
 export async function POST(
   request: Request,
@@ -72,21 +106,25 @@ export async function POST(
     return importCommitErrorResponse(409, "commit_rejected", result.message);
   }
 
-  let decisionReviewRun = null;
+  const decisionReviewRun = {
+    contractVersion: "persisted_decision_review_run_scheduled_v1",
+    importBatchId: batchId,
+    requestedJobCount: result.decisionReviewJobCount,
+    queuedJobCount: plan.decisionReviewJobs.filter(
+      (job) => job.status === "queued",
+    ).length,
+    blockedOpenTradeCount: plan.decisionReviewJobs.filter(
+      (job) => job.status === "blocked_open_trade",
+    ).length,
+    message:
+      "Import saved. Chart data review was queued to continue after the upload response.",
+  };
 
-  try {
-    decisionReviewRun = await runPersistedDecisionReviewJobs({
-      repository,
+  if (result.status === "committed" && result.decisionReviewJobCount > 0) {
+    scheduleDecisionReviewRun({
       importBatchId: batchId,
-      levelsSystem: readLevelsSystemRuntimeConfigFromEnv(),
       generatedAt: plan.generatedAt,
     });
-  } catch (error) {
-    decisionReviewRun = {
-      contractVersion: "persisted_decision_review_run_error_v1",
-      importBatchId: batchId,
-      error: error instanceof Error ? error.message : String(error),
-    };
   }
 
   return Response.json({

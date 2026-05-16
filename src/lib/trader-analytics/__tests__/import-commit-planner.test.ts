@@ -157,7 +157,7 @@ describe("import commit planner", () => {
     expect(acknowledged.duplicateTradeFingerprints).toEqual([fingerprint]);
   });
 
-  it("persists short trades and fee/net previews without turning broker net into gross scoring", () => {
+  it("blocks sell-starting uploads instead of saving unsupported short-side trades", () => {
     const csv = [
       "Date,Time,Symbol,Side,Quantity,Price,Commission,Fees,Amount,Currency",
       "2026-05-01,09:30:00,SHRT,Sell,100,10.00,1.00,0.10,998.90,USD",
@@ -169,18 +169,11 @@ describe("import commit planner", () => {
       },
     });
 
-    expect(plan.status).toBe("ready_to_commit");
-    expect(plan.savedTrades).toMatchObject([
-      {
-        symbol: "SHRT",
-        tradeDirection: "short",
-        grossRealizedPnl: 50,
-        lifecycleStatus: "closed",
-      },
-    ]);
-    expect(plan.executionFeedbackSummaries[0]?.summary.executionOnlyPnl).toMatchObject({
-      grossRealizedPnl: 50,
-    });
+    expect(plan.status).toBe("blocked");
+    expect(plan.savedTrades).toEqual([]);
+    expect(plan.blockingReasons.map((item) => item.id)).toContain(
+      "blocked:no-reconstructed-trades",
+    );
   });
 
   it("review-gates over-reduction splits and execution anomalies until acknowledged", () => {
@@ -208,6 +201,31 @@ describe("import commit planner", () => {
       "acknowledge_execution_anomaly",
     );
     expect(acknowledged.status).toBe("ready_to_commit");
-    expect(acknowledged.savedTrades).toHaveLength(2);
+    expect(acknowledged.savedTrades).toHaveLength(1);
+    expect(acknowledged.savedTrades[0]).toMatchObject({
+      symbol: "OVER",
+      tradeDirection: "long",
+    });
+  });
+
+  it("keeps share-size jump notes from blocking an otherwise clean save", () => {
+    const csv = [
+      "Date,Time,Symbol,Side,Quantity,Price",
+      "2026-05-01,09:30:00,JUMP,Buy,25,10.00",
+      "2026-05-01,09:45:00,JUMP,Buy,100,9.90",
+      "2026-05-01,10:00:00,JUMP,Sell,125,10.10",
+    ].join("\n");
+    const plan = planFor(csv, {
+      acknowledgements: {
+        mappingReview: true,
+        pnlReview: true,
+      },
+    });
+
+    expect(
+      plan.reviewReasons.map((item) => item.message.toLowerCase()),
+    ).not.toContainEqual(expect.stringContaining("size jump"));
+    expect(plan.status).toBe("ready_to_commit");
+    expect(plan.canCommitNow).toBe(true);
   });
 });

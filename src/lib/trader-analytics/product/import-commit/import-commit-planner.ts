@@ -400,6 +400,20 @@ export function buildImportCommitPlan(
     });
   }
 
+  if (importResult.acceptedExecutionCount > 0 && importResult.requestCount === 0) {
+    blockingReasons.push({
+      id: "blocked:no-reconstructed-trades",
+      kind: "review_grouping",
+      severity: "blocked",
+      message:
+        "No saved trades could be reconstructed from the accepted executions.",
+      relatedRowIndexes: importResult.diagnostics.rowOutcomes
+        .filter((row) => row.status === "accepted")
+        .map((row) => row.rowIndex),
+      relatedRequestIndexes: [],
+    });
+  }
+
   if (importResult.rejectedRowCount > 0) {
     blockingReasons.push({
       id: "blocked:rejected-rows",

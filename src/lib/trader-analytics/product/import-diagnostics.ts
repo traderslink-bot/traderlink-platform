@@ -66,7 +66,9 @@ function issueSeverity(issue: BrokerExecutionCsvImportIssue): BrokerCsvImportRep
 
   return issue.code === "auto_detected_format" ||
     issue.code === "non_trade_row_skipped" ||
-    issue.code === "non_filled_order_skipped"
+    issue.code === "non_filled_order_skipped" ||
+    issue.code === "prior_position_close_skipped" ||
+    issue.code === "sell_starting_trade_skipped"
     ? "info"
     : "review";
 }
@@ -98,6 +100,8 @@ function actionForIssue(
       return "review_broker_mapping";
     case "trade_grouping_time_gap_split":
     case "trade_grouping_session_boundary_split":
+    case "prior_position_close_skipped":
+    case "sell_starting_trade_skipped":
       return "review_trade_grouping";
     default:
       return issue.rowIndex ? "skip_row" : "review_broker_mapping";
@@ -135,6 +139,10 @@ function titleForIssue(issue: BrokerExecutionCsvImportIssue): string {
       return "Trade split by time gap";
     case "trade_grouping_session_boundary_split":
       return "Trade split by session boundary";
+    case "prior_position_close_skipped":
+      return "Earlier-period position close";
+    case "sell_starting_trade_skipped":
+      return "Sell row set aside";
     case "non_trade_row_skipped":
       return "Non-execution row skipped";
     case "non_filled_order_skipped":
@@ -175,6 +183,10 @@ function suggestedFixForIssue(issue: BrokerExecutionCsvImportIssue): string {
       return "Review whether the separated executions should remain separate trades.";
     case "trade_grouping_session_boundary_split":
       return "Review whether the separated executions should remain split across sessions.";
+    case "prior_position_close_skipped":
+      return "No action is needed for normal long-side analytics. Upload the earlier period too if this closing row should be connected to its original entry.";
+    case "sell_starting_trade_skipped":
+      return "No action is needed for normal long-side analytics. Upload the earlier period too if this sell belongs to a position opened before this file.";
     case "non_trade_row_skipped":
       return "No fix required; this row was not a stock execution for this import.";
     case "non_filled_order_skipped":

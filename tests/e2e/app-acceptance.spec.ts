@@ -147,6 +147,7 @@ async function uploadCsv(
 ): Promise<void> {
   await page.goto("/import-dry-run");
   await page.waitForLoadState("networkidle");
+  await openAdvancedUploadSettings(page);
   await page.getByTestId("broker-select").selectOption(args.broker);
   await page.getByTestId("local-csv-input").setInputFiles({
     buffer: Buffer.from(args.csvText),
@@ -154,6 +155,40 @@ async function uploadCsv(
     name: args.fileName,
   });
   await expect(page.getByTestId("csv-textarea")).toHaveValue(args.csvText);
+}
+
+async function openAdvancedUploadSettings(page: Page): Promise<void> {
+  const details = page.getByTestId("import-dry-run-advanced-upload-settings");
+
+  if ((await details.count()) === 0) {
+    return;
+  }
+
+  const trigger = details.getByText("Show advanced import settings", {
+    exact: true,
+  });
+  const isOpen = (await details.getAttribute("open")) !== null;
+
+  if (!isOpen && (await trigger.isVisible())) {
+    await trigger.click();
+  }
+}
+
+async function openImportReviewDetails(page: Page): Promise<void> {
+  const details = page.getByTestId("import-dry-run-review-details");
+
+  if ((await details.count()) === 0) {
+    return;
+  }
+
+  const trigger = details.getByText("Show import review details", {
+    exact: true,
+  });
+  const isOpen = (await details.getAttribute("open")) !== null;
+
+  if (!isOpen && (await trigger.isVisible())) {
+    await trigger.click();
+  }
 }
 
 test.describe("trader app acceptance", () => {
@@ -207,9 +242,18 @@ test.describe("trader app acceptance", () => {
       throw new Error("Sample analytics data is missing acceptance fixtures.");
     }
 
-    await visit(page, "/analytics", "Analytics");
+    await visit(
+      page,
+      "/analytics/timing?demo=sample",
+      "Trading Performance Dashboard",
+    );
     await expect(page.getByText("Time Of Day")).toBeVisible();
-    await expect(page.getByText("Session Timing")).toBeVisible();
+    await expect(page.getByText("When did the results happen?")).toBeVisible();
+    await visit(
+      page,
+      "/analytics/trade-explorer?demo=sample",
+      "Trading Performance Dashboard",
+    );
     await page.getByTestId("analytics-filter-symbol").selectOption("ABCD");
     await page.getByTestId("analytics-filter-outcome").selectOption("loser");
     const firstHour = productView.filterOptions.entryHoursEt[0];
@@ -256,7 +300,7 @@ test.describe("trader app acceptance", () => {
     await expect(
       page.getByRole("heading", {
         exact: true,
-        name: `${firstFilteredTrade.symbol} Trade Review`,
+        name: `${firstFilteredTrade.symbol} Review Workspace`,
       }),
     ).toBeVisible();
 
@@ -276,6 +320,7 @@ test.describe("trader app acceptance", () => {
       fileName: "unknown-mapping-acceptance.csv",
     });
     await expect(page.locator("body")).toContainText("Broker mapping confidence is low");
+    await openImportReviewDetails(page);
 
     const mappings = {
       price: "Fill Price",
@@ -310,6 +355,7 @@ test.describe("trader app acceptance", () => {
     await expect(page.getByTestId("row-repair-2-status")).toHaveText("rejected");
     await page.getByTestId("row-repair-2-symbol").fill("ABCD");
     await expect(page.getByTestId("row-repair-2-status")).toHaveText("accepted");
+    await openImportReviewDetails(page);
     await expect(page.locator("body")).toContainText(
       "The import is ready for dry-run feedback review.",
     );
@@ -425,7 +471,7 @@ test.describe("trader app acceptance", () => {
     const firstTrade = sampleTrades[0];
 
     for (const route of [
-      { heading: "Analytics", path: "/analytics" },
+      { heading: "Trading Performance Dashboard", path: "/analytics" },
       { heading: "Import Trades", path: "/import-dry-run" },
       { heading: shell.guidedReview.title, path: "/review" },
       { heading: "Trader Progress", path: "/progress" },

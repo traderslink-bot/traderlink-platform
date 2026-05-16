@@ -81,6 +81,7 @@ function chooseProgressTickerStory(threads: SavedTradeThread[]): SavedTradeThrea
   return (
     multiRoundTripStories.find((thread) => thread.storyKind === "profit_giveback") ??
     multiRoundTripStories.find((thread) => thread.storyKind === "swing_transition") ??
+    multiRoundTripStories.find((thread) => thread.storyKind === "extended_same_day_hold") ??
     multiRoundTripStories.find((thread) => thread.storyKind === "open_reentry") ??
     multiRoundTripStories.find(
       (thread) => thread.storyKind === "repeated_losing_attempts",
@@ -168,7 +169,9 @@ export default function ProgressPage() {
     (thread) => thread.storyKind === "profit_giveback",
   ).length;
   const swingThreadCount = tradeThreadModel.threads.filter(
-    (thread) => thread.storyKind === "swing_transition",
+    (thread) =>
+      thread.storyKind === "swing_transition" ||
+      thread.storyKind === "extended_same_day_hold",
   ).length;
   const openReentryThreadCount = tradeThreadModel.threads.filter(
     (thread) => thread.storyKind === "open_reentry",
@@ -283,7 +286,7 @@ export default function ProgressPage() {
             {
               action: "Open coach",
               body: "Start with the active behavior or strength across saved trades.",
-              href: "/coach#next-action",
+              href: "/coach",
               label: "1. Focus",
               title: "Review coaching focus",
             },
@@ -407,7 +410,7 @@ export default function ProgressPage() {
             </div>
             <Link
               className="border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
-              href="/trades?view=ticker_stories#ticker-stories"
+              href="/trades/ticker-stories#ticker-stories"
             >
               Open ticker stories
             </Link>
@@ -440,9 +443,9 @@ export default function ProgressPage() {
                 tone: openReentryThreadCount > 0 ? "text-amber-300" : "text-zinc-100",
               },
               {
-                label: "Turned Swing",
+                label: "Hold Reviews",
                 value: swingThreadCount,
-                detail: "Day-trade ideas that carried overnight",
+                detail: "Extended same-day or next-session holds",
                 tone: swingThreadCount > 0 ? "text-sky-300" : "text-zinc-100",
               },
             ].map((item) => (
@@ -640,7 +643,7 @@ export default function ProgressPage() {
             </div>
             <Link
               className="border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
-              href="/coach#session-story-coach"
+              href="/coach/session-stories"
             >
               Open session coach
             </Link>
@@ -809,7 +812,7 @@ export default function ProgressPage() {
           <div className="mt-4 flex flex-wrap gap-2 border-t border-zinc-900 pt-3 text-xs">
             <Link
               className="text-sky-300 underline-offset-4 hover:underline"
-              href="/coach#next-action"
+              href="/coach"
             >
               Open coaching focus
             </Link>

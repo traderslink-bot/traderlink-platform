@@ -3,6 +3,24 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --tl-bg: #050a14;
+  --tl-surface: #0b1626;
+  --tl-surface-elevated: #10213a;
+  --tl-logo-blue: #011e56;
+  --tl-action-blue: #073b78;
+  --tl-action-blue-hover: #0a4f96;
+  --tl-link-blue: #4c9ddb;
+  --tl-border-blue: #17345a;
+  --tl-border-neutral: #243247;
+  --tl-profit-bg: #0f2d22;
+  --tl-profit-border: #1e6b4d;
+  --tl-profit-text: #43b883;
+  --tl-loss-bg: #35161d;
+  --tl-loss-border: #7d2635;
+  --tl-loss-text: #d85b6a;
+  --tl-text-primary: #f5f7fb;
+  --tl-text-secondary: #a7b3c7;
+  --tl-text-muted: #6f7e95;
 }
 
 @theme inline {
@@ -31,40 +49,47 @@ main.bg-zinc-950 .text-zinc-500 {
 
 .ti-dashboard-bg {
   background:
-    linear-gradient(180deg, rgba(42, 58, 82, 0.98), rgba(28, 42, 61, 1) 52%),
+    radial-gradient(circle at 18% 0%, rgba(1, 30, 86, 0.72), transparent 34rem),
+    radial-gradient(circle at 92% 14%, rgba(7, 59, 120, 0.42), transparent 28rem),
+    linear-gradient(180deg, rgba(5, 10, 20, 0.99), rgba(8, 15, 29, 1) 46%, rgba(5, 10, 20, 1)),
     repeating-linear-gradient(
       90deg,
-      rgba(148, 163, 184, 0.04) 0,
-      rgba(148, 163, 184, 0.04) 1px,
+      rgba(76, 157, 219, 0.035) 0,
+      rgba(76, 157, 219, 0.035) 1px,
       transparent 1px,
       transparent 80px
     );
 }
 
 .ti-panel {
-  border: 1px solid rgba(148, 163, 184, 0.46);
+  border: 1px solid rgba(23, 52, 90, 0.78);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(47, 63, 88, 0.94), rgba(35, 50, 72, 0.98)),
-    #2f3f58;
-  box-shadow: 0 16px 42px rgba(2, 6, 23, 0.16);
+    linear-gradient(180deg, rgba(16, 33, 58, 0.96), rgba(11, 22, 38, 0.98)),
+    var(--tl-surface);
+  box-shadow:
+    0 18px 55px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(245, 247, 251, 0.04);
 }
 
 .ti-panel-soft {
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  border: 1px solid rgba(36, 50, 71, 0.92);
   border-radius: 8px;
-  background: rgba(51, 66, 88, 0.72);
+  background:
+    linear-gradient(180deg, rgba(16, 33, 58, 0.72), rgba(11, 22, 38, 0.8)),
+    rgba(11, 22, 38, 0.78);
+  box-shadow: inset 0 1px 0 rgba(245, 247, 251, 0.03);
 }
 
 .ti-metric-card,
 .ti-chart-card,
 .ti-workflow-step,
 .ti-advanced-panel {
-  border: 1px solid rgba(125, 143, 166, 0.36);
+  border: 1px solid rgba(36, 50, 71, 0.92);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(46, 61, 84, 0.82), rgba(32, 47, 68, 0.92)),
-    #2e3d54;
+    linear-gradient(180deg, rgba(16, 33, 58, 0.82), rgba(11, 22, 38, 0.94)),
+    var(--tl-surface);
 }
 
 .ti-chart-card {
@@ -73,14 +98,14 @@ main.bg-zinc-950 .text-zinc-500 {
 
 .ti-workflow-step:hover {
   background:
-    linear-gradient(180deg, rgba(59, 75, 99, 0.78), rgba(29, 43, 64, 0.9)),
-    #27364e;
+    linear-gradient(180deg, rgba(7, 59, 120, 0.42), rgba(16, 33, 58, 0.94)),
+    var(--tl-surface-elevated);
 }
 
 .ti-advanced-panel {
   background:
-    linear-gradient(180deg, rgba(25, 37, 56, 0.72), rgba(20, 30, 47, 0.92)),
-    #192538;
+    linear-gradient(180deg, rgba(11, 22, 38, 0.72), rgba(5, 10, 20, 0.9)),
+    #07111f;
 }
 
 .ti-coach-brief {
@@ -101,11 +126,11 @@ main.bg-zinc-950 .text-zinc-500 {
 }
 
 .ti-dashboard-bg .bg-zinc-950 {
-  background-color: #273852;
+  background-color: var(--tl-surface);
 }
 
 .ti-dashboard-bg .bg-zinc-900 {
-  background-color: #33465f;
+  background-color: var(--tl-surface-elevated);
 }
 
 .ti-dashboard-bg [class~="bg-zinc-950/70"],
@@ -119,19 +144,19 @@ main.bg-zinc-950 .text-zinc-500 {
 .ti-dashboard-bg [class~="bg-slate-900/90"],
 .ti-dashboard-bg [class~="bg-slate-900/80"],
 .ti-dashboard-bg [class~="bg-slate-900/70"] {
-  background-color: rgba(49, 67, 92, 0.86);
+  background-color: rgba(16, 33, 58, 0.86);
 }
 
 .ti-dashboard-bg [class~="bg-sky-950/40"],
 .ti-dashboard-bg [class~="bg-sky-950/30"],
 .ti-dashboard-bg [class~="bg-sky-950/25"] {
-  background-color: rgba(14, 88, 128, 0.34);
+  background-color: rgba(1, 30, 86, 0.46);
 }
 
 .ti-dashboard-bg [class~="bg-emerald-950/30"],
 .ti-dashboard-bg [class~="bg-emerald-950/20"],
 .ti-dashboard-bg [class~="bg-emerald-950/10"] {
-  background-color: rgba(6, 95, 70, 0.28);
+  background-color: rgba(15, 45, 34, 0.66);
 }
 
 .ti-dashboard-bg [class~="bg-amber-950/30"],
@@ -141,16 +166,36 @@ main.bg-zinc-950 .text-zinc-500 {
 
 .ti-dashboard-bg [class~="bg-rose-950/30"],
 .ti-dashboard-bg [class~="bg-rose-950/20"] {
-  background-color: rgba(136, 19, 55, 0.26);
+  background-color: rgba(53, 22, 29, 0.72);
 }
 
 .ti-dashboard-bg [class~="border-zinc-900"],
 .ti-dashboard-bg [class~="border-zinc-800"] {
-  border-color: rgba(148, 163, 184, 0.34);
+  border-color: rgba(36, 50, 71, 0.92);
 }
 
 .ti-dashboard-bg [class~="bg-black/20"] {
-  background-color: rgba(38, 52, 74, 0.42);
+  background-color: rgba(5, 10, 20, 0.48);
+}
+
+.ti-top-nav-link {
+  border: 1px solid rgba(23, 52, 90, 0.78);
+  border-radius: 8px;
+  background: rgba(11, 22, 38, 0.76);
+  color: var(--tl-text-secondary);
+  padding: 0.65rem 0.85rem;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.ti-top-nav-link:hover {
+  border-color: rgba(76, 157, 219, 0.72);
+  background: rgba(7, 59, 120, 0.58);
+  color: var(--tl-text-primary);
+  transform: translateY(-1px);
 }
 
 .ti-outcome-chip {

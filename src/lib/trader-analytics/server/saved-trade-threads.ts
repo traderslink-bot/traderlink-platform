@@ -40,11 +40,13 @@ export type SavedTradeThreadLifecycleClassification =
   | "single_round_trip"
   | "closed_day_trade_reentry"
   | "open_intraday_reentry"
+  | "extended_same_day_hold"
   | "day_trade_turned_swing"
   | "multi_day_ticker_thread";
 
 export type SavedTradeThreadStoryKind =
   | "single_round_trip"
+  | "extended_same_day_hold"
   | "swing_transition"
   | "open_reentry"
   | "profit_giveback"
@@ -163,6 +165,24 @@ export interface SavedTradeThread {
   href: string;
 }
 
+export interface SavedTradeSessionTickerSummary {
+  id: string;
+  symbol: string;
+  sessionDate: string;
+  storyLabel: string;
+  lifecycleClassification: SavedTradeThreadLifecycleClassification;
+  lifecycleLabel: string;
+  roundTripCount: number;
+  closedRoundTripCount: number;
+  openRoundTripCount: number;
+  totalGrossRealizedPnl: number;
+  firstEntryTime: string | null;
+  lastExitTime: string | null;
+  reviewPriorityLabel: string;
+  reviewPriorityAction: string;
+  href: string;
+}
+
 export interface SavedTradeSessionStory {
   id: string;
   sessionDate: string;
@@ -188,7 +208,9 @@ export interface SavedTradeSessionStory {
   bestThread: SavedTradeThread | null;
   worstThread: SavedTradeThread | null;
   priorityThread: SavedTradeThread | null;
+  tickerSummaries: SavedTradeSessionTickerSummary[];
   reviewEvidence: SavedTradeThreadEvidenceItem[];
+  daySessionHref: string;
   href: string;
 }
 
@@ -728,9 +750,17 @@ function buildReentryVolumeComparisonFindings(args: {
   return [];
 }
 
-function hasSwingExposure(roundTrips: SavedTradeThreadRoundTrip[]): boolean {
+function hasCrossSessionExposure(
+  roundTrips: SavedTradeThreadRoundTrip[],
+): boolean {
+  return roundTrips.some((roundTrip) => roundTrip.crossedSessionDate);
+}
+
+function hasExtendedSameDayHold(
+  roundTrips: SavedTradeThreadRoundTrip[],
+): boolean {
   return roundTrips.some(
-    (roundTrip) => roundTrip.heldOvernight || roundTrip.crossedSessionDate,
+    (roundTrip) => roundTrip.heldOvernight && !roundTrip.crossedSessionDate,
   );
 }
 
@@ -750,12 +780,21 @@ function classifyThreadLifecycle(args: {
     };
   }
 
-  if (hasSwingExposure(args.roundTrips)) {
+  if (hasCrossSessionExposure(args.roundTrips)) {
     return {
       lifecycleClassification: "day_trade_turned_swing",
       lifecycleLabel: "Day trade turned swing",
       lifecycleDetail:
-        "At least one round trip carried past the original trading day or shows overnight exposure, so review the hold decision separately from the intraday entry.",
+        "At least one round trip carried into another trading session, so review the hold decision separately from the intraday entry.",
+    };
+  }
+
+  if (hasExtendedSameDayHold(args.roundTrips)) {
+    return {
+      lifecycleClassification: "extended_same_day_hold",
+      lifecycleLabel: "Extended same-day hold",
+      lifecycleDetail:
+        "At least one round trip continued into the late or overnight-hours session on the same trading date, so review whether that hold matched the trade plan.",
     };
   }
 
@@ -802,9 +841,20 @@ function buildStory(thread: {
       storyKind: "swing_transition",
       storyLabel: "Re-entry changed the trade type",
       storyDetail:
-        "This started as an intraday ticker story, but one re-entry carried into overnight or multi-session exposure.",
+        "This started as an intraday ticker story, but one re-entry continued into another trading session.",
       reviewPrompt:
         "Review the decision to hold separately from the original day-trade idea: plan, invalidation, size, and whether the setup was still worth carrying.",
+    };
+  }
+
+  if (thread.lifecycleClassification === "extended_same_day_hold") {
+    return {
+      storyKind: "extended_same_day_hold",
+      storyLabel: "Extended same-day hold",
+      storyDetail:
+        "This stayed on the same trading date, and one re-entry continued into the late or overnight-hours session.",
+      reviewPrompt:
+        "Review the hold plan separately: whether the hold was intended, where invalidation was, and what would have ended the extended hold.",
     };
   }
 
@@ -928,9 +978,22 @@ function buildReviewEvidence(thread: {
       id: "swing-transition",
       title: "The re-entry changed the trade type",
       detail:
-        "One later round trip carried past the original session date or shows overnight exposure.",
+        "One later round trip carried into another trading session.",
       reviewAction:
         "Write down the hold plan, invalidation, size, and why the day-trade idea became worth carrying.",
+      evidenceSource: "saved executions",
+      tone: "warning",
+    });
+  }
+
+  if (thread.lifecycleClassification === "extended_same_day_hold") {
+    evidence.push({
+      id: "extended-same-day-hold",
+      title: "The re-entry became an extended same-day hold",
+      detail:
+        "One later round trip stayed on the same trading date but continued into the late or overnight-hours session.",
+      reviewAction:
+        "Write down whether the hold was planned, where invalidation was, and what would have ended the extended hold.",
       evidenceSource: "saved executions",
       tone: "warning",
     });
@@ -1172,6 +1235,8 @@ function buildReviewEvidence(thread: {
   const primaryReviewQuestion =
     thread.lifecycleClassification === "day_trade_turned_swing"
       ? "Did the re-entry become a different trade than the original day-trade idea?"
+      : thread.lifecycleClassification === "extended_same_day_hold"
+        ? "Was the late-session continuation planned, and did it have clear invalidation?"
       : thread.lifecycleClassification === "open_intraday_reentry"
         ? "What needs to happen before this open re-entry can be reviewed as complete?"
         : thread.peakCumulativePnl > 0 && thread.givebackFromPeak > 0
@@ -1282,7 +1347,9 @@ function buildSessionStory(args: {
     (thread) => thread.storyKind === "profit_giveback",
   ).length;
   const openOrSwingThreadCount = args.threads.filter((thread) =>
-    ["open_reentry", "swing_transition"].includes(thread.storyKind),
+    ["extended_same_day_hold", "open_reentry", "swing_transition"].includes(
+      thread.storyKind,
+    ),
   ).length;
   const marketContextStrengthCount = args.threads.reduce(
     (total, thread) => total + thread.marketContextStrengthCount,
@@ -1347,10 +1414,51 @@ function buildSessionStory(args: {
     args.threads.find((thread) => thread.storyKind === "profit_giveback") ??
     args.threads.find((thread) => thread.storyKind === "repeated_losing_attempts") ??
     args.threads.find((thread) => thread.storyKind === "swing_transition") ??
+    args.threads.find((thread) => thread.storyKind === "extended_same_day_hold") ??
     args.threads.find((thread) => thread.marketContextStrengthCount > 0) ??
     sameSymbolThread ??
     worstThread ??
     bestThread;
+  const tickerSummaries = [...args.threads]
+    .sort((left, right) => {
+      if (left.id === priorityThread?.id) {
+        return -1;
+      }
+
+      if (right.id === priorityThread?.id) {
+        return 1;
+      }
+
+      if (right.roundTripCount !== left.roundTripCount) {
+        return right.roundTripCount - left.roundTripCount;
+      }
+
+      if (Math.abs(right.totalGrossRealizedPnl) !== Math.abs(left.totalGrossRealizedPnl)) {
+        return (
+          Math.abs(right.totalGrossRealizedPnl) -
+          Math.abs(left.totalGrossRealizedPnl)
+        );
+      }
+
+      return left.symbol.localeCompare(right.symbol);
+    })
+    .map((thread) => ({
+      id: thread.id,
+      symbol: thread.symbol,
+      sessionDate: thread.sessionDate,
+      storyLabel: thread.storyLabel,
+      lifecycleClassification: thread.lifecycleClassification,
+      lifecycleLabel: thread.lifecycleLabel,
+      roundTripCount: thread.roundTripCount,
+      closedRoundTripCount: thread.closedRoundTripCount,
+      openRoundTripCount: thread.openRoundTripCount,
+      totalGrossRealizedPnl: thread.totalGrossRealizedPnl,
+      firstEntryTime: thread.firstEntryTime,
+      lastExitTime: thread.lastExitTime,
+      reviewPriorityLabel: thread.primaryReviewQuestion,
+      reviewPriorityAction: thread.fixFirstAction,
+      href: thread.href,
+    }));
   const evidence: SavedTradeThreadEvidenceItem[] = [];
 
   if (storyKind === "green_to_red_session") {
@@ -1396,8 +1504,8 @@ function buildSessionStory(args: {
   if (openOrSwingThreadCount > 0) {
     evidence.push({
       id: "session-open-or-swing",
-      title: "Open or overnight exposure needs separate review",
-      detail: `${openOrSwingThreadCount} ticker stor${openOrSwingThreadCount === 1 ? "y" : "ies"} included an open re-entry or overnight hold.`,
+      title: "Open or extended-hold exposure needs separate review",
+      detail: `${openOrSwingThreadCount} ticker stor${openOrSwingThreadCount === 1 ? "y" : "ies"} included an open re-entry, extended same-day hold, or next-session hold.`,
       reviewAction:
         "Review hold plan, size, and invalidation separately from the original intraday idea.",
       evidenceSource: "saved execution lifecycle",
@@ -1587,7 +1695,9 @@ function buildSessionStory(args: {
     bestThread,
     worstThread,
     priorityThread,
+    tickerSummaries,
     reviewEvidence: evidence,
+    daySessionHref: `/trades/day-session/${encodeURIComponent(args.sessionDate)}`,
     href: priorityThread?.href ?? "/analytics",
   };
 }
@@ -1873,7 +1983,7 @@ export function buildSavedTradeThreadReadModel(args: {
       volumeStrengthCount: strengthCount(volumeFindings),
       volumeReviewPromptCount: reviewPromptCount(volumeFindings),
       ...story,
-      href: `/trades?thread=${encodeURIComponent(id)}`,
+      href: `/trades/ticker-story/${encodeURIComponent(id)}`,
     } satisfies SavedTradeThread;
   });
 

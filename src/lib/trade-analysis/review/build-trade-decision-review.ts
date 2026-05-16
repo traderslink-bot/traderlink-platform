@@ -10,10 +10,7 @@ export type TradeDecisionReviewInsightCategory =
   | "market_context"
   | "trade_window";
 
-export type TradeDecisionReviewInsightTone =
-  | "strength"
-  | "risk"
-  | "neutral";
+export type TradeDecisionReviewInsightTone = "strength" | "risk" | "neutral";
 
 export interface TradeDecisionReviewInsight {
   id: string;
@@ -77,7 +74,10 @@ export interface TradeDecisionReview {
   insights: TradeDecisionReviewInsight[];
 }
 
-function hasPattern(result: AppTradeAnalysisResult, patternId: string): boolean {
+function hasPattern(
+  result: AppTradeAnalysisResult,
+  patternId: string,
+): boolean {
   return result.normalizedPatterns.prioritizedPatterns.some(
     (pattern) => pattern.patternId === patternId,
   );
@@ -210,13 +210,13 @@ function buildMarketContextInsights(
       id: "entry_near_daily_4h_resistance",
       category: "market_context",
       tone: "risk",
-      title: `Entry was close to ${levelPhrase(
+      title: `Entry started just below ${levelPhrase(
         "resistance",
         context.firstEntryNearestResistanceStrengthBucket ?? null,
         context.firstEntryNearestResistanceSourceStrengthLabel ?? null,
       )}`,
       summary:
-        "The first entry started near a graded higher-timeframe resistance area, so the trade needed cleaner continuation to justify risk.",
+        "The first entry started just below a graded higher-timeframe resistance area, so the trade needed proof it had enough room to continue.",
       evidence: [
         `nearestResistance=${price(context.firstEntryNearestResistanceAbovePrice)}`,
         `distanceToResistance=${pctPoints(context.firstEntryDistanceToNearestResistancePct)}`,
@@ -242,13 +242,12 @@ function buildMarketContextInsights(
       id: "entry_limited_clean_room_to_resistance",
       category: "market_context",
       tone: "risk",
-      title: "Entry had limited room before resistance",
-      summary:
-        `The nearest ${levelPhrase(
-          "resistance",
-          context.firstEntryNearestResistanceStrengthBucket ?? null,
-          context.firstEntryNearestResistanceSourceStrengthLabel ?? null,
-        )} was close enough that upside was not especially clean from the first fill.`,
+      title: "Entry had limited room before overhead resistance",
+      summary: `The nearest ${levelPhrase(
+        "resistance",
+        context.firstEntryNearestResistanceStrengthBucket ?? null,
+        context.firstEntryNearestResistanceSourceStrengthLabel ?? null,
+      )} was close above the first fill, so upside space was limited unless price could clear that area.`,
       evidence: [
         `nearestResistance=${price(context.firstEntryNearestResistanceAbovePrice)}`,
         `distanceToResistance=${pctPoints(context.firstEntryDistanceToNearestResistancePct)}`,
@@ -304,13 +303,13 @@ function buildMarketContextInsights(
       id: "entry_near_daily_4h_support",
       category: "market_context",
       tone: "strength",
-      title: `Entry had nearby ${levelPhrase(
+      title: `Entry started near ${levelPhrase(
         "support",
         context.firstEntryNearestSupportStrengthBucket ?? null,
         context.firstEntryNearestSupportSourceStrengthLabel ?? null,
-      )}`,
+      )} below`,
       summary:
-        "The first entry had nearby graded higher-timeframe support context instead of floating without obvious structure below.",
+        "The first entry had graded higher-timeframe support underneath instead of floating without obvious structure below.",
       evidence: [
         `nearestSupport=${price(context.firstEntryNearestSupportBelowPrice)}`,
         `distanceToSupport=${pctPoints(context.firstEntryDistanceToNearestSupportPct)}`,
@@ -367,9 +366,9 @@ function buildMarketContextInsights(
       id: "entry_far_from_daily_4h_support",
       category: "market_context",
       tone: "risk",
-      title: "Entry had little nearby support",
+      title: "Entry had little support underneath",
       summary:
-        "Daily/4h context was present, but the first fill was not sitting on nearby support, so the entry had less structural cushion underneath it.",
+        "Daily/4h context was present, but the first fill was not sitting near support below, so the entry had less structural cushion underneath it.",
       evidence: [
         `nearestSupport=${price(context.firstEntryNearestSupportBelowPrice)}`,
         `distanceToSupport=${pctPoints(context.firstEntryDistanceToNearestSupportPct)}`,
@@ -424,9 +423,9 @@ function buildMarketContextInsights(
       id: "stacked_daily_4h_resistance_above_entry",
       category: "market_context",
       tone: "risk",
-      title: "Resistance was stacked above the entry",
+      title: "Resistance was stacked overhead",
       summary:
-        "Multiple higher-timeframe resistance levels were overhead, so continuation had more structure to work through.",
+        "Multiple higher-timeframe resistance levels were above the entry, so continuation had more structure to work through than a single nearby level.",
       evidence: [
         `resistanceLevelsAboveWithinClusterCount=${context.firstEntryResistanceLevelsAboveWithinClusterCount}`,
       ],
@@ -477,17 +476,17 @@ function isAddsAlignedHeadline(headline: string): boolean {
 }
 
 function isExitLeftContinuationHeadline(headline: string): boolean {
-  return headline
-    .toLowerCase()
-    .includes("exited winner potential too early");
+  return headline.toLowerCase().includes("exited winner potential too early");
 }
 
 function isProfitProtectionHeadline(headline: string): boolean {
   const lowerHeadline = headline.toLowerCase();
 
-  return lowerHeadline.includes("profit protection failed") ||
+  return (
+    lowerHeadline.includes("profit protection failed") ||
     lowerHeadline.includes("profit protection was the main review issue") ||
-    lowerHeadline.includes("open profit was not protected");
+    lowerHeadline.includes("open profit was not protected")
+  );
 }
 
 function sentenceFromInsightTitle(title: string): string {
@@ -504,7 +503,10 @@ function buildMarketAwareFallbackHeadline(
   insights: TradeDecisionReviewInsight[],
 ): string | null {
   const resistance = getInsight(insights, "entry_near_daily_4h_resistance");
-  const shortSupport = getInsight(insights, "short_entry_near_daily_4h_support");
+  const shortSupport = getInsight(
+    insights,
+    "short_entry_near_daily_4h_support",
+  );
   const limitedRoom = hasInsight(
     insights,
     "entry_limited_clean_room_to_resistance",
@@ -512,9 +514,15 @@ function buildMarketAwareFallbackHeadline(
   const lateAdd = hasInsight(insights, "adds_after_trade_already_used_range");
   const weakAdd = hasInsight(insights, "adds_increased_risk_into_weakness");
   const failedProtection = hasInsight(insights, "profit_protection_failed");
-  const protectedBeforeFade = hasInsight(insights, "protected_profit_before_fade");
+  const protectedBeforeFade = hasInsight(
+    insights,
+    "protected_profit_before_fade",
+  );
   const continuationLeft = hasInsight(insights, "exit_left_continuation");
-  const avoidedFade = hasInsight(insights, "exit_avoided_adverse_followthrough");
+  const avoidedFade = hasInsight(
+    insights,
+    "exit_avoided_adverse_followthrough",
+  );
   const resistanceReversal = hasInsight(
     insights,
     "exit_into_resistance_with_reversal_after_exit",
@@ -529,11 +537,11 @@ function buildMarketAwareFallbackHeadline(
   );
 
   if (resistance && limitedRoom && lateAdd) {
-    return `${resistance.title}, the trade had limited room before resistance, and later adds increased size after much of the move was already used.`;
+    return `${resistance.title}, the trade had limited room before overhead resistance, and later adds increased size after much of the move was already used.`;
   }
 
   if (resistance && limitedRoom) {
-    return `${resistance.title} with limited room before resistance.`;
+    return `${resistance.title} with limited room before overhead resistance.`;
   }
 
   if (shortSupport) {
@@ -575,7 +583,7 @@ function buildMarketAwareFallbackHeadline(
   const firstRisk = insights.find((insight) => insight.tone === "risk");
 
   if (firstRisk?.id === "entry_far_from_daily_4h_support") {
-    return "Entry had little nearby daily/4h support.";
+    return "Entry had little daily/4h support underneath.";
   }
 
   if (firstRisk) {
@@ -633,7 +641,10 @@ function selectCoachingHeadline(args: {
     hasResistanceLimitedRoomRisk &&
     hasInsight(args.insights, "adds_after_trade_already_used_range");
 
-  if (fallback && (hasCombinedMarketAndScalingRisk || hasResistanceLimitedRoomRisk)) {
+  if (
+    fallback &&
+    (hasCombinedMarketAndScalingRisk || hasResistanceLimitedRoomRisk)
+  ) {
     return fallback;
   }
 
@@ -1354,7 +1365,8 @@ export function buildTradeDecisionReview(
     undefined,
     {
       tradeIndex: 0,
-      sessionBucket: result.rawTradeTimeline.timeline.sessionContext.sessionBucket,
+      sessionBucket:
+        result.rawTradeTimeline.timeline.sessionContext.sessionBucket,
     },
   );
   const input = result.patternInput;
@@ -1408,8 +1420,7 @@ export function buildTradeDecisionReview(
       source: supportResistance.hadSupportResistanceContextAvailable
         ? "levels_system_daily_4h"
         : "none",
-      nearestSupportPrice:
-        supportResistance.firstEntryNearestSupportBelowPrice,
+      nearestSupportPrice: supportResistance.firstEntryNearestSupportBelowPrice,
       nearestResistancePrice:
         supportResistance.firstEntryNearestResistanceAbovePrice ??
         supportResistance.firstEntryNearestResistanceBelowPrice,
@@ -1420,7 +1431,8 @@ export function buildTradeDecisionReview(
       nearestSupportSourceStrengthLabel:
         supportResistance.firstEntryNearestSupportSourceStrengthLabel ?? null,
       nearestResistanceSourceStrengthLabel:
-        supportResistance.firstEntryNearestResistanceSourceStrengthLabel ?? null,
+        supportResistance.firstEntryNearestResistanceSourceStrengthLabel ??
+        null,
       nearestSupportScore:
         supportResistance.firstEntryNearestSupportScore ?? null,
       nearestResistanceScore:
@@ -1442,8 +1454,7 @@ export function buildTradeDecisionReview(
       worstPriceDuringTrade: input.tradeStructure.worstPriceDuringTrade,
       maxFavorableMovePctAfterExit:
         input.exitContext.maxFavorableMovePctAfterExit,
-      maxAdverseMovePctAfterExit:
-        input.exitContext.maxAdverseMovePctAfterExit,
+      maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
     },
     insights,
   };

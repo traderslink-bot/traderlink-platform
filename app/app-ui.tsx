@@ -222,6 +222,7 @@ export function AdvancedDisclosure({
 }
 
 export type DashboardSideNavItem = {
+  active?: boolean;
   href: string;
   label: string;
   summary: string;
@@ -256,7 +257,12 @@ export function DashboardSideNav({
         >
           {items.map((item) => (
             <a
-              className="rounded-md border border-zinc-800/50 bg-slate-950/30 px-3 py-2 text-sm font-medium text-zinc-300 transition hover:border-sky-700 hover:text-sky-200"
+              aria-current={item.active ? "page" : undefined}
+              className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
+                item.active
+                  ? "border-sky-500 bg-sky-950/60 text-sky-100"
+                  : "border-zinc-800/50 bg-slate-950/30 text-zinc-300 hover:border-sky-700 hover:text-sky-200"
+              }`}
               href={item.href}
               key={`mobile-${item.href}-${item.label}`}
             >
@@ -276,7 +282,12 @@ export function DashboardSideNav({
         <nav className="mt-2 grid gap-2" aria-label={eyebrow}>
           {items.map((item) => (
             <a
-              className="rounded-md border border-zinc-800/40 px-3 py-3 text-left text-zinc-400 transition hover:border-sky-700 hover:bg-sky-950/30 hover:text-zinc-100"
+              aria-current={item.active ? "page" : undefined}
+              className={`rounded-md border px-3 py-3 text-left transition ${
+                item.active
+                  ? "border-sky-500 bg-sky-950/60 text-zinc-50 shadow-[inset_3px_0_0_#38bdf8]"
+                  : "border-zinc-800/40 text-zinc-400 hover:border-sky-700 hover:bg-sky-950/30 hover:text-zinc-100"
+              }`}
               href={item.href}
               key={`${item.href}-${item.label}`}
             >

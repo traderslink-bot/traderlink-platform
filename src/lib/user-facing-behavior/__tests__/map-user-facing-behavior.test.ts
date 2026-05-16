@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  mapDecisionReviewInsightForUser,
-  mapUserFacingBehavior,
-} from "..";
+import { mapDecisionReviewInsightForUser, mapUserFacingBehavior } from "..";
 
 function visibleCopy(input: ReturnType<typeof mapUserFacingBehavior>): string {
   return [
@@ -131,25 +128,25 @@ describe("mapUserFacingBehavior", () => {
     {
       behaviorId: "entry_near_daily_4h_resistance",
       expectedEvidenceChannel: "market_context",
-      expectedLabel: "Entry was close to resistance",
+      expectedLabel: "Entry started just below resistance",
       expectedOpportunityType: "risk_to_reduce",
     },
     {
       behaviorId: "entry_limited_clean_room_to_resistance",
       expectedEvidenceChannel: "market_context",
-      expectedLabel: "Entry had limited room before resistance",
+      expectedLabel: "Entry had limited room before overhead resistance",
       expectedOpportunityType: "risk_to_reduce",
     },
     {
       behaviorId: "entry_near_daily_4h_support",
       expectedEvidenceChannel: "market_context",
-      expectedLabel: "Entry was close to support",
+      expectedLabel: "Entry started near support below",
       expectedOpportunityType: "strength_to_repeat",
     },
     {
       behaviorId: "entry_far_from_daily_4h_support",
       expectedEvidenceChannel: "market_context",
-      expectedLabel: "Entry had little nearby support",
+      expectedLabel: "Entry had little support underneath",
       expectedOpportunityType: "risk_to_reduce",
     },
     {
@@ -181,7 +178,7 @@ describe("mapUserFacingBehavior", () => {
     {
       behaviorId: "stacked_daily_4h_resistance_above_entry",
       expectedEvidenceChannel: "market_context",
-      expectedLabel: "Resistance was stacked above the entry",
+      expectedLabel: "Resistance was stacked overhead",
       expectedOpportunityType: "risk_to_reduce",
     },
     {
@@ -520,10 +517,12 @@ describe("mapUserFacingBehavior", () => {
     expect(finding.canDrivePrimaryConclusion).toBe(false);
     expect(finding.opportunityType).toBe("review_prompt");
     expect(finding.label).toBe("Exit needs after-exit chart check");
-    expect(finding.reviewAction.toLowerCase()).toContain("after-exit chart evidence");
-    expect(`${finding.detail} ${finding.reviewAction}`.toLowerCase()).not.toContain(
-      "money left behind",
+    expect(finding.reviewAction.toLowerCase()).toContain(
+      "after-exit chart evidence",
     );
+    expect(
+      `${finding.detail} ${finding.reviewAction}`.toLowerCase(),
+    ).not.toContain("money left behind");
   });
 
   it("keeps unusually large after-exit moves prompt-only until calibrated", () => {
@@ -544,9 +543,9 @@ describe("mapUserFacingBehavior", () => {
     expect(finding.opportunityType).toBe("review_prompt");
     expect(finding.label).toBe("Large after-exit move needs review");
     expect(finding.reviewAction.toLowerCase()).toContain("manually");
-    expect(`${finding.detail} ${finding.reviewAction}`.toLowerCase()).not.toContain(
-      "guaranteed",
-    );
+    expect(
+      `${finding.detail} ${finding.reviewAction}`.toLowerCase(),
+    ).not.toContain("guaranteed");
   });
 
   it("keeps short-side market-context insights out of normal user routes", () => {
@@ -603,9 +602,9 @@ describe("mapUserFacingBehavior", () => {
     expect(finding.opportunityType).toBe("strength_to_repeat");
     expect(finding.label).toBe("Protected profit before the fade");
     expect(finding.reviewAction.toLowerCase()).toContain("exit cue");
-    expect(`${finding.detail} ${finding.reviewAction}`.toLowerCase()).not.toContain(
-      "top tick",
-    );
+    expect(
+      `${finding.detail} ${finding.reviewAction}`.toLowerCase(),
+    ).not.toContain("top tick");
   });
 
   it("translates balanced full-trade management without perfect-exit or signal claims", () => {
@@ -624,7 +623,8 @@ describe("mapUserFacingBehavior", () => {
       },
       "/analytics",
     );
-    const copy = `${finding.label} ${finding.detail} ${finding.reviewAction}`.toLowerCase();
+    const copy =
+      `${finding.label} ${finding.detail} ${finding.reviewAction}`.toLowerCase();
 
     expect(finding.canShowPrimary).toBe(true);
     expect(finding.canDrivePrimaryConclusion).toBe(true);
@@ -654,7 +654,8 @@ describe("mapUserFacingBehavior", () => {
       },
       "/coach",
     );
-    const copy = `${finding.label} ${finding.detail} ${finding.reviewAction}`.toLowerCase();
+    const copy =
+      `${finding.label} ${finding.detail} ${finding.reviewAction}`.toLowerCase();
 
     expect(finding.canShowPrimary).toBe(true);
     expect(finding.canDrivePrimaryConclusion).toBe(true);
@@ -734,7 +735,9 @@ describe("mapUserFacingBehavior", () => {
     expect(behavior.canDrivePrimaryConclusion).toBe(false);
     expect(behavior.label).toBe("Review behavior in advanced details");
     expect(visibleCopy(behavior)).not.toContain("Dominant Internal Pattern 42");
-    expect(behavior.advancedHowDetected).toContain("dominant_internal_pattern_42");
+    expect(behavior.advancedHowDetected).toContain(
+      "dominant_internal_pattern_42",
+    );
   });
 
   it("blocks a known behavior from a route where it is not allowed", () => {

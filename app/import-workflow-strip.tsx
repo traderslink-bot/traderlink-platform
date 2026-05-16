@@ -16,14 +16,14 @@ const IMPORT_WORKFLOW_STEPS: Array<{
   {
     id: "upload",
     label: "Upload CSV",
-    href: "/import-dry-run",
-    detail: "Paste or upload broker executions and check how trades are grouped.",
+    href: "/upload-csv",
+    detail: "Choose a broker CSV and let the app check and save it.",
   },
   {
     id: "recover",
     label: "Save or repair import",
     href: "/imports",
-    detail: "Fix rejected rows if needed, then save the import.",
+    detail: "Save clean files or fix only the rows that need attention.",
   },
   {
     id: "review",

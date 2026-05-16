@@ -6,9 +6,7 @@ import type {
   SavedTradeThreadRoundTrip,
 } from "./saved-trade-threads";
 import { userFacingTradeSymbol } from "../product/trade-display-copy";
-import type {
-  UserFacingBehaviorOpportunityType,
-} from "../../user-facing-behavior";
+import type { UserFacingBehaviorOpportunityType } from "../../user-facing-behavior";
 
 export type AnalyticsBehaviorReportGroupId =
   | "entry-resistance"
@@ -76,7 +74,7 @@ const BEHAVIOR_REPORT_GROUPS: readonly BehaviorReportGroupDefinition[] = [
   {
     actionLabel: "Open entry-location trades",
     description:
-      "Entry was close to resistance and the trade finished red. Review whether there was enough room before overhead resistance.",
+      "Entry started just below overhead resistance and the trade finished red. Review whether there was enough room before that level.",
     emptyState:
       "No certified resistance-entry evidence yet. The app needs historical support/resistance context from the trade date before it can make this call.",
     id: "entry-resistance",
@@ -85,13 +83,13 @@ const BEHAVIOR_REPORT_GROUPS: readonly BehaviorReportGroupDefinition[] = [
       "entry_limited_clean_room_to_resistance",
       "stacked_daily_4h_resistance_above_entry",
     ],
-    question: "Did entries start too close to overhead resistance?",
-    title: "Entries Near Resistance",
+    question: "Did entries start too close below overhead resistance?",
+    title: "Entries Under Resistance",
   },
   {
     actionLabel: "Open support-entry trades",
     description:
-      "Entry was close to support and the trade later worked. Review whether support actually held and what made the entry repeatable.",
+      "Entry started near support below and the trade later worked. Review whether support actually held and what made the entry repeatable.",
     emptyState:
       "No certified support-entry strength yet. A profitable trade still needs historical support evidence before the app praises the location.",
     id: "entry-support",
@@ -163,7 +161,8 @@ const BEHAVIOR_REPORT_GROUPS: readonly BehaviorReportGroupDefinition[] = [
       "balanced_management_with_constructive_exit",
       "add_into_strength_with_constructive_final_exit",
     ],
-    question: "Which trades showed constructive management into the final exit?",
+    question:
+      "Which trades showed constructive management into the final exit?",
     title: "Full-Trade Management",
   },
   {
@@ -250,13 +249,17 @@ function countByOpportunity(
       return false;
     }
 
-    return opportunityType === "review_prompt" || finding.canDrivePrimaryConclusion;
+    return (
+      opportunityType === "review_prompt" || finding.canDrivePrimaryConclusion
+    );
   }).length;
 }
 
-function hrefForRoundTrip(roundTrip: SavedTradeThreadRoundTrip | undefined): string {
+function hrefForRoundTrip(
+  roundTrip: SavedTradeThreadRoundTrip | undefined,
+): string {
   if (!roundTrip) {
-    return "/trades#ticker-stories";
+    return "/trades/ticker-stories#ticker-stories";
   }
 
   return roundTrip.href.includes("#")
@@ -273,10 +276,10 @@ function evidenceDetail(args: {
 
   if (args.definition.id === "entry-resistance" && typeof pnl === "number") {
     if (pnl < 0) {
-      return "Entry was close to resistance and the trade finished red. Review whether there was enough room before overhead resistance.";
+      return "Entry started just below overhead resistance and the trade finished red. Review whether there was enough room before that level.";
     }
 
-    return "Entry was close to resistance. Review whether the trade had enough room and what confirmed the entry despite overhead structure.";
+    return "Entry started just below overhead resistance. Review whether the trade had enough room and what confirmed the entry despite overhead structure.";
   }
 
   if (args.definition.id === "entry-support" && typeof pnl === "number") {
@@ -287,7 +290,7 @@ function evidenceDetail(args: {
     }
 
     if (pnl > 0) {
-      return "Entry was close to support and the trade later worked. Review whether support held and what made the entry repeatable.";
+      return "Entry started near support below and the trade later worked. Review whether support held and what made the entry repeatable.";
     }
 
     return "Entry had support context, but the trade did not finish green. Review whether support actually held after entry.";

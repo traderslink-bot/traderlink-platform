@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { existsSync } from "node:fs";
 import { sampleCreateRawTradeTimelineInput } from "../../raw-trade-timeline/__fixtures__/sample-create-raw-trade-timeline-input";
 import { buildSampleLevelsSystemSupportResistanceOptions } from "../../support-resistance/__fixtures__/sample-levels-system-fetch-service";
 import {
@@ -109,6 +110,17 @@ describe("runTradeAnalysis", () => {
 });
 
 describe("levels-system runtime options", () => {
+  it("uses the bundled IBKR candle warehouse for replay when no env override is set", () => {
+    const config = readLevelsSystemRuntimeConfigFromEnv({});
+
+    expect(config.preferredProvider).toBe("ibkr");
+    expect(config.warehouseMode).toBe("replay");
+    expect(config.warehouseDirectoryPath).toBeDefined();
+    expect(existsSync(`${config.warehouseDirectoryPath}/ibkr`)).toBe(true);
+    expect(config.warehouseDirectoryPath).toContain("data");
+    expect(config.warehouseDirectoryPath).toContain("candles");
+  });
+
   it("normalizes provider and lookback runtime config without owning candle fetching", () => {
     const config = readLevelsSystemRuntimeConfigFromEnv({
       LEVELS_SYSTEM_PROVIDER: "stub",

@@ -16,10 +16,9 @@ import {
   importTradeDirectionLabel,
 } from "../../src/lib/trader-analytics/product/import-user-copy";
 import type { ImportRecoveryReadModel } from "../../src/lib/trader-analytics/server/import-recovery-read-model";
-import { ImportWorkflowStrip } from "../import-workflow-strip";
 
 export const metadata: Metadata = {
-  title: "Import Review | Trader Intelligence",
+  title: "Import History | Trader Intelligence",
 };
 
 export const dynamic = "force-dynamic";
@@ -178,7 +177,7 @@ export default function ImportsPage() {
             Back to workspace
           </Link>
           <h1 className="mt-3 text-3xl font-semibold text-zinc-50">
-            {view.title}
+            Import History
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-zinc-500">
             See saved imports, unfinished repairs, and the next place to go
@@ -186,16 +185,11 @@ export default function ImportsPage() {
           </p>
           <Link
             className="mt-4 inline-block text-sm text-sky-300 hover:text-sky-200"
-            href="/import-dry-run"
+            href="/upload-csv"
           >
-            Open CSV dry run
+            Upload another CSV
           </Link>
         </header>
-
-        <ImportWorkflowStrip
-          currentStep="recover"
-          summary="The app keeps import work here when something still needs repair, duplicate review, or a final save before the trades power review."
-        />
 
         <section className="ti-panel p-4" data-testid="import-recovery-queue">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -274,14 +268,14 @@ export default function ImportsPage() {
               <p className="mt-1 text-xs text-zinc-500">
                 {importHistory.length > 0
                   ? "Saved import attempts are available for review."
-                  : "No saved imports yet. Save one from CSV dry run."}
+                  : "No saved imports yet. Upload one CSV to start."}
               </p>
             </div>
             <Link
               className="text-sm text-sky-300 hover:text-sky-200"
-              href="/import-dry-run"
+              href="/upload-csv"
             >
-              Open CSV dry run
+              Upload another CSV
             </Link>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-4">

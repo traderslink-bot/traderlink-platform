@@ -1,3 +1,7 @@
+import { existsSync } from "node:fs";
+import { createRequire } from "node:module";
+import { join } from "node:path";
+
 import type { BuildLevelsSystemSupportResistanceContextOptions } from "./build-support-resistance-context";
 
 export type LevelsSystemProviderName = NonNullable<
@@ -60,15 +64,24 @@ const DEFAULT_IBKR_PORT = 7497;
 const DEFAULT_IBKR_CLIENT_ID = 101;
 const DEFAULT_IBKR_HISTORICAL_TIMEOUT_MS = 30_000;
 const DEFAULT_IBKR_CONNECTION_TIMEOUT_MS = 10_000;
+const requireFromRuntimeModule = createRequire(import.meta.url);
 
 function runtimeRequire(moduleName: string): unknown {
-  return Function("moduleName", "return require(moduleName)")(moduleName);
+  return requireFromRuntimeModule(moduleName);
 }
 
 function loadLevelsSystemOnDemandRuntime(): LevelsSystemOnDemandRuntime {
   return runtimeRequire(
     "levels-system-phase1/support-resistance-engine",
   ) as LevelsSystemOnDemandRuntime;
+}
+
+function findBundledLevelsSystemWarehouseDirectory(): string | undefined {
+  const candidates = [
+    join(process.cwd(), "..", "levels-system", "data", "candles"),
+  ];
+
+  return candidates.find((candidate) => existsSync(join(candidate, "ibkr")));
 }
 
 function parseProviderName(
@@ -205,18 +218,28 @@ export function readLevelsSystemRuntimeConfigFromEnv(
   const enableOnDemandHydration = parseBoolean(
     env.LEVELS_SYSTEM_ON_DEMAND_HYDRATION,
   );
+  const configuredProvider = parseProviderName(env.LEVELS_SYSTEM_PROVIDER);
+  const configuredWarehouseDirectory =
+    env.LEVELS_SYSTEM_WAREHOUSE_DIRECTORY?.trim() || undefined;
+  const bundledWarehouseDirectory =
+    configuredProvider === undefined && configuredWarehouseDirectory === undefined
+      ? findBundledLevelsSystemWarehouseDirectory()
+      : undefined;
+  const warehouseDirectoryPath =
+    configuredWarehouseDirectory ?? bundledWarehouseDirectory;
+  const shouldUseBundledReplay =
+    !enableOnDemandHydration && bundledWarehouseDirectory !== undefined;
 
   return {
     preferredProvider: enableOnDemandHydration
       ? "ibkr"
-      : parseProviderName(env.LEVELS_SYSTEM_PROVIDER),
-    warehouseDirectoryPath:
-      env.LEVELS_SYSTEM_WAREHOUSE_DIRECTORY?.trim() || undefined,
+      : configuredProvider ?? (shouldUseBundledReplay ? "ibkr" : undefined),
+    warehouseDirectoryPath,
     warehouseMode: enableOnDemandHydration
       ? warehouseMode === "refresh"
         ? "refresh"
         : "read_write"
-      : warehouseMode,
+      : warehouseMode ?? (shouldUseBundledReplay ? "replay" : undefined),
     fetchServiceOptions: enableOnDemandHydration
       ? buildOnDemandHydrationFetchServiceOptions(env)
       : undefined,

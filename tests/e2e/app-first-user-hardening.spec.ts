@@ -8,16 +8,18 @@ const shell = buildProductWorkflowShellViewModel();
 const FIRST_RUN_ROUTES = [
   { heading: "TradersLink Trading Tools", path: "/" },
   { heading: "First Run Setup", path: "/first-run" },
+  { heading: "Upload CSV", path: "/upload-csv" },
   { heading: "Import Trades", path: "/import-dry-run" },
-  { heading: "Analytics", path: "/analytics" },
+  { heading: "Trading Performance Dashboard", path: "/analytics" },
   { heading: "Saved Trades", path: "/trades" },
 ] as const;
 
 const PRODUCT_TRUTHFULNESS_ROUTES = [
   { heading: "TradersLink Trading Tools", path: "/" },
   { heading: "First Run Setup", path: "/first-run" },
+  { heading: "Upload CSV", path: "/upload-csv" },
   { heading: "Import Trades", path: "/import-dry-run" },
-  { heading: "Analytics", path: "/analytics" },
+  { heading: "Trading Performance Dashboard", path: "/analytics" },
   { heading: shell.guidedReview.title, path: "/review" },
   { heading: "Trader Progress", path: "/progress" },
   { heading: "Saved Trades", path: "/trades" },
@@ -195,6 +197,7 @@ async function uploadCsv(
     fileName: string;
   },
 ): Promise<void> {
+  await openAdvancedUploadSettings(page);
   await page.getByTestId("broker-select").selectOption(args.broker);
   await page.getByTestId("local-csv-input").setInputFiles({
     buffer: Buffer.from(args.csvText),
@@ -202,6 +205,57 @@ async function uploadCsv(
     name: args.fileName,
   });
   await expect(page.getByTestId("csv-textarea")).toHaveValue(args.csvText);
+}
+
+async function openAdvancedUploadSettings(page: Page): Promise<void> {
+  const details = page.getByTestId("import-dry-run-advanced-upload-settings");
+
+  if ((await details.count()) === 0) {
+    return;
+  }
+
+  const trigger = details.getByText("Show advanced import settings", {
+    exact: true,
+  });
+  const isOpen = (await details.getAttribute("open")) !== null;
+
+  if (!isOpen && (await trigger.isVisible())) {
+    await trigger.click();
+  }
+}
+
+async function openAdminSampleFiles(page: Page): Promise<void> {
+  const details = page.getByTestId("import-dry-run-admin-sample-details");
+
+  if ((await details.count()) === 0) {
+    return;
+  }
+
+  const trigger = details.getByText("Show demo/admin sample files", {
+    exact: true,
+  });
+  const isOpen = (await details.getAttribute("open")) !== null;
+
+  if (!isOpen && (await trigger.isVisible())) {
+    await trigger.click();
+  }
+}
+
+async function openImportReviewDetails(page: Page): Promise<void> {
+  const details = page.getByTestId("import-dry-run-review-details");
+
+  if ((await details.count()) === 0) {
+    return;
+  }
+
+  const trigger = details.getByText("Show import review details", {
+    exact: true,
+  });
+  const isOpen = (await details.getAttribute("open")) !== null;
+
+  if (!isOpen && (await trigger.isVisible())) {
+    await trigger.click();
+  }
 }
 
 function buildLargeCsv(pairCount = 80): string {
@@ -217,7 +271,7 @@ function buildLargeCsv(pairCount = 80): string {
 }
 
 test.describe("first-user and hardening", () => {
-  test("guides a first user from empty state into import dry-run feedback", async ({
+  test("guides a first user from empty state into CSV upload and import feedback", async ({
     page,
   }, testInfo) => {
     test.skip(!isDesktopProject(testInfo), "first-user journey runs on desktop");
@@ -233,11 +287,17 @@ test.describe("first-user and hardening", () => {
     );
     await assertNoProductOverclaims(page);
 
-    await page.getByTestId("first-run-action-import-dry-run").click();
+    await page.getByTestId("first-run-action-upload-csv").click();
     await page.waitForLoadState("networkidle");
     await expect(
-      page.getByRole("heading", { exact: true, name: "Import Trades" }),
+      page.getByRole("heading", { exact: true, name: "Upload CSV" }),
     ).toBeVisible();
+    await expect(page.getByTestId("upload-csv-card")).toBeVisible();
+    await expect(page.locator("body")).not.toContainText("Broker detection");
+    await expect(page.locator("body")).not.toContainText("Automatic after upload");
+
+    await page.goto("/import-dry-run");
+    await page.waitForLoadState("networkidle");
 
     await uploadCsv(page, {
       broker: "generic_execution_csv",
@@ -251,6 +311,7 @@ test.describe("first-user and hardening", () => {
     await expect(page.getByTestId("row-repair-2-status")).toHaveText("rejected");
     await page.getByTestId("row-repair-2-quantity").fill("100");
     await expect(page.getByTestId("row-repair-2-status")).toHaveText("accepted");
+    await openImportReviewDetails(page);
     await expect(page.getByTestId("execution-readiness-summary")).toContainText(
       "Execution ready",
     );
@@ -266,9 +327,13 @@ test.describe("first-user and hardening", () => {
         name: "Execution Feedback Preview",
       }),
     ).toBeVisible();
-    await expect(page.locator("body")).toContainText(
+    await expect(
+      page.getByText("Show privacy, decision, and QA notes", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText(
       "No saved import is created here.",
-    );
+      { exact: true },
+    )).toBeHidden();
 
     assertNoProblems();
   });
@@ -283,7 +348,7 @@ test.describe("first-user and hardening", () => {
     await expect(page.locator("body")).not.toContainText(
       "Your latest analytics are ready",
     );
-    await expect(page.getByTestId("first-run-action-import-dry-run")).toBeVisible();
+    await expect(page.getByTestId("first-run-action-upload-csv")).toBeVisible();
 
     const missingResponse = await page.goto("/trades/not-a-real-trade-id");
     expect(missingResponse?.status()).toBe(404);
@@ -337,15 +402,21 @@ test.describe("first-user and hardening", () => {
     const assertNoProblems = collectPageProblems(page);
 
     await visitAndAssert(page, "/import-dry-run", "Import Trades");
-    await expect(page.getByTestId("sample-select")).toBeVisible();
+    await expect(page.locator("body")).not.toContainText("Broker detection");
+    await expect(page.locator("body")).not.toContainText("Automatic after upload");
+    await expect(page.getByTestId("sample-select")).toBeHidden();
+    await expect(page.getByTestId("broker-select")).toBeHidden();
+    await expect(page.getByLabel("Account Timezone", { exact: true })).toBeHidden();
+    await expect(page.getByTestId("local-csv-input")).toBeAttached();
+    await expect(page.getByTestId("csv-textarea")).toBeHidden();
+    await page.getByTestId("local-csv-input").focus();
+    await expect(page.getByTestId("local-csv-input")).toBeFocused();
+
+    await openAdvancedUploadSettings(page);
     await expect(page.getByTestId("broker-select")).toBeVisible();
     await expect(page.getByLabel("Account Timezone", { exact: true })).toBeVisible();
-    await expect(page.getByTestId("local-csv-input")).toBeAttached();
-    await expect(page.getByTestId("csv-textarea")).toBeVisible();
-    await page.getByTestId("sample-select").focus();
-    await expect(page.getByTestId("sample-select")).toBeFocused();
-    await page.keyboard.press("Tab");
-    await expect(page.getByTestId("broker-select")).toBeFocused();
+    await openAdminSampleFiles(page);
+    await expect(page.getByTestId("sample-select")).toBeVisible();
 
     await uploadCsv(page, {
       broker: "generic_execution_csv",
@@ -356,11 +427,16 @@ test.describe("first-user and hardening", () => {
       ].join("\n"),
       fileName: "accessibility-mapping.csv",
     });
+    await openImportReviewDetails(page);
     for (const field of ["symbol", "timestamp", "side", "quantity", "price"]) {
       await expect(page.getByTestId(`mapping-field-${field}`)).toBeEnabled();
     }
 
-    await visitAndAssert(page, "/analytics", "Analytics");
+    await visitAndAssert(
+      page,
+      "/analytics/trade-explorer",
+      "Trading Performance Dashboard",
+    );
     for (const testId of [
       "analytics-filter-symbol",
       "analytics-filter-direction",
@@ -421,12 +497,7 @@ test.describe("first-user and hardening", () => {
         csvText: csvCase.csvText,
         fileName: `abuse-${csvCase.name}.csv`,
       });
-      await expect(
-        page.getByRole("heading", {
-          exact: true,
-          name: "Import Session Summary",
-        }),
-      ).toBeVisible();
+      await openImportReviewDetails(page);
       await expect(page.locator("body")).toContainText(csvCase.expected);
       await assertNoBrokenPageCopy(page);
       await assertNoProductOverclaims(page);
@@ -437,6 +508,7 @@ test.describe("first-user and hardening", () => {
       csvText: buildLargeCsv(),
       fileName: "abuse-large.csv",
     });
+    await openImportReviewDetails(page);
     await expect(page.locator("body")).toContainText("Execution Feedback Preview");
     await expect(page.locator("body")).toContainText("BIG0");
     await assertNoProductOverclaims(page);

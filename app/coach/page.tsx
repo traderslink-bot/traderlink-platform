@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  AdvancedDisclosure,
   DashboardSideNav,
   MetricCard,
   plainStateLabel,
@@ -39,6 +38,35 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
+
+type CoachView =
+  | "overview"
+  | "review_session"
+  | "behavior_sequence"
+  | "review_backlog"
+  | "ticker_stories"
+  | "session_stories"
+  | "next_session"
+  | "progress"
+  | "details";
+
+function normalizeCoachView(value: string | string[] | undefined): CoachView {
+  const raw = Array.isArray(value) ? value[0] : value;
+
+  switch (raw) {
+    case "review_session":
+    case "behavior_sequence":
+    case "review_backlog":
+    case "ticker_stories":
+    case "session_stories":
+    case "next_session":
+    case "progress":
+    case "details":
+      return raw;
+    default:
+      return "overview";
+  }
+}
 
 function signed(value: number | null): string {
   if (value === null) {
@@ -188,6 +216,7 @@ function choosePriorityTickerStory(threads: SavedTradeThread[]): SavedTradeThrea
   return (
     multiRoundTripStories.find((thread) => thread.storyKind === "profit_giveback") ??
     multiRoundTripStories.find((thread) => thread.storyKind === "swing_transition") ??
+    multiRoundTripStories.find((thread) => thread.storyKind === "extended_same_day_hold") ??
     multiRoundTripStories.find((thread) => thread.storyKind === "open_reentry") ??
     multiRoundTripStories.find(
       (thread) => thread.storyKind === "repeated_losing_attempts",
@@ -220,7 +249,10 @@ function tickerStoryToneClass(thread: SavedTradeThread | null): string {
     return "border-amber-700 bg-amber-950/20 text-amber-200";
   }
 
-  if (thread.storyKind === "swing_transition") {
+  if (
+    thread.storyKind === "swing_transition" ||
+    thread.storyKind === "extended_same_day_hold"
+  ) {
     return "border-sky-700 bg-sky-950/20 text-sky-200";
   }
 
@@ -292,11 +324,7 @@ function TickerStoryCoachPanel({
   thread: SavedTradeThread | null;
   threadCount: number;
 }) {
-  const storyHref =
-    thread?.href ??
-    (threadCount > 0
-      ? "/trades?view=ticker_stories#ticker-stories"
-      : "/trades#ticker-stories");
+  const storyHref = thread?.href ?? "/trades/ticker-stories#ticker-stories";
 
   return (
     <section className="ti-panel p-5" data-testid="coach-ticker-story-panel">
@@ -1241,8 +1269,102 @@ function CoachNextSessionPlanPanel({
   );
 }
 
-export default function CoachPage() {
-  const analyticsData = buildSavedOrSampleTraderAnalyticsViewModel();
+function EmptyCoachPage() {
+  return (
+    <main className="ti-dashboard-bg min-h-screen px-5 py-8 text-zinc-100 sm:px-8">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+        <header className="ti-panel p-6">
+          <Link className="text-sm text-sky-300 hover:text-sky-200" href="/workspace">
+            Back to workspace
+          </Link>
+          <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-emerald-400">
+            Coach
+          </p>
+          <h1 className="mt-2 max-w-4xl text-3xl font-semibold text-zinc-50">
+            Your Trading Coach
+          </h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+            The coach starts after your first broker CSV is saved. Upload the
+            CSV first, then the coach can choose one behavior to fix, repeat, or
+            review from your own trades.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2 text-xs uppercase tracking-wide">
+            <span className="rounded-md border border-amber-900 bg-amber-950/20 px-2 py-1 text-amber-300">
+              No saved import yet
+            </span>
+            <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-1 text-zinc-400">
+              0 saved trades
+            </span>
+          </div>
+        </header>
+
+        <section className="ti-panel p-4" data-testid="saved-review-summary-strip">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Saved Review Work
+              </p>
+              <h2 className="mt-2 text-lg font-semibold text-zinc-100">
+                Save one broker CSV to build the coaching queue
+              </h2>
+              <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-400">
+                No saved trades are available yet. The coach will stay empty
+                until your import creates real saved trades from your CSV.
+              </p>
+            </div>
+            <Link
+              className="border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+              href="/upload-csv"
+            >
+              Import trades
+            </Link>
+          </div>
+        </section>
+
+        <section className="grid gap-4 md:grid-cols-3">
+          <MetricCard
+            label="Saved Trades"
+            value="0"
+            detail="Upload a CSV to create saved trades."
+            tone="warning"
+          />
+          <MetricCard
+            label="Review Queue"
+            value="0"
+            detail="Review work appears after an import is saved."
+            tone="warning"
+          />
+          <MetricCard
+            label="Coach Status"
+            value="Waiting"
+            detail="Coaching starts from your saved trade evidence."
+            tone="info"
+          />
+        </section>
+      </div>
+    </main>
+  );
+}
+
+export default async function CoachPage(props: {
+  searchParams: Promise<{
+    demo?: string | string[] | undefined;
+    view?: string | string[] | undefined;
+  }>;
+}) {
+  const searchParams = await props.searchParams;
+  const demoParam = Array.isArray(searchParams.demo)
+    ? searchParams.demo[0]
+    : searchParams.demo;
+  const activeCoachView = normalizeCoachView(searchParams.view);
+  const analyticsData = buildSavedOrSampleTraderAnalyticsViewModel({
+    preferSample: demoParam === "sample",
+  });
+
+  if (analyticsData.mode !== "saved" && demoParam !== "sample") {
+    return <EmptyCoachPage />;
+  }
+
   const analytics = analyticsData.viewModel;
   const savedTradesForProgress = analyticsData.repository.listTrades(
     analyticsData.userId,
@@ -1361,26 +1483,96 @@ export default function CoachPage() {
   const evidenceLabel = primaryEvidenceItem
     ? `${primaryEvidenceDisplayName} / ${signed(primaryEvidenceItem.grossRealizedPnl)}`
     : "No saved trade yet";
+  const coachRouteItems = [
+    {
+      active: activeCoachView === "overview",
+      countLabel: evidenceSummary,
+      href: "/coach",
+      label: "Overview",
+      summary: "Current focus, evidence trade, and the coaching path.",
+    },
+    {
+      active: activeCoachView === "review_session",
+      countLabel: primaryEvidenceItem ? primaryEvidenceDisplayName : "Import needed",
+      href: "/coach/review-session",
+      label: "Review Session",
+      summary: "Work the selected evidence trade and name the behavior.",
+    },
+    {
+      active: activeCoachView === "behavior_sequence",
+      countLabel: `${behaviorReport.groups.length} groups`,
+      href: "/coach/behavior-sequence",
+      label: "Behavior Sequence",
+      summary: "One chart-backed path for what to fix, repeat, or review.",
+    },
+    {
+      active: activeCoachView === "review_backlog",
+      countLabel: `${reviewPreviewItems.length} trades`,
+      href: "/coach/review-backlog",
+      label: "Review Backlog",
+      summary: "Trades that prove or challenge the coaching focus.",
+    },
+    {
+      active: activeCoachView === "ticker_stories",
+      countLabel: `${tradeThreadModel.multiRoundTripThreadCount} stories`,
+      href: "/coach/ticker-stories",
+      label: "Ticker Stories",
+      summary: "Same-symbol re-entries, giveback, and hold transitions.",
+    },
+    {
+      active: activeCoachView === "session_stories",
+      countLabel: `${tradeThreadModel.sessionStoryCount} sessions`,
+      href: "/coach/session-stories",
+      label: "Session Stories",
+      summary: "Full-day review for green-to-red, activity, and hold exposure.",
+    },
+    {
+      active: activeCoachView === "next_session",
+      countLabel: "Plan",
+      href: "/coach/next-session",
+      label: "Next Session",
+      summary: "One rule, one behavior to reduce, and one strength to repeat.",
+    },
+    {
+      active: activeCoachView === "progress",
+      countLabel: `${coachProgress.completionPct}%`,
+      href: "/coach/progress",
+      label: "Progress",
+      summary: "Check follow-through after reviews are written.",
+    },
+    {
+      active: activeCoachView === "details",
+      countLabel: "Advanced",
+      href: "/coach/details",
+      label: "More Details",
+      summary: "Supporting reports, queue totals, and rule checks.",
+    },
+  ];
+  const activeCoachRoute =
+    coachRouteItems.find((item) => item.active) ?? coachRouteItems[0];
+  const isCoachOverview = activeCoachView === "overview";
 
   return (
     <main className="ti-dashboard-bg min-h-screen px-5 py-8 text-zinc-100 sm:px-8">
       <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-8">
-        <header className="ti-panel p-6">
+        <header className={`ti-panel ${isCoachOverview ? "p-6" : "p-4"}`}>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <Link className="text-sm text-sky-300 hover:text-sky-200" href="/workspace">
                 Back to workspace
               </Link>
-              <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-emerald-400">
+              <p className={`${isCoachOverview ? "mt-4" : "mt-3"} text-xs font-semibold uppercase tracking-wide text-emerald-400`}>
                 Coach
               </p>
-              <h1 className="mt-2 max-w-4xl text-3xl font-semibold text-zinc-50">
-                {coachPageTitle}
+              <h1 className={`${isCoachOverview ? "text-3xl" : "text-2xl sm:text-3xl"} mt-2 max-w-4xl font-semibold text-zinc-50`}>
+                {isCoachOverview
+                  ? coachPageTitle
+                  : activeCoachRoute.label}
               </h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
-                Start with the main behavior across saved trades. Then open the
-                evidence trades, write the review, and track whether the focus
-                changes after completed reviews.
+                {isCoachOverview
+                  ? "Start with the main behavior across saved trades. Then open a focused coaching page for the evidence, backlog, next-session plan, progress, or supporting details."
+                  : activeCoachRoute.summary}
               </p>
             </div>
             <Link
@@ -1390,7 +1582,7 @@ export default function CoachPage() {
               {primaryEvidenceItem ? "Open evidence trade" : "Import trades"}
             </Link>
           </div>
-          <div className="mt-5 flex flex-wrap gap-2 text-xs uppercase tracking-wide">
+          <div className={`${isCoachOverview ? "mt-5 flex" : "mt-4 hidden sm:flex"} flex-wrap gap-2 text-xs uppercase tracking-wide`}>
             <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-1 text-zinc-400">
               {dataLabel}
             </span>
@@ -1406,56 +1598,17 @@ export default function CoachPage() {
         <section className="grid min-w-0 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
           <DashboardSideNav
             eyebrow="Coach Menu"
-            items={[
-              {
-                href: "#next-action",
-                label: "Overall Focus",
-                summary: "The behavior or strength to review across saved trades.",
-              },
-              {
-                href: "#coaching-session",
-                label: "Review Session",
-                summary: "Understand why it mattered, then review the evidence trade.",
-              },
-              {
-                href: "#behavior-map",
-                label: "Behavior Sequence",
-                summary: "One chart-backed path for what to fix, repeat, or review.",
-              },
-              {
-                href: "#review-backlog",
-                label: "Review Backlog",
-                summary: "Trades that prove or challenge the coaching focus.",
-              },
-              {
-                href: "#ticker-story-coach",
-                label: "Ticker Stories",
-                summary: "Same-symbol re-entries, giveback, and swing transitions.",
-              },
-              {
-                href: "#session-story-coach",
-                label: "Session Stories",
-                summary: "Full-day review for green-to-red, high activity, and hold exposure.",
-              },
-              {
-                href: "#next-session-plan",
-                label: "Next Session",
-                summary: "One rule, one behavior to reduce, and one strength to repeat.",
-              },
-              {
-                href: "#progress-follow-through",
-                label: "Progress",
-                summary: "What must be reviewed before progress means anything.",
-              },
-              {
-                href: "#advanced",
-                label: "More Details",
-                summary: "Supporting charts, queue totals, and rule checks.",
-              },
-            ]}
-            summary="Use this as a coaching workspace instead of scrolling every panel."
+            items={coachRouteItems.map((item) => ({
+              active: item.active,
+              href: item.href,
+              label: item.label,
+              summary: `${item.countLabel}. ${item.summary}`,
+            }))}
+            summary="Move between focused coaching pages without returning to the dashboard."
           />
           <div className="grid min-w-0 gap-6">
+            {activeCoachView === "overview" ? (
+              <>
             <div id="next-action">
               <CoachSessionBriefPanel
                 actionHref={reviewWritingHref}
@@ -1527,6 +1680,53 @@ export default function CoachPage() {
               title="Overall coaching workflow"
             />
 
+            <section
+              className="ti-panel p-4"
+              data-testid="coach-feature-routes"
+            >
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-zinc-100">
+                    Open A Coaching View
+                  </h2>
+                  <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-500">
+                    Choose one coaching page at a time. Start with the review
+                    session when you want to act, or open the supporting views
+                    when you need the evidence behind the focus.
+                  </p>
+                </div>
+                <div className="text-sm text-zinc-500">
+                  {activeCoachRoute.countLabel}
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {coachRouteItems
+                  .filter((item) => item.href !== "/coach")
+                  .map((item) => (
+                    <Link
+                      className="ti-panel-soft block p-4 transition hover:border-sky-500"
+                      href={item.href}
+                      key={item.href}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="text-sm font-semibold text-zinc-100">
+                          {item.label}
+                        </div>
+                        <div className="text-xs font-semibold uppercase tracking-wide text-sky-300">
+                          {item.countLabel}
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs leading-5 text-zinc-500">
+                        {item.summary}
+                      </div>
+                    </Link>
+                  ))}
+              </div>
+            </section>
+              </>
+            ) : null}
+
+        {activeCoachView === "review_session" ? (
         <section
           id="coaching-session"
           className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.42fr)]"
@@ -1702,36 +1902,48 @@ export default function CoachPage() {
             </div>
           </aside>
         </section>
+        ) : null}
 
+        {activeCoachView === "behavior_sequence" ? (
         <div id="behavior-map">
           <CoachBehaviorSequence report={behaviorReport} />
         </div>
+        ) : null}
 
+        {activeCoachView === "review_backlog" ? (
         <div id="review-backlog">
             <TradesToReviewNextPanel
               focusLabel={sessionBehavior?.label}
               items={reviewPreviewItems}
             />
         </div>
+        ) : null}
 
+        {activeCoachView === "ticker_stories" ? (
         <div id="ticker-story-coach">
           <TickerStoryCoachPanel
             thread={priorityTickerStory}
             threadCount={tradeThreadModel.multiRoundTripThreadCount}
           />
         </div>
+        ) : null}
 
+        {activeCoachView === "session_stories" ? (
         <div id="session-story-coach">
           <SessionStoryCoachPanel
             story={prioritySessionStory}
             storyCount={tradeThreadModel.sessionStoryCount}
           />
         </div>
+        ) : null}
 
+        {activeCoachView === "progress" ? (
         <div id="progress-follow-through">
           <CoachProgressFollowThroughPanel summary={coachProgress} />
         </div>
+        ) : null}
 
+        {activeCoachView === "next_session" ? (
         <CoachNextSessionPlanPanel
           avoidBehavior={compactCoachAction(
             prep.avoidBehavior,
@@ -1748,17 +1960,27 @@ export default function CoachPage() {
           ruleFocus={prep.ruleFocus}
           sessionTimeInsight={prep.sessionTimeInsight}
         />
+        ) : null}
 
+        {activeCoachView === "overview" || activeCoachView === "details" ? (
         <SavedImportSourceCaution
           caution={importSourceCaution}
           surface="coach"
         />
+        ) : null}
 
+        {activeCoachView === "details" ? (
         <div id="advanced">
-        <AdvancedDisclosure
-          summary="More coach evidence, queue totals, and rule checks"
-          testId="coach-supporting-details"
+        <section
+          className="grid gap-6"
+          data-testid="coach-supporting-details"
         >
+        <CoachSectionHeader
+          eyebrow="More Details"
+          title="Supporting coach evidence, queue totals, and rule checks"
+          body="Use these as supporting details after the main coaching focus is clear. This page keeps the advanced material available without making it the default coach experience."
+        />
+
         <BehaviorReportPanel mode="coach" report={behaviorReport} />
 
         <SavedReviewQueueSummary queue={savedReviewQueue} surface="coach" />
@@ -2087,8 +2309,9 @@ export default function CoachPage() {
             ))}
           </div>
         </section>
-        </AdvancedDisclosure>
+        </section>
         </div>
+        ) : null}
           </div>
         </section>
       </div>

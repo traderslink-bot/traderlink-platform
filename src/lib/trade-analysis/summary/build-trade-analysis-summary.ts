@@ -27,6 +27,30 @@ export interface TradeAnalysisSummaryNearestLevelSnapshot {
   occurredInOpenAir: boolean;
 }
 
+export type TradeAnalysisSummaryReplayCandleSegment =
+  | "pre_trade"
+  | "during_trade"
+  | "post_trade";
+
+export interface TradeAnalysisSummaryReplayCandle {
+  timestamp: string;
+  segment: TradeAnalysisSummaryReplayCandleSegment;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface TradeAnalysisSummaryReplayCandleWindow {
+  source: "levels_system_trade_window" | "provided_trade_candles";
+  timeframe: string;
+  preTradeCount: number;
+  tradeCount: number;
+  postTradeCount: number;
+  candles: TradeAnalysisSummaryReplayCandle[];
+}
+
 export interface TradeAnalysisMarketStructureDebugSummary {
   observed: boolean;
   observationalOnly: true;
@@ -55,6 +79,7 @@ export interface TradeAnalysisSummary {
     trade: number;
     postTrade: number;
   };
+  replayCandleWindow: TradeAnalysisSummaryReplayCandleWindow | null;
   supportResistance: {
     supportCount: number;
     resistanceCount: number;
@@ -105,7 +130,9 @@ function summarizePattern(pattern: {
 function getStrongestLevelPrice(
   levels:
     | NonNullable<AppTradeAnalysisResult["rawTradeTimeline"]["supportLevels"]>
-    | NonNullable<AppTradeAnalysisResult["rawTradeTimeline"]["resistanceLevels"]>
+    | NonNullable<
+        AppTradeAnalysisResult["rawTradeTimeline"]["resistanceLevels"]
+      >
     | undefined,
 ): number | null {
   if (!levels || levels.length === 0) {
@@ -137,6 +164,63 @@ function summarizeNearestLevelSnapshot(
     roomToNearestResistancePct: firstRelation.roomToNearestResistancePct,
     roomToNearestSupportPct: firstRelation.roomToNearestSupportPct,
     occurredInOpenAir: firstRelation.occurredInOpenAir,
+  };
+}
+
+function summarizeReplayCandleWindow(
+  result: AppTradeAnalysisResult,
+): TradeAnalysisSummaryReplayCandleWindow | null {
+  const timeline = result.rawTradeTimeline.timeline;
+  const toReplayCandle = (
+    candle: (typeof timeline.allCandles)[number],
+    segment: TradeAnalysisSummaryReplayCandleSegment,
+  ): TradeAnalysisSummaryReplayCandle | null => {
+    const values = [candle.open, candle.high, candle.low, candle.close];
+
+    if (
+      !candle.timestamp ||
+      values.some((value) => !Number.isFinite(value) || value <= 0)
+    ) {
+      return null;
+    }
+
+    return {
+      timestamp: candle.timestamp,
+      segment,
+      open: candle.open,
+      high: candle.high,
+      low: candle.low,
+      close: candle.close,
+      volume: Number.isFinite(candle.volume) ? candle.volume : 0,
+    };
+  };
+  const candles = [
+    ...timeline.preTradeCandles.map((candle) =>
+      toReplayCandle(candle, "pre_trade"),
+    ),
+    ...timeline.tradeCandles.map((candle) =>
+      toReplayCandle(candle, "during_trade"),
+    ),
+    ...timeline.postTradeCandles.map((candle) =>
+      toReplayCandle(candle, "post_trade"),
+    ),
+  ].filter(
+    (candle): candle is TradeAnalysisSummaryReplayCandle => candle !== null,
+  );
+
+  if (candles.length === 0) {
+    return null;
+  }
+
+  return {
+    source: hasLevelsSystemTradeWindow(result)
+      ? "levels_system_trade_window"
+      : "provided_trade_candles",
+    timeframe: timeline.timeframe,
+    preTradeCount: timeline.preTradeCandles.length,
+    tradeCount: timeline.tradeCandles.length,
+    postTradeCount: timeline.postTradeCandles.length,
+    candles,
   };
 }
 
@@ -188,8 +272,9 @@ export function buildTradeAnalysisSummary(
     sessionContext: timeline.sessionContext,
     executions: timeline.executions,
   });
-  const executionFeedbackPoints =
-    buildExecutionFeedbackPoints(executionFeedbackFacts);
+  const executionFeedbackPoints = buildExecutionFeedbackPoints(
+    executionFeedbackFacts,
+  );
   const executionFeedback = buildExecutionFeedbackSummary({
     facts: executionFeedbackFacts,
     points: executionFeedbackPoints,
@@ -213,6 +298,7 @@ export function buildTradeAnalysisSummary(
       trade: timeline.tradeCandles.length,
       postTrade: timeline.postTradeCandles.length,
     },
+    replayCandleWindow: summarizeReplayCandleWindow(result),
     supportResistance: {
       supportCount: raw.supportLevels?.length ?? 0,
       resistanceCount: raw.resistanceLevels?.length ?? 0,

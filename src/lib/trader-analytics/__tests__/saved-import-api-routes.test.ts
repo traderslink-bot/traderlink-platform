@@ -112,10 +112,9 @@ describe("saved import API routes", () => {
     expect(commit.status).toBe(200);
     expect(commitBody.result.status).toBe("committed");
     expect(commitBody.decisionReviewRun).toMatchObject({
-      contractVersion: "persisted_decision_review_run_v1",
+      contractVersion: "persisted_decision_review_run_scheduled_v1",
       requestedJobCount: 1,
-      eligibleJobCount: 1,
-      diagnosticCount: 1,
+      queuedJobCount: 1,
     });
 
     const trades = await (await listTrades()).json();
@@ -148,13 +147,7 @@ describe("saved import API routes", () => {
       { itemId: "lesson_review", status: "complete" },
     ]);
     expect(tradeDetail.decisionReviewSnapshot).toBeNull();
-    expect(tradeDetail.decisionReviewDiagnostics).toMatchObject([
-      {
-        status: "market_context_unavailable",
-        code: "market_context_unavailable",
-        symbol: "APIX",
-      },
-    ]);
+    expect(tradeDetail.decisionReviewDiagnostics).toEqual([]);
 
     const analytics = await (await latestAnalytics()).json();
     expect(analytics.source).toBe("saved_sqlite");
@@ -169,23 +162,23 @@ describe("saved import API routes", () => {
     expect(review.savedDecisionReview).toMatchObject({
       totalJobCount: 1,
       analysisFailedCount: 0,
-      marketContextUnavailableCount: 1,
+      queuedCount: 1,
+      marketContextUnavailableCount: 0,
       completedCount: 0,
-      diagnosticCodeCounts: { market_context_unavailable: 1 },
-      diagnosticStatusCounts: { market_context_unavailable: 1 },
-      nextAction:
-        "Execution review is available now; keep chart conclusions unavailable until technical follow-up is resolved.",
+      diagnosticCodeCounts: {},
+      diagnosticStatusCounts: {},
+      nextAction: "Run saved chart data review for queued closed trades.",
     });
-    expect(review.savedReviewQueue).toMatchObject({
-      activeFilter: "highest_priority",
-      items: [
+    expect(review.savedReviewQueue.activeFilter).toBe("highest_priority");
+    expect(review.savedReviewQueue.allItems).toEqual(
+      expect.arrayContaining([
         expect.objectContaining({
           symbol: "APIX",
-          lane: "market_context_unavailable",
-          priorityLabel: "urgent",
+          lane: "queued",
+          priorityLabel: "medium",
         }),
-      ],
-    });
+      ]),
+    );
 
     const status = await setReviewStatus(jsonRequest({ status: "resolved" }), {
       params: Promise.resolve({ tradeId }),
@@ -208,15 +201,9 @@ describe("saved import API routes", () => {
       })
     ).json();
     expect(batch.decisionReview.jobs).toMatchObject([
-      { status: "market_context_unavailable", symbol: "APIX" },
+      { status: "queued", symbol: "APIX" },
     ]);
-    expect(batch.decisionReview.diagnostics).toMatchObject([
-      {
-        status: "market_context_unavailable",
-        code: "market_context_unavailable",
-        symbol: "APIX",
-      },
-    ]);
+    expect(batch.decisionReview.diagnostics).toEqual([]);
 
     const duplicatePreview = await previewImportBatch(jsonRequest(payload));
     const duplicateBody = await duplicatePreview.json();
@@ -472,13 +459,13 @@ describe("saved import API routes", () => {
       expect.arrayContaining([
         expect.objectContaining({
           symbol: "RAPI",
-          lane: "market_context_unavailable",
-          stateLabel: "Chart data still missing",
-          reviewScopeLabel: "execution-only",
+          lane: "queued",
+          stateLabel: "Chart data waiting",
+          reviewScopeLabel: "execution now, chart data waiting",
           stateDetail:
-            "Execution review is available, but chart, level, or volume evidence is still missing.",
+            "Execution review is available now. Chart evidence has not been attached to this saved trade yet.",
           nextAction:
-            "Review entries, adds, reductions, exits, timing, and P/L now; add chart data later.",
+            "Open the execution review now, or resume chart-data review from the saved import details.",
         }),
       ]),
     );
@@ -566,8 +553,8 @@ describe("saved import API routes", () => {
       expect.arrayContaining([
         expect.objectContaining({
           symbol: "GLNG",
-          lane: "market_context_unavailable",
-          priorityLabel: "urgent",
+          lane: "queued",
+          priorityLabel: "medium",
         }),
       ]),
     );
@@ -714,7 +701,7 @@ describe("saved import API routes", () => {
     );
   });
 
-  it("keeps defensive short imports from becoming short-seller coaching claims", async () => {
+  it("sets unsupported short-side imports aside instead of creating coaching claims", async () => {
     const payload = {
       csvText: defensiveShortCsv,
       broker: "generic_execution_csv",
@@ -726,20 +713,22 @@ describe("saved import API routes", () => {
     };
     const previewBody = await (await previewImportBatch(jsonRequest(payload))).json();
 
-    expect(previewBody.plan.canCommitNow).toBe(true);
-    expect(previewBody.plan.savedTrades).toEqual(
+    expect(previewBody.plan.canCommitNow).toBe(false);
+    expect(previewBody.plan.savedTrades).toEqual([]);
+    expect(previewBody.plan.blockingReasons).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          symbol: "DSCP",
-          tradeDirection: "short",
+          id: "blocked:no-reconstructed-trades",
         }),
       ]),
     );
-
-    const commit = await commitImportBatch(jsonRequest(payload), {
-      params: Promise.resolve({ batchId: previewBody.plan.batch.id }),
-    });
-    expect(commit.status).toBe(200);
+    expect(previewBody.plan.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          issueCode: "sell_starting_trade_skipped",
+        }),
+      ]),
+    );
 
     const combinedSavedReadModels = JSON.stringify({
       trades: await (await listTrades()).json(),
@@ -748,7 +737,7 @@ describe("saved import API routes", () => {
       review: await (await latestReview()).json(),
     }).toLowerCase();
 
-    expect(combinedSavedReadModels).toContain("dscp");
+    expect(combinedSavedReadModels).not.toContain("dscp");
     for (const forbidden of [
       "short-seller coaching",
       "short seller coaching",

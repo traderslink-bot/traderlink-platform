@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
 import {
   AdvancedDisclosure,
+  DashboardSideNav,
   EquityCurveChart,
   MetricCard,
   MixBar,
@@ -201,14 +202,28 @@ function TimeOfDayPanel({
 }: {
   report: ProductTraderAnalyticsViewModel["latestReport"]["report"];
 }) {
-  const bestSession =
+  const highestTotalSession =
     [...report.timeOfDay.entrySessionBuckets].sort(
       (left, right) => right.grossTotalRealizedPnl - left.grossTotalRealizedPnl,
     )[0] ?? null;
-  const bestHour =
+  const lowestTotalSession =
+    [...report.timeOfDay.entrySessionBuckets].sort(
+      (left, right) => left.grossTotalRealizedPnl - right.grossTotalRealizedPnl,
+    )[0] ?? null;
+  const highestTotalHour =
     [...report.timeOfDay.entryHoursEt].sort(
       (left, right) => right.grossTotalRealizedPnl - left.grossTotalRealizedPnl,
     )[0] ?? null;
+  const outlierBucket =
+    [...report.timeOfDay.entrySessionBuckets]
+      .filter(
+        (bucket) => bucket.conclusion.kind === "outlier_dominated_total",
+      )
+      .sort(
+        (left, right) =>
+          (right.largestAbsoluteTradeShareOfAbsolutePnl ?? 0) -
+          (left.largestAbsoluteTradeShareOfAbsolutePnl ?? 0),
+      )[0] ?? null;
   const cross = report.timeOfDay.crossSessionHolds;
 
   return (
@@ -235,6 +250,13 @@ function TimeOfDayPanel({
                 {bucket.tradeCount} trades /{" "}
                 {formatPercent(bucket.grossWinRate)}
               </div>
+              <div className="mt-1 text-xs text-zinc-500">
+                Avg {formatSigned(bucket.grossAverageRealizedPnl)} / Median{" "}
+                {formatSigned(bucket.grossMedianRealizedPnl)}
+              </div>
+              <div className="mt-2 text-xs leading-5 text-zinc-500">
+                {bucket.conclusion.summary}
+              </div>
             </div>
           ))}
         </div>
@@ -245,22 +267,42 @@ function TimeOfDayPanel({
         <div className="mt-4 grid gap-3">
           <div className="border-t border-zinc-900 py-3">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Best Session
+              Highest Total Session
             </div>
             <div className="mt-1 text-sm text-zinc-300">
-              {bestSession
-                ? `${bestSession.label} / ${formatSigned(bestSession.grossTotalRealizedPnl)}`
+              {highestTotalSession
+                ? `${highestTotalSession.label} / ${formatSigned(highestTotalSession.grossTotalRealizedPnl)}`
                 : "n/a"}
             </div>
           </div>
           <div className="border-t border-zinc-900 py-3">
             <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Best Hour
+              Highest Total Hour
             </div>
             <div className="mt-1 text-sm text-zinc-300">
-              {bestHour
-                ? `${bestHour.label} / ${formatSigned(bestHour.grossTotalRealizedPnl)}`
+              {highestTotalHour
+                ? `${highestTotalHour.label} / ${formatSigned(highestTotalHour.grossTotalRealizedPnl)}`
                 : "n/a"}
+            </div>
+          </div>
+          <div className="border-t border-zinc-900 py-3">
+            <div className="text-xs uppercase tracking-wide text-zinc-500">
+              Lowest Total Session
+            </div>
+            <div className="mt-1 text-sm text-zinc-300">
+              {lowestTotalSession
+                ? `${lowestTotalSession.label} / ${formatSigned(lowestTotalSession.grossTotalRealizedPnl)}`
+                : "n/a"}
+            </div>
+          </div>
+          <div className="border-t border-zinc-900 py-3">
+            <div className="text-xs uppercase tracking-wide text-zinc-500">
+              Outlier Check
+            </div>
+            <div className="mt-1 text-sm leading-6 text-zinc-300">
+              {outlierBucket
+                ? `${outlierBucket.label}: one trade explains ${formatPercent(outlierBucket.largestAbsoluteTradeShareOfAbsolutePnl)} of the absolute movement.`
+                : "No session is dominated by one trade in this view."}
             </div>
           </div>
           <div className="border-t border-zinc-900 py-3 text-xs text-zinc-500">
@@ -288,7 +330,7 @@ function TickerStoryAnalyticsPanel({
     {
       count: summary.exitLevelFindingCount,
       detail: `${summary.exitLevelRiskCount} risk, ${summary.exitLevelStrengthCount} strength, ${summary.exitLevelReviewPromptCount} prompt`,
-      href: "/trades?storyFilter=levels#ticker-stories",
+      href: "/trades/ticker-stories?storyFilter=levels#ticker-stories",
       label: "Open support/resistance exit reviews",
       tone:
         summary.exitLevelRiskCount > 0
@@ -300,7 +342,7 @@ function TickerStoryAnalyticsPanel({
     {
       count: summary.volumeFindingCount,
       detail: `${summary.volumeRiskCount} risk, ${summary.volumeStrengthCount} strength, ${summary.volumeReviewPromptCount} prompt`,
-      href: "/trades?storyFilter=volume#ticker-stories",
+      href: "/trades/ticker-stories?storyFilter=volume#ticker-stories",
       label: "Open volume comparison stories",
       tone:
         summary.volumeRiskCount > 0
@@ -312,14 +354,14 @@ function TickerStoryAnalyticsPanel({
     {
       count: summary.protectedProfitBeforeFadeFindingCount,
       detail: `${summary.protectedProfitBeforeFadeThreadCount} ticker stor${summary.protectedProfitBeforeFadeThreadCount === 1 ? "y" : "ies"}`,
-      href: "/trades?storyFilter=protected_profit#ticker-stories",
+      href: "/trades/ticker-stories?storyFilter=protected_profit#ticker-stories",
       label: "Open protected-profit stories",
       tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
     },
     {
       count: summary.postExitFindingCount,
       detail: `${summary.postExitRiskCount} risk, ${summary.postExitStrengthCount} strength, ${summary.postExitReviewPromptCount} prompt`,
-      href: "/trades?storyFilter=post_exit#ticker-stories",
+      href: "/trades/ticker-stories?storyFilter=post_exit#ticker-stories",
       label: "Open after-exit review stories",
       tone:
         summary.postExitRiskCount > 0
@@ -352,7 +394,7 @@ function TickerStoryAnalyticsPanel({
         </div>
         <Link
           className="border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
-          href="/trades?view=ticker_stories#ticker-stories"
+          href="/trades/ticker-stories#ticker-stories"
         >
           Open ticker stories
         </Link>
@@ -383,9 +425,9 @@ function TickerStoryAnalyticsPanel({
           tone={summary.openReentryThreadCount > 0 ? "warning" : "default"}
         />
         <MetricCard
-          label="Turned Swing"
+          label="Hold Reviews"
           value={String(summary.swingThreadCount)}
-          detail="Day-trade ideas held overnight"
+          detail="Extended same-day or next-session holds"
           tone={summary.swingThreadCount > 0 ? "info" : "default"}
         />
       </div>
@@ -587,7 +629,7 @@ function SessionStoryAnalyticsPanel({
         </div>
         <Link
           className="border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
-          href="/coach#session-story-coach"
+          href="/coach/session-stories"
         >
           Open session coach
         </Link>
@@ -646,6 +688,159 @@ function SessionStoryAnalyticsPanel({
           Save a broker CSV to build session stories from your own trades.
         </div>
       )}
+    </section>
+  );
+}
+
+function ChartEvidenceAnalyticsPanel({
+  summary,
+}: {
+  summary: AnalyticsTickerStorySummary;
+}) {
+  return (
+    <section
+      className="ti-panel p-5"
+      data-testid="analytics-chart-evidence-panel"
+      id="analytics-chart-evidence"
+    >
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-zinc-100">
+            Chart Evidence
+          </h2>
+          <div className="mt-1 max-w-3xl text-sm leading-6 text-zinc-500">
+            These counts summarize saved chart findings. They stay separate
+            from execution-only P/L, so chart data can support a review without
+            pretending to know intent or giving trading instructions.
+          </div>
+        </div>
+        <Link
+          className="border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+          href="/review?queue=market_context_unavailable"
+        >
+          Open chart-data queue
+        </Link>
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          label="Chart Findings"
+          value={String(summary.marketContextFindingCount)}
+          detail={`${summary.marketContextRiskCount} risk, ${summary.marketContextStrengthCount} strength, ${summary.marketContextReviewPromptCount} prompt`}
+          tone={summary.marketContextFindingCount > 0 ? "info" : "default"}
+        />
+        <MetricCard
+          label="Support/Resistance Exits"
+          value={String(summary.exitLevelFindingCount)}
+          detail={`${summary.exitLevelRiskCount} risk, ${summary.exitLevelStrengthCount} strength, ${summary.exitLevelReviewPromptCount} prompt`}
+          tone={
+            summary.exitLevelRiskCount > 0
+              ? "warning"
+              : summary.exitLevelStrengthCount > 0
+                ? "success"
+                : summary.exitLevelFindingCount > 0
+                  ? "info"
+                  : "default"
+          }
+        />
+        <MetricCard
+          label="Volume Evidence"
+          value={String(summary.volumeFindingCount)}
+          detail={`${summary.volumeRiskCount} risk, ${summary.volumeStrengthCount} strength, ${summary.volumeReviewPromptCount} prompt`}
+          tone={
+            summary.volumeRiskCount > 0
+              ? "warning"
+              : summary.volumeStrengthCount > 0
+                ? "success"
+                : summary.volumeFindingCount > 0
+                  ? "info"
+                  : "default"
+          }
+        />
+        <MetricCard
+          label="After-Exit Review"
+          value={String(summary.postExitFindingCount)}
+          detail={`${summary.postExitRiskCount} risk, ${summary.postExitStrengthCount} strength, ${summary.postExitReviewPromptCount} prompt`}
+          tone={
+            summary.postExitRiskCount > 0
+              ? "warning"
+              : summary.postExitStrengthCount > 0
+                ? "success"
+                : summary.postExitFindingThreadCount > 0
+                  ? "info"
+                  : "default"
+          }
+        />
+        <MetricCard
+          label="Add Quality"
+          value={String(summary.addQualityFindingCount)}
+          detail={`${summary.addQualityRiskCount} risk, ${summary.addQualityStrengthCount} strength, ${summary.addQualityReviewPromptCount} prompt`}
+          tone={
+            summary.addQualityRiskCount > 0
+              ? "warning"
+              : summary.addQualityStrengthCount > 0
+                ? "success"
+                : summary.addQualityFindingCount > 0
+                  ? "info"
+                  : "default"
+          }
+        />
+        <MetricCard
+          label="Protected Profit"
+          value={String(summary.protectedProfitBeforeFadeFindingCount)}
+          detail={`${summary.protectedProfitBeforeFadeThreadCount} ticker stor${summary.protectedProfitBeforeFadeThreadCount === 1 ? "y" : "ies"}`}
+          tone={
+            summary.protectedProfitBeforeFadeFindingCount > 0
+              ? "success"
+              : "default"
+          }
+        />
+        <MetricCard
+          label="Level Checks"
+          value={String(summary.levelFindingCount)}
+          detail={`${summary.threadWithLevelFindingCount} ticker stor${summary.threadWithLevelFindingCount === 1 ? "y" : "ies"} with level context`}
+          tone={summary.levelFindingCount > 0 ? "info" : "default"}
+        />
+        <MetricCard
+          label="Needs Review"
+          value={String(summary.marketContextReviewPromptCount)}
+          detail="Useful chart prompts that still need trader review"
+          tone={summary.marketContextReviewPromptCount > 0 ? "info" : "default"}
+        />
+      </div>
+
+      <div className="mt-5 grid gap-3 lg:grid-cols-3">
+        {[
+          {
+            body: "Use this when a level or volume finding changes how a trade should be reviewed.",
+            href: "/trades/ticker-stories?storyFilter=levels#ticker-stories",
+            label: "Open level stories",
+          },
+          {
+            body: "Use this when later re-entries had stronger or weaker participation.",
+            href: "/trades/ticker-stories?storyFilter=volume#ticker-stories",
+            label: "Open volume stories",
+          },
+          {
+            body: "Use this when exit context or post-exit movement changes the lesson.",
+            href: "/trades/ticker-stories?storyFilter=post_exit#ticker-stories",
+            label: "Open after-exit stories",
+          },
+        ].map((item) => (
+          <Link
+            className="ti-panel-soft block p-4 transition hover:border-sky-500"
+            href={item.href}
+            key={item.label}
+          >
+            <div className="text-sm font-semibold text-zinc-100">
+              {item.label}
+            </div>
+            <div className="mt-2 text-xs leading-5 text-zinc-500">
+              {item.body}
+            </div>
+          </Link>
+        ))}
+      </div>
     </section>
   );
 }
@@ -750,7 +945,7 @@ function AnalyticsStoryPanel({
             </div>
             <Link
               className="mt-3 inline-block text-sm text-sky-300 hover:text-sky-200"
-              href={nextReview?.href ?? "/import-dry-run"}
+              href={nextReview?.href ?? "/upload-csv"}
             >
               {nextReview ? "Open Trade Review" : "Import trades"}
             </Link>
@@ -768,7 +963,7 @@ function AnalyticsStoryPanel({
           chart={charts.entrySessionPerformance}
           formatter={formatSigned}
           maxItems={5}
-          title="P/L by Session"
+          title="Total P/L by Session"
         />
       </div>
 
@@ -789,18 +984,6 @@ function AnalyticsStoryPanel({
           </div>
           <div className="grid gap-4 xl:col-span-2 xl:grid-cols-3">
             <MixBar chart={charts.winLossDonut} title="Outcome Mix" />
-            <SimpleBarChart
-              chart={charts.entryHourPerformance}
-              formatter={formatSigned}
-              maxItems={8}
-              title="P/L by Entry Hour"
-            />
-            <SimpleBarChart
-              chart={charts.behaviorRiskRates}
-              formatter={(value) => String(value)}
-              maxItems={5}
-              title="Execution Habits To Review"
-            />
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
             <div className="ti-panel p-5">
@@ -874,17 +1057,17 @@ function ChartLegendStrip() {
 
 function ChartSectionFrame({
   actionLabel,
+  actionHref,
   body,
   children,
   eyebrow,
-  onAction,
   title,
 }: {
   actionLabel?: string;
+  actionHref?: string;
   body: ReactNode;
   children: ReactNode;
   eyebrow: string;
-  onAction?: () => void;
   title: string;
 }) {
   return (
@@ -899,14 +1082,13 @@ function ChartSectionFrame({
             {body}
           </div>
         </div>
-        {actionLabel && onAction ? (
-          <button
+        {actionLabel && actionHref ? (
+          <Link
             className="inline-flex items-center justify-center rounded-md border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
-            onClick={onAction}
-            type="button"
+            href={actionHref}
           >
             {actionLabel}
-          </button>
+          </Link>
         ) : null}
       </div>
       <div className="mt-5">{children}</div>
@@ -915,17 +1097,14 @@ function ChartSectionFrame({
 }
 
 function AnalyticsChartGalleryPanel({
-  onOpenTrades,
+  tradeExplorerHref,
   viewModel,
 }: {
-  onOpenTrades: () => void;
+  tradeExplorerHref: string;
   viewModel: ProductTraderAnalyticsViewModel;
 }) {
   const report = viewModel.latestReport.report;
   const charts = report.charts;
-  const tradeVisualRows = visualRows(report.trades);
-  const topRisk = report.topRisks[0] ?? null;
-  const topStrength = report.topStrengths[0] ?? null;
 
   return (
     <div className="grid gap-6">
@@ -933,15 +1112,15 @@ function AnalyticsChartGalleryPanel({
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase text-sky-300">
-              Chart Workbench
+              Timing Workbench
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-zinc-50">
-              Stats and graphs, grouped by question
+              When did the results happen?
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
-              Start with outcome, then timing, then behavior. If a number needs
-              investigation, open the trade explorer or the review queue instead
-              of treating the chart as the final answer.
+              Use this page for session, entry-hour, and time-of-day context.
+              Results live in the Results page, and behavior review lives in
+              the Behavior page.
             </p>
           </div>
           <div className="rounded-md border border-zinc-700 bg-slate-900/70 px-3 py-2 font-mono text-sm text-zinc-300">
@@ -954,15 +1133,15 @@ function AnalyticsChartGalleryPanel({
       </section>
 
       <WorkflowHandoffPanel
-        body="Use this flow when a chart catches your eye: inspect the chart, open the trades behind it, write the review, then check whether the coach focus changes."
-        eyebrow="Chart Workflow"
+        body="Use this flow when a time bucket catches your eye: inspect the timing pattern, open the trades behind it, write the review, then check whether the coach focus changes."
+        eyebrow="Timing Workflow"
         items={[
           {
             action: "Stay in charts",
-            body: "Find the trades behind the chart bar, session, hour, or behavior.",
+            body: "Check whether the session or hour is a real pattern or just one large trade.",
             href: "#chart-workbench",
             label: "1. Inspect",
-            title: "Find trades behind a number",
+            title: "Read the time bucket",
           },
           {
             action: "Open review",
@@ -975,7 +1154,7 @@ function AnalyticsChartGalleryPanel({
           {
             action: "Open coach",
             body: "See whether the same behavior becomes the current coaching focus.",
-            href: "/coach#next-action",
+            href: "/coach",
             label: "3. Coach",
             title: "Compare against the focus",
             tone: "success",
@@ -989,67 +1168,14 @@ function AnalyticsChartGalleryPanel({
           },
         ]}
         testId="analytics-chart-workflow"
-        title="Charts should lead to a review, not stop at a number."
+        title="Timing charts should lead to a review, not stop at a number."
       />
 
       <ChartSectionFrame
         actionLabel="Open trade explorer"
-        body="These charts answer whether the saved trade set made or lost money and which individual trades moved the result the most."
-        eyebrow="Outcome"
-        onAction={onOpenTrades}
-        title="Where did the P/L come from?"
-      >
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-          <PnlCalendarGrid
-            formatter={formatSigned}
-            rows={tradeVisualRows}
-            title="Daily P/L Calendar"
-          />
-          <SimpleBarChart
-            chart={charts.grossPnlByTrade}
-            formatter={formatSigned}
-            maxItems={12}
-            title="P/L by Trade"
-          />
-        </div>
-        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-          <MixBar chart={charts.winLossDonut} title="Outcome Mix" />
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="ti-panel-soft p-5">
-              <div className="text-xs uppercase text-zinc-500">
-                Biggest Risk
-              </div>
-              <div className="mt-2 text-lg font-semibold text-rose-300">
-                {topRisk?.label ?? "No repeated risk yet"}
-              </div>
-              <div className="mt-2 text-sm leading-6 text-zinc-400">
-                {topRisk
-                  ? `${topRisk.count} occurrence(s). Open the related trades before writing a new rule.`
-                  : "No repeated red behavior is showing in this report."}
-              </div>
-            </div>
-            <div className="ti-panel-soft p-5">
-              <div className="text-xs uppercase text-zinc-500">
-                Best Strength
-              </div>
-              <div className="mt-2 text-lg font-semibold text-emerald-300">
-                {topStrength?.label ?? "No repeated strength yet"}
-              </div>
-              <div className="mt-2 text-sm leading-6 text-zinc-400">
-                {topStrength
-                  ? `${topStrength.count} occurrence(s). This is the green behavior to preserve.`
-                  : "No repeated green behavior is showing in this report."}
-              </div>
-            </div>
-          </div>
-        </div>
-      </ChartSectionFrame>
-
-      <ChartSectionFrame
-        actionLabel="Open trade explorer"
-        body="Timing charts show whether the same results cluster around premarket, the open, midday, late day, or specific entry hours."
+        actionHref={tradeExplorerHref}
+        body="Timing charts show where dollars were made or lost. Check average, median, win rate, and outlier notes before treating a session as a repeat pattern."
         eyebrow="Timing"
-        onAction={onOpenTrades}
         title="When did the results happen?"
       >
         <div className="grid gap-4 xl:grid-cols-2">
@@ -1057,7 +1183,7 @@ function AnalyticsChartGalleryPanel({
             chart={charts.entrySessionPerformance}
             formatter={formatSigned}
             maxItems={8}
-            title="P/L by Session"
+            title="Total P/L by Session"
           />
           <SimpleBarChart
             chart={charts.entryHourPerformance}
@@ -1068,46 +1194,6 @@ function AnalyticsChartGalleryPanel({
         </div>
         <div className="mt-4">
           <TimeOfDayPanel report={report} />
-        </div>
-      </ChartSectionFrame>
-
-      <ChartSectionFrame
-        actionLabel="Find trades behind this"
-        body="Behavior charts are review prompts. A red bar should send you to the evidence trades; a green pattern should be checked before you try to preserve it."
-        eyebrow="Behavior"
-        onAction={onOpenTrades}
-        title="Which execution habits need review?"
-      >
-        <div className="grid gap-4 xl:grid-cols-[minmax(320px,0.8fr)_minmax(0,1.2fr)]">
-          <SimpleBarChart
-            chart={charts.behaviorRiskRates}
-            formatter={(value) => String(value)}
-            maxItems={8}
-            title="Execution Habits To Review"
-          />
-          <div className="ti-panel-soft p-5">
-            <h3 className="text-sm font-semibold text-zinc-100">
-              How to use this section
-            </h3>
-            <div className="mt-3 grid gap-3 text-sm leading-6 text-zinc-400">
-              <p>
-                Red behavior means the app found repeated execution evidence
-                worth reviewing. It does not tell you what to trade next.
-              </p>
-              <p>
-                If chart data is needed, open the review item and check
-                whether support, resistance, volume, and after-exit movement are
-                actually available.
-              </p>
-              <button
-                className="mt-1 w-fit rounded-md border border-sky-800 bg-sky-950/40 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-400"
-                onClick={onOpenTrades}
-                type="button"
-              >
-                Find trades behind this
-              </button>
-            </div>
-          </div>
         </div>
       </ChartSectionFrame>
     </div>
@@ -2405,9 +2491,11 @@ function DrillDownList({
 }
 
 function TradeRows({
+  isSamplePreview,
   rows,
   testIdPrefix,
 }: {
+  isSamplePreview?: boolean;
   rows: ProductTraderAnalyticsTradeRow[];
   testIdPrefix: string;
 }) {
@@ -2473,7 +2561,7 @@ function TradeRows({
                   className="text-sky-300 hover:text-sky-200"
                   data-testid={`${testIdPrefix}-open-${row.tradeId}`}
                   href={withPageAnchor(
-                    `/trades/${encodeURIComponent(row.tradeId)}`,
+                    `/trades/${encodeURIComponent(row.tradeId)}${isSamplePreview ? "?demo=sample" : ""}`,
                     "summary",
                   )}
                 >
@@ -2586,93 +2674,127 @@ function ImportTrialExperiencePanel({
   );
 }
 
-type AnalyticsDashboardSection =
+export type AnalyticsDashboardSection =
   | "overview"
-  | "charts"
+  | "results"
+  | "timing"
+  | "behavior"
+  | "ticker_stories"
+  | "session_stories"
+  | "chart_evidence"
   | "review"
   | "trades"
   | "advanced";
 
 const ANALYTICS_DASHBOARD_SECTIONS: Array<{
+  href: string;
   id: AnalyticsDashboardSection;
   label: string;
   summary: string;
 }> = [
   {
+    href: "/analytics",
     id: "overview",
+    label: "Overview",
+    summary: "Start with the report map and the key result.",
+  },
+  {
+    href: "/analytics/results",
+    id: "results",
     label: "Results",
-    summary: "P/L curve, win/loss mix, and the trade tape.",
+    summary: "P/L curve, win/loss mix, calendar, and trade tape.",
   },
   {
-    id: "charts",
-    label: "Timing And Charts",
-    summary: "Time, sessions, behavior, and report charts.",
+    href: "/analytics/timing",
+    id: "timing",
+    label: "Timing",
+    summary: "Session, entry-hour, and hold-time context.",
   },
   {
+    href: "/analytics/behavior",
+    id: "behavior",
+    label: "Behavior",
+    summary: "Risk, strength, and uncertain behavior groups.",
+  },
+  {
+    href: "/analytics/ticker-stories",
+    id: "ticker_stories",
+    label: "Ticker Stories",
+    summary: "Same-symbol re-entry and giveback stories.",
+  },
+  {
+    href: "/analytics/session-stories",
+    id: "session_stories",
+    label: "Session Stories",
+    summary: "Full-day stories like green-to-red and high activity.",
+  },
+  {
+    href: "/analytics/chart-evidence",
+    id: "chart_evidence",
+    label: "Chart Evidence",
+    summary: "Support, resistance, volume, and after-exit counts.",
+  },
+  {
+    href: "/analytics/review-plan",
     id: "review",
     label: "Behavior Review Plan",
     summary: "What to review next and what behavior to watch.",
   },
   {
+    href: "/analytics/trade-explorer",
     id: "trades",
-    label: "Trade Stories",
-    summary: "Saved trades, ticker stories, and sessions behind each number.",
+    label: "Trade Explorer",
+    summary: "Filter trades and open the rows behind each number.",
   },
   {
+    href: "/analytics/details",
     id: "advanced",
-    label: "Chart Evidence And Advanced",
-    summary: "Quality checks, chart evidence, import setup, and rule detail.",
+    label: "More Details",
+    summary: "Quality checks, import setup, and rule detail.",
   },
 ];
 
 const ANALYTICS_CATEGORY_ACCESS: Array<{
-  anchor?: string;
   label: string;
   section: AnalyticsDashboardSection;
   summary: string;
 }> = [
   {
-    anchor: "analytics-results",
     label: "Results",
-    section: "overview",
+    section: "results",
     summary: "P/L, win rate, and the trades that moved the account.",
   },
   {
-    anchor: "chart-workbench",
     label: "Timing",
-    section: "charts",
+    section: "timing",
     summary: "Session, entry-hour, and hold-time charts.",
   },
   {
-    anchor: "analytics-behavior",
     label: "Behavior",
-    section: "overview",
+    section: "behavior",
     summary: "Risk, strength, and uncertain behavior groups.",
   },
   {
-    anchor: "analytics-ticker-stories",
     label: "Ticker Stories",
-    section: "overview",
+    section: "ticker_stories",
     summary: "Same-symbol re-entry and giveback stories.",
   },
   {
-    anchor: "analytics-session-stories",
     label: "Session Stories",
-    section: "overview",
+    section: "session_stories",
     summary: "Full-day stories like green-to-red or high trade count.",
   },
   {
-    anchor: "analytics-chart-evidence",
     label: "Chart Evidence",
-    section: "overview",
+    section: "chart_evidence",
     summary: "Support, resistance, volume, and after-exit counts.",
   },
 ];
 
 function AnalyticsCategoryAccessPanel({
-  onOpen,
+  isSamplePreview,
 }: {
-  onOpen: (section: AnalyticsDashboardSection, anchor?: string) => void;
+  isSamplePreview: boolean;
 }) {
   return (
     <section className="ti-panel p-5" data-testid="analytics-category-access">
@@ -2686,11 +2808,10 @@ function AnalyticsCategoryAccessPanel({
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {ANALYTICS_CATEGORY_ACCESS.map((item) => (
-          <button
+          <Link
             className="rounded-md border border-zinc-800/60 bg-slate-950/30 px-4 py-3 text-left transition hover:border-sky-600 hover:bg-sky-950/20"
+            href={analyticsSectionHref(item.section, isSamplePreview)}
             key={item.label}
-            onClick={() => onOpen(item.section, item.anchor)}
-            type="button"
           >
             <span className="block text-sm font-semibold text-zinc-100">
               {item.label}
@@ -2698,7 +2819,7 @@ function AnalyticsCategoryAccessPanel({
             <span className="mt-1 block text-xs leading-5 text-zinc-500">
               {item.summary}
             </span>
-          </button>
+          </Link>
         ))}
       </div>
     </section>
@@ -2707,51 +2828,38 @@ function AnalyticsCategoryAccessPanel({
 
 function AnalyticsDashboardNav({
   activeSection,
-  onChange,
+  isSamplePreview,
 }: {
   activeSection: AnalyticsDashboardSection;
-  onChange: (section: AnalyticsDashboardSection) => void;
+  isSamplePreview: boolean;
 }) {
   return (
-    <aside className="ti-panel h-fit p-3 lg:sticky lg:top-6">
-      <div className="px-2 py-2">
-        <div className="text-xs font-semibold uppercase text-sky-300">
-          Analytics Menu
-        </div>
-        <div className="mt-1 text-xs leading-5 text-zinc-500">
-          Choose the view you want instead of scrolling through every report.
-        </div>
-      </div>
-      <div className="mt-2 grid gap-2">
-        {ANALYTICS_DASHBOARD_SECTIONS.map((section) => {
-          const active = section.id === activeSection;
-
-          return (
-            <button
-              className={`rounded-md border px-3 py-3 text-left transition focus:outline-none ${
-                active
-                  ? "border-sky-500 bg-sky-950/60 text-zinc-50 shadow-[inset_3px_0_0_#38bdf8]"
-                  : "border-zinc-800/40 bg-transparent text-zinc-400 hover:border-zinc-700 hover:bg-slate-800/40 hover:text-zinc-100"
-              }`}
-              key={section.id}
-              onClick={() => onChange(section.id)}
-              type="button"
-            >
-              <span className="block text-sm font-semibold">
-                {section.label}
-              </span>
-              <span className="mt-1 block text-xs leading-5 text-zinc-500">
-                {section.summary}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </aside>
+    <DashboardSideNav
+      eyebrow="Analytics Menu"
+      items={ANALYTICS_DASHBOARD_SECTIONS.map((section) => ({
+        active: section.id === activeSection,
+        href: analyticsSectionHref(section.id, isSamplePreview),
+        label: section.label,
+        summary: section.summary,
+      }))}
+      summary="Move between focused analytics pages without scrolling every report."
+    />
   );
 }
 
+function analyticsSectionHref(
+  section: AnalyticsDashboardSection,
+  isSamplePreview: boolean,
+): string {
+  const href =
+    ANALYTICS_DASHBOARD_SECTIONS.find((item) => item.id === section)?.href ??
+    "/analytics";
+
+  return isSamplePreview ? `${href}?demo=sample` : href;
+}
+
 export function AnalyticsClient({
+  initialSection = "overview",
   initialViewModel,
   savedReviewQueue,
   importSourceCaution,
@@ -2760,6 +2868,7 @@ export function AnalyticsClient({
   tickerStorySummary,
   sessionStorySummary,
 }: {
+  initialSection?: AnalyticsDashboardSection;
   initialViewModel: ProductTraderAnalyticsViewModel;
   savedReviewQueue?: SavedReviewQueueReadModel | null;
   importSourceCaution?: SavedImportSourceCautionReadModel | null;
@@ -2768,8 +2877,7 @@ export function AnalyticsClient({
   tickerStorySummary: AnalyticsTickerStorySummary;
   sessionStorySummary: AnalyticsSessionStorySummary;
 }) {
-  const [activeSection, setActiveSection] =
-    useState<AnalyticsDashboardSection>("overview");
+  const activeSection = initialSection;
   const [filters, setFilters] = useState<TraderAnalyticsFilter>({});
   const [selectedDrillDownId, setSelectedDrillDownId] = useState(
     initialViewModel.drillDowns[0]?.id ?? "",
@@ -2783,6 +2891,10 @@ export function AnalyticsClient({
     () => filteredRows(initialViewModel.filteredView.rows, filters),
     [filters, initialViewModel.filteredView.rows],
   );
+  const activeSectionMeta =
+    ANALYTICS_DASHBOARD_SECTIONS.find((section) => section.id === activeSection) ??
+    ANALYTICS_DASHBOARD_SECTIONS[0];
+  const isOverviewSection = activeSection === "overview";
 
   function updateFilter<K extends keyof TraderAnalyticsFilter>(
     key: K,
@@ -2794,47 +2906,33 @@ export function AnalyticsClient({
     }));
   }
 
-  function openAnalyticsCategory(
-    section: AnalyticsDashboardSection,
-    anchor?: string,
-  ) {
-    setActiveSection(section);
-
-    if (anchor) {
-      window.setTimeout(() => {
-        document.getElementById(anchor)?.scrollIntoView({
-          block: "start",
-          behavior: "smooth",
-        });
-      }, 0);
-    }
-  }
-
   return (
     <main className="ti-dashboard-bg min-h-screen px-5 py-8 text-zinc-100 sm:px-8">
       <div className="mx-auto flex w-full min-w-0 max-w-[1480px] flex-col gap-8">
-        <header className="ti-panel p-6">
+        <header className={`ti-panel ${isOverviewSection ? "p-6" : "p-4"}`}>
           <Link
             className="text-sm text-sky-300 hover:text-sky-200"
             href="/workspace"
           >
             Back to workspace
           </Link>
-          <p className="mt-4 text-xs font-semibold uppercase text-sky-300">
+          <p className={`${isOverviewSection ? "mt-4" : "mt-3"} text-xs font-semibold uppercase text-sky-300`}>
             Trader Intelligence
           </p>
           <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1 className="text-3xl font-semibold text-zinc-50 sm:text-4xl">
-                Trading Performance Dashboard
+              <h1 className={`${isOverviewSection ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl"} font-semibold text-zinc-50`}>
+                {isOverviewSection
+                  ? "Trading Performance Dashboard"
+                  : activeSectionMeta.label}
               </h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
-                A trader-facing report view for results, red/green behavior
-                cost, and the next trade to review. This is analysis of saved
-                executions, not trading advice.
+                {isOverviewSection
+                  ? "A trader-facing report view for results, behavior cost, and the next trade to review. This is analysis of saved executions, not trading advice."
+                  : activeSectionMeta.summary}
               </p>
             </div>
-            <div className="grid gap-2 text-sm">
+            <div className={`${isOverviewSection ? "grid" : "hidden lg:grid"} gap-2 text-sm`}>
               <div className="rounded-md border border-sky-900 bg-sky-950/30 px-4 py-3 text-sky-100">
                 {isSamplePreview
                   ? "Previewing fuller demo data"
@@ -2852,18 +2950,24 @@ export function AnalyticsClient({
           </div>
         </header>
 
-        <SavedReviewQueueSummary queue={savedReviewQueue} surface="analytics" />
+        <SavedReviewQueueSummary
+          compact={!isOverviewSection}
+          queue={savedReviewQueue}
+          surface="analytics"
+        />
         <SavedImportSourceCaution
           caution={importSourceCaution}
           surface="analytics"
         />
 
-        <AnalyticsCategoryAccessPanel onOpen={openAnalyticsCategory} />
+        {activeSection === "overview" ? (
+          <AnalyticsCategoryAccessPanel isSamplePreview={isSamplePreview} />
+        ) : null}
 
         <section className="grid min-w-0 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
           <AnalyticsDashboardNav
             activeSection={activeSection}
-            onChange={setActiveSection}
+            isSamplePreview={isSamplePreview}
           />
           <div className="min-w-0">
             {activeSection === "overview" ? (
@@ -2873,13 +2977,16 @@ export function AnalyticsClient({
                   viewModel={initialViewModel}
                   savedReviewQueue={savedReviewQueue}
                 />
+              </div>
+            ) : null}
 
-                <div id="analytics-behavior">
-                  <BehaviorReportPanel report={behaviorReport} />
-                </div>
-                <TickerStoryAnalyticsPanel summary={tickerStorySummary} />
-                <SessionStoryAnalyticsPanel summary={sessionStorySummary} />
-
+            {activeSection === "results" ? (
+              <div className="grid gap-6">
+                <AnalyticsStoryPanel
+                  showSecondaryCharts
+                  viewModel={initialViewModel}
+                  savedReviewQueue={savedReviewQueue}
+                />
                 <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                   <MetricCard
                     label="Completed Trades"
@@ -2920,11 +3027,43 @@ export function AnalyticsClient({
               </div>
             ) : null}
 
-            {activeSection === "charts" ? (
+            {activeSection === "timing" ? (
               <AnalyticsChartGalleryPanel
-                onOpenTrades={() => setActiveSection("trades")}
+                tradeExplorerHref={analyticsSectionHref(
+                  "trades",
+                  isSamplePreview,
+                )}
                 viewModel={initialViewModel}
               />
+            ) : null}
+
+            {activeSection === "behavior" ? (
+              <div className="grid gap-6" id="analytics-behavior">
+                <BehaviorReportPanel report={behaviorReport} />
+                <section className="grid gap-6 xl:grid-cols-[minmax(320px,0.8fr)_minmax(0,1.2fr)]">
+                  <SimpleBarChart
+                    chart={report.charts.behaviorRiskRates}
+                    formatter={(value) => String(value)}
+                    maxItems={8}
+                    title="Execution Habits To Review"
+                  />
+                  <ImprovementIntelligencePanel
+                    improvement={initialViewModel.improvementIntelligence}
+                  />
+                </section>
+              </div>
+            ) : null}
+
+            {activeSection === "ticker_stories" ? (
+              <TickerStoryAnalyticsPanel summary={tickerStorySummary} />
+            ) : null}
+
+            {activeSection === "session_stories" ? (
+              <SessionStoryAnalyticsPanel summary={sessionStorySummary} />
+            ) : null}
+
+            {activeSection === "chart_evidence" ? (
+              <ChartEvidenceAnalyticsPanel summary={tickerStorySummary} />
             ) : null}
 
             {activeSection === "review" ? (
@@ -3261,10 +3400,11 @@ export function AnalyticsClient({
                       {selectedDrillDown?.summary ?? "Select a metric."}
                     </div>
                     <div className="mt-4 min-w-0">
-                      <TradeRows
-                        rows={selectedDrillDown?.rows ?? []}
-                        testIdPrefix="analytics-drilldown"
-                      />
+                  <TradeRows
+                    isSamplePreview={isSamplePreview}
+                    rows={selectedDrillDown?.rows ?? []}
+                    testIdPrefix="analytics-drilldown"
+                  />
                     </div>
                   </div>
                 </section>
@@ -3278,6 +3418,7 @@ export function AnalyticsClient({
                   </h2>
                   <div className="mt-4 min-w-0">
                     <TradeRows
+                      isSamplePreview={isSamplePreview}
                       rows={visibleRows}
                       testIdPrefix="analytics-filtered"
                     />

@@ -148,11 +148,15 @@ function decisionReviewSnapshot(args: {
   return {
     savedTradeId: args.savedTradeId,
     review: {
-      candleQualityNotes: ["Trade-window candle basis status: basis is proven aligned."],
+      candleQualityNotes: [
+        "Trade-window candle basis status: basis is proven aligned.",
+      ],
       insights: [
         {
           category: args.category ?? "market_context",
-          evidence: args.evidence ?? ["Saved chart evidence for this test trade."],
+          evidence: args.evidence ?? [
+            "Saved chart evidence for this test trade.",
+          ],
           id: args.id ?? "entry_near_level",
           summary: "Entry was reviewed against saved chart evidence.",
           title: args.title ?? "Entry location had saved chart evidence",
@@ -197,6 +201,10 @@ describe("saved trade thread read model", () => {
     expect(model.threads[0]?.peakCumulativePnl).toBe(100);
     expect(model.threads[0]?.givebackFromPeak).toBe(40);
     expect(model.threads[0]?.roundTrips).toHaveLength(2);
+    expect(model.threads[0]?.href).toContain("/trades/ticker-story/");
+    expect(decodeURIComponent(model.threads[0]?.href ?? "")).toContain(
+      "CYCN:2026-04-01",
+    );
     expect(model.threads[0]?.primaryReviewQuestion).toContain(
       "later re-entry give back profit",
     );
@@ -270,11 +278,11 @@ describe("saved trade thread read model", () => {
       thread?.storyDetail,
       thread?.reviewPrompt,
       thread?.primaryReviewQuestion,
-      ...((thread?.reviewEvidence ?? []).flatMap((item) => [
+      ...(thread?.reviewEvidence ?? []).flatMap((item) => [
         item.title,
         item.detail,
         item.reviewAction,
-      ])),
+      ]),
     ].join(" ");
 
     expect(thread?.storyLabel).toBe("Repeated attempts lost money");
@@ -324,6 +332,57 @@ describe("saved trade thread read model", () => {
     expect(model.threads[0]?.reviewEvidence.map((item) => item.id)).toContain(
       "swing-transition",
     );
+  });
+
+  it("treats same-date overnight-session trades as extended holds, not swings", () => {
+    const trades = [
+      trade({ id: "cycn-1", pnl: 80 }),
+      trade({
+        id: "cycn-2",
+        pnl: -20,
+        timestamps: ["2026-04-01T23:58:00.000Z", "2026-04-02T02:03:00.000Z"],
+      }),
+    ];
+    const model = buildSavedTradeThreadReadModel({
+      report: report({
+        rows: [
+          { id: "cycn-1", pnl: 80 },
+          { heldOvernight: true, id: "cycn-2", pnl: -20 },
+        ],
+      }),
+      trades,
+    });
+    const thread = model.threads[0];
+
+    expect(thread?.roundTrips[1]?.crossedSessionDate).toBe(false);
+    expect(thread?.roundTrips[1]?.heldOvernight).toBe(true);
+    expect(thread?.lifecycleClassification).toBe("extended_same_day_hold");
+    expect(thread?.lifecycleLabel).toBe("Extended same-day hold");
+    expect(thread?.storyKind).toBe("extended_same_day_hold");
+    expect(thread?.storyLabel).toBe("Extended same-day hold");
+    expect(thread?.reviewEvidence.map((item) => item.id)).toContain(
+      "extended-same-day-hold",
+    );
+    expect(thread?.reviewEvidence.map((item) => item.id)).not.toContain(
+      "swing-transition",
+    );
+    const copy = [
+      thread?.lifecycleDetail,
+      thread?.storyDetail,
+      thread?.reviewPrompt,
+      thread?.primaryReviewQuestion,
+      ...((thread?.reviewEvidence ?? []).flatMap((item) => [
+        item.detail,
+        item.reviewAction,
+      ])),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    expect(copy).toContain("whether the hold was intended");
+    expect(copy).toContain("planned");
+    expect(copy).not.toContain("quick intraday idea");
+    expect(copy).not.toContain("instead of ending");
   });
 
   it("keeps the same symbol on different dates as separate stories", () => {
@@ -424,9 +483,11 @@ describe("saved trade thread read model", () => {
     });
     const thread = model.threads[0];
 
-    expect(thread?.roundTrips.every((item) => item.chartContextStatus === "available")).toBe(
-      true,
-    );
+    expect(
+      thread?.roundTrips.every(
+        (item) => item.chartContextStatus === "available",
+      ),
+    ).toBe(true);
     expect(thread?.reviewEvidence.map((item) => item.id)).toContain(
       "chart-context-available",
     );
@@ -443,10 +504,10 @@ describe("saved trade thread read model", () => {
         .toLowerCase(),
     ).not.toContain("volume faded");
     expect(
-      thread?.reviewEvidence
-        .find((item) => item.id === "market-context-insights-available")
-        ?.detail,
-    ).toContain("Entry had limited room before resistance");
+      thread?.reviewEvidence.find(
+        (item) => item.id === "market-context-insights-available",
+      )?.detail,
+    ).toContain("Entry had limited room before overhead resistance");
     expect(thread?.marketContextFindingCount).toBe(2);
     expect(thread?.marketContextRiskCount).toBe(2);
     expect(thread?.marketContextStrengthCount).toBe(0);
@@ -511,7 +572,9 @@ describe("saved trade thread read model", () => {
     expect(thread?.addQualityStrengthCount).toBe(1);
     expect(thread?.marketContextStrengthCount).toBe(1);
     expect(model.addQualityStrengthCount).toBe(1);
-    expect(thread?.marketContextFindings[0]?.label).toBe("Adds followed strength");
+    expect(thread?.marketContextFindings[0]?.label).toBe(
+      "Adds followed strength",
+    );
     expect(thread?.marketContextFindings[0]?.reviewAction).toContain("proof");
   });
 
@@ -569,9 +632,9 @@ describe("saved trade thread read model", () => {
     expect(volumeCard?.detail).toBe("Added after much of the move was used");
     expect(volumeCard?.reviewAction).toContain("fresh proof");
     expect(volumeCard?.tone).toBe("danger");
-    expect(thread?.marketContextFindings[0]?.detail.toLowerCase()).not.toContain(
-      "volume faded",
-    );
+    expect(
+      thread?.marketContextFindings[0]?.detail.toLowerCase(),
+    ).not.toContain("volume faded");
   });
 
   it("counts volume-backed strengths separately from volume risks", () => {
@@ -664,7 +727,9 @@ describe("saved trade thread read model", () => {
     expect(volumeFinding?.label).toBe("Re-entry had lower volume");
     expect(volumeFinding?.canDrivePrimaryConclusion).toBe(true);
     expect(volumeFinding?.opportunityType).toBe("risk_to_reduce");
-    expect(volumeFinding?.evidence).toContain("reentryVolumeVsFirstEntryPct=45");
+    expect(volumeFinding?.evidence).toContain(
+      "reentryVolumeVsFirstEntryPct=45",
+    );
     expect(thread?.volumeFindingCount).toBe(1);
     expect(thread?.volumeRiskCount).toBe(1);
     expect(model.volumeRiskCount).toBe(1);
@@ -771,8 +836,9 @@ describe("saved trade thread read model", () => {
       "post-exit-context-finding",
     );
     expect(
-      thread?.reviewEvidence.find((item) => item.id === "post-exit-context-finding")
-        ?.reviewAction,
+      thread?.reviewEvidence.find(
+        (item) => item.id === "post-exit-context-finding",
+      )?.reviewAction,
     ).toContain("runner rule");
   });
 
@@ -855,8 +921,9 @@ describe("saved trade thread read model", () => {
     expect(model.postExitStrengthCount).toBe(1);
     expect(model.threadWithPostExitStrengthCount).toBe(1);
     expect(
-      thread?.reviewEvidence.find((item) => item.id === "post-exit-context-finding")
-        ?.title,
+      thread?.reviewEvidence.find(
+        (item) => item.id === "post-exit-context-finding",
+      )?.title,
     ).toBe("Exit capture was measured");
   });
 
@@ -1130,9 +1197,7 @@ describe("saved trade thread read model", () => {
   });
 
   it("keeps during-trade measurements as review prompts, not risk or strength counts", () => {
-    const trades = [
-      trade({ id: "cycn-1", pnl: 25 }),
-    ];
+    const trades = [trade({ id: "cycn-1", pnl: 25 })];
     const model = buildSavedTradeThreadReadModel({
       decisionReviewSnapshots: [
         decisionReviewSnapshot({
@@ -1227,6 +1292,15 @@ describe("saved trade thread read model", () => {
     expect(story?.reviewEvidence.map((item) => item.id)).toContain(
       "session-green-to-red",
     );
+    expect(story?.daySessionHref).toBe("/trades/day-session/2026-04-01");
+    expect(story?.tickerSummaries.map((item) => item.symbol)).toEqual([
+      "BBGI",
+      "AVEX",
+    ]);
+    expect(story?.tickerSummaries[0]?.href).toContain(
+      "/trades/ticker-story/",
+    );
+    expect(story?.tickerSummaries[0]?.roundTripCount).toBe(1);
     expect(story?.fixFirstAction).toContain("changed the day");
   });
 
@@ -1260,11 +1334,11 @@ describe("saved trade thread read model", () => {
       story?.storyDetail,
       story?.reviewPrompt,
       story?.fixFirstAction,
-      ...((story?.reviewEvidence ?? []).flatMap((item) => [
+      ...(story?.reviewEvidence ?? []).flatMap((item) => [
         item.title,
         item.detail,
         item.reviewAction,
-      ])),
+      ]),
     ].join(" ");
 
     expect(model.sameSymbolManyAttemptsSessionCount).toBe(1);
@@ -1273,6 +1347,14 @@ describe("saved trade thread read model", () => {
     expect(story?.reviewEvidence.map((item) => item.id)).toContain(
       "session-same-symbol-many-attempts",
     );
+    expect(story?.tickerSummaries).toHaveLength(1);
+    expect(story?.tickerSummaries[0]).toMatchObject({
+      symbol: "CYCN",
+      roundTripCount: 3,
+      closedRoundTripCount: 3,
+      openRoundTripCount: 0,
+      totalGrossRealizedPnl: -90,
+    });
     expect(copy.toLowerCase()).not.toContain("revenge");
   });
 

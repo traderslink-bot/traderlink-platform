@@ -38,7 +38,8 @@ describe("CSV dry-run decision-review boundary", () => {
       decisionReviews: [
         {
           tradeId: "dry-run-trade-1-abcd",
-          coachingHeadline: "Entry was close to higher-timeframe resistance.",
+          coachingHeadline:
+            "Entry started just below higher-timeframe resistance.",
           fixFirstBehaviorId: "chasing",
           marketContextSource: "levels_system_daily_4h",
           tradeWindowEvidenceSource: "execution_only_fallback",
@@ -50,9 +51,9 @@ describe("CSV dry-run decision-review boundary", () => {
               id: "entry_near_daily_4h_resistance",
               tone: "risk",
               category: "market_context",
-              title: "Entry was close to daily/4h resistance",
+              title: "Entry started just below daily/4h resistance",
               summary:
-                "The first entry started near a higher-timeframe resistance area.",
+                "The first entry started just below a higher-timeframe resistance area.",
             },
           ],
         },
@@ -66,6 +67,8 @@ describe("CSV dry-run decision-review boundary", () => {
     expect(withReview.topDecisionReviewInsights[0]?.evidence).toContain(
       "levels-system trade-window warning: Trade-window candles were ignored because their prices were disconnected from execution prices by more than 60%.",
     );
-    expect(withReview.limitations.join(" ")).toContain("VWAP/EMA feedback remains disabled");
+    expect(withReview.limitations.join(" ")).toContain(
+      "VWAP/EMA feedback remains disabled",
+    );
   });
 });

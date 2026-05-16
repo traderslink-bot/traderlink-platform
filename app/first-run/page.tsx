@@ -24,7 +24,7 @@ const readinessItems = [
   {
     label: "Broker connection",
     status: "not_connected",
-    detail: "Use CSV dry run now; live broker sync belongs to a later platform step.",
+    detail: "Use CSV upload now; live broker sync belongs to a later platform step.",
   },
   {
     label: "Market context",
@@ -35,10 +35,10 @@ const readinessItems = [
 
 const nextActions = [
   {
-    title: "Try a CSV dry run",
-    detail: "Paste or upload executions, map columns, repair rows, and preview execution-only feedback.",
-    href: "/import-dry-run",
-    cta: "Open CSV dry run",
+    title: "Upload a CSV",
+    detail: "Choose your broker CSV and let the app start the import.",
+    href: "/upload-csv",
+    cta: "Upload CSV",
   },
   {
     title: "Review import format expectations",
@@ -98,9 +98,9 @@ export default function FirstRunPage() {
             <Link
               className="border border-emerald-700 bg-emerald-950/40 px-4 py-3 text-sm font-medium text-emerald-100 transition hover:border-emerald-300"
               data-testid="first-run-action-primary-import"
-              href="/import-dry-run"
+              href="/upload-csv"
             >
-              Open CSV dry run
+              Upload CSV
             </Link>
           </div>
         </section>
@@ -126,8 +126,8 @@ export default function FirstRunPage() {
             </h2>
             <div className="mt-4 grid gap-3">
               {[
-                "CSV parsing, broker selection, and local file upload.",
-                "Column mapping and rejected-row repair in a dry run.",
+                "CSV upload and automatic import checking.",
+                "Column mapping and rejected-row repair only when the app needs help.",
                 "Execution-only feedback preview from the imported rows.",
                 "Sample analytics for learning the review loop while trade history is empty.",
               ].map((item) => (

@@ -240,8 +240,22 @@ export default async function GuidedReviewPage({
     savedReviewQueue?.tabs.find((tab) => tab.id === "highest_priority")?.count ?? 0;
   const marketGapCount =
     savedReviewQueue?.tabs.find((tab) => tab.id === "market_context_unavailable")?.count ?? 0;
+  const queuedChartDataCount =
+    savedReviewQueue?.tabs.find((tab) => tab.id === "queued")?.count ?? 0;
   const openBlockCount =
     savedReviewQueue?.tabs.find((tab) => tab.id === "blocked_open_trade")?.count ?? 0;
+  const chartDataFollowUp =
+    queuedChartDataCount > 0
+      ? {
+          label: "Chart data waiting",
+          count: queuedChartDataCount,
+          href: "/review?queue=queued",
+        }
+      : {
+          label: "Chart data still missing",
+          count: marketGapCount,
+          href: "/review?queue=market_context_unavailable",
+        };
 
   return (
     <main className="ti-dashboard-bg min-h-screen px-5 py-8 text-zinc-100 sm:px-8">
@@ -342,9 +356,9 @@ export default async function GuidedReviewPage({
                   tone: "warning" as const,
                 },
                 {
-                  label: "Chart data still missing",
-                  count: marketGapCount,
-                  href: "/review?queue=market_context_unavailable",
+                  label: chartDataFollowUp.label,
+                  count: chartDataFollowUp.count,
+                  href: chartDataFollowUp.href,
                   tone: "warning" as const,
                 },
                 {
@@ -423,7 +437,7 @@ export default async function GuidedReviewPage({
                   label: "4. Track",
                   title: "Open coaching focus",
                   body: "Take the written lesson into the overall coach, then check whether the same behavior repeats across saved trades.",
-                  href: "/coach#next-action",
+                  href: "/coach",
                   action: "Open coaching focus",
                 },
                 {
@@ -475,12 +489,12 @@ export default async function GuidedReviewPage({
                     repeating.
                   </p>
                 </div>
-                <Link
-                  className="border border-sky-800 bg-sky-950/30 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
-                  href="/trades?view=session_stories#session-stories"
-                >
-                  Open session stories
-                </Link>
+                  <Link
+                    className="border border-sky-800 bg-sky-950/30 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+                    href="/trades/day-sessions#session-stories"
+                  >
+                    Open day sessions
+                  </Link>
               </div>
 
               {prioritySessionStory ? (
@@ -569,7 +583,7 @@ export default async function GuidedReviewPage({
                 </div>
               ) : (
                 <div className="mt-4 ti-panel-soft p-4 text-sm text-zinc-400">
-                  Save an import to group trades into full-day session stories.
+                  Save an import to group trades into full-day sessions.
                 </div>
               )}
             </section>
@@ -602,7 +616,7 @@ export default async function GuidedReviewPage({
                 </Link>
                 <Link
                   className="border border-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-500"
-                  href="/coach#next-action"
+                  href="/coach"
                 >
                   Open coaching focus
                 </Link>

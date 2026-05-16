@@ -16,7 +16,9 @@ import type {
   TraderAnalyticsSampleSizeMetrics,
   TraderAnalyticsReportSummaryInput,
   TraderAnalyticsStrengthMetrics,
+  TraderAnalyticsTimeBucketConclusion,
   TraderAnalyticsTimeBucketMetrics,
+  TraderAnalyticsTimeBucketSampleSizeLabel,
   TraderAnalyticsTimeOfDayMetrics,
   TraderAnalyticsTradeExtreme,
   TraderAnalyticsTradeRow,
@@ -70,6 +72,12 @@ const STRENGTH_POINT_IDS = {
   consistentShareSizing: "consistent_share_sizing",
   profitableReductionSequence: "profitable_reduction_sequence",
 } as const;
+
+const MIN_TIMING_BUCKET_TRADES_FOR_REVIEW = 5;
+const MIN_TIMING_BUCKET_TRADES_FOR_PATTERN = 10;
+const OUTLIER_ABSOLUTE_SHARE_THRESHOLD = 0.6;
+const WEAK_TIMING_WIN_RATE_THRESHOLD = 0.4;
+const STRONG_TIMING_WIN_RATE_THRESHOLD = 0.6;
 
 function roundMetric(value: number): number {
   return Number(value.toFixed(6));
@@ -252,6 +260,129 @@ function toExtreme(row: TraderAnalyticsTradeRow): TraderAnalyticsTradeExtreme {
   };
 }
 
+function timingSampleSizeLabel(
+  tradeCount: number,
+): TraderAnalyticsTimeBucketSampleSizeLabel {
+  if (tradeCount < MIN_TIMING_BUCKET_TRADES_FOR_REVIEW) {
+    return "insufficient";
+  }
+
+  if (tradeCount < MIN_TIMING_BUCKET_TRADES_FOR_PATTERN) {
+    return "limited";
+  }
+
+  return "sufficient";
+}
+
+function largestByPnl(
+  rows: TraderAnalyticsTradeRow[],
+): TraderAnalyticsTradeRow | null {
+  return (
+    [...rows]
+      .filter((row) => row.grossRealizedPnl > 0)
+      .sort((left, right) => right.grossRealizedPnl - left.grossRealizedPnl)[0] ??
+    null
+  );
+}
+
+function smallestByPnl(
+  rows: TraderAnalyticsTradeRow[],
+): TraderAnalyticsTradeRow | null {
+  return (
+    [...rows]
+      .filter((row) => row.grossRealizedPnl < 0)
+      .sort((left, right) => left.grossRealizedPnl - right.grossRealizedPnl)[0] ??
+    null
+  );
+}
+
+function largestByAbsolutePnl(
+  rows: TraderAnalyticsTradeRow[],
+): TraderAnalyticsTradeRow | null {
+  return (
+    [...rows].sort(
+      (left, right) =>
+        Math.abs(right.grossRealizedPnl) - Math.abs(left.grossRealizedPnl) ||
+        left.tradeIndex - right.tradeIndex,
+    )[0] ?? null
+  );
+}
+
+function buildTimingBucketConclusion(args: {
+  tradeCount: number;
+  grossTotalRealizedPnl: number;
+  grossAverageRealizedPnl: number | null;
+  grossMedianRealizedPnl: number | null;
+  grossWinRate: number | null;
+  largestAbsoluteTradeShareOfAbsolutePnl: number | null;
+}): TraderAnalyticsTimeBucketConclusion {
+  if (args.tradeCount < MIN_TIMING_BUCKET_TRADES_FOR_REVIEW) {
+    return {
+      kind: "insufficient_sample",
+      confidence: "low",
+      summary: "Not enough trades for a timing pattern yet.",
+    };
+  }
+
+  if (
+    args.largestAbsoluteTradeShareOfAbsolutePnl !== null &&
+    args.largestAbsoluteTradeShareOfAbsolutePnl >=
+      OUTLIER_ABSOLUTE_SHARE_THRESHOLD
+  ) {
+    return {
+      kind: "outlier_dominated_total",
+      confidence: "medium",
+      summary:
+        "One trade drove most of this bucket's movement. Review the driver before treating it as a timing pattern.",
+    };
+  }
+
+  const hasPatternSample =
+    args.tradeCount >= MIN_TIMING_BUCKET_TRADES_FOR_PATTERN;
+  const hasWeakWinRate =
+    args.grossWinRate !== null &&
+    args.grossWinRate < WEAK_TIMING_WIN_RATE_THRESHOLD;
+  const hasStrongWinRate =
+    args.grossWinRate !== null &&
+    args.grossWinRate > STRONG_TIMING_WIN_RATE_THRESHOLD;
+
+  if (
+    hasPatternSample &&
+    args.grossTotalRealizedPnl < 0 &&
+    (args.grossAverageRealizedPnl ?? 0) < 0 &&
+    (args.grossMedianRealizedPnl ?? 0) < 0 &&
+    hasWeakWinRate
+  ) {
+    return {
+      kind: "consistent_weakness",
+      confidence: "high",
+      summary:
+        "Total, average, median, and win rate all point to repeated weakness.",
+    };
+  }
+
+  if (
+    hasPatternSample &&
+    args.grossTotalRealizedPnl > 0 &&
+    (args.grossAverageRealizedPnl ?? 0) > 0 &&
+    (args.grossMedianRealizedPnl ?? 0) > 0 &&
+    hasStrongWinRate
+  ) {
+    return {
+      kind: "consistent_strength",
+      confidence: "high",
+      summary:
+        "Total, average, median, and win rate all point to repeated strength.",
+    };
+  }
+
+  return {
+    kind: "mixed",
+    confidence: "low",
+    summary: "Mixed timing evidence; use this as a review prompt.",
+  };
+}
+
 function buildTradeRows(
   inputs: Array<{ requestIndex: number; summary: ExecutionFeedbackSummary }>,
 ): TraderAnalyticsTradeRow[] {
@@ -322,6 +453,12 @@ function buildTimeBucketMetrics(
   return [...buckets.entries()]
     .map(([id, bucket]) => {
       const pnlValues = bucket.rows.map((row) => row.grossRealizedPnl);
+      const grossTotalRealizedPnl = roundMetric(sum(pnlValues));
+      const grossAverageRealizedPnl = average(pnlValues);
+      const grossMedianRealizedPnl = median(pnlValues);
+      const grossAbsoluteRealizedPnl = roundMetric(
+        sum(pnlValues.map((value) => Math.abs(value))),
+      );
       const grossWinnerCount = bucket.rows.filter(
         (row) => row.grossRealizedPnl > 0,
       ).length;
@@ -331,17 +468,45 @@ function buildTimeBucketMetrics(
       const grossFlatCount = bucket.rows.filter(
         (row) => row.grossRealizedPnl === 0,
       ).length;
+      const grossWinRate = rate(grossWinnerCount, bucket.rows.length);
+      const largestWinner = largestByPnl(bucket.rows);
+      const largestLoser = smallestByPnl(bucket.rows);
+      const largestAbsoluteTrade = largestByAbsolutePnl(bucket.rows);
+      const largestAbsoluteTradeShareOfAbsolutePnl =
+        largestAbsoluteTrade && grossAbsoluteRealizedPnl > 0
+          ? roundMetric(
+              Math.abs(largestAbsoluteTrade.grossRealizedPnl) /
+                grossAbsoluteRealizedPnl,
+            )
+          : null;
 
       return {
         id,
         label: bucket.label,
         tradeCount: bucket.rows.length,
-        grossTotalRealizedPnl: roundMetric(sum(pnlValues)),
-        grossAverageRealizedPnl: average(pnlValues),
+        grossTotalRealizedPnl,
+        grossAverageRealizedPnl,
+        grossMedianRealizedPnl,
+        grossAbsoluteRealizedPnl,
         grossWinnerCount,
         grossLoserCount,
         grossFlatCount,
-        grossWinRate: rate(grossWinnerCount, bucket.rows.length),
+        grossWinRate,
+        largestWinner: largestWinner ? toExtreme(largestWinner) : null,
+        largestLoser: largestLoser ? toExtreme(largestLoser) : null,
+        largestAbsoluteTrade: largestAbsoluteTrade
+          ? toExtreme(largestAbsoluteTrade)
+          : null,
+        largestAbsoluteTradeShareOfAbsolutePnl,
+        sampleSizeLabel: timingSampleSizeLabel(bucket.rows.length),
+        conclusion: buildTimingBucketConclusion({
+          tradeCount: bucket.rows.length,
+          grossTotalRealizedPnl,
+          grossAverageRealizedPnl,
+          grossMedianRealizedPnl,
+          grossWinRate,
+          largestAbsoluteTradeShareOfAbsolutePnl,
+        }),
       };
     })
     .sort((left, right) => {
@@ -473,18 +638,30 @@ function buildEntryTimeInsight(args: {
   }
 
   const hour = args.bestEntryHourEt
-    ? ` Best entry hour so far is ${args.bestEntryHourEt.label}.`
+    ? ` Highest total entry-hour result so far is ${args.bestEntryHourEt.label}.`
     : "";
   const worst =
     args.worstEntrySession &&
     args.worstEntrySession.id !== args.bestEntrySession.id
-      ? ` Weakest entry session so far is ${args.worstEntrySession.label}.`
+      ? ` Lowest total entry-session result so far is ${args.worstEntrySession.label}.`
+      : "";
+  const outlierNote =
+    args.worstEntrySession?.conclusion.kind === "outlier_dominated_total"
+      ? ` ${args.worstEntrySession.label} is mostly driven by one trade, so review that trade before treating it as a timing pattern.`
+      : "";
+  const insufficientNote =
+    args.worstEntrySession?.conclusion.kind === "insufficient_sample"
+      ? ` ${args.worstEntrySession.label} has too few trades for a timing pattern yet.`
+      : "";
+  const consistentWeaknessNote =
+    args.worstEntrySession?.conclusion.kind === "consistent_weakness"
+      ? ` ${args.worstEntrySession.label} also shows weaker average, median, and win-rate evidence across enough trades.`
       : "";
   const sampleNote = args.sampleSizeWarning
     ? " Treat this as a review prompt until the sample is larger."
-    : "";
+    : " Check average, median, win rate, and outlier notes before calling this a timing pattern.";
 
-  return `Best entry session so far is ${args.bestEntrySession.label}.${hour}${worst}${sampleNote}`;
+  return `Highest total entry-session result so far is ${args.bestEntrySession.label}.${hour}${worst}${outlierNote}${insufficientNote}${consistentWeaknessNote}${sampleNote}`;
 }
 
 function buildHoldInsight(args: {

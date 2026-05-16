@@ -49,6 +49,8 @@ export type BrokerExecutionCsvImportIssueCode =
   | "over_reducing_execution_split"
   | "trade_grouping_time_gap_split"
   | "trade_grouping_session_boundary_split"
+  | "prior_position_close_skipped"
+  | "sell_starting_trade_skipped"
   | "duplicate_trade_in_import"
   | "trade_request_validation_error"
   | "trade_request_validation_warning";
@@ -134,6 +136,7 @@ export type BrokerExecutionCsvColumnMapping = Partial<
 export interface BrokerExecutionCsvTradeGroupingRules {
   maxGapMinutes?: number;
   splitAtSessionBoundary?: boolean;
+  allowSellStartingTrades?: boolean;
 }
 
 export interface BrokerExecutionCsvTradeGroupingDiagnostic {
@@ -1551,6 +1554,43 @@ function csvColumnValue(
   return row[normalizeHeader(header)]?.trim().toLowerCase() ?? "";
 }
 
+function csvColumnRawValue(
+  row: Record<string, string>,
+  header: string,
+): string {
+  return row[normalizeHeader(header)]?.trim() ?? "";
+}
+
+function ibkrPositionEffect(
+  row: Record<string, string>,
+  spec: CsvFormatSpec,
+): ProviderExecution["positionEffect"] {
+  if (spec.id !== "ibkr_activity_statement" || !hasCsvColumn(row, "Code")) {
+    return undefined;
+  }
+
+  const codes = csvColumnRawValue(row, "Code")
+    .split(";")
+    .map((code) => code.trim().toUpperCase())
+    .filter(Boolean);
+  const opens = codes.includes("O");
+  const closes = codes.includes("C");
+
+  if (opens && closes) {
+    return "mixed";
+  }
+
+  if (opens) {
+    return "opening";
+  }
+
+  if (closes) {
+    return "closing";
+  }
+
+  return codes.length > 0 ? "unknown" : undefined;
+}
+
 function rowIsIbkrActivityStatementStockOrder(
   row: Record<string, string>,
   spec: CsvFormatSpec,
@@ -1818,6 +1858,7 @@ function mapCsvRowToExecution(args: {
     fees: fees ?? undefined,
     netAmount: netAmount ?? undefined,
     currency: currency?.toUpperCase() ?? undefined,
+    positionEffect: ibkrPositionEffect(row, spec),
     source: sourceLabel,
   };
 }
@@ -1851,6 +1892,33 @@ function positionDelta(
 
 function directionFromExecution(execution: ProviderExecution): "long" | "short" {
   return execution.side.trim().toLowerCase() === "buy" ? "long" : "short";
+}
+
+function executionClosesPriorPosition(execution: ProviderExecution): boolean {
+  return execution.positionEffect === "closing";
+}
+
+function allowsSellStartingTrades(
+  rules: BrokerExecutionCsvTradeGroupingRules,
+): boolean {
+  return rules.allowSellStartingTrades === true;
+}
+
+function executionStartsSellSideTrade(execution: ProviderExecution): boolean {
+  return directionFromExecution(execution) === "short";
+}
+
+function pushSellStartingTradeSkippedIssue(
+  issues: BrokerExecutionCsvImportIssue[],
+  execution: ProviderExecution,
+): void {
+  pushIssue(issues, {
+    severity: "warning",
+    code: "sell_starting_trade_skipped",
+    message:
+      `${execution.symbol} sell ${execution.shares} share${Number(execution.shares) === 1 ? "" : "s"} at ${String(execution.timestamp)} could not be matched to an earlier buy in this CSV window, so it was set aside from normal long-side analytics.`,
+    rowIndex: executionRowIndex(execution),
+  });
 }
 
 function sessionDateFromExecution(execution: ProviderExecution): string {
@@ -1950,6 +2018,7 @@ function buildRequestsFromExecutions(args: {
     let currentDirection: "long" | "short" | null = null;
     let currentPosition = 0;
     let currentExecutions: ProviderExecution[] = [];
+    let unsupportedSellPosition = 0;
 
     const flushCurrent = (
       groupingReason: BrokerExecutionCsvTradeGroupingReason,
@@ -2009,16 +2078,63 @@ function buildRequestsFromExecutions(args: {
     };
 
     for (const execution of symbolExecutions) {
+      let groupingExecution = execution;
+
+      if (
+        unsupportedSellPosition > 0 &&
+        !allowsSellStartingTrades(tradeGroupingRules)
+      ) {
+        const shares = Number(execution.shares);
+
+        if (executionStartsSellSideTrade(execution)) {
+          unsupportedSellPosition += shares;
+          pushSellStartingTradeSkippedIssue(issues, execution);
+          continue;
+        }
+
+        if (shares <= unsupportedSellPosition) {
+          unsupportedSellPosition -= shares;
+          continue;
+        }
+
+        groupingExecution = cloneWithShares(
+          execution,
+          shares - unsupportedSellPosition,
+          "partially used by CSV import after an unmatched sell-side sequence returned to flat",
+        );
+        unsupportedSellPosition = 0;
+      }
+
       if (!currentDirection) {
-        currentDirection = directionFromExecution(execution);
-        currentPosition = Number(execution.shares);
-        currentExecutions = [execution];
+        if (executionClosesPriorPosition(groupingExecution)) {
+          pushIssue(issues, {
+            severity: "warning",
+            code: "prior_position_close_skipped",
+            message:
+              `${groupingExecution.symbol} ${groupingExecution.side} ${groupingExecution.shares} share${Number(groupingExecution.shares) === 1 ? "" : "s"} at ${String(groupingExecution.timestamp)} was marked by IBKR as closing shares from before this CSV window, so it was set aside from normal long-side analytics.`,
+            rowIndex: executionRowIndex(groupingExecution),
+          });
+          continue;
+        }
+
+        if (
+          executionStartsSellSideTrade(groupingExecution) &&
+          !allowsSellStartingTrades(tradeGroupingRules)
+        ) {
+          unsupportedSellPosition += Number(groupingExecution.shares);
+          pushSellStartingTradeSkippedIssue(issues, groupingExecution);
+          continue;
+        }
+
+        currentDirection = directionFromExecution(groupingExecution);
+        currentPosition = Number(groupingExecution.shares);
+        currentExecutions = [groupingExecution];
         continue;
       }
 
       const safetySplitReason = groupingSplitReason({
         currentExecutions,
-        nextExecution: execution,
+        nextExecution: groupingExecution,
         rules: tradeGroupingRules,
       });
 
@@ -2033,16 +2149,26 @@ function buildRequestsFromExecutions(args: {
             safetySplitReason === "time_gap_split"
               ? "Execution was grouped into a new trade because it exceeded the configured max time gap."
               : "Execution was grouped into a new trade because it crossed the configured session boundary.",
-          rowIndex: executionRowIndex(execution),
+          rowIndex: executionRowIndex(groupingExecution),
         });
         flushCurrent(safetySplitReason);
-        currentDirection = directionFromExecution(execution);
-        currentPosition = Number(execution.shares);
-        currentExecutions = [execution];
+
+        if (
+          executionStartsSellSideTrade(groupingExecution) &&
+          !allowsSellStartingTrades(tradeGroupingRules)
+        ) {
+          unsupportedSellPosition += Number(groupingExecution.shares);
+          pushSellStartingTradeSkippedIssue(issues, groupingExecution);
+          continue;
+        }
+
+        currentDirection = directionFromExecution(groupingExecution);
+        currentPosition = Number(groupingExecution.shares);
+        currentExecutions = [groupingExecution];
         continue;
       }
 
-      const delta = positionDelta(currentDirection, execution);
+      const delta = positionDelta(currentDirection, groupingExecution);
       const nextPosition = currentPosition + delta;
 
       if (nextPosition < 0) {
@@ -2052,7 +2178,7 @@ function buildRequestsFromExecutions(args: {
         if (closingShares > 0) {
           currentExecutions.push(
             cloneWithShares(
-              execution,
+              groupingExecution,
               closingShares,
               "split by CSV import because execution over-reduced the current trade",
             ),
@@ -2065,19 +2191,35 @@ function buildRequestsFromExecutions(args: {
           message:
             "One execution reduced more shares than the open trade; the importer split it into a closing execution and a new opposite-direction trade.",
           rowIndex:
-            typeof execution.executionIndex === "number"
-              ? execution.executionIndex + 1
+            typeof groupingExecution.executionIndex === "number"
+              ? groupingExecution.executionIndex + 1
             : undefined,
         });
 
         currentPosition = 0;
         flushCurrent("over_reduction_split");
 
-        currentDirection = directionFromExecution(execution);
+        if (
+          directionFromExecution(groupingExecution) === "short" &&
+          !allowsSellStartingTrades(tradeGroupingRules)
+        ) {
+          unsupportedSellPosition += openingShares;
+          pushSellStartingTradeSkippedIssue(
+            issues,
+            cloneWithShares(
+              groupingExecution,
+              openingShares,
+              "skipped by CSV import because it would start an unsupported sell-side sequence",
+            ),
+          );
+          continue;
+        }
+
+        currentDirection = directionFromExecution(groupingExecution);
         currentPosition = openingShares;
         currentExecutions = [
           cloneWithShares(
-            execution,
+            groupingExecution,
             openingShares,
             "split by CSV import as the opening remainder after over-reduction",
           ),
@@ -2085,7 +2227,7 @@ function buildRequestsFromExecutions(args: {
         continue;
       }
 
-      currentExecutions.push(execution);
+      currentExecutions.push(groupingExecution);
       currentPosition = nextPosition;
 
       if (currentPosition === 0) {

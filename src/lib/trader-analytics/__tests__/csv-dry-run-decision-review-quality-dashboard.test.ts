@@ -23,7 +23,8 @@ describe("decision review quality dashboard", () => {
     expect(
       dashboard.scenarios.every(
         (scenario) =>
-          scenario.actualMarketContextSource === scenario.expectedMarketContextSource,
+          scenario.actualMarketContextSource ===
+          scenario.expectedMarketContextSource,
       ),
     ).toBe(true);
     expect(
@@ -51,18 +52,22 @@ describe("decision review quality dashboard", () => {
         (scenario) =>
           scenario.id === "entry_near_major_resistance_limited_room",
       )?.coachingHeadline,
-    ).toContain("major daily/4h resistance with limited room before resistance");
+    ).toContain(
+      "major daily/4h resistance with limited room before overhead resistance",
+    );
     expect(
       dashboard.scenarios.find(
         (scenario) => scenario.id === "failed_entry_near_major_resistance",
       )?.coachingHeadline,
-    ).toContain("major daily/4h resistance with limited room before resistance");
+    ).toContain(
+      "major daily/4h resistance with limited room before overhead resistance",
+    );
     expect(
       dashboard.scenarios.find(
         (scenario) => scenario.id === "major_resistance_limited_room_late_add",
       )?.coachingHeadline,
     ).toContain(
-      "major daily/4h resistance, the trade had limited room before resistance, and later adds increased size after much of the move was already used",
+      "major daily/4h resistance, the trade had limited room before overhead resistance, and later adds increased size after much of the move was already used",
     );
     expect(
       dashboard.scenarios.find(

@@ -138,6 +138,39 @@ describe("broker execution CSV imports", () => {
     expect(result.executions[1].netAmount).toBeUndefined();
   });
 
+  it("does not invent a new short when IBKR marks a sell as closing a prior position", () => {
+    const result = parseBrokerExecutionCsv({
+      broker: "ibkr_activity_statement",
+      csvText: [
+        "Trades,Header,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,Trade ID,Proceeds,Comm/Fee,Code",
+        'Trades,Data,Stocks,USD,ANNA,"2026-04-01, 07:35:06",-100,7.4031,IB-1,740.31,-1.0195,C;P',
+        'Trades,Data,Stocks,USD,ANNA,"2026-04-21, 11:52:58",80,4.19,IB-2,-335.20,-1.00,O',
+        'Trades,Data,Stocks,USD,ANNA,"2026-04-21, 16:11:09",-80,4.20,IB-3,336.00,-1.02,C',
+      ].join("\n"),
+      defaultSessionBucket: "unknown",
+    });
+
+    expect(result.acceptedExecutionCount).toBe(3);
+    expect(result.requests).toHaveLength(1);
+    expect(result.groupingDiagnostics).toHaveLength(1);
+    expect(result.groupingDiagnostics[0]).toMatchObject({
+      symbol: "ANNA",
+      tradeDirection: "long",
+      lifecycleStatus: "closed",
+      groupingReason: "flat_position",
+      rowIndexes: [3, 4],
+      finalPositionShares: 0,
+    });
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "prior_position_close_skipped",
+          rowIndex: 2,
+        }),
+      ]),
+    );
+  });
+
   it("skips non-stock execution sections in full IBKR monthly activity statements", () => {
     const result = expectRequestsValid(
       [
@@ -328,15 +361,34 @@ describe("broker execution CSV imports", () => {
     expect(result.skippedRowCount).toBe(1);
   });
 
-  it("maps generic execution CSV files into short trades", () => {
-    const result = expectRequestsValid(
-      [
+  it("skips sell-starting rows by default because short-side review is not enabled", () => {
+    const result = parseBrokerExecutionCsv({
+      broker: "generic_execution_csv",
+      csvText: [
         "Date,Time,Ticker,Action,Shares,Price",
         "2026-05-01,09:30:00,SPY,Sell,100,510.00",
         "2026-05-01,10:00:00,SPY,Buy,100,508.25",
       ].join("\n"),
-      "generic_execution_csv",
+    });
+
+    expect(result.requests).toHaveLength(0);
+    expect(result.issues.map((issue) => issue.code)).toContain(
+      "sell_starting_trade_skipped",
     );
+  });
+
+  it("can map sell-starting rows into short trades when an internal fixture opts in", () => {
+    const result = parseBrokerExecutionCsv({
+      broker: "generic_execution_csv",
+      tradeGroupingRules: {
+        allowSellStartingTrades: true,
+      },
+      csvText: [
+        "Date,Time,Ticker,Action,Shares,Price",
+        "2026-05-01,09:30:00,SPY,Sell,100,510.00",
+        "2026-05-01,10:00:00,SPY,Buy,100,508.25",
+      ].join("\n"),
+    });
 
     expect(result.requests).toHaveLength(1);
     expect(result.requests[0].tradeDirection).toBe("short");
@@ -358,8 +410,12 @@ describe("broker execution CSV imports", () => {
   });
 
   it("auto-detects tab-delimited generic exports with execution-date aliases", () => {
-    const result = expectRequestsValid(
-      [
+    const result = parseBrokerExecutionCsv({
+      broker: "generic_execution_csv",
+      tradeGroupingRules: {
+        allowSellStartingTrades: true,
+      },
+      csvText: [
         [
           "Execution Date",
           "Execution Time",
@@ -391,8 +447,7 @@ describe("broker execution CSV imports", () => {
           "EXEC-2",
         ].join("\t"),
       ].join("\n"),
-      "generic_execution_csv",
-    );
+    });
 
     expect(result.diagnostics.delimiter).toBe("\t");
     expect(result.requests[0]).toMatchObject({
@@ -525,7 +580,7 @@ describe("broker execution CSV imports", () => {
     );
   });
 
-  it("splits over-reducing executions into separate lifecycle requests", () => {
+  it("skips an over-reducing sell remainder when it would create an unsupported short trade", () => {
     const result = parseBrokerExecutionCsv({
       broker: "generic_execution_csv",
       csvText: [
@@ -536,20 +591,21 @@ describe("broker execution CSV imports", () => {
       ].join("\n"),
     });
 
-    expect(result.requests).toHaveLength(2);
+    expect(result.requests).toHaveLength(1);
     expect(result.requests.map((request) => request.tradeDirection)).toEqual([
       "long",
-      "short",
     ]);
     expect(result.groupingDiagnostics.map((item) => item.groupingReason)).toEqual([
       "over_reduction_split",
-      "flat_position",
     ]);
     expect(
       result.groupingDiagnostics.map((item) => item.lifecycleStatus),
-    ).toEqual(["closed", "closed"]);
+    ).toEqual(["closed"]);
     expect(result.issues.map((issue) => issue.code)).toContain(
       "over_reducing_execution_split",
+    );
+    expect(result.issues.map((issue) => issue.code)).toContain(
+      "sell_starting_trade_skipped",
     );
   });
 
@@ -586,7 +642,7 @@ describe("broker execution CSV imports", () => {
       ].join("\n"),
     });
 
-    expect(result.requests).toHaveLength(2);
+    expect(result.requests).toHaveLength(1);
     expect(result.groupingDiagnostics[0]).toMatchObject({
       lifecycleStatus: "open",
       groupingReason: "time_gap_split",
@@ -594,6 +650,9 @@ describe("broker execution CSV imports", () => {
     });
     expect(result.issues.map((issue) => issue.code)).toContain(
       "trade_grouping_time_gap_split",
+    );
+    expect(result.issues.map((issue) => issue.code)).toContain(
+      "sell_starting_trade_skipped",
     );
   });
 
@@ -610,7 +669,7 @@ describe("broker execution CSV imports", () => {
       ].join("\n"),
     });
 
-    expect(result.requests).toHaveLength(2);
+    expect(result.requests).toHaveLength(1);
     expect(result.groupingDiagnostics[0]).toMatchObject({
       lifecycleStatus: "open",
       groupingReason: "session_boundary_split",

@@ -24,6 +24,7 @@ import {
   validateTradeAnalysisRequest,
   type UserTradeAnalysisRequest,
 } from "../../trade-analysis/request/trade-analysis-request-contract";
+import type { TradeAnalysisSummaryReplayCandleWindow } from "../../trade-analysis/summary/build-trade-analysis-summary";
 import { runTraderAnalyticsReport } from "../run-trader-analytics-report";
 import type {
   TraderAnalyticsReport,
@@ -159,6 +160,7 @@ export interface CsvDryRunPrototypeDecisionReviewInput {
     | "levels_system_trade_window"
     | "execution_only_fallback";
   candleQualityNotes?: string[];
+  replayCandleWindow?: TradeAnalysisSummaryReplayCandleWindow | null;
   insights: CsvDryRunPrototypeDecisionReviewInsightInput[];
 }
 
@@ -186,11 +188,7 @@ export interface CsvDryRunPrototypeAnalysisPanel {
   exportAvailable: false;
 }
 
-export type ExecutionAutopsyTone =
-  | "strength"
-  | "risk"
-  | "neutral"
-  | "review";
+export type ExecutionAutopsyTone = "strength" | "risk" | "neutral" | "review";
 
 export interface ExecutionAutopsyObservation {
   id: string;
@@ -557,7 +555,11 @@ function requestWithFacts(
   const validation = validateTradeAnalysisRequest(request);
   const result = runExecutionFeedback(request, { generatedAt });
 
-  if (!validation.valid || !validation.request || result.status !== "completed") {
+  if (
+    !validation.valid ||
+    !validation.request ||
+    result.status !== "completed"
+  ) {
     return {
       result,
       facts: null,
@@ -599,7 +601,9 @@ export function buildImportConfidenceState(
         ? "Start a new import when the source file is ready."
         : "Paste or upload trade execution CSV text.",
       allowedActions: ["load_csv", "choose_broker"],
-      blockers: options?.rejected ? ["The import was explicitly rejected."] : [],
+      blockers: options?.rejected
+        ? ["The import was explicitly rejected."]
+        : [],
       reviewReasons: [],
       evidence: [
         evidence({
@@ -633,7 +637,9 @@ export function buildImportConfidenceState(
   const reviewReasons = [
     ...experience.confidenceGate.reviewReasons,
     ...(importResult.skippedRowCount > 0
-      ? [`${importResult.skippedRowCount} non-trade or unsupported row(s) were skipped.`]
+      ? [
+          `${importResult.skippedRowCount} non-trade or unsupported row(s) were skipped.`,
+        ]
       : []),
     ...(importResult.mappingConfidence.level === "low"
       ? ["Column mapping confidence is low."]
@@ -702,13 +708,17 @@ export function buildImportConfidenceState(
     };
   }
 
-  if (reviewReasons.length > 0 || experience.confidenceGate.status === "needs_review") {
+  if (
+    reviewReasons.length > 0 ||
+    experience.confidenceGate.status === "needs_review"
+  ) {
     return {
       contractVersion: "import_confidence_state_v1",
       state: "needs_review",
       severity: "review",
       label: "Import needs review",
-      primaryNextAction: "Review skipped rows, open positions, or mapping warnings before saving.",
+      primaryNextAction:
+        "Review skipped rows, open positions, or mapping warnings before saving.",
       allowedActions: ["review_import", "repair_rows", "continue_to_analysis"],
       blockers: [],
       reviewReasons,
@@ -753,8 +763,9 @@ export function buildExecutionFeedbackAutopsyEnrichment(args: {
   const firstRisk = args.summary.points.risks[0] ?? null;
   const firstStrength = args.summary.points.strengths[0] ?? null;
   const addExecutions =
-    facts?.executions.filter((executionFact) => executionFact.action === "add") ??
-    [];
+    facts?.executions.filter(
+      (executionFact) => executionFact.action === "add",
+    ) ?? [];
   const reductionExecutions =
     facts?.executions.filter(
       (executionFact) =>
@@ -779,7 +790,8 @@ export function buildExecutionFeedbackAutopsyEnrichment(args: {
           id: "best_add",
           tone: "strength",
           label: "Best add",
-          reason: "This add improved the average open position from an execution-only perspective.",
+          reason:
+            "This add improved the average open position from an execution-only perspective.",
           tradeId: args.tradeId,
           execution: favorableAdds[0],
         })
@@ -790,7 +802,8 @@ export function buildExecutionFeedbackAutopsyEnrichment(args: {
           id: "worst_add",
           tone: "risk",
           label: "Worst add",
-          reason: "This add increased size after price had moved against the current average entry.",
+          reason:
+            "This add increased size after price had moved against the current average entry.",
           tradeId: args.tradeId,
           execution: adverseAdds[0],
         })
@@ -801,7 +814,8 @@ export function buildExecutionFeedbackAutopsyEnrichment(args: {
           id: "best_reduction",
           tone: "strength",
           label: "Best reduction",
-          reason: "This reduction locked in realized P/L against the current average entry.",
+          reason:
+            "This reduction locked in realized P/L against the current average entry.",
           tradeId: args.tradeId,
           execution: profitableReductions[0],
         })
@@ -812,7 +826,8 @@ export function buildExecutionFeedbackAutopsyEnrichment(args: {
           id: "worst_reduction",
           tone: "risk",
           label: "Worst reduction",
-          reason: "This reduction realized a loss against the current average entry.",
+          reason:
+            "This reduction realized a loss against the current average entry.",
           tradeId: args.tradeId,
           execution: losingReductions[0],
         })
@@ -936,36 +951,40 @@ export function buildSavedAnalysisPrototypeFromDryRun(args: {
   const evidenceRefs: FunctionalEvidenceRef[] = [...preSaveState.evidence];
 
   if (canCreate) {
-    args.experience.preview.importResult.requests.forEach((request, requestIndex) => {
-      const tradeId = tradeIdFor({ batchId, request, requestIndex });
-      const { result, facts } = requestWithFacts(request, generatedAt);
-      generatedTradeIds.push(tradeId);
-      generatedTradeLabels.push(`${request.symbol} ${request.tradeDirection}`);
-      feedbackStatuses.push(result.status);
-      evidenceRefs.push(
-        evidence({
-          kind: "trade",
-          id: tradeId,
-          label: `${request.symbol} trade ${requestIndex + 1}`,
-          tradeId,
-        }),
-      );
-
-      if (result.status === "completed" && result.summary) {
-        feedbackSummaryIds.push(`${tradeId}-summary`);
-        summaries.push({
-          requestIndex,
-          summary: result.summary,
-        });
-        autopsies.push(
-          buildExecutionFeedbackAutopsyEnrichment({
-            summary: result.summary,
-            facts,
+    args.experience.preview.importResult.requests.forEach(
+      (request, requestIndex) => {
+        const tradeId = tradeIdFor({ batchId, request, requestIndex });
+        const { result, facts } = requestWithFacts(request, generatedAt);
+        generatedTradeIds.push(tradeId);
+        generatedTradeLabels.push(
+          `${request.symbol} ${request.tradeDirection}`,
+        );
+        feedbackStatuses.push(result.status);
+        evidenceRefs.push(
+          evidence({
+            kind: "trade",
+            id: tradeId,
+            label: `${request.symbol} trade ${requestIndex + 1}`,
             tradeId,
           }),
         );
-      }
-    });
+
+        if (result.status === "completed" && result.summary) {
+          feedbackSummaryIds.push(`${tradeId}-summary`);
+          summaries.push({
+            requestIndex,
+            summary: result.summary,
+          });
+          autopsies.push(
+            buildExecutionFeedbackAutopsyEnrichment({
+              summary: result.summary,
+              facts,
+              tradeId,
+            }),
+          );
+        }
+      },
+    );
   }
 
   const analyticsReport =
@@ -978,7 +997,9 @@ export function buildSavedAnalysisPrototypeFromDryRun(args: {
       : null;
   const state =
     analyticsReport !== null
-      ? buildImportConfidenceState(args.experience, { afterPrototypeSave: true })
+      ? buildImportConfidenceState(args.experience, {
+          afterPrototypeSave: true,
+        })
       : preSaveState;
 
   return {
@@ -994,7 +1015,8 @@ export function buildSavedAnalysisPrototypeFromDryRun(args: {
     autopsies,
     analyticsReportStatus: analyticsReport ? "created" : "not_created",
     analyticsReport,
-    reviewQueueItemCount: args.experience.postImportReviewQueuePreview.totalCount,
+    reviewQueueItemCount:
+      args.experience.postImportReviewQueuePreview.totalCount,
     limitations: [
       "Prototype only: this does not write to a production database.",
       "Execution-only analytics were generated from parsed CSV executions.",
@@ -1189,7 +1211,9 @@ function buildDecisionReviewFindings(
 ): CsvDryRunPrototypeAnalysisFinding[] {
   return reviews
     .flatMap((review) =>
-      review.insights.map((insight) => decisionReviewFinding({ review, insight })),
+      review.insights.map((insight) =>
+        decisionReviewFinding({ review, insight }),
+      ),
     )
     .slice(0, 6);
 }
@@ -1241,7 +1265,8 @@ export function buildCsvDryRunPrototypeAnalysisPanel(args: {
     prototypeGenerated,
   });
   const decisionReviews = args.decisionReviews ?? [];
-  const marketContextSource = decisionReviewMarketContextSource(decisionReviews);
+  const marketContextSource =
+    decisionReviewMarketContextSource(decisionReviews);
   const marketContextUsed = marketContextSource !== "none";
 
   return {
@@ -1284,7 +1309,8 @@ export function buildSyntheticTraderPersonas(): SyntheticTraderPersona[] {
     {
       id: "overtrader",
       label: "Overtrader",
-      expectedBehavior: "Rapid-fire execution clusters and too many decisions in one trade.",
+      expectedBehavior:
+        "Rapid-fire execution clusters and too many decisions in one trade.",
       requests: [
         cloneRequest(rapidFireExecutionCluster as UserTradeAnalysisRequest, {
           symbol: "OTRD",
@@ -1293,7 +1319,9 @@ export function buildSyntheticTraderPersonas(): SyntheticTraderPersona[] {
           symbol: "OTR2",
         }),
       ],
-      limitations: ["Synthetic execution timing only; no market setup context is used."],
+      limitations: [
+        "Synthetic execution timing only; no market setup context is used.",
+      ],
     },
     {
       id: "clean_scalper",
@@ -1312,7 +1340,8 @@ export function buildSyntheticTraderPersonas(): SyntheticTraderPersona[] {
     {
       id: "revenge_like_reentry_trader",
       label: "Revenge-like re-entry trader",
-      expectedBehavior: "Repeated adds before reduction while price moves against the position.",
+      expectedBehavior:
+        "Repeated adds before reduction while price moves against the position.",
       requests: [
         cloneRequest(repeatedAddsBeforeReduction as UserTradeAnalysisRequest, {
           symbol: "RVG1",
@@ -1326,7 +1355,8 @@ export function buildSyntheticTraderPersonas(): SyntheticTraderPersona[] {
     {
       id: "poor_exit_trader",
       label: "Poor exit trader",
-      expectedBehavior: "Open leftovers or reductions that leave the trade unresolved.",
+      expectedBehavior:
+        "Open leftovers or reductions that leave the trade unresolved.",
       requests: [
         cloneRequest(openPosition as UserTradeAnalysisRequest, {
           symbol: "EXIT",
@@ -1335,12 +1365,15 @@ export function buildSyntheticTraderPersonas(): SyntheticTraderPersona[] {
           symbol: "EXI2",
         }),
       ],
-      limitations: ["Exit quality is execution-only and does not include candle targets."],
+      limitations: [
+        "Exit quality is execution-only and does not include candle targets.",
+      ],
     },
     {
       id: "strong_risk_manager",
       label: "Strong risk manager",
-      expectedBehavior: "Partial exits and controlled reductions with positive realized behavior.",
+      expectedBehavior:
+        "Partial exits and controlled reductions with positive realized behavior.",
       requests: [
         cloneRequest(partialExits as UserTradeAnalysisRequest, {
           symbol: "RISK",
@@ -1363,12 +1396,16 @@ export function buildSyntheticTraderPersonas(): SyntheticTraderPersona[] {
           symbol: "SIZ2",
         }),
       ],
-      limitations: ["Sizing assessment does not know the trader's account equity."],
+      limitations: [
+        "Sizing assessment does not know the trader's account equity.",
+      ],
     },
   ];
 }
 
-function detectDominantPersona(report: TraderAnalyticsReport): SyntheticTraderPersonaId {
+function detectDominantPersona(
+  report: TraderAnalyticsReport,
+): SyntheticTraderPersonaId {
   const behavior = report.executionBehavior;
   const strengths = report.strengths;
   const requestCount = Math.max(1, report.sampleSize.completedTradeCount);
@@ -1488,8 +1525,14 @@ function scenarioFromRequest(args: {
       invariantMessages.push("Final position size must not be negative.");
     }
 
-    if (!summary.limitations.some((limitation) => limitation.includes("Market context"))) {
-      invariantMessages.push("Execution-only limitations must mention missing market context.");
+    if (
+      !summary.limitations.some((limitation) =>
+        limitation.includes("Market context"),
+      )
+    ) {
+      invariantMessages.push(
+        "Execution-only limitations must mention missing market context.",
+      );
     }
   }
 
@@ -1658,8 +1701,9 @@ export function runDeterministicExecutionMathFuzzScenarios(
     invalidScenario({ generatedAt }),
     invalidCsvScenario(),
   ];
-  const failedCount = scenarios.filter((scenario) => scenario.status === "failed")
-    .length;
+  const failedCount = scenarios.filter(
+    (scenario) => scenario.status === "failed",
+  ).length;
 
   return {
     contractVersion: "execution_math_deterministic_fuzz_v1",
@@ -1773,21 +1817,26 @@ export function buildFunctionalFeatureReadinessDashboard(args?: {
   const fuzz =
     args?.fuzz ?? runDeterministicExecutionMathFuzzScenarios(generatedAt);
   const personaEvaluations =
-    args?.personaEvaluations ?? evaluateSyntheticTraderPersonas(undefined, generatedAt);
-  const personaMatchCount = personaEvaluations.filter((persona) => persona.matched)
-    .length;
+    args?.personaEvaluations ??
+    evaluateSyntheticTraderPersonas(undefined, generatedAt);
+  const personaMatchCount = personaEvaluations.filter(
+    (persona) => persona.matched,
+  ).length;
   const items: FunctionalFeatureReadinessItem[] = [
     {
       id: "csv_dry_run",
       label: "CSV dry run",
       status: "product_ready_prototype",
-      worksNow: "Broker CSV text can be parsed, grouped, repaired, and previewed without saving.",
-      blocksGoLive: "Needs real anonymized broker files and upload/storage security review.",
+      worksNow:
+        "Broker CSV text can be parsed, grouped, repaired, and previewed without saving.",
+      blocksGoLive:
+        "Needs real anonymized broker files and upload/storage security review.",
       verificationCoverage: [
         "Existing broker regression fixtures",
         "Functional calibration harness",
       ],
-      nextValidationAction: "Collect anonymized real CSV samples from the target brokers.",
+      nextValidationAction:
+        "Collect anonymized real CSV samples from the target brokers.",
       evidence: calibration.evidence,
     },
     {
@@ -1795,29 +1844,40 @@ export function buildFunctionalFeatureReadinessDashboard(args?: {
       label: "Import confidence gate",
       status: "product_ready_prototype",
       worksNow: `Current calibration state is ${calibration.confidenceState.state}.`,
-      blocksGoLive: "Needs more real-file calibration before allowing production saves.",
+      blocksGoLive:
+        "Needs more real-file calibration before allowing production saves.",
       verificationCoverage: ["State-machine unit tests", "Dry-run route tests"],
-      nextValidationAction: "Track every blocker/review reason on real imports.",
+      nextValidationAction:
+        "Track every blocker/review reason on real imports.",
       evidence: calibration.confidenceState.evidence,
     },
     {
       id: "saved_analysis_prototype",
       label: "Import-to-saved-analysis prototype",
       status: "prototype_only",
-      worksNow: "Ready imports can generate feedback summaries and a trader analytics report in memory.",
-      blocksGoLive: "No production database write path or user isolation exists yet.",
+      worksNow:
+        "Ready imports can generate feedback summaries and a trader analytics report in memory.",
+      blocksGoLive:
+        "No production database write path or user isolation exists yet.",
       verificationCoverage: ["Prototype contract tests", "Truth-source audit"],
-      nextValidationAction: "Choose the storage adapter after platform auth decisions.",
+      nextValidationAction:
+        "Choose the storage adapter after platform auth decisions.",
       evidence: calibration.evidence,
     },
     {
       id: "execution_feedback",
       label: "Execution feedback and autopsy",
       status: "product_ready_prototype",
-      worksNow: "Execution-only mistakes, strengths, and autopsy observations are generated from order facts.",
-      blocksGoLive: "Needs calibration against real saved trades and user review outcomes.",
-      verificationCoverage: ["Execution feedback fixtures", "Functional autopsy tests"],
-      nextValidationAction: "Review the first real saved trades for false positives.",
+      worksNow:
+        "Execution-only mistakes, strengths, and autopsy observations are generated from order facts.",
+      blocksGoLive:
+        "Needs calibration against real saved trades and user review outcomes.",
+      verificationCoverage: [
+        "Execution feedback fixtures",
+        "Functional autopsy tests",
+      ],
+      nextValidationAction:
+        "Review the first real saved trades for false positives.",
       evidence: [
         evidence({
           kind: "metric",
@@ -1834,19 +1894,24 @@ export function buildFunctionalFeatureReadinessDashboard(args?: {
           ? "product_ready_prototype"
           : "needs_real_data",
       worksNow: `${personaMatchCount}/${personaEvaluations.length} synthetic persona(s) matched expected behavior.`,
-      blocksGoLive: "Synthetic personas do not replace calibration with real trader histories.",
+      blocksGoLive:
+        "Synthetic personas do not replace calibration with real trader histories.",
       verificationCoverage: ["Persona behavior tests"],
-      nextValidationAction: "Add anonymized real behavior clusters when available.",
+      nextValidationAction:
+        "Add anonymized real behavior clusters when available.",
       evidence: personaEvaluations.flatMap((persona) => persona.evidence),
     },
     {
       id: "market_context_add_on",
       label: "Market context add-on",
       status: "needs_real_data",
-      worksNow: "Market context can remain observational when supplied by levels-system.",
-      blocksGoLive: "No real saved-trade market context calibration exists yet.",
+      worksNow:
+        "Market context can remain observational when supplied by levels-system.",
+      blocksGoLive:
+        "No real saved-trade market context calibration exists yet.",
       verificationCoverage: ["Execution-only truth-source checks"],
-      nextValidationAction: "Wait for levels-system market-structure validation on real saved data.",
+      nextValidationAction:
+        "Wait for levels-system market-structure validation on real saved data.",
       evidence: [
         evidence({
           kind: "state",
@@ -1860,9 +1925,11 @@ export function buildFunctionalFeatureReadinessDashboard(args?: {
       label: "Auth, billing, and persistence",
       status: "blocked_for_live",
       worksNow: "Demo contracts can model platform context and plan tiers.",
-      blocksGoLive: "Real login, tenant isolation, durable storage, billing enforcement, and audit logging are not implemented.",
+      blocksGoLive:
+        "Real login, tenant isolation, durable storage, billing enforcement, and audit logging are not implemented.",
       verificationCoverage: ["Route policy tests", "No-export policy tests"],
-      nextValidationAction: "Return to platform integration after the feature loop is calibrated.",
+      nextValidationAction:
+        "Return to platform integration after the feature loop is calibrated.",
       evidence: [
         evidence({
           kind: "state",
@@ -1980,7 +2047,10 @@ export function buildTraderFunctionalProductReadinessViewModel(args?: {
     experience,
     generatedAt,
   });
-  const personaEvaluations = evaluateSyntheticTraderPersonas(undefined, generatedAt);
+  const personaEvaluations = evaluateSyntheticTraderPersonas(
+    undefined,
+    generatedAt,
+  );
   const fuzzResult = runDeterministicExecutionMathFuzzScenarios(generatedAt);
   const calibrationHarness = runRealDataCalibrationHarness({
     dryRunExperience: experience,

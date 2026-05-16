@@ -16,7 +16,6 @@ import {
 } from "../../src/lib/trader-analytics/server/saved-review-queue";
 import { buildSavedTradeThreadReadModel } from "../../src/lib/trader-analytics/server/saved-trade-threads";
 import { sellStartingReviewLimitationCopy } from "../../src/lib/trader-analytics/product/trade-display-copy";
-import { ImportWorkflowStrip } from "../import-workflow-strip";
 
 export const metadata: Metadata = {
   title: "Saved Trades | Trader Intelligence",
@@ -49,7 +48,10 @@ function timeLabelEt(value: string | null): string {
 }
 
 function lifecycleToneClass(classification: string): string {
-  if (classification === "day_trade_turned_swing") {
+  if (
+    classification === "day_trade_turned_swing" ||
+    classification === "extended_same_day_hold"
+  ) {
     return "border-amber-500/40 bg-amber-500/10 text-amber-200";
   }
 
@@ -62,6 +64,10 @@ function lifecycleToneClass(classification: string): string {
   }
 
   return "border-zinc-700 bg-zinc-900/40 text-zinc-300";
+}
+
+function daySessionHrefFor(sessionDate: string): string {
+  return `/trades/day-session/${encodeURIComponent(sessionDate)}`;
 }
 
 function normalizeReviewLane(value: string | undefined): SavedReviewQueueFilter | "none" {
@@ -85,6 +91,7 @@ type TradeStoryFilter =
   | "giveback"
   | "losses"
   | "swing"
+  | "extended"
   | "open"
   | "added"
   | "chart_findings"
@@ -97,6 +104,7 @@ type TradeStoryFilter =
   | "needs_context";
 
 type TradeBrowseMode =
+  | "calendar"
   | "round_trips"
   | "ticker_stories"
   | "session_stories"
@@ -107,6 +115,7 @@ const TRADE_LIST_PAGE_SIZE = 18;
 
 function normalizeBrowseMode(value: string | undefined): TradeBrowseMode {
   const allowed = new Set([
+    "calendar",
     "round_trips",
     "ticker_stories",
     "session_stories",
@@ -114,7 +123,7 @@ function normalizeBrowseMode(value: string | undefined): TradeBrowseMode {
     "needs_review",
   ]);
 
-  return value && allowed.has(value) ? (value as TradeBrowseMode) : "round_trips";
+  return value && allowed.has(value) ? (value as TradeBrowseMode) : "session_stories";
 }
 
 function normalizeTradeListPage(value: string | undefined, totalPages: number): number {
@@ -133,6 +142,7 @@ function normalizeStoryFilter(value: string | undefined): TradeStoryFilter {
     "giveback",
     "losses",
     "swing",
+    "extended",
     "open",
     "added",
     "chart_findings",
@@ -166,6 +176,10 @@ function storyMatchesFilter(
 
   if (filter === "swing") {
     return thread.storyKind === "swing_transition";
+  }
+
+  if (filter === "extended") {
+    return thread.storyKind === "extended_same_day_hold";
   }
 
   if (filter === "open") {
@@ -251,6 +265,15 @@ function activeBrowseModeCopy(mode: TradeBrowseMode): {
   label: string;
   nextAction: string;
 } {
+  if (mode === "calendar") {
+    return {
+      detail:
+        "Showing one month at a time so you can spot green days, red days, and which tickers drove each session.",
+      label: "Calendar",
+      nextAction: "Open a trading day from the calendar, then choose the ticker story that mattered most.",
+    };
+  }
+
   if (mode === "ticker_stories") {
     return {
       detail:
@@ -263,9 +286,9 @@ function activeBrowseModeCopy(mode: TradeBrowseMode): {
   if (mode === "session_stories") {
     return {
       detail:
-        "Showing trades that belong to full-day stories. Use this when the question is about overtrading, green-to-red days, or strengths to repeat.",
-      label: "Session stories",
-      nextAction: "Open a trade from the session and use the session handoff before writing the lesson.",
+        "Start with the full trading day, then open the ticker story that mattered most before drilling into individual round trips.",
+      label: "Day sessions",
+      nextAction: "Open one day session, choose the ticker story, then open the round trip that needs review.",
     };
   }
 
@@ -293,6 +316,150 @@ function activeBrowseModeCopy(mode: TradeBrowseMode): {
     label: "Round trips",
     nextAction: "Open a trade card and start from the execution replay.",
   };
+}
+
+function pad2(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+function monthKeyFromDate(year: number, zeroBasedMonth: number): string {
+  return `${year}-${pad2(zeroBasedMonth + 1)}`;
+}
+
+function shiftMonthKey(monthKey: string, offset: number): string {
+  const [yearPart, monthPart] = monthKey.split("-");
+  const year = Number.parseInt(yearPart ?? "", 10);
+  const month = Number.parseInt(monthPart ?? "", 10);
+  const shifted = new Date(Date.UTC(year, month - 1 + offset, 1));
+
+  return monthKeyFromDate(shifted.getUTCFullYear(), shifted.getUTCMonth());
+}
+
+function monthLabel(monthKey: string): string {
+  const [yearPart, monthPart] = monthKey.split("-");
+  const year = Number.parseInt(yearPart ?? "", 10);
+  const month = Number.parseInt(monthPart ?? "", 10);
+
+  if (!Number.isFinite(year) || !Number.isFinite(month)) {
+    return "Month";
+  }
+
+  return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString("en-US", {
+    month: "long",
+    timeZone: "UTC",
+    year: "numeric",
+  });
+}
+
+function normalizeCalendarMonth(
+  value: string | undefined,
+  availableMonths: string[],
+): string {
+  if (value && /^\d{4}-\d{2}$/.test(value)) {
+    return value;
+  }
+
+  return availableMonths.at(-1) ?? monthKeyFromDate(
+    new Date().getUTCFullYear(),
+    new Date().getUTCMonth(),
+  );
+}
+
+function pnlToneClass(value: number | null | undefined): string {
+  if (typeof value !== "number" || value === 0) {
+    return "text-zinc-300";
+  }
+
+  return value > 0 ? "text-emerald-300" : "text-rose-300";
+}
+
+function pnlSurfaceClass(value: number | null | undefined): string {
+  if (typeof value !== "number") {
+    return "border-zinc-900 bg-zinc-950/30";
+  }
+
+  if (value > 0) {
+    return "border-emerald-500/40 bg-emerald-500/10";
+  }
+
+  if (value < 0) {
+    return "border-rose-500/40 bg-rose-500/10";
+  }
+
+  return "border-zinc-800 bg-zinc-950/40";
+}
+
+function calendarHref(monthKey: string): string {
+  return `/trades/calendar?month=${encodeURIComponent(monthKey)}#calendar`;
+}
+
+function calendarDayHref(sessionDate: string): string {
+  return daySessionHrefFor(sessionDate);
+}
+
+function buildCalendarCells(
+  sessionStories: ReturnType<
+    typeof buildSavedTradeThreadReadModel
+  >["sessionStories"],
+  monthKey: string,
+) {
+  const [yearPart, monthPart] = monthKey.split("-");
+  const year = Number.parseInt(yearPart ?? "", 10);
+  const month = Number.parseInt(monthPart ?? "", 10);
+  const storyByDate = new Map(
+    sessionStories.map((story) => [story.sessionDate, story]),
+  );
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const cells: Array<{
+    dayNumber: number | null;
+    href: string | null;
+    sessionDate: string | null;
+    story: (typeof sessionStories)[number] | null;
+  }> = [];
+  let hasPlacedFirstVisibleDay = false;
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const date = new Date(Date.UTC(year, month - 1, day));
+    const marketWeekday = date.getUTCDay();
+
+    if (marketWeekday === 6) {
+      continue;
+    }
+
+    if (!hasPlacedFirstVisibleDay) {
+      for (let index = 0; index < marketWeekday; index += 1) {
+        cells.push({
+          dayNumber: null,
+          href: null,
+          sessionDate: null,
+          story: null,
+        });
+      }
+
+      hasPlacedFirstVisibleDay = true;
+    }
+
+    const sessionDate = `${monthKey}-${pad2(day)}`;
+    const story = storyByDate.get(sessionDate) ?? null;
+
+    cells.push({
+      dayNumber: day,
+      href: story ? calendarDayHref(sessionDate) : null,
+      sessionDate,
+      story,
+    });
+  }
+
+  while (cells.length % 6 !== 0) {
+    cells.push({
+      dayNumber: null,
+      href: null,
+      sessionDate: null,
+      story: null,
+    });
+  }
+
+  return cells;
 }
 
 function tradeReviewReason(args: {
@@ -373,14 +540,36 @@ export default async function TradesPage({
     page?: string;
     reviewLane?: string;
     storyFilter?: string;
+    session?: string;
     thread?: string;
     view?: string;
+    month?: string;
   }>;
 }) {
   const query = await searchParams;
   const activeReviewLane = normalizeReviewLane(query?.reviewLane);
   const activeStoryFilter = normalizeStoryFilter(query?.storyFilter);
   const activeBrowseMode = normalizeBrowseMode(query?.view);
+  const isLandingPage = !(
+    query?.view ||
+    query?.session ||
+    query?.thread ||
+    query?.reviewLane ||
+    query?.storyFilter ||
+    query?.month ||
+    query?.page
+  );
+  const showCalendarSection = activeBrowseMode === "calendar";
+  const showTickerStoriesSection = activeBrowseMode === "ticker_stories";
+  const showSessionStoriesSection = activeBrowseMode === "session_stories";
+  const showReviewLanes =
+    activeBrowseMode === "needs_review" ||
+    activeBrowseMode === "round_trips" ||
+    activeBrowseMode === "open_swing";
+  const showTradeList =
+    activeBrowseMode === "round_trips" ||
+    activeBrowseMode === "needs_review" ||
+    activeBrowseMode === "open_swing";
   const data = buildSavedOrSampleTraderAnalyticsViewModel();
   const allTrades = data.repository.listTrades(data.userId);
   const latestReport = data.viewModel.latestReport;
@@ -421,6 +610,52 @@ export default async function TradesPage({
     query?.thread
       ? tradeThreadModel.threads.find((thread) => thread.id === query.thread)
       : null;
+  const activeSessionStory =
+    query?.session
+      ? tradeThreadModel.sessionStories.find(
+          (story) => story.sessionDate === query.session,
+        ) ?? null
+      : null;
+  const availableCalendarMonths = [
+    ...new Set(
+      tradeThreadModel.sessionStories.map((story) =>
+        story.sessionDate.slice(0, 7),
+      ),
+    ),
+  ].sort((left, right) => left.localeCompare(right));
+  const activeCalendarMonth = normalizeCalendarMonth(
+    query?.month,
+    availableCalendarMonths,
+  );
+  const previousCalendarMonth = shiftMonthKey(activeCalendarMonth, -1);
+  const nextCalendarMonth = shiftMonthKey(activeCalendarMonth, 1);
+  const calendarCells = buildCalendarCells(
+    tradeThreadModel.sessionStories,
+    activeCalendarMonth,
+  );
+  const calendarMonthStories = tradeThreadModel.sessionStories.filter((story) =>
+    story.sessionDate.startsWith(activeCalendarMonth),
+  );
+  const calendarMonthPnl = calendarMonthStories.reduce(
+    (total, story) => total + story.totalGrossRealizedPnl,
+    0,
+  );
+  const calendarGreenDayCount = calendarMonthStories.filter(
+    (story) => story.totalGrossRealizedPnl > 0,
+  ).length;
+  const calendarRedDayCount = calendarMonthStories.filter(
+    (story) => story.totalGrossRealizedPnl < 0,
+  ).length;
+  const calendarBestDay =
+    [...calendarMonthStories].sort(
+      (left, right) =>
+        right.totalGrossRealizedPnl - left.totalGrossRealizedPnl,
+    )[0] ?? null;
+  const calendarWorstDay =
+    [...calendarMonthStories].sort(
+      (left, right) =>
+        left.totalGrossRealizedPnl - right.totalGrossRealizedPnl,
+    )[0] ?? null;
   const storyFilters: Array<{
     id: TradeStoryFilter;
     label: string;
@@ -445,6 +680,11 @@ export default async function TradesPage({
       id: "swing",
       label: "Turned swing",
       count: tradeThreadModel.threads.filter((thread) => storyMatchesFilter(thread, "swing")).length,
+    },
+    {
+      id: "extended",
+      label: "Extended holds",
+      count: tradeThreadModel.threads.filter((thread) => storyMatchesFilter(thread, "extended")).length,
     },
     {
       id: "open",
@@ -553,37 +793,44 @@ export default async function TradesPage({
     label: string;
   }> = [
     {
-      body: "Each card is one flat-to-flat trade.",
-      count: allTrades.length,
-      href: "/trades",
-      id: "round_trips",
-      label: "Round Trips",
+      body: "Start with the trading day, then choose the ticker story.",
+      count: tradeThreadModel.sessionStoryCount,
+      href: "/trades/day-sessions#session-stories",
+      id: "session_stories",
+      label: "Day Sessions",
+    },
+    {
+      body: "See green/red days and the tickers behind them.",
+      count: calendarMonthStories.length,
+      href: calendarHref(activeCalendarMonth),
+      id: "calendar",
+      label: "Calendar",
     },
     {
       body: "Group repeated same-ticker attempts.",
       count: multiRoundTripTradeIds.size,
-      href: "/trades?view=ticker_stories#ticker-stories",
+      href: "/trades/ticker-stories#ticker-stories",
       id: "ticker_stories",
       label: "Ticker Stories",
     },
     {
-      body: "Review the whole trading day.",
-      count: tradeThreadModel.sessionStoryCount,
-      href: "/trades?view=session_stories#session-stories",
-      id: "session_stories",
-      label: "Session Stories",
+      body: "Each card is one flat-to-flat trade.",
+      count: allTrades.length,
+      href: "/trades/round-trips#trade-list",
+      id: "round_trips",
+      label: "Round Trips",
     },
     {
       body: "Trades that stayed open or carried overnight.",
       count: openOrSwingTradeIds.size,
-      href: "/trades?view=open_swing#trade-list",
+      href: "/trades/open-swing#trade-list",
       id: "open_swing",
       label: "Open/Swing",
     },
     {
       body: "Saved trades still waiting for review work.",
       count: needsReviewTradeIds.size,
-      href: "/trades?view=needs_review#trade-list",
+      href: "/trades/review-needed#trade-list",
       id: "needs_review",
       label: "Needs Review",
     },
@@ -598,6 +845,10 @@ export default async function TradesPage({
   const trades = laneFilteredTrades.filter((trade) => {
     if (activeBrowseMode === "ticker_stories") {
       return multiRoundTripTradeIds.has(trade.id);
+    }
+
+    if (activeBrowseMode === "calendar") {
+      return sessionStoryTradeIds.has(trade.id);
     }
 
     if (activeBrowseMode === "session_stories") {
@@ -628,8 +879,16 @@ export default async function TradesPage({
   const tradePageHref = (page: number) => {
     const params = new URLSearchParams();
 
-    if (activeBrowseMode !== "round_trips") {
+    if (activeBrowseMode !== "session_stories") {
       params.set("view", activeBrowseMode);
+    }
+
+    if (activeBrowseMode === "calendar") {
+      params.set("month", activeCalendarMonth);
+    }
+
+    if (activeSessionStory) {
+      params.set("session", activeSessionStory.sessionDate);
     }
 
     if (activeReviewLane !== "none") {
@@ -649,7 +908,14 @@ export default async function TradesPage({
     }
 
     const queryString = params.toString();
-    return `/trades${queryString ? `?${queryString}` : ""}#trade-list`;
+    const basePath =
+      activeBrowseMode === "open_swing"
+        ? "/trades/open-swing"
+        : activeBrowseMode === "needs_review"
+          ? "/trades/review-needed"
+          : "/trades/round-trips";
+
+    return `${basePath}${queryString ? `?${queryString}` : ""}#trade-list`;
   };
   const triageItem = primaryTriageItem(savedReviewQueue);
   const highestPriorityCount =
@@ -659,6 +925,37 @@ export default async function TradesPage({
   const openBlockCount =
     savedReviewQueue?.tabs.find((tab) => tab.id === "blocked_open_trade")?.count ?? 0;
   const browseModeCopy = activeBrowseModeCopy(activeBrowseMode);
+  const pageTitle = activeSessionStory
+    ? "Day Session"
+    : isLandingPage
+      ? "Saved Trades"
+      : browseModeCopy.label;
+  const pageDescription = isLandingPage
+    ? data.mode === "saved"
+      ? "Choose one saved-trade view. Start with the calendar or day sessions, then drill into ticker stories and round trips on their own pages."
+      : "Sample trades are shown until a broker CSV import is saved."
+    : activeSessionStory
+      ? `${activeSessionStory.sessionDate}: choose the ticker story to review first.`
+    : browseModeCopy.detail;
+  const activeTradesSection = activeSessionStory
+    ? "session_stories"
+    : activeBrowseMode;
+  const sideNavItems = [
+    {
+      active: isLandingPage,
+      href: "/trades",
+      label: "Overview",
+      summary: "Home for saved trades and the next review action.",
+    },
+    ...browseModes.map((mode) => ({
+      active: !isLandingPage && activeTradesSection === mode.id,
+      href: mode.href,
+      label: mode.label,
+      summary: `${mode.count.toLocaleString()} ${
+        mode.count === 1 ? "item" : "items"
+      }. ${mode.body}`,
+    })),
+  ];
 
   return (
     <main className="ti-dashboard-bg min-h-screen px-5 py-8 text-zinc-100 sm:px-8">
@@ -668,60 +965,25 @@ export default async function TradesPage({
             Back to workspace
           </Link>
           <h1 className="mt-3 text-3xl font-semibold text-zinc-50">
-            Saved Trades
+            {pageTitle}
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-zinc-500">
-            {data.mode === "saved"
-              ? "Saved imports are powering this list. Each card is one flat-to-flat round trip. If you re-enter the same ticker later, it appears as another round trip so the app can show whether the re-entry protected or gave back earlier profit."
-              : "Sample trades are shown until a broker CSV import is saved."}
+            {pageDescription}
           </p>
         </header>
-
-        <ImportWorkflowStrip
-          currentStep="review"
-          summary={
-            data.mode === "saved"
-              ? "The import has reached the end-user review loop. Work from saved trades into the highest-priority queue, analytics, and coach without returning to import review panels unless something looks wrong."
-              : "Saved trades will switch from sample data to imported data after one clean broker CSV is saved."
-          }
-        />
 
         <section className="grid min-w-0 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
           <DashboardSideNav
             eyebrow="Trades Menu"
-            items={[
-              {
-                href: "#priority",
-                label: "Priority",
-                summary: "The next trade to open.",
-              },
-              {
-                href: "#filters",
-                label: "Browse Modes",
-                summary: "Round trips, ticker stories, open/swing, and needs review.",
-              },
-              {
-                href: "#ticker-stories",
-                label: "Ticker Stories",
-                summary: "Same-ticker re-entry stories.",
-              },
-              {
-                href: "#session-stories",
-                label: "Session Stories",
-                summary: "Full-day trading behavior stories.",
-              },
-              {
-                href: "#trade-list",
-                label: "Trade List",
-                summary: "All saved trades as review cards.",
-              },
-            ]}
-            summary="Move from priority work into the full saved-trade list."
+            items={sideNavItems}
+            summary="Move between saved-trade views without returning to the dashboard."
           />
           <div className="grid min-w-0 gap-6">
+            {isLandingPage ? (
+              <>
             <div id="priority">
         <PrimaryActionPanel
-          actionHref={triageItem?.href ?? "/import-dry-run"}
+          actionHref={triageItem?.href ?? "/upload-csv"}
           actionLabel={triageItem ? "Open Trade Review" : "Import trades"}
           body={
             triageItem
@@ -762,10 +1024,9 @@ export default async function TradesPage({
               body={
                 <>
                   Start with the priority trade when you want coaching
-                  direction. Use ticker and session stories when repeated
-                  entries or the full day matter. Open a trade card when you
-                  are ready to replay the executions and write the actual
-                  lesson.
+                  direction. Use day sessions first when you want the full
+                  picture, then open a ticker story and finally the round trip
+                  that needs replay.
                 </>
               }
               eyebrow="Saved Trade Workflow"
@@ -779,11 +1040,11 @@ export default async function TradesPage({
                   tone: "warning",
                 },
                 {
-                  action: "Compare stories",
-                  body: "Use repeated ticker and session stories when one round trip does not tell the whole trading story.",
-                  href: "/trades?view=ticker_stories#ticker-stories",
+                  action: "Open day",
+                  body: "Use the day session to see which tickers mattered before opening individual round trips.",
+                  href: "/trades/day-sessions#session-stories",
                   label: "2. Group",
-                  title: "Check re-entries and full-day behavior",
+                  title: "Review the session and ticker stories",
                   tone: "info",
                 },
                 {
@@ -903,7 +1164,218 @@ export default async function TradesPage({
             Round trips show each flat-to-flat trade. Ticker stories group same-symbol re-entries so you can review whether later attempts protected profit, gave back profit, stayed open, turned into swing exposure, or have certified chart findings attached.
           </div>
         </section>
+              </>
+            ) : null}
 
+        {showCalendarSection ? (
+        <section
+          id="calendar"
+          className="ti-panel min-w-0 p-4"
+          data-testid="saved-trade-month-calendar"
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-100">
+                Month Calendar
+              </h2>
+              <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-500">
+                One month at a time: green days made money, red days lost
+                money, and each ticker chip shows whether that symbol helped or
+                hurt the session.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                className="border border-zinc-800 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-300 transition hover:border-sky-500 hover:text-sky-200"
+                href={calendarHref(previousCalendarMonth)}
+              >
+                Previous month
+              </Link>
+              <Link
+                className="border border-zinc-800 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-300 transition hover:border-sky-500 hover:text-sky-200"
+                href={calendarHref(nextCalendarMonth)}
+              >
+                Next month
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-sky-300">
+                Viewing
+              </div>
+              <div className="mt-1 text-3xl font-semibold text-zinc-50">
+                {monthLabel(activeCalendarMonth)}
+              </div>
+              {availableCalendarMonths.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {availableCalendarMonths.map((month) => (
+                    <Link
+                      className={`border px-3 py-2 text-xs uppercase tracking-wide ${
+                        month === activeCalendarMonth
+                          ? "border-sky-400 text-sky-200"
+                          : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
+                      }`}
+                      href={calendarHref(month)}
+                      key={month}
+                    >
+                      {monthLabel(month)}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-right text-xs text-zinc-500 sm:grid-cols-4 lg:min-w-[520px]">
+              <div className="ti-panel-soft px-3 py-2">
+                <div className={`text-lg font-semibold ${pnlToneClass(calendarMonthPnl)}`}>
+                  {signed(calendarMonthPnl)}
+                </div>
+                <div>Month P/L</div>
+              </div>
+              <div className="ti-panel-soft px-3 py-2">
+                <div className="text-lg font-semibold text-zinc-100">
+                  {calendarMonthStories.length}
+                </div>
+                <div>Trading days</div>
+              </div>
+              <div className="ti-panel-soft px-3 py-2">
+                <div className="text-lg font-semibold text-emerald-300">
+                  {calendarGreenDayCount}
+                </div>
+                <div>Green days</div>
+              </div>
+              <div className="ti-panel-soft px-3 py-2">
+                <div className="text-lg font-semibold text-rose-300">
+                  {calendarRedDayCount}
+                </div>
+                <div>Red days</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-emerald-300">
+                Best day
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                {calendarBestDay
+                  ? `${calendarBestDay.sessionDate} / ${signed(
+                      calendarBestDay.totalGrossRealizedPnl,
+                    )}`
+                  : "No trading days in this month."}
+              </div>
+            </div>
+            <div className="border border-rose-500/20 bg-rose-500/10 px-4 py-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-rose-300">
+                Worst day
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                {calendarWorstDay
+                  ? `${calendarWorstDay.sessionDate} / ${signed(
+                      calendarWorstDay.totalGrossRealizedPnl,
+                    )}`
+                  : "No trading days in this month."}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 w-full max-w-full min-w-0 overflow-x-auto pb-2">
+            <div className="grid min-w-[980px] max-w-none grid-cols-6 gap-2 xl:w-full">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri"].map(
+                (weekday) => (
+                  <div
+                    className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-500"
+                    key={weekday}
+                  >
+                    {weekday}
+                  </div>
+                ),
+              )}
+              {calendarCells.map((cell, index) => {
+                if (!cell.dayNumber || !cell.sessionDate) {
+                  return (
+                    <div
+                      className="h-[122px] border border-zinc-950 bg-zinc-950/20"
+                      key={`blank-${index}`}
+                    />
+                  );
+                }
+
+                if (!cell.story || !cell.href) {
+                  return (
+                    <div
+                      className="h-[122px] border border-zinc-900 bg-zinc-950/30 p-2.5"
+                      data-testid={`calendar-day-${cell.sessionDate}`}
+                      key={cell.sessionDate}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="font-mono text-sm text-zinc-400">
+                          {cell.dayNumber}
+                        </div>
+                        <div className="text-xs text-zinc-600">No trades</div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                const tickerSummaries = cell.story.tickerSummaries.slice(0, 4);
+                const hiddenTickerCount =
+                  cell.story.tickerSummaries.length - tickerSummaries.length;
+
+                return (
+                  <Link
+                    className={`block h-[122px] overflow-hidden border p-2.5 transition hover:border-sky-400 ${pnlSurfaceClass(
+                      cell.story.totalGrossRealizedPnl,
+                    )}`}
+                    data-testid={`calendar-day-${cell.sessionDate}`}
+                    href={cell.href}
+                    key={cell.sessionDate}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-mono text-sm leading-4 text-zinc-100">
+                          {cell.dayNumber}
+                        </div>
+                      </div>
+                      <div
+                        className={`shrink-0 whitespace-nowrap text-right font-mono text-xs font-semibold leading-4 ${pnlToneClass(
+                          cell.story.totalGrossRealizedPnl,
+                        )}`}
+                      >
+                        {signed(cell.story.totalGrossRealizedPnl)}
+                      </div>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1 pb-1">
+                      {tickerSummaries.map((ticker) => (
+                        <span
+                          className={`max-w-full whitespace-nowrap border px-1.5 py-0.5 text-[9px] font-semibold uppercase leading-3 tracking-normal ${
+                            ticker.totalGrossRealizedPnl >= 0
+                              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                              : "border-rose-500/40 bg-rose-500/10 text-rose-200"
+                          }`}
+                          data-testid={`calendar-ticker-${cell.sessionDate}-${ticker.symbol}`}
+                          key={ticker.id}
+                        >
+                          {ticker.symbol} {signed(ticker.totalGrossRealizedPnl)}
+                        </span>
+                      ))}
+                      {hiddenTickerCount > 0 ? (
+                        <span className="whitespace-nowrap border border-zinc-700 bg-zinc-950/50 px-1.5 py-0.5 text-[9px] uppercase leading-3 tracking-normal text-zinc-400">
+                          +{hiddenTickerCount} more
+                        </span>
+                      ) : null}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+        ) : null}
+
+        {showTickerStoriesSection ? (
         <section
           id="ticker-stories"
           className="ti-panel p-4"
@@ -1029,7 +1501,11 @@ export default async function TradesPage({
                       ? "border-sky-400 text-sky-200"
                       : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
                   }`}
-                  href={filter.id === "all" ? "/trades#ticker-stories" : `/trades?storyFilter=${filter.id}#ticker-stories`}
+                  href={
+                    filter.id === "all"
+                      ? "/trades/ticker-stories#ticker-stories"
+                      : `/trades/ticker-stories?storyFilter=${filter.id}#ticker-stories`
+                  }
                 >
                   {filter.label} {filter.count}
                 </Link>
@@ -1186,6 +1662,20 @@ export default async function TradesPage({
                       </div>
                     ))}
                   </div>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Link
+                      className="inline-flex border border-sky-800 bg-sky-950/30 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+                      href={thread.href}
+                    >
+                      Open ticker story
+                    </Link>
+                    <Link
+                      className="inline-flex px-1 py-2 text-sm text-sky-300 hover:text-sky-200"
+                      href={daySessionHrefFor(thread.sessionDate)}
+                    >
+                      Back to day session
+                    </Link>
+                  </div>
                   <div className="mt-4 grid gap-2">
                     {thread.roundTrips.map((roundTrip) => (
                       <Link
@@ -1194,14 +1684,16 @@ export default async function TradesPage({
                         href={roundTrip.href}
                       >
                         <span className="text-zinc-500">
-                          {roundTrip.roleLabel}
+                          Round Trip {roundTrip.sequence}
                         </span>
                         <span className="text-zinc-300">
-                          {roundTrip.entryHourLabelEt} / {roundTrip.executionCount} execution
+                          {roundTrip.roleLabel} / {roundTrip.entryHourLabelEt} / {roundTrip.executionCount} execution
                           {roundTrip.executionCount === 1 ? "" : "s"} / {timeLabelEt(roundTrip.entryTime)} ET
-                          {roundTrip.heldOvernight || roundTrip.crossedSessionDate
-                            ? " / overnight exposure"
-                            : ""}
+                          {roundTrip.crossedSessionDate
+                            ? " / next-session exposure"
+                            : roundTrip.heldOvernight
+                              ? " / extended hold"
+                              : ""}
                         </span>
                         <span className="text-xs text-zinc-500 sm:col-span-2">
                           {roundTrip.chartContextSummary}
@@ -1224,7 +1716,9 @@ export default async function TradesPage({
             </>
           )}
         </section>
+        ) : null}
 
+        {showSessionStoriesSection ? (
         <section
           id="session-stories"
           className="ti-panel p-4"
@@ -1233,13 +1727,12 @@ export default async function TradesPage({
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h2 className="text-sm font-semibold text-zinc-100">
-                Session Stories
+                Day Sessions
               </h2>
               <p className="mt-1 max-w-3xl text-sm text-zinc-500">
-                Session stories group all saved trades from one trading day so
-                you can review the full day: green-to-red, many attempts on one
-                ticker, high trade count, open or overnight exposure, and
-                evidence-backed strengths worth repeating.
+                Start with the trading day. Open a day session to see which
+                tickers mattered, then drill into the ticker story and round
+                trip that need review.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2 text-right text-xs text-zinc-500 lg:grid-cols-3">
@@ -1247,7 +1740,7 @@ export default async function TradesPage({
                 <div className="text-lg font-semibold text-zinc-100">
                   {tradeThreadModel.sessionStoryCount}
                 </div>
-                <div>Sessions</div>
+                <div>Day sessions</div>
               </div>
               <div className="ti-panel-soft px-3 py-2">
                 <div className="text-lg font-semibold text-zinc-100">
@@ -1264,22 +1757,32 @@ export default async function TradesPage({
             </div>
           </div>
 
-          {tradeThreadModel.sessionStories.length === 0 ? (
+          {activeSessionStory ? null : tradeThreadModel.sessionStories.length === 0 ? (
             <div className="mt-4 border-t border-zinc-900 pt-4 text-sm text-zinc-500">
-              No session stories yet. Save an import to group trades by trading day.
+              No day sessions yet. Save an import to group trades by trading day.
             </div>
           ) : (
             <div className="mt-4 grid gap-3 xl:grid-cols-2">
-              {tradeThreadModel.sessionStories.slice(0, 4).map((story) => (
-                <article className="ti-panel-soft p-4" key={story.id}>
+              {tradeThreadModel.sessionStories.slice(0, 6).map((story) => (
+                <article
+                  className="ti-panel-soft p-4"
+                  data-testid={`day-session-card-${story.sessionDate}`}
+                  key={story.id}
+                >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <div className="text-xs uppercase tracking-wide text-zinc-500">
-                        {story.sessionDate}
+                        Day Session / {story.sessionDate}
                       </div>
                       <h3 className="mt-1 text-lg font-semibold text-zinc-50">
                         {story.storyLabel}
                       </h3>
+                      <div className="mt-2 text-xs text-zinc-500">
+                        Priority ticker:{" "}
+                        <span className="text-zinc-300">
+                          {story.priorityThread?.symbol ?? "n/a"}
+                        </span>
+                      </div>
                     </div>
                     <div
                       className={`text-lg font-semibold ${
@@ -1355,19 +1858,117 @@ export default async function TradesPage({
                       </div>
                     ))}
                   </div>
-                  <Link
-                    className="mt-4 inline-flex text-sm text-sky-300 hover:text-sky-200"
-                    href={story.href}
-                  >
-                    Open main ticker story
-                  </Link>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Link
+                      className="inline-flex border border-sky-800 bg-sky-950/30 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+                      href={story.daySessionHref}
+                    >
+                      Open day session
+                    </Link>
+                    <Link
+                      className="inline-flex px-1 py-2 text-sm text-sky-300 hover:text-sky-200"
+                      href={story.href}
+                    >
+                      Open main ticker story
+                    </Link>
+                  </div>
                 </article>
               ))}
             </div>
           )}
-        </section>
 
-        {savedReviewQueue ? (
+          {activeSessionStory ? (
+            <section
+              id="day-session"
+              className="mt-5 border-t border-zinc-900 pt-5"
+              data-testid="saved-trade-day-session-detail"
+            >
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                    Open Day Session
+                  </div>
+                  <h3 className="mt-2 text-lg font-semibold text-zinc-50">
+                    {activeSessionStory.sessionDate}: choose the ticker story
+                    to review first
+                  </h3>
+                  <p className="mt-2 max-w-4xl text-sm leading-6 text-zinc-500">
+                    These are the tickers traded during this day. Each ticker
+                    story contains its own round trips, so repeated CYCN-style
+                    activity stays grouped instead of looking like unrelated
+                    trades.
+                  </p>
+                </div>
+                <Link
+                  className="text-sm text-sky-300 hover:text-sky-200"
+                  href="/trades/day-sessions#session-stories"
+                >
+                  Back to all day sessions
+                </Link>
+              </div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                {activeSessionStory.tickerSummaries.map((ticker) => (
+                  <Link
+                    className="ti-panel-soft block p-4 transition hover:border-sky-500 hover:text-sky-200"
+                    data-testid={`day-session-ticker-${ticker.symbol}`}
+                    href={ticker.href}
+                    key={ticker.id}
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-zinc-500">
+                          Ticker Story
+                        </div>
+                        <h4 className="mt-1 text-base font-semibold text-zinc-50">
+                          {ticker.symbol}
+                        </h4>
+                      </div>
+                      <div
+                        className={`font-mono text-sm font-semibold ${
+                          ticker.totalGrossRealizedPnl >= 0
+                            ? "text-emerald-300"
+                            : "text-rose-300"
+                        }`}
+                      >
+                        {signed(ticker.totalGrossRealizedPnl)}
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span className="border border-sky-500/40 bg-sky-500/10 px-2 py-1 text-xs uppercase tracking-wide text-sky-200">
+                        {ticker.roundTripCount} round trip
+                        {ticker.roundTripCount === 1 ? "" : "s"}
+                      </span>
+                      <span
+                        className={`border px-2 py-1 text-xs uppercase tracking-wide ${lifecycleToneClass(
+                          ticker.lifecycleClassification,
+                        )}`}
+                      >
+                        {ticker.lifecycleLabel}
+                      </span>
+                      {ticker.openRoundTripCount > 0 ? (
+                        <span className="border border-sky-500/40 bg-sky-500/10 px-2 py-1 text-xs uppercase tracking-wide text-sky-200">
+                          Still open
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-zinc-300">
+                      {ticker.storyLabel}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-zinc-500">
+                      {ticker.reviewPriorityLabel}
+                    </p>
+                    <div className="mt-3 text-sm text-sky-300">
+                      Open ticker story
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </section>
+        ) : null}
+
+        {savedReviewQueue && showReviewLanes ? (
           <section
             id="review-lanes"
             className="ti-panel p-4"
@@ -1396,7 +1997,7 @@ export default async function TradesPage({
                     ? "border-sky-400 text-sky-200"
                     : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
                 }`}
-                href="/trades"
+                href="/trades/round-trips#trade-list"
               >
                 All saved trades {allTrades.length}
               </Link>
@@ -1409,7 +2010,7 @@ export default async function TradesPage({
                       : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
                   }`}
                   data-testid={`trades-review-lane-${tab.id}`}
-                  href={`/trades?reviewLane=${tab.id}`}
+                  href={`/trades/review-needed?reviewLane=${tab.id}#trade-list`}
                 >
                   {tab.label} {tab.count}
                 </Link>
@@ -1418,20 +2019,22 @@ export default async function TradesPage({
           </section>
         ) : null}
 
+        {showTradeList ? (
         <section id="trade-list" className="ti-panel p-4">
           <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h2 className="text-sm font-semibold text-zinc-100">
-                Trade Cards
+                Round Trip Cards
               </h2>
               <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-500">
-                Each card answers why this trade is worth opening. Use the
-                detail page for the actual replay, note, and checklist work.
+                Each card is one flat-to-flat round trip. Use these after the
+                day session or ticker story tells you which sequence is worth
+                replaying.
               </p>
             </div>
             <Link
               className="text-sm text-sky-300 hover:text-sky-200"
-              href="/coach#next-action"
+              href="/coach"
             >
               Open coach focus
             </Link>
@@ -1443,9 +2046,9 @@ export default async function TradesPage({
                   "No cards are showing in this view."
                 ) : (
                   <>
-                    Showing cards {tradeStartIndex + 1}-{tradeEndIndex} of{" "}
-                    {trades.length} in this view. Keep one page small, then use
-                    the next page or a story filter when you need more.
+                    Showing round trips {tradeStartIndex + 1}-{tradeEndIndex}{" "}
+                    of {trades.length} in this view. Keep one page small, then
+                    use the next page or a story filter when you need more.
                   </>
                 )}
               </div>
@@ -1616,6 +2219,7 @@ export default async function TradesPage({
             })}
           </div>
         </section>
+        ) : null}
           </div>
         </section>
       </div>

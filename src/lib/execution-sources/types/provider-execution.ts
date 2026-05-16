@@ -20,6 +20,7 @@ export interface ProviderExecution {
   fees?: number | string | null;
   netAmount?: number | string | null;
   currency?: string | null;
+  positionEffect?: "opening" | "closing" | "mixed" | "unknown" | null;
   notes?: string | null;
   source?: string | null;
 }

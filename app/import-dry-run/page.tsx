@@ -4,11 +4,10 @@ import {
   buildProductWorkflowShellViewModel,
   getCsvDryRunSamplePresets,
 } from "../../src/lib/trader-analytics";
-import { ImportWorkflowStrip } from "../import-workflow-strip";
 import { ImportDryRunClient } from "./import-dry-run-client";
 
 export const metadata: Metadata = {
-  title: "Import Trades | Trader Intelligence",
+  title: "Advanced Import Check | Trader Intelligence",
 };
 
 export default function ImportDryRunPage() {
@@ -33,23 +32,31 @@ export default function ImportDryRunPage() {
   return (
     <main className="min-h-screen ti-dashboard-bg px-5 py-8 text-zinc-100 sm:px-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <header className="border-b border-zinc-800 pb-6">
-          <Link className="text-sm text-sky-300 hover:text-sky-200" href="/workspace">
-            Back to workspace
-          </Link>
-          <h1 className="mt-3 text-3xl font-semibold text-zinc-50">
-            Import Trades
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm text-zinc-500">
-            Preview broker executions, map columns, inspect grouped trades, and
-            see whether the import would be ready before anything is saved.
-          </p>
+        <header className="ti-panel p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <Link className="text-sm text-sky-300 hover:text-sky-200" href="/workspace">
+                Back to workspace
+              </Link>
+              <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-amber-300">
+                Advanced import tools
+              </p>
+              <h1 className="mt-2 text-3xl font-semibold text-zinc-50">
+                Advanced Import Check
+              </h1>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+                Use this page when you need to inspect a CSV before saving it.
+                Most traders should start with the simple upload page.
+              </p>
+            </div>
+            <Link
+              className="rounded-md border border-emerald-800 bg-emerald-950/30 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:border-emerald-400"
+              href="/upload-csv"
+            >
+              Simple CSV upload
+            </Link>
+          </div>
         </header>
-
-        <ImportWorkflowStrip
-          currentStep="upload"
-          summary="Start with one clean broker CSV, confirm the parsed executions, then save the import so the end-user app can power saved trades, review queues, analytics, and coach from real data."
-        />
 
         <ImportDryRunClient
           presets={getCsvDryRunSamplePresets()}

@@ -265,6 +265,40 @@ describe("SqliteImportCommitRepository", () => {
     expect(readModel.diagnosticCodeCounts).toEqual({});
   });
 
+  it("resumes a limited persisted decision review run without skipping the remaining queue", async () => {
+    const csv = [
+      "Date,Time,Symbol,Side,Quantity,Price",
+      "2026-05-01,09:30:00,RSMA,Buy,100,10.00",
+      "2026-05-01,10:00:00,RSMA,Sell,100,10.50",
+      "2026-05-01,10:30:00,RSMB,Buy,100,20.00",
+      "2026-05-01,11:00:00,RSMB,Sell,100,20.50",
+    ].join("\n");
+    const { repository, plan } = planFor(csv);
+
+    repository.commitImportPlan(plan);
+    const run = await runPersistedDecisionReviewJobs({
+      repository,
+      importBatchId: plan.batch.id,
+      levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
+      generatedAt: "2026-05-07T12:00:00.000Z",
+      maxTrades: 1,
+      deferRemaining: true,
+    });
+    const readModel = buildSavedDecisionReviewReadModel({ repository });
+
+    expect(run.statusCounts).toMatchObject({ completed: 1, queued: 1 });
+    expect(readModel.completedCount).toBe(1);
+    expect(readModel.queuedCount).toBe(1);
+    expect(readModel.skippedLimitCount).toBe(0);
+    expect(readModel.diagnosticCodeCounts).toEqual({});
+    expect(
+      repository
+        .listDecisionReviewJobs(plan.batch.id)
+        .map((job) => job.status)
+        .sort(),
+    ).toEqual(["completed", "queued"]);
+  });
+
   it("persists blocked-open and market-unavailable decision review diagnostics", async () => {
     const openCsv = [
       "Date,Time,Symbol,Side,Quantity,Price",

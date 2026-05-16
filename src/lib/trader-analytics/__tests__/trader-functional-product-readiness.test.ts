@@ -70,7 +70,7 @@ describe("Trader functional product readiness", () => {
   });
 
   it("builds a saved-analysis prototype from a ready import without production writes or exports", () => {
-    const readyPreset = preset("preset:generic-short");
+    const readyPreset = preset("preset:ibkr");
     const experience = buildCsvDryRunImportExperience({
       csvText: readyPreset.csvText,
       broker: readyPreset.broker,
@@ -143,7 +143,7 @@ describe("Trader functional product readiness", () => {
   });
 
   it("surfaces precomputed daily/4h decision review facts when supplied", () => {
-    const readyPreset = preset("preset:generic-short");
+    const readyPreset = preset("preset:ibkr");
     const experience = buildCsvDryRunImportExperience({
       csvText: readyPreset.csvText,
       broker: readyPreset.broker,
@@ -162,9 +162,9 @@ describe("Trader functional product readiness", () => {
               id: "entry_near_daily_4h_resistance",
               tone: "risk",
               category: "market_context",
-              title: "Entry was close to daily/4h resistance",
+              title: "Entry started just below daily/4h resistance",
               summary:
-                "The first entry started near a higher-timeframe resistance area.",
+                "The first entry started just below a higher-timeframe resistance area.",
               evidence: ["distanceToResistance=1.2%"],
             },
           ],
@@ -178,9 +178,11 @@ describe("Trader functional product readiness", () => {
     expect(panel.fixFirstBehaviorId).toBe("chasing");
     expect(panel.topDecisionReviewInsights[0]).toMatchObject({
       category: "market_context",
-      title: "Entry was close to daily/4h resistance",
+      title: "Entry started just below daily/4h resistance",
     });
-    expect(panel.limitations.join(" ")).toContain("VWAP/EMA feedback remains disabled");
+    expect(panel.limitations.join(" ")).toContain(
+      "VWAP/EMA feedback remains disabled",
+    );
   });
 
   it("does not create analysis from blocked imports", () => {
@@ -222,7 +224,9 @@ describe("Trader functional product readiness", () => {
     });
     expect(autopsy.problemAfterExecutionNumber).not.toBeNull();
     expect(
-      autopsy.observations.every((observation) => observation.evidence.length > 0),
+      autopsy.observations.every(
+        (observation) => observation.evidence.length > 0,
+      ),
     ).toBe(true);
   });
 
@@ -230,9 +234,9 @@ describe("Trader functional product readiness", () => {
     const evaluations = evaluateSyntheticTraderPersonas();
 
     expect(evaluations).toHaveLength(6);
-    expect(evaluations.every((evaluation) => evaluation.marketContextUsed === false)).toBe(
-      true,
-    );
+    expect(
+      evaluations.every((evaluation) => evaluation.marketContextUsed === false),
+    ).toBe(true);
     expect(evaluations.map((evaluation) => evaluation.personaId)).toEqual(
       expect.arrayContaining([
         "overtrader",

@@ -81,6 +81,19 @@ function isMarketContextUnavailableFailure(code: string | undefined): boolean {
   );
 }
 
+function snapshotNeedsReplayCandleRefresh(
+  snapshot: PersistedDecisionReviewSnapshot | undefined,
+): boolean {
+  if (!snapshot) {
+    return true;
+  }
+
+  return (
+    snapshot.review.tradeWindowEvidenceSource ===
+      "levels_system_trade_window" && !snapshot.review.replayCandleWindow
+  );
+}
+
 function diagnosticRecord(args: {
   accountId: string;
   userId: string;
@@ -114,12 +127,20 @@ export async function runPersistedDecisionReviewJobs(args: {
   levelsSystem?: LevelsSystemRuntimeConfig;
   generatedAt?: string;
   maxTrades?: number;
+  deferRemaining?: boolean;
+  refreshMissingReplayCandleWindows?: boolean;
+  savedTradeIds?: string[];
   runBatch?: typeof runBatchTradeAnalysis;
 }): Promise<PersistedDecisionReviewRunResult> {
   const accountId = args.accountId ?? DEMO_ACCOUNT_ID;
   const userId = args.userId ?? DEMO_USER_ID;
   const generatedAt = args.generatedAt ?? new Date().toISOString();
   const jobs = args.repository.listDecisionReviewJobs(args.importBatchId);
+  const snapshotsByTradeId = new Map(
+    args.repository
+      .listDecisionReviewSnapshotsForBatch(args.importBatchId)
+      .map((snapshot) => [snapshot.savedTradeId, snapshot]),
+  );
   const trades = new Map(
     args.repository
       .listSavedTrades(accountId)
@@ -128,7 +149,15 @@ export async function runPersistedDecisionReviewJobs(args: {
   );
   const statusCounts: Record<string, number> = {};
   const marketContextSourceCounts: Record<string, number> = {};
+  const savedTradeIdFilter =
+    args.savedTradeIds && args.savedTradeIds.length > 0
+      ? new Set(args.savedTradeIds)
+      : null;
   const eligible = jobs.filter((job) => {
+    if (savedTradeIdFilter && !savedTradeIdFilter.has(job.savedTradeId)) {
+      return false;
+    }
+
     if (job.status === "blocked_open_trade") {
       increment(statusCounts, job.status);
       const trade = trades.get(job.savedTradeId) ?? null;
@@ -147,6 +176,14 @@ export async function runPersistedDecisionReviewJobs(args: {
       return false;
     }
 
+    if (
+      job.status === "completed" &&
+      args.refreshMissingReplayCandleWindows &&
+      snapshotNeedsReplayCandleRefresh(snapshotsByTradeId.get(job.savedTradeId))
+    ) {
+      return true;
+    }
+
     if (job.status !== "queued") {
       increment(statusCounts, job.status);
       return false;
@@ -158,13 +195,22 @@ export async function runPersistedDecisionReviewJobs(args: {
     args.maxTrades === undefined ? eligible : eligible.slice(0, args.maxTrades);
 
   for (const skipped of eligible.slice(selected.length)) {
+    if (skipped.status !== "queued") {
+      increment(statusCounts, skipped.status);
+      continue;
+    }
+
+    if (args.deferRemaining) {
+      increment(statusCounts, skipped.status);
+      continue;
+    }
+
     const trade = trades.get(skipped.savedTradeId) ?? null;
     const updated: ImportCommitDecisionReviewJobRecord = {
       ...skipped,
       status: "skipped_limit",
       reason: "Decision-review run limit reached before this queued trade.",
     };
-
     args.repository.updateDecisionReviewJob(updated);
     increment(statusCounts, updated.status);
     args.repository.saveDecisionReviewDiagnostic(
@@ -183,10 +229,17 @@ export async function runPersistedDecisionReviewJobs(args: {
 
   const selectedTrades = selected
     .map((job) => ({ job, trade: trades.get(job.savedTradeId) ?? null }))
-    .filter((item): item is { job: ImportCommitDecisionReviewJobRecord; trade: ImportCommitSavedTradeRecord } =>
-      Boolean(item.trade),
+    .filter(
+      (
+        item,
+      ): item is {
+        job: ImportCommitDecisionReviewJobRecord;
+        trade: ImportCommitSavedTradeRecord;
+      } => Boolean(item.trade),
     );
-  const missingTradeJobs = selected.filter((job) => !trades.has(job.savedTradeId));
+  const missingTradeJobs = selected.filter(
+    (job) => !trades.has(job.savedTradeId),
+  );
 
   for (const missing of missingTradeJobs) {
     const updated: ImportCommitDecisionReviewJobRecord = {
@@ -220,9 +273,9 @@ export async function runPersistedDecisionReviewJobs(args: {
       completedSnapshotCount:
         args.repository.listDecisionReviewSnapshotsForBatch(args.importBatchId)
           .length,
-      diagnosticCount:
-        args.repository.listDecisionReviewDiagnosticsForBatch(args.importBatchId)
-          .length,
+      diagnosticCount: args.repository.listDecisionReviewDiagnosticsForBatch(
+        args.importBatchId,
+      ).length,
       statusCounts,
       marketContextSourceCounts,
     };
@@ -307,12 +360,12 @@ export async function runPersistedDecisionReviewJobs(args: {
     importBatchId: args.importBatchId,
     requestedJobCount: jobs.length,
     eligibleJobCount: eligible.length,
-    completedSnapshotCount:
-      args.repository.listDecisionReviewSnapshotsForBatch(args.importBatchId)
-        .length,
-    diagnosticCount:
-      args.repository.listDecisionReviewDiagnosticsForBatch(args.importBatchId)
-        .length,
+    completedSnapshotCount: args.repository.listDecisionReviewSnapshotsForBatch(
+      args.importBatchId,
+    ).length,
+    diagnosticCount: args.repository.listDecisionReviewDiagnosticsForBatch(
+      args.importBatchId,
+    ).length,
     statusCounts,
     marketContextSourceCounts,
   };
@@ -348,8 +401,12 @@ export function buildSavedDecisionReviewReadModel(args: {
   }
 
   const jobs = args.repository.listDecisionReviewJobs(batch.id);
-  const snapshots = args.repository.listDecisionReviewSnapshotsForBatch(batch.id);
-  const diagnostics = args.repository.listDecisionReviewDiagnosticsForBatch(batch.id);
+  const snapshots = args.repository.listDecisionReviewSnapshotsForBatch(
+    batch.id,
+  );
+  const diagnostics = args.repository.listDecisionReviewDiagnosticsForBatch(
+    batch.id,
+  );
   const count = (status: ImportCommitDecisionReviewJobRecord["status"]) =>
     jobs.filter((job) => job.status === status).length;
   const queuedCount = count("queued");

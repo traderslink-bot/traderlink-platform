@@ -97,7 +97,7 @@ describe("analytics behavior report", () => {
           findings: [
             finding({
               id: "entry_near_daily_4h_resistance",
-              label: "Entry was close to resistance",
+              label: "Entry started just below resistance",
               opportunityType: "risk_to_reduce",
               tradeId: "loss-1",
             }),
@@ -110,7 +110,7 @@ describe("analytics behavior report", () => {
           findings: [
             finding({
               id: "entry_near_daily_4h_support",
-              label: "Entry was close to support",
+              label: "Entry started near support below",
               opportunityType: "strength_to_repeat",
               tradeId: "win-1",
             }),
@@ -166,14 +166,14 @@ describe("analytics behavior report", () => {
     expect(report.contractVersion).toBe("analytics_behavior_report_v1");
     expect(report.riskCount).toBe(2);
     expect(report.strengthCount).toBe(4);
-    expect(resistance?.title).toBe("Entries Near Resistance");
+    expect(resistance?.title).toBe("Entries Under Resistance");
     expect(support?.title).toBe("Support-Based Entries");
     expect(extension?.title).toBe("Chase And Extension Review");
     expect(resistance?.evidence[0]?.detail).toContain(
-      "Entry was close to resistance and the trade finished red",
+      "Entry started just below overhead resistance and the trade finished red",
     );
     expect(support?.evidence[0]?.detail).toContain(
-      "Entry was close to support and the trade later worked",
+      "Entry started near support below and the trade later worked",
     );
     expect(dipAdds?.description).toContain("Dip buys");
     expect(dipAdds?.evidence[0]?.detail).toContain(

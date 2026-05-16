@@ -18,9 +18,7 @@ const SAMPLE_EXECUTION_CSV = [
   "2024-04-12,09:39:10,ABCD,Sell,150,1.295",
 ].join("\n");
 
-class AliasMetadataHistoricalCandleProvider
-  implements HistoricalCandleProvider
-{
+class AliasMetadataHistoricalCandleProvider implements HistoricalCandleProvider {
   readonly providerName = "ibkr" as const;
   private readonly delegate = new SampleTradeAlignedHistoricalCandleProvider();
 
@@ -47,9 +45,7 @@ class AliasMetadataHistoricalCandleProvider
   }
 }
 
-class MissingHigherTimeframeHistoricalCandleProvider
-  extends SampleTradeAlignedHistoricalCandleProvider
-{
+class MissingHigherTimeframeHistoricalCandleProvider extends SampleTradeAlignedHistoricalCandleProvider {
   override async fetchCandles(
     request: HistoricalFetchRequest,
     plan: Parameters<HistoricalCandleProvider["fetchCandles"]>[1],
@@ -86,13 +82,23 @@ describe("buildCsvDryRunDecisionReviewBridge", () => {
       marketContextSource: "levels_system_daily_4h",
       tradeWindowEvidenceSource: "levels_system_trade_window",
       candleQualityNotes: expect.any(Array),
+      replayCandleWindow: {
+        source: "levels_system_trade_window",
+        timeframe: expect.any(String),
+        candles: expect.any(Array),
+      },
     });
     expect(result.decisionReviews[0]?.coachingHeadline).toBeTruthy();
     expect(result.decisionReviews[0]?.insights.length).toBeGreaterThan(0);
+    expect(
+      result.decisionReviews[0]?.replayCandleWindow?.candles.length,
+    ).toBeGreaterThan(0);
     expect(result.decisionReviews[0]?.candleQualityNotes?.join("\n")).toContain(
       "Trade-window candle basis status: basis_aligned",
     );
-    expect(JSON.stringify(result.decisionReviews[0])).not.toContain("allCandles");
+    expect(JSON.stringify(result.decisionReviews[0])).not.toContain(
+      "allCandles",
+    );
   }, 15_000);
 
   it("does not run analysis when the import is blocked", async () => {
@@ -233,20 +239,23 @@ describe("buildCsvDryRunDecisionReviewBridge", () => {
         expect(result.decisionReviews).toEqual([]);
 
         for (const expectedCode of scenario.expectedDiagnosticCodes ?? []) {
-          expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
-            expectedCode,
-          );
+          expect(
+            result.diagnostics.map((diagnostic) => diagnostic.code),
+          ).toContain(expectedCode);
         }
 
         return;
       }
 
-      expect(review?.marketContextSource).toBe(scenario.expectedMarketContextSource);
+      expect(review?.marketContextSource).toBe(
+        scenario.expectedMarketContextSource,
+      );
       expect(review?.insights.map((insight) => insight.id)).toEqual(
         expect.arrayContaining(scenario.expectedInsightIds),
       );
       if (scenario.requiredTitleFragments) {
-        const titleText = review?.insights.map((insight) => insight.title).join("\n") ?? "";
+        const titleText =
+          review?.insights.map((insight) => insight.title).join("\n") ?? "";
 
         for (const fragment of scenario.requiredTitleFragments) {
           expect(titleText).toContain(fragment);

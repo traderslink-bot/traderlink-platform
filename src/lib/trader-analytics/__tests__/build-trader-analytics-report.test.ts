@@ -7,6 +7,7 @@ import rapidFireExecutionCluster from "../../../docs/trade-analysis-request-fixt
 import repeatedAddsBeforeReduction from "../../../docs/trade-analysis-request-fixtures/repeated-adds-before-reduction.json";
 import { runBatchExecutionFeedback } from "../../execution-feedback/batch/run-execution-feedback-batch";
 import type { ExecutionFeedbackSummary } from "../../execution-feedback/summary/build-execution-feedback-summary";
+import type { SessionBucket } from "../../raw-trade-timeline/types/session-context";
 import { buildTraderAnalyticsReport } from "../build-trader-analytics-report";
 
 const fixtureRequests = [
@@ -36,6 +37,44 @@ function completedSummaries(): Array<{
       requestIndex: item.requestIndex,
       summary: item.summary as ExecutionFeedbackSummary,
     }));
+}
+
+function buildTimingReport(
+  buckets: Array<{ session: SessionBucket; pnls: number[]; hour?: number }>,
+) {
+  const [base] = completedSummaries();
+  const summaries = buckets.flatMap((bucket) =>
+    bucket.pnls.map((pnl, index) => {
+      const hour = bucket.hour ?? 9;
+
+      return {
+        requestIndex: index,
+        summary: {
+          ...base.summary,
+          symbol: `${bucket.session.slice(0, 3).toUpperCase()}${index}`,
+          sessionDate: "2026-05-12",
+          sessionBucket: bucket.session,
+          entrySessionBucket: bucket.session,
+          entrySessionDateEt: "2026-05-12",
+          entryTimeEt: `${String(hour).padStart(2, "0")}:00:00`,
+          entryHourEt: hour,
+          entryHourLabelEt: `${String(hour).padStart(2, "0")}:00 ET`,
+          executionOnlyPnl: {
+            ...base.summary.executionOnlyPnl,
+            grossRealizedPnl: pnl,
+          },
+          warnings: [],
+        } satisfies ExecutionFeedbackSummary,
+      };
+    }),
+  );
+
+  return buildTraderAnalyticsReport({
+    source: "timing-unit-test",
+    generatedAt: "2026-05-12T14:00:00.000Z",
+    summaries,
+    requestCount: summaries.length,
+  });
 }
 
 describe("buildTraderAnalyticsReport", () => {
@@ -159,6 +198,121 @@ describe("buildTraderAnalyticsReport", () => {
         }),
       ]),
     );
+  });
+
+  it("marks timing buckets as outlier dominated when one trade drives most movement", () => {
+    const report = buildTimingReport([
+      {
+        session: "pre_market",
+        pnls: [-1000, 15, 20, -10, 5, 8, 12, -6, 3, 1],
+        hour: 8,
+      },
+    ]);
+    const bucket = report.timeOfDay.entrySessionBuckets.find(
+      (item) => item.id === "pre_market",
+    );
+
+    expect(bucket).toMatchObject({
+      grossMedianRealizedPnl: 4,
+      sampleSizeLabel: "sufficient",
+      conclusion: {
+        kind: "outlier_dominated_total",
+        confidence: "medium",
+      },
+    });
+    expect(bucket?.largestLoser?.grossRealizedPnl).toBe(-1000);
+    expect(bucket?.largestAbsoluteTrade?.grossRealizedPnl).toBe(-1000);
+    expect(bucket?.largestAbsoluteTradeShareOfAbsolutePnl).toBeGreaterThan(0.9);
+    expect(report.timeOfDay.entryInsight).toContain(
+      "mostly driven by one trade",
+    );
+    expect(report.timeOfDay.entryInsight).not.toContain("Weakest entry session");
+  });
+
+  it("keeps small timing buckets as review prompts instead of repeat patterns", () => {
+    const report = buildTimingReport([
+      { session: "pre_market", pnls: [-50, -25, -10, 5], hour: 8 },
+      {
+        session: "market_open",
+        pnls: [10, 12, 8, 14, 9, 11, 13, 7, 15, 16],
+        hour: 9,
+      },
+    ]);
+    const bucket = report.timeOfDay.entrySessionBuckets.find(
+      (item) => item.id === "pre_market",
+    );
+
+    expect(bucket).toMatchObject({
+      sampleSizeLabel: "insufficient",
+      conclusion: {
+        kind: "insufficient_sample",
+        confidence: "low",
+      },
+    });
+    expect(report.timeOfDay.entryInsight).toContain(
+      "has too few trades for a timing pattern yet",
+    );
+  });
+
+  it("separates consistent timing weakness and strength from raw totals", () => {
+    const report = buildTimingReport([
+      {
+        session: "pre_market",
+        pnls: [-10, -20, -15, -8, -12, -6, -9, -11, 5, 3],
+        hour: 8,
+      },
+      {
+        session: "market_open",
+        pnls: [10, 20, 15, 8, 12, 6, 9, 11, -5, -3],
+        hour: 9,
+      },
+    ]);
+    const weakBucket = report.timeOfDay.entrySessionBuckets.find(
+      (item) => item.id === "pre_market",
+    );
+    const strongBucket = report.timeOfDay.entrySessionBuckets.find(
+      (item) => item.id === "market_open",
+    );
+
+    expect(weakBucket).toMatchObject({
+      conclusion: {
+        kind: "consistent_weakness",
+        confidence: "high",
+      },
+    });
+    expect(strongBucket).toMatchObject({
+      conclusion: {
+        kind: "consistent_strength",
+        confidence: "high",
+      },
+    });
+    expect(report.timeOfDay.entryInsight).toContain(
+      "weaker average, median, and win-rate evidence",
+    );
+  });
+
+  it("leaves mixed timing evidence as a review prompt", () => {
+    const report = buildTimingReport([
+      {
+        session: "midday",
+        pnls: [120, -10, -10, -10, -10, -10, -10, -10, -10, -10],
+        hour: 12,
+      },
+    ]);
+    const bucket = report.timeOfDay.entrySessionBuckets.find(
+      (item) => item.id === "midday",
+    );
+
+    expect(bucket).toMatchObject({
+      grossTotalRealizedPnl: 30,
+      grossAverageRealizedPnl: 3,
+      grossMedianRealizedPnl: -10,
+      grossWinRate: 0.1,
+      conclusion: {
+        kind: "mixed",
+        confidence: "low",
+      },
+    });
   });
 
   it("does not let unmapped or prompt-only behavior drive primary analytics conclusions", () => {

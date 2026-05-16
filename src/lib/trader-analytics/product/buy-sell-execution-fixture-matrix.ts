@@ -455,7 +455,7 @@ export function buildBuySellExecutionFixtureMatrix(): BuySellExecutionFixtureCas
     },
     {
       id: "huge_size_jump",
-      label: "Large size jump is review-visible even when trade closes flat",
+      label: "Large size jump stays advanced-only when trade closes flat",
       broker: "generic_execution_csv",
       csvText: csv([
         "Date,Time,Symbol,Side,Quantity,Price",
@@ -473,7 +473,7 @@ export function buildBuySellExecutionFixtureMatrix(): BuySellExecutionFixtureCas
         anomalyCounts: {
           totalCount: 1,
           urgentCount: 0,
-          reviewCount: 1,
+          reviewCount: 0,
         },
         groupedTrades: [
           {

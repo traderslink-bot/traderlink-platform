@@ -3107,13 +3107,11 @@ export function ImportDryRunClient({
   presets: CsvDryRunSamplePreset[];
   sampleMistakes: CsvDryRunEvidenceRecord[];
 }) {
-  const initialPreset = presets[0];
-  const [selectedPresetId, setSelectedPresetId] = useState(initialPreset?.id ?? "");
-  const [broker, setBroker] = useState<BrokerExecutionCsvFormat>(
-    initialPreset?.broker ?? "generic_execution_csv",
-  );
+  const [selectedPresetId, setSelectedPresetId] = useState("");
+  const [broker, setBroker] = useState<BrokerExecutionCsvFormat>("auto");
   const [timezone, setTimezone] = useState("America/New_York");
-  const [csvText, setCsvText] = useState(initialPreset?.csvText ?? "");
+  const [csvText, setCsvText] = useState("");
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [mappingValues, setMappingValues] = useState<Record<string, string>>({});
   const [groupingDecisions, setGroupingDecisions] = useState<
     Record<number, CsvDryRunGroupingDecisionKind>
@@ -3190,7 +3188,12 @@ export function ImportDryRunClient({
   const canRequestDecisionReview =
     experience.confidenceGate.status !== "blocked" &&
     experience.preview.importResult.requestCount > 0;
+  const hasCsvText = csvText.trim().length > 0;
   const canTrySaveImport = experience.preview.importResult.acceptedExecutionCount > 0;
+  const needsBeginnerRepairHelp =
+    hasCsvText &&
+    (experience.preview.importResult.rejectedRowCount > 0 ||
+      experience.confidenceGate.status === "blocked");
 
   function reviewAcknowledgements() {
     return {
@@ -3223,11 +3226,21 @@ export function ImportDryRunClient({
     setSelectedPresetId(id);
 
     if (!preset) {
+      setBroker("auto");
+      setCsvText("");
+      setSelectedFileName(null);
+      setMappingValues({});
+      setGroupingDecisions({});
+      setSetupTags({});
+      setRepairImpactBaseline(null);
+      setRepairCarryForward({ editCount: 0, lastEdit: null });
+      setFeedbackApproved(false);
       return;
     }
 
     setBroker(preset.broker);
     setCsvText(preset.csvText);
+    setSelectedFileName(preset.label);
     setMappingValues({});
     setGroupingDecisions({});
     setSetupTags({});
@@ -3243,6 +3256,8 @@ export function ImportDryRunClient({
 
     void file.text().then((text) => {
       setCsvText(text);
+      setSelectedFileName(file.name);
+      setBroker("auto");
       setSelectedPresetId("");
       setGroupingDecisions({});
       setSetupTags({});
@@ -3426,69 +3441,16 @@ export function ImportDryRunClient({
       <section className="grid gap-6 xl:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)]">
         <div className="ti-panel p-4">
           <h2 className="text-sm font-semibold text-zinc-100">
-            CSV Input
+            Upload Your CSV
           </h2>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <p className="mt-2 text-sm leading-6 text-zinc-500">
+            Choose your broker export. The app will read the rows, group trades,
+            and tell you whether anything needs attention before saving.
+          </p>
+          <div className="mt-4 grid gap-4">
             <label className="block">
               <span className="text-xs uppercase tracking-wide text-zinc-500">
-                Sample
-              </span>
-              <select
-                aria-label="Sample"
-                data-testid="sample-select"
-                className="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-sky-500"
-                value={selectedPresetId}
-                onChange={(event) => choosePreset(event.target.value)}
-              >
-                <option value="">Custom pasted CSV</option>
-                {presets.map((preset) => (
-                  <option key={preset.id} value={preset.id}>
-                    {preset.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block">
-              <span className="text-xs uppercase tracking-wide text-zinc-500">
-                Broker
-              </span>
-              <select
-                aria-label="Broker"
-                data-testid="broker-select"
-                className="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-sky-500"
-                value={broker}
-                onChange={(event) => {
-                  setBroker(event.target.value as BrokerExecutionCsvFormat);
-                  setRepairImpactBaseline(null);
-                  setRepairCarryForward({ editCount: 0, lastEdit: null });
-                  setFeedbackApproved(false);
-                }}
-              >
-                {BROKER_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block">
-              <span className="text-xs uppercase tracking-wide text-zinc-500">
-                Account Timezone
-              </span>
-              <input
-                aria-label="Account Timezone"
-                data-testid="timezone-input"
-                className="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-sky-500"
-                value={timezone}
-                onChange={(event) => setTimezone(event.target.value)}
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-xs uppercase tracking-wide text-zinc-500">
-                Local CSV
+                CSV file
               </span>
               <input
                 aria-label="Local CSV"
@@ -3498,70 +3460,162 @@ export function ImportDryRunClient({
                 accept=".csv,text/csv,text/plain"
                 onChange={(event) => openLocalCsv(event.target.files?.[0])}
               />
+              <span className="mt-2 block text-xs leading-5 text-zinc-500">
+                Choose the CSV export from your broker.
+              </span>
             </label>
           </div>
 
-          <label className="mt-4 block">
-            <span className="text-xs uppercase tracking-wide text-zinc-500">
-              CSV Text
-            </span>
-            <textarea
-              aria-label="CSV Text"
-              data-testid="csv-textarea"
-              className="mt-2 min-h-[260px] w-full resize-y border border-zinc-800 bg-zinc-950 px-3 py-3 font-mono text-xs leading-5 text-zinc-200 outline-none focus:border-sky-500"
-              value={csvText}
-              onChange={(event) => {
-                setCsvText(event.target.value);
-                setSelectedPresetId("");
-                setRepairImpactBaseline(null);
-                setRepairCarryForward({ editCount: 0, lastEdit: null });
-                setFeedbackApproved(false);
-              }}
-            />
-          </label>
+          <details
+            className="mt-4 border border-zinc-900 bg-zinc-950/60 p-3"
+            data-testid="paste-csv-details"
+          >
+            <summary className="cursor-pointer text-sm font-medium text-zinc-300">
+              Paste CSV instead or view parsed text
+            </summary>
+            <label className="mt-4 block">
+              <span className="text-xs uppercase tracking-wide text-zinc-500">
+                CSV Text
+              </span>
+              <textarea
+                aria-label="CSV Text"
+                data-testid="csv-textarea"
+                className="mt-2 min-h-[260px] w-full resize-y border border-zinc-800 bg-zinc-950 px-3 py-3 font-mono text-xs leading-5 text-zinc-200 outline-none focus:border-sky-500"
+                value={csvText}
+                onChange={(event) => {
+                  setCsvText(event.target.value);
+                  setSelectedPresetId("");
+                  setSelectedFileName(null);
+                  setRepairImpactBaseline(null);
+                  setRepairCarryForward({ editCount: 0, lastEdit: null });
+                  setFeedbackApproved(false);
+                }}
+              />
+            </label>
+          </details>
+
+          <details
+            className="mt-4 border border-zinc-900 bg-zinc-950/40 p-3"
+            data-testid="import-dry-run-advanced-upload-settings"
+          >
+            <summary className="cursor-pointer text-sm font-medium text-zinc-300">
+              Show advanced import settings
+            </summary>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-zinc-500">
+                  Broker override
+                </span>
+                <select
+                  aria-label="Broker"
+                  data-testid="broker-select"
+                  className="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-sky-500"
+                  value={broker}
+                  onChange={(event) => {
+                    setBroker(event.target.value as BrokerExecutionCsvFormat);
+                    setRepairImpactBaseline(null);
+                    setRepairCarryForward({ editCount: 0, lastEdit: null });
+                    setFeedbackApproved(false);
+                  }}
+                >
+                  {BROKER_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="mt-2 block text-xs leading-5 text-zinc-500">
+                  Leave this on auto detect unless the app cannot identify the
+                  export or asks you to choose a format.
+                </span>
+              </label>
+
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-zinc-500">
+                  CSV timezone
+                </span>
+                <input
+                  aria-label="Account Timezone"
+                  data-testid="timezone-input"
+                  className="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-sky-500"
+                  value={timezone}
+                  onChange={(event) => setTimezone(event.target.value)}
+                />
+                <span className="mt-2 block text-xs leading-5 text-zinc-500">
+                  Used only when the CSV timestamps do not include their own
+                  timezone. Most users should leave this alone.
+                </span>
+              </label>
+            </div>
+          </details>
+
         </div>
 
         <div className="grid gap-4">
           <Kpi
-            label="Resolved Broker"
-            value={experience.preview.importResult.brokerLabel}
-            detail={experience.preview.importResult.broker}
+            label="File"
+            value={hasCsvText ? "Loaded" : "Waiting"}
+            detail={
+              hasCsvText
+                ? selectedFileName ?? "CSV text is ready"
+                : "Choose a CSV to start"
+            }
             tone="text-sky-300"
           />
           <div className="grid gap-4 md:grid-cols-2">
             <Kpi
               label="Rows"
               value={String(experience.preview.importResult.rowCount)}
-              detail={`${experience.preview.importResult.acceptedExecutionCount} accepted`}
+              detail={
+                hasCsvText
+                  ? `${experience.preview.importResult.acceptedExecutionCount} accepted`
+                  : "No file selected yet"
+              }
             />
             <Kpi
               label="Trades"
               value={String(experience.preview.importResult.requestCount)}
-              detail={`${experience.preview.importResult.rejectedRowCount} rejected rows`}
+              detail={
+                hasCsvText
+                  ? `${experience.preview.importResult.rejectedRowCount} rejected rows`
+                  : "Trades appear after upload"
+              }
             />
             <Kpi
               label="Rows To Fix"
               value={String(experience.preview.importResult.rejectedRowCount)}
               detail={
-                experience.preview.importResult.rejectedRowCount > 0
+                !hasCsvText
+                  ? "No file selected yet"
+                  : experience.preview.importResult.rejectedRowCount > 0
                   ? "Repair these before saving"
                   : "No rejected rows"
               }
               tone={
-                experience.preview.importResult.rejectedRowCount > 0
+                !hasCsvText
+                  ? "text-zinc-400"
+                  : experience.preview.importResult.rejectedRowCount > 0
                   ? "text-amber-300"
                   : "text-emerald-300"
               }
             />
             <Kpi
               label="Import Check"
-              value={canTrySaveImport ? "Ready" : "Review"}
+              value={!hasCsvText ? "Waiting" : canTrySaveImport ? "Ready" : "Review"}
               detail={
-                canTrySaveImport
+                !hasCsvText
+                  ? "Upload a CSV to start"
+                  : canTrySaveImport
                   ? "Save this import or inspect details first"
                   : "Fix rows or column choices before saving"
               }
-              tone={canTrySaveImport ? "text-emerald-300" : "text-amber-300"}
+              tone={
+                !hasCsvText
+                  ? "text-zinc-400"
+                  : canTrySaveImport
+                    ? "text-emerald-300"
+                    : "text-amber-300"
+              }
             />
           </div>
           <div className="ti-panel p-4">
@@ -3571,8 +3625,8 @@ export function ImportDryRunClient({
                   Save Import
                 </div>
                 <div className="mt-1 text-sm text-zinc-400">
-                  Saves normalized executions, grouped trades, feedback, and the
-                  latest analytics snapshot to the saved import store.
+                  Once saved, these trades appear in your trade library, review
+                  queue, analytics, and coach.
                 </div>
                 {saveImportState.message ? (
                   <div
@@ -3610,76 +3664,144 @@ export function ImportDryRunClient({
         </div>
       </section>
 
-      <ImportSessionSummary experience={experience} />
-      <ExecutionReadinessSummary
-        experience={experience}
-        prototypePanel={prototypeAnalysisPanel}
-      />
-      <PrototypeAnalysisPanel
-        panel={prototypeAnalysisPanel}
-        decisionReviews={currentDecisionReviewRequest.decisionReviews}
-        decisionReviewDiagnostics={currentDecisionReviewRequest.diagnostics}
-        decisionReviewStatus={currentDecisionReviewRequest.status}
-        decisionReviewMessage={currentDecisionReviewRequest.message}
-        canRequestDecisionReview={canRequestDecisionReview}
-        onRequestDecisionReview={requestDecisionReview}
-      />
-      <ReadinessScoreBreakdown experience={experience} />
-      <RepairCarryForwardPanel
-        experience={experience}
-        state={repairCarryForward}
-      />
-      <ConfidenceGate experience={experience} />
-      <SessionState experience={experience} />
-      <ColumnMappingAssistant
-        experience={experience}
-        values={mappingValues}
-        onChange={(field, value) =>
-          setMappingValues((current) => ({
-            ...current,
-            [field]: value,
-          }))
-        }
-      />
-      <RepairImpactDiff experience={experience} />
-      <RowRepairTable experience={experience} onEditCell={editDryRunCell} />
-      <TradeGroupingReview
-        experience={experience}
-        decisionValues={groupingDecisions}
-        onDecisionChange={(requestIndex, value) =>
-          setGroupingDecisions((current) => ({
-            ...current,
-            [requestIndex]: value,
-          }))
-        }
-      />
-      <SetupTagging
-        experience={experience}
-        values={setupTags}
-        onChange={(requestIndex, value) =>
-          setSetupTags((current) => ({
-            ...current,
-            [requestIndex]: value,
-          }))
-        }
-      />
-
-      <section className="grid gap-6 xl:grid-cols-2">
-        <Walkthrough experience={experience} />
-        <EvidenceDrillIn
-          experience={experience}
-          sampleMistakes={sampleMistakes}
-        />
+      <section className="ti-panel p-4">
+        <h2 className="text-sm font-semibold text-zinc-100">
+          What happens after upload
+        </h2>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <Kpi
+            label="1. App checks rows"
+            value={
+              !hasCsvText
+                ? "Waiting"
+                : experience.preview.importResult.rejectedRowCount > 0
+                  ? "Needs help"
+                  : "Looks clean"
+            }
+            detail={
+              !hasCsvText
+                ? "Upload a CSV to start"
+                : experience.preview.importResult.rejectedRowCount > 0
+                ? "Only rejected rows need attention"
+                : "No rejected rows in this file"
+            }
+            tone={
+              !hasCsvText
+                ? "text-zinc-400"
+                : experience.preview.importResult.rejectedRowCount > 0
+                ? "text-amber-300"
+                : "text-emerald-300"
+            }
+          />
+          <Kpi
+            label="2. Save import"
+            value={canTrySaveImport ? "Available" : "Waiting"}
+            detail={
+              canTrySaveImport
+                ? "Save when you are ready"
+                : "Upload or repair rows first"
+            }
+            tone={canTrySaveImport ? "text-emerald-300" : "text-zinc-400"}
+          />
+          <Kpi
+            label="3. Review trades"
+            value={String(experience.preview.importResult.requestCount)}
+            detail="saved trades will open after saving"
+            tone="text-sky-300"
+          />
+        </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-2">
-        <ExecutionFeedbackPreview
-          experience={experience}
-          approved={feedbackApproved}
-          onApprovedChange={setFeedbackApproved}
-        />
-        <ReplayPreview experience={experience} />
-      </section>
+      {needsBeginnerRepairHelp ? (
+        <section className="grid gap-6">
+          <section className="ti-panel p-4">
+            <h2 className="text-sm font-semibold text-zinc-100">
+              Rows That Need Attention
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">
+              The app could not safely save every row yet. Fix only the
+              highlighted row or column issue, then save the import.
+            </p>
+          </section>
+          <ColumnMappingAssistant
+            experience={experience}
+            values={mappingValues}
+            onChange={(field, value) =>
+              setMappingValues((current) => ({
+                ...current,
+                [field]: value,
+              }))
+            }
+          />
+          <RowRepairTable experience={experience} onEditCell={editDryRunCell} />
+        </section>
+      ) : null}
+
+      <details
+        className="ti-advanced-panel p-4"
+        data-testid="import-dry-run-review-details"
+      >
+        <summary className="cursor-pointer text-sm font-semibold text-zinc-300">
+          Show import review details
+        </summary>
+        <div className="mt-5 grid gap-6">
+          <ImportSessionSummary experience={experience} />
+          <ExecutionReadinessSummary
+            experience={experience}
+            prototypePanel={prototypeAnalysisPanel}
+          />
+          {!needsBeginnerRepairHelp ? (
+            <>
+              <ColumnMappingAssistant
+                experience={experience}
+                values={mappingValues}
+                onChange={(field, value) =>
+                  setMappingValues((current) => ({
+                    ...current,
+                    [field]: value,
+                  }))
+                }
+              />
+              <RowRepairTable experience={experience} onEditCell={editDryRunCell} />
+            </>
+          ) : null}
+          <TradeGroupingReview
+            experience={experience}
+            decisionValues={groupingDecisions}
+            onDecisionChange={(requestIndex, value) =>
+              setGroupingDecisions((current) => ({
+                ...current,
+                [requestIndex]: value,
+              }))
+            }
+          />
+          <SetupTagging
+            experience={experience}
+            values={setupTags}
+            onChange={(requestIndex, value) =>
+              setSetupTags((current) => ({
+                ...current,
+                [requestIndex]: value,
+              }))
+            }
+          />
+          <section className="grid gap-6 xl:grid-cols-2">
+            <Walkthrough experience={experience} />
+            <EvidenceDrillIn
+              experience={experience}
+              sampleMistakes={sampleMistakes}
+            />
+          </section>
+          <section className="grid gap-6 xl:grid-cols-2">
+            <ExecutionFeedbackPreview
+              experience={experience}
+              approved={feedbackApproved}
+              onApprovedChange={setFeedbackApproved}
+            />
+            <ReplayPreview experience={experience} />
+          </section>
+        </div>
+      </details>
 
       <details
         className="ti-advanced-panel p-4"
@@ -3694,16 +3816,41 @@ export function ImportDryRunClient({
         </section>
       </details>
 
-      <section className="grid gap-6 xl:grid-cols-2">
-        <FeedbackComparison experience={experience} />
-        <PostImportReviewQueuePreview experience={experience} />
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-2">
-        <ExecutionAnomalyDetector experience={experience} />
-      </section>
-
-      <BrokerHelpAndErrorLibrary experience={experience} />
+      <details
+        className="ti-advanced-panel p-4"
+        data-testid="import-dry-run-technical-diagnostics"
+      >
+        <summary className="cursor-pointer text-sm font-semibold text-zinc-300">
+          Show technical import diagnostics
+        </summary>
+        <div className="mt-5 grid gap-6">
+          <PrototypeAnalysisPanel
+            panel={prototypeAnalysisPanel}
+            decisionReviews={currentDecisionReviewRequest.decisionReviews}
+            decisionReviewDiagnostics={currentDecisionReviewRequest.diagnostics}
+            decisionReviewStatus={currentDecisionReviewRequest.status}
+            decisionReviewMessage={currentDecisionReviewRequest.message}
+            canRequestDecisionReview={canRequestDecisionReview}
+            onRequestDecisionReview={requestDecisionReview}
+          />
+          <ReadinessScoreBreakdown experience={experience} />
+          <RepairCarryForwardPanel
+            experience={experience}
+            state={repairCarryForward}
+          />
+          <ConfidenceGate experience={experience} />
+          <SessionState experience={experience} />
+          <RepairImpactDiff experience={experience} />
+          <section className="grid gap-6 xl:grid-cols-2">
+            <FeedbackComparison experience={experience} />
+            <PostImportReviewQueuePreview experience={experience} />
+          </section>
+          <section className="grid gap-6 xl:grid-cols-2">
+            <ExecutionAnomalyDetector experience={experience} />
+          </section>
+          <BrokerHelpAndErrorLibrary experience={experience} />
+        </div>
+      </details>
       <details
         className="ti-advanced-panel p-4"
         data-testid="import-dry-run-advanced-mapping-details"
@@ -3716,11 +3863,52 @@ export function ImportDryRunClient({
           <BrokerAndCalibration experience={experience} />
         </div>
       </details>
-      <PrivacyDecisionAndMobile
-        experience={experience}
-        feedbackApproved={feedbackApproved}
-        groupingDecisionCount={Object.keys(groupingDecisions).length}
-      />
+      <details
+        className="ti-advanced-panel p-4"
+        data-testid="import-dry-run-operator-details"
+      >
+        <summary className="cursor-pointer text-sm font-semibold text-zinc-300">
+          Show privacy, decision, and QA notes
+        </summary>
+        <div className="mt-5">
+          <PrivacyDecisionAndMobile
+            experience={experience}
+            feedbackApproved={feedbackApproved}
+            groupingDecisionCount={Object.keys(groupingDecisions).length}
+          />
+        </div>
+      </details>
+      <details
+        className="ti-advanced-panel p-4"
+        data-testid="import-dry-run-admin-sample-details"
+      >
+        <summary className="cursor-pointer text-sm font-semibold text-zinc-500">
+          Show demo/admin sample files
+        </summary>
+        <label className="mt-4 block max-w-xl">
+          <span className="text-xs uppercase tracking-wide text-zinc-500">
+            Sample file
+          </span>
+          <select
+            aria-label="Sample"
+            data-testid="sample-select"
+            className="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-sky-500"
+            value={selectedPresetId}
+            onChange={(event) => choosePreset(event.target.value)}
+          >
+            <option value="">No sample selected</option>
+            {presets.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.label}
+              </option>
+            ))}
+          </select>
+          <span className="mt-2 block text-xs leading-5 text-zinc-500">
+            Demo fixtures are for internal testing and product QA, not the
+            normal trader import path.
+          </span>
+        </label>
+      </details>
     </div>
   );
 }

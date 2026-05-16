@@ -14,6 +14,7 @@ import { SqliteImportCommitRepository } from "../../../src/lib/trader-analytics/
 import { ImportWorkflowStrip } from "../../import-workflow-strip";
 import { ImportRepairActions } from "./import-repair-actions";
 import { ImportRecoveryActions } from "./import-recovery-actions";
+import { ResumeChartReviewActions } from "./resume-chart-review-actions";
 
 export const metadata: Metadata = {
   title: "Import Details | Trader Intelligence",
@@ -128,6 +129,22 @@ function diagnosticUserMessage(status: string, code: string): string {
   return "Chart analysis needs technical follow-up before it can support coaching.";
 }
 
+function isActionableRepairItem(item: {
+  severity: string;
+  status: string;
+}): boolean {
+  return item.severity === "fix_required" || (
+    item.status === "open" && item.severity !== "info"
+  );
+}
+
+function isUploadWindowCarryoverIssue(issue: { issueCode: string }): boolean {
+  return (
+    issue.issueCode === "prior_position_close_skipped" ||
+    issue.issueCode === "sell_starting_trade_skipped"
+  );
+}
+
 export default async function ImportBatchPage({
   params,
 }: {
@@ -146,6 +163,7 @@ export default async function ImportBatchPage({
   const decisionReviewStatusCounts = countBy(
     decisionReviewJobs.map((job) => job.status),
   );
+  const decisionReviewQueuedCount = decisionReviewStatusCounts.queued ?? 0;
   const decisionReviewDiagnosticCodeCounts = countBy(
     decisionReviewDiagnostics.map((diagnostic) => diagnostic.code),
   );
@@ -163,15 +181,16 @@ export default async function ImportBatchPage({
   }
 
   const recovery = buildImportRecoveryReadModel({ repository, plan, batch });
+  const isCommitted = batch.status === "committed";
   const workflowCurrentStep =
-    batch.status === "committed" ? "review" : "recover";
+    isCommitted ? "review" : "recover";
   const workflowSummary =
-    batch.status === "committed"
+    isCommitted
       ? "This import is saved. Continue into saved trades, the review queue, analytics, or coach from the saved-data links below."
       : "This import is still in the save-or-repair step. Resolve the visible blocker, duplicate, or acknowledgement before moving into saved trade review.";
   const firstSavedTrade = plan.savedTrades[0] ?? null;
   const savedPrimaryLink =
-    batch.status === "committed"
+    isCommitted
       ? firstSavedTrade
         ? {
             label: "Review first saved trade",
@@ -187,14 +206,21 @@ export default async function ImportBatchPage({
           }
       : null;
   const savedOutputLinks =
-    batch.status === "committed"
+    isCommitted
       ? [
           ["Saved trades", "/trades"],
           ["Review queue", "/review?queue=highest_priority"],
           ["Analytics", "/analytics"],
-          ["Coach", "/coach#next-action"],
+          ["Coach", "/coach"],
         ]
       : [];
+  const actionableRepairItems = plan.repairItems.filter(isActionableRepairItem);
+  const advancedRepairNotes = plan.repairItems.filter(
+    (item) => !isActionableRepairItem(item),
+  );
+  const uploadWindowCarryoverCount = plan.issues.filter(
+    isUploadWindowCarryoverIssue,
+  ).length;
 
   return (
     <main className="min-h-screen ti-dashboard-bg px-5 py-8 text-zinc-100 sm:px-8">
@@ -207,7 +233,7 @@ export default async function ImportBatchPage({
             Back to imports
           </Link>
           <h1 className="mt-3 text-3xl font-semibold text-zinc-50">
-            {batch.status === "committed" ? "Saved Import" : "Import Details"}
+            {isCommitted ? "Saved Import" : "Import Details"}
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-zinc-500">
             {batch.brokerLabel}
@@ -252,6 +278,25 @@ export default async function ImportBatchPage({
                   </span>
                 ) : null}
               </div>
+              {uploadWindowCarryoverCount > 0 ? (
+                <div className="mt-4 rounded-md border border-sky-900 bg-sky-950/20 px-3 py-2 text-xs leading-5 text-sky-100">
+                  {importCountLabel(
+                    uploadWindowCarryoverCount,
+                    "row",
+                  )}{" "}
+                  looked like it belonged to a position opened before this CSV
+                  window, so it was set aside from normal long-side analytics.
+                  You can review it in advanced import details.
+                </div>
+              ) : null}
+              {isCommitted && decisionReviewQueuedCount > 0 ? (
+                <div className="mt-4 rounded-md border border-sky-900 bg-sky-950/20 px-3 py-2 text-xs leading-5 text-sky-100">
+                  Chart evidence is still loading for{" "}
+                  {importCountLabel(decisionReviewQueuedCount, "saved trade")}.
+                  You can start reviewing executions now, and resume chart data
+                  review from advanced details if it stops.
+                </div>
+              ) : null}
             </div>
             <div className="border border-zinc-900 bg-zinc-950 p-3">
               <div className="text-xs uppercase tracking-wide text-zinc-500">
@@ -350,19 +395,22 @@ export default async function ImportBatchPage({
 
         <ImportRecoveryActions batchId={batch.id} recovery={recovery} />
 
-        <ImportRepairActions
-          batchId={batch.id}
-          repairItems={plan.repairItems}
-        />
+        {actionableRepairItems.length > 0 ? (
+          <ImportRepairActions
+            batchId={batch.id}
+            repairItems={actionableRepairItems}
+          />
+        ) : null}
 
         <section className="grid gap-6 xl:grid-cols-2">
           <div className="ti-panel p-4" data-testid="import-batch-saved-trades">
             <h2 className="text-sm font-semibold text-zinc-100">
-              Saved Trades
+              {isCommitted ? "Saved Trades" : "Trades Ready To Save"}
             </h2>
             <p className="mt-1 text-xs leading-5 text-zinc-500">
-              Open a saved trade to review executions, notes, checklist state,
-              session timing, and any chart evidence notes.
+              {isCommitted
+                ? "Open a saved trade to review executions, notes, checklist state, session timing, and any chart evidence notes."
+                : "These trades were found in the CSV preview. Save the import before opening individual trade reviews."}
             </p>
             <div className="mt-4 grid gap-2">
               {plan.savedTrades.length === 0 ? (
@@ -370,25 +418,44 @@ export default async function ImportBatchPage({
                   No saved trades are available for this import yet.
                 </div>
               ) : (
-                plan.savedTrades.map((trade) => (
-                  <Link
-                    key={trade.id}
-                    className="border-t border-zinc-900 py-3 text-sm hover:text-sky-200"
-                    href={`/trades/${encodeURIComponent(trade.id)}#writing-flow`}
-                  >
-                    <div className="font-medium text-zinc-100">
-                      {trade.symbol} /{" "}
-                      {importTradeDirectionLabel(trade.tradeDirection)}
+                plan.savedTrades.map((trade) => {
+                  const body = (
+                    <>
+                      <div className="font-medium text-zinc-100">
+                        {trade.symbol} /{" "}
+                        {importTradeDirectionLabel(trade.tradeDirection)}
+                      </div>
+                      <div className="mt-1 text-xs text-zinc-500">
+                        {importStatusLabel(trade.lifecycleStatus)} /{" "}
+                        {trade.entryHourLabelEt}
+                      </div>
+                      <div
+                        className={`mt-2 text-xs ${
+                          isCommitted ? "text-sky-300" : "text-zinc-500"
+                        }`}
+                      >
+                        {isCommitted ? "Open trade review" : "Save import first"}
+                      </div>
+                    </>
+                  );
+
+                  return isCommitted ? (
+                    <Link
+                      key={trade.id}
+                      className="border-t border-zinc-900 py-3 text-sm hover:text-sky-200"
+                      href={`/trades/${encodeURIComponent(trade.id)}#writing-flow`}
+                    >
+                      {body}
+                    </Link>
+                  ) : (
+                    <div
+                      key={trade.id}
+                      className="border-t border-zinc-900 py-3 text-sm"
+                    >
+                      {body}
                     </div>
-                    <div className="mt-1 text-xs text-zinc-500">
-                      {importStatusLabel(trade.lifecycleStatus)} /{" "}
-                      {trade.entryHourLabelEt}
-                    </div>
-                    <div className="mt-2 text-xs text-sky-300">
-                      Open trade review
-                    </div>
-                  </Link>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -430,6 +497,45 @@ export default async function ImportBatchPage({
           testId="import-batch-advanced-details"
         >
           <section className="grid gap-6 xl:grid-cols-2">
+            {advancedRepairNotes.length > 0 ? (
+              <div
+                className="ti-panel p-4"
+                data-testid="import-batch-advanced-repair-notes"
+              >
+                <h2 className="text-sm font-semibold text-zinc-100">
+                  Automatic Row Notes
+                </h2>
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  These rows were handled automatically and are kept here for
+                  traceability. They do not need action before reviewing saved
+                  trades.
+                </p>
+                <div className="mt-4 grid gap-2">
+                  {advancedRepairNotes.slice(0, 8).map((item) => (
+                    <div key={item.id} className="border-t border-zinc-900 py-3">
+                      <div className="text-sm font-medium text-zinc-100">
+                        {item.title}
+                      </div>
+                      <div className="mt-1 text-xs leading-5 text-zinc-500">
+                        {item.detail}
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs uppercase tracking-wide text-zinc-500">
+                        {item.rowIndex ? <span>row {item.rowIndex}</span> : null}
+                        <span>{importStatusLabel(item.severity)}</span>
+                        <span>{importStatusLabel(item.status)}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {advancedRepairNotes.length > 8 ? (
+                    <div className="border-t border-zinc-900 py-3 text-xs text-zinc-500">
+                      {advancedRepairNotes.length - 8} more automatic row notes
+                      are retained in the import record.
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
             <div
               className="ti-panel p-4"
               data-testid="import-batch-technical-summary"
@@ -514,6 +620,12 @@ export default async function ImportBatchPage({
                     ))
                 )}
               </div>
+              {decisionReviewQueuedCount > 0 ? (
+                <ResumeChartReviewActions
+                  batchId={batch.id}
+                  queuedCount={decisionReviewQueuedCount}
+                />
+              ) : null}
               {decisionReviewDiagnostics.length > 0 ? (
                 <div className="mt-5 grid gap-2">
                   <div className="text-xs uppercase tracking-wide text-zinc-500">

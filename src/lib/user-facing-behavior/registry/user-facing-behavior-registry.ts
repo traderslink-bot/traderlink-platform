@@ -90,7 +90,10 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     missingDataSentence:
       "Chart data is needed to tell whether this was a planned dip buy, a repaired trade, or added risk into weakness.",
     requiredEvidence: ["ordered executions", "adverse price add count"],
-    optionalEvidence: ["candle structure after the add", "nearest level context"],
+    optionalEvidence: [
+      "candle structure after the add",
+      "nearest level context",
+    ],
     triggerRules: ["adversePriceAddCount is greater than zero"],
     negativeGuards: [
       "Do not call it averaging down unless below-basis evidence is available.",
@@ -158,7 +161,11 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
   },
   {
     behaviorId: "overbuilt_losing_position",
-    aliases: ["Overbuilt Losing Position", "overbuilt_position", "Overbuilt Position"],
+    aliases: [
+      "Overbuilt Losing Position",
+      "overbuilt_position",
+      "Overbuilt Position",
+    ],
     state: "certified_detection",
     tone: "risk",
     opportunityType: "risk_to_reduce",
@@ -172,7 +179,10 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Detected from gross losing outcome plus size expansion or overbuilt-position risk evidence.",
     missingDataSentence:
       "Exact avoidable loss needs deeper context; this only flags the size/risk sequence.",
-    requiredEvidence: ["gross losing result", "size expansion or overbuilt risk ID"],
+    requiredEvidence: [
+      "gross losing result",
+      "size expansion or overbuilt risk ID",
+    ],
     optionalEvidence: ["max favorable excursion", "support/resistance context"],
     triggerRules: [
       "grossRealizedPnl is negative",
@@ -182,9 +192,10 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not estimate alternate P/L.",
       "Do not say every add was wrong.",
     ],
-    confidenceRules: ["High when losing outcome and size expansion both exist."],
-    unsupportedFallback:
-      "Review where size should have stopped increasing.",
+    confidenceRules: [
+      "High when losing outcome and size expansion both exist.",
+    ],
+    unsupportedFallback: "Review where size should have stopped increasing.",
     advancedHowDetected:
       "Mapped from overbuilt_losing_position when a losing trade also shows large position expansion.",
     routesAllowed: CORE_ROUTES,
@@ -225,7 +236,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Mapped from poor_first_reduction when the first reduction barely changed exposure.",
     routesAllowed: CORE_ROUTES,
     copySafetyNotes: ["Use reduction/risk language, not judgmental wording."],
-    testCases: ["poor first reduction maps to clear profit-protection review copy"],
+    testCases: [
+      "poor first reduction maps to clear profit-protection review copy",
+    ],
   },
   {
     behaviorId: "left_open_position",
@@ -261,7 +274,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     advancedHowDetected:
       "Mapped from left_open_position when the saved execution sequence ends non-flat.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Keep open-trade state separate from closed-trade coaching."],
+    copySafetyNotes: [
+      "Keep open-trade state separate from closed-trade coaching.",
+    ],
     testCases: ["open trade maps to non-closed review copy"],
   },
   {
@@ -280,8 +295,16 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Detected from repeated same-symbol saved trades with risk labels or losing outcomes.",
     missingDataSentence:
       "Volume and level context can explain whether later attempts had worse market conditions.",
-    requiredEvidence: ["same symbol", "multiple trades", "risk or losing outcome"],
-    optionalEvidence: ["same-symbol thread", "volume context", "levels context"],
+    requiredEvidence: [
+      "same symbol",
+      "multiple trades",
+      "risk or losing outcome",
+    ],
+    optionalEvidence: [
+      "same-symbol thread",
+      "volume context",
+      "levels context",
+    ],
     triggerRules: ["same symbol has two or more risky/loss rows"],
     negativeGuards: [
       "Do not claim emotional revenge.",
@@ -296,7 +319,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     advancedHowDetected:
       "Mapped from overtraded_same_ticker after same-symbol risky trades repeat in the report.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Use same-ticker language rather than overtrader identity labels."],
+    copySafetyNotes: [
+      "Use same-ticker language rather than overtrader identity labels.",
+    ],
     testCases: ["same ticker repeat maps to certified copy"],
   },
   {
@@ -331,7 +356,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     advancedHowDetected:
       "Mapped from all_or_nothing_exit_after_many_adds using execution sequence structure.",
     routesAllowed: TRADE_REVIEW_ROUTES,
-    copySafetyNotes: ["Ask about the plan rather than assuming there was none."],
+    copySafetyNotes: [
+      "Ask about the plan rather than assuming there was none.",
+    ],
     testCases: ["many-adds one-exit maps to reviewable risk copy"],
   },
   {
@@ -387,12 +414,16 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Needs trade plan, same-symbol thread context, or chart evidence before becoming a stronger conclusion.",
     requiredEvidence: ["execution timestamps", "execution clustering"],
     optionalEvidence: ["saved plan", "same-symbol thread", "candle context"],
-    triggerRules: ["rapidFireGapCount is above zero or executionsPerMinute is high"],
+    triggerRules: [
+      "rapidFireGapCount is above zero or executionsPerMinute is high",
+    ],
     negativeGuards: [
       "Do not call this revenge or impulsive behavior from speed alone.",
       "Do not use it as the top fix-first action unless a certified risk also supports it.",
     ],
-    confidenceRules: ["Review prompt unless another certified behavior confirms the risk."],
+    confidenceRules: [
+      "Review prompt unless another certified behavior confirms the risk.",
+    ],
     unsupportedFallback:
       "Review whether the fast execution cluster was planned or reactive.",
     advancedHowDetected:
@@ -419,14 +450,15 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Chart evidence can explain whether the late add had room, but the add timing is execution evidence.",
     requiredEvidence: ["first reduction", "later add", "meaningful add size"],
     optionalEvidence: ["chart structure after re-add", "volume after re-add"],
-    triggerRules: ["addsAfterFirstReductionCount is present and add size is meaningful"],
+    triggerRules: [
+      "addsAfterFirstReductionCount is present and add size is meaningful",
+    ],
     negativeGuards: [
       "Do not call the late add wrong without market context.",
       "Do not merge this with a separate flat-to-flat round trip.",
     ],
     confidenceRules: ["High when the reduction-then-add order is clear."],
-    unsupportedFallback:
-      "Review whether the late add had a planned reason.",
+    unsupportedFallback: "Review whether the late add had a planned reason.",
     advancedHowDetected:
       "Mapped from large_late_add when meaningful size was added after the first reduction.",
     routesAllowed: CORE_ROUTES,
@@ -449,20 +481,30 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Detected from reduction executions that realized an adverse price versus the prior average entry.",
     missingDataSentence:
       "Market context is needed before saying the chart failed or support broke.",
-    requiredEvidence: ["average entry before reduction", "adverse reduction price"],
-    optionalEvidence: ["candles before reduction", "support/resistance context"],
+    requiredEvidence: [
+      "average entry before reduction",
+      "adverse reduction price",
+    ],
+    optionalEvidence: [
+      "candles before reduction",
+      "support/resistance context",
+    ],
     triggerRules: ["losingReductionCount is greater than zero"],
     negativeGuards: [
       "Do not imply a guaranteed better exit.",
       "Do not call the hold wrong without plan or chart evidence.",
     ],
-    confidenceRules: ["High when reduction price and prior average entry are known."],
+    confidenceRules: [
+      "High when reduction price and prior average entry are known.",
+    ],
     unsupportedFallback:
       "Review whether the reduction happened later than your plan allowed.",
     advancedHowDetected:
       "Mapped from losing_reduction_sequence when a reduction realized an adverse execution price.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Keep this about reduction timing, not hindsight certainty."],
+    copySafetyNotes: [
+      "Keep this about reduction timing, not hindsight certainty.",
+    ],
     testCases: ["losing reduction maps to plain risk-reduction copy"],
   },
   {
@@ -481,14 +523,22 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Detected from one entry-side execution, one full exit, and a return to flat.",
     missingDataSentence:
       "Chart evidence can judge setup quality, but the clean execution structure is visible from executions.",
-    requiredEvidence: ["one entry-side execution", "one full exit", "closed flat"],
+    requiredEvidence: [
+      "one entry-side execution",
+      "one full exit",
+      "closed flat",
+    ],
     optionalEvidence: ["setup context", "exit context"],
-    triggerRules: ["positionIncreaseCount is one, reductionCount is one, and closedToFlat is true"],
+    triggerRules: [
+      "positionIncreaseCount is one, reductionCount is one, and closedToFlat is true",
+    ],
     negativeGuards: [
       "Do not imply the entry was good without chart evidence.",
       "Do not imply this structure fits every trade.",
     ],
-    confidenceRules: ["High when the round trip is closed and the execution count is clear."],
+    confidenceRules: [
+      "High when the round trip is closed and the execution count is clear.",
+    ],
     unsupportedFallback:
       "Review whether the clean structure matched the trade plan.",
     advancedHowDetected:
@@ -515,14 +565,15 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Chart data is needed before saying the adds were near support or strength.",
     requiredEvidence: ["add executions", "no adverse-price adds"],
     optionalEvidence: ["candle structure", "support/resistance context"],
-    triggerRules: ["addCountAfterInitialEntry is present and adversePriceAddCount is zero"],
+    triggerRules: [
+      "addCountAfterInitialEntry is present and adversePriceAddCount is zero",
+    ],
     negativeGuards: [
       "Do not call the add location good without market context.",
       "Do not treat controlled scale-in as a recommendation to add.",
     ],
     confidenceRules: ["High when add prices and average entry are known."],
-    unsupportedFallback:
-      "Review what evidence existed before each add.",
+    unsupportedFallback: "Review what evidence existed before each add.",
     advancedHowDetected:
       "Mapped from controlled_scale_in when added size avoided adverse execution prices.",
     routesAllowed: CORE_ROUTES,
@@ -547,17 +598,20 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Chart evidence can explain whether those exits matched levels or a fade.",
     requiredEvidence: ["partial reductions", "closed flat"],
     optionalEvidence: ["planned targets", "post-exit candles"],
-    triggerRules: ["partialReductionCount is greater than zero and closedToFlat is true"],
+    triggerRules: [
+      "partialReductionCount is greater than zero and closedToFlat is true",
+    ],
     negativeGuards: [
       "Do not say each partial was optimal without plan or chart evidence.",
     ],
     confidenceRules: ["High when reductions and flat close are clear."],
-    unsupportedFallback:
-      "Review whether each partial had a planned reason.",
+    unsupportedFallback: "Review whether each partial had a planned reason.",
     advancedHowDetected:
       "Mapped from structured_partial_exit_sequence when staged reductions closed the position.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Praise staged risk control without overclaiming exit quality."],
+    copySafetyNotes: [
+      "Praise staged risk control without overclaiming exit quality.",
+    ],
     testCases: ["structured partial exits map to a repeatable strength"],
   },
   {
@@ -578,13 +632,14 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Market context can explain whether that reduction came before a fade.",
     requiredEvidence: ["first reduction timing", "first reduction size"],
     optionalEvidence: ["open-profit path", "post-reduction candles"],
-    triggerRules: ["first reduction removed at least a meaningful share quickly"],
+    triggerRules: [
+      "first reduction removed at least a meaningful share quickly",
+    ],
     negativeGuards: [
       "Do not call it a top exit without post-reduction candles.",
     ],
     confidenceRules: ["High when timing and position-size math are available."],
-    unsupportedFallback:
-      "Review what triggered the early reduction.",
+    unsupportedFallback: "Review what triggered the early reduction.",
     advancedHowDetected:
       "Mapped from early_position_risk_reduction when risk was reduced early in the sequence.",
     routesAllowed: CORE_ROUTES,
@@ -615,8 +670,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not imply future exits should happen at the same price.",
     ],
     confidenceRules: ["High when final position is flat."],
-    unsupportedFallback:
-      "Review whether the full exit matched your plan.",
+    unsupportedFallback: "Review whether the full exit matched your plan.",
     advancedHowDetected:
       "Mapped from decisive_full_exit when the position returned cleanly to flat.",
     routesAllowed: CORE_ROUTES,
@@ -645,7 +699,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     negativeGuards: [
       "Do not imply size is correct without account/risk-plan context.",
     ],
-    confidenceRules: ["High when multiple entry-side executions have similar share size."],
+    confidenceRules: [
+      "High when multiple entry-side executions have similar share size.",
+    ],
     unsupportedFallback:
       "Review whether consistent size matched the trade plan.",
     advancedHowDetected:
@@ -676,27 +732,33 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     negativeGuards: [
       "Do not say perfect exit or top tick without market context.",
     ],
-    confidenceRules: ["High when every reduction price is favorable versus prior average entry."],
-    unsupportedFallback:
-      "Review what made the reduction timing repeatable.",
+    confidenceRules: [
+      "High when every reduction price is favorable versus prior average entry.",
+    ],
+    unsupportedFallback: "Review what made the reduction timing repeatable.",
     advancedHowDetected:
       "Mapped from profitable_reduction_sequence when all reductions had favorable execution prices.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Use favorable execution language, not hindsight perfection."],
+    copySafetyNotes: [
+      "Use favorable execution language, not hindsight perfection.",
+    ],
     testCases: ["profitable reductions map to a certified strength"],
   },
   {
     behaviorId: "entry_near_daily_4h_resistance",
-    aliases: ["Entry was close to daily/4h resistance"],
+    aliases: [
+      "Entry was close to daily/4h resistance",
+      "Entry started just below daily/4h resistance",
+    ],
     state: "certified_detection",
     tone: "risk",
     opportunityType: "risk_to_reduce",
     evidenceChannel: "market_context",
-    userFacingLabel: "Entry was close to resistance",
+    userFacingLabel: "Entry started just below resistance",
     plainExplanation:
-      "The first entry started close to a higher-timeframe resistance area.",
+      "The first entry started just below a higher-timeframe resistance area.",
     fixFirstAction:
-      "Before entering near resistance, define the proof that the trade has enough room to keep working.",
+      "Before entering just below resistance, define the proof that the trade has enough room to keep working.",
     evidenceSentence:
       "Detected from levels-system daily/4h resistance distance and strength evidence.",
     missingDataSentence:
@@ -707,20 +769,26 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "distance to nearest resistance",
       "resistance strength",
     ],
-    optionalEvidence: ["reaction count", "trade-window candles", "volume context"],
+    optionalEvidence: [
+      "reaction count",
+      "trade-window candles",
+      "volume context",
+    ],
     triggerRules: [
       "nearest daily/4h resistance exists",
-      "first entry is within the configured resistance-distance threshold",
+      "first entry is within the configured resistance-distance threshold below overhead resistance",
     ],
     negativeGuards: [
       "Do not show without levels-system market context.",
       "Do not call it a sell signal or imply the trade could not work.",
     ],
-    confidenceRules: ["High when distance and level strength are both present."],
+    confidenceRules: [
+      "High when distance and level strength are both present.",
+    ],
     unsupportedFallback:
-      "Wait for chart data, then review whether the entry was too close to resistance.",
+      "Wait for chart data, then review whether the entry was too close to overhead resistance.",
     advancedHowDetected:
-      "Mapped from entry_near_daily_4h_resistance when the decision-review layer finds the first fill near daily/4h resistance.",
+      "Mapped from entry_near_daily_4h_resistance when the decision-review layer finds the first fill just below daily/4h resistance.",
     routesAllowed: CORE_ROUTES,
     copySafetyNotes: [
       "Use resistance-location language only when market context is attached.",
@@ -732,14 +800,15 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     aliases: [
       "Entry had limited clean room",
       "Entry had limited room before resistance",
+      "Entry had limited room before overhead resistance",
     ],
     state: "certified_detection",
     tone: "risk",
     opportunityType: "risk_to_reduce",
     evidenceChannel: "market_context",
-    userFacingLabel: "Entry had limited room before resistance",
+    userFacingLabel: "Entry had limited room before overhead resistance",
     plainExplanation:
-      "The entry did not leave much nearby room before the next resistance area.",
+      "The entry did not leave much nearby room before the next overhead resistance area.",
     fixFirstAction:
       "Check the distance to resistance before entering and decide whether the reward path is wide enough.",
     evidenceSentence:
@@ -753,7 +822,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     optionalEvidence: ["resistance strength", "recent candle extension"],
     triggerRules: [
-      "entry is below or near resistance",
+      "entry is below or near overhead resistance",
       "distance to resistance is below the configured room threshold",
     ],
     negativeGuards: [
@@ -762,25 +831,30 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     ],
     confidenceRules: ["High when the level and distance are both available."],
     unsupportedFallback:
-      "Review whether the entry had enough room before the next resistance area.",
+      "Review whether the entry had enough room before the next overhead resistance area.",
     advancedHowDetected:
       "Mapped from entry_limited_clean_room_to_resistance after distance-to-resistance evidence is attached.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Say limited room before resistance, not clean room."],
+    copySafetyNotes: [
+      "Say limited room before overhead resistance, not clean room.",
+    ],
     testCases: ["limited room maps without clean-room wording"],
   },
   {
     behaviorId: "entry_near_daily_4h_support",
-    aliases: ["Entry was close to daily/4h support"],
+    aliases: [
+      "Entry was close to daily/4h support",
+      "Entry started near daily/4h support below",
+    ],
     state: "certified_detection",
     tone: "strength",
     opportunityType: "strength_to_repeat",
     evidenceChannel: "market_context",
-    userFacingLabel: "Entry was close to support",
+    userFacingLabel: "Entry started near support below",
     plainExplanation:
-      "The first entry started near a higher-timeframe support area.",
+      "The first entry started near a higher-timeframe support area below.",
     fixFirstAction:
-      "Keep checking whether entries are near a real support area instead of chasing away from it.",
+      "Keep checking whether entries have real support below instead of chasing away from structure.",
     evidenceSentence:
       "Detected from levels-system daily/4h support distance and strength evidence.",
     missingDataSentence:
@@ -800,27 +874,35 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not imply support will hold in the future.",
       "Do not turn support proximity into a buy signal.",
     ],
-    confidenceRules: ["High when distance and level strength are both present."],
+    confidenceRules: [
+      "High when distance and level strength are both present.",
+    ],
     unsupportedFallback:
-      "Wait for chart data, then review whether the entry had nearby support.",
+      "Wait for chart data, then review whether the entry had nearby support below.",
     advancedHowDetected:
       "Mapped from entry_near_daily_4h_support when the decision-review layer finds the first fill near daily/4h support.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Praise the reviewed location without making a signal claim."],
+    copySafetyNotes: [
+      "Praise the reviewed location without making a signal claim.",
+    ],
     testCases: ["near support maps to certified strength copy"],
   },
   {
     behaviorId: "entry_far_from_daily_4h_support",
-    aliases: ["Entry was not close to support", "Entry had little nearby support"],
+    aliases: [
+      "Entry was not close to support",
+      "Entry had little nearby support",
+      "Entry had little support underneath",
+    ],
     state: "certified_detection",
     tone: "warning",
     opportunityType: "risk_to_reduce",
     evidenceChannel: "market_context",
-    userFacingLabel: "Entry had little nearby support",
+    userFacingLabel: "Entry had little support underneath",
     plainExplanation:
-      "Daily/4h context was available, but the first fill was not near a clear support area.",
+      "Daily/4h context was available, but the first fill was not near a clear support area underneath.",
     fixFirstAction:
-      "Before entering, check whether the closest support is close enough to define risk.",
+      "Before entering, check whether the closest support below is close enough to define risk.",
     evidenceSentence:
       "Detected from levels-system support context showing no nearby daily/4h support at entry.",
     missingDataSentence:
@@ -839,13 +921,17 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not show when support data is missing.",
       "Do not say the trade should not have been taken.",
     ],
-    confidenceRules: ["High only when market context is present but not supportive."],
+    confidenceRules: [
+      "High only when market context is present but not supportive.",
+    ],
     unsupportedFallback:
-      "Wait for chart data, then review whether the entry had nearby support.",
+      "Wait for chart data, then review whether the entry had nearby support underneath.",
     advancedHowDetected:
       "Mapped from entry_far_from_daily_4h_support when support context is present but not close enough.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Separate unavailable support data from present-but-weak support context."],
+    copySafetyNotes: [
+      "Separate unavailable support data from present-but-weak support context.",
+    ],
     testCases: ["far-from-support maps only as market-context copy"],
   },
   {
@@ -878,13 +964,17 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not show from execution-only data.",
       "Do not say guaranteed missed profit or that the user should have held.",
     ],
-    confidenceRules: ["High when post-exit candle evidence is aligned and complete."],
+    confidenceRules: [
+      "High when post-exit candle evidence is aligned and complete.",
+    ],
     unsupportedFallback:
       "Review whether the exit was early once after-exit chart evidence is available.",
     advancedHowDetected:
       "Mapped from exit_left_continuation when post-exit candles show favorable continuation after the final exit.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Use hindsight carefully and never turn continuation into trade advice."],
+    copySafetyNotes: [
+      "Use hindsight carefully and never turn continuation into trade advice.",
+    ],
     testCases: ["post-exit continuation requires market-context evidence"],
   },
   {
@@ -917,7 +1007,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not show as a certified missed-continuation conclusion.",
       "Do not say the user should have held.",
     ],
-    confidenceRules: ["Prompt-only until after-exit candle evidence is aligned."],
+    confidenceRules: [
+      "Prompt-only until after-exit candle evidence is aligned.",
+    ],
     unsupportedFallback:
       "Review whether the exit had a planned reason, then wait for after-exit chart evidence before making a continuation conclusion.",
     advancedHowDetected:
@@ -960,7 +1052,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not call it money left behind until calibration proves the move is usable.",
       "Do not imply a future hold decision.",
     ],
-    confidenceRules: ["Prompt-only until large after-exit moves are calibrated."],
+    confidenceRules: [
+      "Prompt-only until large after-exit moves are calibrated.",
+    ],
     unsupportedFallback:
       "Review the after-exit move manually before turning it into a coaching conclusion.",
     advancedHowDetected:
@@ -1017,14 +1111,17 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
   },
   {
     behaviorId: "stacked_daily_4h_resistance_above_entry",
-    aliases: ["Resistance was stacked above the entry"],
+    aliases: [
+      "Resistance was stacked above the entry",
+      "Resistance was stacked overhead",
+    ],
     state: "certified_detection",
     tone: "risk",
     opportunityType: "risk_to_reduce",
     evidenceChannel: "market_context",
-    userFacingLabel: "Resistance was stacked above the entry",
+    userFacingLabel: "Resistance was stacked overhead",
     plainExplanation:
-      "Multiple higher-timeframe resistance areas were overhead, so the trade had more chart structure to work through.",
+      "Multiple higher-timeframe resistance areas were above the entry, so the trade had more chart structure to work through than a single nearby level.",
     fixFirstAction:
       "Before entering under stacked resistance, decide what proves the move has enough room to continue.",
     evidenceSentence:
@@ -1032,19 +1129,28 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     missingDataSentence:
       "Needs daily/4h support and resistance context before stacked resistance can be reviewed.",
     requiredEvidence: ["daily/4h resistance levels", "first entry price"],
-    optionalEvidence: ["distance to each resistance level", "reaction strength"],
-    triggerRules: ["multiple resistance levels sit above the entry within the configured cluster"],
+    optionalEvidence: [
+      "distance to each resistance level",
+      "reaction strength",
+    ],
+    triggerRules: [
+      "multiple resistance levels sit above the entry within the configured cluster",
+    ],
     negativeGuards: [
       "Do not say the trade could not work.",
       "Do not turn resistance into a sell signal.",
     ],
-    confidenceRules: ["High when level count and distance evidence are present."],
+    confidenceRules: [
+      "High when level count and distance evidence are present.",
+    ],
     unsupportedFallback:
       "Wait for chart data, then review whether overhead resistance was crowded.",
     advancedHowDetected:
       "Mapped from stacked_daily_4h_resistance_above_entry when levels-system finds multiple resistance areas above entry.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Use overhead structure language, not trade-call language."],
+    copySafetyNotes: [
+      "Use overhead structure language, not trade-call language.",
+    ],
     testCases: ["stacked resistance maps to certified chart-evidence copy"],
   },
   {
@@ -1065,18 +1171,24 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Needs support/resistance context before the app can praise room above.",
     requiredEvidence: ["cleared nearby resistance", "room to next resistance"],
     optionalEvidence: ["trade-window follow-through", "volume context"],
-    triggerRules: ["entry clears nearby resistance and has configured room to the next resistance area"],
+    triggerRules: [
+      "entry clears nearby resistance and has configured room to the next resistance area",
+    ],
     negativeGuards: [
       "Do not imply the breakout was guaranteed to continue.",
       "Do not call it a buy signal.",
     ],
-    confidenceRules: ["High when both cleared-resistance and room evidence are present."],
+    confidenceRules: [
+      "High when both cleared-resistance and room evidence are present.",
+    ],
     unsupportedFallback:
       "Wait for chart data, then review whether the breakout had room to continue.",
     advancedHowDetected:
       "Mapped from breakout_had_room_above after levels-system confirms room above cleared resistance.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Praise the reviewed structure without future-looking language."],
+    copySafetyNotes: [
+      "Praise the reviewed structure without future-looking language.",
+    ],
     testCases: ["breakout room maps as a repeatable strength"],
   },
   {
@@ -1095,14 +1207,22 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Detected from candle and trade-window context around the first entry.",
     missingDataSentence:
       "Needs candle or level context before extension can be reviewed as a chart conclusion.",
-    requiredEvidence: ["first entry timestamp", "pre-entry movement", "trade-window or candle context"],
+    requiredEvidence: [
+      "first entry timestamp",
+      "pre-entry movement",
+      "trade-window or candle context",
+    ],
     optionalEvidence: ["support/resistance location", "volume context"],
-    triggerRules: ["entry follows a configured recent run-up or late favorable extension"],
+    triggerRules: [
+      "entry follows a configured recent run-up or late favorable extension",
+    ],
     negativeGuards: [
       "Do not call the trader impulsive.",
       "Do not show from execution speed alone.",
     ],
-    confidenceRules: ["High when pre-entry movement and first-entry location are both available."],
+    confidenceRules: [
+      "High when pre-entry movement and first-entry location are both available.",
+    ],
     unsupportedFallback:
       "Review whether the entry came after the easy part of the move was already gone.",
     advancedHowDetected:
@@ -1134,13 +1254,17 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not imply the trade was guaranteed to work.",
       "Do not convert constructive location into a signal.",
     ],
-    confidenceRules: ["High when entry structure and remaining-room evidence agree."],
+    confidenceRules: [
+      "High when entry structure and remaining-room evidence agree.",
+    ],
     unsupportedFallback:
       "Review whether the entry had enough room to work once chart evidence is available.",
     advancedHowDetected:
       "Mapped from entry_had_constructive_location after chart-evidence entry structure is available.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Use repeatable structure language without future guarantees."],
+    copySafetyNotes: [
+      "Use repeatable structure language without future guarantees.",
+    ],
     testCases: ["constructive entry location maps to strength copy"],
   },
   {
@@ -1166,7 +1290,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not say the user should not have entered.",
       "Do not call it a failed setup without chart evidence.",
     ],
-    confidenceRules: ["High when breakout structure and failed follow-through are both present."],
+    confidenceRules: [
+      "High when breakout structure and failed follow-through are both present.",
+    ],
     unsupportedFallback:
       "Review whether the breakout held after entry once chart evidence is available.",
     advancedHowDetected:
@@ -1193,12 +1319,16 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Needs favorable movement and position-building evidence before this can be reviewed.",
     requiredEvidence: ["favorable movement", "position-building count"],
     optionalEvidence: ["support/resistance context", "user sizing plan"],
-    triggerRules: ["winner opportunity exists while position building remains limited"],
+    triggerRules: [
+      "winner opportunity exists while position building remains limited",
+    ],
     negativeGuards: [
       "Do not say the user should have added size.",
       "Do not ignore the user's risk plan.",
     ],
-    confidenceRules: ["High when favorable movement and limited position building are both clear."],
+    confidenceRules: [
+      "High when favorable movement and limited position building are both clear.",
+    ],
     unsupportedFallback:
       "Review whether staying small was intentional risk control or an under-pressed winner.",
     advancedHowDetected:
@@ -1255,14 +1385,20 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Detected from add location in the recent range and during-trade movement.",
     missingDataSentence:
       "Needs candle or range context before late-add range use can be reviewed.",
-    requiredEvidence: ["add executions", "recent range position", "trade-window movement"],
+    requiredEvidence: [
+      "add executions",
+      "recent range position",
+      "trade-window movement",
+    ],
     optionalEvidence: ["support/resistance context", "volume context"],
     triggerRules: ["average add price sits high in recent range"],
     negativeGuards: [
       "Do not say the add was wrong without plan context.",
       "Do not claim volume faded unless volume evidence exists.",
     ],
-    confidenceRules: ["High when add range location and trade-window evidence are present."],
+    confidenceRules: [
+      "High when add range location and trade-window evidence are present.",
+    ],
     unsupportedFallback:
       "Review whether late adds still had enough room to justify the added risk.",
     advancedHowDetected:
@@ -1287,7 +1423,11 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Detected from add executions compared with daily/4h resistance context.",
     missingDataSentence:
       "Needs support/resistance context before add location can be judged.",
-    requiredEvidence: ["add executions", "daily/4h resistance", "distance from add to resistance"],
+    requiredEvidence: [
+      "add executions",
+      "daily/4h resistance",
+      "distance from add to resistance",
+    ],
     optionalEvidence: ["reaction strength", "volume context"],
     triggerRules: ["one or more adds occur near resistance"],
     negativeGuards: [
@@ -1319,9 +1459,15 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Detected from add executions, cleared resistance, and room-to-next-resistance evidence.",
     missingDataSentence:
       "Needs support/resistance context before the app can praise add location.",
-    requiredEvidence: ["add execution", "cleared resistance", "room to next resistance"],
+    requiredEvidence: [
+      "add execution",
+      "cleared resistance",
+      "room to next resistance",
+    ],
     optionalEvidence: ["volume context", "follow-through candles"],
-    triggerRules: ["add occurs above cleared resistance with configured room to the next level"],
+    triggerRules: [
+      "add occurs above cleared resistance with configured room to the next level",
+    ],
     negativeGuards: [
       "Do not imply cleared resistance guarantees continuation.",
       "Do not call it a buy signal.",
@@ -1351,7 +1497,11 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Detected from reduction executions compared with daily/4h resistance context.",
     missingDataSentence:
       "Needs support/resistance context before the app can praise reduction location.",
-    requiredEvidence: ["reduction execution", "daily/4h resistance", "distance from reduction to resistance"],
+    requiredEvidence: [
+      "reduction execution",
+      "daily/4h resistance",
+      "distance from reduction to resistance",
+    ],
     optionalEvidence: ["reaction strength", "post-reduction candle window"],
     triggerRules: ["one or more reductions occur near resistance"],
     negativeGuards: [
@@ -1364,7 +1514,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     advancedHowDetected:
       "Mapped from reductions_near_resistance when levels-system compares reduction executions to resistance.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Praise the reviewed process, not the future trade decision."],
+    copySafetyNotes: [
+      "Praise the reviewed process, not the future trade decision.",
+    ],
     testCases: ["reductions near resistance map to strength copy"],
   },
   {
@@ -1393,7 +1545,11 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "after-exit candle window",
       "after-exit fade evidence",
     ],
-    optionalEvidence: ["support/resistance context", "partial reduction sequence", "saved exit plan"],
+    optionalEvidence: [
+      "support/resistance context",
+      "partial reduction sequence",
+      "saved exit plan",
+    ],
     triggerRules: [
       "realized capture clears the configured threshold",
       "after-exit adverse move is larger than favorable continuation",
@@ -1415,7 +1571,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     copySafetyNotes: [
       "Frame this as a repeatable protection cue, not a perfect exit or prediction.",
     ],
-    testCases: ["protected profit before fade maps to repeatable strength copy"],
+    testCases: [
+      "protected profit before fade maps to repeatable strength copy",
+    ],
   },
   {
     behaviorId: "exit_captured_trade_well",
@@ -1433,7 +1591,10 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Detected from realized capture and final-exit distance from the trade's favorable extreme.",
     missingDataSentence:
       "Needs trade-window or post-exit context before capture quality can be reviewed.",
-    requiredEvidence: ["realized capture", "final exit distance from favorable extreme"],
+    requiredEvidence: [
+      "realized capture",
+      "final exit distance from favorable extreme",
+    ],
     optionalEvidence: ["post-exit candles", "support/resistance context"],
     triggerRules: ["realized capture clears the configured threshold"],
     negativeGuards: [
@@ -1503,13 +1664,14 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     copySafetyNotes: [
       "Praise the reviewed management process without implying a perfect exit or a future trade decision.",
     ],
-    testCases: [
-      "balanced management maps to repeatable full-trade strength",
-    ],
+    testCases: ["balanced management maps to repeatable full-trade strength"],
   },
   {
     behaviorId: "exit_avoided_adverse_followthrough",
-    aliases: ["Exit avoided adverse followthrough", "Disciplined defensive exit"],
+    aliases: [
+      "Exit avoided adverse followthrough",
+      "Disciplined defensive exit",
+    ],
     state: "certified_detection",
     tone: "strength",
     opportunityType: "strength_to_repeat",
@@ -1538,13 +1700,17 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not say the trader should always exit there.",
       "Do not use without post-exit candles.",
     ],
-    confidenceRules: ["High when adverse after-exit move and net end move agree."],
+    confidenceRules: [
+      "High when adverse after-exit move and net end move agree.",
+    ],
     unsupportedFallback:
       "Wait for after-exit candles, then review whether the exit avoided a fade.",
     advancedHowDetected:
       "Mapped from exit_avoided_adverse_followthrough when after-exit candles move adversely after the final exit.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Frame as a repeatable exit cue, not hindsight perfection."],
+    copySafetyNotes: [
+      "Frame as a repeatable exit cue, not hindsight perfection.",
+    ],
     testCases: ["exit avoided adverse followthrough maps to strength copy"],
   },
   {
@@ -1642,7 +1808,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not say resistance always means sell.",
       "Do not imply the trader predicted the reversal.",
     ],
-    confidenceRules: ["High when final-exit level location and after-exit direction agree."],
+    confidenceRules: [
+      "High when final-exit level location and after-exit direction agree.",
+    ],
     unsupportedFallback:
       "Review the resistance exit after chart evidence is available.",
     advancedHowDetected:
@@ -1685,7 +1853,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not say the trader should have held the full position.",
       "Do not calculate guaranteed missed P/L.",
     ],
-    confidenceRules: ["High when resistance location and post-exit continuation agree."],
+    confidenceRules: [
+      "High when resistance location and post-exit continuation agree.",
+    ],
     unsupportedFallback:
       "Review whether the exit plan had a runner rule once after-exit chart evidence is available.",
     advancedHowDetected:
@@ -1729,7 +1899,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not say support always fails.",
       "Do not imply the trader predicted the breakdown.",
     ],
-    confidenceRules: ["High when support location and post-exit breakdown agree."],
+    confidenceRules: [
+      "High when support location and post-exit breakdown agree.",
+    ],
     unsupportedFallback:
       "Wait for after-exit chart evidence, then review whether the exit avoided a support break.",
     advancedHowDetected:
@@ -1764,7 +1936,11 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "after-exit candle window",
       "post-exit relief evidence",
     ],
-    optionalEvidence: ["saved stop plan", "partial-exit sequence", "support strength"],
+    optionalEvidence: [
+      "saved stop plan",
+      "partial-exit sequence",
+      "support strength",
+    ],
     triggerRules: [
       "final exit occurs near support",
       "after-exit chart bounces or relieves from support",
@@ -1773,13 +1949,17 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not say the exit was wrong without plan context.",
       "Do not imply the trader should hold through support.",
     ],
-    confidenceRules: ["Prompt-only until plan context or stronger calibration exists."],
+    confidenceRules: [
+      "Prompt-only until plan context or stronger calibration exists.",
+    ],
     unsupportedFallback:
       "Review whether the exit near support followed the plan or whether a partial-size bounce rule would have helped.",
     advancedHowDetected:
       "Mapped from exit_into_support_with_relief_after_exit or stacked-support relief variants.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Keep this as a review prompt because support exits can be valid defensive exits."],
+    copySafetyNotes: [
+      "Keep this as a review prompt because support exits can be valid defensive exits.",
+    ],
     testCases: ["support relief after exit stays prompt-only"],
   },
   {
@@ -1798,21 +1978,29 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Detected from favorable excursion, realized capture, and profit-giveback evidence.",
     missingDataSentence:
       "Needs open-profit path and exit context before profit protection can be judged.",
-    requiredEvidence: ["open profit path", "realized capture", "final exit or reduction evidence"],
+    requiredEvidence: [
+      "open profit path",
+      "realized capture",
+      "final exit or reduction evidence",
+    ],
     optionalEvidence: ["post-exit candles", "support/resistance context"],
     triggerRules: ["failed profit-protection structure is present"],
     negativeGuards: [
       "Do not calculate alternate guaranteed P/L.",
       "Do not say the user should have sold at the top.",
     ],
-    confidenceRules: ["High when favorable excursion and realized capture evidence agree."],
+    confidenceRules: [
+      "High when favorable excursion and realized capture evidence agree.",
+    ],
     unsupportedFallback:
       "Review whether open profit had a protection rule before the trade gave it back.",
     advancedHowDetected:
       "Mapped from profit_protection_failed after open-profit giveback evidence is available.",
     routesAllowed: CORE_ROUTES,
     copySafetyNotes: ["Use protection-rule language, not hindsight blame."],
-    testCases: ["profit protection failure maps without guaranteed P/L language"],
+    testCases: [
+      "profit protection failure maps without guaranteed P/L language",
+    ],
   },
   {
     behaviorId: "reentry_volume_faded",
@@ -1837,18 +2025,24 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "saved chart evidence for both attempts",
     ],
     optionalEvidence: ["level location on each attempt", "P/L by round trip"],
-    triggerRules: ["later re-entry volume is materially lower than first-push volume"],
+    triggerRules: [
+      "later re-entry volume is materially lower than first-push volume",
+    ],
     negativeGuards: [
       "Do not claim volume caused the loss.",
       "Do not show when the two volume windows are not comparable.",
     ],
-    confidenceRules: ["High when both saved chart snapshots expose comparable entry-volume values."],
+    confidenceRules: [
+      "High when both saved chart snapshots expose comparable entry-volume values.",
+    ],
     unsupportedFallback:
       "Wait for comparable volume context before judging whether later participation faded.",
     advancedHowDetected:
       "Mapped from reentry_volume_faded when a same-symbol thread compares first-push and re-entry volume.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Use volume comparison language, not causation language."],
+    copySafetyNotes: [
+      "Use volume comparison language, not causation language.",
+    ],
     testCases: ["faded re-entry volume maps to risk copy"],
   },
   {
@@ -1874,18 +2068,24 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "saved chart evidence for both attempts",
     ],
     optionalEvidence: ["level location on each attempt", "P/L by round trip"],
-    triggerRules: ["later re-entry volume is comparable to or stronger than first-push volume"],
+    triggerRules: [
+      "later re-entry volume is comparable to or stronger than first-push volume",
+    ],
     negativeGuards: [
       "Do not imply strong volume guarantees continuation.",
       "Do not ignore entry location or risk management.",
     ],
-    confidenceRules: ["High when both saved chart snapshots expose comparable entry-volume values."],
+    confidenceRules: [
+      "High when both saved chart snapshots expose comparable entry-volume values.",
+    ],
     unsupportedFallback:
       "Wait for comparable volume context before praising the later re-entry.",
     advancedHowDetected:
       "Mapped from reentry_volume_confirmed when a same-symbol thread compares first-push and re-entry volume.",
     routesAllowed: CORE_ROUTES,
-    copySafetyNotes: ["Praise confirmed participation without turning it into a trade signal."],
+    copySafetyNotes: [
+      "Praise confirmed participation without turning it into a trade signal.",
+    ],
     testCases: ["confirmed re-entry volume maps to strength copy"],
   },
   {
@@ -1911,7 +2111,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Do not treat measurement by itself as a coaching conclusion.",
       "Do not use trade-window engine wording in primary UI.",
     ],
-    confidenceRules: ["Review prompt because movement measurement supports other findings."],
+    confidenceRules: [
+      "Review prompt because movement measurement supports other findings.",
+    ],
     unsupportedFallback:
       "Use measured movement as supporting context, not the main coaching conclusion.",
     advancedHowDetected:
@@ -1968,14 +2170,20 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Detected from losing or risky execution clusters, and should be checked against same-symbol trade threads.",
     missingDataSentence:
       "Needs same-symbol re-entry evidence and review context before it can become a stronger conclusion.",
-    requiredEvidence: ["same-symbol re-entry sequence", "time gap", "P/L by attempt"],
+    requiredEvidence: [
+      "same-symbol re-entry sequence",
+      "time gap",
+      "P/L by attempt",
+    ],
     optionalEvidence: ["volume on later attempt", "support/resistance context"],
     triggerRules: ["gross losing trade with rapid-fire cluster"],
     negativeGuards: [
       "Never state revenge or emotion as fact.",
       "Do not use as a top coach conclusion without thread evidence.",
     ],
-    confidenceRules: ["Review prompt unless repeated losing re-entry evidence exists."],
+    confidenceRules: [
+      "Review prompt unless repeated losing re-entry evidence exists.",
+    ],
     unsupportedFallback:
       "Review whether the re-entry was part of the same trade idea or a new attempt.",
     advancedHowDetected:
@@ -2034,7 +2242,9 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     requiredEvidence: ["reduction sequence", "saved plan or checklist"],
     optionalEvidence: ["open profit path"],
     triggerRules: ["partial-exit risk ID appears"],
-    negativeGuards: ["Do not claim no plan existed without saved plan evidence."],
+    negativeGuards: [
+      "Do not claim no plan existed without saved plan evidence.",
+    ],
     confidenceRules: ["Review prompt until saved plan evidence exists."],
     unsupportedFallback:
       "Review each partial and decide whether it had a planned reason.",
@@ -2056,8 +2266,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "A saved rule was broken more than once, but the user should still confirm whether the rule is useful.",
     fixFirstAction:
       "Inspect the linked trades and decide whether the rule needs a clearer threshold.",
-    evidenceSentence:
-      "Detected from saved rule evaluation counts.",
+    evidenceSentence: "Detected from saved rule evaluation counts.",
     missingDataSentence:
       "Needs user confirmation that the rule is still valid.",
     requiredEvidence: ["saved rule", "repeated rule violation count"],
@@ -2094,8 +2303,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
     triggerRules: ["internal experimental signal only"],
     negativeGuards: ["Do not show in primary UI."],
     confidenceRules: ["Internal-only until certified."],
-    unsupportedFallback:
-      "Keep this behavior in advanced diagnostics.",
+    unsupportedFallback: "Keep this behavior in advanced diagnostics.",
     advancedHowDetected:
       "Mapped from impulsive_reversal and blocked from primary UI.",
     routesAllowed: ["advanced"],

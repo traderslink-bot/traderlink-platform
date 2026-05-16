@@ -68,7 +68,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     ],
     expectedMarketContextSource: "levels_system_daily_4h",
     requiredHeadlineFragments: [
-      "major daily/4h resistance with limited room before resistance",
+      "major daily/4h resistance with limited room before overhead resistance",
     ],
     requiredTitleFragments: ["major daily/4h resistance"],
     requiredEvidenceFragments: [
@@ -93,7 +93,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     ],
     expectedMarketContextSource: "levels_system_daily_4h",
     requiredHeadlineFragments: [
-      "major daily/4h resistance with limited room before resistance",
+      "major daily/4h resistance with limited room before overhead resistance",
     ],
     requiredTitleFragments: ["major daily/4h resistance"],
     requiredEvidenceFragments: [
@@ -121,7 +121,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     expectedMarketContextSource: "levels_system_daily_4h",
     requiredHeadlineFragments: [
       "major daily/4h resistance",
-      "limited room before resistance",
+      "limited room before overhead resistance",
       "adds increased size after much of the move was already used",
     ],
     requiredTitleFragments: [
@@ -181,7 +181,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
   },
   {
     id: "short_completed_trade_smoke",
-    label: "Short completed trade smoke",
+    label: "Sell-starting trade stays out of long coaching",
     broker: "generic_execution_csv",
     csvText: [
       "Date,Time,Symbol,Side,Quantity,Price",
@@ -189,17 +189,9 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
       "2024-04-12,09:39:10,ABCD,Buy,100,1.2500",
     ].join("\n"),
     levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
-    expectedInsightIds: [
-      "short_entry_had_room_to_support",
-      "trade_window_excursion_measured",
-    ],
-    expectedMarketContextSource: "levels_system_daily_4h",
-    requiredEvidenceFragments: ["tradeDirection=short", "tradeMfePct="],
-    forbiddenTextFragments: [
-      "room above",
-      "structural cushion underneath",
-      "upside was not especially clean",
-    ],
+    expectedCompletedReviewCount: 0,
+    expectedInsightIds: [],
+    expectedMarketContextSource: null,
   },
   {
     id: "open_position_skipped",

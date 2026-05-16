@@ -33,7 +33,7 @@ describe("coaching language readiness", () => {
         (item) =>
           item.source === "daily_coach_report" &&
           item.field === "sessionTimeInsight" &&
-          item.text.includes("Best entry session"),
+          item.text.includes("Highest total entry-session"),
       ),
     ).toBe(true);
   });

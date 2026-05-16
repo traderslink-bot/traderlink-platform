@@ -129,7 +129,9 @@ describe("trader coach action loop", () => {
     ).toBe(true);
     expect(coach.coachHome.primaryAction.href.length).toBeGreaterThan(0);
     expect(coach.sessionPrepCard.checklist).toHaveLength(4);
-    expect(coach.sessionPrepCard.sessionTimeInsight).toContain("Best entry session");
+    expect(coach.sessionPrepCard.sessionTimeInsight).toContain(
+      "Highest total entry-session",
+    );
   });
 
   it("builds confidence language with cautious wording for limited evidence", () => {

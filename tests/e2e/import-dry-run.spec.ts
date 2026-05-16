@@ -1,8 +1,86 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   buildCsvDryRunRouteSmokeContract,
   buildCsvDryRunVisualRegressionContract,
 } from "../../src/lib/trader-analytics";
+
+async function openImportDryRunDetails(page: Page) {
+  for (const { label, testId } of [
+    {
+      label: "Show import review details",
+      testId: "import-dry-run-review-details",
+    },
+    {
+      label: "Show advanced P/L and cost details",
+      testId: "import-dry-run-advanced-cost-details",
+    },
+    {
+      label: "Show technical import diagnostics",
+      testId: "import-dry-run-technical-diagnostics",
+    },
+    {
+      label: "Show technical import setup details",
+      testId: "import-dry-run-advanced-mapping-details",
+    },
+    {
+      label: "Show privacy, decision, and QA notes",
+      testId: "import-dry-run-operator-details",
+    },
+  ]) {
+    const details = page.getByTestId(testId);
+
+    if ((await details.count()) === 0) {
+      continue;
+    }
+
+    const trigger = details.getByText(label, { exact: true });
+    const isOpen = (await details.getAttribute("open")) !== null;
+
+    if (!isOpen && (await trigger.isVisible())) {
+      await trigger.click();
+    }
+  }
+}
+
+async function openDisclosure(page: Page, testId: string, label: string) {
+  const details = page.getByTestId(testId);
+
+  if ((await details.count()) === 0) {
+    return;
+  }
+
+  const trigger = details.getByText(label, { exact: true });
+  const isOpen = (await details.getAttribute("open")) !== null;
+
+  if (!isOpen && (await trigger.isVisible())) {
+    await trigger.click();
+  }
+}
+
+async function selectBroker(page: Page, broker: string) {
+  await openDisclosure(
+    page,
+    "import-dry-run-advanced-upload-settings",
+    "Show advanced import settings",
+  );
+  await page.getByTestId("broker-select").selectOption(broker);
+}
+
+async function selectSample(page: Page, sampleId: string) {
+  await openDisclosure(
+    page,
+    "import-dry-run-admin-sample-details",
+    "Show demo/admin sample files",
+  );
+  await page.getByTestId("sample-select").selectOption(sampleId);
+}
+
+async function prepareDecisionReviewDryRun(page: Page) {
+  await page.goto("/import-dry-run");
+  await page.waitForLoadState("networkidle");
+  await selectSample(page, "preset:ibkr");
+  await openImportDryRunDetails(page);
+}
 
 test.describe("CSV dry-run import route", () => {
   test("renders the required product panels without unsafe surfaces", async ({
@@ -29,12 +107,14 @@ test.describe("CSV dry-run import route", () => {
     await expect(
       page.getByText("Copy Audit", { exact: true }).first(),
     ).toBeHidden();
-    await page
-      .getByText("Show advanced P/L and cost details", { exact: true })
-      .click();
-    await page
-      .getByText("Show technical import setup details", { exact: true })
-      .click();
+    await expect(
+      page.getByRole("heading", {
+        exact: true,
+        name: "Import Session Summary",
+      }),
+    ).toBeHidden();
+    await selectSample(page, "preset:ibkr");
+    await openImportDryRunDetails(page);
     await expect(
       page.getByText("Mapping Confidence", { exact: true }),
     ).toBeVisible();
@@ -88,9 +168,7 @@ test.describe("CSV dry-run import route", () => {
   }) => {
     await page.goto("/import-dry-run");
     await page.waitForLoadState("networkidle");
-    await page
-      .getByTestId("broker-select")
-      .selectOption("generic_execution_csv");
+    await selectBroker(page, "generic_execution_csv");
     const feeCsv = [
       "Date,Time,Symbol,Side,Quantity,Price,Commission,Fees,Amount,Currency",
       "2026-05-01,09:30:00,ABCD,Buy,100,10.00,1.25,0.08,-1001.33,USD",
@@ -131,9 +209,7 @@ test.describe("CSV dry-run import route", () => {
 
     await page.goto("/import-dry-run");
     await page.waitForLoadState("networkidle");
-    await page
-      .getByTestId("broker-select")
-      .selectOption("generic_execution_csv");
+    await selectBroker(page, "generic_execution_csv");
     await page.getByTestId("local-csv-input").setInputFiles({
       buffer: Buffer.from(csv),
       mimeType: "text/csv",
@@ -253,9 +329,7 @@ test.describe("CSV dry-run import route", () => {
 
     await page.goto("/import-dry-run");
     await page.waitForLoadState("networkidle");
-    await page
-      .getByTestId("broker-select")
-      .selectOption("generic_execution_csv");
+    await selectBroker(page, "generic_execution_csv");
     await page.getByTestId("local-csv-input").setInputFiles({
       buffer: Buffer.from(csv),
       mimeType: "text/csv",
@@ -312,7 +386,8 @@ test.describe("CSV dry-run import route", () => {
   }) => {
     await page.goto("/import-dry-run");
     await page.waitForLoadState("networkidle");
-    await page.getByTestId("sample-select").selectOption("preset:row-repair");
+    await selectSample(page, "preset:row-repair");
+    await openImportDryRunDetails(page);
 
     await expect(page.getByTestId("import-session-summary-status")).toHaveText(
       "Needs repair",
@@ -381,9 +456,8 @@ test.describe("CSV dry-run import route", () => {
   }) => {
     await page.goto("/import-dry-run");
     await page.waitForLoadState("networkidle");
-    await page
-      .getByTestId("sample-select")
-      .selectOption("preset:open-position");
+    await selectSample(page, "preset:open-position");
+    await openImportDryRunDetails(page);
 
     await expect(page.getByTestId("import-session-summary-status")).toHaveText(
       "Needs review",
@@ -429,7 +503,7 @@ test.describe("CSV dry-run import route", () => {
             {
               tradeId: "dry-run-trade-1-abcd",
               coachingHeadline:
-                "Your first entry was close to major 4h resistance.",
+                "Your first entry started just below major 4h resistance.",
               fixFirstBehaviorId: "chasing",
               marketContextSource: "levels_system_daily_4h",
               tradeWindowEvidenceSource: "execution_only_fallback",
@@ -441,9 +515,9 @@ test.describe("CSV dry-run import route", () => {
                   id: "entry_near_daily_4h_resistance",
                   tone: "risk",
                   category: "market_context",
-                  title: "Entry was close to daily/4h resistance",
+                  title: "Entry started just below daily/4h resistance",
                   summary:
-                    "The first entry started near a higher-timeframe resistance area.",
+                    "The first entry started just below a higher-timeframe resistance area.",
                   evidence: [
                     "nearestResistanceStrength=major",
                     "distanceToResistance=1.2%",
@@ -485,8 +559,7 @@ test.describe("CSV dry-run import route", () => {
       });
     });
 
-    await page.goto("/import-dry-run");
-    await page.waitForLoadState("networkidle");
+    await prepareDecisionReviewDryRun(page);
     await page.getByTestId("decision-review-request-button").click();
 
     await expect(page.getByTestId("decision-review-status")).toContainText(
@@ -496,10 +569,10 @@ test.describe("CSV dry-run import route", () => {
       "attached",
     );
     await expect(page.getByTestId("prototype-analysis-coaching")).toContainText(
-      "Your first entry was close to major 4h resistance.",
+      "Your first entry started just below major 4h resistance.",
     );
     await expect(page.getByTestId("prototype-analysis-panel")).toContainText(
-      "Entry was close to daily/4h resistance",
+      "Entry started just below daily/4h resistance",
     );
     await expect(
       page.getByTestId("decision-review-evidence-alignment"),
@@ -580,8 +653,7 @@ test.describe("CSV dry-run import route", () => {
       });
     });
 
-    await page.goto("/import-dry-run");
-    await page.waitForLoadState("networkidle");
+    await prepareDecisionReviewDryRun(page);
     await page.getByTestId("decision-review-request-button").click();
 
     await expect(page.getByTestId("decision-review-status")).toContainText(
@@ -648,8 +720,7 @@ test.describe("CSV dry-run import route", () => {
       });
     });
 
-    await page.goto("/import-dry-run");
-    await page.waitForLoadState("networkidle");
+    await prepareDecisionReviewDryRun(page);
     await page.getByTestId("decision-review-request-button").click();
 
     await expect(
@@ -725,8 +796,7 @@ test.describe("CSV dry-run import route", () => {
       });
     });
 
-    await page.goto("/import-dry-run");
-    await page.waitForLoadState("networkidle");
+    await prepareDecisionReviewDryRun(page);
     await page.getByTestId("decision-review-request-button").click();
 
     await expect(page.getByTestId("decision-review-details")).toContainText(
@@ -790,8 +860,7 @@ test.describe("CSV dry-run import route", () => {
       });
     });
 
-    await page.goto("/import-dry-run");
-    await page.waitForLoadState("networkidle");
+    await prepareDecisionReviewDryRun(page);
     await page.getByTestId("decision-review-request-button").click();
 
     await expect(
@@ -873,8 +942,7 @@ test.describe("CSV dry-run import route", () => {
       });
     });
 
-    await page.goto("/import-dry-run");
-    await page.waitForLoadState("networkidle");
+    await prepareDecisionReviewDryRun(page);
     await page.getByTestId("decision-review-request-button").click();
 
     await expect(
@@ -923,9 +991,9 @@ test.describe("CSV dry-run import route", () => {
                   id: "entry_far_from_daily_4h_support",
                   tone: "risk",
                   category: "market_context",
-                  title: "Entry had little nearby support",
+                  title: "Entry had little support underneath",
                   summary:
-                    "Daily/4h context was present, but the first fill was not sitting on nearby support.",
+                    "Daily/4h context was present, but the first fill was not sitting near support below.",
                   evidence: ["nearestSupport=n/a", "distanceToSupport=n/a"],
                 },
                 {
@@ -947,8 +1015,7 @@ test.describe("CSV dry-run import route", () => {
       });
     });
 
-    await page.goto("/import-dry-run");
-    await page.waitForLoadState("networkidle");
+    await prepareDecisionReviewDryRun(page);
     await page.getByTestId("decision-review-request-button").click();
 
     await expect(
@@ -964,9 +1031,7 @@ test.describe("CSV dry-run import route", () => {
   }, testInfo) => {
     await page.goto("/import-dry-run");
     await page.waitForLoadState("networkidle");
-    await page
-      .getByTestId("broker-select")
-      .selectOption("generic_execution_csv");
+    await selectBroker(page, "generic_execution_csv");
     const projectSuffix = testInfo.project.name.includes("mobile")
       ? "M"
       : testInfo.project.name.includes("tablet")
@@ -1169,12 +1234,12 @@ test.describe("CSV dry-run import route", () => {
     await expect(
       page.getByRole("heading", {
         exact: true,
-        name: "Import Session Summary",
+        name: "What happens after upload",
       }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { exact: true, name: "User Decision Capture" }),
-    ).toBeVisible();
+    ).toBeHidden();
 
     const hasPageOverflow = await page.evaluate(
       () =>
