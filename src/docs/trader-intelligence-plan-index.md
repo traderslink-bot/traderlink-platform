@@ -1,6 +1,6 @@
 # Trader Intelligence Plan Index
 
-**Last updated:** 2026-05-15
+**Last updated:** 2026-05-16
 **Purpose:** Keep Trader Intelligence planning organized so future Codex runs
 can find the right plan, continue the current work, and avoid drifting into old
 prototype docs.
@@ -10,6 +10,10 @@ prototype docs.
 Start here after reading `src/docs/codex-project-log.md`.
 
 The root `plan.md` points here as the app-level plan entry point.
+
+Fresh-chat handoff for the current UI/product resume point:
+
+- `src/docs/trader-intelligence-new-chat-handoff-2026-05-16.md`
 
 This file is the map. It is not the detailed work plan. Use it to decide which
 planning file controls the next implementation run.
@@ -454,6 +458,11 @@ not pause to create those feature plans before implementing Blocks 4 and 8.
   imports, trades, trade detail, analytics, coach, and remaining UX priorities.
   Read this before asking Codex to redo route hierarchy, dashboard, or
   beginner-to-advanced UI work.
+
+- `src/docs/trader-intelligence-new-chat-handoff-2026-05-16.md`
+  Fresh-chat resume note for the latest UI state, including the swing-trades
+  product decision, completed UI work to preserve, verification commands, and
+  the recommended next screenshot-led UI review pass.
 
 ## Current Product Context
 

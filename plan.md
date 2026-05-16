@@ -8,6 +8,10 @@ implementation run:
 
 - `src/docs/trader-intelligence-plan-index.md`
 
+Fresh-chat handoff for the current UI/product state:
+
+- `src/docs/trader-intelligence-new-chat-handoff-2026-05-16.md`
+
 new note may 11
 
 Product/engineering suggestions from the latest human review:

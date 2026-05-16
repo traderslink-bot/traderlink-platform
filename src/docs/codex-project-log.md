@@ -14409,3 +14409,197 @@ Current best next step:
   still too crowded. Likely next candidates are `/review` and `/progress`;
   avoid further import/trades/analytics/coach rewrites unless a concrete
   regression appears.
+
+## 2026-05-16 - UI Follow-Up Pass For Review, Imports, And Trade Replay
+
+Pulled the latest `codex/trader-ui-product-pass` branch through commit
+`2b5c5e9abe9556cc421bc53f3520420acf0e187f` and followed
+`src/docs/codex-ui-followup-instructions-2026-05-16.md`. This was a targeted
+beginner-first polish pass, not a rebuild of the completed IA, import,
+analytics, coach, or saved-trade read-model work.
+
+Changes:
+
+- Simplified `/review` into a clearer beginner work queue: the top explains the
+  one-trade review loop, the side nav now points to review-first, queue,
+  supporting details, and lesson draft, and the main queue shows only the
+  beginner lane counts by default.
+- Kept the full saved review lane counts, session handoff, coach/session
+  context, evidence counts, and technical limits available behind advanced or
+  supporting disclosures.
+- Moved the `/trades/[tradeId]` replay section directly under the
+  replay/decide/write/continue handoff so traders see the candle/execution
+  replay and execution strip before secondary evidence, session story panels,
+  and execution score detail.
+- Changed `/upload-csv` submit copy from `Upload and save trades` to
+  `Check CSV and continue`, which better matches duplicate, repair, and review
+  states.
+- Renamed the lower `/imports` `Import History` section to `Recent imports` and
+  lightly reduced the empty repair section so it does not look like active work
+  when no repairs exist.
+- Lightly simplified `/trades` by tucking the supporting saved-trade count cards
+  behind `Show saved-trade counts`, while preserving the priority panel,
+  workflow handoff, browse modes, calendar, day sessions, ticker stories, and
+  round trips.
+- Updated focused Playwright expectations for the current beginner upload,
+  advanced import, coach, and analytics overview surfaces.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- The requested full desktop Playwright command first could not start while the
+  already-running local server held port 3100, then a live-server retry timed
+  out because the full spec was too broad for that mode.
+- After stopping the existing server so Playwright could start the built app,
+  the focused desktop route regression passed:
+  `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "guided end-user path|saved trade routing|guided review workflow|banned product claims|market context observational|loads the main end-user routes"`.
+- The requested mobile usability slice passed:
+  `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable"`.
+- Headless browser smoke passed against the restarted local server for
+  `/workspace`, `/upload-csv`, `/imports`, `/review?queue=highest_priority`,
+  `/trades`, and a review-queue trade detail handoff. The smoke confirmed the
+  trade replay appears after the workflow handoff and before execution score
+  detail.
+
+Current best next step:
+
+- Continue only with concrete user-reported UI crowding or route-flow issues.
+  The highest-value candidates remain `/review` follow-up QA after real use and
+  `/progress` if it still feels like imported-trade counting instead of review
+  follow-through. Do not revisit import/trades/analytics/coach architecture
+  unless screenshots or tests reveal a real regression.
+
+## 2026-05-16 - Open/Swing False Positive Cleanup
+
+Investigated the `/trades/open-swing#trade-list` report after user QA said the
+April import showed 8 swing trades even though every trade was closed. The 8
+items were closed trades that carried into another session; they were being
+mixed into the open/swing lane because the UI treated overnight/next-session
+holds as open/swing trades.
+
+Changes:
+
+- Changed the `/trades/open-swing` lane into an `Open Positions` lane that
+  only shows true open-position review items, not closed overnight or
+  next-session holds.
+- Renamed user-facing `Open/Swing`, `Open Trades`, and swing-transition copy to
+  `Open Positions`, `Hold Reviews`, `Next-session holds`, or
+  `carried into another session` depending on context.
+- Kept closed next-session holds in ticker/day stories as hold-plan review
+  evidence, without presenting them as open swing trades.
+- Aligned the open-position review queue copy with the saved-trade browse lane:
+  the card now says the import has an opening execution without a matching close
+  and asks the user to check whether the CSV includes the closing execution.
+- Verified the current imported data now shows 1 open-position anomaly, SKYQ on
+  2026-04-29 at 4:31 PM ET, instead of the prior 8 false swing/open items. The
+  SKYQ item remains because the saved import contains a buy for 2 shares without
+  a matching sell; do not force-close it without source evidence.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts`
+  passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "saved trade routing"`
+  passed.
+- Browser smoke passed for `/trades/open-swing#trade-list`: it now shows
+  `Open Positions`, no CYCN/SIDU/SPCE/VEEE/ISPC/SPRC/FFAI/XE false swing cards,
+  and one explicit SKYQ open-position anomaly with closing-execution copy.
+
+## 2026-05-16 - Open Import-Window Positions Removed From Default Coaching
+
+Follow-up user QA clarified that even the remaining SKYQ open-position card
+should not appear in the normal saved-trade/dashboard flow because the product
+is focused on completed trade review. The raw IBKR April CSV contains an
+`Open Positions` row for SKYQ quantity 2 and one unmatched SKYQ buy execution,
+but this should be treated as an incomplete import-window detail, not as a
+saved trade to review by default.
+
+Changes:
+
+- Updated the import commit planner so open/incomplete position groups remain
+  review-gated but are not saved into the completed-trade library and do not
+  create decision-review jobs.
+- Updated the SQLite saved-trade list read path to return closed trades only,
+  which keeps any older open rows out of workspace, trades, analytics, coach,
+  progress, and review surfaces.
+- Added a saved-review-queue guard so legacy open-position jobs are ignored
+  unless they belong to a closed saved trade.
+- Updated open-position tests to assert that unmatched open groups are kept out
+  of completed-trade coaching rather than saved as blocked open trades.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npx vitest run src/lib/trader-analytics/__tests__/import-commit-planner.test.ts src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts`
+  passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "saved trade routing"`
+  passed.
+- Browser smoke passed for `/trades/open-swing#trade-list`: the lane now shows
+  `Open Positions 0`, no SKYQ card, and no false open/swing trade cards.
+
+## 2026-05-16 - Swing Trades Restored With User Close Override
+
+User clarified the intended product behavior: import-window positions should be
+called swing trades, not hidden, and the trader should be able to mark a
+detected swing trade closed if the import window made it look open by mistake.
+This supersedes the previous "hide open positions" interpretation.
+
+Changes:
+
+- Restored open import-window groups as saved swing-trade candidates with
+  `blocked_open_trade` decision-review jobs instead of dropping them from saved
+  trades.
+- Renamed the default user-facing lane from `Open Positions` to `Swing Trades`
+  across saved trades, review, coach, progress, import dry run, workspace, and
+  shared queue labels.
+- Added `POST /api/trades/[tradeId]/mark-closed` and a `/trades/open-swing`
+  card action so the user can mark a detected swing trade closed. The override
+  persists `userLifecycleOverride`, sets the trade to closed/ignored, and
+  removes it from the swing-trade review queue.
+- Kept completed overnight/next-session holds discoverable as hold-plan review
+  evidence while the swing lane now also includes true blocked swing candidates.
+- Updated execution-feedback wording so the import dry-run no longer shows
+  `Open Position Leftover` in the visible execution autopsy; it now presents the
+  case as a swing trade.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npx vitest run src/lib/execution-feedback/__tests__/execution-behavior-patterns.test.ts src/lib/trader-analytics/__tests__/import-commit-planner.test.ts src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts`
+  passed.
+- `npm run build` passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop -g "saved trade routing"`
+  passed.
+- `npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop -g "swing-trade imports"`
+  passed.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-mobile -g "keeps core mobile routes usable"`
+  passed.
+
+Current best next step:
+
+- Resume from user-facing QA on `/trades/open-swing#trade-list` with real April
+  data. Confirm the swing-trade lane contains the expected candidates, the
+  `Mark as closed` action removes mistaken candidates, and completed
+  next-session holds remain in ticker/day stories rather than being confused
+  with unresolved swing trades.
+
+## 2026-05-16 - Fresh Chat Handoff Created
+
+Created a new fresh-chat handoff for the next UI review pass:
+
+- `src/docs/trader-intelligence-new-chat-handoff-2026-05-16.md`
+
+Also linked it from `plan.md` and
+`src/docs/trader-intelligence-plan-index.md` so the next chat has one obvious
+resume document after reading the project log.
+
+Current best next step:
+
+- Start the next chat from the handoff file and run a screenshot-led UI review
+  from `/workspace` through upload, imports, saved trades, review, analytics,
+  coach, and progress. Preserve the completed beginner-first IA and fix only
+  concrete route/copy/layout issues found in the review.
