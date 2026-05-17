@@ -238,7 +238,7 @@ Meaning:
 
 Important:
 
-The 167 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
+The 180 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
 
 The migration pass should check:
 
@@ -351,11 +351,7 @@ These lessons have already been upgraded into the Academy style with metadata, r
 
 | Order | Module | Lesson | URL | Current Asset | Status | Notes |
 |---:|---|---|---|---|---|---|
-| 30 | Chart Patterns | Chart Patterns | `/learn/chart-patterns/` | draft | needs_upgrade | Should be a pattern context hub. |
-| 31 | Chart Patterns | Bull Flag | `/learn/chart-patterns/bull-flag/` | draft | needs_upgrade | Avoid continuation guarantee. |
-| 32 | Chart Patterns | Ascending Triangle | `/learn/chart-patterns/ascending-triangle/` | draft | needs_upgrade | Needs level and volume context. |
-| 33 | Chart Patterns | Double Top | `/learn/chart-patterns/double-top/` | draft | needs_upgrade | Avoid reversal guarantee. |
-| 34 | Chart Patterns | Failed Breakout Pattern | `/learn/chart-patterns/failed-breakout-pattern/` | draft | needs_upgrade | Strong fit with current chart course. |
+| 35 | Future Chart Reading | Chart Reading Path | `/learn/chart-reading-path/` | gap | gap_needed | Optional later path-hub article if needed for UI/navigation. |
 
 ### Completed Candlestick Patterns In Context Course
 
@@ -377,6 +373,27 @@ The candlestick course is **content_upgraded** across all local candlestick draf
 | 12 | Candle And Volume Review | Candle Volume Confirmation | `/learn/candlestick-patterns/candle-volume-confirmation/` | content_upgraded | complete | Connects candle shape and volume without treating volume as proof. |
 | 13 | Intraday Color Transitions | Red-To-Green Move | `/learn/candlestick-patterns/red-to-green-move/` | content_upgraded | complete | Intraday reference reclaim context with red/green transition visual. |
 | 14 | Intraday Color Transitions | Green-To-Red Move | `/learn/candlestick-patterns/green-to-red-move/` | content_upgraded | complete | Intraday reference loss context with red/green transition visual. |
+
+### Completed Chart Patterns In Context Course
+
+The chart-pattern course is **content_upgraded** across all local chart-pattern drafts except VWAP Reclaim, which is already completed and cross-listed from Technical Indicators.
+
+| Order | Module | Lesson | URL | Current Asset | Status | Notes |
+|---:|---|---|---|---|---|---|
+| 1 | Pattern Foundation | Chart Patterns | `/learn/chart-patterns/` | content_upgraded | complete | Course opener; teaches patterns as review structures, not predictions. |
+| 2 | Continuation Context | Bull Flag Pattern | `/learn/chart-patterns/bull-flag/` | content_upgraded | complete | Controlled pullback context with realistic SVG support. |
+| 3 | Continuation Context | Ascending Triangle Pattern | `/learn/chart-patterns/ascending-triangle/` | content_upgraded | complete | Flat resistance and higher-low pressure context with realistic SVG support. |
+| 4 | Range And Base Patterns | Base Breakout | `/learn/chart-patterns/base-breakout/` | content_upgraded | complete | Base/range breakout and hold/fail review with realistic SVG support. |
+| 5 | Range And Base Patterns | Rectangle Pattern | `/learn/chart-patterns/rectangle-pattern/` | content_upgraded | complete | Sideways range support/resistance context with realistic SVG support. |
+| 6 | Trend Channels And Wedges | Channel Pattern | `/learn/chart-patterns/channel-pattern/` | content_upgraded | complete | Sloped range context with realistic SVG support. |
+| 7 | Trend Channels And Wedges | Wedge Pattern | `/learn/chart-patterns/wedge-pattern/` | content_upgraded | complete | Narrowing range/compression context with realistic SVG support. |
+| 8 | Trend Channels And Wedges | Rising Wedge | `/learn/chart-patterns/rising-wedge/` | content_upgraded | complete | Upward narrowing structure with break/failure review. |
+| 9 | Trend Channels And Wedges | Falling Wedge | `/learn/chart-patterns/falling-wedge/` | content_upgraded | complete | Downward narrowing structure with reclaim/failure review. |
+| 10 | Reversal And Failure Context | Double Top | `/learn/chart-patterns/double-top/` | content_upgraded | complete | Repeated resistance context with realistic SVG support. |
+| 11 | Reversal And Failure Context | Inverse Head And Shoulders | `/learn/chart-patterns/inverse-head-and-shoulders/` | content_upgraded | complete | Neckline and improving-structure context with realistic SVG support. |
+| 12 | Reversal And Failure Context | Failed Breakout Pattern | `/learn/chart-patterns/failed-breakout-pattern/` | content_upgraded | complete | Breakout failure and late-entry review with realistic SVG support. |
+| 13 | Extension Context | Parabolic Move | `/learn/chart-patterns/parabolic-move/` | content_upgraded | complete | Acceleration/extension risk context with realistic SVG support. |
+| 14 | Setup Tool Context | VWAP Reclaim | `/learn/chart-patterns/vwap-reclaim/` | content_upgraded | complete | Cross-listed from Technical Indicators And Tools. |
 
 ## Course 3: Volume, Liquidity And Order Flow
 
@@ -869,8 +886,9 @@ Current known Academy-ready lesson groups:
 
 | Course | Academy-Ready Lessons | Notes |
 |---|---:|---|
-| Chart Reading And Market Structure | 23 | Strong course core already created. Needs chart pattern expansion later. |
+| Chart Reading And Market Structure | 23 | Strong course core already created. Optional path-hub/navigation articles can be added later. |
 | Candlestick Patterns In Context | 14 | Full candlestick course markdown path is now content-upgraded across candle foundation, wick/indecision candles, shift candles, compression candles, tail candles, volume confirmation, and red/green intraday transitions. Eight realistic SVGs were created and manifest-tracked. |
+| Chart Patterns In Context | 13 | Full chart-pattern course markdown path is now content-upgraded across pattern foundation, continuation context, range/base patterns, channels, wedges, reversal/failure context, and parabolic extension. Nine realistic SVGs were created and manifest-tracked. VWAP Reclaim is cross-listed from Technical Indicators. |
 | Volume, Liquidity And Order Flow | 14 | Core course path is academy-ready. |
 | News, Catalysts And SEC Filings | 36 | Full course markdown path is now content-upgraded across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
 | Trading Foundations | 4 | Beginner onboarding and market-basics lessons are content-upgraded; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
@@ -884,28 +902,28 @@ Current known Academy-ready lesson groups:
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-167
+180
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 167 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 167 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 180 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 180 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 167 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 180 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/chart-patterns/
+/learn/premarket-trading/
 ```
 
 Reason:
 
-The Academy just completed the Candlestick Patterns In Context course markdown path. The highest-value next course is Chart Patterns In Context, starting with `/learn/chart-patterns/`, because the chart-reading section still has local chart-pattern drafts that need Academy formatting, realistic visuals, and careful non-signal framing.
+The Academy just completed the Chart Patterns In Context course markdown path. The highest-value next course is Day Trading Workflow, starting with `/learn/premarket-trading/`, because local session-workflow drafts already exist and can connect the style course to practical intraday planning.
 
 ## Recommended Work Method From Here
 
