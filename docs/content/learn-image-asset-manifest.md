@@ -118,6 +118,8 @@ journey_map
 | `public/images/learn/chart-reading/slippage-fast-move-liquidity-review.svg` | `/learn/slippage/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show slippage during a fast candle with thin liquidity and widening spread. | Slippage During Fast Moves section. | Trading dashboard showing slippage during a fast candle with thin liquidity and a widening spread. | editor_verified | Supports fast-move slippage review, uses realistic candles, volume, spread/liquidity context, and avoids guarantee language. | `13a86228` |
 | `public/images/learn/chart-reading/market-vs-limit-order-tradeoff.svg` | `/learn/market-orders-vs-limit-orders/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Compare market-order speed with limit-order price control. | Quick Definition section. | Trading dashboard comparing market order speed with limit order price control. | editor_verified | Supports order-type tradeoff education, uses realistic bid/ask context, and avoids universal order recommendations. | `8ac5648f` |
 | `public/images/learn/chart-reading/limit-order-no-fill-review.svg` | `/learn/market-orders-vs-limit-orders/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show a limit order that does not fill as price moves away. | Limit Orders section. | Trading dashboard showing a limit order that does not fill as price moves away. | editor_verified | Supports no-fill review, uses realistic chart/order context, and avoids signal language. | `8ac5648f` |
+| `public/images/learn/chart-reading/level-2-order-book-depth.svg` | `/learn/level-2/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show Level 2 order book depth with stacked bids and asks beside price candles. | Quick Definition section. | Trading dashboard showing a Level 2 order book with stacked bid and ask depth beside price candles. | editor_verified | Supports Level 2 depth education, uses realistic chart/order-book context, and avoids prediction language. | `8a9fc350` |
+| `public/images/learn/chart-reading/level-2-depth-can-disappear.svg` | `/learn/level-2/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show visible bid depth disappearing during a fast move. | Visible Depth Can Disappear section. | Trading dashboard showing visible bid depth disappearing during a fast move. | editor_verified | Supports Level 2 limitation review, uses realistic depth/candle context, and avoids guarantee language. | `8a9fc350` |
 
 ## Editor Verification Summary
 
@@ -384,11 +386,19 @@ Market orders versus limit orders SVG verification:
 - Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Level 2 SVG verification:
+
+- Both visuals support the actual Level 2 lesson.
+- The order-book-depth visual shows stacked bid and ask levels beside realistic candles and volume context.
+- The depth-can-disappear visual shows visible depth shrinking during a fast move as review context, not prediction.
+- Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Level 2 article: visible depth, stacked bid/ask context, and spoofing/overreliance cautions.
+1. Time And Sales article: actual prints, bid/ask print context, tape speed, and overreaction cautions.
 2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
