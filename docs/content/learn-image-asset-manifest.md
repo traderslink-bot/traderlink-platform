@@ -120,6 +120,8 @@ journey_map
 | `public/images/learn/chart-reading/limit-order-no-fill-review.svg` | `/learn/market-orders-vs-limit-orders/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show a limit order that does not fill as price moves away. | Limit Orders section. | Trading dashboard showing a limit order that does not fill as price moves away. | editor_verified | Supports no-fill review, uses realistic chart/order context, and avoids signal language. | `8ac5648f` |
 | `public/images/learn/chart-reading/level-2-order-book-depth.svg` | `/learn/level-2/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show Level 2 order book depth with stacked bids and asks beside price candles. | Quick Definition section. | Trading dashboard showing a Level 2 order book with stacked bid and ask depth beside price candles. | editor_verified | Supports Level 2 depth education, uses realistic chart/order-book context, and avoids prediction language. | `8a9fc350` |
 | `public/images/learn/chart-reading/level-2-depth-can-disappear.svg` | `/learn/level-2/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show visible bid depth disappearing during a fast move. | Visible Depth Can Disappear section. | Trading dashboard showing visible bid depth disappearing during a fast move. | editor_verified | Supports Level 2 limitation review, uses realistic depth/candle context, and avoids guarantee language. | `8a9fc350` |
+| `public/images/learn/chart-reading/time-and-sales-prints-near-bid-ask.svg` | `/learn/time-and-sales/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show time and sales prints near bid and ask quotes beside candles. | Quick Definition section. | Trading dashboard showing time and sales prints near bid and ask quotes beside candles. | editor_verified | Supports time-and-sales print education, uses realistic tape/chart context, and avoids prediction language. | `58ea3ca3` |
+| `public/images/learn/chart-reading/time-and-sales-speed-fade-review.svg` | `/learn/time-and-sales/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show tape speed increasing during a volume burst and fading afterward. | Tape Speed And Fade section. | Trading dashboard showing tape speed increasing during a volume burst and fading afterward. | editor_verified | Supports tape-speed review, uses realistic prints, candles, volume context, and avoids guarantee language. | `58ea3ca3` |
 
 ## Editor Verification Summary
 
@@ -394,11 +396,19 @@ Level 2 SVG verification:
 - Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Time and sales SVG verification:
+
+- Both visuals support the actual time-and-sales lesson.
+- The prints-near-bid/ask visual shows actual tape prints beside a realistic quote and candle context.
+- The tape-speed visual shows print pace increasing and fading as review context, not prediction.
+- Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Time And Sales article: actual prints, bid/ask print context, tape speed, and overreaction cautions.
+1. Volume By Price article: volume-by-price profile, high-volume zones, low-volume areas, and level review.
 2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
