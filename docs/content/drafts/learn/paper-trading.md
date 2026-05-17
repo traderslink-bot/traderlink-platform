@@ -44,6 +44,8 @@ Paper trading is simulated trading. It lets a trader practice decisions without 
 
 That makes it useful, but also limited. Paper trading can help with process, order familiarity, setup recognition, and review habits. It cannot fully recreate live emotion, slippage, liquidity, or the pressure of real risk.
 
+![Dark trading dashboard showing a practice trading feedback loop with realistic candles, volume, planned review zone, simulated decision, review note, and rule adjustment.](/images/learn/chart-reading/practice-trading-feedback-loop.svg)
+
 ## Lesson Objective
 
 By the end of this lesson, you should be able to:

@@ -99,7 +99,7 @@ Recommended order for future runs:
 | 11 | Halts And High-Volatility Events | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; added missing in-body visuals, cleaned stale path-hub wording, and documented source-sensitive halt/circuit-breaker follow-up needs. |
 | 12 | Trading Psychology And Discipline | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; normalized restrained CTAs, fixed stripped price examples, and documented non-shaming coaching/mistake-pattern bridge needs. |
 | 13 | Trade Review And Improvement | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trade-review-improvement.md`; fixed stripped price examples, documented the cross-listed news-review metadata exception, and mapped restrained bridges to Trade Review, Risk Review, Execution Review, Coaching, Analytics, Journal Notes, Playbook Builder, and Progress/Academy. |
-| 14 | Practice And Improvement | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to progress, playbooks, and forward testing. |
+| 14 | Practice And Improvement | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-practice-improvement.md`; added existing editor-verified practice-loop visuals to missing lesson bodies, confirmed no practice-as-proof language, and mapped restrained bridges to Progress/Academy, Trade Review, Risk Review, Execution Review, Coaching, Analytics, Journal Notes, Forward Testing, and Playbook Builder. |
 | 15 | Academy Navigation Path Hubs | not_started | not_started | not_started | not_started | not_started | not_started | Treat as navigation support, not a numbered course. |
 
 ## Lesson-Level Quality Audit Checklist
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 1: Lesson-Level Quality Audit** for **Practice And Improvement**.
+Continue with **Pass 1: Lesson-Level Quality Audit** for **Academy Navigation Path Hubs**.
 
 Reason:
 
@@ -214,15 +214,16 @@ Reason:
 - Halts And High-Volatility Events Pass 1 is complete.
 - Trading Psychology And Discipline Pass 1 is complete.
 - Trade Review And Improvement Pass 1 is complete.
-- Practice And Improvement is the next course because learners now move from reviewing completed trades into deliberate practice, replay, watchlist review, screenshots, grading, drills, forward testing, and improvement planning.
-- This course needs careful language so practice is treated as structured feedback, not proof of future live trading results.
+- Practice And Improvement Pass 1 is complete.
+- Academy Navigation Path Hubs are the next audit target because the core course audits are now complete and learners need clear non-locked navigation across the major Academy journeys.
+- This pass should check whether path hubs help learners choose a path, resume learning, and understand sequence without duplicating course lessons or turning the page into a product ad.
 - Mark factual/source-sensitive items for later Pass 3 where needed, but keep this run focused on Pass 1 lesson quality unless a source issue is obvious inside the lesson text.
 
 Output should include:
 
-- A Practice And Improvement lesson-level quality audit.
+- An Academy Navigation Path Hubs lesson-level quality audit.
 - Any small markdown edits needed.
-- App bridge map for practice trading, paper trading, replay review, watchlist review, setup screenshot review, trade grading, one-rule practice drills, forward testing, and improvement planning.
-- Visual-readiness notes for feedback loops, replay timelines, screenshot review, grading rubrics, drill cycles, forward-testing samples, improvement-plan progress, and progress/resume-learning ties.
+- App bridge map for Chart Reading Path, News And Filings Path, Trade Review Path, and Risk Discipline Path.
+- Visual-readiness notes for path-map SVGs, course cards, progress states, next-lesson affordances, resume-learning context, and non-locked navigation.
 - Tracker and handoff update.
 - Commit.
