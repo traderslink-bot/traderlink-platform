@@ -98,7 +98,7 @@ Recommended order for future runs:
 | 2 | Chart Reading And Market Structure | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-chart-reading.md` with reputable charting references plus official SEC, NYSE, and Nasdaq source checks for session/extended-hours language; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-chart-reading.md` with 69 scoped SVGs verified and no required new assets. |
 | 3 | Volume, Liquidity And Order Flow | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-volume-liquidity.md` with official SEC, Investor.gov, FINRA, Nasdaq, and NYSE source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-volume-liquidity.md` with 29 scoped SVGs verified, no required new assets, and one bid/ask label cleanup. |
 | 4 | Risk Management And Trade Planning | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-risk-management.md` with official SEC, Investor.gov, and FINRA source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-risk-management.md` and identified a six-SVG priority risk visual batch before UI-ready status. |
-| 5 | Technical Indicators And Tools | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-technical-indicators.md` with reputable technical-analysis/charting-source verification plus targeted plain-language accuracy guardrail edits. |
+| 5 | Technical Indicators And Tools | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-technical-indicators.md` with reputable technical-analysis/charting-source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-technical-indicators.md` and identified a seven-SVG priority indicator visual batch before UI-ready status. |
 | 6 | Trading Styles And Playbooks | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-styles.md` with official SEC, Investor.gov, FINRA, and current FINRA 2026 intraday margin-transition source verification plus targeted plain-language accuracy guardrail edits. |
 | 7 | Day Trading Workflow | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-day-trading-workflow.md` with official SEC, Investor.gov, FINRA, NYSE, and Nasdaq source verification plus targeted plain-language accuracy guardrails for premarket and after-hours broker/venue variability. |
 | 8 | Swing Trading Workflow | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; Pass 2 fixed stale swing workflow related links; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-swing-trading-workflow.md` with official SEC, Investor.gov, and FINRA source verification plus targeted plain-language accuracy guardrails for earnings event timing. |
@@ -211,7 +211,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 4: Visual Gap Audit** for **Technical Indicators And Tools**.
+Continue with **Pass 4: Visual Gap Audit** for **Trading Styles And Playbooks**.
 
 Reason:
 
@@ -222,13 +222,14 @@ Reason:
 - Chart Reading And Market Structure Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-chart-reading.md`.
 - Volume, Liquidity And Order Flow Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-volume-liquidity.md`.
 - Risk Management And Trade Planning Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-risk-management.md`.
-- Technical Indicators And Tools is the next course in the Academy order.
-- Technical indicator lessons need a formal Pass 4 audit to verify indicator-overlay visuals, identify missing indicator diagrams, and confirm any existing SVGs avoid signal-language framing.
+- Technical Indicators And Tools Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-technical-indicators.md`.
+- Trading Styles And Playbooks is the next course in the Academy order.
+- Trading style and playbook lessons need a formal Pass 4 audit to decide which style comparisons, setup context diagrams, and cross-listed chart visuals are enough, and where new style/playbook visuals are still needed.
 
 Output should include:
 
-- A Technical Indicators And Tools visual gap audit.
-- Course-level visual coverage notes across trading indicators, indicator lag, indicator overload, moving averages, VWAP, anchored VWAP, RSI, MACD, Bollinger Bands, ATR, volume by price, and VWAP reclaim lessons.
+- A Trading Styles And Playbooks visual gap audit.
+- Course-level visual coverage notes across style overview, day trading, swing trading, scalping, short selling, momentum, pullbacks/dip buys, breakout, breakdown, reclaim, gap fill, news fade, sell-the-news, multi-day runner, and chasing lessons.
 - Lesson-by-lesson visual recommendations.
 - Realistic SVG opportunities, reuse decisions, duplicate-coverage notes, and defer/no-visual decisions.
 - Image manifest task notes only where assets are created or updated.
