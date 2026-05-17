@@ -214,7 +214,7 @@ For Risk Management, the useful review is not whether one trade made money. The 
 
 - [Trading Rules](/learn/trading-rules/)
 - [Position Sizing](/learn/position-sizing/)
-- [/learn/trade-risk-review/](/learn/trade-risk-review/)
+- [Trade Risk Review](/learn/trade-risk-review/)
 
 ## Educational Disclaimer
 

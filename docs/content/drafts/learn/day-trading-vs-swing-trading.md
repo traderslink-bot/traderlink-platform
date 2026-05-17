@@ -87,7 +87,7 @@ A trader can learn both styles, but should not mix them accidentally inside the 
 
 ## Realistic Example
 
-A stock breaks above a major resistance level at .00. A day trader may look for an intraday breakout and exit before the close if the move slows. A swing trader may focus on whether the stock closes above .00 and holds the breakout over several sessions.
+A stock breaks above a major resistance level near $5.00. A day trader may review the intraday breakout and close the position before the session ends if the move slows. A swing trader may focus on whether the stock closes above $5.00 and holds the breakout over several sessions.
 
 Same stock. Same level. Different timeframe. Different review process.
 

@@ -579,22 +579,24 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | Academy master instructor audit | Reviewed each Academy course as a course-based learning journey, identified missing modules and bridge lessons, corrected the recommended course-order framing in the Academy index, and documented the highest-value next content additions. | Passed. Created `docs/content/traderslink-academy-master-instructor-audit.md`. The Academy remains structurally strong, but Risk Management should move earlier, path hubs should be navigation support instead of Course 15, and the next content run should prioritize beginner mechanics, expectancy, short selling, EDGAR source review, and playbook-building gaps. | `15c0e315` |
 | 2026-05-17 | Academy bridge lesson batch 1 | Created the six highest-priority bridge lessons from the master instructor audit and integrated them into adjacent Academy metadata and the course index. | Passed. Added beginner market mechanics, stock market sessions/order flow, expectancy, short selling basics, EDGAR source-document workflow, and playbook-building lessons. Updated previous/next links and Academy-ready count from 217 to 223. No production website files were changed. | `57dfbb82` |
 | 2026-05-17 | Academy quality audit workplan | Created a control file to manage future lesson-level, sequence, accuracy/source, visual, UI/progress, and app-bridge audit passes across all Academy courses. | Passed. Created `docs/content/traderslink-academy-quality-audit-workplan.md` with course-by-course status tracking, app surface vocabulary, bridge strength levels, audit checklists, and output templates. This keeps future runs focused and adds a formal Trader Intelligence / journal-app tie-in review layer. | `1734db2a` |
+| 2026-05-17 | Trading Foundations lesson-level quality audit | Completed Pass 1 lesson-level quality audit for the Trading Foundations course and created a restrained lesson-to-app bridge map. | Passed. Created `docs/content/traderslink-academy-quality-audit-trading-foundations.md`, confirmed the course flow is strong, deferred hard app route links until routes are stable, fixed stripped price/loss examples, and cleaned several related lesson labels. No production website files were changed. | pending commit |
 
 ## Next Recommended Action
 
-Continue from the Academy quality audit workplan:
+Continue from the Trading Foundations Pass 1 audit:
 
-1. Start `Pass 1: Lesson-Level Quality Audit` for `Trading Foundations` using `docs/content/traderslink-academy-quality-audit-workplan.md`.
-2. Include an app bridge map for each reviewed lesson, identifying natural tie-ins to Trader Intelligence / journal-app surfaces such as Trade Review, Coaching, Analytics, Risk Review, Execution Review, Journal Notes, Playbook Builder, Session Review, and Progress.
-3. Make targeted markdown edits only where a real quality, flow, or bridge gap appears.
-4. Then continue with Batch 1 Technical Indicators SVG assets from `docs/content/learn-academy-visual-ui-readiness-review.md`, or with the next missing gap set from `docs/content/traderslink-academy-master-instructor-audit.md`, likely:
+1. Start `Pass 1: Lesson-Level Quality Audit` for `Chart Reading And Market Structure` using `docs/content/traderslink-academy-quality-audit-workplan.md`.
+2. Include Chart Reading core lessons plus Candlestick Patterns In Context and Chart Patterns In Context when appropriate.
+3. Include an app bridge map, but keep bridge wording restrained and review-focused. Do not add hard app route links until app routes are stable.
+4. Make targeted markdown edits only where a real quality, flow, or bridge gap appears.
+5. Then continue with Batch 1 Technical Indicators SVG assets from `docs/content/learn-academy-visual-ui-readiness-review.md`, or with the next missing gap set from `docs/content/traderslink-academy-master-instructor-audit.md`, likely:
    - `/learn/multiple-timeframe-chart-reading/`
    - `/learn/how-to-choose-indicators-for-a-trading-plan/`
    - `/learn/resale-registration-statement/`
    - `/learn/shareholder-approval-for-dilution/`
    - `/learn/weekly-and-monthly-trading-review/`
    - `/learn/backtesting-vs-forward-testing/`
-5. Keep this as markdown/content planning and SVG work only; do not build production routes, components, schemas, JSX, CSS, or pages.
+6. Keep this as markdown/content planning and SVG work only; do not build production routes, components, schemas, JSX, CSS, or pages.
 
 ## Important Reminder
 

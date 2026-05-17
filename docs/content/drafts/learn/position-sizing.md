@@ -207,7 +207,7 @@ For Position Sizing, the useful review is not whether one trade made money. The 
 
 - [Risk Management](/learn/risk-management/)
 - [Risk Reward Ratio](/learn/risk-reward-ratio/)
-- [/learn/trade-risk-review/](/learn/trade-risk-review/)
+- [Trade Risk Review](/learn/trade-risk-review/)
 
 ## Educational Disclaimer
 

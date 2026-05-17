@@ -215,7 +215,7 @@ For Stop Loss, the useful review is not whether one trade made money. The better
 - [Risk Reward Ratio](/learn/risk-reward-ratio/)
 - [Mental Stop Vs Hard Stop](/learn/mental-stop-vs-hard-stop/)
 - [Risk Management](/learn/risk-management/)
-- [/learn/trade-risk-review/](/learn/trade-risk-review/)
+- [Trade Risk Review](/learn/trade-risk-review/)
 
 ## Educational Disclaimer
 

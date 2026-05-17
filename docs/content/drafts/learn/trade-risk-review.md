@@ -89,11 +89,11 @@ This turns risk from a vague feeling into something specific.
 
 ## Realistic Example
 
-A trader enters a stock at .00 with planned invalidation under .80 and planned loss of .
+A trader enters a stock at $5.00 with planned invalidation under $4.80 and a planned loss of $100.
 
-The stock breaks .80. The trader does not exit, adds at .65, and finally exits at .40 for a  loss.
+The stock breaks $4.80. The trader does not exit, adds at $4.65, and finally exits at $4.40 for a larger loss.
 
-A normal P&L review says the trade lost . A risk review says the invalidation was ignored, risk increased after failure, and the original loss limit was exceeded.
+A normal P&L review says the trade lost money. A risk review says the invalidation was ignored, risk increased after failure, and the original loss limit was exceeded.
 
 ## Common Mistakes
 

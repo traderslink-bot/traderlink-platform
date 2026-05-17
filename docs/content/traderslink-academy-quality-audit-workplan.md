@@ -86,7 +86,7 @@ Recommended order for future runs:
 
 | Order | Course / Group | Pass 1 Quality | Pass 2 Sequence | Pass 3 Accuracy | Pass 4 Visual | Pass 5 UI | Pass 6 App Bridge | Notes |
 |---:|---|---|---|---|---|---|---|---|
-| 1 | Trading Foundations | not_started | not_started | not_started | not_started | not_started | not_started | Start here because beginner clarity affects the whole Academy. |
+| 1 | Trading Foundations | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; start here because beginner clarity affects the whole Academy. |
 | 2 | Chart Reading And Market Structure | not_started | not_started | not_started | not_started | not_started | not_started | Include candlestick and chart-pattern submodules when appropriate. |
 | 3 | Volume, Liquidity And Order Flow | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to execution review. |
 | 4 | Risk Management And Trade Planning | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to risk review and analytics. |
@@ -197,18 +197,18 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Start with **Pass 1: Lesson-Level Quality Audit** for **Trading Foundations**.
+Continue with **Pass 1: Lesson-Level Quality Audit** for **Chart Reading And Market Structure**.
 
 Reason:
 
-- It is the first user experience.
-- It now includes the new beginner market-mechanics bridge lessons.
-- It sets the tone for app tie-ins without overwhelming newer traders.
+- Trading Foundations Pass 1 is complete.
+- Chart Reading is the first deep concept course after Foundations.
+- Chart, candlestick, and pattern lessons need careful bridge restraint so they remain education and review support, not app ads or signals.
 
 Output should include:
 
-- A Trading Foundations lesson-level quality audit.
+- A Chart Reading lesson-level quality audit.
 - Any small markdown edits needed.
-- App bridge map for Trading Foundations.
+- App bridge map for Chart Reading core, candlestick, and chart-pattern lessons.
 - Tracker and handoff update.
 - Commit.
