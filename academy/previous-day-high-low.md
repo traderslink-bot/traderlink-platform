@@ -46,6 +46,8 @@ meta_description: "Learn why traders watch previous day high and low, how PDH/PD
 
 The previous day high and previous day low are the highest and lowest prices from the prior regular trading session. Traders often mark these levels before the next session because they are objective, visible reference points.
 
+Check your chart settings before relying on them. Some platforms can include or exclude extended-hours data, which can change what appears to be the prior day's high or low.
+
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Pivot Levels](/academy/pivot-levels/) and leads into [Premarket High Low](/academy/premarket-high-low/), [High of Day](/academy/high-of-day/), and market open review.
 
 
@@ -106,6 +108,8 @@ These are context clues. They should be combined with current volume, liquidity,
 ## Regular Session Versus Premarket
 
 Most traders define previous day high and low from the prior regular session, not premarket or after-hours trading.
+
+For consistency, decide whether your review process uses regular-session levels only or a separate extended-hours map. Mixing those definitions after the trade can make the review less useful.
 
 That said, premarket can still matter. If a stock gaps above PDH in premarket, the open may require a different review than a stock opening quietly inside yesterday's range.
 

@@ -46,6 +46,8 @@ meta_description: "Learn why traders watch premarket high and low levels, how PM
 
 The premarket high and premarket low are the highest and lowest prices a stock trades before the regular market session opens. Day traders often mark these levels because they can shape the early-session map.
 
+Because extended-hours access and data visibility can vary by broker, venue, and chart platform, define PMH and PML from the same session feed you actually use for planning and review.
+
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Previous Day High Low](/academy/previous-day-high-low/) and leads into [High of Day](/academy/high-of-day/), [Market Open Trading](/academy/market-open-trading/), and day-trading workflow review.
 
 
@@ -79,6 +81,8 @@ The goal is to prepare for the open with a cleaner map, not to predict the open.
 The premarket high is the highest price a stock reaches during premarket trading before the regular session opens.
 
 The premarket low is the lowest price a stock reaches during premarket trading before the regular session opens.
+
+If your chart platform lets you include or exclude certain extended-hours prints, make that setting part of your review. A thin odd-lot print is not the same as a level formed by repeated volume.
 
 Traders often abbreviate these as:
 

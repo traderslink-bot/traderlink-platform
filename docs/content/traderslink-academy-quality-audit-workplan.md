@@ -211,7 +211,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 3: Accuracy/Source Audit** for **Chart Reading And Market Structure**.
+Continue with **Pass 3: Accuracy/Source Audit** for **Trading Psychology And Discipline**.
 
 Reason:
 
@@ -242,15 +242,16 @@ Reason:
 - Trading Styles And Playbooks Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trading-styles.md`.
 - Day Trading Workflow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-day-trading-workflow.md`.
 - Swing Trading Workflow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-swing-trading-workflow.md`.
-- Chart Reading And Market Structure is now the next useful source-sensitive course because it is still marked `not_started` for Pass 3 and contains foundational support/resistance, key level, breakout, breakdown, reclaim, HOD/LOD, premarket high/low, previous-day levels, trend-structure, and market-structure lessons. The next source pass should verify anti-guarantee language, chart-reference definitions, time-of-day references, and consistency with the newer `/academy/...` URL structure.
+- Chart Reading And Market Structure Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-chart-reading.md`.
+- Trading Psychology And Discipline is now the next useful source-sensitive course because it should verify non-clinical behavior language, discipline framing, emotional-trading terminology, non-shaming coaching tone, and app bridge restraint before production UI planning.
 - Pass 3 should verify factual details against official and reputable sources before the Academy moves toward production UI planning. Source details belong in internal audit files; user-facing lessons should use clean educational wording unless a rule, filing type, or official system is itself the lesson topic.
 
 Output should include:
 
-- A Chart Reading And Market Structure accuracy/source audit.
+- A Trading Psychology And Discipline accuracy/source audit.
 - Any small markdown edits needed.
 - Source-sensitive findings and corrections.
-- Official-source references for SEC, Investor.gov, FINRA, exchanges, and market-structure/order-mechanics sources where needed.
+- Reputable-source references for trading behavior, risk framing, non-clinical coaching language, and any rule-sensitive claims where needed.
 - A clear list of items deferred to later source passes if the course is too large for one run.
 - Tracker and handoff update.
 - Commit.

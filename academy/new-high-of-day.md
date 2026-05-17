@@ -45,6 +45,8 @@ meta_description: "Learn what new high of day means, why traders watch NHOD aler
 
 New high of day means a stock has traded above its previous highest price of the current session. Traders often shorten it to NHOD.
 
+NHOD alerts depend on the session rules used by the chart or scanner. A regular-session NHOD is different from an extended-hours high that printed before or after the main session.
+
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [High of Day](/academy/high-of-day/) and [Low of Day](/academy/low-of-day/), then connects back to [Breakout Trading](/academy/breakout-trading/) and trade review.
 
 
@@ -75,6 +77,8 @@ The goal is to review whether the NHOD break was planned and supported, or wheth
 ## Quick Definition
 
 New high of day is when price breaks above the current session's prior high.
+
+Before reviewing an alert, confirm whether the scanner was using regular-session data only or including extended-hours prints.
 
 Traders may watch NHOD because it can show:
 

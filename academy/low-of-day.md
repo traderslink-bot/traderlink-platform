@@ -46,6 +46,8 @@ meta_description: "Learn what low of day means, why traders watch LOD levels, co
 
 Low of day is the lowest price a stock has reached during the current trading session. Traders often shorten it to LOD.
 
+For most intraday stock charts, LOD is reviewed inside the active regular session unless the chart or scanner is explicitly set to include extended-hours prints.
+
 This lesson is part of the **Chart Reading And Market Structure** learning path. It follows [High of Day](/academy/high-of-day/) and helps traders review the opposite side of the intraday map: support pressure, breakdown attempts, failed breakdowns, and risk discipline.
 
 
@@ -76,6 +78,8 @@ The goal is to review how price behaved around the level, not to use LOD as an a
 ## Quick Definition
 
 Low of day is the lowest price traded so far during the current session.
+
+If your scanner includes premarket or after-hours prints, confirm that before treating an alert as a regular-session LOD event.
 
 Traders watch LOD because it can become:
 

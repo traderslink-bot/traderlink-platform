@@ -74,7 +74,7 @@ The goal is not to assume price must return. The goal is to review the gap area 
 
 ## Quick Definition
 
-A gap happens when a stock opens above or below the prior session's trading range, leaving an empty price area on the chart.
+A gap happens when a stock opens at a meaningfully different price than the prior session's close, sometimes outside the prior session's range, leaving an empty price area on the chart.
 
 A gap fill happens when price later moves back through that empty area.
 

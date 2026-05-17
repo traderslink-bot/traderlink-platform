@@ -46,6 +46,8 @@ meta_description: "Learn what high of day means, why traders watch HOD levels, c
 
 High of day is the highest price a stock has reached during the current trading session. Traders often shorten it to HOD.
 
+For most intraday stock charts, HOD is reviewed inside the active regular session unless the chart or scanner is explicitly set to include extended-hours prints.
+
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Premarket High Low](/academy/premarket-high-low/) and [Previous Day High Low](/academy/previous-day-high-low/), then leads into [Low of Day](/academy/low-of-day/) and [New High of Day](/academy/new-high-of-day/).
 
 
@@ -76,6 +78,8 @@ The goal is to review how price behaved around the level, not to treat the level
 ## Quick Definition
 
 High of day is the highest price traded so far during the current session.
+
+If your scanner includes premarket or after-hours prints, confirm that before treating an alert as a regular-session HOD event.
 
 Traders watch HOD because it can become:
 
