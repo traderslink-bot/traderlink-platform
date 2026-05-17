@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Downtrend Structure Break</title>
+  <desc id="desc">Educational candlestick chart showing lower highs and lower lows before price breaks above the latest lower high.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Downtrend Structure Break</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Example only: review whether weak structure actually changed.</text>
+  <g stroke="#18304e" stroke-width="1">
+    <line x1="58" y1="118" x2="704" y2="118"/>
+    <line x1="58" y1="170" x2="704" y2="170"/>
+    <line x1="58" y1="222" x2="704" y2="222"/>
+    <line x1="58" y1="274" x2="704" y2="274"/>
+  </g>
+  <rect x="328" y="168" width="238" height="34" fill="#1d4ed8" opacity=".18"/>
+  <line x1="328" y1="168" x2="566" y2="168" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="328" y1="202" x2="566" y2="202" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="336" y="162" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Latest lower high zone</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="96" y1="122" x2="96" y2="210"/><rect x="86" y="144" width="20" height="44" rx="2"/>
+      <line x1="162" y1="190" x2="162" y2="268"/><rect x="152" y="208" width="20" height="38" rx="2"/>
+      <line x1="294" y1="214" x2="294" y2="296"/><rect x="284" y="234" width="20" height="40" rx="2"/>
+    </g>
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="228" y1="158" x2="228" y2="238"/><rect x="218" y="178" width="20" height="38" rx="2"/>
+      <line x1="360" y1="172" x2="360" y2="250"/><rect x="350" y="192" width="20" height="38" rx="2"/>
+      <line x1="492" y1="148" x2="492" y2="232"/><rect x="482" y="168" width="20" height="42" rx="2"/>
+      <line x1="558" y1="116" x2="558" y2="204"/><rect x="548" y="136" width="20" height="46" rx="2"/>
+      <line x1="624" y1="94" x2="624" y2="180"/><rect x="614" y="112" width="20" height="42" rx="2"/>
+    </g>
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="426" y1="222" x2="426" y2="306"/><rect x="416" y="242" width="20" height="40" rx="2"/>
+    </g>
+  </g>
+  <path d="M96 166 L162 244 L228 198 L294 274 L360 212 L426 282 L492 190 L558 160 L624 138" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".55"/>
+  <text x="82" y="112" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">LH</text>
+  <text x="276" y="318" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">LL</text>
+  <text x="410" y="326" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Lower low</text>
+  <text x="540" y="106" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Break above structure</text>
+  <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: did price hold above the lower high, or reject back below?</text>
+</svg>
