@@ -100,6 +100,8 @@ journey_map
 | `public/images/learn/chart-reading/volume-expansion-at-level.svg` | `/learn/volume/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show volume expanding as price tests a clear resistance zone. | Quick Definition section. | Candlestick chart showing volume expansion as price tests a key level. | editor_verified | Supports volume expansion education, uses realistic candles, level context, volume bars, and avoids signal language. | `72a62c5a` |
 | `public/images/learn/chart-reading/volume-dry-up-before-move.svg` | `/learn/volume/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show candles tightening while volume contracts near a decision area. | Low Volume And Dry-Up section. | Candlestick chart showing volume drying up while price tightens near a resistance zone. | editor_verified | Supports volume dry-up education, uses realistic candles, contraction context, volume bars, and avoids prediction language. | `72a62c5a` |
 | `public/images/learn/chart-reading/volume-fade-after-spike.svg` | `/learn/volume/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show participation fading after an early spike. | Volume Fade After A Spike section. | Candlestick chart showing volume fading after an early spike while price stops making clean progress. | editor_verified | Supports volume fade review, uses realistic candles, volume bars, and avoids reversal guarantee language. | `72a62c5a` |
+| `public/images/learn/chart-reading/relative-volume-normal-vs-unusual.svg` | `/learn/relative-volume/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Compare normal activity with unusual relative volume. | Quick Definition section. | Candlestick chart comparing normal volume with unusual relative volume. | editor_verified | Supports relative-volume comparison education, uses realistic candles and volume bars, and avoids signal language. | `f191d165` |
+| `public/images/learn/chart-reading/relative-volume-news-fade-review.svg` | `/learn/relative-volume/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show high relative volume after news followed by fading participation. | High Relative Volume With News section. | Candlestick chart showing high relative volume after news followed by fading participation. | editor_verified | Supports relative-volume context review, uses realistic candles, catalyst context, volume bars, and avoids prediction language. | `f191d165` |
 
 ## Editor Verification Summary
 
@@ -294,11 +296,19 @@ Volume SVG verification:
 - Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Relative volume SVG verification:
+
+- Both visuals support the actual relative-volume lesson.
+- The comparison visual shows normal activity versus unusual relative volume with realistic candles and volume bars.
+- The news-fade visual shows high relative volume after news followed by fading participation as review context, not as a prediction.
+- Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Relative Volume or RVOL article: current activity versus normal activity, RVOL comparison, and low-float/news context.
+1. Relative Volume RVOL article: scanner-style RVOL metric, time-of-day comparison, and review caveats.
 2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
