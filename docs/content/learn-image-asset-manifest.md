@@ -86,6 +86,8 @@ journey_map
 | `public/images/learn/chart-reading/high-of-day-failed-breakout.svg` | `/learn/high-of-day/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a break above high of day failing back below the level as review context. | Failed HOD Breakout section. | Candlestick chart showing price breaking above high of day and failing back below the level. | editor_verified | Supports failed-HOD-breakout review, uses realistic candles, highlights the HOD zone, includes volume context, and avoids reversal guarantee language. | `b31325b3` |
 | `public/images/learn/chart-reading/low-of-day-level-map.svg` | `/learn/low-of-day/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show low of day as an intraday reference level with PML and PDL context. | Quick Definition section. | Candlestick chart showing low of day as an intraday reference level with nearby PML and PDL context. | editor_verified | Supports LOD reference-level education, uses realistic candles, nearby context levels, volume bars, and avoids signal language. | `b31325b3` |
 | `public/images/learn/chart-reading/low-of-day-failed-breakdown.svg` | `/learn/low-of-day/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a break below low of day reclaiming back above the level as review context. | Failed LOD Breakdown section. | Candlestick chart showing price breaking below low of day and reclaiming back above the level. | editor_verified | Supports failed-LOD-breakdown review, uses realistic candles, highlights the LOD zone, includes volume context, and avoids reversal guarantee language. | `b31325b3` |
+| `public/images/learn/chart-reading/new-high-of-day-hold-vs-fail.svg` | `/learn/new-high-of-day/` | Chart Reading And Market Structure | realistic_candlestick_chart | Compare a new high of day that holds with one that fails back below the old high. | Quick Definition section. | Candlestick chart comparing a new high of day that holds with one that fails back below the old high. | editor_verified | Supports NHOD hold-versus-fail review, uses realistic candles, highlights the old HOD zone, includes volume context, and avoids signal language. | `30cd3b05` |
+| `public/images/learn/chart-reading/new-high-of-day-chase-risk.svg` | `/learn/new-high-of-day/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show repeated new high of day pushes becoming extended far from support. | Chase Risk After Repeated New Highs section. | Candlestick chart showing repeated new high of day pushes getting farther from support and creating chase-risk review context. | editor_verified | Supports NHOD chase-risk review, uses realistic candles, support context, volume bars, and avoids predictive claims. | `30cd3b05` |
 
 ## Editor Verification Summary
 
@@ -238,11 +240,19 @@ High of day and low of day SVG verification:
 - Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+New high of day SVG verification:
+
+- Both visuals support the actual new-high-of-day lesson.
+- The hold-versus-fail visual shows the old HOD zone and two plausible outcomes without implying certainty.
+- The chase-risk visual shows repeated NHOD pushes becoming extended from support.
+- Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. New High Of Day article: NHOD alert context, hold/fail review, and extension/chase-risk review.
+1. Breakdown/market-structure gap article if no Learn draft exists, otherwise continue with `gap-fill-trading` or `compression` based on the Chart Reading sequence.
 2. Breakdown article: clean breakdown, failed breakdown/reclaim, breakdown with volume context.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
