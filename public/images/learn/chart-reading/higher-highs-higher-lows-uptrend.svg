@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Higher Highs And Higher Lows Uptrend Structure</title>
+  <desc id="desc">Educational candlestick chart showing higher highs and higher lows forming a rising market structure with volume context.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Higher Highs And Higher Lows</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Rising swing highs and higher pullbacks define the structure.</text>
+  <g stroke="#18304e" stroke-width="1">
+    <line x1="58" y1="116" x2="704" y2="116"/>
+    <line x1="58" y1="166" x2="704" y2="166"/>
+    <line x1="58" y1="216" x2="704" y2="216"/>
+    <line x1="58" y1="266" x2="704" y2="266"/>
+  </g>
+  <rect x="198" y="242" width="134" height="32" fill="#1d4ed8" opacity=".18"/>
+  <rect x="388" y="198" width="136" height="32" fill="#1d4ed8" opacity=".18"/>
+  <text x="204" y="236" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="12" font-weight="700">Higher low zone</text>
+  <text x="394" y="192" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="12" font-weight="700">Higher low zone</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="92" y1="268" x2="92" y2="324"/><rect x="82" y="286" width="20" height="24" rx="2"/>
+      <line x1="145" y1="222" x2="145" y2="294"/><rect x="135" y="242" width="20" height="34" rx="2"/>
+      <line x1="198" y1="240" x2="198" y2="304"/><rect x="188" y="258" width="20" height="28" rx="2"/>
+      <line x1="251" y1="184" x2="251" y2="260"/><rect x="241" y="204" width="20" height="38" rx="2"/>
+      <line x1="304" y1="218" x2="304" y2="286"/><rect x="294" y="238" width="20" height="28" rx="2"/>
+      <line x1="357" y1="150" x2="357" y2="230"/><rect x="347" y="170" width="20" height="40" rx="2"/>
+      <line x1="410" y1="194" x2="410" y2="260"/><rect x="400" y="214" width="20" height="28" rx="2"/>
+      <line x1="463" y1="124" x2="463" y2="204"/><rect x="453" y="144" width="20" height="42" rx="2"/>
+      <line x1="516" y1="160" x2="516" y2="230"/><rect x="506" y="180" width="20" height="30" rx="2"/>
+      <line x1="622" y1="96" x2="622" y2="174"/><rect x="612" y="114" width="20" height="40" rx="2"/>
+    </g>
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="569" y1="120" x2="569" y2="206"/><rect x="559" y="142" width="20" height="44" rx="2"/>
+      <line x1="675" y1="112" x2="675" y2="196"/><rect x="665" y="134" width="20" height="42" rx="2"/>
+    </g>
+  </g>
+  <path d="M92 302 L145 258 L198 276 L251 224 L304 256 L357 190 L410 230 L463 166 L516 210 L569 184 L622 134 L675 176" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
+  <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
+    <text x="132" y="214" fill="#bbf7d0">HH</text>
+    <text x="194" y="320" fill="#bbf7d0">HL</text>
+    <text x="342" y="142" fill="#bbf7d0">Higher high</text>
+    <text x="398" y="284" fill="#bbf7d0">Higher low</text>
+    <text x="596" y="88" fill="#bbf7d0">New higher high</text>
+  </g>
+  <g>
+    <rect x="58" y="316" width="14" height="18" fill="#21c784" opacity=".7"/>
+    <rect x="84" y="310" width="14" height="24" fill="#21c784" opacity=".75"/>
+    <rect x="110" y="322" width="14" height="12" fill="#ef4444" opacity=".7"/>
+    <rect x="136" y="304" width="14" height="30" fill="#21c784" opacity=".8"/>
+    <rect x="162" y="318" width="14" height="16" fill="#ef4444" opacity=".7"/>
+    <rect x="188" y="306" width="14" height="28" fill="#21c784" opacity=".75"/>
+    <rect x="214" y="314" width="14" height="20" fill="#ef4444" opacity=".7"/>
+    <rect x="240" y="294" width="14" height="40" fill="#21c784" opacity=".9"/>
+    <rect x="266" y="318" width="14" height="16" fill="#ef4444" opacity=".7"/>
+    <rect x="292" y="306" width="14" height="28" fill="#21c784" opacity=".75"/>
+    <rect x="318" y="322" width="14" height="12" fill="#ef4444" opacity=".65"/>
+    <rect x="344" y="292" width="14" height="42" fill="#21c784" opacity=".9"/>
+    <rect x="370" y="316" width="14" height="18" fill="#ef4444" opacity=".65"/>
+    <rect x="396" y="304" width="14" height="30" fill="#21c784" opacity=".8"/>
+    <rect x="422" y="318" width="14" height="16" fill="#ef4444" opacity=".65"/>
+    <rect x="448" y="288" width="14" height="46" fill="#21c784" opacity=".9"/>
+    <rect x="474" y="310" width="14" height="24" fill="#21c784" opacity=".75"/>
+    <rect x="500" y="318" width="14" height="16" fill="#ef4444" opacity=".65"/>
+    <rect x="526" y="304" width="14" height="30" fill="#21c784" opacity=".8"/>
+    <rect x="552" y="314" width="14" height="20" fill="#ef4444" opacity=".65"/>
+    <rect x="578" y="292" width="14" height="42" fill="#21c784" opacity=".9"/>
+    <rect x="604" y="286" width="14" height="48" fill="#21c784" opacity=".95"/>
+    <rect x="630" y="308" width="14" height="26" fill="#ef4444" opacity=".7"/>
+  </g>
+  <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: what higher low defined the structure, and was current price extended from it?</text>
+  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">This is context for learning, not a trade instruction.</text>
+</svg>
