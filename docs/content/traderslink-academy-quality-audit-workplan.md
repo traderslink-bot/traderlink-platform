@@ -100,7 +100,7 @@ Recommended order for future runs:
 | 4 | Risk Management And Trade Planning | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-risk-management.md` with official SEC, Investor.gov, and FINRA source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-risk-management.md` and identified a six-SVG priority risk visual batch before UI-ready status. |
 | 5 | Technical Indicators And Tools | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-technical-indicators.md` with reputable technical-analysis/charting-source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-technical-indicators.md` and identified a seven-SVG priority indicator visual batch before UI-ready status. |
 | 6 | Trading Styles And Playbooks | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-styles.md` with official SEC, Investor.gov, FINRA, and current FINRA 2026 intraday margin-transition source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-trading-styles.md` with 10 cross-listed setup SVGs verified and an eight-SVG native style/playbook visual batch identified. |
-| 7 | Day Trading Workflow | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-day-trading-workflow.md` with official SEC, Investor.gov, FINRA, NYSE, and Nasdaq source verification plus targeted plain-language accuracy guardrails for premarket and after-hours broker/venue variability. |
+| 7 | Day Trading Workflow | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-day-trading-workflow.md` with official SEC, Investor.gov, FINRA, NYSE, and Nasdaq source verification plus targeted plain-language accuracy guardrails for premarket and after-hours broker/venue variability; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-day-trading-workflow.md` with 5 session SVGs verified and 2 optional future dashboard visuals identified. |
 | 8 | Swing Trading Workflow | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; Pass 2 fixed stale swing workflow related links; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-swing-trading-workflow.md` with official SEC, Investor.gov, and FINRA source verification plus targeted plain-language accuracy guardrails for earnings event timing. |
 | 9 | News, Catalysts And SEC Filings | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; Pass 2 completed; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md` with official SEC, Investor.gov, and FDA source verification plus targeted plain-language accuracy guardrail edits. |
 | 10 | Small-Cap Stocks, Float And Dilution | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-small-cap-float-dilution.md` with official SEC, Investor.gov, PCAOB, and FASB source verification plus targeted plain-language accuracy guardrail edits. |
@@ -211,7 +211,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 4: Visual Gap Audit** for **Day Trading Workflow**.
+Continue with **Pass 4: Visual Gap Audit** for **Swing Trading Workflow**.
 
 Reason:
 
@@ -224,13 +224,14 @@ Reason:
 - Risk Management And Trade Planning Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-risk-management.md`.
 - Technical Indicators And Tools Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-technical-indicators.md`.
 - Trading Styles And Playbooks Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-trading-styles.md`.
-- Day Trading Workflow is the next course in the Academy order.
-- Day Trading Workflow already has several realistic session visuals, but needs a formal Pass 4 audit to verify visual coverage, manifest health, mobile readability, and whether any session-specific gaps remain.
+- Day Trading Workflow Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-day-trading-workflow.md`.
+- Swing Trading Workflow is the next course in the Academy order.
+- Swing Trading Workflow already has multi-session visuals, but needs a formal Pass 4 audit to verify coverage, manifest health, mobile readability, and whether any swing review, earnings, or news-risk visuals are still needed.
 
 Output should include:
 
-- A Day Trading Workflow visual gap audit.
-- Course-level visual coverage notes across workflow overview, premarket, watchlist, market open, opening range, midday, power hour, after-hours, and session review lessons.
+- A Swing Trading Workflow visual gap audit.
+- Course-level visual coverage notes across beginner swing workflow, swing risk management, swing support/resistance, swing volume, swing catalysts, swing earnings, swing news risk, and small-cap swing trading lessons.
 - Lesson-by-lesson visual recommendations.
 - Realistic SVG opportunities, reuse decisions, duplicate-coverage notes, and defer/no-visual decisions.
 - Image manifest task notes only where assets are created or updated.
