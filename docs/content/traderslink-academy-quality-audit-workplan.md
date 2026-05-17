@@ -94,7 +94,7 @@ Recommended order for future runs:
 | 6 | Trading Styles And Playbooks | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; confirmed strong style/playbook flow, removed stale app route links from cross-listed setup lessons, and documented restrained bridges to Playbook Builder, Trade Review, Analytics, Session Review, Coaching, Risk Review, and Execution Review. |
 | 7 | Day Trading Workflow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; confirmed strong session-flow structure, fixed one invalid after-hours earnings link, and documented restrained bridges to Session Review, Trade Review, Execution Review, Risk Review, Analytics, Coaching, and News/Filing Review. |
 | 8 | Swing Trading Workflow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; corrected adjacent course transitions, cleaned beginner swing quote encoding, and documented restrained bridges to Trade Review, Risk Review, Journal Notes, News/Filing Review, Analytics, Coaching, and Playbook Builder. |
-| 9 | News, Catalysts And SEC Filings | not_started | not_started | not_started | not_started | not_started | not_started | Requires official source checks for EDGAR/SEC details. |
+| 9 | News, Catalysts And SEC Filings | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; removed stale app route links from SEC filing module lessons, cleaned broad journal wording, fixed several stale internal links, and documented source-sensitive follow-up needs for SEC, EDGAR, FDA, filing, and delisting details. |
 | 10 | Small-Cap Stocks, Float And Dilution | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to news/filing review and risk context. |
 | 11 | Halts And High-Volatility Events | not_started | not_started | not_started | not_started | not_started | not_started | Requires official source checks for halt/circuit-breaker rules. |
 | 12 | Trading Psychology And Discipline | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to coaching and mistake-pattern review. |
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 1: Lesson-Level Quality Audit** for **News, Catalysts And SEC Filings**.
+Continue with **Pass 1: Lesson-Level Quality Audit** for **Small-Cap Stocks, Float And Dilution**.
 
 Reason:
 
@@ -209,15 +209,16 @@ Reason:
 - Trading Styles And Playbooks Pass 1 is complete.
 - Day Trading Workflow Pass 1 is complete.
 - Swing Trading Workflow Pass 1 is complete.
-- News, Catalysts And SEC Filings is the next course because learners now move from multi-session swing context into the source, quality, filing, and event-review work behind stock movement.
-- This course needs careful language around catalysts, press releases, filings, EDGAR, offerings, dilution, earnings, and news so lessons stay educational and do not become directional trade calls.
+- News, Catalysts And SEC Filings Pass 1 is complete.
+- Small-Cap Stocks, Float And Dilution is the next course because learners now move from catalyst and filing source review into float, dilution, offerings, warrants, share structure, cash runway, and going-concern context.
+- This course needs careful language around low-float moves, dilution risk, offerings, warrants, reverse splits, cash runway, and going-concern language so lessons stay educational and do not become hype or avoid-at-all-costs warnings.
 - Mark factual/source-sensitive items for later Pass 3 where needed, but keep this run focused on Pass 1 lesson quality unless a source issue is obvious inside the lesson text.
 
 Output should include:
 
-- A News, Catalysts And SEC Filings lesson-level quality audit.
+- A Small-Cap Stocks, Float And Dilution lesson-level quality audit.
 - Any small markdown edits needed.
-- App bridge map for stock catalysts, press releases, how to read press releases, SEC filings, EDGAR source-document lessons, SEC filing modules, and news-category lessons.
-- Visual-readiness notes for catalyst timelines, filing/source panels, press-release quality review, EDGAR document review, offering/dilution context, and news-reaction review.
+- App bridge map for small-cap stocks, penny stocks, float, low float, float rotation, shares outstanding, fully diluted shares, dilution, offerings, warrants, convertibles, preferred stock, reverse splits, cash runway, going concern, and related dilution-risk lessons.
+- Visual-readiness notes for float/share-structure diagrams, offering flow, warrant/convertible context, reverse split context, cash runway review, and small-cap risk dashboards.
 - Tracker and handoff update.
 - Commit.

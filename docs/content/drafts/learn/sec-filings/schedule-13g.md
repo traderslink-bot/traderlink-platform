@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed filing-driven trades by source context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/sec-filings/form-def-14a/"
 recommended_previous: "/learn/sec-filings/schedule-13d/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 25
 academy_module: "Beneficial Ownership"
 academy_course: "News, Catalysts And SEC Filings"
 learning_track: "News, Catalysts And SEC Filings"
-internal_links: ["/learn/sec-filings/", "/learn/sec-filings/schedule-13d/", "/learn/share-structure/", "/learn/stock-float/", "/learn/news-driven-stocks/", "/trader-intelligence/"]
+internal_links: ["/learn/sec-filings/", "/learn/sec-filings/schedule-13d/", "/learn/float-vs-shares-outstanding/", "/learn/stock-float/", "/learn/stock-catalysts/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -37,7 +37,7 @@ By the end of this lesson, you should be able to:
 
 - Explain what Schedule 13G is used for.
 - Identify the parts of the filing that matter most for traders.
-- Review passive or institutional beneficial ownership ownership percentage amendments and float context without assuming a guaranteed market reaction.
+- Review passive or institutional beneficial ownership, ownership percentage, amendments, and float context without assuming a guaranteed market reaction.
 - Connect the filing to related news, chart reaction, liquidity, and risk context.
 - Use the filing as part of a structured review process instead of a standalone prediction tool.
 
@@ -136,13 +136,13 @@ Useful review notes include:
 
 This helps traders avoid treating every ownership filing as the same catalyst.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed filing-driven trades by source context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/learn/sec-filings/). Schedule 13G is closely related to [Schedule 13D](/learn/sec-filings/schedule-13d/), which is generally more detailed and often tied to active intent.
 
-For ownership context, review [share structure](/learn/share-structure/), [stock float](/learn/stock-float/), and [news driven stocks](/learn/news-driven-stocks/).
+For ownership context, review [float versus shares outstanding](/learn/float-vs-shares-outstanding/), [stock float](/learn/stock-float/), and [stock catalysts](/learn/stock-catalysts/).
 
 ## Common Mistakes
 

@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed filing-driven trades by source context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/earnings-news/"
 recommended_previous: "/learn/sec-filings/nt-10-q/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 30
 academy_module: "Exchange And Listing Events"
 academy_course: "News, Catalysts And SEC Filings"
 learning_track: "News, Catalysts And SEC Filings"
-internal_links: ["/learn/sec-filings/", "/learn/reverse-split/", "/learn/small-cap-risk/", "/learn/how-to-spot-dilution-risk/", "/learn/news-driven-stocks/", "/trader-intelligence/"]
+internal_links: ["/learn/sec-filings/", "/learn/reverse-split/", "/learn/small-cap-stocks/", "/learn/how-to-spot-dilution-risk/", "/learn/stock-catalysts/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -37,7 +37,7 @@ By the end of this lesson, you should be able to:
 
 - Explain what Form 25 is used for.
 - Identify the parts of the filing that matter most for traders.
-- Review delisting deregistration from an exchange listing-status context and liquidity risk without assuming a guaranteed market reaction.
+- Review delisting, exchange-registration status, listing context, and liquidity risk without assuming a guaranteed market reaction.
 - Connect the filing to related news, chart reaction, liquidity, and risk context.
 - Use the filing as part of a structured review process instead of a standalone prediction tool.
 
@@ -137,13 +137,13 @@ Useful review notes include:
 
 This kind of review is especially useful for small-cap and low-priced stocks where listing risk can be significant.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed filing-driven trades by source context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related SEC Filings
 
-Start with the main [SEC filings guide](/learn/sec-filings/). Delisting risk can connect with [reverse stock splits](/learn/reverse-split/), [small-cap risk](/learn/small-cap-risk/), and [how to spot dilution risk](/learn/how-to-spot-dilution-risk/).
+Start with the main [SEC filings guide](/learn/sec-filings/). Delisting risk can connect with [reverse stock splits](/learn/reverse-split/), [small-cap stocks](/learn/small-cap-stocks/), and [how to spot dilution risk](/learn/how-to-spot-dilution-risk/).
 
-For market reaction context, review [news driven stocks](/learn/news-driven-stocks/).
+For market reaction context, review [stock catalysts](/learn/stock-catalysts/).
 
 ## Common Mistakes
 

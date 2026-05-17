@@ -304,7 +304,7 @@ No. A press release is a company announcement. An SEC filing is a formal regulat
 
 Yes. Many press-release moves fade, especially if the headline is weak, the stock is extended, volume dries up, or the details do not support the initial excitement.
 
-### Should traders journal press-release trades?
+### Should traders keep review notes on press-release trades?
 
 Yes. Structured review can help traders see whether they read the release, checked filings, planned the trade, and managed execution risk.
 

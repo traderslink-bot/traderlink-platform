@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed filing-driven trades by source context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/sec-filings/schedule-13d/"
 recommended_previous: "/learn/sec-filings/form-4/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 23
 academy_module: "Insider Ownership"
 academy_course: "News, Catalysts And SEC Filings"
 learning_track: "News, Catalysts And SEC Filings"
-internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-3/", "/learn/sec-filings/form-4/", "/learn/share-structure/", "/learn/stock-float/", "/trader-intelligence/"]
+internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-3/", "/learn/sec-filings/form-4/", "/learn/float-vs-shares-outstanding/", "/learn/stock-float/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -37,7 +37,7 @@ By the end of this lesson, you should be able to:
 
 - Explain what Form 5 is used for.
 - Identify the parts of the filing that matter most for traders.
-- Review annual insider ownership reporting late or exempt transactions and cleanup disclosures without assuming a guaranteed market reaction.
+- Review annual insider ownership reporting, late or exempt transactions, and cleanup disclosures without assuming a guaranteed market reaction.
 - Connect the filing to related news, chart reaction, liquidity, and risk context.
 - Use the filing as part of a structured review process instead of a standalone prediction tool.
 
@@ -138,13 +138,13 @@ Useful review notes include:
 
 This helps traders avoid reacting to annual filings without checking timing and transaction type.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed filing-driven trades by source context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/learn/sec-filings/). Form 5 connects with [Form 3](/learn/sec-filings/form-3/) and [Form 4 insider transactions](/learn/sec-filings/form-4/).
 
-For ownership context, review [share structure](/learn/share-structure/) and [stock float](/learn/stock-float/).
+For ownership context, review [float versus shares outstanding](/learn/float-vs-shares-outstanding/) and [stock float](/learn/stock-float/).
 
 ## Common Mistakes
 

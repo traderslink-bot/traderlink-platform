@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed filing-driven trades by source context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/sec-filings/form-10-q/"
 recommended_previous: "/learn/sec-filings/form-8-k/"
 academy_level: "Foundation"
@@ -18,7 +18,7 @@ academy_order: 7
 academy_module: "Company Reports"
 academy_course: "News, Catalysts And SEC Filings"
 learning_track: "News, Catalysts And SEC Filings"
-internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-10-q/", "/learn/sec-filings/form-8-k/", "/learn/how-to-spot-dilution-risk/", "/learn/share-structure/", "/trader-intelligence/"]
+internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-10-q/", "/learn/sec-filings/form-8-k/", "/learn/how-to-spot-dilution-risk/", "/learn/float-vs-shares-outstanding/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -37,7 +37,7 @@ By the end of this lesson, you should be able to:
 
 - Explain what Form 10-K is used for.
 - Identify the parts of the filing that matter most for traders.
-- Review annual reports audited financials risk factors cash debt and going-concern context without assuming a guaranteed market reaction.
+- Review annual reports, audited financials, risk factors, cash, debt, and going-concern context without assuming a guaranteed market reaction.
 - Connect the filing to related news, chart reaction, liquidity, and risk context.
 - Use the filing as part of a structured review process instead of a standalone prediction tool.
 
@@ -141,13 +141,13 @@ Useful review notes include:
 
 This kind of review helps traders avoid reacting only to headlines or charts.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed filing-driven trades by source context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/learn/sec-filings/). Form 10-K is closely related to [Form 10-Q](/learn/sec-filings/form-10-q/) because quarterly reports update the annual picture throughout the year.
 
-For current events, review [Form 8-K](/learn/sec-filings/form-8-k/). For dilution context, review [how to spot dilution risk](/learn/how-to-spot-dilution-risk/) and [share structure](/learn/share-structure/).
+For current events, review [Form 8-K](/learn/sec-filings/form-8-k/). For dilution context, review [how to spot dilution risk](/learn/how-to-spot-dilution-risk/) and [float versus shares outstanding](/learn/float-vs-shares-outstanding/).
 
 ## Common Mistakes
 

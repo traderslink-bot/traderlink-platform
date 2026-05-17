@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed filing-driven trades by source context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/sec-filings/form-25/"
 recommended_previous: "/learn/sec-filings/nt-10-k/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 29
 academy_module: "Late Filing Notices"
 academy_course: "News, Catalysts And SEC Filings"
 learning_track: "News, Catalysts And SEC Filings"
-internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-10-q/", "/learn/sec-filings/nt-10-k/", "/learn/sec-filings/form-8-k/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
+internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-10-q/", "/learn/sec-filings/nt-10-k/", "/learn/sec-filings/form-8-k/", "/learn/how-to-spot-dilution-risk/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -37,7 +37,7 @@ By the end of this lesson, you should be able to:
 
 - Explain what NT 10-Q is used for.
 - Identify the parts of the filing that matter most for traders.
-- Review late quarterly report notices delay reasons reporting controls and follow-up 10-Q context without assuming a guaranteed market reaction.
+- Review late quarterly report notices, delay reasons, reporting controls, and follow-up 10-Q context without assuming a guaranteed market reaction.
 - Connect the filing to related news, chart reaction, liquidity, and risk context.
 - Use the filing as part of a structured review process instead of a standalone prediction tool.
 
@@ -132,7 +132,7 @@ Useful review notes include:
 
 This helps traders avoid treating all late filing notices the same way.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed filing-driven trades by source context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related SEC Filings
 

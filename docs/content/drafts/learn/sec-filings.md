@@ -240,7 +240,7 @@ Common SEC filing mistakes include:
 - Missing warrant or convertible-note language.
 - Ignoring cash position and going-concern language.
 - Reading the press release but not the attached filing.
-- Forgetting to journal whether the filing was reviewed before entry.
+- Forgetting to record whether the filing was reviewed before entry.
 
 Filings can feel dense, but repeated review makes the common patterns easier to recognize.
 

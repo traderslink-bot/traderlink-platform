@@ -5,7 +5,7 @@ primary_keyword: "how to review news trades"
 secondary_keywords:
   - "news trade review"
   - "review catalyst trades"
-  - "stock news trade journal"
+  - "stock news trade review"
   - "news driven trade review"
 search_intent: "Learn how to review news-driven stock trades with structure, including catalyst quality, price reaction, volume, risk, execution, and trade management."
 status: "draft"
