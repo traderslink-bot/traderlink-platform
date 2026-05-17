@@ -192,7 +192,7 @@ Use this as the primary course order on the Academy homepage:
 | 1 | Trading Foundations | content_upgraded | Completed beginner onboarding and market-basics markdown path, with plan/risk/review lessons cross-listed from completed courses. |
 | 2 | Chart Reading And Market Structure | in_progress | Users need candles, levels, structure, breakouts, breakdowns, and chart context early. |
 | 3 | Volume, Liquidity And Order Flow | academy_ready_core | Builds on chart reading and teaches whether activity is clean, thin, fast, or crowded. |
-| 4 | Technical Indicators And Tools | content_upgraded | Completed markdown course path teaches indicators as measurement/context tools after price, levels, and volume. |
+| 4 | Technical Indicators And Tools | academy_ready_core | Completed markdown course path teaches indicators as measurement/context tools after price, levels, and volume. |
 | 5 | Trading Styles And Playbooks | content_upgraded | Completed markdown course path helps users combine chart, volume, tools, and risk into style/playbook categories. |
 | 6 | News, Catalysts And SEC Filings | content_upgraded | High-value TradersLink differentiator. Core course markdown lesson path is now complete through news-trade review. |
 | 7 | Small-Cap Stocks, Float And Dilution | content_upgraded | Completed markdown course path covering small-cap context, float, share structure, dilution, offerings, securities, corporate actions, cash runway, and going concern. |
@@ -483,13 +483,13 @@ How to review it with price, volume, levels, and risk.
 
 ### Course Status
 
-The Technical Indicators And Tools course markdown path is **content_upgraded** across 11 newly created or upgraded lessons plus the cross-listed Volume By Price lesson from the completed Volume course.
+The Technical Indicators And Tools course markdown path is **academy_ready_core** across 11 newly created or upgraded lessons plus the cross-listed Volume By Price lesson from the completed Volume course.
 
 Before production UI implementation, this course still needs:
 
 - Visual asset review for indicator-specific diagrams where visuals would improve learning.
 - Optional realistic SVGs for VWAP, RSI/MACD, Bollinger Bands, and ATR only if they clearly support the lesson content.
-- Final Academy migration pass for completion behavior and UI-ready metadata.
+- Final production UI schema review once the website build begins.
 
 ## Course 5: Trading Styles And Playbooks
 
@@ -1139,7 +1139,7 @@ Current known Academy-ready lesson groups:
 | Volume, Liquidity And Order Flow | 14 | Core course path has passed Academy format migration check: metadata, lesson objectives, checklist, review, Trader Intelligence bridge, and visuals are normalized. |
 | News, Catalysts And SEC Filings | 36 | Full course markdown path is now content-upgraded across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
 | Trading Foundations | 4 | Beginner onboarding and market-basics lessons are content-upgraded; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
-| Technical Indicators And Tools | 11 | Full indicator course markdown path is now content-upgraded across indicator foundation, trend tools, momentum tools, volatility tools, and VWAP reclaim. Volume By Price is cross-listed from the completed Volume course. Needs visual review before UI-ready. |
+| Technical Indicators And Tools | 11 | Full indicator course markdown path has passed Academy format migration check across indicator foundation, trend tools, momentum tools, volatility tools, and VWAP reclaim. Volume By Price is cross-listed from the completed Volume course. Needs visual review before UI-ready. |
 | Trading Styles And Playbooks | 9 | Full course markdown path is now content-upgraded across style selector lessons, pullback context, news-fade/sell-the-news context, and multi-day runner context. Breakout, breakdown, reclaim, gap-fill, and chasing lessons are cross-listed from completed courses. Needs visual review before UI-ready. |
 | Small-Cap Stocks, Float And Dilution | 28 | Full course markdown path is now content-upgraded across small-cap context, float, dilution, offerings, securities, corporate actions, cash runway, and going concern. Needs visual review before UI-ready. |
 | Risk Management And Trade Planning | 13 | Full course markdown path is now content-upgraded across planning, rules, risk basics, account protection, trade management, and event risk. Needs visual review before UI-ready. |
@@ -1157,20 +1157,20 @@ More precise current state:
 | State | Lesson Count | Meaning |
 |---|---:|---|
 | content_upgraded | 217 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 153 | Remaining upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
-| academy_ready | 64 | Chart Reading core, Candlestick Patterns, Chart Patterns, and Volume/Liquidity lesson sets have passed the first Academy format migration check. |
+| academy_format_review_needed | 143 | Remaining upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| academy_ready | 74 | Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, and Technical Indicators lesson sets have passed the first Academy format migration check. Technical Indicators adds 10 newly counted ready lessons here because VWAP Reclaim was already counted in the Chart Patterns check and Volume By Price was already counted in the Volume check. |
 
 The 217 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to continue normalizing them into the final course format while creating or upgrading missing lessons only when a real gap appears.
 
 Current best next editorial action:
 
 ```text
-Technical Indicators And Tools Academy format migration
+Trading Styles And Playbooks Academy format migration
 ```
 
 Reason:
 
-Trading Foundations passed the first structural check. Chart Reading core, Candlestick Patterns, Chart Patterns, and Volume/Liquidity have completed the first Academy format migration check. The highest-value next work is Technical Indicators And Tools.
+Trading Foundations passed the first structural check. Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, and Technical Indicators have completed the first Academy format migration check. The highest-value next work is Trading Styles And Playbooks.
 
 ## Recommended Work Method From Here
 

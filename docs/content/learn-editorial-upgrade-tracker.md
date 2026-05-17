@@ -562,13 +562,14 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | Chart Reading Academy format migration | Normalized 23 Chart Reading And Market Structure core lessons for Academy format. | Passed. Lessons now use `content_type: "academy_lesson"`, `academy_course`, `academy_module`, `academy_order`, `academy_level`, lesson objectives, `Practical Checklist`, `Apply This In Review`, and `Trader Intelligence Bridge` labels. The pass preserved the strong existing lesson content and avoided production website files. | `f6773070` |
 | 2026-05-17 | Candlestick and Chart Patterns migration check | Checked Candlestick Patterns In Context and Chart Patterns In Context for Academy format readiness. | Passed with no content edits needed. Lessons already include Academy metadata, previous/next path, lesson objective, practical checklist, Apply This In Review, Trader Intelligence bridge, visual assets where useful, FAQ, and educational disclaimer. | no file changes |
 | 2026-05-17 | Volume, Liquidity And Order Flow Academy format migration | Normalized 14 Volume, Liquidity And Order Flow lessons for Academy format. | Passed. Lessons now use `content_type: "academy_lesson"`, normalized `learning_track`, `academy_course`, `academy_module`, `academy_order`, `academy_level`, lesson objectives, `Practical Checklist`, `Apply This In Review`, and review-focused wording. | `8bef2423` |
+| 2026-05-17 | Technical Indicators And Tools Academy format migration check | Checked 11 Technical Indicators And Tools lessons plus the cross-listed Volume By Price lesson for Academy format readiness. | Passed with no lesson edits needed. Lessons already include `content_type: "academy_lesson"`, `academy_course`, `academy_module`, `academy_order`, `academy_level`, previous/next path, lesson objective, practical checklist, Apply This In Review, Trader Intelligence bridge, related lessons, FAQ, and educational disclaimer. VWAP Reclaim was already counted in the Chart Patterns check, and Volume By Price was already counted in the Volume check. | no lesson file changes |
 
 ## Next Recommended Action
 
 Continue into Academy format migration and UI-readiness normalization:
 
-1. Continue the metadata/format pass with Technical Indicators And Tools.
-2. Then continue into Trading Styles And Playbooks.
+1. Continue the metadata/format pass with Trading Styles And Playbooks.
+2. Then continue into News, Catalysts And SEC Filings or Risk Management And Trade Planning, depending on which course has the highest website-readiness value at that point.
 3. Normalize `academy_course`, `academy_module`, `academy_order`, `academy_level`, `recommended_previous`, `recommended_next`, visual asset references, and review-section naming.
 4. Do not rewrite strong lessons unless the new Academy format reveals a real gap.
 5. Keep this as markdown/content planning only; do not build production routes, components, schemas, JSX, CSS, or pages.
