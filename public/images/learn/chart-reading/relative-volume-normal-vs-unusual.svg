@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">Normal volume compared with unusual relative volume</title>
+  <desc id="desc">A dark trading dashboard style chart comparing normal activity with a high relative volume session using candles and volume bars.</desc>
+  <rect width="900" height="520" fill="#08111f"/>
+  <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Relative volume compares today's activity to normal</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">The same raw share volume can mean different things on different stocks or different days.</text>
+  <rect x="70" y="118" width="350" height="306" rx="10" fill="#0a1322" stroke="#213858"/>
+  <rect x="480" y="118" width="350" height="306" rx="10" fill="#0a1322" stroke="#213858"/>
+  <text x="94" y="148" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Normal activity</text>
+  <text x="504" y="148" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Unusual relative volume</text>
+  <line x1="94" y1="190" x2="396" y2="190" stroke="#182943"/>
+  <line x1="94" y1="246" x2="396" y2="246" stroke="#182943"/>
+  <line x1="504" y1="190" x2="806" y2="190" stroke="#182943"/>
+  <line x1="504" y1="246" x2="806" y2="246" stroke="#182943"/>
+  <g stroke-width="3" stroke-linecap="round">
+    <line x1="116" y1="260" x2="116" y2="230" stroke="#22c55e"/><rect x="106" y="240" width="20" height="14" fill="#22c55e" rx="3"/>
+    <line x1="154" y1="252" x2="154" y2="222" stroke="#ef4444"/><rect x="144" y="232" width="20" height="14" fill="#ef4444" rx="3"/>
+    <line x1="192" y1="246" x2="192" y2="216" stroke="#22c55e"/><rect x="182" y="226" width="20" height="14" fill="#22c55e" rx="3"/>
+    <line x1="230" y1="238" x2="230" y2="210" stroke="#22c55e"/><rect x="220" y="220" width="20" height="12" fill="#22c55e" rx="3"/>
+    <line x1="268" y1="242" x2="268" y2="214" stroke="#ef4444"/><rect x="258" y="224" width="20" height="12" fill="#ef4444" rx="3"/>
+    <line x1="306" y1="232" x2="306" y2="202" stroke="#22c55e"/><rect x="296" y="212" width="20" height="14" fill="#22c55e" rx="3"/>
+    <line x1="344" y1="236" x2="344" y2="206" stroke="#ef4444"/><rect x="334" y="216" width="20" height="14" fill="#ef4444" rx="3"/>
+    <line x1="526" y1="266" x2="526" y2="226" stroke="#22c55e"/><rect x="516" y="240" width="20" height="18" fill="#22c55e" rx="3"/>
+    <line x1="564" y1="250" x2="564" y2="204" stroke="#22c55e"/><rect x="554" y="220" width="20" height="22" fill="#22c55e" rx="3"/>
+    <line x1="602" y1="226" x2="602" y2="176" stroke="#22c55e"/><rect x="592" y="192" width="20" height="26" fill="#22c55e" rx="3"/>
+    <line x1="640" y1="204" x2="640" y2="150" stroke="#22c55e"/><rect x="630" y="166" width="20" height="30" fill="#22c55e" rx="3"/>
+    <line x1="678" y1="196" x2="678" y2="140" stroke="#ef4444"/><rect x="668" y="158" width="20" height="28" fill="#ef4444" rx="3"/>
+    <line x1="716" y1="184" x2="716" y2="128" stroke="#22c55e"/><rect x="706" y="144" width="20" height="30" fill="#22c55e" rx="3"/>
+    <line x1="754" y1="178" x2="754" y2="122" stroke="#22c55e"/><rect x="744" y="138" width="20" height="30" fill="#22c55e" rx="3"/>
+  </g>
+  <line x1="94" y1="296" x2="396" y2="296" stroke="#2a3d5c"/>
+  <line x1="504" y1="296" x2="806" y2="296" stroke="#2a3d5c"/>
+  <g>
+    <rect x="106" y="364" width="20" height="28" fill="#22c55e" opacity="0.5"/>
+    <rect x="144" y="368" width="20" height="24" fill="#ef4444" opacity="0.5"/>
+    <rect x="182" y="360" width="20" height="32" fill="#22c55e" opacity="0.55"/>
+    <rect x="220" y="354" width="20" height="38" fill="#22c55e" opacity="0.55"/>
+    <rect x="258" y="362" width="20" height="30" fill="#ef4444" opacity="0.5"/>
+    <rect x="296" y="350" width="20" height="42" fill="#22c55e" opacity="0.58"/>
+    <rect x="334" y="358" width="20" height="34" fill="#ef4444" opacity="0.5"/>
+    <rect x="516" y="346" width="20" height="46" fill="#22c55e" opacity="0.65"/>
+    <rect x="554" y="326" width="20" height="66" fill="#22c55e" opacity="0.75"/>
+    <rect x="592" y="300" width="20" height="92" fill="#22c55e" opacity="0.85"/>
+    <rect x="630" y="278" width="20" height="114" fill="#22c55e" opacity="0.95"/>
+    <rect x="668" y="296" width="20" height="96" fill="#ef4444" opacity="0.78"/>
+    <rect x="706" y="268" width="20" height="124" fill="#22c55e" opacity="1"/>
+    <rect x="744" y="258" width="20" height="134" fill="#22c55e" opacity="1"/>
+  </g>
+  <text x="100" y="456" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">baseline volume</text>
+  <text x="510" y="456" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">activity far above baseline</text>
+</svg>
