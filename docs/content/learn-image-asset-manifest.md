@@ -76,6 +76,8 @@ journey_map
 | `public/images/learn/chart-reading/higher-low-failure-review.svg` | `/learn/higher-highs-higher-lows/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show an uptrend losing the latest higher-low zone and shifting into review context. | When A Higher Low Fails section. | Candlestick chart showing an uptrend losing the latest higher low and shifting into a review area. | editor_verified | Supports higher-low failure review, uses realistic candles, highlights the relevant zone, includes volume context, and avoids predictive claims. | `fece7bfe` |
 | `public/images/learn/chart-reading/lower-highs-lower-lows-downtrend.svg` | `/learn/lower-highs-lower-lows/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show weak bounces and lower lows in a clean downtrend structure. | Quick Definition section. | Candlestick chart showing lower highs and lower lows forming a weakening market structure. | editor_verified | Supports downtrend-structure identification, uses realistic red and green candles, lower-high zones, volume context, and avoids signal language. | `65a5747d` |
 | `public/images/learn/chart-reading/lower-high-reclaim-review.svg` | `/learn/lower-highs-lower-lows/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a downtrend reclaiming a meaningful lower-high zone and shifting into review context. | When A Lower High Is Reclaimed section. | Candlestick chart showing a downtrend reclaiming a meaningful lower high and shifting into review context. | editor_verified | Supports lower-high reclaim review, uses realistic candles, highlights the relevant zone, includes volume context, and avoids reversal guarantee language. | `65a5747d` |
+| `public/images/learn/chart-reading/pivot-level-reaction-map.svg` | `/learn/pivot-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show repeated reactions around a clear pivot zone. | Quick Definition section. | Candlestick chart showing price reacting around a clear pivot level zone. | editor_verified | Supports pivot-zone identification, uses realistic red and green candles, volume context, and avoids signal language. | `8c7efffa` |
+| `public/images/learn/chart-reading/pivot-failed-reclaim-review.svg` | `/learn/pivot-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a failed reclaim and rejection around a pivot zone as review context. | Failed Reclaim Or Rejection At A Pivot section. | Candlestick chart showing a failed reclaim and rejection around a pivot level zone. | editor_verified | Supports failed-reclaim review, uses realistic candles, highlights the pivot zone, includes volume context, and avoids predictive claims. | `8c7efffa` |
 
 ## Editor Verification Summary
 
@@ -191,11 +193,20 @@ Lower highs and lower lows SVG verification:
 - The visuals are wired to article sections where they add learning value.
 - The batch is appropriate for the lower-high/lower-low structure article.
 
+Pivot levels SVG verification:
+
+- Both visuals support the actual pivot-levels lesson.
+- The pivot reaction map shows realistic repeated reactions around one clear zone instead of random lines.
+- The failed reclaim visual shows a pivot losing, retesting, and rejecting as review context, not as a prediction.
+- Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+- The batch is appropriate for the pivot-levels article.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Pivot Levels article: pivot level map, price reaction around a pivot, and failed pivot reclaim/rejection review.
+1. Previous Day High Low article: objective PDH/PDL map, breakout/rejection around PDH, and failed breakdown/reclaim around PDL.
 2. Breakdown article: clean breakdown, failed breakdown/reclaim, breakdown with volume context.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
