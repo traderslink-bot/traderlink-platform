@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
+  <title id="title">Press release reading workflow</title>
+  <desc id="desc">Dark dashboard showing a step-by-step workflow from press release headline to source check, detail review, filing check, chart reaction, and journal notes.</desc>
+  <rect width="960" height="560" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="904" height="504" rx="14" fill="#0b1628" stroke="#1d3557"/>
+  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Press Release Reading Workflow</text>
+  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">Move from headline to details before judging the chart reaction.</text>
+  <g font-family="Arial, sans-serif">
+    <rect x="64" y="132" width="158" height="94" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="84" y="164" fill="#7bb4ff" font-size="12" font-weight="700">STEP 1</text>
+    <text x="84" y="190" fill="#e6f0ff" font-size="15" font-weight="700">Source + Time</text>
+    <text x="84" y="211" fill="#8fa7c8" font-size="12">Official release?</text>
+    <rect x="248" y="132" width="158" height="94" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="268" y="164" fill="#7bb4ff" font-size="12" font-weight="700">STEP 2</text>
+    <text x="268" y="190" fill="#e6f0ff" font-size="15" font-weight="700">Catalyst Type</text>
+    <text x="268" y="211" fill="#8fa7c8" font-size="12">Contract, FDA, filing</text>
+    <rect x="432" y="132" width="158" height="94" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="452" y="164" fill="#7bb4ff" font-size="12" font-weight="700">STEP 3</text>
+    <text x="452" y="190" fill="#e6f0ff" font-size="15" font-weight="700">Specific Details</text>
+    <text x="452" y="211" fill="#8fa7c8" font-size="12">Names, terms, dates</text>
+    <rect x="616" y="132" width="158" height="94" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="636" y="164" fill="#7bb4ff" font-size="12" font-weight="700">STEP 4</text>
+    <text x="636" y="190" fill="#e6f0ff" font-size="15" font-weight="700">Filing Check</text>
+    <text x="636" y="211" fill="#8fa7c8" font-size="12">8-K, offering, terms</text>
+  </g>
+  <g stroke="#2d8cff" stroke-width="2" stroke-linecap="round">
+    <line x1="222" y1="179" x2="248" y2="179"/>
+    <line x1="406" y1="179" x2="432" y2="179"/>
+    <line x1="590" y1="179" x2="616" y2="179"/>
+  </g>
+  <rect x="52" y="260" width="528" height="230" rx="10" fill="#081323" stroke="#172a46"/>
+  <g stroke="#172a46" stroke-width="1">
+    <line x1="76" y1="300" x2="556" y2="300"/>
+    <line x1="76" y1="338" x2="556" y2="338"/>
+    <line x1="76" y1="376" x2="556" y2="376"/>
+    <line x1="76" y1="414" x2="556" y2="414"/>
+  </g>
+  <g stroke-linecap="round" stroke-width="3">
+    <line x1="102" y1="398" x2="102" y2="432" stroke="#26c281"/><rect x="92" y="410" width="20" height="14" rx="2" fill="#26c281"/>
+    <line x1="138" y1="388" x2="138" y2="426" stroke="#26c281"/><rect x="128" y="400" width="20" height="18" rx="2" fill="#26c281"/>
+    <line x1="174" y1="356" x2="174" y2="410" stroke="#26c281"/><rect x="164" y="374" width="20" height="26" rx="2" fill="#26c281"/>
+    <line x1="210" y1="318" x2="210" y2="386" stroke="#26c281"/><rect x="200" y="338" width="20" height="34" rx="2" fill="#26c281"/>
+    <line x1="246" y1="292" x2="246" y2="374" stroke="#ef5350"/><rect x="236" y="314" width="20" height="42" rx="2" fill="#ef5350"/>
+    <line x1="282" y1="302" x2="282" y2="382" stroke="#26c281"/><rect x="272" y="324" width="20" height="38" rx="2" fill="#26c281"/>
+    <line x1="318" y1="320" x2="318" y2="394" stroke="#ef5350"/><rect x="308" y="338" width="20" height="38" rx="2" fill="#ef5350"/>
+    <line x1="354" y1="334" x2="354" y2="402" stroke="#ef5350"/><rect x="344" y="350" width="20" height="34" rx="2" fill="#ef5350"/>
+    <line x1="390" y1="342" x2="390" y2="410" stroke="#26c281"/><rect x="380" y="358" width="20" height="26" rx="2" fill="#26c281"/>
+  </g>
+  <rect x="604" y="260" width="304" height="230" rx="10" fill="#081323" stroke="#172a46"/>
+  <text x="628" y="294" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Journal Notes</text>
+  <g font-family="Arial, sans-serif" font-size="13" fill="#8fa7c8">
+    <text x="628" y="330">Did I read the body?</text>
+    <text x="628" y="362">What detail mattered?</text>
+    <text x="628" y="394">Was a filing needed?</text>
+    <text x="628" y="426">Did volume continue?</text>
+    <text x="628" y="458">Was entry planned?</text>
+  </g>
+</svg>
