@@ -20,7 +20,7 @@ academy_course: "News, Catalysts And SEC Filings"
 academy_module: "Catalyst Foundation"
 academy_order: 1
 academy_level: "Foundation"
-recommended_previous: "/learn/unusual-volume/"
+recommended_previous: "/learn/swing-trading-small-caps/"
 recommended_next: "/learn/press-releases/"
 visual_assets:
   - "/images/learn/chart-reading/stock-catalyst-quality-review.svg"
@@ -51,7 +51,7 @@ meta_description: "Learn what stock catalysts are, common catalyst types, qualit
 
 Stock catalysts are events, news, filings, or market developments that can draw attention to a stock. A catalyst can help explain why volume increases, why a stock gaps up or down, or why a quiet ticker suddenly becomes active.
 
-This lesson starts the **News, Catalysts And SEC Filings** learning path. It follows [Unusual Volume](/learn/unusual-volume/) because abnormal activity often raises the same question: what caused this?
+This lesson starts the **News, Catalysts And SEC Filings** learning path. It follows [Small Cap Swing Trading](/learn/swing-trading-small-caps/) because swing and small-cap context often leads to the same question: what caused this activity?
 
 A stock catalyst does not guarantee price movement. Some catalysts create strong attention. Some create one quick spike and fade. Some sound exciting but do not contain enough detail to support the reaction. Your job is to review the catalyst, the market reaction, and the trade conditions without turning the headline into a prediction.
 

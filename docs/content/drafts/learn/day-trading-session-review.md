@@ -16,7 +16,7 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review completed sessions, repeated behaviors, and process quality."
 recommended_previous: "/learn/after-hours-trading/"
-recommended_next: "/learn/risk-management/"
+recommended_next: "/learn/swing-trading-for-beginners/"
 academy_level: "Practical"
 academy_order: 9
 academy_module: "Review"
@@ -36,7 +36,7 @@ meta_description: "Learn how to review a day trading session using preparation, 
 ---
 # Day Trading Session Review
 
-This lesson completes the **Day Trading Workflow** course. It follows [After-Hours Trading](/learn/after-hours-trading/) and connects next to [Risk Management](/learn/risk-management/).
+This lesson completes the **Day Trading Workflow** course. It follows [After-Hours Trading](/learn/after-hours-trading/) and connects next to [Swing Trading For Beginners](/learn/swing-trading-for-beginners/).
 
 A day trading session review is the process of studying the day after trades are complete. It turns the workflow into feedback.
 

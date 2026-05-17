@@ -93,7 +93,7 @@ Recommended order for future runs:
 | 5 | Technical Indicators And Tools | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; confirmed strong anti-signal language, fixed one invalid ATR related link, removed one premature app route link, and documented realistic indicator-overlay visual needs. |
 | 6 | Trading Styles And Playbooks | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; confirmed strong style/playbook flow, removed stale app route links from cross-listed setup lessons, and documented restrained bridges to Playbook Builder, Trade Review, Analytics, Session Review, Coaching, Risk Review, and Execution Review. |
 | 7 | Day Trading Workflow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; confirmed strong session-flow structure, fixed one invalid after-hours earnings link, and documented restrained bridges to Session Review, Trade Review, Execution Review, Risk Review, Analytics, Coaching, and News/Filing Review. |
-| 8 | Swing Trading Workflow | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to journal notes and multi-session review. |
+| 8 | Swing Trading Workflow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; corrected adjacent course transitions, cleaned beginner swing quote encoding, and documented restrained bridges to Trade Review, Risk Review, Journal Notes, News/Filing Review, Analytics, Coaching, and Playbook Builder. |
 | 9 | News, Catalysts And SEC Filings | not_started | not_started | not_started | not_started | not_started | not_started | Requires official source checks for EDGAR/SEC details. |
 | 10 | Small-Cap Stocks, Float And Dilution | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to news/filing review and risk context. |
 | 11 | Halts And High-Volatility Events | not_started | not_started | not_started | not_started | not_started | not_started | Requires official source checks for halt/circuit-breaker rules. |
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 1: Lesson-Level Quality Audit** for **Swing Trading Workflow**.
+Continue with **Pass 1: Lesson-Level Quality Audit** for **News, Catalysts And SEC Filings**.
 
 Reason:
 
@@ -208,14 +208,16 @@ Reason:
 - Technical Indicators And Tools Pass 1 is complete.
 - Trading Styles And Playbooks Pass 1 is complete.
 - Day Trading Workflow Pass 1 is complete.
-- Swing Trading Workflow is the next course because learners should now move from same-session workflow into multi-session planning, overnight risk, catalysts, earnings, and small-cap swing context.
-- This course needs careful language around multi-session holds, overnight gaps, catalyst changes, earnings/news risk, and small-cap volatility so swing lessons do not become hold recommendations.
+- Swing Trading Workflow Pass 1 is complete.
+- News, Catalysts And SEC Filings is the next course because learners now move from multi-session swing context into the source, quality, filing, and event-review work behind stock movement.
+- This course needs careful language around catalysts, press releases, filings, EDGAR, offerings, dilution, earnings, and news so lessons stay educational and do not become directional trade calls.
+- Mark factual/source-sensitive items for later Pass 3 where needed, but keep this run focused on Pass 1 lesson quality unless a source issue is obvious inside the lesson text.
 
 Output should include:
 
-- A Swing Trading Workflow lesson-level quality audit.
+- A News, Catalysts And SEC Filings lesson-level quality audit.
 - Any small markdown edits needed.
-- App bridge map for swing trading for beginners, swing trading risk management, swing trading support and resistance, swing trading volume, swing trading catalysts, swing trading earnings, swing trading news risk, and small-cap swing trading.
-- Visual-readiness notes for multi-session examples that may need daily candles, gap markers, catalyst panels, support/resistance zones, and review cards.
+- App bridge map for stock catalysts, press releases, how to read press releases, SEC filings, EDGAR source-document lessons, SEC filing modules, and news-category lessons.
+- Visual-readiness notes for catalyst timelines, filing/source panels, press-release quality review, EDGAR document review, offering/dilution context, and news-reaction review.
 - Tracker and handoff update.
 - Commit.

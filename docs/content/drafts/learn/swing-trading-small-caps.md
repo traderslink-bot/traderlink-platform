@@ -16,7 +16,7 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review completed small-cap swing trades by catalyst, float, filings, liquidity, risk, and repeated decision patterns."
 recommended_previous: "/learn/swing-trading-news-risk/"
-recommended_next: "/learn/chart-reading-path/"
+recommended_next: "/learn/stock-catalysts/"
 academy_level: "Advanced"
 academy_order: 8
 academy_module: "Small-Cap Swing Context"
@@ -38,7 +38,7 @@ meta_description: "Learn how small-cap swing trades should be reviewed with cata
 ---
 # Small Cap Swing Trading
 
-This lesson completes the **Swing Trading Workflow** course. It follows [Swing Trading News Risk](/learn/swing-trading-news-risk/) and points back into broader Academy navigation through [Chart Reading Path](/learn/chart-reading-path/).
+This lesson completes the **Swing Trading Workflow** course. It follows [Swing Trading News Risk](/learn/swing-trading-news-risk/) and leads into [Stock Catalysts](/learn/stock-catalysts/).
 
 Small cap swing trading means holding smaller-company stocks across multiple sessions. These trades can move sharply because small caps may have lower liquidity, smaller floats, stronger catalyst reactions, wider spreads, and more financing risk.
 

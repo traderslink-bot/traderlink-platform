@@ -15,7 +15,7 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review completed swing trades by thesis, levels, risk, catalysts, hold decisions, and repeated behavior."
-recommended_previous: "/learn/high-volatility-trade-review/"
+recommended_previous: "/learn/day-trading-session-review/"
 recommended_next: "/learn/swing-trading-risk-management/"
 academy_level: "Foundation"
 academy_order: 1
@@ -38,9 +38,9 @@ meta_description: "Learn beginner swing trading as a practical multi-session wor
 ---
 # Swing Trading For Beginners
 
-This lesson opens the **Swing Trading Workflow** course. It follows [High-Volatility Trade Review](/learn/high-volatility-trade-review/) and leads into [Swing Trading Risk Management](/learn/swing-trading-risk-management/).
+This lesson opens the **Swing Trading Workflow** course. It follows [Day Trading Session Review](/learn/day-trading-session-review/) and leads into [Swing Trading Risk Management](/learn/swing-trading-risk-management/).
 
-Swing trading means holding a planned trade across more than one market session. A beginner should not think of it as “day trading but slower.” Swing trading has its own workflow, because the trade can change while the market is closed.
+Swing trading means holding a planned trade across more than one market session. A beginner should not think of it as "day trading but slower." Swing trading has its own workflow, because the trade can change while the market is closed.
 
 A useful beginner swing plan connects the chart, the reason for interest, position size, overnight risk, and review. The goal is not to predict every candle. The goal is to know what the trade idea is, what would weaken it, and how to review the decisions made while holding.
 
@@ -84,12 +84,12 @@ Third, a swing trade needs a thesis. The thesis does not have to be complicated,
 
 Examples:
 
-- “The stock is holding above a prior breakout zone after volume expanded.”
-- “The catalyst is still being supported by follow-through volume.”
-- “The pullback is staying above the higher-timeframe support area.”
-- “The trade is no longer valid if price loses the support zone and cannot reclaim it.”
+- "The stock is holding above a prior breakout zone after volume expanded."
+- "The catalyst is still being supported by follow-through volume."
+- "The pullback is staying above the higher-timeframe support area."
+- "The trade is no longer valid if price loses the support zone and cannot reclaim it."
 
-Those are reviewable ideas. “I think it can go higher” is not enough.
+Those are reviewable ideas. "I think it can go higher" is not enough.
 
 ## The Beginner Swing Trading Workflow
 

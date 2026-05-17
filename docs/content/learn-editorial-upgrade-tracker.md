@@ -139,7 +139,7 @@ Review
 | 12 | Chart Patterns In Context | complete | 3 | Full 13-lesson chart-pattern course markdown path content-upgraded with 9 realistic SVG assets. VWAP Reclaim is cross-listed from Technical Indicators. |
 | 13 | Halts And High-Volatility Events | complete | 3 | Full 7-lesson high-volatility event-risk course markdown path content-upgraded with 3 realistic SVG assets. |
 | 14 | Small-Cap, Float, And Short Squeeze Context | complete | 2 | Full 28-lesson Small-Cap Stocks, Float And Dilution course content-upgraded. Needs visual review before UI-ready. |
-| 15 | Swing Trading Workflow | complete | 3 | Full 8-lesson swing-trading workflow course markdown path content-upgraded with 3 realistic multi-session SVG assets. |
+| 15 | Swing Trading Workflow | complete | 3 | Full 8-lesson swing-trading workflow course markdown path content-upgraded with 3 realistic multi-session SVG assets. Pass 1 lesson-level quality audit confirmed strong multi-session workflow, restrained app bridges, existing realistic visual support, and corrected adjacent course transitions into Stock Catalysts. |
 | 16 | Academy Navigation Path Hubs | complete | 2 | Four path hubs created with realistic SVG/path-map assets to connect completed courses before website implementation. |
 
 ## Completed Model Article
@@ -586,16 +586,17 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | Technical Indicators And Tools lesson-level quality audit | Completed Pass 1 lesson-level quality audit for the Technical Indicators And Tools course. | Passed. Created `docs/content/traderslink-academy-quality-audit-technical-indicators.md`, confirmed the 12-lesson indicator path including cross-listed Volume By Price and VWAP Reclaim, verified anti-signal language across indicator lessons, fixed an invalid ATR stop-loss link, removed one premature `/features/` link from Volume By Price, documented realistic indicator-overlay visual gaps, and mapped restrained app bridges to Trade Review, Analytics, Execution Review, Risk Review, and Playbook Builder. No production website files were changed. | `5eaaa671` |
 | 2026-05-17 | Trading Styles And Playbooks lesson-level quality audit | Completed Pass 1 lesson-level quality audit for the Trading Styles And Playbooks course. | Passed. Created `docs/content/traderslink-academy-quality-audit-trading-styles.md`, confirmed the 15-lesson style/playbook path including Short Selling Basics and cross-listed setup/risk lessons, verified style and setup lessons avoid promise/signal framing, removed premature `/features/` links from Breakout, Breakdown, Level Reclaim, and Gap Fill, documented future visual needs, and mapped restrained app bridges to Playbook Builder, Trade Review, Analytics, Session Review, Coaching, Risk Review, and Execution Review. No production website files were changed. | `56637d7f` |
 | 2026-05-17 | Day Trading Workflow lesson-level quality audit | Completed Pass 1 lesson-level quality audit for the Day Trading Workflow course. | Passed. Created `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`, confirmed the 9-lesson session workflow from premarket preparation through session review, verified time-of-day lessons avoid signal framing, fixed an invalid after-hours earnings link, documented existing realistic visual coverage and optional visual gaps, and mapped restrained app bridges to Session Review, Trade Review, Execution Review, Risk Review, Analytics, Coaching, and News/Filing Review. No production website files were changed. | `2bbcb482` |
+| 2026-05-17 | Swing Trading Workflow lesson-level quality audit | Completed Pass 1 lesson-level quality audit for the Swing Trading Workflow course. | Passed. Created `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`, confirmed the 8-lesson multi-session workflow, corrected transitions from day trading session review into the swing opener and from the swing capstone into stock catalysts, cleaned beginner quote encoding, documented existing realistic visual support and optional visual gaps, and mapped restrained app bridges to Trade Review, Risk Review, Journal Notes, News/Filing Review, Analytics, Coaching, and Playbook Builder. No production website files were changed. | pending_commit |
 
 ## Next Recommended Action
 
-Continue from the Day Trading Workflow Pass 1 audit:
+Continue from the Swing Trading Workflow Pass 1 audit:
 
-1. Start `Pass 1: Lesson-Level Quality Audit` for `Swing Trading Workflow` using `docs/content/traderslink-academy-quality-audit-workplan.md`.
-2. Include swing trading for beginners, swing trading risk management, swing trading support and resistance, swing trading volume, swing trading catalysts, swing trading earnings, swing trading news risk, and small-cap swing trading.
+1. Start `Pass 1: Lesson-Level Quality Audit` for `News, Catalysts And SEC Filings` using `docs/content/traderslink-academy-quality-audit-workplan.md`.
+2. Include stock catalysts, press releases, how to read press releases, SEC filings, how to use EDGAR source documents, SEC filing lesson modules, and news-category lessons.
 3. Include an app bridge map, but keep bridge wording restrained and review-focused. Do not add hard app route links until app routes are stable.
 4. Make targeted markdown edits only where a real quality, flow, or bridge gap appears.
-5. Keep app bridge notes centered on Trade Review, Risk Review, Journal Notes, News/Filing Review, Analytics, Coaching, and Playbook Builder without turning the lessons into product ads.
+5. Keep app bridge notes centered on News/Filing Review, Trade Review, Risk Review, Analytics, Journal Notes, and Playbook Builder without turning the lessons into product ads.
 6. Keep this as markdown/content planning and SVG work only; do not build production routes, components, schemas, JSX, CSS, or pages.
 
 ## Important Reminder
