@@ -97,6 +97,7 @@ Review
 | Volume Liquidity article upgrade 11 | complete | `/learn/level-2/` upgraded with order-book-depth and disappearing-depth visuals. |
 | Volume Liquidity article upgrade 12 | complete | `/learn/time-and-sales/` upgraded with tape-print and tape-speed visuals. |
 | Volume Liquidity article upgrade 13 | complete | `/learn/volume-by-price/` upgraded with volume-profile-zone and low-volume-area visuals. |
+| Volume Liquidity article upgrade 14 | complete | `/learn/unusual-volume/` upgraded with normal-versus-unusual and catalyst-fade visuals. |
 | Learn hub website build | not_started | Codex should not build until explicitly requested. |
 
 ## Track Upgrade Order
@@ -105,10 +106,10 @@ Review
 |---:|---|---|---:|---|
 | 1 | Start Here For New Traders | not_started | 1 | Foundation path for new users. |
 | 2 | Chart Reading And Market Structure | in_progress | 1 | Support/resistance, level drawing, support/resistance levels, key levels, breakout trading, breakdown trading, level breakout, level reclaim, price rejection, break of structure, swing highs/lows, higher-high/higher-low, lower-high/lower-low, pivot-level, previous-day-level, premarket-level, HOD, LOD, NHOD, compression, consolidation, and gap-fill articles complete. Continue with volume/fakeout context and remaining chart-reading concepts. |
-| 3 | News, Catalysts, Filings, And Dilution | not_started | 1 | High-value TradersLink differentiator. |
+| 3 | News, Catalysts, Filings, And Dilution | in_progress | 1 | High-value TradersLink differentiator. Begin with stock-catalysts after unusual-volume bridge. |
 | 4 | Risk, Discipline, And Psychology | not_started | 1 | Important coaching/retention path. |
 | 5 | Execution And Trade Review | not_started | 1 | Strongest Trader Intelligence bridge. |
-| 6 | Volume, Liquidity, And Order Flow | in_progress | 2 | Volume foundation, relative-volume concept, RVOL metric, volume-spike, liquidity, dollar-volume, spread, bid/ask, slippage, order-type, Level 2, time-and-sales, and volume-by-price articles complete. Continue with unusual-volume context. |
+| 6 | Volume, Liquidity, And Order Flow | complete | 2 | Core path complete through volume foundation, relative volume, RVOL, volume spike, liquidity, dollar volume, spread, bid/ask, slippage, order type, Level 2, time and sales, volume by price, and unusual volume. |
 | 7 | Day Trading Workflow | not_started | 2 | Practical user workflow path. |
 | 8 | Practice And Improvement | not_started | 2 | Helps users train before increasing risk. |
 | 9 | Candlestick Patterns In Context | not_started | 3 | Needs visuals and context warnings. |
@@ -172,7 +173,8 @@ Alternative future gold-standard article:
 | /learn/level-2/ | docs/content/drafts/learn/level-2.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed Level 2 upgrade. Added learning path metadata, previous/next metadata, order-book depth visual, disappearing-depth visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `8a9fc350` |
 | /learn/time-and-sales/ | docs/content/drafts/learn/time-and-sales.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed time-and-sales upgrade. Added learning path metadata, previous/next metadata, bid/ask print visual, tape-speed fade visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `58ea3ca3` |
 | /learn/volume-by-price/ | docs/content/drafts/learn/volume-by-price.md | Volume Liquidity And Order Flow | Chart Reading And Market Structure, Execution And Trade Review | Practical | complete | full_upgrade | 2 realistic SVG chart/profile diagrams created and wired to content | No | 1 | Completed volume-by-price upgrade. Added learning path metadata, previous/next metadata, profile-zone visual, low-volume-area review visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `5a5bfc59` |
-| /learn/unusual-volume/ | docs/content/drafts/learn/unusual-volume.md | Volume Liquidity And Order Flow | News Catalysts Filings And Dilution, Execution And Trade Review | Practical | not_started | full_upgrade | 2 realistic SVG chart/dashboard diagrams | No | 1 | Should teach unusual volume as abnormal activity, scanner/catalyst context, liquidity review, fade risk, and journal workflow without treating unusual volume as bullish by default. |  |
+| /learn/unusual-volume/ | docs/content/drafts/learn/unusual-volume.md | Volume Liquidity And Order Flow | News Catalysts Filings And Dilution, Execution And Trade Review | Practical | complete | full_upgrade | 2 realistic SVG chart/dashboard diagrams created and wired to content | No | 1 | Completed unusual-volume upgrade. Added learning path metadata, previous/next metadata, normal-versus-today visual, catalyst-fade review visual, scanner context, catalyst/liquidity review, realistic example, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `80c78592` |
+| /learn/stock-catalysts/ | docs/content/drafts/learn/stock-catalysts.md | News Catalysts Filings And Dilution | Volume Liquidity And Order Flow, Execution And Trade Review | Foundation | not_started | full_upgrade | 2 realistic SVG news/chart/dashboard diagrams | No | 1 | Should teach catalyst categories, catalyst quality, headline versus details, reaction review, and journal workflow without treating catalysts as guaranteed movers. |  |
 | /learn/sec-filings/ | docs/content/drafts/learn/sec-filings.md | News, Catalysts, Filings, And Dilution | Small-Cap, Float, And Short Squeeze Context | Foundation | not_started | full_upgrade | 2 to 3 filing flow diagrams | No | 1 | Alternative gold-standard article. Needs beginner path, filing map, risk warnings, and links to dilution/offering concepts. |  |
 | /learn/start-here/ | docs/content/drafts/learn/start-here.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 journey map SVG | Yes | 1 | Gap article likely needed to introduce the learning system and guide new users. |  |
 | /learn/how-to-use-traderslink-learn/ | docs/content/drafts/learn/how-to-use-traderslink-learn.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 navigation diagram | Yes | 1 | Gap article likely needed to teach users how to move through learning paths. |  |
@@ -273,6 +275,8 @@ Summary of completed Chart Reading SVG batches:
 | public/images/learn/chart-reading/time-and-sales-speed-fade-review.svg | /learn/time-and-sales/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show tape speed increasing and fading. | Tape Speed And Fade section. | Trading dashboard showing tape speed increasing during a volume burst and fading afterward. | editor_verified | Supports tape-speed review and avoids guarantee language. | `58ea3ca3` |
 | public/images/learn/chart-reading/volume-by-price-profile-zones.svg | /learn/volume-by-price/ | Volume Liquidity And Order Flow | realistic candlestick chart | Show volume-by-price profile zones. | Quick Definition section. | Candlestick chart with a volume-by-price profile showing high-volume price zones. | editor_verified | Supports volume-by-price profile education and avoids prediction language. | `5a5bfc59` |
 | public/images/learn/chart-reading/volume-by-price-low-volume-area-review.svg | /learn/volume-by-price/ | Volume Liquidity And Order Flow | realistic candlestick chart | Show low-volume area review. | Low-Volume Areas section. | Candlestick chart with volume-by-price profile showing price moving through a low-volume area and stalling near a high-volume zone. | editor_verified | Supports low-volume-area review and avoids guarantee language. | `5a5bfc59` |
+| public/images/learn/chart-reading/unusual-volume-normal-vs-today.svg | /learn/unusual-volume/ | Volume Liquidity And Order Flow | realistic trading dashboard | Compare normal activity with today's unusual volume and scanner context. | Quick Definition section. | Trading dashboard showing normal volume versus today's unusual volume burst with scanner context. | editor_verified | Supports unusual-volume baseline comparison and avoids signal language. | `80c78592` |
+| public/images/learn/chart-reading/unusual-volume-catalyst-fade-review.svg | /learn/unusual-volume/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show catalyst burst, failed hold, volume fade, and spread review. | Follow-Through Versus Fade section. | Trading dashboard showing unusual volume after a catalyst, followed by failed hold, fading volume, and spread review. | editor_verified | Supports catalyst/fade/liquidity review and avoids guarantee language. | `80c78592` |
 
 ## Gap Article Tracker
 
@@ -327,15 +331,16 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | /learn/level-2/ | Completed Level 2 article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches visible order-book depth, limitations of displayed size, and Level 2/time-and-sales comparison without implying the book predicts price. | `8a9fc350` |
 | 2026-05-17 | /learn/time-and-sales/ | Completed time-and-sales article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches actual prints, tape speed, bid/ask print context, Level 2 comparison, and avoids implying tape predicts price. | `58ea3ca3` |
 | 2026-05-17 | /learn/volume-by-price/ | Completed volume-by-price article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches volume-by-price profiles, high-volume zones, low-volume areas, and level review without treating zones as guaranteed support/resistance. | `5a5bfc59` |
+| 2026-05-17 | /learn/unusual-volume/ | Completed unusual-volume article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches abnormal activity, scanner context, catalyst quality, liquidity/spread review, and fade risk without treating unusual volume as bullish by default. | `80c78592` |
 
 ## Next Recommended Action
 
-Continue the Volume Liquidity And Order Flow track:
+Continue into the News Catalysts Filings And Dilution track:
 
-1. Fetch `/learn/unusual-volume/` draft.
+1. Fetch `/learn/stock-catalysts/` draft.
 2. Perform pre-editor review.
-3. Upgrade it using `/learn/volume/`, `/learn/relative-volume-rvol/`, and `/learn/volume-spike/` as context.
-4. Create 2 realistic SVGs focused on normal versus unusual activity, catalyst/scanner context, and fade risk.
+3. Upgrade it using `/learn/unusual-volume/`, `/learn/how-to-read-stock-press-releases/`, and `/learn/sec-filings/` as context.
+4. Create 2 realistic SVGs focused on catalyst-quality review and headline-to-chart reaction.
 5. Run editor verification.
 6. Update this tracker.
 7. Update the handoff.
