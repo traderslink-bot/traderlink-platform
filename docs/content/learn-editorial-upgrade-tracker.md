@@ -566,13 +566,14 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | Trading Styles And Playbooks Academy format migration check | Checked 14 Trading Styles course-sequence lessons for Academy format readiness. | Passed with no lesson edits needed. Lessons already include `content_type: "academy_lesson"`, `academy_course`, `academy_module`, `academy_order`, `academy_level`, previous/next path, lesson objective, practical checklist, Apply This In Review, Trader Intelligence bridge, related lessons, FAQ, and educational disclaimer. Breakout, breakdown, reclaim, and gap-fill were already counted in the Chart Reading check; chasing stocks is now counted through this pass. | no lesson file changes |
 | 2026-05-17 | News, Catalysts And SEC Filings Academy format migration | Normalized 36 News, Catalysts And SEC Filings lessons for Academy format. | Passed. Lessons now use `content_type: "academy_lesson"`, normalized `learning_track`, `academy_course`, `academy_module`, `academy_order`, `academy_level`, lesson objectives, `Practical Checklist`, `Apply This In Review`, and review-focused wording. The pass also replaced broad journal framing with structured review notes where the lesson was not specifically about journaling. | `c66493f3` |
 | 2026-05-17 | Risk Management And Trade Planning Academy format migration | Normalized 13 Risk Management And Trade Planning lessons for Academy format. | Passed. Lessons now use `content_type: "academy_lesson"` and retain complete Academy metadata, lesson objectives, `Practical Checklist`, one `Apply This In Review` section, review-focused Trader Intelligence bridges, FAQ, and educational disclaimers. Broad journal framing was replaced with structured review wording. | `97ce61ca` |
+| 2026-05-17 | Small-Cap Stocks, Float And Dilution Academy format migration | Normalized 28 Small-Cap Stocks, Float And Dilution lessons for Academy format. | Passed. Lessons now use `content_type: "academy_lesson"`, normalized `learning_track`, complete Academy metadata, lesson objectives, `Practical Checklist`, one `Apply This In Review` section, review-focused Trader Intelligence bridges, FAQ, and educational disclaimers. Broad journal framing was replaced with structured review wording. | `eb9f972e` |
 
 ## Next Recommended Action
 
 Continue into Academy format migration and UI-readiness normalization:
 
-1. Continue the metadata/format pass with Small-Cap Stocks, Float And Dilution.
-2. Then continue into Trading Psychology And Discipline or Trade Review And Improvement.
+1. Continue the metadata/format pass with Trading Psychology And Discipline.
+2. Then continue into Trade Review And Improvement.
 3. Normalize `academy_course`, `academy_module`, `academy_order`, `academy_level`, `recommended_previous`, `recommended_next`, visual asset references, and review-section naming.
 4. Do not rewrite strong lessons unless the new Academy format reveals a real gap.
 5. Keep this as markdown/content planning only; do not build production routes, components, schemas, JSX, CSS, or pages.
