@@ -72,6 +72,8 @@ journey_map
 | `public/images/learn/chart-reading/uptrend-structure-break.svg` | `/learn/break-of-structure/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show higher highs and higher lows before price breaks below the latest higher low. | Uptrend Structure Break section. | Candlestick chart showing higher highs and higher lows before price breaks below the latest higher low. | editor_verified | Supports uptrend structure-break review, uses realistic candles and swing labels, and avoids predictive language. | `d03cf796` |
 | `public/images/learn/chart-reading/downtrend-structure-break.svg` | `/learn/break-of-structure/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show lower highs and lower lows before price breaks above the latest lower high. | Downtrend Structure Break section. | Candlestick chart showing lower highs and lower lows before price breaks above the latest lower high. | editor_verified | Supports downtrend structure-break review, uses realistic candles and swing labels, and avoids reversal certainty. | `d03cf796` |
 | `public/images/learn/chart-reading/swing-highs-swing-lows-map.svg` | `/learn/swing-highs-and-swing-lows/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show major swing highs and swing lows on a realistic price move. | Quick Definition section. | Candlestick chart showing clear swing highs and swing lows on a realistic price move. | editor_verified | Supports swing-point identification, uses realistic candles, labels only major turns, and avoids predictive language. | `94fabc3b` |
+| `public/images/learn/chart-reading/higher-highs-higher-lows-uptrend.svg` | `/learn/higher-highs-higher-lows/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show rising swing highs and higher pullbacks in a clean uptrend structure. | Quick Definition section. | Candlestick chart showing higher highs and higher lows forming a rising market structure. | editor_verified | Supports uptrend-structure identification, uses realistic red and green candles, support zones, volume context, and avoids signal language. | `fece7bfe` |
+| `public/images/learn/chart-reading/higher-low-failure-review.svg` | `/learn/higher-highs-higher-lows/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show an uptrend losing the latest higher-low zone and shifting into review context. | When A Higher Low Fails section. | Candlestick chart showing an uptrend losing the latest higher low and shifting into a review area. | editor_verified | Supports higher-low failure review, uses realistic candles, highlights the relevant zone, includes volume context, and avoids predictive claims. | `fece7bfe` |
 
 ## Editor Verification Summary
 
@@ -169,11 +171,20 @@ Swing highs and swing lows SVG verification:
 - The visual is wired to the article section where it adds learning value.
 - The asset is appropriate for the swing-point foundation article.
 
+Higher highs and higher lows SVG verification:
+
+- Both visuals support the actual higher-highs/higher-lows lesson.
+- The uptrend structure visual shows realistic rising candles, higher-low zones, and volume context.
+- The higher-low failure visual shows the latest higher-low area failing as review context, not as a prediction.
+- Labels avoid buy/sell language, profit claims, and guaranteed-continuation claims.
+- The visuals are wired to article sections where they add learning value.
+- The batch is appropriate for the higher-high/higher-low structure article.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Higher Highs And Higher Lows article: uptrend structure, extension risk, higher-low failure.
+1. Lower Highs And Lower Lows article: downtrend structure, lower-high review, and lower-high reclaim/structure shift.
 2. Breakdown article: clean breakdown, failed breakdown/reclaim, breakdown with volume context.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
