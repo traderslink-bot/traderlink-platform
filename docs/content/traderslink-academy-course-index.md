@@ -552,7 +552,7 @@ The user should understand what caused a stock to move, how to review the qualit
 | 2 | Press Releases | Stock Press Releases | `/learn/press-releases/` | complete | `a089acc5` |
 | 3 | Press Releases | How To Read Stock Press Releases | `/learn/how-to-read-stock-press-releases/` | complete | `31f3f02c` |
 | 4 | SEC Filing Foundation | SEC Filings | `/learn/sec-filings/` | complete | `4616c671` |
-| 5 | SEC Filing Foundation | How To Use EDGAR Source Documents | `/learn/how-to-use-edgar-source-documents/` | complete | pending |
+| 5 | SEC Filing Foundation | How To Use EDGAR Source Documents | `/learn/how-to-use-edgar-source-documents/` | complete | `57dfbb82` |
 
 ### Completed Course Lesson Sequence
 
