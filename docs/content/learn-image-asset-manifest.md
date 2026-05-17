@@ -95,6 +95,8 @@ journey_map
 | `public/images/learn/chart-reading/compression-failed-break-review.svg` | `/learn/compression/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a compression break attempt failing back inside the range. | Failed Compression Break section. | Candlestick chart showing a compression breakout attempt that fails back inside the range. | editor_verified | Supports failed-compression-break review, uses realistic candles, range context, volume bars, and avoids signal language. | `085019d2` |
 | `public/images/learn/chart-reading/consolidation-range-map.svg` | `/learn/consolidation/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a clear consolidation range with support, resistance, and volume context. | Quick Definition section. | Candlestick chart showing a consolidation range with support, resistance, and volume context. | editor_verified | Supports consolidation range education, uses realistic candles, support/resistance range levels, volume bars, and avoids prediction language. | `085019d2` |
 | `public/images/learn/chart-reading/consolidation-failed-range-break.svg` | `/learn/consolidation/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a consolidation break attempt failing back inside the range. | Failed Range Break section. | Candlestick chart showing a consolidation breakout attempt that fails back inside the range. | editor_verified | Supports failed-range-break review, uses realistic candles, range context, volume bars, and avoids signal language. | `085019d2` |
+| `public/images/learn/chart-reading/gap-fill-zone-map.svg` | `/learn/gap-fill-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show gap zone between prior close/current open and price moving into the gap. | Quick Definition section. | Candlestick chart showing a gap zone between prior close and current open with price moving into the gap area. | editor_verified | Supports gap-fill zone education, uses realistic candles, gap top/bottom/midpoint context, volume bars, and avoids prediction language. | `efd6d0ba` |
+| `public/images/learn/chart-reading/failed-gap-fill-hold-review.svg` | `/learn/gap-fill-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show partial fill/fail/hold above midpoint as review context. | Failed Gap Fill Or Gap Hold section. | Candlestick chart showing price entering a gap area but failing to continue filling the gap and holding above the gap midpoint. | editor_verified | Supports failed gap fill review, uses realistic candles, gap context, volume bars, and avoids guarantee language. | `efd6d0ba` |
 
 ## Editor Verification Summary
 
@@ -272,11 +274,19 @@ Compression and consolidation SVG verification:
 - Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Gap fill trading SVG verification:
+
+- Both visuals support the actual gap-fill lesson.
+- The gap-zone map shows prior close/current open, gap top/bottom, midpoint, and a realistic move into the gap.
+- The failed gap fill visual shows a partial fill stalling/holding as review context, not as a guarantee.
+- Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Gap Fill Trading article: gap map, gap fill attempt, failed fill/hold behavior, and catalyst/volume context.
+1. Volume article: volume context for breakouts/breakdowns, dry-up/expansion, and review of participation.
 2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
