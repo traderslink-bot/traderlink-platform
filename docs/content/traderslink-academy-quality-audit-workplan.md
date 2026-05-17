@@ -94,7 +94,7 @@ Recommended order for future runs:
 
 | Order | Course / Group | Pass 1 Quality | Pass 2 Sequence | Pass 3 Accuracy | Pass 4 Visual | Pass 5 UI | Pass 6 App Bridge | Notes |
 |---:|---|---|---|---|---|---|---|---|
-| 1 | Trading Foundations | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-foundations.md` with official SEC, Investor.gov, FINRA, and Regulation SHO source verification plus targeted plain-language accuracy guardrail edits. |
+| 1 | Trading Foundations | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-foundations.md` with official SEC, Investor.gov, FINRA, and Regulation SHO source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-trading-foundations.md` with 4 priority beginner SVGs planned and risk/review visuals deferred to their dedicated course passes. |
 | 2 | Chart Reading And Market Structure | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-chart-reading.md` with reputable charting references plus official SEC, NYSE, and Nasdaq source checks for session/extended-hours language. |
 | 3 | Volume, Liquidity And Order Flow | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-volume-liquidity.md` with official SEC, Investor.gov, FINRA, Nasdaq, and NYSE source verification plus targeted plain-language accuracy guardrail edits. |
 | 4 | Risk Management And Trade Planning | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-risk-management.md` with official SEC, Investor.gov, and FINRA source verification plus targeted plain-language accuracy guardrail edits. |
@@ -211,23 +211,23 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 4: Visual Gap Audit** for **Start Here For New Traders**.
+Continue with **Pass 4: Visual Gap Audit** for **Chart Reading And Market Structure**.
 
 Reason:
 
 - The course-by-course Pass 1 lesson-level quality audit cycle is complete.
 - Pass 2 Academy-Wide Sequence And Cross-Link Audit is complete.
 - Pass 3 Accuracy/Source Audit is complete for all current Academy course groups and Academy Navigation Path Hubs.
-- Academy Navigation Path Hubs Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-navigation-path-hubs.md`.
-- The next useful audit phase is Pass 4 Visual Gap Audit, starting in course order with Start Here For New Traders.
-- Pass 4 should identify where beginner lessons need realistic educational visuals, where existing visuals are enough, and where visual work should be deferred until production UI planning.
+- Start Here For New Traders Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-trading-foundations.md`.
+- Chart Reading And Market Structure is the next course in the Academy order.
+- Chart Reading already has strong visual coverage in many lessons, so its Pass 4 audit should focus on remaining visual gaps, duplicate coverage, manifest accuracy, and whether existing realistic chart SVGs still support the final lesson content.
 
 Output should include:
 
-- A Start Here For New Traders visual gap audit.
-- Course-level visual coverage notes.
+- A Chart Reading And Market Structure visual gap audit.
+- Course-level visual coverage notes across core chart reading, candlestick patterns, and chart patterns.
 - Lesson-by-lesson visual recommendations.
-- Realistic SVG opportunities and defer/no-visual decisions.
+- Realistic SVG opportunities, reuse decisions, duplicate-coverage notes, and defer/no-visual decisions.
 - Image manifest task notes only where assets are created or updated.
 - Tracker and handoff update.
 - Commit.
