@@ -130,6 +130,8 @@ journey_map
 | `public/images/learn/chart-reading/stock-catalyst-headline-vs-reaction.svg` | `/learn/stock-catalysts/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Compare a catalyst headline with price reaction, volume fade, and filing-review notes. | Headline Versus Market Reaction section. | Trading dashboard comparing a catalyst headline with the chart reaction, volume burst, and later fade review. | editor_verified | Supports headline-versus-reaction review, uses realistic candles and review labels, and avoids guarantee language. | `63dff225` |
 | `public/images/learn/chart-reading/press-release-anatomy-review.svg` | `/learn/press-releases/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Show press-release anatomy with headline, timestamp, source, key details, risk language, and filing check. | Quick Definition section. | Dark dashboard showing a press release anatomy review with headline, timestamp, source, key details, risk language, and filing check. | editor_verified | Supports press-release anatomy review, uses realistic dashboard/chart context, and avoids signal language. | `a089acc5` |
 | `public/images/learn/chart-reading/press-release-reaction-review.svg` | `/learn/press-releases/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Show first reaction, volume burst, fade review, and journal notes after a press release. | Chart Reaction Still Matters section. | Dark trading dashboard showing a press release headline, red and green candlesticks, volume burst, and fade review notes. | editor_verified | Supports press-release reaction review, uses realistic candles and volume bars, and avoids guarantee language. | `a089acc5` |
+| `public/images/learn/chart-reading/press-release-reading-workflow.svg` | `/learn/how-to-read-stock-press-releases/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Show workflow from headline to source, catalyst type, details, filing check, chart reaction, and journal notes. | Quick Definition section. | Dark dashboard showing a step-by-step press-release reading workflow from headline to filing check to chart reaction. | editor_verified | Supports the press-release reading workflow and avoids signal language. | `31f3f02c` |
+| `public/images/learn/chart-reading/press-release-specific-vs-vague.svg` | `/learn/how-to-read-stock-press-releases/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Compare specific release details with vague language beside chart reaction context. | Step 3 section. | Dark dashboard comparing specific press-release details with vague language beside a realistic chart reaction. | editor_verified | Supports specific-versus-vague detail review and avoids guarantee language. | `31f3f02c` |
 
 ## Editor Verification Summary
 
@@ -444,12 +446,20 @@ Press releases SVG verification:
 - Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+How to read stock press releases SVG verification:
+
+- Both visuals support the actual step-by-step press-release reading lesson.
+- The workflow visual shows source/time, catalyst type, specific details, filing check, chart reaction, and journal notes.
+- The specific-versus-vague visual compares reviewable details with vague language while keeping chart reaction context visible.
+- Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the completed Chart Reading and Volume Liquidity batches, the next high-value SVG batch should likely support one of these:
 
-1. How To Read Stock Press Releases: source-detail workflow, vague-language review, and related-filing check.
-2. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
-3. Catalyst category articles: earnings, FDA, clinical trial, contract, partnership, and merger news review.
+1. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
+2. Catalyst category articles: earnings, FDA, clinical trial, contract, partnership, and merger news review.
+3. Dilution-risk path: offering language, shelf registrations, warrants, and convertible securities.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
 5. Trade review path: trade timeline, planned vs actual risk, execution review timeline.
