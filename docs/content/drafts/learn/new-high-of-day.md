@@ -22,7 +22,7 @@ academy_order: 20
 academy_module: "Intraday Reference Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/low-of-day/"
-recommended_next: "/learn/breakout-trading/"
+recommended_next: "/learn/compression/"
 visual_assets:
   - "/images/learn/chart-reading/new-high-of-day-hold-vs-fail.svg"
   - "/images/learn/chart-reading/new-high-of-day-chase-risk.svg"
@@ -195,7 +195,7 @@ Ask:
 - Do I repeatedly lose money chasing new highs late?
 - Did I follow my plan when the break failed?
 
-A journal can help show whether NHOD trades are part of a structured setup or just reactive entries.
+After-trade review can help show whether NHOD trades are part of a structured setup or just reactive entries.
 
 ## Trader Intelligence Bridge
 

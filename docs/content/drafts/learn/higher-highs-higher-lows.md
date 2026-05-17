@@ -160,7 +160,7 @@ Extension risk can show up when:
 - Candles are becoming wider and less controlled.
 - The trader is reacting late instead of planning near structure.
 
-A chart can be in an uptrend and still offer poor trade location. That is why this lesson belongs with support, resistance, key levels, and journal review rather than as a simple pattern label.
+A chart can be in an uptrend and still offer poor trade location. That is why this lesson belongs with support, resistance, key levels, and after-trade review rather than as a simple pattern label.
 
 ## Realistic Example Scenario
 

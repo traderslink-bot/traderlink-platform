@@ -21,7 +21,7 @@ academy_level: "Practical"
 academy_order: 21
 academy_module: "Ranges And Compression"
 academy_course: "Chart Reading And Market Structure"
-recommended_previous: "/learn/breakdown-trading/"
+recommended_previous: "/learn/new-high-of-day/"
 recommended_next: "/learn/consolidation/"
 visual_assets:
   - "/images/learn/chart-reading/compression-tightening-range.svg"
@@ -190,7 +190,7 @@ Ask:
 - Did I respect the range when it failed?
 - Was this a planned trade or an impatient guess?
 
-A journal can help show whether compression improves entry quality or becomes another reason to anticipate moves too early.
+After-trade review can help show whether compression improves entry quality or becomes another reason to anticipate moves too early.
 
 ## Trader Intelligence Bridge
 

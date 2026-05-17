@@ -87,7 +87,7 @@ Recommended order for future runs:
 | Order | Course / Group | Pass 1 Quality | Pass 2 Sequence | Pass 3 Accuracy | Pass 4 Visual | Pass 5 UI | Pass 6 App Bridge | Notes |
 |---:|---|---|---|---|---|---|---|---|
 | 1 | Trading Foundations | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; start here because beginner clarity affects the whole Academy. |
-| 2 | Chart Reading And Market Structure | not_started | not_started | not_started | not_started | not_started | not_started | Include candlestick and chart-pattern submodules when appropriate. |
+| 2 | Chart Reading And Market Structure | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; included candlestick and chart-pattern submodules with a restrained app bridge map. |
 | 3 | Volume, Liquidity And Order Flow | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to execution review. |
 | 4 | Risk Management And Trade Planning | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to risk review and analytics. |
 | 5 | Technical Indicators And Tools | not_started | not_started | not_started | not_started | not_started | not_started | Needs visual batch and careful anti-signal language. |
@@ -197,18 +197,19 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 1: Lesson-Level Quality Audit** for **Chart Reading And Market Structure**.
+Continue with **Pass 1: Lesson-Level Quality Audit** for **Volume, Liquidity And Order Flow**.
 
 Reason:
 
 - Trading Foundations Pass 1 is complete.
-- Chart Reading is the first deep concept course after Foundations.
-- Chart, candlestick, and pattern lessons need careful bridge restraint so they remain education and review support, not app ads or signals.
+- Chart Reading And Market Structure Pass 1 is complete.
+- Volume, liquidity, spread, slippage, Level 2, and tape-reading lessons are the next dependency layer after users learn levels, candles, and chart structure.
+- This course has natural app tie-ins to Execution Review, Trade Review, Risk Review, and Analytics, but the bridge should remain review-focused and not become product advertising.
 
 Output should include:
 
-- A Chart Reading lesson-level quality audit.
+- A Volume, Liquidity And Order Flow lesson-level quality audit.
 - Any small markdown edits needed.
-- App bridge map for Chart Reading core, candlestick, and chart-pattern lessons.
+- App bridge map for volume, liquidity, order-flow, spread, slippage, Level 2, time-and-sales, and volume-by-price lessons.
 - Tracker and handoff update.
 - Commit.

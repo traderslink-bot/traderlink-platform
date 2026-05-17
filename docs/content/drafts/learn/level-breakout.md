@@ -22,7 +22,7 @@ academy_level: "Practical"
 academy_order: 8
 academy_module: "Breaks And Reclaims"
 academy_course: "Chart Reading And Market Structure"
-recommended_previous: "/learn/breakout-trading/"
+recommended_previous: "/learn/breakdown-trading/"
 recommended_next: "/learn/level-reclaim/"
 visual_assets:
   - "/images/learn/chart-reading/level-breakout-retest-hold.svg"

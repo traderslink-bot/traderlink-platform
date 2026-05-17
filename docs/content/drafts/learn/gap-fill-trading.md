@@ -157,7 +157,7 @@ Common gap fill mistakes include:
 - Entering after most of the gap has already filled.
 - Ignoring volume during the fill attempt.
 - Forgetting that a partial fill can fail.
-- Journaling only the result instead of the gap structure.
+- Reviewing only the result instead of the gap structure.
 
 Some gaps can hold for a long time, especially if the catalyst changes how the market values the stock.
 
@@ -257,7 +257,7 @@ Gap fills can matter to both. Day traders may focus on intraday gap behavior, wh
 
 The gap can hold, price can continue away from the gap, volume can shift, or the catalyst can be strong enough to keep price in the new range.
 
-### How should I journal gap fill trades?
+### How should I review gap fill trades?
 
 Track the gap cause, gap levels, entry timing, volume, key support or resistance, invalidation level, and whether the trade followed the original plan.
 

@@ -126,7 +126,7 @@ Review
 | Order | Learning Track | Status | Priority | Notes |
 |---:|---|---|---:|---|
 | 1 | Start Here For New Traders | complete | 1 | Trading Foundations markdown path content-upgraded across Academy onboarding, beginner market basics, and cross-listed plan/risk/review lessons. Needs visual review before UI-ready. |
-| 2 | Chart Reading And Market Structure | in_progress | 1 | Support/resistance, level drawing, support/resistance levels, key levels, breakout trading, breakdown trading, level breakout, level reclaim, price rejection, break of structure, swing highs/lows, higher-high/higher-low, lower-high/lower-low, pivot-level, previous-day-level, premarket-level, HOD, LOD, NHOD, compression, consolidation, and gap-fill articles complete. Continue with volume/fakeout context and remaining chart-reading concepts. |
+| 2 | Chart Reading And Market Structure | complete | 1 | Core Chart Reading, Candlestick Patterns In Context, and Chart Patterns In Context have passed Pass 1 lesson-level quality audit. The audit confirmed strong educational flow and realistic visual support, cleaned previous/next metadata, replaced leftover broad journal wording with review wording, and documented a restrained app bridge map. Future gap lesson: `/learn/multiple-timeframe-chart-reading/`. |
 | 3 | News, Catalysts, Filings, And Dilution | complete | 1 | Expanded Academy course markdown path complete through stock catalysts, press releases, 25 SEC filing lessons, news category lessons, and news-trade review. Needs visual review before UI-ready. |
 | 4 | Risk, Discipline, And Psychology | complete | 1 | Risk Management And Trade Planning and Trading Psychology And Discipline course markdown paths are content-upgraded. Needs visual review before UI-ready. |
 | 5 | Execution And Trade Review | complete | 1 | Trade Review And Improvement markdown path content-upgraded across review foundation, risk, execution, mistake patterns, swing review, and Trader Intelligence bridge. Needs visual review before UI-ready. |
@@ -580,22 +580,17 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | Academy bridge lesson batch 1 | Created the six highest-priority bridge lessons from the master instructor audit and integrated them into adjacent Academy metadata and the course index. | Passed. Added beginner market mechanics, stock market sessions/order flow, expectancy, short selling basics, EDGAR source-document workflow, and playbook-building lessons. Updated previous/next links and Academy-ready count from 217 to 223. No production website files were changed. | `57dfbb82` |
 | 2026-05-17 | Academy quality audit workplan | Created a control file to manage future lesson-level, sequence, accuracy/source, visual, UI/progress, and app-bridge audit passes across all Academy courses. | Passed. Created `docs/content/traderslink-academy-quality-audit-workplan.md` with course-by-course status tracking, app surface vocabulary, bridge strength levels, audit checklists, and output templates. This keeps future runs focused and adds a formal Trader Intelligence / journal-app tie-in review layer. | `1734db2a` |
 | 2026-05-17 | Trading Foundations lesson-level quality audit | Completed Pass 1 lesson-level quality audit for the Trading Foundations course and created a restrained lesson-to-app bridge map. | Passed. Created `docs/content/traderslink-academy-quality-audit-trading-foundations.md`, confirmed the course flow is strong, deferred hard app route links until routes are stable, fixed stripped price/loss examples, and cleaned several related lesson labels. No production website files were changed. | `c9126773` |
+| 2026-05-17 | Chart Reading lesson-level quality audit | Completed Pass 1 lesson-level quality audit for Chart Reading And Market Structure, including Candlestick Patterns In Context and Chart Patterns In Context. | Passed. Created `docs/content/traderslink-academy-quality-audit-chart-reading.md`, confirmed the course remains strong as the second Academy course, fixed previous/next metadata in the core Chart Reading chain, replaced leftover broad journal wording with review wording, documented restrained app bridge opportunities, and identified `/learn/multiple-timeframe-chart-reading/` as a future gap lesson. No production website files were changed. | pending_commit |
 
 ## Next Recommended Action
 
-Continue from the Trading Foundations Pass 1 audit:
+Continue from the Chart Reading Pass 1 audit:
 
-1. Start `Pass 1: Lesson-Level Quality Audit` for `Chart Reading And Market Structure` using `docs/content/traderslink-academy-quality-audit-workplan.md`.
-2. Include Chart Reading core lessons plus Candlestick Patterns In Context and Chart Patterns In Context when appropriate.
+1. Start `Pass 1: Lesson-Level Quality Audit` for `Volume, Liquidity And Order Flow` using `docs/content/traderslink-academy-quality-audit-workplan.md`.
+2. Include volume, relative volume, RVOL, volume spike, unusual volume, liquidity, dollar volume, spread, bid/ask, slippage, order types, Level 2, time and sales, and volume by price.
 3. Include an app bridge map, but keep bridge wording restrained and review-focused. Do not add hard app route links until app routes are stable.
 4. Make targeted markdown edits only where a real quality, flow, or bridge gap appears.
-5. Then continue with Batch 1 Technical Indicators SVG assets from `docs/content/learn-academy-visual-ui-readiness-review.md`, or with the next missing gap set from `docs/content/traderslink-academy-master-instructor-audit.md`, likely:
-   - `/learn/multiple-timeframe-chart-reading/`
-   - `/learn/how-to-choose-indicators-for-a-trading-plan/`
-   - `/learn/resale-registration-statement/`
-   - `/learn/shareholder-approval-for-dilution/`
-   - `/learn/weekly-and-monthly-trading-review/`
-   - `/learn/backtesting-vs-forward-testing/`
+5. Track the future Chart Reading gap lesson `/learn/multiple-timeframe-chart-reading/`, but do not derail the course-by-course Pass 1 audit unless the user asks for a gap-lesson creation run.
 6. Keep this as markdown/content planning and SVG work only; do not build production routes, components, schemas, JSX, CSS, or pages.
 
 ## Important Reminder

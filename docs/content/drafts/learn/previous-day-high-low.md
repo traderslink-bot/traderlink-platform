@@ -237,7 +237,7 @@ This checklist keeps previous day levels practical and reviewable.
 
 ## Apply This In Review
 
-Previous day levels are useful for journaling because they can be marked objectively before the session.
+Previous day levels are useful for review because they can be marked objectively before the session.
 
 Ask:
 

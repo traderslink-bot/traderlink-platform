@@ -23,7 +23,7 @@ academy_order: 6
 academy_module: "Breaks And Reclaims"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/key-levels-trading/"
-recommended_next: "/learn/level-breakout/"
+recommended_next: "/learn/breakdown-trading/"
 visual_assets:
   - "/images/learn/chart-reading/breakout-with-volume-context.svg"
   - "/images/learn/chart-reading/failed-breakout-review.svg"
@@ -334,7 +334,7 @@ Traders often watch level quality, volume, nearby resistance, liquidity, spread,
 
 Not by itself. Volume matters, but traders also review whether price holds the level, whether the move is extended, and whether risk is defined.
 
-### How should I journal breakout trades?
+### How should I review breakout trades?
 
 Review the level, volume, entry location, invalidation plan, whether the breakout held or failed, and whether your response followed your rules.
 

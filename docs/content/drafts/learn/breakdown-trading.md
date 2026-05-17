@@ -21,8 +21,8 @@ academy_level: "Practical"
 academy_order: 7
 academy_module: "Breaks And Reclaims"
 academy_course: "Chart Reading And Market Structure"
-recommended_previous: "/learn/new-high-of-day/"
-recommended_next: "/learn/level-reclaim/"
+recommended_previous: "/learn/breakout-trading/"
+recommended_next: "/learn/level-breakout/"
 visual_assets:
   - "/images/learn/chart-reading/breakdown-with-volume-context.svg"
   - "/images/learn/chart-reading/failed-breakdown-reclaim-review.svg"
@@ -284,7 +284,7 @@ Traders often watch level quality, volume, nearby support, liquidity, spread, fo
 
 Not by itself. Volume matters, but traders also review whether price holds the level, whether the move is extended, and whether risk is defined.
 
-### How should I journal breakdown trades?
+### How should I review breakdown trades?
 
 Review the level, volume, entry or exit location, invalidation plan, whether the breakdown held or reclaimed, and whether your response followed your rules.
 

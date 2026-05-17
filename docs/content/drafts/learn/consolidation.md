@@ -192,7 +192,7 @@ Ask:
 - Was the trade planned around structure or boredom?
 - Do I overtrade while price is still inside the range?
 
-A journal can help show whether consolidation trades are improving timing or just giving more reasons to overtrade.
+After-trade review can help show whether consolidation trades are improving timing or just giving more reasons to overtrade.
 
 ## Trader Intelligence Bridge
 

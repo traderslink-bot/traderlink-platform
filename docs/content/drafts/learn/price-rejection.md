@@ -222,7 +222,7 @@ Before using rejection in a trade review, ask:
 7. Did the trader respond according to plan?
 8. Did price later reclaim the rejected level?
 9. Was the candle meaningful or just noisy liquidity?
-10. How will this rejection be tagged in the journal?
+10. How will this rejection be tagged in review notes?
 
 This checklist helps avoid turning every wick into a story.
 

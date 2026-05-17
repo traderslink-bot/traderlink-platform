@@ -223,7 +223,7 @@ A useful pivot level should make the trade easier to review. If the level is onl
 
 ## Practical Checklist
 
-Before using a pivot in a trade plan or journal review, ask:
+Before using a pivot in a trade plan or after-trade review, ask:
 
 1. Was the pivot visible before the trade?
 2. What created the pivot: swing high, swing low, support, resistance, or session level?
