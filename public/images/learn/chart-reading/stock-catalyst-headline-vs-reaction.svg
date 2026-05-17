@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
+  <title id="title">Stock catalyst headline versus chart reaction</title>
+  <desc id="desc">Dark trading dashboard showing a catalyst headline, red and green candlesticks, a volume burst, a failed hold review label, and filing check notes.</desc>
+  <rect width="960" height="560" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="904" height="504" rx="14" fill="#0b1628" stroke="#1d3557"/>
+  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Headline Versus Reaction</text>
+  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">A catalyst starts the review. The chart, volume, filings, and liquidity add context.</text>
+
+  <rect x="52" y="118" width="856" height="74" rx="10" fill="#081323" stroke="#172a46"/>
+  <text x="78" y="148" fill="#7bb4ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">CATALYST HEADLINE</text>
+  <text x="78" y="174" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="18" font-weight="700">Company announces partnership update before the open</text>
+  <rect x="690" y="137" width="190" height="34" rx="7" fill="#10233c" stroke="#2d8cff"/>
+  <text x="785" y="159" fill="#d8eaff" font-family="Arial, sans-serif" font-size="13" text-anchor="middle">Read full details</text>
+
+  <rect x="52" y="216" width="620" height="250" rx="10" fill="#081323" stroke="#172a46"/>
+  <g stroke="#172a46" stroke-width="1">
+    <line x1="76" y1="252" x2="648" y2="252"/>
+    <line x1="76" y1="290" x2="648" y2="290"/>
+    <line x1="76" y1="328" x2="648" y2="328"/>
+    <line x1="76" y1="366" x2="648" y2="366"/>
+    <line x1="76" y1="404" x2="648" y2="404"/>
+  </g>
+  <rect x="376" y="250" width="178" height="38" rx="7" fill="#15345c" opacity=".7" stroke="#2d8cff"/>
+  <text x="465" y="274" fill="#d8eaff" font-family="Arial, sans-serif" font-size="13" text-anchor="middle">First reaction fades</text>
+
+  <g stroke-linecap="round" stroke-width="3">
+    <line x1="96" y1="398" x2="96" y2="430" stroke="#26c281"/>
+    <rect x="86" y="410" width="20" height="12" rx="2" fill="#26c281"/>
+    <line x1="128" y1="390" x2="128" y2="424" stroke="#ef5350"/>
+    <rect x="118" y="400" width="20" height="17" rx="2" fill="#ef5350"/>
+    <line x1="160" y1="374" x2="160" y2="414" stroke="#26c281"/>
+    <rect x="150" y="388" width="20" height="18" rx="2" fill="#26c281"/>
+    <line x1="192" y1="334" x2="192" y2="392" stroke="#26c281"/>
+    <rect x="182" y="350" width="20" height="30" rx="2" fill="#26c281"/>
+    <line x1="224" y1="292" x2="224" y2="360" stroke="#26c281"/>
+    <rect x="214" y="310" width="20" height="36" rx="2" fill="#26c281"/>
+    <line x1="256" y1="252" x2="256" y2="332" stroke="#26c281"/>
+    <rect x="246" y="274" width="20" height="42" rx="2" fill="#26c281"/>
+    <line x1="288" y1="232" x2="288" y2="326" stroke="#ef5350"/>
+    <rect x="278" y="256" width="20" height="52" rx="2" fill="#ef5350"/>
+    <line x1="320" y1="240" x2="320" y2="332" stroke="#26c281"/>
+    <rect x="310" y="264" width="20" height="44" rx="2" fill="#26c281"/>
+    <line x1="352" y1="256" x2="352" y2="350" stroke="#ef5350"/>
+    <rect x="342" y="276" width="20" height="56" rx="2" fill="#ef5350"/>
+    <line x1="384" y1="280" x2="384" y2="370" stroke="#ef5350"/>
+    <rect x="374" y="298" width="20" height="50" rx="2" fill="#ef5350"/>
+    <line x1="416" y1="300" x2="416" y2="386" stroke="#ef5350"/>
+    <rect x="406" y="318" width="20" height="46" rx="2" fill="#ef5350"/>
+    <line x1="448" y1="314" x2="448" y2="394" stroke="#26c281"/>
+    <rect x="438" y="334" width="20" height="34" rx="2" fill="#26c281"/>
+    <line x1="480" y1="322" x2="480" y2="402" stroke="#ef5350"/>
+    <rect x="470" y="340" width="20" height="40" rx="2" fill="#ef5350"/>
+    <line x1="512" y1="334" x2="512" y2="412" stroke="#ef5350"/>
+    <rect x="502" y="350" width="20" height="38" rx="2" fill="#ef5350"/>
+    <line x1="544" y1="344" x2="544" y2="416" stroke="#26c281"/>
+    <rect x="534" y="360" width="20" height="28" rx="2" fill="#26c281"/>
+    <line x1="576" y1="350" x2="576" y2="422" stroke="#ef5350"/>
+    <rect x="566" y="366" width="20" height="34" rx="2" fill="#ef5350"/>
+  </g>
+
+  <rect x="52" y="478" width="620" height="34" rx="8" fill="#081323" stroke="#172a46"/>
+  <g>
+    <rect x="86" y="498" width="20" height="8" fill="#26c281" opacity=".55"/>
+    <rect x="118" y="497" width="20" height="9" fill="#ef5350" opacity=".55"/>
+    <rect x="150" y="493" width="20" height="13" fill="#26c281" opacity=".6"/>
+    <rect x="182" y="486" width="20" height="20" fill="#26c281" opacity=".75"/>
+    <rect x="214" y="480" width="20" height="26" fill="#26c281" opacity=".9"/>
+    <rect x="246" y="478" width="20" height="28" fill="#26c281"/>
+    <rect x="278" y="482" width="20" height="24" fill="#ef5350" opacity=".9"/>
+    <rect x="310" y="486" width="20" height="20" fill="#26c281" opacity=".75"/>
+    <rect x="342" y="490" width="20" height="16" fill="#ef5350" opacity=".7"/>
+    <rect x="374" y="494" width="20" height="12" fill="#ef5350" opacity=".62"/>
+    <rect x="406" y="497" width="20" height="9" fill="#ef5350" opacity=".58"/>
+    <rect x="438" y="498" width="20" height="8" fill="#26c281" opacity=".55"/>
+    <rect x="470" y="499" width="20" height="7" fill="#ef5350" opacity=".52"/>
+    <rect x="502" y="500" width="20" height="6" fill="#ef5350" opacity=".5"/>
+    <rect x="534" y="500" width="20" height="6" fill="#26c281" opacity=".5"/>
+    <rect x="566" y="501" width="20" height="5" fill="#ef5350" opacity=".5"/>
+  </g>
+
+  <rect x="700" y="216" width="208" height="250" rx="10" fill="#081323" stroke="#172a46"/>
+  <text x="724" y="248" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Review Notes</text>
+  <g font-family="Arial, sans-serif" font-size="13">
+    <text x="724" y="286" fill="#8fa7c8">Source</text>
+    <text x="884" y="286" fill="#e6f0ff" text-anchor="end">Company PR</text>
+    <text x="724" y="322" fill="#8fa7c8">Terms</text>
+    <text x="884" y="322" fill="#f5c26b" text-anchor="end">Not disclosed</text>
+    <text x="724" y="358" fill="#8fa7c8">Filing check</text>
+    <text x="884" y="358" fill="#7bb4ff" text-anchor="end">Needed</text>
+    <text x="724" y="394" fill="#8fa7c8">Volume</text>
+    <text x="884" y="394" fill="#ef5350" text-anchor="end">Fading</text>
+    <text x="724" y="430" fill="#8fa7c8">Liquidity</text>
+    <text x="884" y="430" fill="#f5c26b" text-anchor="end">Review</text>
+  </g>
+</svg>
