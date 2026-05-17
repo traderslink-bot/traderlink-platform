@@ -91,7 +91,7 @@ Recommended order for future runs:
 | 3 | Volume, Liquidity And Order Flow | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-volume-liquidity.md` with official SEC, Investor.gov, FINRA, Nasdaq, and NYSE source checks plus targeted source-note edits. |
 | 4 | Risk Management And Trade Planning | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-risk-management.md` with official SEC, Investor.gov, and FINRA source checks plus targeted source-note edits. |
 | 5 | Technical Indicators And Tools | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-technical-indicators.md` with reputable technical-analysis/charting-source checks plus targeted source-note edits. |
-| 6 | Trading Styles And Playbooks | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 6 | Trading Styles And Playbooks | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-styles.md` with official SEC, Investor.gov, FINRA, and current FINRA 2026 intraday margin-transition source checks plus targeted source-note edits. |
 | 7 | Day Trading Workflow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 8 | Swing Trading Workflow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; Pass 2 fixed stale swing workflow related links. |
 | 9 | News, Catalysts And SEC Filings | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; Pass 2 completed; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md` with official SEC, Investor.gov, and FDA source checks plus targeted source-note edits. |
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 3: Accuracy/Source Audit** for **Trading Styles And Playbooks**.
+Continue with **Pass 3: Accuracy/Source Audit** for **Day Trading Workflow**.
 
 Reason:
 
@@ -225,12 +225,13 @@ Reason:
 - Volume, Liquidity And Order Flow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-volume-liquidity.md`.
 - Risk Management And Trade Planning Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-risk-management.md`.
 - Technical Indicators And Tools Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-technical-indicators.md`.
-- Trading Styles And Playbooks is now the next useful source-sensitive course because it includes style definitions, day trading, swing trading, scalping, momentum trading, pullbacks and dip buys, news fade, sell-the-news, multi-day runners, breakouts, breakdowns, reclaims, gap fills, chasing, and playbook language. The next pass should verify style definitions, account/risk caveats, day-trading rule references where relevant, and guarantee-sensitive setup language.
+- Trading Styles And Playbooks Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trading-styles.md`.
+- Day Trading Workflow is now the next useful source-sensitive course because it includes premarket trading, day-trading watchlists, market open trading, opening range, midday trading, power hour, after-hours trading, and session review. The next pass should verify time-of-day framing, extended-hours risk, market-open volatility, liquidity/spread/slippage language, day-trading rule references where relevant, and avoid any implication that a session segment creates a signal.
 - Pass 3 should verify factual details and official-source references before the Academy moves toward production UI planning.
 
 Output should include:
 
-- A Trading Styles And Playbooks accuracy/source audit.
+- A Day Trading Workflow accuracy/source audit.
 - Any small markdown edits needed.
 - Source-sensitive findings and corrections.
 - Official-source references for SEC, Investor.gov, FINRA, exchanges, and market-structure/order-mechanics sources where needed.

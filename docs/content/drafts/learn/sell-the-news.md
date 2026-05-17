@@ -64,6 +64,8 @@ Sell the news describes a market reaction where price weakens after a public cat
 
 The phrase describes what happened. It does not tell traders what to do.
 
+Source check: SEC EDGAR provides free public access to company filings, and SEC after-hours risk materials warn that news outside regular hours can interact with lower liquidity, wider spreads, and uncertain prices. Sell-the-news review should compare expectation, actual announcement details, related filings, volume, and level behavior rather than treating the phrase as a trade rule.
+
 ## How This Style Works
 
 Sell-the-news review usually compares:

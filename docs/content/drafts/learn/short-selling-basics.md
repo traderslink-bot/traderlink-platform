@@ -67,7 +67,7 @@ The basic sequence is:
 
 The risk is not the same as a long trade. A long stock position can lose up to the amount invested if the stock goes to zero. A short position can keep losing as the stock rises, so risk control is critical.
 
-Source check: SEC Regulation SHO investor materials explain that short sellers borrow shares, sell them, and later buy shares back to replace the borrowed stock. The SEC also notes that short selling can involve theoretically unlimited losses because a stock can keep rising, and that locate, delivery, close-out, margin, interest, and borrowing mechanics matter.
+Source check: SEC Regulation SHO investor materials explain that short sellers borrow shares, sell them, and later buy shares back to replace the borrowed stock. The SEC also notes that short selling can involve theoretically unlimited losses because a stock can keep rising, and that locate, delivery, close-out, margin, interest, borrowing mechanics, and delivery obligations matter.
 
 ## Why Traders Study Short Selling
 

@@ -64,6 +64,8 @@ A news fade is a move where price initially reacts to news and later loses momen
 
 A fade describes reaction behavior after news. It is not a prediction.
 
+Source check: SEC after-hours risk materials warn that news announced outside regular hours can have greater price impact when activity is limited and prices may not match the next regular-session open. When a news-fade idea depends on company details, traders should verify the press release, SEC filing, exchange notice, or regulator source instead of relying only on a headline or social summary.
+
 ## How This Style Works
 
 News-fade review usually asks:
