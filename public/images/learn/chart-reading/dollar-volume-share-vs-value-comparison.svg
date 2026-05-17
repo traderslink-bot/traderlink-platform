@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">Share volume versus dollar volume comparison</title>
+  <desc id="desc">A dark trading dashboard style comparison showing how a low-priced stock can have more share volume but less dollar volume than a higher-priced stock.</desc>
+  <rect width="900" height="520" fill="#08111f"/>
+  <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Share volume and dollar volume can tell different stories</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A low-priced stock can trade more shares but less total value.</text>
+  <rect x="70" y="126" width="350" height="302" rx="10" fill="#0a1322" stroke="#213858"/>
+  <rect x="480" y="126" width="350" height="302" rx="10" fill="#0a1322" stroke="#213858"/>
+  <text x="96" y="158" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Stock A: low price</text>
+  <text x="506" y="158" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Stock B: higher price</text>
+  <g font-family="Arial, sans-serif" font-size="15">
+    <text x="96" y="198" fill="#e8f1ff">Price: $0.50</text>
+    <text x="96" y="228" fill="#e8f1ff">Share volume: 8M</text>
+    <text x="96" y="258" fill="#38bdf8">Dollar volume: $4M</text>
+    <text x="506" y="198" fill="#e8f1ff">Price: $5.00</text>
+    <text x="506" y="228" fill="#e8f1ff">Share volume: 1.5M</text>
+    <text x="506" y="258" fill="#38bdf8">Dollar volume: $7.5M</text>
+  </g>
+  <line x1="96" y1="300" x2="380" y2="300" stroke="#2a3d5c"/>
+  <line x1="506" y1="300" x2="790" y2="300" stroke="#2a3d5c"/>
+  <text x="96" y="328" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">share volume looks larger</text>
+  <text x="506" y="328" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">traded value is larger</text>
+  <rect x="96" y="356" width="232" height="34" rx="8" fill="#12345a" stroke="#38bdf8"/>
+  <text x="112" y="378" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="14">8M shares x $0.50 = $4M</text>
+  <rect x="506" y="356" width="244" height="34" rx="8" fill="#12345a" stroke="#38bdf8"/>
+  <text x="522" y="378" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="14">1.5M shares x $5.00 = $7.5M</text>
+  <g>
+    <rect x="330" y="216" width="32" height="108" fill="#22c55e" opacity="0.75" rx="4"/>
+    <rect x="742" y="246" width="32" height="78" fill="#22c55e" opacity="0.75" rx="4"/>
+    <rect x="366" y="270" width="32" height="54" fill="#38bdf8" opacity="0.8" rx="4"/>
+    <rect x="778" y="224" width="32" height="100" fill="#38bdf8" opacity="0.9" rx="4"/>
+  </g>
+  <text x="330" y="204" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="12">shares</text>
+  <text x="366" y="258" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="12">value</text>
+  <text x="742" y="234" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="12">shares</text>
+  <text x="778" y="212" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="12">value</text>
+</svg>
