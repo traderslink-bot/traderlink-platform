@@ -238,7 +238,7 @@ Meaning:
 
 Important:
 
-The 198 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
+The 205 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
 
 The migration pass should check:
 
@@ -850,6 +850,53 @@ Before production UI implementation, this course still needs:
 - Optional course intro/landing copy for the Academy course page.
 - Progress/lesson completion wiring in the website build phase.
 
+## Course 13: Halts And High-Volatility Events
+
+### Purpose
+
+Teach interruption risk, volatility risk, halt/resume behavior, broad-market circuit breaker context, fast-spread risk, low-float volatility, and high-volatility trade review.
+
+### Course Outcome
+
+The user should understand that halts and high-volatility events are risk and review context, not trade triggers. They should know how to review interruption risk, spread, depth, slippage, size, and market structure after volatile events.
+
+### Completed Course Lesson Sequence
+
+| Order | Module | Lesson | URL | Current Asset | Status | Notes |
+|---:|---|---|---|---|---|---|
+| 1 | Halt Foundation | Trading Halts | `/learn/trading-halts/` | content_upgraded | complete | New course opener with realistic halt timeline SVG; teaches halt types, interruption risk, and official source checks. |
+| 2 | Single-Stock Halts | Volatility Halts | `/learn/volatility-halts/` | content_upgraded | complete | New lesson teaching rapid-move halts, low-float context, halt risk, and no directional assumptions. |
+| 3 | Single-Stock Halts | Halt Resume | `/learn/halt-resume/` | content_upgraded | complete | New lesson with realistic spread/depth SVG; teaches resume instability, spread, depth, and slippage review. |
+| 4 | Market-Wide Events | Market-Wide Circuit Breakers | `/learn/market-wide-circuit-breakers/` | content_upgraded | complete | New lesson with circuit-breaker context SVG and official-rule verification framing. |
+| 5 | Execution Risk | Fast Spread Risk | `/learn/fast-spread-risk/` | content_upgraded | complete | New lesson teaching spread widening, depth, slippage, and chart-versus-execution review. |
+| 6 | Small-Cap Volatility | Low-Float Volatility | `/learn/low-float-volatility/` | content_upgraded | complete | New lesson connecting low float, volume spikes, halt risk, spread, liquidity, and dilution context. |
+| 7 | Event Review | High-Volatility Trade Review | `/learn/high-volatility-trade-review/` | content_upgraded | complete | New course capstone for reviewing volatile trades by halt risk, spread, slippage, liquidity, size, and behavior. |
+
+### Cross-Listed Support Lessons
+
+These completed lessons should be linked from the Halts And High-Volatility Events course UI where useful:
+
+- `/learn/low-float-stocks/`
+- `/learn/float-rotation/`
+- `/learn/volume-spike/`
+- `/learn/spread/`
+- `/learn/slippage/`
+- `/learn/liquidity/`
+- `/learn/level-2/`
+- `/learn/risk-management/`
+- `/learn/trade-risk-review/`
+- `/learn/execution-review/`
+
+### Course Status
+
+The Halts And High-Volatility Events course markdown path is **content_upgraded** across 7 new lessons and 3 realistic SVG assets.
+
+Before production UI implementation, this course still needs:
+
+- Final Academy migration pass for UI-ready metadata and completion behavior.
+- Optional course intro/landing copy for the Academy course page.
+- Progress/lesson completion wiring in the website build phase.
+
 ## Cross-Listed Lesson Rules
 
 Some lessons can appear in more than one course. This is good for navigation, but each lesson should still have one primary course.
@@ -991,6 +1038,7 @@ Current known Academy-ready lesson groups:
 | Chart Patterns In Context | 13 | Full chart-pattern course markdown path is now content-upgraded across pattern foundation, continuation context, range/base patterns, channels, wedges, reversal/failure context, and parabolic extension. Nine realistic SVGs were created and manifest-tracked. VWAP Reclaim is cross-listed from Technical Indicators. |
 | Day Trading Workflow | 9 | Full day-trading workflow course markdown path is now content-upgraded across session framework, premarket prep, watchlist filtering, market open, opening range, midday filtering, power hour, after-hours context, and session review. Five realistic SVGs were created and manifest-tracked. |
 | Practice And Improvement | 9 | Full practice course markdown path is now content-upgraded across practice foundation, paper trading, replay review, watchlist review, screenshot review, trade grading, one-rule drills, forward testing, and improvement planning. Three realistic SVGs were created and manifest-tracked. |
+| Halts And High-Volatility Events | 7 | Full event-risk course markdown path is now content-upgraded across trading halts, volatility halts, halt resumes, market-wide circuit breakers, fast-spread risk, low-float volatility, and high-volatility trade review. Three realistic SVGs were created and manifest-tracked. |
 | Volume, Liquidity And Order Flow | 14 | Core course path is academy-ready. |
 | News, Catalysts And SEC Filings | 36 | Full course markdown path is now content-upgraded across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
 | Trading Foundations | 4 | Beginner onboarding and market-basics lessons are content-upgraded; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
@@ -1004,28 +1052,28 @@ Current known Academy-ready lesson groups:
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-198
+205
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 198 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 198 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 205 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 205 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 198 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 205 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/trading-halts/
+/learn/swing-trading-for-beginners/
 ```
 
 Reason:
 
-The Academy just completed the Practice And Improvement course markdown path. The highest-value next course is Halts And High-Volatility Events, starting with a new `/learn/trading-halts/` lesson, because high-volatility interruption risk connects naturally after practice, day-trading workflow, risk management, low-float context, and execution review.
+The Academy just completed the Halts And High-Volatility Events course markdown path. The highest-value next course is Swing Trading Workflow, starting with `/learn/swing-trading-for-beginners/`, because local swing-trading drafts already exist and can turn the current swing overview into a fuller multi-session learning path.
 
 ## Recommended Work Method From Here
 
