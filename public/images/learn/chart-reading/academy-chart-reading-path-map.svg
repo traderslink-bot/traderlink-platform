@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Academy Chart Reading Path Map</title>
+  <desc id="desc">Dark Academy dashboard path map showing realistic red and green candlesticks, support and resistance zones, volume bars, and course steps for chart reading, candles, patterns, volume, and workflow.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="34" y="34" width="892" height="472" rx="14" fill="#0d1828" stroke="#18314f"/>
+  <text x="58" y="70" fill="#e6edf7" font-family="Arial, sans-serif" font-size="24" font-weight="700">Chart Reading Path</text>
+  <text x="58" y="96" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="14">Levels → structure → candles → patterns → volume → workflow review</text>
+  <rect x="58" y="126" width="525" height="250" fill="#0a1422" stroke="#152b46"/>
+  <g stroke="#162943"><line x1="58" y1="176" x2="583" y2="176"/><line x1="58" y1="226" x2="583" y2="226"/><line x1="58" y1="276" x2="583" y2="276"/><line x1="58" y1="326" x2="583" y2="326"/></g>
+  <rect x="58" y="152" width="525" height="28" fill="#1d3d5d" opacity=".55"/><rect x="58" y="304" width="525" height="30" fill="#0f5f86" opacity=".35"/>
+  <text x="72" y="171" fill="#9fd0ff" font-family="Arial, sans-serif" font-size="12" font-weight="700">Resistance zone</text>
+  <text x="72" y="324" fill="#9fd0ff" font-family="Arial, sans-serif" font-size="12" font-weight="700">Support zone</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#33b07a" fill="#33b07a"><line x1="112" y1="282" x2="112" y2="334"/><rect x="102" y="296" width="20" height="24" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="172" y1="250" x2="172" y2="326"/><rect x="162" y="266" width="20" height="42" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="232" y1="218" x2="232" y2="308"/><rect x="222" y="236" width="20" height="54" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="292" y1="174" x2="292" y2="260"/><rect x="282" y="194" width="20" height="44" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="352" y1="168" x2="352" y2="258"/><rect x="342" y="186" width="20" height="50" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="412" y1="186" x2="412" y2="278"/><rect x="402" y="204" width="20" height="52" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="472" y1="210" x2="472" y2="304"/><rect x="462" y="230" width="20" height="50" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="532" y1="178" x2="532" y2="270"/><rect x="522" y="198" width="20" height="48" rx="2"/></g>
+  </g>
+  <rect x="58" y="398" width="525" height="54" fill="#0a1422" stroke="#152b46"/>
+  <g opacity=".7"><rect x="102" y="432" width="20" height="14" fill="#33b07a"/><rect x="162" y="426" width="20" height="20" fill="#e25f5f"/><rect x="222" y="418" width="20" height="28" fill="#33b07a"/><rect x="282" y="410" width="20" height="36" fill="#33b07a"/><rect x="342" y="424" width="20" height="22" fill="#e25f5f"/><rect x="402" y="416" width="20" height="30" fill="#33b07a"/><rect x="462" y="430" width="20" height="16" fill="#e25f5f"/><rect x="522" y="420" width="20" height="26" fill="#33b07a"/></g>
+  <g font-family="Arial, sans-serif" font-size="14">
+    <rect x="620" y="128" width="248" height="44" rx="8" fill="#0b2035" stroke="#2f86d1"/><text x="638" y="156" fill="#dcefff">1. Levels and zones</text>
+    <rect x="620" y="184" width="248" height="44" rx="8" fill="#0b2035" stroke="#204d73"/><text x="638" y="212" fill="#dcefff">2. Structure and reclaims</text>
+    <rect x="620" y="240" width="248" height="44" rx="8" fill="#0b2035" stroke="#204d73"/><text x="638" y="268" fill="#dcefff">3. Candles and patterns</text>
+    <rect x="620" y="296" width="248" height="44" rx="8" fill="#0b2035" stroke="#204d73"/><text x="638" y="324" fill="#dcefff">4. Volume and liquidity</text>
+    <rect x="620" y="352" width="248" height="44" rx="8" fill="#0b2035" stroke="#204d73"/><text x="638" y="380" fill="#dcefff">5. Workflow and review</text>
+  </g>
+</svg>
