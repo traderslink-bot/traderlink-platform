@@ -86,7 +86,7 @@ Recommended order for future runs:
 
 | Order | Course / Group | Pass 1 Quality | Pass 2 Sequence | Pass 3 Accuracy | Pass 4 Visual | Pass 5 UI | Pass 6 App Bridge | Notes |
 |---:|---|---|---|---|---|---|---|---|
-| 1 | Trading Foundations | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 1 | Trading Foundations | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-foundations.md` with official SEC, Investor.gov, FINRA, and Regulation SHO source checks plus targeted source-note edits. |
 | 2 | Chart Reading And Market Structure | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 3 | Volume, Liquidity And Order Flow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 4 | Risk Management And Trade Planning | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 3: Accuracy/Source Audit** for **Trading Foundations**.
+Continue with **Pass 3: Accuracy/Source Audit** for **Volume, Liquidity And Order Flow**.
 
 Reason:
 
@@ -221,12 +221,13 @@ Reason:
 - News, Catalysts And SEC Filings Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md`.
 - Small-Cap Stocks, Float And Dilution Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-small-cap-float-dilution.md`.
 - Halts And High-Volatility Events Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-halts-high-volatility.md`.
-- Trading Foundations is now the next useful source-sensitive course because it includes market sessions, order-flow basics, beginner day-trading framing, short selling basics, and any settlement or order-mechanics claims that should be source-checked before UI planning.
+- Trading Foundations Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trading-foundations.md`.
+- Volume, Liquidity And Order Flow is now the next useful source-sensitive course because it includes bid/ask, spread, liquidity, slippage, market orders versus limit orders, Level 2, time and sales, and other execution mechanics that should be checked against official sources before UI planning.
 - Pass 3 should verify factual details and official-source references before the Academy moves toward production UI planning.
 
 Output should include:
 
-- A Trading Foundations accuracy/source audit.
+- A Volume, Liquidity And Order Flow accuracy/source audit.
 - Any small markdown edits needed.
 - Source-sensitive findings and corrections.
 - Official-source references for SEC, Investor.gov, FINRA, exchanges, and market-structure/order-mechanics sources where needed.

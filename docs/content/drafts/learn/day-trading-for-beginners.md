@@ -67,6 +67,8 @@ Day trading means opening and closing trades within the same trading day.
 
 The goal is to trade intraday price movement, not to invest long term.
 
+Source check: FINRA defines day trading for margin-rule purposes as buying and selling, or selling and buying, the same security in a margin account on the same day. Account eligibility, margin requirements, cash-account restrictions, broker policies, and active FINRA rule changes can affect what a trader is allowed to do. This lesson teaches process and risk awareness, not account-rule advice.
+
 ## Why It Matters
 
 Day trading is risky because decisions happen quickly. A trader can enter late, use too much size, ignore the stop area, add into weakness, or chase a stock after the clean move is gone.
