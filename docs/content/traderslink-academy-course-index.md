@@ -482,30 +482,50 @@ The user should understand what caused a stock to move, how to review the qualit
 | 3 | Press Releases | How To Read Stock Press Releases | `/learn/how-to-read-stock-press-releases/` | complete | `31f3f02c` |
 | 4 | SEC Filing Foundation | SEC Filings | `/learn/sec-filings/` | complete | `4616c671` |
 
-### Next Priority Lessons
+### Completed Course Lesson Sequence
 
 | Order | Module | Lesson | URL | Current Asset | Status | Notes |
 |---:|---|---|---|---|---|---|
 | 5 | SEC Filing Foundation | Form 8-K | `/learn/sec-filings/form-8-k/` | content_upgraded | complete | Current-event filing workflow, item/exhibit review, financing language, and review prompts added. |
-| 6 | SEC Filing Foundation | Form S-1 | `/learn/sec-filings/form-s-1/` | content_upgraded | complete | Registration statement, resale shares, selling stockholders, warrants, and EFFECT context added. |
-| 7 | SEC Filing Foundation | Form S-3 | `/learn/sec-filings/form-s-3/` | content_upgraded | complete | Shelf registration, offering distinction, ATM context, and review workflow added. |
-| 8 | SEC Filing Foundation | Form 424B5 | `/learn/sec-filings/form-424b5/` | content_upgraded | complete | Prospectus supplement, offering terms, warrants, proceeds, and review workflow added. |
-| 9 | News Categories | Earnings News | `/learn/earnings-news/` | content_upgraded | complete | Revenue, losses, margins, guidance, cash, and reaction review added. |
-| 10 | News Categories | FDA News Stocks | `/learn/fda-news-stocks/` | content_upgraded | complete | Regulatory event types, development stage, cash context, and review workflow added. |
-| 11 | News Categories | Clinical Trial News | `/learn/clinical-trial-news/` | content_upgraded | complete | Phase, endpoints, sample size, safety, cash context, and review workflow added. |
-| 12 | News Categories | Contract News Stocks | `/learn/contract-news-stocks/` | content_upgraded | complete | Customer name, terms, value, timing, execution context, and review workflow added. |
-| 13 | News Categories | Partnership News Stocks | `/learn/partnership-news-stocks/` | content_upgraded | complete | Partner quality, terms, commercial mechanics, filing context, and review workflow added. |
-| 14 | News Categories | Merger News Stocks | `/learn/merger-news-stocks/` | content_upgraded | complete | Deal type, consideration, closing conditions, filings, dilution context, and review workflow added. |
-| 15 | News Review | How To Review News Trades | `/learn/how-to-review-news-trades/` | content_upgraded | complete | Course capstone review lesson added for catalyst, reaction, risk, execution, and repeated patterns. |
+| 6 | Company Reports | Form 10-K | `/learn/sec-filings/form-10-k/` | content_upgraded | complete | Annual report, audited financials, risk factors, cash, debt, share structure, and going-concern context. |
+| 7 | Company Reports | Form 10-Q | `/learn/sec-filings/form-10-q/` | content_upgraded | complete | Quarterly report, unaudited financials, cash changes, operating updates, and risk review. |
+| 8 | Company Reports | Form 20-F | `/learn/sec-filings/form-20-f/` | content_upgraded | complete | Foreign private issuer annual report context, financial statements, and risk disclosures. |
+| 9 | Company Reports | Form 6-K | `/learn/sec-filings/form-6-k/` | content_upgraded | complete | Foreign issuer current reports, foreign-market disclosures, press releases, and interim updates. |
+| 10 | Registration Statements | Form S-1 | `/learn/sec-filings/form-s-1/` | content_upgraded | complete | Registration statement, resale shares, selling stockholders, warrants, and future supply context. |
+| 11 | Registration Statements | Form S-3 | `/learn/sec-filings/form-s-3/` | content_upgraded | complete | Shelf registration, offering distinction, eligibility, and future offering context. |
+| 12 | Registration Statements | Form F-1 | `/learn/sec-filings/form-f-1/` | content_upgraded | complete | Foreign issuer registration statement, IPO/resale context, risk factors, and share supply. |
+| 13 | Registration Statements | Form F-3 | `/learn/sec-filings/form-f-3/` | content_upgraded | complete | Foreign issuer shelf registration, eligibility, prospectus supplements, and offering context. |
+| 14 | Transaction Registration | Form S-4 | `/learn/sec-filings/form-s-4/` | content_upgraded | complete | Merger securities, exchange offers, shareholder votes, transaction terms, and deal risk. |
+| 15 | Transaction Registration | Form S-8 | `/learn/sec-filings/form-s-8/` | content_upgraded | complete | Employee benefit plan securities, compensation shares, available share pools, and supply context. |
+| 16 | Prospectus Supplements | Form 424B5 | `/learn/sec-filings/form-424b5/` | content_upgraded | complete | Prospectus supplement, offering terms, warrants, proceeds, and dilution context. |
+| 17 | Prospectus Supplements | Form 424B3 | `/learn/sec-filings/form-424b3/` | content_upgraded | complete | Prospectus updates, resale context, registered securities, and plan of distribution. |
+| 18 | Prospectus Supplements | Form 424B4 | `/learn/sec-filings/form-424b4/` | content_upgraded | complete | Final prospectus details, offering terms, underwriters, proceeds, and risk disclosure. |
+| 19 | Registration Effectiveness | EFFECT Notice | `/learn/sec-filings/effect-notice/` | content_upgraded | complete | Effectiveness notice, related registration statement, resale eligibility, and timing context. |
+| 20 | Insider Ownership | Form 3 | `/learn/sec-filings/form-3/` | content_upgraded | complete | Initial insider ownership, officer/director holdings, and beneficial ownership baseline. |
+| 21 | Insider Ownership | Form 4 | `/learn/sec-filings/form-4/` | content_upgraded | complete | Insider transactions, transaction codes, grants, exercises, sales, and footnotes. |
+| 22 | Insider Ownership | Form 5 | `/learn/sec-filings/form-5/` | content_upgraded | complete | Annual insider ownership cleanup, late/exempt transactions, and follow-up review. |
+| 23 | Beneficial Ownership | Schedule 13D | `/learn/sec-filings/schedule-13d/` | content_upgraded | complete | Large beneficial ownership, activist intent, purpose of transaction, and position changes. |
+| 24 | Beneficial Ownership | Schedule 13G | `/learn/sec-filings/schedule-13g/` | content_upgraded | complete | Passive/institutional beneficial ownership, ownership percentage, amendments, and float context. |
+| 25 | Proxy Statements | Form DEF 14A | `/learn/sec-filings/form-def-14a/` | content_upgraded | complete | Definitive proxy statements, shareholder votes, governance, compensation, and meeting proposals. |
+| 26 | Proxy Statements | Form PRE 14A | `/learn/sec-filings/form-pre-14a/` | content_upgraded | complete | Preliminary proxy statements, proposed votes, corporate actions, and changes before final proxy. |
+| 27 | Late Filing Notices | NT 10-K | `/learn/sec-filings/nt-10-k/` | content_upgraded | complete | Late annual report notices, delay reasons, reporting risk, and follow-up filing review. |
+| 28 | Late Filing Notices | NT 10-Q | `/learn/sec-filings/nt-10-q/` | content_upgraded | complete | Late quarterly report notices, delay reasons, reporting controls, and follow-up 10-Q context. |
+| 29 | Exchange And Listing Events | Form 25 | `/learn/sec-filings/form-25/` | content_upgraded | complete | Delisting, exchange removal, deregistration context, listing status, and liquidity risk. |
+| 30 | News Categories | Earnings News | `/learn/earnings-news/` | content_upgraded | complete | Revenue, losses, margins, guidance, cash, and reaction review added. |
+| 31 | News Categories | FDA News Stocks | `/learn/fda-news-stocks/` | content_upgraded | complete | Regulatory event types, development stage, cash context, and review workflow added. |
+| 32 | News Categories | Clinical Trial News | `/learn/clinical-trial-news/` | content_upgraded | complete | Phase, endpoints, sample size, safety, cash context, and review workflow added. |
+| 33 | News Categories | Contract News Stocks | `/learn/contract-news-stocks/` | content_upgraded | complete | Customer name, terms, value, timing, execution context, and review workflow added. |
+| 34 | News Categories | Partnership News Stocks | `/learn/partnership-news-stocks/` | content_upgraded | complete | Partner quality, terms, commercial mechanics, filing context, and review workflow added. |
+| 35 | News Categories | Merger News Stocks | `/learn/merger-news-stocks/` | content_upgraded | complete | Deal type, consideration, closing conditions, filings, dilution context, and review workflow added. |
+| 36 | News Review | How To Review News Trades | `/learn/how-to-review-news-trades/` | content_upgraded | complete | Course capstone review lesson added for catalyst, reaction, risk, execution, and repeated patterns. |
 
 ### Course Status
 
-The core News, Catalysts And SEC Filings course markdown path is **content_upgraded**.
+The News, Catalysts And SEC Filings course markdown path is **content_upgraded** across the catalyst, press release, SEC filing, news category, and news-trade review lessons.
 
 Before production UI implementation, this course still needs:
 
-- A final Academy format migration pass across all 15 lessons.
-- Visual asset review to decide which newly upgraded lessons need SVG support.
+- Visual asset review to decide which filing/news lessons need SVG support.
 - Optional course intro/landing copy for the Academy course page.
 - Progress/lesson completion wiring in the website build phase.
 
@@ -764,7 +784,7 @@ Current known Academy-ready lesson groups:
 |---|---:|---|
 | Chart Reading And Market Structure | 23 | Strong course core already created. Needs candlestick and chart pattern expansions later. |
 | Volume, Liquidity And Order Flow | 14 | Core course path is academy-ready. |
-| News, Catalysts And SEC Filings | 15 | Core course markdown path is now content-upgraded. Needs final Academy migration pass and visual review before UI-ready. |
+| News, Catalysts And SEC Filings | 36 | Full course markdown path is now content-upgraded across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
 | Trading Foundations | 0 | Existing drafts need upgrade plus onboarding gap lessons. |
 | Technical Indicators And Tools | 0 | Mostly gap lessons needed. |
 | Trading Styles And Playbooks | 0 | Existing drafts plus several gap lessons. |
@@ -776,18 +796,18 @@ Current known Academy-ready lesson groups:
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-41
+73
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 52 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 52 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 73 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 73 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 52 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 73 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
@@ -797,7 +817,7 @@ Current best next editorial action:
 
 Reason:
 
-The Academy just completed the News, Catalysts And SEC Filings course markdown path. Small-Cap Stocks, Float And Dilution is the natural next course because it builds on SEC filings, offerings, dilution, float, and catalyst risk.
+The Academy just completed the expanded News, Catalysts And SEC Filings course markdown path. Small-Cap Stocks, Float And Dilution is the natural next course because it builds on SEC filings, offerings, dilution, float, and catalyst risk.
 
 ## Recommended Work Method From Here
 
