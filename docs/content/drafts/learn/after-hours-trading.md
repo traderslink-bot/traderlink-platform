@@ -26,7 +26,7 @@ internal_links:
   - "/learn/power-hour-trading/"
   - "/learn/day-trading-session-review/"
   - "/learn/sec-filings/"
-  - "/learn/earnings-reports/"
+  - "/learn/earnings-news/"
   - "/learn/overnight-risk/"
 visual_assets:
   - "/images/learn/chart-reading/after-hours-liquidity-context.svg"
@@ -142,7 +142,7 @@ Trader Intelligence is being built to help traders review after-hours trades and
 - [Power Hour Trading](/learn/power-hour-trading/)
 - [Day Trading Session Review](/learn/day-trading-session-review/)
 - [SEC Filings](/learn/sec-filings/)
-- [Earnings Reports](/learn/earnings-reports/)
+- [Earnings News](/learn/earnings-news/)
 - [Overnight Risk](/learn/overnight-risk/)
 
 ## Related Glossary Terms
