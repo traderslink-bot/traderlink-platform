@@ -192,7 +192,7 @@ Use this as the primary course order on the Academy homepage:
 | 1 | Trading Foundations | content_upgraded | Completed beginner onboarding and market-basics markdown path, with plan/risk/review lessons cross-listed from completed courses. |
 | 2 | Chart Reading And Market Structure | in_progress | Users need candles, levels, structure, breakouts, breakdowns, and chart context early. |
 | 3 | Volume, Liquidity And Order Flow | academy_ready_core | Builds on chart reading and teaches whether activity is clean, thin, fast, or crowded. |
-| 4 | Technical Indicators And Tools | planned | Indicators make more sense after price, levels, and volume are understood. |
+| 4 | Technical Indicators And Tools | content_upgraded | Completed markdown course path teaches indicators as measurement/context tools after price, levels, and volume. |
 | 5 | Trading Styles And Playbooks | planned | Users can now combine chart, volume, and tools into recognizable setup categories. |
 | 6 | News, Catalysts And SEC Filings | content_upgraded | High-value TradersLink differentiator. Core course markdown lesson path is now complete through news-trade review. |
 | 7 | Small-Cap Stocks, Float And Dilution | content_upgraded | Completed markdown course path covering small-cap context, float, share structure, dilution, offerings, securities, corporate actions, cash runway, and going concern. |
@@ -238,7 +238,7 @@ Meaning:
 
 Important:
 
-The 41 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
+The 144 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
 
 The migration pass should check:
 
@@ -427,22 +427,32 @@ When it becomes misleading.
 How to review it with price, volume, levels, and risk.
 ```
 
-### Suggested Modules And Lessons
+### Completed Course Lesson Sequence
 
 | Order | Module | Lesson | URL | Current Asset | Status | Notes |
 |---:|---|---|---|---|---|---|
-| 1 | Indicator Foundation | What Are Trading Indicators? | `/learn/trading-indicators/` | gap | gap_needed | New hub lesson needed. |
-| 2 | Indicator Foundation | Indicators Lag Price | `/learn/why-indicators-lag/` | gap | gap_needed | Important anti-signal lesson. |
-| 3 | Indicator Foundation | Indicator Overload | `/learn/indicator-overload/` | gap | gap_needed | Teaches too many tools can create confusion. |
-| 4 | Trend Tools | Moving Averages | `/learn/moving-averages/` | gap | gap_needed | Common beginner indicator. |
-| 5 | Trend Tools | VWAP | `/learn/vwap/` | gap | gap_needed | High-value day-trader tool. |
-| 6 | Trend Tools | Anchored VWAP | `/learn/anchored-vwap/` | gap | gap_needed | Advanced context tool. |
-| 7 | Momentum Tools | RSI | `/learn/rsi/` | gap | gap_needed | Must avoid overbought/oversold signal claims. |
-| 8 | Momentum Tools | MACD | `/learn/macd/` | gap | gap_needed | Teach momentum/lag context. |
-| 9 | Volatility Tools | Bollinger Bands | `/learn/bollinger-bands/` | gap | gap_needed | Teach volatility envelope context. |
-| 10 | Volatility Tools | ATR | `/learn/atr/` | gap | gap_needed | Strong risk/sizing bridge. |
-| 11 | Volume Tools | Volume Profile | `/learn/volume-by-price/` | existing | complete | Already completed in Volume course; can be cross-listed here. |
-| 12 | Setup Tool Context | VWAP Reclaim | `/learn/chart-patterns/vwap-reclaim/` | draft | needs_upgrade | Could live here or in Trading Styles. |
+| 1 | Indicator Foundation | What Are Trading Indicators? | `/learn/trading-indicators/` | content_upgraded | complete | New course opener; indicators framed as context and measurement tools, not signals. |
+| 2 | Indicator Foundation | Indicators Lag Price | `/learn/why-indicators-lag/` | content_upgraded | complete | Teaches confirmation versus prediction and late-entry risk. |
+| 3 | Indicator Foundation | Indicator Overload | `/learn/indicator-overload/` | content_upgraded | complete | Teaches tool clutter, duplicate inputs, and simpler review. |
+| 4 | Trend Tools | Moving Averages | `/learn/moving-averages/` | content_upgraded | complete | Covers trend context, lag, chop risk, and late confirmation. |
+| 5 | Trend Tools | VWAP | `/learn/vwap/` | content_upgraded | complete | Teaches intraday average-price context without treating VWAP as support/resistance certainty. |
+| 6 | Trend Tools | Anchored VWAP | `/learn/anchored-vwap/` | content_upgraded | complete | Covers event-based anchors, anchor bias, and review discipline. |
+| 7 | Momentum Tools | RSI | `/learn/rsi/` | content_upgraded | complete | Teaches momentum context and overbought/oversold caution without signal language. |
+| 8 | Momentum Tools | MACD | `/learn/macd/` | content_upgraded | complete | Teaches momentum shifts, histogram context, lag, and choppy cross risk. |
+| 9 | Volatility Tools | Bollinger Bands | `/learn/bollinger-bands/` | content_upgraded | complete | Teaches volatility expansion/contraction and band-touch caution. |
+| 10 | Volatility Tools | ATR | `/learn/atr/` | content_upgraded | complete | Bridges volatility, risk distance, position sizing, spread, and slippage review. |
+| 11 | Volume Tools | Volume By Price | `/learn/volume-by-price/` | content_upgraded | complete | Cross-listed from Volume course; useful as a volume-at-price tool. |
+| 12 | Setup Tool Context | VWAP Reclaim | `/learn/chart-patterns/vwap-reclaim/` | content_upgraded | complete | Teaches VWAP reclaim behavior, failed reclaims, chase risk, and review context. |
+
+### Course Status
+
+The Technical Indicators And Tools course markdown path is **content_upgraded** across 11 newly created or upgraded lessons plus the cross-listed Volume By Price lesson from the completed Volume course.
+
+Before production UI implementation, this course still needs:
+
+- Visual asset review for indicator-specific diagrams where visuals would improve learning.
+- Optional realistic SVGs for VWAP, RSI/MACD, Bollinger Bands, and ATR only if they clearly support the lesson content.
+- Final Academy migration pass for completion behavior and UI-ready metadata.
 
 ## Course 5: Trading Styles And Playbooks
 
@@ -838,7 +848,7 @@ Current known Academy-ready lesson groups:
 | Volume, Liquidity And Order Flow | 14 | Core course path is academy-ready. |
 | News, Catalysts And SEC Filings | 36 | Full course markdown path is now content-upgraded across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
 | Trading Foundations | 4 | Beginner onboarding and market-basics lessons are content-upgraded; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
-| Technical Indicators And Tools | 0 | Mostly gap lessons needed. |
+| Technical Indicators And Tools | 11 | Full indicator course markdown path is now content-upgraded across indicator foundation, trend tools, momentum tools, volatility tools, and VWAP reclaim. Volume By Price is cross-listed from the completed Volume course. Needs visual review before UI-ready. |
 | Trading Styles And Playbooks | 0 | Existing drafts plus several gap lessons. |
 | Small-Cap Stocks, Float And Dilution | 28 | Full course markdown path is now content-upgraded across small-cap context, float, dilution, offerings, securities, corporate actions, cash runway, and going concern. Needs visual review before UI-ready. |
 | Risk Management And Trade Planning | 13 | Full course markdown path is now content-upgraded across planning, rules, risk basics, account protection, trade management, and event risk. Needs visual review before UI-ready. |
@@ -848,28 +858,28 @@ Current known Academy-ready lesson groups:
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-133
+144
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 133 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 133 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 144 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 144 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 133 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 144 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/trading-indicators/
+/learn/trading-styles/
 ```
 
 Reason:
 
-The Academy just completed the Trading Foundations course markdown path. The highest-value next course is Technical Indicators And Tools, starting with `/learn/trading-indicators/`, because indicators are a major expected Academy course and should be taught as context tools, not signal machines.
+The Academy just completed the Technical Indicators And Tools course markdown path. The highest-value next course is Trading Styles And Playbooks, starting with `/learn/trading-styles/`, because users can now combine chart structure, volume/liquidity context, risk planning, and indicators into recognizable styles without treating those styles as guaranteed setups.
 
 ## Recommended Work Method From Here
 
