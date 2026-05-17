@@ -16,7 +16,7 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review completed trades by rules, triggers, sizing, execution, risk decisions, and repeated behavior patterns."
 recommended_previous: "/learn/cutting-winners-too-early/"
-recommended_next: "/learn/trade-risk-review/"
+recommended_next: "/learn/trade-review-and-improvement/"
 academy_level: "Practical"
 academy_order: 8
 academy_module: "Position Behavior"
@@ -36,7 +36,7 @@ meta_description: "Learn what averaging down means in trading, why it can be ris
 ---
 # Averaging Down
 
-This lesson is part of the **Trading Psychology And Discipline** course. It follows [Cutting Winners Too Early](/learn/cutting-winners-too-early/) and leads into [Trade Risk Review](/learn/trade-risk-review/).
+This lesson is part of the **Trading Psychology And Discipline** course. It follows [Cutting Winners Too Early](/learn/cutting-winners-too-early/) and leads into [Trade Review And Improvement](/learn/trade-review-and-improvement/).
 
 Averaging down means adding to a position after price moves against the trader, lowering the average entry price. It can sound logical because the average price improves, but it can also increase risk quickly if the original trade idea is failing.
 

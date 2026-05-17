@@ -25,8 +25,8 @@ learning_track: "Trading Styles And Playbooks"
 internal_links:
   - "/learn/momentum-trading/"
   - "/learn/relative-volume/"
-  - "/learn/float/"
-  - "/learn/short-squeeze/"
+  - "/learn/stock-float/"
+  - "/learn/low-float-stocks/"
   - "/learn/chasing-stocks/"
 schema:
   - "FAQPage"
@@ -136,8 +136,8 @@ Trader Intelligence is being built to help traders review multi-day moves by cat
 
 - [Momentum Trading](/learn/momentum-trading/)
 - [Relative Volume](/learn/relative-volume/)
-- [Float](/learn/float/)
-- [Short Squeeze](/learn/short-squeeze/)
+- [Stock Float](/learn/stock-float/)
+- [Low Float Stocks](/learn/low-float-stocks/)
 - [Chasing Stocks](/learn/chasing-stocks/)
 
 ## FAQ

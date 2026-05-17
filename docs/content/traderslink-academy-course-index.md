@@ -206,6 +206,16 @@ Use this as the primary course order on the Academy homepage:
 
 Academy Navigation Path Hubs are navigation support, not a numbered course. Use the completed path hubs for Academy homepage entry points, course-page guidance, and continue-learning recommendations.
 
+## 2026-05-17 Academy-Wide Sequence Audit Status
+
+Pass 2 sequence and cross-link audit is complete in:
+
+```text
+docs/content/traderslink-academy-sequence-cross-link-audit.md
+```
+
+The audit mapped 223 Academy-ready lessons and path hubs, confirmed all `recommended_previous` and `recommended_next` targets resolve locally, fixed stale lesson links, and documented intentional cross-listed navigation exceptions. Future UI should treat the Academy as a course catalog with guided paths and progress-aware recommendations, not as one strict locked lesson chain.
+
 Status definitions:
 
 ```text

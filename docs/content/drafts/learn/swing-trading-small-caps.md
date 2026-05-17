@@ -26,7 +26,7 @@ internal_links:
   - "/learn/swing-trading-news-risk/"
   - "/learn/small-cap-stocks/"
   - "/learn/low-float-stocks/"
-  - "/learn/penny-stock-dilution-risk/"
+  - "/learn/dilution-risk/"
   - "/learn/sec-filings/"
 visual_assets:
   - "/images/learn/chart-reading/swing-trading-catalyst-timeline.svg"
@@ -167,7 +167,7 @@ Trader Intelligence is being built to help traders review completed small-cap sw
 
 - [Small Cap Stocks](/learn/small-cap-stocks/)
 - [Low Float Stocks](/learn/low-float-stocks/)
-- [Penny Stock Dilution Risk](/learn/penny-stock-dilution-risk/)
+- [Dilution Risk](/learn/dilution-risk/)
 - [SEC Filings](/learn/sec-filings/)
 - [Trading Halts](/learn/trading-halts/)
 

@@ -25,7 +25,7 @@ learning_track: "Swing Trading Workflow"
 internal_links:
   - "/learn/swing-trading-volume/"
   - "/learn/stock-catalysts/"
-  - "/learn/news-driven-stocks/"
+  - "/learn/how-to-review-news-trades/"
   - "/learn/press-releases/"
   - "/learn/sec-filings/"
 visual_assets:
@@ -171,7 +171,7 @@ Trader Intelligence is being built to help traders review completed catalyst tra
 ## Related Lessons
 
 - [Stock Catalysts](/learn/stock-catalysts/)
-- [News Driven Stocks](/learn/news-driven-stocks/)
+- [How To Review News Trades](/learn/how-to-review-news-trades/)
 - [Press Releases](/learn/press-releases/)
 - [SEC Filings](/learn/sec-filings/)
 - [Swing Trading Earnings](/learn/swing-trading-earnings/)

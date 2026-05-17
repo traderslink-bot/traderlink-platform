@@ -24,7 +24,7 @@ academy_course: "Swing Trading Workflow"
 learning_track: "Swing Trading Workflow"
 internal_links:
   - "/learn/swing-trading-earnings/"
-  - "/learn/news-driven-stocks/"
+  - "/learn/stock-catalysts/"
   - "/learn/press-releases/"
   - "/learn/sec-filings/"
   - "/learn/overnight-risk/"
@@ -156,7 +156,7 @@ Trader Intelligence is being built to help traders review completed trades aroun
 
 ## Related Lessons
 
-- [News Driven Stocks](/learn/news-driven-stocks/)
+- [Stock Catalysts](/learn/stock-catalysts/)
 - [Press Releases](/learn/press-releases/)
 - [SEC Filings](/learn/sec-filings/)
 - [Overnight Risk](/learn/overnight-risk/)

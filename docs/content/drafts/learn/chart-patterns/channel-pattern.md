@@ -23,7 +23,7 @@ academy_module: "Trend Channels And Wedges"
 academy_course: "Chart Patterns In Context"
 learning_track: "Chart Patterns In Context"
 internal_links:
-  - "[Trend Lines](/learn/trend-lines/)"
+  - "[Swing Highs And Swing Lows](/learn/swing-highs-and-swing-lows/)"
   - "[Support And Resistance](/learn/support-and-resistance/)"
   - "[Wedge Pattern](/learn/chart-patterns/wedge-pattern/)"
   - "[Higher Highs And Higher Lows](/learn/higher-highs-higher-lows/)"
@@ -137,7 +137,7 @@ Trader Intelligence is being built to help traders review completed trades by pa
 
 ## Related Lessons
 
-- [Trend Lines](/learn/trend-lines/)
+- [Swing Highs And Swing Lows](/learn/swing-highs-and-swing-lows/)
 - [Support And Resistance](/learn/support-and-resistance/)
 - [Wedge Pattern](/learn/chart-patterns/wedge-pattern/)
 - [Higher Highs And Higher Lows](/learn/higher-highs-higher-lows/)

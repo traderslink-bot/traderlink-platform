@@ -86,21 +86,21 @@ Recommended order for future runs:
 
 | Order | Course / Group | Pass 1 Quality | Pass 2 Sequence | Pass 3 Accuracy | Pass 4 Visual | Pass 5 UI | Pass 6 App Bridge | Notes |
 |---:|---|---|---|---|---|---|---|---|
-| 1 | Trading Foundations | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; start here because beginner clarity affects the whole Academy. |
-| 2 | Chart Reading And Market Structure | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; included candlestick and chart-pattern submodules with a restrained app bridge map. |
-| 3 | Volume, Liquidity And Order Flow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; strong restrained bridge map to execution review, trade review, risk review, and analytics. |
-| 4 | Risk Management And Trade Planning | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; corrected Academy course transitions, removed premature feature links, and documented a restrained bridge map to Risk Review, Trade Review, Analytics, Coaching, and Execution Review. |
-| 5 | Technical Indicators And Tools | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; confirmed strong anti-signal language, fixed one invalid ATR related link, removed one premature app route link, and documented realistic indicator-overlay visual needs. |
-| 6 | Trading Styles And Playbooks | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; confirmed strong style/playbook flow, removed stale app route links from cross-listed setup lessons, and documented restrained bridges to Playbook Builder, Trade Review, Analytics, Session Review, Coaching, Risk Review, and Execution Review. |
-| 7 | Day Trading Workflow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; confirmed strong session-flow structure, fixed one invalid after-hours earnings link, and documented restrained bridges to Session Review, Trade Review, Execution Review, Risk Review, Analytics, Coaching, and News/Filing Review. |
-| 8 | Swing Trading Workflow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; corrected adjacent course transitions, cleaned beginner swing quote encoding, and documented restrained bridges to Trade Review, Risk Review, Journal Notes, News/Filing Review, Analytics, Coaching, and Playbook Builder. |
-| 9 | News, Catalysts And SEC Filings | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; removed stale app route links from SEC filing module lessons, cleaned broad journal wording, fixed several stale internal links, and documented source-sensitive follow-up needs for SEC, EDGAR, FDA, filing, and delisting details. |
-| 10 | Small-Cap Stocks, Float And Dilution | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; tightened generic migrated objectives, removed stale hard app route links, fixed stale internal links, and documented visual/source follow-up needs. |
-| 11 | Halts And High-Volatility Events | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; added missing in-body visuals, cleaned stale path-hub wording, and documented source-sensitive halt/circuit-breaker follow-up needs. |
-| 12 | Trading Psychology And Discipline | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; normalized restrained CTAs, fixed stripped price examples, and documented non-shaming coaching/mistake-pattern bridge needs. |
-| 13 | Trade Review And Improvement | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trade-review-improvement.md`; fixed stripped price examples, documented the cross-listed news-review metadata exception, and mapped restrained bridges to Trade Review, Risk Review, Execution Review, Coaching, Analytics, Journal Notes, Playbook Builder, and Progress/Academy. |
-| 14 | Practice And Improvement | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-practice-improvement.md`; added existing editor-verified practice-loop visuals to missing lesson bodies, confirmed no practice-as-proof language, and mapped restrained bridges to Progress/Academy, Trade Review, Risk Review, Execution Review, Coaching, Analytics, Journal Notes, Forward Testing, and Playbook Builder. |
-| 15 | Academy Navigation Path Hubs | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-navigation-path-hubs.md`; fixed stale News/Filings and Risk/Discipline hub links, confirmed path maps are visible and editor-verified, and documented non-locked navigation, resume-learning, and restrained app bridge needs. |
+| 1 | Trading Foundations | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 2 | Chart Reading And Market Structure | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 3 | Volume, Liquidity And Order Flow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 4 | Risk Management And Trade Planning | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 5 | Technical Indicators And Tools | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 6 | Trading Styles And Playbooks | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 7 | Day Trading Workflow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 8 | Swing Trading Workflow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; Pass 2 fixed stale swing workflow related links. |
+| 9 | News, Catalysts And SEC Filings | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; Pass 2 completed; Pass 3 should start here because this is the highest source-sensitive course. |
+| 10 | Small-Cap Stocks, Float And Dilution | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 11 | Halts And High-Volatility Events | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 12 | Trading Psychology And Discipline | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; Pass 2 corrected the Averaging Down transition into the Trade Review course opener. |
+| 13 | Trade Review And Improvement | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trade-review-improvement.md`; Pass 2 documented the news-review cross-list exception. |
+| 14 | Practice And Improvement | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-practice-improvement.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 15 | Academy Navigation Path Hubs | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-navigation-path-hubs.md`; Pass 2 confirmed path hubs are optional navigation support, not a locked course sequence. |
 
 ## Lesson-Level Quality Audit Checklist
 
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 2: Academy-Wide Sequence And Cross-Link Audit**.
+Continue with **Pass 3: Accuracy/Source Audit** for **News, Catalysts And SEC Filings**.
 
 Reason:
 
@@ -217,17 +217,16 @@ Reason:
 - Practice And Improvement Pass 1 is complete.
 - Academy Navigation Path Hubs Pass 1 is complete.
 - The course-by-course Pass 1 lesson-level quality audit cycle is complete.
-- Pass 2 should now audit the Academy-wide order, course-to-course transitions, previous/next metadata across boundaries, cross-listed lessons, and related-lesson links.
-- Keep this run focused on sequence and cross-link quality. Mark factual/source-sensitive issues for later Pass 3 unless a source issue is obvious inside the lesson text.
+- Pass 2 Academy-Wide Sequence And Cross-Link Audit is complete.
+- News, Catalysts And SEC Filings is the highest source-sensitive Academy course because it includes SEC filings, EDGAR workflows, press releases, earnings, FDA and clinical-trial news, contracts, partnerships, mergers, filings, offering context, and news-trade review.
+- Pass 3 should verify factual details and official-source references before the Academy moves toward production UI planning.
 
 Output should include:
 
-- An Academy-wide sequence and cross-link audit.
+- A News, Catalysts And SEC Filings accuracy/source audit.
 - Any small markdown edits needed.
-- Course-to-course transition findings.
-- Previous/next metadata corrections where needed.
-- Cross-listed lesson metadata notes.
-- Related-lesson link quality notes.
-- Future UI implications for continue-learning and resume-learning.
+- Source-sensitive findings and corrections.
+- Official-source references for SEC, EDGAR, filing mechanics, FDA/regulatory catalyst, offering, delisting, and news category details where needed.
+- A clear list of items deferred to later source passes if the course is too large for one run.
 - Tracker and handoff update.
 - Commit.
