@@ -243,7 +243,7 @@ Meaning:
 
 Important:
 
-The 217 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
+The 217 upgraded lessons and path hubs should now be treated as **academy_ready** for the first content-format pass. They still need visual/UI-readiness review before production website implementation.
 
 The migration pass should check:
 
