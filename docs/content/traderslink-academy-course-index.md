@@ -190,20 +190,21 @@ Use this as the primary course order on the Academy homepage:
 | Order | Course | Status | Why It Sits Here |
 |---:|---|---|---|
 | 1 | Trading Foundations | academy_ready_core | Completed beginner onboarding and market-basics markdown path, with plan/risk/review lessons cross-listed from completed courses. |
-| 2 | Chart Reading And Market Structure | in_progress | Users need candles, levels, structure, breakouts, breakdowns, and chart context early. |
+| 2 | Chart Reading And Market Structure | academy_ready_core | Users need candles, levels, structure, breakouts, breakdowns, and chart context early. |
 | 3 | Volume, Liquidity And Order Flow | academy_ready_core | Builds on chart reading and teaches whether activity is clean, thin, fast, or crowded. |
-| 4 | Technical Indicators And Tools | academy_ready_core | Completed markdown course path teaches indicators as measurement/context tools after price, levels, and volume. |
-| 5 | Trading Styles And Playbooks | academy_ready_core | Completed markdown course path helps users combine chart, volume, tools, and risk into style/playbook categories. |
-| 6 | News, Catalysts And SEC Filings | academy_ready_core | High-value TradersLink differentiator. Core course markdown lesson path is now complete through news-trade review. |
-| 7 | Small-Cap Stocks, Float And Dilution | academy_ready_core | Completed markdown course path covering small-cap context, float, share structure, dilution, offerings, securities, corporate actions, cash runway, and going concern. |
-| 8 | Risk Management And Trade Planning | academy_ready_core | Completed markdown course path covering plans, rules, sizing, stops, loss limits, trade management, profit protection, overnight risk, and holding through news. |
-| 9 | Trading Psychology And Discipline | academy_ready_core | Completed markdown course path covering discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. |
-| 10 | Trade Review And Improvement | academy_ready_core | Completed markdown course path covering trade review, risk review, planned-vs-actual review, execution review, mistake patterns, swing review, and Trader Intelligence review bridge. |
-| 11 | Day Trading Workflow | academy_ready_core | Completed markdown course path covering premarket, watchlists, market open, opening range, midday, power hour, after-hours, and session review. |
-| 12 | Practice And Improvement | academy_ready_core | Completed markdown course path covering practice loops, paper trading, replay, screenshots, grading, drills, forward testing, and improvement planning. |
-| 13 | Halts And High-Volatility Events | academy_ready_core | Completed markdown course path covering halts, resumes, circuit breakers, fast spreads, low-float volatility, and volatile-trade review. |
-| 14 | Swing Trading Workflow | academy_ready_core | Completed markdown course path covering beginner swing planning, risk, levels, volume, catalysts, earnings, news risk, and small-cap swing context. |
-| 15 | Academy Navigation Path Hubs | academy_ready_core | Completed four markdown path hubs for chart reading, news and filings, trade review, and risk discipline navigation support. |
+| 4 | Risk Management And Trade Planning | academy_ready_core | Risk should come before users study indicators, styles, catalysts, small-cap volatility, and workflows. |
+| 5 | Technical Indicators And Tools | academy_ready_core | Completed markdown course path teaches indicators as measurement/context tools after price, levels, volume, and risk. |
+| 6 | Trading Styles And Playbooks | academy_ready_core | Completed markdown course path helps users combine chart, volume, tools, and risk into style/playbook categories. |
+| 7 | Day Trading Workflow | academy_ready_core | Completed markdown course path covering premarket, watchlists, market open, opening range, midday, power hour, after-hours, and session review. |
+| 8 | Swing Trading Workflow | academy_ready_core | Completed markdown course path covering beginner swing planning, risk, levels, volume, catalysts, earnings, news risk, and small-cap swing context. |
+| 9 | News, Catalysts And SEC Filings | academy_ready_core | High-value TradersLink differentiator. Core course markdown lesson path is now complete through news-trade review. |
+| 10 | Small-Cap Stocks, Float And Dilution | academy_ready_core | Completed markdown course path covering small-cap context, float, share structure, dilution, offerings, securities, corporate actions, cash runway, and going concern. |
+| 11 | Halts And High-Volatility Events | academy_ready_core | Completed markdown course path covering halts, resumes, circuit breakers, fast spreads, low-float volatility, and volatile-trade review. |
+| 12 | Trading Psychology And Discipline | academy_ready_core | Completed markdown course path covering discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. |
+| 13 | Trade Review And Improvement | academy_ready_core | Completed markdown course path covering trade review, risk review, planned-vs-actual review, execution review, mistake patterns, swing review, and Trader Intelligence review bridge. |
+| 14 | Practice And Improvement | academy_ready_core | Completed markdown course path covering practice loops, paper trading, replay, screenshots, grading, drills, forward testing, and improvement planning. |
+
+Academy Navigation Path Hubs are navigation support, not a numbered course. Use the completed path hubs for Academy homepage entry points, course-page guidance, and continue-learning recommendations.
 
 Status definitions:
 
