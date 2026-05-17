@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume-spike/"
   - "/academy/breakout-trading/"
 visual_assets:
-  - "/images/academy/chart-reading/candle-volume-confirmation-context.svg"
+  - "/academy/images/chart-reading/candle-volume-confirmation-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Candle volume confirmation means reviewing whether the volume behind a candle su
 
 Volume should be read with candle structure, not separately from it.
 
-![Candlestick chart comparing candle reactions with expanding and fading volume context.](/images/academy/chart-reading/candle-volume-confirmation-context.svg)
+![Candlestick chart comparing candle reactions with expanding and fading volume context.](/academy/images/chart-reading/candle-volume-confirmation-context.svg)
 
 ## Lesson Objective
 

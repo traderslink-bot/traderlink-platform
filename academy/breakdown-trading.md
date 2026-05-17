@@ -24,9 +24,9 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/breakout-trading/"
 recommended_next: "/academy/level-breakout/"
 visual_assets:
-  - "/images/academy/chart-reading/breakdown-with-volume-context.svg"
-  - "/images/academy/chart-reading/failed-breakdown-reclaim-review.svg"
-  - "/images/academy/chart-reading/extended-breakdown-chase-risk.svg"
+  - "/academy/images/chart-reading/breakdown-with-volume-context.svg"
+  - "/academy/images/chart-reading/failed-breakdown-reclaim-review.svg"
+  - "/academy/images/chart-reading/extended-breakdown-chase-risk.svg"
 internal_links:
   - "/academy/support-levels/"
   - "/academy/low-of-day/"
@@ -88,7 +88,7 @@ Common breakdown levels include:
 - Consolidation lows.
 - Prior reclaim or failed support areas.
 
-![Candlestick chart showing price breaking below support with volume context.](/images/academy/chart-reading/breakdown-with-volume-context.svg)
+![Candlestick chart showing price breaking below support with volume context.](/academy/images/chart-reading/breakdown-with-volume-context.svg)
 
 The visual above shows a breakdown attempt with volume expanding as price loses a support zone. This is not a signal. It is an example of behavior traders may review: level quality, volume, and whether price holds below the zone.
 
@@ -125,7 +125,7 @@ No single item guarantees anything. The more reviewable the setup is, the easier
 
 A failed breakdown happens when price breaks below a level but cannot hold below it. Price may reclaim the breakdown area, squeeze back into the prior range, or trap traders who reacted late.
 
-![Candlestick chart showing a breakdown below support that quickly reclaims the level.](/images/academy/chart-reading/failed-breakdown-reclaim-review.svg)
+![Candlestick chart showing a breakdown below support that quickly reclaims the level.](/academy/images/chart-reading/failed-breakdown-reclaim-review.svg)
 
 Failed breakdowns are important because they can reveal reactive decisions. A trader may short the break after price is already extended, or a long-biased trader may hold through the break without reviewing whether the level reclaimed.
 
@@ -135,7 +135,7 @@ A failed breakdown does not mean the original support level was fake. It means t
 
 One of the biggest breakdown mistakes is entering far below the level after the move has already stretched.
 
-![Candlestick chart showing a breakdown far below support with chase-risk review labels.](/images/academy/chart-reading/extended-breakdown-chase-risk.svg)
+![Candlestick chart showing a breakdown far below support with chase-risk review labels.](/academy/images/chart-reading/extended-breakdown-chase-risk.svg)
 
 An extended breakdown can still continue, but the review question changes:
 

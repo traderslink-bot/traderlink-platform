@@ -23,8 +23,8 @@ academy_level: "Practical"
 recommended_previous: "/academy/press-releases/"
 recommended_next: "/academy/sec-filings/"
 visual_assets:
-  - "/images/academy/chart-reading/press-release-reading-workflow.svg"
-  - "/images/academy/chart-reading/press-release-specific-vs-vague.svg"
+  - "/academy/images/chart-reading/press-release-reading-workflow.svg"
+  - "/academy/images/chart-reading/press-release-specific-vs-vague.svg"
 internal_links:
   - "/academy/stock-catalysts/"
   - "/academy/press-releases/"
@@ -81,7 +81,7 @@ The goal is a repeatable process that keeps the trader from reacting only to exc
 
 Reading a stock press release means reviewing the full company announcement, identifying the actual catalyst, separating confirmed details from promotional language, checking related filings, and comparing the news with market reaction.
 
-![Dark dashboard showing a step-by-step press-release reading workflow from headline to filing check to chart reaction.](/images/academy/chart-reading/press-release-reading-workflow.svg)
+![Dark dashboard showing a step-by-step press-release reading workflow from headline to filing check to chart reaction.](/academy/images/chart-reading/press-release-reading-workflow.svg)
 
 A good review looks at:
 
@@ -152,7 +152,7 @@ Vague or incomplete details may include:
 - Missing timeline.
 - Important risk language buried near the end.
 
-![Dark dashboard comparing specific press-release details with vague language beside a realistic chart reaction.](/images/academy/chart-reading/press-release-specific-vs-vague.svg)
+![Dark dashboard comparing specific press-release details with vague language beside a realistic chart reaction.](/academy/images/chart-reading/press-release-specific-vs-vague.svg)
 
 Specific does not mean guaranteed. Vague does not mean useless. The point is to know which details are real before judging the reaction.
 

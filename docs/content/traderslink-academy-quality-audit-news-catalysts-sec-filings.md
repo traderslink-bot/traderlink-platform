@@ -150,13 +150,13 @@ The course does not need a broad rewrite. It does need continued source discipli
 
 No new SVGs were created in this pass. Existing realistic visual support includes:
 
-- `public/images/academy/chart-reading/stock-catalyst-quality-review.svg`
-- `public/images/academy/chart-reading/stock-catalyst-headline-vs-reaction.svg`
-- `public/images/academy/chart-reading/press-release-anatomy-review.svg`
-- `public/images/academy/chart-reading/press-release-reaction-review.svg`
-- `public/images/academy/chart-reading/sec-filing-map-for-traders.svg`
-- `public/images/academy/chart-reading/sec-filing-8k-event-review.svg`
-- `public/images/academy/chart-reading/sec-filing-shelf-to-offering-flow.svg`
+- `public/academy/images/chart-reading/stock-catalyst-quality-review.svg`
+- `public/academy/images/chart-reading/stock-catalyst-headline-vs-reaction.svg`
+- `public/academy/images/chart-reading/press-release-anatomy-review.svg`
+- `public/academy/images/chart-reading/press-release-reaction-review.svg`
+- `public/academy/images/chart-reading/sec-filing-map-for-traders.svg`
+- `public/academy/images/chart-reading/sec-filing-8k-event-review.svg`
+- `public/academy/images/chart-reading/sec-filing-shelf-to-offering-flow.svg`
 
 Future optional SVGs:
 

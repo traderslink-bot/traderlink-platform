@@ -29,7 +29,7 @@ internal_links:
   - "/academy/earnings-news/"
   - "/academy/overnight-risk/"
 visual_assets:
-  - "/images/academy/chart-reading/after-hours-liquidity-context.svg"
+  - "/academy/images/chart-reading/after-hours-liquidity-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ After-hours trading happens after the regular session closes. Stocks can move af
 
 After-hours can look exciting, but it is often thinner and less forgiving than regular-hours trading. The chart may move quickly while the actual liquidity is limited.
 
-![After-hours candlestick chart showing headline reaction, sparse candles, wide spread review, and lower-volume context.](/images/academy/chart-reading/after-hours-liquidity-context.svg)
+![After-hours candlestick chart showing headline reaction, sparse candles, wide spread review, and lower-volume context.](/academy/images/chart-reading/after-hours-liquidity-context.svg)
 
 ## Lesson Objective
 

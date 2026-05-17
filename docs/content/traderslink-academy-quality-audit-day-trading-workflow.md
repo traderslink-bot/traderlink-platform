@@ -89,11 +89,11 @@ The course does not need a broad rewrite. The useful work during this pass was t
 
 No new SVGs were created in this pass. The existing visuals are useful and realistic:
 
-- `public/images/academy/chart-reading/day-trading-session-map.svg`
-- `public/images/academy/chart-reading/premarket-session-workflow.svg`
-- `public/images/academy/chart-reading/market-open-opening-range.svg`
-- `public/images/academy/chart-reading/midday-power-hour-context.svg`
-- `public/images/academy/chart-reading/after-hours-liquidity-context.svg`
+- `public/academy/images/chart-reading/day-trading-session-map.svg`
+- `public/academy/images/chart-reading/premarket-session-workflow.svg`
+- `public/academy/images/chart-reading/market-open-opening-range.svg`
+- `public/academy/images/chart-reading/midday-power-hour-context.svg`
+- `public/academy/images/chart-reading/after-hours-liquidity-context.svg`
 
 Future optional SVGs:
 

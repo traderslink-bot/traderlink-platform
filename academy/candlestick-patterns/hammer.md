@@ -29,7 +29,7 @@ internal_links:
   - "/academy/price-rejection/"
   - "/academy/stop-loss/"
 visual_assets:
-  - "/images/academy/chart-reading/hammer-support-context.svg"
+  - "/academy/images/chart-reading/hammer-support-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A hammer candle has a small body near the top of its range and a long lower wick
 
 A hammer near support may be meaningful, but it still needs context and a failure plan.
 
-![Candlestick chart showing a hammer candle near support with volume and follow-through context.](/images/academy/chart-reading/hammer-support-context.svg)
+![Candlestick chart showing a hammer candle near support with volume and follow-through context.](/academy/images/chart-reading/hammer-support-context.svg)
 
 ## Lesson Objective
 

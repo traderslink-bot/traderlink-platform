@@ -24,8 +24,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/slippage/"
 recommended_next: "/academy/level-2/"
 visual_assets:
-  - "/images/academy/chart-reading/market-vs-limit-order-tradeoff.svg"
-  - "/images/academy/chart-reading/limit-order-no-fill-review.svg"
+  - "/academy/images/chart-reading/market-vs-limit-order-tradeoff.svg"
+  - "/academy/images/chart-reading/limit-order-no-fill-review.svg"
 internal_links:
   - "/academy/bid-and-ask/"
   - "/academy/spread/"
@@ -86,7 +86,7 @@ The basic tradeoff:
 - Market orders prioritize speed.
 - Limit orders prioritize price control.
 
-![Trading dashboard comparing market order speed with limit order price control.](/images/academy/chart-reading/market-vs-limit-order-tradeoff.svg)
+![Trading dashboard comparing market order speed with limit order price control.](/academy/images/chart-reading/market-vs-limit-order-tradeoff.svg)
 
 Both order types can create problems if used without context.
 
@@ -139,7 +139,7 @@ A limit sell sets the minimum price the trader is willing to accept.
 
 Limit orders can help control price, but they can also miss fills.
 
-![Trading dashboard showing a limit order that does not fill as price moves away.](/images/academy/chart-reading/limit-order-no-fill-review.svg)
+![Trading dashboard showing a limit order that does not fill as price moves away.](/academy/images/chart-reading/limit-order-no-fill-review.svg)
 
 This matters because a missed fill can affect behavior. A trader may chase after missing the fill, enter late, or abandon the plan.
 

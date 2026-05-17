@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume/"
   - "/academy/support-and-resistance/"
 visual_assets:
-  - "/images/academy/chart-reading/doji-at-key-level.svg"
+  - "/academy/images/chart-reading/doji-at-key-level.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A spinning top candle has a small body with wicks on both sides. It can show hes
 
 Like a doji, a spinning top is easy to overread. It needs location and follow-through before it becomes useful review context.
 
-![Candlestick chart showing small-body hesitation near a key level with volume and follow-through context.](/images/academy/chart-reading/doji-at-key-level.svg)
+![Candlestick chart showing small-body hesitation near a key level with volume and follow-through context.](/academy/images/chart-reading/doji-at-key-level.svg)
 
 ## Lesson Objective
 

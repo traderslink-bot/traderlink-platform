@@ -70,10 +70,10 @@ No new SVGs were created in this pass. Existing realistic path-map support is st
 
 Existing editor-verified SVGs:
 
-- `public/images/academy/chart-reading/academy-chart-reading-path-map.svg`
-- `public/images/academy/chart-reading/academy-news-filings-path-map.svg`
-- `public/images/academy/chart-reading/academy-trade-review-path-map.svg`
-- `public/images/academy/chart-reading/academy-risk-discipline-path-map.svg`
+- `public/academy/images/chart-reading/academy-chart-reading-path-map.svg`
+- `public/academy/images/chart-reading/academy-news-filings-path-map.svg`
+- `public/academy/images/chart-reading/academy-trade-review-path-map.svg`
+- `public/academy/images/chart-reading/academy-risk-discipline-path-map.svg`
 
 Future optional UI visuals or states:
 

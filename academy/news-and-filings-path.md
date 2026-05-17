@@ -29,7 +29,7 @@ internal_links:
   - "/academy/dilution-risk/"
   - "/academy/how-to-review-news-trades/"
 visual_assets:
-  - "/images/academy/chart-reading/academy-news-filings-path-map.svg"
+  - "/academy/images/chart-reading/academy-news-filings-path-map.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -42,7 +42,7 @@ This path hub organizes the completed **News, Catalysts, Filings, And Dilution**
 
 News and filings can overwhelm traders because the information comes fast and not all headlines have the same quality. The path teaches users to slow down, read the source, understand the filing type, connect the information to price reaction, and review risk.
 
-![Dark dashboard path map showing catalyst news, SEC filing cards, realistic chart reaction, volume, and review steps for the news and filings learning path.](/images/academy/chart-reading/academy-news-filings-path-map.svg)
+![Dark dashboard path map showing catalyst news, SEC filing cards, realistic chart reaction, volume, and review steps for the news and filings learning path.](/academy/images/chart-reading/academy-news-filings-path-map.svg)
 
 ## Path Objective
 

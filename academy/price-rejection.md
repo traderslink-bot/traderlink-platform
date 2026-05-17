@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/level-reclaim/"
 recommended_next: "/academy/break-of-structure/"
 visual_assets:
-  - "/images/academy/chart-reading/price-rejection-at-resistance.svg"
-  - "/images/academy/chart-reading/rejection-wick-context.svg"
+  - "/academy/images/chart-reading/price-rejection-at-resistance.svg"
+  - "/academy/images/chart-reading/rejection-wick-context.svg"
 internal_links:
   - "/academy/resistance-levels/"
   - "/academy/support-levels/"
@@ -93,7 +93,7 @@ A rejection may happen at:
 
 A rejection near resistance may show buyers failing to hold above the level. A rejection below support that quickly reclaims may show sellers failing to keep control.
 
-![Candlestick chart showing price pushing into resistance and rejecting back below the zone.](/images/academy/chart-reading/price-rejection-at-resistance.svg)
+![Candlestick chart showing price pushing into resistance and rejecting back below the zone.](/academy/images/chart-reading/price-rejection-at-resistance.svg)
 
 The visual above shows rejection at a resistance zone. The important lesson is not that rejection always leads to a large reversal. The lesson is that price failed to hold the level, giving the trader something to review.
 
@@ -117,7 +117,7 @@ A rejection is more useful when:
 - Follow-through confirms the failed hold.
 - The rejection changes the trade thesis.
 
-![Candlestick chart showing a long wick at a key level with follow-through context.](/images/academy/chart-reading/rejection-wick-context.svg)
+![Candlestick chart showing a long wick at a key level with follow-through context.](/academy/images/chart-reading/rejection-wick-context.svg)
 
 The wick matters more when it appears at a meaningful level and is followed by price behavior that confirms the failed hold. A random wick in the middle of a range may not deserve the same weight.
 

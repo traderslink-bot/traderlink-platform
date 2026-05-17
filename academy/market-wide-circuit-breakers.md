@@ -29,7 +29,7 @@ internal_links:
   - "/academy/spread/"
   - "/academy/trade-risk-review/"
 visual_assets:
-  - "/images/academy/chart-reading/market-wide-circuit-breaker-context.svg"
+  - "/academy/images/chart-reading/market-wide-circuit-breaker-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Market-wide circuit breakers are rules that can pause broad market trading durin
 
 The goal of this lesson is not to memorize rules as a trade setup. The goal is to understand broad-market interruption risk and know where to verify current rules.
 
-![Dark market dashboard showing an index decline with Level 1, Level 2, and Level 3 circuit breaker reference bands and review labels.](/images/academy/chart-reading/market-wide-circuit-breaker-context.svg)
+![Dark market dashboard showing an index decline with Level 1, Level 2, and Level 3 circuit breaker reference bands and review labels.](/academy/images/chart-reading/market-wide-circuit-breaker-context.svg)
 
 ## Lesson Objective
 

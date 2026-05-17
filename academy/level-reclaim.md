@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/level-breakout/"
 recommended_next: "/academy/price-rejection/"
 visual_assets:
-  - "/images/academy/chart-reading/level-reclaim-hold.svg"
-  - "/images/academy/chart-reading/level-reclaim-failure.svg"
+  - "/academy/images/chart-reading/level-reclaim-hold.svg"
+  - "/academy/images/chart-reading/level-reclaim-failure.svg"
 internal_links:
   - "/academy/key-levels-trading/"
   - "/academy/support-and-resistance/"
@@ -113,7 +113,7 @@ The fourth stage is the review point. A quick pop above the level that immediate
 
 A cleaner reclaim happens when price moves back above the lost level and holds above it. Sometimes price retests the level from above before continuing or consolidating.
 
-![Candlestick chart showing price losing a key level, reclaiming it, and holding above the zone.](/images/academy/chart-reading/level-reclaim-hold.svg)
+![Candlestick chart showing price losing a key level, reclaiming it, and holding above the zone.](/academy/images/chart-reading/level-reclaim-hold.svg)
 
 This behavior gives traders something concrete to review:
 
@@ -129,7 +129,7 @@ A reclaim and hold is still not a guarantee. It is a structure that can make ris
 
 A reclaim failure happens when price moves back above a lost level but cannot stay there. Price may fall back below the level, chop around it, or reject from a nearby resistance area.
 
-![Candlestick chart showing price reclaiming a level briefly and then failing back below the zone.](/images/academy/chart-reading/level-reclaim-failure.svg)
+![Candlestick chart showing price reclaiming a level briefly and then failing back below the zone.](/academy/images/chart-reading/level-reclaim-failure.svg)
 
 Failed reclaims matter because they can trap traders who react to the first bounce without waiting for the level to hold.
 

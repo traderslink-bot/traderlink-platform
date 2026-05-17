@@ -29,7 +29,7 @@ internal_links:
   - "/academy/press-releases/"
   - "/academy/sec-filings/"
 visual_assets:
-  - "/images/academy/chart-reading/swing-trading-catalyst-timeline.svg"
+  - "/academy/images/chart-reading/swing-trading-catalyst-timeline.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Swing trading catalysts are events, news, filings, or themes that give the marke
 
 A catalyst is not a guarantee. It is a reason to review market reaction. The headline may attract attention, but swing traders still need to evaluate the details, price behavior, volume, liquidity, and risk.
 
-![Dark trading dashboard showing a swing trading catalyst timeline with daily candles, volume expansion, catalyst date, pullback review, and follow-through labels.](/images/academy/chart-reading/swing-trading-catalyst-timeline.svg)
+![Dark trading dashboard showing a swing trading catalyst timeline with daily candles, volume expansion, catalyst date, pullback review, and follow-through labels.](/academy/images/chart-reading/swing-trading-catalyst-timeline.svg)
 
 ## Lesson Objective
 

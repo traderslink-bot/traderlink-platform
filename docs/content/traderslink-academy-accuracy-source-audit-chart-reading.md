@@ -67,7 +67,7 @@ The course already avoids the major accuracy risks:
 - It treats chart patterns and candlestick patterns as context inside levels, volume, liquidity, timeframe, and risk.
 - It uses zones rather than penny-perfect certainty for support/resistance.
 - It keeps app bridge language focused on completed-trade review, not prediction.
-- It now uses `/academy/...` public URLs and `/images/academy/...` visual asset URLs.
+- It now uses `/academy/...` public URLs and `/academy/images/...` visual asset URLs.
 
 The only useful edits were narrow source-sensitive guardrails around session settings, extended-hours data, scanner behavior, and gap definition.
 

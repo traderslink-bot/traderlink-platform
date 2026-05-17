@@ -29,7 +29,7 @@ internal_links:
   - "[Price Rejection](/academy/price-rejection/)"
   - "[Volume](/academy/volume/)"
 visual_assets:
-  - "/images/academy/chart-reading/failed-breakout-pattern-context.svg"
+  - "/academy/images/chart-reading/failed-breakout-pattern-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Failed Breakout Pattern is a chart pattern traders use to organize price behavio
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing a breakout above resistance that fails back below the level with volume context.](/images/academy/chart-reading/failed-breakout-pattern-context.svg)
+![Candlestick chart showing a breakout above resistance that fails back below the level with volume context.](/academy/images/chart-reading/failed-breakout-pattern-context.svg)
 
 ## Lesson Objective
 

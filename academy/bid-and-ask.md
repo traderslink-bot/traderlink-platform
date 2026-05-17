@@ -24,8 +24,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/spread/"
 recommended_next: "/academy/slippage/"
 visual_assets:
-  - "/images/academy/chart-reading/bid-ask-quote-mechanics.svg"
-  - "/images/academy/chart-reading/bid-ask-order-interaction-review.svg"
+  - "/academy/images/chart-reading/bid-ask-quote-mechanics.svg"
+  - "/academy/images/chart-reading/bid-ask-order-interaction-review.svg"
 internal_links:
   - "/academy/spread/"
   - "/academy/liquidity/"
@@ -89,7 +89,7 @@ For example:
 - Ask: `$2.12`
 - Spread: `$0.02`
 
-![Trading dashboard showing bid, ask, spread, last price, and nearby quote depth.](/images/academy/chart-reading/bid-ask-quote-mechanics.svg)
+![Trading dashboard showing bid, ask, spread, last price, and nearby quote depth.](/academy/images/chart-reading/bid-ask-quote-mechanics.svg)
 
 A trader who buys immediately may pay near the ask. A trader who sells immediately may receive near the bid. Actual fills depend on order type, size, liquidity, and how fast the quote changes.
 
@@ -130,7 +130,7 @@ If the trader assumes `$2.00` is the available entry or exit price, the trade re
 
 Different order types interact with the quote differently.
 
-![Trading dashboard showing how immediate orders interact with bid and ask quotes.](/images/academy/chart-reading/bid-ask-order-interaction-review.svg)
+![Trading dashboard showing how immediate orders interact with bid and ask quotes.](/academy/images/chart-reading/bid-ask-order-interaction-review.svg)
 
 In simple terms:
 

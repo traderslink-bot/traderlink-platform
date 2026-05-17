@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume-spike/"
   - "/academy/unusual-volume/"
 visual_assets:
-  - "/images/academy/chart-reading/swing-trading-catalyst-timeline.svg"
+  - "/academy/images/chart-reading/swing-trading-catalyst-timeline.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Volume helps swing traders review whether a move is attracting participation acr
 
 For swing trading, the question is not simply "Was volume high?" The better question is: where did volume appear, what did price do with it, and did participation continue after the first reaction?
 
-![Dark trading dashboard showing a swing trading catalyst timeline with daily candles, volume expansion, catalyst date, pullback review, and follow-through labels.](/images/academy/chart-reading/swing-trading-catalyst-timeline.svg)
+![Dark trading dashboard showing a swing trading catalyst timeline with daily candles, volume expansion, catalyst date, pullback review, and follow-through labels.](/academy/images/chart-reading/swing-trading-catalyst-timeline.svg)
 
 ## Lesson Objective
 

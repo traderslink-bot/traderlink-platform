@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/resistance-levels/"
 recommended_next: "/academy/breakout-trading/"
 visual_assets:
-  - "/images/academy/chart-reading/key-level-map-current-price.svg"
-  - "/images/academy/chart-reading/key-level-review-workflow.svg"
+  - "/academy/images/chart-reading/key-level-map-current-price.svg"
+  - "/academy/images/chart-reading/key-level-review-workflow.svg"
 internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/how-to-draw-support-and-resistance/"
@@ -95,7 +95,7 @@ Common key levels include:
 
 A key level is useful when it helps a trader define context, risk, or review questions.
 
-![Candlestick chart showing a clean key-level map around current price.](/images/academy/chart-reading/key-level-map-current-price.svg)
+![Candlestick chart showing a clean key-level map around current price.](/academy/images/chart-reading/key-level-map-current-price.svg)
 
 The visual above shows a practical level map: nearest support below price, nearest resistance above price, and one higher timeframe level nearby. The goal is not to mark everything. The goal is to mark what can affect the current plan.
 
@@ -177,7 +177,7 @@ Examples:
 - If price rejects resistance, did the trader chase into the level?
 - If price reclaims a lost level, did the trader wait for structure or react emotionally?
 
-![Educational workflow showing how traders review hold, break, reject, and reclaim behavior around key levels.](/images/academy/chart-reading/key-level-review-workflow.svg)
+![Educational workflow showing how traders review hold, break, reject, and reclaim behavior around key levels.](/academy/images/chart-reading/key-level-review-workflow.svg)
 
 This is where key levels become useful after the trade. They help you review decisions instead of only reviewing profit or loss.
 

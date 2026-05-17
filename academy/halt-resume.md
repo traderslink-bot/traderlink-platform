@@ -29,7 +29,7 @@ internal_links:
   - "/academy/slippage/"
   - "/academy/execution-review/"
 visual_assets:
-  - "/images/academy/chart-reading/halt-resume-spread-risk.svg"
+  - "/academy/images/chart-reading/halt-resume-spread-risk.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A halt resume is the moment trading begins again after a halt. This can be one o
 
 The resume is not a clean reset. Orders, emotion, news reaction, imbalance, spread, and liquidity can all change at once.
 
-![Dark trading dashboard showing a halt resume, wide bid-ask spread, thin depth, realistic candles, volume bars, and execution-risk review labels.](/images/academy/chart-reading/halt-resume-spread-risk.svg)
+![Dark trading dashboard showing a halt resume, wide bid-ask spread, thin depth, realistic candles, volume bars, and execution-risk review labels.](/academy/images/chart-reading/halt-resume-spread-risk.svg)
 
 ## Lesson Objective
 

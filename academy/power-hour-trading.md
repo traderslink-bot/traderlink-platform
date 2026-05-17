@@ -29,7 +29,7 @@ internal_links:
   - "/academy/momentum-trading/"
   - "/academy/overtrading/"
 visual_assets:
-  - "/images/academy/chart-reading/midday-power-hour-context.svg"
+  - "/academy/images/chart-reading/midday-power-hour-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Power hour usually refers to the final hour of the regular session. Traders watc
 
 Power hour is also a discipline test. The trader may be tired, green, red, frustrated, or tempted to force one more decision before the close.
 
-![Candlestick chart showing a slow midday range followed by late-session volume return and power hour reassessment.](/images/academy/chart-reading/midday-power-hour-context.svg)
+![Candlestick chart showing a slow midday range followed by late-session volume return and power hour reassessment.](/academy/images/chart-reading/midday-power-hour-context.svg)
 
 ## Lesson Objective
 

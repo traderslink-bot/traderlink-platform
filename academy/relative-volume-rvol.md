@@ -24,8 +24,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/relative-volume/"
 recommended_next: "/academy/volume-spike/"
 visual_assets:
-  - "/images/academy/chart-reading/rvol-time-of-day-comparison.svg"
-  - "/images/academy/chart-reading/rvol-scanner-context-review.svg"
+  - "/academy/images/chart-reading/rvol-time-of-day-comparison.svg"
+  - "/academy/images/chart-reading/rvol-scanner-context-review.svg"
 internal_links:
   - "/academy/volume/"
   - "/academy/relative-volume/"
@@ -87,7 +87,7 @@ In many scanners, RVOL is shown as a multiple:
 - `5.0x` means activity is about five times normal.
 - `10.0x` or higher means activity is far above the normal baseline.
 
-![Candlestick chart showing current volume compared with a normal time-of-day baseline.](/images/academy/chart-reading/rvol-time-of-day-comparison.svg)
+![Candlestick chart showing current volume compared with a normal time-of-day baseline.](/academy/images/chart-reading/rvol-time-of-day-comparison.svg)
 
 The exact number depends on what the platform uses as the baseline.
 
@@ -127,7 +127,7 @@ RVOL is a platform or data-vendor metric, not a single standardized number. Befo
 
 Scanners often rank stocks by RVOL because unusual volume can bring trader attention.
 
-![Candlestick chart with a scanner-style context panel showing high RVOL, catalyst, spread, and volume fade review.](/images/academy/chart-reading/rvol-scanner-context-review.svg)
+![Candlestick chart with a scanner-style context panel showing high RVOL, catalyst, spread, and volume fade review.](/academy/images/chart-reading/rvol-scanner-context-review.svg)
 
 A high-RVOL scanner result should lead to review questions:
 

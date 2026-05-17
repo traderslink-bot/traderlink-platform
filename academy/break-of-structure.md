@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/price-rejection/"
 recommended_next: "/academy/swing-highs-and-swing-lows/"
 visual_assets:
-  - "/images/academy/chart-reading/uptrend-structure-break.svg"
-  - "/images/academy/chart-reading/downtrend-structure-break.svg"
+  - "/academy/images/chart-reading/uptrend-structure-break.svg"
+  - "/academy/images/chart-reading/downtrend-structure-break.svg"
 internal_links:
   - "/academy/swing-highs-and-swing-lows/"
   - "/academy/higher-highs-higher-lows/"
@@ -104,7 +104,7 @@ This is where traders can get into trouble. They may keep trading the old idea e
 
 An uptrend structure often has higher highs and higher lows. The structure can weaken when price loses the latest meaningful higher low and fails to reclaim it.
 
-![Candlestick chart showing an uptrend with higher highs and higher lows before a structure break below the latest higher low.](/images/academy/chart-reading/uptrend-structure-break.svg)
+![Candlestick chart showing an uptrend with higher highs and higher lows before a structure break below the latest higher low.](/academy/images/chart-reading/uptrend-structure-break.svg)
 
 Useful review questions include:
 
@@ -120,7 +120,7 @@ This does not mean the stock must collapse. It means the prior uptrend structure
 
 A downtrend structure often has lower highs and lower lows. The structure can change when price breaks above a meaningful lower high and holds above it.
 
-![Candlestick chart showing a downtrend with lower highs and lower lows before a structure break above the latest lower high.](/images/academy/chart-reading/downtrend-structure-break.svg)
+![Candlestick chart showing a downtrend with lower highs and lower lows before a structure break above the latest lower high.](/academy/images/chart-reading/downtrend-structure-break.svg)
 
 Useful review questions include:
 

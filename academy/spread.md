@@ -24,8 +24,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/dollar-volume/"
 recommended_next: "/academy/bid-and-ask/"
 visual_assets:
-  - "/images/academy/chart-reading/spread-tight-vs-wide-market.svg"
-  - "/images/academy/chart-reading/spread-hidden-execution-cost.svg"
+  - "/academy/images/chart-reading/spread-tight-vs-wide-market.svg"
+  - "/academy/images/chart-reading/spread-hidden-execution-cost.svg"
 internal_links:
   - "/academy/liquidity/"
   - "/academy/dollar-volume/"
@@ -85,7 +85,7 @@ The bid ask spread is the gap between the bid price and the ask price.
 
 For example, if the bid is `$2.00` and the ask is `$2.05`, the spread is `$0.05`.
 
-![Trading dashboard comparing a tight spread with a wide spread.](/images/academy/chart-reading/spread-tight-vs-wide-market.svg)
+![Trading dashboard comparing a tight spread with a wide spread.](/academy/images/chart-reading/spread-tight-vs-wide-market.svg)
 
 A tight spread can make execution easier. A wide spread can make the trade more expensive before the setup has time to work or fail.
 
@@ -127,7 +127,7 @@ Neither tight nor wide spread predicts direction. Spread describes execution con
 
 The spread can create hidden cost even if the chart level is correct.
 
-![Trading dashboard showing hidden execution cost when entering across a wide spread.](/images/academy/chart-reading/spread-hidden-execution-cost.svg)
+![Trading dashboard showing hidden execution cost when entering across a wide spread.](/academy/images/chart-reading/spread-hidden-execution-cost.svg)
 
 For example, a trader plans risk around a `$2.00` level. The quote shows:
 

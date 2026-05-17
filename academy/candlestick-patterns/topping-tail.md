@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume/"
   - "/academy/chasing-stocks/"
 visual_assets:
-  - "/images/academy/chart-reading/long-wick-rejection-context.svg"
+  - "/academy/images/chart-reading/long-wick-rejection-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A topping tail candle has a long upper wick that shows price pushed higher durin
 
 The candle should be reviewed as rejection context, not a prediction that price must reverse.
 
-![Candlestick chart showing upper wick rejection near resistance with volume context.](/images/academy/chart-reading/long-wick-rejection-context.svg)
+![Candlestick chart showing upper wick rejection near resistance with volume context.](/academy/images/chart-reading/long-wick-rejection-context.svg)
 
 ## Lesson Objective
 

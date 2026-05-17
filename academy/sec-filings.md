@@ -23,9 +23,9 @@ academy_level: "Foundation"
 recommended_previous: "/academy/how-to-read-stock-press-releases/"
 recommended_next: "/academy/how-to-use-edgar-source-documents/"
 visual_assets:
-  - "/images/academy/chart-reading/sec-filing-map-for-traders.svg"
-  - "/images/academy/chart-reading/sec-filing-8k-event-review.svg"
-  - "/images/academy/chart-reading/sec-filing-shelf-to-offering-flow.svg"
+  - "/academy/images/chart-reading/sec-filing-map-for-traders.svg"
+  - "/academy/images/chart-reading/sec-filing-8k-event-review.svg"
+  - "/academy/images/chart-reading/sec-filing-shelf-to-offering-flow.svg"
 internal_links:
   - "/academy/stock-catalysts/"
   - "/academy/press-releases/"
@@ -95,7 +95,7 @@ They can include:
 
 For source-sensitive review, start with the official SEC EDGAR filing record instead of screenshots, scanner summaries, or copied excerpts. The SEC describes EDGAR as its Electronic Data Gathering, Analysis, and Retrieval system and provides free public access to company filings through SEC search tools.
 
-![Dark dashboard showing a filing map for traders with current reports, registration statements, offering documents, ownership filings, and financial reports.](/images/academy/chart-reading/sec-filing-map-for-traders.svg)
+![Dark dashboard showing a filing map for traders with current reports, registration statements, offering documents, ownership filings, and financial reports.](/academy/images/chart-reading/sec-filing-map-for-traders.svg)
 
 Different forms have different purposes. A Form 8-K is not the same as a Form S-3, and a Form 424B5 is not the same as a Form 4.
 
@@ -142,7 +142,7 @@ When a press release mentions financing, securities, mergers, material agreement
 
 A Form 8-K is used to report important current events. Traders watch 8-K filings for financing deals, mergers, executive changes, agreements, delisting notices, reverse split updates, press release exhibits, and other material events.
 
-![Dark trading dashboard showing a Form 8-K current-event filing beside a realistic chart reaction and review notes.](/images/academy/chart-reading/sec-filing-8k-event-review.svg)
+![Dark trading dashboard showing a Form 8-K current-event filing beside a realistic chart reaction and review notes.](/academy/images/chart-reading/sec-filing-8k-event-review.svg)
 
 ### Form 10-Q And Form 10-K
 
@@ -180,7 +180,7 @@ A simplified flow can look like this:
 - An 8-K may disclose a financing agreement or closing details.
 - The market reviews size, price, warrants, resale rights, and timing.
 
-![Dark dashboard showing a shelf registration to offering flow with S-3, effective shelf, 424B5 terms, 8-K details, and dilution review.](/images/academy/chart-reading/sec-filing-shelf-to-offering-flow.svg)
+![Dark dashboard showing a shelf registration to offering flow with S-3, effective shelf, 424B5 terms, 8-K details, and dilution review.](/academy/images/chart-reading/sec-filing-shelf-to-offering-flow.svg)
 
 This flow does not mean every shelf leads to an immediate offering. It gives traders a map for what to check.
 

@@ -29,7 +29,7 @@ internal_links:
   - "/academy/mistake-pattern-review/"
   - "/academy/practice-trading/"
 visual_assets:
-  - "/images/academy/chart-reading/academy-trade-review-path-map.svg"
+  - "/academy/images/chart-reading/academy-trade-review-path-map.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -42,7 +42,7 @@ This path hub organizes the completed **Trade Review And Improvement** and **Pra
 
 Trade review is where education becomes useful. A trader can understand levels, volume, news, and risk in theory but still repeat the same execution and management mistakes. Review turns completed trades into evidence.
 
-![Dark dashboard path map showing a completed trade review workflow with realistic candles, risk review, execution review, mistake pattern review, and improvement loop.](/images/academy/chart-reading/academy-trade-review-path-map.svg)
+![Dark dashboard path map showing a completed trade review workflow with realistic candles, risk review, execution review, mistake pattern review, and improvement loop.](/academy/images/chart-reading/academy-trade-review-path-map.svg)
 
 ## Path Objective
 

@@ -29,7 +29,7 @@ internal_links:
   - "[Volume](/academy/volume/)"
   - "[Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/)"
 visual_assets:
-  - "/images/academy/chart-reading/rectangle-base-breakout-context.svg"
+  - "/academy/images/chart-reading/rectangle-base-breakout-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Base Breakout is a chart pattern traders use to organize price behavior. The pat
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing a base range, breakout attempt, retest, and failed-breakout review context.](/images/academy/chart-reading/rectangle-base-breakout-context.svg)
+![Candlestick chart showing a base range, breakout attempt, retest, and failed-breakout review context.](/academy/images/chart-reading/rectangle-base-breakout-context.svg)
 
 ## Lesson Objective
 

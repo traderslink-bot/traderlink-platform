@@ -29,7 +29,7 @@ internal_links:
   - "/academy/high-of-day/"
   - "/academy/risk-management/"
 visual_assets:
-  - "/images/academy/chart-reading/market-open-opening-range.svg"
+  - "/academy/images/chart-reading/market-open-opening-range.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Market open trading happens near the start of the regular session, when fresh vo
 
 The open can create meaningful movement, but it can also create fast fakeouts, changing spreads, and rushed decisions. The goal is to observe the open with a plan, not to force the first candle.
 
-![Candlestick chart showing market open volatility, opening range zones, early volume, and failed extension review.](/images/academy/chart-reading/market-open-opening-range.svg)
+![Candlestick chart showing market open volatility, opening range zones, early volume, and failed extension review.](/academy/images/chart-reading/market-open-opening-range.svg)
 
 ## Lesson Objective
 

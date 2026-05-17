@@ -24,8 +24,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/volume-spike/"
 recommended_next: "/academy/dollar-volume/"
 visual_assets:
-  - "/images/academy/chart-reading/liquidity-clean-vs-thin-market.svg"
-  - "/images/academy/chart-reading/liquidity-spread-depth-review.svg"
+  - "/academy/images/chart-reading/liquidity-clean-vs-thin-market.svg"
+  - "/academy/images/chart-reading/liquidity-spread-depth-review.svg"
 internal_links:
   - "/academy/volume/"
   - "/academy/volume-spike/"
@@ -92,7 +92,7 @@ A more liquid stock usually has:
 
 A less liquid stock may have wide spreads, thin order-book depth, sudden price jumps, and difficult exits.
 
-![Trading dashboard comparison showing clean liquidity versus thin liquidity with candles, spread, and depth context.](/images/academy/chart-reading/liquidity-clean-vs-thin-market.svg)
+![Trading dashboard comparison showing clean liquidity versus thin liquidity with candles, spread, and depth context.](/academy/images/chart-reading/liquidity-clean-vs-thin-market.svg)
 
 Liquidity is practical. It asks whether the trade can actually be executed near the plan.
 
@@ -134,7 +134,7 @@ Clean liquidity usually combines volume, tight spread, stable depth, active part
 
 The bid-ask spread shows the difference between what buyers are bidding and what sellers are asking. Depth shows how many shares are available near those prices.
 
-![Trading dashboard showing bid ask spread and market depth as liquidity review context.](/images/academy/chart-reading/liquidity-spread-depth-review.svg)
+![Trading dashboard showing bid ask spread and market depth as liquidity review context.](/academy/images/chart-reading/liquidity-spread-depth-review.svg)
 
 A tighter spread and stronger depth can make execution easier. A wide spread and thin depth can make the trade more expensive before price even moves.
 

@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/lower-highs-lower-lows/"
 recommended_next: "/academy/previous-day-high-low/"
 visual_assets:
-  - "/images/academy/chart-reading/pivot-level-reaction-map.svg"
-  - "/images/academy/chart-reading/pivot-failed-reclaim-review.svg"
+  - "/academy/images/chart-reading/pivot-level-reaction-map.svg"
+  - "/academy/images/chart-reading/pivot-failed-reclaim-review.svg"
 internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/swing-highs-and-swing-lows/"
@@ -91,7 +91,7 @@ Traders may mark pivot levels from:
 - Range highs or range lows.
 - Session levels like previous day high, previous day low, premarket high, or premarket low.
 
-![Candlestick chart showing price reacting around a clear pivot level zone.](/images/academy/chart-reading/pivot-level-reaction-map.svg)
+![Candlestick chart showing price reacting around a clear pivot level zone.](/academy/images/chart-reading/pivot-level-reaction-map.svg)
 
 The visual above shows a pivot zone where price reacted more than once. It is still only context. The useful question is how price behaves around the area now.
 
@@ -152,7 +152,7 @@ None of these reactions is a guaranteed signal. They are different outcomes to l
 
 A pivot can become especially useful when price tries to reclaim it and fails.
 
-![Candlestick chart showing a failed reclaim and rejection around a pivot level zone.](/images/academy/chart-reading/pivot-failed-reclaim-review.svg)
+![Candlestick chart showing a failed reclaim and rejection around a pivot level zone.](/academy/images/chart-reading/pivot-failed-reclaim-review.svg)
 
 In this example, price breaks below the pivot, attempts to reclaim the zone, and then rejects back under it. That does not mean the next move is guaranteed. It means the pivot became a review point for trade management.
 

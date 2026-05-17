@@ -29,7 +29,7 @@ internal_links:
   - "/academy/spread/"
   - "/academy/volume/"
 visual_assets:
-  - "/images/academy/chart-reading/long-wick-rejection-context.svg"
+  - "/academy/images/chart-reading/long-wick-rejection-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A pin bar is a candle with a long wick and a small body, often discussed as reje
 
 The pattern is not useful because of the name. It is useful only when the rejection happened in a meaningful area.
 
-![Candlestick chart showing long upper and lower wick rejection around support and resistance with volume context.](/images/academy/chart-reading/long-wick-rejection-context.svg)
+![Candlestick chart showing long upper and lower wick rejection around support and resistance with volume context.](/academy/images/chart-reading/long-wick-rejection-context.svg)
 
 ## Lesson Objective
 

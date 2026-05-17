@@ -29,7 +29,7 @@ internal_links:
   - "/academy/low-of-day/"
   - "/academy/volume/"
 visual_assets:
-  - "/images/academy/chart-reading/market-open-opening-range.svg"
+  - "/academy/images/chart-reading/market-open-opening-range.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ The opening range is the high and low formed during the first part of the regula
 
 The opening range does not guarantee continuation or reversal. It gives the trader a cleaner way to ask what happened after the open.
 
-![Candlestick chart showing market open volatility, opening range high and low zones, volume expansion, and failed extension review.](/images/academy/chart-reading/market-open-opening-range.svg)
+![Candlestick chart showing market open volatility, opening range high and low zones, volume expansion, and failed extension review.](/academy/images/chart-reading/market-open-opening-range.svg)
 
 ## Lesson Objective
 

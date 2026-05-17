@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/new-high-of-day/"
 recommended_next: "/academy/consolidation/"
 visual_assets:
-  - "/images/academy/chart-reading/compression-tightening-range.svg"
-  - "/images/academy/chart-reading/compression-failed-break-review.svg"
+  - "/academy/images/chart-reading/compression-tightening-range.svg"
+  - "/academy/images/chart-reading/compression-failed-break-review.svg"
 internal_links:
   - "/academy/consolidation/"
   - "/academy/key-levels-trading/"
@@ -86,7 +86,7 @@ Traders may watch compression because it can show:
 - A possible breakout or breakdown attempt.
 - A clearer failure level if the range is well defined.
 
-![Candlestick chart showing price compression with tightening candles and contracting volume near a key level.](/images/academy/chart-reading/compression-tightening-range.svg)
+![Candlestick chart showing price compression with tightening candles and contracting volume near a key level.](/academy/images/chart-reading/compression-tightening-range.svg)
 
 Compression is closely related to consolidation, but compression usually implies the range is getting tighter.
 
@@ -118,7 +118,7 @@ The important part is not just that price is tight. It is where the tightness is
 
 A failed compression break happens when price leaves the tight range but cannot hold outside it.
 
-![Candlestick chart showing a compression breakout attempt that fails back inside the range.](/images/academy/chart-reading/compression-failed-break-review.svg)
+![Candlestick chart showing a compression breakout attempt that fails back inside the range.](/academy/images/chart-reading/compression-failed-break-review.svg)
 
 This does not mean compression is useless. It means the first expansion attempt did not hold and the trader should review the response.
 

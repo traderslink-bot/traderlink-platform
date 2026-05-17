@@ -81,9 +81,9 @@ No new SVGs were created in this pass. Existing realistic visual support is stro
 
 Existing visual assets:
 
-- `public/images/academy/chart-reading/trading-halt-timeline.svg`
-- `public/images/academy/chart-reading/halt-resume-spread-risk.svg`
-- `public/images/academy/chart-reading/market-wide-circuit-breaker-context.svg`
+- `public/academy/images/chart-reading/trading-halt-timeline.svg`
+- `public/academy/images/chart-reading/halt-resume-spread-risk.svg`
+- `public/academy/images/chart-reading/market-wide-circuit-breaker-context.svg`
 
 Visual verification:
 

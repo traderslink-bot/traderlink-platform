@@ -29,7 +29,7 @@ internal_links:
   - "/academy/resistance-levels/"
   - "/academy/key-levels-trading/"
 visual_assets:
-  - "/images/academy/chart-reading/swing-trading-multi-session-plan.svg"
+  - "/academy/images/chart-reading/swing-trading-multi-session-plan.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Support and resistance help swing traders organize the daily chart. They do not 
 
 For swing trading, the most useful levels are usually the ones that matter across multiple sessions: prior highs, prior lows, breakout zones, failed breakout areas, gap zones, consolidation ranges, and high-volume reaction areas.
 
-![Dark trading dashboard showing a multi-session swing trading plan with daily candles, support and resistance zones, volume, overnight markers, and review labels.](/images/academy/chart-reading/swing-trading-multi-session-plan.svg)
+![Dark trading dashboard showing a multi-session swing trading plan with daily candles, support and resistance zones, volume, overnight markers, and review labels.](/academy/images/chart-reading/swing-trading-multi-session-plan.svg)
 
 ## Lesson Objective
 

@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/premarket-high-low/"
 recommended_next: "/academy/low-of-day/"
 visual_assets:
-  - "/images/academy/chart-reading/high-of-day-level-map.svg"
-  - "/images/academy/chart-reading/high-of-day-failed-breakout.svg"
+  - "/academy/images/chart-reading/high-of-day-level-map.svg"
+  - "/academy/images/chart-reading/high-of-day-failed-breakout.svg"
 internal_links:
   - "/academy/key-levels-trading/"
   - "/academy/premarket-high-low/"
@@ -90,7 +90,7 @@ Traders watch HOD because it can become:
 - A place where late traders may chase.
 - A review point for extension risk.
 
-![Candlestick chart showing high of day as an intraday reference level with nearby PMH and PDH context.](/images/academy/chart-reading/high-of-day-level-map.svg)
+![Candlestick chart showing high of day as an intraday reference level with nearby PMH and PDH context.](/academy/images/chart-reading/high-of-day-level-map.svg)
 
 The visual above shows HOD as part of the intraday map. It is not isolated. Premarket high, previous day high, current volume, and the distance from support can all change the quality of the HOD test.
 
@@ -127,7 +127,7 @@ The first HOD can become a reference level. A later new HOD is a breakout attemp
 
 A failed HOD breakout happens when price pushes above high of day but cannot hold above it.
 
-![Candlestick chart showing price breaking above high of day and failing back below the level.](/images/academy/chart-reading/high-of-day-failed-breakout.svg)
+![Candlestick chart showing price breaking above high of day and failing back below the level.](/academy/images/chart-reading/high-of-day-failed-breakout.svg)
 
 This does not mean the stock must reverse. It means the HOD interaction became a review point.
 

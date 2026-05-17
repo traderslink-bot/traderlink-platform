@@ -29,7 +29,7 @@ internal_links:
   - "/academy/trade-grading/"
   - "/academy/trade-review-and-improvement/"
 visual_assets:
-  - "/images/academy/chart-reading/practice-trading-feedback-loop.svg"
+  - "/academy/images/chart-reading/practice-trading-feedback-loop.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Practice trading means working on trading skills without treating every session 
 
 Good practice is not random chart watching. It is a feedback loop: choose a focus, make a simulated or planned decision, review what happened, adjust one rule, and repeat.
 
-![Dark trading dashboard showing a practice trading feedback loop with realistic candles, volume, planned review zone, simulated decision, review note, and rule adjustment.](/images/academy/chart-reading/practice-trading-feedback-loop.svg)
+![Dark trading dashboard showing a practice trading feedback loop with realistic candles, volume, planned review zone, simulated decision, review note, and rule adjustment.](/academy/images/chart-reading/practice-trading-feedback-loop.svg)
 
 ## Lesson Objective
 

@@ -29,7 +29,7 @@ internal_links:
   - "/academy/vwap/"
   - "/academy/volume/"
 visual_assets:
-  - "/images/academy/chart-reading/midday-power-hour-context.svg"
+  - "/academy/images/chart-reading/midday-power-hour-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Midday trading happens after the opening volatility settles and before late-day 
 
 Midday is not automatically bad. But it often has slower movement, lower urgency, fading volume, and more temptation to force trades.
 
-![Candlestick chart showing midday range behavior, fading volume, and later power hour reassessment context.](/images/academy/chart-reading/midday-power-hour-context.svg)
+![Candlestick chart showing midday range behavior, fading volume, and later power hour reassessment context.](/academy/images/chart-reading/midday-power-hour-context.svg)
 
 ## Lesson Objective
 

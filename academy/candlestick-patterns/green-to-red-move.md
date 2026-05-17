@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume/"
   - "/academy/news-fade/"
 visual_assets:
-  - "/images/academy/chart-reading/red-green-transition-context.svg"
+  - "/academy/images/chart-reading/red-green-transition-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A green-to-red move happens when a stock that was above its previous close or se
 
 The color change is not a complete thesis. It needs levels, volume, VWAP, catalyst, and risk context.
 
-![Candlestick chart showing red-to-green and green-to-red intraday transitions with VWAP and volume context.](/images/academy/chart-reading/red-green-transition-context.svg)
+![Candlestick chart showing red-to-green and green-to-red intraday transitions with VWAP and volume context.](/academy/images/chart-reading/red-green-transition-context.svg)
 
 ## Lesson Objective
 

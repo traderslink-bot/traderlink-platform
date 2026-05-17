@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/higher-highs-higher-lows/"
 recommended_next: "/academy/pivot-levels/"
 visual_assets:
-  - "/images/academy/chart-reading/lower-highs-lower-lows-downtrend.svg"
-  - "/images/academy/chart-reading/lower-high-reclaim-review.svg"
+  - "/academy/images/chart-reading/lower-highs-lower-lows-downtrend.svg"
+  - "/academy/images/chart-reading/lower-high-reclaim-review.svg"
 internal_links:
   - "/academy/swing-highs-and-swing-lows/"
   - "/academy/break-of-structure/"
@@ -84,7 +84,7 @@ A lower low shows that price broke below the prior swing low.
 
 Together, they can show weakening structure, a downtrend, or a chart where sellers are controlling bounces.
 
-![Candlestick chart showing lower highs and lower lows forming a weakening market structure.](/images/academy/chart-reading/lower-highs-lower-lows-downtrend.svg)
+![Candlestick chart showing lower highs and lower lows forming a weakening market structure.](/academy/images/chart-reading/lower-highs-lower-lows-downtrend.svg)
 
 The visual above shows a clean educational example. Real charts are rarely this tidy, so traders should focus on obvious swing points and meaningful levels rather than forcing every candle into the pattern.
 
@@ -133,7 +133,7 @@ For review, the question is not only "did support break?" It is also "were lower
 
 A downtrend structure can shift when price breaks above a meaningful lower high and holds above it.
 
-![Candlestick chart showing a downtrend reclaiming a meaningful lower high and shifting into review context.](/images/academy/chart-reading/lower-high-reclaim-review.svg)
+![Candlestick chart showing a downtrend reclaiming a meaningful lower high and shifting into review context.](/academy/images/chart-reading/lower-high-reclaim-review.svg)
 
 This does not guarantee a reversal. It means the prior weak structure may be changing and deserves a different review.
 

@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volatility-halts/"
   - "/academy/risk-management/"
 visual_assets:
-  - "/images/academy/chart-reading/trading-halt-timeline.svg"
+  - "/academy/images/chart-reading/trading-halt-timeline.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Low-float volatility happens when a stock with limited publicly tradable shares 
 
 Low float can make a stock more sensitive to demand and supply changes, but it does not guarantee a clean move. It can also mean faster reversals, wider spreads, halts, and difficult exits.
 
-![Dark trading dashboard showing candles before a halt, paused trading period, resume candles, and volume bars with review labels.](/images/academy/chart-reading/trading-halt-timeline.svg)
+![Dark trading dashboard showing candles before a halt, paused trading period, resume candles, and volume bars with review labels.](/academy/images/chart-reading/trading-halt-timeline.svg)
 
 ## Lesson Objective
 

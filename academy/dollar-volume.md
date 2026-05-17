@@ -24,8 +24,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/liquidity/"
 recommended_next: "/academy/spread/"
 visual_assets:
-  - "/images/academy/chart-reading/dollar-volume-share-vs-value-comparison.svg"
-  - "/images/academy/chart-reading/dollar-volume-low-price-liquidity-review.svg"
+  - "/academy/images/chart-reading/dollar-volume-share-vs-value-comparison.svg"
+  - "/academy/images/chart-reading/dollar-volume-low-price-liquidity-review.svg"
 internal_links:
   - "/academy/volume/"
   - "/academy/relative-volume/"
@@ -93,7 +93,7 @@ If another stock trades 1 million shares at an average price of `$50.00`, approx
 
 The first stock had more share volume. The second stock had more dollar volume.
 
-![Trading dashboard comparison showing high share volume versus higher dollar volume.](/images/academy/chart-reading/dollar-volume-share-vs-value-comparison.svg)
+![Trading dashboard comparison showing high share volume versus higher dollar volume.](/academy/images/chart-reading/dollar-volume-share-vs-value-comparison.svg)
 
 This comparison helps traders think more clearly about liquidity and execution.
 
@@ -147,7 +147,7 @@ A stock can have strong dollar volume and still have:
 - Poor fills during volatility.
 - Liquidity that disappears after the first spike.
 
-![Trading dashboard showing low-priced stock dollar volume with spread and depth review context.](/images/academy/chart-reading/dollar-volume-low-price-liquidity-review.svg)
+![Trading dashboard showing low-priced stock dollar volume with spread and depth review context.](/academy/images/chart-reading/dollar-volume-low-price-liquidity-review.svg)
 
 This is why dollar volume should be reviewed with [Liquidity](/academy/liquidity/), [Spread](/academy/spread/), and [Slippage](/academy/slippage/).
 

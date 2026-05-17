@@ -29,7 +29,7 @@ internal_links:
   - "/academy/dilution-risk/"
   - "/academy/sec-filings/"
 visual_assets:
-  - "/images/academy/chart-reading/swing-trading-catalyst-timeline.svg"
+  - "/academy/images/chart-reading/swing-trading-catalyst-timeline.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Small cap swing trading means holding smaller-company stocks across multiple ses
 
 That can make the charts look exciting, but it also makes review more demanding.
 
-![Dark trading dashboard showing a swing trading catalyst timeline with daily candles, volume expansion, catalyst date, pullback review, and follow-through labels.](/images/academy/chart-reading/swing-trading-catalyst-timeline.svg)
+![Dark trading dashboard showing a swing trading catalyst timeline with daily candles, volume expansion, catalyst date, pullback review, and follow-through labels.](/academy/images/chart-reading/swing-trading-catalyst-timeline.svg)
 
 ## Lesson Objective
 

@@ -23,8 +23,8 @@ academy_level: "Foundation"
 recommended_previous: "/academy/swing-trading-small-caps/"
 recommended_next: "/academy/press-releases/"
 visual_assets:
-  - "/images/academy/chart-reading/stock-catalyst-quality-review.svg"
-  - "/images/academy/chart-reading/stock-catalyst-headline-vs-reaction.svg"
+  - "/academy/images/chart-reading/stock-catalyst-quality-review.svg"
+  - "/academy/images/chart-reading/stock-catalyst-headline-vs-reaction.svg"
 internal_links:
   - "/academy/unusual-volume/"
   - "/academy/volume-spike/"
@@ -97,7 +97,7 @@ Common stock catalysts include:
 - Short-interest or squeeze attention.
 - Financing, offering, or dilution-related news.
 
-![Trading dashboard showing a catalyst-quality review panel beside a realistic candlestick reaction.](/images/academy/chart-reading/stock-catalyst-quality-review.svg)
+![Trading dashboard showing a catalyst-quality review panel beside a realistic candlestick reaction.](/academy/images/chart-reading/stock-catalyst-quality-review.svg)
 
 For small-cap traders, catalysts can be especially important because lower normal liquidity and smaller floats can make reactions sharper. That can also make the risk sharper.
 
@@ -156,7 +156,7 @@ After a catalyst appears, review:
 - Did the reaction happen premarket, at the open, midday, or after hours?
 - Was there a related filing that changed the interpretation?
 
-![Trading dashboard comparing a catalyst headline with the chart reaction, volume burst, and later fade review.](/images/academy/chart-reading/stock-catalyst-headline-vs-reaction.svg)
+![Trading dashboard comparing a catalyst headline with the chart reaction, volume burst, and later fade review.](/academy/images/chart-reading/stock-catalyst-headline-vs-reaction.svg)
 
 The same type of news can create different reactions depending on float, liquidity, market theme, recent dilution history, chart location, and time of day.
 

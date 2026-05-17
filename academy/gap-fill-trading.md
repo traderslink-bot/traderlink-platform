@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/consolidation/"
 recommended_next: "/academy/volume/"
 visual_assets:
-  - "/images/academy/chart-reading/gap-fill-zone-map.svg"
-  - "/images/academy/chart-reading/failed-gap-fill-hold-review.svg"
+  - "/academy/images/chart-reading/gap-fill-zone-map.svg"
+  - "/academy/images/chart-reading/failed-gap-fill-hold-review.svg"
 internal_links:
   - "/academy/consolidation/"
   - "/academy/swing-trading/"
@@ -80,7 +80,7 @@ A gap fill happens when price later moves back through that empty area.
 
 For example, if a stock closes at $5.00 and opens the next day at $6.00, there is a gap between $5.00 and $6.00. If price later trades back down through that area, traders may call it a gap fill.
 
-![Candlestick chart showing a gap zone between prior close and current open with price moving into the gap area.](/images/academy/chart-reading/gap-fill-zone-map.svg)
+![Candlestick chart showing a gap zone between prior close and current open with price moving into the gap area.](/academy/images/chart-reading/gap-fill-zone-map.svg)
 
 Gaps can happen because of news, earnings, filings, market conditions, low liquidity, or overnight order flow.
 
@@ -115,7 +115,7 @@ After that, traders watch how price reacts.
 
 A failed gap fill happens when price starts moving into the gap but cannot keep filling it.
 
-![Candlestick chart showing price entering a gap area but failing to continue filling the gap and holding above the gap midpoint.](/images/academy/chart-reading/failed-gap-fill-hold-review.svg)
+![Candlestick chart showing price entering a gap area but failing to continue filling the gap and holding above the gap midpoint.](/academy/images/chart-reading/failed-gap-fill-hold-review.svg)
 
 This does not mean the gap must hold forever. It means the fill attempt did not complete and the trader should review the behavior.
 

@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/pivot-levels/"
 recommended_next: "/academy/premarket-high-low/"
 visual_assets:
-  - "/images/academy/chart-reading/previous-day-high-low-map.svg"
-  - "/images/academy/chart-reading/previous-day-high-failed-breakout.svg"
+  - "/academy/images/chart-reading/previous-day-high-low-map.svg"
+  - "/academy/images/chart-reading/previous-day-high-failed-breakout.svg"
 internal_links:
   - "/academy/key-levels-trading/"
   - "/academy/pivot-levels/"
@@ -87,7 +87,7 @@ Traders often abbreviate these as:
 - PDH for previous day high.
 - PDL for previous day low.
 
-![Candlestick chart showing previous day high and previous day low mapped as objective reference levels.](/images/academy/chart-reading/previous-day-high-low-map.svg)
+![Candlestick chart showing previous day high and previous day low mapped as objective reference levels.](/academy/images/chart-reading/previous-day-high-low-map.svg)
 
 The visual above shows a simple two-session view. Yesterday's high and low become today's reference levels. The levels are useful because they are known before the current session unfolds.
 
@@ -139,7 +139,7 @@ The important review question is not "did price break PDH?" It is "what happened
 
 A failed breakout at PDH happens when price pushes above the previous day high but cannot hold above it.
 
-![Candlestick chart showing price breaking above previous day high and failing back below the level.](/images/academy/chart-reading/previous-day-high-failed-breakout.svg)
+![Candlestick chart showing price breaking above previous day high and failing back below the level.](/academy/images/chart-reading/previous-day-high-failed-breakout.svg)
 
 This does not mean the stock must reverse. It means the PDH interaction became a review point.
 
