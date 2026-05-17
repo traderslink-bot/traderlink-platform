@@ -66,6 +66,8 @@ For small-cap traders, the filing can matter because a large holder may represen
 
 Investors may need to file Schedule 13D after crossing certain beneficial ownership thresholds. The filing helps the market understand who owns a significant stake and whether the investor has plans that could influence the company.
 
+SEC investor guidance says Schedule 13D generally applies when a person or group acquires beneficial ownership of more than 5% of a voting class of registered equity securities, unless the facts allow a shorter Schedule 13G instead. Timing, filer eligibility, amendments, and beneficial-ownership calculations can be technical, so traders should use the filing as a review source rather than a legal conclusion.
+
 The filing can include:
 
 1. Reporting person information.

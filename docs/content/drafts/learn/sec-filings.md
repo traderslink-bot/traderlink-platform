@@ -93,6 +93,8 @@ They can include:
 - Ownership reports.
 - Delisting or late filing notices.
 
+For source-sensitive review, start with the official SEC EDGAR filing record instead of screenshots, scanner summaries, or copied excerpts. The SEC describes EDGAR as its Electronic Data Gathering, Analysis, and Retrieval system and provides free public access to company filings through SEC search tools.
+
 ![Dark dashboard showing a filing map for traders with current reports, registration statements, offering documents, ownership filings, and financial reports.](/images/learn/chart-reading/sec-filing-map-for-traders.svg)
 
 Different forms have different purposes. A Form 8-K is not the same as a Form S-3, and a Form 424B5 is not the same as a Form 4.

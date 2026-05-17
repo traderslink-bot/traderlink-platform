@@ -74,6 +74,8 @@ Common clinical trial announcements include:
 
 The key question is not only whether the company released trial news. The better question is what the data actually says.
 
+For source-sensitive review, use the company's full announcement, related filings, trial registry information when available, and official FDA clinical-research guidance as context. FDA describes clinical research as studies in people and emphasizes study design details such as participants, duration, control groups, dosing, assessments, data collection, and analysis.
+
 ## Why Clinical Trial News Matters
 
 Biotech stocks can move sharply when the market believes new data changes a company's outlook.
@@ -102,6 +104,8 @@ Broadly:
 - **Phase 1** often focuses on safety, tolerability, and dosing.
 - **Phase 2** often explores effectiveness and dose selection.
 - **Phase 3** is usually larger and more important for potential approval.
+
+These phase descriptions are broad learning categories, not guarantees. FDA guidance notes that Phase 2 studies are usually not large enough by themselves to prove benefit, while Phase 3 studies are designed to demonstrate whether a product offers treatment benefit in a specific population and to gather more safety information.
 
 A small early-stage update can attract attention, but it is not the same as a successful late-stage trial.
 

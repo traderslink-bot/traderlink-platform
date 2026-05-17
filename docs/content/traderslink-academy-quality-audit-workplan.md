@@ -94,8 +94,8 @@ Recommended order for future runs:
 | 6 | Trading Styles And Playbooks | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 7 | Day Trading Workflow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 8 | Swing Trading Workflow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; Pass 2 fixed stale swing workflow related links. |
-| 9 | News, Catalysts And SEC Filings | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; Pass 2 completed; Pass 3 should start here because this is the highest source-sensitive course. |
-| 10 | Small-Cap Stocks, Float And Dilution | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 9 | News, Catalysts And SEC Filings | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; Pass 2 completed; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md` with official SEC, Investor.gov, and FDA source checks plus targeted source-note edits. |
+| 10 | Small-Cap Stocks, Float And Dilution | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; next recommended Pass 3 source audit. |
 | 11 | Halts And High-Volatility Events | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 12 | Trading Psychology And Discipline | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; Pass 2 corrected the Averaging Down transition into the Trade Review course opener. |
 | 13 | Trade Review And Improvement | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trade-review-improvement.md`; Pass 2 documented the news-review cross-list exception. |
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 3: Accuracy/Source Audit** for **News, Catalysts And SEC Filings**.
+Continue with **Pass 3: Accuracy/Source Audit** for **Small-Cap Stocks, Float And Dilution**.
 
 Reason:
 
@@ -218,12 +218,13 @@ Reason:
 - Academy Navigation Path Hubs Pass 1 is complete.
 - The course-by-course Pass 1 lesson-level quality audit cycle is complete.
 - Pass 2 Academy-Wide Sequence And Cross-Link Audit is complete.
-- News, Catalysts And SEC Filings is the highest source-sensitive Academy course because it includes SEC filings, EDGAR workflows, press releases, earnings, FDA and clinical-trial news, contracts, partnerships, mergers, filings, offering context, and news-trade review.
+- News, Catalysts And SEC Filings Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md`.
+- Small-Cap Stocks, Float And Dilution is now the next highest source-sensitive course because it covers float, shares outstanding, dilution, offerings, warrants, convertible notes, preferred stock, reverse splits, cash runway, going concern, resale registrations, and offering mechanics.
 - Pass 3 should verify factual details and official-source references before the Academy moves toward production UI planning.
 
 Output should include:
 
-- A News, Catalysts And SEC Filings accuracy/source audit.
+- A Small-Cap Stocks, Float And Dilution accuracy/source audit.
 - Any small markdown edits needed.
 - Source-sensitive findings and corrections.
 - Official-source references for SEC, EDGAR, filing mechanics, FDA/regulatory catalyst, offering, delisting, and news category details where needed.

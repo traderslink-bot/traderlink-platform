@@ -77,6 +77,8 @@ Common FDA-related catalysts include:
 
 Some FDA news is clearly positive or negative. Other FDA news is more subtle and needs careful reading.
 
+For source-sensitive review, verify the exact regulatory term through the company release, related SEC filings, and official FDA resources when available. FDA Fast Track is a development and review process for serious conditions with unmet medical need, orphan drug designation is separate from approval or licensing, and PDUFA relates to the FDA user-fee review framework rather than a promise that a product will be approved.
+
 ## Not All FDA News Is Approval News
 
 This is the biggest beginner mistake.

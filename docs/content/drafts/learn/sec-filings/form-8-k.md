@@ -81,6 +81,8 @@ For traders, the key is not just that an 8-K exists. The key is what the 8-K rep
 
 Companies file Form 8-K to disclose important events in a timely way. That makes the filing useful for traders who need to understand why a stock is moving.
 
+SEC investor guidance says companies generally file most 8-K disclosures within four business days of the triggering event, with some items required sooner. For trading review, that means the accepted time, filing date, event date, item number, and exhibits all matter.
+
 An 8-K may explain:
 
 - Why unusual volume appeared.

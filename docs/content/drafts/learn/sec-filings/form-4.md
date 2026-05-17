@@ -67,6 +67,8 @@ For traders, the transaction code and footnotes are often just as important as t
 
 Insiders file Form 4 to disclose changes in ownership. The filing helps the market see when insiders buy, sell, receive, or dispose of securities.
 
+SEC investor guidance says Form 4 is generally filed within two business days after the transaction date. That timing is useful context, but the transaction code and footnotes still decide what the filing actually reports.
+
 The filing usually includes:
 
 1. Reporting person.

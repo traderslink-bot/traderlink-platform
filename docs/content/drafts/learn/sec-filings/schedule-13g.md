@@ -66,6 +66,8 @@ For small-cap traders, large ownership can matter because it may affect float dy
 
 Investors file Schedule 13G to report beneficial ownership while generally using a shorter, less detailed form than Schedule 13D.
 
+SEC investor guidance frames Schedule 13G as a shorter alternative that may be available depending on the facts and circumstances of the beneficial owner. A 13G can show important ownership context, but it should not be read as proof of active intent by itself.
+
 The filing may include:
 
 1. Reporting person information.

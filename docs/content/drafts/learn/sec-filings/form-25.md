@@ -49,6 +49,8 @@ A Form 25 filing is not automatically a buy or sell signal. It does not guarante
 
 Form 25 is used for notification of removal from listing and registration. In simple terms, it is connected to a security being delisted from an exchange.
 
+The official SEC Form 25 title is notification of removal from listing and/or registration under Section 12(b) of the Securities Exchange Act of 1934. A trader reviewing one should check the exchange, security class, rule provision, issuer or exchange action, and effective-date context instead of relying only on the word "delisting."
+
 A Form 25 may relate to:
 
 1. Exchange delisting.
