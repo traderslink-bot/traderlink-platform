@@ -569,13 +569,14 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | Small-Cap Stocks, Float And Dilution Academy format migration | Normalized 28 Small-Cap Stocks, Float And Dilution lessons for Academy format. | Passed. Lessons now use `content_type: "academy_lesson"`, normalized `learning_track`, complete Academy metadata, lesson objectives, `Practical Checklist`, one `Apply This In Review` section, review-focused Trader Intelligence bridges, FAQ, and educational disclaimers. Broad journal framing was replaced with structured review wording. | `eb9f972e` |
 | 2026-05-17 | Trading Psychology And Discipline Academy format migration check | Checked 8 Trading Psychology And Discipline lessons for Academy format readiness. | Passed with no lesson edits needed. Lessons already include `content_type: "academy_lesson"`, complete Academy metadata, lesson objectives, `Practical Checklist`, one `Apply This In Review` section, review-focused Trader Intelligence bridges, FAQ, and educational disclaimers. Chasing Stocks was already counted through the Trading Styles check. | no lesson file changes |
 | 2026-05-17 | Trade Review And Improvement Academy format migration check | Checked 8 Trade Review And Improvement course-sequence lessons for Academy format readiness. | Passed with no lesson edits needed. Lessons already include `content_type: "academy_lesson"`, complete Academy metadata, lesson objectives, `Practical Checklist`, one `Apply This In Review` section, review-focused Trader Intelligence bridges, FAQ, and educational disclaimers. How To Review News Trades was already counted through the News course migration. | no lesson file changes |
+| 2026-05-17 | Day Trading Workflow Academy format migration | Checked 9 Day Trading Workflow lessons for Academy format readiness and normalized one session-review metadata keyword. | Passed. Lessons include `content_type: "academy_lesson"`, complete Academy metadata, lesson objectives, `Practical Checklist`, one `Apply This In Review` section, review-focused Trader Intelligence bridges, FAQ, educational disclaimers, and realistic SVG support where useful. | `27d31632` |
 
 ## Next Recommended Action
 
 Continue into Academy format migration and UI-readiness normalization:
 
-1. Continue the metadata/format pass with Day Trading Workflow.
-2. Then continue into Practice And Improvement.
+1. Continue the metadata/format pass with Practice And Improvement.
+2. Then continue into Halts And High-Volatility Events.
 3. Normalize `academy_course`, `academy_module`, `academy_order`, `academy_level`, `recommended_previous`, `recommended_next`, visual asset references, and review-section naming.
 4. Do not rewrite strong lessons unless the new Academy format reveals a real gap.
 5. Keep this as markdown/content planning only; do not build production routes, components, schemas, JSX, CSS, or pages.
