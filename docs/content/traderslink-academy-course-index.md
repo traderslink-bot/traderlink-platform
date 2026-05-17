@@ -195,7 +195,7 @@ Use this as the primary course order on the Academy homepage:
 | 4 | Technical Indicators And Tools | planned | Indicators make more sense after price, levels, and volume are understood. |
 | 5 | Trading Styles And Playbooks | planned | Users can now combine chart, volume, and tools into recognizable setup categories. |
 | 6 | News, Catalysts And SEC Filings | content_upgraded | High-value TradersLink differentiator. Core course markdown lesson path is now complete through news-trade review. |
-| 7 | Small-Cap Stocks, Float And Dilution | planned | Builds naturally from SEC filings and catalyst risk. |
+| 7 | Small-Cap Stocks, Float And Dilution | content_upgraded | Completed markdown course path covering small-cap context, float, share structure, dilution, offerings, securities, corporate actions, cash runway, and going concern. |
 | 8 | Risk Management And Trade Planning | planned | Should be reinforced throughout, then taught deeply as its own course. |
 | 9 | Trading Psychology And Discipline | planned | Best taught after users understand what they are trying to execute. |
 | 10 | Trade Review And Improvement | planned | Final product bridge into reviewing behavior, mistakes, execution, and Trader Intelligence. |
@@ -539,38 +539,49 @@ Teach small-cap-specific context: float, share structure, offerings, dilution, w
 
 The user should understand that small-cap stock movement often depends on float, liquidity, share supply, financing history, and dilution risk.
 
-### Suggested Modules And Lessons
+### Completed Course Lesson Sequence
 
 | Order | Module | Lesson | URL | Current Asset | Status | Notes |
 |---:|---|---|---|---|---|---|
-| 1 | Small-Cap Foundation | Small-Cap Stocks | `/learn/small-cap-stocks/` | draft | needs_upgrade | Course opener. |
-| 2 | Small-Cap Foundation | Penny Stocks | `/learn/penny-stocks/` | draft | needs_upgrade | Must avoid hype. |
-| 3 | Float Foundation | Stock Float | `/learn/stock-float/` | draft | needs_upgrade | Core concept. |
-| 4 | Float Foundation | Low Float Stocks | `/learn/low-float-stocks/` | draft | needs_upgrade | Avoid "low float runs" hype. |
-| 5 | Float Foundation | Float Rotation | `/learn/float-rotation/` | draft | needs_upgrade | Advanced small-cap lesson. |
-| 6 | Share Structure | Float Vs Shares Outstanding | `/learn/float-vs-shares-outstanding/` | draft | needs_upgrade | Good bridge to dilution. |
-| 7 | Share Structure | Fully Diluted Shares | `/learn/fully-diluted-shares/` | draft | needs_upgrade | Important for warrants/convertibles. |
-| 8 | Valuation Context | Market Cap Vs Fully Diluted Market Cap | `/learn/market-cap-vs-fully-diluted-market-cap/` | draft | needs_upgrade | Helps avoid surface-level market cap review. |
-| 9 | Dilution Foundation | Dilution | `/learn/dilution/` | draft | needs_upgrade | Core concept. |
-| 10 | Dilution Foundation | Dilution Risk | `/learn/dilution-risk/` | draft | needs_upgrade | Broad risk lesson. |
-| 11 | Dilution Foundation | How To Spot Dilution Risk | `/learn/how-to-spot-dilution-risk/` | draft | needs_upgrade | High priority after SEC filing lessons. |
-| 12 | Offerings | Stock Offerings | `/learn/stock-offerings/` | draft | needs_upgrade | Offering hub. |
-| 13 | Offerings | Public Offering | `/learn/public-offering/` | draft | needs_upgrade | Offering type. |
-| 14 | Offerings | Registered Direct Offering | `/learn/registered-direct-offering/` | draft | needs_upgrade | Small-cap relevant. |
-| 15 | Offerings | Private Placement | `/learn/private-placement/` | draft | needs_upgrade | Small-cap relevant. |
-| 16 | Offerings | At The Market Offering | `/learn/at-the-market-offering/` | draft | needs_upgrade | ATM context. |
-| 17 | Offerings | Shelf Registration | `/learn/shelf-registration/` | draft | needs_upgrade | Important after S-3. |
-| 18 | Offerings | Shelf Registration Vs Offering | `/learn/shelf-registration-vs-offering/` | draft | needs_upgrade | Prevents overreacting to shelf filings. |
-| 19 | Securities | Warrants | `/learn/warrants/` | draft | needs_upgrade | Core dilution/security lesson. |
-| 20 | Securities | Warrants Vs Options | `/learn/warrants-vs-options/` | draft | needs_upgrade | Clarifies common confusion. |
-| 21 | Securities | Pre-Funded Warrants | `/learn/pre-funded-warrants/` | draft | needs_upgrade | Important offering term. |
-| 22 | Securities | Convertible Notes | `/learn/convertible-notes/` | draft | needs_upgrade | Key small-cap risk. |
-| 23 | Securities | Preferred Stock | `/learn/preferred-stock/` | draft | needs_upgrade | Often appears in filings. |
-| 24 | Corporate Actions | Reverse Split | `/learn/reverse-split/` | draft | needs_upgrade | Important small-cap context. |
-| 25 | Corporate Actions | Reverse Split Vs Dilution | `/learn/reverse-split-vs-dilution/` | draft | needs_upgrade | Clarifies two separate concepts. |
-| 26 | Corporate Actions | Forward Split | `/learn/forward-split/` | draft | needs_upgrade | Less urgent, but useful. |
-| 27 | Risk Context | Cash Runway | `/learn/cash-runway/` | draft | needs_upgrade | Financing pressure context. |
-| 28 | Risk Context | Going Concern | `/learn/going-concern/` | draft | needs_upgrade | Risk language in filings. |
+| 1 | Small-Cap Foundation | Small-Cap Stocks | `/learn/small-cap-stocks/` | content_upgraded | complete | Course opener covering market cap, volatility, liquidity, catalysts, filings, and risk. |
+| 2 | Small-Cap Foundation | Penny Stocks | `/learn/penny-stocks/` | content_upgraded | complete | Penny-stock risk, low-priced securities, spreads, promotions, and company quality. |
+| 3 | Float Foundation | Stock Float | `/learn/stock-float/` | content_upgraded | complete | Tradable share supply, float size, liquidity, turnover, and share availability. |
+| 4 | Float Foundation | Low Float Stocks | `/learn/low-float-stocks/` | content_upgraded | complete | Low-float volatility, liquidity gaps, halts, spread risk, and crowding. |
+| 5 | Float Foundation | Float Rotation | `/learn/float-rotation/` | content_upgraded | complete | Volume versus float, scanner context, repeated turnover, and crowding risk. |
+| 6 | Share Structure | Float Vs Shares Outstanding | `/learn/float-vs-shares-outstanding/` | content_upgraded | complete | Float, shares outstanding, restricted shares, insider holdings, and tradable supply. |
+| 7 | Share Structure | Fully Diluted Shares | `/learn/fully-diluted-shares/` | content_upgraded | complete | Warrants, options, convertibles, preferred stock, and potential future share count. |
+| 8 | Valuation Context | Market Cap Vs Fully Diluted Market Cap | `/learn/market-cap-vs-fully-diluted-market-cap/` | content_upgraded | complete | Basic market cap versus fully diluted valuation and hidden supply context. |
+| 9 | Dilution Foundation | Dilution | `/learn/dilution/` | content_upgraded | complete | New share issuance, ownership percentage, share count, and financing context. |
+| 10 | Dilution Foundation | Dilution Risk | `/learn/dilution-risk/` | content_upgraded | complete | Cash needs, financing mechanisms, shelf registrations, warrants, convertibles, and offering risk. |
+| 11 | Dilution Foundation | How To Spot Dilution Risk | `/learn/how-to-spot-dilution-risk/` | content_upgraded | complete | Cash runway, filings, shelf capacity, ATM programs, warrants, convertibles, and financing history. |
+| 12 | Offerings | Stock Offerings | `/learn/stock-offerings/` | content_upgraded | complete | Equity offering structures, pricing, proceeds, share count, warrants, and financing context. |
+| 13 | Offerings | Public Offering | `/learn/public-offering/` | content_upgraded | complete | Registered public offerings, pricing, underwriters, warrants, proceeds, and dilution context. |
+| 14 | Offerings | Registered Direct Offering | `/learn/registered-direct-offering/` | content_upgraded | complete | Registered direct offerings, investors, pricing, warrants, placement agents, and share supply. |
+| 15 | Offerings | Private Placement | `/learn/private-placement/` | content_upgraded | complete | Private placements, restricted securities, registration rights, warrants, and resale context. |
+| 16 | Offerings | At The Market Offering | `/learn/at-the-market-offering/` | content_upgraded | complete | ATM programs, shelf capacity, gradual share sales, volume impact, and filing context. |
+| 17 | Offerings | Shelf Registration | `/learn/shelf-registration/` | content_upgraded | complete | Shelf capacity, future offerings, prospectus supplements, and timing context. |
+| 18 | Offerings | Shelf Registration Vs Offering | `/learn/shelf-registration-vs-offering/` | content_upgraded | complete | Difference between registering securities and actually selling securities. |
+| 19 | Securities | Warrants | `/learn/warrants/` | content_upgraded | complete | Warrant terms, exercise price, expiration, cashless exercise, and potential future shares. |
+| 20 | Securities | Warrants Vs Options | `/learn/warrants-vs-options/` | content_upgraded | complete | Warrant/option differences, issuer impact, dilution, and trading context. |
+| 21 | Securities | Pre-Funded Warrants | `/learn/pre-funded-warrants/` | content_upgraded | complete | Pre-funded warrant mechanics, ownership limits, offering structure, and share-count context. |
+| 22 | Securities | Convertible Notes | `/learn/convertible-notes/` | content_upgraded | complete | Convertible debt, conversion terms, fixed versus variable conversion, and dilution risk. |
+| 23 | Securities | Preferred Stock | `/learn/preferred-stock/` | content_upgraded | complete | Preferred stock rights, conversion, liquidation preference, voting, and dilution context. |
+| 24 | Corporate Actions | Reverse Split | `/learn/reverse-split/` | content_upgraded | complete | Reverse split mechanics, exchange compliance, share count adjustment, and post-split context. |
+| 25 | Corporate Actions | Reverse Split Vs Dilution | `/learn/reverse-split-vs-dilution/` | content_upgraded | complete | Difference between share consolidation and ownership dilution. |
+| 26 | Corporate Actions | Forward Split | `/learn/forward-split/` | content_upgraded | complete | Forward split mechanics, share count adjustment, price adjustment, and context review. |
+| 27 | Risk Context | Cash Runway | `/learn/cash-runway/` | content_upgraded | complete | Cash balance, burn rate, financing runway, and capital need review. |
+| 28 | Risk Context | Going Concern | `/learn/going-concern/` | content_upgraded | complete | Going concern warnings, substantial doubt, cash needs, operating losses, and financing risk. |
+
+### Course Status
+
+The Small-Cap Stocks, Float And Dilution course markdown path is **content_upgraded** across all 28 planned lessons.
+
+Before production UI implementation, this course still needs:
+
+- Visual asset review to decide which lessons need chart, filing, or share-structure diagrams.
+- Optional course intro/landing copy for the Academy course page.
+- Progress/lesson completion wiring in the website build phase.
+
 
 ## Course 8: Risk Management And Trade Planning
 
@@ -788,7 +799,7 @@ Current known Academy-ready lesson groups:
 | Trading Foundations | 0 | Existing drafts need upgrade plus onboarding gap lessons. |
 | Technical Indicators And Tools | 0 | Mostly gap lessons needed. |
 | Trading Styles And Playbooks | 0 | Existing drafts plus several gap lessons. |
-| Small-Cap Stocks, Float And Dilution | 0 | Many drafts exist; high-value future course. |
+| Small-Cap Stocks, Float And Dilution | 28 | Full course markdown path is now content-upgraded across small-cap context, float, dilution, offerings, securities, corporate actions, cash runway, and going concern. Needs visual review before UI-ready. |
 | Risk Management And Trade Planning | 0 | Many drafts exist; high-value future course. |
 | Trading Psychology And Discipline | 0 | Many drafts exist; strong retention/product bridge. |
 | Trade Review And Improvement | 0 | Needs new course opener and product-aligned review lessons. |
@@ -796,28 +807,28 @@ Current known Academy-ready lesson groups:
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-73
+101
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 73 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 73 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 101 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 101 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 73 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 101 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/small-cap-stocks/
+/learn/trading-plan/
 ```
 
 Reason:
 
-The Academy just completed the expanded News, Catalysts And SEC Filings course markdown path. Small-Cap Stocks, Float And Dilution is the natural next course because it builds on SEC filings, offerings, dilution, float, and catalyst risk.
+The Academy just completed the Small-Cap Stocks, Float And Dilution course markdown path. Risk Management And Trade Planning is the natural next course because users now need deeper planning, sizing, invalidation, and account-protection structure.
 
 ## Recommended Work Method From Here
 
