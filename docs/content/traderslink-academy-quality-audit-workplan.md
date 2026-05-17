@@ -96,7 +96,7 @@ Recommended order for future runs:
 | 8 | Swing Trading Workflow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; corrected adjacent course transitions, cleaned beginner swing quote encoding, and documented restrained bridges to Trade Review, Risk Review, Journal Notes, News/Filing Review, Analytics, Coaching, and Playbook Builder. |
 | 9 | News, Catalysts And SEC Filings | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; removed stale app route links from SEC filing module lessons, cleaned broad journal wording, fixed several stale internal links, and documented source-sensitive follow-up needs for SEC, EDGAR, FDA, filing, and delisting details. |
 | 10 | Small-Cap Stocks, Float And Dilution | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; tightened generic migrated objectives, removed stale hard app route links, fixed stale internal links, and documented visual/source follow-up needs. |
-| 11 | Halts And High-Volatility Events | not_started | not_started | not_started | not_started | not_started | not_started | Requires official source checks for halt/circuit-breaker rules. |
+| 11 | Halts And High-Volatility Events | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; added missing in-body visuals, cleaned stale path-hub wording, and documented source-sensitive halt/circuit-breaker follow-up needs. |
 | 12 | Trading Psychology And Discipline | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to coaching and mistake-pattern review. |
 | 13 | Trade Review And Improvement | not_started | not_started | not_started | not_started | not_started | not_started | Core app bridge course. |
 | 14 | Practice And Improvement | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to progress, playbooks, and forward testing. |
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 1: Lesson-Level Quality Audit** for **Halts And High-Volatility Events**.
+Continue with **Pass 1: Lesson-Level Quality Audit** for **Trading Psychology And Discipline**.
 
 Reason:
 
@@ -211,15 +211,16 @@ Reason:
 - Swing Trading Workflow Pass 1 is complete.
 - News, Catalysts And SEC Filings Pass 1 is complete.
 - Small-Cap Stocks, Float And Dilution Pass 1 is complete.
-- Halts And High-Volatility Events is the next course because learners now move from small-cap float, dilution, liquidity, and filing risk into the event-risk mechanics that often appear around low-float and high-volatility stocks.
-- This course needs careful language around halts, resumes, circuit breakers, spreads, low-float volatility, and high-volatility review so lessons stay educational and do not become trade-trigger or fear-based content.
+- Halts And High-Volatility Events Pass 1 is complete.
+- Trading Psychology And Discipline is the next course because learners now move from market-event and execution-risk mechanics into the behavior patterns that affect whether they follow plans under pressure.
+- This course needs careful language around FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down so lessons stay practical without shame, blame, medicalized claims, or promises that an app will fix behavior.
 - Mark factual/source-sensitive items for later Pass 3 where needed, but keep this run focused on Pass 1 lesson quality unless a source issue is obvious inside the lesson text.
 
 Output should include:
 
-- A Halts And High-Volatility Events lesson-level quality audit.
+- A Trading Psychology And Discipline lesson-level quality audit.
 - Any small markdown edits needed.
-- App bridge map for trading halts, volatility halts, halt resumes, market-wide circuit breakers, fast-spread risk, low-float volatility, and high-volatility review.
-- Visual-readiness notes for halt timelines, resume uncertainty, LULD/circuit-breaker context, fast-spread risk, low-float volatility, and review dashboards.
+- App bridge map for trading discipline, FOMO, chasing stocks, revenge trading, overtrading, holding losers, cutting winners, and averaging down.
+- Visual-readiness notes for behavior loops, rule breaks, emotional pressure, process recovery, and mistake-pattern review dashboards.
 - Tracker and handoff update.
 - Commit.

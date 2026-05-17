@@ -38,11 +38,13 @@ meta_description: "Learn how to review trades taken during volatile conditions, 
 ---
 # High-Volatility Trade Review
 
-This lesson completes the **Halts And High-Volatility Events** course. It follows [Low-Float Volatility](/learn/low-float-volatility/) and points back toward broader [Chart Reading Path](/learn/chart-reading-path/) work if a path hub is added later.
+This lesson completes the **Halts And High-Volatility Events** course. It follows [Low-Float Volatility](/learn/low-float-volatility/) and points back toward the broader [Chart Reading Path](/learn/chart-reading-path/) for chart context after volatile event-risk review.
 
 High-volatility trade review is the process of studying trades taken during fast, unstable, or interruption-prone conditions.
 
 The review should be stricter than normal because the risk is different. A fast market can make a trade harder to execute, harder to exit, and harder to judge from the chart alone.
+
+![Dark trading dashboard showing a halt resume, wide bid-ask spread, thin depth, realistic candles, volume bars, and execution-risk review labels.](/images/learn/chart-reading/halt-resume-spread-risk.svg)
 
 ## Lesson Objective
 
