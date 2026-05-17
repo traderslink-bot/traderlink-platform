@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">Clean liquidity versus thin liquidity</title>
+  <desc id="desc">A dark trading dashboard style comparison of a clean liquid market and a thin market using candles, volume, spread, and market depth context.</desc>
+  <rect width="900" height="520" fill="#08111f"/>
+  <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Liquidity changes how executable a chart really is</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Tight spreads and depth make execution different from wide, jumpy quotes.</text>
+  <rect x="64" y="118" width="370" height="332" rx="10" fill="#0a1322" stroke="#213858"/>
+  <rect x="466" y="118" width="370" height="332" rx="10" fill="#0a1322" stroke="#213858"/>
+  <text x="88" y="148" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Cleaner liquidity</text>
+  <text x="490" y="148" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Thin liquidity</text>
+  <line x1="88" y1="190" x2="292" y2="190" stroke="#182943"/>
+  <line x1="88" y1="238" x2="292" y2="238" stroke="#182943"/>
+  <line x1="490" y1="190" x2="694" y2="190" stroke="#182943"/>
+  <line x1="490" y1="238" x2="694" y2="238" stroke="#182943"/>
+  <g stroke-width="3" stroke-linecap="round">
+    <line x1="108" y1="260" x2="108" y2="226" stroke="#22c55e"/><rect x="98" y="238" width="20" height="16" fill="#22c55e" rx="3"/>
+    <line x1="144" y1="250" x2="144" y2="214" stroke="#ef4444"/><rect x="134" y="226" width="20" height="16" fill="#ef4444" rx="3"/>
+    <line x1="180" y1="242" x2="180" y2="204" stroke="#22c55e"/><rect x="170" y="218" width="20" height="16" fill="#22c55e" rx="3"/>
+    <line x1="216" y1="232" x2="216" y2="194" stroke="#22c55e"/><rect x="206" y="208" width="20" height="16" fill="#22c55e" rx="3"/>
+    <line x1="252" y1="224" x2="252" y2="186" stroke="#ef4444"/><rect x="242" y="200" width="20" height="16" fill="#ef4444" rx="3"/>
+    <line x1="510" y1="270" x2="510" y2="220" stroke="#22c55e"/><rect x="500" y="242" width="20" height="18" fill="#22c55e" rx="3"/>
+    <line x1="546" y1="238" x2="546" y2="176" stroke="#22c55e"/><rect x="536" y="198" width="20" height="26" fill="#22c55e" rx="3"/>
+    <line x1="582" y1="216" x2="582" y2="152" stroke="#ef4444"/><rect x="572" y="174" width="20" height="26" fill="#ef4444" rx="3"/>
+    <line x1="618" y1="250" x2="618" y2="186" stroke="#ef4444"/><rect x="608" y="210" width="20" height="24" fill="#ef4444" rx="3"/>
+    <line x1="654" y1="228" x2="654" y2="166" stroke="#22c55e"/><rect x="644" y="188" width="20" height="24" fill="#22c55e" rx="3"/>
+  </g>
+  <line x1="88" y1="290" x2="292" y2="290" stroke="#2a3d5c"/>
+  <line x1="490" y1="290" x2="694" y2="290" stroke="#2a3d5c"/>
+  <g>
+    <rect x="98" y="350" width="20" height="58" fill="#22c55e" opacity="0.72"/>
+    <rect x="134" y="344" width="20" height="64" fill="#ef4444" opacity="0.7"/>
+    <rect x="170" y="332" width="20" height="76" fill="#22c55e" opacity="0.78"/>
+    <rect x="206" y="326" width="20" height="82" fill="#22c55e" opacity="0.82"/>
+    <rect x="242" y="336" width="20" height="72" fill="#ef4444" opacity="0.72"/>
+    <rect x="500" y="368" width="20" height="40" fill="#22c55e" opacity="0.55"/>
+    <rect x="536" y="322" width="20" height="86" fill="#22c55e" opacity="0.82"/>
+    <rect x="572" y="374" width="20" height="34" fill="#ef4444" opacity="0.52"/>
+    <rect x="608" y="390" width="20" height="18" fill="#ef4444" opacity="0.44"/>
+    <rect x="644" y="338" width="20" height="70" fill="#22c55e" opacity="0.72"/>
+  </g>
+  <g font-family="Arial, sans-serif" font-size="13">
+    <rect x="306" y="180" width="96" height="82" rx="8" fill="#111827" stroke="#334155"/>
+    <text x="322" y="204" fill="#bbf7d0">Bid 2.00</text>
+    <text x="322" y="226" fill="#fecdd3">Ask 2.01</text>
+    <text x="322" y="248" fill="#8ea6c8">Depth stable</text>
+    <rect x="708" y="180" width="96" height="82" rx="8" fill="#111827" stroke="#334155"/>
+    <text x="724" y="204" fill="#bbf7d0">Bid 1.92</text>
+    <text x="724" y="226" fill="#fecdd3">Ask 2.06</text>
+    <text x="724" y="248" fill="#8ea6c8">Thin depth</text>
+  </g>
+  <text x="92" y="432" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">tighter spread, steadier fills</text>
+  <text x="494" y="432" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">wider spread, jumpier fills</text>
+</svg>
