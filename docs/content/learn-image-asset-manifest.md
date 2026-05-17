@@ -74,6 +74,8 @@ journey_map
 | `public/images/learn/chart-reading/swing-highs-swing-lows-map.svg` | `/learn/swing-highs-and-swing-lows/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show major swing highs and swing lows on a realistic price move. | Quick Definition section. | Candlestick chart showing clear swing highs and swing lows on a realistic price move. | editor_verified | Supports swing-point identification, uses realistic candles, labels only major turns, and avoids predictive language. | `94fabc3b` |
 | `public/images/learn/chart-reading/higher-highs-higher-lows-uptrend.svg` | `/learn/higher-highs-higher-lows/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show rising swing highs and higher pullbacks in a clean uptrend structure. | Quick Definition section. | Candlestick chart showing higher highs and higher lows forming a rising market structure. | editor_verified | Supports uptrend-structure identification, uses realistic red and green candles, support zones, volume context, and avoids signal language. | `fece7bfe` |
 | `public/images/learn/chart-reading/higher-low-failure-review.svg` | `/learn/higher-highs-higher-lows/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show an uptrend losing the latest higher-low zone and shifting into review context. | When A Higher Low Fails section. | Candlestick chart showing an uptrend losing the latest higher low and shifting into a review area. | editor_verified | Supports higher-low failure review, uses realistic candles, highlights the relevant zone, includes volume context, and avoids predictive claims. | `fece7bfe` |
+| `public/images/learn/chart-reading/lower-highs-lower-lows-downtrend.svg` | `/learn/lower-highs-lower-lows/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show weak bounces and lower lows in a clean downtrend structure. | Quick Definition section. | Candlestick chart showing lower highs and lower lows forming a weakening market structure. | editor_verified | Supports downtrend-structure identification, uses realistic red and green candles, lower-high zones, volume context, and avoids signal language. | `65a5747d` |
+| `public/images/learn/chart-reading/lower-high-reclaim-review.svg` | `/learn/lower-highs-lower-lows/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a downtrend reclaiming a meaningful lower-high zone and shifting into review context. | When A Lower High Is Reclaimed section. | Candlestick chart showing a downtrend reclaiming a meaningful lower high and shifting into review context. | editor_verified | Supports lower-high reclaim review, uses realistic candles, highlights the relevant zone, includes volume context, and avoids reversal guarantee language. | `65a5747d` |
 
 ## Editor Verification Summary
 
@@ -180,11 +182,20 @@ Higher highs and higher lows SVG verification:
 - The visuals are wired to article sections where they add learning value.
 - The batch is appropriate for the higher-high/higher-low structure article.
 
+Lower highs and lower lows SVG verification:
+
+- Both visuals support the actual lower-highs/lower-lows lesson.
+- The downtrend structure visual shows realistic weak bounces, lower-high zones, lower lows, and volume context.
+- The lower-high reclaim visual shows a meaningful lower-high area being reclaimed as review context, not as a reversal guarantee.
+- Labels avoid buy/sell language, profit claims, and guaranteed-continuation claims.
+- The visuals are wired to article sections where they add learning value.
+- The batch is appropriate for the lower-high/lower-low structure article.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Lower Highs And Lower Lows article: downtrend structure, lower-high review, and lower-high reclaim/structure shift.
+1. Pivot Levels article: pivot level map, price reaction around a pivot, and failed pivot reclaim/rejection review.
 2. Breakdown article: clean breakdown, failed breakdown/reclaim, breakdown with volume context.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
