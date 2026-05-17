@@ -42,6 +42,8 @@ Trade review is the process of studying completed trades so the trader can under
 
 This course is the bridge between learning concepts and improving from real trades. Reading lessons can build knowledge, but review turns that knowledge into feedback.
 
+That feedback can make the next review more specific, but it does not prove what the next trade will do.
+
 ## Lesson Objective
 
 By the end of this lesson, you should be able to:

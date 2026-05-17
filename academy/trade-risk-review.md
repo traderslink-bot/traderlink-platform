@@ -87,6 +87,8 @@ A useful trade risk review compares the planned risk with the actual risk:
 
 This turns risk from a vague feeling into something specific.
 
+Order type belongs in this review too. Market, limit, stop, and stop-limit orders handle execution and price control differently, so the review should not assume every planned stop or exit filled exactly as intended.
+
 ## Realistic Example
 
 A trader enters a stock at $5.00 with planned invalidation under $4.80 and a planned loss of $100.

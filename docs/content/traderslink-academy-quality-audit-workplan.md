@@ -106,7 +106,7 @@ Recommended order for future runs:
 | 10 | Small-Cap Stocks, Float And Dilution | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-small-cap-float-dilution.md` with official SEC, Investor.gov, PCAOB, and FASB source verification plus targeted plain-language accuracy guardrail edits. |
 | 11 | Halts And High-Volatility Events | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-halts-high-volatility.md` with official SEC, Investor.gov, FINRA, NYSE, Nasdaq, LULD, and Cboe source verification plus targeted plain-language accuracy guardrail edits. |
 | 12 | Trading Psychology And Discipline | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; Pass 2 corrected the Averaging Down transition into the Trade Review course opener; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-psychology.md` with reputable investor-risk, order-type, and behavioral-finance source verification plus targeted plain-language guardrail edits. |
-| 13 | Trade Review And Improvement | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trade-review-improvement.md`; Pass 2 documented the news-review cross-list exception. |
+| 13 | Trade Review And Improvement | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trade-review-improvement.md`; Pass 2 documented the news-review cross-list exception; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trade-review-improvement.md` with official/reputable order, execution, active-trading-risk, behavioral-finance, and local product-truthfulness source checks plus targeted plain-language guardrail edits. |
 | 14 | Practice And Improvement | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-practice-improvement.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 15 | Academy Navigation Path Hubs | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-navigation-path-hubs.md`; Pass 2 confirmed path hubs are optional navigation support, not a locked course sequence. |
 
@@ -211,7 +211,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 3: Accuracy/Source Audit** for **Trade Review And Improvement**.
+Continue with **Pass 3: Accuracy/Source Audit** for **Practice And Improvement**.
 
 Reason:
 
@@ -244,15 +244,16 @@ Reason:
 - Swing Trading Workflow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-swing-trading-workflow.md`.
 - Chart Reading And Market Structure Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-chart-reading.md`.
 - Trading Psychology And Discipline Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trading-psychology.md`.
-- Trade Review And Improvement is now the next useful source-sensitive course because it is the strongest natural bridge between Academy lessons and the Trader Intelligence review product.
+- Trade Review And Improvement Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trade-review-improvement.md`.
+- Practice And Improvement is now the next useful source-sensitive course because practice, replay, paper trading, grading, drills, forward testing, and improvement plans need clear simulation/sample-size/live-transfer guardrails.
 - Pass 3 should verify factual details against official and reputable sources before the Academy moves toward production UI planning. Source details belong in internal audit files; user-facing lessons should use clean educational wording unless a rule, filing type, or official system is itself the lesson topic.
 
 Output should include:
 
-- A Trade Review And Improvement accuracy/source audit.
+- A Practice And Improvement accuracy/source audit.
 - Any small markdown edits needed.
 - Source-sensitive findings and corrections.
-- Reputable-source references for review-process language, planned-versus-actual framing, execution review, mistake-pattern review, and app bridge restraint.
+- Reputable-source references for practice-process language, paper trading, replay review, forward testing, sample size, grading, improvement plans, and app bridge restraint.
 - A clear list of items deferred to later source passes if the course is too large for one run.
 - Tracker and handoff update.
 - Commit.

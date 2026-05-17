@@ -83,7 +83,7 @@ Reviewed trades give better evidence:
 - Whether risk was defined.
 - Whether liquidity was clean.
 - Whether the trader followed the plan.
-- Whether the trade failed for predictable reasons.
+- Whether the trade failed for reviewable reasons.
 - Whether the same mistake repeated.
 
 The playbook should come from patterns across trades, not from one chart.

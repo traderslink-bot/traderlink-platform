@@ -42,6 +42,8 @@ A swing trade journal is a structured record of trades held across multiple sess
 
 Swing trades need more than a quick entry and exit note. A trade can change over several days as news appears, volume fades, support breaks, or the trader adjusts the plan.
 
+Because multi-session trades can gap between sessions, the journal should also record whether the risk plan assumed a fill that was not actually available.
+
 ## Lesson Objective
 
 By the end of this lesson, you should be able to:

@@ -73,6 +73,8 @@ Execution matters because small differences can become large over repeated trade
 
 Execution review is especially important for small-cap, news-driven, fast-moving, or low-liquidity stocks.
 
+Order type matters in that review. A marketable order may prioritize getting filled but not the exact price. A limit or stop-limit order may control price better but may not fill. A stop order can become a market order after the stop price is reached, so the final execution may differ from the planned stop price.
+
 ## Practical Review Process
 
 A practical execution review checks:
