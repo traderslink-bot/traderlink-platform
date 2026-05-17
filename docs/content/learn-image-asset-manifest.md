@@ -67,6 +67,8 @@ journey_map
 | `public/images/learn/chart-reading/level-breakout-failed-hold.svg` | `/learn/level-breakout/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price breaking above a level and then failing back below the breakout zone. | Failed Hold After A Breakout section. | Candlestick chart showing price breaking above a level and then failing back below the breakout zone. | editor_verified | Supports failed-hold review, keeps labels focused on trader review, and avoids buy/sell or predictive language. | `1377793b` |
 | `public/images/learn/chart-reading/level-reclaim-hold.svg` | `/learn/level-reclaim/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price losing a key level, reclaiming it, and holding above the zone. | Reclaim And Hold section. | Candlestick chart showing price losing a key level, reclaiming it, and holding above the zone. | editor_verified | Supports reclaim-and-hold review, uses realistic candles and zones, and avoids guaranteed-continuation language. | `57664031` |
 | `public/images/learn/chart-reading/level-reclaim-failure.svg` | `/learn/level-reclaim/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price reclaiming a level briefly and then failing back below the zone. | Reclaim Failure section. | Candlestick chart showing price reclaiming a level briefly and then failing back below the zone. | editor_verified | Supports reclaim failure review, keeps labels focused on trader response, and avoids buy/sell or predictive language. | `57664031` |
+| `public/images/learn/chart-reading/price-rejection-at-resistance.svg` | `/learn/price-rejection/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price pushing into resistance and rejecting back below the zone. | Quick Definition section. | Candlestick chart showing price pushing into resistance and rejecting back below the zone. | editor_verified | Supports rejection-at-level review, uses realistic candles and zones, and avoids reversal guarantee language. | `3ff3c7c4` |
+| `public/images/learn/chart-reading/rejection-wick-context.svg` | `/learn/price-rejection/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a long wick at a key level with follow-through context. | Rejection Needs Context section. | Candlestick chart showing a long wick at a key level with follow-through context. | editor_verified | Supports wick-context education, avoids treating every wick as a signal, and keeps labels focused on review. | `3ff3c7c4` |
 
 ## Editor Verification Summary
 
@@ -140,11 +142,19 @@ Level reclaim SVG batch verification:
 - The visuals are wired to article sections where they add learning value.
 - The batch is appropriate for the level reclaim upgrade.
 
+Price rejection SVG batch verification:
+
+- Both visuals support the actual price rejection lesson.
+- Visuals show realistic rejection behavior with red and green candlesticks, key-level zones, wick behavior, and follow-through context.
+- Labels teach review of rejection without buy/sell language or guaranteed-reversal claims.
+- The visuals are wired to article sections where they add learning value.
+- The batch is appropriate for the price rejection upgrade.
+
 ## Next Asset Batch Candidates
 
-After the first eight Chart Reading articles, the next high-value SVG batch should likely support one of these:
+After the first nine Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Price Rejection article: resistance rejection, support rejection/reclaim, rejection candle with volume context.
+1. Break Of Structure article: higher-high/higher-low shift, lower-high/lower-low shift, structure break review.
 2. Breakdown article: clean breakdown, failed breakdown/reclaim, breakdown with volume context.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
