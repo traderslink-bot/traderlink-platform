@@ -88,7 +88,7 @@ Recommended order for future runs:
 |---:|---|---|---|---|---|---|---|---|
 | 1 | Trading Foundations | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-foundations.md` with official SEC, Investor.gov, FINRA, and Regulation SHO source checks plus targeted source-note edits. |
 | 2 | Chart Reading And Market Structure | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
-| 3 | Volume, Liquidity And Order Flow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 3 | Volume, Liquidity And Order Flow | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-volume-liquidity.md` with official SEC, Investor.gov, FINRA, Nasdaq, and NYSE source checks plus targeted source-note edits. |
 | 4 | Risk Management And Trade Planning | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 5 | Technical Indicators And Tools | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 6 | Trading Styles And Playbooks | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 3: Accuracy/Source Audit** for **Volume, Liquidity And Order Flow**.
+Continue with **Pass 3: Accuracy/Source Audit** for **Risk Management And Trade Planning**.
 
 Reason:
 
@@ -222,12 +222,13 @@ Reason:
 - Small-Cap Stocks, Float And Dilution Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-small-cap-float-dilution.md`.
 - Halts And High-Volatility Events Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-halts-high-volatility.md`.
 - Trading Foundations Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trading-foundations.md`.
-- Volume, Liquidity And Order Flow is now the next useful source-sensitive course because it includes bid/ask, spread, liquidity, slippage, market orders versus limit orders, Level 2, time and sales, and other execution mechanics that should be checked against official sources before UI planning.
+- Volume, Liquidity And Order Flow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-volume-liquidity.md`.
+- Risk Management And Trade Planning is now the next useful source-sensitive course because it includes stop-loss, mental versus hard stops, max loss, daily loss limits, risk/reward, holding through news, and overnight risk. The next pass should verify order behavior, stop-order caveats, risk-control language, and any guarantee-sensitive claims.
 - Pass 3 should verify factual details and official-source references before the Academy moves toward production UI planning.
 
 Output should include:
 
-- A Volume, Liquidity And Order Flow accuracy/source audit.
+- A Risk Management And Trade Planning accuracy/source audit.
 - Any small markdown edits needed.
 - Source-sensitive findings and corrections.
 - Official-source references for SEC, Investor.gov, FINRA, exchanges, and market-structure/order-mechanics sources where needed.

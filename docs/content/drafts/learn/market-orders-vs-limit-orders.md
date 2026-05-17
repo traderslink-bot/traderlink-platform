@@ -90,6 +90,8 @@ The basic tradeoff:
 
 Both order types can create problems if used without context.
 
+Source check: Investor.gov explains that market orders seek immediate execution but do not guarantee execution price, while limit orders set a maximum buy price or minimum sell price but may not execute. Neither order type is universally better; the tradeoff depends on liquidity, spread, speed, size, and risk.
+
 ## Why Order Type Matters
 
 Order type matters because the price on the chart is not always the price the trader gets.
