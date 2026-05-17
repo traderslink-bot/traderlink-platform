@@ -1163,12 +1163,12 @@ The 217 content-upgraded lessons are not throwaway work. They are now the Academ
 Current best next editorial action:
 
 ```text
-Academy visual/UI-readiness review
+Create Batch 1 Technical Indicators SVG assets
 ```
 
 Reason:
 
-All 217 content-upgraded lessons and path hubs represented in this index have completed the first Academy format migration or readiness check. The highest-value next work is a visual/UI-readiness review: decide which Academy-ready lessons need additional realistic SVGs, then prepare production implementation from the existing markdown metadata without changing production website files in this content workflow.
+The Academy visual/UI-readiness review is complete in `docs/content/learn-academy-visual-ui-readiness-review.md`. All 217 content-upgraded lessons and path hubs represented in this index have completed the first Academy format migration or readiness check. The highest-value next content-only work is the first targeted visual batch for Technical Indicators And Tools.
 
 ## Recommended Work Method From Here
 

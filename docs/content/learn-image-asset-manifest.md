@@ -42,6 +42,14 @@ journey_map
 
 ## Asset Table
 
+The Academy-wide visual/UI-readiness review is complete in:
+
+```text
+docs/content/learn-academy-visual-ui-readiness-review.md
+```
+
+Use that file as the source of truth for planned future SVG batches. Do not add planned SVGs to lesson frontmatter or production UI until the SVG exists, is added to this manifest, and is editor-verified.
+
 | Asset File | Related Article/Slug | Learning Track | Visual Type | Purpose | Suggested Placement | Alt Text | Status | Editor Verification | Commit SHA |
 |---|---|---|---|---|---|---|---|---|---|
 | `public/images/learn/chart-reading/chart-pattern-context-map.svg` | `/learn/chart-patterns/` | Chart Patterns In Context | realistic_candlestick_chart | Show chart patterns as combinations of levels, trend, volume, and risk context. | Intro visual after opening context. | Educational chart showing patterns as combinations of levels, trend, volume, and risk context. | editor_verified | Supports the chart-pattern course opener, uses realistic candles and volume bars, and frames patterns as review structures rather than predictions. | `d3598bf8` |
