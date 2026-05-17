@@ -12,12 +12,15 @@ search_intent: "Learn what lower highs and lower lows mean, how traders read dow
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review trades around lower highs, lower lows, structure shifts, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 14
+academy_module: "Swing Structure"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/higher-highs-higher-lows/"
 recommended_next: "/learn/pivot-levels/"
 visual_assets:
@@ -44,6 +47,16 @@ meta_description: "Learn what lower highs and lower lows mean, how traders read 
 Lower highs and lower lows describe weakening or downward market structure. Price bounces, fails below the prior swing high, breaks to a lower swing low, and then repeats the pattern.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Higher Highs and Higher Lows](/learn/higher-highs-higher-lows/) and [Swing Highs and Swing Lows](/learn/swing-highs-and-swing-lows/), then leads into practical level review with [Pivot Levels](/learn/pivot-levels/) and other intraday reference levels.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain lower highs and lower lows in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 Lower-high and lower-low structure can help traders recognize weakness and avoid fighting a chart that is losing support. It does not mean price has to keep dropping, and it is not a standalone trade signal.
 
@@ -206,7 +219,7 @@ Common mistakes with lower highs and lower lows include:
 
 Lower highs and lower lows are useful, but they are not a complete trade plan by themselves.
 
-## Lower High Lower Low Checklist
+## Practical Checklist
 
 Before using this structure in a plan or review, ask:
 
@@ -223,7 +236,7 @@ Before using this structure in a plan or review, ask:
 
 This checklist keeps the concept tied to practical decisions and review.
 
-## How To Review Lower Highs And Lower Lows In Your Trading Journal
+## Apply This In Review
 
 Lower-high and lower-low review can show whether a trader respected weakness or kept fighting it.
 
@@ -240,7 +253,7 @@ Ask:
 
 Over time, this review can reveal whether repeated losses happen when trades are taken against weak structure.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review decisions around entries, exits, adds, reductions, and trade management.
 

@@ -12,12 +12,15 @@ search_intent: "Learn what previous day high and previous day low mean, why trad
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review trades around previous day levels, trade location, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 16
+academy_module: "Intraday Reference Levels"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/pivot-levels/"
 recommended_next: "/learn/premarket-high-low/"
 visual_assets:
@@ -44,6 +47,16 @@ meta_description: "Learn why traders watch previous day high and low, how PDH/PD
 The previous day high and previous day low are the highest and lowest prices from the prior regular trading session. Traders often mark these levels before the next session because they are objective, visible reference points.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Pivot Levels](/learn/pivot-levels/) and leads into [Premarket High Low](/learn/premarket-high-low/), [High of Day](/learn/high-of-day/), and market open review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain previous day high and low in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 Previous day levels can help traders compare today's price action against yesterday's range. They do not guarantee a breakout, breakdown, bounce, rejection, or continuation.
 
@@ -205,7 +218,7 @@ Common mistakes around previous day high and low include:
 
 The level gives structure. The reaction around the level gives the review.
 
-## Previous Day High Low Checklist
+## Practical Checklist
 
 Before using PDH or PDL in a plan or review, ask:
 
@@ -222,7 +235,7 @@ Before using PDH or PDL in a plan or review, ask:
 
 This checklist keeps previous day levels practical and reviewable.
 
-## How To Review PDH And PDL In Your Trading Journal
+## Apply This In Review
 
 Previous day levels are useful for journaling because they can be marked objectively before the session.
 
@@ -239,7 +252,7 @@ Ask:
 
 This helps turn level trading from a vague chart idea into a reviewable process.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own trades with more structure.
 

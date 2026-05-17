@@ -12,12 +12,15 @@ search_intent: "Learn what pivot levels are, why traders watch chart turning poi
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review trades around pivot levels, trade location, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 15
+academy_module: "Intraday Reference Levels"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/lower-highs-lower-lows/"
 recommended_next: "/learn/previous-day-high-low/"
 visual_assets:
@@ -45,6 +48,16 @@ meta_description: "Learn what pivot levels are, why traders watch chart turning 
 Pivot levels are price areas where a stock has clearly turned, paused, rejected, bounced, or shifted direction. Traders use them as reference areas for planning and review.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on support, resistance, swing points, and trend structure, then leads into objective session levels like [Previous Day High Low](/learn/previous-day-high-low/) and [Premarket High Low](/learn/premarket-high-low/).
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain pivot levels in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 A pivot level is not a prediction. It is a place on the chart where price behavior deserves attention and where a trade plan may need clearer risk, confirmation, or review.
 
@@ -208,7 +221,7 @@ Common mistakes with pivot levels include:
 
 A useful pivot level should make the trade easier to review. If the level is only clear after the fact, it probably did not help the decision.
 
-## Pivot Level Checklist
+## Practical Checklist
 
 Before using a pivot in a trade plan or journal review, ask:
 
@@ -225,7 +238,7 @@ Before using a pivot in a trade plan or journal review, ask:
 
 This checklist keeps pivot levels practical.
 
-## How To Review Pivot Levels In Your Trading Journal
+## Apply This In Review
 
 Pivot levels are useful for reviewing trade location and trade management.
 
@@ -242,7 +255,7 @@ Ask:
 
 This kind of review can show whether you are using levels as a process or only as a label.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own trades with more structure.
 

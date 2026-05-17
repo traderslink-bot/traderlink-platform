@@ -12,12 +12,15 @@ search_intent: "Learn what compression trading means, why traders watch tighteni
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review compression trades, failed breaks, timing, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 21
+academy_module: "Ranges And Compression"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/breakdown-trading/"
 recommended_next: "/learn/consolidation/"
 visual_assets:
@@ -44,6 +47,16 @@ meta_description: "Learn what compression trading means, why traders watch tight
 Compression trading focuses on moments when price action tightens and volatility contracts. The chart may show smaller candles, tighter pullbacks, lower volume, and price pressing near a level.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on breakout and breakdown review, then leads into [Consolidation Trading](/learn/consolidation/) and volume-based review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain compression in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 Compression can lead to expansion, but it does not guarantee direction. It can break higher, break lower, fake out, or stay choppy.
 
@@ -146,7 +159,7 @@ Common compression trading mistakes include:
 
 Compression should make risk clearer, not just make the chart look interesting.
 
-## Compression Trading Checklist
+## Practical Checklist
 
 Before using compression in a trade plan or review, ask:
 
@@ -163,7 +176,7 @@ Before using compression in a trade plan or review, ask:
 
 This checklist keeps compression review practical.
 
-## How To Review Compression In Your Trading Journal
+## Apply This In Review
 
 Compression trades are worth reviewing because they test patience and timing.
 
@@ -179,7 +192,7 @@ Ask:
 
 A journal can help show whether compression improves entry quality or becomes another reason to anticipate moves too early.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own trades with more structure.
 

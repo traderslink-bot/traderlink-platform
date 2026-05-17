@@ -12,12 +12,15 @@ search_intent: "Learn what higher highs and higher lows mean, how traders read u
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review trades around higher highs, higher lows, structure changes, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 13
+academy_module: "Swing Structure"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/swing-highs-and-swing-lows/"
 recommended_next: "/learn/lower-highs-lower-lows/"
 visual_assets:
@@ -44,6 +47,16 @@ meta_description: "Learn what higher highs and higher lows mean, how traders rea
 Higher highs and higher lows describe rising market structure. Price pushes to a new swing high, pulls back, holds above the prior swing low, and then pushes to another higher area.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Swing Highs and Swing Lows](/learn/swing-highs-and-swing-lows/) and leads into [Lower Highs and Lower Lows](/learn/lower-highs-lower-lows/), [Break of Structure](/learn/break-of-structure/), and practical trade review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain higher highs and higher lows in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 Higher-high and higher-low structure can help traders understand whether a chart is still making upward progress. It does not mean the move has to continue, and it should never be treated as a standalone trade signal.
 
@@ -206,7 +219,7 @@ Common mistakes with higher highs and higher lows include:
 
 Higher highs and higher lows are useful, but they are not a full trade plan by themselves.
 
-## Higher High Higher Low Checklist
+## Practical Checklist
 
 Before using this structure in a plan or review, ask:
 
@@ -223,7 +236,7 @@ Before using this structure in a plan or review, ask:
 
 This checklist keeps the structure tied to practical review.
 
-## How To Review Higher Highs And Higher Lows In Your Trading Journal
+## Apply This In Review
 
 Higher-high and higher-low review can show whether a trade matched the actual chart structure or reacted to momentum excitement.
 
@@ -240,7 +253,7 @@ Ask:
 
 Over time, this review can show whether you trade better near planned pullbacks or worse when chasing late pushes.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review decisions around entries, exits, adds, reductions, and trade management.
 

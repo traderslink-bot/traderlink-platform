@@ -13,12 +13,15 @@ search_intent: "Learn what breakout trading is, how traders evaluate breakout qu
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review breakout trades, failed breakouts, execution, risk, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 6
+academy_module: "Breaks And Reclaims"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/key-levels-trading/"
 recommended_next: "/learn/level-breakout/"
 visual_assets:
@@ -48,6 +51,16 @@ meta_description: "Learn how breakout trading works, how to review breakout qual
 Breakout trading is a style of trading where traders watch price move through an important level, such as resistance, high of day, premarket high, previous day high, or the top of a consolidation range.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Key Levels Trading](/learn/key-levels-trading/) and leads into level breakouts, breakdowns, reclaims, rejections, fakeouts, volume review, and trade management.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain breakout trading in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 A breakout is not automatically a good trade. The quality depends on the level, volume, liquidity, catalyst context, risk, follow-through, and whether the trader planned the trade before the move or chased after it.
 
@@ -218,7 +231,7 @@ Common breakout trading mistakes include:
 
 A breakout can be a valid setup, but a poor entry can still make it difficult to manage.
 
-## Breakout Trading Checklist
+## Practical Checklist
 
 Before using a breakout in a trade plan, ask:
 
@@ -235,7 +248,7 @@ Before using a breakout in a trade plan, ask:
 
 This checklist helps turn a breakout from an emotional moment into a reviewable setup.
 
-## How To Review Breakouts In Your Trading Journal
+## Apply This In Review
 
 After a breakout trade, review the setup and the execution separately.
 
@@ -254,7 +267,7 @@ Ask:
 
 Breakout review should focus on whether the trader respected the level, the risk, and the plan.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own breakout trades with more structure.
 

@@ -12,12 +12,15 @@ search_intent: "Learn what a break of structure is, why traders watch structure 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review structure-based trades, invalidation, execution, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Advanced"
+academy_level: "Advanced"
+academy_order: 11
+academy_module: "Reaction And Structure"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/price-rejection/"
 recommended_next: "/learn/swing-highs-and-swing-lows/"
 visual_assets:
@@ -44,6 +47,16 @@ meta_description: "Learn what break of structure means in trading, why market st
 A break of structure happens when price breaks an important swing high, swing low, support area, or resistance area that helped define the current chart structure.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Price Rejection](/learn/price-rejection/) and leads into [Swing Highs and Swing Lows](/learn/swing-highs-and-swing-lows/), higher-high/higher-low structure, lower-high/lower-low structure, and trade management review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain break of structure in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 Traders watch breaks of structure because they can show that control may be shifting. But a structure break does not guarantee the next move. It is a context change that should be reviewed with level quality, volume, timeframe, and risk.
 
@@ -185,7 +198,7 @@ Common mistakes with break of structure include:
 
 A useful break of structure should be tied to the actual trade idea, not just any random level on the chart.
 
-## Break Of Structure Checklist
+## Practical Checklist
 
 Before using break of structure in a trade plan or review, ask:
 
@@ -202,7 +215,7 @@ Before using break of structure in a trade plan or review, ask:
 
 This checklist keeps structure tied to practical review.
 
-## How To Review Break Of Structure In Your Trading Journal
+## Apply This In Review
 
 Break-of-structure review helps traders understand whether they adapted when the chart changed.
 
@@ -219,7 +232,7 @@ Ask:
 
 The goal is not to find a perfect label. The goal is to understand whether the trade idea was still valid after the chart changed.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review decisions like entries, exits, adds, reductions, and trade management.
 

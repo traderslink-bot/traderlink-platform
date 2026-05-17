@@ -12,12 +12,15 @@ search_intent: "Learn what consolidation trading means, why traders watch sidewa
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review consolidation trades, range breaks, failed moves, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 22
+academy_module: "Ranges And Compression"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/compression/"
 recommended_next: "/learn/gap-fill-trading/"
 visual_assets:
@@ -44,6 +47,16 @@ meta_description: "Learn what consolidation trading means, why traders watch tig
 Consolidation trading focuses on price areas where a stock stops trending and trades inside a defined range. Instead of pushing clearly higher or lower, price pauses, rotates, and builds structure.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It follows [Compression Trading](/learn/compression/) and connects directly to breakout, breakdown, range support, and range resistance review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain consolidation in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 A consolidation can lead to a breakout, a breakdown, or more sideways action. The range itself does not guarantee the next move.
 
@@ -147,7 +160,7 @@ Common consolidation trading mistakes include:
 
 A consolidation should help define risk. If the range does not help define risk, it may not be useful.
 
-## Consolidation Trading Checklist
+## Practical Checklist
 
 Before using consolidation in a plan or review, ask:
 
@@ -164,7 +177,7 @@ Before using consolidation in a plan or review, ask:
 
 This checklist keeps consolidation review tied to the actual range.
 
-## How To Review Consolidation In Your Trading Journal
+## Apply This In Review
 
 Consolidation trades are useful to review because they show whether the trader waited for structure or forced an entry.
 
@@ -181,7 +194,7 @@ Ask:
 
 A journal can help show whether consolidation trades are improving timing or just giving more reasons to overtrade.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own trades with more structure.
 

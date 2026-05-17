@@ -12,12 +12,15 @@ search_intent: "Learn what low of day means, why traders watch LOD levels, commo
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review low-of-day trades, breakdown failures, risk discipline, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 19
+academy_module: "Intraday Reference Levels"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/high-of-day/"
 recommended_next: "/learn/new-high-of-day/"
 visual_assets:
@@ -44,6 +47,16 @@ meta_description: "Learn what low of day means, why traders watch LOD levels, co
 Low of day is the lowest price a stock has reached during the current trading session. Traders often shorten it to LOD.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It follows [High of Day](/learn/high-of-day/) and helps traders review the opposite side of the intraday map: support pressure, breakdown attempts, failed breakdowns, and risk discipline.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain low of day in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 LOD is useful context, but it does not guarantee a bounce or continuation lower.
 
@@ -170,7 +183,7 @@ Common mistakes around low of day include:
 
 LOD can be useful, but only if the trader has a plan for both hold and fail scenarios.
 
-## Low Of Day Checklist
+## Practical Checklist
 
 Before using LOD in a plan or review, ask:
 
@@ -187,7 +200,7 @@ Before using LOD in a plan or review, ask:
 
 This checklist keeps LOD review practical.
 
-## How To Review LOD In Your Trading Journal
+## Apply This In Review
 
 Low-of-day trades are worth reviewing because they often expose risk discipline issues.
 
@@ -204,7 +217,7 @@ Ask:
 
 Reviewing these questions helps traders understand whether they used LOD as structure or as an excuse to stay in a weak trade.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own trades with more structure.
 

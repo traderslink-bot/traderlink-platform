@@ -12,12 +12,15 @@ search_intent: "Learn what high of day means, why traders watch HOD levels, comm
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review high-of-day trades, chase risk, breakout failures, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 18
+academy_module: "Intraday Reference Levels"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/premarket-high-low/"
 recommended_next: "/learn/low-of-day/"
 visual_assets:
@@ -44,6 +47,16 @@ meta_description: "Learn what high of day means, why traders watch HOD levels, c
 High of day is the highest price a stock has reached during the current trading session. Traders often shorten it to HOD.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Premarket High Low](/learn/premarket-high-low/) and [Previous Day High Low](/learn/previous-day-high-low/), then leads into [Low of Day](/learn/low-of-day/) and [New High of Day](/learn/new-high-of-day/).
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain high of day in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 HOD is one of the most visible intraday levels. It can help traders review strength, breakout attempts, failed breakouts, and chase risk. It does not guarantee continuation.
 
@@ -170,7 +183,7 @@ Common mistakes around high of day include:
 
 HOD is useful only when it improves the plan and the review.
 
-## High Of Day Checklist
+## Practical Checklist
 
 Before using HOD in a plan or review, ask:
 
@@ -187,7 +200,7 @@ Before using HOD in a plan or review, ask:
 
 This checklist keeps HOD review practical.
 
-## How To Review HOD In Your Trading Journal
+## Apply This In Review
 
 High-of-day trades are worth reviewing because they often reveal chasing, FOMO, and breakout discipline issues.
 
@@ -204,7 +217,7 @@ Ask:
 
 Reviewing these details helps separate strong execution from emotional entry timing.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own trades with more structure.
 

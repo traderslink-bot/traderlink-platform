@@ -13,12 +13,15 @@ search_intent: "Learn what resistance levels are, why traders watch them, how re
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review trades around resistance levels, breakouts, failed breakouts, execution, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 4
+academy_module: "Core Levels"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/support-levels/"
 recommended_next: "/learn/key-levels-trading/"
 visual_assets:
@@ -48,6 +51,16 @@ meta_description: "Learn how resistance levels work, how resistance can reject, 
 Resistance levels are price areas where a stock has previously struggled to move higher, stalled, rejected, or failed to hold above a zone. Traders watch resistance because it can help them understand price location, chase risk, breakout quality, and whether a move is still behaving cleanly.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Support Levels](/learn/support-levels/) and leads into [Key Levels Trading](/learn/key-levels-trading/), breakout trading, rejections, fakeouts, and trade review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain resistance levels in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 Resistance is useful context, not a promise. A resistance level can reject, break, consolidate, fake out, become support later, or stop mattering. The goal is to read the level clearly, plan around it, and review your decisions afterward.
 
@@ -233,7 +246,7 @@ Common mistakes around resistance levels include:
 
 A resistance level should make the plan clearer. If it creates overconfidence or fear by itself, it is being used the wrong way.
 
-## Resistance Level Checklist
+## Practical Checklist
 
 Before using a resistance level in a trade plan, ask:
 
@@ -250,7 +263,7 @@ Before using a resistance level in a trade plan, ask:
 
 This checklist is meant to slow down the read. Resistance is most useful when it helps a trader avoid emotional entries and review breakout quality.
 
-## How To Review Resistance Levels In Your Trading Journal
+## Apply This In Review
 
 Resistance-level review can be revealing because many trader mistakes happen near the top of a move.
 
@@ -269,7 +282,7 @@ After a trade, ask:
 
 Over time, these questions can show whether resistance levels are improving your process or just becoming stories after the trade.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own decisions around levels with more structure.
 

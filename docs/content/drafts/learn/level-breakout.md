@@ -13,12 +13,15 @@ search_intent: "Learn what a level breakout is, why traders review what happens 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review level breakouts, retests, failed holds, execution, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 8
+academy_module: "Breaks And Reclaims"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/breakout-trading/"
 recommended_next: "/learn/level-reclaim/"
 visual_assets:
@@ -47,6 +50,16 @@ meta_description: "Learn what a level breakout is, how to review breakout holds,
 A level breakout happens when price moves above an important resistance area, range high, high of day, premarket high, previous day high, or another key level. Traders watch level breakouts because they can show price trying to move into a new area.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Breakout Trading](/learn/breakout-trading/) and leads into [Level Reclaim](/learn/level-reclaim/), price rejection, failed setups, and trade review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain level breakouts in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 The key question is not only whether price broke the level. The better question is what happened after the break: did price hold, retest, fail, reject, or reclaim?
 
@@ -200,7 +213,7 @@ Common level breakout mistakes include:
 
 A level breakout should be reviewable. If the trader cannot explain the level, confirmation, and failure point, the setup may have been too vague.
 
-## Level Breakout Checklist
+## Practical Checklist
 
 Before using a level breakout in a trade plan, ask:
 
@@ -217,7 +230,7 @@ Before using a level breakout in a trade plan, ask:
 
 This checklist helps keep the focus on the level and the trader's response.
 
-## How To Review Level Breakouts In Your Trading Journal
+## Apply This In Review
 
 Level breakout review can show whether a trader is patient or reactive.
 
@@ -234,7 +247,7 @@ Ask:
 
 The goal is to understand whether the breakout was planned and reviewable, not just whether it made or lost money.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own breakout decisions with more structure.
 

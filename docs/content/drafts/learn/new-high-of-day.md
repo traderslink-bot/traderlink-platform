@@ -12,12 +12,15 @@ search_intent: "Learn what new high of day means, why traders watch NHOD alerts,
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review new-high-of-day trades, alert reactions, chase risk, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 20
+academy_module: "Intraday Reference Levels"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/low-of-day/"
 recommended_next: "/learn/breakout-trading/"
 visual_assets:
@@ -43,6 +46,16 @@ meta_description: "Learn what new high of day means, why traders watch NHOD aler
 New high of day means a stock has traded above its previous highest price of the current session. Traders often shorten it to NHOD.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [High of Day](/learn/high-of-day/) and [Low of Day](/learn/low-of-day/), then connects back to [Breakout Trading](/learn/breakout-trading/) and trade review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain new high of day in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 NHOD alerts can be useful because they show fresh intraday highs. They can also create emotional entries if the trader reacts to the alert before checking structure, volume, resistance, and extension risk.
 
@@ -150,7 +163,7 @@ Common mistakes around new high of day include:
 
 New highs can be useful, but only when the trade has context and risk control.
 
-## New High Of Day Checklist
+## Practical Checklist
 
 Before using NHOD in a plan or review, ask:
 
@@ -167,7 +180,7 @@ Before using NHOD in a plan or review, ask:
 
 This checklist keeps NHOD review practical.
 
-## How To Review NHOD Trades In Your Trading Journal
+## Apply This In Review
 
 New-high-of-day trades are useful for reviewing breakout discipline.
 
@@ -184,7 +197,7 @@ Ask:
 
 A journal can help show whether NHOD trades are part of a structured setup or just reactive entries.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own trades with more structure.
 

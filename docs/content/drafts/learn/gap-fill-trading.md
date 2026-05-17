@@ -12,12 +12,15 @@ search_intent: "Understand what gap fill trading means, why traders watch gaps, 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review gap trades, failed fills, catalyst context, execution, and trade management patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 23
+academy_module: "Gaps"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/consolidation/"
 recommended_next: "/learn/volume/"
 visual_assets:
@@ -44,6 +47,16 @@ meta_description: "Learn what gap fill trading means, why traders watch price ga
 Gap fill trading is based on the idea that a stock may move back into a price gap left between one trading session and another. Traders watch gap areas because they can become important chart reference zones.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on consolidation and previous-day levels, and it connects chart gaps with catalyst, volume, and trade review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain gap fills in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 A gap fill is not guaranteed. Some gaps fill quickly. Some take days or weeks. Some never fill. The important part is understanding why the gap happened, how price reacts near the gap area, and whether volume supports the move.
 
@@ -148,7 +161,7 @@ Common gap fill mistakes include:
 
 Some gaps can hold for a long time, especially if the catalyst changes how the market values the stock.
 
-## Gap Fill Trading Checklist
+## Practical Checklist
 
 Before using a gap fill idea in a plan or review, ask:
 
@@ -165,7 +178,7 @@ Before using a gap fill idea in a plan or review, ask:
 
 This checklist keeps gap fill review tied to price behavior instead of assumption.
 
-## How To Review Gap Fills In Your Trading Journal
+## Apply This In Review
 
 Gap fill trades should be reviewed with clear chart context.
 
@@ -182,7 +195,7 @@ Ask:
 
 A good gap fill review helps traders see whether they were trading a structured level or just assuming price had to return.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own trades with more structure.
 

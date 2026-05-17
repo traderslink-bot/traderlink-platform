@@ -12,12 +12,15 @@ search_intent: "Learn what swing highs and swing lows are, how traders use them 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review trades around swing highs, swing lows, structure changes, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Foundation"
+academy_level: "Foundation"
+academy_order: 12
+academy_module: "Swing Structure"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/break-of-structure/"
 recommended_next: "/learn/higher-highs-higher-lows/"
 visual_assets:
@@ -43,6 +46,16 @@ meta_description: "Learn what swing highs and swing lows are, how traders read m
 Swing highs and swing lows are turning points on a chart. Traders use them to understand structure, mark possible support and resistance, and review whether price is making progress, weakening, or breaking down.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Break of Structure](/learn/break-of-structure/) and leads into [Higher Highs and Higher Lows](/learn/higher-highs-higher-lows/) and [Lower Highs and Lower Lows](/learn/lower-highs-lower-lows/).
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain swing highs and swing lows in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 Swing points are simple ideas, but they can tell you a lot about how a trade is developing. The important part is to mark the obvious turns, not every tiny candle wiggle.
 
@@ -173,7 +186,7 @@ Common mistakes with swing highs and swing lows include:
 
 A useful swing point is visible enough to help planning and review.
 
-## Swing High And Swing Low Checklist
+## Practical Checklist
 
 Before using swing points in a trade plan or review, ask:
 
@@ -190,7 +203,7 @@ Before using swing points in a trade plan or review, ask:
 
 This checklist keeps swing analysis practical.
 
-## How To Review Swing Points In Your Trading Journal
+## Apply This In Review
 
 Swing highs and swing lows are useful for reviewing whether your trade matched the actual structure.
 
@@ -206,7 +219,7 @@ Ask:
 
 This type of review helps separate a planned structure-based trade from a reaction to short-term movement.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review trades around structure with more clarity.
 

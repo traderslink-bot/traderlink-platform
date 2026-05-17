@@ -12,12 +12,15 @@ search_intent: "Learn what a level reclaim is, why traders watch price winning b
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review level reclaims, reclaim failures, execution, risk, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 9
+academy_module: "Breaks And Reclaims"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/level-breakout/"
 recommended_next: "/learn/price-rejection/"
 visual_assets:
@@ -46,6 +49,16 @@ meta_description: "Learn what a level reclaim is, why traders watch reclaimed le
 A level reclaim happens when price loses an important level, then moves back above it and tries to hold. Traders watch reclaims because they can show that a failed breakdown, failed flush, or temporary weakness is being repaired.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Level Breakout](/learn/level-breakout/) and leads into [Price Rejection](/learn/price-rejection/), fakeouts, break of structure, and trade review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain level reclaims in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 A reclaim can be useful context, but it does not guarantee continuation. Price still needs to hold the reclaimed level and prove that the move is not just another fakeout.
 
@@ -189,7 +202,7 @@ Common level reclaim mistakes include:
 
 A clean reclaim should make the trade easier to define. If the failure point is unclear, the setup may be messy.
 
-## Level Reclaim Checklist
+## Practical Checklist
 
 Before using a reclaim in a trade plan, ask:
 
@@ -206,7 +219,7 @@ Before using a reclaim in a trade plan, ask:
 
 This checklist helps separate a structured reclaim from a fast bounce that only looks good for a moment.
 
-## How To Review Reclaims In Your Trading Journal
+## Apply This In Review
 
 Level reclaim trades are useful to review because they often involve fast decisions after a shakeout or failed breakdown.
 
@@ -221,9 +234,9 @@ Ask:
 - Did the reclaim fit the broader market structure?
 - Did I treat the reclaim as confirmation, or did I react to the first bounce?
 
-A trading journal can help show whether reclaims are a real part of your process or just another form of chasing.
+Structured review notes can help show whether reclaims are a real part of your process or just another form of chasing.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review reclaim trades with more structure.
 

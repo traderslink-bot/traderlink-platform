@@ -12,12 +12,15 @@ search_intent: "Learn what breakdown trading is, how traders review support brea
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review breakdown trades, failed breakdowns, risk decisions, and repeated behavior patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 7
+academy_module: "Breaks And Reclaims"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/new-high-of-day/"
 recommended_next: "/learn/level-reclaim/"
 visual_assets:
@@ -45,6 +48,16 @@ meta_description: "Learn how breakdown trading works, how to review support brea
 Breakdown trading means watching price move below an important support level, range low, low of day, premarket low, previous day low, or another chart area that helped define the current structure.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It mirrors [Breakout Trading](/learn/breakout-trading/) on the downside and connects support levels, low of day, lower-high/lower-low structure, failed breakdowns, and reclaim review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain breakdown trading in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 A breakdown is not automatically a good trade. The quality depends on level quality, volume, liquidity, spread, extension, nearby support, and whether the trader had a plan before the level broke.
 
@@ -168,7 +181,7 @@ Common breakdown trading mistakes include:
 
 A breakdown can be a valid setup or a valid risk warning, but a poor entry or poor response can still make it difficult to manage.
 
-## Breakdown Trading Checklist
+## Practical Checklist
 
 Before using a breakdown in a trade plan or review, ask:
 
@@ -185,7 +198,7 @@ Before using a breakdown in a trade plan or review, ask:
 
 This checklist helps turn a breakdown from an emotional moment into a reviewable setup.
 
-## How To Review Breakdowns In Your Trading Journal
+## Apply This In Review
 
 After a breakdown trade or breakdown-related exit, review the setup and the execution separately.
 
@@ -204,7 +217,7 @@ Ask:
 
 Breakdown review should focus on whether the trader respected the level, the risk, and the plan.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own breakdown trades and risk decisions with more structure.
 

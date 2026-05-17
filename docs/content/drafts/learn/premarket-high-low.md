@@ -12,12 +12,15 @@ search_intent: "Learn what premarket high and premarket low mean, why traders wa
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review trades around premarket levels, market open decisions, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 17
+academy_module: "Intraday Reference Levels"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/previous-day-high-low/"
 recommended_next: "/learn/high-of-day/"
 visual_assets:
@@ -44,6 +47,16 @@ meta_description: "Learn why traders watch premarket high and low levels, how PM
 The premarket high and premarket low are the highest and lowest prices a stock trades before the regular market session opens. Day traders often mark these levels because they can shape the early-session map.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Previous Day High Low](/learn/previous-day-high-low/) and leads into [High of Day](/learn/high-of-day/), [Market Open Trading](/learn/market-open-trading/), and day-trading workflow review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain premarket high and low in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 Premarket levels can be useful, especially on active stocks with news, but they do not guarantee a breakout, breakdown, bounce, rejection, or continuation.
 
@@ -208,7 +221,7 @@ Common mistakes around premarket high and low include:
 
 The level gives structure. The reaction around the level gives the review.
 
-## Premarket High Low Checklist
+## Practical Checklist
 
 Before using PMH or PML in a plan or review, ask:
 
@@ -225,7 +238,7 @@ Before using PMH or PML in a plan or review, ask:
 
 This checklist keeps premarket levels practical.
 
-## How To Review PMH And PML In Your Trading Journal
+## Apply This In Review
 
 Premarket level review is especially useful for day traders who trade the open.
 
@@ -242,7 +255,7 @@ Ask:
 
 Reviewing these questions can show whether you are using premarket levels as structure or reacting emotionally to early movement.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own trades with more structure.
 

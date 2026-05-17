@@ -13,12 +13,15 @@ search_intent: "Learn what support levels are, why traders watch them, how suppo
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review trades around support levels, failed support, reclaims, execution, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 3
+academy_module: "Core Levels"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/how-to-draw-support-and-resistance/"
 recommended_next: "/learn/resistance-levels/"
 visual_assets:
@@ -48,6 +51,16 @@ meta_description: "Learn how support levels work, how support can hold, break, o
 Support levels are price areas where a stock has previously found buying interest, paused during a decline, or held above a meaningful zone. Traders watch support because it can help them understand price location, risk, and whether a trade idea is still behaving as expected.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [How to Draw Support and Resistance](/learn/how-to-draw-support-and-resistance/) and leads into [Resistance Levels](/learn/resistance-levels/), breakdowns, reclaims, key levels, and trade review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain support levels in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 Support is useful context, not a promise. A support level can hold, break, fake out, reclaim, or turn into resistance later. The educational goal is to learn how to read the level, plan around it, and review your decisions after the trade.
 
@@ -230,7 +243,7 @@ Common mistakes around support levels include:
 
 A support level should make the plan clearer. If it becomes a reason to avoid accountability, it is being used the wrong way.
 
-## Support Level Checklist
+## Practical Checklist
 
 Before using a support level in a trade plan, ask:
 
@@ -247,7 +260,7 @@ Before using a support level in a trade plan, ask:
 
 This checklist is meant to slow down the read. Support is most useful when it helps a trader define risk before emotion takes over.
 
-## How To Review Support Levels In Your Trading Journal
+## Apply This In Review
 
 Support-level review is important because many risk-management mistakes happen around broken levels.
 
@@ -267,7 +280,7 @@ After a trade, ask:
 
 Over time, these questions can show whether support levels are improving your process or simply giving you a story after the fact.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own decisions around levels with more structure.
 

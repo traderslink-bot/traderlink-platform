@@ -12,12 +12,15 @@ search_intent: "Learn what key levels are in trading, how to choose the levels t
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review trades around key levels, execution, risk, and repeated decision patterns."
 learning_track: "Chart Reading And Market Structure"
-learning_stage: "Practical"
+academy_level: "Practical"
+academy_order: 5
+academy_module: "Core Levels"
+academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/learn/resistance-levels/"
 recommended_next: "/learn/breakout-trading/"
 visual_assets:
@@ -47,6 +50,16 @@ meta_description: "Learn how key levels trading works, how to build a clean leve
 Key levels trading means using important price areas to plan, manage, and review trades. A key level might be support, resistance, a previous day high, a premarket high, a swing high, a swing low, a breakout area, or another chart zone where price has clearly reacted.
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Support Levels](/learn/support-levels/) and [Resistance Levels](/learn/resistance-levels/), then leads into breakout trading, breakdowns, reclaims, rejections, fakeouts, and intraday level review.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain key levels in chart-reading context.
+- Identify where it appears on a realistic chart.
+- Review the concept with levels, volume, liquidity, and risk in mind.
+- Avoid treating it as a guaranteed trading signal.
 
 The point is not to predict every move. The point is to know where price is, what level matters next, and what you will review if price holds, breaks, rejects, or reclaims.
 
@@ -234,7 +247,7 @@ Common key-level mistakes include:
 
 A clean level map should make decision-making easier. If it does not, simplify it.
 
-## Key Levels Trading Checklist
+## Practical Checklist
 
 Before using key levels in a trade plan, ask:
 
@@ -251,7 +264,7 @@ Before using key levels in a trade plan, ask:
 
 This checklist turns levels into a process instead of a chart-marking habit.
 
-## How To Review Key Levels In Your Trading Journal
+## Apply This In Review
 
 Key levels are one of the most useful things to review after a trade.
 
@@ -270,7 +283,7 @@ Ask:
 
 The goal is not to prove that every level was perfect. The goal is to learn whether your decisions around levels were planned, consistent, and risk-aware.
 
-## How Trader Intelligence Connects
+## Trader Intelligence Bridge
 
 Trader Intelligence is being built to help traders review their own trades with more structure.
 
