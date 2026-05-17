@@ -70,6 +70,7 @@ Review
 | Chart Reading article upgrade 7 | complete | `/learn/level-breakout/` upgraded with breakout retest/hold and failed-hold visuals. |
 | Chart Reading article upgrade 8 | complete | `/learn/level-reclaim/` upgraded with reclaim-and-hold and reclaim-failure visuals. |
 | Chart Reading article upgrade 9 | complete | `/learn/price-rejection/` upgraded with rejection-at-resistance and wick-context visuals. |
+| Chart Reading article upgrade 10 | complete | `/learn/break-of-structure/` upgraded with uptrend and downtrend structure-break visuals. |
 | Learn hub website build | not_started | Codex should not build until explicitly requested. |
 
 ## Track Upgrade Order
@@ -77,7 +78,7 @@ Review
 | Order | Learning Track | Status | Priority | Notes |
 |---:|---|---|---:|---|
 | 1 | Start Here For New Traders | not_started | 1 | Foundation path for new users. |
-| 2 | Chart Reading And Market Structure | in_progress | 1 | Support/resistance, level drawing, support/resistance levels, key levels, breakout trading, level breakout, level reclaim, and price rejection articles complete. Continue with break of structure, breakdown, fakeout, and intraday level concepts. |
+| 2 | Chart Reading And Market Structure | in_progress | 1 | Support/resistance, level drawing, support/resistance levels, key levels, breakout trading, level breakout, level reclaim, price rejection, and break of structure articles complete. Continue with swing highs/lows, trend structure, breakdown, fakeout, and intraday level concepts. |
 | 3 | News, Catalysts, Filings, And Dilution | not_started | 1 | High-value TradersLink differentiator. |
 | 4 | Risk, Discipline, And Psychology | not_started | 1 | Important coaching/retention path. |
 | 5 | Execution And Trade Review | not_started | 1 | Strongest Trader Intelligence bridge. |
@@ -118,7 +119,8 @@ Alternative future gold-standard article:
 | /learn/level-breakout/ | docs/content/drafts/learn/level-breakout.md | Chart Reading And Market Structure | Volume Liquidity And Order Flow, Execution And Trade Review | Practical | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed level breakout upgrade. Added learning path metadata, previous/next metadata, breakout retest/hold visual, failed-hold visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `1377793b` |
 | /learn/level-reclaim/ | docs/content/drafts/learn/level-reclaim.md | Chart Reading And Market Structure | Execution And Trade Review | Practical | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed level reclaim upgrade. Added learning path metadata, previous/next metadata, reclaim-and-hold visual, reclaim-failure visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `57664031` |
 | /learn/price-rejection/ | docs/content/drafts/learn/price-rejection.md | Chart Reading And Market Structure | Candlestick Patterns In Context, Execution And Trade Review | Practical | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed price rejection upgrade. Added learning path metadata, previous/next metadata, rejection-at-resistance visual, wick-context visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `3ff3c7c4` |
-| /learn/break-of-structure/ | docs/content/drafts/learn/break-of-structure.md | Chart Reading And Market Structure | Execution And Trade Review | Advanced | not_started | full_upgrade | 2 to 3 realistic SVG chart diagrams | No | 1 | Should teach structure shifts through higher highs/lows and lower highs/lows, avoid ICT-style certainty, and connect structure breaks to review. |  |
+| /learn/break-of-structure/ | docs/content/drafts/learn/break-of-structure.md | Chart Reading And Market Structure | Execution And Trade Review | Advanced | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed break of structure upgrade. Added learning path metadata, previous/next metadata, uptrend structure-break visual, downtrend structure-break visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `d03cf796` |
+| /learn/swing-highs-and-swing-lows/ | docs/content/drafts/learn/swing-highs-and-swing-lows.md | Chart Reading And Market Structure | Start Here For New Traders | Foundation | not_started | full_upgrade | 1 to 2 realistic SVG chart diagrams | No | 1 | Should teach swing point identification as the foundation for higher highs/lows, lower highs/lows, and break of structure. |  |
 | /learn/sec-filings/ | docs/content/drafts/learn/sec-filings.md | News, Catalysts, Filings, And Dilution | Small-Cap, Float, And Short Squeeze Context | Foundation | not_started | full_upgrade | 2 to 3 filing flow diagrams | No | 1 | Alternative gold-standard article. Needs beginner path, filing map, risk warnings, and links to dilution/offering concepts. |  |
 | /learn/start-here/ | docs/content/drafts/learn/start-here.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 journey map SVG | Yes | 1 | Gap article likely needed to introduce the learning system and guide new users. |  |
 | /learn/how-to-use-traderslink-learn/ | docs/content/drafts/learn/how-to-use-traderslink-learn.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 navigation diagram | Yes | 1 | Gap article likely needed to teach users how to move through learning paths. |  |
@@ -164,6 +166,8 @@ Summary of completed Chart Reading SVG batches:
 | public/images/learn/chart-reading/level-reclaim-failure.svg | /learn/level-reclaim/ | Chart Reading And Market Structure | realistic candlestick chart | Show reclaim failure below the level. | Reclaim Failure section. | Candlestick chart showing price reclaiming a level briefly and then failing back below the zone. | editor_verified | Supports reclaim failure review and avoids predictive claims. | `57664031` |
 | public/images/learn/chart-reading/price-rejection-at-resistance.svg | /learn/price-rejection/ | Chart Reading And Market Structure | realistic candlestick chart | Show price rejection at resistance. | Quick Definition section. | Candlestick chart showing price pushing into resistance and rejecting back below the zone. | editor_verified | Supports rejection-at-level review and avoids reversal certainty. | `3ff3c7c4` |
 | public/images/learn/chart-reading/rejection-wick-context.svg | /learn/price-rejection/ | Chart Reading And Market Structure | realistic candlestick chart | Show long wick rejection with follow-through context. | Rejection Needs Context section. | Candlestick chart showing a long wick at a key level with follow-through context. | editor_verified | Supports wick-context education without treating every wick as a signal. | `3ff3c7c4` |
+| public/images/learn/chart-reading/uptrend-structure-break.svg | /learn/break-of-structure/ | Chart Reading And Market Structure | realistic candlestick chart | Show uptrend structure breaking below the latest higher low. | Uptrend Structure Break section. | Candlestick chart showing higher highs and higher lows before price breaks below the latest higher low. | editor_verified | Supports uptrend structure-break review and avoids predictive claims. | `d03cf796` |
+| public/images/learn/chart-reading/downtrend-structure-break.svg | /learn/break-of-structure/ | Chart Reading And Market Structure | realistic candlestick chart | Show downtrend structure breaking above the latest lower high. | Downtrend Structure Break section. | Candlestick chart showing lower highs and lower lows before price breaks above the latest lower high. | editor_verified | Supports downtrend structure-break review and avoids reversal certainty. | `d03cf796` |
 
 ## Gap Article Tracker
 
@@ -191,15 +195,16 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | /learn/level-breakout/ | Completed level breakout article upgrade and created two supporting realistic SVG assets. | Passed. The article focuses on what happens after a level breaks, including retests, holds, and failed holds. It avoids buy/sell signals and guaranteed-outcome language, includes practical review prompts, and uses realistic candlestick visuals. | `1377793b` |
 | 2026-05-17 | /learn/level-reclaim/ | Completed level reclaim article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches lost-level, reclaim-and-hold, and reclaim-failure behavior without treating reclaims as safe or predictive. It includes practical review prompts, common mistakes, checklist, and a soft Trader Intelligence bridge. | `57664031` |
 | 2026-05-17 | /learn/price-rejection/ | Completed price rejection article upgrade and created two supporting realistic SVG assets. | Passed. The article ties rejection to meaningful levels, teaches wick context and follow-through, avoids buy/sell signals and guaranteed-reversal language, and includes journal review prompts plus a soft Trader Intelligence bridge. | `3ff3c7c4` |
+| 2026-05-17 | /learn/break-of-structure/ | Completed break of structure article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches ordinary swing-structure shifts, avoids certainty and mystical pattern language, includes practical review prompts and a soft Trader Intelligence bridge, and uses realistic candlestick structure visuals. | `d03cf796` |
 
 ## Next Recommended Action
 
 Continue the Chart Reading And Market Structure track:
 
-1. Fetch `/learn/break-of-structure/` draft.
+1. Fetch `/learn/swing-highs-and-swing-lows/` draft.
 2. Perform pre-editor review.
-3. Upgrade it using the completed chart structure articles as the model.
-4. Create 2 to 3 realistic SVGs focused on higher-high/higher-low structure, lower-high/lower-low structure, and structure break review.
+3. Upgrade it using the completed break-of-structure article as the model.
+4. Create 1 to 2 realistic SVGs focused on clean swing high and swing low identification.
 5. Run editor verification.
 6. Update this tracker.
 7. Update the handoff.
