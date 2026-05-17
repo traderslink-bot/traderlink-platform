@@ -94,6 +94,8 @@ Another issue is missing live pressure. Replay does not recreate real-time speed
 
 Replay should train decision clarity, not create false confidence.
 
+Replay notes should say whether the trader already knew the ticker, session, or final outcome. That keeps replay useful as practice instead of turning it into a polished hindsight story.
+
 ## Realistic Example
 
 A trader replays a morning breakout attempt. Before the breakout candle, they pause and mark resistance, volume, spread context, and where the idea would fail. They write: "If price cannot hold above the zone, the setup is not clean."

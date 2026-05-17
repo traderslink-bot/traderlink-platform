@@ -42,6 +42,8 @@ A one-rule practice drill is a focused practice session where the trader works o
 
 Many traders try to fix everything at once. That usually makes review blurry. One-rule drills make improvement specific enough to track.
 
+A drill result should be treated as evidence from a sample, not proof that a behavior is permanently fixed.
+
 ## Lesson Objective
 
 By the end of this lesson, you should be able to:
@@ -75,7 +77,7 @@ Then write the drill like this:
 
 - Rule: what behavior will be practiced?
 - Session: when will it be practiced?
-- Evidence: what proves the rule was followed?
+- Evidence: what shows the rule was followed?
 - Review: what question will be answered after?
 - Adjustment: what changes if the rule is broken?
 

@@ -90,6 +90,8 @@ Paper trading does not prove that a trader is ready for live size. A simulated p
 
 Paper trading is a training tool, not a guarantee.
 
+When reviewing paper trades, record whether fills were realistic, delayed, partial, or simply assumed by the simulator. A clean simulated fill may not represent what could have happened with real orders in a fast, thin, or wide-spread market.
+
 ## Realistic Example
 
 A trader paper trades opening range setups for two weeks. The simulated results look positive, but review shows several entries happened far from the planned risk area. In live trading, that same behavior could create bigger losses or emotional exits.
@@ -169,4 +171,4 @@ Yes, if the trader uses unrealistic size, ignores execution, or treats simulated
 
 ## Educational Disclaimer
 
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.
+This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security. Simulated trades can support practice, but they do not represent actual trading performance or guarantee live results.

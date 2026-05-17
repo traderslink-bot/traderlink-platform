@@ -93,6 +93,8 @@ The sample does not need to be huge to be useful, but it should be planned. The 
 
 Without a sample, forward testing becomes emotional guessing.
 
+Forward-test notes should also say whether examples were live, simulated, replay-based, or observation-only. Mixed samples can still be useful, but the conclusion should not treat every environment as equal.
+
 ## Realistic Example
 
 A trader wants to test whether their premarket watchlist filter improves the open. For 15 sessions, they track whether each trade came from the planned watchlist, whether the catalyst was understood, whether spread was acceptable, and whether the trade earned a process grade of B or better.

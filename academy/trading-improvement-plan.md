@@ -44,6 +44,8 @@ A trading improvement plan turns review into action. It connects what the trader
 
 The plan does not need to be complicated. It needs to be specific enough to repeat.
 
+An improvement plan should define what counts as better process, not promise better market outcomes.
+
 ![Dark trading dashboard showing a practice trading feedback loop with realistic candles, volume, planned review zone, simulated decision, review note, and rule adjustment.](/academy/images/chart-reading/practice-trading-feedback-loop.svg)
 
 ## Lesson Objective

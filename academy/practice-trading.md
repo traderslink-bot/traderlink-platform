@@ -98,6 +98,8 @@ Practice can mislead when traders treat simulated results like live proof. Paper
 
 Practice can also mislead when it becomes hindsight study only. If the trader already knows what happened, they may think the decision was obvious. That is why replay and screenshots should include what was known at the time.
 
+Practice records should also note whether the result came from paper trading, replay, observation, or live trading. Those environments are useful for different reasons, but they are not interchangeable.
+
 ## Realistic Example
 
 A trader wants to improve entries around opening range levels. For one week, they do not practice everything. They collect screenshots of the opening range, mark the range high and low, write the planned failure condition, and review whether their simulated decision waited for enough structure.
@@ -177,4 +179,4 @@ Long enough to collect a useful sample. Changing the focus after every chart usu
 
 ## Educational Disclaimer
 
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.
+This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security. Practice can support review habits, but it cannot recreate every live trading condition or guarantee future results.

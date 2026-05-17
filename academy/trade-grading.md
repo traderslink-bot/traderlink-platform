@@ -69,6 +69,8 @@ Common grading categories include:
 
 The grade should help the trader improve, not punish the trader.
 
+Grades are review labels, not forecasts. A strong process grade does not mean the next trade should work, and a weak process grade does not mean every similar trade will fail.
+
 ## Simple Grade Structure
 
 Keep the first grading system simple.
