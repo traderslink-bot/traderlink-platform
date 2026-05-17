@@ -58,6 +58,8 @@ journey_map
 | `public/images/learn/chart-reading/resistance-level-rejection.svg` | `/learn/resistance-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price testing a resistance zone and rejecting from it with volume context. | Quick Definition section after resistance-level sources. | Candlestick chart showing price rejecting from a resistance zone with volume context. | editor_verified | Supports the resistance rejection section, uses realistic red and green candles, shows a clear resistance zone, and avoids reversal guarantee language. | `688c4ac7` |
 | `public/images/learn/chart-reading/resistance-level-break.svg` | `/learn/resistance-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price breaking above a resistance zone and holding above it with volume context. | When Resistance Breaks section. | Candlestick chart showing price breaking above a resistance zone and holding above it. | editor_verified | Supports the resistance break section, includes volume context, and frames the break as behavior to review rather than continuation certainty. | `688c4ac7` |
 | `public/images/learn/chart-reading/failed-breakout-at-resistance.svg` | `/learn/resistance-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a breakout attempt above resistance that fails back below the zone. | When A Breakout Fails At Resistance section. | Candlestick chart showing a breakout attempt above resistance that fails back below the zone. | editor_verified | Supports the failed-breakout section, makes chase risk visible, and avoids buy/sell language or predictive claims. | `688c4ac7` |
+| `public/images/learn/chart-reading/key-level-map-current-price.svg` | `/learn/key-levels-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a clean current-price level map with nearest support, nearest resistance, and one higher timeframe level. | Quick Definition section after key-level examples. | Candlestick chart showing a clean key-level map around current price. | editor_verified | Supports the level-map lesson, uses realistic red and green candles, teaches level selection, and avoids signal or guarantee language. | `4121eaf9` |
+| `public/images/learn/chart-reading/key-level-review-workflow.svg` | `/learn/key-levels-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show hold, break, reject, and review behavior around a key level zone. | Step 3 section about review questions. | Educational chart workflow showing hold, break, reject, and reclaim behavior around key levels. | editor_verified | Supports the journal-review workflow, uses chart-based price behavior, and frames outcomes as review prompts instead of predictions. | `4121eaf9` |
 
 ## Editor Verification Summary
 
@@ -98,12 +100,20 @@ Resistance levels SVG batch verification:
 - The visuals are wired to article sections where they add learning value.
 - The batch is appropriate for the fourth Chart Reading And Market Structure upgrade.
 
+Key levels trading SVG batch verification:
+
+- Both visuals support the actual key-levels trading lesson.
+- Visuals show realistic chart context with red and green candlesticks, zones, and current-price framing.
+- Labels teach level mapping and review workflow without buy/sell language or guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+- The batch is appropriate for the practical level-map bridge article.
+
 ## Next Asset Batch Candidates
 
-After the first four Chart Reading articles, the next high-value SVG batch should likely support one of these:
+After the first five Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Key Levels Trading article: clean key-level map, crowded chart example, level review workflow.
-2. Breakout article: clean breakout, failed breakout, breakout with volume confirmation.
+1. Breakout article: clean breakout, failed breakout, breakout with volume confirmation.
+2. Breakdown article: clean breakdown, failed breakdown/reclaim, breakdown with volume context.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
 5. Trade review path: trade timeline, planned vs actual risk, execution review timeline.
