@@ -15,7 +15,7 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review whether tools supported a decision or became noise after completed trades."
-recommended_previous: "/learn/day-trading-vs-swing-trading/"
+recommended_previous: "/learn/holding-through-news/"
 recommended_next: "/learn/why-indicators-lag/"
 academy_level: "Foundation"
 academy_order: 1
@@ -36,7 +36,7 @@ meta_description: "Learn what trading indicators measure, why they should be use
 ---
 # What Are Trading Indicators?
 
-This lesson is part of the **Technical Indicators And Tools** course. It follows [Day Trading Vs Swing Trading](/learn/day-trading-vs-swing-trading/) and leads into [Why Indicators Lag Price](/learn/why-indicators-lag/).
+This lesson is part of the **Technical Indicators And Tools** course. It follows [Holding Through News](/learn/holding-through-news/) and leads into [Why Indicators Lag Price](/learn/why-indicators-lag/).
 
 Trading indicators are tools that transform price, volume, volatility, or time into a visual reference. They can help traders organize context, but they should not be treated as automatic instructions.
 

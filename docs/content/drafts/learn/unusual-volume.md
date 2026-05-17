@@ -21,7 +21,7 @@ academy_order: 14
 academy_module: "Scanner Context"
 academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/volume-by-price/"
-recommended_next: "/learn/stock-catalysts/"
+recommended_next: "/learn/trading-plan/"
 visual_assets:
   - "/images/learn/chart-reading/unusual-volume-normal-vs-today.svg"
   - "/images/learn/chart-reading/unusual-volume-catalyst-fade-review.svg"
@@ -50,7 +50,7 @@ meta_description: "Learn what unusual volume stocks are, why abnormal activity m
 
 Unusual volume stocks are stocks trading far more activity than they normally do. Traders watch them because abnormal volume can show that attention has changed. The cause might be news, filings, a scanner alert, sector momentum, forced selling, short covering, or a fast intraday reaction.
 
-This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Volume](/learn/volume/), [Relative Volume](/learn/relative-volume/), [Relative Volume RVOL](/learn/relative-volume-rvol/), [Volume Spike](/learn/volume-spike/), and [Volume By Price](/learn/volume-by-price/). It leads into [Stock Catalysts](/learn/stock-catalysts/) because unusual volume often starts with the question: what caused this activity?
+This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Volume](/learn/volume/), [Relative Volume](/learn/relative-volume/), [Relative Volume RVOL](/learn/relative-volume-rvol/), [Volume Spike](/learn/volume-spike/), and [Volume By Price](/learn/volume-by-price/). It leads into [Trading Plan](/learn/trading-plan/) because unusual activity and execution conditions need risk rules before they become trade decisions.
 
 
 ## Lesson Objective

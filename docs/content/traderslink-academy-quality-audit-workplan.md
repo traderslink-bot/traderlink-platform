@@ -89,7 +89,7 @@ Recommended order for future runs:
 | 1 | Trading Foundations | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; start here because beginner clarity affects the whole Academy. |
 | 2 | Chart Reading And Market Structure | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; included candlestick and chart-pattern submodules with a restrained app bridge map. |
 | 3 | Volume, Liquidity And Order Flow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; strong restrained bridge map to execution review, trade review, risk review, and analytics. |
-| 4 | Risk Management And Trade Planning | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to risk review and analytics. |
+| 4 | Risk Management And Trade Planning | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; corrected Academy course transitions, removed premature feature links, and documented a restrained bridge map to Risk Review, Trade Review, Analytics, Coaching, and Execution Review. |
 | 5 | Technical Indicators And Tools | not_started | not_started | not_started | not_started | not_started | not_started | Needs visual batch and careful anti-signal language. |
 | 6 | Trading Styles And Playbooks | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to playbook building and setup samples. |
 | 7 | Day Trading Workflow | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to session review. |
@@ -197,20 +197,22 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 1: Lesson-Level Quality Audit** for **Risk Management And Trade Planning**.
+Continue with **Pass 1: Lesson-Level Quality Audit** for **Technical Indicators And Tools**.
 
 Reason:
 
 - Trading Foundations Pass 1 is complete.
 - Chart Reading And Market Structure Pass 1 is complete.
 - Volume, Liquidity And Order Flow Pass 1 is complete.
-- Risk Management And Trade Planning is the next high-value course because risk should be checked before users move into indicators, styles, catalysts, and high-volatility topics.
-- This course has natural app tie-ins to Risk Review, Trade Review, Analytics, Coaching, and Execution Review, but the bridge should remain review-focused and not become product advertising.
+- Risk Management And Trade Planning Pass 1 is complete.
+- Technical Indicators And Tools is the next course because learners should understand risk before they use indicators as context tools.
+- This course needs careful anti-signal language so indicators are framed as measurement, review, and context tools rather than prediction tools.
 
 Output should include:
 
-- A Risk Management And Trade Planning lesson-level quality audit.
+- A Technical Indicators And Tools lesson-level quality audit.
 - Any small markdown edits needed.
-- App bridge map for trading plan, rules, risk management, position sizing, risk/reward, stops, max loss, daily loss limits, trade management, profit protection, overnight risk, holding through news, expectancy, and risk review lessons.
+- App bridge map for trading indicators, why indicators lag, indicator overload, moving averages, VWAP, anchored VWAP, RSI, MACD, Bollinger Bands, ATR, VWAP reclaim, and cross-listed volume-by-price context.
+- Visual-readiness notes for indicator examples that may need realistic candlestick overlays, volume bars, VWAP/AVWAP lines, volatility bands, or review panels.
 - Tracker and handoff update.
 - Commit.

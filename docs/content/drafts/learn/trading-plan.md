@@ -16,7 +16,7 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
 recommended_next: "/learn/trading-rules/"
-recommended_previous: "/learn/going-concern/"
+recommended_previous: "/learn/unusual-volume/"
 academy_level: "Foundation"
 academy_order: 1
 academy_module: "Planning"
@@ -36,7 +36,7 @@ meta_description: "Learn what a trading plan is, what it should include, and how
 ---
 # Trading Plan
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Going Concern](/learn/going-concern/) and leads into [Trading Rules](/learn/trading-rules/).
+This lesson is part of the **Risk Management And Trade Planning** course. It follows [Unusual Volume](/learn/unusual-volume/) and leads into [Trading Rules](/learn/trading-rules/).
 
 The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
 

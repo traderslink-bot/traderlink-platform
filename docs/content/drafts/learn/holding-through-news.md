@@ -15,7 +15,7 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
-recommended_next: "/learn/trading-discipline/"
+recommended_next: "/learn/trading-indicators/"
 recommended_previous: "/learn/overnight-risk/"
 academy_level: "Practical"
 academy_order: 14
@@ -36,7 +36,7 @@ meta_description: "Learn what holding through news means, why catalyst risk matt
 ---
 # Holding Through News
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Overnight Risk](/learn/overnight-risk/) and leads into [Trading Discipline](/learn/trading-discipline/).
+This lesson is part of the **Risk Management And Trade Planning** course. It follows [Overnight Risk](/learn/overnight-risk/) and leads into [What Are Trading Indicators?](/learn/trading-indicators/).
 
 The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
 

@@ -26,7 +26,6 @@ internal_links:
   - "/learn/trade-management/"
   - "/learn/cutting-winners-too-early/"
   - "/learn/risk-management/"
-  - "/features/profit-protection-review/"
   - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
@@ -155,7 +154,6 @@ For more context, read:
 - [Trade management](/learn/trade-management/)
 - [Cutting winners too early](/learn/cutting-winners-too-early/)
 - [Trading risk management](/learn/risk-management/)
-- [Profit protection review](/features/profit-protection-review/)
 - [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist

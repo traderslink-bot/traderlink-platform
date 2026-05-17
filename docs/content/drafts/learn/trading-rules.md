@@ -26,7 +26,6 @@ internal_links:
   - "/learn/trading-plan/"
   - "/learn/trading-discipline/"
   - "/learn/risk-management/"
-  - "/features/rule-candidate-tracking/"
   - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
@@ -171,7 +170,6 @@ For more context, read:
 - [Trading plan](/learn/trading-plan/)
 - [Trading discipline](/learn/trading-discipline/)
 - [Trading risk management](/learn/risk-management/)
-- [Rule candidate tracking](/features/rule-candidate-tracking/)
 - [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist

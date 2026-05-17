@@ -26,7 +26,6 @@ internal_links:
   - "/learn/stop-loss/"
   - "/learn/risk-management/"
   - "/learn/holding-losers-too-long/"
-  - "/features/risk-behavior-review/"
   - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
@@ -148,7 +147,6 @@ For more context, read:
 - [Stop loss](/learn/stop-loss/)
 - [Trading risk management](/learn/risk-management/)
 - [Holding losers too long](/learn/holding-losers-too-long/)
-- [Risk behavior review](/features/risk-behavior-review/)
 - [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist

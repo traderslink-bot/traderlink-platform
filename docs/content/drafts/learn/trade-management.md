@@ -26,7 +26,6 @@ internal_links:
   - "/learn/trading-plan/"
   - "/learn/risk-management/"
   - "/learn/profit-protection/"
-  - "/features/trade-management-feedback/"
   - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
@@ -160,7 +159,6 @@ For more context, read:
 - [Trading plan](/learn/trading-plan/)
 - [Trading risk management](/learn/risk-management/)
 - [Profit protection](/learn/profit-protection/)
-- [Trade management feedback](/features/trade-management-feedback/)
 - [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist

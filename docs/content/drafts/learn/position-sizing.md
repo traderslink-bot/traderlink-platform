@@ -26,7 +26,6 @@ internal_links:
   - "/learn/risk-management/"
   - "/learn/revenge-trading/"
   - "/learn/overtrading/"
-  - "/features/risk-behavior-review/"
   - "/learn/trade-review-and-improvement/"
 schema:
   - "Article"
@@ -145,7 +144,6 @@ Useful related pages include:
 - [Trading Risk Management](/learn/risk-management/)
 - [Revenge Trading](/learn/revenge-trading/)
 - [Overtrading](/learn/overtrading/)
-- [Risk Behavior Review](/features/risk-behavior-review/)
 - [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist

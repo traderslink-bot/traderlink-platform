@@ -26,7 +26,6 @@ internal_links:
   - "/learn/risk-management/"
   - "/learn/position-sizing/"
   - "/learn/stop-loss/"
-  - "/features/risk-behavior-review/"
   - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
@@ -146,7 +145,6 @@ For more context, read:
 - [Trading risk management](/learn/risk-management/)
 - [Position sizing](/learn/position-sizing/)
 - [Stop loss](/learn/stop-loss/)
-- [Risk behavior review](/features/risk-behavior-review/)
 - [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
