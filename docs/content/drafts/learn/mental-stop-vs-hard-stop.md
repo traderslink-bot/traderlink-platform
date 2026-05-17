@@ -101,6 +101,8 @@ Traders should understand:
 - Fast markets can move before the order fills.
 - Mental stops can fail if discipline fails.
 
+Source check: Investor.gov's order-type guidance supports this distinction. Stop orders can prioritize getting out after the stop is triggered but may not protect the exact price, while stop-limit orders add price control but introduce no-fill risk.
+
 ## Example Scenario
 
 Imagine a trader enters a volatile small-cap stock at $2.00. The invalidation area is $1.90.
@@ -209,7 +211,7 @@ For Mental Stop Vs Hard Stop, the useful review is not whether one trade made mo
 - [Stop Loss](/learn/stop-loss/)
 - [Max Loss](/learn/max-loss/)
 - [Risk Management](/learn/risk-management/)
-- [/learn/trade-risk-review/](/learn/trade-risk-review/)
+- [Trade Risk Review](/learn/trade-risk-review/)
 
 ## Educational Disclaimer
 

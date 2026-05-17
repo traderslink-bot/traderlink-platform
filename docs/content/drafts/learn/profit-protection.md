@@ -216,7 +216,7 @@ For Profit Protection, the useful review is not whether one trade made money. Th
 - [Trade Management](/learn/trade-management/)
 - [Overnight Risk](/learn/overnight-risk/)
 - [Risk Management](/learn/risk-management/)
-- [/learn/trade-risk-review/](/learn/trade-risk-review/)
+- [Trade Risk Review](/learn/trade-risk-review/)
 
 ## Educational Disclaimer
 

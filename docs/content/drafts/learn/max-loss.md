@@ -224,7 +224,7 @@ For Max Loss, the useful review is not whether one trade made money. The better 
 - [Mental Stop Vs Hard Stop](/learn/mental-stop-vs-hard-stop/)
 - [Daily Loss Limit](/learn/daily-loss-limit/)
 - [Risk Management](/learn/risk-management/)
-- [/learn/trade-risk-review/](/learn/trade-risk-review/)
+- [Trade Risk Review](/learn/trade-risk-review/)
 
 ## Educational Disclaimer
 

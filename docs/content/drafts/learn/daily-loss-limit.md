@@ -210,7 +210,7 @@ For Daily Loss Limit, the useful review is not whether one trade made money. The
 - [Max Loss](/learn/max-loss/)
 - [Trade Management](/learn/trade-management/)
 - [Risk Management](/learn/risk-management/)
-- [/learn/trade-risk-review/](/learn/trade-risk-review/)
+- [Trade Risk Review](/learn/trade-risk-review/)
 
 ## Educational Disclaimer
 

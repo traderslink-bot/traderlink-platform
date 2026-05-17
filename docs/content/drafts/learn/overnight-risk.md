@@ -75,6 +75,8 @@ Overnight risk can come from:
 
 For swing traders, overnight risk should be part of the plan before the position is opened.
 
+Source check: SEC and FINRA extended-hours risk materials warn that trading outside regular hours can involve lower liquidity, wider spreads, greater volatility, changing prices, and partial or no executions. Investor.gov margin-account materials also warn that margin use can increase losses and create margin-call risk, so overnight exposure should be reviewed with account type and broker rules in mind.
+
 ## Why It Matters To Traders
 
 Overnight risk matters because a planned exit level may not be available the next morning.
@@ -227,7 +229,7 @@ For Overnight Risk, the useful review is not whether one trade made money. The b
 - [Profit Protection](/learn/profit-protection/)
 - [Holding Through News](/learn/holding-through-news/)
 - [Risk Management](/learn/risk-management/)
-- [/learn/trade-risk-review/](/learn/trade-risk-review/)
+- [Trade Risk Review](/learn/trade-risk-review/)
 
 ## Educational Disclaimer
 

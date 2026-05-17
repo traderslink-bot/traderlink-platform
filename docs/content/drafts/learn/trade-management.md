@@ -221,7 +221,7 @@ For Trade Management, the useful review is not whether one trade made money. The
 - [Daily Loss Limit](/learn/daily-loss-limit/)
 - [Profit Protection](/learn/profit-protection/)
 - [Risk Management](/learn/risk-management/)
-- [/learn/trade-risk-review/](/learn/trade-risk-review/)
+- [Trade Risk Review](/learn/trade-risk-review/)
 
 ## Educational Disclaimer
 

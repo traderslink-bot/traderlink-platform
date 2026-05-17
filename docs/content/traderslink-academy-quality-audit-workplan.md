@@ -89,7 +89,7 @@ Recommended order for future runs:
 | 1 | Trading Foundations | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-foundations.md` with official SEC, Investor.gov, FINRA, and Regulation SHO source checks plus targeted source-note edits. |
 | 2 | Chart Reading And Market Structure | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 3 | Volume, Liquidity And Order Flow | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-volume-liquidity.md` with official SEC, Investor.gov, FINRA, Nasdaq, and NYSE source checks plus targeted source-note edits. |
-| 4 | Risk Management And Trade Planning | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 4 | Risk Management And Trade Planning | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-risk-management.md` with official SEC, Investor.gov, and FINRA source checks plus targeted source-note edits. |
 | 5 | Technical Indicators And Tools | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 6 | Trading Styles And Playbooks | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 7 | Day Trading Workflow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 3: Accuracy/Source Audit** for **Risk Management And Trade Planning**.
+Continue with **Pass 3: Accuracy/Source Audit** for **Technical Indicators And Tools**.
 
 Reason:
 
@@ -223,12 +223,13 @@ Reason:
 - Halts And High-Volatility Events Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-halts-high-volatility.md`.
 - Trading Foundations Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trading-foundations.md`.
 - Volume, Liquidity And Order Flow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-volume-liquidity.md`.
-- Risk Management And Trade Planning is now the next useful source-sensitive course because it includes stop-loss, mental versus hard stops, max loss, daily loss limits, risk/reward, holding through news, and overnight risk. The next pass should verify order behavior, stop-order caveats, risk-control language, and any guarantee-sensitive claims.
+- Risk Management And Trade Planning Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-risk-management.md`.
+- Technical Indicators And Tools is now the next useful source-sensitive course because it includes moving averages, VWAP, anchored VWAP, RSI, MACD, Bollinger Bands, ATR, VWAP reclaim, and cross-listed volume-by-price concepts. The next pass should verify formula, platform-calculation, indicator-lag, and anti-signal claims against primary or reputable technical-reference sources where official sources are not available.
 - Pass 3 should verify factual details and official-source references before the Academy moves toward production UI planning.
 
 Output should include:
 
-- A Risk Management And Trade Planning accuracy/source audit.
+- A Technical Indicators And Tools accuracy/source audit.
 - Any small markdown edits needed.
 - Source-sensitive findings and corrections.
 - Official-source references for SEC, Investor.gov, FINRA, exchanges, and market-structure/order-mechanics sources where needed.

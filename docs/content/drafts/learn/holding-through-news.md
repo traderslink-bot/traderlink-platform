@@ -75,6 +75,8 @@ This can include holding through:
 
 Some news is scheduled. Some news is unexpected. Both can affect a swing trade.
 
+Source check: SEC after-hours risk materials warn that news announced outside regular hours can have greater price impact when trading activity is limited, spreads are wider, and prices may not match the next regular-session open. News and filings should be checked from official company, SEC, exchange, or regulator sources when they are central to the trade thesis.
+
 ## Why It Matters To Traders
 
 Holding through news matters because the trader may not be able to control the exit price once the news is released.
@@ -224,7 +226,7 @@ For Holding Through News, the useful review is not whether one trade made money.
 - [Overnight Risk](/learn/overnight-risk/)
 - [Trading Discipline](/learn/trading-discipline/)
 - [Risk Management](/learn/risk-management/)
-- [/learn/trade-risk-review/](/learn/trade-risk-review/)
+- [Trade Risk Review](/learn/trade-risk-review/)
 
 ## Educational Disclaimer
 

@@ -226,7 +226,7 @@ For Trading Plan, the useful review is not whether one trade made money. The bet
 
 ## Related Lessons
 
-- [Going Concern](/learn/going-concern/)
+- [Unusual Volume](/learn/unusual-volume/)
 - [Trading Rules](/learn/trading-rules/)
 - [Risk Management](/learn/risk-management/)
 - [Trade Risk Review](/learn/trade-risk-review/)
