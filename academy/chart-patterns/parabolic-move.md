@@ -29,7 +29,7 @@ internal_links:
   - "[High Of Day](/academy/high-of-day/)"
   - "[Risk Management](/academy/risk-management/)"
 visual_assets:
-  - "/images/learn/chart-reading/parabolic-extension-context.svg"
+  - "/images/academy/chart-reading/parabolic-extension-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Parabolic Move is a chart pattern traders use to organize price behavior. The pa
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing an accelerating parabolic move far above support with volume and extension-risk labels.](/images/learn/chart-reading/parabolic-extension-context.svg)
+![Candlestick chart showing an accelerating parabolic move far above support with volume and extension-risk labels.](/images/academy/chart-reading/parabolic-extension-context.svg)
 
 ## Lesson Objective
 

@@ -24,8 +24,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/bid-and-ask/"
 recommended_next: "/academy/market-orders-vs-limit-orders/"
 visual_assets:
-  - "/images/learn/chart-reading/slippage-expected-vs-actual-fill.svg"
-  - "/images/learn/chart-reading/slippage-fast-move-liquidity-review.svg"
+  - "/images/academy/chart-reading/slippage-expected-vs-actual-fill.svg"
+  - "/images/academy/chart-reading/slippage-fast-move-liquidity-review.svg"
 internal_links:
   - "/academy/bid-and-ask/"
   - "/academy/spread/"
@@ -87,7 +87,7 @@ For example:
 - Actual fill: `$2.08`
 - Slippage: `$0.08` per share
 
-![Trading dashboard showing expected price versus actual fill price.](/images/learn/chart-reading/slippage-expected-vs-actual-fill.svg)
+![Trading dashboard showing expected price versus actual fill price.](/images/academy/chart-reading/slippage-expected-vs-actual-fill.svg)
 
 On low-priced stocks, a few cents of slippage can meaningfully change the trade.
 
@@ -131,7 +131,7 @@ Slippage can be small and normal, or it can be large enough to change the qualit
 
 Fast moves can make slippage worse because quotes change quickly.
 
-![Trading dashboard showing slippage during a fast candle with thin liquidity and a widening spread.](/images/learn/chart-reading/slippage-fast-move-liquidity-review.svg)
+![Trading dashboard showing slippage during a fast candle with thin liquidity and a widening spread.](/images/academy/chart-reading/slippage-fast-move-liquidity-review.svg)
 
 For example, a trader wants to enter a breakout near `$3.00`. The stock is moving quickly, the spread widens, and the order fills at `$3.12`.
 

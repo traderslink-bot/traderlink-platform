@@ -29,7 +29,7 @@ internal_links:
   - "/academy/trading-discipline/"
   - "/academy/overtrading/"
 visual_assets:
-  - "/images/learn/chart-reading/academy-risk-discipline-path-map.svg"
+  - "/images/academy/chart-reading/academy-risk-discipline-path-map.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -42,7 +42,7 @@ This path hub organizes the completed **Risk Management And Trade Planning** and
 
 Risk and discipline are not separate from chart reading. They decide whether the trader can act on a plan without letting size, emotion, or hope take over.
 
-![Dark dashboard path map showing risk planning, position sizing, loss limits, discipline behaviors, realistic candles, and review loop.](/images/learn/chart-reading/academy-risk-discipline-path-map.svg)
+![Dark dashboard path map showing risk planning, position sizing, loss limits, discipline behaviors, realistic candles, and review loop.](/images/academy/chart-reading/academy-risk-discipline-path-map.svg)
 
 ## Path Objective
 

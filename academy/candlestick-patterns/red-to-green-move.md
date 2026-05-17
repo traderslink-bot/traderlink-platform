@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume/"
   - "/academy/chasing-stocks/"
 visual_assets:
-  - "/images/learn/chart-reading/red-green-transition-context.svg"
+  - "/images/academy/chart-reading/red-green-transition-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A red-to-green move happens when a stock that was below its previous close or se
 
 The color change is only context. A move from red to green can fail quickly if price runs into resistance, VWAP, or weak volume.
 
-![Candlestick chart showing red-to-green and green-to-red intraday transitions with VWAP and volume context.](/images/learn/chart-reading/red-green-transition-context.svg)
+![Candlestick chart showing red-to-green and green-to-red intraday transitions with VWAP and volume context.](/images/academy/chart-reading/red-green-transition-context.svg)
 
 ## Lesson Objective
 

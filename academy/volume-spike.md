@@ -24,8 +24,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/relative-volume-rvol/"
 recommended_next: "/academy/liquidity/"
 visual_assets:
-  - "/images/learn/chart-reading/volume-spike-follow-through-vs-fade.svg"
-  - "/images/learn/chart-reading/volume-spike-chase-risk.svg"
+  - "/images/academy/chart-reading/volume-spike-follow-through-vs-fade.svg"
+  - "/images/academy/chart-reading/volume-spike-chase-risk.svg"
 internal_links:
   - "/academy/volume/"
   - "/academy/relative-volume/"
@@ -91,7 +91,7 @@ Volume spikes can happen during:
 - Panic selling.
 - Market open volatility.
 
-![Candlestick chart comparing a volume spike that follows through with one that fades after the first burst.](/images/learn/chart-reading/volume-spike-follow-through-vs-fade.svg)
+![Candlestick chart comparing a volume spike that follows through with one that fades after the first burst.](/images/academy/chart-reading/volume-spike-follow-through-vs-fade.svg)
 
 The spike itself is not the full story. Traders need to review what price does after the activity appears.
 
@@ -148,7 +148,7 @@ Neither outcome is guaranteed. The point is to review the behavior after the spi
 
 The first spike often creates urgency. It can make a trader feel like they are missing the move.
 
-![Candlestick chart showing chase risk after a late entry far above the first volume spike and nearest support.](/images/learn/chart-reading/volume-spike-chase-risk.svg)
+![Candlestick chart showing chase risk after a late entry far above the first volume spike and nearest support.](/images/academy/chart-reading/volume-spike-chase-risk.svg)
 
 Chase risk increases when:
 

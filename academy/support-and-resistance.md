@@ -24,10 +24,10 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/start-here/"
 recommended_next: "/academy/how-to-draw-support-and-resistance/"
 visual_assets:
-  - "/images/learn/chart-reading/support-resistance-candlestick-diagram.svg"
-  - "/images/learn/chart-reading/support-breaks-becomes-resistance.svg"
-  - "/images/learn/chart-reading/resistance-breaks-becomes-support.svg"
-  - "/images/learn/chart-reading/bad-support-resistance-example.svg"
+  - "/images/academy/chart-reading/support-resistance-candlestick-diagram.svg"
+  - "/images/academy/chart-reading/support-breaks-becomes-resistance.svg"
+  - "/images/academy/chart-reading/resistance-breaks-becomes-support.svg"
+  - "/images/academy/chart-reading/bad-support-resistance-example.svg"
 internal_links:
   - "/academy/how-to-draw-support-and-resistance/"
   - "/academy/resistance-levels/"
@@ -83,7 +83,7 @@ Support is usually below the current price. Traders watch it because price has p
 
 Resistance is usually above the current price. Traders watch it because price has previously rejected there, stalled there, or found supply there.
 
-![Candlestick chart showing price bouncing near support and rejecting near resistance.](/images/learn/chart-reading/support-resistance-candlestick-diagram.svg)
+![Candlestick chart showing price bouncing near support and rejecting near resistance.](/images/academy/chart-reading/support-resistance-candlestick-diagram.svg)
 
 The visual above shows a familiar chart-style example: price pushes into a resistance zone, rejects, pulls back toward support, then bounces. The important lesson is not that this exact pattern always happens. The lesson is that levels give traders areas to watch and review.
 
@@ -136,7 +136,7 @@ A better way to think about levels is:
 
 If a trader draws too many lines, every candle starts to look important. That usually creates more noise, not better analysis.
 
-![Chart diagram comparing cluttered support and resistance lines with cleaner decision zones.](/images/learn/chart-reading/bad-support-resistance-example.svg)
+![Chart diagram comparing cluttered support and resistance lines with cleaner decision zones.](/images/academy/chart-reading/bad-support-resistance-example.svg)
 
 The cleaner example on the right focuses on the main areas where price reacted. The cluttered example on the left shows a common mistake: drawing so many levels that the chart becomes hard to use.
 
@@ -144,7 +144,7 @@ The cleaner example on the right focuses on the main areas where price reacted. 
 
 A support area can become resistance after price breaks below it. This happens because traders who expected support to hold may later sell or hesitate when price retests that same area from below.
 
-![Candlestick chart showing broken support later acting as resistance during a retest.](/images/learn/chart-reading/support-breaks-becomes-resistance.svg)
+![Candlestick chart showing broken support later acting as resistance during a retest.](/images/academy/chart-reading/support-breaks-becomes-resistance.svg)
 
 In this example, price first reacts around a support zone. After support breaks, price retests the same area from below and rejects. That does not guarantee the stock will keep dropping, but it gives traders a clear area to review.
 
@@ -160,7 +160,7 @@ Useful review questions include:
 
 A resistance area can become support after price breaks above it. Traders often call this a role reversal. The old resistance area becomes an area to watch on a pullback.
 
-![Candlestick chart showing broken resistance later acting as support during a pullback.](/images/learn/chart-reading/resistance-breaks-becomes-support.svg)
+![Candlestick chart showing broken resistance later acting as support during a pullback.](/images/academy/chart-reading/resistance-breaks-becomes-support.svg)
 
 In this example, price struggles under resistance, breaks above it, then pulls back and holds near the old resistance zone. Again, this is context, not certainty. The trader still needs volume, liquidity, risk control, and confirmation.
 

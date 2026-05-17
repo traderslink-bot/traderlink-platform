@@ -25,9 +25,9 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/how-to-draw-support-and-resistance/"
 recommended_next: "/academy/resistance-levels/"
 visual_assets:
-  - "/images/learn/chart-reading/support-level-hold.svg"
-  - "/images/learn/chart-reading/support-level-break.svg"
-  - "/images/learn/chart-reading/support-level-reclaim.svg"
+  - "/images/academy/chart-reading/support-level-hold.svg"
+  - "/images/academy/chart-reading/support-level-break.svg"
+  - "/images/academy/chart-reading/support-level-reclaim.svg"
 internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/how-to-draw-support-and-resistance/"
@@ -95,7 +95,7 @@ Traders often mark support from:
 
 A support level gives traders a place to watch and review. It does not decide the trade by itself.
 
-![Candlestick chart showing price holding above a support zone with volume context.](/images/learn/chart-reading/support-level-hold.svg)
+![Candlestick chart showing price holding above a support zone with volume context.](/images/academy/chart-reading/support-level-hold.svg)
 
 The visual above shows price testing a support zone more than once. The lesson is not that support always holds. The lesson is that repeated reactions can make a level easier to define, plan around, and review.
 
@@ -161,7 +161,7 @@ The support zone can help structure a plan. It does not mean the stock has to bo
 
 A support break happens when price moves through a support zone and fails to recover it quickly. The tone of the chart may change because the area that previously held is no longer acting the same way.
 
-![Candlestick chart showing a support zone breaking with increased volume and a later retest.](/images/learn/chart-reading/support-level-break.svg)
+![Candlestick chart showing a support zone breaking with increased volume and a later retest.](/images/academy/chart-reading/support-level-break.svg)
 
 Support breaks can happen for many reasons:
 
@@ -186,7 +186,7 @@ Useful questions after a support break:
 
 A support reclaim happens when price breaks below a support zone, then moves back above it and holds. This can show that the first break did not fully resolve the level.
 
-![Candlestick chart showing price losing support, reclaiming the zone, and holding above it.](/images/learn/chart-reading/support-level-reclaim.svg)
+![Candlestick chart showing price losing support, reclaiming the zone, and holding above it.](/images/academy/chart-reading/support-level-reclaim.svg)
 
 A reclaim is not a guaranteed reversal. It is a behavior to review. Traders may watch whether price can hold back above the zone, whether volume improves, and whether the failed break changed the risk plan.
 

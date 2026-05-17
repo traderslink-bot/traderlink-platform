@@ -24,7 +24,7 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/break-of-structure/"
 recommended_next: "/academy/higher-highs-higher-lows/"
 visual_assets:
-  - "/images/learn/chart-reading/swing-highs-swing-lows-map.svg"
+  - "/images/academy/chart-reading/swing-highs-swing-lows-map.svg"
 internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/how-to-draw-support-and-resistance/"
@@ -88,7 +88,7 @@ Traders use swing highs and swing lows to identify:
 - Failed breakouts or failed breakdowns.
 - Areas where trade risk may change.
 
-![Candlestick chart showing clear swing highs and swing lows on a realistic price move.](/images/learn/chart-reading/swing-highs-swing-lows-map.svg)
+![Candlestick chart showing clear swing highs and swing lows on a realistic price move.](/images/academy/chart-reading/swing-highs-swing-lows-map.svg)
 
 The visual above marks the major turns that help define structure. It does not label every candle. That is the point: useful swing points should make the chart easier to read.
 

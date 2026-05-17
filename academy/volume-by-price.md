@@ -24,8 +24,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/time-and-sales/"
 recommended_next: "/academy/unusual-volume/"
 visual_assets:
-  - "/images/learn/chart-reading/volume-by-price-profile-zones.svg"
-  - "/images/learn/chart-reading/volume-by-price-low-volume-area-review.svg"
+  - "/images/academy/chart-reading/volume-by-price-profile-zones.svg"
+  - "/images/academy/chart-reading/volume-by-price-low-volume-area-review.svg"
 internal_links:
   - "/academy/volume/"
   - "/academy/support-and-resistance/"
@@ -84,7 +84,7 @@ Volume by price shows how much volume traded around each price area.
 
 For example, if a stock traded heavy volume between `$2.40` and `$2.50`, that area may stand out as a high-activity zone.
 
-![Candlestick chart with a volume-by-price profile showing high-volume price zones.](/images/learn/chart-reading/volume-by-price-profile-zones.svg)
+![Candlestick chart with a volume-by-price profile showing high-volume price zones.](/images/academy/chart-reading/volume-by-price-profile-zones.svg)
 
 Traders may later watch that zone to see whether price accepts it, rejects it, holds above it, or fails below it.
 
@@ -131,7 +131,7 @@ Low-volume areas are price ranges where relatively little trading occurred.
 
 Sometimes price can move quickly through these areas because there was less previous activity. But this is not automatic.
 
-![Candlestick chart with volume-by-price profile showing price moving through a low-volume area and stalling near a high-volume zone.](/images/learn/chart-reading/volume-by-price-low-volume-area-review.svg)
+![Candlestick chart with volume-by-price profile showing price moving through a low-volume area and stalling near a high-volume zone.](/images/academy/chart-reading/volume-by-price-low-volume-area-review.svg)
 
 Low-volume area review asks:
 

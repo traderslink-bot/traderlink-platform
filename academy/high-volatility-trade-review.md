@@ -29,7 +29,7 @@ internal_links:
   - "/academy/slippage/"
   - "/academy/trade-risk-review/"
 visual_assets:
-  - "/images/learn/chart-reading/halt-resume-spread-risk.svg"
+  - "/images/academy/chart-reading/halt-resume-spread-risk.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ High-volatility trade review is the process of studying trades taken during fast
 
 The review should be stricter than normal because the risk is different. A fast market can make a trade harder to execute, harder to exit, and harder to judge from the chart alone.
 
-![Dark trading dashboard showing a halt resume, wide bid-ask spread, thin depth, realistic candles, volume bars, and execution-risk review labels.](/images/learn/chart-reading/halt-resume-spread-risk.svg)
+![Dark trading dashboard showing a halt resume, wide bid-ask spread, thin depth, realistic candles, volume bars, and execution-risk review labels.](/images/academy/chart-reading/halt-resume-spread-risk.svg)
 
 ## Lesson Objective
 

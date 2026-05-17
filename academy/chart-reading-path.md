@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume/"
   - "/academy/day-trading-workflow/"
 visual_assets:
-  - "/images/learn/chart-reading/academy-chart-reading-path-map.svg"
+  - "/images/academy/chart-reading/academy-chart-reading-path-map.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Chart reading is the skill of understanding price, levels, candles, structure, v
 
 The best learning order is not random. Users should learn levels first, then structure, then candles and patterns in context, then volume and workflow.
 
-![Dark Academy path map showing realistic candlesticks, support and resistance zones, volume bars, and the recommended chart reading course sequence.](/images/learn/chart-reading/academy-chart-reading-path-map.svg)
+![Dark Academy path map showing realistic candlesticks, support and resistance zones, volume bars, and the recommended chart reading course sequence.](/images/academy/chart-reading/academy-chart-reading-path-map.svg)
 
 ## Path Objective
 

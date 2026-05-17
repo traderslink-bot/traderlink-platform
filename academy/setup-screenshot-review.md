@@ -29,7 +29,7 @@ internal_links:
   - "/academy/mistake-pattern-review/"
   - "/academy/support-and-resistance/"
 visual_assets:
-  - "/images/learn/chart-reading/setup-screenshot-review.svg"
+  - "/images/academy/chart-reading/setup-screenshot-review.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Setup screenshots help traders preserve context. A chart after the fact can feel
 
 The goal is not to collect pretty charts. The goal is to make decisions reviewable.
 
-![Dark trading dashboard screenshot-style chart showing planned zones, a decision area, realistic candles, volume bars, and before-during-after review notes.](/images/learn/chart-reading/setup-screenshot-review.svg)
+![Dark trading dashboard screenshot-style chart showing planned zones, a decision area, realistic candles, volume bars, and before-during-after review notes.](/images/academy/chart-reading/setup-screenshot-review.svg)
 
 ## Lesson Objective
 

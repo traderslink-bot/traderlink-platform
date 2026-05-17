@@ -29,7 +29,7 @@ internal_links:
   - "/academy/midday-trading/"
   - "/academy/trade-review-and-improvement/"
 visual_assets:
-  - "/images/learn/chart-reading/day-trading-session-map.svg"
+  - "/images/academy/chart-reading/day-trading-session-map.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A day trading workflow is the repeatable process a trader uses before, during, a
 
 Without a workflow, the trading day can become a stream of alerts, candles, headlines, and emotions. With a workflow, each part of the session has a job.
 
-![Dark trading dashboard showing a day trading session workflow across premarket, open, midday, power hour, and after-hours review.](/images/learn/chart-reading/day-trading-session-map.svg)
+![Dark trading dashboard showing a day trading session workflow across premarket, open, midday, power hour, and after-hours review.](/images/academy/chart-reading/day-trading-session-map.svg)
 
 ## Lesson Objective
 

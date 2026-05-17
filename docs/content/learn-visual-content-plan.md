@@ -102,7 +102,7 @@ Use careful labels such as:
 When Codex later wires images into the website, use a simple public asset structure such as:
 
 ```text
-public/images/learn/
+public/images/academy/
   chart-reading/
   candlesticks/
   volume-liquidity/
@@ -174,7 +174,7 @@ Alt text should:
 Future markdown frontmatter can optionally support:
 
 ```yaml
-featured_image: "/images/learn/chart-reading/support-resistance-levels-diagram.png"
+featured_image: "/images/academy/chart-reading/support-resistance-levels-diagram.png"
 featured_image_alt: "Simple chart diagram showing support and resistance levels."
 visual_type: "chart_diagram"
 learning_track: "Chart Reading And Market Structure"
@@ -614,7 +614,7 @@ Add later if useful:
 ```yaml
 learning_track: "Chart Reading And Market Structure"
 learning_stage: "Foundation"
-featured_image: "/images/learn/chart-reading/support-resistance-levels-diagram.png"
+featured_image: "/images/academy/chart-reading/support-resistance-levels-diagram.png"
 featured_image_alt: "Simple chart diagram showing support and resistance levels."
 visual_type: "chart_diagram"
 visual_priority: "high"

@@ -23,8 +23,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/volume-by-price/"
 recommended_next: "/academy/trading-plan/"
 visual_assets:
-  - "/images/learn/chart-reading/unusual-volume-normal-vs-today.svg"
-  - "/images/learn/chart-reading/unusual-volume-catalyst-fade-review.svg"
+  - "/images/academy/chart-reading/unusual-volume-normal-vs-today.svg"
+  - "/images/academy/chart-reading/unusual-volume-catalyst-fade-review.svg"
 internal_links:
   - "/academy/volume/"
   - "/academy/relative-volume/"
@@ -90,7 +90,7 @@ Traders may compare current volume with:
 - Recent intraday volume.
 - Volume during prior news, breakout, or selloff events.
 
-![Candlestick chart comparing normal volume with today's unusual volume burst and scanner context.](/images/learn/chart-reading/unusual-volume-normal-vs-today.svg)
+![Candlestick chart comparing normal volume with today's unusual volume burst and scanner context.](/images/academy/chart-reading/unusual-volume-normal-vs-today.svg)
 
 A stock trading 5 million shares may be unusual if it normally trades 200,000 shares. Another stock trading 5 million shares may be normal if it trades that much almost every day. The comparison matters more than the raw number.
 
@@ -196,7 +196,7 @@ Fade risk can include:
 - The spread widens during the pullback.
 - Traders who entered late are forced to manage poor risk.
 
-![Candlestick chart showing unusual volume after a catalyst, followed by a failed hold and volume fade.](/images/learn/chart-reading/unusual-volume-catalyst-fade-review.svg)
+![Candlestick chart showing unusual volume after a catalyst, followed by a failed hold and volume fade.](/images/academy/chart-reading/unusual-volume-catalyst-fade-review.svg)
 
 Neither follow-through nor fade is guaranteed. The point is to review the behavior after attention arrives.
 

@@ -24,8 +24,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/level-2/"
 recommended_next: "/academy/volume-by-price/"
 visual_assets:
-  - "/images/learn/chart-reading/time-and-sales-prints-near-bid-ask.svg"
-  - "/images/learn/chart-reading/time-and-sales-speed-fade-review.svg"
+  - "/images/academy/chart-reading/time-and-sales-prints-near-bid-ask.svg"
+  - "/images/academy/chart-reading/time-and-sales-speed-fade-review.svg"
 internal_links:
   - "/academy/level-2/"
   - "/academy/bid-and-ask/"
@@ -87,7 +87,7 @@ It usually shows:
 - Whether trades are printing near the bid, ask, or between them.
 - Trade sequence and pace.
 
-![Trading dashboard showing time and sales prints near bid and ask quotes beside candles.](/images/learn/chart-reading/time-and-sales-prints-near-bid-ask.svg)
+![Trading dashboard showing time and sales prints near bid and ask quotes beside candles.](/images/academy/chart-reading/time-and-sales-prints-near-bid-ask.svg)
 
 Traders use it to understand actual executed activity, not only displayed interest.
 
@@ -134,7 +134,7 @@ When used together, Level 2 can show the displayed quote environment while time 
 
 Print speed can increase when a stock becomes active. A faster tape may show that more transactions are happening.
 
-![Trading dashboard showing tape speed increasing during a volume burst and fading afterward.](/images/learn/chart-reading/time-and-sales-speed-fade-review.svg)
+![Trading dashboard showing tape speed increasing during a volume burst and fading afterward.](/images/academy/chart-reading/time-and-sales-speed-fade-review.svg)
 
 But tape speed can also fade after the first burst of activity. If print speed slows while price stops making progress, the trader should review whether participation is leaving the move.
 

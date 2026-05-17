@@ -29,7 +29,7 @@ internal_links:
   - "/academy/execution-review/"
   - "/academy/mistake-pattern-review/"
 visual_assets:
-  - "/images/learn/chart-reading/trade-replay-review-timeline.svg"
+  - "/images/academy/chart-reading/trade-replay-review-timeline.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Trade replay review means replaying a chart or session one step at a time so the
 
 The value is not in pretending replay is live trading. The value is in slowing down the decision process and asking what was known at each point.
 
-![Dark trading dashboard showing a replay review timeline with hidden future candles, pause points, volume bars, and review notes.](/images/learn/chart-reading/trade-replay-review-timeline.svg)
+![Dark trading dashboard showing a replay review timeline with hidden future candles, pause points, volume bars, and review notes.](/images/academy/chart-reading/trade-replay-review-timeline.svg)
 
 ## Lesson Objective
 

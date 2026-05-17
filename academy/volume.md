@@ -24,9 +24,9 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/gap-fill-trading/"
 recommended_next: "/academy/relative-volume/"
 visual_assets:
-  - "/images/learn/chart-reading/volume-expansion-at-level.svg"
-  - "/images/learn/chart-reading/volume-dry-up-before-move.svg"
-  - "/images/learn/chart-reading/volume-fade-after-spike.svg"
+  - "/images/academy/chart-reading/volume-expansion-at-level.svg"
+  - "/images/academy/chart-reading/volume-dry-up-before-move.svg"
+  - "/images/academy/chart-reading/volume-fade-after-spike.svg"
 internal_links:
   - "/academy/gap-fill-trading/"
   - "/academy/breakout-trading/"
@@ -94,7 +94,7 @@ Common timeframes include:
 - Premarket volume.
 - After-hours volume.
 
-![Candlestick chart showing volume expansion as price tests a key level.](/images/learn/chart-reading/volume-expansion-at-level.svg)
+![Candlestick chart showing volume expansion as price tests a key level.](/images/academy/chart-reading/volume-expansion-at-level.svg)
 
 The size of a volume bar matters most when compared with nearby bars. A candle that looks active on one stock might be normal on another stock.
 
@@ -152,7 +152,7 @@ In a useful review, the trader might ask:
 
 Low volume means fewer shares are trading. Sometimes that simply means there is little interest. Other times, volume dries up while price tightens near a level.
 
-![Candlestick chart showing volume drying up while price tightens near a resistance zone.](/images/learn/chart-reading/volume-dry-up-before-move.svg)
+![Candlestick chart showing volume drying up while price tightens near a resistance zone.](/images/academy/chart-reading/volume-dry-up-before-move.svg)
 
 Volume dry-up can be useful context when it appears with compression or consolidation. It can show that trading activity is narrowing before a larger decision area.
 
@@ -162,7 +162,7 @@ But dry-up is not automatically bullish or bearish. A quiet stock can stay quiet
 
 Many new traders notice the first big volume spike and assume the move is still early. Sometimes it is. Often, the first spike is already the loudest part of the move.
 
-![Candlestick chart showing volume fading after an early spike while price stops making clean progress.](/images/learn/chart-reading/volume-fade-after-spike.svg)
+![Candlestick chart showing volume fading after an early spike while price stops making clean progress.](/images/academy/chart-reading/volume-fade-after-spike.svg)
 
 Volume fade after a spike can tell a trader to review whether participation is leaving the move.
 

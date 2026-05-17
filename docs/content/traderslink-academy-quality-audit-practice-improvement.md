@@ -90,9 +90,9 @@ No new SVGs were created in this pass. Existing realistic visual support is stro
 
 Existing editor-verified SVGs:
 
-- `public/images/learn/chart-reading/practice-trading-feedback-loop.svg`
-- `public/images/learn/chart-reading/trade-replay-review-timeline.svg`
-- `public/images/learn/chart-reading/setup-screenshot-review.svg`
+- `public/images/academy/chart-reading/practice-trading-feedback-loop.svg`
+- `public/images/academy/chart-reading/trade-replay-review-timeline.svg`
+- `public/images/academy/chart-reading/setup-screenshot-review.svg`
 
 Future optional SVGs:
 

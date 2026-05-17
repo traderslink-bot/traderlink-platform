@@ -95,9 +95,9 @@ The course does not need a broad rewrite. The useful work during this pass was t
 
 No new SVGs were created in this pass. The existing visuals are useful and realistic:
 
-- `public/images/learn/chart-reading/swing-trading-multi-session-plan.svg`
-- `public/images/learn/chart-reading/swing-trading-risk-gap-context.svg`
-- `public/images/learn/chart-reading/swing-trading-catalyst-timeline.svg`
+- `public/images/academy/chart-reading/swing-trading-multi-session-plan.svg`
+- `public/images/academy/chart-reading/swing-trading-risk-gap-context.svg`
+- `public/images/academy/chart-reading/swing-trading-catalyst-timeline.svg`
 
 Future optional SVGs:
 

@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/compression/"
 recommended_next: "/academy/gap-fill-trading/"
 visual_assets:
-  - "/images/learn/chart-reading/consolidation-range-map.svg"
-  - "/images/learn/chart-reading/consolidation-failed-range-break.svg"
+  - "/images/academy/chart-reading/consolidation-range-map.svg"
+  - "/images/academy/chart-reading/consolidation-failed-range-break.svg"
 internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/key-levels-trading/"
@@ -86,7 +86,7 @@ Traders often watch consolidation because it can show:
 - Pressure building before a breakout or breakdown.
 - A place where risk can be easier to define.
 
-![Candlestick chart showing a consolidation range with support, resistance, and volume context.](/images/learn/chart-reading/consolidation-range-map.svg)
+![Candlestick chart showing a consolidation range with support, resistance, and volume context.](/images/academy/chart-reading/consolidation-range-map.svg)
 
 The cleaner the range, the easier it may be to review the trade idea.
 
@@ -119,7 +119,7 @@ A consolidation is more useful when the range is clear enough to plan around. If
 
 A failed range break happens when price moves outside consolidation but cannot stay outside the range.
 
-![Candlestick chart showing a consolidation breakout attempt that fails back inside the range.](/images/learn/chart-reading/consolidation-failed-range-break.svg)
+![Candlestick chart showing a consolidation breakout attempt that fails back inside the range.](/images/academy/chart-reading/consolidation-failed-range-break.svg)
 
 This does not mean the range was meaningless. It means the first break did not hold and the trader should review the response.
 

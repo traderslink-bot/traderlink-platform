@@ -25,9 +25,9 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/key-levels-trading/"
 recommended_next: "/academy/breakdown-trading/"
 visual_assets:
-  - "/images/learn/chart-reading/breakout-with-volume-context.svg"
-  - "/images/learn/chart-reading/failed-breakout-review.svg"
-  - "/images/learn/chart-reading/extended-breakout-chase-risk.svg"
+  - "/images/academy/chart-reading/breakout-with-volume-context.svg"
+  - "/images/academy/chart-reading/failed-breakout-review.svg"
+  - "/images/academy/chart-reading/extended-breakout-chase-risk.svg"
 internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/key-levels-trading/"
@@ -93,7 +93,7 @@ Common breakout levels include:
 
 Traders watch these areas because a clean break can attract attention, volume, and short-term participation. But the break itself is only one part of the read.
 
-![Candlestick chart showing price breaking above resistance with volume context.](/images/learn/chart-reading/breakout-with-volume-context.svg)
+![Candlestick chart showing price breaking above resistance with volume context.](/images/academy/chart-reading/breakout-with-volume-context.svg)
 
 The visual above shows a breakout attempt with volume expanding as price clears a resistance zone. This is not a signal. It is an example of the kind of behavior traders may review: level quality, volume, and whether price holds above the zone.
 
@@ -147,7 +147,7 @@ The important part is that confirmation should be defined before the trade. If a
 
 A failed breakout happens when price breaks above a level but cannot hold above it. Price may fall back under the breakout area, reject sharply, or return to the prior range.
 
-![Candlestick chart showing a breakout attempt that fails back below the breakout level.](/images/learn/chart-reading/failed-breakout-review.svg)
+![Candlestick chart showing a breakout attempt that fails back below the breakout level.](/images/academy/chart-reading/failed-breakout-review.svg)
 
 Failed breakouts are important because they can reveal chase behavior. A trader may enter after price clears the level, then keep holding even after the level that made the idea attractive has failed.
 
@@ -157,7 +157,7 @@ A failed breakout does not mean the original level was fake. It means the breako
 
 One of the biggest breakout mistakes is entering far above the level after the move has already stretched.
 
-![Candlestick chart showing a breakout far above the level with chase-risk review labels.](/images/learn/chart-reading/extended-breakout-chase-risk.svg)
+![Candlestick chart showing a breakout far above the level with chase-risk review labels.](/images/academy/chart-reading/extended-breakout-chase-risk.svg)
 
 An extended breakout can still continue, but the review question changes:
 

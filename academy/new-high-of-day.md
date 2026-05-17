@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/low-of-day/"
 recommended_next: "/academy/compression/"
 visual_assets:
-  - "/images/learn/chart-reading/new-high-of-day-hold-vs-fail.svg"
-  - "/images/learn/chart-reading/new-high-of-day-chase-risk.svg"
+  - "/images/academy/chart-reading/new-high-of-day-hold-vs-fail.svg"
+  - "/images/academy/chart-reading/new-high-of-day-chase-risk.svg"
 internal_links:
   - "/academy/high-of-day/"
   - "/academy/key-levels-trading/"
@@ -85,7 +85,7 @@ Traders may watch NHOD because it can show:
 - A failed breakout if price cannot hold.
 - A crowded chase area if price is already extended.
 
-![Candlestick chart comparing a new high of day that holds with one that fails back below the old high.](/images/learn/chart-reading/new-high-of-day-hold-vs-fail.svg)
+![Candlestick chart comparing a new high of day that holds with one that fails back below the old high.](/images/academy/chart-reading/new-high-of-day-hold-vs-fail.svg)
 
 The visual above shows why the word "attempt" matters. A new high can hold above the old high, or it can fail back below it. Both outcomes belong in the review.
 
@@ -120,7 +120,7 @@ Neither outcome is guaranteed. The lesson is to compare the plan with what actua
 
 Repeated new highs can look strong, but they can also become extended.
 
-![Candlestick chart showing repeated new high of day pushes getting farther from support and creating chase-risk review context.](/images/learn/chart-reading/new-high-of-day-chase-risk.svg)
+![Candlestick chart showing repeated new high of day pushes getting farther from support and creating chase-risk review context.](/images/academy/chart-reading/new-high-of-day-chase-risk.svg)
 
 Chase risk can show up when:
 

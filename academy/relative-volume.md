@@ -24,8 +24,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/volume/"
 recommended_next: "/academy/relative-volume-rvol/"
 visual_assets:
-  - "/images/learn/chart-reading/relative-volume-normal-vs-unusual.svg"
-  - "/images/learn/chart-reading/relative-volume-news-fade-review.svg"
+  - "/images/academy/chart-reading/relative-volume-normal-vs-unusual.svg"
+  - "/images/academy/chart-reading/relative-volume-news-fade-review.svg"
 internal_links:
   - "/academy/volume/"
   - "/academy/relative-volume-rvol/"
@@ -87,7 +87,7 @@ For example:
 - Today it trades 3,000,000 shares by midday.
 - That activity is much higher than normal.
 
-![Candlestick chart comparing normal volume with unusual relative volume.](/images/learn/chart-reading/relative-volume-normal-vs-unusual.svg)
+![Candlestick chart comparing normal volume with unusual relative volume.](/images/academy/chart-reading/relative-volume-normal-vs-unusual.svg)
 
 The exact calculation can vary by platform. Some tools compare current daily volume with average daily volume. Others compare current volume with the typical volume by the same time of day.
 
@@ -139,7 +139,7 @@ High relative volume is common after news, filings, earnings, sector moves, or o
 
 That catalyst matters. A stock with strong relative volume after meaningful news is different from a stock with high relative volume but no clear reason for attention.
 
-![Candlestick chart showing high relative volume after news followed by fading participation.](/images/learn/chart-reading/relative-volume-news-fade-review.svg)
+![Candlestick chart showing high relative volume after news followed by fading participation.](/images/academy/chart-reading/relative-volume-news-fade-review.svg)
 
 A useful review separates the activity from the quality:
 

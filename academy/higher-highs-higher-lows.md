@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/swing-highs-and-swing-lows/"
 recommended_next: "/academy/lower-highs-lower-lows/"
 visual_assets:
-  - "/images/learn/chart-reading/higher-highs-higher-lows-uptrend.svg"
-  - "/images/learn/chart-reading/higher-low-failure-review.svg"
+  - "/images/academy/chart-reading/higher-highs-higher-lows-uptrend.svg"
+  - "/images/academy/chart-reading/higher-low-failure-review.svg"
 internal_links:
   - "/academy/swing-highs-and-swing-lows/"
   - "/academy/break-of-structure/"
@@ -84,7 +84,7 @@ A higher low shows that a pullback held above the prior swing low.
 
 Together, they can show uptrend structure or strengthening intraday structure.
 
-![Candlestick chart showing higher highs and higher lows forming a rising market structure.](/images/learn/chart-reading/higher-highs-higher-lows-uptrend.svg)
+![Candlestick chart showing higher highs and higher lows forming a rising market structure.](/images/academy/chart-reading/higher-highs-higher-lows-uptrend.svg)
 
 The visual above shows a clean educational example. Notice that the higher lows are not perfect touches on a line. Real charts are messier, so traders usually think in zones and visible swing areas.
 
@@ -133,7 +133,7 @@ For many reviews, the question is not simply "did price make a higher high?" The
 
 A higher low failure happens when price loses the latest meaningful higher-low area and cannot reclaim it.
 
-![Candlestick chart showing an uptrend losing the latest higher low and shifting into a review area.](/images/learn/chart-reading/higher-low-failure-review.svg)
+![Candlestick chart showing an uptrend losing the latest higher low and shifting into a review area.](/images/academy/chart-reading/higher-low-failure-review.svg)
 
 This does not mean price must collapse. It means the prior uptrend structure has changed enough to review the trade differently.
 

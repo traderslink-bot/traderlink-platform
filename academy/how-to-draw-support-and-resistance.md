@@ -24,9 +24,9 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/support-and-resistance/"
 recommended_next: "/academy/support-levels/"
 visual_assets:
-  - "/images/learn/chart-reading/support-resistance-zones-vs-lines.svg"
-  - "/images/learn/chart-reading/mark-obvious-reaction-levels.svg"
-  - "/images/learn/chart-reading/near-price-actionable-levels.svg"
+  - "/images/academy/chart-reading/support-resistance-zones-vs-lines.svg"
+  - "/images/academy/chart-reading/mark-obvious-reaction-levels.svg"
+  - "/images/academy/chart-reading/near-price-actionable-levels.svg"
 internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/resistance-levels/"
@@ -97,7 +97,7 @@ One of the biggest beginner mistakes is trying to draw a perfect line through on
 
 A better approach is to mark the area where price reacted.
 
-![Educational chart comparing exact support and resistance lines with cleaner support and resistance zones.](/images/learn/chart-reading/support-resistance-zones-vs-lines.svg)
+![Educational chart comparing exact support and resistance lines with cleaner support and resistance zones.](/images/academy/chart-reading/support-resistance-zones-vs-lines.svg)
 
 The left side of the visual shows why exact lines can miss the real behavior. The right side shows a cleaner zone that captures nearby candle bodies, wicks, and repeated reactions.
 
@@ -125,7 +125,7 @@ Look for areas where price clearly:
 - Reclaimed.
 - Failed.
 
-![Educational candlestick chart showing how to mark only obvious support and resistance reaction areas.](/images/learn/chart-reading/mark-obvious-reaction-levels.svg)
+![Educational candlestick chart showing how to mark only obvious support and resistance reaction areas.](/images/academy/chart-reading/mark-obvious-reaction-levels.svg)
 
 The important part is that the level should be visible before the trade. If you only notice it after the trade goes wrong, it may not have helped the original decision.
 
@@ -173,7 +173,7 @@ For a current trade plan, the most useful levels are usually:
 - The next major target or trouble area.
 - Any major daily or premarket level nearby.
 
-![Educational chart showing nearest actionable support and resistance levels around current price.](/images/learn/chart-reading/near-price-actionable-levels.svg)
+![Educational chart showing nearest actionable support and resistance levels around current price.](/images/academy/chart-reading/near-price-actionable-levels.svg)
 
 Far-away levels can still be useful later. But if a level is too far from current price to affect the trade, it may not need to be on the active decision chart.
 

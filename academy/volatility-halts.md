@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume-spike/"
   - "/academy/slippage/"
 visual_assets:
-  - "/images/learn/chart-reading/trading-halt-timeline.svg"
+  - "/images/academy/chart-reading/trading-halt-timeline.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A volatility halt is a pause caused by extreme or rapid price movement under mar
 
 Volatility halts are not rewards, warnings, or predictions by themselves. They are market structure events that can create serious risk.
 
-![Dark trading dashboard showing candles before a halt, paused trading period, resume candles, and volume bars with review labels.](/images/learn/chart-reading/trading-halt-timeline.svg)
+![Dark trading dashboard showing candles before a halt, paused trading period, resume candles, and volume bars with review labels.](/images/academy/chart-reading/trading-halt-timeline.svg)
 
 ## Lesson Objective
 

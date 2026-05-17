@@ -29,7 +29,7 @@ internal_links:
   - "/academy/overnight-risk/"
   - "/academy/stop-loss/"
 visual_assets:
-  - "/images/learn/chart-reading/swing-trading-risk-gap-context.svg"
+  - "/images/academy/chart-reading/swing-trading-risk-gap-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Swing trading risk management is the process of deciding how much risk belongs i
 
 The key difference is overnight exposure. A day trader can often close before the session ends. A swing trader may still be exposed to earnings, filings, offerings, sector headlines, broad-market weakness, and gaps before the next regular-hours open.
 
-![Dark trading dashboard showing swing trading gap-risk context with daily candles, overnight gap, planned invalidation area, and review labels.](/images/learn/chart-reading/swing-trading-risk-gap-context.svg)
+![Dark trading dashboard showing swing trading gap-risk context with daily candles, overnight gap, planned invalidation area, and review labels.](/images/academy/chart-reading/swing-trading-risk-gap-context.svg)
 
 ## Lesson Objective
 

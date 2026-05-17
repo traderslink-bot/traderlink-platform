@@ -14,7 +14,7 @@ Academy markdown source now lives under the repository root `academy/` folder, n
 
 Academy public page slugs should use `/academy/...`, so the future website experience and search-engine URLs live under `traderslink.pro/academy/...` instead of `traderslink.pro/learn/...`.
 
-Existing visual asset paths may remain under `/images/learn/...` and `public/images/learn/...` for now. Those are media asset locations, not Academy page URLs.
+Academy visual assets now live under `/images/academy/...` and `public/images/academy/...`. Those are media asset locations, not Academy page URLs.
 
 ## What The User Means By App Tie-Ins
 

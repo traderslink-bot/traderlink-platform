@@ -29,7 +29,7 @@ internal_links:
   - "/academy/risk-management/"
   - "/academy/revenue-guidance/"
 visual_assets:
-  - "/images/learn/chart-reading/swing-trading-risk-gap-context.svg"
+  - "/images/academy/chart-reading/swing-trading-risk-gap-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Earnings can change a swing trade quickly because the market is reacting to new 
 
 For swing traders, the most important question is whether they are trading before earnings, after earnings, or intentionally through earnings. Those are different situations with different risks.
 
-![Dark trading dashboard showing swing trading gap-risk context with daily candles, overnight gap, planned invalidation area, and review labels.](/images/learn/chart-reading/swing-trading-risk-gap-context.svg)
+![Dark trading dashboard showing swing trading gap-risk context with daily candles, overnight gap, planned invalidation area, and review labels.](/images/academy/chart-reading/swing-trading-risk-gap-context.svg)
 
 ## Lesson Objective
 

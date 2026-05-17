@@ -29,7 +29,7 @@ internal_links:
   - "/academy/relative-volume-rvol/"
   - "/academy/spread/"
 visual_assets:
-  - "/images/learn/chart-reading/premarket-session-workflow.svg"
+  - "/images/academy/chart-reading/premarket-session-workflow.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Premarket trading happens before the regular session opens. It can reveal active
 
 The important lesson is preparation. Premarket movement can be useful context, but extended-hours trading can be thin, spread out, and easy to misread.
 
-![Premarket candlestick chart showing premarket high, premarket low, opening bell, volume, catalyst review, and spread check.](/images/learn/chart-reading/premarket-session-workflow.svg)
+![Premarket candlestick chart showing premarket high, premarket low, opening bell, volume, catalyst review, and spread check.](/images/academy/chart-reading/premarket-session-workflow.svg)
 
 ## Lesson Objective
 

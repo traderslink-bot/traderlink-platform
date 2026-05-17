@@ -29,7 +29,7 @@ internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/overnight-risk/"
 visual_assets:
-  - "/images/learn/chart-reading/swing-trading-multi-session-plan.svg"
+  - "/images/academy/chart-reading/swing-trading-multi-session-plan.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Swing trading means holding a planned trade across more than one market session.
 
 A useful beginner swing plan connects the chart, the reason for interest, position size, overnight risk, and review. The goal is not to predict every candle. The goal is to know what the trade idea is, what would weaken it, and how to review the decisions made while holding.
 
-![Dark trading dashboard showing a multi-session swing trading plan with daily candles, support and resistance zones, volume, overnight markers, and review labels.](/images/learn/chart-reading/swing-trading-multi-session-plan.svg)
+![Dark trading dashboard showing a multi-session swing trading plan with daily candles, support and resistance zones, volume, overnight markers, and review labels.](/images/academy/chart-reading/swing-trading-multi-session-plan.svg)
 
 ## Lesson Objective
 

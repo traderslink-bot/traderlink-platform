@@ -29,7 +29,7 @@ internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/volume/"
 visual_assets:
-  - "/images/learn/chart-reading/candlestick-anatomy-context.svg"
+  - "/images/academy/chart-reading/candlestick-anatomy-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Candlestick patterns are price formations created by one or more candles. They c
 
 The danger is treating candle names as instructions. A doji, hammer, engulfing candle, or inside bar has meaning only when it is read with location, volume, trend, liquidity, and risk.
 
-![Educational candlestick chart showing candle anatomy, wick, body, support, resistance, and volume context.](/images/learn/chart-reading/candlestick-anatomy-context.svg)
+![Educational candlestick chart showing candle anatomy, wick, body, support, resistance, and volume context.](/images/academy/chart-reading/candlestick-anatomy-context.svg)
 
 ## Lesson Objective
 

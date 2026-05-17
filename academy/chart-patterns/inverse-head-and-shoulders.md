@@ -29,7 +29,7 @@ internal_links:
   - "[Volume](/academy/volume/)"
   - "[Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/)"
 visual_assets:
-  - "/images/learn/chart-reading/inverse-head-shoulders-context.svg"
+  - "/images/academy/chart-reading/inverse-head-shoulders-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Inverse Head And Shoulders is a chart pattern traders use to organize price beha
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing inverse head and shoulders structure with neckline and failed-neckline review context.](/images/learn/chart-reading/inverse-head-shoulders-context.svg)
+![Candlestick chart showing inverse head and shoulders structure with neckline and failed-neckline review context.](/images/academy/chart-reading/inverse-head-shoulders-context.svg)
 
 ## Lesson Objective
 

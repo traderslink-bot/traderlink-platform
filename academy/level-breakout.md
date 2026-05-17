@@ -25,8 +25,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/breakdown-trading/"
 recommended_next: "/academy/level-reclaim/"
 visual_assets:
-  - "/images/learn/chart-reading/level-breakout-retest-hold.svg"
-  - "/images/learn/chart-reading/level-breakout-failed-hold.svg"
+  - "/images/academy/chart-reading/level-breakout-retest-hold.svg"
+  - "/images/academy/chart-reading/level-breakout-failed-hold.svg"
 internal_links:
   - "/academy/key-levels-trading/"
   - "/academy/resistance-levels/"
@@ -124,7 +124,7 @@ Useful questions include:
 
 Sometimes price breaks above resistance, pulls back, and holds near the old resistance zone. Traders may describe this as old resistance becoming support.
 
-![Candlestick chart showing price breaking above a level, retesting it, and holding above the zone.](/images/learn/chart-reading/level-breakout-retest-hold.svg)
+![Candlestick chart showing price breaking above a level, retesting it, and holding above the zone.](/images/academy/chart-reading/level-breakout-retest-hold.svg)
 
 This behavior can make a breakout easier to review because the level remains relevant after the break. It still does not guarantee continuation. The trader still needs to review volume, liquidity, risk, and whether the entry was close enough to defined risk.
 
@@ -140,7 +140,7 @@ Useful retest questions include:
 
 A failed hold happens when price breaks above a level but cannot stay above it. Price may fall back below the breakout zone, reject sharply, or return to the prior range.
 
-![Candlestick chart showing price breaking above a level and then failing back below the breakout zone.](/images/learn/chart-reading/level-breakout-failed-hold.svg)
+![Candlestick chart showing price breaking above a level and then failing back below the breakout zone.](/images/academy/chart-reading/level-breakout-failed-hold.svg)
 
 This is one of the most important breakout review moments. The trader can ask whether the original idea changed when price failed to hold the level.
 

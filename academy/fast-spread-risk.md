@@ -29,7 +29,7 @@ internal_links:
   - "/academy/market-orders-vs-limit-orders/"
   - "/academy/halt-resume/"
 visual_assets:
-  - "/images/learn/chart-reading/halt-resume-spread-risk.svg"
+  - "/images/academy/chart-reading/halt-resume-spread-risk.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Fast spread risk happens when the bid-ask spread widens during a volatile or thi
 
 This matters around halts, resumes, news spikes, low-float stocks, market-wide stress, and any fast candle where liquidity is not stable.
 
-![Dark trading dashboard showing a halt resume, wide bid-ask spread, thin depth, realistic candles, volume bars, and execution-risk review labels.](/images/learn/chart-reading/halt-resume-spread-risk.svg)
+![Dark trading dashboard showing a halt resume, wide bid-ask spread, thin depth, realistic candles, volume bars, and execution-risk review labels.](/images/academy/chart-reading/halt-resume-spread-risk.svg)
 
 ## Lesson Objective
 

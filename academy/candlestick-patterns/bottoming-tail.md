@@ -29,7 +29,7 @@ internal_links:
   - "/academy/price-rejection/"
   - "/academy/volume/"
 visual_assets:
-  - "/images/learn/chart-reading/hammer-support-context.svg"
+  - "/images/academy/chart-reading/hammer-support-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A bottoming tail candle has a long lower wick that shows price dropped during th
 
 The candle can be useful, but only if the trader reviews whether the lower area actually mattered afterward.
 
-![Candlestick chart showing a hammer-style lower wick near support with volume and follow-through context.](/images/learn/chart-reading/hammer-support-context.svg)
+![Candlestick chart showing a hammer-style lower wick near support with volume and follow-through context.](/images/academy/chart-reading/hammer-support-context.svg)
 
 ## Lesson Objective
 

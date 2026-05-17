@@ -29,7 +29,7 @@ internal_links:
   - "/academy/slippage/"
   - "/academy/risk-management/"
 visual_assets:
-  - "/images/learn/chart-reading/trading-halt-timeline.svg"
+  - "/images/academy/chart-reading/trading-halt-timeline.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A trading halt is a temporary pause in trading for a security or, in extreme cas
 
 The important lesson is risk. A halt can interrupt a plan, freeze exits, widen uncertainty, and change execution conditions after trading resumes.
 
-![Dark trading dashboard showing candles before a halt, paused trading period, resume candles, and volume bars with review labels.](/images/learn/chart-reading/trading-halt-timeline.svg)
+![Dark trading dashboard showing candles before a halt, paused trading period, resume candles, and volume bars with review labels.](/images/academy/chart-reading/trading-halt-timeline.svg)
 
 ## Lesson Objective
 

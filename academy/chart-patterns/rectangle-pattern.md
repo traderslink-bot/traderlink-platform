@@ -29,7 +29,7 @@ internal_links:
   - "[Volume By Price](/academy/volume-by-price/)"
   - "[Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/)"
 visual_assets:
-  - "/images/learn/chart-reading/rectangle-base-breakout-context.svg"
+  - "/images/academy/chart-reading/rectangle-base-breakout-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Rectangle Pattern is a chart pattern traders use to organize price behavior. The
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing a rectangular range with support, resistance, volume, and breakout failure context.](/images/learn/chart-reading/rectangle-base-breakout-context.svg)
+![Candlestick chart showing a rectangular range with support, resistance, volume, and breakout failure context.](/images/academy/chart-reading/rectangle-base-breakout-context.svg)
 
 ## Lesson Objective
 

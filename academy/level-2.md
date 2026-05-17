@@ -24,8 +24,8 @@ academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/academy/market-orders-vs-limit-orders/"
 recommended_next: "/academy/time-and-sales/"
 visual_assets:
-  - "/images/learn/chart-reading/level-2-order-book-depth.svg"
-  - "/images/learn/chart-reading/level-2-depth-can-disappear.svg"
+  - "/images/academy/chart-reading/level-2-order-book-depth.svg"
+  - "/images/academy/chart-reading/level-2-depth-can-disappear.svg"
 internal_links:
   - "/academy/bid-and-ask/"
   - "/academy/spread/"
@@ -88,7 +88,7 @@ A Level 2 screen may show:
 - Market depth above and below the current price.
 - Changes in visible liquidity.
 
-![Trading dashboard showing a Level 2 order book with stacked bid and ask depth beside price candles.](/images/learn/chart-reading/level-2-order-book-depth.svg)
+![Trading dashboard showing a Level 2 order book with stacked bid and ask depth beside price candles.](/images/academy/chart-reading/level-2-order-book-depth.svg)
 
 Traders use Level 2 to understand the current quote environment and possible execution conditions.
 
@@ -131,7 +131,7 @@ A stacked bid may show visible interest, but it does not guarantee support. A st
 
 Level 2 displays visible orders, but not every order in the market is visible. Some orders may be hidden, routed elsewhere, canceled quickly, or changed as price moves.
 
-![Trading dashboard showing visible bid depth disappearing during a fast move.](/images/learn/chart-reading/level-2-depth-can-disappear.svg)
+![Trading dashboard showing visible bid depth disappearing during a fast move.](/images/academy/chart-reading/level-2-depth-can-disappear.svg)
 
 This is why traders need caution with Level 2. Displayed size can look strong and then vanish. Ask size can look heavy and then get absorbed. The book can change quickly during news, halts, low float moves, or volume spikes.
 

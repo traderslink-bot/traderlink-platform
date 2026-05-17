@@ -29,7 +29,7 @@ internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/volume/"
 visual_assets:
-  - "/images/learn/chart-reading/chart-pattern-context-map.svg"
+  - "/images/academy/chart-reading/chart-pattern-context-map.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Chart patterns are recurring price structures traders use to organize what they 
 
 The pattern name is not the edge. The useful part is the structure it gives to levels, risk, and review.
 
-![Educational chart showing patterns as combinations of levels, trend, volume, and risk context.](/images/learn/chart-reading/chart-pattern-context-map.svg)
+![Educational chart showing patterns as combinations of levels, trend, volume, and risk context.](/images/academy/chart-reading/chart-pattern-context-map.svg)
 
 ## Lesson Objective
 

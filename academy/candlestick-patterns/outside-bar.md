@@ -29,7 +29,7 @@ internal_links:
   - "/academy/breakout-trading/"
   - "/academy/breakdown-trading/"
 visual_assets:
-  - "/images/learn/chart-reading/inside-outside-bar-context.svg"
+  - "/images/academy/chart-reading/inside-outside-bar-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ An outside bar forms when a candle trades above the prior high and below the pri
 
 An outside bar can look powerful, but it can also mark exhaustion, a trap, or messy volatility.
 
-![Candlestick chart showing inside bar compression and outside bar range expansion with volume context.](/images/learn/chart-reading/inside-outside-bar-context.svg)
+![Candlestick chart showing inside bar compression and outside bar range expansion with volume context.](/images/academy/chart-reading/inside-outside-bar-context.svg)
 
 ## Lesson Objective
 

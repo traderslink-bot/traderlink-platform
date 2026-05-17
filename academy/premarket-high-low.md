@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/previous-day-high-low/"
 recommended_next: "/academy/high-of-day/"
 visual_assets:
-  - "/images/learn/chart-reading/premarket-high-low-range-map.svg"
-  - "/images/learn/chart-reading/premarket-high-failed-breakout.svg"
+  - "/images/academy/chart-reading/premarket-high-low-range-map.svg"
+  - "/images/academy/chart-reading/premarket-high-failed-breakout.svg"
 internal_links:
   - "/academy/premarket-trading/"
   - "/academy/key-levels-trading/"
@@ -85,7 +85,7 @@ Traders often abbreviate these as:
 - PMH for premarket high.
 - PML for premarket low.
 
-![Candlestick chart showing premarket high and premarket low mapped before the regular session open.](/images/learn/chart-reading/premarket-high-low-range-map.svg)
+![Candlestick chart showing premarket high and premarket low mapped before the regular session open.](/images/academy/chart-reading/premarket-high-low-range-map.svg)
 
 The visual above shows how the premarket range can become the first map for the open. The level quality still depends on volume, liquidity, spread, and how price behaves after 9:30 a.m. Eastern.
 
@@ -135,7 +135,7 @@ Premarket levels are most useful when the chart shows real participation, not ju
 
 A failed breakout at premarket high happens when price pushes above PMH but cannot hold above it.
 
-![Candlestick chart showing price breaking above premarket high and failing back below after the open.](/images/learn/chart-reading/premarket-high-failed-breakout.svg)
+![Candlestick chart showing price breaking above premarket high and failing back below after the open.](/images/academy/chart-reading/premarket-high-failed-breakout.svg)
 
 This does not mean the stock must reverse. It means the PMH interaction became a review point.
 

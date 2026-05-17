@@ -29,7 +29,7 @@ internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/volume/"
 visual_assets:
-  - "/images/learn/chart-reading/engulfing-candle-context.svg"
+  - "/images/academy/chart-reading/engulfing-candle-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ An engulfing candle forms when one candle's body overtakes the body of the prior
 
 The larger candle can feel decisive in real time. The review still has to ask whether the entry was structured or late.
 
-![Candlestick chart showing bullish and bearish engulfing candles near support and resistance with volume context.](/images/learn/chart-reading/engulfing-candle-context.svg)
+![Candlestick chart showing bullish and bearish engulfing candles near support and resistance with volume context.](/images/academy/chart-reading/engulfing-candle-context.svg)
 
 ## Lesson Objective
 

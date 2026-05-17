@@ -29,7 +29,7 @@ internal_links:
   - "[Volume](/academy/volume/)"
   - "[Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/)"
 visual_assets:
-  - "/images/learn/chart-reading/wedge-channel-context.svg"
+  - "/images/academy/chart-reading/wedge-channel-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Wedge Pattern is a chart pattern traders use to organize price behavior. The pat
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing a narrowing wedge with converging trendlines and volume context.](/images/learn/chart-reading/wedge-channel-context.svg)
+![Candlestick chart showing a narrowing wedge with converging trendlines and volume context.](/images/academy/chart-reading/wedge-channel-context.svg)
 
 ## Lesson Objective
 

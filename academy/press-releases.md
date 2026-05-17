@@ -23,8 +23,8 @@ academy_level: "Foundation"
 recommended_previous: "/academy/stock-catalysts/"
 recommended_next: "/academy/how-to-read-stock-press-releases/"
 visual_assets:
-  - "/images/learn/chart-reading/press-release-anatomy-review.svg"
-  - "/images/learn/chart-reading/press-release-reaction-review.svg"
+  - "/images/academy/chart-reading/press-release-anatomy-review.svg"
+  - "/images/academy/chart-reading/press-release-reaction-review.svg"
 internal_links:
   - "/academy/stock-catalysts/"
   - "/academy/how-to-read-stock-press-releases/"
@@ -91,7 +91,7 @@ Press releases may cover:
 - Product launches or commercialization updates.
 - Corporate governance or leadership changes.
 
-![Dark dashboard showing a press release anatomy review with headline, timestamp, source, key details, risk language, and filing check.](/images/learn/chart-reading/press-release-anatomy-review.svg)
+![Dark dashboard showing a press release anatomy review with headline, timestamp, source, key details, risk language, and filing check.](/images/academy/chart-reading/press-release-anatomy-review.svg)
 
 For traders, the press release often explains why a stock is moving. It does not prove that the move is strong, durable, or clean to trade.
 
@@ -155,7 +155,7 @@ Useful questions include:
 - Did the spread stay manageable?
 - Did the first move happen before most traders had time to read the details?
 
-![Dark trading dashboard showing a press release headline, red and green candlesticks, volume burst, and fade review notes.](/images/learn/chart-reading/press-release-reaction-review.svg)
+![Dark trading dashboard showing a press release headline, red and green candlesticks, volume burst, and fade review notes.](/images/academy/chart-reading/press-release-reaction-review.svg)
 
 The release explains the catalyst. The chart and liquidity explain how the market responded.
 

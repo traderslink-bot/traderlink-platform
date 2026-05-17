@@ -24,8 +24,8 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/high-of-day/"
 recommended_next: "/academy/new-high-of-day/"
 visual_assets:
-  - "/images/learn/chart-reading/low-of-day-level-map.svg"
-  - "/images/learn/chart-reading/low-of-day-failed-breakdown.svg"
+  - "/images/academy/chart-reading/low-of-day-level-map.svg"
+  - "/images/academy/chart-reading/low-of-day-failed-breakdown.svg"
 internal_links:
   - "/academy/high-of-day/"
   - "/academy/key-levels-trading/"
@@ -86,7 +86,7 @@ Traders watch LOD because it can become:
 - A risk line for long trades.
 - A review point for extended downside moves.
 
-![Candlestick chart showing low of day as an intraday reference level with nearby PML and PDL context.](/images/learn/chart-reading/low-of-day-level-map.svg)
+![Candlestick chart showing low of day as an intraday reference level with nearby PML and PDL context.](/images/academy/chart-reading/low-of-day-level-map.svg)
 
 The visual above shows LOD as part of the intraday map. It should be reviewed with premarket low, previous day low, current structure, volume, and distance from the latest lower high.
 
@@ -123,7 +123,7 @@ The first LOD can become a reference level. A later new LOD is a breakdown attem
 
 A failed LOD breakdown happens when price pushes below low of day but cannot hold below it.
 
-![Candlestick chart showing price breaking below low of day and reclaiming back above the level.](/images/learn/chart-reading/low-of-day-failed-breakdown.svg)
+![Candlestick chart showing price breaking below low of day and reclaiming back above the level.](/images/academy/chart-reading/low-of-day-failed-breakdown.svg)
 
 This does not mean the stock must reverse. It means the LOD interaction became a review point.
 

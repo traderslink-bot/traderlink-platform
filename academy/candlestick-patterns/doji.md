@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume/"
   - "/academy/consolidation/"
 visual_assets:
-  - "/images/learn/chart-reading/doji-at-key-level.svg"
+  - "/images/academy/chart-reading/doji-at-key-level.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A doji forms when the open and close are very close together. It often shows hes
 
 A doji matters most when the trader can explain where it formed, why the location matters, and what price did after it.
 
-![Candlestick chart showing a doji candle near resistance with volume and follow-through context.](/images/learn/chart-reading/doji-at-key-level.svg)
+![Candlestick chart showing a doji candle near resistance with volume and follow-through context.](/images/academy/chart-reading/doji-at-key-level.svg)
 
 ## Lesson Objective
 

@@ -29,7 +29,7 @@ internal_links:
   - "[Volume](/academy/volume/)"
   - "[Support Levels](/academy/support-levels/)"
 visual_assets:
-  - "/images/learn/chart-reading/wedge-channel-context.svg"
+  - "/images/academy/chart-reading/wedge-channel-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Falling Wedge is a chart pattern traders use to organize price behavior. The pat
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing a falling wedge narrowing downward with volume and reclaim-review context.](/images/learn/chart-reading/wedge-channel-context.svg)
+![Candlestick chart showing a falling wedge narrowing downward with volume and reclaim-review context.](/images/academy/chart-reading/wedge-channel-context.svg)
 
 ## Lesson Objective
 

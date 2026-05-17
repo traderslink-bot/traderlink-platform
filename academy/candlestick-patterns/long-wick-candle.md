@@ -29,7 +29,7 @@ internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/spread/"
 visual_assets:
-  - "/images/learn/chart-reading/long-wick-rejection-context.svg"
+  - "/images/academy/chart-reading/long-wick-rejection-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ A long wick candle has a wick that stands out compared with the body. It can sho
 
 A wick is useful only when the trader asks where it formed and what happened after it.
 
-![Candlestick chart showing long upper and lower wick rejection around support and resistance with volume context.](/images/learn/chart-reading/long-wick-rejection-context.svg)
+![Candlestick chart showing long upper and lower wick rejection around support and resistance with volume context.](/images/academy/chart-reading/long-wick-rejection-context.svg)
 
 ## Lesson Objective
 

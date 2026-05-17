@@ -25,9 +25,9 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/support-levels/"
 recommended_next: "/academy/key-levels-trading/"
 visual_assets:
-  - "/images/learn/chart-reading/resistance-level-rejection.svg"
-  - "/images/learn/chart-reading/resistance-level-break.svg"
-  - "/images/learn/chart-reading/failed-breakout-at-resistance.svg"
+  - "/images/academy/chart-reading/resistance-level-rejection.svg"
+  - "/images/academy/chart-reading/resistance-level-break.svg"
+  - "/images/academy/chart-reading/failed-breakout-at-resistance.svg"
 internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/how-to-draw-support-and-resistance/"
@@ -95,7 +95,7 @@ Traders often mark resistance from:
 
 A resistance level gives traders a place to watch and review. It does not decide the trade by itself.
 
-![Candlestick chart showing price rejecting from a resistance zone with volume context.](/images/learn/chart-reading/resistance-level-rejection.svg)
+![Candlestick chart showing price rejecting from a resistance zone with volume context.](/images/academy/chart-reading/resistance-level-rejection.svg)
 
 The visual above shows price testing a resistance zone and rejecting from it. The lesson is not that resistance always rejects. The lesson is that a visible zone gives traders an area to plan around and review.
 
@@ -163,7 +163,7 @@ The resistance level does not prove what happens next. It gives the trader a str
 
 A resistance break happens when price moves above a resistance zone. The quality of the break depends on what happens next: volume, follow-through, acceptance above the level, and whether price holds the old resistance area on a pullback.
 
-![Candlestick chart showing price breaking above a resistance zone and holding above it.](/images/learn/chart-reading/resistance-level-break.svg)
+![Candlestick chart showing price breaking above a resistance zone and holding above it.](/images/academy/chart-reading/resistance-level-break.svg)
 
 Resistance breaks can happen because:
 
@@ -187,7 +187,7 @@ Useful review questions after a resistance break:
 
 A failed breakout happens when price moves above resistance but cannot hold there. It may fall back into the prior range, reject sharply, or chop around the level.
 
-![Candlestick chart showing a breakout attempt above resistance that fails back below the zone.](/images/learn/chart-reading/failed-breakout-at-resistance.svg)
+![Candlestick chart showing a breakout attempt above resistance that fails back below the zone.](/images/academy/chart-reading/failed-breakout-at-resistance.svg)
 
 Failed breakouts are important because they often reveal chase risk. A trader may see price move above resistance, enter late, and then hold as price falls back under the level that made the idea attractive.
 

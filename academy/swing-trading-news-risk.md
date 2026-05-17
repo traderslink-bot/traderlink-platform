@@ -29,7 +29,7 @@ internal_links:
   - "/academy/sec-filings/"
   - "/academy/overnight-risk/"
 visual_assets:
-  - "/images/learn/chart-reading/swing-trading-risk-gap-context.svg"
+  - "/images/academy/chart-reading/swing-trading-risk-gap-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ News risk is the risk that new information changes the trade while a swing posit
 
 This matters because swing trades cross sessions. A trader can enter with a clean chart and wake up to a different setup after a headline, filing, sector event, or broad-market move.
 
-![Dark trading dashboard showing swing trading gap-risk context with daily candles, overnight gap, planned invalidation area, and review labels.](/images/learn/chart-reading/swing-trading-risk-gap-context.svg)
+![Dark trading dashboard showing swing trading gap-risk context with daily candles, overnight gap, planned invalidation area, and review labels.](/images/academy/chart-reading/swing-trading-risk-gap-context.svg)
 
 ## Lesson Objective
 

@@ -29,7 +29,7 @@ internal_links:
   - "[Higher Highs And Higher Lows](/academy/higher-highs-higher-lows/)"
   - "[Break Of Structure](/academy/break-of-structure/)"
 visual_assets:
-  - "/images/learn/chart-reading/wedge-channel-context.svg"
+  - "/images/academy/chart-reading/wedge-channel-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ Channel Pattern is a chart pattern traders use to organize price behavior. The p
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing a rising channel and narrowing wedge structure with trendline context.](/images/learn/chart-reading/wedge-channel-context.svg)
+![Candlestick chart showing a rising channel and narrowing wedge structure with trendline context.](/images/academy/chart-reading/wedge-channel-context.svg)
 
 ## Lesson Objective
 

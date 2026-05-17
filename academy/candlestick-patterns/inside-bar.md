@@ -29,7 +29,7 @@ internal_links:
   - "/academy/consolidation/"
   - "/academy/level-breakout/"
 visual_assets:
-  - "/images/learn/chart-reading/inside-outside-bar-context.svg"
+  - "/images/academy/chart-reading/inside-outside-bar-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -44,7 +44,7 @@ An inside bar forms when a candle stays inside the high and low of the prior can
 
 The inside bar gives traders a range to review. It does not promise a clean break.
 
-![Candlestick chart showing inside bar compression and outside bar range expansion with volume context.](/images/learn/chart-reading/inside-outside-bar-context.svg)
+![Candlestick chart showing inside bar compression and outside bar range expansion with volume context.](/images/academy/chart-reading/inside-outside-bar-context.svg)
 
 ## Lesson Objective
 
