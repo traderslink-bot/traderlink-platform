@@ -86,6 +86,7 @@ Review
 | Chart Reading article upgrade 23 | complete | `/learn/gap-fill-trading/` upgraded with realistic gap-zone and failed-fill visuals. |
 | Volume Liquidity article upgrade 1 | complete | `/learn/volume/` upgraded as the foundation volume/participation lesson with three realistic chart visuals. |
 | Volume Liquidity article upgrade 2 | complete | `/learn/relative-volume/` upgraded with normal-versus-unusual and news-fade visuals. |
+| Volume Liquidity article upgrade 3 | complete | `/learn/relative-volume-rvol/` upgraded with time-of-day comparison and scanner-context visuals. |
 | Learn hub website build | not_started | Codex should not build until explicitly requested. |
 
 ## Track Upgrade Order
@@ -97,7 +98,7 @@ Review
 | 3 | News, Catalysts, Filings, And Dilution | not_started | 1 | High-value TradersLink differentiator. |
 | 4 | Risk, Discipline, And Psychology | not_started | 1 | Important coaching/retention path. |
 | 5 | Execution And Trade Review | not_started | 1 | Strongest Trader Intelligence bridge. |
-| 6 | Volume, Liquidity, And Order Flow | in_progress | 2 | Volume foundation and relative-volume concept articles complete. Continue with RVOL, volume spikes, liquidity, dollar volume, spread, slippage, and Level 2/time-and-sales context. |
+| 6 | Volume, Liquidity, And Order Flow | in_progress | 2 | Volume foundation, relative-volume concept, and RVOL metric articles complete. Continue with volume spikes, liquidity, dollar volume, spread, slippage, and Level 2/time-and-sales context. |
 | 7 | Day Trading Workflow | not_started | 2 | Practical user workflow path. |
 | 8 | Practice And Improvement | not_started | 2 | Helps users train before increasing risk. |
 | 9 | Candlestick Patterns In Context | not_started | 3 | Needs visuals and context warnings. |
@@ -150,7 +151,8 @@ Alternative future gold-standard article:
 | /learn/gap-fill-trading/ | docs/content/drafts/learn/gap-fill-trading.md | Chart Reading And Market Structure | Swing Trading, News Catalysts Filings And Dilution, Execution And Trade Review | Practical | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed gap fill trading upgrade. Added learning path metadata, previous/next metadata, gap-zone map visual, failed gap fill/hold visual, catalyst and volume context, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `efd6d0ba` |
 | /learn/volume/ | docs/content/drafts/learn/volume.md | Volume Liquidity And Order Flow | Chart Reading And Market Structure, Execution And Trade Review | Foundation | complete | full_upgrade | 3 realistic SVG chart diagrams created and wired to content | No | 1 | Completed volume foundation upgrade. Added learning path metadata, previous/next metadata, expansion-at-level visual, dry-up visual, fade-after-spike visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `72a62c5a` |
 | /learn/relative-volume/ | docs/content/drafts/learn/relative-volume.md | Volume Liquidity And Order Flow | Chart Reading And Market Structure, News Catalysts Filings And Dilution | Practical | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed relative volume upgrade. Added learning path metadata, previous/next metadata, normal-versus-unusual visual, high-relative-volume news fade visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `f191d165` |
-| /learn/relative-volume-rvol/ | docs/content/drafts/learn/relative-volume-rvol.md | Volume Liquidity And Order Flow | Chart Reading And Market Structure, Day Trading Workflow | Practical | not_started | full_upgrade | 2 realistic SVG chart diagrams | No | 1 | Should teach scanner-style RVOL metrics, time-of-day comparisons, platform differences, and review caveats without treating RVOL as confirmation by itself. |  |
+| /learn/relative-volume-rvol/ | docs/content/drafts/learn/relative-volume-rvol.md | Volume Liquidity And Order Flow | Chart Reading And Market Structure, Day Trading Workflow | Practical | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed RVOL upgrade. Added learning path metadata, previous/next metadata, time-of-day RVOL comparison visual, scanner-context review visual, platform calculation caveats, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `f714877e` |
+| /learn/volume-spike/ | docs/content/drafts/learn/volume-spike.md | Volume Liquidity And Order Flow | Chart Reading And Market Structure, News Catalysts Filings And Dilution | Practical | not_started | full_upgrade | 2 realistic SVG chart diagrams | No | 1 | Should teach sudden volume bursts, first-spike risk, continuation versus fade, catalyst context, and review workflow without treating spikes as direction signals. |  |
 | /learn/sec-filings/ | docs/content/drafts/learn/sec-filings.md | News, Catalysts, Filings, And Dilution | Small-Cap, Float, And Short Squeeze Context | Foundation | not_started | full_upgrade | 2 to 3 filing flow diagrams | No | 1 | Alternative gold-standard article. Needs beginner path, filing map, risk warnings, and links to dilution/offering concepts. |  |
 | /learn/start-here/ | docs/content/drafts/learn/start-here.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 journey map SVG | Yes | 1 | Gap article likely needed to introduce the learning system and guide new users. |  |
 | /learn/how-to-use-traderslink-learn/ | docs/content/drafts/learn/how-to-use-traderslink-learn.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 navigation diagram | Yes | 1 | Gap article likely needed to teach users how to move through learning paths. |  |
@@ -229,6 +231,8 @@ Summary of completed Chart Reading SVG batches:
 | public/images/learn/chart-reading/volume-fade-after-spike.svg | /learn/volume/ | Volume Liquidity And Order Flow | realistic candlestick chart | Show volume fading after a spike. | Volume Fade After A Spike section. | Candlestick chart showing volume fading after an early spike while price stops making clean progress. | editor_verified | Supports volume fade review and avoids reversal certainty. | `72a62c5a` |
 | public/images/learn/chart-reading/relative-volume-normal-vs-unusual.svg | /learn/relative-volume/ | Volume Liquidity And Order Flow | realistic candlestick chart | Compare normal activity with unusual relative volume. | Quick Definition section. | Candlestick chart comparing normal volume with unusual relative volume. | editor_verified | Supports relative-volume comparison education and avoids signal language. | `f191d165` |
 | public/images/learn/chart-reading/relative-volume-news-fade-review.svg | /learn/relative-volume/ | Volume Liquidity And Order Flow | realistic candlestick chart | Show high relative volume after news with fading participation. | High Relative Volume With News section. | Candlestick chart showing high relative volume after news followed by fading participation. | editor_verified | Supports relative-volume context review and avoids prediction language. | `f191d165` |
+| public/images/learn/chart-reading/rvol-time-of-day-comparison.svg | /learn/relative-volume-rvol/ | Volume Liquidity And Order Flow | realistic candlestick chart | Show today's volume versus time-of-day baseline. | Quick Definition section. | Candlestick chart showing current volume compared with a normal time-of-day baseline. | editor_verified | Supports RVOL time-of-day comparison and avoids signal language. | `f714877e` |
+| public/images/learn/chart-reading/rvol-scanner-context-review.svg | /learn/relative-volume-rvol/ | Volume Liquidity And Order Flow | realistic candlestick chart | Show scanner-style RVOL context beside chart review. | RVOL On A Scanner section. | Candlestick chart with a scanner-style context panel showing high RVOL, catalyst, spread, and volume fade review. | editor_verified | Supports RVOL scanner-context review and avoids prediction language. | `f714877e` |
 
 ## Gap Article Tracker
 
@@ -272,15 +276,16 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | /learn/gap-fill-trading/ | Completed gap fill trading article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches gap areas as reviewable zones, includes failed-fill/hold coaching, avoids saying gaps must fill, and uses realistic candlestick visuals with gap levels and volume context. | `efd6d0ba` |
 | 2026-05-17 | /learn/volume/ | Completed volume foundation article upgrade and created three supporting realistic SVG assets. | Passed. The article teaches volume as participation context, includes expansion, dry-up, and fade-after-spike review, avoids treating volume as a signal, and uses realistic candlestick visuals with volume bars. | `72a62c5a` |
 | 2026-05-17 | /learn/relative-volume/ | Completed relative volume article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches current activity versus normal activity, connects relative volume with catalyst/liquidity context, avoids scanner-signal language, and uses realistic candlestick visuals with volume comparisons. | `f191d165` |
+| 2026-05-17 | /learn/relative-volume-rvol/ | Completed RVOL article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches scanner-style RVOL, time-of-day comparisons, platform calculation differences, and review context without treating RVOL as confirmation by itself. | `f714877e` |
 
 ## Next Recommended Action
 
 Continue the Volume Liquidity And Order Flow track:
 
-1. Fetch `/learn/relative-volume-rvol/` draft.
+1. Fetch `/learn/volume-spike/` draft.
 2. Perform pre-editor review.
-3. Upgrade it using `/learn/volume/` and `/learn/relative-volume/` as context.
-4. Create 2 realistic SVGs focused on scanner-style RVOL, time-of-day comparisons, and platform calculation caveats.
+3. Upgrade it using `/learn/volume/`, `/learn/relative-volume/`, and `/learn/relative-volume-rvol/` as context.
+4. Create 2 realistic SVGs focused on first-spike context, continuation versus fade, and catalyst/level review.
 5. Run editor verification.
 6. Update this tracker.
 7. Update the handoff.
