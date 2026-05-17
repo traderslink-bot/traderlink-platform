@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Key-Level Review Workflow</title>
+  <desc id="desc">Educational chart workflow showing hold, break, reject, and reclaim behavior around key levels.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Key-Level Review Workflow</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Use levels to review behavior, not to predict a guaranteed outcome.</text>
+  <g stroke="#18304e" stroke-width="1">
+    <line x1="58" y1="128" x2="704" y2="128"/>
+    <line x1="58" y1="188" x2="704" y2="188"/>
+    <line x1="58" y1="248" x2="704" y2="248"/>
+    <line x1="58" y1="308" x2="704" y2="308"/>
+  </g>
+  <rect x="68" y="172" width="620" height="40" fill="#1d4ed8" opacity=".2"/>
+  <line x1="68" y1="172" x2="688" y2="172" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="68" y1="212" x2="688" y2="212" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="538" y="166" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Key level zone</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="98" y1="218" x2="98" y2="282"/>
+      <rect x="88" y="238" width="20" height="28" rx="2"/>
+      <line x1="142" y1="194" x2="142" y2="258"/>
+      <rect x="132" y="212" width="20" height="28" rx="2"/>
+      <line x1="274" y1="182" x2="274" y2="250"/>
+      <rect x="264" y="202" width="20" height="30" rx="2"/>
+      <line x1="318" y1="136" x2="318" y2="218"/>
+      <rect x="308" y="156" width="20" height="40" rx="2"/>
+      <line x1="450" y1="204" x2="450" y2="282"/>
+      <rect x="440" y="224" width="20" height="36" rx="2"/>
+      <line x1="494" y1="172" x2="494" y2="250"/>
+      <rect x="484" y="190" width="20" height="38" rx="2"/>
+      <line x1="582" y1="198" x2="582" y2="272"/>
+      <rect x="572" y="218" width="20" height="34" rx="2"/>
+    </g>
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="186" y1="156" x2="186" y2="238"/>
+      <rect x="176" y="178" width="20" height="38" rx="2"/>
+      <line x1="362" y1="126" x2="362" y2="238"/>
+      <rect x="352" y="150" width="20" height="62" rx="2"/>
+      <line x1="538" y1="150" x2="538" y2="250"/>
+      <rect x="528" y="172" width="20" height="54" rx="2"/>
+      <line x1="626" y1="232" x2="626" y2="314"/>
+      <rect x="616" y="252" width="20" height="38" rx="2"/>
+    </g>
+  </g>
+  <path d="M97 263 C141 223 170 197 187 209 C219 229 257 222 275 217 C303 209 325 163 363 212 C394 251 426 260 451 250 C482 238 504 207 539 224 C570 239 596 238 626 286" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".55"/>
+  <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
+    <text x="78" y="318" fill="#bbf7d0">Hold?</text>
+    <text x="288" y="124" fill="#bbf7d0">Break?</text>
+    <text x="364" y="270" fill="#fecaca">Reject?</text>
+    <text x="548" y="326" fill="#c8d7ee">Review response</text>
+  </g>
+  <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Journal prompt: What did price do at the level, and did my decision follow the plan?</text>
+</svg>
