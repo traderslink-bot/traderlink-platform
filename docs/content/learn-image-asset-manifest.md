@@ -69,6 +69,8 @@ journey_map
 | `public/images/learn/chart-reading/level-reclaim-failure.svg` | `/learn/level-reclaim/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price reclaiming a level briefly and then failing back below the zone. | Reclaim Failure section. | Candlestick chart showing price reclaiming a level briefly and then failing back below the zone. | editor_verified | Supports reclaim failure review, keeps labels focused on trader response, and avoids buy/sell or predictive language. | `57664031` |
 | `public/images/learn/chart-reading/price-rejection-at-resistance.svg` | `/learn/price-rejection/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price pushing into resistance and rejecting back below the zone. | Quick Definition section. | Candlestick chart showing price pushing into resistance and rejecting back below the zone. | editor_verified | Supports rejection-at-level review, uses realistic candles and zones, and avoids reversal guarantee language. | `3ff3c7c4` |
 | `public/images/learn/chart-reading/rejection-wick-context.svg` | `/learn/price-rejection/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a long wick at a key level with follow-through context. | Rejection Needs Context section. | Candlestick chart showing a long wick at a key level with follow-through context. | editor_verified | Supports wick-context education, avoids treating every wick as a signal, and keeps labels focused on review. | `3ff3c7c4` |
+| `public/images/learn/chart-reading/uptrend-structure-break.svg` | `/learn/break-of-structure/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show higher highs and higher lows before price breaks below the latest higher low. | Uptrend Structure Break section. | Candlestick chart showing higher highs and higher lows before price breaks below the latest higher low. | editor_verified | Supports uptrend structure-break review, uses realistic candles and swing labels, and avoids predictive language. | `d03cf796` |
+| `public/images/learn/chart-reading/downtrend-structure-break.svg` | `/learn/break-of-structure/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show lower highs and lower lows before price breaks above the latest lower high. | Downtrend Structure Break section. | Candlestick chart showing lower highs and lower lows before price breaks above the latest lower high. | editor_verified | Supports downtrend structure-break review, uses realistic candles and swing labels, and avoids reversal certainty. | `d03cf796` |
 
 ## Editor Verification Summary
 
@@ -150,11 +152,19 @@ Price rejection SVG batch verification:
 - The visuals are wired to article sections where they add learning value.
 - The batch is appropriate for the price rejection upgrade.
 
+Break of structure SVG batch verification:
+
+- Both visuals support the actual break-of-structure lesson.
+- Visuals show realistic swing structure with red and green candlesticks, higher-high/higher-low and lower-high/lower-low context.
+- Labels teach review of structure changes without buy/sell language or guaranteed-reversal claims.
+- The visuals are wired to article sections where they add learning value.
+- The batch is appropriate for the break-of-structure upgrade.
+
 ## Next Asset Batch Candidates
 
-After the first nine Chart Reading articles, the next high-value SVG batch should likely support one of these:
+After the first ten Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Break Of Structure article: higher-high/higher-low shift, lower-high/lower-low shift, structure break review.
+1. Swing Highs And Swing Lows article: swing point identification and clean structure map.
 2. Breakdown article: clean breakdown, failed breakdown/reclaim, breakdown with volume context.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
