@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Compression Tightening Range</title>
+  <desc id="desc">Educational candlestick chart showing price compression with tightening candles and contracting volume near a key level.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Compression: Tightening Range</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Range tightens near a key level while volume contracts.</text>
+  <g stroke="#18304e" stroke-width="1"><line x1="58" y1="116" x2="704" y2="116"/><line x1="58" y1="166" x2="704" y2="166"/><line x1="58" y1="216" x2="704" y2="216"/><line x1="58" y1="266" x2="704" y2="266"/></g>
+  <rect x="80" y="148" width="560" height="30" fill="#1d4ed8" opacity=".18"/>
+  <line x1="80" y1="148" x2="640" y2="148" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="80" y1="178" x2="640" y2="178" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="88" y="140" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Resistance zone</text>
+  <path d="M112 282 L590 180" stroke="#fbbf24" stroke-width="3" stroke-dasharray="8 8" opacity=".9"/>
+  <text x="422" y="234" fill="#fbbf24" font-family="Arial, sans-serif" font-size="13" font-weight="700">Higher lows tighten</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="104" y1="250" x2="104" y2="316"/><rect x="94" y="270" width="20" height="28" rx="2"/>
+      <line x1="158" y1="222" x2="158" y2="292"/><rect x="148" y="242" width="20" height="32" rx="2"/>
+      <line x1="212" y1="196" x2="212" y2="268"/><rect x="202" y="216" width="20" height="34" rx="2"/>
+      <line x1="266" y1="174" x2="266" y2="244"/><rect x="256" y="194" width="20" height="32" rx="2"/>
+      <line x1="374" y1="168" x2="374" y2="226"/><rect x="364" y="184" width="20" height="26" rx="2"/>
+      <line x1="482" y1="158" x2="482" y2="208"/><rect x="472" y="174" width="20" height="22" rx="2"/>
+      <line x1="590" y1="152" x2="590" y2="198"/><rect x="580" y="166" width="20" height="20" rx="2"/>
+    </g>
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="320" y1="154" x2="320" y2="230"/><rect x="310" y="176" width="20" height="36" rx="2"/>
+      <line x1="428" y1="150" x2="428" y2="212"/><rect x="418" y="168" width="20" height="28" rx="2"/>
+      <line x1="536" y1="150" x2="536" y2="202"/><rect x="526" y="166" width="20" height="24" rx="2"/>
+    </g>
+  </g>
+  <path d="M104 298 L158 258 L212 234 L266 210 L320 212 L374 198 L428 196 L482 186 L536 190 L590 176" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
+  <g><rect x="74" y="326" width="14" height="40" fill="#21c784" opacity=".85"/><rect x="112" y="336" width="14" height="30" fill="#21c784" opacity=".75"/><rect x="150" y="344" width="14" height="22" fill="#ef4444" opacity=".65"/><rect x="188" y="346" width="14" height="20" fill="#21c784" opacity=".65"/><rect x="226" y="350" width="14" height="16" fill="#ef4444" opacity=".6"/><rect x="264" y="352" width="14" height="14" fill="#21c784" opacity=".55"/><rect x="302" y="354" width="14" height="12" fill="#21c784" opacity=".5"/></g>
+  <rect x="28" y="376" width="704" height="36" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="399" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: did range and volume truly tighten before expansion?</text>
+</svg>

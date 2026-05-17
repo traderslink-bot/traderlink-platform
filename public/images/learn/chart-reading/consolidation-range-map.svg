@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Consolidation Range Map</title>
+  <desc id="desc">Educational candlestick chart showing a consolidation range with support, resistance, and volume context.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Consolidation Range Map</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A useful range has clear support, resistance, and reviewable reactions.</text>
+  <g stroke="#18304e" stroke-width="1"><line x1="58" y1="116" x2="704" y2="116"/><line x1="58" y1="166" x2="704" y2="166"/><line x1="58" y1="216" x2="704" y2="216"/><line x1="58" y1="266" x2="704" y2="266"/></g>
+  <rect x="84" y="140" width="568" height="132" fill="#1d4ed8" opacity=".1"/>
+  <line x1="84" y1="140" x2="652" y2="140" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="84" y1="272" x2="652" y2="272" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="94" y="132" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Range resistance</text>
+  <text x="94" y="294" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Range support</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="108" y1="240" x2="108" y2="304"/><rect x="98" y="258" width="20" height="28" rx="2"/>
+      <line x1="216" y1="178" x2="216" y2="250"/><rect x="206" y="198" width="20" height="34" rx="2"/>
+      <line x1="324" y1="236" x2="324" y2="300"/><rect x="314" y="254" width="20" height="28" rx="2"/>
+      <line x1="432" y1="174" x2="432" y2="246"/><rect x="422" y="194" width="20" height="34" rx="2"/>
+      <line x1="540" y1="232" x2="540" y2="298"/><rect x="530" y="250" width="20" height="30" rx="2"/>
+    </g>
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="162" y1="136" x2="162" y2="218"/><rect x="152" y="158" width="20" height="42" rx="2"/>
+      <line x1="270" y1="138" x2="270" y2="220"/><rect x="260" y="160" width="20" height="42" rx="2"/>
+      <line x1="378" y1="140" x2="378" y2="220"/><rect x="368" y="160" width="20" height="40" rx="2"/>
+      <line x1="486" y1="138" x2="486" y2="220"/><rect x="476" y="160" width="20" height="42" rx="2"/>
+      <line x1="594" y1="142" x2="594" y2="222"/><rect x="584" y="162" width="20" height="40" rx="2"/>
+    </g>
+  </g>
+  <path d="M108 286 L162 200 L216 232 L270 200 L324 282 L378 200 L432 228 L486 202 L540 280 L594 202" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
+  <g><rect x="90" y="340" width="14" height="26" fill="#21c784" opacity=".7"/><rect x="124" y="346" width="14" height="20" fill="#ef4444" opacity=".65"/><rect x="158" y="342" width="14" height="24" fill="#21c784" opacity=".68"/><rect x="192" y="348" width="14" height="18" fill="#ef4444" opacity=".6"/><rect x="226" y="350" width="14" height="16" fill="#21c784" opacity=".55"/><rect x="260" y="346" width="14" height="20" fill="#ef4444" opacity=".6"/></g>
+  <rect x="28" y="376" width="704" height="36" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="399" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: was the entry near a range edge or in the middle?</text>
+</svg>
