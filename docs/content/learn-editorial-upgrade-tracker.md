@@ -564,13 +564,14 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | Volume, Liquidity And Order Flow Academy format migration | Normalized 14 Volume, Liquidity And Order Flow lessons for Academy format. | Passed. Lessons now use `content_type: "academy_lesson"`, normalized `learning_track`, `academy_course`, `academy_module`, `academy_order`, `academy_level`, lesson objectives, `Practical Checklist`, `Apply This In Review`, and review-focused wording. | `8bef2423` |
 | 2026-05-17 | Technical Indicators And Tools Academy format migration check | Checked 11 Technical Indicators And Tools lessons plus the cross-listed Volume By Price lesson for Academy format readiness. | Passed with no lesson edits needed. Lessons already include `content_type: "academy_lesson"`, `academy_course`, `academy_module`, `academy_order`, `academy_level`, previous/next path, lesson objective, practical checklist, Apply This In Review, Trader Intelligence bridge, related lessons, FAQ, and educational disclaimer. VWAP Reclaim was already counted in the Chart Patterns check, and Volume By Price was already counted in the Volume check. | no lesson file changes |
 | 2026-05-17 | Trading Styles And Playbooks Academy format migration check | Checked 14 Trading Styles course-sequence lessons for Academy format readiness. | Passed with no lesson edits needed. Lessons already include `content_type: "academy_lesson"`, `academy_course`, `academy_module`, `academy_order`, `academy_level`, previous/next path, lesson objective, practical checklist, Apply This In Review, Trader Intelligence bridge, related lessons, FAQ, and educational disclaimer. Breakout, breakdown, reclaim, and gap-fill were already counted in the Chart Reading check; chasing stocks is now counted through this pass. | no lesson file changes |
+| 2026-05-17 | News, Catalysts And SEC Filings Academy format migration | Normalized 36 News, Catalysts And SEC Filings lessons for Academy format. | Passed. Lessons now use `content_type: "academy_lesson"`, normalized `learning_track`, `academy_course`, `academy_module`, `academy_order`, `academy_level`, lesson objectives, `Practical Checklist`, `Apply This In Review`, and review-focused wording. The pass also replaced broad journal framing with structured review notes where the lesson was not specifically about journaling. | `c66493f3` |
 
 ## Next Recommended Action
 
 Continue into Academy format migration and UI-readiness normalization:
 
-1. Continue the metadata/format pass with News, Catalysts And SEC Filings.
-2. Then continue into Risk Management And Trade Planning or Small-Cap Stocks, Float And Dilution, depending on which course has the highest website-readiness value at that point.
+1. Continue the metadata/format pass with Risk Management And Trade Planning.
+2. Then continue into Small-Cap Stocks, Float And Dilution.
 3. Normalize `academy_course`, `academy_module`, `academy_order`, `academy_level`, `recommended_previous`, `recommended_next`, visual asset references, and review-section naming.
 4. Do not rewrite strong lessons unless the new Academy format reveals a real gap.
 5. Keep this as markdown/content planning only; do not build production routes, components, schemas, JSX, CSS, or pages.
