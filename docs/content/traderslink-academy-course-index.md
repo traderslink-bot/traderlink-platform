@@ -1129,8 +1129,8 @@ Current known Academy-ready lesson groups:
 | Course | Academy-Ready Lessons | Notes |
 |---|---:|---|
 | Chart Reading And Market Structure | 23 | Core course has completed its first Academy format migration pass: normalized academy metadata, lesson objectives, practical checklist naming, Apply This In Review, and Trader Intelligence Bridge labels. |
-| Candlestick Patterns In Context | 14 | Full candlestick course markdown path is now content-upgraded across candle foundation, wick/indecision candles, shift candles, compression candles, tail candles, volume confirmation, and red/green intraday transitions. Eight realistic SVGs were created and manifest-tracked. |
-| Chart Patterns In Context | 13 | Full chart-pattern course markdown path is now content-upgraded across pattern foundation, continuation context, range/base patterns, channels, wedges, reversal/failure context, and parabolic extension. Nine realistic SVGs were created and manifest-tracked. VWAP Reclaim is cross-listed from Technical Indicators. |
+| Candlestick Patterns In Context | 14 | Full candlestick course markdown path has passed Academy format migration check: metadata, lesson objectives, checklist, review, Trader Intelligence bridge, and visuals are already normalized. |
+| Chart Patterns In Context | 13 | Full chart-pattern course markdown path has passed Academy format migration check: metadata, lesson objectives, checklist, review, Trader Intelligence bridge, and visuals are already normalized. VWAP Reclaim remains cross-listed from Technical Indicators. |
 | Day Trading Workflow | 9 | Full day-trading workflow course markdown path is now content-upgraded across session framework, premarket prep, watchlist filtering, market open, opening range, midday filtering, power hour, after-hours context, and session review. Five realistic SVGs were created and manifest-tracked. |
 | Practice And Improvement | 9 | Full practice course markdown path is now content-upgraded across practice foundation, paper trading, replay review, watchlist review, screenshot review, trade grading, one-rule drills, forward testing, and improvement planning. Three realistic SVGs were created and manifest-tracked. |
 | Halts And High-Volatility Events | 7 | Full event-risk course markdown path is now content-upgraded across trading halts, volatility halts, halt resumes, market-wide circuit breakers, fast-spread risk, low-float volatility, and high-volatility trade review. Three realistic SVGs were created and manifest-tracked. |
@@ -1157,20 +1157,20 @@ More precise current state:
 | State | Lesson Count | Meaning |
 |---|---:|---|
 | content_upgraded | 217 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 194 | Remaining upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
-| academy_ready | 23 | Chart Reading And Market Structure core lessons have passed the first Academy format migration check. |
+| academy_format_review_needed | 167 | Remaining upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| academy_ready | 50 | Chart Reading core, Candlestick Patterns, and Chart Patterns lesson sets have passed the first Academy format migration check. |
 
 The 217 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to continue normalizing them into the final course format while creating or upgrading missing lessons only when a real gap appears.
 
 Current best next editorial action:
 
 ```text
-Candlestick Patterns Academy format migration
+Volume, Liquidity And Order Flow Academy format migration
 ```
 
 Reason:
 
-Trading Foundations passed the first structural check, and the Chart Reading core lesson set has now completed the first Academy format migration pass. The highest-value next work is the Candlestick Patterns In Context migration pass, followed by Chart Patterns In Context.
+Trading Foundations passed the first structural check. Chart Reading core, Candlestick Patterns, and Chart Patterns have completed the first Academy format migration check. The highest-value next work is Volume, Liquidity And Order Flow, followed by Technical Indicators And Tools.
 
 ## Recommended Work Method From Here
 
