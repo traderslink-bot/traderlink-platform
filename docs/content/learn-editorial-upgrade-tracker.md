@@ -93,6 +93,7 @@ Review
 | Volume Liquidity article upgrade 7 | complete | `/learn/spread/` upgraded with tight/wide spread and hidden execution-cost visuals. |
 | Volume Liquidity article upgrade 8 | complete | `/learn/bid-and-ask/` upgraded with quote-mechanics and order-interaction visuals. |
 | Volume Liquidity article upgrade 9 | complete | `/learn/slippage/` upgraded with expected-vs-actual fill and fast-move liquidity visuals. |
+| Volume Liquidity article upgrade 10 | complete | `/learn/market-orders-vs-limit-orders/` upgraded with order-type tradeoff and no-fill visuals. |
 | Learn hub website build | not_started | Codex should not build until explicitly requested. |
 
 ## Track Upgrade Order
@@ -104,7 +105,7 @@ Review
 | 3 | News, Catalysts, Filings, And Dilution | not_started | 1 | High-value TradersLink differentiator. |
 | 4 | Risk, Discipline, And Psychology | not_started | 1 | Important coaching/retention path. |
 | 5 | Execution And Trade Review | not_started | 1 | Strongest Trader Intelligence bridge. |
-| 6 | Volume, Liquidity, And Order Flow | in_progress | 2 | Volume foundation, relative-volume concept, RVOL metric, volume-spike, liquidity, dollar-volume, spread, bid/ask, and slippage articles complete. Continue with order types and Level 2/time-and-sales context. |
+| 6 | Volume, Liquidity, And Order Flow | in_progress | 2 | Volume foundation, relative-volume concept, RVOL metric, volume-spike, liquidity, dollar-volume, spread, bid/ask, slippage, and order-type articles complete. Continue with Level 2 and time-and-sales context. |
 | 7 | Day Trading Workflow | not_started | 2 | Practical user workflow path. |
 | 8 | Practice And Improvement | not_started | 2 | Helps users train before increasing risk. |
 | 9 | Candlestick Patterns In Context | not_started | 3 | Needs visuals and context warnings. |
@@ -164,7 +165,8 @@ Alternative future gold-standard article:
 | /learn/spread/ | docs/content/drafts/learn/spread.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed spread upgrade. Added learning path metadata, previous/next metadata, tight-versus-wide spread visual, hidden execution cost visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `255f7a89` |
 | /learn/bid-and-ask/ | docs/content/drafts/learn/bid-and-ask.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Foundation | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed bid-and-ask upgrade. Added learning path metadata, previous/next metadata, quote mechanics visual, order interaction visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `5dd2af67` |
 | /learn/slippage/ | docs/content/drafts/learn/slippage.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed slippage upgrade. Added learning path metadata, previous/next metadata, expected-versus-actual-fill visual, fast-move liquidity review visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `13a86228` |
-| /learn/market-orders-vs-limit-orders/ | docs/content/drafts/learn/market-orders-vs-limit-orders.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | not_started | full_upgrade | 2 realistic SVG trading dashboard diagrams | No | 1 | Should teach speed versus price control, fill/no-fill tradeoffs, order type review, and execution context without recommending one order type universally. |  |
+| /learn/market-orders-vs-limit-orders/ | docs/content/drafts/learn/market-orders-vs-limit-orders.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed market-orders-vs-limit-orders upgrade. Added learning path metadata, previous/next metadata, speed-versus-price-control visual, limit no-fill visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `8ac5648f` |
+| /learn/level-2/ | docs/content/drafts/learn/level-2.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | not_started | full_upgrade | 2 realistic SVG trading dashboard diagrams | No | 1 | Should teach visible order-book depth, bid/ask stacks, limitations, spoofing/overreliance cautions, and review workflow without implying Level 2 predicts moves. |  |
 | /learn/sec-filings/ | docs/content/drafts/learn/sec-filings.md | News, Catalysts, Filings, And Dilution | Small-Cap, Float, And Short Squeeze Context | Foundation | not_started | full_upgrade | 2 to 3 filing flow diagrams | No | 1 | Alternative gold-standard article. Needs beginner path, filing map, risk warnings, and links to dilution/offering concepts. |  |
 | /learn/start-here/ | docs/content/drafts/learn/start-here.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 journey map SVG | Yes | 1 | Gap article likely needed to introduce the learning system and guide new users. |  |
 | /learn/how-to-use-traderslink-learn/ | docs/content/drafts/learn/how-to-use-traderslink-learn.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 navigation diagram | Yes | 1 | Gap article likely needed to teach users how to move through learning paths. |  |
@@ -257,6 +259,8 @@ Summary of completed Chart Reading SVG batches:
 | public/images/learn/chart-reading/bid-ask-order-interaction-review.svg | /learn/bid-and-ask/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show order interaction with quote sides. | How Orders Interact With Bid And Ask section. | Trading dashboard showing how immediate orders interact with bid and ask quotes. | editor_verified | Supports quote/order interaction review and avoids directive order advice. | `5dd2af67` |
 | public/images/learn/chart-reading/slippage-expected-vs-actual-fill.svg | /learn/slippage/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show expected versus actual fill. | Quick Definition section. | Trading dashboard showing expected price versus actual fill price. | editor_verified | Supports slippage definition education and avoids signal language. | `13a86228` |
 | public/images/learn/chart-reading/slippage-fast-move-liquidity-review.svg | /learn/slippage/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show slippage during fast move with thin liquidity. | Slippage During Fast Moves section. | Trading dashboard showing slippage during a fast candle with thin liquidity and a widening spread. | editor_verified | Supports fast-move slippage review and avoids guarantee language. | `13a86228` |
+| public/images/learn/chart-reading/market-vs-limit-order-tradeoff.svg | /learn/market-orders-vs-limit-orders/ | Volume Liquidity And Order Flow | realistic trading dashboard | Compare market order speed and limit order price control. | Quick Definition section. | Trading dashboard comparing market order speed with limit order price control. | editor_verified | Supports order-type tradeoff education and avoids universal order advice. | `8ac5648f` |
+| public/images/learn/chart-reading/limit-order-no-fill-review.svg | /learn/market-orders-vs-limit-orders/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show limit order no-fill review context. | Limit Orders section. | Trading dashboard showing a limit order that does not fill as price moves away. | editor_verified | Supports no-fill review and avoids signal language. | `8ac5648f` |
 
 ## Gap Article Tracker
 
@@ -307,15 +311,16 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | /learn/spread/ | Completed spread article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches bid-ask spread as execution cost, includes tight-versus-wide and hidden-cost review, and avoids treating tight spread as a guarantee. | `255f7a89` |
 | 2026-05-17 | /learn/bid-and-ask/ | Completed bid-and-ask article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches quote mechanics, bid/ask versus last price, and order interaction review without giving order recommendations or implying fills are guaranteed. | `5dd2af67` |
 | 2026-05-17 | /learn/slippage/ | Completed slippage article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches expected versus actual fills, spread/liquidity causes, fast-move review, and avoids implying slippage can always be avoided. | `13a86228` |
+| 2026-05-17 | /learn/market-orders-vs-limit-orders/ | Completed market-orders-vs-limit-orders article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches speed versus price-control tradeoffs, fill/no-fill review, and avoids recommending one order type universally. | `8ac5648f` |
 
 ## Next Recommended Action
 
 Continue the Volume Liquidity And Order Flow track:
 
-1. Fetch `/learn/market-orders-vs-limit-orders/` draft.
+1. Fetch `/learn/level-2/` draft.
 2. Perform pre-editor review.
-3. Upgrade it using `/learn/bid-and-ask/`, `/learn/spread/`, and `/learn/slippage/` as context.
-4. Create 2 realistic SVGs focused on speed versus price control and fill/no-fill tradeoffs.
+3. Upgrade it using `/learn/bid-and-ask/`, `/learn/liquidity/`, and `/learn/time-and-sales/` as context.
+4. Create 2 realistic SVGs focused on visible depth, bid/ask stacks, and Level 2 limitations.
 5. Run editor verification.
 6. Update this tracker.
 7. Update the handoff.
