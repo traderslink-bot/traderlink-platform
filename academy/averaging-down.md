@@ -40,7 +40,7 @@ This lesson is part of the **Trading Psychology And Discipline** course. It foll
 
 Averaging down means adding to a position after price moves against the trader, lowering the average entry price. It can sound logical because the average price improves, but it can also increase risk quickly if the original trade idea is failing.
 
-Averaging down is not automatically wrong in every strategy, but it needs a clear plan, position-size control, and a defined invalidation area. Without those, it can become emotional risk-taking.
+Averaging down is not automatically wrong in every strategy, but it needs a clear plan, position-size control, and a defined invalidation area. The review should also include total exposure, liquidity, and whether the trader could still exit without creating a larger problem. Without those checks, it can become emotional risk-taking.
 
 ## Lesson Objective
 

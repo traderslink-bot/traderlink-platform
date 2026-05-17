@@ -40,7 +40,7 @@ This lesson is part of the **Trading Psychology And Discipline** course. It foll
 
 Revenge trading happens when a trader takes another trade mainly to make back money, fix a loss, or prove they were right. It usually comes from emotion, not from a clean setup.
 
-Every active trader knows the feeling. A loss happens, a stock moves without them, or they feel like they got shaken out. The next trade feels urgent. That urgency is often the warning sign.
+Many active traders recognize the feeling. A loss happens, a stock moves without them, or they feel like they got shaken out. The next trade feels urgent. That urgency is often the warning sign.
 
 ## Lesson Objective
 
@@ -55,6 +55,8 @@ By the end of this lesson, you should be able to:
 ## Quick Definition
 
 Revenge trading is emotional trading after a frustrating result.
+
+This is a behavior-review label, not a medical or personality label.
 
 - Re-entering too quickly after a loss.
 - Increasing size to make money back.

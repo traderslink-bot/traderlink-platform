@@ -95,7 +95,7 @@ Recommended order for future runs:
 | Order | Course / Group | Pass 1 Quality | Pass 2 Sequence | Pass 3 Accuracy | Pass 4 Visual | Pass 5 UI | Pass 6 App Bridge | Notes |
 |---:|---|---|---|---|---|---|---|---|
 | 1 | Trading Foundations | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-foundations.md` with official SEC, Investor.gov, FINRA, and Regulation SHO source verification plus targeted plain-language accuracy guardrail edits. |
-| 2 | Chart Reading And Market Structure | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 2 | Chart Reading And Market Structure | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-chart-reading.md` with reputable charting references plus official SEC, NYSE, and Nasdaq source checks for session/extended-hours language. |
 | 3 | Volume, Liquidity And Order Flow | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-volume-liquidity.md` with official SEC, Investor.gov, FINRA, Nasdaq, and NYSE source verification plus targeted plain-language accuracy guardrail edits. |
 | 4 | Risk Management And Trade Planning | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-risk-management.md` with official SEC, Investor.gov, and FINRA source verification plus targeted plain-language accuracy guardrail edits. |
 | 5 | Technical Indicators And Tools | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-technical-indicators.md` with reputable technical-analysis/charting-source verification plus targeted plain-language accuracy guardrail edits. |
@@ -105,7 +105,7 @@ Recommended order for future runs:
 | 9 | News, Catalysts And SEC Filings | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; Pass 2 completed; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md` with official SEC, Investor.gov, and FDA source verification plus targeted plain-language accuracy guardrail edits. |
 | 10 | Small-Cap Stocks, Float And Dilution | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-small-cap-float-dilution.md` with official SEC, Investor.gov, PCAOB, and FASB source verification plus targeted plain-language accuracy guardrail edits. |
 | 11 | Halts And High-Volatility Events | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-halts-high-volatility.md` with official SEC, Investor.gov, FINRA, NYSE, Nasdaq, LULD, and Cboe source verification plus targeted plain-language accuracy guardrail edits. |
-| 12 | Trading Psychology And Discipline | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; Pass 2 corrected the Averaging Down transition into the Trade Review course opener. |
+| 12 | Trading Psychology And Discipline | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; Pass 2 corrected the Averaging Down transition into the Trade Review course opener; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-psychology.md` with reputable investor-risk, order-type, and behavioral-finance source verification plus targeted plain-language guardrail edits. |
 | 13 | Trade Review And Improvement | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trade-review-improvement.md`; Pass 2 documented the news-review cross-list exception. |
 | 14 | Practice And Improvement | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-practice-improvement.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
 | 15 | Academy Navigation Path Hubs | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-navigation-path-hubs.md`; Pass 2 confirmed path hubs are optional navigation support, not a locked course sequence. |
@@ -211,7 +211,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 3: Accuracy/Source Audit** for **Trading Psychology And Discipline**.
+Continue with **Pass 3: Accuracy/Source Audit** for **Trade Review And Improvement**.
 
 Reason:
 
@@ -243,15 +243,16 @@ Reason:
 - Day Trading Workflow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-day-trading-workflow.md`.
 - Swing Trading Workflow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-swing-trading-workflow.md`.
 - Chart Reading And Market Structure Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-chart-reading.md`.
-- Trading Psychology And Discipline is now the next useful source-sensitive course because it should verify non-clinical behavior language, discipline framing, emotional-trading terminology, non-shaming coaching tone, and app bridge restraint before production UI planning.
+- Trading Psychology And Discipline Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trading-psychology.md`.
+- Trade Review And Improvement is now the next useful source-sensitive course because it is the strongest natural bridge between Academy lessons and the Trader Intelligence review product.
 - Pass 3 should verify factual details against official and reputable sources before the Academy moves toward production UI planning. Source details belong in internal audit files; user-facing lessons should use clean educational wording unless a rule, filing type, or official system is itself the lesson topic.
 
 Output should include:
 
-- A Trading Psychology And Discipline accuracy/source audit.
+- A Trade Review And Improvement accuracy/source audit.
 - Any small markdown edits needed.
 - Source-sensitive findings and corrections.
-- Reputable-source references for trading behavior, risk framing, non-clinical coaching language, and any rule-sensitive claims where needed.
+- Reputable-source references for review-process language, planned-versus-actual framing, execution review, mistake-pattern review, and app bridge restraint.
 - A clear list of items deferred to later source passes if the course is too large for one run.
 - Tracker and handoff update.
 - Commit.

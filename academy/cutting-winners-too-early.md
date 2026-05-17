@@ -137,7 +137,7 @@ After a trade or session, ask:
 - Would a partial scale-out have matched the plan better?
 - How did the trade behave after my exit?
 
-The goal is not to regret every missed move. The goal is to know whether early exits are a repeated pattern.
+The goal is not to regret every missed move. The goal is to know whether early exits are a repeated pattern. This review should avoid hindsight. A smaller planned profit can be valid; the issue is whether the exit matched the plan and information available at the time.
 
 ## Trader Intelligence Bridge
 

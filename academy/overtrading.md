@@ -71,7 +71,7 @@ Overtrading is not only about the number of trades. It is about the quality of t
 
 Overtrading can quietly damage a trading day. A trader may start with one or two clean trades, then slowly give back gains through smaller, lower-quality trades.
 
-- More slippage and spread cost.
+- More commissions, fees, spread cost, and slippage.
 - Lower setup quality.
 - Poor focus.
 - Emotional decision-making.
@@ -79,6 +79,8 @@ Overtrading can quietly damage a trading day. A trader may start with one or two
 - Confusing review data because planned and unplanned trades are mixed together.
 
 The issue is not always one dramatic mistake. Sometimes it is five unnecessary trades that should not have happened.
+
+Frequent trading also makes costs and account/risk rules more important, especially when trades are lower quality or taken after focus fades.
 
 ## How It Shows Up
 

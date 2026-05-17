@@ -42,6 +42,8 @@ Holding losers too long means staying in a losing trade after the original trade
 
 A losing trade is not automatically a mistake. Losses are part of trading. The problem is when the trader ignores the invalidation level, moves the risk, or holds because accepting the planned loss feels uncomfortable.
 
+Stop and exit plans can reduce decision drift, but they cannot guarantee an exact fill in fast, illiquid, halted, or gapping markets.
+
 ## Lesson Objective
 
 By the end of this lesson, you should be able to:

@@ -77,7 +77,7 @@ Trading discipline matters because inconsistency can damage even a reasonable st
 - Emotional decisions become patterns that can be named.
 - Adjustments can be made from evidence instead of frustration.
 
-The goal is not perfection. The goal is consistency that can be reviewed.
+The goal is not perfection. The goal is consistency that can be reviewed. Discipline should also be reviewed without self-judgment. The point is to make the decision process visible, not to diagnose the trader or turn a normal mistake into a character label.
 
 ## How It Shows Up
 
@@ -182,4 +182,4 @@ Review whether the trade followed the plan, which rule was followed or broken, w
 
 ## Educational Disclaimer
 
-This guide is for educational purposes only and is not financial advice. Trading discipline can support better review and risk control, but it does not guarantee trading results.
+This guide is for educational purposes only and is not financial advice. Trading discipline can support better review and risk control, but it does not remove market risk, guarantee better decisions, or guarantee trading results.
