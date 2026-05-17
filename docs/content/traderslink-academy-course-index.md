@@ -198,7 +198,7 @@ Use this as the primary course order on the Academy homepage:
 | 7 | Small-Cap Stocks, Float And Dilution | content_upgraded | Completed markdown course path covering small-cap context, float, share structure, dilution, offerings, securities, corporate actions, cash runway, and going concern. |
 | 8 | Risk Management And Trade Planning | content_upgraded | Completed markdown course path covering plans, rules, sizing, stops, loss limits, trade management, profit protection, overnight risk, and holding through news. |
 | 9 | Trading Psychology And Discipline | content_upgraded | Completed markdown course path covering discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. |
-| 10 | Trade Review And Improvement | planned | Final product bridge into reviewing behavior, mistakes, execution, and Trader Intelligence. |
+| 10 | Trade Review And Improvement | content_upgraded | Completed markdown course path covering trade review, risk review, planned-vs-actual review, execution review, mistake patterns, swing review, and Trader Intelligence review bridge. |
 
 Status definitions:
 
@@ -665,18 +665,28 @@ Teach users how to review decisions, executions, context, mistakes, and repeated
 
 The user should understand how improvement happens through structured review, not just reading lessons.
 
-### Suggested Modules And Lessons
+### Completed Course Lesson Sequence
 
 | Order | Module | Lesson | URL | Current Asset | Status | Notes |
 |---:|---|---|---|---|---|---|
-| 1 | Review Foundation | Trade Review And Improvement | `/learn/trade-review-and-improvement/` | gap | gap_needed | New course opener. |
-| 2 | Review Foundation | Trade Risk Review | `/learn/trade-risk-review/` | draft | needs_upgrade | Existing draft can become core lesson. |
-| 3 | Review Foundation | How To Review News Trades | `/learn/how-to-review-news-trades/` | draft | needs_upgrade | Cross-listed from News course. |
-| 4 | Review Foundation | Swing Trade Journal | `/learn/swing-trade-journal/` | draft | needs_upgrade | Swing-specific review. |
-| 5 | Review Process | Planned Vs Actual Trade | `/learn/planned-vs-actual-trade-review/` | gap | gap_needed | Strong Trader Intelligence bridge. |
-| 6 | Review Process | Execution Review | `/learn/execution-review/` | gap | gap_needed | Slippage/spread/order-type bridge. |
-| 7 | Review Process | Mistake Pattern Review | `/learn/mistake-pattern-review/` | gap | gap_needed | Behavior review without shame. |
-| 8 | Product Bridge | How Trader Intelligence Helps Review Trades | `/learn/trader-intelligence-trade-review/` | gap | gap_needed | Soft product education, not hard sales. |
+| 1 | Review Foundation | Trade Review And Improvement | `/learn/trade-review-and-improvement/` | content_upgraded | complete | Course opener covering review categories, outcome versus decision quality, and improvement notes. |
+| 2 | Review Foundation | Trade Risk Review | `/learn/trade-risk-review/` | content_upgraded | complete | Planned versus actual risk, invalidation, size, stops, adds, slippage, and repeated risk behavior. |
+| 3 | Review Process | Planned Vs Actual Trade Review | `/learn/planned-vs-actual-trade-review/` | content_upgraded | complete | Plan versus actual setup, entry, risk, size, management, exit, and adjustment review. |
+| 4 | Review Process | Execution Review | `/learn/execution-review/` | content_upgraded | complete | Entry timing, fill quality, order type, spread, slippage, liquidity, and exit execution review. |
+| 5 | Review Process | Mistake Pattern Review | `/learn/mistake-pattern-review/` | content_upgraded | complete | Repeated behavior patterns, mistake tags, context triggers, and rule improvements without shame framing. |
+| 6 | Specialized Review | How To Review News Trades | `/learn/how-to-review-news-trades/` | content_upgraded | complete | Cross-listed completed News course capstone for catalyst, reaction, risk, execution, and news-trade review. |
+| 7 | Specialized Review | Swing Trade Journal | `/learn/swing-trade-journal/` | content_upgraded | complete | Multi-session thesis, levels, overnight risk, catalysts, daily management notes, and swing-trade review. |
+| 8 | Product Bridge | How Trader Intelligence Helps Review Trades | `/learn/trader-intelligence-trade-review/` | content_upgraded | complete | Review-only product bridge explaining Trader Intelligence as completed-trade analysis, not prediction. |
+
+### Course Status
+
+The Trade Review And Improvement course markdown path is **content_upgraded** across 7 newly upgraded or created lessons plus the already-completed cross-listed news-trade review lesson.
+
+Before production UI implementation, this course still needs:
+
+- Visual asset review to decide whether review workflow, planned-vs-actual, execution, or pattern diagrams would improve learning.
+- Optional course intro/landing copy for the Academy course page.
+- Progress/lesson completion wiring in the website build phase.
 
 ## Cross-Listed Lesson Rules
 
@@ -823,33 +833,33 @@ Current known Academy-ready lesson groups:
 | Small-Cap Stocks, Float And Dilution | 28 | Full course markdown path is now content-upgraded across small-cap context, float, dilution, offerings, securities, corporate actions, cash runway, and going concern. Needs visual review before UI-ready. |
 | Risk Management And Trade Planning | 13 | Full course markdown path is now content-upgraded across planning, rules, risk basics, account protection, trade management, and event risk. Needs visual review before UI-ready. |
 | Trading Psychology And Discipline | 8 | Full course markdown path is now content-upgraded across discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. Needs visual review before UI-ready. |
-| Trade Review And Improvement | 0 | Needs new course opener and product-aligned review lessons. |
+| Trade Review And Improvement | 7 | Full course markdown path is now content-upgraded across review foundation, risk review, planned-vs-actual review, execution review, mistake patterns, swing review, and Trader Intelligence review bridge. The news-trade review lesson is cross-listed from the completed News course. Needs visual review before UI-ready. |
 
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-122
+129
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 122 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 122 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 129 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 129 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 122 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 129 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/trade-risk-review/
+/learn/start-here/
 ```
 
 Reason:
 
-The Academy just completed the Trading Psychology And Discipline course markdown path. Trade Review And Improvement is the natural next course because users now need a structured way to review risk, behavior, execution, and repeated patterns after trades.
+The Academy just completed the Trade Review And Improvement course markdown path. The highest-value next course is Trading Foundations, starting with `/learn/start-here/`, because the Academy now needs a clean beginner onboarding path that introduces the course system before users enter advanced lessons.
 
 ## Recommended Work Method From Here
 
