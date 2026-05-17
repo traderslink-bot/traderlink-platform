@@ -212,6 +212,51 @@ complete
 gap_needed
 ```
 
+## Academy Readiness Status Model
+
+The older editorial tracker uses `complete` to mean an article has passed the current Learn editorial upgrade workflow.
+
+For TradersLink Academy, use a more precise readiness model:
+
+```text
+draft_exists
+content_upgraded
+academy_format_review_needed
+academy_ready
+ui_ready
+gap_needed
+```
+
+Meaning:
+
+- **draft_exists**: A markdown draft exists, but it still needs a full Academy upgrade.
+- **content_upgraded**: The lesson has been rewritten as a stronger educational lesson with examples, mistakes, review prompts, links, FAQ/disclaimer, and visuals where useful.
+- **academy_format_review_needed**: The lesson is good content, but should be checked against the final Academy structure before website build.
+- **academy_ready**: The lesson has final Academy course/module/order metadata, lesson objective, completion behavior assumptions, review-section naming, and next/previous path.
+- **ui_ready**: The lesson is ready for production website implementation once the UI is built.
+- **gap_needed**: The lesson does not exist yet and should be created.
+
+Important:
+
+The 41 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
+
+The migration pass should check:
+
+- `academy_course`
+- `academy_module`
+- `academy_order`
+- `academy_level`
+- `recommended_previous`
+- `recommended_next`
+- cross-listed courses
+- consistent lesson objective
+- consistent completion CTA assumptions
+- review-section naming, especially replacing overused "journal" framing where appropriate
+- whether the lesson needs any additional explanation now that it is part of a course
+- whether visuals still match the lesson after any content changes
+
+Do not assume a lesson needs a full rewrite just because the Academy format is new. Many completed lessons may only need metadata normalization, section label cleanup, and light additions.
+
 ## Course 1: Trading Foundations
 
 ### Purpose
@@ -723,6 +768,16 @@ Total Academy-ready lessons currently represented in this index:
 41
 ```
 
+More precise current state:
+
+| State | Lesson Count | Meaning |
+|---|---:|---|
+| content_upgraded | 41 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 41 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
+
+The 41 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+
 Current best next editorial action:
 
 ```text
@@ -732,6 +787,43 @@ Current best next editorial action:
 Reason:
 
 The Academy just completed the SEC filings hub. Form 8-K is the natural next lesson because it teaches the most common current-event filing users will encounter after press releases and catalysts.
+
+## Recommended Work Method From Here
+
+Do not go back to isolated SEO article production.
+
+Work course-by-course and lesson-by-lesson using this file as the source of truth.
+
+Recommended workflow:
+
+1. Pick the current course and next lesson from this index.
+2. Read the existing draft if it exists.
+3. Decide whether the lesson needs:
+   - full content upgrade,
+   - light Academy format migration,
+   - visual creation,
+   - metadata normalization,
+   - or a brand-new gap draft.
+4. Upgrade or create the markdown lesson.
+5. Add realistic visuals only when they improve learning.
+6. Update the image manifest if visuals are created.
+7. Update the editorial tracker.
+8. Update this Academy index.
+9. Update the handoff.
+10. Commit in clear chunks.
+
+Existing content-upgraded lessons should get an **Academy migration pass** before the website build. That pass should not rewrite everything. It should:
+
+- Add final Academy metadata.
+- Confirm course/module/order.
+- Rename review sections if needed.
+- Add a short lesson objective if missing.
+- Add or refine completion-oriented "what you should now understand" framing if useful.
+- Confirm previous/next lesson flow.
+- Add content only where the lesson is too thin for the Academy standard.
+- Leave strong existing content intact.
+
+New or not-yet-upgraded drafts should receive the full editorial workflow.
 
 ## Maintenance Instructions
 
