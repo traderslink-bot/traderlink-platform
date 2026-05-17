@@ -95,6 +95,7 @@ Review
 | Volume Liquidity article upgrade 9 | complete | `/learn/slippage/` upgraded with expected-vs-actual fill and fast-move liquidity visuals. |
 | Volume Liquidity article upgrade 10 | complete | `/learn/market-orders-vs-limit-orders/` upgraded with order-type tradeoff and no-fill visuals. |
 | Volume Liquidity article upgrade 11 | complete | `/learn/level-2/` upgraded with order-book-depth and disappearing-depth visuals. |
+| Volume Liquidity article upgrade 12 | complete | `/learn/time-and-sales/` upgraded with tape-print and tape-speed visuals. |
 | Learn hub website build | not_started | Codex should not build until explicitly requested. |
 
 ## Track Upgrade Order
@@ -106,7 +107,7 @@ Review
 | 3 | News, Catalysts, Filings, And Dilution | not_started | 1 | High-value TradersLink differentiator. |
 | 4 | Risk, Discipline, And Psychology | not_started | 1 | Important coaching/retention path. |
 | 5 | Execution And Trade Review | not_started | 1 | Strongest Trader Intelligence bridge. |
-| 6 | Volume, Liquidity, And Order Flow | in_progress | 2 | Volume foundation, relative-volume concept, RVOL metric, volume-spike, liquidity, dollar-volume, spread, bid/ask, slippage, order-type, and Level 2 articles complete. Continue with time-and-sales and volume-by-price context. |
+| 6 | Volume, Liquidity, And Order Flow | in_progress | 2 | Volume foundation, relative-volume concept, RVOL metric, volume-spike, liquidity, dollar-volume, spread, bid/ask, slippage, order-type, Level 2, and time-and-sales articles complete. Continue with volume-by-price and unusual-volume context. |
 | 7 | Day Trading Workflow | not_started | 2 | Practical user workflow path. |
 | 8 | Practice And Improvement | not_started | 2 | Helps users train before increasing risk. |
 | 9 | Candlestick Patterns In Context | not_started | 3 | Needs visuals and context warnings. |
@@ -168,7 +169,8 @@ Alternative future gold-standard article:
 | /learn/slippage/ | docs/content/drafts/learn/slippage.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed slippage upgrade. Added learning path metadata, previous/next metadata, expected-versus-actual-fill visual, fast-move liquidity review visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `13a86228` |
 | /learn/market-orders-vs-limit-orders/ | docs/content/drafts/learn/market-orders-vs-limit-orders.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed market-orders-vs-limit-orders upgrade. Added learning path metadata, previous/next metadata, speed-versus-price-control visual, limit no-fill visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `8ac5648f` |
 | /learn/level-2/ | docs/content/drafts/learn/level-2.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed Level 2 upgrade. Added learning path metadata, previous/next metadata, order-book depth visual, disappearing-depth visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `8a9fc350` |
-| /learn/time-and-sales/ | docs/content/drafts/learn/time-and-sales.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | not_started | full_upgrade | 2 realistic SVG trading dashboard diagrams | No | 1 | Should teach actual prints, tape speed, bid/ask print context, Level 2 comparison, and review workflow without implying tape predicts price. |  |
+| /learn/time-and-sales/ | docs/content/drafts/learn/time-and-sales.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed time-and-sales upgrade. Added learning path metadata, previous/next metadata, bid/ask print visual, tape-speed fade visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `58ea3ca3` |
+| /learn/volume-by-price/ | docs/content/drafts/learn/volume-by-price.md | Volume Liquidity And Order Flow | Chart Reading And Market Structure, Execution And Trade Review | Practical | not_started | full_upgrade | 2 realistic SVG chart/profile diagrams | No | 1 | Should teach volume-by-price profile, high-volume zones, low-volume areas, level review, and journal workflow without treating zones as guaranteed support/resistance. |  |
 | /learn/sec-filings/ | docs/content/drafts/learn/sec-filings.md | News, Catalysts, Filings, And Dilution | Small-Cap, Float, And Short Squeeze Context | Foundation | not_started | full_upgrade | 2 to 3 filing flow diagrams | No | 1 | Alternative gold-standard article. Needs beginner path, filing map, risk warnings, and links to dilution/offering concepts. |  |
 | /learn/start-here/ | docs/content/drafts/learn/start-here.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 journey map SVG | Yes | 1 | Gap article likely needed to introduce the learning system and guide new users. |  |
 | /learn/how-to-use-traderslink-learn/ | docs/content/drafts/learn/how-to-use-traderslink-learn.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 navigation diagram | Yes | 1 | Gap article likely needed to teach users how to move through learning paths. |  |
@@ -265,6 +267,8 @@ Summary of completed Chart Reading SVG batches:
 | public/images/learn/chart-reading/limit-order-no-fill-review.svg | /learn/market-orders-vs-limit-orders/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show limit order no-fill review context. | Limit Orders section. | Trading dashboard showing a limit order that does not fill as price moves away. | editor_verified | Supports no-fill review and avoids signal language. | `8ac5648f` |
 | public/images/learn/chart-reading/level-2-order-book-depth.svg | /learn/level-2/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show Level 2 stacked bid/ask depth. | Quick Definition section. | Trading dashboard showing a Level 2 order book with stacked bid and ask depth beside price candles. | editor_verified | Supports Level 2 depth education and avoids prediction language. | `8a9fc350` |
 | public/images/learn/chart-reading/level-2-depth-can-disappear.svg | /learn/level-2/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show visible depth disappearing during fast move. | Visible Depth Can Disappear section. | Trading dashboard showing visible bid depth disappearing during a fast move. | editor_verified | Supports Level 2 limitation review and avoids guarantee language. | `8a9fc350` |
+| public/images/learn/chart-reading/time-and-sales-prints-near-bid-ask.svg | /learn/time-and-sales/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show tape prints near bid and ask. | Quick Definition section. | Trading dashboard showing time and sales prints near bid and ask quotes beside candles. | editor_verified | Supports time-and-sales print education and avoids prediction language. | `58ea3ca3` |
+| public/images/learn/chart-reading/time-and-sales-speed-fade-review.svg | /learn/time-and-sales/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show tape speed increasing and fading. | Tape Speed And Fade section. | Trading dashboard showing tape speed increasing during a volume burst and fading afterward. | editor_verified | Supports tape-speed review and avoids guarantee language. | `58ea3ca3` |
 
 ## Gap Article Tracker
 
@@ -317,15 +321,16 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | /learn/slippage/ | Completed slippage article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches expected versus actual fills, spread/liquidity causes, fast-move review, and avoids implying slippage can always be avoided. | `13a86228` |
 | 2026-05-17 | /learn/market-orders-vs-limit-orders/ | Completed market-orders-vs-limit-orders article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches speed versus price-control tradeoffs, fill/no-fill review, and avoids recommending one order type universally. | `8ac5648f` |
 | 2026-05-17 | /learn/level-2/ | Completed Level 2 article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches visible order-book depth, limitations of displayed size, and Level 2/time-and-sales comparison without implying the book predicts price. | `8a9fc350` |
+| 2026-05-17 | /learn/time-and-sales/ | Completed time-and-sales article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches actual prints, tape speed, bid/ask print context, Level 2 comparison, and avoids implying tape predicts price. | `58ea3ca3` |
 
 ## Next Recommended Action
 
 Continue the Volume Liquidity And Order Flow track:
 
-1. Fetch `/learn/time-and-sales/` draft.
+1. Fetch `/learn/volume-by-price/` draft.
 2. Perform pre-editor review.
-3. Upgrade it using `/learn/level-2/`, `/learn/bid-and-ask/`, and `/learn/volume/` as context.
-4. Create 2 realistic SVGs focused on actual prints, tape speed, and bid/ask print context.
+3. Upgrade it using `/learn/volume/`, `/learn/support-and-resistance/`, and `/learn/key-levels-trading/` as context.
+4. Create 2 realistic SVGs focused on high-volume price zones, low-volume areas, and level review.
 5. Run editor verification.
 6. Update this tracker.
 7. Update the handoff.
