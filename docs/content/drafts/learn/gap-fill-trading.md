@@ -33,7 +33,6 @@ internal_links:
   - "/learn/previous-day-high-low/"
   - "/learn/volume/"
   - "/learn/stock-catalysts/"
-  - "/features/trade-management-feedback/"
 schema:
   - "Article"
   - "FAQPage"
@@ -230,10 +229,6 @@ Useful related terms:
 - [Previous Day High](/glossary/previous-day-high/)
 - [Previous Day Low](/glossary/previous-day-low/)
 - [Volume](/glossary/volume/)
-
-Related product education:
-
-- [Trade Management Feedback](/features/trade-management-feedback/)
 
 ## FAQ
 

@@ -34,7 +34,6 @@ internal_links:
   - "/learn/key-levels-trading/"
   - "/learn/level-reclaim/"
   - "/learn/breakout-trading/"
-  - "/features/trade-management-feedback/"
 schema:
   - "Article"
   - "FAQPage"
@@ -253,10 +252,6 @@ Useful related terms:
 - [Reclaim](/glossary/reclaim/)
 - [Low of Day](/glossary/low-of-day/)
 - [Failed Setup](/glossary/failed-setup/)
-
-Related product education:
-
-- [Trade Management Feedback](/features/trade-management-feedback/)
 
 ## FAQ
 

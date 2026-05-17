@@ -35,7 +35,6 @@ internal_links:
   - "/glossary/reclaim/"
   - "/glossary/confirmation/"
   - "/glossary/failed-setup/"
-  - "/features/trade-review/"
 schema:
   - "Article"
   - "FAQPage"
@@ -271,10 +270,6 @@ Useful related terms:
 - [Failed Setup](/glossary/failed-setup/)
 - [Breakdown](/glossary/breakdown/)
 - [Rejection](/glossary/rejection/)
-
-Related product education:
-
-- [Trade Review](/features/trade-review/)
 
 ## FAQ
 

@@ -91,7 +91,7 @@ Recommended order for future runs:
 | 3 | Volume, Liquidity And Order Flow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; strong restrained bridge map to execution review, trade review, risk review, and analytics. |
 | 4 | Risk Management And Trade Planning | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; corrected Academy course transitions, removed premature feature links, and documented a restrained bridge map to Risk Review, Trade Review, Analytics, Coaching, and Execution Review. |
 | 5 | Technical Indicators And Tools | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; confirmed strong anti-signal language, fixed one invalid ATR related link, removed one premature app route link, and documented realistic indicator-overlay visual needs. |
-| 6 | Trading Styles And Playbooks | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to playbook building and setup samples. |
+| 6 | Trading Styles And Playbooks | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; confirmed strong style/playbook flow, removed stale app route links from cross-listed setup lessons, and documented restrained bridges to Playbook Builder, Trade Review, Analytics, Session Review, Coaching, Risk Review, and Execution Review. |
 | 7 | Day Trading Workflow | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to session review. |
 | 8 | Swing Trading Workflow | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to journal notes and multi-session review. |
 | 9 | News, Catalysts And SEC Filings | not_started | not_started | not_started | not_started | not_started | not_started | Requires official source checks for EDGAR/SEC details. |
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 1: Lesson-Level Quality Audit** for **Trading Styles And Playbooks**.
+Continue with **Pass 1: Lesson-Level Quality Audit** for **Day Trading Workflow**.
 
 Reason:
 
@@ -206,14 +206,15 @@ Reason:
 - Volume, Liquidity And Order Flow Pass 1 is complete.
 - Risk Management And Trade Planning Pass 1 is complete.
 - Technical Indicators And Tools Pass 1 is complete.
-- Trading Styles And Playbooks is the next course because learners can now connect foundations, charts, volume, risk, and indicators to actual strategy categories without treating styles as promises.
-- This course needs careful language around momentum, pullbacks, news fades, sell-the-news reactions, and multi-day runners so the lessons teach context and review instead of setup hype.
+- Trading Styles And Playbooks Pass 1 is complete.
+- Day Trading Workflow is the next course because learners can now move from style/setup categories into a session-by-session operating flow.
+- This course needs careful language around premarket, market open, opening range, midday, power hour, after-hours, and session review so time-of-day lessons do not become signal lessons.
 
 Output should include:
 
-- A Trading Styles And Playbooks lesson-level quality audit.
+- A Day Trading Workflow lesson-level quality audit.
 - Any small markdown edits needed.
-- App bridge map for trading styles overview, day trading, swing trading, scalping, momentum trading, pullbacks and dip-buy context, news fade, sell-the-news, multi-day runner context, and cross-listed breakout, breakdown, reclaim, gap-fill, and chasing lessons.
-- Visual-readiness notes for style/playbook examples that may need realistic charts, volume context, catalyst/reaction panels, and review cards.
+- App bridge map for day trading workflow, premarket trading, day-trading watchlist, market open trading, opening range, midday trading, power hour trading, after-hours trading, and trading session review.
+- Visual-readiness notes for workflow examples that may need realistic session timelines, candlestick charts, watchlist filters, liquidity/spread panels, and review cards.
 - Tracker and handoff update.
 - Commit.
