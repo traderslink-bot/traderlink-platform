@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Failed Breakdown Reclaim Review</title>
+  <desc id="desc">Educational candlestick chart showing a breakdown below support that quickly reclaims the level.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Failed Breakdown And Reclaim</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A breakdown can fail if price quickly reclaims the broken support zone.</text>
+  <g stroke="#18304e" stroke-width="1">
+    <line x1="58" y1="116" x2="704" y2="116"/><line x1="58" y1="166" x2="704" y2="166"/><line x1="58" y1="216" x2="704" y2="216"/><line x1="58" y1="266" x2="704" y2="266"/>
+  </g>
+  <rect x="72" y="236" width="620" height="34" fill="#1d4ed8" opacity=".18"/>
+  <line x1="72" y1="236" x2="692" y2="236" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="72" y1="270" x2="692" y2="270" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="82" y="230" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Broken support zone</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="96" y1="160" x2="96" y2="238"/><rect x="86" y="180" width="20" height="38" rx="2"/>
+      <line x1="204" y1="210" x2="204" y2="292"/><rect x="194" y="232" width="20" height="40" rx="2"/>
+      <line x1="312" y1="238" x2="312" y2="326"/><rect x="302" y="260" width="20" height="46" rx="2"/>
+    </g>
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="150" y1="186" x2="150" y2="258"/><rect x="140" y="206" width="20" height="34" rx="2"/>
+      <line x1="258" y1="206" x2="258" y2="278"/><rect x="248" y="226" width="20" height="34" rx="2"/>
+      <line x1="366" y1="228" x2="366" y2="302"/><rect x="356" y="248" width="20" height="34" rx="2"/>
+      <line x1="420" y1="206" x2="420" y2="280"/><rect x="410" y="226" width="20" height="34" rx="2"/>
+      <line x1="474" y1="180" x2="474" y2="254"/><rect x="464" y="200" width="20" height="34" rx="2"/>
+      <line x1="528" y1="166" x2="528" y2="238"/><rect x="518" y="186" width="20" height="34" rx="2"/>
+    </g>
+  </g>
+  <path d="M96 200 L150 240 L204 272 L258 244 L312 306 L366 266 L420 244 L474 220 L528 204" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
+  <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
+    <text x="282" y="342" fill="#fecaca">Breakdown attempt</text>
+    <text x="390" y="196" fill="#bbf7d0">Reclaim review</text>
+    <text x="510" y="148" fill="#bbf7d0">Back above level</text>
+  </g>
+  <g>
+    <rect x="70" y="326" width="14" height="18" fill="#ef4444" opacity=".7"/><rect x="96" y="314" width="14" height="30" fill="#ef4444" opacity=".85"/><rect x="122" y="330" width="14" height="14" fill="#21c784" opacity=".62"/><rect x="148" y="306" width="14" height="38" fill="#ef4444" opacity=".88"/><rect x="174" y="288" width="14" height="56" fill="#ef4444" opacity=".98"/><rect x="200" y="300" width="14" height="44" fill="#21c784" opacity=".86"/><rect x="226" y="306" width="14" height="38" fill="#21c784" opacity=".82"/><rect x="252" y="312" width="14" height="32" fill="#21c784" opacity=".78"/>
+  </g>
+  <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: did the breakdown hold, or did price reclaim the support zone?</text>
+  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">A reclaim changes context; it does not guarantee a reversal.</text>
+</svg>
