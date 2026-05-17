@@ -189,7 +189,7 @@ Use this as the primary course order on the Academy homepage:
 
 | Order | Course | Status | Why It Sits Here |
 |---:|---|---|---|
-| 1 | Trading Foundations | content_upgraded | Completed beginner onboarding and market-basics markdown path, with plan/risk/review lessons cross-listed from completed courses. |
+| 1 | Trading Foundations | academy_ready_core | Completed beginner onboarding and market-basics markdown path, with plan/risk/review lessons cross-listed from completed courses. |
 | 2 | Chart Reading And Market Structure | in_progress | Users need candles, levels, structure, breakouts, breakdowns, and chart context early. |
 | 3 | Volume, Liquidity And Order Flow | academy_ready_core | Builds on chart reading and teaches whether activity is clean, thin, fast, or crowded. |
 | 4 | Technical Indicators And Tools | academy_ready_core | Completed markdown course path teaches indicators as measurement/context tools after price, levels, and volume. |
@@ -1127,7 +1127,7 @@ Current known Academy-ready lesson groups:
 |---|---:|---|
 | Chart Reading And Market Structure | 23 | Core course has completed its first Academy format migration pass: normalized academy metadata, lesson objectives, practical checklist naming, Apply This In Review, and Trader Intelligence Bridge labels. |
 | Candlestick Patterns In Context | 14 | Full candlestick course markdown path has passed Academy format migration check: metadata, lesson objectives, checklist, review, Trader Intelligence bridge, and visuals are already normalized. |
-| Chart Patterns In Context | 13 | Full chart-pattern course markdown path has passed Academy format migration check: metadata, lesson objectives, checklist, review, Trader Intelligence bridge, and visuals are already normalized. VWAP Reclaim remains cross-listed from Technical Indicators. |
+| Chart Patterns In Context | 14 | Full chart-pattern course markdown path has passed Academy format migration check: metadata, lesson objectives, checklist, review, Trader Intelligence bridge, and visuals are already normalized. VWAP Reclaim remains cross-listed from Technical Indicators. |
 | Day Trading Workflow | 9 | Full day-trading workflow course markdown path is now content-upgraded across session framework, premarket prep, watchlist filtering, market open, opening range, midday filtering, power hour, after-hours context, and session review. Five realistic SVGs were created and manifest-tracked. |
 | Practice And Improvement | 9 | Full practice course has passed Academy format migration check across practice foundation, paper trading, replay review, watchlist review, screenshot review, trade grading, one-rule drills, forward testing, and improvement planning. Three realistic SVGs are already manifest-tracked. |
 | Halts And High-Volatility Events | 7 | Full event-risk course has passed Academy format migration check across trading halts, volatility halts, halt resumes, market-wide circuit breakers, fast-spread risk, low-float volatility, and high-volatility trade review. Three realistic SVGs are already manifest-tracked. |
@@ -1135,7 +1135,7 @@ Current known Academy-ready lesson groups:
 | Academy Navigation Path Hubs | 4 | Four path hubs have passed Academy path-hub readiness checks across chart reading, news and filings, trade review, and risk discipline. Four realistic SVG/path-map assets are already manifest-tracked. |
 | Volume, Liquidity And Order Flow | 14 | Core course path has passed Academy format migration check: metadata, lesson objectives, checklist, review, Trader Intelligence bridge, and visuals are normalized. |
 | News, Catalysts And SEC Filings | 36 | Full course markdown path has passed Academy format migration across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
-| Trading Foundations | 4 | Beginner onboarding and market-basics lessons are content-upgraded; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
+| Trading Foundations | 4 | Beginner onboarding and market-basics lessons have passed Academy format migration check; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
 | Technical Indicators And Tools | 11 | Full indicator course markdown path has passed Academy format migration check across indicator foundation, trend tools, momentum tools, volatility tools, and VWAP reclaim. Volume By Price is cross-listed from the completed Volume course. Needs visual review before UI-ready. |
 | Trading Styles And Playbooks | 14 | Full course sequence has passed Academy format migration check across style selector lessons, pullback context, news-fade/sell-the-news context, multi-day runner context, and cross-listed breakout, breakdown, reclaim, gap-fill, and chasing lessons. Needs visual review before UI-ready. |
 | Small-Cap Stocks, Float And Dilution | 28 | Full course markdown path has passed Academy format migration across small-cap context, float, dilution, offerings, securities, corporate actions, cash runway, and going concern. Needs visual review before UI-ready. |
@@ -1155,20 +1155,20 @@ More precise current state:
 | State | Lesson Count | Meaning |
 |---|---:|---|
 | content_upgraded | 217 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 5 | Remaining upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
-| academy_ready | 212 | Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, Small-Cap/Float/Dilution, Trading Psychology, Trade Review, Day Trading Workflow, Practice/Improvement, Halts/High-Volatility, Swing Trading Workflow, and Academy path hubs have passed the first Academy format migration check. |
+| academy_format_review_needed | 0 | All 217 content-upgraded lessons and path hubs represented in this index have passed the first Academy format migration or readiness check. |
+| academy_ready | 217 | Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, Small-Cap/Float/Dilution, Trading Psychology, Trade Review, Day Trading Workflow, Practice/Improvement, Halts/High-Volatility, Swing Trading Workflow, Academy path hubs, and Trading Foundations have passed the first Academy format migration check. The final reconciliation corrected Chart Patterns to 14 Academy-ready entries. |
 
-The 217 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to continue normalizing them into the final course format while creating or upgrading missing lessons only when a real gap appears.
+The 217 content-upgraded lessons are not throwaway work. They are now the Academy-ready content foundation. The next step is to review visual/UI readiness and create or upgrade missing assets only when a real learning gap appears.
 
 Current best next editorial action:
 
 ```text
-Trading Foundations final Academy readiness check
+Academy visual/UI-readiness review
 ```
 
 Reason:
 
-Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, Small-Cap/Float/Dilution, Trading Psychology, Trade Review, Day Trading Workflow, Practice/Improvement, Halts/High-Volatility, Swing Trading Workflow, and Academy path hubs have completed the first Academy format migration check. The highest-value next work is a final Trading Foundations readiness check, including any cross-listed onboarding lessons that still need a recorded ready state.
+All 217 content-upgraded lessons and path hubs represented in this index have completed the first Academy format migration or readiness check. The highest-value next work is a visual/UI-readiness review: decide which Academy-ready lessons need additional realistic SVGs, then prepare production implementation from the existing markdown metadata without changing production website files in this content workflow.
 
 ## Recommended Work Method From Here
 

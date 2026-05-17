@@ -574,13 +574,14 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | Halts And High-Volatility Events Academy format migration check | Checked 7 Halts And High-Volatility Events lessons for Academy format readiness. | Passed with no lesson edits needed. Lessons already include `content_type: "academy_lesson"`, complete Academy metadata, lesson objectives, `Practical Checklist`, one `Apply This In Review` section, review-focused Trader Intelligence bridges, FAQ, educational disclaimers, and realistic SVG support where useful. | no lesson file changes |
 | 2026-05-17 | Swing Trading Workflow Academy format migration check | Checked 8 Swing Trading Workflow lessons for Academy format readiness. | Passed with no lesson edits needed. Lessons already include `content_type: "academy_lesson"`, complete Academy metadata, lesson objectives, `Practical Checklist`, one `Apply This In Review` section, review-focused Trader Intelligence bridges, FAQ, educational disclaimers, and realistic SVG support where useful. | no lesson file changes |
 | 2026-05-17 | Academy Navigation Path Hubs readiness check | Checked 4 Academy path hubs for path-hub readiness. | Passed with no file edits needed. Hubs intentionally use `content_type: "academy_path_hub"` and include Academy metadata, path objective, previous/next path, recommended flow, `Practical Checklist`, one `Apply This In Review` section, review-focused Trader Intelligence bridge, FAQ, educational disclaimer, and realistic SVG/path-map support. | no file changes |
+| 2026-05-17 | Trading Foundations final Academy readiness check | Checked 4 Trading Foundations lessons and reconciled the full Academy migration count. | Passed with no lesson edits needed. Foundations lessons already include Academy metadata, lesson objectives, `Practical Checklist`, one `Apply This In Review` section, review-focused Trader Intelligence bridge, FAQ, and educational disclaimer. The final count also corrects Chart Patterns to 14 Academy-ready entries, bringing the tracked Academy migration total to 217 of 217. | no lesson file changes |
 
 ## Next Recommended Action
 
 Continue into Academy format migration and UI-readiness normalization:
 
-1. Continue with the final Trading Foundations readiness check.
-2. Then reconcile the remaining upgraded-lesson count against the Academy index.
+1. Begin Academy visual/UI-readiness review for the 217 Academy-ready lessons and path hubs.
+2. Decide which lessons need additional realistic SVG support before production website implementation.
 3. Normalize `academy_course`, `academy_module`, `academy_order`, `academy_level`, `recommended_previous`, `recommended_next`, visual asset references, and review-section naming.
 4. Do not rewrite strong lessons unless the new Academy format reveals a real gap.
 5. Keep this as markdown/content planning only; do not build production routes, components, schemas, JSX, CSS, or pages.
