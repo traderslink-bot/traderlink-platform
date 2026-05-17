@@ -194,7 +194,7 @@ Use this as the primary course order on the Academy homepage:
 | 3 | Volume, Liquidity And Order Flow | academy_ready_core | Builds on chart reading and teaches whether activity is clean, thin, fast, or crowded. |
 | 4 | Technical Indicators And Tools | planned | Indicators make more sense after price, levels, and volume are understood. |
 | 5 | Trading Styles And Playbooks | planned | Users can now combine chart, volume, and tools into recognizable setup categories. |
-| 6 | News, Catalysts And SEC Filings | in_progress | High-value TradersLink differentiator, especially for small-cap/news-driven traders. |
+| 6 | News, Catalysts And SEC Filings | content_upgraded | High-value TradersLink differentiator. Core course markdown lesson path is now complete through news-trade review. |
 | 7 | Small-Cap Stocks, Float And Dilution | planned | Builds naturally from SEC filings and catalyst risk. |
 | 8 | Risk Management And Trade Planning | planned | Should be reinforced throughout, then taught deeply as its own course. |
 | 9 | Trading Psychology And Discipline | planned | Best taught after users understand what they are trying to execute. |
@@ -486,17 +486,28 @@ The user should understand what caused a stock to move, how to review the qualit
 
 | Order | Module | Lesson | URL | Current Asset | Status | Notes |
 |---:|---|---|---|---|---|---|
-| 5 | SEC Filing Foundation | Form 8-K | `/learn/sec-filings/form-8-k/` | draft | not_started | Current next recommended upgrade. |
-| 6 | SEC Filing Foundation | Form S-1 | `/learn/sec-filings/form-s-1/` | draft | needs_upgrade | Registration statement education. |
-| 7 | SEC Filing Foundation | Form S-3 | `/learn/sec-filings/form-s-3/` | draft | needs_upgrade | Shelf registration education. |
-| 8 | SEC Filing Foundation | Form 424B5 | `/learn/sec-filings/form-424b5/` | draft | needs_upgrade | Offering terms education. |
-| 9 | News Categories | Earnings News | `/learn/earnings-news/` | draft | needs_upgrade | Numbers, guidance, reaction. |
-| 10 | News Categories | FDA News Stocks | `/learn/fda-news-stocks/` | draft | needs_upgrade | Regulatory catalysts. |
-| 11 | News Categories | Clinical Trial News | `/learn/clinical-trial-news/` | draft | needs_upgrade | Trial phase/endpoints/context. |
-| 12 | News Categories | Contract News Stocks | `/learn/contract-news-stocks/` | draft | needs_upgrade | Named customer, terms, timeline. |
-| 13 | News Categories | Partnership News Stocks | `/learn/partnership-news-stocks/` | draft | needs_upgrade | Vague vs specific partner news. |
-| 14 | News Categories | Merger News Stocks | `/learn/merger-news-stocks/` | draft | needs_upgrade | Merger terms and risk. |
-| 15 | News Review | How To Review News Trades | `/learn/how-to-review-news-trades/` | draft | needs_upgrade | Could bridge to Trade Review course. |
+| 5 | SEC Filing Foundation | Form 8-K | `/learn/sec-filings/form-8-k/` | content_upgraded | complete | Current-event filing workflow, item/exhibit review, financing language, and review prompts added. |
+| 6 | SEC Filing Foundation | Form S-1 | `/learn/sec-filings/form-s-1/` | content_upgraded | complete | Registration statement, resale shares, selling stockholders, warrants, and EFFECT context added. |
+| 7 | SEC Filing Foundation | Form S-3 | `/learn/sec-filings/form-s-3/` | content_upgraded | complete | Shelf registration, offering distinction, ATM context, and review workflow added. |
+| 8 | SEC Filing Foundation | Form 424B5 | `/learn/sec-filings/form-424b5/` | content_upgraded | complete | Prospectus supplement, offering terms, warrants, proceeds, and review workflow added. |
+| 9 | News Categories | Earnings News | `/learn/earnings-news/` | content_upgraded | complete | Revenue, losses, margins, guidance, cash, and reaction review added. |
+| 10 | News Categories | FDA News Stocks | `/learn/fda-news-stocks/` | content_upgraded | complete | Regulatory event types, development stage, cash context, and review workflow added. |
+| 11 | News Categories | Clinical Trial News | `/learn/clinical-trial-news/` | content_upgraded | complete | Phase, endpoints, sample size, safety, cash context, and review workflow added. |
+| 12 | News Categories | Contract News Stocks | `/learn/contract-news-stocks/` | content_upgraded | complete | Customer name, terms, value, timing, execution context, and review workflow added. |
+| 13 | News Categories | Partnership News Stocks | `/learn/partnership-news-stocks/` | content_upgraded | complete | Partner quality, terms, commercial mechanics, filing context, and review workflow added. |
+| 14 | News Categories | Merger News Stocks | `/learn/merger-news-stocks/` | content_upgraded | complete | Deal type, consideration, closing conditions, filings, dilution context, and review workflow added. |
+| 15 | News Review | How To Review News Trades | `/learn/how-to-review-news-trades/` | content_upgraded | complete | Course capstone review lesson added for catalyst, reaction, risk, execution, and repeated patterns. |
+
+### Course Status
+
+The core News, Catalysts And SEC Filings course markdown path is **content_upgraded**.
+
+Before production UI implementation, this course still needs:
+
+- A final Academy format migration pass across all 15 lessons.
+- Visual asset review to decide which newly upgraded lessons need SVG support.
+- Optional course intro/landing copy for the Academy course page.
+- Progress/lesson completion wiring in the website build phase.
 
 ## Course 7: Small-Cap Stocks, Float And Dilution
 
@@ -753,7 +764,7 @@ Current known Academy-ready lesson groups:
 |---|---:|---|
 | Chart Reading And Market Structure | 23 | Strong course core already created. Needs candlestick and chart pattern expansions later. |
 | Volume, Liquidity And Order Flow | 14 | Core course path is academy-ready. |
-| News, Catalysts And SEC Filings | 4 | Foundation started. Next lesson should be Form 8-K. |
+| News, Catalysts And SEC Filings | 15 | Core course markdown path is now content-upgraded. Needs final Academy migration pass and visual review before UI-ready. |
 | Trading Foundations | 0 | Existing drafts need upgrade plus onboarding gap lessons. |
 | Technical Indicators And Tools | 0 | Mostly gap lessons needed. |
 | Trading Styles And Playbooks | 0 | Existing drafts plus several gap lessons. |
@@ -772,21 +783,21 @@ More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 41 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 41 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 52 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 52 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 41 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 52 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/sec-filings/form-8-k/
+/learn/small-cap-stocks/
 ```
 
 Reason:
 
-The Academy just completed the SEC filings hub. Form 8-K is the natural next lesson because it teaches the most common current-event filing users will encounter after press releases and catalysts.
+The Academy just completed the News, Catalysts And SEC Filings course markdown path. Small-Cap Stocks, Float And Dilution is the natural next course because it builds on SEC filings, offerings, dilution, float, and catalyst risk.
 
 ## Recommended Work Method From Here
 
