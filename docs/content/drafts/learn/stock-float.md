@@ -45,11 +45,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Stock Float.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Define stock float and explain why tradable share supply matters.
+- Review float source, float date, volume, liquidity, and recent issuance together.
+- Understand why float can change after offerings, resale registrations, insider sales, or share unlocks.
+- Avoid treating low float as an automatic squeeze or continuation signal.
+- Connect float assumptions to post-trade review and execution quality.
 
 Stock float is the number of shares generally available for public trading. Traders watch float because it can affect how easily a stock moves, how liquid it is, and how volatile it may become when volume increases.
 
@@ -206,7 +206,7 @@ For Stock Float, the useful review is not whether the concept predicted the move
 
 - [Penny Stocks](/learn/penny-stocks/)
 - [Low-Float Stocks](/learn/low-float-stocks/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

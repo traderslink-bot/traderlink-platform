@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/warrants-vs-options/"
 recommended_previous: "/learn/shelf-registration-vs-offering/"
 academy_level: "Foundation"
@@ -18,7 +18,7 @@ academy_order: 19
 academy_module: "Securities"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/stock-offerings/", "/learn/private-placement/", "/learn/pre-funded-warrants/", "/learn/how-to-spot-dilution-risk/", "/learn/share-structure/", "/trader-intelligence/"]
+internal_links: ["/learn/stock-offerings/", "/learn/private-placement/", "/learn/pre-funded-warrants/", "/learn/how-to-spot-dilution-risk/", "/learn/float-vs-shares-outstanding/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Warrants.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what stock warrants are.
+- Review exercise price, expiration, exercisability, cashless exercise, and share-count impact.
+- Understand why warrants can create future dilution or resistance context.
+- Avoid treating warrants as identical to common shares or options.
+- Connect warrant review to offering terms, filings, and completed-trade review.
 
 Stock warrants are securities that give the holder the right to buy shares at a set exercise price before a certain expiration date. Traders often see warrants in public offerings, registered direct offerings, private placements, and other financing deals.
 
@@ -141,13 +141,13 @@ Useful review notes include:
 
 Over time, this can help traders recognize financing structures that create overhead supply or future dilution risk.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
 Start with [stock offerings](/learn/stock-offerings/) and [private placement stock](/learn/private-placement/). Warrants often appear alongside [pre-funded warrants](/learn/pre-funded-warrants/) and are important in [how to spot dilution risk](/learn/how-to-spot-dilution-risk/).
 
-For broader structure context, review [share structure](/learn/share-structure/).
+For broader structure context, review [float versus shares outstanding](/learn/float-vs-shares-outstanding/).
 
 ## Practical Checklist
 
@@ -208,7 +208,7 @@ For Warrants, the useful review is not whether the concept predicted the move. T
 
 - [Shelf Registration Vs Offering](/learn/shelf-registration-vs-offering/)
 - [Warrants Vs Options](/learn/warrants-vs-options/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

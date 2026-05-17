@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/reverse-split/"
 recommended_previous: "/learn/convertible-notes/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 23
 academy_module: "Securities"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/stock-offerings/", "/learn/convertible-notes/", "/learn/warrants/", "/learn/how-to-spot-dilution-risk/", "/learn/share-structure/", "/trader-intelligence/"]
+internal_links: ["/learn/stock-offerings/", "/learn/convertible-notes/", "/learn/warrants/", "/learn/how-to-spot-dilution-risk/", "/learn/float-vs-shares-outstanding/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Preferred Stock.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what preferred stock is.
+- Review conversion rights, liquidation preference, voting rights, dividends, and share-count impact.
+- Understand why preferred stock can matter for dilution, control, and financing context.
+- Avoid treating preferred shares as the same as common stock.
+- Connect preferred-stock review to filings, risk context, and completed-trade review.
 
 Preferred stock is a class of equity that can have rights different from common stock. Traders often review preferred stock because it can affect voting power, liquidation preferences, dividends, conversion rights, and dilution risk.
 
@@ -144,13 +144,13 @@ Useful review notes include:
 
 Over time, this can help traders recognize hidden share structure risk.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
 Preferred stock can appear in [stock offerings](/learn/stock-offerings/) and private financings. It often overlaps with [convertible notes](/learn/convertible-notes/), [stock warrants](/learn/warrants/), and [how to spot dilution risk](/learn/how-to-spot-dilution-risk/).
 
-For broader ownership context, review [share structure](/learn/share-structure/).
+For broader ownership context, review [float versus shares outstanding](/learn/float-vs-shares-outstanding/).
 
 ## Practical Checklist
 
@@ -211,7 +211,7 @@ For Preferred Stock, the useful review is not whether the concept predicted the 
 
 - [Convertible Notes](/learn/convertible-notes/)
 - [Reverse Split](/learn/reverse-split/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

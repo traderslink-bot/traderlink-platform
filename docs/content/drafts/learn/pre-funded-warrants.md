@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/convertible-notes/"
 recommended_previous: "/learn/warrants-vs-options/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 21
 academy_module: "Securities"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/stock-offerings/", "/learn/warrants/", "/learn/registered-direct-offering/", "/learn/private-placement/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
+internal_links: ["/learn/stock-offerings/", "/learn/warrants/", "/learn/registered-direct-offering/", "/learn/private-placement/", "/learn/how-to-spot-dilution-risk/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Pre-Funded Warrants.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what pre-funded warrants are.
+- Review exercise price, ownership limits, common-stock equivalents, and offering structure.
+- Understand why pre-funded warrants can affect apparent share count and dilution context.
+- Avoid ignoring pre-funded warrants because they do not look like common shares at first glance.
+- Connect pre-funded warrant review to offering terms and completed-trade review.
 
 Pre-funded warrants are securities that are often used in stock offerings when an investor wants economic exposure to shares but may not want to immediately own more common stock due to ownership limits or other structural reasons. Traders often see pre-funded warrants in small-cap financings, registered direct offerings, public offerings, and private placements.
 
@@ -142,7 +142,7 @@ Useful review notes include:
 
 Over time, this can help traders become more accurate when reviewing dilution and share supply risk.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
@@ -209,7 +209,7 @@ For Pre-Funded Warrants, the useful review is not whether the concept predicted 
 
 - [Warrants Vs Options](/learn/warrants-vs-options/)
 - [Convertible Notes](/learn/convertible-notes/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

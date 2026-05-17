@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/market-cap-vs-fully-diluted-market-cap/"
 recommended_previous: "/learn/float-vs-shares-outstanding/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 7
 academy_module: "Share Structure"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/dilution/", "/learn/dilution-risk/", "/learn/warrants/", "/learn/convertible-notes/", "/learn/share-structure/", "/trader-intelligence/"]
+internal_links: ["/learn/dilution/", "/learn/dilution-risk/", "/learn/warrants/", "/learn/convertible-notes/", "/learn/float-vs-shares-outstanding/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Fully Diluted Shares.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what fully diluted shares means.
+- Identify warrants, options, convertibles, preferred stock, and other securities that may become shares.
+- Review how potential future shares can change dilution and valuation context.
+- Avoid treating the current share count as the whole supply picture.
+- Connect fully diluted share review to filing-driven trade review and risk planning.
 
 Fully diluted shares is an estimate of how many shares could exist if dilutive securities become common shares. Traders use fully diluted share count to understand potential dilution, future share supply, and a more complete view of share structure.
 
@@ -143,11 +143,11 @@ Useful review notes include:
 
 Over time, this helps traders avoid being surprised by hidden share structure risk.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
-Start with [dilution](/learn/dilution/) and [dilution risk](/learn/dilution-risk/). Fully diluted share count often requires reviewing [stock warrants](/learn/warrants/), [convertible notes](/learn/convertible-notes/), and [share structure](/learn/share-structure/).
+Start with [dilution](/learn/dilution/) and [dilution risk](/learn/dilution-risk/). Fully diluted share count often requires reviewing [stock warrants](/learn/warrants/), [convertible notes](/learn/convertible-notes/), and [float versus shares outstanding](/learn/float-vs-shares-outstanding/).
 
 ## Practical Checklist
 
@@ -208,7 +208,7 @@ For Fully Diluted Shares, the useful review is not whether the concept predicted
 
 - [Float Vs Shares Outstanding](/learn/float-vs-shares-outstanding/)
 - [Market Cap Vs Fully Diluted Market Cap](/learn/market-cap-vs-fully-diluted-market-cap/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

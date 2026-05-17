@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/cash-runway/"
 recommended_previous: "/learn/reverse-split-vs-dilution/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 26
 academy_module: "Corporate Actions"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/reverse-split/", "/learn/share-structure/", "/learn/stock-float/", "/learn/news-driven-stocks/", "/learn/sec-filings/", "/trader-intelligence/"]
+internal_links: ["/learn/reverse-split/", "/learn/float-vs-shares-outstanding/", "/learn/stock-float/", "/learn/stock-catalysts/", "/learn/sec-filings/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Forward Split.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what a forward split does to share count and price.
+- Review split ratio, effective date, adjusted price, liquidity, and company context.
+- Understand why a lower post-split price does not make a company cheaper by itself.
+- Avoid confusing split mechanics with business improvement.
+- Connect forward split review to chart, liquidity, and trade management context.
 
 A forward stock split is a corporate action where a company increases the number of shares outstanding and adjusts the share price proportionally. Traders watch forward splits because they can affect share count, price display, liquidity, and market attention.
 
@@ -133,13 +133,13 @@ Useful review notes include:
 
 Over time, this can help traders avoid confusing corporate action mechanics with actual trading edge.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
-Forward splits are often compared with [reverse stock splits](/learn/reverse-split/). For share count context, review [share structure](/learn/share-structure/) and [stock float](/learn/stock-float/).
+Forward splits are often compared with [reverse stock splits](/learn/reverse-split/). For share count context, review [float versus shares outstanding](/learn/float-vs-shares-outstanding/) and [stock float](/learn/stock-float/).
 
-For market reaction context, review [news driven stocks](/learn/news-driven-stocks/) and [SEC filings](/learn/sec-filings/).
+For market reaction context, review [stock catalysts](/learn/stock-catalysts/) and [SEC filings](/learn/sec-filings/).
 
 ## Practical Checklist
 
@@ -200,7 +200,7 @@ For Forward Split, the useful review is not whether the concept predicted the mo
 
 - [Reverse Split Vs Dilution](/learn/reverse-split-vs-dilution/)
 - [Cash Runway](/learn/cash-runway/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

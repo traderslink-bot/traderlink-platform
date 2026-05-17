@@ -46,11 +46,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind How To Spot Dilution Risk.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Identify practical signs of dilution risk in filings and company context.
+- Review cash runway, burn rate, shelf capacity, ATM programs, warrants, convertibles, and financing history.
+- Understand why dilution risk can exist before an offering headline appears.
+- Avoid relying on one clue without checking the full financing picture.
+- Connect dilution-risk checks to completed-trade review and research gaps.
 
 To spot dilution risk, traders look for signs that a company may issue more shares or securities that can become shares. In small-cap and penny stocks, dilution risk often shows up through SEC filings, offerings, warrants, convertible notes, shelf registrations, resale registrations, and weak cash positions.
 
@@ -222,7 +222,7 @@ For How To Spot Dilution Risk, the useful review is not whether the concept pred
 
 - [Dilution Risk](/learn/dilution-risk/)
 - [Stock Offerings](/learn/stock-offerings/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 
 ## Educational Disclaimer

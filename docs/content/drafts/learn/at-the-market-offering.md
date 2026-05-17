@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/shelf-registration/"
 recommended_previous: "/learn/private-placement/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 16
 academy_module: "Offerings"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/stock-offerings/", "/learn/shelf-registration/", "/learn/sec-filings/form-s-3/", "/learn/sec-filings/form-424b5/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
+internal_links: ["/learn/stock-offerings/", "/learn/shelf-registration/", "/learn/sec-filings/form-s-3/", "/learn/sec-filings/form-424b5/", "/learn/how-to-spot-dilution-risk/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind At The Market Offering.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain how at-the-market offering programs work.
+- Review shelf capacity, sales agreements, maximum size, volume context, and company cash needs.
+- Understand why ATM sales may happen gradually and can be hard to see from price alone.
+- Avoid assuming every shelf or ATM mention means immediate selling.
+- Connect ATM review to filing checks, volume behavior, and post-trade review.
 
 An at-the-market offering, often called an ATM offering, is a financing program that lets a company sell shares into the market over time. Traders watch ATM offerings because they can create ongoing dilution risk and potential selling pressure, especially in small-cap stocks.
 
@@ -138,7 +138,7 @@ Useful review notes include:
 
 Over time, this helps traders avoid ignoring potential ongoing supply.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
@@ -205,7 +205,7 @@ For At The Market Offering, the useful review is not whether the concept predict
 
 - [Private Placement](/learn/private-placement/)
 - [Shelf Registration](/learn/shelf-registration/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

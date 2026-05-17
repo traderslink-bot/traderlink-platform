@@ -14,7 +14,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/float-vs-shares-outstanding/"
 recommended_previous: "/learn/low-float-stocks/"
 academy_level: "Advanced"
@@ -44,11 +44,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Float Rotation.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain float rotation as volume compared with tradable share supply.
+- Review whether high turnover reflected real participation, churn, or crowded attention.
+- Understand why float rotation does not prove a stock must continue.
+- Connect float rotation with volume, liquidity, catalyst quality, and price reaction.
+- Use float-rotation review to study whether entries were early, late, or reactive.
 
 Float rotation happens when a stock trades volume equal to or greater than its public float over a period of time. Traders often watch float rotation in low-float and small-cap stocks because it can show how aggressively shares are changing hands.
 
@@ -230,7 +230,7 @@ For Float Rotation, the useful review is not whether the concept predicted the m
 
 - [Low-Float Stocks](/learn/low-float-stocks/)
 - [Float Vs Shares Outstanding](/learn/float-vs-shares-outstanding/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/dilution/"
 recommended_previous: "/learn/fully-diluted-shares/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 8
 academy_module: "Valuation Context"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/market-cap/", "/learn/fully-diluted-shares/", "/learn/dilution/", "/learn/share-structure/", "/learn/warrants/", "/trader-intelligence/"]
+internal_links: ["/learn/market-cap-vs-fully-diluted-market-cap/", "/learn/fully-diluted-shares/", "/learn/dilution/", "/learn/float-vs-shares-outstanding/", "/learn/warrants/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Market Cap Vs Fully Diluted Market Cap.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain market cap and fully diluted market cap.
+- Review how hidden future shares can change the valuation picture.
+- Compare current share count with potential shares from warrants, convertibles, options, and preferred stock.
+- Avoid relying on basic market cap alone when dilution context matters.
+- Connect valuation context to small-cap trade review without treating valuation as a signal.
 
 Market cap vs fully diluted market cap is an important comparison because the basic market cap may not show the full potential share count. Market cap usually uses current shares outstanding. Fully diluted market cap estimates valuation if dilutive securities become common shares.
 
@@ -148,11 +148,11 @@ Useful review notes include:
 
 Over time, this can help traders compare setups more accurately.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
-Start with [market cap](/learn/market-cap/) and [fully diluted shares](/learn/fully-diluted-shares/). For dilution context, review [dilution](/learn/dilution/), [share structure](/learn/share-structure/), and [stock warrants](/learn/warrants/).
+Start with [market cap versus fully diluted market cap](/learn/market-cap-vs-fully-diluted-market-cap/) and [fully diluted shares](/learn/fully-diluted-shares/). For dilution context, review [dilution](/learn/dilution/), [float versus shares outstanding](/learn/float-vs-shares-outstanding/), and [stock warrants](/learn/warrants/).
 
 ## Practical Checklist
 
@@ -213,7 +213,7 @@ For Market Cap Vs Fully Diluted Market Cap, the useful review is not whether the
 
 - [Fully Diluted Shares](/learn/fully-diluted-shares/)
 - [Dilution](/learn/dilution/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

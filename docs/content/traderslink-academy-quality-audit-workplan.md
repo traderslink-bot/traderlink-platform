@@ -95,7 +95,7 @@ Recommended order for future runs:
 | 7 | Day Trading Workflow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; confirmed strong session-flow structure, fixed one invalid after-hours earnings link, and documented restrained bridges to Session Review, Trade Review, Execution Review, Risk Review, Analytics, Coaching, and News/Filing Review. |
 | 8 | Swing Trading Workflow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; corrected adjacent course transitions, cleaned beginner swing quote encoding, and documented restrained bridges to Trade Review, Risk Review, Journal Notes, News/Filing Review, Analytics, Coaching, and Playbook Builder. |
 | 9 | News, Catalysts And SEC Filings | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; removed stale app route links from SEC filing module lessons, cleaned broad journal wording, fixed several stale internal links, and documented source-sensitive follow-up needs for SEC, EDGAR, FDA, filing, and delisting details. |
-| 10 | Small-Cap Stocks, Float And Dilution | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to news/filing review and risk context. |
+| 10 | Small-Cap Stocks, Float And Dilution | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; tightened generic migrated objectives, removed stale hard app route links, fixed stale internal links, and documented visual/source follow-up needs. |
 | 11 | Halts And High-Volatility Events | not_started | not_started | not_started | not_started | not_started | not_started | Requires official source checks for halt/circuit-breaker rules. |
 | 12 | Trading Psychology And Discipline | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to coaching and mistake-pattern review. |
 | 13 | Trade Review And Improvement | not_started | not_started | not_started | not_started | not_started | not_started | Core app bridge course. |
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 1: Lesson-Level Quality Audit** for **Small-Cap Stocks, Float And Dilution**.
+Continue with **Pass 1: Lesson-Level Quality Audit** for **Halts And High-Volatility Events**.
 
 Reason:
 
@@ -210,15 +210,16 @@ Reason:
 - Day Trading Workflow Pass 1 is complete.
 - Swing Trading Workflow Pass 1 is complete.
 - News, Catalysts And SEC Filings Pass 1 is complete.
-- Small-Cap Stocks, Float And Dilution is the next course because learners now move from catalyst and filing source review into float, dilution, offerings, warrants, share structure, cash runway, and going-concern context.
-- This course needs careful language around low-float moves, dilution risk, offerings, warrants, reverse splits, cash runway, and going-concern language so lessons stay educational and do not become hype or avoid-at-all-costs warnings.
+- Small-Cap Stocks, Float And Dilution Pass 1 is complete.
+- Halts And High-Volatility Events is the next course because learners now move from small-cap float, dilution, liquidity, and filing risk into the event-risk mechanics that often appear around low-float and high-volatility stocks.
+- This course needs careful language around halts, resumes, circuit breakers, spreads, low-float volatility, and high-volatility review so lessons stay educational and do not become trade-trigger or fear-based content.
 - Mark factual/source-sensitive items for later Pass 3 where needed, but keep this run focused on Pass 1 lesson quality unless a source issue is obvious inside the lesson text.
 
 Output should include:
 
-- A Small-Cap Stocks, Float And Dilution lesson-level quality audit.
+- A Halts And High-Volatility Events lesson-level quality audit.
 - Any small markdown edits needed.
-- App bridge map for small-cap stocks, penny stocks, float, low float, float rotation, shares outstanding, fully diluted shares, dilution, offerings, warrants, convertibles, preferred stock, reverse splits, cash runway, going concern, and related dilution-risk lessons.
-- Visual-readiness notes for float/share-structure diagrams, offering flow, warrant/convertible context, reverse split context, cash runway review, and small-cap risk dashboards.
+- App bridge map for trading halts, volatility halts, halt resumes, market-wide circuit breakers, fast-spread risk, low-float volatility, and high-volatility review.
+- Visual-readiness notes for halt timelines, resume uncertainty, LULD/circuit-breaker context, fast-spread risk, low-float volatility, and review dashboards.
 - Tracker and handoff update.
 - Commit.

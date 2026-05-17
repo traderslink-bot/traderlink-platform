@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/going-concern/"
 recommended_previous: "/learn/forward-split/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 27
 academy_module: "Risk Context"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/dilution-risk/", "/learn/going-concern/", "/learn/sec-filings/form-10-q/", "/learn/sec-filings/form-10-k/", "/learn/stock-offerings/", "/trader-intelligence/"]
+internal_links: ["/learn/dilution-risk/", "/learn/going-concern/", "/learn/sec-filings/form-10-q/", "/learn/sec-filings/form-10-k/", "/learn/stock-offerings/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Cash Runway.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain cash runway and why it matters for small-cap companies.
+- Review cash balance, burn rate, debt, upcoming costs, financing history, and filing context.
+- Understand why short runway can increase financing risk without guaranteeing immediate dilution.
+- Avoid judging runway from a headline without checking filings.
+- Connect cash runway review to dilution risk, catalyst trades, and completed-trade review.
 
 Cash runway is an estimate of how long a company can keep operating before it may need more money, based on its cash balance and burn rate. Traders review cash runway because low cash can increase financing risk, especially in small-cap and biotech stocks.
 
@@ -136,7 +136,7 @@ Useful review notes include:
 
 Over time, this can help traders identify when financing risk was visible before a trade.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
@@ -203,7 +203,7 @@ For Cash Runway, the useful review is not whether the concept predicted the move
 
 - [Forward Split](/learn/forward-split/)
 - [Going Concern](/learn/going-concern/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

@@ -45,11 +45,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Reverse Split.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what a reverse stock split does to share count and price.
+- Review split ratio, effective date, listing reason, liquidity, and post-split share structure.
+- Understand why a reverse split does not fix business quality or remove dilution risk by itself.
+- Avoid reacting only to the higher post-split price.
+- Connect reverse split trades to filing review, liquidity review, and risk planning.
 
 A reverse stock split reduces the number of shares outstanding and increases the share price proportionally. Traders watch reverse splits closely because they are common in small-cap and penny stock names, especially when companies are trying to meet exchange listing requirements.
 
@@ -216,7 +216,7 @@ For Reverse Split, the useful review is not whether the concept predicted the mo
 
 - [Preferred Stock](/learn/preferred-stock/)
 - [Reverse Split Vs Dilution](/learn/reverse-split-vs-dilution/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

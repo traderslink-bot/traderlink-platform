@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/preferred-stock/"
 recommended_previous: "/learn/pre-funded-warrants/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 22
 academy_module: "Securities"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/stock-offerings/", "/learn/preferred-stock/", "/learn/warrants/", "/learn/how-to-spot-dilution-risk/", "/learn/share-structure/", "/trader-intelligence/"]
+internal_links: ["/learn/stock-offerings/", "/learn/preferred-stock/", "/learn/warrants/", "/learn/how-to-spot-dilution-risk/", "/learn/float-vs-shares-outstanding/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Convertible Notes.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what convertible notes are.
+- Review conversion terms, fixed versus variable conversion, maturity, interest, and share-count impact.
+- Understand why convertibles can create dilution risk when debt can become equity.
+- Avoid reacting to convertible debt without reading the actual conversion mechanics.
+- Connect convertible-note review to filing context, cash needs, and trade review.
 
 Convertible notes are debt securities that can convert into equity under certain terms. Traders often watch convertible notes because they can affect dilution risk, share count, future supply, and a company's financing structure.
 
@@ -144,13 +144,13 @@ Useful review notes include:
 
 Over time, this can help traders avoid ignoring hidden dilution risks.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
 Convertible notes are part of broader [stock offerings](/learn/stock-offerings/) and financing risk analysis. They can overlap with [preferred stock](/learn/preferred-stock/), [stock warrants](/learn/warrants/), and [how to spot dilution risk](/learn/how-to-spot-dilution-risk/).
 
-For share count context, review [share structure](/learn/share-structure/).
+For share count context, review [float versus shares outstanding](/learn/float-vs-shares-outstanding/).
 
 ## Practical Checklist
 
@@ -211,7 +211,7 @@ For Convertible Notes, the useful review is not whether the concept predicted th
 
 - [Pre-Funded Warrants](/learn/pre-funded-warrants/)
 - [Preferred Stock](/learn/preferred-stock/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

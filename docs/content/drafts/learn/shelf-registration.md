@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/shelf-registration-vs-offering/"
 recommended_previous: "/learn/at-the-market-offering/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 17
 academy_module: "Offerings"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/stock-offerings/", "/learn/at-the-market-offering/", "/learn/sec-filings/form-s-3/", "/learn/sec-filings/effect-notice/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
+internal_links: ["/learn/stock-offerings/", "/learn/at-the-market-offering/", "/learn/sec-filings/form-s-3/", "/learn/sec-filings/effect-notice/", "/learn/how-to-spot-dilution-risk/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Shelf Registration.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what shelf registration means.
+- Separate registered capacity from actual offering activity.
+- Review securities covered, registration size, prospectus supplements, and company cash needs.
+- Understand why a shelf changes future financing context without guaranteeing dilution timing.
+- Connect shelf review to source filings, risk planning, and completed-trade review.
 
 A shelf registration is an SEC registration statement that lets a company register securities that may be offered later. Traders watch shelf registrations because they can create future financing flexibility and possible dilution risk.
 
@@ -139,7 +139,7 @@ Useful review notes include:
 
 Over time, this can help traders understand how shelf filings fit into financing risk.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
@@ -204,7 +204,7 @@ For Shelf Registration, the useful review is not whether the concept predicted t
 
 - [At The Market Offering](/learn/at-the-market-offering/)
 - [Shelf Registration Vs Offering](/learn/shelf-registration-vs-offering/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

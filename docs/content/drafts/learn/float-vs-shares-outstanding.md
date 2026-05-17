@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/fully-diluted-shares/"
 recommended_previous: "/learn/float-rotation/"
 academy_level: "Foundation"
@@ -18,7 +18,7 @@ academy_order: 6
 academy_module: "Share Structure"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/stock-float/", "/learn/share-structure/", "/learn/fully-diluted-shares/", "/learn/dilution/", "/learn/low-float-stocks/", "/trader-intelligence/"]
+internal_links: ["/learn/stock-float/", "/learn/fully-diluted-shares/", "/learn/dilution/", "/learn/low-float-stocks/", "/learn/market-cap-vs-fully-diluted-market-cap/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Float Vs Shares Outstanding.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain the difference between float and shares outstanding.
+- Review tradable supply, total share count, restricted shares, insider holdings, and recent issuance.
+- Understand why a low float can exist beside a much larger total or fully diluted share count.
+- Avoid using one share-count number as a complete risk picture.
+- Connect share-structure assumptions to completed-trade review.
 
 Float vs shares outstanding is an important share structure comparison for traders. Shares outstanding means the total number of issued shares a company has. Float usually means the shares available for public trading after excluding restricted or closely held shares.
 
@@ -156,11 +156,11 @@ Useful review notes include:
 
 Over time, this helps traders understand whether float-based assumptions are helping or hurting their process.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
-Start with [stock float](/learn/stock-float/) and [share structure](/learn/share-structure/). For more complete dilution context, review [fully diluted shares](/learn/fully-diluted-shares/), [dilution](/learn/dilution/), and [low float stocks](/learn/low-float-stocks/).
+Start with [stock float](/learn/stock-float/). For more complete share-structure context, review [fully diluted shares](/learn/fully-diluted-shares/), [dilution](/learn/dilution/), [low float stocks](/learn/low-float-stocks/), and [market cap versus fully diluted market cap](/learn/market-cap-vs-fully-diluted-market-cap/).
 
 ## Practical Checklist
 
@@ -221,7 +221,7 @@ For Float Vs Shares Outstanding, the useful review is not whether the concept pr
 
 - [Float Rotation](/learn/float-rotation/)
 - [Fully Diluted Shares](/learn/fully-diluted-shares/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

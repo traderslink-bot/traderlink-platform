@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/dilution-risk/"
 recommended_previous: "/learn/market-cap-vs-fully-diluted-market-cap/"
 academy_level: "Foundation"
@@ -18,7 +18,7 @@ academy_order: 9
 academy_module: "Dilution Foundation"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/dilution-risk/", "/learn/how-to-spot-dilution-risk/", "/learn/stock-offerings/", "/learn/fully-diluted-shares/", "/learn/share-structure/", "/trader-intelligence/"]
+internal_links: ["/learn/dilution-risk/", "/learn/how-to-spot-dilution-risk/", "/learn/stock-offerings/", "/learn/fully-diluted-shares/", "/learn/float-vs-shares-outstanding/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Dilution.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what dilution means for ownership percentage and share count.
+- Review how offerings, warrants, convertibles, preferred stock, and compensation shares can create dilution.
+- Understand why dilution can affect market reaction without guaranteeing a specific price move.
+- Separate company financing needs from trade direction.
+- Connect dilution review to filings, risk planning, and completed-trade notes.
 
 Dilution happens when a company issues more shares or securities that can become shares, reducing the ownership percentage of existing shareholders. Traders watch dilution because it can affect share count, float, market cap, financing risk, and how a stock reacts to news.
 
@@ -145,11 +145,11 @@ Useful review notes include:
 
 Over time, this can help traders avoid getting surprised by financing events.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
-Start with [dilution risk](/learn/dilution-risk/) and [how to spot dilution risk](/learn/how-to-spot-dilution-risk/). Dilution often connects with [stock offerings](/learn/stock-offerings/), [fully diluted shares](/learn/fully-diluted-shares/), and [share structure](/learn/share-structure/).
+Start with [dilution risk](/learn/dilution-risk/) and [how to spot dilution risk](/learn/how-to-spot-dilution-risk/). Dilution often connects with [stock offerings](/learn/stock-offerings/), [fully diluted shares](/learn/fully-diluted-shares/), and [float versus shares outstanding](/learn/float-vs-shares-outstanding/).
 
 ## Practical Checklist
 
@@ -210,7 +210,7 @@ For Dilution, the useful review is not whether the concept predicted the move. T
 
 - [Market Cap Vs Fully Diluted Market Cap](/learn/market-cap-vs-fully-diluted-market-cap/)
 - [Dilution Risk](/learn/dilution-risk/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 
 ## Educational Disclaimer

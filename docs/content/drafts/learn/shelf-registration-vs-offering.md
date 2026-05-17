@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/warrants/"
 recommended_previous: "/learn/shelf-registration/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 18
 academy_module: "Offerings"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/shelf-registration/", "/learn/stock-offerings/", "/learn/at-the-market-offering/", "/learn/sec-filings/effect-notice/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
+internal_links: ["/learn/shelf-registration/", "/learn/stock-offerings/", "/learn/at-the-market-offering/", "/learn/sec-filings/effect-notice/", "/learn/how-to-spot-dilution-risk/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Shelf Registration Vs Offering.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Distinguish a shelf registration from an actual offering.
+- Review which filing creates capacity and which filing gives transaction terms.
+- Understand why traders can overreact when they confuse registration with sale.
+- Connect S-3, EFFECT, 424B5, and offering headlines into one review flow.
+- Use the distinction to improve filing-driven trade review.
 
 Shelf registration vs offering is an important distinction for traders. A shelf registration usually creates the ability to sell securities later, while an offering is the actual financing transaction where securities are sold or offered under specific terms.
 
@@ -156,7 +156,7 @@ Useful review notes include:
 
 Over time, this can help traders avoid confusing financing capacity with actual financing execution.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
@@ -223,7 +223,7 @@ For Shelf Registration Vs Offering, the useful review is not whether the concept
 
 - [Shelf Registration](/learn/shelf-registration/)
 - [Warrants](/learn/warrants/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/forward-split/"
 recommended_previous: "/learn/reverse-split/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 25
 academy_module: "Corporate Actions"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/reverse-split/", "/learn/dilution/", "/learn/dilution-risk/", "/learn/share-structure/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
+internal_links: ["/learn/reverse-split/", "/learn/dilution/", "/learn/dilution-risk/", "/learn/float-vs-shares-outstanding/", "/learn/how-to-spot-dilution-risk/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Reverse Split Vs Dilution.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Distinguish reverse splits from dilution.
+- Review how share consolidation differs from issuing more shares.
+- Understand why a company can reverse split and still have dilution risk later.
+- Avoid treating a reverse split as the same thing as reduced financing risk.
+- Connect split and dilution context to completed-trade review.
 
 Reverse split vs dilution is an important distinction for traders. A reverse split reduces the number of shares and raises the price per share proportionally. Dilution increases the number of shares or potential shares, reducing existing shareholders' ownership percentage.
 
@@ -151,11 +151,11 @@ Useful review notes include:
 
 Over time, this can help traders review share structure more accurately.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
-Start with the full guides on [reverse stock splits](/learn/reverse-split/) and [dilution](/learn/dilution/). For broader risk context, review [dilution risk](/learn/dilution-risk/), [share structure](/learn/share-structure/), and [how to spot dilution risk](/learn/how-to-spot-dilution-risk/).
+Start with the full guides on [reverse stock splits](/learn/reverse-split/) and [dilution](/learn/dilution/). For broader risk context, review [dilution risk](/learn/dilution-risk/), [float versus shares outstanding](/learn/float-vs-shares-outstanding/), and [how to spot dilution risk](/learn/how-to-spot-dilution-risk/).
 
 ## Practical Checklist
 
@@ -216,7 +216,7 @@ For Reverse Split Vs Dilution, the useful review is not whether the concept pred
 
 - [Reverse Split](/learn/reverse-split/)
 - [Forward Split](/learn/forward-split/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

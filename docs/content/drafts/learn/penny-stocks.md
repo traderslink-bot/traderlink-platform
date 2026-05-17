@@ -45,11 +45,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Penny Stocks.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what penny stocks are and how they overlap with small-cap, micro-cap, and low-priced stocks.
+- Review liquidity, spread, promotion risk, filings, and company quality before reacting to price.
+- Understand why low price does not make a stock cheaper or safer.
+- Identify common penny-stock risks such as thin trading, dilution, reverse splits, and unreliable catalysts.
+- Connect penny-stock trades to completed-trade review instead of treating low price as opportunity by itself.
 
 Penny stocks are low-priced stocks that often trade with higher volatility and higher risk than larger, more established companies. Traders watch penny stocks because they can move quickly on news, volume, filings, sector attention, or low-float conditions.
 
@@ -238,7 +238,7 @@ For Penny Stocks, the useful review is not whether the concept predicted the mov
 
 - [Small-Cap Stocks](/learn/small-cap-stocks/)
 - [Stock Float](/learn/stock-float/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

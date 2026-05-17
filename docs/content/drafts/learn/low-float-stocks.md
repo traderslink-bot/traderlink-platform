@@ -45,11 +45,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Low-Float Stocks.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what makes a stock low float.
+- Review low-float volatility alongside liquidity, spread, halts, crowding, and catalyst quality.
+- Understand why low float can increase both movement and execution risk.
+- Identify common low-float mistakes such as chasing, oversizing, and ignoring dilution context.
+- Connect low-float assumptions to completed-trade review instead of treating float as a setup by itself.
 
 Low-float stocks are stocks with a smaller number of shares generally available for public trading. Traders watch low-float stocks because limited supply can sometimes create fast price movement when demand increases.
 
@@ -200,7 +200,7 @@ For Low-Float Stocks, the useful review is not whether the concept predicted the
 
 - [Stock Float](/learn/stock-float/)
 - [Float Rotation](/learn/float-rotation/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

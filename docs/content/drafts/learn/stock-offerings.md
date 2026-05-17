@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/public-offering/"
 recommended_previous: "/learn/how-to-spot-dilution-risk/"
 academy_level: "Foundation"
@@ -18,7 +18,7 @@ academy_order: 12
 academy_module: "Offerings"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/sec-filings/", "/learn/public-offering/", "/learn/registered-direct-offering/", "/learn/private-placement/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
+internal_links: ["/learn/sec-filings/", "/learn/public-offering/", "/learn/registered-direct-offering/", "/learn/private-placement/", "/learn/how-to-spot-dilution-risk/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Stock Offerings.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what stock offerings are and why companies use them.
+- Review offering type, price, size, warrants, proceeds, and share-count impact.
+- Separate the financing headline from the actual offering terms.
+- Understand why an offering can change both cash context and dilution risk.
+- Connect offering review to risk, liquidity, filing context, and trade outcome review.
 
 A stock offering is a way for a company to raise money by issuing or selling securities. Traders watch stock offerings because they can affect share count, float, cash, dilution risk, and short-term market reaction.
 
@@ -142,7 +142,7 @@ Useful review notes include:
 
 Over time, this can help traders avoid reacting emotionally to offering headlines.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
@@ -207,7 +207,7 @@ For Stock Offerings, the useful review is not whether the concept predicted the 
 
 - [How To Spot Dilution Risk](/learn/how-to-spot-dilution-risk/)
 - [Public Offering](/learn/public-offering/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/at-the-market-offering/"
 recommended_previous: "/learn/registered-direct-offering/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 15
 academy_module: "Offerings"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/stock-offerings/", "/learn/public-offering/", "/learn/registered-direct-offering/", "/learn/resale-registration-statement/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
+internal_links: ["/learn/stock-offerings/", "/learn/public-offering/", "/learn/registered-direct-offering/", "/learn/resale-registration-statement/", "/learn/how-to-spot-dilution-risk/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Private Placement.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what a private placement is.
+- Review restricted securities, registration rights, warrants, resale timing, and investor terms.
+- Understand how private placements can create future supply even when shares are not immediately public.
+- Avoid treating private placements as automatically positive or negative.
+- Connect private placement review to filing context, liquidity, and completed-trade review.
 
 Private placement stock refers to securities sold privately to selected investors instead of through a broad public offering. Traders often watch private placements because they can bring in cash while also creating future dilution, resale registration, warrant overhang, or changes in ownership.
 
@@ -146,7 +146,7 @@ Useful review notes include:
 
 Over time, this can help traders avoid treating all private placements the same way.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
@@ -213,7 +213,7 @@ For Private Placement, the useful review is not whether the concept predicted th
 
 - [Registered Direct Offering](/learn/registered-direct-offering/)
 - [At The Market Offering](/learn/at-the-market-offering/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

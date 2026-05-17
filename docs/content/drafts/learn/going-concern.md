@@ -10,7 +10,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps."
 recommended_next: "/learn/trading-plan/"
 recommended_previous: "/learn/cash-runway/"
 academy_level: "Practical"
@@ -18,7 +18,7 @@ academy_order: 28
 academy_module: "Risk Context"
 academy_course: "Small-Cap Stocks, Float And Dilution"
 learning_track: "Small-Cap Stocks, Float And Dilution"
-internal_links: ["/learn/cash-runway/", "/learn/dilution-risk/", "/learn/sec-filings/form-10-q/", "/learn/sec-filings/form-10-k/", "/learn/stock-offerings/", "/trader-intelligence/"]
+internal_links: ["/learn/cash-runway/", "/learn/dilution-risk/", "/learn/sec-filings/form-10-q/", "/learn/sec-filings/form-10-k/", "/learn/stock-offerings/"]
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -35,11 +35,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Going Concern.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain going concern language in filings.
+- Review substantial doubt language, cash, losses, debt, management plans, and financing history.
+- Understand why going concern risk does not guarantee bankruptcy or dilution but changes context.
+- Avoid ignoring financial risk because a stock has fresh news or a strong chart.
+- Connect going concern review to cash runway, dilution risk, and completed-trade review.
 
 Going concern is accounting and filing language that can warn traders a company may not have enough financial resources to continue operating without raising more money, improving operations, or changing its financial position. Traders often review going concern language because it can point to cash runway, financing pressure, and dilution risk.
 
@@ -141,7 +141,7 @@ Useful review notes include:
 
 Over time, this can help traders avoid ignoring financial risk during strong chart moves.
 
-If you want to review your trades with more structure, [Trader Intelligence](/trader-intelligence/) is being built to help traders analyze executions, mistakes, trade management, and performance patterns.
+Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
@@ -208,7 +208,7 @@ For Going Concern, the useful review is not whether the concept predicted the mo
 
 - [Cash Runway](/learn/cash-runway/)
 - [Trading Plan](/learn/trading-plan/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 

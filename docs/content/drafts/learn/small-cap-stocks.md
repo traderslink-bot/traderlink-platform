@@ -45,11 +45,11 @@ The goal is not to make small-cap trading look easy or exciting. The goal is to 
 
 By the end of this lesson, you should be able to:
 
-- Explain the core idea behind Small-Cap Stocks.
-- Identify the parts of the concept that matter most in small-cap stocks.
-- Review the concept in context without assuming a guaranteed price reaction.
-- Connect the concept to filings, float, dilution, liquidity, and trade risk.
-- Use the lesson as part of a structured review process instead of a standalone trading signal.
+- Explain what small-cap stocks are and why traders watch them.
+- Review market cap, float, liquidity, catalysts, filings, and dilution context together.
+- Understand why small-cap moves can be fast without assuming they are clean or safer to trade.
+- Identify common small-cap risks such as wide spreads, dilution, halts, reverse splits, and failed catalysts.
+- Connect small-cap context to a structured trade review instead of treating low price or volatility as a signal.
 
 Small-cap stocks are shares of companies with smaller market capitalizations than large, established companies. Traders often watch small-cap stocks because they can move quickly on news, volume, filings, sector attention, or changes in supply and demand.
 
@@ -238,7 +238,7 @@ For Small-Cap Stocks, the useful review is not whether the concept predicted the
 
 - [How To Review News Trades](/learn/how-to-review-news-trades/)
 - [Penny Stocks](/learn/penny-stocks/)
-- [/learn/sec-filings/](/learn/sec-filings/)
+- [SEC Filings](/learn/sec-filings/)
 - [Dilution Risk](/learn/dilution-risk/)
 
 ## Educational Disclaimer
