@@ -91,6 +91,10 @@ journey_map
 | `public/images/learn/chart-reading/breakdown-with-volume-context.svg` | `/learn/breakdown-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show support breaking with lower-high pressure and volume context. | Quick Definition section. | Candlestick chart showing price breaking below support with volume context. | editor_verified | Supports breakdown-quality review, uses realistic candles, support zones, volume bars, and avoids signal language. | `bbca46b8` |
 | `public/images/learn/chart-reading/failed-breakdown-reclaim-review.svg` | `/learn/breakdown-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a breakdown below support quickly reclaiming the broken level. | Failed Breakdowns section. | Candlestick chart showing a breakdown below support that quickly reclaims the level. | editor_verified | Supports failed-breakdown reclaim review, uses realistic candles, highlights the support zone, and avoids reversal guarantee language. | `bbca46b8` |
 | `public/images/learn/chart-reading/extended-breakdown-chase-risk.svg` | `/learn/breakdown-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a breakdown entry far below support as chase-risk review context. | Extended Breakdown Chase Risk section. | Candlestick chart showing a breakdown far below support with chase-risk review labels. | editor_verified | Supports breakdown chase-risk review, uses realistic candles, support context, volume bars, and avoids predictive claims. | `bbca46b8` |
+| `public/images/learn/chart-reading/compression-tightening-range.svg` | `/learn/compression/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show tightening range behavior with contracting volume near a key level. | Quick Definition section. | Candlestick chart showing price compression with tightening candles and contracting volume near a key level. | editor_verified | Supports compression education, uses realistic candles, trendline/range context, volume bars, and avoids prediction language. | `085019d2` |
+| `public/images/learn/chart-reading/compression-failed-break-review.svg` | `/learn/compression/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a compression break attempt failing back inside the range. | Failed Compression Break section. | Candlestick chart showing a compression breakout attempt that fails back inside the range. | editor_verified | Supports failed-compression-break review, uses realistic candles, range context, volume bars, and avoids signal language. | `085019d2` |
+| `public/images/learn/chart-reading/consolidation-range-map.svg` | `/learn/consolidation/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a clear consolidation range with support, resistance, and volume context. | Quick Definition section. | Candlestick chart showing a consolidation range with support, resistance, and volume context. | editor_verified | Supports consolidation range education, uses realistic candles, support/resistance range levels, volume bars, and avoids prediction language. | `085019d2` |
+| `public/images/learn/chart-reading/consolidation-failed-range-break.svg` | `/learn/consolidation/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a consolidation break attempt failing back inside the range. | Failed Range Break section. | Candlestick chart showing a consolidation breakout attempt that fails back inside the range. | editor_verified | Supports failed-range-break review, uses realistic candles, range context, volume bars, and avoids signal language. | `085019d2` |
 
 ## Editor Verification Summary
 
@@ -260,12 +264,20 @@ Breakdown trading SVG verification:
 - Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Compression and consolidation SVG verification:
+
+- All four visuals support the actual compression and consolidation lessons.
+- Compression visuals show tightening price action, contracting volume, and a failed break back inside the range.
+- Consolidation visuals show clear range support/resistance and failed range-break review.
+- Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Compression article: tightening range before breakout/breakdown, failed move review, and volume contraction/expansion context.
-2. Consolidation article: range support/resistance, breakout/breakdown review, and false move risk.
+1. Gap Fill Trading article: gap map, gap fill attempt, failed fill/hold behavior, and catalyst/volume context.
+2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
 5. Trade review path: trade timeline, planned vs actual risk, execution review timeline.
