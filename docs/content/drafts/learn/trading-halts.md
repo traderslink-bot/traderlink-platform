@@ -83,6 +83,8 @@ Different halt types can have different causes and procedures.
 
 Traders should check official exchange or regulatory notices instead of guessing from the chart.
 
+Source check: FINRA distinguishes trading halts, trading delays, and SEC trading suspensions. Listed-stock halts are generally issued by the listing exchange and observed across other U.S. markets, while SEC trading suspensions are separate regulatory actions that can last up to 10 trading days. For OTC securities, quoting may not automatically resume after a suspension ends.
+
 ## Why Halts Matter To Traders
 
 Halts matter because they interrupt control.
@@ -160,6 +162,7 @@ Trader Intelligence is being built to help traders review completed trades aroun
 
 - [FINRA: Trading Halts, Delays and Suspensions](https://www.finra.org/investors/investing/investment-products/stocks/trading-halts-delays-suspensions)
 - [SEC: Trading Suspensions](https://www.sec.gov/enforcement-litigation/trading-suspensions)
+- [Nasdaq: Trading Halt Codes](https://nasdaqtrader.com/trader.aspx?id=tradehaltcodes)
 
 ## FAQ
 

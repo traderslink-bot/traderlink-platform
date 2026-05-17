@@ -82,6 +82,8 @@ But the same structure can work against the trader. If liquidity disappears, exi
 
 Low-float stocks can be halt-prone when price moves too quickly. A halt can freeze exits and create uncertainty before resume.
 
+Source check: low float does not trigger a halt by itself. For listed NMS stocks, volatility pauses relate to market-structure rules such as LULD price bands and limit states. Treat low float as context that can contribute to fast movement and thin liquidity, not as an official halt category.
+
 The trader should review:
 
 - Float size.

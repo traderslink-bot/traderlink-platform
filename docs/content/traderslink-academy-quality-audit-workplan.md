@@ -96,7 +96,7 @@ Recommended order for future runs:
 | 8 | Swing Trading Workflow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; Pass 2 fixed stale swing workflow related links. |
 | 9 | News, Catalysts And SEC Filings | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; Pass 2 completed; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md` with official SEC, Investor.gov, and FDA source checks plus targeted source-note edits. |
 | 10 | Small-Cap Stocks, Float And Dilution | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-small-cap-float-dilution.md` with official SEC, Investor.gov, PCAOB, and FASB source checks plus targeted source-note edits. |
-| 11 | Halts And High-Volatility Events | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; next recommended Pass 3 source audit. |
+| 11 | Halts And High-Volatility Events | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-halts-high-volatility.md` with official SEC, Investor.gov, FINRA, NYSE, Nasdaq, LULD, and Cboe source checks plus targeted source-note edits. |
 | 12 | Trading Psychology And Discipline | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; Pass 2 corrected the Averaging Down transition into the Trade Review course opener. |
 | 13 | Trade Review And Improvement | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trade-review-improvement.md`; Pass 2 documented the news-review cross-list exception. |
 | 14 | Practice And Improvement | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-practice-improvement.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 3: Accuracy/Source Audit** for **Halts And High-Volatility Events**.
+Continue with **Pass 3: Accuracy/Source Audit** for **Trading Foundations**.
 
 Reason:
 
@@ -220,15 +220,16 @@ Reason:
 - Pass 2 Academy-Wide Sequence And Cross-Link Audit is complete.
 - News, Catalysts And SEC Filings Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md`.
 - Small-Cap Stocks, Float And Dilution Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-small-cap-float-dilution.md`.
-- Halts And High-Volatility Events is now the next highest source-sensitive course because it covers trading halts, volatility pauses, SEC trading suspensions, limit up-limit down behavior, market-wide circuit breakers, resumption risk, fast spreads, and low-liquidity high-volatility context.
+- Halts And High-Volatility Events Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-halts-high-volatility.md`.
+- Trading Foundations is now the next useful source-sensitive course because it includes market sessions, order-flow basics, beginner day-trading framing, short selling basics, and any settlement or order-mechanics claims that should be source-checked before UI planning.
 - Pass 3 should verify factual details and official-source references before the Academy moves toward production UI planning.
 
 Output should include:
 
-- A Halts And High-Volatility Events accuracy/source audit.
+- A Trading Foundations accuracy/source audit.
 - Any small markdown edits needed.
 - Source-sensitive findings and corrections.
-- Official-source references for SEC, FINRA, Nasdaq, NYSE, Cboe, LULD, and market-wide circuit-breaker mechanics where needed.
+- Official-source references for SEC, Investor.gov, FINRA, exchanges, and market-structure/order-mechanics sources where needed.
 - A clear list of items deferred to later source passes if the course is too large for one run.
 - Tracker and handoff update.
 - Commit.

@@ -68,6 +68,8 @@ As of this lesson review, NYSE describes market-wide circuit breaker levels base
 
 Rules can change, and timing details matter. Always check current official exchange information.
 
+Source check: NYSE, FINRA, and Investor.gov currently describe Level 1 and Level 2 market-wide circuit breakers as 15-minute halts if triggered before 3:25 p.m. ET, with no Level 1 or Level 2 halt at or after 3:25 p.m. ET. A Level 3 decline halts market-wide trading for the rest of the trading day. Verify these details directly before publishing production UI copy.
+
 ## How This Differs From A Stock Halt
 
 A single-stock halt affects one security. A market-wide circuit breaker affects trading across the broader market.
@@ -150,7 +152,8 @@ Trader Intelligence is being built to help traders review completed trades in co
 ## Official References To Check
 
 - [NYSE: Market-Wide Circuit Breakers](https://www.nyse.com/markets/nyse/trading-info)
-- [FINRA: Market Volatility and Circuit Breakers](https://www.finra.org/investors/insights/market-volatility-and-circuit-breakers)
+- [FINRA: Guardrails For Market Volatility](https://www.finra.org/investors/insights/guardrails-market-volatility)
+- [Investor.gov: Stock Market Circuit Breakers](https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/measures)
 
 ## FAQ
 
