@@ -132,6 +132,9 @@ journey_map
 | `public/images/learn/chart-reading/press-release-reaction-review.svg` | `/learn/press-releases/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Show first reaction, volume burst, fade review, and journal notes after a press release. | Chart Reaction Still Matters section. | Dark trading dashboard showing a press release headline, red and green candlesticks, volume burst, and fade review notes. | editor_verified | Supports press-release reaction review, uses realistic candles and volume bars, and avoids guarantee language. | `a089acc5` |
 | `public/images/learn/chart-reading/press-release-reading-workflow.svg` | `/learn/how-to-read-stock-press-releases/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Show workflow from headline to source, catalyst type, details, filing check, chart reaction, and journal notes. | Quick Definition section. | Dark dashboard showing a step-by-step press-release reading workflow from headline to filing check to chart reaction. | editor_verified | Supports the press-release reading workflow and avoids signal language. | `31f3f02c` |
 | `public/images/learn/chart-reading/press-release-specific-vs-vague.svg` | `/learn/how-to-read-stock-press-releases/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Compare specific release details with vague language beside chart reaction context. | Step 3 section. | Dark dashboard comparing specific press-release details with vague language beside a realistic chart reaction. | editor_verified | Supports specific-versus-vague detail review and avoids guarantee language. | `31f3f02c` |
+| `public/images/learn/chart-reading/sec-filing-map-for-traders.svg` | `/learn/sec-filings/` | News Catalysts Filings And Dilution | realistic_dashboard_diagram | Show common SEC filing categories traders review. | Quick Definition section. | Dark dashboard showing a filing map for traders with current reports, registration statements, offering documents, ownership filings, and financial reports. | editor_verified | Supports SEC filing category education and avoids signal language. | `4616c671` |
+| `public/images/learn/chart-reading/sec-filing-8k-event-review.svg` | `/learn/sec-filings/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Show Form 8-K current-event review beside chart and volume context. | Form 8-K section. | Dark trading dashboard showing a Form 8-K current-event filing beside a realistic chart reaction and review notes. | editor_verified | Supports 8-K event review, uses realistic candles and volume bars, and avoids prediction language. | `4616c671` |
+| `public/images/learn/chart-reading/sec-filing-shelf-to-offering-flow.svg` | `/learn/sec-filings/` | News Catalysts Filings And Dilution | realistic_dashboard_diagram | Show shelf registration to offering flow with dilution review context. | Shelf Registration To Offering Flow section. | Dark dashboard showing a shelf registration to offering flow with S-3, effective shelf, 424B5 terms, 8-K details, and dilution review. | editor_verified | Supports shelf/offering flow education and avoids guarantee language. | `4616c671` |
 
 ## Editor Verification Summary
 
@@ -454,12 +457,21 @@ How to read stock press releases SVG verification:
 - Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+SEC filings SVG verification:
+
+- All three visuals support the actual SEC filings hub.
+- The filing-map visual explains common filing categories without implying direction.
+- The 8-K event visual uses realistic red and green candles with volume bars and review labels.
+- The shelf-to-offering flow visual explains S-3/S-1, effective shelf, 424B5, 8-K, and dilution review without claiming immediate dilution.
+- Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the completed Chart Reading and Volume Liquidity batches, the next high-value SVG batch should likely support one of these:
 
-1. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
-2. Catalyst category articles: earnings, FDA, clinical trial, contract, partnership, and merger news review.
+1. Form 8-K: current-event filing workflow, item/detail review, and financing/risk language.
+2. Form S-1, Form S-3, and Form 424B5: registration-to-offering path.
 3. Dilution-risk path: offering language, shelf registrations, warrants, and convertible securities.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
 5. Trade review path: trade timeline, planned vs actual risk, execution review timeline.
