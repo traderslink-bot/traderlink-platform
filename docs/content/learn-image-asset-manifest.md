@@ -112,6 +112,8 @@ journey_map
 | `public/images/learn/chart-reading/dollar-volume-low-price-liquidity-review.svg` | `/learn/dollar-volume/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show low-priced stock share volume, dollar volume, spread, and depth review context. | Dollar Volume And Liquidity Are Related But Different section. | Trading dashboard showing low-priced stock dollar volume with spread and depth review context. | editor_verified | Supports low-priced stock liquidity review, uses realistic candles, volume bars, quote context, and avoids guarantee language. | `30d417ee` |
 | `public/images/learn/chart-reading/spread-tight-vs-wide-market.svg` | `/learn/spread/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Compare tight and wide bid-ask spreads with volume context. | Quick Definition section. | Trading dashboard comparing a tight spread with a wide spread. | editor_verified | Supports spread education, uses realistic quote and volume context, and avoids signal language. | `255f7a89` |
 | `public/images/learn/chart-reading/spread-hidden-execution-cost.svg` | `/learn/spread/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show hidden execution cost when entering across a wide spread. | Hidden Execution Cost section. | Trading dashboard showing hidden execution cost when entering across a wide spread. | editor_verified | Supports spread execution-cost review, uses realistic chart/quote context, and avoids guarantee language. | `255f7a89` |
+| `public/images/learn/chart-reading/bid-ask-quote-mechanics.svg` | `/learn/bid-and-ask/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show bid, ask, spread, last price, depth, candles, and volume. | Quick Definition section. | Trading dashboard showing bid, ask, spread, last price, and nearby quote depth. | editor_verified | Supports bid/ask mechanics education, uses realistic quote/chart context, and avoids signal language. | `5dd2af67` |
+| `public/images/learn/chart-reading/bid-ask-order-interaction-review.svg` | `/learn/bid-and-ask/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show how immediate orders interact with bid and ask quote sides. | How Orders Interact With Bid And Ask section. | Trading dashboard showing how immediate orders interact with bid and ask quotes. | editor_verified | Supports quote/order interaction review, uses realistic dashboard context, and avoids directive order advice. | `5dd2af67` |
 
 ## Editor Verification Summary
 
@@ -354,11 +356,19 @@ Spread SVG verification:
 - Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Bid and ask SVG verification:
+
+- Both visuals support the actual bid-and-ask lesson.
+- The quote-mechanics visual shows bid, ask, spread, last price, depth, candles, and volume in one realistic dashboard.
+- The order-interaction visual explains how immediate order context interacts with bid and ask without giving trade instructions.
+- Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Bid And Ask article: quote mechanics, buyer/seller sides, and how orders interact with the quote.
+1. Slippage article: expected versus actual fill, spread/liquidity causes, and execution review.
 2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
