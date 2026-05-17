@@ -244,7 +244,7 @@ Meaning:
 
 Important:
 
-The 217 upgraded lessons and path hubs should now be treated as **academy_ready** for the first content-format pass. They still need visual/UI-readiness review before production website implementation.
+The 223 upgraded lessons and path hubs should now be treated as **academy_ready** for the first content-format pass. They still need visual/UI-readiness review before production website implementation.
 
 The migration pass should check:
 
@@ -285,18 +285,20 @@ The user should understand what trading is, why planning matters, what risk mean
 |---:|---|---|---|---|---|---|
 | 1 | Start Here | Welcome To TradersLink Academy | `/learn/start-here/` | content_upgraded | complete | New Academy onboarding lesson explaining courses, lessons, progress, review prompts, and non-advice education. |
 | 2 | Start Here | How To Use TradersLink Academy | `/learn/how-to-use-traderslink-academy/` | content_upgraded | complete | New lesson explaining navigation, previous/next flow, related lessons, glossary support, completion, and review prompts. |
-| 3 | Market Basics | Day Trading For Beginners | `/learn/day-trading-for-beginners/` | content_upgraded | complete | Beginner day-trading orientation focused on risk, process, orders, liquidity, review, and avoiding income claims. |
-| 4 | Market Basics | Day Trading Vs Swing Trading | `/learn/day-trading-vs-swing-trading/` | content_upgraded | complete | Timeframe comparison covering risk, overnight exposure, screen time, execution, style drift, and review. |
-| 5 | Process Basics | Trading Plan | `/learn/trading-plan/` | content_upgraded | complete | Cross-listed from Risk Management course; early process foundation. |
-| 6 | Process Basics | Trading Rules | `/learn/trading-rules/` | content_upgraded | complete | Cross-listed from Risk Management course; rules as behavior constraints. |
-| 7 | Risk Basics | Risk Management | `/learn/risk-management/` | content_upgraded | complete | Cross-listed from Risk Management course; risk foundation. |
-| 8 | Risk Basics | Position Sizing | `/learn/position-sizing/` | content_upgraded | complete | Cross-listed from Risk Management course; size as risk decision. |
-| 9 | Risk Basics | Stop Loss | `/learn/stop-loss/` | content_upgraded | complete | Cross-listed from Risk Management course; invalidation and risk control. |
-| 10 | Review Basics | Trade Risk Review | `/learn/trade-risk-review/` | content_upgraded | complete | Cross-listed from Trade Review course; early review foundation. |
+| 3 | Market Mechanics | What Is A Stock And How Does A Trade Work? | `/learn/what-is-a-stock-and-how-does-a-trade-work/` | content_upgraded | complete | New bridge lesson covering stock ownership, trade matching, bid/ask, last price, order types, liquidity, and review. |
+| 4 | Market Mechanics | Stock Market Sessions And Order Flow Basics | `/learn/stock-market-sessions-and-order-flow-basics/` | content_upgraded | complete | New bridge lesson covering premarket, open, midday, close, after-hours, order flow, spread, liquidity, and session review. |
+| 5 | Market Basics | Day Trading For Beginners | `/learn/day-trading-for-beginners/` | content_upgraded | complete | Beginner day-trading orientation focused on risk, process, orders, liquidity, review, and avoiding income claims. |
+| 6 | Market Basics | Day Trading Vs Swing Trading | `/learn/day-trading-vs-swing-trading/` | content_upgraded | complete | Timeframe comparison covering risk, overnight exposure, screen time, execution, style drift, and review. |
+| 7 | Process Basics | Trading Plan | `/learn/trading-plan/` | content_upgraded | complete | Cross-listed from Risk Management course; early process foundation. |
+| 8 | Process Basics | Trading Rules | `/learn/trading-rules/` | content_upgraded | complete | Cross-listed from Risk Management course; rules as behavior constraints. |
+| 9 | Risk Basics | Risk Management | `/learn/risk-management/` | content_upgraded | complete | Cross-listed from Risk Management course; risk foundation. |
+| 10 | Risk Basics | Position Sizing | `/learn/position-sizing/` | content_upgraded | complete | Cross-listed from Risk Management course; size as risk decision. |
+| 11 | Risk Basics | Stop Loss | `/learn/stop-loss/` | content_upgraded | complete | Cross-listed from Risk Management course; invalidation and risk control. |
+| 12 | Review Basics | Trade Risk Review | `/learn/trade-risk-review/` | content_upgraded | complete | Cross-listed from Trade Review course; early review foundation. |
 
 ### Course Status
 
-The Trading Foundations course markdown path is **content_upgraded** across 4 newly created or upgraded beginner lessons plus 6 cross-listed completed plan, risk, and review lessons.
+The Trading Foundations course markdown path is **content_upgraded** across 6 newly created or upgraded beginner lessons plus 6 cross-listed completed plan, risk, and review lessons.
 
 Before production UI implementation, this course still needs:
 
@@ -510,20 +512,21 @@ The user should understand how traders categorize trade ideas without treating a
 | 2 | Style Selector | Day Trading | `/learn/day-trading/` | content_upgraded | complete | Style overview focused on intraday planning, risk, execution, and review. |
 | 3 | Style Selector | Swing Trading | `/learn/swing-trading/` | content_upgraded | complete | Style overview focused on multi-session planning, overnight risk, catalyst review, and style drift. |
 | 4 | Style Selector | Scalping Stocks | `/learn/scalping-stocks/` | content_upgraded | complete | Execution-sensitive style lesson covering spread, slippage, liquidity, trade count, and review. |
-| 5 | Style Selector | Momentum Trading | `/learn/momentum-trading/` | content_upgraded | complete | Teaches momentum as planned participation context and separates it from chasing. |
-| 6 | Setup Types | Pullbacks And Dip-Buy Setups | `/learn/pullbacks-and-dip-buy-setups/` | content_upgraded | complete | Gap lesson created with careful review-based framing; avoids treating dips as instructions. |
-| 7 | Setup Types | Breakout Setups | `/learn/breakout-trading/` | content_upgraded | complete | Cross-listed from Chart Reading. |
-| 8 | Setup Types | Breakdown Setups | `/learn/breakdown-trading/` | content_upgraded | complete | Cross-listed from Chart Reading. |
-| 9 | Setup Types | Reclaim Setups | `/learn/level-reclaim/` | content_upgraded | complete | Cross-listed from Chart Reading. |
-| 10 | Setup Types | Gap Fill Setups | `/learn/gap-fill-trading/` | content_upgraded | complete | Cross-listed from Chart Reading. |
-| 11 | Setup Types | News Fade | `/learn/news-fade/` | content_upgraded | complete | Teaches catalyst/reaction fade review without assuming every news move fades. |
-| 12 | Setup Types | Sell The News | `/learn/sell-the-news/` | content_upgraded | complete | Teaches expected-news reaction review without using the phrase as a trade command. |
-| 13 | Multi-Day Context | Multi-Day Runner | `/learn/multi-day-runner/` | content_upgraded | complete | Teaches attention, float, volume, supply, exhaustion, and chase-risk context. |
-| 14 | Risk Context | Chasing Stocks | `/learn/chasing-stocks/` | content_upgraded | complete | Cross-listed from Trading Psychology; caps the course with late-entry risk review. |
+| 5 | Style Selector | Short Selling Basics | `/learn/short-selling-basics/` | content_upgraded | complete | New bridge lesson covering borrowed shares, covering, borrow risk, squeeze risk, halt risk, and review without short-signal framing. |
+| 6 | Style Selector | Momentum Trading | `/learn/momentum-trading/` | content_upgraded | complete | Teaches momentum as planned participation context and separates it from chasing. |
+| 7 | Setup Types | Pullbacks And Dip-Buy Setups | `/learn/pullbacks-and-dip-buy-setups/` | content_upgraded | complete | Gap lesson created with careful review-based framing; avoids treating dips as instructions. |
+| 8 | Setup Types | Breakout Setups | `/learn/breakout-trading/` | content_upgraded | complete | Cross-listed from Chart Reading. |
+| 9 | Setup Types | Breakdown Setups | `/learn/breakdown-trading/` | content_upgraded | complete | Cross-listed from Chart Reading. |
+| 10 | Setup Types | Reclaim Setups | `/learn/level-reclaim/` | content_upgraded | complete | Cross-listed from Chart Reading. |
+| 11 | Setup Types | Gap Fill Setups | `/learn/gap-fill-trading/` | content_upgraded | complete | Cross-listed from Chart Reading. |
+| 12 | Setup Types | News Fade | `/learn/news-fade/` | content_upgraded | complete | Teaches catalyst/reaction fade review without assuming every news move fades. |
+| 13 | Setup Types | Sell The News | `/learn/sell-the-news/` | content_upgraded | complete | Teaches expected-news reaction review without using the phrase as a trade command. |
+| 14 | Multi-Day Context | Multi-Day Runner | `/learn/multi-day-runner/` | content_upgraded | complete | Teaches attention, float, volume, supply, exhaustion, and chase-risk context. |
+| 15 | Risk Context | Chasing Stocks | `/learn/chasing-stocks/` | content_upgraded | complete | Cross-listed from Trading Psychology; caps the course with late-entry risk review. |
 
 ### Course Status
 
-The Trading Styles And Playbooks course markdown path is **academy_ready_core** across 9 newly created or upgraded lessons plus 5 cross-listed completed lessons from Chart Reading and Trading Psychology.
+The Trading Styles And Playbooks course markdown path is **academy_ready_core** across 10 newly created or upgraded lessons plus 5 cross-listed completed lessons from Chart Reading and Trading Psychology.
 
 Before production UI implementation, this course still needs:
 
@@ -549,47 +552,48 @@ The user should understand what caused a stock to move, how to review the qualit
 | 2 | Press Releases | Stock Press Releases | `/learn/press-releases/` | complete | `a089acc5` |
 | 3 | Press Releases | How To Read Stock Press Releases | `/learn/how-to-read-stock-press-releases/` | complete | `31f3f02c` |
 | 4 | SEC Filing Foundation | SEC Filings | `/learn/sec-filings/` | complete | `4616c671` |
+| 5 | SEC Filing Foundation | How To Use EDGAR Source Documents | `/learn/how-to-use-edgar-source-documents/` | complete | pending |
 
 ### Completed Course Lesson Sequence
 
 | Order | Module | Lesson | URL | Current Asset | Status | Notes |
 |---:|---|---|---|---|---|---|
-| 5 | SEC Filing Foundation | Form 8-K | `/learn/sec-filings/form-8-k/` | content_upgraded | complete | Current-event filing workflow, item/exhibit review, financing language, and review prompts added. |
-| 6 | Company Reports | Form 10-K | `/learn/sec-filings/form-10-k/` | content_upgraded | complete | Annual report, audited financials, risk factors, cash, debt, share structure, and going-concern context. |
-| 7 | Company Reports | Form 10-Q | `/learn/sec-filings/form-10-q/` | content_upgraded | complete | Quarterly report, unaudited financials, cash changes, operating updates, and risk review. |
-| 8 | Company Reports | Form 20-F | `/learn/sec-filings/form-20-f/` | content_upgraded | complete | Foreign private issuer annual report context, financial statements, and risk disclosures. |
-| 9 | Company Reports | Form 6-K | `/learn/sec-filings/form-6-k/` | content_upgraded | complete | Foreign issuer current reports, foreign-market disclosures, press releases, and interim updates. |
-| 10 | Registration Statements | Form S-1 | `/learn/sec-filings/form-s-1/` | content_upgraded | complete | Registration statement, resale shares, selling stockholders, warrants, and future supply context. |
-| 11 | Registration Statements | Form S-3 | `/learn/sec-filings/form-s-3/` | content_upgraded | complete | Shelf registration, offering distinction, eligibility, and future offering context. |
-| 12 | Registration Statements | Form F-1 | `/learn/sec-filings/form-f-1/` | content_upgraded | complete | Foreign issuer registration statement, IPO/resale context, risk factors, and share supply. |
-| 13 | Registration Statements | Form F-3 | `/learn/sec-filings/form-f-3/` | content_upgraded | complete | Foreign issuer shelf registration, eligibility, prospectus supplements, and offering context. |
-| 14 | Transaction Registration | Form S-4 | `/learn/sec-filings/form-s-4/` | content_upgraded | complete | Merger securities, exchange offers, shareholder votes, transaction terms, and deal risk. |
-| 15 | Transaction Registration | Form S-8 | `/learn/sec-filings/form-s-8/` | content_upgraded | complete | Employee benefit plan securities, compensation shares, available share pools, and supply context. |
-| 16 | Prospectus Supplements | Form 424B5 | `/learn/sec-filings/form-424b5/` | content_upgraded | complete | Prospectus supplement, offering terms, warrants, proceeds, and dilution context. |
-| 17 | Prospectus Supplements | Form 424B3 | `/learn/sec-filings/form-424b3/` | content_upgraded | complete | Prospectus updates, resale context, registered securities, and plan of distribution. |
-| 18 | Prospectus Supplements | Form 424B4 | `/learn/sec-filings/form-424b4/` | content_upgraded | complete | Final prospectus details, offering terms, underwriters, proceeds, and risk disclosure. |
-| 19 | Registration Effectiveness | EFFECT Notice | `/learn/sec-filings/effect-notice/` | content_upgraded | complete | Effectiveness notice, related registration statement, resale eligibility, and timing context. |
-| 20 | Insider Ownership | Form 3 | `/learn/sec-filings/form-3/` | content_upgraded | complete | Initial insider ownership, officer/director holdings, and beneficial ownership baseline. |
-| 21 | Insider Ownership | Form 4 | `/learn/sec-filings/form-4/` | content_upgraded | complete | Insider transactions, transaction codes, grants, exercises, sales, and footnotes. |
-| 22 | Insider Ownership | Form 5 | `/learn/sec-filings/form-5/` | content_upgraded | complete | Annual insider ownership cleanup, late/exempt transactions, and follow-up review. |
-| 23 | Beneficial Ownership | Schedule 13D | `/learn/sec-filings/schedule-13d/` | content_upgraded | complete | Large beneficial ownership, activist intent, purpose of transaction, and position changes. |
-| 24 | Beneficial Ownership | Schedule 13G | `/learn/sec-filings/schedule-13g/` | content_upgraded | complete | Passive/institutional beneficial ownership, ownership percentage, amendments, and float context. |
-| 25 | Proxy Statements | Form DEF 14A | `/learn/sec-filings/form-def-14a/` | content_upgraded | complete | Definitive proxy statements, shareholder votes, governance, compensation, and meeting proposals. |
-| 26 | Proxy Statements | Form PRE 14A | `/learn/sec-filings/form-pre-14a/` | content_upgraded | complete | Preliminary proxy statements, proposed votes, corporate actions, and changes before final proxy. |
-| 27 | Late Filing Notices | NT 10-K | `/learn/sec-filings/nt-10-k/` | content_upgraded | complete | Late annual report notices, delay reasons, reporting risk, and follow-up filing review. |
-| 28 | Late Filing Notices | NT 10-Q | `/learn/sec-filings/nt-10-q/` | content_upgraded | complete | Late quarterly report notices, delay reasons, reporting controls, and follow-up 10-Q context. |
-| 29 | Exchange And Listing Events | Form 25 | `/learn/sec-filings/form-25/` | content_upgraded | complete | Delisting, exchange removal, deregistration context, listing status, and liquidity risk. |
-| 30 | News Categories | Earnings News | `/learn/earnings-news/` | content_upgraded | complete | Revenue, losses, margins, guidance, cash, and reaction review added. |
-| 31 | News Categories | FDA News Stocks | `/learn/fda-news-stocks/` | content_upgraded | complete | Regulatory event types, development stage, cash context, and review workflow added. |
-| 32 | News Categories | Clinical Trial News | `/learn/clinical-trial-news/` | content_upgraded | complete | Phase, endpoints, sample size, safety, cash context, and review workflow added. |
-| 33 | News Categories | Contract News Stocks | `/learn/contract-news-stocks/` | content_upgraded | complete | Customer name, terms, value, timing, execution context, and review workflow added. |
-| 34 | News Categories | Partnership News Stocks | `/learn/partnership-news-stocks/` | content_upgraded | complete | Partner quality, terms, commercial mechanics, filing context, and review workflow added. |
-| 35 | News Categories | Merger News Stocks | `/learn/merger-news-stocks/` | content_upgraded | complete | Deal type, consideration, closing conditions, filings, dilution context, and review workflow added. |
-| 36 | News Review | How To Review News Trades | `/learn/how-to-review-news-trades/` | content_upgraded | complete | Course capstone review lesson added for catalyst, reaction, risk, execution, and repeated patterns. |
+| 6 | SEC Filing Foundation | Form 8-K | `/learn/sec-filings/form-8-k/` | content_upgraded | complete | Current-event filing workflow, item/exhibit review, financing language, and review prompts added. |
+| 7 | Company Reports | Form 10-K | `/learn/sec-filings/form-10-k/` | content_upgraded | complete | Annual report, audited financials, risk factors, cash, debt, share structure, and going-concern context. |
+| 8 | Company Reports | Form 10-Q | `/learn/sec-filings/form-10-q/` | content_upgraded | complete | Quarterly report, unaudited financials, cash changes, operating updates, and risk review. |
+| 9 | Company Reports | Form 20-F | `/learn/sec-filings/form-20-f/` | content_upgraded | complete | Foreign private issuer annual report context, financial statements, and risk disclosures. |
+| 10 | Company Reports | Form 6-K | `/learn/sec-filings/form-6-k/` | content_upgraded | complete | Foreign issuer current reports, foreign-market disclosures, press releases, and interim updates. |
+| 11 | Registration Statements | Form S-1 | `/learn/sec-filings/form-s-1/` | content_upgraded | complete | Registration statement, resale shares, selling stockholders, warrants, and future supply context. |
+| 12 | Registration Statements | Form S-3 | `/learn/sec-filings/form-s-3/` | content_upgraded | complete | Shelf registration, offering distinction, eligibility, and future offering context. |
+| 13 | Registration Statements | Form F-1 | `/learn/sec-filings/form-f-1/` | content_upgraded | complete | Foreign issuer registration statement, IPO/resale context, risk factors, and share supply. |
+| 14 | Registration Statements | Form F-3 | `/learn/sec-filings/form-f-3/` | content_upgraded | complete | Foreign issuer shelf registration, eligibility, prospectus supplements, and offering context. |
+| 15 | Transaction Registration | Form S-4 | `/learn/sec-filings/form-s-4/` | content_upgraded | complete | Merger securities, exchange offers, shareholder votes, transaction terms, and deal risk. |
+| 16 | Transaction Registration | Form S-8 | `/learn/sec-filings/form-s-8/` | content_upgraded | complete | Employee benefit plan securities, compensation shares, available share pools, and supply context. |
+| 17 | Prospectus Supplements | Form 424B5 | `/learn/sec-filings/form-424b5/` | content_upgraded | complete | Prospectus supplement, offering terms, warrants, proceeds, and dilution context. |
+| 18 | Prospectus Supplements | Form 424B3 | `/learn/sec-filings/form-424b3/` | content_upgraded | complete | Prospectus updates, resale context, registered securities, and plan of distribution. |
+| 19 | Prospectus Supplements | Form 424B4 | `/learn/sec-filings/form-424b4/` | content_upgraded | complete | Final prospectus details, offering terms, underwriters, proceeds, and risk disclosure. |
+| 20 | Registration Effectiveness | EFFECT Notice | `/learn/sec-filings/effect-notice/` | content_upgraded | complete | Effectiveness notice, related registration statement, resale eligibility, and timing context. |
+| 21 | Insider Ownership | Form 3 | `/learn/sec-filings/form-3/` | content_upgraded | complete | Initial insider ownership, officer/director holdings, and beneficial ownership baseline. |
+| 22 | Insider Ownership | Form 4 | `/learn/sec-filings/form-4/` | content_upgraded | complete | Insider transactions, transaction codes, grants, exercises, sales, and footnotes. |
+| 23 | Insider Ownership | Form 5 | `/learn/sec-filings/form-5/` | content_upgraded | complete | Annual insider ownership cleanup, late/exempt transactions, and follow-up review. |
+| 24 | Beneficial Ownership | Schedule 13D | `/learn/sec-filings/schedule-13d/` | content_upgraded | complete | Large beneficial ownership, activist intent, purpose of transaction, and position changes. |
+| 25 | Beneficial Ownership | Schedule 13G | `/learn/sec-filings/schedule-13g/` | content_upgraded | complete | Passive/institutional beneficial ownership, ownership percentage, amendments, and float context. |
+| 26 | Proxy Statements | Form DEF 14A | `/learn/sec-filings/form-def-14a/` | content_upgraded | complete | Definitive proxy statements, shareholder votes, governance, compensation, and meeting proposals. |
+| 27 | Proxy Statements | Form PRE 14A | `/learn/sec-filings/form-pre-14a/` | content_upgraded | complete | Preliminary proxy statements, proposed votes, corporate actions, and changes before final proxy. |
+| 28 | Late Filing Notices | NT 10-K | `/learn/sec-filings/nt-10-k/` | content_upgraded | complete | Late annual report notices, delay reasons, reporting risk, and follow-up filing review. |
+| 29 | Late Filing Notices | NT 10-Q | `/learn/sec-filings/nt-10-q/` | content_upgraded | complete | Late quarterly report notices, delay reasons, reporting controls, and follow-up 10-Q context. |
+| 30 | Exchange And Listing Events | Form 25 | `/learn/sec-filings/form-25/` | content_upgraded | complete | Delisting, exchange removal, deregistration context, listing status, and liquidity risk. |
+| 31 | News Categories | Earnings News | `/learn/earnings-news/` | content_upgraded | complete | Revenue, losses, margins, guidance, cash, and reaction review added. |
+| 32 | News Categories | FDA News Stocks | `/learn/fda-news-stocks/` | content_upgraded | complete | Regulatory event types, development stage, cash context, and review workflow added. |
+| 33 | News Categories | Clinical Trial News | `/learn/clinical-trial-news/` | content_upgraded | complete | Phase, endpoints, sample size, safety, cash context, and review workflow added. |
+| 34 | News Categories | Contract News Stocks | `/learn/contract-news-stocks/` | content_upgraded | complete | Customer name, terms, value, timing, execution context, and review workflow added. |
+| 35 | News Categories | Partnership News Stocks | `/learn/partnership-news-stocks/` | content_upgraded | complete | Partner quality, terms, commercial mechanics, filing context, and review workflow added. |
+| 36 | News Categories | Merger News Stocks | `/learn/merger-news-stocks/` | content_upgraded | complete | Deal type, consideration, closing conditions, filings, dilution context, and review workflow added. |
+| 37 | News Review | How To Review News Trades | `/learn/how-to-review-news-trades/` | content_upgraded | complete | Course capstone review lesson added for catalyst, reaction, risk, execution, and repeated patterns. |
 
 ### Course Status
 
-The News, Catalysts And SEC Filings course markdown path is **academy_ready_core** across the catalyst, press release, SEC filing, news category, and news-trade review lessons.
+The News, Catalysts And SEC Filings course markdown path is **academy_ready_core** across the catalyst, press release, EDGAR source-document, SEC filing, news category, and news-trade review lessons.
 
 Before production UI implementation, this course still needs:
 
@@ -670,18 +674,19 @@ The user should understand how risk, sizing, stops, loss limits, reward/risk, an
 | 3 | Risk Basics | Risk Management | `/learn/risk-management/` | content_upgraded | complete | Risk per trade, position size, invalidation, daily limit, loss control, and review process. |
 | 4 | Risk Basics | Position Sizing | `/learn/position-sizing/` | content_upgraded | complete | Account risk, trade risk, stop distance, share size, liquidity, slippage, and max loss. |
 | 5 | Risk Basics | Risk Reward Ratio | `/learn/risk-reward-ratio/` | content_upgraded | complete | Planned risk, potential reward, win-rate context, realistic targets, invalidation, and review after exit. |
-| 6 | Risk Basics | Stop Loss | `/learn/stop-loss/` | content_upgraded | complete | Invalidation level, stop type, position size, liquidity, gap risk, discipline risk, and review outcome. |
-| 7 | Risk Basics | Mental Stop Vs Hard Stop | `/learn/mental-stop-vs-hard-stop/` | content_upgraded | complete | Execution discipline, order risk, liquidity, gap risk, platform access, emotional delay, and review evidence. |
-| 8 | Account Protection | Max Loss | `/learn/max-loss/` | content_upgraded | complete | Per-trade max loss, session max loss, account impact, position sizing, stop discipline, and shutdown plan. |
-| 9 | Account Protection | Daily Loss Limit | `/learn/daily-loss-limit/` | content_upgraded | complete | Daily loss number, stop-trading trigger, reset rule, revenge risk, overtrading risk, and review plan. |
-| 10 | Trade Management | Trade Management | `/learn/trade-management/` | content_upgraded | complete | Initial plan, risk adjustment, partial exits, stop movement, adding rules, time in trade, and exit review. |
-| 11 | Trade Management | Profit Protection | `/learn/profit-protection/` | content_upgraded | complete | Open profit, giveback risk, exit plan, trailing logic, liquidity, news risk, and review after exit. |
-| 12 | Event Risk | Overnight Risk | `/learn/overnight-risk/` | content_upgraded | complete | Gap risk, news risk, position size, liquidity, borrow or margin risk, exit access, and next-day plan. |
-| 13 | Event Risk | Holding Through News | `/learn/holding-through-news/` | content_upgraded | complete | Scheduled catalysts, unexpected news, position size, gap risk, liquidity, thesis dependence, and review outcome. |
+| 6 | Risk Basics | Win Rate, Reward/Risk, And Expectancy | `/learn/win-rate-reward-risk-and-expectancy/` | content_upgraded | complete | New bridge lesson connecting win rate, average winner, average loser, reward/risk, expectancy, sample size, and review. |
+| 7 | Risk Basics | Stop Loss | `/learn/stop-loss/` | content_upgraded | complete | Invalidation level, stop type, position size, liquidity, gap risk, discipline risk, and review outcome. |
+| 8 | Risk Basics | Mental Stop Vs Hard Stop | `/learn/mental-stop-vs-hard-stop/` | content_upgraded | complete | Execution discipline, order risk, liquidity, gap risk, platform access, emotional delay, and review evidence. |
+| 9 | Account Protection | Max Loss | `/learn/max-loss/` | content_upgraded | complete | Per-trade max loss, session max loss, account impact, position sizing, stop discipline, and shutdown plan. |
+| 10 | Account Protection | Daily Loss Limit | `/learn/daily-loss-limit/` | content_upgraded | complete | Daily loss number, stop-trading trigger, reset rule, revenge risk, overtrading risk, and review plan. |
+| 11 | Trade Management | Trade Management | `/learn/trade-management/` | content_upgraded | complete | Initial plan, risk adjustment, partial exits, stop movement, adding rules, time in trade, and exit review. |
+| 12 | Trade Management | Profit Protection | `/learn/profit-protection/` | content_upgraded | complete | Open profit, giveback risk, exit plan, trailing logic, liquidity, news risk, and review after exit. |
+| 13 | Event Risk | Overnight Risk | `/learn/overnight-risk/` | content_upgraded | complete | Gap risk, news risk, position size, liquidity, borrow or margin risk, exit access, and next-day plan. |
+| 14 | Event Risk | Holding Through News | `/learn/holding-through-news/` | content_upgraded | complete | Scheduled catalysts, unexpected news, position size, gap risk, liquidity, thesis dependence, and review outcome. |
 
 ### Course Status
 
-The Risk Management And Trade Planning course markdown path is **academy_ready_core** across all 13 planned lessons.
+The Risk Management And Trade Planning course markdown path is **academy_ready_core** across all 14 planned lessons.
 
 Before production UI implementation, this course still needs:
 
@@ -742,13 +747,14 @@ The user should understand how improvement happens through structured review, no
 | 3 | Review Process | Planned Vs Actual Trade Review | `/learn/planned-vs-actual-trade-review/` | content_upgraded | complete | Plan versus actual setup, entry, risk, size, management, exit, and adjustment review. |
 | 4 | Review Process | Execution Review | `/learn/execution-review/` | content_upgraded | complete | Entry timing, fill quality, order type, spread, slippage, liquidity, and exit execution review. |
 | 5 | Review Process | Mistake Pattern Review | `/learn/mistake-pattern-review/` | content_upgraded | complete | Repeated behavior patterns, mistake tags, context triggers, and rule improvements without shame framing. |
-| 6 | Specialized Review | How To Review News Trades | `/learn/how-to-review-news-trades/` | content_upgraded | complete | Cross-listed completed News course capstone for catalyst, reaction, risk, execution, and news-trade review. |
-| 7 | Specialized Review | Swing Trade Journal | `/learn/swing-trade-journal/` | content_upgraded | complete | Multi-session thesis, levels, overnight risk, catalysts, daily management notes, and swing-trade review. |
-| 8 | Product Bridge | How Trader Intelligence Helps Review Trades | `/learn/trader-intelligence-trade-review/` | content_upgraded | complete | Review-only product bridge explaining Trader Intelligence as completed-trade analysis, not prediction. |
+| 6 | Review Process | Building A Playbook From Reviewed Trades | `/learn/building-a-playbook-from-reviewed-trades/` | content_upgraded | complete | New bridge lesson turning reviewed trade samples into setup criteria, disqualifiers, risk rules, and forward-testable playbook updates. |
+| 7 | Specialized Review | How To Review News Trades | `/learn/how-to-review-news-trades/` | content_upgraded | complete | Cross-listed completed News course capstone for catalyst, reaction, risk, execution, and news-trade review. |
+| 8 | Specialized Review | Swing Trade Journal | `/learn/swing-trade-journal/` | content_upgraded | complete | Multi-session thesis, levels, overnight risk, catalysts, daily management notes, and swing-trade review. |
+| 9 | Product Bridge | How Trader Intelligence Helps Review Trades | `/learn/trader-intelligence-trade-review/` | content_upgraded | complete | Review-only product bridge explaining Trader Intelligence as completed-trade analysis, not prediction. |
 
 ### Course Status
 
-The Trade Review And Improvement course markdown path is **academy_ready_core** across 7 newly upgraded or created lessons plus the already-completed cross-listed news-trade review lesson.
+The Trade Review And Improvement course markdown path is **academy_ready_core** across 8 newly upgraded or created lessons plus the already-completed cross-listed news-trade review lesson.
 
 Before production UI implementation, this course still needs:
 
@@ -1135,31 +1141,31 @@ Current known Academy-ready lesson groups:
 | Swing Trading Workflow | 8 | Full swing-trading workflow course has passed Academy format migration check across beginner swing planning, risk management, support/resistance planning, volume, catalysts, earnings, news risk, and small-cap swing context. Three realistic SVGs are already manifest-tracked. |
 | Academy Navigation Path Hubs | 4 | Four path hubs have passed Academy path-hub readiness checks across chart reading, news and filings, trade review, and risk discipline. Four realistic SVG/path-map assets are already manifest-tracked. |
 | Volume, Liquidity And Order Flow | 14 | Core course path has passed Academy format migration check: metadata, lesson objectives, checklist, review, Trader Intelligence bridge, and visuals are normalized. |
-| News, Catalysts And SEC Filings | 36 | Full course markdown path has passed Academy format migration across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
-| Trading Foundations | 4 | Beginner onboarding and market-basics lessons have passed Academy format migration check; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
+| News, Catalysts And SEC Filings | 37 | Full course markdown path has passed Academy format migration across catalysts, press releases, EDGAR source-document review, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
+| Trading Foundations | 6 | Beginner onboarding, market-mechanics, and market-basics lessons have passed Academy format migration check; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
 | Technical Indicators And Tools | 11 | Full indicator course markdown path has passed Academy format migration check across indicator foundation, trend tools, momentum tools, volatility tools, and VWAP reclaim. Volume By Price is cross-listed from the completed Volume course. Needs visual review before UI-ready. |
-| Trading Styles And Playbooks | 14 | Full course sequence has passed Academy format migration check across style selector lessons, pullback context, news-fade/sell-the-news context, multi-day runner context, and cross-listed breakout, breakdown, reclaim, gap-fill, and chasing lessons. Needs visual review before UI-ready. |
+| Trading Styles And Playbooks | 15 | Full course sequence has passed Academy format migration check across style selector lessons, short selling basics, pullback context, news-fade/sell-the-news context, multi-day runner context, and cross-listed breakout, breakdown, reclaim, gap-fill, and chasing lessons. Needs visual review before UI-ready. |
 | Small-Cap Stocks, Float And Dilution | 28 | Full course markdown path has passed Academy format migration across small-cap context, float, dilution, offerings, securities, corporate actions, cash runway, and going concern. Needs visual review before UI-ready. |
-| Risk Management And Trade Planning | 13 | Full course markdown path has passed Academy format migration across planning, rules, risk basics, account protection, trade management, and event risk. Needs visual review before UI-ready. |
+| Risk Management And Trade Planning | 14 | Full course markdown path has passed Academy format migration across planning, rules, expectancy, risk basics, account protection, trade management, and event risk. Needs visual review before UI-ready. |
 | Trading Psychology And Discipline | 8 | Full course markdown path has passed Academy format migration check across discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. Needs visual review before UI-ready. |
-| Trade Review And Improvement | 8 | Full course sequence has passed Academy format migration check across review foundation, risk review, planned-vs-actual review, execution review, mistake patterns, news-trade review, swing review, and Trader Intelligence review bridge. The news-trade review lesson is cross-listed from the completed News course. Needs visual review before UI-ready. |
+| Trade Review And Improvement | 9 | Full course sequence has passed Academy format migration check across review foundation, risk review, planned-vs-actual review, execution review, mistake patterns, playbook building, news-trade review, swing review, and Trader Intelligence review bridge. The news-trade review lesson is cross-listed from the completed News course. Needs visual review before UI-ready. |
 | Day Trading Workflow | 9 | Full day-trading workflow course has passed Academy format migration check across session framework, premarket prep, watchlist filtering, market open, opening range, midday filtering, power hour, after-hours context, and session review. Five realistic SVGs are already manifest-tracked. |
 
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-217
+223
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 217 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 0 | All 217 content-upgraded lessons and path hubs represented in this index have passed the first Academy format migration or readiness check. |
-| academy_ready | 217 | Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, Small-Cap/Float/Dilution, Trading Psychology, Trade Review, Day Trading Workflow, Practice/Improvement, Halts/High-Volatility, Swing Trading Workflow, Academy path hubs, and Trading Foundations have passed the first Academy format migration check. The final reconciliation corrected Chart Patterns to 14 Academy-ready entries. |
+| content_upgraded | 223 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 0 | All 223 content-upgraded lessons and path hubs represented in this index have passed the first Academy format migration or readiness check. |
+| academy_ready | 223 | Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, Small-Cap/Float/Dilution, Trading Psychology, Trade Review, Day Trading Workflow, Practice/Improvement, Halts/High-Volatility, Swing Trading Workflow, Academy path hubs, and Trading Foundations have passed the first Academy format migration check. The final reconciliation corrected Chart Patterns to 14 Academy-ready entries, and the first six master-audit bridge lessons have now been added. |
 
-The 217 content-upgraded lessons are not throwaway work. They are now the Academy-ready content foundation. The next step is to review visual/UI readiness and create or upgrade missing assets only when a real learning gap appears.
+The 223 content-upgraded lessons are not throwaway work. They are now the Academy-ready content foundation. The next step is to review visual/UI readiness and create or upgrade missing assets only when a real learning gap appears.
 
 Current best next editorial action:
 
@@ -1169,7 +1175,7 @@ Create Batch 1 Technical Indicators SVG assets
 
 Reason:
 
-The Academy visual/UI-readiness review is complete in `docs/content/learn-academy-visual-ui-readiness-review.md`. All 217 content-upgraded lessons and path hubs represented in this index have completed the first Academy format migration or readiness check. The highest-value next content-only work is the first targeted visual batch for Technical Indicators And Tools.
+The Academy visual/UI-readiness review is complete in `docs/content/learn-academy-visual-ui-readiness-review.md`. All 223 content-upgraded lessons and path hubs represented in this index have completed the first Academy format migration or readiness check. The highest-value next content-only work is the first targeted visual batch for Technical Indicators And Tools.
 
 ## Recommended Work Method From Here
 

@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built to help traders review whether each tra
 recommended_previous: "/learn/day-trading-for-beginners/"
 recommended_next: "/learn/trading-plan/"
 academy_level: "Foundation"
-academy_order: 4
+academy_order: 6
 academy_module: "Market Basics"
 academy_course: "Trading Foundations"
 learning_track: "Trading Foundations"

@@ -14,7 +14,7 @@ cta: "If you want to review your trades with more structure, Trader Intelligence
 recommended_next: "/learn/sec-filings/form-s-1/"
 recommended_previous: "/learn/sec-filings/form-20-f/"
 academy_level: "Practical"
-academy_order: 9
+academy_order: 10
 academy_module: "Company Reports"
 academy_course: "News, Catalysts And SEC Filings"
 learning_track: "News, Catalysts And SEC Filings"

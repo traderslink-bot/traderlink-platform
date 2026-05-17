@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built to help traders review filing-driven tr
 learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "Registration Statements"
-academy_order: 11
+academy_order: 12
 academy_level: "Practical"
 recommended_previous: "/learn/sec-filings/form-s-1/"
 recommended_next: "/learn/sec-filings/form-f-1/"

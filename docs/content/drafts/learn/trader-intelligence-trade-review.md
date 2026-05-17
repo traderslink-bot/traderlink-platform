@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built as a review and analysis system for tra
 recommended_previous: "/learn/swing-trade-journal/"
 recommended_next: "/learn/start-here/"
 academy_level: "Review"
-academy_order: 7
+academy_order: 9
 academy_module: "Product Bridge"
 academy_course: "Trade Review And Improvement"
 learning_track: "Trade Review And Improvement"

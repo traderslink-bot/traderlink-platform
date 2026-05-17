@@ -16,7 +16,7 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders identify repeated mistake patterns across completed trades and sessions."
 recommended_previous: "/learn/execution-review/"
-recommended_next: "/learn/swing-trade-journal/"
+recommended_next: "/learn/building-a-playbook-from-reviewed-trades/"
 academy_level: "Practical"
 academy_order: 5
 academy_module: "Review Process"
@@ -36,7 +36,7 @@ meta_description: "Learn how to identify repeated trading mistake patterns and t
 ---
 # Mistake Pattern Review
 
-This lesson is part of the **Trade Review And Improvement** course. It follows [Execution Review](/learn/execution-review/) and leads into [Swing Trade Journal](/learn/swing-trade-journal/).
+This lesson is part of the **Trade Review And Improvement** course. It follows [Execution Review](/learn/execution-review/) and leads into [Building A Playbook From Reviewed Trades](/learn/building-a-playbook-from-reviewed-trades/).
 
 Mistake pattern review is the process of looking across trades to find repeated behaviors. One mistake may be noise. A repeated mistake is a pattern that can be named, tracked, and improved.
 

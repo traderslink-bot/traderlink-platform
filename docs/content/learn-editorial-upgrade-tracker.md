@@ -577,22 +577,22 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | Trading Foundations final Academy readiness check | Checked 4 Trading Foundations lessons and reconciled the full Academy migration count. | Passed with no lesson edits needed. Foundations lessons already include Academy metadata, lesson objectives, `Practical Checklist`, one `Apply This In Review` section, review-focused Trader Intelligence bridge, FAQ, and educational disclaimer. The final count also corrects Chart Patterns to 14 Academy-ready entries, bringing the tracked Academy migration total to 217 of 217. | no lesson file changes |
 | 2026-05-17 | Academy visual/UI-readiness review | Completed the Academy-wide visual/UI-readiness review across the 217 Academy-ready lessons and path hubs. | Passed. Created `docs/content/learn-academy-visual-ui-readiness-review.md`, confirmed the Academy is content-format ready and UI-planning ready, documented course-by-course visual coverage, identified which lessons need additional realistic SVG support, and prioritized the next visual batches. No production website files were changed. | `df253425` |
 | 2026-05-17 | Academy master instructor audit | Reviewed each Academy course as a course-based learning journey, identified missing modules and bridge lessons, corrected the recommended course-order framing in the Academy index, and documented the highest-value next content additions. | Passed. Created `docs/content/traderslink-academy-master-instructor-audit.md`. The Academy remains structurally strong, but Risk Management should move earlier, path hubs should be navigation support instead of Course 15, and the next content run should prioritize beginner mechanics, expectancy, short selling, EDGAR source review, and playbook-building gaps. | `15c0e315` |
+| 2026-05-17 | Academy bridge lesson batch 1 | Created the six highest-priority bridge lessons from the master instructor audit and integrated them into adjacent Academy metadata and the course index. | Passed. Added beginner market mechanics, stock market sessions/order flow, expectancy, short selling basics, EDGAR source-document workflow, and playbook-building lessons. Updated previous/next links and Academy-ready count from 217 to 223. No production website files were changed. | pending commit |
 
 ## Next Recommended Action
 
-Continue from the Academy master instructor audit:
+Continue from the completed Academy bridge lesson batch:
 
-1. Create the first missing bridge lessons from `docs/content/traderslink-academy-master-instructor-audit.md`:
-   - `/learn/what-is-a-stock-and-how-does-a-trade-work/`
-   - `/learn/stock-market-sessions-and-order-flow-basics/`
-   - `/learn/win-rate-reward-risk-and-expectancy/`
-   - `/learn/short-selling-basics/`
-   - `/learn/how-to-use-edgar-source-documents/`
-   - `/learn/building-a-playbook-from-reviewed-trades/`
-2. Update `docs/content/traderslink-academy-course-index.md` as each new lesson is integrated.
-3. Then create Batch 1 Technical Indicators SVG assets from `docs/content/learn-academy-visual-ui-readiness-review.md`.
-4. Update `docs/content/learn-image-asset-manifest.md` after each SVG is created and editor-verified.
-5. Keep this as markdown/content planning and SVG work only; do not build production routes, components, schemas, JSX, CSS, or pages.
+1. Create Batch 1 Technical Indicators SVG assets from `docs/content/learn-academy-visual-ui-readiness-review.md`.
+2. Update `docs/content/learn-image-asset-manifest.md` after each SVG is created and editor-verified.
+3. Then continue with the next missing gap set from `docs/content/traderslink-academy-master-instructor-audit.md`, likely:
+   - `/learn/multiple-timeframe-chart-reading/`
+   - `/learn/how-to-choose-indicators-for-a-trading-plan/`
+   - `/learn/resale-registration-statement/`
+   - `/learn/shareholder-approval-for-dilution/`
+   - `/learn/weekly-and-monthly-trading-review/`
+   - `/learn/backtesting-vs-forward-testing/`
+4. Keep this as markdown/content planning and SVG work only; do not build production routes, components, schemas, JSX, CSS, or pages.
 
 ## Important Reminder
 

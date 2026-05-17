@@ -14,7 +14,7 @@ cta: "If you want to review your trades with more structure, Trader Intelligence
 recommended_next: "/learn/sec-filings/form-4/"
 recommended_previous: "/learn/sec-filings/effect-notice/"
 academy_level: "Foundation"
-academy_order: 20
+academy_order: 21
 academy_module: "Insider Ownership"
 academy_course: "News, Catalysts And SEC Filings"
 learning_track: "News, Catalysts And SEC Filings"

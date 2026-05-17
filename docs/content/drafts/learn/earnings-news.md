@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built to help traders review earnings-driven 
 learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
-academy_order: 30
+academy_order: 31
 academy_level: "Practical"
 recommended_previous: "/learn/sec-filings/form-25/"
 recommended_next: "/learn/fda-news-stocks/"

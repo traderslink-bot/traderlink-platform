@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built to help traders review which styles, se
 recommended_previous: "/learn/sell-the-news/"
 recommended_next: "/learn/chasing-stocks/"
 academy_level: "Advanced"
-academy_order: 13
+academy_order: 14
 academy_module: "Multi-Day Context"
 academy_course: "Trading Styles And Playbooks"
 learning_track: "Trading Styles And Playbooks"

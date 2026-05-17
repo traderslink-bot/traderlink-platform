@@ -14,7 +14,7 @@ cta: "If you want to review your trades with more structure, Trader Intelligence
 recommended_next: "/learn/sec-filings/form-def-14a/"
 recommended_previous: "/learn/sec-filings/schedule-13d/"
 academy_level: "Practical"
-academy_order: 24
+academy_order: 25
 academy_module: "Beneficial Ownership"
 academy_course: "News, Catalysts And SEC Filings"
 learning_track: "News, Catalysts And SEC Filings"

@@ -14,7 +14,7 @@ cta: "If you want to review your trades with more structure, Trader Intelligence
 recommended_next: "/learn/sec-filings/form-424b5/"
 recommended_previous: "/learn/sec-filings/form-s-4/"
 academy_level: "Practical"
-academy_order: 15
+academy_order: 16
 academy_module: "Transaction Registration"
 academy_course: "News, Catalysts And SEC Filings"
 learning_track: "News, Catalysts And SEC Filings"

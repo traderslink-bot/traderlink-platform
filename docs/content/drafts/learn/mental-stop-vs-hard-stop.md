@@ -18,7 +18,7 @@ cta: "If you want to review your trades with more structure, Trader Intelligence
 recommended_next: "/learn/max-loss/"
 recommended_previous: "/learn/stop-loss/"
 academy_level: "Practical"
-academy_order: 7
+academy_order: 8
 academy_module: "Risk Basics"
 academy_course: "Risk Management And Trade Planning"
 learning_track: "Risk Management And Trade Planning"

@@ -15,10 +15,10 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review which styles, setups, timeframes, and behaviors fit their completed trades."
-recommended_previous: "/learn/scalping-stocks/"
+recommended_previous: "/learn/short-selling-basics/"
 recommended_next: "/learn/pullbacks-and-dip-buy-setups/"
 academy_level: "Practical"
-academy_order: 5
+academy_order: 6
 academy_module: "Style Selector"
 academy_course: "Trading Styles And Playbooks"
 learning_track: "Trading Styles And Playbooks"
@@ -36,7 +36,7 @@ meta_description: "Learn what momentum trading is, what it requires, common mist
 ---
 # Momentum Trading
 
-This lesson is part of the **Trading Styles And Playbooks** course. It follows [Scalping Stocks](/learn/scalping-stocks/) and leads into [Pullbacks And Dip-Buy Setups](/learn/pullbacks-and-dip-buy-setups/).
+This lesson is part of the **Trading Styles And Playbooks** course. It follows [Short Selling Basics](/learn/short-selling-basics/) and leads into [Pullbacks And Dip-Buy Setups](/learn/pullbacks-and-dip-buy-setups/).
 
 Momentum trading focuses on stocks with strong directional movement, participation, and attention. The style can involve breakouts, high relative volume, news reactions, or continuation attempts.
 

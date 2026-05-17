@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built to help traders review which styles, se
 recommended_previous: "/learn/momentum-trading/"
 recommended_next: "/learn/breakout-trading/"
 academy_level: "Practical"
-academy_order: 6
+academy_order: 7
 academy_module: "Setup Types"
 academy_course: "Trading Styles And Playbooks"
 learning_track: "Trading Styles And Playbooks"

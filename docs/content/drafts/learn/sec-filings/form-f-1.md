@@ -14,7 +14,7 @@ cta: "If you want to review your trades with more structure, Trader Intelligence
 recommended_next: "/learn/sec-filings/form-f-3/"
 recommended_previous: "/learn/sec-filings/form-s-3/"
 academy_level: "Practical"
-academy_order: 12
+academy_order: 13
 academy_module: "Registration Statements"
 academy_course: "News, Catalysts And SEC Filings"
 learning_track: "News, Catalysts And SEC Filings"

@@ -15,10 +15,10 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review multi-session trades, management decisions, context changes, and repeated swing-trade patterns."
-recommended_previous: "/learn/mistake-pattern-review/"
+recommended_previous: "/learn/how-to-review-news-trades/"
 recommended_next: "/learn/trader-intelligence-trade-review/"
 academy_level: "Practical"
-academy_order: 6
+academy_order: 8
 academy_module: "Specialized Review"
 academy_course: "Trade Review And Improvement"
 learning_track: "Trade Review And Improvement"
@@ -36,7 +36,7 @@ meta_description: "Learn what to track in a swing trade journal, including thesi
 ---
 # Swing Trade Journal
 
-This lesson is part of the **Trade Review And Improvement** course. It follows [Mistake Pattern Review](/learn/mistake-pattern-review/) and leads into [How Trader Intelligence Helps Review Trades](/learn/trader-intelligence-trade-review/).
+This lesson is part of the **Trade Review And Improvement** course. It follows [How To Review News Trades](/learn/how-to-review-news-trades/) and leads into [How Trader Intelligence Helps Review Trades](/learn/trader-intelligence-trade-review/).
 
 A swing trade journal is a structured record of trades held across multiple sessions. It helps the trader review the original idea, risk plan, key levels, catalyst, overnight risk, and decisions made while the trade was open.
 

@@ -18,9 +18,9 @@ cta: "Trader Intelligence is being built to help traders review filing-driven tr
 learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "SEC Filing Foundation"
-academy_order: 5
+academy_order: 6
 academy_level: "Practical"
-recommended_previous: "/learn/sec-filings/"
+recommended_previous: "/learn/how-to-use-edgar-source-documents/"
 recommended_next: "/learn/sec-filings/form-10-k/"
 internal_links:
   - "/learn/sec-filings/"
@@ -42,7 +42,7 @@ meta_description: "Learn what a Form 8-K filing means, why companies file it, an
 
 A Form 8-K is a current report that public companies file with the SEC to report important events between regular quarterly and annual reports. Traders watch 8-K filings because they can reveal news that may matter quickly: financing agreements, material contracts, mergers, leadership changes, delisting notices, reverse split updates, press release exhibits, and other company events.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [SEC Filings](/learn/sec-filings/) and leads into [Form 10-K](/learn/sec-filings/form-10-k/).
+This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [How To Use EDGAR Source Documents](/learn/how-to-use-edgar-source-documents/) and leads into [Form 10-K](/learn/sec-filings/form-10-k/).
 
 An 8-K is not automatically good or bad. It is a container for current-event information. The item, exhibit, terms, timing, and market reaction decide what the filing actually means for review.
 

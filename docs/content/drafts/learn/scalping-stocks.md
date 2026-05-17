@@ -16,7 +16,7 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review which styles, setups, timeframes, and behaviors fit their completed trades."
 recommended_previous: "/learn/swing-trading/"
-recommended_next: "/learn/momentum-trading/"
+recommended_next: "/learn/short-selling-basics/"
 academy_level: "Practical"
 academy_order: 4
 academy_module: "Style Selector"
@@ -36,7 +36,7 @@ meta_description: "Learn what stock scalping is, what it requires, common mistak
 ---
 # Scalping Stocks
 
-This lesson is part of the **Trading Styles And Playbooks** course. It follows [Swing Trading](/learn/swing-trading/) and leads into [Momentum Trading](/learn/momentum-trading/).
+This lesson is part of the **Trading Styles And Playbooks** course. It follows [Swing Trading](/learn/swing-trading/) and leads into [Short Selling Basics](/learn/short-selling-basics/).
 
 Scalping is a very short-term trading style focused on small price movements, fast decisions, and execution quality. Because holding periods are short, spread, slippage, fills, and discipline matter heavily.
 

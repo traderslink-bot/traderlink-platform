@@ -16,9 +16,9 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
 recommended_next: "/learn/mental-stop-vs-hard-stop/"
-recommended_previous: "/learn/risk-reward-ratio/"
+recommended_previous: "/learn/win-rate-reward-risk-and-expectancy/"
 academy_level: "Practical"
-academy_order: 6
+academy_order: 7
 academy_module: "Risk Basics"
 academy_course: "Risk Management And Trade Planning"
 learning_track: "Risk Management And Trade Planning"
@@ -36,7 +36,7 @@ meta_description: "Learn what a stop loss is, how traders use stop areas, common
 ---
 # Stop Loss
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Risk Reward Ratio](/learn/risk-reward-ratio/) and leads into [Mental Stop Vs Hard Stop](/learn/mental-stop-vs-hard-stop/).
+This lesson is part of the **Risk Management And Trade Planning** course. It follows [Win Rate, Reward/Risk, And Expectancy](/learn/win-rate-reward-risk-and-expectancy/) and leads into [Mental Stop Vs Hard Stop](/learn/mental-stop-vs-hard-stop/).
 
 The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
 

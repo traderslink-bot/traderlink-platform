@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built to help traders review partnership-news
 learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
-academy_order: 34
+academy_order: 35
 academy_level: "Practical"
 recommended_previous: "/learn/contract-news-stocks/"
 recommended_next: "/learn/merger-news-stocks/"

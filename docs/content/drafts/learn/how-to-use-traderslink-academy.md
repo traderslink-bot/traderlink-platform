@@ -16,7 +16,7 @@ funnel_stage: "awareness"
 priority: "1"
 cta: "Use the Academy to learn the concepts, then use Trader Intelligence later to review completed trades and repeated patterns."
 recommended_previous: "/learn/start-here/"
-recommended_next: "/learn/day-trading-for-beginners/"
+recommended_next: "/learn/what-is-a-stock-and-how-does-a-trade-work/"
 academy_level: "Foundation"
 academy_order: 2
 academy_module: "Start Here"
@@ -36,7 +36,7 @@ meta_description: "Learn how to move through TradersLink Academy courses, lesson
 ---
 # How To Use TradersLink Academy
 
-This lesson is part of the **Trading Foundations** course. It follows [Welcome To TradersLink Academy](/learn/start-here/) and leads into [Day Trading For Beginners](/learn/day-trading-for-beginners/).
+This lesson is part of the **Trading Foundations** course. It follows [Welcome To TradersLink Academy](/learn/start-here/) and leads into [What Is A Stock And How Does A Trade Work?](/learn/what-is-a-stock-and-how-does-a-trade-work/).
 
 TradersLink Academy is meant to feel like guided education without forcing users into a locked path. You can follow the recommended course order, jump to a specific lesson, or return to a lesson after a trade review exposes a gap.
 

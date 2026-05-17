@@ -18,7 +18,7 @@ cta: "If you want to review your trades with more structure, Trader Intelligence
 recommended_next: "/learn/overnight-risk/"
 recommended_previous: "/learn/trade-management/"
 academy_level: "Practical"
-academy_order: 11
+academy_order: 12
 academy_module: "Trade Management"
 academy_course: "Risk Management And Trade Planning"
 learning_track: "Risk Management And Trade Planning"

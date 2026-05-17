@@ -21,7 +21,7 @@ academy_module: "SEC Filing Foundation"
 academy_order: 4
 academy_level: "Foundation"
 recommended_previous: "/learn/how-to-read-stock-press-releases/"
-recommended_next: "/learn/sec-filings/form-8-k/"
+recommended_next: "/learn/how-to-use-edgar-source-documents/"
 visual_assets:
   - "/images/learn/chart-reading/sec-filing-map-for-traders.svg"
   - "/images/learn/chart-reading/sec-filing-8k-event-review.svg"
@@ -51,7 +51,7 @@ meta_description: "Learn what SEC filings are, why traders watch them, and how f
 
 SEC filings are official documents that public companies submit to the U.S. Securities and Exchange Commission. Traders watch SEC filings because they can reveal company events, financial results, offerings, dilution risk, insider transactions, mergers, reverse splits, and other material updates.
 
-This lesson is part of the **News, Catalysts And SEC Filings** learning path. It builds on [Stock Catalysts](/learn/stock-catalysts/), [Stock Press Releases](/learn/press-releases/), and [How To Read Stock Press Releases](/learn/how-to-read-stock-press-releases/). It leads into [Form 8-K](/learn/sec-filings/form-8-k/) because 8-K filings are one of the most common current-event filings traders encounter.
+This lesson is part of the **News, Catalysts And SEC Filings** learning path. It builds on [Stock Catalysts](/learn/stock-catalysts/), [Stock Press Releases](/learn/press-releases/), and [How To Read Stock Press Releases](/learn/how-to-read-stock-press-releases/). It leads into [How To Use EDGAR Source Documents](/learn/how-to-use-edgar-source-documents/) so traders learn to verify source filings before studying individual form types.
 
 For small-cap traders, filings can be especially important. A press release may sound exciting, but a filing can provide deeper context about financing, share structure, risk, and company obligations.
 

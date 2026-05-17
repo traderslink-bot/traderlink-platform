@@ -14,7 +14,7 @@ cta: "If you want to review your trades with more structure, Trader Intelligence
 recommended_next: "/learn/sec-filings/nt-10-k/"
 recommended_previous: "/learn/sec-filings/form-def-14a/"
 academy_level: "Practical"
-academy_order: 26
+academy_order: 27
 academy_module: "Proxy Statements"
 academy_course: "News, Catalysts And SEC Filings"
 learning_track: "News, Catalysts And SEC Filings"

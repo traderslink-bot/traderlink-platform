@@ -18,7 +18,7 @@ cta: "If you want to review your trades with more structure, Trader Intelligence
 recommended_next: "/learn/holding-through-news/"
 recommended_previous: "/learn/profit-protection/"
 academy_level: "Practical"
-academy_order: 12
+academy_order: 13
 academy_module: "Event Risk"
 academy_course: "Risk Management And Trade Planning"
 learning_track: "Risk Management And Trade Planning"

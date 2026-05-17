@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built to help traders review clinical-trial n
 learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
-academy_order: 32
+academy_order: 33
 academy_level: "Practical"
 recommended_previous: "/learn/fda-news-stocks/"
 recommended_next: "/learn/contract-news-stocks/"

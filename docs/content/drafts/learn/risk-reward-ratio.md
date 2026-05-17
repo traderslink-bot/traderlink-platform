@@ -15,7 +15,7 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
-recommended_next: "/learn/stop-loss/"
+recommended_next: "/learn/win-rate-reward-risk-and-expectancy/"
 recommended_previous: "/learn/position-sizing/"
 academy_level: "Practical"
 academy_order: 5
@@ -36,7 +36,7 @@ meta_description: "Learn what risk reward ratio means in trading, why it matters
 ---
 # Risk Reward Ratio
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Position Sizing](/learn/position-sizing/) and leads into [Stop Loss](/learn/stop-loss/).
+This lesson is part of the **Risk Management And Trade Planning** course. It follows [Position Sizing](/learn/position-sizing/) and leads into [Win Rate, Reward/Risk, And Expectancy](/learn/win-rate-reward-risk-and-expectancy/).
 
 The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
 

@@ -463,16 +463,20 @@ The Academy index should be cleaned up before production implementation:
 
 ## Master Instructor Next Step
 
-Do not rewrite the whole Academy. The highest-value next run is:
+Update after bridge-lesson run:
 
-1. Update the Academy index course order and path-hub framing.
-2. Create the top-priority missing beginner/risk bridge lessons:
-   - `What Is A Stock And How Does A Trade Work?`
-   - `Stock Market Sessions And Order Flow Basics`
-   - `Win Rate, Reward/Risk, And Expectancy`
-   - `Short Selling Basics`
-   - `How To Use EDGAR Source Documents`
-   - `Building A Playbook From Reviewed Trades`
-3. Then continue visual Batch 1 from the visual/UI readiness review.
+The first six top-priority bridge lessons have been created and integrated into the Academy index:
+
+- `What Is A Stock And How Does A Trade Work?`
+- `Stock Market Sessions And Order Flow Basics`
+- `Win Rate, Reward/Risk, And Expectancy`
+- `Short Selling Basics`
+- `How To Use EDGAR Source Documents`
+- `Building A Playbook From Reviewed Trades`
+
+Do not rewrite the whole Academy. The highest-value next run is now:
+
+1. Create Batch 1 Technical Indicators SVG assets from the visual/UI readiness review.
+2. Then continue with the next missing gap set from this audit, likely `Multiple Timeframe Chart Reading`, `How To Choose Indicators For A Trading Plan`, `Resale Registration Statement`, `Shareholder Approval For Dilution`, `Weekly And Monthly Trading Review`, and `Backtesting Vs Forward Testing`.
 
 This sequence strengthens the Academy without bloating lessons or turning it back into a flat SEO content library.

@@ -18,7 +18,7 @@ cta: "If you want to review your trades with more structure, Trader Intelligence
 recommended_next: "/learn/daily-loss-limit/"
 recommended_previous: "/learn/mental-stop-vs-hard-stop/"
 academy_level: "Practical"
-academy_order: 8
+academy_order: 9
 academy_module: "Account Protection"
 academy_course: "Risk Management And Trade Planning"
 learning_track: "Risk Management And Trade Planning"

@@ -15,10 +15,10 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review completed trades, execution, risk behavior, and repeated beginner mistakes."
-recommended_previous: "/learn/how-to-use-traderslink-academy/"
+recommended_previous: "/learn/stock-market-sessions-and-order-flow-basics/"
 recommended_next: "/learn/day-trading-vs-swing-trading/"
 academy_level: "Foundation"
-academy_order: 3
+academy_order: 5
 academy_module: "Market Basics"
 academy_course: "Trading Foundations"
 learning_track: "Trading Foundations"
@@ -36,7 +36,7 @@ meta_description: "Learn day trading basics for beginners, including risk, entri
 ---
 # Day Trading For Beginners
 
-This lesson is part of the **Trading Foundations** course. It follows [How To Use TradersLink Academy](/learn/how-to-use-traderslink-academy/) and leads into [Day Trading Vs Swing Trading](/learn/day-trading-vs-swing-trading/).
+This lesson is part of the **Trading Foundations** course. It follows [Stock Market Sessions And Order Flow Basics](/learn/stock-market-sessions-and-order-flow-basics/) and leads into [Day Trading Vs Swing Trading](/learn/day-trading-vs-swing-trading/).
 
 Day trading for beginners should start with risk, process, and review. A lot of new traders start by looking for hot stocks or perfect setups, but the real foundation is learning how trades work, how losses happen, and how to review decisions honestly after the session.
 
