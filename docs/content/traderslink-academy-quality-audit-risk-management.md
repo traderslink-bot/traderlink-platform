@@ -10,25 +10,25 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/trading-plan.md`
-- `docs/content/drafts/learn/trading-rules.md`
-- `docs/content/drafts/learn/risk-management.md`
-- `docs/content/drafts/learn/position-sizing.md`
-- `docs/content/drafts/learn/risk-reward-ratio.md`
-- `docs/content/drafts/learn/win-rate-reward-risk-and-expectancy.md`
-- `docs/content/drafts/learn/stop-loss.md`
-- `docs/content/drafts/learn/mental-stop-vs-hard-stop.md`
-- `docs/content/drafts/learn/max-loss.md`
-- `docs/content/drafts/learn/daily-loss-limit.md`
-- `docs/content/drafts/learn/trade-management.md`
-- `docs/content/drafts/learn/profit-protection.md`
-- `docs/content/drafts/learn/overnight-risk.md`
-- `docs/content/drafts/learn/holding-through-news.md`
+- `academy/trading-plan.md`
+- `academy/trading-rules.md`
+- `academy/risk-management.md`
+- `academy/position-sizing.md`
+- `academy/risk-reward-ratio.md`
+- `academy/win-rate-reward-risk-and-expectancy.md`
+- `academy/stop-loss.md`
+- `academy/mental-stop-vs-hard-stop.md`
+- `academy/max-loss.md`
+- `academy/daily-loss-limit.md`
+- `academy/trade-management.md`
+- `academy/profit-protection.md`
+- `academy/overnight-risk.md`
+- `academy/holding-through-news.md`
 
 Adjacent transition files reviewed and lightly edited:
 
-- `docs/content/drafts/learn/unusual-volume.md`
-- `docs/content/drafts/learn/trading-indicators.md`
+- `academy/unusual-volume.md`
+- `academy/trading-indicators.md`
 
 Related planning files:
 
@@ -64,20 +64,20 @@ The course does not need a broad rewrite. The useful work during this pass was t
 
 | Lesson | Quality Result | Depth | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/trading-plan/` | Pass after cleanup | Strong course opener for process, rules, risk, and review. | Core bridge to Trade Review and Risk Review. | Updated previous lesson metadata and intro from old course order to `/learn/unusual-volume/`. |
-| `/learn/trading-rules/` | Pass after cleanup | Good rule clarity and behavior-constraint lesson. | Core bridge to Coaching and Trade Review. | Removed premature `/features/...` link. |
-| `/learn/risk-management/` | Pass after cleanup | Strong risk foundation lesson. | Core bridge to Risk Review and Coaching. | Removed premature `/features/...` link. |
-| `/learn/position-sizing/` | Pass after cleanup | Strong sizing lesson tied to stop distance, liquidity, and max loss. | Core bridge to Risk Review and Analytics. | Removed premature `/features/...` link. |
-| `/learn/risk-reward-ratio/` | Pass after cleanup | Good planned-risk lesson that avoids ratio-as-guarantee framing. | Core bridge to Risk Review and Trade Review. | Removed premature `/features/...` link. |
-| `/learn/win-rate-reward-risk-and-expectancy/` | Pass | Strong bridge lesson for sample review and expectancy. | Core bridge to Analytics and Risk Review. | No edit needed. |
-| `/learn/stop-loss/` | Pass | Good invalidation and exit-risk lesson with slippage/gap caution. | Core bridge to Risk Review and Execution Review. | No edit needed. |
-| `/learn/mental-stop-vs-hard-stop/` | Pass after cleanup | Strong comparison of discipline risk versus order/fill risk. | Core bridge to Risk Review, Execution Review, and Coaching. | Removed premature `/features/...` link. |
-| `/learn/max-loss/` | Pass | Good account-protection lesson. | Core bridge to Risk Review and Coaching. | No edit needed. |
-| `/learn/daily-loss-limit/` | Pass | Good stop-trading and revenge-risk lesson. | Core bridge to Risk Review and Coaching. | No edit needed. |
-| `/learn/trade-management/` | Pass after cleanup | Good post-entry decision process lesson. | Core bridge to Trade Review and Risk Review. | Removed premature `/features/...` link. |
-| `/learn/profit-protection/` | Pass after cleanup | Good open-profit risk and giveback lesson. | Supporting bridge to Trade Review and Coaching. | Removed premature `/features/...` link. |
-| `/learn/overnight-risk/` | Pass | Good event/gap-risk lesson. | Core bridge to Risk Review and Journal Notes. | No edit needed. |
-| `/learn/holding-through-news/` | Pass after cleanup | Good catalyst-risk lesson with planned-decision framing. | Core bridge to Risk Review and News/Filing Review. | Updated next lesson metadata and intro to lead into Technical Indicators. |
+| `/academy/trading-plan/` | Pass after cleanup | Strong course opener for process, rules, risk, and review. | Core bridge to Trade Review and Risk Review. | Updated previous lesson metadata and intro from old course order to `/academy/unusual-volume/`. |
+| `/academy/trading-rules/` | Pass after cleanup | Good rule clarity and behavior-constraint lesson. | Core bridge to Coaching and Trade Review. | Removed premature `/features/...` link. |
+| `/academy/risk-management/` | Pass after cleanup | Strong risk foundation lesson. | Core bridge to Risk Review and Coaching. | Removed premature `/features/...` link. |
+| `/academy/position-sizing/` | Pass after cleanup | Strong sizing lesson tied to stop distance, liquidity, and max loss. | Core bridge to Risk Review and Analytics. | Removed premature `/features/...` link. |
+| `/academy/risk-reward-ratio/` | Pass after cleanup | Good planned-risk lesson that avoids ratio-as-guarantee framing. | Core bridge to Risk Review and Trade Review. | Removed premature `/features/...` link. |
+| `/academy/win-rate-reward-risk-and-expectancy/` | Pass | Strong bridge lesson for sample review and expectancy. | Core bridge to Analytics and Risk Review. | No edit needed. |
+| `/academy/stop-loss/` | Pass | Good invalidation and exit-risk lesson with slippage/gap caution. | Core bridge to Risk Review and Execution Review. | No edit needed. |
+| `/academy/mental-stop-vs-hard-stop/` | Pass after cleanup | Strong comparison of discipline risk versus order/fill risk. | Core bridge to Risk Review, Execution Review, and Coaching. | Removed premature `/features/...` link. |
+| `/academy/max-loss/` | Pass | Good account-protection lesson. | Core bridge to Risk Review and Coaching. | No edit needed. |
+| `/academy/daily-loss-limit/` | Pass | Good stop-trading and revenge-risk lesson. | Core bridge to Risk Review and Coaching. | No edit needed. |
+| `/academy/trade-management/` | Pass after cleanup | Good post-entry decision process lesson. | Core bridge to Trade Review and Risk Review. | Removed premature `/features/...` link. |
+| `/academy/profit-protection/` | Pass after cleanup | Good open-profit risk and giveback lesson. | Supporting bridge to Trade Review and Coaching. | Removed premature `/features/...` link. |
+| `/academy/overnight-risk/` | Pass | Good event/gap-risk lesson. | Core bridge to Risk Review and Journal Notes. | No edit needed. |
+| `/academy/holding-through-news/` | Pass after cleanup | Good catalyst-risk lesson with planned-decision framing. | Core bridge to Risk Review and News/Filing Review. | Updated next lesson metadata and intro to lead into Technical Indicators. |
 
 ## Adjacent Transition Notes
 
@@ -85,8 +85,8 @@ Two adjacent lessons were lightly edited because the Academy course order change
 
 | Lesson | Edit | Why |
 |---|---|---|
-| `/learn/unusual-volume/` | `recommended_next` now points to `/learn/trading-plan/`; intro now says it leads into Trading Plan. | Volume/Liquidity is now followed by Risk Management, not News/Catalysts. |
-| `/learn/trading-indicators/` | `recommended_previous` now points to `/learn/holding-through-news/`; intro now says it follows Holding Through News. | Technical Indicators now follows Risk Management in the Academy path. |
+| `/academy/unusual-volume/` | `recommended_next` now points to `/academy/trading-plan/`; intro now says it leads into Trading Plan. | Volume/Liquidity is now followed by Risk Management, not News/Catalysts. |
+| `/academy/trading-indicators/` | `recommended_previous` now points to `/academy/holding-through-news/`; intro now says it follows Holding Through News. | Technical Indicators now follows Risk Management in the Academy path. |
 
 ## App Bridge Map
 
@@ -160,9 +160,9 @@ The existing 14-lesson sequence covers the major risk-management learning path w
 
 Future optional additions could be considered during a later sequence or visual/UI pass:
 
-- `/learn/risk-before-entry-checklist/`
-- `/learn/when-to-reduce-position-size/`
-- `/learn/position-sizing-for-volatile-stocks/`
+- `/academy/risk-before-entry-checklist/`
+- `/academy/when-to-reduce-position-size/`
+- `/academy/position-sizing-for-volatile-stocks/`
 
 Do not create those now unless a later audit finds users need more granular bridges between sizing, volatility, and execution risk.
 
@@ -181,20 +181,20 @@ Future Accuracy/Source Audit should review lessons touching:
 
 Edited Risk course files:
 
-- `docs/content/drafts/learn/trading-plan.md`
-- `docs/content/drafts/learn/trading-rules.md`
-- `docs/content/drafts/learn/risk-management.md`
-- `docs/content/drafts/learn/position-sizing.md`
-- `docs/content/drafts/learn/risk-reward-ratio.md`
-- `docs/content/drafts/learn/mental-stop-vs-hard-stop.md`
-- `docs/content/drafts/learn/trade-management.md`
-- `docs/content/drafts/learn/profit-protection.md`
-- `docs/content/drafts/learn/holding-through-news.md`
+- `academy/trading-plan.md`
+- `academy/trading-rules.md`
+- `academy/risk-management.md`
+- `academy/position-sizing.md`
+- `academy/risk-reward-ratio.md`
+- `academy/mental-stop-vs-hard-stop.md`
+- `academy/trade-management.md`
+- `academy/profit-protection.md`
+- `academy/holding-through-news.md`
 
 Edited adjacent transition files:
 
-- `docs/content/drafts/learn/unusual-volume.md`
-- `docs/content/drafts/learn/trading-indicators.md`
+- `academy/unusual-volume.md`
+- `academy/trading-indicators.md`
 
 Edits were limited to:
 

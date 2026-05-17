@@ -10,20 +10,20 @@ Status: complete
 
 Reviewed the 14-lesson Risk Management And Trade Planning course:
 
-- `docs/content/drafts/learn/trading-plan.md`
-- `docs/content/drafts/learn/trading-rules.md`
-- `docs/content/drafts/learn/risk-management.md`
-- `docs/content/drafts/learn/position-sizing.md`
-- `docs/content/drafts/learn/risk-reward-ratio.md`
-- `docs/content/drafts/learn/win-rate-reward-risk-and-expectancy.md`
-- `docs/content/drafts/learn/stop-loss.md`
-- `docs/content/drafts/learn/mental-stop-vs-hard-stop.md`
-- `docs/content/drafts/learn/max-loss.md`
-- `docs/content/drafts/learn/daily-loss-limit.md`
-- `docs/content/drafts/learn/trade-management.md`
-- `docs/content/drafts/learn/profit-protection.md`
-- `docs/content/drafts/learn/overnight-risk.md`
-- `docs/content/drafts/learn/holding-through-news.md`
+- `academy/trading-plan.md`
+- `academy/trading-rules.md`
+- `academy/risk-management.md`
+- `academy/position-sizing.md`
+- `academy/risk-reward-ratio.md`
+- `academy/win-rate-reward-risk-and-expectancy.md`
+- `academy/stop-loss.md`
+- `academy/mental-stop-vs-hard-stop.md`
+- `academy/max-loss.md`
+- `academy/daily-loss-limit.md`
+- `academy/trade-management.md`
+- `academy/profit-protection.md`
+- `academy/overnight-risk.md`
+- `academy/holding-through-news.md`
 
 ## Official Sources Used
 
@@ -53,12 +53,12 @@ No broad rewrite was needed.
 
 | Lesson | Edit |
 |---|---|
-| `/learn/stop-loss/` | Added a source check clarifying that triggered stop orders can become market orders and may execute away from the stop price, while stop-limit orders may not execute. |
-| `/learn/mental-stop-vs-hard-stop/` | Added a source check clarifying the official order-type distinction between stop-market and stop-limit behavior. |
-| `/learn/overnight-risk/` | Added a source check tying overnight exposure to SEC/FINRA extended-hours risk disclosures and Investor.gov margin-account risk materials. |
-| `/learn/holding-through-news/` | Added a source check tying news holds to SEC after-hours risk materials and official-source verification for company, SEC, exchange, or regulator news. |
-| `/learn/trading-plan/` | Replaced an unrelated `Going Concern` related-lesson link with `Unusual Volume`, which is the actual previous course transition. |
-| Multiple Risk lessons | Replaced raw `/learn/trade-risk-review/` related-link labels with `Trade Risk Review`. |
+| `/academy/stop-loss/` | Added a source check clarifying that triggered stop orders can become market orders and may execute away from the stop price, while stop-limit orders may not execute. |
+| `/academy/mental-stop-vs-hard-stop/` | Added a source check clarifying the official order-type distinction between stop-market and stop-limit behavior. |
+| `/academy/overnight-risk/` | Added a source check tying overnight exposure to SEC/FINRA extended-hours risk disclosures and Investor.gov margin-account risk materials. |
+| `/academy/holding-through-news/` | Added a source check tying news holds to SEC after-hours risk materials and official-source verification for company, SEC, exchange, or regulator news. |
+| `/academy/trading-plan/` | Replaced an unrelated `Going Concern` related-lesson link with `Unusual Volume`, which is the actual previous course transition. |
+| Multiple Risk lessons | Replaced raw `/academy/trade-risk-review/` related-link labels with `Trade Risk Review`. |
 
 ## Source-Sensitive Findings
 

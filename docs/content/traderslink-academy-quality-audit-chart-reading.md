@@ -17,39 +17,39 @@ Status: complete
 
 Core Chart Reading lessons:
 
-- `docs/content/drafts/learn/support-and-resistance.md`
-- `docs/content/drafts/learn/how-to-draw-support-and-resistance.md`
-- `docs/content/drafts/learn/support-levels.md`
-- `docs/content/drafts/learn/resistance-levels.md`
-- `docs/content/drafts/learn/key-levels-trading.md`
-- `docs/content/drafts/learn/breakout-trading.md`
-- `docs/content/drafts/learn/breakdown-trading.md`
-- `docs/content/drafts/learn/level-breakout.md`
-- `docs/content/drafts/learn/level-reclaim.md`
-- `docs/content/drafts/learn/price-rejection.md`
-- `docs/content/drafts/learn/break-of-structure.md`
-- `docs/content/drafts/learn/swing-highs-and-swing-lows.md`
-- `docs/content/drafts/learn/higher-highs-higher-lows.md`
-- `docs/content/drafts/learn/lower-highs-lower-lows.md`
-- `docs/content/drafts/learn/pivot-levels.md`
-- `docs/content/drafts/learn/previous-day-high-low.md`
-- `docs/content/drafts/learn/premarket-high-low.md`
-- `docs/content/drafts/learn/high-of-day.md`
-- `docs/content/drafts/learn/low-of-day.md`
-- `docs/content/drafts/learn/new-high-of-day.md`
-- `docs/content/drafts/learn/compression.md`
-- `docs/content/drafts/learn/consolidation.md`
-- `docs/content/drafts/learn/gap-fill-trading.md`
+- `academy/support-and-resistance.md`
+- `academy/how-to-draw-support-and-resistance.md`
+- `academy/support-levels.md`
+- `academy/resistance-levels.md`
+- `academy/key-levels-trading.md`
+- `academy/breakout-trading.md`
+- `academy/breakdown-trading.md`
+- `academy/level-breakout.md`
+- `academy/level-reclaim.md`
+- `academy/price-rejection.md`
+- `academy/break-of-structure.md`
+- `academy/swing-highs-and-swing-lows.md`
+- `academy/higher-highs-higher-lows.md`
+- `academy/lower-highs-lower-lows.md`
+- `academy/pivot-levels.md`
+- `academy/previous-day-high-low.md`
+- `academy/premarket-high-low.md`
+- `academy/high-of-day.md`
+- `academy/low-of-day.md`
+- `academy/new-high-of-day.md`
+- `academy/compression.md`
+- `academy/consolidation.md`
+- `academy/gap-fill-trading.md`
 
 Candlestick submodule:
 
-- `docs/content/drafts/learn/candlestick-patterns.md`
-- `docs/content/drafts/learn/candlestick-patterns/*.md`
+- `academy/candlestick-patterns.md`
+- `academy/candlestick-patterns/*.md`
 
 Chart-pattern submodule:
 
-- `docs/content/drafts/learn/chart-patterns.md`
-- `docs/content/drafts/learn/chart-patterns/*.md`
+- `academy/chart-patterns.md`
+- `academy/chart-patterns/*.md`
 
 Related planning files:
 
@@ -83,29 +83,29 @@ The course does not need a broad rewrite. The useful work during this pass was t
 
 | Lesson | Quality Result | Depth | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/support-and-resistance/` | Pass | Strong foundation lesson with role reversal and bad-level example. | Supporting bridge to Trade Review and Journal Notes. | No edit needed. |
-| `/learn/how-to-draw-support-and-resistance/` | Pass | Strong practical workflow for drawing clean zones. | Supporting bridge to Trade Review and Playbook Builder. | No edit needed. |
-| `/learn/support-levels/` | Pass | Good practical support lesson with hold, break, and reclaim context. | Supporting bridge to Trade Review and Risk Review. | No edit needed. |
-| `/learn/resistance-levels/` | Pass | Good resistance lesson with rejection, break, and failed-breakout context. | Supporting bridge to Trade Review and Execution Review. | No edit needed. |
-| `/learn/key-levels-trading/` | Pass | Strong bridge from individual levels into a working level map. | Supporting bridge to Trade Review and Playbook Builder. | No edit needed. |
-| `/learn/breakout-trading/` | Pass after cleanup | Strong anti-chasing breakout lesson. | Supporting bridge to Execution Review and Trade Review. | Updated next lesson and FAQ wording. |
-| `/learn/breakdown-trading/` | Pass after cleanup | Strong support-break lesson with reclaim and extension risk. | Supporting bridge to Risk Review and Trade Review. | Updated previous/next metadata and FAQ wording. |
-| `/learn/level-breakout/` | Pass after cleanup | Good focused lesson on level clear, retest, hold, and failed hold. | Supporting bridge to Trade Review and Execution Review. | Updated previous lesson metadata. |
-| `/learn/level-reclaim/` | Pass | Good reclaim lesson with failure context and no reversal guarantee. | Supporting bridge to Trade Review and Playbook Builder. | No edit needed. |
-| `/learn/price-rejection/` | Pass after cleanup | Good rejection lesson with wick/context warnings. | Supporting bridge to Trade Review and Journal Notes. | Replaced journal-tag wording with review-notes wording. |
-| `/learn/break-of-structure/` | Pass | Good advanced structure lesson with both uptrend and downtrend examples. | Supporting bridge to Trade Review and Analytics. | No edit needed. |
-| `/learn/swing-highs-and-swing-lows/` | Pass | Strong foundation for structure reading. | Supporting bridge to Trade Review and Playbook Builder. | No edit needed. |
-| `/learn/higher-highs-higher-lows/` | Pass after cleanup | Good uptrend-structure lesson with failure and extension context. | Supporting bridge to Trade Review and Analytics. | Replaced journal-review wording with after-trade review wording. |
-| `/learn/lower-highs-lower-lows/` | Pass | Good downtrend-structure lesson with reclaim and extension context. | Supporting bridge to Trade Review and Analytics. | No edit needed. |
-| `/learn/pivot-levels/` | Pass after cleanup | Good pivot-zone lesson that avoids formula-only pivot confusion. | Supporting bridge to Trade Review and Playbook Builder. | Replaced journal-review wording with after-trade review wording. |
-| `/learn/previous-day-high-low/` | Pass after cleanup | Good objective-reference lesson. | Supporting bridge to Session Review and Trade Review. | Replaced journaling wording with review wording. |
-| `/learn/premarket-high-low/` | Pass | Good premarket range lesson with open/liquidity caution. | Supporting bridge to Session Review and Execution Review. | No edit needed. |
-| `/learn/high-of-day/` | Pass | Good intraday reference lesson with failed-breakout context. | Supporting bridge to Session Review and Trade Review. | No edit needed. |
-| `/learn/low-of-day/` | Pass | Good intraday reference lesson with failed-breakdown context. | Supporting bridge to Session Review and Trade Review. | No edit needed. |
-| `/learn/new-high-of-day/` | Pass after cleanup | Good lesson for NHOD attempts, hold/fail behavior, and chase risk. | Supporting bridge to Session Review and Execution Review. | Updated next lesson and review wording. |
-| `/learn/compression/` | Pass after cleanup | Good tightening-range lesson with failed-break context. | Supporting bridge to Trade Review and Playbook Builder. | Updated previous lesson and review wording. |
-| `/learn/consolidation/` | Pass after cleanup | Good range lesson with overtrading caution. | Supporting bridge to Trade Review and Coaching. | Replaced journal wording with after-trade review wording. |
-| `/learn/gap-fill-trading/` | Pass after cleanup | Good gap-zone lesson with catalyst and partial-fill context. | Supporting bridge to Trade Review and News/Filing Review. | Replaced journal wording with review wording. |
+| `/academy/support-and-resistance/` | Pass | Strong foundation lesson with role reversal and bad-level example. | Supporting bridge to Trade Review and Journal Notes. | No edit needed. |
+| `/academy/how-to-draw-support-and-resistance/` | Pass | Strong practical workflow for drawing clean zones. | Supporting bridge to Trade Review and Playbook Builder. | No edit needed. |
+| `/academy/support-levels/` | Pass | Good practical support lesson with hold, break, and reclaim context. | Supporting bridge to Trade Review and Risk Review. | No edit needed. |
+| `/academy/resistance-levels/` | Pass | Good resistance lesson with rejection, break, and failed-breakout context. | Supporting bridge to Trade Review and Execution Review. | No edit needed. |
+| `/academy/key-levels-trading/` | Pass | Strong bridge from individual levels into a working level map. | Supporting bridge to Trade Review and Playbook Builder. | No edit needed. |
+| `/academy/breakout-trading/` | Pass after cleanup | Strong anti-chasing breakout lesson. | Supporting bridge to Execution Review and Trade Review. | Updated next lesson and FAQ wording. |
+| `/academy/breakdown-trading/` | Pass after cleanup | Strong support-break lesson with reclaim and extension risk. | Supporting bridge to Risk Review and Trade Review. | Updated previous/next metadata and FAQ wording. |
+| `/academy/level-breakout/` | Pass after cleanup | Good focused lesson on level clear, retest, hold, and failed hold. | Supporting bridge to Trade Review and Execution Review. | Updated previous lesson metadata. |
+| `/academy/level-reclaim/` | Pass | Good reclaim lesson with failure context and no reversal guarantee. | Supporting bridge to Trade Review and Playbook Builder. | No edit needed. |
+| `/academy/price-rejection/` | Pass after cleanup | Good rejection lesson with wick/context warnings. | Supporting bridge to Trade Review and Journal Notes. | Replaced journal-tag wording with review-notes wording. |
+| `/academy/break-of-structure/` | Pass | Good advanced structure lesson with both uptrend and downtrend examples. | Supporting bridge to Trade Review and Analytics. | No edit needed. |
+| `/academy/swing-highs-and-swing-lows/` | Pass | Strong foundation for structure reading. | Supporting bridge to Trade Review and Playbook Builder. | No edit needed. |
+| `/academy/higher-highs-higher-lows/` | Pass after cleanup | Good uptrend-structure lesson with failure and extension context. | Supporting bridge to Trade Review and Analytics. | Replaced journal-review wording with after-trade review wording. |
+| `/academy/lower-highs-lower-lows/` | Pass | Good downtrend-structure lesson with reclaim and extension context. | Supporting bridge to Trade Review and Analytics. | No edit needed. |
+| `/academy/pivot-levels/` | Pass after cleanup | Good pivot-zone lesson that avoids formula-only pivot confusion. | Supporting bridge to Trade Review and Playbook Builder. | Replaced journal-review wording with after-trade review wording. |
+| `/academy/previous-day-high-low/` | Pass after cleanup | Good objective-reference lesson. | Supporting bridge to Session Review and Trade Review. | Replaced journaling wording with review wording. |
+| `/academy/premarket-high-low/` | Pass | Good premarket range lesson with open/liquidity caution. | Supporting bridge to Session Review and Execution Review. | No edit needed. |
+| `/academy/high-of-day/` | Pass | Good intraday reference lesson with failed-breakout context. | Supporting bridge to Session Review and Trade Review. | No edit needed. |
+| `/academy/low-of-day/` | Pass | Good intraday reference lesson with failed-breakdown context. | Supporting bridge to Session Review and Trade Review. | No edit needed. |
+| `/academy/new-high-of-day/` | Pass after cleanup | Good lesson for NHOD attempts, hold/fail behavior, and chase risk. | Supporting bridge to Session Review and Execution Review. | Updated next lesson and review wording. |
+| `/academy/compression/` | Pass after cleanup | Good tightening-range lesson with failed-break context. | Supporting bridge to Trade Review and Playbook Builder. | Updated previous lesson and review wording. |
+| `/academy/consolidation/` | Pass after cleanup | Good range lesson with overtrading caution. | Supporting bridge to Trade Review and Coaching. | Replaced journal wording with after-trade review wording. |
+| `/academy/gap-fill-trading/` | Pass after cleanup | Good gap-zone lesson with catalyst and partial-fill context. | Supporting bridge to Trade Review and News/Filing Review. | Replaced journal wording with review wording. |
 
 ## Candlestick Submodule Notes
 
@@ -205,14 +205,14 @@ SVG standard remains:
 One high-value future gap remains:
 
 ```text
-/learn/multiple-timeframe-chart-reading/
+/academy/multiple-timeframe-chart-reading/
 ```
 
 Recommended placement:
 
 - Course: Chart Reading And Market Structure
 - Module: Core Levels or Structure Context
-- Suggested position: after `/learn/key-levels-trading/` or after `/learn/break-of-structure/`
+- Suggested position: after `/academy/key-levels-trading/` or after `/academy/break-of-structure/`
 
 Why:
 
@@ -241,17 +241,17 @@ Future Accuracy/Source Audit should still check lessons that touch:
 
 Edited:
 
-- `docs/content/drafts/learn/breakout-trading.md`
-- `docs/content/drafts/learn/breakdown-trading.md`
-- `docs/content/drafts/learn/level-breakout.md`
-- `docs/content/drafts/learn/new-high-of-day.md`
-- `docs/content/drafts/learn/compression.md`
-- `docs/content/drafts/learn/consolidation.md`
-- `docs/content/drafts/learn/higher-highs-higher-lows.md`
-- `docs/content/drafts/learn/previous-day-high-low.md`
-- `docs/content/drafts/learn/pivot-levels.md`
-- `docs/content/drafts/learn/gap-fill-trading.md`
-- `docs/content/drafts/learn/price-rejection.md`
+- `academy/breakout-trading.md`
+- `academy/breakdown-trading.md`
+- `academy/level-breakout.md`
+- `academy/new-high-of-day.md`
+- `academy/compression.md`
+- `academy/consolidation.md`
+- `academy/higher-highs-higher-lows.md`
+- `academy/previous-day-high-low.md`
+- `academy/pivot-levels.md`
+- `academy/gap-fill-trading.md`
+- `academy/price-rejection.md`
 
 Edits were limited to:
 

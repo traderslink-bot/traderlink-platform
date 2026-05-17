@@ -10,34 +10,34 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/small-cap-stocks.md`
-- `docs/content/drafts/learn/penny-stocks.md`
-- `docs/content/drafts/learn/stock-float.md`
-- `docs/content/drafts/learn/low-float-stocks.md`
-- `docs/content/drafts/learn/float-rotation.md`
-- `docs/content/drafts/learn/float-vs-shares-outstanding.md`
-- `docs/content/drafts/learn/fully-diluted-shares.md`
-- `docs/content/drafts/learn/market-cap-vs-fully-diluted-market-cap.md`
-- `docs/content/drafts/learn/dilution.md`
-- `docs/content/drafts/learn/dilution-risk.md`
-- `docs/content/drafts/learn/how-to-spot-dilution-risk.md`
-- `docs/content/drafts/learn/stock-offerings.md`
-- `docs/content/drafts/learn/public-offering.md`
-- `docs/content/drafts/learn/registered-direct-offering.md`
-- `docs/content/drafts/learn/private-placement.md`
-- `docs/content/drafts/learn/at-the-market-offering.md`
-- `docs/content/drafts/learn/shelf-registration.md`
-- `docs/content/drafts/learn/shelf-registration-vs-offering.md`
-- `docs/content/drafts/learn/warrants.md`
-- `docs/content/drafts/learn/warrants-vs-options.md`
-- `docs/content/drafts/learn/pre-funded-warrants.md`
-- `docs/content/drafts/learn/convertible-notes.md`
-- `docs/content/drafts/learn/preferred-stock.md`
-- `docs/content/drafts/learn/reverse-split.md`
-- `docs/content/drafts/learn/reverse-split-vs-dilution.md`
-- `docs/content/drafts/learn/forward-split.md`
-- `docs/content/drafts/learn/cash-runway.md`
-- `docs/content/drafts/learn/going-concern.md`
+- `academy/small-cap-stocks.md`
+- `academy/penny-stocks.md`
+- `academy/stock-float.md`
+- `academy/low-float-stocks.md`
+- `academy/float-rotation.md`
+- `academy/float-vs-shares-outstanding.md`
+- `academy/fully-diluted-shares.md`
+- `academy/market-cap-vs-fully-diluted-market-cap.md`
+- `academy/dilution.md`
+- `academy/dilution-risk.md`
+- `academy/how-to-spot-dilution-risk.md`
+- `academy/stock-offerings.md`
+- `academy/public-offering.md`
+- `academy/registered-direct-offering.md`
+- `academy/private-placement.md`
+- `academy/at-the-market-offering.md`
+- `academy/shelf-registration.md`
+- `academy/shelf-registration-vs-offering.md`
+- `academy/warrants.md`
+- `academy/warrants-vs-options.md`
+- `academy/pre-funded-warrants.md`
+- `academy/convertible-notes.md`
+- `academy/preferred-stock.md`
+- `academy/reverse-split.md`
+- `academy/reverse-split-vs-dilution.md`
+- `academy/forward-split.md`
+- `academy/cash-runway.md`
+- `academy/going-concern.md`
 
 Related planning files:
 
@@ -58,7 +58,7 @@ The main quality issue was migrated-template wording. Every lesson had the requi
 1. The 28-lesson course sequence is strong. It moves from broad small-cap context into specific mechanics and then into risk interpretation.
 2. The course avoids signal language. Low float, float rotation, dilution risk, offerings, warrants, convertibles, splits, cash runway, and going concern are taught as context, not predictions.
 3. All 28 lessons include the required Academy structure: lesson objective, common mistakes, practical checklist, Apply This In Review, Trader Intelligence bridge, FAQ, and educational disclaimer.
-4. Previous/next metadata is intact from `/learn/how-to-review-news-trades/` into `/learn/small-cap-stocks/` and from `/learn/going-concern/` into `/learn/trading-plan/`.
+4. Previous/next metadata is intact from `/academy/how-to-review-news-trades/` into `/academy/small-cap-stocks/` and from `/academy/going-concern/` into `/academy/trading-plan/`.
 5. Generic hard app links were removed from the course. Trader Intelligence bridge wording now stays review-focused and does not link to unstable product routes.
 6. Stale internal links were corrected, including old share-structure, news-driven-stocks, market-cap, and raw SEC filing link labels.
 7. The course has little direct visual support today. It should receive a later Visual Gap Audit before UI implementation.
@@ -68,34 +68,34 @@ The main quality issue was migrated-template wording. Every lesson had the requi
 
 | Lesson | Quality Result | Depth | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/small-cap-stocks/` | Pass after cleanup | Strong foundation for market cap, float, filings, liquidity, and small-cap risk. | Supporting bridge to Trade Review, Risk Review, and News/Filing Review. | Replaced generic objective wording and cleaned SEC filing link label. |
-| `/learn/penny-stocks/` | Pass after cleanup | Strong beginner lesson separating low price from safety or value. | Supporting bridge to Trade Review and Risk Review. | Replaced generic objective wording. |
-| `/learn/stock-float/` | Pass after cleanup | Strong explanation of tradable supply and why float must be checked with volume and filings. | Core bridge to News/Filing Review and Trade Review. | Replaced generic objective wording. |
-| `/learn/low-float-stocks/` | Pass after cleanup | Strong low-float risk lesson covering volatility, spread, halts, and crowding. | Core bridge to Trade Review, Risk Review, and Execution Review. | Replaced generic objective wording. |
-| `/learn/float-rotation/` | Pass after cleanup | Strong volume-versus-float context lesson without continuation claims. | Core bridge to Trade Review and Analytics. | Replaced generic objective wording. |
-| `/learn/float-vs-shares-outstanding/` | Pass after cleanup | Strong share-count distinction lesson. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording, removed self-link, and fixed stale share-structure link. |
-| `/learn/fully-diluted-shares/` | Pass after cleanup | Strong lesson on potential future shares from warrants, options, convertibles, and preferred stock. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/market-cap-vs-fully-diluted-market-cap/` | Pass after cleanup | Strong valuation-context lesson connecting hidden future shares to risk review. | Supporting bridge to Analytics and Risk Review. | Replaced generic objective wording and fixed stale market-cap link. |
-| `/learn/dilution/` | Pass after cleanup | Strong foundation for ownership percentage, share count, and financing context. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/dilution-risk/` | Pass after cleanup | Strong practical risk lesson around cash needs, shelves, ATM programs, warrants, and convertibles. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/how-to-spot-dilution-risk/` | Pass after cleanup | Strong workflow lesson for checking cash runway, shelf capacity, warrants, convertibles, and financing history. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording. |
-| `/learn/stock-offerings/` | Pass after cleanup | Strong offering hub that separates financing headlines from terms. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/public-offering/` | Pass after cleanup | Strong registered offering lesson with price, size, underwriters, proceeds, and warrants. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/registered-direct-offering/` | Pass after cleanup | Strong registered direct lesson with investor, pricing, warrant, and placement-agent context. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/private-placement/` | Pass after cleanup | Strong private placement lesson that explains restricted securities and future resale risk. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/at-the-market-offering/` | Pass after cleanup | Strong ATM lesson that distinguishes program capacity from actual sales. | Core bridge to News/Filing Review, Risk Review, and Volume Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/shelf-registration/` | Pass after cleanup | Strong shelf lesson that separates registration capacity from offering activity. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/shelf-registration-vs-offering/` | Pass after cleanup | Strong distinction lesson for registration versus transaction terms. | Core bridge to News/Filing Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/warrants/` | Pass after cleanup | Strong warrant mechanics lesson with exercise price, expiration, exercisability, and cashless exercise context. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/warrants-vs-options/` | Pass after cleanup | Strong distinction lesson between financing-related warrants and trader options. | Supporting bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/pre-funded-warrants/` | Pass after cleanup | Strong pre-funded warrant lesson with common-stock-equivalent and ownership-limit context. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/convertible-notes/` | Pass after cleanup | Strong convertible debt lesson covering conversion terms and dilution context. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/preferred-stock/` | Pass after cleanup | Strong preferred-stock lesson with conversion, liquidation preference, voting, and dividends. | Supporting bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/reverse-split/` | Pass after cleanup | Strong split-mechanics lesson that avoids implying business improvement. | Supporting bridge to News/Filing Review, Liquidity Review, and Risk Review. | Replaced generic objective wording. |
-| `/learn/reverse-split-vs-dilution/` | Pass after cleanup | Strong comparison lesson separating share consolidation from new share issuance. | Supporting bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/forward-split/` | Pass after cleanup | Strong mechanical split lesson that avoids "cheaper stock" framing. | Light bridge to Chart Review, Liquidity Review, and Trade Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/cash-runway/` | Pass after cleanup | Strong lesson connecting cash, burn rate, obligations, and financing pressure. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
-| `/learn/going-concern/` | Pass after cleanup | Strong final risk-context lesson that avoids bankruptcy or dilution guarantees. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording, removed hard app route link, and cleaned SEC filing link label. |
+| `/academy/small-cap-stocks/` | Pass after cleanup | Strong foundation for market cap, float, filings, liquidity, and small-cap risk. | Supporting bridge to Trade Review, Risk Review, and News/Filing Review. | Replaced generic objective wording and cleaned SEC filing link label. |
+| `/academy/penny-stocks/` | Pass after cleanup | Strong beginner lesson separating low price from safety or value. | Supporting bridge to Trade Review and Risk Review. | Replaced generic objective wording. |
+| `/academy/stock-float/` | Pass after cleanup | Strong explanation of tradable supply and why float must be checked with volume and filings. | Core bridge to News/Filing Review and Trade Review. | Replaced generic objective wording. |
+| `/academy/low-float-stocks/` | Pass after cleanup | Strong low-float risk lesson covering volatility, spread, halts, and crowding. | Core bridge to Trade Review, Risk Review, and Execution Review. | Replaced generic objective wording. |
+| `/academy/float-rotation/` | Pass after cleanup | Strong volume-versus-float context lesson without continuation claims. | Core bridge to Trade Review and Analytics. | Replaced generic objective wording. |
+| `/academy/float-vs-shares-outstanding/` | Pass after cleanup | Strong share-count distinction lesson. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording, removed self-link, and fixed stale share-structure link. |
+| `/academy/fully-diluted-shares/` | Pass after cleanup | Strong lesson on potential future shares from warrants, options, convertibles, and preferred stock. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/market-cap-vs-fully-diluted-market-cap/` | Pass after cleanup | Strong valuation-context lesson connecting hidden future shares to risk review. | Supporting bridge to Analytics and Risk Review. | Replaced generic objective wording and fixed stale market-cap link. |
+| `/academy/dilution/` | Pass after cleanup | Strong foundation for ownership percentage, share count, and financing context. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/dilution-risk/` | Pass after cleanup | Strong practical risk lesson around cash needs, shelves, ATM programs, warrants, and convertibles. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/how-to-spot-dilution-risk/` | Pass after cleanup | Strong workflow lesson for checking cash runway, shelf capacity, warrants, convertibles, and financing history. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording. |
+| `/academy/stock-offerings/` | Pass after cleanup | Strong offering hub that separates financing headlines from terms. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/public-offering/` | Pass after cleanup | Strong registered offering lesson with price, size, underwriters, proceeds, and warrants. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/registered-direct-offering/` | Pass after cleanup | Strong registered direct lesson with investor, pricing, warrant, and placement-agent context. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/private-placement/` | Pass after cleanup | Strong private placement lesson that explains restricted securities and future resale risk. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/at-the-market-offering/` | Pass after cleanup | Strong ATM lesson that distinguishes program capacity from actual sales. | Core bridge to News/Filing Review, Risk Review, and Volume Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/shelf-registration/` | Pass after cleanup | Strong shelf lesson that separates registration capacity from offering activity. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/shelf-registration-vs-offering/` | Pass after cleanup | Strong distinction lesson for registration versus transaction terms. | Core bridge to News/Filing Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/warrants/` | Pass after cleanup | Strong warrant mechanics lesson with exercise price, expiration, exercisability, and cashless exercise context. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/warrants-vs-options/` | Pass after cleanup | Strong distinction lesson between financing-related warrants and trader options. | Supporting bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/pre-funded-warrants/` | Pass after cleanup | Strong pre-funded warrant lesson with common-stock-equivalent and ownership-limit context. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/convertible-notes/` | Pass after cleanup | Strong convertible debt lesson covering conversion terms and dilution context. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/preferred-stock/` | Pass after cleanup | Strong preferred-stock lesson with conversion, liquidation preference, voting, and dividends. | Supporting bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/reverse-split/` | Pass after cleanup | Strong split-mechanics lesson that avoids implying business improvement. | Supporting bridge to News/Filing Review, Liquidity Review, and Risk Review. | Replaced generic objective wording. |
+| `/academy/reverse-split-vs-dilution/` | Pass after cleanup | Strong comparison lesson separating share consolidation from new share issuance. | Supporting bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/forward-split/` | Pass after cleanup | Strong mechanical split lesson that avoids "cheaper stock" framing. | Light bridge to Chart Review, Liquidity Review, and Trade Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/cash-runway/` | Pass after cleanup | Strong lesson connecting cash, burn rate, obligations, and financing pressure. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording and removed hard app route link. |
+| `/academy/going-concern/` | Pass after cleanup | Strong final risk-context lesson that avoids bankruptcy or dilution guarantees. | Core bridge to News/Filing Review and Risk Review. | Replaced generic objective wording, removed hard app route link, and cleaned SEC filing link label. |
 
 ## App Bridge Map
 
@@ -140,11 +140,11 @@ No urgent new lesson is required for this course before the next Pass 1 audit.
 
 Future optional additions could be considered during a later sequence or source audit:
 
-- `/learn/atm-offering-vs-public-offering/`
-- `/learn/shareholder-approval-for-dilution/`
-- `/learn/resale-registration-statement/`
-- `/learn/offering-terms-review/`
-- `/learn/low-float-halt-risk/`
+- `/academy/atm-offering-vs-public-offering/`
+- `/academy/shareholder-approval-for-dilution/`
+- `/academy/resale-registration-statement/`
+- `/academy/offering-terms-review/`
+- `/academy/low-float-halt-risk/`
 
 Do not add these automatically unless the sequence audit confirms they improve the learning flow or reduce confusion.
 
@@ -166,34 +166,34 @@ Source-sensitive lessons should avoid exact regulatory timing, deadline, eligibi
 
 Edited course files:
 
-- `docs/content/drafts/learn/small-cap-stocks.md`
-- `docs/content/drafts/learn/penny-stocks.md`
-- `docs/content/drafts/learn/stock-float.md`
-- `docs/content/drafts/learn/low-float-stocks.md`
-- `docs/content/drafts/learn/float-rotation.md`
-- `docs/content/drafts/learn/float-vs-shares-outstanding.md`
-- `docs/content/drafts/learn/fully-diluted-shares.md`
-- `docs/content/drafts/learn/market-cap-vs-fully-diluted-market-cap.md`
-- `docs/content/drafts/learn/dilution.md`
-- `docs/content/drafts/learn/dilution-risk.md`
-- `docs/content/drafts/learn/how-to-spot-dilution-risk.md`
-- `docs/content/drafts/learn/stock-offerings.md`
-- `docs/content/drafts/learn/public-offering.md`
-- `docs/content/drafts/learn/registered-direct-offering.md`
-- `docs/content/drafts/learn/private-placement.md`
-- `docs/content/drafts/learn/at-the-market-offering.md`
-- `docs/content/drafts/learn/shelf-registration.md`
-- `docs/content/drafts/learn/shelf-registration-vs-offering.md`
-- `docs/content/drafts/learn/warrants.md`
-- `docs/content/drafts/learn/warrants-vs-options.md`
-- `docs/content/drafts/learn/pre-funded-warrants.md`
-- `docs/content/drafts/learn/convertible-notes.md`
-- `docs/content/drafts/learn/preferred-stock.md`
-- `docs/content/drafts/learn/reverse-split.md`
-- `docs/content/drafts/learn/reverse-split-vs-dilution.md`
-- `docs/content/drafts/learn/forward-split.md`
-- `docs/content/drafts/learn/cash-runway.md`
-- `docs/content/drafts/learn/going-concern.md`
+- `academy/small-cap-stocks.md`
+- `academy/penny-stocks.md`
+- `academy/stock-float.md`
+- `academy/low-float-stocks.md`
+- `academy/float-rotation.md`
+- `academy/float-vs-shares-outstanding.md`
+- `academy/fully-diluted-shares.md`
+- `academy/market-cap-vs-fully-diluted-market-cap.md`
+- `academy/dilution.md`
+- `academy/dilution-risk.md`
+- `academy/how-to-spot-dilution-risk.md`
+- `academy/stock-offerings.md`
+- `academy/public-offering.md`
+- `academy/registered-direct-offering.md`
+- `academy/private-placement.md`
+- `academy/at-the-market-offering.md`
+- `academy/shelf-registration.md`
+- `academy/shelf-registration-vs-offering.md`
+- `academy/warrants.md`
+- `academy/warrants-vs-options.md`
+- `academy/pre-funded-warrants.md`
+- `academy/convertible-notes.md`
+- `academy/preferred-stock.md`
+- `academy/reverse-split.md`
+- `academy/reverse-split-vs-dilution.md`
+- `academy/forward-split.md`
+- `academy/cash-runway.md`
+- `academy/going-concern.md`
 
 Edits were limited to:
 
@@ -201,7 +201,7 @@ Edits were limited to:
 - Removing hard `/trader-intelligence/` app route links from lesson metadata and body copy.
 - Replacing generic product copy with restrained small-cap review-support wording.
 - Fixing stale internal lesson targets.
-- Cleaning raw `/learn/sec-filings/` link labels.
+- Cleaning raw `/academy/sec-filings/` link labels.
 - Removing one self-link from the float versus shares outstanding lesson.
 
 No production website files were edited.
@@ -210,9 +210,9 @@ No production website files were edited.
 
 - Confirmed all 28 lessons include the required Academy sections.
 - Confirmed previous/next metadata matches the intended course chain.
-- Confirmed no missing `/learn/.../` local draft links were introduced by this pass.
+- Confirmed no missing `/academy/.../` local draft links were introduced by this pass.
 - Confirmed no hard `/trader-intelligence/` or `/features/` route links remain in the Small-Cap course files.
-- Confirmed no raw `[/learn/.../]` labels remain in the Small-Cap course files.
+- Confirmed no raw `[/academy/.../]` labels remain in the Small-Cap course files.
 - Confirmed no obvious encoding artifacts or buy/sell-signal language were introduced.
 
 ## Recommended Next Action

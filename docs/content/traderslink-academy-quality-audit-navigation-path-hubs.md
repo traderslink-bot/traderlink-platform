@@ -10,10 +10,10 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/chart-reading-path.md`
-- `docs/content/drafts/learn/news-and-filings-path.md`
-- `docs/content/drafts/learn/trade-review-path.md`
-- `docs/content/drafts/learn/risk-discipline-path.md`
+- `academy/chart-reading-path.md`
+- `academy/news-and-filings-path.md`
+- `academy/trade-review-path.md`
+- `academy/risk-discipline-path.md`
 
 Related planning files:
 
@@ -42,18 +42,18 @@ The hubs did not need a broad rewrite. The main issue was stale lesson links in 
 3. All 4 hubs include the required path-hub structure: path objective, recommended course flow, common mistakes, practical checklist, Apply This In Review, Trader Intelligence bridge, FAQ, and educational disclaimer.
 4. Previous/next metadata is intact across the hub chain: Chart Reading Path, News And Filings Path, Trade Review Path, Risk Discipline Path, then back to the broader Academy navigation lesson.
 5. Existing SVG support is strong. All 4 path-map assets are editor-verified in the manifest, appear in the lesson body, include `title` and `desc` tags, and use educational labels without buy/sell, prediction, profit, or guaranteed-outcome language.
-6. News And Filings Path had stale links for old or grouped slugs such as `/learn/news-driven-stocks/`, `/learn/atm-offering/`, `/learn/sec-filings/forms-3-4-5/`, and `/learn/fda-approval/`. This pass replaced them with completed lesson slugs.
-7. Risk Discipline Path had stale links for `/learn/mental-stop/`, `/learn/hard-stop/`, `/learn/holding-losers/`, and `/learn/cutting-winners/`. This pass replaced them with completed lesson slugs.
+6. News And Filings Path had stale links for old or grouped slugs such as `/academy/news-driven-stocks/`, `/academy/atm-offering/`, `/academy/sec-filings/forms-3-4-5/`, and `/academy/fda-approval/`. This pass replaced them with completed lesson slugs.
+7. Risk Discipline Path had stale links for `/academy/mental-stop/`, `/academy/hard-stop/`, `/academy/holding-losers/`, and `/academy/cutting-winners/`. This pass replaced them with completed lesson slugs.
 8. No new SVGs were needed, and the image manifest did not need new asset rows.
 
 ## Hub-Level Notes
 
 | Hub | Quality Result | Navigation Result | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/chart-reading-path/` | Pass | Strong path from levels to structure, candles, patterns, volume, workflow, and review. | Supporting bridge to Trade Review, Chart Context Review, and Progress/Academy. | None. |
-| `/learn/news-and-filings-path/` | Pass after cleanup | Strong path for source-first catalyst and filing education, now linking to current completed lessons. | Core bridge to News/Filing Review, Trade Review, Risk Review, and Analytics. | Fixed stale lesson links. |
-| `/learn/trade-review-path/` | Pass | Strong bridge from education into completed-trade review and practice without over-promoting the app. | Core bridge to Trade Review, Execution Review, Coaching, Analytics, and Progress/Academy. | None. |
-| `/learn/risk-discipline-path/` | Pass after cleanup | Strong route through planning, risk, trade management, discipline behaviors, and review/practice. | Core bridge to Risk Review, Coaching, Trade Review, and Analytics. | Fixed stale lesson links. |
+| `/academy/chart-reading-path/` | Pass | Strong path from levels to structure, candles, patterns, volume, workflow, and review. | Supporting bridge to Trade Review, Chart Context Review, and Progress/Academy. | None. |
+| `/academy/news-and-filings-path/` | Pass after cleanup | Strong path for source-first catalyst and filing education, now linking to current completed lessons. | Core bridge to News/Filing Review, Trade Review, Risk Review, and Analytics. | Fixed stale lesson links. |
+| `/academy/trade-review-path/` | Pass | Strong bridge from education into completed-trade review and practice without over-promoting the app. | Core bridge to Trade Review, Execution Review, Coaching, Analytics, and Progress/Academy. | None. |
+| `/academy/risk-discipline-path/` | Pass after cleanup | Strong route through planning, risk, trade management, discipline behaviors, and review/practice. | Core bridge to Risk Review, Coaching, Trade Review, and Analytics. | Fixed stale lesson links. |
 
 ## App Bridge Map
 
@@ -99,11 +99,11 @@ No urgent new path hub is required before the next audit phase.
 
 Future optional path hubs could be considered after UI planning:
 
-- `/learn/start-here-path/`
-- `/learn/day-trading-path/`
-- `/learn/swing-trading-path/`
-- `/learn/technical-indicators-path/`
-- `/learn/small-cap-dilution-path/`
+- `/academy/start-here-path/`
+- `/academy/day-trading-path/`
+- `/academy/swing-trading-path/`
+- `/academy/technical-indicators-path/`
+- `/academy/small-cap-dilution-path/`
 
 Do not add these automatically during this Pass 1 cycle. The current four hubs are enough to support the first Academy UI/navigation plan.
 
@@ -122,8 +122,8 @@ Future Accuracy/Source Audit should still verify:
 
 Edited hub files:
 
-- `docs/content/drafts/learn/news-and-filings-path.md`
-- `docs/content/drafts/learn/risk-discipline-path.md`
+- `academy/news-and-filings-path.md`
+- `academy/risk-discipline-path.md`
 
 Edits were limited to:
 
@@ -135,10 +135,10 @@ No production website files were edited.
 ## Verification Completed
 
 - Confirmed all 4 hubs include the required path-hub sections.
-- Confirmed local `/learn/.../` draft links resolve to existing markdown files, including nested SEC filing lessons.
+- Confirmed local `/academy/.../` draft links resolve to existing markdown files, including nested SEC filing lessons.
 - Confirmed previous/next metadata matches the intended path-hub chain.
 - Confirmed no hard `/trader-intelligence/` or `/features/` route links remain in the reviewed path hubs.
-- Confirmed no raw `[/learn/.../]` labels, encoding artifacts, buy/sell signal language, or guaranteed-profit language were introduced.
+- Confirmed no raw `[/academy/.../]` labels, encoding artifacts, buy/sell signal language, or guaranteed-profit language were introduced.
 - Confirmed the four existing SVG assets include `title` and `desc` tags and support the actual hub content.
 - Confirmed no new image manifest row was needed because no new SVG asset was created.
 

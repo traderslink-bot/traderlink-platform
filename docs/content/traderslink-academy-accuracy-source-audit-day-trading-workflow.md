@@ -10,15 +10,15 @@ Status: complete
 
 Reviewed the 9-lesson Day Trading Workflow course:
 
-- `docs/content/drafts/learn/day-trading-workflow.md`
-- `docs/content/drafts/learn/premarket-trading.md`
-- `docs/content/drafts/learn/day-trading-watchlist.md`
-- `docs/content/drafts/learn/market-open-trading.md`
-- `docs/content/drafts/learn/opening-range.md`
-- `docs/content/drafts/learn/midday-trading.md`
-- `docs/content/drafts/learn/power-hour-trading.md`
-- `docs/content/drafts/learn/after-hours-trading.md`
-- `docs/content/drafts/learn/day-trading-session-review.md`
+- `academy/day-trading-workflow.md`
+- `academy/premarket-trading.md`
+- `academy/day-trading-watchlist.md`
+- `academy/market-open-trading.md`
+- `academy/opening-range.md`
+- `academy/midday-trading.md`
+- `academy/power-hour-trading.md`
+- `academy/after-hours-trading.md`
+- `academy/day-trading-session-review.md`
 
 ## Sources Used Internally
 
@@ -55,8 +55,8 @@ The only lesson edits needed were small plain-language guardrails around broker/
 
 | Lesson | Edit |
 |---|---|
-| `/learn/premarket-trading/` | Added plain lesson wording that exact premarket access, order types, routing, and symbols can vary by broker and venue, and that premarket should be treated as lower-liquidity preparation unless account and execution constraints are clear. |
-| `/learn/after-hours-trading/` | Added plain lesson wording that exact after-hours access, order types, routing, and symbols can vary by broker and venue, and that after-hours prices are context rather than a promise of the next regular-session open. |
+| `/academy/premarket-trading/` | Added plain lesson wording that exact premarket access, order types, routing, and symbols can vary by broker and venue, and that premarket should be treated as lower-liquidity preparation unless account and execution constraints are clear. |
+| `/academy/after-hours-trading/` | Added plain lesson wording that exact after-hours access, order types, routing, and symbols can vary by broker and venue, and that after-hours prices are context rather than a promise of the next regular-session open. |
 
 No broad rewrite was needed.
 

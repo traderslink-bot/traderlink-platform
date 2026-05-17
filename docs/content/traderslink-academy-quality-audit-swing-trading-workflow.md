@@ -10,19 +10,19 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/swing-trading-for-beginners.md`
-- `docs/content/drafts/learn/swing-trading-risk-management.md`
-- `docs/content/drafts/learn/swing-trading-support-resistance.md`
-- `docs/content/drafts/learn/swing-trading-volume.md`
-- `docs/content/drafts/learn/swing-trading-catalysts.md`
-- `docs/content/drafts/learn/swing-trading-earnings.md`
-- `docs/content/drafts/learn/swing-trading-news-risk.md`
-- `docs/content/drafts/learn/swing-trading-small-caps.md`
+- `academy/swing-trading-for-beginners.md`
+- `academy/swing-trading-risk-management.md`
+- `academy/swing-trading-support-resistance.md`
+- `academy/swing-trading-volume.md`
+- `academy/swing-trading-catalysts.md`
+- `academy/swing-trading-earnings.md`
+- `academy/swing-trading-news-risk.md`
+- `academy/swing-trading-small-caps.md`
 
 Adjacent transition files reviewed and lightly edited:
 
-- `docs/content/drafts/learn/day-trading-session-review.md`
-- `docs/content/drafts/learn/stock-catalysts.md`
+- `academy/day-trading-session-review.md`
+- `academy/stock-catalysts.md`
 
 Related planning files:
 
@@ -69,27 +69,27 @@ The course does not need a broad rewrite. The useful work during this pass was t
 
 | Lesson | Quality Result | Depth | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/swing-trading-for-beginners/` | Pass after cleanup | Strong opener that explains swing trading as multi-session planning and separates planned swing trades from failed day trades. | Core bridge to Trade Review and Playbook Builder. | Fixed previous course transition and cleaned quote encoding. |
-| `/learn/swing-trading-risk-management/` | Pass | Strong risk-first lesson with invalidation, overnight gaps, sizing, and open-trade risk changes. | Core bridge to Risk Review and Trade Review. | No edit needed. |
-| `/learn/swing-trading-support-resistance/` | Pass | Strong level-planning lesson using higher-timeframe zones, reaction review, and failed-level context. | Supporting bridge to Trade Review and Risk Review. | No edit needed. |
-| `/learn/swing-trading-volume/` | Pass | Strong volume lesson that treats participation as context, not a signal. | Supporting bridge to Analytics and Trade Review. | No edit needed. |
-| `/learn/swing-trading-catalysts/` | Pass | Strong catalyst-quality lesson that connects source detail, chart reaction, filings, and volume follow-through. | Core bridge to News/Filing Review and Trade Review. | No edit needed. |
-| `/learn/swing-trading-earnings/` | Pass | Strong event-risk lesson that separates before, through, and after-earnings plans. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
-| `/learn/swing-trading-news-risk/` | Pass | Strong lesson on known versus surprise news, thesis changes, liquidity, and review. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
-| `/learn/swing-trading-small-caps/` | Pass after cleanup | Strong capstone connecting small-cap swing risk to catalyst quality, float, filings, liquidity, dilution, halts, and gaps. | Core bridge to News/Filing Review, Risk Review, and Analytics. | Fixed next course transition to Stock Catalysts. |
+| `/academy/swing-trading-for-beginners/` | Pass after cleanup | Strong opener that explains swing trading as multi-session planning and separates planned swing trades from failed day trades. | Core bridge to Trade Review and Playbook Builder. | Fixed previous course transition and cleaned quote encoding. |
+| `/academy/swing-trading-risk-management/` | Pass | Strong risk-first lesson with invalidation, overnight gaps, sizing, and open-trade risk changes. | Core bridge to Risk Review and Trade Review. | No edit needed. |
+| `/academy/swing-trading-support-resistance/` | Pass | Strong level-planning lesson using higher-timeframe zones, reaction review, and failed-level context. | Supporting bridge to Trade Review and Risk Review. | No edit needed. |
+| `/academy/swing-trading-volume/` | Pass | Strong volume lesson that treats participation as context, not a signal. | Supporting bridge to Analytics and Trade Review. | No edit needed. |
+| `/academy/swing-trading-catalysts/` | Pass | Strong catalyst-quality lesson that connects source detail, chart reaction, filings, and volume follow-through. | Core bridge to News/Filing Review and Trade Review. | No edit needed. |
+| `/academy/swing-trading-earnings/` | Pass | Strong event-risk lesson that separates before, through, and after-earnings plans. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
+| `/academy/swing-trading-news-risk/` | Pass | Strong lesson on known versus surprise news, thesis changes, liquidity, and review. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
+| `/academy/swing-trading-small-caps/` | Pass after cleanup | Strong capstone connecting small-cap swing risk to catalyst quality, float, filings, liquidity, dilution, halts, and gaps. | Core bridge to News/Filing Review, Risk Review, and Analytics. | Fixed next course transition to Stock Catalysts. |
 
 ## App Bridge Map
 
 | Lesson | Primary App Surface | Secondary App Surface | Bridge Strength | Natural Tie-In | Needed Edit |
 |---|---|---|---|---|---|
-| `/learn/swing-trading-for-beginners/` | Trade Review | Playbook Builder | Core Bridge | Review completed swing trades by thesis, level plan, overnight exposure, hold decisions, and whether the trade began as a real swing plan. | Fixed previous transition and quote encoding. |
-| `/learn/swing-trading-risk-management/` | Risk Review | Trade Review | Core Bridge | Review whether position size, invalidation, gap risk, event risk, and open-trade adjustments matched the original plan. | None. |
-| `/learn/swing-trading-support-resistance/` | Trade Review | Risk Review | Supporting Bridge | Review whether higher-timeframe zones were respected, adjusted, or ignored during the hold. | None. |
-| `/learn/swing-trading-volume/` | Analytics | Trade Review | Supporting Bridge | Compare swing outcomes by participation quality, volume fade, pullback volume, and liquidity context. | None. |
-| `/learn/swing-trading-catalysts/` | News/Filing Review | Trade Review | Core Bridge | Review source quality, headline detail, filing context, follow-through volume, and whether the catalyst thesis stayed intact. | None. |
-| `/learn/swing-trading-earnings/` | News/Filing Review | Risk Review | Core Bridge | Review whether the trader planned before, through, or after earnings and understood event gap risk. | None. |
-| `/learn/swing-trading-news-risk/` | News/Filing Review | Risk Review | Core Bridge | Review known versus surprise news, thesis changes, overnight risk, and reaction quality after the trade is complete. | None. |
-| `/learn/swing-trading-small-caps/` | News/Filing Review | Risk Review / Analytics | Core Bridge | Review small-cap swings by float, liquidity, filings, dilution risk, halt/gap exposure, and repeated behavior patterns. | Fixed next transition to Stock Catalysts. |
+| `/academy/swing-trading-for-beginners/` | Trade Review | Playbook Builder | Core Bridge | Review completed swing trades by thesis, level plan, overnight exposure, hold decisions, and whether the trade began as a real swing plan. | Fixed previous transition and quote encoding. |
+| `/academy/swing-trading-risk-management/` | Risk Review | Trade Review | Core Bridge | Review whether position size, invalidation, gap risk, event risk, and open-trade adjustments matched the original plan. | None. |
+| `/academy/swing-trading-support-resistance/` | Trade Review | Risk Review | Supporting Bridge | Review whether higher-timeframe zones were respected, adjusted, or ignored during the hold. | None. |
+| `/academy/swing-trading-volume/` | Analytics | Trade Review | Supporting Bridge | Compare swing outcomes by participation quality, volume fade, pullback volume, and liquidity context. | None. |
+| `/academy/swing-trading-catalysts/` | News/Filing Review | Trade Review | Core Bridge | Review source quality, headline detail, filing context, follow-through volume, and whether the catalyst thesis stayed intact. | None. |
+| `/academy/swing-trading-earnings/` | News/Filing Review | Risk Review | Core Bridge | Review whether the trader planned before, through, or after earnings and understood event gap risk. | None. |
+| `/academy/swing-trading-news-risk/` | News/Filing Review | Risk Review | Core Bridge | Review known versus surprise news, thesis changes, overnight risk, and reaction quality after the trade is complete. | None. |
+| `/academy/swing-trading-small-caps/` | News/Filing Review | Risk Review / Analytics | Core Bridge | Review small-cap swings by float, liquidity, filings, dilution risk, halt/gap exposure, and repeated behavior patterns. | Fixed next transition to Stock Catalysts. |
 
 ## Visual Needs
 
@@ -121,9 +121,9 @@ No urgent new lesson is needed for this course.
 
 Future optional additions could be considered during a later sequence or UI pass:
 
-- `/learn/swing-trade-hold-decision-review/`
-- `/learn/swing-trading-style-drift/`
-- `/learn/swing-trading-event-checklist/`
+- `/academy/swing-trade-hold-decision-review/`
+- `/academy/swing-trading-style-drift/`
+- `/academy/swing-trading-event-checklist/`
 
 Do not create those now unless a later audit finds the UI journey needs more granular bridges between swing planning, open-trade review, and post-trade improvement.
 
@@ -142,10 +142,10 @@ Future Accuracy/Source Audit should review lessons touching:
 
 Edited Swing Workflow and adjacent transition files:
 
-- `docs/content/drafts/learn/day-trading-session-review.md`
-- `docs/content/drafts/learn/swing-trading-for-beginners.md`
-- `docs/content/drafts/learn/swing-trading-small-caps.md`
-- `docs/content/drafts/learn/stock-catalysts.md`
+- `academy/day-trading-session-review.md`
+- `academy/swing-trading-for-beginners.md`
+- `academy/swing-trading-small-caps.md`
+- `academy/stock-catalysts.md`
 
 Edits were limited to:
 

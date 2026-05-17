@@ -10,18 +10,18 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/start-here.md`
-- `docs/content/drafts/learn/how-to-use-traderslink-academy.md`
-- `docs/content/drafts/learn/what-is-a-stock-and-how-does-a-trade-work.md`
-- `docs/content/drafts/learn/stock-market-sessions-and-order-flow-basics.md`
-- `docs/content/drafts/learn/day-trading-for-beginners.md`
-- `docs/content/drafts/learn/day-trading-vs-swing-trading.md`
-- `docs/content/drafts/learn/trading-plan.md`
-- `docs/content/drafts/learn/trading-rules.md`
-- `docs/content/drafts/learn/risk-management.md`
-- `docs/content/drafts/learn/position-sizing.md`
-- `docs/content/drafts/learn/stop-loss.md`
-- `docs/content/drafts/learn/trade-risk-review.md`
+- `academy/start-here.md`
+- `academy/how-to-use-traderslink-academy.md`
+- `academy/what-is-a-stock-and-how-does-a-trade-work.md`
+- `academy/stock-market-sessions-and-order-flow-basics.md`
+- `academy/day-trading-for-beginners.md`
+- `academy/day-trading-vs-swing-trading.md`
+- `academy/trading-plan.md`
+- `academy/trading-rules.md`
+- `academy/risk-management.md`
+- `academy/position-sizing.md`
+- `academy/stop-loss.md`
+- `academy/trade-risk-review.md`
 
 ## Overall Verdict
 
@@ -44,18 +44,18 @@ The course does not need a broad rewrite. The useful next work is visual support
 
 | Lesson | Quality Result | Depth | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/start-here/` | Pass | Right length for onboarding. | Light bridge to Progress/Academy and Trade Review. | No edit needed. |
-| `/learn/how-to-use-traderslink-academy/` | Pass | Strong navigation guidance. | Light bridge to Progress/Academy and Trade Review. | No edit needed. |
-| `/learn/what-is-a-stock-and-how-does-a-trade-work/` | Pass | Strong beginner mechanics bridge. | Supporting bridge to Execution Review and Trade Review. | No edit needed. |
-| `/learn/stock-market-sessions-and-order-flow-basics/` | Pass | Strong session and order-flow primer. | Supporting bridge to Session Review and Execution Review. | No edit needed. |
-| `/learn/day-trading-for-beginners/` | Pass | Good beginner orientation without hype. | Core bridge to Trade Review, Execution Review, Risk Review, and Coaching. | No edit needed. |
-| `/learn/day-trading-vs-swing-trading/` | Pass after cleanup | Good timeframe comparison. | Supporting bridge to Trade Review and Journal Notes. | Fixed stripped price example. |
-| `/learn/trading-plan/` | Pass with future polish note | Good plan overview. Some wording is generic because it serves the Risk course too. | Core bridge to Trade Review and Journal Notes. | Fixed related lesson label. |
-| `/learn/trading-rules/` | Pass with future polish note | Good rule clarity lesson. Some wording is generic because it serves the Risk course too. | Core bridge to Coaching, Trade Review, and Risk Review. | Fixed related lesson label. |
-| `/learn/risk-management/` | Pass | Strong early risk foundation. | Core bridge to Risk Review and Coaching. | Fixed related lesson label. |
-| `/learn/position-sizing/` | Pass | Strong beginner risk-sizing lesson. | Core bridge to Risk Review and Analytics. | Fixed related lesson label. |
-| `/learn/stop-loss/` | Pass | Strong invalidation and stop-risk lesson. | Core bridge to Risk Review and Execution Review. | Fixed related lesson label. |
-| `/learn/trade-risk-review/` | Pass after cleanup | Strong capstone review lesson for this course. | Core bridge to Risk Review and Trade Review. | Fixed stripped example. |
+| `/academy/start-here/` | Pass | Right length for onboarding. | Light bridge to Progress/Academy and Trade Review. | No edit needed. |
+| `/academy/how-to-use-traderslink-academy/` | Pass | Strong navigation guidance. | Light bridge to Progress/Academy and Trade Review. | No edit needed. |
+| `/academy/what-is-a-stock-and-how-does-a-trade-work/` | Pass | Strong beginner mechanics bridge. | Supporting bridge to Execution Review and Trade Review. | No edit needed. |
+| `/academy/stock-market-sessions-and-order-flow-basics/` | Pass | Strong session and order-flow primer. | Supporting bridge to Session Review and Execution Review. | No edit needed. |
+| `/academy/day-trading-for-beginners/` | Pass | Good beginner orientation without hype. | Core bridge to Trade Review, Execution Review, Risk Review, and Coaching. | No edit needed. |
+| `/academy/day-trading-vs-swing-trading/` | Pass after cleanup | Good timeframe comparison. | Supporting bridge to Trade Review and Journal Notes. | Fixed stripped price example. |
+| `/academy/trading-plan/` | Pass with future polish note | Good plan overview. Some wording is generic because it serves the Risk course too. | Core bridge to Trade Review and Journal Notes. | Fixed related lesson label. |
+| `/academy/trading-rules/` | Pass with future polish note | Good rule clarity lesson. Some wording is generic because it serves the Risk course too. | Core bridge to Coaching, Trade Review, and Risk Review. | Fixed related lesson label. |
+| `/academy/risk-management/` | Pass | Strong early risk foundation. | Core bridge to Risk Review and Coaching. | Fixed related lesson label. |
+| `/academy/position-sizing/` | Pass | Strong beginner risk-sizing lesson. | Core bridge to Risk Review and Analytics. | Fixed related lesson label. |
+| `/academy/stop-loss/` | Pass | Strong invalidation and stop-risk lesson. | Core bridge to Risk Review and Execution Review. | Fixed related lesson label. |
+| `/academy/trade-risk-review/` | Pass after cleanup | Strong capstone review lesson for this course. | Core bridge to Risk Review and Trade Review. | Fixed stripped example. |
 
 ## App Bridge Map
 
@@ -63,18 +63,18 @@ Use this map later when deciding where UI links or product cards should appear. 
 
 | Lesson | Primary App Surface | Secondary App Surface | Bridge Strength | Natural Tie-In | Link Now? |
 |---|---|---|---|---|---|
-| `/learn/start-here/` | Progress/Academy | Trade Review | Light Bridge | Resume learning, see completed lessons, and later connect lessons to completed trades. | No. Wait for stable Academy/progress routes. |
-| `/learn/how-to-use-traderslink-academy/` | Progress/Academy | Journal Notes | Light Bridge | Use progress and related lessons to return after review exposes a gap. | No. Wait for stable Academy/progress routes. |
-| `/learn/what-is-a-stock-and-how-does-a-trade-work/` | Execution Review | Trade Review | Supporting Bridge | Review fills, bid/ask, spread, order type, and whether execution matched expectation. | No. Add later when execution-review route is stable. |
-| `/learn/stock-market-sessions-and-order-flow-basics/` | Session Review | Execution Review | Supporting Bridge | Review whether mistakes cluster around open, midday, close, premarket, or after-hours. | No. Add later when session-review route is stable. |
-| `/learn/day-trading-for-beginners/` | Trade Review | Coaching | Core Bridge | Review beginner mistakes such as chasing, undefined risk, overtrading, and reactive entries. | No. Mention app surface only until workspace route is final. |
-| `/learn/day-trading-vs-swing-trading/` | Trade Review | Journal Notes | Supporting Bridge | Review whether the trade matched its intended timeframe or drifted from day trade to swing trade. | No. Add later if trade detail supports timeframe tags. |
-| `/learn/trading-plan/` | Trade Review | Journal Notes | Core Bridge | Compare written plan against actual trade behavior. | No. Add later when plan/journal surfaces are stable. |
-| `/learn/trading-rules/` | Coaching | Trade Review | Core Bridge | Review rule-following and repeated rule breaks without shame framing. | No. Add later when coaching/rule surfaces are stable. |
-| `/learn/risk-management/` | Risk Review | Coaching | Core Bridge | Review planned risk, risk expansion, daily limits, and emotional risk changes. | No. Add later when risk-review route is stable. |
-| `/learn/position-sizing/` | Risk Review | Analytics | Core Bridge | Compare size, risk distance, max open risk, and repeated sizing errors. | No. Add later when analytics/risk route is stable. |
-| `/learn/stop-loss/` | Risk Review | Execution Review | Core Bridge | Review planned stop, actual exit, slippage, stop movement, and invalidation. | No. Add later when risk/execution route is stable. |
-| `/learn/trade-risk-review/` | Risk Review | Trade Review | Core Bridge | Natural app fit: compare planned risk with actual risk after completed trades. | No. Add later when stable route targets exist. |
+| `/academy/start-here/` | Progress/Academy | Trade Review | Light Bridge | Resume learning, see completed lessons, and later connect lessons to completed trades. | No. Wait for stable Academy/progress routes. |
+| `/academy/how-to-use-traderslink-academy/` | Progress/Academy | Journal Notes | Light Bridge | Use progress and related lessons to return after review exposes a gap. | No. Wait for stable Academy/progress routes. |
+| `/academy/what-is-a-stock-and-how-does-a-trade-work/` | Execution Review | Trade Review | Supporting Bridge | Review fills, bid/ask, spread, order type, and whether execution matched expectation. | No. Add later when execution-review route is stable. |
+| `/academy/stock-market-sessions-and-order-flow-basics/` | Session Review | Execution Review | Supporting Bridge | Review whether mistakes cluster around open, midday, close, premarket, or after-hours. | No. Add later when session-review route is stable. |
+| `/academy/day-trading-for-beginners/` | Trade Review | Coaching | Core Bridge | Review beginner mistakes such as chasing, undefined risk, overtrading, and reactive entries. | No. Mention app surface only until workspace route is final. |
+| `/academy/day-trading-vs-swing-trading/` | Trade Review | Journal Notes | Supporting Bridge | Review whether the trade matched its intended timeframe or drifted from day trade to swing trade. | No. Add later if trade detail supports timeframe tags. |
+| `/academy/trading-plan/` | Trade Review | Journal Notes | Core Bridge | Compare written plan against actual trade behavior. | No. Add later when plan/journal surfaces are stable. |
+| `/academy/trading-rules/` | Coaching | Trade Review | Core Bridge | Review rule-following and repeated rule breaks without shame framing. | No. Add later when coaching/rule surfaces are stable. |
+| `/academy/risk-management/` | Risk Review | Coaching | Core Bridge | Review planned risk, risk expansion, daily limits, and emotional risk changes. | No. Add later when risk-review route is stable. |
+| `/academy/position-sizing/` | Risk Review | Analytics | Core Bridge | Compare size, risk distance, max open risk, and repeated sizing errors. | No. Add later when analytics/risk route is stable. |
+| `/academy/stop-loss/` | Risk Review | Execution Review | Core Bridge | Review planned stop, actual exit, slippage, stop movement, and invalidation. | No. Add later when risk/execution route is stable. |
+| `/academy/trade-risk-review/` | Risk Review | Trade Review | Core Bridge | Natural app fit: compare planned risk with actual risk after completed trades. | No. Add later when stable route targets exist. |
 
 ## App Link Recommendation
 
@@ -132,13 +132,13 @@ No urgent source verification was needed for this pass beyond general common tra
 
 Edited:
 
-- `docs/content/drafts/learn/day-trading-vs-swing-trading.md`
-- `docs/content/drafts/learn/trade-risk-review.md`
-- `docs/content/drafts/learn/trading-plan.md`
-- `docs/content/drafts/learn/trading-rules.md`
-- `docs/content/drafts/learn/risk-management.md`
-- `docs/content/drafts/learn/position-sizing.md`
-- `docs/content/drafts/learn/stop-loss.md`
+- `academy/day-trading-vs-swing-trading.md`
+- `academy/trade-risk-review.md`
+- `academy/trading-plan.md`
+- `academy/trading-rules.md`
+- `academy/risk-management.md`
+- `academy/position-sizing.md`
+- `academy/stop-loss.md`
 
 Edits were limited to:
 

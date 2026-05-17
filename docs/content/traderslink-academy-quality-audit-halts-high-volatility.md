@@ -10,13 +10,13 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/trading-halts.md`
-- `docs/content/drafts/learn/volatility-halts.md`
-- `docs/content/drafts/learn/halt-resume.md`
-- `docs/content/drafts/learn/market-wide-circuit-breakers.md`
-- `docs/content/drafts/learn/fast-spread-risk.md`
-- `docs/content/drafts/learn/low-float-volatility.md`
-- `docs/content/drafts/learn/high-volatility-trade-review.md`
+- `academy/trading-halts.md`
+- `academy/volatility-halts.md`
+- `academy/halt-resume.md`
+- `academy/market-wide-circuit-breakers.md`
+- `academy/fast-spread-risk.md`
+- `academy/low-float-volatility.md`
+- `academy/high-volatility-trade-review.md`
 
 Related planning files:
 
@@ -45,23 +45,23 @@ The course does not need a broad rewrite. It needed small visual/body alignment 
 1. The course flow is strong. It starts with event mechanics and ends with review behavior, which matches the Academy goal.
 2. The course avoids signal framing. Halts, resumes, circuit breakers, fast spreads, and low-float volatility are consistently taught as risk context, not buy/sell instructions.
 3. All 7 lessons include the required Academy structure: lesson objective, common mistakes, practical checklist, Apply This In Review, Trader Intelligence bridge, FAQ, and educational disclaimer.
-4. Previous/next metadata is intact from `/learn/trading-improvement-plan/` into `/learn/trading-halts/` and from `/learn/high-volatility-trade-review/` into `/learn/chart-reading-path/`.
+4. Previous/next metadata is intact from `/academy/trading-improvement-plan/` into `/academy/trading-halts/` and from `/academy/high-volatility-trade-review/` into `/academy/chart-reading-path/`.
 5. Existing visual support is strong and realistic. Three SVGs are reused across the course and include title/desc tags, realistic candle context, volume or spread/depth context, dark dashboard styling, and educational labels.
 6. Four lessons had `visual_assets` metadata but no visible image in the markdown body. This pass inserted the relevant existing SVG into those lesson bodies.
-7. The capstone lesson still said the chart-reading path hub might be added later. This pass updated the wording because `/learn/chart-reading-path/` now exists.
+7. The capstone lesson still said the chart-reading path hub might be added later. This pass updated the wording because `/academy/chart-reading-path/` now exists.
 8. Source-sensitive rule details remain the main later risk. The course already includes official-source reminders, and later Pass 3 should verify halt, LULD, circuit-breaker, and exchange procedure claims.
 
 ## Lesson-Level Notes
 
 | Lesson | Quality Result | Depth | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/trading-halts/` | Pass | Strong opener covering halt types, interruption risk, official source checks, spread, liquidity, and no-direction assumptions. | Core bridge to Risk Review, Trade Review, and Execution Review. | No direct edit needed. |
-| `/learn/volatility-halts/` | Pass after cleanup | Strong single-stock volatility halt lesson with low-float and fast-candle context. | Core bridge to Risk Review, Execution Review, and Trade Review. | Added the existing halt timeline SVG to the lesson body. |
-| `/learn/halt-resume/` | Pass | Strong resume-risk lesson focused on spread, depth, first-candle instability, and slippage. | Core bridge to Execution Review and Trade Review. | No direct edit needed. |
-| `/learn/market-wide-circuit-breakers/` | Pass | Strong market-wide stress lesson that separates broad-market circuit breakers from single-stock halts. | Supporting bridge to Risk Review, Session Review, and Trade Review. | No direct edit needed. |
-| `/learn/fast-spread-risk/` | Pass after cleanup | Strong execution lesson connecting spread, slippage, quote conditions, order type, and realistic fill risk. | Core bridge to Execution Review and Analytics. | Added the existing halt-resume spread-risk SVG to the lesson body. |
-| `/learn/low-float-volatility/` | Pass after cleanup | Strong small-cap volatility lesson connecting float, volume, spread, halts, liquidity, and dilution context. | Core bridge to Risk Review, Trade Review, and News/Filing Review. | Added the existing halt timeline SVG to the lesson body. |
-| `/learn/high-volatility-trade-review/` | Pass after cleanup | Strong course capstone that teaches condition-first review, outcome/process separation, tagging, sizing, and behavior patterns. | Core bridge to Trade Review, Execution Review, Risk Review, and Analytics. | Added the existing halt-resume spread-risk SVG and cleaned stale path-hub wording. |
+| `/academy/trading-halts/` | Pass | Strong opener covering halt types, interruption risk, official source checks, spread, liquidity, and no-direction assumptions. | Core bridge to Risk Review, Trade Review, and Execution Review. | No direct edit needed. |
+| `/academy/volatility-halts/` | Pass after cleanup | Strong single-stock volatility halt lesson with low-float and fast-candle context. | Core bridge to Risk Review, Execution Review, and Trade Review. | Added the existing halt timeline SVG to the lesson body. |
+| `/academy/halt-resume/` | Pass | Strong resume-risk lesson focused on spread, depth, first-candle instability, and slippage. | Core bridge to Execution Review and Trade Review. | No direct edit needed. |
+| `/academy/market-wide-circuit-breakers/` | Pass | Strong market-wide stress lesson that separates broad-market circuit breakers from single-stock halts. | Supporting bridge to Risk Review, Session Review, and Trade Review. | No direct edit needed. |
+| `/academy/fast-spread-risk/` | Pass after cleanup | Strong execution lesson connecting spread, slippage, quote conditions, order type, and realistic fill risk. | Core bridge to Execution Review and Analytics. | Added the existing halt-resume spread-risk SVG to the lesson body. |
+| `/academy/low-float-volatility/` | Pass after cleanup | Strong small-cap volatility lesson connecting float, volume, spread, halts, liquidity, and dilution context. | Core bridge to Risk Review, Trade Review, and News/Filing Review. | Added the existing halt timeline SVG to the lesson body. |
+| `/academy/high-volatility-trade-review/` | Pass after cleanup | Strong course capstone that teaches condition-first review, outcome/process separation, tagging, sizing, and behavior patterns. | Core bridge to Trade Review, Execution Review, Risk Review, and Analytics. | Added the existing halt-resume spread-risk SVG and cleaned stale path-hub wording. |
 
 ## App Bridge Map
 
@@ -108,11 +108,11 @@ No urgent new lesson is required for this course.
 
 Future optional additions could be considered during a later sequence or source audit:
 
-- `/learn/luld-bands/`
-- `/learn/halt-codes/`
-- `/learn/order-imbalance-halts/`
-- `/learn/news-pending-halts/`
-- `/learn/sec-trading-suspensions/`
+- `/academy/luld-bands/`
+- `/academy/halt-codes/`
+- `/academy/order-imbalance-halts/`
+- `/academy/news-pending-halts/`
+- `/academy/sec-trading-suspensions/`
 
 These should not be added automatically during Pass 1. They may be useful if the UI needs a deeper market-structure branch or if the Accuracy/Source Audit decides the course should separate exchange halt mechanics from SEC trading suspensions.
 
@@ -140,15 +140,15 @@ Source-sensitive lessons should avoid exact rule, timing, or procedure claims un
 
 Edited course files:
 
-- `docs/content/drafts/learn/volatility-halts.md`
-- `docs/content/drafts/learn/fast-spread-risk.md`
-- `docs/content/drafts/learn/low-float-volatility.md`
-- `docs/content/drafts/learn/high-volatility-trade-review.md`
+- `academy/volatility-halts.md`
+- `academy/fast-spread-risk.md`
+- `academy/low-float-volatility.md`
+- `academy/high-volatility-trade-review.md`
 
 Edits were limited to:
 
 - Adding existing realistic SVGs into lesson bodies where the visual was already declared in `visual_assets`.
-- Updating the capstone lesson's stale chart-reading path-hub wording now that `/learn/chart-reading-path/` exists.
+- Updating the capstone lesson's stale chart-reading path-hub wording now that `/academy/chart-reading-path/` exists.
 
 No production website files were edited.
 
@@ -156,9 +156,9 @@ No production website files were edited.
 
 - Confirmed all 7 lessons include the required Academy sections.
 - Confirmed previous/next metadata matches the intended course chain.
-- Confirmed no missing local `/learn/.../` draft links were introduced by this pass.
+- Confirmed no missing local `/academy/.../` draft links were introduced by this pass.
 - Confirmed no hard `/trader-intelligence/` or `/features/` route links remain in the Halts course files.
-- Confirmed no raw `[/learn/.../]` labels remain in the Halts course files.
+- Confirmed no raw `[/academy/.../]` labels remain in the Halts course files.
 - Confirmed the three existing SVG files include title and desc tags.
 - Confirmed the course retains no buy/sell instruction framing, profit claims, or guaranteed-outcome claims.
 

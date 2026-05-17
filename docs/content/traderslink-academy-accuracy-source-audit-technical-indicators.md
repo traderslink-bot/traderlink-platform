@@ -10,18 +10,18 @@ Status: complete
 
 Reviewed the 12-lesson Technical Indicators And Tools course:
 
-- `docs/content/drafts/learn/trading-indicators.md`
-- `docs/content/drafts/learn/why-indicators-lag.md`
-- `docs/content/drafts/learn/indicator-overload.md`
-- `docs/content/drafts/learn/moving-averages.md`
-- `docs/content/drafts/learn/vwap.md`
-- `docs/content/drafts/learn/anchored-vwap.md`
-- `docs/content/drafts/learn/rsi.md`
-- `docs/content/drafts/learn/macd.md`
-- `docs/content/drafts/learn/bollinger-bands.md`
-- `docs/content/drafts/learn/atr.md`
-- `docs/content/drafts/learn/volume-by-price.md`
-- `docs/content/drafts/learn/chart-patterns/vwap-reclaim.md`
+- `academy/trading-indicators.md`
+- `academy/why-indicators-lag.md`
+- `academy/indicator-overload.md`
+- `academy/moving-averages.md`
+- `academy/vwap.md`
+- `academy/anchored-vwap.md`
+- `academy/rsi.md`
+- `academy/macd.md`
+- `academy/bollinger-bands.md`
+- `academy/atr.md`
+- `academy/volume-by-price.md`
+- `academy/chart-patterns/vwap-reclaim.md`
 
 ## Sources Used
 
@@ -56,14 +56,14 @@ The main improvement was adding calculation and platform-variant guardrails to f
 
 | Lesson | Edit |
 |---|---|
-| `/learn/moving-averages/` | Added source check for SMA/EMA basics, recency weighting, and setting/platform variation. |
-| `/learn/vwap/` | Added source check for cumulative price-volume over cumulative volume and tick-versus-bar/session/extended-hours variation. |
-| `/learn/anchored-vwap/` | Added source check explaining that anchored VWAP uses the VWAP idea from a user-selected bar, making anchor choice central. |
-| `/learn/rsi/` | Added source check for Wilder RSI, 0-100 scale, 14-period default, overbought/oversold labels, and smoothing/platform variation. |
-| `/learn/macd/` | Added source check for common 12/26/9 EMA construction and setting sensitivity. |
-| `/learn/bollinger-bands/` | Added source check for SMA middle band, standard-deviation outer bands, common 20/2 default, and adjustable settings. |
-| `/learn/atr/` | Added source check for true range, Wilder smoothing, non-directional volatility framing, and display variants. |
-| `/learn/chart-patterns/vwap-reclaim/` | Added source check that a VWAP reclaim is price behavior around a platform-calculated VWAP reference, not an official market signal. |
+| `/academy/moving-averages/` | Added source check for SMA/EMA basics, recency weighting, and setting/platform variation. |
+| `/academy/vwap/` | Added source check for cumulative price-volume over cumulative volume and tick-versus-bar/session/extended-hours variation. |
+| `/academy/anchored-vwap/` | Added source check explaining that anchored VWAP uses the VWAP idea from a user-selected bar, making anchor choice central. |
+| `/academy/rsi/` | Added source check for Wilder RSI, 0-100 scale, 14-period default, overbought/oversold labels, and smoothing/platform variation. |
+| `/academy/macd/` | Added source check for common 12/26/9 EMA construction and setting sensitivity. |
+| `/academy/bollinger-bands/` | Added source check for SMA middle band, standard-deviation outer bands, common 20/2 default, and adjustable settings. |
+| `/academy/atr/` | Added source check for true range, Wilder smoothing, non-directional volatility framing, and display variants. |
+| `/academy/chart-patterns/vwap-reclaim/` | Added source check that a VWAP reclaim is price behavior around a platform-calculated VWAP reference, not an official market signal. |
 
 No broad rewrite was needed.
 

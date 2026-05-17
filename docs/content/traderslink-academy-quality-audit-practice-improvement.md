@@ -10,15 +10,15 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/practice-trading.md`
-- `docs/content/drafts/learn/paper-trading.md`
-- `docs/content/drafts/learn/trade-replay-review.md`
-- `docs/content/drafts/learn/watchlist-review.md`
-- `docs/content/drafts/learn/setup-screenshot-review.md`
-- `docs/content/drafts/learn/trade-grading.md`
-- `docs/content/drafts/learn/one-rule-practice-drill.md`
-- `docs/content/drafts/learn/forward-testing-trading.md`
-- `docs/content/drafts/learn/trading-improvement-plan.md`
+- `academy/practice-trading.md`
+- `academy/paper-trading.md`
+- `academy/trade-replay-review.md`
+- `academy/watchlist-review.md`
+- `academy/setup-screenshot-review.md`
+- `academy/trade-grading.md`
+- `academy/one-rule-practice-drill.md`
+- `academy/forward-testing-trading.md`
+- `academy/trading-improvement-plan.md`
 
 Related planning files:
 
@@ -50,7 +50,7 @@ The course did not need a broad rewrite. The main issue was visual/body alignmen
 1. The course flow is coherent and learner-friendly. It moves from general practice concepts into specific review methods, then finishes with sample-building and improvement planning.
 2. The course avoids performance-promise language. Practice, paper trading, replay, and forward testing are consistently framed as process evidence rather than proof of future live results.
 3. All 9 lessons include the required Academy structure: lesson objective, common mistakes, practical checklist, Apply This In Review, Trader Intelligence bridge, FAQ, and educational disclaimer.
-4. Previous/next metadata is intact from `/learn/day-trading-session-review/` into `/learn/practice-trading/` and from `/learn/trading-improvement-plan/` into `/learn/trading-halts/`.
+4. Previous/next metadata is intact from `/academy/day-trading-session-review/` into `/academy/practice-trading/` and from `/academy/trading-improvement-plan/` into `/academy/trading-halts/`.
 5. Existing SVG support is realistic and useful. The practice-loop, replay timeline, and setup-screenshot visuals use dark dashboard styling, realistic red and green candles, volume bars, review zones, hidden-future replay framing, educational labels, and `title`/`desc` tags.
 6. `paper-trading.md` and `trading-improvement-plan.md` had `visual_assets` metadata but no visible in-body image. This pass added the already verified practice-loop SVG to both lesson bodies.
 7. The course bridges naturally to Progress/Academy, Trade Review, Playbook Builder, Coaching, Analytics, Journal Notes, and Forward Testing without hard app route links.
@@ -60,15 +60,15 @@ The course did not need a broad rewrite. The main issue was visual/body alignmen
 
 | Lesson | Quality Result | Depth | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/practice-trading/` | Pass | Strong opener that defines practice as focus, simulation, review, adjustment, and repetition. | Core bridge to Progress/Academy, Trade Review, and Analytics. | None. |
-| `/learn/paper-trading/` | Pass after cleanup | Strong simulation lesson that teaches usefulness and limits without treating paper results as proof. | Core bridge to Trade Review and Risk Review. | Added the existing practice-loop SVG to the lesson body. |
-| `/learn/trade-replay-review/` | Pass | Strong replay lesson focused on incomplete information, pause points, hindsight-bias reduction, and process review. | Core bridge to Trade Review, Replay Review, and Coaching. | None. |
-| `/learn/watchlist-review/` | Pass | Strong preparation-review lesson separating useful watchlists from reactive ticker selection. | Core bridge to Session Review, Trade Review, and Analytics. | None. |
-| `/learn/setup-screenshot-review/` | Pass | Strong visual-review lesson teaching before/during/after screenshots as evidence, not pretty chart collection. | Core bridge to Trade Review, Journal Notes, and Coaching. | None. |
-| `/learn/trade-grading/` | Pass | Strong process-scoring lesson that separates green/red outcome from plan, risk, execution, and behavior quality. | Core bridge to Trade Review, Analytics, and Coaching. | None. |
-| `/learn/one-rule-practice-drill/` | Pass | Strong focused-drill lesson that makes improvement observable and non-shaming. | Core bridge to Coaching, Progress/Academy, and mistake-pattern review. | None. |
-| `/learn/forward-testing-trading/` | Pass | Strong sample-building lesson that teaches forward testing as evidence, not certainty. | Core bridge to Forward Testing, Playbook Builder, and Analytics. | None. |
-| `/learn/trading-improvement-plan/` | Pass after cleanup | Strong capstone connecting review evidence, practice methods, rule changes, sample size, and review dates. | Core bridge to Progress/Academy, Trade Review, Coaching, and Analytics. | Added the existing practice-loop SVG to the lesson body. |
+| `/academy/practice-trading/` | Pass | Strong opener that defines practice as focus, simulation, review, adjustment, and repetition. | Core bridge to Progress/Academy, Trade Review, and Analytics. | None. |
+| `/academy/paper-trading/` | Pass after cleanup | Strong simulation lesson that teaches usefulness and limits without treating paper results as proof. | Core bridge to Trade Review and Risk Review. | Added the existing practice-loop SVG to the lesson body. |
+| `/academy/trade-replay-review/` | Pass | Strong replay lesson focused on incomplete information, pause points, hindsight-bias reduction, and process review. | Core bridge to Trade Review, Replay Review, and Coaching. | None. |
+| `/academy/watchlist-review/` | Pass | Strong preparation-review lesson separating useful watchlists from reactive ticker selection. | Core bridge to Session Review, Trade Review, and Analytics. | None. |
+| `/academy/setup-screenshot-review/` | Pass | Strong visual-review lesson teaching before/during/after screenshots as evidence, not pretty chart collection. | Core bridge to Trade Review, Journal Notes, and Coaching. | None. |
+| `/academy/trade-grading/` | Pass | Strong process-scoring lesson that separates green/red outcome from plan, risk, execution, and behavior quality. | Core bridge to Trade Review, Analytics, and Coaching. | None. |
+| `/academy/one-rule-practice-drill/` | Pass | Strong focused-drill lesson that makes improvement observable and non-shaming. | Core bridge to Coaching, Progress/Academy, and mistake-pattern review. | None. |
+| `/academy/forward-testing-trading/` | Pass | Strong sample-building lesson that teaches forward testing as evidence, not certainty. | Core bridge to Forward Testing, Playbook Builder, and Analytics. | None. |
+| `/academy/trading-improvement-plan/` | Pass after cleanup | Strong capstone connecting review evidence, practice methods, rule changes, sample size, and review dates. | Core bridge to Progress/Academy, Trade Review, Coaching, and Analytics. | Added the existing practice-loop SVG to the lesson body. |
 
 ## App Bridge Map
 
@@ -118,11 +118,11 @@ No urgent new lesson is required before the next Pass 1 audit.
 
 Future optional additions could be considered during a later sequence or UI-readiness pass:
 
-- `/learn/backtesting-vs-forward-testing/`
-- `/learn/trading-practice-schedule/`
-- `/learn/how-to-build-a-trade-sample/`
-- `/learn/process-scorecard-for-traders/`
-- `/learn/reviewing-practice-vs-live-trades/`
+- `/academy/backtesting-vs-forward-testing/`
+- `/academy/trading-practice-schedule/`
+- `/academy/how-to-build-a-trade-sample/`
+- `/academy/process-scorecard-for-traders/`
+- `/academy/reviewing-practice-vs-live-trades/`
 
 Do not add these automatically during this Pass 1 cycle. They may be useful if the UI needs a deeper practice branch or if later app planning needs more direct support for scorecards, sample tracking, and practice-vs-live comparison.
 
@@ -141,8 +141,8 @@ Future Accuracy/Source Audit should still verify:
 
 Edited course files:
 
-- `docs/content/drafts/learn/paper-trading.md`
-- `docs/content/drafts/learn/trading-improvement-plan.md`
+- `academy/paper-trading.md`
+- `academy/trading-improvement-plan.md`
 
 Edits were limited to:
 
@@ -154,9 +154,9 @@ No production website files were edited.
 
 - Confirmed all 9 lessons include the required Academy sections.
 - Confirmed previous/next metadata matches the intended Practice And Improvement course chain.
-- Confirmed local `/learn/.../` draft links resolve to existing markdown files.
+- Confirmed local `/academy/.../` draft links resolve to existing markdown files.
 - Confirmed no hard `/trader-intelligence/` or `/features/` route links remain in the reviewed Practice files.
-- Confirmed no raw `[/learn/.../]` labels, encoding artifacts, buy/sell signal language, or guaranteed-profit language were introduced.
+- Confirmed no raw `[/academy/.../]` labels, encoding artifacts, buy/sell signal language, or guaranteed-profit language were introduced.
 - Confirmed the three existing SVG assets include `title` and `desc` tags and support the actual lesson content.
 - Confirmed no new image manifest row was needed because no new SVG asset was created.
 

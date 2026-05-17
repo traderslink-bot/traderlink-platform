@@ -10,15 +10,15 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/trade-review-and-improvement.md`
-- `docs/content/drafts/learn/trade-risk-review.md`
-- `docs/content/drafts/learn/planned-vs-actual-trade-review.md`
-- `docs/content/drafts/learn/execution-review.md`
-- `docs/content/drafts/learn/mistake-pattern-review.md`
-- `docs/content/drafts/learn/building-a-playbook-from-reviewed-trades.md`
-- `docs/content/drafts/learn/how-to-review-news-trades.md`
-- `docs/content/drafts/learn/swing-trade-journal.md`
-- `docs/content/drafts/learn/trader-intelligence-trade-review.md`
+- `academy/trade-review-and-improvement.md`
+- `academy/trade-risk-review.md`
+- `academy/planned-vs-actual-trade-review.md`
+- `academy/execution-review.md`
+- `academy/mistake-pattern-review.md`
+- `academy/building-a-playbook-from-reviewed-trades.md`
+- `academy/how-to-review-news-trades.md`
+- `academy/swing-trade-journal.md`
+- `academy/trader-intelligence-trade-review.md`
 
 Related planning files:
 
@@ -42,7 +42,7 @@ The 9-lesson course flow is strong:
 8. Teach swing trade journaling for multi-session thesis, level, and catalyst review.
 9. Finish with a dedicated Trader Intelligence trade-review bridge.
 
-The course did not need a broad rewrite. It needed small cleanup where stripped price examples made two lessons look less realistic. It also needed the cross-listed news-review lesson documented correctly: `/learn/how-to-review-news-trades/` remains primarily part of News, Catalysts And SEC Filings while also supporting the Trade Review And Improvement journey.
+The course did not need a broad rewrite. It needed small cleanup where stripped price examples made two lessons look less realistic. It also needed the cross-listed news-review lesson documented correctly: `/academy/how-to-review-news-trades/` remains primarily part of News, Catalysts And SEC Filings while also supporting the Trade Review And Improvement journey.
 
 ## Major Findings
 
@@ -59,15 +59,15 @@ The course did not need a broad rewrite. It needed small cleanup where stripped 
 
 | Lesson | Quality Result | Depth | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/trade-review-and-improvement/` | Pass | Strong course opener that defines review as learning from completed decisions, context, risk, execution, and repeated patterns. | Core bridge to Trade Review, Progress/Academy, and Analytics. | None. |
-| `/learn/trade-risk-review/` | Pass | Strong risk-review lesson covering planned versus actual risk, invalidation, stop movement, size, adds, slippage, and repeated risk behavior. | Core bridge to Risk Review and Trade Review. | None. |
-| `/learn/planned-vs-actual-trade-review/` | Pass | Strong lesson comparing the original plan with actual entry, size, risk, management, and exit decisions. | Core bridge to Trade Review and Coaching. | None. |
-| `/learn/execution-review/` | Pass after cleanup | Strong execution-quality lesson covering entry timing, fill quality, order type, spread, slippage, liquidity, and exit execution. | Core bridge to Execution Review, Trade Review, and Analytics. | Restored readable price examples. |
-| `/learn/mistake-pattern-review/` | Pass | Strong non-shaming behavior-review lesson focused on repeated decision patterns, context triggers, and rule improvements. | Core bridge to Coaching, Analytics, and Trade Review. | None. |
-| `/learn/building-a-playbook-from-reviewed-trades/` | Pass | Strong evidence-to-playbook lesson that teaches traders to convert reviewed samples into rules, filters, and forward-test ideas. | Core bridge to Playbook Builder and Trade Review. | None. |
-| `/learn/how-to-review-news-trades/` | Pass as cross-listed lesson | Strong catalyst-specific review capstone covering headline quality, filing context, volume, reaction, risk, execution, and behavior. | Core bridge to News/Filing Review and Trade Review. | None. Primary News metadata intentionally retained. |
-| `/learn/swing-trade-journal/` | Pass after cleanup | Strong multi-session review lesson covering thesis, levels, overnight risk, catalyst context, daily notes, and exit review. | Core bridge to Journal Notes, Trade Review, and Risk Review. | Restored readable price examples. |
-| `/learn/trader-intelligence-trade-review/` | Pass | Strong product-bridge lesson that explains Trader Intelligence as completed-trade review support, not prediction, signals, or guaranteed improvement. | Core bridge to Trade Review, Progress/Academy, and Analytics. | None. |
+| `/academy/trade-review-and-improvement/` | Pass | Strong course opener that defines review as learning from completed decisions, context, risk, execution, and repeated patterns. | Core bridge to Trade Review, Progress/Academy, and Analytics. | None. |
+| `/academy/trade-risk-review/` | Pass | Strong risk-review lesson covering planned versus actual risk, invalidation, stop movement, size, adds, slippage, and repeated risk behavior. | Core bridge to Risk Review and Trade Review. | None. |
+| `/academy/planned-vs-actual-trade-review/` | Pass | Strong lesson comparing the original plan with actual entry, size, risk, management, and exit decisions. | Core bridge to Trade Review and Coaching. | None. |
+| `/academy/execution-review/` | Pass after cleanup | Strong execution-quality lesson covering entry timing, fill quality, order type, spread, slippage, liquidity, and exit execution. | Core bridge to Execution Review, Trade Review, and Analytics. | Restored readable price examples. |
+| `/academy/mistake-pattern-review/` | Pass | Strong non-shaming behavior-review lesson focused on repeated decision patterns, context triggers, and rule improvements. | Core bridge to Coaching, Analytics, and Trade Review. | None. |
+| `/academy/building-a-playbook-from-reviewed-trades/` | Pass | Strong evidence-to-playbook lesson that teaches traders to convert reviewed samples into rules, filters, and forward-test ideas. | Core bridge to Playbook Builder and Trade Review. | None. |
+| `/academy/how-to-review-news-trades/` | Pass as cross-listed lesson | Strong catalyst-specific review capstone covering headline quality, filing context, volume, reaction, risk, execution, and behavior. | Core bridge to News/Filing Review and Trade Review. | None. Primary News metadata intentionally retained. |
+| `/academy/swing-trade-journal/` | Pass after cleanup | Strong multi-session review lesson covering thesis, levels, overnight risk, catalyst context, daily notes, and exit review. | Core bridge to Journal Notes, Trade Review, and Risk Review. | Restored readable price examples. |
+| `/academy/trader-intelligence-trade-review/` | Pass | Strong product-bridge lesson that explains Trader Intelligence as completed-trade review support, not prediction, signals, or guaranteed improvement. | Core bridge to Trade Review, Progress/Academy, and Analytics. | None. |
 
 ## App Bridge Map
 
@@ -113,11 +113,11 @@ No urgent new lesson is required before the next Pass 1 audit.
 
 Future optional additions could be considered during a later sequence or UI-readiness pass:
 
-- `/learn/review-tags-for-traders/`
-- `/learn/trade-review-template/`
-- `/learn/from-review-to-rule-change/`
-- `/learn/review-sample-size/`
-- `/learn/weekly-trading-review/`
+- `/academy/review-tags-for-traders/`
+- `/academy/trade-review-template/`
+- `/academy/from-review-to-rule-change/`
+- `/academy/review-sample-size/`
+- `/academy/weekly-trading-review/`
 
 Do not add these automatically during this Pass 1 cycle. They may be useful if the app UI needs more explicit support for tagging, templates, sample-size discipline, or weekly review workflows.
 
@@ -136,8 +136,8 @@ Future Accuracy/Source Audit should still verify:
 
 Edited course files:
 
-- `docs/content/drafts/learn/execution-review.md`
-- `docs/content/drafts/learn/swing-trade-journal.md`
+- `academy/execution-review.md`
+- `academy/swing-trade-journal.md`
 
 Edits were limited to restoring readable numeric price examples where stripped values made examples look broken.
 
@@ -146,10 +146,10 @@ No production website files were edited.
 ## Verification Completed
 
 - Confirmed all 9 reviewed lessons include the required Academy sections.
-- Confirmed local `/learn/.../` draft links resolve to existing markdown files.
-- Confirmed previous/next metadata matches the intended Trade Review course chain, with `/learn/how-to-review-news-trades/` retained as a documented cross-listed News-course exception.
+- Confirmed local `/academy/.../` draft links resolve to existing markdown files.
+- Confirmed previous/next metadata matches the intended Trade Review course chain, with `/academy/how-to-review-news-trades/` retained as a documented cross-listed News-course exception.
 - Confirmed no hard `/trader-intelligence/` or `/features/` route links remain in the reviewed Trade Review files.
-- Confirmed no raw `[/learn/.../]` labels, encoding artifacts, buy/sell signal language, or guaranteed-profit language were introduced.
+- Confirmed no raw `[/academy/.../]` labels, encoding artifacts, buy/sell signal language, or guaranteed-profit language were introduced.
 - Confirmed no new SVG or manifest update was needed during this markdown-only audit pass.
 
 ## Recommended Next Action

@@ -10,21 +10,21 @@ Status: complete
 
 Reviewed the 15-lesson Trading Styles And Playbooks course:
 
-- `docs/content/drafts/learn/trading-styles.md`
-- `docs/content/drafts/learn/day-trading.md`
-- `docs/content/drafts/learn/swing-trading.md`
-- `docs/content/drafts/learn/scalping-stocks.md`
-- `docs/content/drafts/learn/short-selling-basics.md`
-- `docs/content/drafts/learn/momentum-trading.md`
-- `docs/content/drafts/learn/pullbacks-and-dip-buy-setups.md`
-- `docs/content/drafts/learn/breakout-trading.md`
-- `docs/content/drafts/learn/breakdown-trading.md`
-- `docs/content/drafts/learn/level-reclaim.md`
-- `docs/content/drafts/learn/gap-fill-trading.md`
-- `docs/content/drafts/learn/news-fade.md`
-- `docs/content/drafts/learn/sell-the-news.md`
-- `docs/content/drafts/learn/multi-day-runner.md`
-- `docs/content/drafts/learn/chasing-stocks.md`
+- `academy/trading-styles.md`
+- `academy/day-trading.md`
+- `academy/swing-trading.md`
+- `academy/scalping-stocks.md`
+- `academy/short-selling-basics.md`
+- `academy/momentum-trading.md`
+- `academy/pullbacks-and-dip-buy-setups.md`
+- `academy/breakout-trading.md`
+- `academy/breakdown-trading.md`
+- `academy/level-reclaim.md`
+- `academy/gap-fill-trading.md`
+- `academy/news-fade.md`
+- `academy/sell-the-news.md`
+- `academy/multi-day-runner.md`
+- `academy/chasing-stocks.md`
 
 ## Sources Used
 
@@ -61,13 +61,13 @@ The useful source work was targeted: keep citations and source details in this i
 
 | Lesson | Edit |
 |---|---|
-| `/learn/day-trading/` | Added plain lesson wording for current account-rule, margin, broker-policy, fast-market, trading-cost, and intraday risk context without exposing citations in the user-facing copy. |
-| `/learn/swing-trading/` | Added plain lesson wording tying overnight and news exposure to gap, liquidity, spread, volatility, and execution risk. |
-| `/learn/scalping-stocks/` | Added plain lesson wording tying scalping risk to fast-market price changes, execution-price uncertainty, spread, slippage, order type, and fill quality. |
-| `/learn/short-selling-basics/` | Tightened short-selling mechanics wording to include delivery obligations and broker-policy/forced-closeout context. |
-| `/learn/news-fade/` | Added plain lesson wording for after-hours news behavior and original-source verification of press releases, filings, exchange notices, or regulator updates. |
-| `/learn/sell-the-news/` | Added plain lesson wording for filing/news review and reinforced that the phrase is not a trade rule. |
-| `/learn/multi-day-runner/` | Added plain lesson wording connecting multi-session attention to company news, filings, float/supply context, halts, extended-hours risk, and execution quality. |
+| `/academy/day-trading/` | Added plain lesson wording for current account-rule, margin, broker-policy, fast-market, trading-cost, and intraday risk context without exposing citations in the user-facing copy. |
+| `/academy/swing-trading/` | Added plain lesson wording tying overnight and news exposure to gap, liquidity, spread, volatility, and execution risk. |
+| `/academy/scalping-stocks/` | Added plain lesson wording tying scalping risk to fast-market price changes, execution-price uncertainty, spread, slippage, order type, and fill quality. |
+| `/academy/short-selling-basics/` | Tightened short-selling mechanics wording to include delivery obligations and broker-policy/forced-closeout context. |
+| `/academy/news-fade/` | Added plain lesson wording for after-hours news behavior and original-source verification of press releases, filings, exchange notices, or regulator updates. |
+| `/academy/sell-the-news/` | Added plain lesson wording for filing/news review and reinforced that the phrase is not a trade rule. |
+| `/academy/multi-day-runner/` | Added plain lesson wording connecting multi-session attention to company news, filings, float/supply context, halts, extended-hours risk, and execution quality. |
 
 No broad rewrite was needed.
 

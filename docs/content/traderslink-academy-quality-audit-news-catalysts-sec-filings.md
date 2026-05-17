@@ -12,46 +12,46 @@ Status: complete
 
 Core catalyst, press release, EDGAR, SEC hub, and news review files:
 
-- `docs/content/drafts/learn/stock-catalysts.md`
-- `docs/content/drafts/learn/press-releases.md`
-- `docs/content/drafts/learn/how-to-read-stock-press-releases.md`
-- `docs/content/drafts/learn/sec-filings.md`
-- `docs/content/drafts/learn/how-to-use-edgar-source-documents.md`
-- `docs/content/drafts/learn/earnings-news.md`
-- `docs/content/drafts/learn/fda-news-stocks.md`
-- `docs/content/drafts/learn/clinical-trial-news.md`
-- `docs/content/drafts/learn/contract-news-stocks.md`
-- `docs/content/drafts/learn/partnership-news-stocks.md`
-- `docs/content/drafts/learn/merger-news-stocks.md`
-- `docs/content/drafts/learn/how-to-review-news-trades.md`
+- `academy/stock-catalysts.md`
+- `academy/press-releases.md`
+- `academy/how-to-read-stock-press-releases.md`
+- `academy/sec-filings.md`
+- `academy/how-to-use-edgar-source-documents.md`
+- `academy/earnings-news.md`
+- `academy/fda-news-stocks.md`
+- `academy/clinical-trial-news.md`
+- `academy/contract-news-stocks.md`
+- `academy/partnership-news-stocks.md`
+- `academy/merger-news-stocks.md`
+- `academy/how-to-review-news-trades.md`
 
 SEC filing module files:
 
-- `docs/content/drafts/learn/sec-filings/form-8-k.md`
-- `docs/content/drafts/learn/sec-filings/form-10-k.md`
-- `docs/content/drafts/learn/sec-filings/form-10-q.md`
-- `docs/content/drafts/learn/sec-filings/form-20-f.md`
-- `docs/content/drafts/learn/sec-filings/form-6-k.md`
-- `docs/content/drafts/learn/sec-filings/form-s-1.md`
-- `docs/content/drafts/learn/sec-filings/form-s-3.md`
-- `docs/content/drafts/learn/sec-filings/form-f-1.md`
-- `docs/content/drafts/learn/sec-filings/form-f-3.md`
-- `docs/content/drafts/learn/sec-filings/form-s-4.md`
-- `docs/content/drafts/learn/sec-filings/form-s-8.md`
-- `docs/content/drafts/learn/sec-filings/form-424b5.md`
-- `docs/content/drafts/learn/sec-filings/form-424b3.md`
-- `docs/content/drafts/learn/sec-filings/form-424b4.md`
-- `docs/content/drafts/learn/sec-filings/effect-notice.md`
-- `docs/content/drafts/learn/sec-filings/form-3.md`
-- `docs/content/drafts/learn/sec-filings/form-4.md`
-- `docs/content/drafts/learn/sec-filings/form-5.md`
-- `docs/content/drafts/learn/sec-filings/schedule-13d.md`
-- `docs/content/drafts/learn/sec-filings/schedule-13g.md`
-- `docs/content/drafts/learn/sec-filings/form-def-14a.md`
-- `docs/content/drafts/learn/sec-filings/form-pre-14a.md`
-- `docs/content/drafts/learn/sec-filings/nt-10-k.md`
-- `docs/content/drafts/learn/sec-filings/nt-10-q.md`
-- `docs/content/drafts/learn/sec-filings/form-25.md`
+- `academy/sec-filings/form-8-k.md`
+- `academy/sec-filings/form-10-k.md`
+- `academy/sec-filings/form-10-q.md`
+- `academy/sec-filings/form-20-f.md`
+- `academy/sec-filings/form-6-k.md`
+- `academy/sec-filings/form-s-1.md`
+- `academy/sec-filings/form-s-3.md`
+- `academy/sec-filings/form-f-1.md`
+- `academy/sec-filings/form-f-3.md`
+- `academy/sec-filings/form-s-4.md`
+- `academy/sec-filings/form-s-8.md`
+- `academy/sec-filings/form-424b5.md`
+- `academy/sec-filings/form-424b3.md`
+- `academy/sec-filings/form-424b4.md`
+- `academy/sec-filings/effect-notice.md`
+- `academy/sec-filings/form-3.md`
+- `academy/sec-filings/form-4.md`
+- `academy/sec-filings/form-5.md`
+- `academy/sec-filings/schedule-13d.md`
+- `academy/sec-filings/schedule-13g.md`
+- `academy/sec-filings/form-def-14a.md`
+- `academy/sec-filings/form-pre-14a.md`
+- `academy/sec-filings/nt-10-k.md`
+- `academy/sec-filings/nt-10-q.md`
+- `academy/sec-filings/form-25.md`
 
 Related planning files:
 
@@ -78,7 +78,7 @@ The course does not need a broad rewrite. It does need continued source discipli
 
 1. The course flow is strong. It moves from broad catalyst review into source verification, then into filing types, then into common news categories, then into completed-trade review.
 2. The course avoids signal framing. Catalysts, filings, FDA updates, earnings, contracts, partnerships, mergers, and ownership disclosures are consistently taught as context, not buy/sell instructions.
-3. The EDGAR bridge lesson is important. The course index correctly counts 37 lessons because `/learn/how-to-use-edgar-source-documents/` sits between the SEC filings hub and individual form lessons.
+3. The EDGAR bridge lesson is important. The course index correctly counts 37 lessons because `/academy/how-to-use-edgar-source-documents/` sits between the SEC filings hub and individual form lessons.
 4. Existing visual support is strongest in the catalyst, press-release, and SEC filings hub lessons. The individual SEC form lessons are mostly text-only and should be reviewed in a later visual pass for source-document panels or filing-flow diagrams.
 5. Several SEC filing module lessons had premature hard `/trader-intelligence/` links and generic product copy. Those were removed or converted into restrained review-support language.
 6. Several SEC filing module objective bullets were compressed and keyword-like. Those were cleaned into readable instructor-style objectives.
@@ -89,43 +89,43 @@ The course does not need a broad rewrite. It does need continued source discipli
 
 | Lesson | Quality Result | Depth | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/stock-catalysts/` | Pass | Strong opener for catalyst categories, detail quality, market reaction, and dilution context. | Core bridge to News/Filing Review and Trade Review. | No direct edit needed. |
-| `/learn/press-releases/` | Pass after cleanup | Strong press-release anatomy and reaction lesson. | Core bridge to News/Filing Review and Trade Review. | Replaced broad journal wording with review-notes wording. |
-| `/learn/how-to-read-stock-press-releases/` | Pass | Strong source, timestamp, detail, filing-check, and reaction workflow. | Core bridge to News/Filing Review. | No edit needed. |
-| `/learn/sec-filings/` | Pass after cleanup | Strong SEC filings hub with filing map, 8-K context, shelf-to-offering flow, and anti-signal language. | Core bridge to News/Filing Review and Risk Review. | Replaced broad journal wording with review wording. |
-| `/learn/how-to-use-edgar-source-documents/` | Pass | Strong source-document bridge that teaches official EDGAR workflow before form-specific lessons. | Core bridge to News/Filing Review. | No edit needed. |
-| `/learn/sec-filings/form-8-k/` | Pass | Strong current-event filing lesson with item/exhibit review and financing-language context. | Core bridge to News/Filing Review and Trade Review. | No edit needed. |
-| `/learn/sec-filings/form-10-k/` | Pass after cleanup | Strong annual-report lesson with audited financials, risk factors, cash, debt, and going-concern context. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
-| `/learn/sec-filings/form-10-q/` | Pass after cleanup | Strong quarterly-report lesson with cash changes, operating updates, and recent financial context. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
-| `/learn/sec-filings/form-20-f/` | Pass after cleanup | Strong foreign private issuer annual-report context. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
-| `/learn/sec-filings/form-6-k/` | Pass after cleanup | Strong foreign issuer current-report lesson with exhibit and interim-update context. | Core bridge to News/Filing Review. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
-| `/learn/sec-filings/form-s-1/` | Pass | Strong registration statement lesson with resale, risk factor, and share-supply context. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
-| `/learn/sec-filings/form-s-3/` | Pass | Strong shelf-registration lesson that separates shelf availability from actual offering terms. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
-| `/learn/sec-filings/form-f-1/` | Pass after cleanup | Strong foreign issuer registration lesson. | Core bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
-| `/learn/sec-filings/form-f-3/` | Pass after cleanup | Strong foreign issuer shelf-registration lesson. | Core bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
-| `/learn/sec-filings/form-s-4/` | Pass after cleanup | Strong merger securities and transaction-risk lesson. | Core bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
-| `/learn/sec-filings/form-s-8/` | Pass after cleanup | Strong employee benefit plan registration and share-supply context lesson. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
-| `/learn/sec-filings/form-424b5/` | Pass | Strong prospectus supplement lesson with offering terms, warrants, proceeds, and context. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
-| `/learn/sec-filings/form-424b3/` | Pass after cleanup | Strong prospectus/resale update context. | Core bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
-| `/learn/sec-filings/form-424b4/` | Pass after cleanup | Strong final-prospectus lesson with underwriters, proceeds, and risk disclosure. | Core bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
-| `/learn/sec-filings/effect-notice/` | Pass after cleanup | Strong registration-effectiveness timeline lesson. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
-| `/learn/sec-filings/form-3/` | Pass after cleanup | Strong initial insider ownership baseline lesson. | Supporting bridge to News/Filing Review and Analytics. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
-| `/learn/sec-filings/form-4/` | Pass after cleanup | Strong insider transaction lesson with codes, footnotes, grants, exercises, and open-market context. | Supporting bridge to News/Filing Review and Trade Review. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
-| `/learn/sec-filings/form-5/` | Pass after cleanup | Strong annual insider cleanup lesson. | Supporting bridge to News/Filing Review. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
-| `/learn/sec-filings/schedule-13d/` | Pass after cleanup | Strong activist/beneficial ownership lesson. | Supporting bridge to News/Filing Review and Analytics. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
-| `/learn/sec-filings/schedule-13g/` | Pass after cleanup | Strong passive/institutional ownership lesson. | Supporting bridge to News/Filing Review and Analytics. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
-| `/learn/sec-filings/form-def-14a/` | Pass after cleanup | Strong definitive proxy lesson with votes, governance, compensation, and dilution-related proposals. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
-| `/learn/sec-filings/form-pre-14a/` | Pass after cleanup | Strong preliminary proxy lesson. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
-| `/learn/sec-filings/nt-10-k/` | Pass after cleanup | Strong late annual report notice lesson. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
-| `/learn/sec-filings/nt-10-q/` | Pass after cleanup | Strong late quarterly report notice lesson. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
-| `/learn/sec-filings/form-25/` | Pass after cleanup | Strong delisting and liquidity-risk lesson. | Core bridge to News/Filing Review and Risk Review. | Removed hard app route link, fixed internal link targets, and cleaned objective wording. |
-| `/learn/earnings-news/` | Pass | Strong earnings/guidance reaction lesson. | Core bridge to News/Filing Review and Trade Review. | No edit needed. |
-| `/learn/fda-news-stocks/` | Pass | Strong FDA event-type lesson that avoids treating FDA keywords as approval. | Core bridge to News/Filing Review and Trade Review. | No edit needed. |
-| `/learn/clinical-trial-news/` | Pass | Strong clinical-trial data lesson with phase, endpoints, sample size, safety, and cash context. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
-| `/learn/contract-news-stocks/` | Pass | Strong contract-detail lesson with customer, value, timing, and execution context. | Core bridge to News/Filing Review and Trade Review. | No edit needed. |
-| `/learn/partnership-news-stocks/` | Pass | Strong partnership-quality lesson with named partner, terms, commercial mechanics, and vague-headline risk. | Core bridge to News/Filing Review and Trade Review. | No edit needed. |
-| `/learn/merger-news-stocks/` | Pass | Strong M&A lesson with deal terms, consideration, approvals, closing conditions, and dilution context. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
-| `/learn/how-to-review-news-trades/` | Pass after cleanup | Strong capstone tying catalyst quality, chart reaction, liquidity, risk, execution, and repeated patterns together. | Core bridge to Trade Review, News/Filing Review, and Analytics. | Replaced a broad journal SEO phrase with review wording. |
+| `/academy/stock-catalysts/` | Pass | Strong opener for catalyst categories, detail quality, market reaction, and dilution context. | Core bridge to News/Filing Review and Trade Review. | No direct edit needed. |
+| `/academy/press-releases/` | Pass after cleanup | Strong press-release anatomy and reaction lesson. | Core bridge to News/Filing Review and Trade Review. | Replaced broad journal wording with review-notes wording. |
+| `/academy/how-to-read-stock-press-releases/` | Pass | Strong source, timestamp, detail, filing-check, and reaction workflow. | Core bridge to News/Filing Review. | No edit needed. |
+| `/academy/sec-filings/` | Pass after cleanup | Strong SEC filings hub with filing map, 8-K context, shelf-to-offering flow, and anti-signal language. | Core bridge to News/Filing Review and Risk Review. | Replaced broad journal wording with review wording. |
+| `/academy/how-to-use-edgar-source-documents/` | Pass | Strong source-document bridge that teaches official EDGAR workflow before form-specific lessons. | Core bridge to News/Filing Review. | No edit needed. |
+| `/academy/sec-filings/form-8-k/` | Pass | Strong current-event filing lesson with item/exhibit review and financing-language context. | Core bridge to News/Filing Review and Trade Review. | No edit needed. |
+| `/academy/sec-filings/form-10-k/` | Pass after cleanup | Strong annual-report lesson with audited financials, risk factors, cash, debt, and going-concern context. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
+| `/academy/sec-filings/form-10-q/` | Pass after cleanup | Strong quarterly-report lesson with cash changes, operating updates, and recent financial context. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
+| `/academy/sec-filings/form-20-f/` | Pass after cleanup | Strong foreign private issuer annual-report context. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
+| `/academy/sec-filings/form-6-k/` | Pass after cleanup | Strong foreign issuer current-report lesson with exhibit and interim-update context. | Core bridge to News/Filing Review. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
+| `/academy/sec-filings/form-s-1/` | Pass | Strong registration statement lesson with resale, risk factor, and share-supply context. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
+| `/academy/sec-filings/form-s-3/` | Pass | Strong shelf-registration lesson that separates shelf availability from actual offering terms. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
+| `/academy/sec-filings/form-f-1/` | Pass after cleanup | Strong foreign issuer registration lesson. | Core bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
+| `/academy/sec-filings/form-f-3/` | Pass after cleanup | Strong foreign issuer shelf-registration lesson. | Core bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
+| `/academy/sec-filings/form-s-4/` | Pass after cleanup | Strong merger securities and transaction-risk lesson. | Core bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
+| `/academy/sec-filings/form-s-8/` | Pass after cleanup | Strong employee benefit plan registration and share-supply context lesson. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
+| `/academy/sec-filings/form-424b5/` | Pass | Strong prospectus supplement lesson with offering terms, warrants, proceeds, and context. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
+| `/academy/sec-filings/form-424b3/` | Pass after cleanup | Strong prospectus/resale update context. | Core bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
+| `/academy/sec-filings/form-424b4/` | Pass after cleanup | Strong final-prospectus lesson with underwriters, proceeds, and risk disclosure. | Core bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
+| `/academy/sec-filings/effect-notice/` | Pass after cleanup | Strong registration-effectiveness timeline lesson. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
+| `/academy/sec-filings/form-3/` | Pass after cleanup | Strong initial insider ownership baseline lesson. | Supporting bridge to News/Filing Review and Analytics. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
+| `/academy/sec-filings/form-4/` | Pass after cleanup | Strong insider transaction lesson with codes, footnotes, grants, exercises, and open-market context. | Supporting bridge to News/Filing Review and Trade Review. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
+| `/academy/sec-filings/form-5/` | Pass after cleanup | Strong annual insider cleanup lesson. | Supporting bridge to News/Filing Review. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
+| `/academy/sec-filings/schedule-13d/` | Pass after cleanup | Strong activist/beneficial ownership lesson. | Supporting bridge to News/Filing Review and Analytics. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
+| `/academy/sec-filings/schedule-13g/` | Pass after cleanup | Strong passive/institutional ownership lesson. | Supporting bridge to News/Filing Review and Analytics. | Removed hard app route link, fixed internal link target, and cleaned objective wording. |
+| `/academy/sec-filings/form-def-14a/` | Pass after cleanup | Strong definitive proxy lesson with votes, governance, compensation, and dilution-related proposals. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
+| `/academy/sec-filings/form-pre-14a/` | Pass after cleanup | Strong preliminary proxy lesson. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
+| `/academy/sec-filings/nt-10-k/` | Pass after cleanup | Strong late annual report notice lesson. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
+| `/academy/sec-filings/nt-10-q/` | Pass after cleanup | Strong late quarterly report notice lesson. | Supporting bridge to News/Filing Review and Risk Review. | Removed hard app route link and cleaned objective wording. |
+| `/academy/sec-filings/form-25/` | Pass after cleanup | Strong delisting and liquidity-risk lesson. | Core bridge to News/Filing Review and Risk Review. | Removed hard app route link, fixed internal link targets, and cleaned objective wording. |
+| `/academy/earnings-news/` | Pass | Strong earnings/guidance reaction lesson. | Core bridge to News/Filing Review and Trade Review. | No edit needed. |
+| `/academy/fda-news-stocks/` | Pass | Strong FDA event-type lesson that avoids treating FDA keywords as approval. | Core bridge to News/Filing Review and Trade Review. | No edit needed. |
+| `/academy/clinical-trial-news/` | Pass | Strong clinical-trial data lesson with phase, endpoints, sample size, safety, and cash context. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
+| `/academy/contract-news-stocks/` | Pass | Strong contract-detail lesson with customer, value, timing, and execution context. | Core bridge to News/Filing Review and Trade Review. | No edit needed. |
+| `/academy/partnership-news-stocks/` | Pass | Strong partnership-quality lesson with named partner, terms, commercial mechanics, and vague-headline risk. | Core bridge to News/Filing Review and Trade Review. | No edit needed. |
+| `/academy/merger-news-stocks/` | Pass | Strong M&A lesson with deal terms, consideration, approvals, closing conditions, and dilution context. | Core bridge to News/Filing Review and Risk Review. | No edit needed. |
+| `/academy/how-to-review-news-trades/` | Pass after cleanup | Strong capstone tying catalyst quality, chart reaction, liquidity, risk, execution, and repeated patterns together. | Core bridge to Trade Review, News/Filing Review, and Analytics. | Replaced a broad journal SEO phrase with review wording. |
 
 ## App Bridge Map
 
@@ -182,11 +182,11 @@ No urgent new lesson is needed for this course.
 
 Future optional additions could be considered during a later sequence, source, or UI pass:
 
-- `/learn/sec-filings/how-to-read-exhibits/`
-- `/learn/sec-filings/filing-date-vs-accepted-time/`
-- `/learn/news-catalyst-quality-checklist/`
-- `/learn/biotech-catalyst-risk-review/`
-- `/learn/offering-terms-review/`
+- `/academy/sec-filings/how-to-read-exhibits/`
+- `/academy/sec-filings/filing-date-vs-accepted-time/`
+- `/academy/news-catalyst-quality-checklist/`
+- `/academy/biotech-catalyst-risk-review/`
+- `/academy/offering-terms-review/`
 
 Do not create those now unless a later audit finds the Academy UI needs more granular lessons between EDGAR source review, filing interpretation, and trade review.
 
@@ -208,30 +208,30 @@ Source-sensitive lessons should avoid exact regulatory timing, deadline, eligibi
 
 Edited course files:
 
-- `docs/content/drafts/learn/press-releases.md`
-- `docs/content/drafts/learn/sec-filings.md`
-- `docs/content/drafts/learn/how-to-review-news-trades.md`
-- `docs/content/drafts/learn/sec-filings/effect-notice.md`
-- `docs/content/drafts/learn/sec-filings/form-10-k.md`
-- `docs/content/drafts/learn/sec-filings/form-10-q.md`
-- `docs/content/drafts/learn/sec-filings/form-20-f.md`
-- `docs/content/drafts/learn/sec-filings/form-25.md`
-- `docs/content/drafts/learn/sec-filings/form-3.md`
-- `docs/content/drafts/learn/sec-filings/form-4.md`
-- `docs/content/drafts/learn/sec-filings/form-424b3.md`
-- `docs/content/drafts/learn/sec-filings/form-424b4.md`
-- `docs/content/drafts/learn/sec-filings/form-5.md`
-- `docs/content/drafts/learn/sec-filings/form-6-k.md`
-- `docs/content/drafts/learn/sec-filings/form-def-14a.md`
-- `docs/content/drafts/learn/sec-filings/form-f-1.md`
-- `docs/content/drafts/learn/sec-filings/form-f-3.md`
-- `docs/content/drafts/learn/sec-filings/form-pre-14a.md`
-- `docs/content/drafts/learn/sec-filings/form-s-4.md`
-- `docs/content/drafts/learn/sec-filings/form-s-8.md`
-- `docs/content/drafts/learn/sec-filings/nt-10-k.md`
-- `docs/content/drafts/learn/sec-filings/nt-10-q.md`
-- `docs/content/drafts/learn/sec-filings/schedule-13d.md`
-- `docs/content/drafts/learn/sec-filings/schedule-13g.md`
+- `academy/press-releases.md`
+- `academy/sec-filings.md`
+- `academy/how-to-review-news-trades.md`
+- `academy/sec-filings/effect-notice.md`
+- `academy/sec-filings/form-10-k.md`
+- `academy/sec-filings/form-10-q.md`
+- `academy/sec-filings/form-20-f.md`
+- `academy/sec-filings/form-25.md`
+- `academy/sec-filings/form-3.md`
+- `academy/sec-filings/form-4.md`
+- `academy/sec-filings/form-424b3.md`
+- `academy/sec-filings/form-424b4.md`
+- `academy/sec-filings/form-5.md`
+- `academy/sec-filings/form-6-k.md`
+- `academy/sec-filings/form-def-14a.md`
+- `academy/sec-filings/form-f-1.md`
+- `academy/sec-filings/form-f-3.md`
+- `academy/sec-filings/form-pre-14a.md`
+- `academy/sec-filings/form-s-4.md`
+- `academy/sec-filings/form-s-8.md`
+- `academy/sec-filings/nt-10-k.md`
+- `academy/sec-filings/nt-10-q.md`
+- `academy/sec-filings/schedule-13d.md`
+- `academy/sec-filings/schedule-13g.md`
 
 Edits were limited to:
 

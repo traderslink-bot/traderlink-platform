@@ -66,7 +66,7 @@ This pass did not require broad resequencing. It did require stale-link cleanup 
 
 1. All 223 Academy markdown files were mapped successfully.
 2. All `recommended_previous` and `recommended_next` targets resolve to local Academy markdown files.
-3. All in-body `/learn/.../` links inside mapped Academy lessons now resolve to local markdown files.
+3. All in-body `/academy/.../` links inside mapped Academy lessons now resolve to local markdown files.
 4. Several stale links were found and corrected in Chart Patterns, Trading Styles, Swing Trading Workflow, and Trading Psychology.
 5. The remaining non-reciprocal previous/next findings are cross-listed or navigation exceptions, not missing files.
 6. Path hubs are correctly treated as navigation support, not a numbered course.
@@ -77,12 +77,12 @@ This pass did not require broad resequencing. It did require stale-link cleanup 
 
 | File | Issue | Fix |
 |---|---|---|
-| `docs/content/drafts/learn/chart-patterns/channel-pattern.md` | Linked to missing `/learn/trend-lines/`. | Replaced with `/learn/swing-highs-and-swing-lows/`. |
-| `docs/content/drafts/learn/multi-day-runner.md` | Linked to missing `/learn/float/` and `/learn/short-squeeze/`. | Replaced with `/learn/stock-float/` and `/learn/low-float-stocks/`. |
-| `docs/content/drafts/learn/swing-trading-catalysts.md` | Linked to missing `/learn/news-driven-stocks/`. | Replaced with `/learn/how-to-review-news-trades/`. |
-| `docs/content/drafts/learn/swing-trading-news-risk.md` | Linked to missing `/learn/news-driven-stocks/`. | Replaced with `/learn/stock-catalysts/`. |
-| `docs/content/drafts/learn/swing-trading-small-caps.md` | Linked to missing `/learn/penny-stock-dilution-risk/`. | Replaced with `/learn/dilution-risk/`. |
-| `docs/content/drafts/learn/averaging-down.md` | Pointed directly to `/learn/trade-risk-review/` even though the Trade Review course opener uses Averaging Down as its previous lesson. | Changed next lesson to `/learn/trade-review-and-improvement/`. |
+| `academy/chart-patterns/channel-pattern.md` | Linked to missing `/academy/trend-lines/`. | Replaced with `/academy/swing-highs-and-swing-lows/`. |
+| `academy/multi-day-runner.md` | Linked to missing `/academy/float/` and `/academy/short-squeeze/`. | Replaced with `/academy/stock-float/` and `/academy/low-float-stocks/`. |
+| `academy/swing-trading-catalysts.md` | Linked to missing `/academy/news-driven-stocks/`. | Replaced with `/academy/how-to-review-news-trades/`. |
+| `academy/swing-trading-news-risk.md` | Linked to missing `/academy/news-driven-stocks/`. | Replaced with `/academy/stock-catalysts/`. |
+| `academy/swing-trading-small-caps.md` | Linked to missing `/academy/penny-stock-dilution-risk/`. | Replaced with `/academy/dilution-risk/`. |
+| `academy/averaging-down.md` | Pointed directly to `/academy/trade-risk-review/` even though the Trade Review course opener uses Averaging Down as its previous lesson. | Changed next lesson to `/academy/trade-review-and-improvement/`. |
 
 ## Course-To-Course Transition Notes
 
@@ -116,15 +116,15 @@ The following non-reciprocal previous/next relationships should be treated as in
 
 | Source | Target | Why It Is Acceptable |
 |---|---|---|
-| `/learn/atr/` -> `/learn/volume-by-price/` | Volume By Price is primary to Volume, Liquidity And Order Flow but cross-listed as an indicator-adjacent volume tool. |
-| `/learn/chart-patterns/parabolic-move/` -> `/learn/chart-patterns/vwap-reclaim/` | VWAP Reclaim is primary to Technical Indicators And Tools but also caps Chart Patterns In Context. |
-| `/learn/pullbacks-and-dip-buy-setups/` -> `/learn/breakout-trading/` | Breakout Trading is primary to Chart Reading but cross-listed into Trading Styles And Playbooks as a setup type. |
-| `/learn/multi-day-runner/` -> `/learn/chasing-stocks/` | Chasing Stocks is primary to Trading Psychology but caps Trading Styles as a late-entry risk warning. |
-| `/learn/building-a-playbook-from-reviewed-trades/` -> `/learn/how-to-review-news-trades/` | News-trade review is primary to News, Catalysts And SEC Filings but also supports the Trade Review path. |
-| `/learn/day-trading-vs-swing-trading/` -> `/learn/trading-plan/` | Trading Foundations points into risk planning as a beginner next step, while Trading Plan also follows Volume in the main risk course sequence. |
-| `/learn/going-concern/` -> `/learn/trading-plan/` | Small-cap dilution context links back into risk planning; this is a learning bridge, not a required reciprocal chain. |
-| `/learn/high-volatility-trade-review/` -> `/learn/chart-reading-path/` | The halt course capstone points back to a broader chart-reading path hub after event-risk review. |
-| `/learn/risk-discipline-path/` -> `/learn/how-to-use-traderslink-academy/` | The final path hub sends users back to Academy navigation, while the Academy navigation lesson belongs to Trading Foundations. |
+| `/academy/atr/` -> `/academy/volume-by-price/` | Volume By Price is primary to Volume, Liquidity And Order Flow but cross-listed as an indicator-adjacent volume tool. |
+| `/academy/chart-patterns/parabolic-move/` -> `/academy/chart-patterns/vwap-reclaim/` | VWAP Reclaim is primary to Technical Indicators And Tools but also caps Chart Patterns In Context. |
+| `/academy/pullbacks-and-dip-buy-setups/` -> `/academy/breakout-trading/` | Breakout Trading is primary to Chart Reading but cross-listed into Trading Styles And Playbooks as a setup type. |
+| `/academy/multi-day-runner/` -> `/academy/chasing-stocks/` | Chasing Stocks is primary to Trading Psychology but caps Trading Styles as a late-entry risk warning. |
+| `/academy/building-a-playbook-from-reviewed-trades/` -> `/academy/how-to-review-news-trades/` | News-trade review is primary to News, Catalysts And SEC Filings but also supports the Trade Review path. |
+| `/academy/day-trading-vs-swing-trading/` -> `/academy/trading-plan/` | Trading Foundations points into risk planning as a beginner next step, while Trading Plan also follows Volume in the main risk course sequence. |
+| `/academy/going-concern/` -> `/academy/trading-plan/` | Small-cap dilution context links back into risk planning; this is a learning bridge, not a required reciprocal chain. |
+| `/academy/high-volatility-trade-review/` -> `/academy/chart-reading-path/` | The halt course capstone points back to a broader chart-reading path hub after event-risk review. |
+| `/academy/risk-discipline-path/` -> `/academy/how-to-use-traderslink-academy/` | The final path hub sends users back to Academy navigation, while the Academy navigation lesson belongs to Trading Foundations. |
 
 ## Related Lesson Link Quality Notes
 
@@ -176,10 +176,10 @@ The next audit phase should prioritize factual and rule-sensitive lessons, espec
 - Rebuilt a metadata map of 223 Academy markdown files.
 - Confirmed every Academy `recommended_previous` target resolves locally.
 - Confirmed every Academy `recommended_next` target resolves locally.
-- Confirmed every in-body `/learn/.../` link in mapped Academy files resolves locally.
+- Confirmed every in-body `/academy/.../` link in mapped Academy files resolves locally.
 - Rechecked non-reciprocal previous/next relationships and documented cross-list exceptions.
 - Confirmed the edited files contain no hard `/trader-intelligence/` or `/features/` route links.
-- Confirmed the edited files contain no raw `[/learn/.../]` labels, encoding artifacts, buy/sell signal language, or guaranteed-profit language.
+- Confirmed the edited files contain no raw `[/academy/.../]` labels, encoding artifacts, buy/sell signal language, or guaranteed-profit language.
 
 ## Recommended Next Action
 

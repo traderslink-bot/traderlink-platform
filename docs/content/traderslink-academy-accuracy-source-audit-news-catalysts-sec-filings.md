@@ -47,14 +47,14 @@ The most important source-sensitive improvement was not a rewrite. It was adding
 
 | Lesson | Edit |
 |---|---|
-| `/learn/sec-filings/` | Added EDGAR official-source guardrail after the quick definition. |
-| `/learn/sec-filings/form-8-k/` | Added SEC investor guidance note about most 8-K disclosures generally being filed within four business days, with event date, filing date, accepted time, item number, and exhibits as review details. |
-| `/learn/sec-filings/form-4/` | Added Form 4 timing and transaction-code/footnote guardrail. |
-| `/learn/sec-filings/schedule-13d/` | Added beneficial-ownership threshold and Schedule 13G alternative caution from SEC/Investor.gov framing. |
-| `/learn/sec-filings/schedule-13g/` | Added caution that Schedule 13G can be a shorter alternative depending on facts and does not prove active intent by itself. |
-| `/learn/sec-filings/form-25/` | Added official Form 25 title and removal from listing/registration review details. |
-| `/learn/fda-news-stocks/` | Added FDA source-sensitive guardrail distinguishing Fast Track, orphan designation, and PDUFA from approval promises. |
-| `/learn/clinical-trial-news/` | Added official FDA clinical-research review context and phase-description caution. |
+| `/academy/sec-filings/` | Added EDGAR official-source guardrail after the quick definition. |
+| `/academy/sec-filings/form-8-k/` | Added SEC investor guidance note about most 8-K disclosures generally being filed within four business days, with event date, filing date, accepted time, item number, and exhibits as review details. |
+| `/academy/sec-filings/form-4/` | Added Form 4 timing and transaction-code/footnote guardrail. |
+| `/academy/sec-filings/schedule-13d/` | Added beneficial-ownership threshold and Schedule 13G alternative caution from SEC/Investor.gov framing. |
+| `/academy/sec-filings/schedule-13g/` | Added caution that Schedule 13G can be a shorter alternative depending on facts and does not prove active intent by itself. |
+| `/academy/sec-filings/form-25/` | Added official Form 25 title and removal from listing/registration review details. |
+| `/academy/fda-news-stocks/` | Added FDA source-sensitive guardrail distinguishing Fast Track, orphan designation, and PDUFA from approval promises. |
+| `/academy/clinical-trial-news/` | Added official FDA clinical-research review context and phase-description caution. |
 
 ## Source-Sensitive Course Review
 

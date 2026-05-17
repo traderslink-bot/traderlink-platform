@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the visual content strategy for the TradersLink `/learn/` education library.
+This document defines the visual content strategy for the TradersLink `/academy/` education library.
 
 The goal is to make educational content easier to understand, easier to follow, and more visually useful for traders. This plan is for Codex and future image-generation work. It is **not** a production implementation file and it does **not** create image assets by itself.
 
@@ -39,7 +39,7 @@ This plan supports:
 docs/content/learn-learning-journey-implementation-plan.md
 ```
 
-The learning journey plan explains how users move through `/learn/`. This visual plan explains what images, diagrams, and educational graphics should support those journeys.
+The learning journey plan explains how users move through `/academy/`. This visual plan explains what images, diagrams, and educational graphics should support those journeys.
 
 ## Core Visual Principle
 
@@ -117,7 +117,7 @@ public/images/learn/
 Alternative if the content pipeline keeps assets beside content:
 
 ```text
-docs/content/assets/learn/
+docs/content/assets/academy/
 ```
 
 Codex should choose based on the website architecture.
@@ -316,7 +316,7 @@ Style:
 
 ### Batch 1: Core Learning Journey Hero Images
 
-These images support the main `/learn/` hub and learning path cards.
+These images support the main `/academy/` hub and learning path cards.
 
 | Priority | Track | Suggested Filename | Image Type | Purpose | Alt Text |
 |---:|---|---|---|---|---|

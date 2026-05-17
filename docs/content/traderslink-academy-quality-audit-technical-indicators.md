@@ -10,18 +10,18 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/trading-indicators.md`
-- `docs/content/drafts/learn/why-indicators-lag.md`
-- `docs/content/drafts/learn/indicator-overload.md`
-- `docs/content/drafts/learn/moving-averages.md`
-- `docs/content/drafts/learn/vwap.md`
-- `docs/content/drafts/learn/anchored-vwap.md`
-- `docs/content/drafts/learn/rsi.md`
-- `docs/content/drafts/learn/macd.md`
-- `docs/content/drafts/learn/bollinger-bands.md`
-- `docs/content/drafts/learn/atr.md`
-- `docs/content/drafts/learn/volume-by-price.md`
-- `docs/content/drafts/learn/chart-patterns/vwap-reclaim.md`
+- `academy/trading-indicators.md`
+- `academy/why-indicators-lag.md`
+- `academy/indicator-overload.md`
+- `academy/moving-averages.md`
+- `academy/vwap.md`
+- `academy/anchored-vwap.md`
+- `academy/rsi.md`
+- `academy/macd.md`
+- `academy/bollinger-bands.md`
+- `academy/atr.md`
+- `academy/volume-by-price.md`
+- `academy/chart-patterns/vwap-reclaim.md`
 
 Related planning files:
 
@@ -40,7 +40,7 @@ The useful work during this pass was targeted:
 - Confirm the 12-lesson indicator path and cross-listed context.
 - Confirm lesson structure, examples, checklists, review prompts, FAQ, disclaimers, and anti-guarantee language.
 - Remove a premature hard `/features/...` link from the cross-listed Volume By Price lesson.
-- Fix an invalid ATR related-link target from `/learn/stop-loss-placement/` to `/learn/stop-loss/`.
+- Fix an invalid ATR related-link target from `/academy/stop-loss-placement/` to `/academy/stop-loss/`.
 - Document restrained Trader Intelligence bridge opportunities around completed-trade review, analytics, execution review, risk review, and playbook building.
 
 ## Major Findings
@@ -57,35 +57,35 @@ The useful work during this pass was targeted:
 
 | Lesson | Quality Result | Depth | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/trading-indicators/` | Pass | Strong course opener that defines indicators as context tools. | Supporting bridge to Trade Review and Analytics. | No edit needed. |
-| `/learn/why-indicators-lag/` | Pass | Strong explanation of confirmation versus prediction and late-entry risk. | Core bridge to Trade Review and Execution Review. | No edit needed. |
-| `/learn/indicator-overload/` | Pass | Strong process lesson on clutter, duplicate inputs, and cherry-picking. | Core bridge to Coaching and Trade Review. | No edit needed. |
-| `/learn/moving-averages/` | Pass | Good trend-context lesson with lag and chop cautions. | Supporting bridge to Trade Review and Analytics. | No edit needed. |
-| `/learn/vwap/` | Pass | Strong intraday average-price lesson with execution and reclaim context. | Core bridge to Execution Review and Trade Review. | No edit needed. |
-| `/learn/anchored-vwap/` | Pass | Good advanced lesson on event anchors and anchor bias. | Supporting bridge to Trade Review and News/Filing Review. | No edit needed. |
-| `/learn/rsi/` | Pass | Strong momentum lesson that avoids overbought/oversold command language. | Supporting bridge to Trade Review and Coaching. | No edit needed. |
-| `/learn/macd/` | Pass | Good lag-aware momentum lesson with clean histogram and cross framing. | Supporting bridge to Trade Review and Analytics. | No edit needed. |
-| `/learn/bollinger-bands/` | Pass | Strong volatility-context lesson with squeeze and band-touch cautions. | Supporting bridge to Trade Review and Risk Review. | No edit needed. |
-| `/learn/atr/` | Pass after cleanup | Strong range and risk-distance lesson. | Core bridge to Risk Review and Execution Review. | Fixed invalid stop-loss related link. |
-| `/learn/volume-by-price/` | Pass after cleanup | Strong cross-listed volume-at-price lesson with realistic visuals. | Supporting bridge to Trade Review and Execution Review. | Removed premature `/features/...` link. |
-| `/learn/chart-patterns/vwap-reclaim/` | Pass | Strong setup-context lesson with failed-reclaim and chase-risk framing. | Core bridge to Trade Review and Execution Review. | No edit needed. |
+| `/academy/trading-indicators/` | Pass | Strong course opener that defines indicators as context tools. | Supporting bridge to Trade Review and Analytics. | No edit needed. |
+| `/academy/why-indicators-lag/` | Pass | Strong explanation of confirmation versus prediction and late-entry risk. | Core bridge to Trade Review and Execution Review. | No edit needed. |
+| `/academy/indicator-overload/` | Pass | Strong process lesson on clutter, duplicate inputs, and cherry-picking. | Core bridge to Coaching and Trade Review. | No edit needed. |
+| `/academy/moving-averages/` | Pass | Good trend-context lesson with lag and chop cautions. | Supporting bridge to Trade Review and Analytics. | No edit needed. |
+| `/academy/vwap/` | Pass | Strong intraday average-price lesson with execution and reclaim context. | Core bridge to Execution Review and Trade Review. | No edit needed. |
+| `/academy/anchored-vwap/` | Pass | Good advanced lesson on event anchors and anchor bias. | Supporting bridge to Trade Review and News/Filing Review. | No edit needed. |
+| `/academy/rsi/` | Pass | Strong momentum lesson that avoids overbought/oversold command language. | Supporting bridge to Trade Review and Coaching. | No edit needed. |
+| `/academy/macd/` | Pass | Good lag-aware momentum lesson with clean histogram and cross framing. | Supporting bridge to Trade Review and Analytics. | No edit needed. |
+| `/academy/bollinger-bands/` | Pass | Strong volatility-context lesson with squeeze and band-touch cautions. | Supporting bridge to Trade Review and Risk Review. | No edit needed. |
+| `/academy/atr/` | Pass after cleanup | Strong range and risk-distance lesson. | Core bridge to Risk Review and Execution Review. | Fixed invalid stop-loss related link. |
+| `/academy/volume-by-price/` | Pass after cleanup | Strong cross-listed volume-at-price lesson with realistic visuals. | Supporting bridge to Trade Review and Execution Review. | Removed premature `/features/...` link. |
+| `/academy/chart-patterns/vwap-reclaim/` | Pass | Strong setup-context lesson with failed-reclaim and chase-risk framing. | Core bridge to Trade Review and Execution Review. | No edit needed. |
 
 ## App Bridge Map
 
 | Lesson | Primary App Surface | Secondary App Surface | Bridge Strength | Natural Tie-In | Needed Edit |
 |---|---|---|---|---|---|
-| `/learn/trading-indicators/` | Trade Review | Analytics | Supporting Bridge | Review whether an indicator added context or distracted from the plan. | None. |
-| `/learn/why-indicators-lag/` | Trade Review | Execution Review | Core Bridge | Review whether delayed confirmation caused a late entry or improved patience. | None. |
-| `/learn/indicator-overload/` | Coaching | Trade Review | Core Bridge | Review repeated mistakes caused by clutter, conflicting tools, or cherry-picking. | None. |
-| `/learn/moving-averages/` | Trade Review | Analytics | Supporting Bridge | Compare trend-context decisions against late entries and choppy conditions. | None. |
-| `/learn/vwap/` | Execution Review | Trade Review | Core Bridge | Review entry timing, VWAP holds/losses, slippage, spread, and failed context. | None. |
-| `/learn/anchored-vwap/` | Trade Review | News/Filing Review | Supporting Bridge | Review whether an event anchor was meaningful or chosen after the fact. | None. |
-| `/learn/rsi/` | Trade Review | Coaching | Supporting Bridge | Review early exits, countertrend attempts, and overbought/oversold misuse. | None. |
-| `/learn/macd/` | Trade Review | Analytics | Supporting Bridge | Review whether MACD clarified momentum or confirmed after price was extended. | None. |
-| `/learn/bollinger-bands/` | Trade Review | Risk Review | Supporting Bridge | Review chase behavior after volatility expansion or early fades at band touches. | None. |
-| `/learn/atr/` | Risk Review | Execution Review | Core Bridge | Review volatility-adjusted size, stop distance, spread, slippage, and range pressure. | Fixed related-link target. |
-| `/learn/volume-by-price/` | Trade Review | Execution Review | Supporting Bridge | Review entries into crowded zones, low-volume areas, and execution quality around levels. | Removed stale app route link. |
-| `/learn/chart-patterns/vwap-reclaim/` | Trade Review | Execution Review | Core Bridge | Review reclaim quality, failed reclaims, chase entries, and whether VWAP actually held. | None. |
+| `/academy/trading-indicators/` | Trade Review | Analytics | Supporting Bridge | Review whether an indicator added context or distracted from the plan. | None. |
+| `/academy/why-indicators-lag/` | Trade Review | Execution Review | Core Bridge | Review whether delayed confirmation caused a late entry or improved patience. | None. |
+| `/academy/indicator-overload/` | Coaching | Trade Review | Core Bridge | Review repeated mistakes caused by clutter, conflicting tools, or cherry-picking. | None. |
+| `/academy/moving-averages/` | Trade Review | Analytics | Supporting Bridge | Compare trend-context decisions against late entries and choppy conditions. | None. |
+| `/academy/vwap/` | Execution Review | Trade Review | Core Bridge | Review entry timing, VWAP holds/losses, slippage, spread, and failed context. | None. |
+| `/academy/anchored-vwap/` | Trade Review | News/Filing Review | Supporting Bridge | Review whether an event anchor was meaningful or chosen after the fact. | None. |
+| `/academy/rsi/` | Trade Review | Coaching | Supporting Bridge | Review early exits, countertrend attempts, and overbought/oversold misuse. | None. |
+| `/academy/macd/` | Trade Review | Analytics | Supporting Bridge | Review whether MACD clarified momentum or confirmed after price was extended. | None. |
+| `/academy/bollinger-bands/` | Trade Review | Risk Review | Supporting Bridge | Review chase behavior after volatility expansion or early fades at band touches. | None. |
+| `/academy/atr/` | Risk Review | Execution Review | Core Bridge | Review volatility-adjusted size, stop distance, spread, slippage, and range pressure. | Fixed related-link target. |
+| `/academy/volume-by-price/` | Trade Review | Execution Review | Supporting Bridge | Review entries into crowded zones, low-volume areas, and execution quality around levels. | Removed stale app route link. |
+| `/academy/chart-patterns/vwap-reclaim/` | Trade Review | Execution Review | Core Bridge | Review reclaim quality, failed reclaims, chase entries, and whether VWAP actually held. | None. |
 
 ## Visual Needs
 
@@ -118,9 +118,9 @@ No urgent new lesson is needed for this course.
 
 Future optional additions could be considered during a later sequence or visual/UI pass:
 
-- `/learn/indicator-settings-and-timeframes/`
-- `/learn/using-indicators-with-price-levels/`
-- `/learn/indicator-backtesting-vs-live-review/`
+- `/academy/indicator-settings-and-timeframes/`
+- `/academy/using-indicators-with-price-levels/`
+- `/academy/indicator-backtesting-vs-live-review/`
 
 Do not create those now unless a later audit finds users need more granular bridges between indicator configuration, level context, and real trade review.
 
@@ -139,8 +139,8 @@ Future Accuracy/Source Audit should review any expanded lesson claims around:
 
 Edited Technical Indicators course or cross-listed files:
 
-- `docs/content/drafts/learn/atr.md`
-- `docs/content/drafts/learn/volume-by-price.md`
+- `academy/atr.md`
+- `academy/volume-by-price.md`
 
 Edits were limited to:
 

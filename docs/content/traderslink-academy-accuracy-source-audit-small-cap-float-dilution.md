@@ -10,34 +10,34 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/small-cap-stocks.md`
-- `docs/content/drafts/learn/penny-stocks.md`
-- `docs/content/drafts/learn/stock-float.md`
-- `docs/content/drafts/learn/low-float-stocks.md`
-- `docs/content/drafts/learn/float-rotation.md`
-- `docs/content/drafts/learn/float-vs-shares-outstanding.md`
-- `docs/content/drafts/learn/fully-diluted-shares.md`
-- `docs/content/drafts/learn/market-cap-vs-fully-diluted-market-cap.md`
-- `docs/content/drafts/learn/dilution.md`
-- `docs/content/drafts/learn/dilution-risk.md`
-- `docs/content/drafts/learn/how-to-spot-dilution-risk.md`
-- `docs/content/drafts/learn/stock-offerings.md`
-- `docs/content/drafts/learn/public-offering.md`
-- `docs/content/drafts/learn/registered-direct-offering.md`
-- `docs/content/drafts/learn/private-placement.md`
-- `docs/content/drafts/learn/at-the-market-offering.md`
-- `docs/content/drafts/learn/shelf-registration.md`
-- `docs/content/drafts/learn/shelf-registration-vs-offering.md`
-- `docs/content/drafts/learn/warrants.md`
-- `docs/content/drafts/learn/warrants-vs-options.md`
-- `docs/content/drafts/learn/pre-funded-warrants.md`
-- `docs/content/drafts/learn/convertible-notes.md`
-- `docs/content/drafts/learn/preferred-stock.md`
-- `docs/content/drafts/learn/reverse-split.md`
-- `docs/content/drafts/learn/reverse-split-vs-dilution.md`
-- `docs/content/drafts/learn/forward-split.md`
-- `docs/content/drafts/learn/cash-runway.md`
-- `docs/content/drafts/learn/going-concern.md`
+- `academy/small-cap-stocks.md`
+- `academy/penny-stocks.md`
+- `academy/stock-float.md`
+- `academy/low-float-stocks.md`
+- `academy/float-rotation.md`
+- `academy/float-vs-shares-outstanding.md`
+- `academy/fully-diluted-shares.md`
+- `academy/market-cap-vs-fully-diluted-market-cap.md`
+- `academy/dilution.md`
+- `academy/dilution-risk.md`
+- `academy/how-to-spot-dilution-risk.md`
+- `academy/stock-offerings.md`
+- `academy/public-offering.md`
+- `academy/registered-direct-offering.md`
+- `academy/private-placement.md`
+- `academy/at-the-market-offering.md`
+- `academy/shelf-registration.md`
+- `academy/shelf-registration-vs-offering.md`
+- `academy/warrants.md`
+- `academy/warrants-vs-options.md`
+- `academy/pre-funded-warrants.md`
+- `academy/convertible-notes.md`
+- `academy/preferred-stock.md`
+- `academy/reverse-split.md`
+- `academy/reverse-split-vs-dilution.md`
+- `academy/forward-split.md`
+- `academy/cash-runway.md`
+- `academy/going-concern.md`
 
 ## Official Sources Used
 
@@ -74,14 +74,14 @@ No major factual correction was needed. The main source-audit improvement was ad
 
 | Lesson | Edit |
 |---|---|
-| `/learn/penny-stocks/` | Added SEC/Investor.gov source-check note for penny-stock and microcap risk, public-information risk, liquidity, promotion, and fraud context. |
-| `/learn/stock-float/` | Added source-date note for float, public float, shares outstanding, data-provider differences, filings, corporate actions, and recent financing. |
-| `/learn/stock-offerings/` | Added source-check note directing learners to official filing packages, including registration statements, prospectus supplements, Form 8-Ks, purchase agreements, warrant agreements, and exhibits. |
-| `/learn/at-the-market-offering/` | Added source-check note separating ATM program capacity from actual sales and directing review toward later 10-Q/10-K disclosures. |
-| `/learn/shelf-registration/` | Added source-check note separating base shelf registration capacity from specific later prospectus supplements or takedowns. |
-| `/learn/convertible-notes/` | Added source-check note for the actual note agreement, purchase agreement, registration rights, resale registration, fixed versus variable terms, floors, caps, defaults, and amendments. |
-| `/learn/reverse-split/` | Added source-check note for split ratio, effective date, fractional shares, exchange notice, and related filings. |
-| `/learn/going-concern/` | Added PCAOB/FASB-aligned source-check note that keeps trader education focused on conditions, management plans, and later filing evidence. |
+| `/academy/penny-stocks/` | Added SEC/Investor.gov source-check note for penny-stock and microcap risk, public-information risk, liquidity, promotion, and fraud context. |
+| `/academy/stock-float/` | Added source-date note for float, public float, shares outstanding, data-provider differences, filings, corporate actions, and recent financing. |
+| `/academy/stock-offerings/` | Added source-check note directing learners to official filing packages, including registration statements, prospectus supplements, Form 8-Ks, purchase agreements, warrant agreements, and exhibits. |
+| `/academy/at-the-market-offering/` | Added source-check note separating ATM program capacity from actual sales and directing review toward later 10-Q/10-K disclosures. |
+| `/academy/shelf-registration/` | Added source-check note separating base shelf registration capacity from specific later prospectus supplements or takedowns. |
+| `/academy/convertible-notes/` | Added source-check note for the actual note agreement, purchase agreement, registration rights, resale registration, fixed versus variable terms, floors, caps, defaults, and amendments. |
+| `/academy/reverse-split/` | Added source-check note for split ratio, effective date, fractional shares, exchange notice, and related filings. |
+| `/academy/going-concern/` | Added PCAOB/FASB-aligned source-check note that keeps trader education focused on conditions, management plans, and later filing evidence. |
 
 ## Source-Sensitive Review Table
 

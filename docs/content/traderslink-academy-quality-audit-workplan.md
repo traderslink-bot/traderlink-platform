@@ -8,6 +8,14 @@ This file manages the next Academy review runs so the work stays organized acros
 
 This is a content, planning, tracker, manifest, and SVG workflow only. Do not edit production website files, routes, schemas, React components, JSX, CSS, or Next.js pages unless the user explicitly asks.
 
+## Source Location And Public URL
+
+Academy markdown source now lives under the repository root `academy/` folder, not under `docs/content/drafts/learn/`.
+
+Academy public page slugs should use `/academy/...`, so the future website experience and search-engine URLs live under `traderslink.pro/academy/...` instead of `traderslink.pro/learn/...`.
+
+Existing visual asset paths may remain under `/images/learn/...` and `public/images/learn/...` for now. Those are media asset locations, not Academy page URLs.
+
 ## What The User Means By App Tie-Ins
 
 The user wants lessons to identify natural moments where the TradersLink app can help after the user learns a concept.
@@ -160,7 +168,7 @@ Use this table inside each course audit output:
 
 | Lesson | Primary App Surface | Secondary App Surface | Bridge Strength | Natural Tie-In | Needed Edit |
 |---|---|---|---|---|---|
-| `/learn/example/` | Trade Review | Coaching | Core Bridge | Review completed trades for this behavior pattern. | Tighten Trader Intelligence Bridge wording. |
+| `/academy/example/` | Trade Review | Coaching | Core Bridge | Review completed trades for this behavior pattern. | Tighten Trader Intelligence Bridge wording. |
 
 ## Course Audit Output Template
 
@@ -193,12 +201,12 @@ Completed before this workplan:
 
 - Master instructor course audit: `docs/content/traderslink-academy-master-instructor-audit.md`
 - First bridge lesson batch:
-  - `/learn/what-is-a-stock-and-how-does-a-trade-work/`
-  - `/learn/stock-market-sessions-and-order-flow-basics/`
-  - `/learn/win-rate-reward-risk-and-expectancy/`
-  - `/learn/short-selling-basics/`
-  - `/learn/how-to-use-edgar-source-documents/`
-  - `/learn/building-a-playbook-from-reviewed-trades/`
+  - `/academy/what-is-a-stock-and-how-does-a-trade-work/`
+  - `/academy/stock-market-sessions-and-order-flow-basics/`
+  - `/academy/win-rate-reward-risk-and-expectancy/`
+  - `/academy/short-selling-basics/`
+  - `/academy/how-to-use-edgar-source-documents/`
+  - `/academy/building-a-playbook-from-reviewed-trades/`
 - Academy index now represents 223 Academy-ready lessons/path hubs.
 
 ## Recommended Next Run

@@ -10,20 +10,20 @@ Status: complete
 
 Reviewed the 14-lesson Volume, Liquidity And Order Flow course:
 
-- `docs/content/drafts/learn/volume.md`
-- `docs/content/drafts/learn/relative-volume.md`
-- `docs/content/drafts/learn/relative-volume-rvol.md`
-- `docs/content/drafts/learn/volume-spike.md`
-- `docs/content/drafts/learn/liquidity.md`
-- `docs/content/drafts/learn/dollar-volume.md`
-- `docs/content/drafts/learn/spread.md`
-- `docs/content/drafts/learn/bid-and-ask.md`
-- `docs/content/drafts/learn/slippage.md`
-- `docs/content/drafts/learn/market-orders-vs-limit-orders.md`
-- `docs/content/drafts/learn/level-2.md`
-- `docs/content/drafts/learn/time-and-sales.md`
-- `docs/content/drafts/learn/volume-by-price.md`
-- `docs/content/drafts/learn/unusual-volume.md`
+- `academy/volume.md`
+- `academy/relative-volume.md`
+- `academy/relative-volume-rvol.md`
+- `academy/volume-spike.md`
+- `academy/liquidity.md`
+- `academy/dollar-volume.md`
+- `academy/spread.md`
+- `academy/bid-and-ask.md`
+- `academy/slippage.md`
+- `academy/market-orders-vs-limit-orders.md`
+- `academy/level-2.md`
+- `academy/time-and-sales.md`
+- `academy/volume-by-price.md`
+- `academy/unusual-volume.md`
 
 ## Official Sources Used
 
@@ -58,13 +58,13 @@ No broad rewrite was needed.
 
 | Lesson | Edit |
 |---|---|
-| `/learn/relative-volume-rvol/` | Added a source check clarifying that RVOL is a platform/data-vendor metric, not one SEC or FINRA standardized number. |
-| `/learn/liquidity/` | Added a source check tying liquidity, wider spreads, partial/no-fill risk, and extended-hours/volatile conditions to SEC and FINRA investor materials. |
-| `/learn/bid-and-ask/` | Added a source check clarifying that last-traded price is not necessarily the current executable price. |
-| `/learn/market-orders-vs-limit-orders/` | Added a source check clarifying the official market-order versus limit-order tradeoff: execution priority versus price control/no-fill risk. |
-| `/learn/level-2/` | Added a source check clarifying that market-depth products display visible order-book interest from specific markets or feeds, not all hidden/routed/off-exchange interest. |
-| `/learn/time-and-sales/` | Added a source check clarifying that time and sales is based on reported trade prints, but platform display, corrections, late reports, and reporting rules can affect interpretation. |
-| `/learn/volume-by-price/` | Added a source check clarifying that volume-by-price/profile zones are charting-platform calculations affected by session, timeframe, aggregation, and data feed. |
+| `/academy/relative-volume-rvol/` | Added a source check clarifying that RVOL is a platform/data-vendor metric, not one SEC or FINRA standardized number. |
+| `/academy/liquidity/` | Added a source check tying liquidity, wider spreads, partial/no-fill risk, and extended-hours/volatile conditions to SEC and FINRA investor materials. |
+| `/academy/bid-and-ask/` | Added a source check clarifying that last-traded price is not necessarily the current executable price. |
+| `/academy/market-orders-vs-limit-orders/` | Added a source check clarifying the official market-order versus limit-order tradeoff: execution priority versus price control/no-fill risk. |
+| `/academy/level-2/` | Added a source check clarifying that market-depth products display visible order-book interest from specific markets or feeds, not all hidden/routed/off-exchange interest. |
+| `/academy/time-and-sales/` | Added a source check clarifying that time and sales is based on reported trade prints, but platform display, corrections, late reports, and reporting rules can affect interpretation. |
+| `/academy/volume-by-price/` | Added a source check clarifying that volume-by-price/profile zones are charting-platform calculations affected by session, timeframe, aggregation, and data feed. |
 
 ## Source-Sensitive Findings
 
@@ -125,7 +125,7 @@ No hard app route links were added during this pass.
 
 These are useful later, but they do not block the course:
 
-- A deeper `/learn/order-routing-and-best-execution/` lesson if the Academy later adds an advanced execution module.
+- A deeper `/academy/order-routing-and-best-execution/` lesson if the Academy later adds an advanced execution module.
 - A future visual/UI note explaining that execution-review fields should capture intended price, actual fill, spread, order type, liquidity, and slippage.
 - A later source audit of any new broker/platform-specific scanner claims if the website adds named tools or screenshots.
 

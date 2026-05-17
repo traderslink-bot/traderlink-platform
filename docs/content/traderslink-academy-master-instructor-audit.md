@@ -15,7 +15,7 @@ Reviewed:
 - `docs/content/traderslink-academy-course-index.md`
 - `docs/content/learn-academy-visual-ui-readiness-review.md`
 - `docs/content/learn-editorial-upgrade-tracker.md`
-- Current lesson inventory under `docs/content/drafts/learn/`
+- Current lesson inventory under `academy/`
 - Current guardrail language scan for guarantee, prediction, buy/sell, profit, and financial-advice phrasing
 
 The language-risk scan showed the Academy is consistently using the intended guardrails: lessons repeatedly frame charts, indicators, filings, catalysts, and setups as review context rather than predictions or guaranteed outcomes. The matches were mostly disclaimer, no-guarantee, and review-context language. Rule-specific topics such as halts, circuit breakers, and SEC filing mechanics should still be source-verified at drafting time because rules and filing conventions can change.
@@ -424,18 +424,18 @@ Priority: Medium for UI planning; low for content rewriting.
 
 The following local draft candidates already exist and should be reviewed before deciding whether to integrate them into the Academy sequence:
 
-- `docs/content/drafts/learn/accumulation-and-distribution.md`
-- `docs/content/drafts/learn/ai-news-stocks.md`
-- `docs/content/drafts/learn/atm-offering-vs-public-offering.md`
-- `docs/content/drafts/learn/biotech-data-readouts.md`
-- `docs/content/drafts/learn/bitcoin-crypto-treasury-stocks.md`
-- `docs/content/drafts/learn/fda-fast-track.md`
-- `docs/content/drafts/learn/orphan-drug-designation.md`
-- `docs/content/drafts/learn/pdufa-date.md`
-- `docs/content/drafts/learn/phase-1-phase-2-phase-3-trials.md`
-- `docs/content/drafts/learn/resale-registration-statement.md`
-- `docs/content/drafts/learn/revenue-guidance.md`
-- `docs/content/drafts/learn/shareholder-approval-for-dilution.md`
+- `academy/accumulation-and-distribution.md`
+- `academy/ai-news-stocks.md`
+- `academy/atm-offering-vs-public-offering.md`
+- `academy/biotech-data-readouts.md`
+- `academy/bitcoin-crypto-treasury-stocks.md`
+- `academy/fda-fast-track.md`
+- `academy/orphan-drug-designation.md`
+- `academy/pdufa-date.md`
+- `academy/phase-1-phase-2-phase-3-trials.md`
+- `academy/resale-registration-statement.md`
+- `academy/revenue-guidance.md`
+- `academy/shareholder-approval-for-dilution.md`
 
 Do not mark these Academy-complete until each draft gets the same Academy metadata, previous/next placement, lesson objective, realistic examples, common mistakes, practical checklist, Apply This In Review section, Trader Intelligence bridge, related lessons, related glossary terms, FAQ, educational disclaimer, and visual review.
 

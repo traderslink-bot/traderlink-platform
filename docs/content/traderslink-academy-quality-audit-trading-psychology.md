@@ -10,14 +10,14 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/trading-discipline.md`
-- `docs/content/drafts/learn/fomo-trading.md`
-- `docs/content/drafts/learn/chasing-stocks.md`
-- `docs/content/drafts/learn/revenge-trading.md`
-- `docs/content/drafts/learn/overtrading.md`
-- `docs/content/drafts/learn/holding-losers-too-long.md`
-- `docs/content/drafts/learn/cutting-winners-too-early.md`
-- `docs/content/drafts/learn/averaging-down.md`
+- `academy/trading-discipline.md`
+- `academy/fomo-trading.md`
+- `academy/chasing-stocks.md`
+- `academy/revenge-trading.md`
+- `academy/overtrading.md`
+- `academy/holding-losers-too-long.md`
+- `academy/cutting-winners-too-early.md`
+- `academy/averaging-down.md`
 
 Related planning files:
 
@@ -39,7 +39,7 @@ The course did not need a broad rewrite. It needed targeted cleanup around old g
 2. The course avoids shame framing. Lessons consistently describe behavior patterns without calling the trader weak, broken, lazy, or incapable.
 3. The course avoids medicalized language. It does not diagnose users or treat trading behavior as therapy.
 4. All 8 lessons include the required Academy structure: lesson objective, common mistakes, practical checklist, Apply This In Review, Trader Intelligence bridge, FAQ, and educational disclaimer.
-5. Previous/next metadata is intact from `/learn/holding-through-news/` into `/learn/trading-discipline/` and from `/learn/averaging-down/` into `/learn/trade-risk-review/`.
+5. Previous/next metadata is intact from `/academy/holding-through-news/` into `/academy/trading-discipline/` and from `/academy/averaging-down/` into `/academy/trade-risk-review/`.
 6. The old metadata CTAs used several slightly product-heavy "If you want..." variants. This pass normalized them into restrained completed-trade review language.
 7. Several realistic examples had stripped prices such as `.00`, `.80`, and `.20 per share`. This pass restored readable numeric examples.
 8. The course has no dedicated visuals today. That is acceptable for Pass 1, but a later Visual Gap Audit should consider behavior-loop and mistake-pattern review visuals before UI implementation.
@@ -48,14 +48,14 @@ The course did not need a broad rewrite. It needed targeted cleanup around old g
 
 | Lesson | Quality Result | Depth | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/trading-discipline/` | Pass after cleanup | Strong course opener that defines discipline as rule adherence, reviewability, and process consistency rather than willpower. | Core bridge to Coaching, Trade Review, Risk Review, and Analytics. | Normalized metadata CTA. |
-| `/learn/fomo-trading/` | Pass after cleanup | Strong lesson separating planned momentum from urgency-driven entries. | Core bridge to Trade Review, Coaching, and mistake-pattern review. | Normalized metadata CTA and restored readable price examples. |
-| `/learn/chasing-stocks/` | Pass after cleanup | Strong late-entry lesson with risk distance, extension, spread, and nearby-level context. | Core bridge to Trade Review, Execution Review, and Analytics. | Normalized metadata CTA and restored readable price examples. |
-| `/learn/revenge-trading/` | Pass after cleanup | Strong non-shaming lesson on trades taken after frustration, losses, or missed moves. | Core bridge to Coaching, Risk Review, and Trade Review. | Normalized metadata CTA. |
-| `/learn/overtrading/` | Pass after cleanup | Strong session-behavior lesson that defines overtrading by quality and reason, not only count. | Core bridge to Analytics, Coaching, Session Review, and Trade Review. | Normalized metadata CTA. |
-| `/learn/holding-losers-too-long/` | Pass after cleanup | Strong trade-management lesson that separates planned losses from unplanned risk expansion. | Core bridge to Risk Review, Trade Review, and Coaching. | Normalized metadata CTA and restored readable price examples. |
-| `/learn/cutting-winners-too-early/` | Pass after cleanup | Strong early-exit lesson that separates planned profit protection from fear-based exiting. | Core bridge to Trade Review, Risk Review, and Analytics. | Normalized metadata CTA and restored readable price examples. |
-| `/learn/averaging-down/` | Pass after cleanup | Strong risk-expansion lesson separating planned scaling from emotional adding. | Core bridge to Risk Review, Trade Review, and mistake-pattern review. | Normalized metadata CTA and restored readable price examples. |
+| `/academy/trading-discipline/` | Pass after cleanup | Strong course opener that defines discipline as rule adherence, reviewability, and process consistency rather than willpower. | Core bridge to Coaching, Trade Review, Risk Review, and Analytics. | Normalized metadata CTA. |
+| `/academy/fomo-trading/` | Pass after cleanup | Strong lesson separating planned momentum from urgency-driven entries. | Core bridge to Trade Review, Coaching, and mistake-pattern review. | Normalized metadata CTA and restored readable price examples. |
+| `/academy/chasing-stocks/` | Pass after cleanup | Strong late-entry lesson with risk distance, extension, spread, and nearby-level context. | Core bridge to Trade Review, Execution Review, and Analytics. | Normalized metadata CTA and restored readable price examples. |
+| `/academy/revenge-trading/` | Pass after cleanup | Strong non-shaming lesson on trades taken after frustration, losses, or missed moves. | Core bridge to Coaching, Risk Review, and Trade Review. | Normalized metadata CTA. |
+| `/academy/overtrading/` | Pass after cleanup | Strong session-behavior lesson that defines overtrading by quality and reason, not only count. | Core bridge to Analytics, Coaching, Session Review, and Trade Review. | Normalized metadata CTA. |
+| `/academy/holding-losers-too-long/` | Pass after cleanup | Strong trade-management lesson that separates planned losses from unplanned risk expansion. | Core bridge to Risk Review, Trade Review, and Coaching. | Normalized metadata CTA and restored readable price examples. |
+| `/academy/cutting-winners-too-early/` | Pass after cleanup | Strong early-exit lesson that separates planned profit protection from fear-based exiting. | Core bridge to Trade Review, Risk Review, and Analytics. | Normalized metadata CTA and restored readable price examples. |
+| `/academy/averaging-down/` | Pass after cleanup | Strong risk-expansion lesson separating planned scaling from emotional adding. | Core bridge to Risk Review, Trade Review, and mistake-pattern review. | Normalized metadata CTA and restored readable price examples. |
 
 ## App Bridge Map
 
@@ -100,11 +100,11 @@ No urgent new lesson is required for this course before the next Pass 1 audit.
 
 Future optional additions could be considered during a later sequence or visual audit:
 
-- `/learn/rule-break-review/`
-- `/learn/trading-after-a-loss/`
-- `/learn/emotional-trade-tags/`
-- `/learn/session-reset-rules/`
-- `/learn/confidence-after-losses/`
+- `/academy/rule-break-review/`
+- `/academy/trading-after-a-loss/`
+- `/academy/emotional-trade-tags/`
+- `/academy/session-reset-rules/`
+- `/academy/confidence-after-losses/`
 
 Do not add these automatically during Pass 1. They may be useful if the UI needs a deeper behavior-review branch or if later app bridge planning needs more direct support for coaching and mistake-pattern workflows.
 
@@ -123,14 +123,14 @@ Future Accuracy/Source Audit should still verify:
 
 Edited course files:
 
-- `docs/content/drafts/learn/trading-discipline.md`
-- `docs/content/drafts/learn/fomo-trading.md`
-- `docs/content/drafts/learn/chasing-stocks.md`
-- `docs/content/drafts/learn/revenge-trading.md`
-- `docs/content/drafts/learn/overtrading.md`
-- `docs/content/drafts/learn/holding-losers-too-long.md`
-- `docs/content/drafts/learn/cutting-winners-too-early.md`
-- `docs/content/drafts/learn/averaging-down.md`
+- `academy/trading-discipline.md`
+- `academy/fomo-trading.md`
+- `academy/chasing-stocks.md`
+- `academy/revenge-trading.md`
+- `academy/overtrading.md`
+- `academy/holding-losers-too-long.md`
+- `academy/cutting-winners-too-early.md`
+- `academy/averaging-down.md`
 
 Edits were limited to:
 
@@ -143,9 +143,9 @@ No production website files were edited.
 
 - Confirmed all 8 lessons include the required Academy sections.
 - Confirmed previous/next metadata matches the intended course chain.
-- Confirmed no missing local `/learn/.../` draft links were introduced by this pass.
+- Confirmed no missing local `/academy/.../` draft links were introduced by this pass.
 - Confirmed no hard `/trader-intelligence/` or `/features/` route links remain in the Psychology course files.
-- Confirmed no raw `[/learn/.../]` labels remain in the Psychology course files.
+- Confirmed no raw `[/academy/.../]` labels remain in the Psychology course files.
 - Confirmed no broad journal wording, encoding artifacts, medicalized claims, or shame wording were introduced.
 - Confirmed the course keeps app bridge language review-focused and does not promise prediction, performance, or behavior fixes.
 

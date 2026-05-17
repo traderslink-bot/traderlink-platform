@@ -108,12 +108,12 @@ Reason: indicator lessons have strong content but no dedicated visual support. T
 
 | Planned Asset | Related Lessons | Visual Type | Purpose |
 |---|---|---|---|
-| `indicator-lag-price-vs-signal.svg` | `/learn/why-indicators-lag/`, `/learn/trading-indicators/` | realistic_candlestick_chart | Show price turning before a lagging indicator confirms. |
-| `indicator-overload-duplicate-inputs.svg` | `/learn/indicator-overload/` | realistic_trading_dashboard | Show several indicators repeating the same input and cluttering review. |
-| `moving-average-trend-and-chop.svg` | `/learn/moving-averages/` | realistic_candlestick_chart | Compare smoother trend context with choppy whipsaw context. |
-| `vwap-hold-loss-reclaim-review.svg` | `/learn/vwap/`, `/learn/chart-patterns/vwap-reclaim/` | realistic_candlestick_chart | Show VWAP as average-price context with hold, loss, and reclaim review labels. |
-| `rsi-macd-momentum-context.svg` | `/learn/rsi/`, `/learn/macd/` | realistic_dashboard_diagram | Show momentum readings as context, not automatic reversal or continuation signals. |
-| `bollinger-atr-volatility-context.svg` | `/learn/bollinger-bands/`, `/learn/atr/` | realistic_candlestick_chart | Show volatility expansion, contraction, and range context. |
+| `indicator-lag-price-vs-signal.svg` | `/academy/why-indicators-lag/`, `/academy/trading-indicators/` | realistic_candlestick_chart | Show price turning before a lagging indicator confirms. |
+| `indicator-overload-duplicate-inputs.svg` | `/academy/indicator-overload/` | realistic_trading_dashboard | Show several indicators repeating the same input and cluttering review. |
+| `moving-average-trend-and-chop.svg` | `/academy/moving-averages/` | realistic_candlestick_chart | Compare smoother trend context with choppy whipsaw context. |
+| `vwap-hold-loss-reclaim-review.svg` | `/academy/vwap/`, `/academy/chart-patterns/vwap-reclaim/` | realistic_candlestick_chart | Show VWAP as average-price context with hold, loss, and reclaim review labels. |
+| `rsi-macd-momentum-context.svg` | `/academy/rsi/`, `/academy/macd/` | realistic_dashboard_diagram | Show momentum readings as context, not automatic reversal or continuation signals. |
+| `bollinger-atr-volatility-context.svg` | `/academy/bollinger-bands/`, `/academy/atr/` | realistic_candlestick_chart | Show volatility expansion, contraction, and range context. |
 
 ### Batch 2: Risk Management And Trade Planning
 
@@ -123,12 +123,12 @@ Reason: risk concepts are core to learning and benefit from visual math/workflow
 
 | Planned Asset | Related Lessons | Visual Type | Purpose |
 |---|---|---|---|
-| `risk-plan-before-entry.svg` | `/learn/trading-plan/`, `/learn/trading-rules/` | workflow_diagram | Show setup criteria, invalidation, size, stop, and review before a trade. |
-| `position-sizing-risk-box.svg` | `/learn/position-sizing/`, `/learn/risk-management/` | risk_loop_diagram | Show account risk, trade risk, stop distance, and share size relationship. |
-| `risk-reward-planned-vs-actual.svg` | `/learn/risk-reward-ratio/`, `/learn/trade-risk-review/` | realistic_candlestick_chart | Show planned risk/reward versus actual trade management. |
-| `stop-loss-invalidation-context.svg` | `/learn/stop-loss/`, `/learn/mental-stop-vs-hard-stop/` | realistic_candlestick_chart | Show invalidation zone, stop behavior, gap/slippage caution, and review labels. |
-| `daily-max-loss-shutdown-flow.svg` | `/learn/max-loss/`, `/learn/daily-loss-limit/` | workflow_diagram | Show per-trade loss, daily loss limit, stop-trading trigger, and review loop. |
-| `trade-management-profit-protection.svg` | `/learn/trade-management/`, `/learn/profit-protection/` | realistic_candlestick_chart | Show planned management decisions, giveback review, and exit-plan context. |
+| `risk-plan-before-entry.svg` | `/academy/trading-plan/`, `/academy/trading-rules/` | workflow_diagram | Show setup criteria, invalidation, size, stop, and review before a trade. |
+| `position-sizing-risk-box.svg` | `/academy/position-sizing/`, `/academy/risk-management/` | risk_loop_diagram | Show account risk, trade risk, stop distance, and share size relationship. |
+| `risk-reward-planned-vs-actual.svg` | `/academy/risk-reward-ratio/`, `/academy/trade-risk-review/` | realistic_candlestick_chart | Show planned risk/reward versus actual trade management. |
+| `stop-loss-invalidation-context.svg` | `/academy/stop-loss/`, `/academy/mental-stop-vs-hard-stop/` | realistic_candlestick_chart | Show invalidation zone, stop behavior, gap/slippage caution, and review labels. |
+| `daily-max-loss-shutdown-flow.svg` | `/academy/max-loss/`, `/academy/daily-loss-limit/` | workflow_diagram | Show per-trade loss, daily loss limit, stop-trading trigger, and review loop. |
+| `trade-management-profit-protection.svg` | `/academy/trade-management/`, `/academy/profit-protection/` | realistic_candlestick_chart | Show planned management decisions, giveback review, and exit-plan context. |
 
 ### Batch 3: Small-Cap Stocks, Float And Dilution
 
@@ -138,14 +138,14 @@ Reason: this is a major TradersLink differentiator and many concepts are structu
 
 | Planned Asset | Related Lessons | Visual Type | Purpose |
 |---|---|---|---|
-| `small-cap-context-dashboard.svg` | `/learn/small-cap-stocks/`, `/learn/penny-stocks/` | realistic_trading_dashboard | Show price, volume, spread, float, catalyst, and filing context together. |
-| `float-vs-outstanding-share-map.svg` | `/learn/stock-float/`, `/learn/float-vs-shares-outstanding/` | comparison_graphic | Show tradable float versus total shares outstanding. |
-| `low-float-volume-rotation.svg` | `/learn/low-float-stocks/`, `/learn/float-rotation/` | realistic_candlestick_chart | Show volume relative to float without implying a guaranteed move. |
-| `fully-diluted-share-stack.svg` | `/learn/fully-diluted-shares/`, `/learn/market-cap-vs-fully-diluted-market-cap/` | filing_flow_diagram | Show common securities that can expand the share count. |
-| `dilution-risk-filing-chain.svg` | `/learn/dilution/`, `/learn/dilution-risk/`, `/learn/how-to-spot-dilution-risk/` | filing_flow_diagram | Show cash need, shelf, offering, warrants, and future supply context. |
-| `offering-types-comparison.svg` | `/learn/stock-offerings/`, `/learn/public-offering/`, `/learn/registered-direct-offering/`, `/learn/private-placement/`, `/learn/at-the-market-offering/` | comparison_graphic | Compare offering structures without labeling any as automatically bullish/bearish. |
-| `warrant-convertible-preferred-stack.svg` | `/learn/warrants/`, `/learn/pre-funded-warrants/`, `/learn/convertible-notes/`, `/learn/preferred-stock/` | filing_flow_diagram | Show securities that may become common shares. |
-| `split-cash-going-concern-context.svg` | `/learn/reverse-split/`, `/learn/forward-split/`, `/learn/cash-runway/`, `/learn/going-concern/` | workflow_diagram | Show corporate action and cash-risk context for review. |
+| `small-cap-context-dashboard.svg` | `/academy/small-cap-stocks/`, `/academy/penny-stocks/` | realistic_trading_dashboard | Show price, volume, spread, float, catalyst, and filing context together. |
+| `float-vs-outstanding-share-map.svg` | `/academy/stock-float/`, `/academy/float-vs-shares-outstanding/` | comparison_graphic | Show tradable float versus total shares outstanding. |
+| `low-float-volume-rotation.svg` | `/academy/low-float-stocks/`, `/academy/float-rotation/` | realistic_candlestick_chart | Show volume relative to float without implying a guaranteed move. |
+| `fully-diluted-share-stack.svg` | `/academy/fully-diluted-shares/`, `/academy/market-cap-vs-fully-diluted-market-cap/` | filing_flow_diagram | Show common securities that can expand the share count. |
+| `dilution-risk-filing-chain.svg` | `/academy/dilution/`, `/academy/dilution-risk/`, `/academy/how-to-spot-dilution-risk/` | filing_flow_diagram | Show cash need, shelf, offering, warrants, and future supply context. |
+| `offering-types-comparison.svg` | `/academy/stock-offerings/`, `/academy/public-offering/`, `/academy/registered-direct-offering/`, `/academy/private-placement/`, `/academy/at-the-market-offering/` | comparison_graphic | Compare offering structures without labeling any as automatically bullish/bearish. |
+| `warrant-convertible-preferred-stack.svg` | `/academy/warrants/`, `/academy/pre-funded-warrants/`, `/academy/convertible-notes/`, `/academy/preferred-stock/` | filing_flow_diagram | Show securities that may become common shares. |
+| `split-cash-going-concern-context.svg` | `/academy/reverse-split/`, `/academy/forward-split/`, `/academy/cash-runway/`, `/academy/going-concern/` | workflow_diagram | Show corporate action and cash-risk context for review. |
 
 ### Batch 4: Trade Review, Psychology, And Practice Support
 
@@ -155,13 +155,13 @@ Reason: these courses bridge naturally into Trader Intelligence and progress tra
 
 | Planned Asset | Related Lessons | Visual Type | Purpose |
 |---|---|---|---|
-| `trade-review-evidence-stack.svg` | `/learn/trade-review-and-improvement/`, `/learn/planned-vs-actual-trade-review/` | workflow_diagram | Show plan, chart, execution, risk, management, and behavior evidence. |
-| `execution-review-fill-quality.svg` | `/learn/execution-review/` | realistic_trading_dashboard | Show entry/exit timing, spread, slippage, order type, and fill review. |
-| `mistake-pattern-review-loop.svg` | `/learn/mistake-pattern-review/`, `/learn/trading-mistake-patterns/` | workflow_diagram | Show repeated mistake tags leading to one focused rule change. |
-| `trader-intelligence-review-bridge.svg` | `/learn/trader-intelligence-trade-review/` | workflow_diagram | Show Trader Intelligence as completed-trade review support, not prediction. |
-| `discipline-behavior-loop.svg` | `/learn/trading-discipline/`, `/learn/fomo-trading/`, `/learn/revenge-trading/`, `/learn/overtrading/` | risk_loop_diagram | Show trigger, impulse, action, outcome, review, and rule adjustment. |
-| `holding-cutting-averaging-review.svg` | `/learn/holding-losers-too-long/`, `/learn/cutting-winners-too-early/`, `/learn/averaging-down/` | realistic_candlestick_chart | Show trade-management behavior review without shame or signal labels. |
-| `trade-grading-scorecard.svg` | `/learn/trade-grading/`, `/learn/forward-testing-trading/` | checklist_graphic | Show process grading and sample-building review. |
+| `trade-review-evidence-stack.svg` | `/academy/trade-review-and-improvement/`, `/academy/planned-vs-actual-trade-review/` | workflow_diagram | Show plan, chart, execution, risk, management, and behavior evidence. |
+| `execution-review-fill-quality.svg` | `/academy/execution-review/` | realistic_trading_dashboard | Show entry/exit timing, spread, slippage, order type, and fill review. |
+| `mistake-pattern-review-loop.svg` | `/academy/mistake-pattern-review/`, `/academy/trading-mistake-patterns/` | workflow_diagram | Show repeated mistake tags leading to one focused rule change. |
+| `trader-intelligence-review-bridge.svg` | `/academy/trader-intelligence-trade-review/` | workflow_diagram | Show Trader Intelligence as completed-trade review support, not prediction. |
+| `discipline-behavior-loop.svg` | `/academy/trading-discipline/`, `/academy/fomo-trading/`, `/academy/revenge-trading/`, `/academy/overtrading/` | risk_loop_diagram | Show trigger, impulse, action, outcome, review, and rule adjustment. |
+| `holding-cutting-averaging-review.svg` | `/academy/holding-losers-too-long/`, `/academy/cutting-winners-too-early/`, `/academy/averaging-down/` | realistic_candlestick_chart | Show trade-management behavior review without shame or signal labels. |
+| `trade-grading-scorecard.svg` | `/academy/trade-grading/`, `/academy/forward-testing-trading/` | checklist_graphic | Show process grading and sample-building review. |
 
 ### Batch 5: Trading Foundations And Trading Styles
 
@@ -171,11 +171,11 @@ Reason: these improve course navigation and beginner comprehension, but the cont
 
 | Planned Asset | Related Lessons | Visual Type | Purpose |
 |---|---|---|---|
-| `academy-start-here-course-map.svg` | `/learn/start-here/`, `/learn/how-to-use-traderslink-academy/` | journey_map | Show courses, lessons, free navigation, progress, and continue-learning behavior. |
-| `day-vs-swing-timeframe-map.svg` | `/learn/day-trading-for-beginners/`, `/learn/day-trading-vs-swing-trading/` | comparison_graphic | Compare intraday and multi-session risk/review context. |
-| `trading-styles-selector-map.svg` | `/learn/trading-styles/`, `/learn/day-trading/`, `/learn/swing-trading/`, `/learn/scalping-stocks/` | workflow_diagram | Show styles as playbook/review categories, not trader identities. |
-| `momentum-vs-chasing-context.svg` | `/learn/momentum-trading/`, `/learn/chasing-stocks/` | realistic_candlestick_chart | Show planned momentum context versus late chase risk. |
-| `pullback-news-fade-style-context.svg` | `/learn/pullbacks-and-dip-buy-setups/`, `/learn/news-fade/`, `/learn/sell-the-news/`, `/learn/multi-day-runner/` | realistic_candlestick_chart | Show setup categories as context with failure/review labels. |
+| `academy-start-here-course-map.svg` | `/academy/start-here/`, `/academy/how-to-use-traderslink-academy/` | journey_map | Show courses, lessons, free navigation, progress, and continue-learning behavior. |
+| `day-vs-swing-timeframe-map.svg` | `/academy/day-trading-for-beginners/`, `/academy/day-trading-vs-swing-trading/` | comparison_graphic | Compare intraday and multi-session risk/review context. |
+| `trading-styles-selector-map.svg` | `/academy/trading-styles/`, `/academy/day-trading/`, `/academy/swing-trading/`, `/academy/scalping-stocks/` | workflow_diagram | Show styles as playbook/review categories, not trader identities. |
+| `momentum-vs-chasing-context.svg` | `/academy/momentum-trading/`, `/academy/chasing-stocks/` | realistic_candlestick_chart | Show planned momentum context versus late chase risk. |
+| `pullback-news-fade-style-context.svg` | `/academy/pullbacks-and-dip-buy-setups/`, `/academy/news-fade/`, `/academy/sell-the-news/`, `/academy/multi-day-runner/` | realistic_candlestick_chart | Show setup categories as context with failure/review labels. |
 
 ### Batch 6: Selective News And Filing Deepening
 
@@ -185,12 +185,12 @@ Reason: News/filings already has strong opener visuals, but selective deeper vis
 
 | Planned Asset | Related Lessons | Visual Type | Purpose |
 |---|---|---|---|
-| `company-report-filing-comparison.svg` | `/learn/sec-filings/form-10-k/`, `/learn/sec-filings/form-10-q/`, `/learn/sec-filings/form-20-f/`, `/learn/sec-filings/form-6-k/` | filing_flow_diagram | Compare annual, quarterly, and foreign issuer report context. |
-| `registration-statement-comparison.svg` | `/learn/sec-filings/form-s-1/`, `/learn/sec-filings/form-s-3/`, `/learn/sec-filings/form-f-1/`, `/learn/sec-filings/form-f-3/` | filing_flow_diagram | Compare registration statement types and resale/shelf context. |
-| `prospectus-supplement-terms-review.svg` | `/learn/sec-filings/form-424b5/`, `/learn/sec-filings/form-424b3/`, `/learn/sec-filings/form-424b4/` | filing_flow_diagram | Show prospectus supplement terms, registered securities, proceeds, and dilution context. |
-| `insider-ownership-filing-map.svg` | `/learn/sec-filings/form-3/`, `/learn/sec-filings/form-4/`, `/learn/sec-filings/form-5/`, `/learn/sec-filings/schedule-13d/`, `/learn/sec-filings/schedule-13g/` | filing_flow_diagram | Show insider and beneficial ownership filing categories. |
-| `proxy-late-filing-delisting-map.svg` | `/learn/sec-filings/form-def-14a/`, `/learn/sec-filings/form-pre-14a/`, `/learn/sec-filings/nt-10-k/`, `/learn/sec-filings/nt-10-q/`, `/learn/sec-filings/form-25/` | filing_flow_diagram | Show governance, late filing, and listing-status review context. |
-| `news-category-quality-map.svg` | `/learn/earnings-news/`, `/learn/fda-news-stocks/`, `/learn/clinical-trial-news/`, `/learn/contract-news-stocks/`, `/learn/partnership-news-stocks/`, `/learn/merger-news-stocks/` | realistic_trading_dashboard | Compare news category detail checks and reaction review. |
+| `company-report-filing-comparison.svg` | `/academy/sec-filings/form-10-k/`, `/academy/sec-filings/form-10-q/`, `/academy/sec-filings/form-20-f/`, `/academy/sec-filings/form-6-k/` | filing_flow_diagram | Compare annual, quarterly, and foreign issuer report context. |
+| `registration-statement-comparison.svg` | `/academy/sec-filings/form-s-1/`, `/academy/sec-filings/form-s-3/`, `/academy/sec-filings/form-f-1/`, `/academy/sec-filings/form-f-3/` | filing_flow_diagram | Compare registration statement types and resale/shelf context. |
+| `prospectus-supplement-terms-review.svg` | `/academy/sec-filings/form-424b5/`, `/academy/sec-filings/form-424b3/`, `/academy/sec-filings/form-424b4/` | filing_flow_diagram | Show prospectus supplement terms, registered securities, proceeds, and dilution context. |
+| `insider-ownership-filing-map.svg` | `/academy/sec-filings/form-3/`, `/academy/sec-filings/form-4/`, `/academy/sec-filings/form-5/`, `/academy/sec-filings/schedule-13d/`, `/academy/sec-filings/schedule-13g/` | filing_flow_diagram | Show insider and beneficial ownership filing categories. |
+| `proxy-late-filing-delisting-map.svg` | `/academy/sec-filings/form-def-14a/`, `/academy/sec-filings/form-pre-14a/`, `/academy/sec-filings/nt-10-k/`, `/academy/sec-filings/nt-10-q/`, `/academy/sec-filings/form-25/` | filing_flow_diagram | Show governance, late filing, and listing-status review context. |
+| `news-category-quality-map.svg` | `/academy/earnings-news/`, `/academy/fda-news-stocks/`, `/academy/clinical-trial-news/`, `/academy/contract-news-stocks/`, `/academy/partnership-news-stocks/`, `/academy/merger-news-stocks/` | realistic_trading_dashboard | Compare news category detail checks and reaction review. |
 
 ## Visuals Not Required Before UI Build
 

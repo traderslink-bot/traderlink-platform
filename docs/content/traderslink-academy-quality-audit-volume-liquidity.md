@@ -10,20 +10,20 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/volume.md`
-- `docs/content/drafts/learn/relative-volume.md`
-- `docs/content/drafts/learn/relative-volume-rvol.md`
-- `docs/content/drafts/learn/volume-spike.md`
-- `docs/content/drafts/learn/liquidity.md`
-- `docs/content/drafts/learn/dollar-volume.md`
-- `docs/content/drafts/learn/spread.md`
-- `docs/content/drafts/learn/bid-and-ask.md`
-- `docs/content/drafts/learn/slippage.md`
-- `docs/content/drafts/learn/market-orders-vs-limit-orders.md`
-- `docs/content/drafts/learn/level-2.md`
-- `docs/content/drafts/learn/time-and-sales.md`
-- `docs/content/drafts/learn/volume-by-price.md`
-- `docs/content/drafts/learn/unusual-volume.md`
+- `academy/volume.md`
+- `academy/relative-volume.md`
+- `academy/relative-volume-rvol.md`
+- `academy/volume-spike.md`
+- `academy/liquidity.md`
+- `academy/dollar-volume.md`
+- `academy/spread.md`
+- `academy/bid-and-ask.md`
+- `academy/slippage.md`
+- `academy/market-orders-vs-limit-orders.md`
+- `academy/level-2.md`
+- `academy/time-and-sales.md`
+- `academy/volume-by-price.md`
+- `academy/unusual-volume.md`
 
 Related planning files:
 
@@ -57,20 +57,20 @@ The course does not need a broad rewrite. The useful work during this pass was t
 
 | Lesson | Quality Result | Depth | App Bridge Result | Edit Needed |
 |---|---|---|---|---|
-| `/learn/volume/` | Pass after cleanup | Strong foundation lesson for participation, expansion, dry-up, and fading volume. | Supporting bridge to Trade Review and Analytics. | Replaced journal-prompt wording with review-prompt wording. |
-| `/learn/relative-volume/` | Pass after cleanup | Strong comparison lesson showing why raw volume needs baseline context. | Supporting bridge to Trade Review, Analytics, and News/Filing Review. | Replaced journal wording in review prompts and FAQ. |
-| `/learn/relative-volume-rvol/` | Pass after cleanup | Good scanner-style RVOL lesson with time-of-day and platform-context caution. | Supporting bridge to Analytics and Trade Review. | Replaced journaling wording with review wording. |
-| `/learn/volume-spike/` | Pass after cleanup | Good sudden-activity lesson with follow-through, fade, and chase-risk examples. | Supporting bridge to Trade Review, Coaching, and Execution Review. | Replaced journal wording in review prompts and FAQ. |
-| `/learn/liquidity/` | Pass after cleanup | Strong execution-context lesson covering clean versus thin markets. | Core bridge to Execution Review and Risk Review. | Replaced journal-prompt wording with review-prompt wording. |
-| `/learn/dollar-volume/` | Pass after cleanup | Good traded-value lesson that corrects share-volume-only thinking. | Supporting bridge to Execution Review and Analytics. | Fixed review-notes grammar and review-prompt wording. |
-| `/learn/spread/` | Pass after cleanup | Strong spread-as-cost lesson with hidden execution cost. | Core bridge to Execution Review and Risk Review. | Replaced journal wording with after-trade/review-notes wording. |
-| `/learn/bid-and-ask/` | Pass after cleanup | Good quote mechanics lesson connecting last price to available execution. | Core bridge to Execution Review. | Replaced journal-prompt wording with review-prompt wording. |
-| `/learn/slippage/` | Pass after cleanup | Strong planned-versus-actual fill lesson. | Core bridge to Execution Review and Risk Review. | Replaced journal-prompt wording with review-prompt wording. |
-| `/learn/market-orders-vs-limit-orders/` | Pass after cleanup | Strong order-type tradeoff lesson with speed versus price-control framing. | Core bridge to Execution Review. | Replaced journal wording in review prompts and FAQ. |
-| `/learn/level-2/` | Pass after cleanup | Good order-book lesson that warns visible depth can disappear. | Core bridge to Execution Review and Coaching. | Replaced journal-prompt wording with review-prompt wording. |
-| `/learn/time-and-sales/` | Pass after cleanup | Good tape lesson focused on actual prints rather than prediction. | Core bridge to Execution Review and Analytics. | Replaced journal-prompt wording with review-prompt wording. |
-| `/learn/volume-by-price/` | Pass after cleanup | Good price-zone participation lesson linking volume profile with levels. | Supporting bridge to Trade Review and Playbook Builder. | Replaced journal wording in review prompts and FAQ. |
-| `/learn/unusual-volume/` | Pass after cleanup | Strong scanner-context capstone connecting abnormal activity with catalyst, liquidity, spread, and fade risk. | Supporting bridge to Trade Review, News/Filing Review, Coaching, and Analytics. | Replaced journal wording with review wording. |
+| `/academy/volume/` | Pass after cleanup | Strong foundation lesson for participation, expansion, dry-up, and fading volume. | Supporting bridge to Trade Review and Analytics. | Replaced journal-prompt wording with review-prompt wording. |
+| `/academy/relative-volume/` | Pass after cleanup | Strong comparison lesson showing why raw volume needs baseline context. | Supporting bridge to Trade Review, Analytics, and News/Filing Review. | Replaced journal wording in review prompts and FAQ. |
+| `/academy/relative-volume-rvol/` | Pass after cleanup | Good scanner-style RVOL lesson with time-of-day and platform-context caution. | Supporting bridge to Analytics and Trade Review. | Replaced journaling wording with review wording. |
+| `/academy/volume-spike/` | Pass after cleanup | Good sudden-activity lesson with follow-through, fade, and chase-risk examples. | Supporting bridge to Trade Review, Coaching, and Execution Review. | Replaced journal wording in review prompts and FAQ. |
+| `/academy/liquidity/` | Pass after cleanup | Strong execution-context lesson covering clean versus thin markets. | Core bridge to Execution Review and Risk Review. | Replaced journal-prompt wording with review-prompt wording. |
+| `/academy/dollar-volume/` | Pass after cleanup | Good traded-value lesson that corrects share-volume-only thinking. | Supporting bridge to Execution Review and Analytics. | Fixed review-notes grammar and review-prompt wording. |
+| `/academy/spread/` | Pass after cleanup | Strong spread-as-cost lesson with hidden execution cost. | Core bridge to Execution Review and Risk Review. | Replaced journal wording with after-trade/review-notes wording. |
+| `/academy/bid-and-ask/` | Pass after cleanup | Good quote mechanics lesson connecting last price to available execution. | Core bridge to Execution Review. | Replaced journal-prompt wording with review-prompt wording. |
+| `/academy/slippage/` | Pass after cleanup | Strong planned-versus-actual fill lesson. | Core bridge to Execution Review and Risk Review. | Replaced journal-prompt wording with review-prompt wording. |
+| `/academy/market-orders-vs-limit-orders/` | Pass after cleanup | Strong order-type tradeoff lesson with speed versus price-control framing. | Core bridge to Execution Review. | Replaced journal wording in review prompts and FAQ. |
+| `/academy/level-2/` | Pass after cleanup | Good order-book lesson that warns visible depth can disappear. | Core bridge to Execution Review and Coaching. | Replaced journal-prompt wording with review-prompt wording. |
+| `/academy/time-and-sales/` | Pass after cleanup | Good tape lesson focused on actual prints rather than prediction. | Core bridge to Execution Review and Analytics. | Replaced journal-prompt wording with review-prompt wording. |
+| `/academy/volume-by-price/` | Pass after cleanup | Good price-zone participation lesson linking volume profile with levels. | Supporting bridge to Trade Review and Playbook Builder. | Replaced journal wording in review prompts and FAQ. |
+| `/academy/unusual-volume/` | Pass after cleanup | Strong scanner-context capstone connecting abnormal activity with catalyst, liquidity, spread, and fade risk. | Supporting bridge to Trade Review, News/Filing Review, Coaching, and Analytics. | Replaced journal wording with review wording. |
 
 ## App Bridge Map
 
@@ -146,8 +146,8 @@ The existing 14-lesson sequence covers the major course concepts well:
 
 Future optional additions could be considered during a later master sequence pass:
 
-- `/learn/volume-vs-liquidity-vs-volatility/`
-- `/learn/execution-environment-checklist/`
+- `/academy/volume-vs-liquidity-vs-volatility/`
+- `/academy/execution-environment-checklist/`
 
 Do not create those now unless a later audit finds that users need a bridge lesson between activity metrics and execution risk.
 
@@ -167,20 +167,20 @@ Future Accuracy/Source Audit should review lessons touching:
 
 Edited:
 
-- `docs/content/drafts/learn/volume.md`
-- `docs/content/drafts/learn/relative-volume.md`
-- `docs/content/drafts/learn/relative-volume-rvol.md`
-- `docs/content/drafts/learn/volume-spike.md`
-- `docs/content/drafts/learn/unusual-volume.md`
-- `docs/content/drafts/learn/liquidity.md`
-- `docs/content/drafts/learn/dollar-volume.md`
-- `docs/content/drafts/learn/spread.md`
-- `docs/content/drafts/learn/bid-and-ask.md`
-- `docs/content/drafts/learn/slippage.md`
-- `docs/content/drafts/learn/market-orders-vs-limit-orders.md`
-- `docs/content/drafts/learn/level-2.md`
-- `docs/content/drafts/learn/time-and-sales.md`
-- `docs/content/drafts/learn/volume-by-price.md`
+- `academy/volume.md`
+- `academy/relative-volume.md`
+- `academy/relative-volume-rvol.md`
+- `academy/volume-spike.md`
+- `academy/unusual-volume.md`
+- `academy/liquidity.md`
+- `academy/dollar-volume.md`
+- `academy/spread.md`
+- `academy/bid-and-ask.md`
+- `academy/slippage.md`
+- `academy/market-orders-vs-limit-orders.md`
+- `academy/level-2.md`
+- `academy/time-and-sales.md`
+- `academy/volume-by-price.md`
 
 Edits were limited to:
 

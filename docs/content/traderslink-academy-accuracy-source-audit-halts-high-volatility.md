@@ -10,13 +10,13 @@ Status: complete
 
 ## Files Reviewed
 
-- `docs/content/drafts/learn/trading-halts.md`
-- `docs/content/drafts/learn/volatility-halts.md`
-- `docs/content/drafts/learn/halt-resume.md`
-- `docs/content/drafts/learn/market-wide-circuit-breakers.md`
-- `docs/content/drafts/learn/fast-spread-risk.md`
-- `docs/content/drafts/learn/low-float-volatility.md`
-- `docs/content/drafts/learn/high-volatility-trade-review.md`
+- `academy/trading-halts.md`
+- `academy/volatility-halts.md`
+- `academy/halt-resume.md`
+- `academy/market-wide-circuit-breakers.md`
+- `academy/fast-spread-risk.md`
+- `academy/low-float-volatility.md`
+- `academy/high-volatility-trade-review.md`
 
 ## Official Sources Used
 
@@ -55,11 +55,11 @@ No broad rewrite was needed. The main source-audit work was adding precise offic
 
 | Lesson | Edit |
 |---|---|
-| `/learn/trading-halts/` | Added a source-check note distinguishing FINRA trading halts/delays, exchange-listed stock halts, SEC trading suspensions, and OTC post-suspension quotation risk. Added Nasdaq halt codes to official references. |
-| `/learn/volatility-halts/` | Added a source-check note explaining LULD price bands, NMS stock coverage, regular-hours context, 15-second Limit State, five-minute pause, possible extension, and exceptions/official-rule verification. |
-| `/learn/halt-resume/` | Added a source-check note warning that resume procedures can depend on primary-listing-exchange rules, auctions, collars, order handling, and timing near the close. |
-| `/learn/market-wide-circuit-breakers/` | Added source-checked timing details for Level 1/Level 2 before 3:25 p.m. ET and Level 3 rest-of-day halt treatment. Updated official reference links. |
-| `/learn/low-float-volatility/` | Added a source-check note clarifying that low float is not an official halt category and that listed-stock volatility pauses relate to market-structure rules such as LULD bands and limit states. |
+| `/academy/trading-halts/` | Added a source-check note distinguishing FINRA trading halts/delays, exchange-listed stock halts, SEC trading suspensions, and OTC post-suspension quotation risk. Added Nasdaq halt codes to official references. |
+| `/academy/volatility-halts/` | Added a source-check note explaining LULD price bands, NMS stock coverage, regular-hours context, 15-second Limit State, five-minute pause, possible extension, and exceptions/official-rule verification. |
+| `/academy/halt-resume/` | Added a source-check note warning that resume procedures can depend on primary-listing-exchange rules, auctions, collars, order handling, and timing near the close. |
+| `/academy/market-wide-circuit-breakers/` | Added source-checked timing details for Level 1/Level 2 before 3:25 p.m. ET and Level 3 rest-of-day halt treatment. Updated official reference links. |
+| `/academy/low-float-volatility/` | Added a source-check note clarifying that low float is not an official halt category and that listed-stock volatility pauses relate to market-structure rules such as LULD bands and limit states. |
 
 ## Source-Sensitive Review Table
 
@@ -93,9 +93,9 @@ No urgent source correction is deferred.
 
 Later optional improvements:
 
-- Add `/learn/luld-bands/` if the Academy needs a deeper market-structure lesson on price bands, reference prices, Limit State, Straddle State, tiering, and exclusions.
-- Add `/learn/sec-trading-suspensions/` if the News/Filings path should separate SEC suspensions from exchange halt basics.
-- Add `/learn/halt-codes/` if future UI needs a reference-style lesson for Nasdaq/NYSE/FINRA halt codes.
+- Add `/academy/luld-bands/` if the Academy needs a deeper market-structure lesson on price bands, reference prices, Limit State, Straddle State, tiering, and exclusions.
+- Add `/academy/sec-trading-suspensions/` if the News/Filings path should separate SEC suspensions from exchange halt basics.
+- Add `/academy/halt-codes/` if future UI needs a reference-style lesson for Nasdaq/NYSE/FINRA halt codes.
 
 These are optional. The current course is accurate enough for the Academy flow without turning a beginner/intermediate course into a rulebook.
 

@@ -10,20 +10,20 @@ Status: complete
 
 Reviewed the Trading Foundations course and source-sensitive bridge lessons:
 
-- `docs/content/drafts/learn/start-here.md`
-- `docs/content/drafts/learn/how-to-use-traderslink-academy.md`
-- `docs/content/drafts/learn/what-is-a-stock-and-how-does-a-trade-work.md`
-- `docs/content/drafts/learn/stock-market-sessions-and-order-flow-basics.md`
-- `docs/content/drafts/learn/day-trading-for-beginners.md`
-- `docs/content/drafts/learn/day-trading-vs-swing-trading.md`
-- `docs/content/drafts/learn/trading-plan.md`
-- `docs/content/drafts/learn/trading-rules.md`
-- `docs/content/drafts/learn/risk-management.md`
-- `docs/content/drafts/learn/position-sizing.md`
-- `docs/content/drafts/learn/stop-loss.md`
-- `docs/content/drafts/learn/trade-risk-review.md`
-- `docs/content/drafts/learn/short-selling-basics.md`
-- `docs/content/drafts/learn/win-rate-reward-risk-and-expectancy.md`
+- `academy/start-here.md`
+- `academy/how-to-use-traderslink-academy.md`
+- `academy/what-is-a-stock-and-how-does-a-trade-work.md`
+- `academy/stock-market-sessions-and-order-flow-basics.md`
+- `academy/day-trading-for-beginners.md`
+- `academy/day-trading-vs-swing-trading.md`
+- `academy/trading-plan.md`
+- `academy/trading-rules.md`
+- `academy/risk-management.md`
+- `academy/position-sizing.md`
+- `academy/stop-loss.md`
+- `academy/trade-risk-review.md`
+- `academy/short-selling-basics.md`
+- `academy/win-rate-reward-risk-and-expectancy.md`
 
 The formal Trading Foundations course has 12 lessons. `short-selling-basics.md` and `win-rate-reward-risk-and-expectancy.md` were included because they are beginner bridge lessons with source-sensitive risk, margin, execution, or math framing.
 
@@ -49,10 +49,10 @@ No major rewrite was needed.
 
 | Lesson | Edit |
 |---|---|
-| `/learn/what-is-a-stock-and-how-does-a-trade-work/` | Added a source check clarifying that market orders prioritize execution but not price, limit orders control price but may not execute, and broker routing/market-center mechanics can affect fills. |
-| `/learn/stock-market-sessions-and-order-flow-basics/` | Added a source check covering regular-hours framing and extended-hours risks: thinner liquidity, wider spreads, greater volatility, uncertain prices, and broker-specific access. |
-| `/learn/day-trading-for-beginners/` | Added a source check clarifying that FINRA's margin-rule definition and broker/account restrictions matter, and that the lesson is process/risk education rather than account-rule advice. |
-| `/learn/short-selling-basics/` | Added a source check tying short-selling mechanics and risk language to SEC Regulation SHO investor materials. |
+| `/academy/what-is-a-stock-and-how-does-a-trade-work/` | Added a source check clarifying that market orders prioritize execution but not price, limit orders control price but may not execute, and broker routing/market-center mechanics can affect fills. |
+| `/academy/stock-market-sessions-and-order-flow-basics/` | Added a source check covering regular-hours framing and extended-hours risks: thinner liquidity, wider spreads, greater volatility, uncertain prices, and broker-specific access. |
+| `/academy/day-trading-for-beginners/` | Added a source check clarifying that FINRA's margin-rule definition and broker/account restrictions matter, and that the lesson is process/risk education rather than account-rule advice. |
+| `/academy/short-selling-basics/` | Added a source check tying short-selling mechanics and risk language to SEC Regulation SHO investor materials. |
 
 ## Source-Sensitive Findings
 
@@ -115,8 +115,8 @@ No hard app route links were added.
 
 These are useful future lessons or later audit items, but they do not block this course:
 
-- A dated `/learn/day-trading-margin-rules/` lesson after the 2026 FINRA rule-change path is stable enough to describe without becoming outdated quickly.
-- A deeper `/learn/order-routing-and-execution/` lesson if the product wants an advanced execution module beyond market/limit/slippage basics.
+- A dated `/academy/day-trading-margin-rules/` lesson after the 2026 FINRA rule-change path is stable enough to describe without becoming outdated quickly.
+- A deeper `/academy/order-routing-and-execution/` lesson if the product wants an advanced execution module beyond market/limit/slippage basics.
 - A future Pass 3 source audit for Volume, Liquidity And Order Flow, because that course contains the highest concentration of execution mechanics after Trading Foundations.
 
 ## Recommended Next Action
