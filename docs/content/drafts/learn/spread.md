@@ -217,9 +217,9 @@ This checklist helps connect the setup to the actual execution.
 
 ## Apply This In Review
 
-Spread review belongs in the journal whenever execution was worse than expected.
+Spread review belongs in after-trade notes whenever execution was worse than expected.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What was the spread before entry?
 - What was the spread before exit?
@@ -285,7 +285,7 @@ Spreads often widen when liquidity is thin, volatility is high, news hits, the s
 
 A wide spread can make execution much harder and can make planned risk unrealistic, especially if the trader uses too much size or a poor order type.
 
-### Should traders track spread in a journal?
+### Should traders track spread in review notes?
 
 Yes, especially when fills are worse than expected. Spread review can reveal execution problems that a chart-only review misses.
 

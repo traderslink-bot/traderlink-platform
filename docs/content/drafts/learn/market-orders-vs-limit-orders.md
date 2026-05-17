@@ -215,7 +215,7 @@ This review helps connect execution behavior to the trade result.
 
 Order review helps traders find execution habits that may not show up from P&L alone.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What order type did I use?
 - Why did I choose it?
@@ -280,7 +280,7 @@ Yes. Market orders can fill worse than expected in wide-spread, thin, fast-movin
 
 Yes. A limit order may not fill if the market does not trade at the chosen price or better.
 
-### Should traders track order type in a journal?
+### Should traders track order type in review notes?
 
 Yes. Order type can explain slippage, missed fills, late entries, poor exits, and repeated execution mistakes.
 

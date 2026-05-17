@@ -219,9 +219,9 @@ The checklist is meant to connect dollar volume with real execution quality.
 
 ## Apply This In Review
 
-Dollar volume can make a review notes more specific because it gives liquidity context beyond share count.
+Dollar volume can make review notes more specific because it gives liquidity context beyond share count.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What was approximate dollar volume at entry?
 - What was approximate dollar volume at exit?

@@ -222,7 +222,7 @@ The checklist is not about blaming liquidity for every loss. It is about making 
 
 Liquidity review can help traders understand whether a trade was managed poorly, selected poorly, or simply hard to execute cleanly.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What was the spread when I entered?
 - What was the spread when I exited?

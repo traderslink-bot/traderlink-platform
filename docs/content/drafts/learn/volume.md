@@ -228,7 +228,7 @@ The checklist is not meant to approve or reject a trade. It is meant to make rev
 
 When reviewing volume, write down what the volume actually did instead of only saying "volume was high."
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What was normal volume for this stock before the trade?
 - What changed when I entered?

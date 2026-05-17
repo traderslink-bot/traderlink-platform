@@ -212,7 +212,7 @@ This checklist helps separate useful activity from emotional reaction.
 
 Volume-spike review can show whether a trader is reacting to activity or trading a structured setup.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What candle created the spike?
 - What was the catalyst or level context?
@@ -279,7 +279,7 @@ No. A volume spike is a sudden short-term burst. Relative volume compares curren
 
 Traders watch volume spikes because they can show sudden attention, catalyst reaction, liquidity changes, or volatility.
 
-### Should volume spikes be tracked in a journal?
+### Should volume spikes be tracked in review notes?
 
 Yes, if the spike affected the trade idea. Reviewing spike context can help traders identify chasing, late entries, and execution problems.
 

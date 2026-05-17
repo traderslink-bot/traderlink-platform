@@ -88,7 +88,7 @@ Recommended order for future runs:
 |---:|---|---|---|---|---|---|---|---|
 | 1 | Trading Foundations | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; start here because beginner clarity affects the whole Academy. |
 | 2 | Chart Reading And Market Structure | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; included candlestick and chart-pattern submodules with a restrained app bridge map. |
-| 3 | Volume, Liquidity And Order Flow | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to execution review. |
+| 3 | Volume, Liquidity And Order Flow | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; strong restrained bridge map to execution review, trade review, risk review, and analytics. |
 | 4 | Risk Management And Trade Planning | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to risk review and analytics. |
 | 5 | Technical Indicators And Tools | not_started | not_started | not_started | not_started | not_started | not_started | Needs visual batch and careful anti-signal language. |
 | 6 | Trading Styles And Playbooks | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to playbook building and setup samples. |
@@ -197,19 +197,20 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 1: Lesson-Level Quality Audit** for **Volume, Liquidity And Order Flow**.
+Continue with **Pass 1: Lesson-Level Quality Audit** for **Risk Management And Trade Planning**.
 
 Reason:
 
 - Trading Foundations Pass 1 is complete.
 - Chart Reading And Market Structure Pass 1 is complete.
-- Volume, liquidity, spread, slippage, Level 2, and tape-reading lessons are the next dependency layer after users learn levels, candles, and chart structure.
-- This course has natural app tie-ins to Execution Review, Trade Review, Risk Review, and Analytics, but the bridge should remain review-focused and not become product advertising.
+- Volume, Liquidity And Order Flow Pass 1 is complete.
+- Risk Management And Trade Planning is the next high-value course because risk should be checked before users move into indicators, styles, catalysts, and high-volatility topics.
+- This course has natural app tie-ins to Risk Review, Trade Review, Analytics, Coaching, and Execution Review, but the bridge should remain review-focused and not become product advertising.
 
 Output should include:
 
-- A Volume, Liquidity And Order Flow lesson-level quality audit.
+- A Risk Management And Trade Planning lesson-level quality audit.
 - Any small markdown edits needed.
-- App bridge map for volume, liquidity, order-flow, spread, slippage, Level 2, time-and-sales, and volume-by-price lessons.
+- App bridge map for trading plan, rules, risk management, position sizing, risk/reward, stops, max loss, daily loss limits, trade management, profit protection, overnight risk, holding through news, expectancy, and risk review lessons.
 - Tracker and handoff update.
 - Commit.

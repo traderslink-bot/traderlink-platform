@@ -204,7 +204,7 @@ The checklist helps turn fast tape into structured review.
 
 Tape review can help traders understand whether entries and exits matched actual order flow.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What were prints doing when I entered?
 - Were prints near the ask, bid, or between them?

@@ -206,7 +206,7 @@ The checklist keeps volume by price tied to behavior, not prediction.
 
 Volume by price can make trade review more specific.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - Was my entry near a high-volume price area?
 - Was I trading into a crowded zone?
@@ -271,7 +271,7 @@ No. It can help identify areas worth reviewing, but it does not guarantee that p
 
 A low-volume area is a price range where relatively little trading occurred. Price may sometimes move quickly through these areas, but context still matters.
 
-### How can traders review volume by price in a journal?
+### How can traders review volume by price in review notes?
 
 Traders can note whether entries and exits happened near high-volume zones, low-volume areas, support, resistance, or previous rejection areas, then compare those notes with execution quality and outcome.
 

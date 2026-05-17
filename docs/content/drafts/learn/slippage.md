@@ -207,7 +207,7 @@ This checklist helps keep execution review concrete.
 
 Slippage review should compare the planned trade with the actual fills.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What was my intended entry or exit price?
 - What was my actual fill?

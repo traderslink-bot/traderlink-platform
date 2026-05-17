@@ -219,7 +219,7 @@ The point is to make the review more specific than "it had high volume."
 
 After trading a high-relative-volume stock, record the context that made the activity unusual.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What was relative volume when I first noticed the stock?
 - What was relative volume when I entered?
@@ -290,7 +290,7 @@ Small-cap traders watch relative volume because unusual activity can appear when
 
 Yes. High relative volume can bring fast movement, volatility, halts, wide spreads, crowded trades, and sharp fades.
 
-### Should traders track relative volume in a journal?
+### Should traders track relative volume in review notes?
 
 Yes, if unusual volume was part of the trade idea. Tracking it can help traders review whether relative volume supported the setup or encouraged chasing.
 

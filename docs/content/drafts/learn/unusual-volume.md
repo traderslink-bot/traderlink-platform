@@ -253,9 +253,9 @@ This turns an exciting scanner result into a calmer review process.
 
 ## Apply This In Review
 
-Unusual-volume trades are especially useful to journal because they often expose emotional decision patterns.
+Unusual-volume trades are especially useful to review because they often expose emotional decision patterns.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What scanner or source brought the stock to my attention?
 - What was unusual about the volume?

@@ -206,7 +206,7 @@ The checklist helps turn order-book observation into execution review.
 
 Level 2 review can help traders understand whether execution conditions supported the trade.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What did Level 2 look like before entry?
 - Was visible depth strong enough for my size?

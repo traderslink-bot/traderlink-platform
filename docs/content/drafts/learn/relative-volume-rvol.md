@@ -205,9 +205,9 @@ This checklist helps turn scanner excitement into trade review.
 
 ## Apply This In Review
 
-When journaling RVOL, record the number and the context behind it.
+When reviewing RVOL, record the number and the context behind it.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - Which platform or scanner showed RVOL?
 - What did that platform compare against?

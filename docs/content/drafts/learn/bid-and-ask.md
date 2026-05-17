@@ -210,7 +210,7 @@ The checklist helps connect the chart to actual fill quality.
 
 Bid and ask review helps traders understand execution quality.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What were the bid and ask before entry?
 - Did I enter near the ask or get a controlled fill?
