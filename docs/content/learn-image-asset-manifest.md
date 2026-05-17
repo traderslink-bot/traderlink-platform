@@ -82,6 +82,10 @@ journey_map
 | `public/images/learn/chart-reading/previous-day-high-failed-breakout.svg` | `/learn/previous-day-high-low/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a break above previous day high failing back below the level as review context. | Failed Breakout At Previous Day High section. | Candlestick chart showing price breaking above previous day high and failing back below the level. | editor_verified | Supports failed-PDH-breakout review, uses realistic candles, highlights the PDH zone, includes volume context, and avoids reversal guarantee language. | `0f638881` |
 | `public/images/learn/chart-reading/premarket-high-low-range-map.svg` | `/learn/premarket-high-low/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show premarket high and premarket low mapped before the regular session open. | Quick Definition section. | Candlestick chart showing premarket high and premarket low mapped before the regular session open. | editor_verified | Supports PMH/PML range-map education, uses realistic red and green candles, premarket/open context, volume bars, and avoids signal language. | `a1450f3c` |
 | `public/images/learn/chart-reading/premarket-high-failed-breakout.svg` | `/learn/premarket-high-low/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a break above premarket high failing back below after the open as review context. | Failed Breakout At Premarket High section. | Candlestick chart showing price breaking above premarket high and failing back below after the open. | editor_verified | Supports failed-PMH-breakout review, uses realistic candles, highlights the PMH zone, includes volume context, and avoids reversal guarantee language. | `a1450f3c` |
+| `public/images/learn/chart-reading/high-of-day-level-map.svg` | `/learn/high-of-day/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show high of day as an intraday reference level with PMH and PDH context. | Quick Definition section. | Candlestick chart showing high of day as an intraday reference level with nearby PMH and PDH context. | editor_verified | Supports HOD reference-level education, uses realistic candles, nearby context levels, volume bars, and avoids signal language. | `b31325b3` |
+| `public/images/learn/chart-reading/high-of-day-failed-breakout.svg` | `/learn/high-of-day/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a break above high of day failing back below the level as review context. | Failed HOD Breakout section. | Candlestick chart showing price breaking above high of day and failing back below the level. | editor_verified | Supports failed-HOD-breakout review, uses realistic candles, highlights the HOD zone, includes volume context, and avoids reversal guarantee language. | `b31325b3` |
+| `public/images/learn/chart-reading/low-of-day-level-map.svg` | `/learn/low-of-day/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show low of day as an intraday reference level with PML and PDL context. | Quick Definition section. | Candlestick chart showing low of day as an intraday reference level with nearby PML and PDL context. | editor_verified | Supports LOD reference-level education, uses realistic candles, nearby context levels, volume bars, and avoids signal language. | `b31325b3` |
+| `public/images/learn/chart-reading/low-of-day-failed-breakdown.svg` | `/learn/low-of-day/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a break below low of day reclaiming back above the level as review context. | Failed LOD Breakdown section. | Candlestick chart showing price breaking below low of day and reclaiming back above the level. | editor_verified | Supports failed-LOD-breakdown review, uses realistic candles, highlights the LOD zone, includes volume context, and avoids reversal guarantee language. | `b31325b3` |
 
 ## Editor Verification Summary
 
@@ -224,11 +228,21 @@ Premarket high/low SVG verification:
 - The visuals are wired to article sections where they add learning value.
 - The batch is appropriate for the premarket high/low article.
 
+High of day and low of day SVG verification:
+
+- All four visuals support the actual HOD/LOD lessons.
+- The HOD level map shows high of day with PMH, PDH, volume, and extension context.
+- The failed HOD breakout visual shows price failing back below HOD as review context, not as a reversal guarantee.
+- The LOD level map shows low of day with PML, PDL, volume, and lower-high context.
+- The failed LOD breakdown visual shows price reclaiming LOD as review context, not as a reversal guarantee.
+- Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. High Of Day article: high-of-day reference level, failed HOD breakout/rejection, and extended HOD chase-risk review.
+1. New High Of Day article: NHOD alert context, hold/fail review, and extension/chase-risk review.
 2. Breakdown article: clean breakdown, failed breakdown/reclaim, breakdown with volume context.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
