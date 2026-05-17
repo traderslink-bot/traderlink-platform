@@ -73,6 +73,7 @@ Review
 | Chart Reading article upgrade 10 | complete | `/learn/break-of-structure/` upgraded with uptrend and downtrend structure-break visuals. |
 | Chart Reading article upgrade 11 | complete | `/learn/swing-highs-and-swing-lows/` upgraded with a realistic swing-point map visual. |
 | Chart Reading article upgrade 12 | complete | `/learn/higher-highs-higher-lows/` upgraded with realistic uptrend-structure and higher-low-failure visuals. |
+| Chart Reading article upgrade 13 | complete | `/learn/lower-highs-lower-lows/` upgraded with realistic downtrend-structure and lower-high-reclaim visuals. |
 | Learn hub website build | not_started | Codex should not build until explicitly requested. |
 
 ## Track Upgrade Order
@@ -80,7 +81,7 @@ Review
 | Order | Learning Track | Status | Priority | Notes |
 |---:|---|---|---:|---|
 | 1 | Start Here For New Traders | not_started | 1 | Foundation path for new users. |
-| 2 | Chart Reading And Market Structure | in_progress | 1 | Support/resistance, level drawing, support/resistance levels, key levels, breakout trading, level breakout, level reclaim, price rejection, break of structure, swing highs/lows, and higher-high/higher-low articles complete. Continue with downtrend structure, breakdown, fakeout, and intraday level concepts. |
+| 2 | Chart Reading And Market Structure | in_progress | 1 | Support/resistance, level drawing, support/resistance levels, key levels, breakout trading, level breakout, level reclaim, price rejection, break of structure, swing highs/lows, higher-high/higher-low, and lower-high/lower-low articles complete. Continue with pivot levels, breakdown, fakeout, and intraday level concepts. |
 | 3 | News, Catalysts, Filings, And Dilution | not_started | 1 | High-value TradersLink differentiator. |
 | 4 | Risk, Discipline, And Psychology | not_started | 1 | Important coaching/retention path. |
 | 5 | Execution And Trade Review | not_started | 1 | Strongest Trader Intelligence bridge. |
@@ -124,7 +125,8 @@ Alternative future gold-standard article:
 | /learn/break-of-structure/ | docs/content/drafts/learn/break-of-structure.md | Chart Reading And Market Structure | Execution And Trade Review | Advanced | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed break of structure upgrade. Added learning path metadata, previous/next metadata, uptrend structure-break visual, downtrend structure-break visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `d03cf796` |
 | /learn/swing-highs-and-swing-lows/ | docs/content/drafts/learn/swing-highs-and-swing-lows.md | Chart Reading And Market Structure | Start Here For New Traders | Foundation | complete | full_upgrade | 1 realistic SVG chart diagram created and wired to content | No | 1 | Completed swing highs/lows upgrade. Added learning path metadata, previous/next metadata, swing-point map visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `94fabc3b` |
 | /learn/higher-highs-higher-lows/ | docs/content/drafts/learn/higher-highs-higher-lows.md | Chart Reading And Market Structure | Start Here For New Traders, Execution And Trade Review | Practical | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed higher-highs/higher-lows upgrade. Added learning path metadata, previous/next metadata, uptrend structure visual, higher-low failure visual, realistic examples, extension-risk coaching, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `fece7bfe` |
-| /learn/lower-highs-lower-lows/ | docs/content/drafts/learn/lower-highs-lower-lows.md | Chart Reading And Market Structure | Start Here For New Traders, Execution And Trade Review | Practical | not_started | full_upgrade | 1 to 2 realistic SVG chart diagrams | No | 1 | Should teach downtrend structure, lower-high review, support pressure, breakdown extension risk, and what shifts the structure. |  |
+| /learn/lower-highs-lower-lows/ | docs/content/drafts/learn/lower-highs-lower-lows.md | Chart Reading And Market Structure | Start Here For New Traders, Execution And Trade Review | Practical | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed lower-highs/lower-lows upgrade. Added learning path metadata, previous/next metadata, downtrend structure visual, lower-high reclaim visual, realistic examples, support-pressure coaching, breakdown extension-risk coaching, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `65a5747d` |
+| /learn/pivot-levels/ | docs/content/drafts/learn/pivot-levels.md | Chart Reading And Market Structure | Day Trading Workflow, Execution And Trade Review | Practical | not_started | full_upgrade | 1 to 2 realistic SVG chart diagrams | No | 1 | Should teach pivot levels as reference areas, price reaction review, failed pivot reclaims/rejections, and how to avoid treating pivots as automatic signals. |  |
 | /learn/sec-filings/ | docs/content/drafts/learn/sec-filings.md | News, Catalysts, Filings, And Dilution | Small-Cap, Float, And Short Squeeze Context | Foundation | not_started | full_upgrade | 2 to 3 filing flow diagrams | No | 1 | Alternative gold-standard article. Needs beginner path, filing map, risk warnings, and links to dilution/offering concepts. |  |
 | /learn/start-here/ | docs/content/drafts/learn/start-here.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 journey map SVG | Yes | 1 | Gap article likely needed to introduce the learning system and guide new users. |  |
 | /learn/how-to-use-traderslink-learn/ | docs/content/drafts/learn/how-to-use-traderslink-learn.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 navigation diagram | Yes | 1 | Gap article likely needed to teach users how to move through learning paths. |  |
@@ -175,6 +177,8 @@ Summary of completed Chart Reading SVG batches:
 | public/images/learn/chart-reading/swing-highs-swing-lows-map.svg | /learn/swing-highs-and-swing-lows/ | Chart Reading And Market Structure | realistic candlestick chart | Show clean swing high and swing low identification. | Quick Definition section. | Candlestick chart showing clear swing highs and swing lows on a realistic price move. | editor_verified | Supports swing-point identification and avoids predictive claims. | `94fabc3b` |
 | public/images/learn/chart-reading/higher-highs-higher-lows-uptrend.svg | /learn/higher-highs-higher-lows/ | Chart Reading And Market Structure | realistic candlestick chart | Show higher highs and higher lows in a clean uptrend structure. | Quick Definition section. | Candlestick chart showing higher highs and higher lows forming a rising market structure. | editor_verified | Supports uptrend-structure identification and avoids signal language. | `fece7bfe` |
 | public/images/learn/chart-reading/higher-low-failure-review.svg | /learn/higher-highs-higher-lows/ | Chart Reading And Market Structure | realistic candlestick chart | Show the latest higher-low zone failing as review context. | When A Higher Low Fails section. | Candlestick chart showing an uptrend losing the latest higher low and shifting into a review area. | editor_verified | Supports higher-low failure review and avoids predictive claims. | `fece7bfe` |
+| public/images/learn/chart-reading/lower-highs-lower-lows-downtrend.svg | /learn/lower-highs-lower-lows/ | Chart Reading And Market Structure | realistic candlestick chart | Show lower highs and lower lows in a weakening market structure. | Quick Definition section. | Candlestick chart showing lower highs and lower lows forming a weakening market structure. | editor_verified | Supports downtrend-structure identification and avoids signal language. | `65a5747d` |
+| public/images/learn/chart-reading/lower-high-reclaim-review.svg | /learn/lower-highs-lower-lows/ | Chart Reading And Market Structure | realistic candlestick chart | Show a meaningful lower-high zone being reclaimed as review context. | When A Lower High Is Reclaimed section. | Candlestick chart showing a downtrend reclaiming a meaningful lower high and shifting into review context. | editor_verified | Supports lower-high reclaim review and avoids reversal certainty. | `65a5747d` |
 
 ## Gap Article Tracker
 
@@ -205,15 +209,16 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | /learn/break-of-structure/ | Completed break of structure article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches ordinary swing-structure shifts, avoids certainty and mystical pattern language, includes practical review prompts and a soft Trader Intelligence bridge, and uses realistic candlestick structure visuals. | `d03cf796` |
 | 2026-05-17 | /learn/swing-highs-and-swing-lows/ | Completed swing highs/lows article upgrade and created one supporting realistic SVG asset. | Passed. The article teaches swing point identification as a foundation for market structure, avoids over-labeling every candle, includes practical review prompts, and uses a realistic candlestick structure visual. | `94fabc3b` |
 | 2026-05-17 | /learn/higher-highs-higher-lows/ | Completed higher-highs/higher-lows article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches uptrend structure as reviewable context, includes higher-low failure and extension-risk coaching, avoids buy/sell signals and guaranteed-continuation language, and uses realistic candlestick visuals with zones and volume context. | `fece7bfe` |
+| 2026-05-17 | /learn/lower-highs-lower-lows/ | Completed lower-highs/lower-lows article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches weakening structure as reviewable context, includes lower-high reclaim and breakdown-extension coaching, avoids buy/sell signals and guaranteed-continuation language, and uses realistic candlestick visuals with zones and volume context. | `65a5747d` |
 
 ## Next Recommended Action
 
 Continue the Chart Reading And Market Structure track:
 
-1. Fetch `/learn/lower-highs-lower-lows/` draft.
+1. Fetch `/learn/pivot-levels/` draft.
 2. Perform pre-editor review.
-3. Upgrade it using the completed higher-high/higher-low and swing-point articles as the model.
-4. Create 1 to 2 realistic SVGs focused on lower-high/lower-low structure, support pressure, and structure-shift review.
+3. Upgrade it using the completed level and structure articles as the model.
+4. Create 1 to 2 realistic SVGs focused on pivot-level reference areas, reactions, and failed reclaim/rejection review.
 5. Run editor verification.
 6. Update this tracker.
 7. Update the handoff.
