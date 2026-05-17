@@ -122,6 +122,8 @@ journey_map
 | `public/images/learn/chart-reading/level-2-depth-can-disappear.svg` | `/learn/level-2/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show visible bid depth disappearing during a fast move. | Visible Depth Can Disappear section. | Trading dashboard showing visible bid depth disappearing during a fast move. | editor_verified | Supports Level 2 limitation review, uses realistic depth/candle context, and avoids guarantee language. | `8a9fc350` |
 | `public/images/learn/chart-reading/time-and-sales-prints-near-bid-ask.svg` | `/learn/time-and-sales/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show time and sales prints near bid and ask quotes beside candles. | Quick Definition section. | Trading dashboard showing time and sales prints near bid and ask quotes beside candles. | editor_verified | Supports time-and-sales print education, uses realistic tape/chart context, and avoids prediction language. | `58ea3ca3` |
 | `public/images/learn/chart-reading/time-and-sales-speed-fade-review.svg` | `/learn/time-and-sales/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show tape speed increasing during a volume burst and fading afterward. | Tape Speed And Fade section. | Trading dashboard showing tape speed increasing during a volume burst and fading afterward. | editor_verified | Supports tape-speed review, uses realistic prints, candles, volume context, and avoids guarantee language. | `58ea3ca3` |
+| `public/images/learn/chart-reading/volume-by-price-profile-zones.svg` | `/learn/volume-by-price/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show horizontal volume-by-price profile with high-volume zones beside candles. | Quick Definition section. | Candlestick chart with a volume-by-price profile showing high-volume price zones. | editor_verified | Supports volume-by-price profile education, uses realistic candles and horizontal volume profile, and avoids prediction language. | `5a5bfc59` |
+| `public/images/learn/chart-reading/volume-by-price-low-volume-area-review.svg` | `/learn/volume-by-price/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show price moving through a low-volume area and stalling near a high-volume zone. | Low-Volume Areas section. | Candlestick chart with volume-by-price profile showing price moving through a low-volume area and stalling near a high-volume zone. | editor_verified | Supports low-volume-area review, uses realistic candles/profile context, and avoids guarantee language. | `5a5bfc59` |
 
 ## Editor Verification Summary
 
@@ -404,11 +406,19 @@ Time and sales SVG verification:
 - Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Volume by price SVG verification:
+
+- Both visuals support the actual volume-by-price lesson.
+- The profile-zones visual shows horizontal volume-by-price bars beside realistic candles.
+- The low-volume-area visual shows price moving through a low-volume area and stalling near a higher-volume zone as review context.
+- Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Volume By Price article: volume-by-price profile, high-volume zones, low-volume areas, and level review.
+1. Unusual Volume article: normal versus unusual activity, scanner context, catalyst/liquidity review, and fade risk.
 2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
