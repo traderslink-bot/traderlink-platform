@@ -201,7 +201,7 @@ Use this as the primary course order on the Academy homepage:
 | 10 | Trade Review And Improvement | academy_ready_core | Completed markdown course path covering trade review, risk review, planned-vs-actual review, execution review, mistake patterns, swing review, and Trader Intelligence review bridge. |
 | 11 | Day Trading Workflow | academy_ready_core | Completed markdown course path covering premarket, watchlists, market open, opening range, midday, power hour, after-hours, and session review. |
 | 12 | Practice And Improvement | academy_ready_core | Completed markdown course path covering practice loops, paper trading, replay, screenshots, grading, drills, forward testing, and improvement planning. |
-| 13 | Halts And High-Volatility Events | content_upgraded | Completed markdown course path covering halts, resumes, circuit breakers, fast spreads, low-float volatility, and volatile-trade review. |
+| 13 | Halts And High-Volatility Events | academy_ready_core | Completed markdown course path covering halts, resumes, circuit breakers, fast spreads, low-float volatility, and volatile-trade review. |
 | 14 | Swing Trading Workflow | content_upgraded | Completed markdown course path covering beginner swing planning, risk, levels, volume, catalysts, earnings, news risk, and small-cap swing context. |
 | 15 | Academy Navigation Path Hubs | content_upgraded | Completed four markdown path hubs for chart reading, news and filings, trade review, and risk discipline navigation support. |
 
@@ -936,13 +936,12 @@ These completed lessons should be linked from the Halts And High-Volatility Even
 
 ### Course Status
 
-The Halts And High-Volatility Events course markdown path is **content_upgraded** across 7 new lessons and 3 realistic SVG assets.
+The Halts And High-Volatility Events course markdown path is **academy_ready_core** across 7 new lessons and 3 realistic SVG assets.
 
 Before production UI implementation, this course still needs:
 
-- Final Academy migration pass for UI-ready metadata and completion behavior.
 - Optional course intro/landing copy for the Academy course page.
-- Progress/lesson completion wiring in the website build phase.
+- Final production UI schema review once the website build begins.
 
 ## Course 14: Swing Trading Workflow
 
@@ -1133,7 +1132,7 @@ Current known Academy-ready lesson groups:
 | Chart Patterns In Context | 13 | Full chart-pattern course markdown path has passed Academy format migration check: metadata, lesson objectives, checklist, review, Trader Intelligence bridge, and visuals are already normalized. VWAP Reclaim remains cross-listed from Technical Indicators. |
 | Day Trading Workflow | 9 | Full day-trading workflow course markdown path is now content-upgraded across session framework, premarket prep, watchlist filtering, market open, opening range, midday filtering, power hour, after-hours context, and session review. Five realistic SVGs were created and manifest-tracked. |
 | Practice And Improvement | 9 | Full practice course has passed Academy format migration check across practice foundation, paper trading, replay review, watchlist review, screenshot review, trade grading, one-rule drills, forward testing, and improvement planning. Three realistic SVGs are already manifest-tracked. |
-| Halts And High-Volatility Events | 7 | Full event-risk course markdown path is now content-upgraded across trading halts, volatility halts, halt resumes, market-wide circuit breakers, fast-spread risk, low-float volatility, and high-volatility trade review. Three realistic SVGs were created and manifest-tracked. |
+| Halts And High-Volatility Events | 7 | Full event-risk course has passed Academy format migration check across trading halts, volatility halts, halt resumes, market-wide circuit breakers, fast-spread risk, low-float volatility, and high-volatility trade review. Three realistic SVGs are already manifest-tracked. |
 | Swing Trading Workflow | 8 | Full swing-trading workflow course markdown path is now content-upgraded across beginner swing planning, risk management, support/resistance planning, volume, catalysts, earnings, news risk, and small-cap swing context. Three realistic SVGs were created and manifest-tracked. |
 | Academy Navigation Path Hubs | 4 | Four path hubs are now content-upgraded across chart reading, news and filings, trade review, and risk discipline. Four realistic SVG/path-map assets were created and manifest-tracked. |
 | Volume, Liquidity And Order Flow | 14 | Core course path has passed Academy format migration check: metadata, lesson objectives, checklist, review, Trader Intelligence bridge, and visuals are normalized. |
@@ -1158,20 +1157,20 @@ More precise current state:
 | State | Lesson Count | Meaning |
 |---|---:|---|
 | content_upgraded | 217 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 24 | Remaining upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
-| academy_ready | 193 | Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, Small-Cap/Float/Dilution, Trading Psychology, Trade Review, Day Trading Workflow, and Practice/Improvement lesson sets have passed the first Academy format migration check. |
+| academy_format_review_needed | 17 | Remaining upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| academy_ready | 200 | Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, Small-Cap/Float/Dilution, Trading Psychology, Trade Review, Day Trading Workflow, Practice/Improvement, and Halts/High-Volatility lesson sets have passed the first Academy format migration check. |
 
 The 217 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to continue normalizing them into the final course format while creating or upgrading missing lessons only when a real gap appears.
 
 Current best next editorial action:
 
 ```text
-Halts And High-Volatility Events Academy format migration
+Swing Trading Workflow Academy format migration
 ```
 
 Reason:
 
-Trading Foundations passed the first structural check. Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, Small-Cap/Float/Dilution, Trading Psychology, Trade Review, Day Trading Workflow, and Practice/Improvement have completed the first Academy format migration check. The highest-value next work is Halts And High-Volatility Events.
+Trading Foundations passed the first structural check. Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, Small-Cap/Float/Dilution, Trading Psychology, Trade Review, Day Trading Workflow, Practice/Improvement, and Halts/High-Volatility have completed the first Academy format migration check. The highest-value next work is Swing Trading Workflow.
 
 ## Recommended Work Method From Here
 
