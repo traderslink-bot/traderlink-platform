@@ -203,6 +203,7 @@ Use this as the primary course order on the Academy homepage:
 | 12 | Practice And Improvement | content_upgraded | Completed markdown course path covering practice loops, paper trading, replay, screenshots, grading, drills, forward testing, and improvement planning. |
 | 13 | Halts And High-Volatility Events | content_upgraded | Completed markdown course path covering halts, resumes, circuit breakers, fast spreads, low-float volatility, and volatile-trade review. |
 | 14 | Swing Trading Workflow | content_upgraded | Completed markdown course path covering beginner swing planning, risk, levels, volume, catalysts, earnings, news risk, and small-cap swing context. |
+| 15 | Academy Navigation Path Hubs | content_upgraded | Completed four markdown path hubs for chart reading, news and filings, trade review, and risk discipline navigation support. |
 
 Status definitions:
 
@@ -242,7 +243,7 @@ Meaning:
 
 Important:
 
-The 213 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
+The 217 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
 
 The migration pass should check:
 
@@ -806,6 +807,48 @@ Before production UI implementation, this course still needs:
 - Optional course intro/landing copy for the Academy course page.
 - Progress/lesson completion wiring in the website build phase.
 
+## Course 15: Academy Navigation Path Hubs
+
+### Purpose
+
+Connect completed courses into clearer recommended learning paths before production website implementation. These hubs are not production routes yet; they are content and planning assets that future UI work can use for course cards, progress paths, next steps, and continue-learning behavior.
+
+### Course Outcome
+
+The user should be able to choose a practical path through the Academy: chart reading, news and filings, trade review, or risk discipline. Each hub explains which lessons to take, why the order matters, and how the path connects to trade review and Trader Intelligence.
+
+### Completed Path Hub Sequence
+
+| Order | Module | Lesson | URL | Current Asset | Status | Notes |
+|---:|---|---|---|---|---|---|
+| 1 | Academy Path Hubs | Chart Reading Path | `/learn/chart-reading-path/` | content_upgraded | complete | New path hub with SVG map connecting levels, structure, candles, patterns, volume, workflow, and review. |
+| 2 | Academy Path Hubs | News And Filings Path | `/learn/news-and-filings-path/` | content_upgraded | complete | New path hub with dashboard SVG connecting catalysts, press releases, SEC filings, offerings/dilution, and news-trade review. |
+| 3 | Academy Path Hubs | Trade Review Path | `/learn/trade-review-path/` | content_upgraded | complete | New path hub with workflow SVG connecting plan-vs-actual, risk review, execution review, mistake patterns, practice, and Trader Intelligence review support. |
+| 4 | Academy Path Hubs | Risk Discipline Path | `/learn/risk-discipline-path/` | content_upgraded | complete | New path hub with workflow SVG connecting plans, sizing, stops, limits, discipline behaviors, and review/practice. |
+
+### Cross-Listed Support Lessons
+
+These path hubs should be discoverable from the Academy homepage and relevant course pages:
+
+- `/learn/how-to-use-traderslink-academy/`
+- `/learn/support-and-resistance/`
+- `/learn/stock-catalysts/`
+- `/learn/sec-filings/`
+- `/learn/trade-review-and-improvement/`
+- `/learn/risk-management/`
+- `/learn/trading-discipline/`
+- `/learn/practice-trading/`
+
+### Course Status
+
+The Academy Navigation Path Hubs set is **content_upgraded** across 4 new path hubs and 4 realistic SVG/path-map assets.
+
+Before production UI implementation, these hubs still need:
+
+- Final Academy migration pass for UI-ready metadata and completion behavior.
+- Product decision on whether these are standalone lessons, course pages, or navigational panels.
+- Progress/lesson completion wiring in the website build phase if they become track entry pages.
+
 ## Course 12: Practice And Improvement
 
 ### Purpose
@@ -1092,6 +1135,7 @@ Current known Academy-ready lesson groups:
 | Practice And Improvement | 9 | Full practice course markdown path is now content-upgraded across practice foundation, paper trading, replay review, watchlist review, screenshot review, trade grading, one-rule drills, forward testing, and improvement planning. Three realistic SVGs were created and manifest-tracked. |
 | Halts And High-Volatility Events | 7 | Full event-risk course markdown path is now content-upgraded across trading halts, volatility halts, halt resumes, market-wide circuit breakers, fast-spread risk, low-float volatility, and high-volatility trade review. Three realistic SVGs were created and manifest-tracked. |
 | Swing Trading Workflow | 8 | Full swing-trading workflow course markdown path is now content-upgraded across beginner swing planning, risk management, support/resistance planning, volume, catalysts, earnings, news risk, and small-cap swing context. Three realistic SVGs were created and manifest-tracked. |
+| Academy Navigation Path Hubs | 4 | Four path hubs are now content-upgraded across chart reading, news and filings, trade review, and risk discipline. Four realistic SVG/path-map assets were created and manifest-tracked. |
 | Volume, Liquidity And Order Flow | 14 | Core course path is academy-ready. |
 | News, Catalysts And SEC Filings | 36 | Full course markdown path is now content-upgraded across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
 | Trading Foundations | 4 | Beginner onboarding and market-basics lessons are content-upgraded; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
@@ -1105,28 +1149,28 @@ Current known Academy-ready lesson groups:
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-213
+217
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 213 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 213 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 217 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 217 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 213 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 217 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/chart-reading-path/
+Academy format migration pass
 ```
 
 Reason:
 
-The Academy just completed the Swing Trading Workflow course markdown path. The highest-value next work is path-hub/navigation support, starting with `/learn/chart-reading-path/`, so the completed courses can be connected into a clearer guided Academy experience before website implementation.
+The Academy just completed the path-hub/navigation support batch. The highest-value next work is a metadata and format migration pass across completed Academy lessons, starting with Trading Foundations and Chart Reading, so lessons become more UI-ready without building production website files.
 
 ## Recommended Work Method From Here
 
