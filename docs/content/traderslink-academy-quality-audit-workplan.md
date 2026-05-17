@@ -100,7 +100,7 @@ Recommended order for future runs:
 | 12 | Trading Psychology And Discipline | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; normalized restrained CTAs, fixed stripped price examples, and documented non-shaming coaching/mistake-pattern bridge needs. |
 | 13 | Trade Review And Improvement | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trade-review-improvement.md`; fixed stripped price examples, documented the cross-listed news-review metadata exception, and mapped restrained bridges to Trade Review, Risk Review, Execution Review, Coaching, Analytics, Journal Notes, Playbook Builder, and Progress/Academy. |
 | 14 | Practice And Improvement | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-practice-improvement.md`; added existing editor-verified practice-loop visuals to missing lesson bodies, confirmed no practice-as-proof language, and mapped restrained bridges to Progress/Academy, Trade Review, Risk Review, Execution Review, Coaching, Analytics, Journal Notes, Forward Testing, and Playbook Builder. |
-| 15 | Academy Navigation Path Hubs | not_started | not_started | not_started | not_started | not_started | not_started | Treat as navigation support, not a numbered course. |
+| 15 | Academy Navigation Path Hubs | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-navigation-path-hubs.md`; fixed stale News/Filings and Risk/Discipline hub links, confirmed path maps are visible and editor-verified, and documented non-locked navigation, resume-learning, and restrained app bridge needs. |
 
 ## Lesson-Level Quality Audit Checklist
 
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 1: Lesson-Level Quality Audit** for **Academy Navigation Path Hubs**.
+Continue with **Pass 2: Academy-Wide Sequence And Cross-Link Audit**.
 
 Reason:
 
@@ -215,15 +215,19 @@ Reason:
 - Trading Psychology And Discipline Pass 1 is complete.
 - Trade Review And Improvement Pass 1 is complete.
 - Practice And Improvement Pass 1 is complete.
-- Academy Navigation Path Hubs are the next audit target because the core course audits are now complete and learners need clear non-locked navigation across the major Academy journeys.
-- This pass should check whether path hubs help learners choose a path, resume learning, and understand sequence without duplicating course lessons or turning the page into a product ad.
-- Mark factual/source-sensitive items for later Pass 3 where needed, but keep this run focused on Pass 1 lesson quality unless a source issue is obvious inside the lesson text.
+- Academy Navigation Path Hubs Pass 1 is complete.
+- The course-by-course Pass 1 lesson-level quality audit cycle is complete.
+- Pass 2 should now audit the Academy-wide order, course-to-course transitions, previous/next metadata across boundaries, cross-listed lessons, and related-lesson links.
+- Keep this run focused on sequence and cross-link quality. Mark factual/source-sensitive issues for later Pass 3 unless a source issue is obvious inside the lesson text.
 
 Output should include:
 
-- An Academy Navigation Path Hubs lesson-level quality audit.
+- An Academy-wide sequence and cross-link audit.
 - Any small markdown edits needed.
-- App bridge map for Chart Reading Path, News And Filings Path, Trade Review Path, and Risk Discipline Path.
-- Visual-readiness notes for path-map SVGs, course cards, progress states, next-lesson affordances, resume-learning context, and non-locked navigation.
+- Course-to-course transition findings.
+- Previous/next metadata corrections where needed.
+- Cross-listed lesson metadata notes.
+- Related-lesson link quality notes.
+- Future UI implications for continue-learning and resume-learning.
 - Tracker and handoff update.
 - Commit.

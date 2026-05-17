@@ -67,8 +67,7 @@ Start here:
 2. **Trade Risk Tools**
    - [Risk Reward Ratio](/learn/risk-reward-ratio/)
    - [Stop Loss](/learn/stop-loss/)
-   - [Mental Stop](/learn/mental-stop/)
-   - [Hard Stop](/learn/hard-stop/)
+   - [Mental Stop Vs Hard Stop](/learn/mental-stop-vs-hard-stop/)
    - [Max Loss](/learn/max-loss/)
    - [Daily Loss Limit](/learn/daily-loss-limit/)
 
@@ -84,8 +83,8 @@ Start here:
    - [Chasing Stocks](/learn/chasing-stocks/)
    - [Revenge Trading](/learn/revenge-trading/)
    - [Overtrading](/learn/overtrading/)
-   - [Holding Losers](/learn/holding-losers/)
-   - [Cutting Winners](/learn/cutting-winners/)
+   - [Holding Losers Too Long](/learn/holding-losers-too-long/)
+   - [Cutting Winners Too Early](/learn/cutting-winners-too-early/)
    - [Averaging Down](/learn/averaging-down/)
 
 5. **Review And Practice**

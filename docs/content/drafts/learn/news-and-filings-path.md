@@ -60,9 +60,9 @@ Start here:
 
 1. **Catalyst Foundation**
    - [Stock Catalysts](/learn/stock-catalysts/)
-   - [News Driven Stocks](/learn/news-driven-stocks/)
    - [Press Releases](/learn/press-releases/)
    - [How To Read Stock Press Releases](/learn/how-to-read-stock-press-releases/)
+   - [How To Use EDGAR Source Documents](/learn/how-to-use-edgar-source-documents/)
 
 2. **SEC Filing Foundation**
    - [SEC Filings](/learn/sec-filings/)
@@ -79,25 +79,30 @@ Start here:
 
 4. **Offerings, Registration, And Dilution**
    - [Dilution Risk](/learn/dilution-risk/)
-   - [Penny Stock Dilution Risk](/learn/penny-stock-dilution-risk/)
-   - [ATM Offering](/learn/atm-offering/)
+   - [Penny Stocks](/learn/penny-stocks/)
+   - [At The Market Offering](/learn/at-the-market-offering/)
    - [Public Offering](/learn/public-offering/)
-   - [Shelf Offering](/learn/shelf-offering/)
+   - [Shelf Registration](/learn/shelf-registration/)
    - [Resale Registration Statement](/learn/resale-registration-statement/)
 
 5. **Ownership, Proxies, And Corporate Actions**
-   - [Forms 3 4 5](/learn/sec-filings/forms-3-4-5/)
-   - [Schedules 13D 13G](/learn/sec-filings/schedule-13d-13g/)
-   - [Proxy Filings](/learn/sec-filings/proxy-filings/)
+   - [Form 3](/learn/sec-filings/form-3/)
+   - [Form 4](/learn/sec-filings/form-4/)
+   - [Form 5](/learn/sec-filings/form-5/)
+   - [Schedule 13D](/learn/sec-filings/schedule-13d/)
+   - [Schedule 13G](/learn/sec-filings/schedule-13g/)
+   - [Form DEF 14A](/learn/sec-filings/form-def-14a/)
+   - [Form PRE 14A](/learn/sec-filings/form-pre-14a/)
    - [Reverse Split](/learn/reverse-split/)
    - [Shareholder Approval For Dilution](/learn/shareholder-approval-for-dilution/)
 
 6. **News Category Lessons**
    - [Earnings News](/learn/earnings-news/)
-   - [FDA Approval](/learn/fda-approval/)
-   - [Clinical Trial Results](/learn/clinical-trial-results/)
-   - [Contract News](/learn/contract-news/)
-   - [Merger News](/learn/merger-news/)
+   - [FDA News Stocks](/learn/fda-news-stocks/)
+   - [Clinical Trial News](/learn/clinical-trial-news/)
+   - [Contract News Stocks](/learn/contract-news-stocks/)
+   - [Partnership News Stocks](/learn/partnership-news-stocks/)
+   - [Merger News Stocks](/learn/merger-news-stocks/)
 
 7. **Review Application**
    - [How To Review News Trades](/learn/how-to-review-news-trades/)
