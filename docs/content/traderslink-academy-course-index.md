@@ -196,7 +196,7 @@ Use this as the primary course order on the Academy homepage:
 | 5 | Trading Styles And Playbooks | planned | Users can now combine chart, volume, and tools into recognizable setup categories. |
 | 6 | News, Catalysts And SEC Filings | content_upgraded | High-value TradersLink differentiator. Core course markdown lesson path is now complete through news-trade review. |
 | 7 | Small-Cap Stocks, Float And Dilution | content_upgraded | Completed markdown course path covering small-cap context, float, share structure, dilution, offerings, securities, corporate actions, cash runway, and going concern. |
-| 8 | Risk Management And Trade Planning | planned | Should be reinforced throughout, then taught deeply as its own course. |
+| 8 | Risk Management And Trade Planning | content_upgraded | Completed markdown course path covering plans, rules, sizing, stops, loss limits, trade management, profit protection, overnight risk, and holding through news. |
 | 9 | Trading Psychology And Discipline | planned | Best taught after users understand what they are trying to execute. |
 | 10 | Trade Review And Improvement | planned | Final product bridge into reviewing behavior, mistakes, execution, and Trader Intelligence. |
 
@@ -593,23 +593,34 @@ Teach users how to define risk, size trades, plan invalidation, manage trades, a
 
 The user should understand how risk, sizing, stops, loss limits, reward/risk, and trade plans work together.
 
-### Suggested Modules And Lessons
+### Completed Course Lesson Sequence
 
 | Order | Module | Lesson | URL | Current Asset | Status | Notes |
 |---:|---|---|---|---|---|---|
-| 1 | Planning | Trading Plan | `/learn/trading-plan/` | draft | needs_upgrade | Cross-listed from Foundations. |
-| 2 | Planning | Trading Rules | `/learn/trading-rules/` | draft | needs_upgrade | Rules as behavior constraints. |
-| 3 | Risk Basics | Risk Management | `/learn/risk-management/` | draft | needs_upgrade | Course foundation. |
-| 4 | Risk Basics | Position Sizing | `/learn/position-sizing/` | draft | needs_upgrade | Size from risk, not emotion. |
-| 5 | Risk Basics | Risk Reward Ratio | `/learn/risk-reward-ratio/` | draft | needs_upgrade | Needs nuanced expectation framing. |
-| 6 | Risk Basics | Stop Loss | `/learn/stop-loss/` | draft | needs_upgrade | Invalidation concept. |
-| 7 | Risk Basics | Mental Stop Vs Hard Stop | `/learn/mental-stop-vs-hard-stop/` | draft | needs_upgrade | Execution and discipline context. |
-| 8 | Account Protection | Max Loss | `/learn/max-loss/` | draft | needs_upgrade | Per-trade or session loss guardrail. |
-| 9 | Account Protection | Daily Loss Limit | `/learn/daily-loss-limit/` | draft | needs_upgrade | Strong behavior protection lesson. |
-| 10 | Trade Management | Trade Management | `/learn/trade-management/` | draft | needs_upgrade | Managing after entry. |
-| 11 | Trade Management | Profit Protection | `/learn/profit-protection/` | draft | needs_upgrade | Avoid profit promise language. |
-| 12 | Event Risk | Overnight Risk | `/learn/overnight-risk/` | draft | needs_upgrade | Also belongs in swing course. |
-| 13 | Event Risk | Holding Through News | `/learn/holding-through-news/` | draft | needs_upgrade | Strong bridge to News course. |
+| 1 | Planning | Trading Plan | `/learn/trading-plan/` | content_upgraded | complete | Course opener covering written process, setup criteria, risk rules, and review process. |
+| 2 | Planning | Trading Rules | `/learn/trading-rules/` | content_upgraded | complete | Rule clarity, behavior constraints, triggers, exceptions, and review process. |
+| 3 | Risk Basics | Risk Management | `/learn/risk-management/` | content_upgraded | complete | Risk per trade, position size, invalidation, daily limit, loss control, and review process. |
+| 4 | Risk Basics | Position Sizing | `/learn/position-sizing/` | content_upgraded | complete | Account risk, trade risk, stop distance, share size, liquidity, slippage, and max loss. |
+| 5 | Risk Basics | Risk Reward Ratio | `/learn/risk-reward-ratio/` | content_upgraded | complete | Planned risk, potential reward, win-rate context, realistic targets, invalidation, and review after exit. |
+| 6 | Risk Basics | Stop Loss | `/learn/stop-loss/` | content_upgraded | complete | Invalidation level, stop type, position size, liquidity, gap risk, discipline risk, and review outcome. |
+| 7 | Risk Basics | Mental Stop Vs Hard Stop | `/learn/mental-stop-vs-hard-stop/` | content_upgraded | complete | Execution discipline, order risk, liquidity, gap risk, platform access, emotional delay, and review evidence. |
+| 8 | Account Protection | Max Loss | `/learn/max-loss/` | content_upgraded | complete | Per-trade max loss, session max loss, account impact, position sizing, stop discipline, and shutdown plan. |
+| 9 | Account Protection | Daily Loss Limit | `/learn/daily-loss-limit/` | content_upgraded | complete | Daily loss number, stop-trading trigger, reset rule, revenge risk, overtrading risk, and review plan. |
+| 10 | Trade Management | Trade Management | `/learn/trade-management/` | content_upgraded | complete | Initial plan, risk adjustment, partial exits, stop movement, adding rules, time in trade, and exit review. |
+| 11 | Trade Management | Profit Protection | `/learn/profit-protection/` | content_upgraded | complete | Open profit, giveback risk, exit plan, trailing logic, liquidity, news risk, and review after exit. |
+| 12 | Event Risk | Overnight Risk | `/learn/overnight-risk/` | content_upgraded | complete | Gap risk, news risk, position size, liquidity, borrow or margin risk, exit access, and next-day plan. |
+| 13 | Event Risk | Holding Through News | `/learn/holding-through-news/` | content_upgraded | complete | Scheduled catalysts, unexpected news, position size, gap risk, liquidity, thesis dependence, and review outcome. |
+
+### Course Status
+
+The Risk Management And Trade Planning course markdown path is **content_upgraded** across all 13 planned lessons.
+
+Before production UI implementation, this course still needs:
+
+- Visual asset review to decide which lessons need planning, sizing, risk, or trade-management diagrams.
+- Optional course intro/landing copy for the Academy course page.
+- Progress/lesson completion wiring in the website build phase.
+
 
 ## Course 9: Trading Psychology And Discipline
 
@@ -800,35 +811,35 @@ Current known Academy-ready lesson groups:
 | Technical Indicators And Tools | 0 | Mostly gap lessons needed. |
 | Trading Styles And Playbooks | 0 | Existing drafts plus several gap lessons. |
 | Small-Cap Stocks, Float And Dilution | 28 | Full course markdown path is now content-upgraded across small-cap context, float, dilution, offerings, securities, corporate actions, cash runway, and going concern. Needs visual review before UI-ready. |
-| Risk Management And Trade Planning | 0 | Many drafts exist; high-value future course. |
+| Risk Management And Trade Planning | 13 | Full course markdown path is now content-upgraded across planning, rules, risk basics, account protection, trade management, and event risk. Needs visual review before UI-ready. |
 | Trading Psychology And Discipline | 0 | Many drafts exist; strong retention/product bridge. |
 | Trade Review And Improvement | 0 | Needs new course opener and product-aligned review lessons. |
 
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-101
+114
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 101 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 101 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 114 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 114 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 101 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 114 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/trading-plan/
+/learn/trading-discipline/
 ```
 
 Reason:
 
-The Academy just completed the Small-Cap Stocks, Float And Dilution course markdown path. Risk Management And Trade Planning is the natural next course because users now need deeper planning, sizing, invalidation, and account-protection structure.
+The Academy just completed the Risk Management And Trade Planning course markdown path. Trading Psychology And Discipline is the natural next course because users now need behavior-pattern lessons that connect risk rules to execution discipline.
 
 ## Recommended Work Method From Here
 
