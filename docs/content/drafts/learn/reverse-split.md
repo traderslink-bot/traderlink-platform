@@ -91,6 +91,8 @@ Traders often review:
 
 The split headline is only the start. The post-split share structure and future financing risk can matter just as much.
 
+Source check: a reverse split is a mechanical share-count and price adjustment. Verify the ratio, effective date, treatment of fractional shares, exchange notice, and any related filing. A higher post-split price does not, by itself, improve the company's business, cash position, or dilution risk.
+
 ## What It Does Not Automatically Mean
 
 A reverse stock split does not automatically mean:

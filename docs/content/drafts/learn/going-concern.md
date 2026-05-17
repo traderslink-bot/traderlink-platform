@@ -98,6 +98,8 @@ A company may try to address going concern risk through:
 
 For traders, the issue is not just that the warning exists. The issue is whether the plan to address it is realistic.
 
+Source check: going-concern wording is technical. PCAOB auditing standards focus on whether substantial doubt exists for a reasonable period not exceeding one year beyond the audited financial-statement date, while FASB guidance for management disclosures uses a one-year period after the financial statements are issued or available to be issued. For trader education, keep the lesson focused on the practical filing question: what conditions raised the concern, what management plans to do, and whether later filings show improvement or continued pressure.
+
 ## Example Scenario
 
 A company reports $3 million in cash, recurring losses, and a going concern warning in its 10-Q. Two weeks later, the stock spikes on contract news.

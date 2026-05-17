@@ -70,6 +70,8 @@ In active trading conversations, penny stocks are often discussed alongside:
 
 These categories can overlap, but they do not always mean the same thing.
 
+Source check: the SEC and Investor.gov describe penny stocks and microcap stocks as higher-risk areas where public information, liquidity, promotion, and fraud risk can matter. Treat low price as a reason to verify more carefully, not as proof that a stock is cheap, safe, or likely to move.
+
 ## Why It Matters To Traders
 
 Penny stocks can move fast because they are often smaller companies with lower liquidity, lower float, or stronger reactions to news and filings.

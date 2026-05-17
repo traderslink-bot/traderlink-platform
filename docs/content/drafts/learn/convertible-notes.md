@@ -99,6 +99,8 @@ Convertible notes can appear in:
 
 Some notes are relatively straightforward. Others can be complex and risky, especially if the conversion price floats with the market.
 
+Source check: do not rely on the phrase "convertible note" by itself. Review the actual note agreement, purchase agreement, registration-rights language, and any resale registration statement. Fixed conversion terms, market-price formulas, floors, caps, defaults, and amendments can create very different share-count outcomes.
+
 ## Example Scenario
 
 A company issues a $2 million convertible note with a conversion price equal to a discount to the lowest trading price over a recent period.

@@ -95,6 +95,8 @@ The process often includes:
 
 For small-cap traders, this can matter because a company may use strong volume to raise cash without a traditional overnight offering.
 
+Source check: an ATM prospectus supplement usually describes maximum program size and permitted sale methods, but that capacity is not the same as actual shares sold. To review actual use, check later 10-Q, 10-K, or other company filings for shares sold, average prices, gross proceeds, commissions, and remaining capacity.
+
 ## Example Scenario
 
 A company files a prospectus supplement for a $50 million ATM program. The stock later has a major news-driven volume spike.
