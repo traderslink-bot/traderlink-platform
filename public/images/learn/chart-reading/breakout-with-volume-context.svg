@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Breakout With Volume Context</title>
+  <desc id="desc">Educational candlestick chart showing price breaking above a resistance zone with volume expanding into the move.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Breakout With Volume Context</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Example only: review the level, volume, hold, and risk.</text>
+  <g stroke="#18304e" stroke-width="1">
+    <line x1="58" y1="118" x2="704" y2="118"/>
+    <line x1="58" y1="170" x2="704" y2="170"/>
+    <line x1="58" y1="222" x2="704" y2="222"/>
+    <line x1="58" y1="274" x2="704" y2="274"/>
+  </g>
+  <rect x="64" y="184" width="626" height="38" fill="#1d4ed8" opacity=".2"/>
+  <line x1="64" y1="184" x2="690" y2="184" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="64" y1="222" x2="690" y2="222" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="508" y="178" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Breakout level zone</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="96" y1="248" x2="96" y2="306"/>
+      <rect x="86" y="266" width="20" height="26" rx="2"/>
+      <line x1="162" y1="226" x2="162" y2="288"/>
+      <rect x="152" y="242" width="20" height="28" rx="2"/>
+      <line x1="228" y1="206" x2="228" y2="268"/>
+      <rect x="218" y="222" width="20" height="28" rx="2"/>
+      <line x1="294" y1="192" x2="294" y2="254"/>
+      <rect x="284" y="208" width="20" height="28" rx="2"/>
+      <line x1="360" y1="146" x2="360" y2="232"/>
+      <rect x="350" y="166" width="20" height="46" rx="2"/>
+      <line x1="426" y1="112" x2="426" y2="196"/>
+      <rect x="416" y="132" width="20" height="42" rx="2"/>
+      <line x1="558" y1="106" x2="558" y2="188"/>
+      <rect x="548" y="126" width="20" height="40" rx="2"/>
+      <line x1="624" y1="92" x2="624" y2="170"/>
+      <rect x="614" y="110" width="20" height="36" rx="2"/>
+    </g>
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="492" y1="128" x2="492" y2="214"/>
+      <rect x="482" y="150" width="20" height="42" rx="2"/>
+    </g>
+  </g>
+  <path d="M96 290 C154 262 204 240 229 236 C268 230 310 209 361 189 C407 171 447 155 492 191 C528 220 577 148 625 128" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".55"/>
+  <text x="332" y="136" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Break above level</text>
+  <text x="500" y="232" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="13">Review whether it holds</text>
+  <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Volume expands into breakout</text>
+  <g fill="#1d4ed8" opacity=".8">
+    <rect x="178" y="392" width="20" height="11"/>
+    <rect x="218" y="390" width="20" height="13"/>
+    <rect x="258" y="388" width="20" height="15"/>
+    <rect x="298" y="383" width="20" height="20"/>
+    <rect x="338" y="368" width="20" height="35"/>
+    <rect x="378" y="366" width="20" height="37"/>
+    <rect x="418" y="372" width="20" height="31"/>
+    <rect x="458" y="382" width="20" height="21"/>
+    <rect x="498" y="379" width="20" height="24"/>
+    <rect x="538" y="374" width="20" height="29"/>
+    <rect x="578" y="370" width="20" height="33"/>
+  </g>
+</svg>
