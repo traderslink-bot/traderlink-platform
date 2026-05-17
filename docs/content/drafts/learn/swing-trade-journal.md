@@ -91,9 +91,9 @@ The review should show how the trade evolved, not only where it opened and close
 
 ## Realistic Example
 
-A trader enters a swing trade because a stock breaks above .00 resistance on strong volume. The pre-trade note says the .00 level must hold and failed breakout risk starts below .70.
+A trader enters a swing trade because a stock breaks above 6.00 resistance on strong volume. The pre-trade note says the 6.00 level must hold and failed breakout risk starts below 5.70.
 
-Two days later, the stock closes at .85 on increased selling volume. The journal note says the breakout level is under pressure and the trader needs a reclaim or the original thesis is weakening.
+Two days later, the stock closes at 5.85 on increased selling volume. The journal note says the breakout level is under pressure and the trader needs a reclaim or the original thesis is weakening.
 
 That tracking helps the trader manage the trade from structure, not just emotion.
 

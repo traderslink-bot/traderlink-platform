@@ -90,9 +90,9 @@ This review should be factual. The trader is not trying to make every fill perfe
 
 ## Realistic Example
 
-A trader plans an entry near .00 with a tight spread. The stock starts moving quickly after a news headline. The trader sends a marketable order and gets filled at .12 while the spread widens.
+A trader plans an entry near 3.00 with a tight spread. The stock starts moving quickly after a news headline. The trader sends a marketable order and gets filled at 3.12 while the spread widens.
 
-The trade later pulls back to .95. The setup may still be worth reviewing, but execution changed the risk. The real entry was not near the planned level, and slippage made the stop distance larger.
+The trade later pulls back to 2.95. The setup may still be worth reviewing, but execution changed the risk. The real entry was not near the planned level, and slippage made the stop distance larger.
 
 ## Common Mistakes
 

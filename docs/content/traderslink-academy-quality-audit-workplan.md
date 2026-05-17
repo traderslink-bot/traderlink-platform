@@ -98,7 +98,7 @@ Recommended order for future runs:
 | 10 | Small-Cap Stocks, Float And Dilution | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; tightened generic migrated objectives, removed stale hard app route links, fixed stale internal links, and documented visual/source follow-up needs. |
 | 11 | Halts And High-Volatility Events | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; added missing in-body visuals, cleaned stale path-hub wording, and documented source-sensitive halt/circuit-breaker follow-up needs. |
 | 12 | Trading Psychology And Discipline | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; normalized restrained CTAs, fixed stripped price examples, and documented non-shaming coaching/mistake-pattern bridge needs. |
-| 13 | Trade Review And Improvement | not_started | not_started | not_started | not_started | not_started | not_started | Core app bridge course. |
+| 13 | Trade Review And Improvement | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trade-review-improvement.md`; fixed stripped price examples, documented the cross-listed news-review metadata exception, and mapped restrained bridges to Trade Review, Risk Review, Execution Review, Coaching, Analytics, Journal Notes, Playbook Builder, and Progress/Academy. |
 | 14 | Practice And Improvement | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to progress, playbooks, and forward testing. |
 | 15 | Academy Navigation Path Hubs | not_started | not_started | not_started | not_started | not_started | not_started | Treat as navigation support, not a numbered course. |
 
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 1: Lesson-Level Quality Audit** for **Trade Review And Improvement**.
+Continue with **Pass 1: Lesson-Level Quality Audit** for **Practice And Improvement**.
 
 Reason:
 
@@ -213,15 +213,16 @@ Reason:
 - Small-Cap Stocks, Float And Dilution Pass 1 is complete.
 - Halts And High-Volatility Events Pass 1 is complete.
 - Trading Psychology And Discipline Pass 1 is complete.
-- Trade Review And Improvement is the next course because it is the strongest natural bridge between Academy lessons and the future app experience.
-- This course needs careful language so trade review, risk review, execution review, mistake-pattern review, swing trade notes, and Trader Intelligence bridge content feel genuinely educational instead of promotional.
+- Trade Review And Improvement Pass 1 is complete.
+- Practice And Improvement is the next course because learners now move from reviewing completed trades into deliberate practice, replay, watchlist review, screenshots, grading, drills, forward testing, and improvement planning.
+- This course needs careful language so practice is treated as structured feedback, not proof of future live trading results.
 - Mark factual/source-sensitive items for later Pass 3 where needed, but keep this run focused on Pass 1 lesson quality unless a source issue is obvious inside the lesson text.
 
 Output should include:
 
-- A Trade Review And Improvement lesson-level quality audit.
+- A Practice And Improvement lesson-level quality audit.
 - Any small markdown edits needed.
-- App bridge map for trade review foundation, trade risk review, planned-vs-actual review, execution review, mistake pattern review, swing trade journal, and Trader Intelligence trade review bridge.
-- Visual-readiness notes for review dashboards, planned-versus-actual comparisons, execution review, mistake-pattern tagging, swing trade notes, and progress/resume-learning ties.
+- App bridge map for practice trading, paper trading, replay review, watchlist review, setup screenshot review, trade grading, one-rule practice drills, forward testing, and improvement planning.
+- Visual-readiness notes for feedback loops, replay timelines, screenshot review, grading rubrics, drill cycles, forward-testing samples, improvement-plan progress, and progress/resume-learning ties.
 - Tracker and handoff update.
 - Commit.
