@@ -69,6 +69,8 @@ The anchor should have a reason before the line is trusted.
 
 Anchored VWAP measures the volume weighted average price from the chosen anchor point forward. It does not prove that price must react there.
 
+Source check: Anchored VWAP uses the same general VWAP idea but begins from a user-selected bar instead of the regular session start. Because the chosen anchor controls which price and volume data are included, different anchor choices can create meaningfully different lines on the same chart.
+
 ## How Traders Use It As Context
 
 Traders may use anchored VWAP to review:

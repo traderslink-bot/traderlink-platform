@@ -68,6 +68,8 @@ ATR is about range. It is not a prediction.
 
 ATR measures average range over recent periods. It does not measure whether a setup is valid, whether a catalyst is strong, or whether a stock will continue in one direction.
 
+Source check: Wilder's ATR starts with true range, which accounts for the current high-low range and gaps from the prior close, then smooths that range over a selected period. ATR is a volatility measure, not a direction measure, and values can vary by timeframe, lookback, smoothing, data history, and whether the platform displays ATR as an absolute value or percentage variant.
+
 ## How Traders Use It As Context
 
 Traders may use ATR to review:

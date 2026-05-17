@@ -68,6 +68,8 @@ VWAP is a context line, not a trading instruction.
 
 VWAP measures the average traded price weighted by volume. It does not measure future demand, catalyst quality, float, dilution risk, or whether a trader has a valid risk plan.
 
+Source check: VWAP is commonly calculated from cumulative price-volume divided by cumulative volume, often using intraday period data. Charting platforms may calculate VWAP from tick data or bar data, define sessions differently, and handle extended-hours data differently, so VWAP should be treated as a charting reference rather than an official price level.
+
 ## How Traders Use It As Context
 
 Traders may use VWAP to review:

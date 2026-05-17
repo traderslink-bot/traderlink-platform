@@ -68,6 +68,8 @@ The key is not the line by itself. The key is behavior after the reclaim.
 
 A VWAP reclaim uses VWAP as an intraday average-price reference. It measures how price behaves around that reference, not whether the next move is guaranteed.
 
+Source check: VWAP itself is a volume weighted average price calculation, and platform values can vary based on session definition, data feed, tick-versus-bar calculation, and whether extended-hours data is included. A reclaim is therefore a review of price behavior around a charting reference, not an official market signal.
+
 ## How Traders Use It As Context
 
 Traders may review a VWAP reclaim by checking:

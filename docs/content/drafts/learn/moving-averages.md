@@ -66,6 +66,8 @@ The setting matters, but the context matters more.
 
 Moving averages measure smoothed price over time. They do not measure news, liquidity, dilution, spread, or whether a trade has defined risk.
 
+Source check: StockCharts ChartSchool describes simple moving averages as averaging prices over a selected timeframe and exponential moving averages as giving more weight to recent prices. Exact values can vary by setting, price input, chart timeframe, data history, and platform calculation method.
+
 ## How Traders Use It As Context
 
 Traders may use moving averages to review:
