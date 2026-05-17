@@ -97,6 +97,9 @@ journey_map
 | `public/images/learn/chart-reading/consolidation-failed-range-break.svg` | `/learn/consolidation/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a consolidation break attempt failing back inside the range. | Failed Range Break section. | Candlestick chart showing a consolidation breakout attempt that fails back inside the range. | editor_verified | Supports failed-range-break review, uses realistic candles, range context, volume bars, and avoids signal language. | `085019d2` |
 | `public/images/learn/chart-reading/gap-fill-zone-map.svg` | `/learn/gap-fill-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show gap zone between prior close/current open and price moving into the gap. | Quick Definition section. | Candlestick chart showing a gap zone between prior close and current open with price moving into the gap area. | editor_verified | Supports gap-fill zone education, uses realistic candles, gap top/bottom/midpoint context, volume bars, and avoids prediction language. | `efd6d0ba` |
 | `public/images/learn/chart-reading/failed-gap-fill-hold-review.svg` | `/learn/gap-fill-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show partial fill/fail/hold above midpoint as review context. | Failed Gap Fill Or Gap Hold section. | Candlestick chart showing price entering a gap area but failing to continue filling the gap and holding above the gap midpoint. | editor_verified | Supports failed gap fill review, uses realistic candles, gap context, volume bars, and avoids guarantee language. | `efd6d0ba` |
+| `public/images/learn/chart-reading/volume-expansion-at-level.svg` | `/learn/volume/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show volume expanding as price tests a clear resistance zone. | Quick Definition section. | Candlestick chart showing volume expansion as price tests a key level. | editor_verified | Supports volume expansion education, uses realistic candles, level context, volume bars, and avoids signal language. | `72a62c5a` |
+| `public/images/learn/chart-reading/volume-dry-up-before-move.svg` | `/learn/volume/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show candles tightening while volume contracts near a decision area. | Low Volume And Dry-Up section. | Candlestick chart showing volume drying up while price tightens near a resistance zone. | editor_verified | Supports volume dry-up education, uses realistic candles, contraction context, volume bars, and avoids prediction language. | `72a62c5a` |
+| `public/images/learn/chart-reading/volume-fade-after-spike.svg` | `/learn/volume/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show participation fading after an early spike. | Volume Fade After A Spike section. | Candlestick chart showing volume fading after an early spike while price stops making clean progress. | editor_verified | Supports volume fade review, uses realistic candles, volume bars, and avoids reversal guarantee language. | `72a62c5a` |
 
 ## Editor Verification Summary
 
@@ -282,11 +285,20 @@ Gap fill trading SVG verification:
 - Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Volume SVG verification:
+
+- All three visuals support the actual volume foundation lesson.
+- The expansion visual shows participation increasing at a visible level with realistic candles and volume bars.
+- The dry-up visual shows tightening price action and contracting volume without implying a future move is guaranteed.
+- The fade-after-spike visual shows participation dropping after the loudest candle as review context, not as reversal certainty.
+- Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Volume article: volume context for breakouts/breakdowns, dry-up/expansion, and review of participation.
+1. Relative Volume or RVOL article: current activity versus normal activity, RVOL comparison, and low-float/news context.
 2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
