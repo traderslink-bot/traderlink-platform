@@ -1,4 +1,4 @@
----
+﻿---
 title: "Earnings News: How Traders Review Financial Results"
 slug: "/learn/earnings-news/"
 primary_keyword: "earnings news stocks"
@@ -18,9 +18,9 @@ cta: "Trader Intelligence is being built to help traders review earnings-driven 
 learning_track: "News Catalysts Filings And Dilution"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
-academy_order: 9
+academy_order: 30
 academy_level: "Practical"
-recommended_previous: "/learn/sec-filings/form-424b5/"
+recommended_previous: "/learn/sec-filings/form-25/"
 recommended_next: "/learn/fda-news-stocks/"
 internal_links:
   - "/learn/stock-catalysts/"

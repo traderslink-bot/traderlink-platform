@@ -1,4 +1,4 @@
----
+﻿---
 title: "How To Review News Trades: Catalyst, Reaction, Risk, And Execution"
 slug: "/learn/how-to-review-news-trades/"
 primary_keyword: "how to review news trades"
@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built to help traders review news trades, cat
 learning_track: "News Catalysts Filings And Dilution"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Review"
-academy_order: 15
+academy_order: 36
 academy_level: "Review"
 recommended_previous: "/learn/merger-news-stocks/"
 recommended_next: "/learn/small-cap-stocks/"

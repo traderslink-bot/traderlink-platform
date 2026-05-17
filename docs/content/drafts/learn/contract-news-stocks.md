@@ -1,4 +1,4 @@
----
+﻿---
 title: "Contract News Stocks: How Traders Review Customer Announcements"
 slug: "/learn/contract-news-stocks/"
 primary_keyword: "contract news stocks"
@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built to help traders review contract-news tr
 learning_track: "News Catalysts Filings And Dilution"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
-academy_order: 12
+academy_order: 33
 academy_level: "Practical"
 recommended_previous: "/learn/clinical-trial-news/"
 recommended_next: "/learn/partnership-news-stocks/"

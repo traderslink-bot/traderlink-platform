@@ -1,4 +1,4 @@
----
+﻿---
 title: "Partnership News Stocks: How Traders Review Collaboration Headlines"
 slug: "/learn/partnership-news-stocks/"
 primary_keyword: "partnership news stocks"
@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built to help traders review partnership-news
 learning_track: "News Catalysts Filings And Dilution"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
-academy_order: 13
+academy_order: 34
 academy_level: "Practical"
 recommended_previous: "/learn/contract-news-stocks/"
 recommended_next: "/learn/merger-news-stocks/"

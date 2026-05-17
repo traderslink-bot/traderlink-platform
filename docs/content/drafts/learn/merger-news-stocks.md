@@ -1,4 +1,4 @@
----
+﻿---
 title: "Merger News Stocks: How Traders Review M&A Catalysts"
 slug: "/learn/merger-news-stocks/"
 primary_keyword: "merger news stocks"
@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built to help traders review merger-news trad
 learning_track: "News Catalysts Filings And Dilution"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
-academy_order: 14
+academy_order: 35
 academy_level: "Practical"
 recommended_previous: "/learn/partnership-news-stocks/"
 recommended_next: "/learn/how-to-review-news-trades/"

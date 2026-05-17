@@ -1,4 +1,4 @@
----
+﻿---
 title: "Form S-3: Shelf Registrations And Future Offering Context"
 slug: "/learn/sec-filings/form-s-3/"
 primary_keyword: "Form S-3"
@@ -17,11 +17,11 @@ priority: "3"
 cta: "Trader Intelligence is being built to help traders review filing-driven trades, catalyst context, execution quality, and repeated research gaps."
 learning_track: "News Catalysts Filings And Dilution"
 academy_course: "News, Catalysts And SEC Filings"
-academy_module: "SEC Filing Foundation"
-academy_order: 7
+academy_module: "Registration Statements"
+academy_order: 11
 academy_level: "Practical"
 recommended_previous: "/learn/sec-filings/form-s-1/"
-recommended_next: "/learn/sec-filings/form-424b5/"
+recommended_next: "/learn/sec-filings/form-f-1/"
 internal_links:
   - "/learn/sec-filings/"
   - "/learn/sec-filings/form-8-k/"
@@ -38,12 +38,11 @@ last_reviewed: "2026-05-17"
 meta_title: "Form S-3 Explained for Traders"
 meta_description: "Learn what a Form S-3 filing means, how shelf registrations work, and why traders review S-3 filings for offering and dilution context."
 ---
-
 # Form S-3: Shelf Registrations And Future Offering Context
 
 A Form S-3 is a shorter registration statement that eligible public companies can use to register securities with the SEC. Traders often watch S-3 filings because they can create a shelf registration, which may allow a company to offer securities later.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form S-1](/learn/sec-filings/form-s-1/) and leads into [Form 424B5](/learn/sec-filings/form-424b5/).
+This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form S-1](/learn/sec-filings/form-s-1/) and leads into [Form F-1](/learn/sec-filings/form-f-1/).
 
 An S-3 does not automatically mean an offering is happening today. It often means the company is setting up or maintaining the ability to raise capital under certain conditions.
 

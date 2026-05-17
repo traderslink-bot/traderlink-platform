@@ -1,4 +1,4 @@
----
+﻿---
 title: "Form 424B5: Offering Terms And Prospectus Supplements"
 slug: "/learn/sec-filings/form-424b5/"
 primary_keyword: "Form 424B5"
@@ -17,11 +17,11 @@ priority: "3"
 cta: "Trader Intelligence is being built to help traders review filing-driven trades, catalyst context, execution quality, and repeated research gaps."
 learning_track: "News Catalysts Filings And Dilution"
 academy_course: "News, Catalysts And SEC Filings"
-academy_module: "SEC Filing Foundation"
-academy_order: 8
+academy_module: "Prospectus Supplements"
+academy_order: 16
 academy_level: "Practical"
-recommended_previous: "/learn/sec-filings/form-s-3/"
-recommended_next: "/learn/earnings-news/"
+recommended_previous: "/learn/sec-filings/form-s-8/"
+recommended_next: "/learn/sec-filings/form-424b3/"
 internal_links:
   - "/learn/sec-filings/"
   - "/learn/sec-filings/form-8-k/"
@@ -38,12 +38,11 @@ last_reviewed: "2026-05-17"
 meta_title: "Form 424B5 Explained for Traders"
 meta_description: "Learn what a Form 424B5 filing means, how prospectus supplements work, and why traders review 424B5 filings for offering terms."
 ---
-
 # Form 424B5: Offering Terms And Prospectus Supplements
 
 A Form 424B5 is a prospectus supplement that can provide specific details about an offering. Traders often watch 424B5 filings because they may include the number of shares, offering price, warrant terms, proceeds, underwriters, placement agents, or other terms connected to a registered offering.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form S-3](/learn/sec-filings/form-s-3/) and leads into [Earnings News](/learn/earnings-news/).
+This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form S-8](/learn/sec-filings/form-s-8/) and leads into [Form 424B3](/learn/sec-filings/form-424b3/).
 
 For small-cap traders, a 424B5 can be important because it may move a financing situation from "possible future offering" to actual offering terms.
 

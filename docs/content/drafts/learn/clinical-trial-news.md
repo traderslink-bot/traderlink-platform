@@ -1,4 +1,4 @@
----
+﻿---
 title: "Clinical Trial News: How Traders Review Biotech Data"
 slug: "/learn/clinical-trial-news/"
 primary_keyword: "clinical trial news"
@@ -18,7 +18,7 @@ cta: "Trader Intelligence is being built to help traders review clinical-trial n
 learning_track: "News Catalysts Filings And Dilution"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
-academy_order: 11
+academy_order: 32
 academy_level: "Practical"
 recommended_previous: "/learn/fda-news-stocks/"
 recommended_next: "/learn/contract-news-stocks/"

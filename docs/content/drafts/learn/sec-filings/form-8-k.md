@@ -1,4 +1,4 @@
----
+﻿---
 title: "Form 8-K: How Traders Review Current Event Filings"
 slug: "/learn/sec-filings/form-8-k/"
 primary_keyword: "Form 8-K"
@@ -21,7 +21,7 @@ academy_module: "SEC Filing Foundation"
 academy_order: 5
 academy_level: "Practical"
 recommended_previous: "/learn/sec-filings/"
-recommended_next: "/learn/sec-filings/form-s-1/"
+recommended_next: "/learn/sec-filings/form-10-k/"
 internal_links:
   - "/learn/sec-filings/"
   - "/learn/press-releases/"
@@ -38,12 +38,11 @@ last_reviewed: "2026-05-17"
 meta_title: "Form 8-K Explained for Traders"
 meta_description: "Learn what a Form 8-K filing means, why companies file it, and how traders review 8-K events, exhibits, risks, catalysts, and market reaction."
 ---
-
 # Form 8-K: How Traders Review Current Event Filings
 
 A Form 8-K is a current report that public companies file with the SEC to report important events between regular quarterly and annual reports. Traders watch 8-K filings because they can reveal news that may matter quickly: financing agreements, material contracts, mergers, leadership changes, delisting notices, reverse split updates, press release exhibits, and other company events.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It builds on [SEC Filings](/learn/sec-filings/) and leads into [Form S-1](/learn/sec-filings/form-s-1/).
+This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [SEC Filings](/learn/sec-filings/) and leads into [Form 10-K](/learn/sec-filings/form-10-k/).
 
 An 8-K is not automatically good or bad. It is a container for current-event information. The item, exhibit, terms, timing, and market reaction decide what the filing actually means for review.
 

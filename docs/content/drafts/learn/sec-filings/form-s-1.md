@@ -1,4 +1,4 @@
----
+﻿---
 title: "Form S-1: Registration Statements And Resale Context"
 slug: "/learn/sec-filings/form-s-1/"
 primary_keyword: "Form S-1"
@@ -17,10 +17,10 @@ priority: "3"
 cta: "Trader Intelligence is being built to help traders review filing-driven trades, catalyst context, execution quality, and repeated research gaps."
 learning_track: "News Catalysts Filings And Dilution"
 academy_course: "News, Catalysts And SEC Filings"
-academy_module: "SEC Filing Foundation"
-academy_order: 6
+academy_module: "Registration Statements"
+academy_order: 10
 academy_level: "Practical"
-recommended_previous: "/learn/sec-filings/form-8-k/"
+recommended_previous: "/learn/sec-filings/form-6-k/"
 recommended_next: "/learn/sec-filings/form-s-3/"
 internal_links:
   - "/learn/sec-filings/"
@@ -38,12 +38,11 @@ last_reviewed: "2026-05-17"
 meta_title: "Form S-1 Explained for Traders"
 meta_description: "Learn what a Form S-1 filing means, why companies file it, and how traders review registration statements, resale shares, warrants, and dilution risk."
 ---
-
 # Form S-1: Registration Statements And Resale Context
 
 A Form S-1 is a registration statement filed with the SEC to register securities for sale or resale. Traders watch S-1 filings because they can involve IPOs, resale shares, financing structures, warrants, and other details that may affect future share supply.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form 8-K](/learn/sec-filings/form-8-k/) and leads into [Form S-3](/learn/sec-filings/form-s-3/).
+This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form 6-K](/learn/sec-filings/form-6-k/) and leads into [Form S-3](/learn/sec-filings/form-s-3/).
 
 An S-1 is not automatically good or bad. It is a filing that answers a practical question: what securities are being registered, and who may be able to sell them after the registration process moves forward?
 
