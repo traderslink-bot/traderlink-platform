@@ -238,7 +238,7 @@ Meaning:
 
 Important:
 
-The 180 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
+The 189 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
 
 The migration pass should check:
 
@@ -750,6 +750,58 @@ Before production UI implementation, this course still needs:
 - Optional course intro/landing copy for the Academy course page.
 - Progress/lesson completion wiring in the website build phase.
 
+## Course 11: Day Trading Workflow
+
+### Purpose
+
+Teach users how a day trading session fits together from preparation through review, without turning time-of-day concepts into signals.
+
+### Course Outcome
+
+The user should understand how to prepare before the open, filter a watchlist, observe the market open, use opening range context, manage midday and power-hour behavior, review after-hours risk, and complete a structured session review.
+
+### Completed Course Lesson Sequence
+
+| Order | Module | Lesson | URL | Current Asset | Status | Notes |
+|---:|---|---|---|---|---|---|
+| 1 | Session Framework | Day Trading Workflow | `/learn/day-trading-workflow/` | content_upgraded | complete | New course opener with realistic session-map SVG; teaches prepare, observe, execute, and review. |
+| 2 | Preparation | Premarket Trading | `/learn/premarket-trading/` | content_upgraded | complete | Upgraded premarket lesson with catalyst, PMH/PML, spread, liquidity, and realistic SVG support. |
+| 3 | Preparation | Day Trading Watchlist | `/learn/day-trading-watchlist/` | content_upgraded | complete | New watchlist-filter lesson covering catalyst, volume, liquidity, spread, levels, and noise reduction. |
+| 4 | Market Open | Market Open Trading | `/learn/market-open-trading/` | content_upgraded | complete | Upgraded market-open lesson with opening volatility, premarket level interaction, spread/slippage, and realistic SVG support. |
+| 5 | Market Open | Opening Range | `/learn/opening-range/` | content_upgraded | complete | New opening-range lesson with opening range high/low zones, failed extension review, and realistic SVG support. |
+| 6 | Midday Filtering | Midday Trading | `/learn/midday-trading/` | content_upgraded | complete | Upgraded midday lesson with low-volume chop, boredom risk, filtering, and realistic SVG support. |
+| 7 | Late Session | Power Hour Trading | `/learn/power-hour-trading/` | content_upgraded | complete | Upgraded final-hour lesson with late-session reassessment, volume return, close planning, and realistic SVG support. |
+| 8 | Extended Hours | After-Hours Trading | `/learn/after-hours-trading/` | content_upgraded | complete | Upgraded after-hours lesson with headline/source review, spread/liquidity risk, overnight context, and realistic SVG support. |
+| 9 | Review | Day Trading Session Review | `/learn/day-trading-session-review/` | content_upgraded | complete | New course capstone lesson connecting session segments to completed-trade review and Trader Intelligence. |
+
+### Cross-Listed Support Lessons
+
+These completed lessons should be linked from the Day Trading Workflow course UI where useful:
+
+- `/learn/day-trading/`
+- `/learn/day-trading-for-beginners/`
+- `/learn/vwap/`
+- `/learn/chart-patterns/vwap-reclaim/`
+- `/learn/premarket-high-low/`
+- `/learn/high-of-day/`
+- `/learn/low-of-day/`
+- `/learn/relative-volume-rvol/`
+- `/learn/liquidity/`
+- `/learn/spread/`
+- `/learn/slippage/`
+- `/learn/overtrading/`
+- `/learn/max-loss/`
+
+### Course Status
+
+The Day Trading Workflow course markdown path is **content_upgraded** across 9 lessons, including 4 new gap lessons, 5 upgraded session drafts, and 5 realistic SVG assets.
+
+Before production UI implementation, this course still needs:
+
+- Final Academy migration pass for UI-ready metadata and completion behavior.
+- Optional course intro/landing copy for the Academy course page.
+- Progress/lesson completion wiring in the website build phase.
+
 ## Cross-Listed Lesson Rules
 
 Some lessons can appear in more than one course. This is good for navigation, but each lesson should still have one primary course.
@@ -889,6 +941,7 @@ Current known Academy-ready lesson groups:
 | Chart Reading And Market Structure | 23 | Strong course core already created. Optional path-hub/navigation articles can be added later. |
 | Candlestick Patterns In Context | 14 | Full candlestick course markdown path is now content-upgraded across candle foundation, wick/indecision candles, shift candles, compression candles, tail candles, volume confirmation, and red/green intraday transitions. Eight realistic SVGs were created and manifest-tracked. |
 | Chart Patterns In Context | 13 | Full chart-pattern course markdown path is now content-upgraded across pattern foundation, continuation context, range/base patterns, channels, wedges, reversal/failure context, and parabolic extension. Nine realistic SVGs were created and manifest-tracked. VWAP Reclaim is cross-listed from Technical Indicators. |
+| Day Trading Workflow | 9 | Full day-trading workflow course markdown path is now content-upgraded across session framework, premarket prep, watchlist filtering, market open, opening range, midday filtering, power hour, after-hours context, and session review. Five realistic SVGs were created and manifest-tracked. |
 | Volume, Liquidity And Order Flow | 14 | Core course path is academy-ready. |
 | News, Catalysts And SEC Filings | 36 | Full course markdown path is now content-upgraded across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
 | Trading Foundations | 4 | Beginner onboarding and market-basics lessons are content-upgraded; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
@@ -902,28 +955,28 @@ Current known Academy-ready lesson groups:
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-180
+189
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 180 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 180 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 189 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 189 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 180 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 189 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/premarket-trading/
+/learn/practice-trading/
 ```
 
 Reason:
 
-The Academy just completed the Chart Patterns In Context course markdown path. The highest-value next course is Day Trading Workflow, starting with `/learn/premarket-trading/`, because local session-workflow drafts already exist and can connect the style course to practical intraday planning.
+The Academy just completed the Day Trading Workflow course markdown path. The highest-value next course is Practice And Improvement, starting with a new `/learn/practice-trading/` lesson, because this would turn the Academy from passive reading into a repeatable skill-building path without requiring quizzes or tests.
 
 ## Recommended Work Method From Here
 
