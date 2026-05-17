@@ -189,7 +189,7 @@ Use this as the primary course order on the Academy homepage:
 
 | Order | Course | Status | Why It Sits Here |
 |---:|---|---|---|
-| 1 | Trading Foundations | planned | New users need basic market, planning, and risk concepts before advanced topics. |
+| 1 | Trading Foundations | content_upgraded | Completed beginner onboarding and market-basics markdown path, with plan/risk/review lessons cross-listed from completed courses. |
 | 2 | Chart Reading And Market Structure | in_progress | Users need candles, levels, structure, breakouts, breakdowns, and chart context early. |
 | 3 | Volume, Liquidity And Order Flow | academy_ready_core | Builds on chart reading and teaches whether activity is clean, thin, fast, or crowded. |
 | 4 | Technical Indicators And Tools | planned | Indicators make more sense after price, levels, and volume are understood. |
@@ -273,20 +273,30 @@ Give new traders a clear foundation before they enter charts, scanners, filings,
 
 The user should understand what trading is, why planning matters, what risk means, and why review is part of improvement.
 
-### Suggested Modules And Lessons
+### Completed Course Lesson Sequence
 
 | Order | Module | Lesson | URL | Current Asset | Status | Notes |
 |---:|---|---|---|---|---|---|
-| 1 | Start Here | Welcome To TradersLink Academy | `/learn/start-here/` | gap | gap_needed | New first lesson that explains courses, lessons, progress, and non-advice education. |
-| 2 | Start Here | How To Use TradersLink Academy | `/learn/how-to-use-traderslink-academy/` | gap | gap_needed | Replace old possible "how to use Learn" idea with Academy-specific onboarding. |
-| 3 | Market Basics | Day Trading For Beginners | `/learn/day-trading-for-beginners/` | draft | needs_upgrade | Should orient users without encouraging day trading. |
-| 4 | Market Basics | Day Trading Vs Swing Trading | `/learn/day-trading-vs-swing-trading/` | draft | needs_upgrade | Helps users choose later course paths. |
-| 5 | Process Basics | Trading Plan | `/learn/trading-plan/` | draft | needs_upgrade | Must be early because every future setup needs a plan. |
-| 6 | Process Basics | Trading Rules | `/learn/trading-rules/` | draft | needs_upgrade | Turns plan into behavior. |
-| 7 | Risk Basics | Risk Management | `/learn/risk-management/` | draft | needs_upgrade | Should be a foundation primer here, with deeper course later. |
-| 8 | Risk Basics | Position Sizing | `/learn/position-sizing/` | draft | needs_upgrade | Teaches size as a risk decision. |
-| 9 | Risk Basics | Stop Loss | `/learn/stop-loss/` | draft | needs_upgrade | Teaches invalidation and risk control without command language. |
-| 10 | Review Basics | Trade Review | `/learn/trade-risk-review/` | draft | needs_upgrade | Use as early intro to review process. |
+| 1 | Start Here | Welcome To TradersLink Academy | `/learn/start-here/` | content_upgraded | complete | New Academy onboarding lesson explaining courses, lessons, progress, review prompts, and non-advice education. |
+| 2 | Start Here | How To Use TradersLink Academy | `/learn/how-to-use-traderslink-academy/` | content_upgraded | complete | New lesson explaining navigation, previous/next flow, related lessons, glossary support, completion, and review prompts. |
+| 3 | Market Basics | Day Trading For Beginners | `/learn/day-trading-for-beginners/` | content_upgraded | complete | Beginner day-trading orientation focused on risk, process, orders, liquidity, review, and avoiding income claims. |
+| 4 | Market Basics | Day Trading Vs Swing Trading | `/learn/day-trading-vs-swing-trading/` | content_upgraded | complete | Timeframe comparison covering risk, overnight exposure, screen time, execution, style drift, and review. |
+| 5 | Process Basics | Trading Plan | `/learn/trading-plan/` | content_upgraded | complete | Cross-listed from Risk Management course; early process foundation. |
+| 6 | Process Basics | Trading Rules | `/learn/trading-rules/` | content_upgraded | complete | Cross-listed from Risk Management course; rules as behavior constraints. |
+| 7 | Risk Basics | Risk Management | `/learn/risk-management/` | content_upgraded | complete | Cross-listed from Risk Management course; risk foundation. |
+| 8 | Risk Basics | Position Sizing | `/learn/position-sizing/` | content_upgraded | complete | Cross-listed from Risk Management course; size as risk decision. |
+| 9 | Risk Basics | Stop Loss | `/learn/stop-loss/` | content_upgraded | complete | Cross-listed from Risk Management course; invalidation and risk control. |
+| 10 | Review Basics | Trade Risk Review | `/learn/trade-risk-review/` | content_upgraded | complete | Cross-listed from Trade Review course; early review foundation. |
+
+### Course Status
+
+The Trading Foundations course markdown path is **content_upgraded** across 4 newly created or upgraded beginner lessons plus 6 cross-listed completed plan, risk, and review lessons.
+
+Before production UI implementation, this course still needs:
+
+- Visual asset review to decide whether an Academy path map or beginner workflow diagram would improve learning.
+- Optional course intro/landing copy for the Academy course page.
+- Progress/lesson completion wiring in the website build phase.
 
 ### UI Notes
 
@@ -827,7 +837,7 @@ Current known Academy-ready lesson groups:
 | Chart Reading And Market Structure | 23 | Strong course core already created. Needs candlestick and chart pattern expansions later. |
 | Volume, Liquidity And Order Flow | 14 | Core course path is academy-ready. |
 | News, Catalysts And SEC Filings | 36 | Full course markdown path is now content-upgraded across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
-| Trading Foundations | 0 | Existing drafts need upgrade plus onboarding gap lessons. |
+| Trading Foundations | 4 | Beginner onboarding and market-basics lessons are content-upgraded; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
 | Technical Indicators And Tools | 0 | Mostly gap lessons needed. |
 | Trading Styles And Playbooks | 0 | Existing drafts plus several gap lessons. |
 | Small-Cap Stocks, Float And Dilution | 28 | Full course markdown path is now content-upgraded across small-cap context, float, dilution, offerings, securities, corporate actions, cash runway, and going concern. Needs visual review before UI-ready. |
@@ -838,28 +848,28 @@ Current known Academy-ready lesson groups:
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-129
+133
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 129 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 129 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 133 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 133 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 129 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 133 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/start-here/
+/learn/trading-indicators/
 ```
 
 Reason:
 
-The Academy just completed the Trade Review And Improvement course markdown path. The highest-value next course is Trading Foundations, starting with `/learn/start-here/`, because the Academy now needs a clean beginner onboarding path that introduces the course system before users enter advanced lessons.
+The Academy just completed the Trading Foundations course markdown path. The highest-value next course is Technical Indicators And Tools, starting with `/learn/trading-indicators/`, because indicators are a major expected Academy course and should be taught as context tools, not signal machines.
 
 ## Recommended Work Method From Here
 
