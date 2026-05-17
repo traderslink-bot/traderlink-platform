@@ -80,6 +80,8 @@ journey_map
 | `public/images/learn/chart-reading/pivot-failed-reclaim-review.svg` | `/learn/pivot-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a failed reclaim and rejection around a pivot zone as review context. | Failed Reclaim Or Rejection At A Pivot section. | Candlestick chart showing a failed reclaim and rejection around a pivot level zone. | editor_verified | Supports failed-reclaim review, uses realistic candles, highlights the pivot zone, includes volume context, and avoids predictive claims. | `8c7efffa` |
 | `public/images/learn/chart-reading/previous-day-high-low-map.svg` | `/learn/previous-day-high-low/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show previous day high and previous day low mapped across prior and current sessions. | Quick Definition section. | Candlestick chart showing previous day high and previous day low mapped as objective reference levels. | editor_verified | Supports PDH/PDL map education, uses realistic red and green candles, two-session context, volume bars, and avoids signal language. | `0f638881` |
 | `public/images/learn/chart-reading/previous-day-high-failed-breakout.svg` | `/learn/previous-day-high-low/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a break above previous day high failing back below the level as review context. | Failed Breakout At Previous Day High section. | Candlestick chart showing price breaking above previous day high and failing back below the level. | editor_verified | Supports failed-PDH-breakout review, uses realistic candles, highlights the PDH zone, includes volume context, and avoids reversal guarantee language. | `0f638881` |
+| `public/images/learn/chart-reading/premarket-high-low-range-map.svg` | `/learn/premarket-high-low/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show premarket high and premarket low mapped before the regular session open. | Quick Definition section. | Candlestick chart showing premarket high and premarket low mapped before the regular session open. | editor_verified | Supports PMH/PML range-map education, uses realistic red and green candles, premarket/open context, volume bars, and avoids signal language. | `a1450f3c` |
+| `public/images/learn/chart-reading/premarket-high-failed-breakout.svg` | `/learn/premarket-high-low/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a break above premarket high failing back below after the open as review context. | Failed Breakout At Premarket High section. | Candlestick chart showing price breaking above premarket high and failing back below after the open. | editor_verified | Supports failed-PMH-breakout review, uses realistic candles, highlights the PMH zone, includes volume context, and avoids reversal guarantee language. | `a1450f3c` |
 
 ## Editor Verification Summary
 
@@ -213,11 +215,20 @@ Previous day high/low SVG verification:
 - The visuals are wired to article sections where they add learning value.
 - The batch is appropriate for the previous-day high/low article.
 
+Premarket high/low SVG verification:
+
+- Both visuals support the actual premarket high/low lesson.
+- The PMH/PML map shows a premarket range and regular-session reaction with clear reference zones.
+- The failed PMH breakout visual shows price breaking above premarket high and failing back below it as review context, not as a reversal guarantee.
+- Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+- The batch is appropriate for the premarket high/low article.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Premarket High Low article: premarket range map, open reaction around PMH/PML, and failed premarket breakout review.
+1. High Of Day article: high-of-day reference level, failed HOD breakout/rejection, and extended HOD chase-risk review.
 2. Breakdown article: clean breakdown, failed breakdown/reclaim, breakdown with volume context.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
