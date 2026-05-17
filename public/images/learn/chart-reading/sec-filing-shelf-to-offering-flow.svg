@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
+  <title id="title">Shelf registration to offering flow</title>
+  <desc id="desc">Dark dashboard showing the educational flow from shelf registration to effective shelf, prospectus supplement, 8-K details, and dilution review without predicting price movement.</desc>
+  <rect width="960" height="560" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="904" height="504" rx="14" fill="#0b1628" stroke="#1d3557"/>
+  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Shelf Registration To Offering Flow</text>
+  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">A filing map for review. A shelf does not automatically mean immediate dilution.</text>
+  <g font-family="Arial, sans-serif">
+    <rect x="64" y="150" width="150" height="110" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="88" y="184" fill="#7bb4ff" font-size="13" font-weight="700">1. Register</text>
+    <text x="88" y="214" fill="#e6f0ff" font-size="20" font-weight="700">S-1 / S-3</text>
+    <text x="88" y="238" fill="#8fa7c8" font-size="12">Securities registered</text>
+    <rect x="246" y="150" width="150" height="110" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="270" y="184" fill="#7bb4ff" font-size="13" font-weight="700">2. Available</text>
+    <text x="270" y="214" fill="#e6f0ff" font-size="20" font-weight="700">Effective</text>
+    <text x="270" y="238" fill="#8fa7c8" font-size="12">May be used later</text>
+    <rect x="428" y="150" width="150" height="110" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="452" y="184" fill="#7bb4ff" font-size="13" font-weight="700">3. Terms</text>
+    <text x="452" y="214" fill="#e6f0ff" font-size="20" font-weight="700">424B5</text>
+    <text x="452" y="238" fill="#8fa7c8" font-size="12">Price, size, warrants</text>
+    <rect x="610" y="150" width="150" height="110" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="634" y="184" fill="#7bb4ff" font-size="13" font-weight="700">4. Event</text>
+    <text x="634" y="214" fill="#e6f0ff" font-size="20" font-weight="700">8-K</text>
+    <text x="634" y="238" fill="#8fa7c8" font-size="12">Agreement or closing</text>
+    <rect x="792" y="150" width="102" height="110" rx="10" fill="#081323" stroke="#f5c26b"/>
+    <text x="814" y="184" fill="#f5c26b" font-size="13" font-weight="700">5. Review</text>
+    <text x="814" y="214" fill="#e6f0ff" font-size="18" font-weight="700">Context</text>
+    <text x="814" y="238" fill="#8fa7c8" font-size="12">Risk + reaction</text>
+  </g>
+  <g stroke="#2d8cff" stroke-width="2" stroke-linecap="round">
+    <line x1="214" y1="205" x2="246" y2="205"/>
+    <line x1="396" y1="205" x2="428" y2="205"/>
+    <line x1="578" y1="205" x2="610" y2="205"/>
+    <line x1="760" y1="205" x2="792" y2="205"/>
+  </g>
+  <rect x="64" y="314" width="830" height="176" rx="10" fill="#081323" stroke="#172a46"/>
+  <text x="90" y="350" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Review Questions</text>
+  <g font-family="Arial, sans-serif" font-size="14" fill="#8fa7c8">
+    <text x="90" y="388">What securities were registered or offered?</text>
+    <text x="90" y="420">Were warrants, convertible notes, resale shares, or pre-funded warrants included?</text>
+    <text x="90" y="452">Was there actual offering pricing, or only an available shelf?</text>
+    <text x="520" y="388">Did volume expand after the filing?</text>
+    <text x="520" y="420">Did price hold, fade, or churn after traders saw details?</text>
+    <text x="520" y="452">Did the trade follow a plan or filing headline reaction?</text>
+  </g>
+</svg>
