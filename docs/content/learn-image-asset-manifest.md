@@ -116,6 +116,8 @@ journey_map
 | `public/images/learn/chart-reading/bid-ask-order-interaction-review.svg` | `/learn/bid-and-ask/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show how immediate orders interact with bid and ask quote sides. | How Orders Interact With Bid And Ask section. | Trading dashboard showing how immediate orders interact with bid and ask quotes. | editor_verified | Supports quote/order interaction review, uses realistic dashboard context, and avoids directive order advice. | `5dd2af67` |
 | `public/images/learn/chart-reading/slippage-expected-vs-actual-fill.svg` | `/learn/slippage/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show expected price versus actual fill price. | Quick Definition section. | Trading dashboard showing expected price versus actual fill price. | editor_verified | Supports slippage definition education, uses realistic chart/fill context, and avoids signal language. | `13a86228` |
 | `public/images/learn/chart-reading/slippage-fast-move-liquidity-review.svg` | `/learn/slippage/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show slippage during a fast candle with thin liquidity and widening spread. | Slippage During Fast Moves section. | Trading dashboard showing slippage during a fast candle with thin liquidity and a widening spread. | editor_verified | Supports fast-move slippage review, uses realistic candles, volume, spread/liquidity context, and avoids guarantee language. | `13a86228` |
+| `public/images/learn/chart-reading/market-vs-limit-order-tradeoff.svg` | `/learn/market-orders-vs-limit-orders/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Compare market-order speed with limit-order price control. | Quick Definition section. | Trading dashboard comparing market order speed with limit order price control. | editor_verified | Supports order-type tradeoff education, uses realistic bid/ask context, and avoids universal order recommendations. | `8ac5648f` |
+| `public/images/learn/chart-reading/limit-order-no-fill-review.svg` | `/learn/market-orders-vs-limit-orders/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show a limit order that does not fill as price moves away. | Limit Orders section. | Trading dashboard showing a limit order that does not fill as price moves away. | editor_verified | Supports no-fill review, uses realistic chart/order context, and avoids signal language. | `8ac5648f` |
 
 ## Editor Verification Summary
 
@@ -374,11 +376,19 @@ Slippage SVG verification:
 - Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Market orders versus limit orders SVG verification:
+
+- Both visuals support the actual order-type lesson.
+- The tradeoff visual compares speed and price control using bid/ask context without recommending one order type universally.
+- The no-fill visual shows how price can move away from a limit order and create review questions.
+- Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Market Orders Vs Limit Orders article: speed versus price control, fill/no-fill tradeoff, and execution review.
+1. Level 2 article: visible depth, stacked bid/ask context, and spoofing/overreliance cautions.
 2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
