@@ -65,6 +65,8 @@ journey_map
 | `public/images/learn/chart-reading/extended-breakout-chase-risk.svg` | `/learn/breakout-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price far above the breakout level to explain extended-entry chase risk. | Extended Breakout Chase Risk section. | Candlestick chart showing a breakout far above the level with chase-risk review labels. | editor_verified | Supports chase-risk education, keeps labels focused on review, and avoids buy/sell or profit language. | `bdd8664e` |
 | `public/images/learn/chart-reading/level-breakout-retest-hold.svg` | `/learn/level-breakout/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price breaking above a level, retesting it, and holding above the zone. | Breakout Retest And Hold section. | Candlestick chart showing price breaking above a level, retesting it, and holding above the zone. | editor_verified | Supports breakout-level retest review, uses realistic candles and zones, and avoids guaranteed-continuation language. | `1377793b` |
 | `public/images/learn/chart-reading/level-breakout-failed-hold.svg` | `/learn/level-breakout/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price breaking above a level and then failing back below the breakout zone. | Failed Hold After A Breakout section. | Candlestick chart showing price breaking above a level and then failing back below the breakout zone. | editor_verified | Supports failed-hold review, keeps labels focused on trader review, and avoids buy/sell or predictive language. | `1377793b` |
+| `public/images/learn/chart-reading/level-reclaim-hold.svg` | `/learn/level-reclaim/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price losing a key level, reclaiming it, and holding above the zone. | Reclaim And Hold section. | Candlestick chart showing price losing a key level, reclaiming it, and holding above the zone. | editor_verified | Supports reclaim-and-hold review, uses realistic candles and zones, and avoids guaranteed-continuation language. | `57664031` |
+| `public/images/learn/chart-reading/level-reclaim-failure.svg` | `/learn/level-reclaim/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price reclaiming a level briefly and then failing back below the zone. | Reclaim Failure section. | Candlestick chart showing price reclaiming a level briefly and then failing back below the zone. | editor_verified | Supports reclaim failure review, keeps labels focused on trader response, and avoids buy/sell or predictive language. | `57664031` |
 
 ## Editor Verification Summary
 
@@ -130,11 +132,19 @@ Level breakout SVG batch verification:
 - The visuals are wired to article sections where they add learning value.
 - The batch is appropriate for the level breakout upgrade.
 
+Level reclaim SVG batch verification:
+
+- Both visuals support the actual level reclaim lesson.
+- Visuals show realistic lost-level, reclaim-and-hold, and reclaim-failure behavior with red and green candlesticks.
+- Labels teach review of reclaimed levels without buy/sell language or guaranteed-continuation claims.
+- The visuals are wired to article sections where they add learning value.
+- The batch is appropriate for the level reclaim upgrade.
+
 ## Next Asset Batch Candidates
 
-After the first seven Chart Reading articles, the next high-value SVG batch should likely support one of these:
+After the first eight Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Level Reclaim article: lost level, reclaim and hold, reclaim failure.
+1. Price Rejection article: resistance rejection, support rejection/reclaim, rejection candle with volume context.
 2. Breakdown article: clean breakdown, failed breakdown/reclaim, breakdown with volume context.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
