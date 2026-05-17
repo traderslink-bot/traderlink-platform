@@ -193,7 +193,7 @@ Use this as the primary course order on the Academy homepage:
 | 2 | Chart Reading And Market Structure | in_progress | Users need candles, levels, structure, breakouts, breakdowns, and chart context early. |
 | 3 | Volume, Liquidity And Order Flow | academy_ready_core | Builds on chart reading and teaches whether activity is clean, thin, fast, or crowded. |
 | 4 | Technical Indicators And Tools | content_upgraded | Completed markdown course path teaches indicators as measurement/context tools after price, levels, and volume. |
-| 5 | Trading Styles And Playbooks | planned | Users can now combine chart, volume, and tools into recognizable setup categories. |
+| 5 | Trading Styles And Playbooks | content_upgraded | Completed markdown course path helps users combine chart, volume, tools, and risk into style/playbook categories. |
 | 6 | News, Catalysts And SEC Filings | content_upgraded | High-value TradersLink differentiator. Core course markdown lesson path is now complete through news-trade review. |
 | 7 | Small-Cap Stocks, Float And Dilution | content_upgraded | Completed markdown course path covering small-cap context, float, share structure, dilution, offerings, securities, corporate actions, cash runway, and going concern. |
 | 8 | Risk Management And Trade Planning | content_upgraded | Completed markdown course path covering plans, rules, sizing, stops, loss limits, trade management, profit protection, overnight risk, and holding through news. |
@@ -238,7 +238,7 @@ Meaning:
 
 Important:
 
-The 144 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
+The 153 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
 
 The migration pass should check:
 
@@ -464,24 +464,34 @@ Help users understand different trading styles and setup categories after they u
 
 The user should understand how traders categorize trade ideas without treating any style or setup as a guaranteed edge.
 
-### Suggested Modules And Lessons
+### Completed Course Lesson Sequence
 
 | Order | Module | Lesson | URL | Current Asset | Status | Notes |
 |---:|---|---|---|---|---|---|
-| 1 | Style Selector | Trading Styles Overview | `/learn/trading-styles/` | gap | gap_needed | New course opener. |
-| 2 | Style Selector | Day Trading | `/learn/day-trading/` | draft | needs_upgrade | Style overview, not promotion. |
-| 3 | Style Selector | Swing Trading | `/learn/swing-trading/` | draft | needs_upgrade | Style overview. |
-| 4 | Style Selector | Scalping Stocks | `/learn/scalping-stocks/` | draft | needs_upgrade | Must emphasize speed/risk/execution. |
-| 5 | Style Selector | Momentum Trading | `/learn/momentum-trading/` | draft | needs_upgrade | Fits user question around momentum. |
-| 6 | Setup Types | Pullbacks And Dip-Buy Setups | `/learn/pullbacks-and-dip-buy-setups/` | gap | gap_needed | Better title than "dip buys"; avoid buy instruction framing. |
-| 7 | Setup Types | Breakout Setups | `/learn/breakout-trading/` | existing | complete | Cross-list from Chart Reading. |
-| 8 | Setup Types | Breakdown Setups | `/learn/breakdown-trading/` | existing | complete | Cross-list from Chart Reading. |
-| 9 | Setup Types | Reclaim Setups | `/learn/level-reclaim/` | existing | complete | Cross-list from Chart Reading. |
-| 10 | Setup Types | Gap Fill Setups | `/learn/gap-fill-trading/` | existing | complete | Cross-list from Chart Reading. |
-| 11 | Setup Types | News Fade | `/learn/news-fade/` | draft | needs_upgrade | Also belongs in News course. |
-| 12 | Setup Types | Sell The News | `/learn/sell-the-news/` | draft | needs_upgrade | Needs careful non-signal framing. |
-| 13 | Multi-Day Context | Multi-Day Runner | `/learn/multi-day-runner/` | draft | needs_upgrade | Should teach review context, not hype. |
-| 14 | Risk Context | Chasing Stocks | `/learn/chasing-stocks/` | draft | needs_upgrade | Also belongs in Psychology. |
+| 1 | Style Selector | Trading Styles Overview | `/learn/trading-styles/` | content_upgraded | complete | New course opener; explains styles as review/playbook categories, not identities or guarantees. |
+| 2 | Style Selector | Day Trading | `/learn/day-trading/` | content_upgraded | complete | Style overview focused on intraday planning, risk, execution, and review. |
+| 3 | Style Selector | Swing Trading | `/learn/swing-trading/` | content_upgraded | complete | Style overview focused on multi-session planning, overnight risk, catalyst review, and style drift. |
+| 4 | Style Selector | Scalping Stocks | `/learn/scalping-stocks/` | content_upgraded | complete | Execution-sensitive style lesson covering spread, slippage, liquidity, trade count, and review. |
+| 5 | Style Selector | Momentum Trading | `/learn/momentum-trading/` | content_upgraded | complete | Teaches momentum as planned participation context and separates it from chasing. |
+| 6 | Setup Types | Pullbacks And Dip-Buy Setups | `/learn/pullbacks-and-dip-buy-setups/` | content_upgraded | complete | Gap lesson created with careful review-based framing; avoids treating dips as instructions. |
+| 7 | Setup Types | Breakout Setups | `/learn/breakout-trading/` | content_upgraded | complete | Cross-listed from Chart Reading. |
+| 8 | Setup Types | Breakdown Setups | `/learn/breakdown-trading/` | content_upgraded | complete | Cross-listed from Chart Reading. |
+| 9 | Setup Types | Reclaim Setups | `/learn/level-reclaim/` | content_upgraded | complete | Cross-listed from Chart Reading. |
+| 10 | Setup Types | Gap Fill Setups | `/learn/gap-fill-trading/` | content_upgraded | complete | Cross-listed from Chart Reading. |
+| 11 | Setup Types | News Fade | `/learn/news-fade/` | content_upgraded | complete | Teaches catalyst/reaction fade review without assuming every news move fades. |
+| 12 | Setup Types | Sell The News | `/learn/sell-the-news/` | content_upgraded | complete | Teaches expected-news reaction review without using the phrase as a trade command. |
+| 13 | Multi-Day Context | Multi-Day Runner | `/learn/multi-day-runner/` | content_upgraded | complete | Teaches attention, float, volume, supply, exhaustion, and chase-risk context. |
+| 14 | Risk Context | Chasing Stocks | `/learn/chasing-stocks/` | content_upgraded | complete | Cross-listed from Trading Psychology; caps the course with late-entry risk review. |
+
+### Course Status
+
+The Trading Styles And Playbooks course markdown path is **content_upgraded** across 9 newly created or upgraded lessons plus 5 cross-listed completed lessons from Chart Reading and Trading Psychology.
+
+Before production UI implementation, this course still needs:
+
+- Visual asset review for style-selector or playbook-flow diagrams if they improve learning.
+- Optional realistic chart/workflow visuals for momentum, pullbacks, news fades, sell-the-news reactions, and multi-day runners.
+- Final Academy migration pass for completion behavior and UI-ready metadata.
 
 ## Course 6: News, Catalysts And SEC Filings
 
@@ -849,7 +859,7 @@ Current known Academy-ready lesson groups:
 | News, Catalysts And SEC Filings | 36 | Full course markdown path is now content-upgraded across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
 | Trading Foundations | 4 | Beginner onboarding and market-basics lessons are content-upgraded; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
 | Technical Indicators And Tools | 11 | Full indicator course markdown path is now content-upgraded across indicator foundation, trend tools, momentum tools, volatility tools, and VWAP reclaim. Volume By Price is cross-listed from the completed Volume course. Needs visual review before UI-ready. |
-| Trading Styles And Playbooks | 0 | Existing drafts plus several gap lessons. |
+| Trading Styles And Playbooks | 9 | Full course markdown path is now content-upgraded across style selector lessons, pullback context, news-fade/sell-the-news context, and multi-day runner context. Breakout, breakdown, reclaim, gap-fill, and chasing lessons are cross-listed from completed courses. Needs visual review before UI-ready. |
 | Small-Cap Stocks, Float And Dilution | 28 | Full course markdown path is now content-upgraded across small-cap context, float, dilution, offerings, securities, corporate actions, cash runway, and going concern. Needs visual review before UI-ready. |
 | Risk Management And Trade Planning | 13 | Full course markdown path is now content-upgraded across planning, rules, risk basics, account protection, trade management, and event risk. Needs visual review before UI-ready. |
 | Trading Psychology And Discipline | 8 | Full course markdown path is now content-upgraded across discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. Needs visual review before UI-ready. |
@@ -858,28 +868,28 @@ Current known Academy-ready lesson groups:
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-144
+153
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 144 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 144 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 153 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 153 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 144 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 153 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/trading-styles/
+/learn/candlestick-patterns/
 ```
 
 Reason:
 
-The Academy just completed the Technical Indicators And Tools course markdown path. The highest-value next course is Trading Styles And Playbooks, starting with `/learn/trading-styles/`, because users can now combine chart structure, volume/liquidity context, risk planning, and indicators into recognizable styles without treating those styles as guaranteed setups.
+The Academy just completed the Trading Styles And Playbooks course markdown path. The highest-value next course is the remaining Candlestick Patterns In Context path, starting with `/learn/candlestick-patterns/`, because chart-reading still has known draft lessons that need realistic candle visuals and careful non-signal framing.
 
 ## Recommended Work Method From Here
 
