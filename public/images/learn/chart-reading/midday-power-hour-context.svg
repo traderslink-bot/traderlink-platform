@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430" role="img" aria-labelledby="title desc">
+  <title id="title">Midday Chop And Power Hour Context</title>
+  <desc id="desc">Realistic intraday candlestick chart showing slower midday range behavior, fading volume, later volume return, and power hour reassessment labels.</desc>
+  <defs><style>
+    .bg{fill:#0b1220}.panel{fill:#0f1a2b;stroke:#203651;stroke-width:1.5}.grid{stroke:#22364f;opacity:.65}.txt{fill:#d7e3f4;font-family:Arial,Helvetica,sans-serif}.small{font-size:12px}.label{font-size:13px;font-weight:700}.muted{fill:#8ea1bd}.zone{fill:rgba(56,189,248,.12);stroke:#38bdf8;stroke-width:1.5}.line{stroke:#38bdf8;stroke-width:1.5;stroke-dasharray:6 5}.green{fill:#22c55e;stroke:#22c55e}.red{fill:#ef4444;stroke:#ef4444}.wickG{stroke:#22c55e;stroke-width:2}.wickR{stroke:#ef4444;stroke-width:2}.volG{fill:#22c55e;opacity:.45}.volR{fill:#ef4444;opacity:.45}
+  </style></defs>
+  <rect class="bg" width="760" height="430"/><rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
+  <text class="txt label" x="34" y="42">Midday To Power Hour: Filter Chop, Then Reassess</text>
+  <text class="txt small muted" x="34" y="64">The lesson is session behavior: slower range, volume return, and end-of-day risk review.</text>
+  <g transform="translate(54 94)">
+    <rect x="0" y="0" width="650" height="230" fill="#0c1626" stroke="#203651"/>
+    <line class="grid" x1="0" y1="45" x2="650" y2="45"/><line class="grid" x1="0" y1="90" x2="650" y2="90"/><line class="grid" x1="0" y1="135" x2="650" y2="135"/><line class="grid" x1="0" y1="180" x2="650" y2="180"/>
+    <rect class="zone" x="70" y="88" width="330" height="54"/><text class="txt small" x="82" y="108">Midday range / lower urgency</text>
+    <line class="line" x1="438" y1="0" x2="438" y2="230"/><text class="txt small" x="410" y="18">Final hour</text>
+    <line class="wickG" x1="38" y1="78" x2="38" y2="154"/><rect class="green" x="30" y="106" width="16" height="28"/>
+    <line class="wickR" x1="72" y1="96" x2="72" y2="150"/><rect class="red" x="65" y="112" width="14" height="22"/>
+    <line class="wickG" x1="106" y1="100" x2="106" y2="138"/><rect class="green" x="99" y="114" width="14" height="10"/>
+    <line class="wickR" x1="140" y1="98" x2="140" y2="144"/><rect class="red" x="133" y="112" width="14" height="16"/>
+    <line class="wickG" x1="174" y1="104" x2="174" y2="140"/><rect class="green" x="167" y="116" width="14" height="10"/>
+    <line class="wickR" x1="208" y1="102" x2="208" y2="142"/><rect class="red" x="201" y="114" width="14" height="12"/>
+    <line class="wickG" x1="242" y1="98" x2="242" y2="138"/><rect class="green" x="235" y="112" width="14" height="12"/>
+    <line class="wickR" x1="276" y1="104" x2="276" y2="146"/><rect class="red" x="269" y="116" width="14" height="14"/>
+    <line class="wickG" x1="310" y1="96" x2="310" y2="136"/><rect class="green" x="303" y="110" width="14" height="14"/>
+    <line class="wickR" x1="344" y1="100" x2="344" y2="148"/><rect class="red" x="337" y="114" width="14" height="18"/>
+    <line class="wickG" x1="378" y1="92" x2="378" y2="138"/><rect class="green" x="371" y="108" width="14" height="16"/>
+    <line class="wickG" x1="452" y1="84" x2="452" y2="134"/><rect class="green" x="444" y="102" width="16" height="20"/>
+    <line class="wickG" x1="486" y1="66" x2="486" y2="126"/><rect class="green" x="478" y="88" width="16" height="26"/>
+    <line class="wickR" x1="520" y1="62" x2="520" y2="142"/><rect class="red" x="512" y="82" width="16" height="42"/>
+    <line class="wickG" x1="554" y1="80" x2="554" y2="132"/><rect class="green" x="546" y="98" width="16" height="18"/>
+    <line class="wickR" x1="588" y1="90" x2="588" y2="150"/><rect class="red" x="580" y="108" width="16" height="26"/>
+    <text class="txt small" x="480" y="52">Volume returns, plan still required</text>
+    <g transform="translate(0 246)">
+      <rect class="volG" x="30" y="10" width="16" height="38"/><rect class="volR" x="65" y="24" width="14" height="24"/><rect class="volG" x="99" y="35" width="14" height="13"/><rect class="volR" x="133" y="36" width="14" height="12"/><rect class="volG" x="167" y="38" width="14" height="10"/><rect class="volR" x="201" y="37" width="14" height="11"/><rect class="volG" x="235" y="39" width="14" height="9"/><rect class="volR" x="269" y="36" width="14" height="12"/><rect class="volG" x="303" y="37" width="14" height="11"/><rect class="volR" x="337" y="35" width="14" height="13"/><rect class="volG" x="371" y="34" width="14" height="14"/>
+      <rect class="volG" x="444" y="22" width="16" height="26"/><rect class="volG" x="478" y="10" width="16" height="38"/><rect class="volR" x="512" y="8" width="16" height="40"/><rect class="volG" x="546" y="18" width="16" height="30"/><rect class="volR" x="580" y="20" width="16" height="28"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430" role="img" aria-labelledby="title desc">
+  <title id="title">Premarket Trading Preparation Map</title>
+  <desc id="desc">Realistic premarket candlestick chart showing premarket high, premarket low, opening bell, volume bars, spread note, and catalyst review labels.</desc>
+  <defs>
+    <style>
+      .bg{fill:#0b1220}.panel{fill:#0f1a2b;stroke:#203651;stroke-width:1.5}.grid{stroke:#22364f;opacity:.65}.txt{fill:#d7e3f4;font-family:Arial,Helvetica,sans-serif}.small{font-size:12px}.label{font-size:13px;font-weight:700}.muted{fill:#8ea1bd}.zone{fill:rgba(56,189,248,.12);stroke:#38bdf8;stroke-width:1.5}.line{stroke:#38bdf8;stroke-width:1.5;stroke-dasharray:6 5}.green{fill:#22c55e;stroke:#22c55e}.red{fill:#ef4444;stroke:#ef4444}.wickG{stroke:#22c55e;stroke-width:2}.wickR{stroke:#ef4444;stroke-width:2}.volG{fill:#22c55e;opacity:.45}.volR{fill:#ef4444;opacity:.45}.note{fill:#12263f;stroke:#2f80ed;stroke-width:1}
+    </style>
+  </defs>
+  <rect class="bg" width="760" height="430"/>
+  <rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
+  <text class="txt label" x="34" y="42">Premarket: Map The Context Before The Bell</text>
+  <text class="txt small muted" x="34" y="64">The goal is preparation: catalyst, liquidity, spread, and reference levels.</text>
+  <g transform="translate(54 92)">
+    <rect x="0" y="0" width="520" height="230" fill="#0c1626" stroke="#203651"/>
+    <line class="grid" x1="0" y1="52" x2="520" y2="52"/><line class="grid" x1="0" y1="104" x2="520" y2="104"/><line class="grid" x1="0" y1="156" x2="520" y2="156"/><line class="grid" x1="0" y1="208" x2="520" y2="208"/>
+    <rect class="zone" x="36" y="64" width="420" height="14"/><text class="txt small" x="462" y="76">PMH zone</text>
+    <rect class="zone" x="36" y="148" width="420" height="16"/><text class="txt small" x="462" y="161">PML zone</text>
+    <line class="line" x1="392" y1="0" x2="392" y2="230"/><text class="txt small" x="366" y="18">Open</text>
+    <line class="wickG" x1="34" y1="150" x2="34" y2="176"/><rect class="green" x="27" y="158" width="14" height="10"/>
+    <line class="wickG" x1="62" y1="126" x2="62" y2="170"/><rect class="green" x="55" y="142" width="14" height="18"/>
+    <line class="wickR" x1="90" y1="112" x2="90" y2="164"/><rect class="red" x="83" y="126" width="14" height="28"/>
+    <line class="wickG" x1="118" y1="96" x2="118" y2="150"/><rect class="green" x="111" y="116" width="14" height="24"/>
+    <line class="wickG" x1="146" y1="72" x2="146" y2="138"/><rect class="green" x="139" y="94" width="14" height="30"/>
+    <line class="wickR" x1="174" y1="64" x2="174" y2="142"/><rect class="red" x="167" y="82" width="14" height="44"/>
+    <line class="wickG" x1="202" y1="88" x2="202" y2="146"/><rect class="green" x="195" y="110" width="14" height="20"/>
+    <line class="wickR" x1="230" y1="104" x2="230" y2="164"/><rect class="red" x="223" y="120" width="14" height="30"/>
+    <line class="wickG" x1="258" y1="116" x2="258" y2="158"/><rect class="green" x="251" y="130" width="14" height="14"/>
+    <line class="wickR" x1="286" y1="108" x2="286" y2="164"/><rect class="red" x="279" y="124" width="14" height="28"/>
+    <line class="wickG" x1="314" y1="92" x2="314" y2="146"/><rect class="green" x="307" y="110" width="14" height="24"/>
+    <line class="wickG" x1="342" y1="76" x2="342" y2="134"/><rect class="green" x="335" y="98" width="14" height="22"/>
+    <line class="wickR" x1="370" y1="66" x2="370" y2="142"/><rect class="red" x="363" y="84" width="14" height="44"/>
+    <line class="wickG" x1="414" y1="58" x2="414" y2="138"/><rect class="green" x="406" y="84" width="16" height="34"/>
+    <line class="wickR" x1="446" y1="70" x2="446" y2="158"/><rect class="red" x="438" y="96" width="16" height="42"/>
+    <line class="wickR" x1="478" y1="114" x2="478" y2="178"/><rect class="red" x="470" y="134" width="16" height="26"/>
+    <g transform="translate(0 246)">
+      <rect class="volG" x="27" y="34" width="14" height="14"/><rect class="volG" x="55" y="28" width="14" height="20"/><rect class="volR" x="83" y="25" width="14" height="23"/><rect class="volG" x="111" y="18" width="14" height="30"/><rect class="volG" x="139" y="10" width="14" height="38"/><rect class="volR" x="167" y="8" width="14" height="40"/><rect class="volG" x="195" y="22" width="14" height="26"/><rect class="volR" x="223" y="26" width="14" height="22"/><rect class="volG" x="251" y="33" width="14" height="15"/><rect class="volR" x="279" y="31" width="14" height="17"/><rect class="volG" x="307" y="24" width="14" height="24"/><rect class="volG" x="335" y="18" width="14" height="30"/><rect class="volR" x="363" y="13" width="14" height="35"/><rect class="volG" x="406" y="0" width="16" height="48"/><rect class="volR" x="438" y="4" width="16" height="44"/><rect class="volR" x="470" y="15" width="16" height="33"/>
+    </g>
+  </g>
+  <g>
+    <rect class="note" x="602" y="102" width="118" height="60" rx="6"/><text class="txt small" x="616" y="126">Catalyst</text><text class="txt small muted" x="616" y="146">Read source</text>
+    <rect class="note" x="602" y="180" width="118" height="60" rx="6"/><text class="txt small" x="616" y="204">Liquidity</text><text class="txt small muted" x="616" y="224">Check spread</text>
+    <rect class="note" x="602" y="258" width="118" height="60" rx="6"/><text class="txt small" x="616" y="282">Review</text><text class="txt small muted" x="616" y="302">Did plan hold?</text>
+  </g>
+</svg>
