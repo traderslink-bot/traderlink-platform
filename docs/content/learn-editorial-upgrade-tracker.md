@@ -559,15 +559,17 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | Halts And High-Volatility Events course | Created 7 Halts And High-Volatility Events course markdown lessons and 3 realistic SVG assets. | Passed. Lessons include Academy metadata, previous/next path, lesson objective, realistic examples, common mistakes, practical checklist, Apply This In Review, Trader Intelligence bridge, related lessons, related glossary terms, FAQ, educational disclaimer, official source check reminders where rules can change, and visual assets where useful. The course teaches halts and volatility as risk and review context, not trade triggers. SVGs use realistic candles, halt/resume zones, bid/ask spread context, broad-market circuit-breaker reference bands, volume bars, dark trading-dashboard styling, title/desc tags, and educational labels. | `4dad0058`; manifest `30a6bfd0` |
 | 2026-05-17 | Swing Trading Workflow course | Upgraded 8 Swing Trading Workflow course markdown lessons and created 3 realistic SVG assets. | Passed. Lessons include Academy metadata, previous/next path, lesson objective, realistic examples, common mistakes, practical checklist, Apply This In Review, Trader Intelligence bridge, related lessons, related glossary terms, FAQ, educational disclaimer, and visual assets where useful. The course teaches swing trading as multi-session planning, overnight/gap risk, level review, volume participation, catalyst quality, earnings/news risk, and small-cap context, not slower guaranteed setups. SVGs use realistic red/green daily candles, support/resistance or invalidation zones, catalyst markers, volume bars, dark trading-dashboard styling, title/desc tags, and educational labels. | `9546ea6c`; manifest `86cff300` |
 | 2026-05-17 | Academy path hubs | Created 4 Academy navigation path hubs and 4 realistic SVG/path-map assets. | Passed. Path hubs include Academy metadata, previous/next path, path objective, recommended course flow, common mistakes, practical checklist, Apply This In Review, Trader Intelligence bridge, related lessons, related glossary terms, FAQ, educational disclaimer, and visual assets. The hubs connect completed courses for chart reading, news/filings, trade review/practice, and risk/discipline without building production website files. SVGs use dark dashboard styling, realistic chart context where useful, title/desc tags, and educational navigation labels. | `3d83f1ba`; manifest `3c994c73` |
+| 2026-05-17 | Chart Reading Academy format migration | Normalized 23 Chart Reading And Market Structure core lessons for Academy format. | Passed. Lessons now use `content_type: "academy_lesson"`, `academy_course`, `academy_module`, `academy_order`, `academy_level`, lesson objectives, `Practical Checklist`, `Apply This In Review`, and `Trader Intelligence Bridge` labels. The pass preserved the strong existing lesson content and avoided production website files. | `f6773070` |
 
 ## Next Recommended Action
 
 Continue into Academy format migration and UI-readiness normalization:
 
-1. Start a metadata/format pass on completed Academy lessons, beginning with Trading Foundations and Chart Reading.
-2. Normalize `academy_course`, `academy_module`, `academy_order`, `academy_level`, `recommended_previous`, `recommended_next`, visual asset references, and review-section naming.
-3. Do not rewrite strong lessons unless the new Academy format reveals a real gap.
-4. Keep this as markdown/content planning only; do not build production routes, components, schemas, JSX, CSS, or pages.
+1. Continue the metadata/format pass with Candlestick Patterns In Context.
+2. Then continue into Chart Patterns In Context.
+3. Normalize `academy_course`, `academy_module`, `academy_order`, `academy_level`, `recommended_previous`, `recommended_next`, visual asset references, and review-section naming.
+4. Do not rewrite strong lessons unless the new Academy format reveals a real gap.
+5. Keep this as markdown/content planning only; do not build production routes, components, schemas, JSX, CSS, or pages.
 
 ## Important Reminder
 
