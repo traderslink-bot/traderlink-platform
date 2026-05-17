@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Private Placement Stock"
 slug: "/learn/private-placement/"
 primary_keyword: "private placement stock"
@@ -7,7 +7,7 @@ search_intent: "Understand what private placement stock means, why companies use
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 15
 academy_module: "Offerings"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/stock-offerings/", "/learn/public-offering/", "/learn/registered-direct-offering/", "/learn/resale-registration-statement/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -127,9 +127,9 @@ Traders also get into trouble when they ignore warrants or convertible securitie
 
 A fourth mistake is not reading the Form 8-K or purchase agreement exhibits.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help you study how private placements affect your trades.
+A structured trade review can help you study how private placements affect your trades.
 
 Useful review notes include:
 

@@ -1,4 +1,4 @@
-﻿---
+---
 title: "How to Spot Dilution Risk in Small-Cap Stocks"
 slug: "/learn/how-to-spot-dilution-risk/"
 primary_keyword: "how to spot dilution risk"
@@ -11,7 +11,7 @@ search_intent: "Learn how traders identify potential dilution risk in small-cap 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review dilution-risk trades with Trader Intelligence"
@@ -21,14 +21,14 @@ academy_level: "Practical"
 academy_order: 11
 academy_module: "Dilution Foundation"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links:
   - "/learn/sec-filings/"
   - "/learn/sec-filings/form-s-1/"
   - "/learn/sec-filings/form-s-3/"
   - "/learn/sec-filings/form-424b5/"
   - "/learn/reverse-split/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "Article"
   - "FAQPage"
@@ -136,7 +136,7 @@ Common dilution-risk mistakes include:
 
 The headline is only part of the story.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 If dilution risk affected a trade, write it down.
 
@@ -150,7 +150,7 @@ Ask:
 - Did I exit because of a planned risk rule or because of panic?
 - Is ignoring filings a repeated mistake in my trades?
 
-A journal can help reveal whether filing risk is something you consistently overlook.
+Structured review notes can help reveal whether filing risk is something you consistently overlook.
 
 ## Related Terms And Guides
 
@@ -161,7 +161,7 @@ Useful related pages include:
 - [Form S-3](/learn/sec-filings/form-s-3/)
 - [Form 424B5](/learn/sec-filings/form-424b5/)
 - [Reverse Stock Split](/learn/reverse-split/)
-- [Trading Journal App](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -197,7 +197,7 @@ Small-cap companies often raise capital through share offerings, warrants, conve
 
 It depends on context. Raising capital may help a company fund operations, but it can also increase share supply. Traders need to read the terms.
 
-### Should I track dilution risk in my journal?
+### Should I track dilution risk in my review notes?
 
 Yes, especially if you trade small-cap or penny stocks. Tracking whether you checked filings can help you avoid repeating the same research mistakes.
 

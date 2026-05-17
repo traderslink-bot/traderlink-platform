@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Float vs Shares Outstanding"
 slug: "/learn/float-vs-shares-outstanding/"
 primary_keyword: "float vs shares outstanding"
@@ -7,7 +7,7 @@ search_intent: "Understand the difference between float and shares outstanding, 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "comparison"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Foundation"
 academy_order: 6
 academy_module: "Share Structure"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/stock-float/", "/learn/share-structure/", "/learn/fully-diluted-shares/", "/learn/dilution/", "/learn/low-float-stocks/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -138,9 +138,9 @@ Traders also get into trouble when they ignore fully diluted shares.
 
 A fourth mistake is assuming low float alone makes a trade good. Low float can increase volatility, but it does not replace risk management.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help connect share structure to trade behavior.
+A structured trade review can help connect share structure to trade behavior.
 
 Useful review notes include:
 

@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Reverse Stock Split Explained for Traders"
 slug: "/learn/reverse-split/"
 primary_keyword: "reverse stock split"
@@ -11,7 +11,7 @@ search_intent: "Learn what a reverse stock split is, why companies do it, and wh
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review reverse split trades with Trader Intelligence"
@@ -21,13 +21,13 @@ academy_level: "Practical"
 academy_order: 24
 academy_module: "Corporate Actions"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links:
   - "/learn/sec-filings/"
   - "/learn/small-cap-stocks/"
   - "/learn/penny-stocks/"
   - "/learn/low-float-stocks/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "Article"
   - "FAQPage"
@@ -120,7 +120,7 @@ Traders often watch whether the company has:
 
 This is not about assuming every reverse split creates dilution. It is about understanding whether the split is part of a larger risk picture.
 
-## How To Review Trades Around This Filing
+## Apply This In Review
 
 If you traded a stock around a reverse split, review the trade carefully.
 
@@ -144,7 +144,7 @@ Useful related pages include:
 - [Small-Cap Stocks](/learn/small-cap-stocks/)
 - [Penny Stocks](/learn/penny-stocks/)
 - [Low-Float Stocks](/learn/low-float-stocks/)
-- [Trading Journal App](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Common Mistakes
 
@@ -191,11 +191,11 @@ No. A reverse split does not automatically remove dilution risk. Traders should 
 
 Yes. Some reverse split stocks can become volatile because the share count and float structure change. That volatility can create risk as well as opportunity.
 
-### Should I review reverse split trades in my journal?
+### Should I review reverse split trades in my review notes?
 
 Yes. Reverse split trades should be reviewed with attention to timing, liquidity, share structure, filings, entry quality, and risk management.
 
-## Apply This In Review
+## Review Questions
 
 When reviewing a small-cap trade or watchlist idea connected to Reverse Split, ask:
 

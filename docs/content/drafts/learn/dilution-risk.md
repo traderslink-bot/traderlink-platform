@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Dilution Risk"
 slug: "/learn/dilution-risk/"
 primary_keyword: "dilution risk"
@@ -7,7 +7,7 @@ search_intent: "Understand what dilution risk means, why traders watch financing
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 10
 academy_module: "Dilution Foundation"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/dilution/", "/learn/how-to-spot-dilution-risk/", "/learn/stock-offerings/", "/learn/shelf-registration/", "/learn/fully-diluted-shares/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -125,9 +125,9 @@ Traders also get into trouble when they only check cash and ignore warrants, con
 
 A fourth mistake is assuming a company with fresh news cannot raise money. Sometimes news creates the opportunity to raise.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help you study whether dilution risk affected your trades.
+A structured trade review can help you study whether dilution risk affected your trades.
 
 Useful review notes include:
 

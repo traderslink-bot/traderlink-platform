@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Low-Float Stocks: What Traders Should Know"
 slug: "/learn/low-float-stocks/"
 primary_keyword: "low float stocks"
@@ -11,7 +11,7 @@ search_intent: "Learn what low-float stocks are, why traders watch them, and wha
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review low-float trades with Trader Intelligence"
@@ -21,13 +21,13 @@ academy_level: "Practical"
 academy_order: 4
 academy_module: "Float Foundation"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links:
   - "/learn/small-cap-stocks/"
   - "/learn/penny-stocks/"
   - "/learn/stock-float/"
   - "/learn/relative-volume/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "Article"
   - "FAQPage"
@@ -114,7 +114,7 @@ Common low-float trading mistakes include:
 
 Low-float stocks can be exciting, but they require discipline.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 After trading a low-float stock, review the trade with context.
 
@@ -139,7 +139,7 @@ Useful related pages include:
 - [Penny Stocks](/learn/penny-stocks/)
 - [Stock Float](/learn/stock-float/)
 - [Relative Volume](/learn/relative-volume/)
-- [Trading Journal App](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -175,9 +175,9 @@ Yes. Low-float stocks can be volatile, illiquid, prone to wide spreads, and diff
 
 Traders often check float, volume, liquidity, catalyst quality, filings, dilution risk, chart levels, and whether the trade has a clear risk plan.
 
-### Can a trading journal help with low-float trades?
+### Can a structured trade review help with low-float trades?
 
-Yes. A journal can help traders review whether they chased, over-sized, ignored liquidity, or failed to manage risk in low-float trades.
+Yes. Structured review notes can help traders review whether they chased, over-sized, ignored liquidity, or failed to manage risk in low-float trades.
 
 ## Apply This In Review
 

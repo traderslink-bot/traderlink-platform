@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Shelf Registration"
 slug: "/learn/shelf-registration/"
 primary_keyword: "shelf registration"
@@ -7,7 +7,7 @@ search_intent: "Understand what a shelf registration is, why companies file shel
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 17
 academy_module: "Offerings"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/stock-offerings/", "/learn/at-the-market-offering/", "/learn/sec-filings/form-s-3/", "/learn/sec-filings/effect-notice/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -121,9 +121,9 @@ Traders also get into trouble when they fail to distinguish primary shelf regist
 
 A fourth mistake is not watching for follow-up 424B filings.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help connect shelf registration details to trading decisions.
+A structured trade review can help connect shelf registration details to trading decisions.
 
 Useful review notes include:
 

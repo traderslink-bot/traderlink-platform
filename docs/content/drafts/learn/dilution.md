@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Dilution"
 slug: "/learn/dilution/"
 primary_keyword: "dilution"
@@ -7,7 +7,7 @@ search_intent: "Understand what dilution means in stocks, why share count increa
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Foundation"
 academy_order: 9
 academy_module: "Dilution Foundation"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/dilution-risk/", "/learn/how-to-spot-dilution-risk/", "/learn/stock-offerings/", "/learn/fully-diluted-shares/", "/learn/share-structure/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -127,9 +127,9 @@ Traders also get into trouble when they focus only on the float and ignore fully
 
 A fourth mistake is not checking whether registration statements or EFFECT notices make resale shares available.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help connect dilution details to trade decisions.
+A structured trade review can help connect dilution details to trade decisions.
 
 Useful review notes include:
 

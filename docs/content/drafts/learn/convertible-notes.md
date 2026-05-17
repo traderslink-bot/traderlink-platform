@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Convertible Notes"
 slug: "/learn/convertible-notes/"
 primary_keyword: "convertible notes"
@@ -7,7 +7,7 @@ search_intent: "Understand what convertible notes are, why companies use convert
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 22
 academy_module: "Securities"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/stock-offerings/", "/learn/preferred-stock/", "/learn/warrants/", "/learn/how-to-spot-dilution-risk/", "/learn/share-structure/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -125,9 +125,9 @@ Traders also get into trouble when they ignore default provisions. Default terms
 
 A fourth mistake is not estimating the possible share count impact.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help connect convertible note details to trade decisions.
+A structured trade review can help connect convertible note details to trade decisions.
 
 Useful review notes include:
 

@@ -1,4 +1,4 @@
-﻿---
+---
 title: "At-The-Market Offering"
 slug: "/learn/at-the-market-offering/"
 primary_keyword: "at the market offering"
@@ -7,7 +7,7 @@ search_intent: "Understand what an at-the-market offering is, why companies use 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 16
 academy_module: "Offerings"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/stock-offerings/", "/learn/shelf-registration/", "/learn/sec-filings/form-s-3/", "/learn/sec-filings/form-424b5/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -120,9 +120,9 @@ Traders also get into trouble when they treat ATM filings the same as priced off
 
 A fourth mistake is not checking later financial filings for actual sales under the ATM.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help you study how ATM offerings affect trades.
+A structured trade review can help you study how ATM offerings affect trades.
 
 Useful review notes include:
 

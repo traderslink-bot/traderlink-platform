@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Penny Stocks: What New Traders Should Know"
 slug: "/learn/penny-stocks/"
 primary_keyword: "penny stocks"
@@ -11,7 +11,7 @@ search_intent: "Learn what penny stocks are, why traders watch them, and what ri
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review penny stock trades with Trader Intelligence"
@@ -21,13 +21,13 @@ academy_level: "Foundation"
 academy_order: 2
 academy_module: "Small-Cap Foundation"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links:
   - "/learn/small-cap-stocks/"
   - "/learn/low-float-stocks/"
   - "/learn/stock-float/"
   - "/learn/relative-volume/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "Article"
   - "FAQPage"
@@ -152,7 +152,7 @@ Common penny stock trading mistakes include:
 
 Penny stocks can move fast, so poor planning can become expensive quickly.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 After trading a penny stock, review the full context.
 
@@ -177,7 +177,7 @@ Useful related pages include:
 - [Low-Float Stocks](/learn/low-float-stocks/)
 - [Stock Float](/learn/stock-float/)
 - [Relative Volume](/learn/relative-volume/)
-- [Trading Journal App](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -213,9 +213,9 @@ Yes. Penny stocks can have high volatility, wide spreads, dilution risk, weak li
 
 Traders often review catalyst quality, float, volume, liquidity, filings, dilution risk, support and resistance, and whether the trade has a clear plan.
 
-### Can a trading journal help with penny stocks?
+### Can a structured trade review help with penny stocks?
 
-Yes. A journal can help traders review whether they chased, ignored filings, over-sized, averaged down, or repeated other mistakes in penny stock trades.
+Yes. Structured review notes can help traders review whether they chased, ignored filings, over-sized, averaged down, or repeated other mistakes in penny stock trades.
 
 ## Apply This In Review
 

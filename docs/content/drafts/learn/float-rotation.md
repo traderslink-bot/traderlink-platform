@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Float Rotation"
 slug: "/learn/float-rotation/"
 primary_keyword: "float rotation"
@@ -11,7 +11,7 @@ search_intent: "Understand what float rotation means, how traders estimate it, a
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -21,13 +21,13 @@ academy_level: "Advanced"
 academy_order: 5
 academy_module: "Float Foundation"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links:
   - "/learn/stock-float/"
   - "/learn/low-float-stocks/"
   - "/learn/volume/"
   - "/learn/relative-volume-rvol/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -145,9 +145,9 @@ Another mistake is ignoring price action. Heavy float rotation with strong struc
 
 Context matters.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-Float rotation can be useful in a trading journal because it gives volume context to the trade.
+Float rotation can be useful in a structured trade review because it gives volume context to the trade.
 
 After a trade, you can review:
 
@@ -169,7 +169,7 @@ For more context, read:
 - [Low float stocks](/learn/low-float-stocks/)
 - [Stock volume](/learn/volume/)
 - [Relative volume RVOL](/learn/relative-volume-rvol/)
-- [Trading journal app](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 

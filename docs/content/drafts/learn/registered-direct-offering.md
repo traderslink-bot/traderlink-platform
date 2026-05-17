@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Registered Direct Offering"
 slug: "/learn/registered-direct-offering/"
 primary_keyword: "registered direct offering"
@@ -7,7 +7,7 @@ search_intent: "Understand what a registered direct offering is, why companies u
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 14
 academy_module: "Offerings"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/stock-offerings/", "/learn/public-offering/", "/learn/private-placement/", "/learn/sec-filings/form-424b5/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -122,9 +122,9 @@ Traders also get into trouble when they ignore the company's cash position. If t
 
 A fourth mistake is not reading the prospectus supplement or purchase agreement details.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help you study how registered direct offerings affected your trades.
+A structured trade review can help you study how registered direct offerings affected your trades.
 
 Useful review notes include:
 

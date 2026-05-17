@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Pre-Funded Warrants"
 slug: "/learn/pre-funded-warrants/"
 primary_keyword: "pre-funded warrants"
@@ -7,7 +7,7 @@ search_intent: "Understand what pre-funded warrants are, why they appear in stoc
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 21
 academy_module: "Securities"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/stock-offerings/", "/learn/warrants/", "/learn/registered-direct-offering/", "/learn/private-placement/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -123,9 +123,9 @@ Traders also get into trouble when they ignore ownership limits. Those limits ca
 
 A fourth mistake is not checking whether common warrants are attached in the same deal.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help you study how pre-funded warrants affected your trades.
+A structured trade review can help you study how pre-funded warrants affected your trades.
 
 Useful review notes include:
 

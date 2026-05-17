@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Warrants vs Options"
 slug: "/learn/warrants-vs-options/"
 primary_keyword: "warrants vs options"
@@ -7,7 +7,7 @@ search_intent: "Compare warrants and options so traders can understand the diffe
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "comparison"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 20
 academy_module: "Securities"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/warrants/", "/learn/pre-funded-warrants/", "/learn/stock-offerings/", "/learn/dilution-risk/", "/learn/fully-diluted-shares/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -130,9 +130,9 @@ Traders also get into trouble when they do not check exercise price and expirati
 
 A fourth mistake is not checking whether warrants have cashless exercise or anti-dilution adjustment terms.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help connect warrant and option details to trade decisions.
+A structured trade review can help connect warrant and option details to trade decisions.
 
 Useful review notes include:
 

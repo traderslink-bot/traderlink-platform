@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Stock Offering"
 slug: "/learn/stock-offerings/"
 primary_keyword: "stock offering"
@@ -7,7 +7,7 @@ search_intent: "Understand what a stock offering is, why companies raise money t
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Foundation"
 academy_order: 12
 academy_module: "Offerings"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/sec-filings/", "/learn/public-offering/", "/learn/registered-direct-offering/", "/learn/private-placement/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -124,9 +124,9 @@ Traders also get into trouble when they ignore the company's cash position befor
 
 A fourth mistake is trading only the headline without reading the actual terms.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help you study how offerings affected your trades.
+A structured trade review can help you study how offerings affected your trades.
 
 Useful review notes include:
 

@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Fully Diluted Shares"
 slug: "/learn/fully-diluted-shares/"
 primary_keyword: "fully diluted shares"
@@ -7,7 +7,7 @@ search_intent: "Understand what fully diluted shares means, why traders review f
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 7
 academy_module: "Share Structure"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/dilution/", "/learn/dilution-risk/", "/learn/warrants/", "/learn/convertible-notes/", "/learn/share-structure/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -124,9 +124,9 @@ Traders also get into trouble when they ignore variable conversion terms. Some s
 
 A fourth mistake is not updating the estimate after new offerings or filings.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help connect fully diluted share count to trade decisions.
+A structured trade review can help connect fully diluted share count to trade decisions.
 
 Useful review notes include:
 

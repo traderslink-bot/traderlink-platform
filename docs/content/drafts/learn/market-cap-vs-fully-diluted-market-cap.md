@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Market Cap vs Fully Diluted Market Cap"
 slug: "/learn/market-cap-vs-fully-diluted-market-cap/"
 primary_keyword: "market cap vs fully diluted market cap"
@@ -7,7 +7,7 @@ search_intent: "Understand the difference between market cap and fully diluted m
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "comparison"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 8
 academy_module: "Valuation Context"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/market-cap/", "/learn/fully-diluted-shares/", "/learn/dilution/", "/learn/share-structure/", "/learn/warrants/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -130,9 +130,9 @@ Traders also get into trouble when they ignore variable conversion securities, b
 
 A fourth mistake is comparing one company's basic market cap to another company's fully diluted market cap.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help connect valuation and dilution details to trade decisions.
+A structured trade review can help connect valuation and dilution details to trade decisions.
 
 Useful review notes include:
 

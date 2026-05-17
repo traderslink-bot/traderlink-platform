@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Forward Stock Split"
 slug: "/learn/forward-split/"
 primary_keyword: "forward stock split"
@@ -7,7 +7,7 @@ search_intent: "Understand what a forward stock split is, why companies use forw
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 26
 academy_module: "Corporate Actions"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/reverse-split/", "/learn/share-structure/", "/learn/stock-float/", "/learn/news-driven-stocks/", "/learn/sec-filings/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -115,9 +115,9 @@ Traders also get into trouble when they chase split excitement without a plan.
 
 A fourth mistake is assuming every forward split is bullish. Some stocks get attention around splits, but the move is not guaranteed.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help you study how forward split events affected your trades.
+A structured trade review can help you study how forward split events affected your trades.
 
 Useful review notes include:
 

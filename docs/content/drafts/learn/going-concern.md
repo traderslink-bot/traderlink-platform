@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Going Concern"
 slug: "/learn/going-concern/"
 primary_keyword: "going concern"
@@ -7,7 +7,7 @@ search_intent: "Understand what going concern means in company filings, why trad
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 28
 academy_module: "Risk Context"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/cash-runway/", "/learn/dilution-risk/", "/learn/sec-filings/form-10-q/", "/learn/sec-filings/form-10-k/", "/learn/stock-offerings/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -123,9 +123,9 @@ Traders also get into trouble when they treat all going concern warnings the sam
 
 A fourth mistake is not checking whether the going concern warning is new or repeated from prior filings.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help connect going concern risk to trade decisions.
+A structured trade review can help connect going concern risk to trade decisions.
 
 Useful review notes include:
 

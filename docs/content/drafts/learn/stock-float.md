@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Stock Float Explained"
 slug: "/learn/stock-float/"
 primary_keyword: "stock float"
@@ -11,7 +11,7 @@ search_intent: "Learn what stock float means and why it matters to traders."
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review float context with Trader Intelligence"
@@ -21,13 +21,13 @@ academy_level: "Foundation"
 academy_order: 3
 academy_module: "Float Foundation"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links:
   - "/learn/small-cap-stocks/"
   - "/learn/penny-stocks/"
   - "/learn/low-float-stocks/"
   - "/learn/relative-volume/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "Article"
   - "FAQPage"
@@ -121,7 +121,7 @@ Common mistakes when using stock float include:
 
 Float is useful, but it should be reviewed with other context.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 When reviewing trades, float can help explain the environment.
 
@@ -145,7 +145,7 @@ Useful related pages include:
 - [Penny Stocks](/learn/penny-stocks/)
 - [Low-Float Stocks](/learn/low-float-stocks/)
 - [Relative Volume](/learn/relative-volume/)
-- [Trading Journal App](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 

@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Stock Warrants"
 slug: "/learn/warrants/"
 primary_keyword: "stock warrants"
@@ -7,7 +7,7 @@ search_intent: "Understand what stock warrants are, why they appear in financing
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Foundation"
 academy_order: 19
 academy_module: "Securities"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links: ["/learn/stock-offerings/", "/learn/private-placement/", "/learn/pre-funded-warrants/", "/learn/how-to-spot-dilution-risk/", "/learn/share-structure/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -123,9 +123,9 @@ Traders also get into trouble when they ignore reset or adjustment language. Som
 
 A fourth mistake is not checking whether warrant shares are included in a resale registration.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading journal can help you study how warrants affected your trades.
+A structured trade review can help you study how warrants affected your trades.
 
 Useful review notes include:
 

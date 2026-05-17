@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Small-Cap Stocks: What Traders Should Know"
 slug: "/learn/small-cap-stocks/"
 primary_keyword: "small cap stocks"
@@ -11,7 +11,7 @@ search_intent: "Learn what small-cap stocks are, why traders watch them, and wha
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review small-cap trades with Trader Intelligence"
@@ -21,13 +21,13 @@ academy_level: "Foundation"
 academy_order: 1
 academy_module: "Small-Cap Foundation"
 academy_course: "Small-Cap Stocks, Float And Dilution"
-learning_track: "Small-Cap Stocks Float And Dilution"
+learning_track: "Small-Cap Stocks, Float And Dilution"
 internal_links:
   - "/learn/penny-stocks/"
   - "/learn/low-float-stocks/"
   - "/learn/stock-float/"
   - "/learn/relative-volume/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "Article"
   - "FAQPage"
@@ -152,7 +152,7 @@ Common small-cap trading mistakes include:
 
 Small-cap trading requires discipline because the moves can be fast and emotional.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 After trading a small-cap stock, review more than the final P&L.
 
@@ -177,7 +177,7 @@ Useful related pages include:
 - [Low-Float Stocks](/learn/low-float-stocks/)
 - [Stock Float](/learn/stock-float/)
 - [Relative Volume](/learn/relative-volume/)
-- [Trading Journal App](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -213,9 +213,9 @@ Risks can include volatility, low liquidity, wide spreads, dilution, reverse spl
 
 Traders often review float, volume, liquidity, catalyst quality, filings, dilution risk, support and resistance, and the overall trade plan before making a decision.
 
-### Can a trading journal help with small-cap trading?
+### Can a structured trade review help with small-cap trading?
 
-Yes. A journal can help traders review whether small-cap trades were planned, whether entries were late, whether liquidity mattered, and whether repeated mistakes appeared.
+Yes. Structured review notes can help traders review whether small-cap trades were planned, whether entries were late, whether liquidity mattered, and whether repeated mistakes appeared.
 
 ## Apply This In Review
 
