@@ -102,7 +102,7 @@ Recommended order for future runs:
 | 6 | Trading Styles And Playbooks | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-styles.md` with official SEC, Investor.gov, FINRA, and current FINRA 2026 intraday margin-transition source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-trading-styles.md` with 10 cross-listed setup SVGs verified and an eight-SVG native style/playbook visual batch identified. |
 | 7 | Day Trading Workflow | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-day-trading-workflow.md` with official SEC, Investor.gov, FINRA, NYSE, and Nasdaq source verification plus targeted plain-language accuracy guardrails for premarket and after-hours broker/venue variability; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-day-trading-workflow.md` with 5 session SVGs verified and 2 optional future dashboard visuals identified. |
 | 8 | Swing Trading Workflow | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; Pass 2 fixed stale swing workflow related links; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-swing-trading-workflow.md` with official SEC, Investor.gov, and FINRA source verification plus targeted plain-language accuracy guardrails for earnings event timing; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-swing-trading-workflow.md` with 3 multi-session SVGs verified and optional future hold-decision, thesis-change, and small-cap swing risk dashboard visuals identified. |
-| 9 | News, Catalysts And SEC Filings | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; Pass 2 completed; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md` with official SEC, Investor.gov, and FDA source verification plus targeted plain-language accuracy guardrail edits. |
+| 9 | News, Catalysts And SEC Filings | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; Pass 2 completed; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md` with official SEC, Investor.gov, and FDA source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-news-catalysts-sec-filings.md` with 9 scoped SVGs verified, 2 press-release SVG labels cleaned, and an 8-SVG priority future visual batch identified. |
 | 10 | Small-Cap Stocks, Float And Dilution | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-small-cap-float-dilution.md` with official SEC, Investor.gov, PCAOB, and FASB source verification plus targeted plain-language accuracy guardrail edits. |
 | 11 | Halts And High-Volatility Events | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-halts-high-volatility.md` with official SEC, Investor.gov, FINRA, NYSE, Nasdaq, LULD, and Cboe source verification plus targeted plain-language accuracy guardrail edits. |
 | 12 | Trading Psychology And Discipline | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; Pass 2 corrected the Averaging Down transition into the Trade Review course opener; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-psychology.md` with reputable investor-risk, order-type, and behavioral-finance source verification plus targeted plain-language guardrail edits. |
@@ -211,7 +211,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 4: Visual Gap Audit** for **News, Catalysts And SEC Filings**.
+Continue with **Pass 4: Visual Gap Audit** for **Small-Cap Stocks, Float And Dilution**.
 
 Reason:
 
@@ -226,13 +226,14 @@ Reason:
 - Trading Styles And Playbooks Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-trading-styles.md`.
 - Day Trading Workflow Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-day-trading-workflow.md`.
 - Swing Trading Workflow Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-swing-trading-workflow.md`.
-- News, Catalysts And SEC Filings is the next course in the Academy order.
-- News, Catalysts And SEC Filings is a large course with catalyst, press-release, EDGAR, SEC filing, dilution, FDA, sector-news, rumor, and news-review modules that need visual coverage review before UI planning.
+- News, Catalysts And SEC Filings Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-news-catalysts-sec-filings.md`.
+- Small-Cap Stocks, Float And Dilution is the next course in the Academy order.
+- Small-Cap Stocks, Float And Dilution is source- and visual-sensitive because it covers float, share structure, offerings, warrants, convertibles, preferred stock, reverse splits, cash runway, going concern, and dilution-risk context.
 
 Output should include:
 
-- A News, Catalysts And SEC Filings visual gap audit.
-- Course-level visual coverage notes across catalysts, press releases, market news, EDGAR, SEC filing modules, offering/dilution context, FDA and sector catalysts, rumors, and news-trade review lessons.
+- A Small-Cap Stocks, Float And Dilution visual gap audit.
+- Course-level visual coverage notes across float, share structure, low float behavior, offerings, warrants, convertibles, preferred stock, reverse splits, cash runway, going concern, and dilution-risk lessons.
 - Lesson-by-lesson visual recommendations.
 - Realistic SVG opportunities, reuse decisions, duplicate-coverage notes, and defer/no-visual decisions.
 - Image manifest task notes only where assets are created or updated.
