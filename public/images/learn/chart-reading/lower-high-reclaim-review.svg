@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Lower High Reclaim Review</title>
+  <desc id="desc">Educational candlestick chart showing a downtrend reclaiming a meaningful lower high and shifting into review context with volume.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Lower High Reclaim Review</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A reclaim above the lower-high area can change the structure review.</text>
+  <g stroke="#18304e" stroke-width="1">
+    <line x1="58" y1="116" x2="704" y2="116"/>
+    <line x1="58" y1="166" x2="704" y2="166"/>
+    <line x1="58" y1="216" x2="704" y2="216"/>
+    <line x1="58" y1="266" x2="704" y2="266"/>
+  </g>
+  <rect x="346" y="192" width="180" height="36" fill="#1d4ed8" opacity=".18"/>
+  <line x1="346" y1="192" x2="526" y2="192" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="346" y1="228" x2="526" y2="228" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="354" y="184" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="12" font-weight="700">Meaningful lower high zone</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="96" y1="124" x2="96" y2="204"/><rect x="86" y="144" width="20" height="40" rx="2"/>
+      <line x1="150" y1="166" x2="150" y2="250"/><rect x="140" y="188" width="20" height="42" rx="2"/>
+      <line x1="204" y1="210" x2="204" y2="292"/><rect x="194" y="230" width="20" height="42" rx="2"/>
+      <line x1="258" y1="180" x2="258" y2="252"/><rect x="248" y="198" width="20" height="36" rx="2"/>
+      <line x1="312" y1="238" x2="312" y2="316"/><rect x="302" y="258" width="20" height="38" rx="2"/>
+      <line x1="366" y1="202" x2="366" y2="274"/><rect x="356" y="220" width="20" height="34" rx="2"/>
+    </g>
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="420" y1="208" x2="420" y2="280"/><rect x="410" y="228" width="20" height="34" rx="2"/>
+      <line x1="474" y1="174" x2="474" y2="250"/><rect x="464" y="194" width="20" height="38" rx="2"/>
+      <line x1="528" y1="142" x2="528" y2="220"/><rect x="518" y="162" width="20" height="40" rx="2"/>
+      <line x1="582" y1="166" x2="582" y2="236"/><rect x="572" y="184" width="20" height="32" rx="2"/>
+      <line x1="636" y1="126" x2="636" y2="204"/><rect x="626" y="146" width="20" height="38" rx="2"/>
+    </g>
+  </g>
+  <path d="M96 164 L150 230 L204 272 L258 216 L312 296 L366 240 L420 246 L474 214 L528 182 L582 216 L636 164" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
+  <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
+    <text x="88" y="114" fill="#fecaca">Start of weak structure</text>
+    <text x="246" y="172" fill="#fecaca">Lower high</text>
+    <text x="296" y="334" fill="#fecaca">Lower low</text>
+    <text x="512" y="132" fill="#bbf7d0">Reclaim review</text>
+  </g>
+  <path d="M516 188 L536 170" stroke="#bbf7d0" stroke-width="2"/>
+  <g>
+    <rect x="58" y="312" width="14" height="22" fill="#ef4444" opacity=".75"/>
+    <rect x="84" y="304" width="14" height="30" fill="#ef4444" opacity=".85"/>
+    <rect x="110" y="318" width="14" height="16" fill="#21c784" opacity=".65"/>
+    <rect x="136" y="296" width="14" height="38" fill="#ef4444" opacity=".9"/>
+    <rect x="162" y="314" width="14" height="20" fill="#21c784" opacity=".65"/>
+    <rect x="188" y="288" width="14" height="46" fill="#ef4444" opacity=".95"/>
+    <rect x="214" y="320" width="14" height="14" fill="#21c784" opacity=".65"/>
+    <rect x="240" y="306" width="14" height="28" fill="#ef4444" opacity=".75"/>
+    <rect x="266" y="316" width="14" height="18" fill="#21c784" opacity=".65"/>
+    <rect x="292" y="286" width="14" height="48" fill="#ef4444" opacity=".95"/>
+    <rect x="318" y="300" width="14" height="34" fill="#ef4444" opacity=".85"/>
+    <rect x="344" y="314" width="14" height="20" fill="#21c784" opacity=".65"/>
+    <rect x="370" y="306" width="14" height="28" fill="#ef4444" opacity=".75"/>
+    <rect x="396" y="312" width="14" height="22" fill="#21c784" opacity=".7"/>
+    <rect x="422" y="298" width="14" height="36" fill="#21c784" opacity=".8"/>
+    <rect x="448" y="286" width="14" height="48" fill="#21c784" opacity=".95"/>
+    <rect x="474" y="292" width="14" height="42" fill="#21c784" opacity=".9"/>
+    <rect x="500" y="300" width="14" height="34" fill="#21c784" opacity=".8"/>
+    <rect x="526" y="318" width="14" height="16" fill="#ef4444" opacity=".65"/>
+    <rect x="552" y="304" width="14" height="30" fill="#21c784" opacity=".8"/>
+    <rect x="578" y="292" width="14" height="42" fill="#21c784" opacity=".9"/>
+    <rect x="604" y="310" width="14" height="24" fill="#ef4444" opacity=".65"/>
+  </g>
+  <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: did price reclaim the lower-high zone and hold above it?</text>
+  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">A reclaim changes context; it does not guarantee a reversal.</text>
+</svg>
