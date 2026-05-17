@@ -72,6 +72,8 @@ Traders often watch:
 
 Premarket levels are reference areas. They do not guarantee what regular-hours price will do.
 
+Exact premarket access, order types, routing, and available symbols can vary by broker and venue. Treat premarket as a lower-liquidity preparation segment unless your own platform, account rules, and execution constraints are clear.
+
 ## How This Fits The Workflow
 
 Premarket is the first filter in the day trading workflow.

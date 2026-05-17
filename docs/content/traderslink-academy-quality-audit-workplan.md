@@ -92,7 +92,7 @@ Recommended order for future runs:
 | 4 | Risk Management And Trade Planning | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-risk-management.md` with official SEC, Investor.gov, and FINRA source verification plus targeted plain-language accuracy guardrail edits. |
 | 5 | Technical Indicators And Tools | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-technical-indicators.md` with reputable technical-analysis/charting-source verification plus targeted plain-language accuracy guardrail edits. |
 | 6 | Trading Styles And Playbooks | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-styles.md` with official SEC, Investor.gov, FINRA, and current FINRA 2026 intraday margin-transition source verification plus targeted plain-language accuracy guardrail edits. |
-| 7 | Day Trading Workflow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`. |
+| 7 | Day Trading Workflow | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-day-trading-workflow.md` with official SEC, Investor.gov, FINRA, NYSE, and Nasdaq source verification plus targeted plain-language accuracy guardrails for premarket and after-hours broker/venue variability. |
 | 8 | Swing Trading Workflow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; Pass 2 fixed stale swing workflow related links. |
 | 9 | News, Catalysts And SEC Filings | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; Pass 2 completed; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md` with official SEC, Investor.gov, and FDA source verification plus targeted plain-language accuracy guardrail edits. |
 | 10 | Small-Cap Stocks, Float And Dilution | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-small-cap-float-dilution.md` with official SEC, Investor.gov, PCAOB, and FASB source verification plus targeted plain-language accuracy guardrail edits. |
@@ -203,7 +203,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 3: Accuracy/Source Audit** for **Day Trading Workflow**.
+Continue with **Pass 3: Accuracy/Source Audit** for **Swing Trading Workflow**.
 
 Reason:
 
@@ -232,12 +232,13 @@ Reason:
 - Risk Management And Trade Planning Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-risk-management.md`.
 - Technical Indicators And Tools Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-technical-indicators.md`.
 - Trading Styles And Playbooks Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trading-styles.md`.
-- Day Trading Workflow is now the next useful source-sensitive course because it includes premarket trading, day-trading watchlists, market open trading, opening range, midday trading, power hour, after-hours trading, and session review. The next pass should verify time-of-day framing, extended-hours risk, market-open volatility, liquidity/spread/slippage language, day-trading rule references where relevant, and avoid any implication that a session segment creates a signal.
+- Day Trading Workflow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-day-trading-workflow.md`.
+- Swing Trading Workflow is now the next useful source-sensitive course because it includes multi-session holding, overnight risk, swing support/resistance, swing volume, catalysts, earnings, news risk, and small-cap swing-trading context. The next pass should verify gap/overnight risk, extended-hours and news language, catalyst/source framing, liquidity/spread risk, small-cap supply risk, and avoid any implication that multi-session setups guarantee continuation.
 - Pass 3 should verify factual details against official and reputable sources before the Academy moves toward production UI planning. Source details belong in internal audit files; user-facing lessons should use clean educational wording unless a rule, filing type, or official system is itself the lesson topic.
 
 Output should include:
 
-- A Day Trading Workflow accuracy/source audit.
+- A Swing Trading Workflow accuracy/source audit.
 - Any small markdown edits needed.
 - Source-sensitive findings and corrections.
 - Official-source references for SEC, Investor.gov, FINRA, exchanges, and market-structure/order-mechanics sources where needed.

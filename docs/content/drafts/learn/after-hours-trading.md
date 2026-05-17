@@ -73,6 +73,8 @@ Traders often watch:
 
 After-hours movement is context, not a guarantee for the next day.
 
+Exact after-hours access, order types, routing, and available symbols can vary by broker and venue. Treat after-hours prices as extended-hours context, not as a promise of where regular-session trading will open.
+
 ## How This Fits The Workflow
 
 After-hours is both a trading segment and a review segment.
