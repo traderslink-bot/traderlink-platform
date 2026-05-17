@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">Market order versus limit order tradeoff</title>
+  <desc id="desc">A dark trading dashboard style comparison showing market order speed versus limit order price control with bid ask context.</desc>
+  <rect width="900" height="520" fill="#08111f"/>
+  <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Order type is a speed versus price-control tradeoff</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">The quote, spread, liquidity, and urgency all matter.</text>
+  <rect x="70" y="128" width="350" height="286" rx="10" fill="#0a1322" stroke="#213858"/>
+  <rect x="480" y="128" width="350" height="286" rx="10" fill="#0a1322" stroke="#213858"/>
+  <text x="96" y="162" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Market order context</text>
+  <text x="506" y="162" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Limit order context</text>
+  <g font-family="Arial, sans-serif" font-size="14">
+    <rect x="108" y="206" width="92" height="34" fill="#0f2f25" rx="6"/>
+    <rect x="238" y="206" width="92" height="34" fill="#33171f" rx="6"/>
+    <text x="122" y="228" fill="#bbf7d0">Bid 1.98</text>
+    <text x="252" y="228" fill="#fecdd3">Ask 2.08</text>
+    <path d="M156 306 C196 282, 224 258, 252 240" fill="none" stroke="#38bdf8" stroke-width="3"/>
+    <text x="112" y="326" fill="#e8f1ff">Prioritizes speed</text>
+    <text x="112" y="354" fill="#8ea6c8">Fill price can slip</text>
+    <rect x="518" y="206" width="92" height="34" fill="#0f2f25" rx="6"/>
+    <rect x="648" y="206" width="92" height="34" fill="#33171f" rx="6"/>
+    <text x="532" y="228" fill="#bbf7d0">Bid 1.98</text>
+    <text x="662" y="228" fill="#fecdd3">Ask 2.08</text>
+    <line x1="518" y1="280" x2="740" y2="280" stroke="#38bdf8" stroke-width="2" stroke-dasharray="8 8"/>
+    <text x="526" y="270" fill="#bcd7ff">limit price review</text>
+    <text x="522" y="326" fill="#e8f1ff">Prioritizes price control</text>
+    <text x="522" y="354" fill="#8ea6c8">Order may not fill</text>
+  </g>
+</svg>
