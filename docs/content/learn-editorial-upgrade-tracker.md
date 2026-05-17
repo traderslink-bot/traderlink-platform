@@ -90,6 +90,7 @@ Review
 | Volume Liquidity article upgrade 4 | complete | `/learn/volume-spike/` upgraded with follow-through/fade and chase-risk visuals. |
 | Volume Liquidity article upgrade 5 | complete | `/learn/liquidity/` upgraded with clean-versus-thin and spread/depth execution visuals. |
 | Volume Liquidity article upgrade 6 | complete | `/learn/dollar-volume/` upgraded with share-volume/value and low-price liquidity visuals. |
+| Volume Liquidity article upgrade 7 | complete | `/learn/spread/` upgraded with tight/wide spread and hidden execution-cost visuals. |
 | Learn hub website build | not_started | Codex should not build until explicitly requested. |
 
 ## Track Upgrade Order
@@ -101,7 +102,7 @@ Review
 | 3 | News, Catalysts, Filings, And Dilution | not_started | 1 | High-value TradersLink differentiator. |
 | 4 | Risk, Discipline, And Psychology | not_started | 1 | Important coaching/retention path. |
 | 5 | Execution And Trade Review | not_started | 1 | Strongest Trader Intelligence bridge. |
-| 6 | Volume, Liquidity, And Order Flow | in_progress | 2 | Volume foundation, relative-volume concept, RVOL metric, volume-spike, liquidity, and dollar-volume articles complete. Continue with spread, slippage, and Level 2/time-and-sales context. |
+| 6 | Volume, Liquidity, And Order Flow | in_progress | 2 | Volume foundation, relative-volume concept, RVOL metric, volume-spike, liquidity, dollar-volume, and spread articles complete. Continue with bid/ask, slippage, and Level 2/time-and-sales context. |
 | 7 | Day Trading Workflow | not_started | 2 | Practical user workflow path. |
 | 8 | Practice And Improvement | not_started | 2 | Helps users train before increasing risk. |
 | 9 | Candlestick Patterns In Context | not_started | 3 | Needs visuals and context warnings. |
@@ -158,7 +159,8 @@ Alternative future gold-standard article:
 | /learn/volume-spike/ | docs/content/drafts/learn/volume-spike.md | Volume Liquidity And Order Flow | Chart Reading And Market Structure, News Catalysts Filings And Dilution | Practical | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed volume spike upgrade. Added learning path metadata, previous/next metadata, follow-through-versus-fade visual, chase-risk visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `b74f09f9` |
 | /learn/liquidity/ | docs/content/drafts/learn/liquidity.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Foundation | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed liquidity upgrade. Added learning path metadata, previous/next metadata, clean-versus-thin liquidity visual, spread/depth review visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `debb3ce8` |
 | /learn/dollar-volume/ | docs/content/drafts/learn/dollar-volume.md | Volume Liquidity And Order Flow | Execution And Trade Review, Small-Cap Float And Liquidity | Practical | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed dollar-volume upgrade. Added learning path metadata, previous/next metadata, share-volume-versus-value visual, low-priced-stock liquidity review visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `30d417ee` |
-| /learn/spread/ | docs/content/drafts/learn/spread.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | not_started | full_upgrade | 2 realistic SVG trading dashboard diagrams | No | 1 | Should teach bid-ask spread, tight versus wide spread, execution cost, position sizing, and review workflow without treating spread as a minor detail. |  |
+| /learn/spread/ | docs/content/drafts/learn/spread.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Practical | complete | full_upgrade | 2 realistic SVG trading dashboard diagrams created and wired to content | No | 1 | Completed spread upgrade. Added learning path metadata, previous/next metadata, tight-versus-wide spread visual, hidden execution cost visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `255f7a89` |
+| /learn/bid-and-ask/ | docs/content/drafts/learn/bid-and-ask.md | Volume Liquidity And Order Flow | Execution And Trade Review, Day Trading Workflow | Foundation | not_started | full_upgrade | 2 realistic SVG trading dashboard diagrams | No | 1 | Should teach bid/ask quote mechanics, buyer and seller sides, order interaction, and review workflow without giving order recommendations. |  |
 | /learn/sec-filings/ | docs/content/drafts/learn/sec-filings.md | News, Catalysts, Filings, And Dilution | Small-Cap, Float, And Short Squeeze Context | Foundation | not_started | full_upgrade | 2 to 3 filing flow diagrams | No | 1 | Alternative gold-standard article. Needs beginner path, filing map, risk warnings, and links to dilution/offering concepts. |  |
 | /learn/start-here/ | docs/content/drafts/learn/start-here.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 journey map SVG | Yes | 1 | Gap article likely needed to introduce the learning system and guide new users. |  |
 | /learn/how-to-use-traderslink-learn/ | docs/content/drafts/learn/how-to-use-traderslink-learn.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 navigation diagram | Yes | 1 | Gap article likely needed to teach users how to move through learning paths. |  |
@@ -245,6 +247,8 @@ Summary of completed Chart Reading SVG batches:
 | public/images/learn/chart-reading/liquidity-spread-depth-review.svg | /learn/liquidity/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show bid-ask spread and depth review context. | Reading Spread And Depth section. | Trading dashboard showing bid ask spread and market depth as liquidity review context. | editor_verified | Supports spread/depth liquidity review and avoids signal language. | `debb3ce8` |
 | public/images/learn/chart-reading/dollar-volume-share-vs-value-comparison.svg | /learn/dollar-volume/ | Volume Liquidity And Order Flow | realistic trading dashboard | Compare share volume and dollar volume. | Quick Definition section. | Trading dashboard comparison showing high share volume versus higher dollar volume. | editor_verified | Supports dollar-volume comparison education and avoids signal language. | `30d417ee` |
 | public/images/learn/chart-reading/dollar-volume-low-price-liquidity-review.svg | /learn/dollar-volume/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show low-priced stock dollar volume with liquidity context. | Dollar Volume And Liquidity Are Related But Different section. | Trading dashboard showing low-priced stock dollar volume with spread and depth review context. | editor_verified | Supports low-priced stock liquidity review and avoids guarantee language. | `30d417ee` |
+| public/images/learn/chart-reading/spread-tight-vs-wide-market.svg | /learn/spread/ | Volume Liquidity And Order Flow | realistic trading dashboard | Compare tight and wide spreads. | Quick Definition section. | Trading dashboard comparing a tight spread with a wide spread. | editor_verified | Supports spread education and avoids signal language. | `255f7a89` |
+| public/images/learn/chart-reading/spread-hidden-execution-cost.svg | /learn/spread/ | Volume Liquidity And Order Flow | realistic trading dashboard | Show hidden execution cost from a wide spread. | Hidden Execution Cost section. | Trading dashboard showing hidden execution cost when entering across a wide spread. | editor_verified | Supports spread execution-cost review and avoids guarantee language. | `255f7a89` |
 
 ## Gap Article Tracker
 
@@ -292,15 +296,16 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | /learn/volume-spike/ | Completed volume spike article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches sudden volume bursts, follow-through versus fade, and chase risk without treating spikes as directional confirmation. | `b74f09f9` |
 | 2026-05-17 | /learn/liquidity/ | Completed liquidity article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches liquidity as executable market context, includes clean-versus-thin comparisons, spread/depth review, and avoids implying volume or liquidity guarantees clean fills. | `debb3ce8` |
 | 2026-05-17 | /learn/dollar-volume/ | Completed dollar-volume article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches share volume versus traded value, low-priced stock liquidity context, and avoids treating dollar volume as a safety or execution guarantee. | `30d417ee` |
+| 2026-05-17 | /learn/spread/ | Completed spread article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches bid-ask spread as execution cost, includes tight-versus-wide and hidden-cost review, and avoids treating tight spread as a guarantee. | `255f7a89` |
 
 ## Next Recommended Action
 
 Continue the Volume Liquidity And Order Flow track:
 
-1. Fetch `/learn/spread/` draft.
+1. Fetch `/learn/bid-and-ask/` draft.
 2. Perform pre-editor review.
-3. Upgrade it using `/learn/liquidity/`, `/learn/dollar-volume/`, and `/learn/slippage/` as context.
-4. Create 2 realistic SVGs focused on bid/ask mechanics, tight versus wide spread, and hidden execution cost.
+3. Upgrade it using `/learn/spread/`, `/learn/liquidity/`, and `/learn/market-orders-vs-limit-orders/` as context.
+4. Create 2 realistic SVGs focused on quote mechanics, buyer/seller sides, and order interaction with the bid and ask.
 5. Run editor verification.
 6. Update this tracker.
 7. Update the handoff.
