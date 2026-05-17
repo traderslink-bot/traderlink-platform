@@ -68,6 +68,7 @@ Review
 | Chart Reading article upgrade 5 | complete | `/learn/key-levels-trading/` upgraded as the practical level-map bridge article with two realistic chart visuals. |
 | Chart Reading article upgrade 6 | complete | `/learn/breakout-trading/` upgraded with breakout quality, failed breakout, and chase-risk visuals. |
 | Chart Reading article upgrade 7 | complete | `/learn/level-breakout/` upgraded with breakout retest/hold and failed-hold visuals. |
+| Chart Reading article upgrade 8 | complete | `/learn/level-reclaim/` upgraded with reclaim-and-hold and reclaim-failure visuals. |
 | Learn hub website build | not_started | Codex should not build until explicitly requested. |
 
 ## Track Upgrade Order
@@ -75,7 +76,7 @@ Review
 | Order | Learning Track | Status | Priority | Notes |
 |---:|---|---|---:|---|
 | 1 | Start Here For New Traders | not_started | 1 | Foundation path for new users. |
-| 2 | Chart Reading And Market Structure | in_progress | 1 | Support/resistance, level drawing, support levels, resistance levels, key levels, breakout trading, and level breakout articles complete. Continue with level-reclaim, rejection, breakdown, and fakeout concepts. |
+| 2 | Chart Reading And Market Structure | in_progress | 1 | Support/resistance, level drawing, support levels, resistance levels, key levels, breakout trading, level breakout, and level reclaim articles complete. Continue with price rejection, breakdown, break of structure, and fakeout concepts. |
 | 3 | News, Catalysts, Filings, And Dilution | not_started | 1 | High-value TradersLink differentiator. |
 | 4 | Risk, Discipline, And Psychology | not_started | 1 | Important coaching/retention path. |
 | 5 | Execution And Trade Review | not_started | 1 | Strongest Trader Intelligence bridge. |
@@ -114,7 +115,8 @@ Alternative future gold-standard article:
 | /learn/key-levels-trading/ | docs/content/drafts/learn/key-levels-trading.md | Chart Reading And Market Structure | Start Here For New Traders, Execution And Trade Review | Practical | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed practical level-map bridge article. Added learning path metadata, previous/next metadata, current-price level-map visual, key-level review workflow visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related lessons, related glossary terms, FAQ, and editor-safe language. | `4121eaf9` |
 | /learn/breakout-trading/ | docs/content/drafts/learn/breakout-trading.md | Chart Reading And Market Structure | Volume Liquidity And Order Flow, Execution And Trade Review | Practical | complete | full_upgrade | 3 realistic SVG chart diagrams created and wired to content | No | 1 | Completed breakout trading upgrade. Added learning path metadata, previous/next metadata, breakout-with-volume visual, failed-breakout visual, extended chase-risk visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `bdd8664e` |
 | /learn/level-breakout/ | docs/content/drafts/learn/level-breakout.md | Chart Reading And Market Structure | Volume Liquidity And Order Flow, Execution And Trade Review | Practical | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed level breakout upgrade. Added learning path metadata, previous/next metadata, breakout retest/hold visual, failed-hold visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `1377793b` |
-| /learn/level-reclaim/ | docs/content/drafts/learn/level-reclaim.md | Chart Reading And Market Structure | Execution And Trade Review | Practical | not_started | full_upgrade | 2 to 3 realistic SVG chart diagrams | No | 1 | Should teach lost level, reclaim and hold, reclaim failure, and how to review fast decisions after failed breakdowns or failed breakout losses. |  |
+| /learn/level-reclaim/ | docs/content/drafts/learn/level-reclaim.md | Chart Reading And Market Structure | Execution And Trade Review | Practical | complete | full_upgrade | 2 realistic SVG chart diagrams created and wired to content | No | 1 | Completed level reclaim upgrade. Added learning path metadata, previous/next metadata, reclaim-and-hold visual, reclaim-failure visual, realistic examples, common mistakes, checklist, journal review prompts, Trader Intelligence bridge, related terms, FAQ, and editor-safe language. | `57664031` |
+| /learn/price-rejection/ | docs/content/drafts/learn/price-rejection.md | Chart Reading And Market Structure | Candlestick Patterns In Context, Execution And Trade Review | Practical | not_started | full_upgrade | 2 to 3 realistic SVG chart diagrams | No | 1 | Should teach rejection at resistance, failed holds, wick/context review, and how to avoid treating every wick as meaningful. |  |
 | /learn/sec-filings/ | docs/content/drafts/learn/sec-filings.md | News, Catalysts, Filings, And Dilution | Small-Cap, Float, And Short Squeeze Context | Foundation | not_started | full_upgrade | 2 to 3 filing flow diagrams | No | 1 | Alternative gold-standard article. Needs beginner path, filing map, risk warnings, and links to dilution/offering concepts. |  |
 | /learn/start-here/ | docs/content/drafts/learn/start-here.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 journey map SVG | Yes | 1 | Gap article likely needed to introduce the learning system and guide new users. |  |
 | /learn/how-to-use-traderslink-learn/ | docs/content/drafts/learn/how-to-use-traderslink-learn.md | Start Here For New Traders | All Tracks | Foundation | not_started | gap_article_needed | 1 navigation diagram | Yes | 1 | Gap article likely needed to teach users how to move through learning paths. |  |
@@ -156,6 +158,8 @@ Summary of completed Chart Reading SVG batches:
 | public/images/learn/chart-reading/extended-breakout-chase-risk.svg | /learn/breakout-trading/ | Chart Reading And Market Structure | realistic candlestick chart | Show extended distance from the breakout level as chase-risk context. | Extended Breakout Chase Risk section. | Candlestick chart showing a breakout far above the level with chase-risk review labels. | editor_verified | Supports chase-risk review without buy/sell language. | `bdd8664e` |
 | public/images/learn/chart-reading/level-breakout-retest-hold.svg | /learn/level-breakout/ | Chart Reading And Market Structure | realistic candlestick chart | Show breakout retest and hold above the level. | Breakout Retest And Hold section. | Candlestick chart showing price breaking above a level, retesting it, and holding above the zone. | editor_verified | Supports retest/hold review and avoids continuation certainty. | `1377793b` |
 | public/images/learn/chart-reading/level-breakout-failed-hold.svg | /learn/level-breakout/ | Chart Reading And Market Structure | realistic candlestick chart | Show breakout failed hold below the level. | Failed Hold After A Breakout section. | Candlestick chart showing price breaking above a level and then failing back below the breakout zone. | editor_verified | Supports failed-hold review and avoids predictive claims. | `1377793b` |
+| public/images/learn/chart-reading/level-reclaim-hold.svg | /learn/level-reclaim/ | Chart Reading And Market Structure | realistic candlestick chart | Show lost level reclaimed and held. | Reclaim And Hold section. | Candlestick chart showing price losing a key level, reclaiming it, and holding above the zone. | editor_verified | Supports reclaim-and-hold review and avoids continuation certainty. | `57664031` |
+| public/images/learn/chart-reading/level-reclaim-failure.svg | /learn/level-reclaim/ | Chart Reading And Market Structure | realistic candlestick chart | Show reclaim failure below the level. | Reclaim Failure section. | Candlestick chart showing price reclaiming a level briefly and then failing back below the zone. | editor_verified | Supports reclaim failure review and avoids predictive claims. | `57664031` |
 
 ## Gap Article Tracker
 
@@ -181,15 +185,16 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-17 | /learn/key-levels-trading/ | Completed practical level-map bridge article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches how to choose current-plan key levels, includes realistic level-map examples, avoids buy/sell signals and guaranteed-outcome language, includes common mistakes, checklist, journal review prompts, and a soft Trader Intelligence bridge. Visuals support the exact lesson and avoid predictive language. | `4121eaf9` |
 | 2026-05-17 | /learn/breakout-trading/ | Completed breakout trading article upgrade and created three supporting realistic SVG assets. | Passed. The article teaches breakout quality, failed breakout behavior, and chase risk without treating breakouts as signals. It includes realistic examples, common mistakes, checklist, journal review prompts, and a soft Trader Intelligence bridge. Visuals use realistic candlesticks and volume context. | `bdd8664e` |
 | 2026-05-17 | /learn/level-breakout/ | Completed level breakout article upgrade and created two supporting realistic SVG assets. | Passed. The article focuses on what happens after a level breaks, including retests, holds, and failed holds. It avoids buy/sell signals and guaranteed-outcome language, includes practical review prompts, and uses realistic candlestick visuals. | `1377793b` |
+| 2026-05-17 | /learn/level-reclaim/ | Completed level reclaim article upgrade and created two supporting realistic SVG assets. | Passed. The article teaches lost-level, reclaim-and-hold, and reclaim-failure behavior without treating reclaims as safe or predictive. It includes practical review prompts, common mistakes, checklist, and a soft Trader Intelligence bridge. | `57664031` |
 
 ## Next Recommended Action
 
 Continue the Chart Reading And Market Structure track:
 
-1. Fetch `/learn/level-reclaim/` draft.
+1. Fetch `/learn/price-rejection/` draft.
 2. Perform pre-editor review.
-3. Upgrade it using the completed level breakout and support/resistance articles as the model.
-4. Create 2 to 3 realistic SVGs focused on lost level, reclaim and hold, and reclaim failure behavior.
+3. Upgrade it using the completed level breakout, reclaim, and resistance articles as the model.
+4. Create 2 to 3 realistic SVGs focused on rejection at resistance, failed hold/rejection, and wick/context review.
 5. Run editor verification.
 6. Update this tracker.
 7. Update the handoff.
