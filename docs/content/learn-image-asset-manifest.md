@@ -128,6 +128,8 @@ journey_map
 | `public/images/learn/chart-reading/unusual-volume-catalyst-fade-review.svg` | `/learn/unusual-volume/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show a catalyst volume burst that fails to hold while volume fades and spread widens. | Follow-Through Versus Fade section. | Trading dashboard showing unusual volume after a catalyst, followed by failed hold, fading volume, and spread review. | editor_verified | Supports catalyst/fade/liquidity review, uses realistic candles and bid/ask context, and avoids guarantee language. | `80c78592` |
 | `public/images/learn/chart-reading/stock-catalyst-quality-review.svg` | `/learn/stock-catalysts/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Show catalyst detail checks beside a realistic price and volume reaction. | Quick Definition section. | Trading dashboard showing a catalyst-quality review panel beside a realistic candlestick reaction. | editor_verified | Supports catalyst-quality review, uses realistic candles and volume bars, and avoids signal language. | `63dff225` |
 | `public/images/learn/chart-reading/stock-catalyst-headline-vs-reaction.svg` | `/learn/stock-catalysts/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Compare a catalyst headline with price reaction, volume fade, and filing-review notes. | Headline Versus Market Reaction section. | Trading dashboard comparing a catalyst headline with the chart reaction, volume burst, and later fade review. | editor_verified | Supports headline-versus-reaction review, uses realistic candles and review labels, and avoids guarantee language. | `63dff225` |
+| `public/images/learn/chart-reading/press-release-anatomy-review.svg` | `/learn/press-releases/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Show press-release anatomy with headline, timestamp, source, key details, risk language, and filing check. | Quick Definition section. | Dark dashboard showing a press release anatomy review with headline, timestamp, source, key details, risk language, and filing check. | editor_verified | Supports press-release anatomy review, uses realistic dashboard/chart context, and avoids signal language. | `a089acc5` |
+| `public/images/learn/chart-reading/press-release-reaction-review.svg` | `/learn/press-releases/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Show first reaction, volume burst, fade review, and journal notes after a press release. | Chart Reaction Still Matters section. | Dark trading dashboard showing a press release headline, red and green candlesticks, volume burst, and fade review notes. | editor_verified | Supports press-release reaction review, uses realistic candles and volume bars, and avoids guarantee language. | `a089acc5` |
 
 ## Editor Verification Summary
 
@@ -434,11 +436,19 @@ Stock catalysts SVG verification:
 - Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Press releases SVG verification:
+
+- Both visuals support the actual press-releases lesson.
+- The anatomy visual shows headline, timestamp, source, key details, risk language, filing check, and chart context.
+- The reaction visual shows first reaction, fade review, volume bars, spread/liquidity journal prompts, and review-not-prediction language.
+- Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the completed Chart Reading and Volume Liquidity batches, the next high-value SVG batch should likely support one of these:
 
-1. Press Releases or How To Read Stock Press Releases: press-release anatomy and source-detail review.
+1. How To Read Stock Press Releases: source-detail workflow, vague-language review, and related-filing check.
 2. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 3. Catalyst category articles: earnings, FDA, clinical trial, contract, partnership, and merger news review.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
