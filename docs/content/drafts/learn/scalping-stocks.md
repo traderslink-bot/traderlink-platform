@@ -64,7 +64,7 @@ Scalping is a short-term style where traders attempt to capture small moves over
 
 The style is execution-sensitive and requires strict review.
 
-Source check: SEC trade-execution materials explain that order execution is not instantaneous, prices can change quickly in fast-moving markets, and traders may not receive the price they saw on screen. Investor.gov order-type guidance also warns that market orders prioritize execution but do not guarantee execution price, which is why scalping lessons should keep spread, slippage, order type, and fill quality central.
+In fast-moving stocks, the price a trader sees on screen may not be the price they receive. That is why scalping review should keep spread, slippage, order type, and fill quality central.
 
 ## How This Style Works
 

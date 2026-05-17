@@ -66,7 +66,7 @@ In simple terms:
 - Shares outstanding = total company shares issued.
 - Float = shares generally available to trade publicly.
 
-Source check: float, public float, and shares outstanding can vary by data provider, filing date, corporate action, and recent financing activity. When float matters to a trade review, record the source and date of the number rather than treating a scanner value as permanent.
+Float, public float, and shares outstanding can vary by data provider, filing date, corporate action, and recent financing activity. When float matters to a trade review, record the source and date of the number rather than treating a scanner value as permanent.
 
 ## Why It Matters To Traders
 

@@ -64,7 +64,7 @@ Day trading is a trading style where positions are opened and closed during the 
 
 The key is not activity. The key is structured intraday decision-making.
 
-Source check: FINRA defines day trading in margin-account context as buying and selling, or selling and buying, the same security on the same day. FINRA and SEC investor materials warn that day trading can be extremely risky, especially when margin, fast markets, trading costs, and broker-specific account rules are involved. FINRA has also announced new intraday margin standards effective June 4, 2026, with a phase-in period, so any account-rule lesson should be checked against current FINRA and broker rules before publication.
+Account rules, margin requirements, and broker policies can affect day trading, so those details should always be checked against current broker and regulatory materials. This lesson focuses on the trading style itself: intraday planning, risk, execution, and review.
 
 ## How This Style Works
 

@@ -68,7 +68,7 @@ As of this lesson review, NYSE describes market-wide circuit breaker levels base
 
 Rules can change, and timing details matter. Always check current official exchange information.
 
-Source check: NYSE, FINRA, and Investor.gov currently describe Level 1 and Level 2 market-wide circuit breakers as 15-minute halts if triggered before 3:25 p.m. ET, with no Level 1 or Level 2 halt at or after 3:25 p.m. ET. A Level 3 decline halts market-wide trading for the rest of the trading day. Verify these details directly before publishing production UI copy.
+Level 1 and Level 2 market-wide circuit breakers are generally 15-minute halts if triggered before 3:25 p.m. ET, with no Level 1 or Level 2 halt at or after 3:25 p.m. ET. A Level 3 decline halts market-wide trading for the rest of the trading day. Verify these details against current market-rule materials before publishing production UI copy.
 
 ## How This Differs From A Stock Halt
 

@@ -68,7 +68,7 @@ RSI describes momentum context. It does not guarantee reversal or continuation.
 
 RSI measures the speed and size of recent price changes. It does not measure catalyst quality, liquidity, float, spread, or whether a trade has a defined invalidation point.
 
-Source check: Wilder's RSI is commonly calculated from average gains and average losses and normalized on a 0 to 100 scale, with 14 periods often used as the default setting. Overbought and oversold thresholds are conventional context labels, not guaranteed reversal points, and platform values can vary with smoothing, lookback, and data history.
+RSI is commonly calculated from average gains and average losses and normalized on a 0 to 100 scale, with 14 periods often used as the default setting. Overbought and oversold thresholds are conventional context labels, not guaranteed reversal points, and platform values can vary with smoothing, lookback, and data history.
 
 ## How Traders Use It As Context
 

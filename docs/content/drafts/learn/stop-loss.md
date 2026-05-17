@@ -72,7 +72,7 @@ Traders may use stops based on:
 
 Some traders place stop orders with their broker. Others use alerts or mental stops. The important part is that the stop area is planned before the trade and reviewed after the trade.
 
-Source check: Investor.gov explains that when a stop order is triggered, it can become a market order, which means the final execution price can differ from the stop price in fast or thin markets. A stop-limit order adds a limit price, but it may not execute if price moves through the limit.
+When a stop order is triggered, it can become a market order, which means the final execution price can differ from the stop price in fast or thin markets. A stop-limit order adds a limit price, but it may not execute if price moves through the limit.
 
 ## Why It Matters To Traders
 

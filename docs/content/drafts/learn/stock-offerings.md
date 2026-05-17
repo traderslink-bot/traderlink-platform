@@ -98,7 +98,7 @@ Common offering types include:
 
 Each structure can affect traders differently. A discounted public offering with warrants may create a different reaction than a small ATM sale or a strategic private placement.
 
-Source check: offering headlines are not enough. Review the official filing package when available, including the registration statement, prospectus supplement, Form 8-K, purchase agreement, warrant agreement, or related exhibits. The legal documents control details such as price, securities issued, investor terms, resale rights, and use of proceeds.
+Offering headlines are not enough. Review the official filing package when available, including the registration statement, prospectus supplement, Form 8-K, purchase agreement, warrant agreement, or related exhibits. The legal documents control details such as price, securities issued, investor terms, resale rights, and use of proceeds.
 
 ## Example Scenario
 

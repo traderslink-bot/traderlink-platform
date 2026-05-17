@@ -68,7 +68,7 @@ MACD is a momentum context tool, not a guaranteed timing system.
 
 MACD measures the relationship between moving averages. Because it is built from averages, it usually reacts after price has already started changing.
 
-Source check: Standard MACD is commonly built from the difference between 12-period and 26-period exponential moving averages, with a 9-period EMA of the MACD line used as the signal line. Those are common defaults, not universal rules, and different settings can change sensitivity and lag.
+Standard MACD is commonly built from the difference between 12-period and 26-period exponential moving averages, with a 9-period EMA of the MACD line used as the signal line. Those are common defaults, not universal rules, and different settings can change sensitivity and lag.
 
 ## How Traders Use It As Context
 

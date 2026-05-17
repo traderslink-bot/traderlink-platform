@@ -93,7 +93,7 @@ For example:
 
 A trader who buys immediately may pay near the ask. A trader who sells immediately may receive near the bid. Actual fills depend on order type, size, liquidity, and how fast the quote changes.
 
-Source check: Investor.gov explains that the last-traded price is not necessarily the price where a market order will execute. Current bid, ask, spread, order type, routing, available liquidity, and speed of the market can all affect the final fill.
+The last-traded price is not necessarily the price where a market order will execute. Current bid, ask, spread, order type, routing, available liquidity, and speed of the market can all affect the final fill.
 
 ## Why Bid And Ask Matter
 

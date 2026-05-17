@@ -64,7 +64,7 @@ Swing trading is a style where positions are held across multiple sessions to pa
 
 A swing trade should be planned as a swing trade before the hold, not renamed after a day trade fails.
 
-Source check: SEC extended-hours risk materials warn that news outside regular hours can have greater price impact and that extended-hours trading can involve lower liquidity, wider spreads, greater volatility, uncertain prices, and partial or no execution. Swing-trade lessons should keep overnight and news exposure framed as risk to plan and review, not as a way to avoid intraday risk.
+Overnight exposure can change the risk profile because news, gaps, lower-liquidity periods, wider spreads, and uncertain execution can affect the position while the trader is not actively managing it. Swing trading should be reviewed as a planned hold, not as a way to avoid intraday discipline.
 
 ## How This Style Works
 

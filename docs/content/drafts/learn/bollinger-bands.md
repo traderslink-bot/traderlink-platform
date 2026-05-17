@@ -68,7 +68,7 @@ The bands describe recent volatility context. They do not predict the next move.
 
 Bollinger Bands measure price location relative to a moving average and recent volatility. They do not measure news quality, liquidity, float, dilution, or whether a trade has acceptable risk.
 
-Source check: Bollinger Bands are commonly plotted with a middle simple moving average and upper/lower bands set a selected number of standard deviations away from that average. The common default is 20 periods and 2 standard deviations, but settings can be adjusted and should not be treated as universal trading rules.
+Bollinger Bands are commonly plotted with a middle simple moving average and upper/lower bands set a selected number of standard deviations away from that average. The common default is 20 periods and 2 standard deviations, but settings can be adjusted and should not be treated as universal trading rules.
 
 ## How Traders Use It As Context
 

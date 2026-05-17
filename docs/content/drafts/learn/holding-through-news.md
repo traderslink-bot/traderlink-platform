@@ -75,7 +75,7 @@ This can include holding through:
 
 Some news is scheduled. Some news is unexpected. Both can affect a swing trade.
 
-Source check: SEC after-hours risk materials warn that news announced outside regular hours can have greater price impact when trading activity is limited, spreads are wider, and prices may not match the next regular-session open. News and filings should be checked from official company, SEC, exchange, or regulator sources when they are central to the trade thesis.
+News announced outside regular hours can have greater price impact when trading activity is limited, spreads are wider, and prices may not match the next regular-session open. News and filings should be checked from official company, filing, exchange, or regulator sources when they are central to the trade thesis.
 
 ## Why It Matters To Traders
 

@@ -121,7 +121,7 @@ This does not mean RVOL is useless. It means the trader should know what their t
 
 If one platform shows `8x` RVOL and another shows `5x`, both may still be telling the same practical story: the stock is unusually active.
 
-Source check: RVOL is a platform or data-vendor metric, not a single SEC or FINRA standardized number. Before relying on an RVOL value, traders should know the scanner's lookback period, time-of-day handling, data feed, and whether premarket or after-hours volume is included.
+RVOL is a platform or data-vendor metric, not a single standardized number. Before relying on an RVOL value, traders should know the scanner's lookback period, time-of-day handling, data feed, and whether premarket or after-hours volume is included.
 
 ## RVOL On A Scanner
 

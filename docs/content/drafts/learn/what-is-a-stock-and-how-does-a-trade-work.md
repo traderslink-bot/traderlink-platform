@@ -112,7 +112,7 @@ A market order may fill quickly, but the final price can be worse than expected 
 
 This is why order type belongs in beginner education. It affects execution, slippage, risk, and review.
 
-Source check: Investor.gov explains that market orders prioritize execution but do not guarantee execution price, while limit orders control price but may not execute. Investor.gov also notes that orders route through brokers and market centers, so the price on the screen may differ from the final fill in fast or thin markets.
+Market orders prioritize execution but do not guarantee execution price, while limit orders control price but may not execute. Orders also route through brokers and market centers, so the price on screen can differ from the final fill in fast or thin markets.
 
 ## Realistic Example
 

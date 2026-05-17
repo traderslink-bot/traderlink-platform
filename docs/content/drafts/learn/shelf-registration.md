@@ -96,7 +96,7 @@ The process may include:
 
 For traders, the shelf becomes more important when the company has low cash, heavy losses, or a strong stock move that could make financing easier.
 
-Source check: a shelf registration generally creates registered capacity, while a later prospectus supplement or takedown describes the specific offering terms. Review both the base prospectus and any follow-up 424B prospectus supplement before deciding what the filing actually changed.
+A shelf registration generally creates registered capacity, while a later prospectus supplement or takedown describes the specific offering terms. Review both the base prospectus and any follow-up 424B prospectus supplement before deciding what the filing actually changed.
 
 ## Example Scenario
 

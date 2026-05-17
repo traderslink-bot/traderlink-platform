@@ -92,7 +92,7 @@ A Level 2 screen may show:
 
 Traders use Level 2 to understand the current quote environment and possible execution conditions.
 
-Source check: Exchange market-depth products such as Nasdaq TotalView and NYSE OpenBook/Integrated Feed display visible order-book information from their markets or feeds. Level 2 data is useful context, but it is not a complete view of all hidden, routed, canceled, or off-exchange interest.
+Market-depth products display visible order-book information from their markets or feeds. Level 2 data is useful context, but it is not a complete view of all hidden, routed, canceled, or off-exchange interest.
 
 ## Why Level 2 Matters
 

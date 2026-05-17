@@ -101,7 +101,7 @@ Traders should understand:
 - Fast markets can move before the order fills.
 - Mental stops can fail if discipline fails.
 
-Source check: Investor.gov's order-type guidance supports this distinction. Stop orders can prioritize getting out after the stop is triggered but may not protect the exact price, while stop-limit orders add price control but introduce no-fill risk.
+Stop orders can prioritize getting out after the stop is triggered but may not protect the exact price, while stop-limit orders add price control but introduce no-fill risk.
 
 ## Example Scenario
 

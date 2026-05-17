@@ -66,7 +66,7 @@ Stock market sessions are the time windows when stocks trade. For U.S. listed st
 
 Order flow is the movement of buy and sell orders through the market. It includes visible quotes, executed trades, changing bids and asks, volume, and liquidity conditions.
 
-Source check: SEC investor education materials describe regular U.S. exchange hours as traditionally running from 9:30 a.m. to 4:00 p.m. Eastern Time. Extended-hours access, order types, and routing can vary by broker, and SEC/FINRA risk disclosures warn that extended-hours trading may involve thinner liquidity, wider spreads, greater volatility, and uncertain prices.
+Regular U.S. exchange hours are traditionally 9:30 a.m. to 4:00 p.m. Eastern Time. Extended-hours access, order types, and routing can vary by broker, and extended-hours trading may involve thinner liquidity, wider spreads, greater volatility, and uncertain prices.
 
 ## Why Session Context Matters
 

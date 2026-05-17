@@ -96,7 +96,7 @@ A less liquid stock may have wide spreads, thin order-book depth, sudden price j
 
 Liquidity is practical. It asks whether the trade can actually be executed near the plan.
 
-Source check: SEC and FINRA investor materials warn that thinner trading, especially in extended-hours or volatile conditions, can mean less liquidity, wider spreads, partial fills, uncertain prices, and more difficult execution. Volume can support liquidity review, but volume alone does not guarantee clean fills.
+Thinner trading, especially in extended-hours or volatile conditions, can mean less liquidity, wider spreads, partial fills, uncertain prices, and more difficult execution. Volume can support liquidity review, but volume alone does not guarantee clean fills.
 
 ## Why Liquidity Matters
 

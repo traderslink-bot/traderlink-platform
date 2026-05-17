@@ -92,7 +92,7 @@ Before making a new decision around a resume, review:
 
 Sometimes the best review is simply observing how resume conditions behave.
 
-Source check: LULD resume procedures are handled through the primary listing exchange, and the exact reopening process can depend on exchange rules, auctions, collars, order handling, and timing near the close. A five-minute pause is a baseline, not a guarantee that trading resumes cleanly or exactly when a trader expects.
+LULD resume procedures are handled through the primary listing exchange, and the exact reopening process can depend on exchange rules, auctions, collars, order handling, and timing near the close. A five-minute pause is a baseline, not a guarantee that trading resumes cleanly or exactly when a trader expects.
 
 ## Realistic Example
 

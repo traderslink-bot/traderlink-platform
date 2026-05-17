@@ -55,19 +55,19 @@ The course already avoids the biggest problems:
 - It treats news fade and sell-the-news language as reaction review, not instructions.
 - It keeps app bridge wording focused on completed-trade review.
 
-The useful source work was targeted: add source-backed guardrails where rules, execution mechanics, short-selling mechanics, overnight/news risk, or filing verification matter.
+The useful source work was targeted: keep citations and source details in this internal audit, while preserving plain user-facing accuracy guardrails in lessons where rules, execution mechanics, short-selling mechanics, overnight/news risk, or filing verification matter.
 
 ## Targeted Edits Completed
 
 | Lesson | Edit |
 |---|---|
-| `/learn/day-trading/` | Added source check for FINRA day-trading definition, SEC/FINRA risk warnings, fast-market/trading-cost risk, broker-specific rules, and the FINRA 2026 intraday margin-rule transition. |
-| `/learn/swing-trading/` | Added source check tying overnight and news exposure to SEC extended-hours risk materials. |
-| `/learn/scalping-stocks/` | Added source check tying scalping risk to SEC trade-execution materials, fast-market price changes, market-order execution-price caveats, spread, slippage, and fill quality. |
-| `/learn/short-selling-basics/` | Tightened existing SEC Regulation SHO source note to include delivery obligations. |
-| `/learn/news-fade/` | Added source check for after-hours news impact and official-source verification of press releases, SEC filings, exchange notices, or regulator sources. |
-| `/learn/sell-the-news/` | Added source check for EDGAR filing access and after-hours/news-risk context; reinforced that the phrase is not a trade rule. |
-| `/learn/multi-day-runner/` | Added source check connecting multi-session attention to official company news, SEC filings, float/supply context, halts, extended-hours risk, and execution quality. |
+| `/learn/day-trading/` | Added plain lesson wording for current account-rule, margin, broker-policy, fast-market, trading-cost, and intraday risk context without exposing citations in the user-facing copy. |
+| `/learn/swing-trading/` | Added plain lesson wording tying overnight and news exposure to gap, liquidity, spread, volatility, and execution risk. |
+| `/learn/scalping-stocks/` | Added plain lesson wording tying scalping risk to fast-market price changes, execution-price uncertainty, spread, slippage, order type, and fill quality. |
+| `/learn/short-selling-basics/` | Tightened short-selling mechanics wording to include delivery obligations and broker-policy/forced-closeout context. |
+| `/learn/news-fade/` | Added plain lesson wording for after-hours news behavior and original-source verification of press releases, filings, exchange notices, or regulator updates. |
+| `/learn/sell-the-news/` | Added plain lesson wording for filing/news review and reinforced that the phrase is not a trade rule. |
+| `/learn/multi-day-runner/` | Added plain lesson wording connecting multi-session attention to company news, filings, float/supply context, halts, extended-hours risk, and execution quality. |
 
 No broad rewrite was needed.
 
@@ -107,7 +107,7 @@ No source correction was required beyond the broader execution/news/risk notes a
 
 The news-reaction lessons are accurate. SEC after-hours risk materials support the idea that news outside regular hours can interact with lower liquidity, wider spreads, price volatility, uncertain prices, and execution limitations. SEC EDGAR supports the course's source-first framing around filings.
 
-The added source notes reinforce that news-fade and sell-the-news are reaction-review concepts, not commands.
+The added lesson guardrails reinforce that news-fade and sell-the-news are reaction-review concepts, not commands.
 
 ### Multi-Day Runner And Chasing
 

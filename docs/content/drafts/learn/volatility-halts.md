@@ -72,7 +72,7 @@ Traders may see volatility halts in stocks with:
 
 The exact rules and bands can vary by security, exchange, and market structure. Traders should verify current official rules.
 
-Source check: under the LULD Plan, price bands are designed to prevent trades in NMS stocks outside specified bands during regular trading hours. If a security remains in a Limit State for 15 seconds, the primary listing exchange can declare a five-minute trading pause, and the pause can be extended. Rights, warrants, OTC securities, and some timing windows are treated differently, so check current official LULD and exchange sources.
+Under LULD market-structure rules, price bands are designed to prevent trades in NMS stocks outside specified bands during regular trading hours. If a security remains in a Limit State for 15 seconds, the primary listing exchange can declare a five-minute trading pause, and the pause can be extended. Rights, warrants, OTC securities, and some timing windows are treated differently, so rule-specific details should be checked before publication or trading review.
 
 ## Why Volatility Halts Happen
 

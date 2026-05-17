@@ -75,7 +75,7 @@ Overnight risk can come from:
 
 For swing traders, overnight risk should be part of the plan before the position is opened.
 
-Source check: SEC and FINRA extended-hours risk materials warn that trading outside regular hours can involve lower liquidity, wider spreads, greater volatility, changing prices, and partial or no executions. Investor.gov margin-account materials also warn that margin use can increase losses and create margin-call risk, so overnight exposure should be reviewed with account type and broker rules in mind.
+Trading outside regular hours can involve lower liquidity, wider spreads, greater volatility, changing prices, and partial or no executions. Margin use can also increase losses and create margin-call risk, so overnight exposure should be reviewed with account type and broker rules in mind.
 
 ## Why It Matters To Traders
 

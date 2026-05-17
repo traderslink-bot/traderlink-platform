@@ -64,7 +64,7 @@ A multi-day runner is a stock that continues drawing price movement, volume, and
 
 A runner describes a historical move and current attention. It does not guarantee the next session.
 
-Source check: Multi-day runner context often depends on the same source checks used elsewhere in the Academy: official company news, SEC filings, float/supply context, halt risk, extended-hours conditions, and trade-execution quality. A stock that ran for several sessions should still be reviewed as a changing risk environment, not as proof that continuation should happen again.
+Multi-day runner context can change quickly as new company news, filings, float and supply details, halt risk, extended-hours conditions, and execution quality shift. A stock that ran for several sessions should still be reviewed as a changing risk environment, not as proof that continuation should happen again.
 
 ## How This Style Works
 

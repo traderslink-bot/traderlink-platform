@@ -91,7 +91,7 @@ It usually shows:
 
 Traders use it to understand actual executed activity, not only displayed interest.
 
-Source check: Time and sales is based on reported trade prints, but trade-reporting and data-feed rules can include corrections, cancellations, late reports, odd-lot handling, venue differences, and display choices by platform. Treat it as execution evidence, not a complete prediction tool.
+Time and sales is based on reported trade prints, but trade-reporting and data-feed rules can include corrections, cancellations, late reports, odd-lot handling, venue differences, and display choices by platform. Treat it as execution evidence, not a complete prediction tool.
 
 ## Why Time And Sales Matters
 

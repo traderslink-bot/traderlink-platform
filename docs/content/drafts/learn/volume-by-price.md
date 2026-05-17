@@ -88,7 +88,7 @@ For example, if a stock traded heavy volume between `$2.40` and `$2.50`, that ar
 
 Traders may later watch that zone to see whether price accepts it, rejects it, holds above it, or fails below it.
 
-Source check: Volume-by-price and volume-profile displays are charting-platform calculations based on trade data and user settings such as session, timeframe, aggregation, and data feed. Different settings can produce different zones, so the tool should be reviewed as context rather than as an official level.
+Volume-by-price and volume-profile displays are charting-platform calculations based on trade data and user settings such as session, timeframe, aggregation, and data feed. Different settings can produce different zones, so the tool should be reviewed as context rather than as an official level.
 
 ## Why Volume By Price Matters
 
