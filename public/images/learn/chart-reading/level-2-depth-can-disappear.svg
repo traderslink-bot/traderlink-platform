@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">Level 2 depth can disappear</title>
+  <desc id="desc">A dark trading dashboard showing visible Level 2 bid depth disappearing during a fast price move.</desc>
+  <rect width="900" height="520" fill="#08111f"/>
+  <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Visible depth can change quickly</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Displayed size may cancel, move, or disappear during fast conditions.</text>
+  <line x1="74" y1="128" x2="520" y2="128" stroke="#182943"/>
+  <line x1="74" y1="188" x2="520" y2="188" stroke="#182943"/>
+  <line x1="74" y1="248" x2="520" y2="248" stroke="#182943"/>
+  <line x1="74" y1="308" x2="520" y2="308" stroke="#182943"/>
+  <rect x="74" y="228" width="446" height="28" fill="#2563eb" opacity="0.16"/>
+  <line x1="74" y1="242" x2="520" y2="242" stroke="#38bdf8" stroke-width="2" stroke-dasharray="8 8"/>
+  <g stroke-width="3" stroke-linecap="round">
+    <line x1="112" y1="292" x2="112" y2="248" stroke="#22c55e"/><rect x="101" y="264" width="22" height="20" fill="#22c55e" rx="3"/>
+    <line x1="154" y1="270" x2="154" y2="220" stroke="#22c55e"/><rect x="143" y="238" width="22" height="22" fill="#22c55e" rx="3"/>
+    <line x1="196" y1="248" x2="196" y2="194" stroke="#22c55e"/><rect x="185" y="214" width="22" height="24" fill="#22c55e" rx="3"/>
+    <line x1="238" y1="214" x2="238" y2="154" stroke="#ef4444"/><rect x="227" y="174" width="22" height="30" fill="#ef4444" rx="3"/>
+    <line x1="280" y1="238" x2="280" y2="180" stroke="#ef4444"/><rect x="269" y="200" width="22" height="26" fill="#ef4444" rx="3"/>
+    <line x1="322" y1="262" x2="322" y2="206" stroke="#ef4444"/><rect x="311" y="224" width="22" height="26" fill="#ef4444" rx="3"/>
+  </g>
+  <line x1="74" y1="340" x2="520" y2="340" stroke="#2a3d5c"/>
+  <g>
+    <rect x="101" y="416" width="22" height="42" fill="#22c55e" opacity="0.6"/>
+    <rect x="143" y="382" width="22" height="76" fill="#22c55e" opacity="0.74"/>
+    <rect x="185" y="344" width="22" height="114" fill="#22c55e" opacity="0.9"/>
+    <rect x="227" y="388" width="22" height="70" fill="#ef4444" opacity="0.66"/>
+    <rect x="269" y="410" width="22" height="48" fill="#ef4444" opacity="0.56"/>
+    <rect x="311" y="424" width="22" height="34" fill="#ef4444" opacity="0.5"/>
+  </g>
+  <rect x="560" y="122" width="264" height="318" rx="12" fill="#0a1322" stroke="#213858"/>
+  <text x="584" y="154" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Depth change review</text>
+  <g font-family="Arial, sans-serif" font-size="13">
+    <text x="584" y="190" fill="#bbf7d0">Before move</text>
+    <rect x="584" y="204" width="142" height="24" fill="#0f2f25" rx="4"/><text x="596" y="221" fill="#bbf7d0">2.48 bid x 22k</text>
+    <rect x="584" y="234" width="118" height="24" fill="#0f2f25" rx="4"/><text x="596" y="251" fill="#bbf7d0">2.47 bid x 14k</text>
+    <text x="584" y="292" fill="#fecdd3">During move</text>
+    <rect x="584" y="306" width="54" height="24" fill="#33171f" rx="4"/><text x="596" y="323" fill="#fecdd3">2k</text>
+    <rect x="584" y="336" width="38" height="24" fill="#33171f" rx="4"/><text x="596" y="353" fill="#fecdd3">1k</text>
+    <text x="584" y="394" fill="#8ea6c8">Displayed size changed fast.</text>
+  </g>
+</svg>
