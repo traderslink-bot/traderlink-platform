@@ -238,7 +238,7 @@ Meaning:
 
 Important:
 
-The 153 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
+The 167 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
 
 The migration pass should check:
 
@@ -351,17 +351,32 @@ These lessons have already been upgraded into the Academy style with metadata, r
 
 | Order | Module | Lesson | URL | Current Asset | Status | Notes |
 |---:|---|---|---|---|---|---|
-| 24 | Candlestick Context | Candlestick Patterns | `/learn/candlestick-patterns/` | draft | needs_upgrade | Should introduce candles as context, not signals. |
-| 25 | Candlestick Context | Long Wick Candle | `/learn/candlestick-patterns/long-wick-candle/` | draft | needs_upgrade | Needs realistic candle visuals. |
-| 26 | Candlestick Context | Doji | `/learn/candlestick-patterns/doji/` | draft | needs_upgrade | Teach indecision with context. |
-| 27 | Candlestick Context | Engulfing Candle | `/learn/candlestick-patterns/engulfing-candle/` | draft | needs_upgrade | Avoid automatic reversal claims. |
-| 28 | Candlestick Context | Hammer | `/learn/candlestick-patterns/hammer/` | draft | needs_upgrade | Must avoid "hammer means buy" language. |
-| 29 | Candlestick Context | Inside Bar | `/learn/candlestick-patterns/inside-bar/` | draft | needs_upgrade | Good bridge to compression. |
 | 30 | Chart Patterns | Chart Patterns | `/learn/chart-patterns/` | draft | needs_upgrade | Should be a pattern context hub. |
 | 31 | Chart Patterns | Bull Flag | `/learn/chart-patterns/bull-flag/` | draft | needs_upgrade | Avoid continuation guarantee. |
 | 32 | Chart Patterns | Ascending Triangle | `/learn/chart-patterns/ascending-triangle/` | draft | needs_upgrade | Needs level and volume context. |
 | 33 | Chart Patterns | Double Top | `/learn/chart-patterns/double-top/` | draft | needs_upgrade | Avoid reversal guarantee. |
 | 34 | Chart Patterns | Failed Breakout Pattern | `/learn/chart-patterns/failed-breakout-pattern/` | draft | needs_upgrade | Strong fit with current chart course. |
+
+### Completed Candlestick Patterns In Context Course
+
+The candlestick course is **content_upgraded** across all local candlestick drafts, with realistic candlestick SVGs wired where they improve learning.
+
+| Order | Module | Lesson | URL | Current Asset | Status | Notes |
+|---:|---|---|---|---|---|---|
+| 1 | Candle Foundation | Candlestick Patterns | `/learn/candlestick-patterns/` | content_upgraded | complete | Course opener; teaches candle anatomy, context, volume, levels, and review. |
+| 2 | Wicks And Indecision | Long Wick Candle | `/learn/candlestick-patterns/long-wick-candle/` | content_upgraded | complete | Long upper/lower wick rejection context with realistic SVG support. |
+| 3 | Wicks And Indecision | Doji Candle | `/learn/candlestick-patterns/doji/` | content_upgraded | complete | Indecision-at-level context with realistic SVG support. |
+| 4 | Rejection And Shift Candles | Engulfing Candle | `/learn/candlestick-patterns/engulfing-candle/` | content_upgraded | complete | Shift-of-control context with realistic SVG support. |
+| 5 | Rejection And Shift Candles | Hammer Candlestick | `/learn/candlestick-patterns/hammer/` | content_upgraded | complete | Lower-wick recovery near support with realistic SVG support. |
+| 6 | Compression Candles | Inside Bar | `/learn/candlestick-patterns/inside-bar/` | content_upgraded | complete | Compression and range-break review with inside/outside bar SVG support. |
+| 7 | Compression Candles | Outside Bar | `/learn/candlestick-patterns/outside-bar/` | content_upgraded | complete | Range expansion and close-location review with inside/outside bar SVG support. |
+| 8 | Rejection And Shift Candles | Pin Bar | `/learn/candlestick-patterns/pin-bar/` | content_upgraded | complete | Wick rejection context cross-supported by the long-wick visual. |
+| 9 | Tail Candles | Bottoming Tail Candle | `/learn/candlestick-patterns/bottoming-tail/` | content_upgraded | complete | Lower-wick support/recovery context cross-supported by the hammer visual. |
+| 10 | Tail Candles | Topping Tail Candle | `/learn/candlestick-patterns/topping-tail/` | content_upgraded | complete | Upper-wick resistance/rejection context cross-supported by the long-wick visual. |
+| 11 | Wicks And Indecision | Spinning Top Candle | `/learn/candlestick-patterns/spinning-top/` | content_upgraded | complete | Small-body hesitation context cross-supported by the doji visual. |
+| 12 | Candle And Volume Review | Candle Volume Confirmation | `/learn/candlestick-patterns/candle-volume-confirmation/` | content_upgraded | complete | Connects candle shape and volume without treating volume as proof. |
+| 13 | Intraday Color Transitions | Red-To-Green Move | `/learn/candlestick-patterns/red-to-green-move/` | content_upgraded | complete | Intraday reference reclaim context with red/green transition visual. |
+| 14 | Intraday Color Transitions | Green-To-Red Move | `/learn/candlestick-patterns/green-to-red-move/` | content_upgraded | complete | Intraday reference loss context with red/green transition visual. |
 
 ## Course 3: Volume, Liquidity And Order Flow
 
@@ -854,7 +869,8 @@ Current known Academy-ready lesson groups:
 
 | Course | Academy-Ready Lessons | Notes |
 |---|---:|---|
-| Chart Reading And Market Structure | 23 | Strong course core already created. Needs candlestick and chart pattern expansions later. |
+| Chart Reading And Market Structure | 23 | Strong course core already created. Needs chart pattern expansion later. |
+| Candlestick Patterns In Context | 14 | Full candlestick course markdown path is now content-upgraded across candle foundation, wick/indecision candles, shift candles, compression candles, tail candles, volume confirmation, and red/green intraday transitions. Eight realistic SVGs were created and manifest-tracked. |
 | Volume, Liquidity And Order Flow | 14 | Core course path is academy-ready. |
 | News, Catalysts And SEC Filings | 36 | Full course markdown path is now content-upgraded across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
 | Trading Foundations | 4 | Beginner onboarding and market-basics lessons are content-upgraded; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
@@ -868,28 +884,28 @@ Current known Academy-ready lesson groups:
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-153
+167
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 153 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 153 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 167 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 167 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 153 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 167 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/candlestick-patterns/
+/learn/chart-patterns/
 ```
 
 Reason:
 
-The Academy just completed the Trading Styles And Playbooks course markdown path. The highest-value next course is the remaining Candlestick Patterns In Context path, starting with `/learn/candlestick-patterns/`, because chart-reading still has known draft lessons that need realistic candle visuals and careful non-signal framing.
+The Academy just completed the Candlestick Patterns In Context course markdown path. The highest-value next course is Chart Patterns In Context, starting with `/learn/chart-patterns/`, because the chart-reading section still has local chart-pattern drafts that need Academy formatting, realistic visuals, and careful non-signal framing.
 
 ## Recommended Work Method From Here
 
