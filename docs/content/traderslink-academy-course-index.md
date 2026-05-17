@@ -1136,7 +1136,7 @@ Current known Academy-ready lesson groups:
 | Halts And High-Volatility Events | 7 | Full event-risk course markdown path is now content-upgraded across trading halts, volatility halts, halt resumes, market-wide circuit breakers, fast-spread risk, low-float volatility, and high-volatility trade review. Three realistic SVGs were created and manifest-tracked. |
 | Swing Trading Workflow | 8 | Full swing-trading workflow course markdown path is now content-upgraded across beginner swing planning, risk management, support/resistance planning, volume, catalysts, earnings, news risk, and small-cap swing context. Three realistic SVGs were created and manifest-tracked. |
 | Academy Navigation Path Hubs | 4 | Four path hubs are now content-upgraded across chart reading, news and filings, trade review, and risk discipline. Four realistic SVG/path-map assets were created and manifest-tracked. |
-| Volume, Liquidity And Order Flow | 14 | Core course path is academy-ready. |
+| Volume, Liquidity And Order Flow | 14 | Core course path has passed Academy format migration check: metadata, lesson objectives, checklist, review, Trader Intelligence bridge, and visuals are normalized. |
 | News, Catalysts And SEC Filings | 36 | Full course markdown path is now content-upgraded across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
 | Trading Foundations | 4 | Beginner onboarding and market-basics lessons are content-upgraded; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
 | Technical Indicators And Tools | 11 | Full indicator course markdown path is now content-upgraded across indicator foundation, trend tools, momentum tools, volatility tools, and VWAP reclaim. Volume By Price is cross-listed from the completed Volume course. Needs visual review before UI-ready. |
@@ -1157,20 +1157,20 @@ More precise current state:
 | State | Lesson Count | Meaning |
 |---|---:|---|
 | content_upgraded | 217 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 167 | Remaining upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
-| academy_ready | 50 | Chart Reading core, Candlestick Patterns, and Chart Patterns lesson sets have passed the first Academy format migration check. |
+| academy_format_review_needed | 153 | Remaining upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| academy_ready | 64 | Chart Reading core, Candlestick Patterns, Chart Patterns, and Volume/Liquidity lesson sets have passed the first Academy format migration check. |
 
 The 217 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to continue normalizing them into the final course format while creating or upgrading missing lessons only when a real gap appears.
 
 Current best next editorial action:
 
 ```text
-Volume, Liquidity And Order Flow Academy format migration
+Technical Indicators And Tools Academy format migration
 ```
 
 Reason:
 
-Trading Foundations passed the first structural check. Chart Reading core, Candlestick Patterns, and Chart Patterns have completed the first Academy format migration check. The highest-value next work is Volume, Liquidity And Order Flow, followed by Technical Indicators And Tools.
+Trading Foundations passed the first structural check. Chart Reading core, Candlestick Patterns, Chart Patterns, and Volume/Liquidity have completed the first Academy format migration check. The highest-value next work is Technical Indicators And Tools.
 
 ## Recommended Work Method From Here
 
