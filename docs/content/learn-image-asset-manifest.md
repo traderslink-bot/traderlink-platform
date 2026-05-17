@@ -110,6 +110,8 @@ journey_map
 | `public/images/learn/chart-reading/liquidity-spread-depth-review.svg` | `/learn/liquidity/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show bid-ask spread and depth as execution review context beside a chart. | Reading Spread And Depth section. | Trading dashboard showing bid ask spread and market depth as liquidity review context. | editor_verified | Supports spread/depth liquidity review, uses realistic candles, volume bars, quote context, and avoids signal language. | `debb3ce8` |
 | `public/images/learn/chart-reading/dollar-volume-share-vs-value-comparison.svg` | `/learn/dollar-volume/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Compare high share volume with higher dollar volume across differently priced stocks. | Quick Definition section. | Trading dashboard comparison showing high share volume versus higher dollar volume. | editor_verified | Supports dollar-volume comparison education, uses realistic dashboard context, and avoids signal language. | `30d417ee` |
 | `public/images/learn/chart-reading/dollar-volume-low-price-liquidity-review.svg` | `/learn/dollar-volume/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show low-priced stock share volume, dollar volume, spread, and depth review context. | Dollar Volume And Liquidity Are Related But Different section. | Trading dashboard showing low-priced stock dollar volume with spread and depth review context. | editor_verified | Supports low-priced stock liquidity review, uses realistic candles, volume bars, quote context, and avoids guarantee language. | `30d417ee` |
+| `public/images/learn/chart-reading/spread-tight-vs-wide-market.svg` | `/learn/spread/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Compare tight and wide bid-ask spreads with volume context. | Quick Definition section. | Trading dashboard comparing a tight spread with a wide spread. | editor_verified | Supports spread education, uses realistic quote and volume context, and avoids signal language. | `255f7a89` |
+| `public/images/learn/chart-reading/spread-hidden-execution-cost.svg` | `/learn/spread/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show hidden execution cost when entering across a wide spread. | Hidden Execution Cost section. | Trading dashboard showing hidden execution cost when entering across a wide spread. | editor_verified | Supports spread execution-cost review, uses realistic chart/quote context, and avoids guarantee language. | `255f7a89` |
 
 ## Editor Verification Summary
 
@@ -344,11 +346,19 @@ Dollar volume SVG verification:
 - Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Spread SVG verification:
+
+- Both visuals support the actual spread lesson.
+- The tight-versus-wide visual compares realistic bid/ask quotes and volume context.
+- The hidden execution cost visual shows how a fill at the ask can change planned risk before price moves.
+- Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Spread article: bid/ask mechanics, tight versus wide spread, and hidden execution cost.
+1. Bid And Ask article: quote mechanics, buyer/seller sides, and how orders interact with the quote.
 2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
