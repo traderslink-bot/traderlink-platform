@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Trading Rules"
 slug: "/learn/trading-rules/"
 primary_keyword: "trading rules"
@@ -7,11 +7,11 @@ secondary_keywords:
   - "trading discipline rules"
   - "risk management rules"
   - "trading plan rules"
-search_intent: "Understand what trading rules are, why they matter, what rules traders commonly use, and how to review rule-following in a journal."
+search_intent: "Understand what trading rules are, why they matter, what rules traders commonly use, and how to review rule-following in a review notes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -27,12 +27,12 @@ internal_links:
   - "/learn/trading-discipline/"
   - "/learn/risk-management/"
   - "/features/rule-candidate-tracking/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
 meta_title: "Trading Rules Explained"
-meta_description: "Learn what trading rules are, why they matter, common rule types, and how traders can review rule-following in a journal."
+meta_description: "Learn what trading rules are, why they matter, common rule types, and how traders can review rule-following in a review notes."
 ---
 # Trading Rules
 
@@ -131,7 +131,7 @@ Imagine a trader creates a rule: no new trades after hitting the daily loss limi
 
 During a red session, the trader hits the limit but takes one more trade to try to recover. That trade loses more money.
 
-The journal review is clear. The issue was not only the final trade. The issue was a broken rule.
+The structured review is clear. The issue was not only the final trade. The issue was a broken rule.
 
 That clarity matters because it gives the trader something specific to fix.
 
@@ -147,11 +147,11 @@ Another mistake is only tracking rules on losing trades. Winning trades can brea
 
 A final mistake is not updating rules after repeated evidence. If the same mistake keeps happening, the rule may need to be clearer or easier to enforce.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-Trading rules should be part of the journal review.
+Trading rules should be part of the structured review.
 
-Useful journal questions include:
+Useful review questions include:
 
 - What rule applied to this trade?
 - Did I follow the rule?
@@ -162,7 +162,7 @@ Useful journal questions include:
 - Does this rule need to be changed or reinforced?
 - Is this a repeated rule-break pattern?
 
-A journal makes rules more useful because it shows whether the trader is actually following them.
+A structured review makes rules more useful because it shows whether the trader is actually following them.
 
 ## Related Terms And Guides
 
@@ -172,7 +172,7 @@ For more context, read:
 - [Trading discipline](/learn/trading-discipline/)
 - [Trading risk management](/learn/risk-management/)
 - [Rule candidate tracking](/features/rule-candidate-tracking/)
-- [Trading journal app](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -208,7 +208,7 @@ Often, yes. Rules should be clear enough to follow during live trading and easy 
 
 Yes. A trade can make money but still violate the plan. Reviewing only losses can hide discipline problems.
 
-### How should I journal trading rules?
+### How should I review trading rules?
 
 Track which rule applied, whether it was followed, why it was broken, and whether the rule needs to be clearer or better enforced.
 

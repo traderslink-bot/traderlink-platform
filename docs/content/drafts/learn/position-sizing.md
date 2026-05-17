@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Position Sizing Explained for Traders"
 slug: "/learn/position-sizing/"
 primary_keyword: "position sizing"
@@ -11,7 +11,7 @@ search_intent: "Learn what position sizing is, why it matters, and how traders c
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "4"
 cta: "Review position sizing decisions with Trader Intelligence"
@@ -27,7 +27,7 @@ internal_links:
   - "/learn/revenge-trading/"
   - "/learn/overtrading/"
   - "/features/risk-behavior-review/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "Article"
   - "FAQPage"
@@ -122,7 +122,7 @@ Common position sizing mistakes include:
 
 Position sizing mistakes often show up as emotional trade management later.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 After a trade, review size as its own decision.
 
@@ -146,7 +146,7 @@ Useful related pages include:
 - [Revenge Trading](/learn/revenge-trading/)
 - [Overtrading](/learn/overtrading/)
 - [Risk Behavior Review](/features/risk-behavior-review/)
-- [Trading Journal App](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -182,7 +182,7 @@ Risk per trade is the amount a trader is willing to lose if the trade idea is wr
 
 It can help. If size is too large, traders are more likely to panic, move stops, or hold bad trades. Proper sizing can make the trade easier to manage.
 
-### Should I track position size in my journal?
+### Should I track position size in my review notes?
 
 Yes. Tracking position size helps traders review whether size affected entries, exits, adds, emotions, and risk management.
 

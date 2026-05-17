@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Trading Plan"
 slug: "/learn/trading-plan/"
 primary_keyword: "trading plan"
@@ -11,7 +11,7 @@ search_intent: "Understand what a trading plan is, what it should include, and h
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -27,7 +27,7 @@ internal_links:
   - "/learn/trading-discipline/"
   - "/learn/trading-rules/"
   - "/blog/how-to-review-your-trades/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -126,7 +126,7 @@ Their trading plan might include:
 - Stop after hitting the daily loss limit.
 - Review every trade after the session.
 
-If the trader later takes a low-volume midday trade out of boredom, the journal can clearly show that the trade was outside the plan.
+If the trader later takes a low-volume midday trade out of boredom, the review notes can clearly show that the trade was outside the plan.
 
 That clarity matters.
 
@@ -142,9 +142,9 @@ Another mistake is changing the plan during a losing session. That is usually em
 
 A final mistake is only judging the plan by profit and loss. A losing trade can follow the plan. A winning trade can break the plan.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
-A trading plan should connect directly to the journal.
+A trading plan should connect directly to the review notes.
 
 Useful review questions include:
 
@@ -167,7 +167,7 @@ For more context, read:
 - [Trading discipline](/learn/trading-discipline/)
 - [Trading rules](/learn/trading-rules/)
 - [How to review your trades](/blog/how-to-review-your-trades/)
-- [Trading journal app](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -203,7 +203,7 @@ Not exactly. A strategy is the setup or method. A trading plan includes the stra
 
 Yes, but changes should usually happen during review, not in the middle of an emotional trade.
 
-### How should I journal my trading plan?
+### How should I review my trading plan?
 
 Track whether each trade followed the plan, which rules were followed or broken, and what needs to be adjusted based on repeated evidence.
 

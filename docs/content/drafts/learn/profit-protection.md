@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Profit Protection"
 slug: "/learn/profit-protection/"
 primary_keyword: "profit protection"
@@ -11,7 +11,7 @@ search_intent: "Understand what profit protection means in trading, why traders 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -27,7 +27,7 @@ internal_links:
   - "/learn/cutting-winners-too-early/"
   - "/learn/risk-management/"
   - "/features/profit-protection-review/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -110,7 +110,7 @@ Imagine a trader buys a stock at $10.00. The first target is $10.80, and resista
 
 The stock moves to $10.85. The trader takes partial profit and moves the risk on the rest closer to breakeven. The stock later reaches $11.20, then rejects hard.
 
-A journal review might ask:
+A structured review might ask:
 
 - Was the partial exit planned?
 - Did the trader protect profit at a logical level?
@@ -131,11 +131,11 @@ Another mistake is selling full size too early when a partial exit would match t
 
 A final mistake is judging profit protection only by the final result. The review should ask whether the decision made sense with the information available at the time.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 Profit protection should be reviewed after winning trades and after trades that gave back gains.
 
-Useful journal questions include:
+Useful review questions include:
 
 - What was my profit protection plan?
 - Did I take partials at planned levels?
@@ -156,7 +156,7 @@ For more context, read:
 - [Cutting winners too early](/learn/cutting-winners-too-early/)
 - [Trading risk management](/learn/risk-management/)
 - [Profit protection review](/features/profit-protection-review/)
-- [Trading journal app](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 

@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Daily Loss Limit"
 slug: "/learn/daily-loss-limit/"
 primary_keyword: "daily loss limit"
@@ -11,7 +11,7 @@ search_intent: "Understand what a daily loss limit is, why traders use one, comm
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -27,12 +27,12 @@ internal_links:
   - "/learn/max-loss/"
   - "/learn/overtrading/"
   - "/learn/revenge-trading/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
 meta_title: "Daily Loss Limit Explained"
-meta_description: "Learn what a daily loss limit is, why traders use one, common mistakes, and how to review loss-limit discipline in a journal."
+meta_description: "Learn what a daily loss limit is, why traders use one, common mistakes, and how to review loss-limit discipline in a review notes."
 ---
 # Daily Loss Limit
 
@@ -109,7 +109,7 @@ They lose $150 on the first trade and $175 on the second trade. They are now dow
 
 A disciplined response may be to stop, reduce size, or only take a very clean setup. An emotional response may be to increase size to get green quickly.
 
-The journal should review that moment. The danger is often not the first loss. It is what the trader does after the limit is close.
+The review notes should review that moment. The danger is often not the first loss. It is what the trader does after the limit is close.
 
 ## Common Mistakes
 
@@ -121,13 +121,13 @@ Traders also make mistakes when they count only realized losses and ignore open 
 
 Another mistake is trading smaller after hitting the limit but continuing to force poor setups. Smaller size can still reinforce bad habits.
 
-A final mistake is failing to review why the limit was reached. The limit stops the day, but the journal should explain what caused the damage.
+A final mistake is failing to review why the limit was reached. The limit stops the day, but the review notes should explain what caused the damage.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 Daily loss limit review should happen any time the trader gets near or hits the limit.
 
-Useful journal questions include:
+Useful review questions include:
 
 - What was my daily loss limit before the session?
 - Did I follow it?
@@ -148,7 +148,7 @@ For more context, read:
 - [Max loss trading](/learn/max-loss/)
 - [Overtrading](/learn/overtrading/)
 - [Revenge trading](/learn/revenge-trading/)
-- [Trading journal app](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -184,7 +184,7 @@ Many traders stop trading, reduce activity, or switch to review mode. The rule s
 
 No. It can help control behavior and risk, but it cannot remove market risk, slippage, gap risk, or execution problems.
 
-### How should I journal daily loss limit mistakes?
+### How should I review daily loss limit mistakes?
 
 Track the limit, when it was reached, what trades caused it, whether you followed the rule, and what emotional triggers appeared.
 

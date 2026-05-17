@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Holding Through News"
 slug: "/learn/holding-through-news/"
 primary_keyword: "holding through news"
@@ -11,7 +11,7 @@ search_intent: "Understand the risks of holding stocks through news, how traders
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -27,7 +27,7 @@ internal_links:
   - "/learn/swing-trading-news-risk/"
   - "/learn/stock-catalysts/"
   - "/learn/overnight-risk/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -135,13 +135,13 @@ Traders also make mistakes when they use normal swing size for an event-risk tra
 
 Another mistake is ignoring filings. For small-cap traders, filings can be just as important as press releases.
 
-A final mistake is refusing to reassess after the news. If the news changes the trade thesis, the journal should reflect that clearly.
+A final mistake is refusing to reassess after the news. If the news changes the trade thesis, the review notes should reflect that clearly.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 Holding through news should be reviewed separately from normal swing management.
 
-Useful journal questions include:
+Useful review questions include:
 
 - Was the news event known before entry?
 - Did I intentionally hold through it?
@@ -162,7 +162,7 @@ For more context, read:
 - [Swing trading news risk](/learn/swing-trading-news-risk/)
 - [Stock catalysts](/learn/stock-catalysts/)
 - [Overnight risk](/learn/overnight-risk/)
-- [Trading journal app](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -198,7 +198,7 @@ Yes. A stock can fall after good news if expectations were higher, traders sell 
 
 Traders can check the event type, timing, position size, liquidity, filings, prior expectations, and what would invalidate the trade.
 
-### How should I journal trades held through news?
+### How should I review trades held through news?
 
 Track the known event, why you held, position size, news details, price reaction, and whether your post-news decisions followed the plan.
 

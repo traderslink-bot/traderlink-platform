@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Risk Reward Ratio"
 slug: "/learn/risk-reward-ratio/"
 primary_keyword: "risk reward ratio"
@@ -7,11 +7,11 @@ secondary_keywords:
   - "trading risk reward"
   - "reward to risk ratio"
   - "trade risk reward review"
-search_intent: "Understand what risk reward ratio means in trading, how traders use it, common mistakes, and how to review it in a journal."
+search_intent: "Understand what risk reward ratio means in trading, how traders use it, common mistakes, and how to review it in a review notes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -27,7 +27,7 @@ internal_links:
   - "/learn/position-sizing/"
   - "/learn/stop-loss/"
   - "/features/risk-behavior-review/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -122,11 +122,11 @@ Another mistake is changing the target or risk level during the trade for emotio
 
 A final mistake is treating risk reward as a guarantee. Even a clean ratio can fail if the setup does not work.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 Risk reward review should compare the planned trade to the actual trade.
 
-Useful journal questions include:
+Useful review questions include:
 
 - What was the planned risk reward ratio before entry?
 - Was the target based on a real level?
@@ -147,7 +147,7 @@ For more context, read:
 - [Position sizing](/learn/position-sizing/)
 - [Stop loss](/learn/stop-loss/)
 - [Risk behavior review](/features/risk-behavior-review/)
-- [Trading journal app](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -183,7 +183,7 @@ Compare the distance from entry to the planned risk area with the distance from 
 
 Yes, but the trader should understand whether the potential reward justifies the risk and whether the setup fits their strategy.
 
-### How should I journal risk reward?
+### How should I review risk reward?
 
 Record the planned risk, planned target, actual exit, slippage, whether the target was realistic, and whether you followed the plan.
 

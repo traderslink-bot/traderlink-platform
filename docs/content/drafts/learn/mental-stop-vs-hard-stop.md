@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Mental Stop Vs Hard Stop"
 slug: "/learn/mental-stop-vs-hard-stop/"
 primary_keyword: "mental stop vs hard stop"
@@ -11,7 +11,7 @@ search_intent: "Understand the difference between a mental stop and a hard stop,
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -27,7 +27,7 @@ internal_links:
   - "/learn/risk-management/"
   - "/learn/holding-losers-too-long/"
   - "/features/risk-behavior-review/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -122,13 +122,13 @@ Traders also make mistakes when they place stops at obvious levels without consi
 
 Another mistake is moving either type of stop after price reaches it. Sometimes there is a valid reason. Often it is emotional loss avoidance.
 
-A final mistake is not journaling stop behavior. If the trader does not track missed stops, late exits, or stop-outs from poor placement, the pattern can repeat.
+A final mistake is not recording stop behavior. If the trader does not track missed stops, late exits, or stop-outs from poor placement, the pattern can repeat.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 Stop type should be reviewed as part of risk management.
 
-Useful journal questions include:
+Useful review questions include:
 
 - Did I use a mental stop or a hard stop?
 - Was the stop area defined before entry?
@@ -149,7 +149,7 @@ For more context, read:
 - [Trading risk management](/learn/risk-management/)
 - [Holding losers too long](/learn/holding-losers-too-long/)
 - [Risk behavior review](/features/risk-behavior-review/)
-- [Trading journal app](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -185,7 +185,7 @@ Yes. Depending on the order type, liquidity, spread, and market speed, the actua
 
 Mental stops fail when traders hesitate, move the level, hope for a bounce, or ignore the original invalidation area.
 
-### How should I journal stop choices?
+### How should I review stop choices?
 
 Track the stop type, planned level, actual exit, slippage, whether the stop was followed, and whether the stop type fit the trade.
 

@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Trading Risk Management: A Practical Guide"
 slug: "/learn/risk-management/"
 primary_keyword: "trading risk management"
@@ -11,7 +11,7 @@ search_intent: "Learn what trading risk management is, why it matters, and how t
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "4"
 cta: "Review risk decisions with Trader Intelligence"
@@ -27,7 +27,7 @@ internal_links:
   - "/learn/revenge-trading/"
   - "/learn/overtrading/"
   - "/features/risk-behavior-review/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "Article"
   - "FAQPage"
@@ -129,7 +129,7 @@ Common trading risk management mistakes include:
 
 The biggest issue is usually not one mistake. It is repeating the same risk mistake and not reviewing it.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 After each trade, review risk as its own category.
 
@@ -143,7 +143,7 @@ Ask:
 - Did I keep trading after I should have stopped?
 - Was the loss controlled or avoidably large?
 
-A trading journal should help you see whether your risk rules are being followed or rewritten during the trade.
+A structured trade review should help you see whether your risk rules are being followed or rewritten during the trade.
 
 ## Related Terms And Guides
 
@@ -153,7 +153,7 @@ Useful related pages include:
 - [Revenge Trading](/learn/revenge-trading/)
 - [Overtrading](/learn/overtrading/)
 - [Risk Behavior Review](/features/risk-behavior-review/)
-- [Trading Journal App](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 

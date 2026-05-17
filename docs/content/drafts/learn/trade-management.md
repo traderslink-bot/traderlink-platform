@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Trade Management"
 slug: "/learn/trade-management/"
 primary_keyword: "trade management"
@@ -11,7 +11,7 @@ search_intent: "Understand what trade management means, why it matters after ent
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -27,7 +27,7 @@ internal_links:
   - "/learn/risk-management/"
   - "/learn/profit-protection/"
   - "/features/trade-management-feedback/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -134,13 +134,13 @@ Traders also make mistakes when they add to losing trades without a plan.
 
 Another mistake is cutting winners too early but holding losers too long. That pattern can damage performance even if the trader has good entries.
 
-A final mistake is not journaling management decisions. If only entry and exit prices are tracked, the trader may miss the behavior that mattered most.
+A final mistake is not recording management decisions. If only entry and exit prices are tracked, the trader may miss the behavior that mattered most.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 Trade management review should study what happened after entry.
 
-Useful journal questions include:
+Useful review questions include:
 
 - What was my management plan before entry?
 - Did I follow the plan?
@@ -161,7 +161,7 @@ For more context, read:
 - [Trading risk management](/learn/risk-management/)
 - [Profit protection](/learn/profit-protection/)
 - [Trade management feedback](/features/trade-management-feedback/)
-- [Trading journal app](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -197,7 +197,7 @@ Common mistakes include exiting too early, holding losers too long, adding emoti
 
 Traders can define the plan before entry, track decisions during the trade, and review whether exits, scales, and holds followed the original structure.
 
-### How should I journal trade management?
+### How should I review trade management?
 
 Track the plan, key levels, adds, reductions, exits, emotional decisions, and whether the trade was managed according to the original thesis.
 

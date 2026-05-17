@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Stop Loss"
 slug: "/learn/stop-loss/"
 primary_keyword: "stop loss"
@@ -11,7 +11,7 @@ search_intent: "Understand what a stop loss is, how traders use stop areas, what
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -27,12 +27,12 @@ internal_links:
   - "/learn/risk-reward-ratio/"
   - "/learn/position-sizing/"
   - "/learn/max-loss/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
 meta_title: "Stop Loss Explained For Traders"
-meta_description: "Learn what a stop loss is, how traders use stop areas, common stop loss mistakes, and how to review stop decisions in a journal."
+meta_description: "Learn what a stop loss is, how traders use stop areas, common stop loss mistakes, and how to review stop decisions in a review notes."
 ---
 # Stop Loss
 
@@ -126,13 +126,13 @@ Traders also make mistakes when they move stops farther away because they do not
 
 Another mistake is assuming a stop order guarantees a perfect exit price. In fast markets, low-liquidity stocks, or gap-down situations, the actual fill can be different.
 
-A final mistake is ignoring the stop after entry. If the stop was planned before the trade, the journal should show whether it was respected.
+A final mistake is ignoring the stop after entry. If the stop was planned before the trade, the review notes should show whether it was respected.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 Stop loss review should focus on whether the exit plan matched the setup.
 
-Useful journal questions include:
+Useful review questions include:
 
 - Did I define a stop or invalidation area before entry?
 - Was the stop based on chart structure or just a dollar amount?
@@ -153,7 +153,7 @@ For more context, read:
 - [Risk reward ratio](/learn/risk-reward-ratio/)
 - [Position sizing](/learn/position-sizing/)
 - [Max loss trading](/learn/max-loss/)
-- [Trading journal app](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -187,9 +187,9 @@ A mental stop is a planned exit level that the trader watches manually instead o
 
 ### Why do traders move stop losses?
 
-Sometimes a stop is adjusted because the chart changes. Other times it is moved emotionally to avoid taking a loss. The journal should separate those reasons.
+Sometimes a stop is adjusted because the chart changes. Other times it is moved emotionally to avoid taking a loss. The review notes should separate those reasons.
 
-### How should I journal stop loss decisions?
+### How should I review stop loss decisions?
 
 Track the planned stop, why it was chosen, whether it was followed, actual exit price, slippage, and whether the trade idea was invalidated.
 

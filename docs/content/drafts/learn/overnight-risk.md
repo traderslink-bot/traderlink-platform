@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Overnight Risk"
 slug: "/learn/overnight-risk/"
 primary_keyword: "overnight risk"
@@ -11,7 +11,7 @@ search_intent: "Understand what overnight risk means, why it matters for swing t
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -27,7 +27,7 @@ internal_links:
   - "/learn/swing-trading-risk-management/"
   - "/learn/swing-trading-news-risk/"
   - "/learn/gap-fill-trading/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -140,11 +140,11 @@ Another mistake is holding small-cap stocks overnight without checking filings, 
 
 A final mistake is sizing too large because the chart looks clean during regular hours. Overnight gaps can change that quickly.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 Overnight risk should be reviewed any time a trade is held past the close.
 
-Useful journal questions include:
+Useful review questions include:
 
 - Was holding overnight part of the original plan?
 - What was the reason for holding?
@@ -165,7 +165,7 @@ For more context, read:
 - [Swing trading risk management](/learn/swing-trading-risk-management/)
 - [Swing trading news risk](/learn/swing-trading-news-risk/)
 - [Gap fill trading](/learn/gap-fill-trading/)
-- [Trading journal app](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -201,7 +201,7 @@ Overnight gaps can be caused by earnings, news, filings, analyst updates, sector
 
 That depends on the trader's strategy and risk plan. The key is to know when overnight risk is being taken and size the trade accordingly.
 
-### How should I journal overnight risk?
+### How should I review overnight risk?
 
 Track why the trade was held overnight, what risks were known, whether position size made sense, how the stock opened, and whether the plan was followed.
 

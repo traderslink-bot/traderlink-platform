@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Max Loss Trading"
 slug: "/learn/max-loss/"
 primary_keyword: "max loss trading"
@@ -11,7 +11,7 @@ search_intent: "Understand what max loss means in trading, why traders use max l
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -27,7 +27,7 @@ internal_links:
   - "/learn/daily-loss-limit/"
   - "/learn/position-sizing/"
   - "/learn/stop-loss/"
-  - "/trading-journal-app/"
+  - "/learn/trade-review-and-improvement/"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
@@ -116,7 +116,7 @@ The trader loses $120 on the first trade and $100 on the second trade. They are 
 
 If the trader takes another full-size trade and loses $150, they have exceeded the max loss rule.
 
-A journal review should ask:
+A structured review should ask:
 
 - Was the max loss rule clear before the session?
 - Did the trader reduce size as losses built up?
@@ -135,13 +135,13 @@ Traders also make mistakes when they do not account for open positions. A trader
 
 Another mistake is using the same max loss rule in all market conditions. Higher volatility may require different sizing or stricter rules.
 
-A final mistake is failing to review why the max loss was hit. The rule stops the damage, but the journal should explain what led to it.
+A final mistake is failing to review why the max loss was hit. The rule stops the damage, but the review notes should explain what led to it.
 
-## How To Review This In Your Trading Journal
+## Review Questions
 
 Max loss review should happen any time a trader approaches or hits a loss limit.
 
-Useful journal questions include:
+Useful review questions include:
 
 - What was my max loss rule before the session?
 - Did I follow it?
@@ -162,7 +162,7 @@ For more context, read:
 - [Daily loss limit](/learn/daily-loss-limit/)
 - [Position sizing](/learn/position-sizing/)
 - [Stop loss](/learn/stop-loss/)
-- [Trading journal app](/trading-journal-app/)
+- [Trade Review And Improvement](/learn/trade-review-and-improvement/)
 
 ## Practical Checklist
 
@@ -198,7 +198,7 @@ That depends on the rule. Some traders stop for the day, reduce size, pause, or 
 
 No. It can help control risk, but it cannot remove market risk, slippage, gap risk, or execution problems.
 
-### How should I journal max loss rules?
+### How should I review max loss rules?
 
 Track the rule, whether it was followed, what trades led to the limit, what emotions appeared, and whether any rule breaks made the loss worse.
 
