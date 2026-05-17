@@ -6,7 +6,7 @@ secondary_keywords:
   - "day trading review"
   - "trading session recap"
   - "intraday trade review"
-  - "day trading journal review"
+  - "day trading session review"
 search_intent: "Learn how to review a day trading session by preparation, timing, risk, execution, and behavior."
 status: "draft"
 product_area: "Education"
