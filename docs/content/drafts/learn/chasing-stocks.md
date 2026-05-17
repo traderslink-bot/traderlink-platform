@@ -14,7 +14,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review late-entry and chase patterns with more structure, Trader Intelligence is being built to help traders analyze executions, entries, and repeated mistake patterns."
+cta: "Trader Intelligence is being built to help traders review completed trades by rules, triggers, sizing, execution, risk decisions, and repeated behavior patterns."
 recommended_previous: "/learn/fomo-trading/"
 recommended_next: "/learn/revenge-trading/"
 academy_level: "Practical"
@@ -96,9 +96,9 @@ Missing a move is not the same as needing to enter the next candle. A better rev
 
 ## Realistic Example
 
-Imagine a stock breaks above .00 and runs to .80 on heavy volume. The clean breakout entry was near .05, but the trader hesitated.
+Imagine a stock breaks above 4.00 and runs to 4.80 on heavy volume. The clean breakout entry was near 4.05, but the trader hesitated.
 
-At .78, the stock hits another scanner alert. The trader enters because it feels like the stock could keep pushing. But resistance is near .90, the spread is wide, and the stock is already extended.
+At 4.78, the stock hits another scanner alert. The trader enters because it feels like the stock could keep pushing. But resistance is near 4.90, the spread is wide, and the stock is already extended.
 
 The issue is not that the stock had momentum. The issue is that the entry came after the clean risk area was gone.
 

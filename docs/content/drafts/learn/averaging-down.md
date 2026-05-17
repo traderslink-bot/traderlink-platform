@@ -14,7 +14,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review average-down behavior with more structure, Trader Intelligence is being built to help traders analyze adds, risk expansion, invalidation, and repeated trade-management patterns."
+cta: "Trader Intelligence is being built to help traders review completed trades by rules, triggers, sizing, execution, risk decisions, and repeated behavior patterns."
 recommended_previous: "/learn/cutting-winners-too-early/"
 recommended_next: "/learn/trade-risk-review/"
 academy_level: "Practical"
@@ -93,9 +93,9 @@ An emotional average down usually happens after the trade moves against the trad
 
 ## Realistic Example
 
-Imagine a trader enters a stock at .00 because it broke above resistance. The trade idea depends on the stock holding above .90.
+Imagine a trader enters a stock at 2.00 because it broke above resistance. The trade idea depends on the stock holding above 1.90.
 
-Price drops to .85 and fails to reclaim .90. Instead of exiting, the trader buys more at .80 to lower the average.
+Price drops to 1.85 and fails to reclaim 1.90. Instead of exiting, the trader buys more at 1.80 to lower the average.
 
 The average price improves, but the original breakout idea may already be invalid. A useful review asks whether the add was planned, whether the key level had failed, and whether risk increased beyond the intended amount.
 

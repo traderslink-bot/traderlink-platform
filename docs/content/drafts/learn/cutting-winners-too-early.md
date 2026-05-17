@@ -14,7 +14,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review profit-taking behavior with more structure, Trader Intelligence is being built to help traders analyze trade management, planned exits, giveback, and repeated early-exit patterns."
+cta: "Trader Intelligence is being built to help traders review completed trades by rules, triggers, sizing, execution, risk decisions, and repeated behavior patterns."
 recommended_previous: "/learn/holding-losers-too-long/"
 recommended_next: "/learn/averaging-down/"
 academy_level: "Practical"
@@ -94,9 +94,9 @@ An emotional exit usually happens before planned conditions appear. The trader e
 
 ## Realistic Example
 
-Imagine a trader enters a breakout at .00. The planned target is .60, with a possible partial exit near .30.
+Imagine a trader enters a breakout at 5.00. The planned target is 5.60, with a possible partial exit near 5.30.
 
-The stock moves to .18. The trader exits the full position because they are afraid it will come back to entry. The stock later moves to .55.
+The stock moves to 5.18. The trader exits the full position because they are afraid it will come back to entry. The stock later moves to 5.55.
 
 The trade was profitable, but review should still ask whether the exit followed the plan, whether size was too large, and whether a partial exit would have matched the plan better.
 

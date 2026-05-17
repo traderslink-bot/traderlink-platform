@@ -14,7 +14,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review FOMO patterns with more structure, Trader Intelligence is being built to help traders analyze executions, mistake patterns, and emotional decision points."
+cta: "Trader Intelligence is being built to help traders review completed trades by rules, triggers, sizing, execution, risk decisions, and repeated behavior patterns."
 recommended_previous: "/learn/trading-discipline/"
 recommended_next: "/learn/chasing-stocks/"
 academy_level: "Foundation"
@@ -95,9 +95,9 @@ After the trigger, the trader may rush the decision. A better pause asks where t
 
 ## Realistic Example
 
-Imagine a stock runs from .00 to .20 after a press release. The trader missed the first breakout. The stock hits a scanner again near .25, and the trader enters immediately because it feels like the move could continue.
+Imagine a stock runs from 2.00 to 3.20 after a press release. The trader missed the first breakout. The stock hits a scanner again near 3.25, and the trader enters immediately because it feels like the move could continue.
 
-But nearby resistance is at .40. The spread is wider than normal. Volume is already fading. The trader has no clear invalidation level.
+But nearby resistance is at 3.40. The spread is wider than normal. Volume is already fading. The trader has no clear invalidation level.
 
 The issue was not that the stock had momentum. The issue was that the trader entered late without a plan.
 

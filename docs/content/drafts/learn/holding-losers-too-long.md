@@ -14,7 +14,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review trade-management behavior with more structure, Trader Intelligence is being built to help traders analyze invalidation, exits, risk expansion, and repeated mistakes."
+cta: "Trader Intelligence is being built to help traders review completed trades by rules, triggers, sizing, execution, risk decisions, and repeated behavior patterns."
 recommended_previous: "/learn/overtrading/"
 recommended_next: "/learn/cutting-winners-too-early/"
 academy_level: "Practical"
@@ -96,11 +96,11 @@ Sometimes the plan changes because new information appears. Other times the trad
 
 ## Realistic Example
 
-Imagine a trader enters a stock at .00 because it reclaimed resistance. The plan says the trade is wrong if price loses .80.
+Imagine a trader enters a stock at 3.00 because it reclaimed resistance. The plan says the trade is wrong if price loses 2.80.
 
-Price drops to .78. The trader does not exit because they think it may bounce. Then price drops to .55. The trader still holds because the loss now feels too big. Eventually they exit at .30.
+Price drops to 2.78. The trader does not exit because they think it may bounce. Then price drops to 2.55. The trader still holds because the loss now feels too big. Eventually they exit at 2.30.
 
-The original risk was about .20 per share. The final loss was about .70 per share. The review should focus on the decision at .80, not only the final exit.
+The original risk was about 0.20 per share. The final loss was about 0.70 per share. The review should focus on the decision at 2.80, not only the final exit.
 
 ## Common Mistakes
 

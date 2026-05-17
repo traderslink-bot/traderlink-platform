@@ -97,7 +97,7 @@ Recommended order for future runs:
 | 9 | News, Catalysts And SEC Filings | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; removed stale app route links from SEC filing module lessons, cleaned broad journal wording, fixed several stale internal links, and documented source-sensitive follow-up needs for SEC, EDGAR, FDA, filing, and delisting details. |
 | 10 | Small-Cap Stocks, Float And Dilution | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; tightened generic migrated objectives, removed stale hard app route links, fixed stale internal links, and documented visual/source follow-up needs. |
 | 11 | Halts And High-Volatility Events | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; added missing in-body visuals, cleaned stale path-hub wording, and documented source-sensitive halt/circuit-breaker follow-up needs. |
-| 12 | Trading Psychology And Discipline | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to coaching and mistake-pattern review. |
+| 12 | Trading Psychology And Discipline | complete | not_started | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; normalized restrained CTAs, fixed stripped price examples, and documented non-shaming coaching/mistake-pattern bridge needs. |
 | 13 | Trade Review And Improvement | not_started | not_started | not_started | not_started | not_started | not_started | Core app bridge course. |
 | 14 | Practice And Improvement | not_started | not_started | not_started | not_started | not_started | not_started | Strong app tie-ins to progress, playbooks, and forward testing. |
 | 15 | Academy Navigation Path Hubs | not_started | not_started | not_started | not_started | not_started | not_started | Treat as navigation support, not a numbered course. |
@@ -197,7 +197,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 1: Lesson-Level Quality Audit** for **Trading Psychology And Discipline**.
+Continue with **Pass 1: Lesson-Level Quality Audit** for **Trade Review And Improvement**.
 
 Reason:
 
@@ -212,15 +212,16 @@ Reason:
 - News, Catalysts And SEC Filings Pass 1 is complete.
 - Small-Cap Stocks, Float And Dilution Pass 1 is complete.
 - Halts And High-Volatility Events Pass 1 is complete.
-- Trading Psychology And Discipline is the next course because learners now move from market-event and execution-risk mechanics into the behavior patterns that affect whether they follow plans under pressure.
-- This course needs careful language around FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down so lessons stay practical without shame, blame, medicalized claims, or promises that an app will fix behavior.
+- Trading Psychology And Discipline Pass 1 is complete.
+- Trade Review And Improvement is the next course because it is the strongest natural bridge between Academy lessons and the future app experience.
+- This course needs careful language so trade review, risk review, execution review, mistake-pattern review, swing trade notes, and Trader Intelligence bridge content feel genuinely educational instead of promotional.
 - Mark factual/source-sensitive items for later Pass 3 where needed, but keep this run focused on Pass 1 lesson quality unless a source issue is obvious inside the lesson text.
 
 Output should include:
 
-- A Trading Psychology And Discipline lesson-level quality audit.
+- A Trade Review And Improvement lesson-level quality audit.
 - Any small markdown edits needed.
-- App bridge map for trading discipline, FOMO, chasing stocks, revenge trading, overtrading, holding losers, cutting winners, and averaging down.
-- Visual-readiness notes for behavior loops, rule breaks, emotional pressure, process recovery, and mistake-pattern review dashboards.
+- App bridge map for trade review foundation, trade risk review, planned-vs-actual review, execution review, mistake pattern review, swing trade journal, and Trader Intelligence trade review bridge.
+- Visual-readiness notes for review dashboards, planned-versus-actual comparisons, execution review, mistake-pattern tagging, swing trade notes, and progress/resume-learning ties.
 - Tracker and handoff update.
 - Commit.
