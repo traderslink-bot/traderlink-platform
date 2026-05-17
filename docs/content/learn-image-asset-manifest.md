@@ -102,6 +102,8 @@ journey_map
 | `public/images/learn/chart-reading/volume-fade-after-spike.svg` | `/learn/volume/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show participation fading after an early spike. | Volume Fade After A Spike section. | Candlestick chart showing volume fading after an early spike while price stops making clean progress. | editor_verified | Supports volume fade review, uses realistic candles, volume bars, and avoids reversal guarantee language. | `72a62c5a` |
 | `public/images/learn/chart-reading/relative-volume-normal-vs-unusual.svg` | `/learn/relative-volume/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Compare normal activity with unusual relative volume. | Quick Definition section. | Candlestick chart comparing normal volume with unusual relative volume. | editor_verified | Supports relative-volume comparison education, uses realistic candles and volume bars, and avoids signal language. | `f191d165` |
 | `public/images/learn/chart-reading/relative-volume-news-fade-review.svg` | `/learn/relative-volume/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show high relative volume after news followed by fading participation. | High Relative Volume With News section. | Candlestick chart showing high relative volume after news followed by fading participation. | editor_verified | Supports relative-volume context review, uses realistic candles, catalyst context, volume bars, and avoids prediction language. | `f191d165` |
+| `public/images/learn/chart-reading/rvol-time-of-day-comparison.svg` | `/learn/relative-volume-rvol/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show today's volume compared with a normal time-of-day baseline. | Quick Definition section. | Candlestick chart showing current volume compared with a normal time-of-day baseline. | editor_verified | Supports RVOL time-of-day comparison education, uses realistic candles and volume bars, and avoids signal language. | `f714877e` |
+| `public/images/learn/chart-reading/rvol-scanner-context-review.svg` | `/learn/relative-volume-rvol/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show a scanner-style RVOL context panel beside chart and volume review. | RVOL On A Scanner section. | Candlestick chart with a scanner-style context panel showing high RVOL, catalyst, spread, and volume fade review. | editor_verified | Supports RVOL scanner review, uses realistic candles, volume bars, and avoids prediction language. | `f714877e` |
 
 ## Editor Verification Summary
 
@@ -304,11 +306,19 @@ Relative volume SVG verification:
 - Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+RVOL SVG verification:
+
+- Both visuals support the actual RVOL scanner-metric lesson.
+- The time-of-day comparison visual shows today's activity against a normal baseline, with realistic candles and volume bars.
+- The scanner-context visual shows RVOL alongside catalyst, spread, and fade review so the number is not treated as a signal.
+- Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Relative Volume RVOL article: scanner-style RVOL metric, time-of-day comparison, and review caveats.
+1. Volume Spike article: sudden activity burst, follow-through versus fade, and catalyst/level context.
 2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
