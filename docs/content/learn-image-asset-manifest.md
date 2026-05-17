@@ -126,6 +126,8 @@ journey_map
 | `public/images/learn/chart-reading/volume-by-price-low-volume-area-review.svg` | `/learn/volume-by-price/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show price moving through a low-volume area and stalling near a high-volume zone. | Low-Volume Areas section. | Candlestick chart with volume-by-price profile showing price moving through a low-volume area and stalling near a high-volume zone. | editor_verified | Supports low-volume-area review, uses realistic candles/profile context, and avoids guarantee language. | `5a5bfc59` |
 | `public/images/learn/chart-reading/unusual-volume-normal-vs-today.svg` | `/learn/unusual-volume/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Compare normal volume with today's unusual activity and scanner context. | Quick Definition section. | Trading dashboard showing normal volume versus today's unusual volume burst with scanner context. | editor_verified | Supports unusual-volume baseline comparison, uses realistic candles and volume bars, and avoids signal language. | `80c78592` |
 | `public/images/learn/chart-reading/unusual-volume-catalyst-fade-review.svg` | `/learn/unusual-volume/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show a catalyst volume burst that fails to hold while volume fades and spread widens. | Follow-Through Versus Fade section. | Trading dashboard showing unusual volume after a catalyst, followed by failed hold, fading volume, and spread review. | editor_verified | Supports catalyst/fade/liquidity review, uses realistic candles and bid/ask context, and avoids guarantee language. | `80c78592` |
+| `public/images/learn/chart-reading/stock-catalyst-quality-review.svg` | `/learn/stock-catalysts/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Show catalyst detail checks beside a realistic price and volume reaction. | Quick Definition section. | Trading dashboard showing a catalyst-quality review panel beside a realistic candlestick reaction. | editor_verified | Supports catalyst-quality review, uses realistic candles and volume bars, and avoids signal language. | `63dff225` |
+| `public/images/learn/chart-reading/stock-catalyst-headline-vs-reaction.svg` | `/learn/stock-catalysts/` | News Catalysts Filings And Dilution | realistic_trading_dashboard | Compare a catalyst headline with price reaction, volume fade, and filing-review notes. | Headline Versus Market Reaction section. | Trading dashboard comparing a catalyst headline with the chart reaction, volume burst, and later fade review. | editor_verified | Supports headline-versus-reaction review, uses realistic candles and review labels, and avoids guarantee language. | `63dff225` |
 
 ## Editor Verification Summary
 
@@ -424,12 +426,20 @@ Unusual volume SVG verification:
 - Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Stock catalysts SVG verification:
+
+- Both visuals support the actual stock-catalysts lesson.
+- The catalyst-quality visual shows detail checks, filing review, dilution review, and a realistic chart reaction.
+- The headline-versus-reaction visual shows a catalyst headline, volume burst, fade review, and filing/liquidity notes.
+- Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the completed Chart Reading and Volume Liquidity batches, the next high-value SVG batch should likely support one of these:
 
-1. Stock Catalysts article: catalyst-quality matrix, headline-to-chart reaction, and catalyst review workflow.
-2. Press Releases or How To Read Stock Press Releases: press-release anatomy and source-detail review.
-3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
+1. Press Releases or How To Read Stock Press Releases: press-release anatomy and source-detail review.
+2. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
+3. Catalyst category articles: earnings, FDA, clinical trial, contract, partnership, and merger news review.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
 5. Trade review path: trade timeline, planned vs actual risk, execution review timeline.
