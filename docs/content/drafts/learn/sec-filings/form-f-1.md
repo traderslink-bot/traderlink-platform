@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form F-1"
 slug: "/learn/sec-filings/form-f-1/"
 primary_keyword: "Form F-1"
@@ -7,7 +7,7 @@ search_intent: "Understand what Form F-1 is, why foreign private issuers file it
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 12
 academy_module: "Registration Statements"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-f-3/", "/learn/sec-filings/form-s-1/", "/learn/public-offering/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -124,9 +124,9 @@ Traders may want to check:
 
 The filing does not guarantee selling pressure, but it can show potential future supply.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help connect Form F-1 details to actual trades.
+Structured review notes can help connect Form F-1 details to actual trades.
 
 Useful review notes include:
 

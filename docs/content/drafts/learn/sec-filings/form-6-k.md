@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form 6-K"
 slug: "/learn/sec-filings/form-6-k/"
 primary_keyword: "Form 6-K"
@@ -7,7 +7,7 @@ search_intent: "Understand what Form 6-K is, why foreign private issuers file it
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 9
 academy_module: "Company Reports"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-20-f/", "/learn/sec-filings/form-f-1/", "/learn/sec-filings/form-f-3/", "/learn/news-driven-stocks/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -123,9 +123,9 @@ Traders may want to check:
 
 The filing does not guarantee dilution, but it can contain information that points to financing risk.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help connect Form 6-K details to trade decisions.
+Structured review notes can help connect Form 6-K details to trade decisions.
 
 Useful review notes include:
 

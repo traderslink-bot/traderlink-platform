@@ -11,12 +11,15 @@ search_intent: "Learn what SEC filings are, why public companies file them, whic
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "cluster_hub"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review filing-driven trades, catalyst context, execution quality, and repeated research gaps."
-learning_track: "News Catalysts Filings And Dilution"
-learning_stage: "Foundation"
+learning_track: "News, Catalysts And SEC Filings"
+academy_course: "News, Catalysts And SEC Filings"
+academy_module: "SEC Filing Foundation"
+academy_order: 4
+academy_level: "Foundation"
 recommended_previous: "/learn/how-to-read-stock-press-releases/"
 recommended_next: "/learn/sec-filings/form-8-k/"
 visual_assets:
@@ -48,9 +51,19 @@ meta_description: "Learn what SEC filings are, why traders watch them, and how f
 
 SEC filings are official documents that public companies submit to the U.S. Securities and Exchange Commission. Traders watch SEC filings because they can reveal company events, financial results, offerings, dilution risk, insider transactions, mergers, reverse splits, and other material updates.
 
-This lesson is part of the **News Catalysts Filings And Dilution** learning path. It builds on [Stock Catalysts](/learn/stock-catalysts/), [Stock Press Releases](/learn/press-releases/), and [How To Read Stock Press Releases](/learn/how-to-read-stock-press-releases/). It leads into [Form 8-K](/learn/sec-filings/form-8-k/) because 8-K filings are one of the most common current-event filings traders encounter.
+This lesson is part of the **News, Catalysts And SEC Filings** learning path. It builds on [Stock Catalysts](/learn/stock-catalysts/), [Stock Press Releases](/learn/press-releases/), and [How To Read Stock Press Releases](/learn/how-to-read-stock-press-releases/). It leads into [Form 8-K](/learn/sec-filings/form-8-k/) because 8-K filings are one of the most common current-event filings traders encounter.
 
 For small-cap traders, filings can be especially important. A press release may sound exciting, but a filing can provide deeper context about financing, share structure, risk, and company obligations.
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain what SEC filings are.
+- Understand why traders review filings around catalysts and unusual volume.
+- Recognize major filing categories and what questions each category raises.
+- Use filings as context without treating them as automatic trade signals.
+- Connect filing details to price, volume, liquidity, risk, and trade review.
 
 ## What You Should Understand Before Reading This
 
@@ -231,7 +244,7 @@ Common SEC filing mistakes include:
 
 Filings can feel dense, but repeated review makes the common patterns easier to recognize.
 
-## Practical SEC Filing Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing filing-driven trades:
 
@@ -249,9 +262,9 @@ Use this checklist when reviewing filing-driven trades:
 
 This checklist turns filing review into a repeatable process.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
-If a filing influenced your trade, journal the filing context.
+If a filing influenced your trade, record the filing context in your review notes.
 
 Helpful prompts:
 
@@ -264,7 +277,7 @@ Helpful prompts:
 - Did I enter before understanding the filing?
 - Is ignoring filings a repeated mistake in my trades?
 
-A journal can show whether filing research is part of your process or an afterthought.
+Structured review notes can show whether filing research is part of your process or an afterthought.
 
 ## Trader Intelligence Bridge
 
@@ -325,7 +338,7 @@ Filings may disclose offerings, shelf registrations, resale shares, warrants, co
 
 No. A press release is a company announcement. An SEC filing is a formal regulatory document. Traders often review both when a catalyst involves financing, securities, material agreements, earnings, or major corporate events.
 
-### Should I review SEC filings in my trading journal?
+### Should I review SEC filings in my review notes?
 
 Yes, if a filing influenced your trade. Reviewing the filing context can help you understand whether you reacted to the headline or understood the details.
 

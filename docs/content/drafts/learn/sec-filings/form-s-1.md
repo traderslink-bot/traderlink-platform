@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form S-1: Registration Statements And Resale Context"
 slug: "/learn/sec-filings/form-s-1/"
 primary_keyword: "Form S-1"
@@ -11,11 +11,11 @@ search_intent: "Learn what a Form S-1 is, why companies file it, and how traders
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review filing-driven trades, catalyst context, execution quality, and repeated research gaps."
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "Registration Statements"
 academy_order: 10
@@ -189,7 +189,7 @@ Common S-1 mistakes include:
 
 An S-1 should create review questions, not automatic conclusions.
 
-## Practical Form S-1 Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing an S-1:
 

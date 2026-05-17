@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form 8-K: How Traders Review Current Event Filings"
 slug: "/learn/sec-filings/form-8-k/"
 primary_keyword: "Form 8-K"
@@ -11,11 +11,11 @@ search_intent: "Learn what a Form 8-K is, why companies file it, and how traders
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review filing-driven trades, catalyst context, execution quality, and repeated research gaps."
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "SEC Filing Foundation"
 academy_order: 5
@@ -187,7 +187,7 @@ Common Form 8-K mistakes include:
 
 The 8-K should slow the review down, not create urgency by itself.
 
-## Practical Form 8-K Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing an 8-K:
 

@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form 10-Q"
 slug: "/learn/sec-filings/form-10-q/"
 primary_keyword: "Form 10-Q"
@@ -7,7 +7,7 @@ search_intent: "Understand what Form 10-Q is, why companies file it, and what tr
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Foundation"
 academy_order: 7
 academy_module: "Company Reports"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-10-k/", "/learn/sec-filings/form-8-k/", "/learn/how-to-spot-dilution-risk/", "/learn/cash-on-hand/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -124,9 +124,9 @@ Review areas such as:
 
 The filing does not guarantee dilution, but it can help traders understand whether capital needs are building.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help connect the filing to your trades.
+Structured review notes can help connect the filing to your trades.
 
 Useful review notes include:
 

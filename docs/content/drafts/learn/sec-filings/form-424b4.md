@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form 424B4"
 slug: "/learn/sec-filings/form-424b4/"
 primary_keyword: "Form 424B4"
@@ -7,7 +7,7 @@ search_intent: "Understand what Form 424B4 is, why companies file final prospect
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 18
 academy_module: "Prospectus Supplements"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-s-1/", "/learn/sec-filings/form-f-1/", "/learn/public-offering/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -122,9 +122,9 @@ Traders may want to check:
 
 The filing does not guarantee a specific reaction, but it can clarify how the offering changes the company's capital structure.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help connect Form 424B4 details to actual decisions.
+Structured review notes can help connect Form 424B4 details to actual decisions.
 
 Useful review notes include:
 

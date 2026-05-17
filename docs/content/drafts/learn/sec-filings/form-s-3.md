@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form S-3: Shelf Registrations And Future Offering Context"
 slug: "/learn/sec-filings/form-s-3/"
 primary_keyword: "Form S-3"
@@ -11,11 +11,11 @@ search_intent: "Learn what a Form S-3 is, how shelf registrations work, and why 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review filing-driven trades, catalyst context, execution quality, and repeated research gaps."
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "Registration Statements"
 academy_order: 11
@@ -178,7 +178,7 @@ Common S-3 mistakes include:
 
 The S-3 should become context, not panic.
 
-## Practical Form S-3 Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing an S-3:
 

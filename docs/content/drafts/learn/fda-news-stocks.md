@@ -1,4 +1,4 @@
-﻿---
+---
 title: "FDA News Stocks: How Traders Review Regulatory Catalysts"
 slug: "/learn/fda-news-stocks/"
 primary_keyword: "FDA news stocks"
@@ -11,11 +11,11 @@ search_intent: "Understand what FDA news stocks are, why traders watch FDA-relat
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review FDA-news trades, catalyst quality, execution, and repeated decision patterns."
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
 academy_order: 31
@@ -170,7 +170,7 @@ Common FDA-news mistakes include:
 
 FDA news should create review questions, not automatic conclusions.
 
-## Practical FDA News Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing FDA-news trades:
 

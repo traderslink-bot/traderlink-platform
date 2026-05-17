@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form S-4"
 slug: "/learn/sec-filings/form-s-4/"
 primary_keyword: "Form S-4"
@@ -7,7 +7,7 @@ search_intent: "Understand what Form S-4 is, why companies file it, and what tra
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 14
 academy_module: "Transaction Registration"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/merger-news-stocks/", "/learn/sec-filings/form-8-k/", "/learn/resale-registration-statement/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -123,9 +123,9 @@ Traders may want to check:
 
 The filing does not guarantee dilution-related selling, but it can show how ownership and share count may change.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help you connect Form S-4 details to trade decisions.
+Structured review notes can help you connect Form S-4 details to trade decisions.
 
 Useful review notes include:
 

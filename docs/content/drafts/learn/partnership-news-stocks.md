@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Partnership News Stocks: How Traders Review Collaboration Headlines"
 slug: "/learn/partnership-news-stocks/"
 primary_keyword: "partnership news stocks"
@@ -11,11 +11,11 @@ search_intent: "Understand what partnership news stocks are, why traders watch p
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review partnership-news trades, catalyst quality, execution, and repeated decision patterns."
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
 academy_order: 34
@@ -169,7 +169,7 @@ Common partnership-news mistakes include:
 
 Partnership news should be reviewed for substance, not just brand names.
 
-## Practical Partnership News Checklist
+## Practical Checklist
 
 Use this checklist when reviewing partnership-news trades:
 

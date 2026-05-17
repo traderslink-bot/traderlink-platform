@@ -1,4 +1,4 @@
-﻿---
+---
 title: "NT 10-K"
 slug: "/learn/sec-filings/nt-10-k/"
 primary_keyword: "NT 10-K"
@@ -7,7 +7,7 @@ search_intent: "Understand what NT 10-K means, why companies file late annual re
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 27
 academy_module: "Late Filing Notices"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-10-k/", "/learn/sec-filings/nt-10-q/", "/learn/sec-filings/form-8-k/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -115,9 +115,9 @@ Traders may want to check:
 
 The filing does not guarantee dilution, but it can increase uncertainty until the annual report is filed.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help connect NT 10-K details to trading decisions.
+Structured review notes can help connect NT 10-K details to trading decisions.
 
 Useful review notes include:
 

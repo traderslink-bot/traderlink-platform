@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Contract News Stocks: How Traders Review Customer Announcements"
 slug: "/learn/contract-news-stocks/"
 primary_keyword: "contract news stocks"
@@ -11,11 +11,11 @@ search_intent: "Understand what contract news stocks are, why traders watch cont
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review contract-news trades, catalyst quality, execution, and repeated decision patterns."
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
 academy_order: 33
@@ -166,7 +166,7 @@ Common contract-news mistakes include:
 
 Contract news should be reviewed for substance, not just excitement.
 
-## Practical Contract News Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing contract-news trades:
 

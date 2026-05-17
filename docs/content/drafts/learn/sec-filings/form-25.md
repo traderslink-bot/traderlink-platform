@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form 25 Delisting"
 slug: "/learn/sec-filings/form-25/"
 primary_keyword: "Form 25 delisting"
@@ -7,7 +7,7 @@ search_intent: "Understand what Form 25 delisting means, why companies file it, 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 29
 academy_module: "Exchange And Listing Events"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/reverse-split/", "/learn/small-cap-risk/", "/learn/how-to-spot-dilution-risk/", "/learn/news-driven-stocks/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -119,9 +119,9 @@ Traders may want to check:
 
 Delisting can affect trade execution, spreads, and access more than share count itself.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help connect Form 25 details to trade decisions.
+Structured review notes can help connect Form 25 details to trade decisions.
 
 Useful review notes include:
 

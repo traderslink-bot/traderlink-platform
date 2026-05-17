@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form 424B5: Offering Terms And Prospectus Supplements"
 slug: "/learn/sec-filings/form-424b5/"
 primary_keyword: "Form 424B5"
@@ -11,11 +11,11 @@ search_intent: "Learn what a Form 424B5 is, why companies file it, and how trade
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review filing-driven trades, catalyst context, execution quality, and repeated research gaps."
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "Prospectus Supplements"
 academy_order: 16
@@ -179,7 +179,7 @@ Common 424B5 mistakes include:
 
 The terms matter more than the label.
 
-## Practical Form 424B5 Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing a 424B5:
 

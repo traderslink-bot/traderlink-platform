@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Schedule 13D"
 slug: "/learn/sec-filings/schedule-13d/"
 primary_keyword: "Schedule 13D"
@@ -7,7 +7,7 @@ search_intent: "Understand what Schedule 13D is, why investors file it, and what
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 23
 academy_module: "Beneficial Ownership"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/sec-filings/schedule-13g/", "/learn/share-structure/", "/learn/stock-float/", "/learn/news-driven-stocks/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -121,9 +121,9 @@ Traders may want to check:
 
 The filing does not guarantee supply or demand, but it can provide useful ownership context.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help connect Schedule 13D details to actual trades.
+Structured review notes can help connect Schedule 13D details to actual trades.
 
 Useful review notes include:
 

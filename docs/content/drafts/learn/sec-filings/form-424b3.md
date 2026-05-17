@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form 424B3"
 slug: "/learn/sec-filings/form-424b3/"
 primary_keyword: "Form 424B3"
@@ -7,7 +7,7 @@ search_intent: "Understand what Form 424B3 is, why companies file it, and what t
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 17
 academy_module: "Prospectus Supplements"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-s-1/", "/learn/sec-filings/form-s-3/", "/learn/resale-registration-statement/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -122,9 +122,9 @@ Traders may want to check:
 
 The filing does not guarantee selling pressure, but it can show a risk that traders should understand.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help connect Form 424B3 details to trade decisions.
+Structured review notes can help connect Form 424B3 details to trade decisions.
 
 Useful review notes include:
 

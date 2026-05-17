@@ -11,12 +11,15 @@ search_intent: "Understand what stock press releases are, why traders watch them
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review press-release trades, catalyst context, execution quality, and repeated headline-chasing patterns."
-learning_track: "News Catalysts Filings And Dilution"
-learning_stage: "Foundation"
+learning_track: "News, Catalysts And SEC Filings"
+academy_course: "News, Catalysts And SEC Filings"
+academy_module: "Press Releases"
+academy_order: 2
+academy_level: "Foundation"
 recommended_previous: "/learn/stock-catalysts/"
 recommended_next: "/learn/how-to-read-stock-press-releases/"
 visual_assets:
@@ -46,9 +49,19 @@ meta_description: "Learn what stock press releases are, why traders watch compan
 
 Stock press releases are official company announcements shared with investors, media, data providers, and the market. Traders watch them because a press release can introduce a catalyst, explain unusual volume, or create sudden attention around a stock.
 
-This lesson is part of the **News Catalysts Filings And Dilution** learning path. It builds on [Stock Catalysts](/learn/stock-catalysts/) and leads into [How To Read Stock Press Releases](/learn/how-to-read-stock-press-releases/).
+This lesson is part of the **News, Catalysts And SEC Filings** learning path. It builds on [Stock Catalysts](/learn/stock-catalysts/) and leads into [How To Read Stock Press Releases](/learn/how-to-read-stock-press-releases/).
 
 A stock press release does not guarantee a clean move. Some news creates volume and follow-through. Some news fades quickly. Some headlines sound exciting but have weak details. The headline is only the start.
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain what a stock press release is.
+- Understand why traders watch company announcements.
+- Separate company communication from independent confirmation.
+- Review headline claims against release details and related filings.
+- Avoid treating a press release as a trade instruction.
 
 ## What You Should Understand Before Reading This
 
@@ -195,7 +208,7 @@ Common press-release mistakes include:
 
 The release should start the review. It should not end it.
 
-## Practical Press Release Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing press-release trades:
 
@@ -214,11 +227,11 @@ Use this checklist when reviewing press-release trades:
 
 This checklist helps turn news into reviewable context.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
-Press-release trades are useful to journal because they show whether a trader reads details or reacts to excitement.
+Press-release trades are useful to review because they show whether a trader reads details or reacts to excitement.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - Did I read the full release before entering?
 - What detail made the release meaningful or weak?
@@ -293,7 +306,7 @@ Yes. Many press-release moves fade, especially if the headline is weak, the stoc
 
 ### Should traders journal press-release trades?
 
-Yes. Journaling can help traders review whether they read the release, checked filings, planned the trade, and managed execution risk.
+Yes. Structured review can help traders see whether they read the release, checked filings, planned the trade, and managed execution risk.
 
 ## Educational Disclaimer
 

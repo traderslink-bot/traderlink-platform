@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form 5"
 slug: "/learn/sec-filings/form-5/"
 primary_keyword: "Form 5"
@@ -7,7 +7,7 @@ search_intent: "Understand what Form 5 is, why insiders file it, and what trader
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 22
 academy_module: "Insider Ownership"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-3/", "/learn/sec-filings/form-4/", "/learn/share-structure/", "/learn/stock-float/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -120,9 +120,9 @@ Traders may want to check:
 
 The filing can add ownership context, but it does not automatically indicate supply pressure or dilution.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help connect Form 5 details to trade decisions.
+Structured review notes can help connect Form 5 details to trade decisions.
 
 Useful review notes include:
 

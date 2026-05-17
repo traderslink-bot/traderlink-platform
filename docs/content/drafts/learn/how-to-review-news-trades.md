@@ -1,4 +1,4 @@
-﻿---
+---
 title: "How To Review News Trades: Catalyst, Reaction, Risk, And Execution"
 slug: "/learn/how-to-review-news-trades/"
 primary_keyword: "how to review news trades"
@@ -11,11 +11,11 @@ search_intent: "Learn how to review news-driven stock trades with structure, inc
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review news trades, catalyst quality, execution, trade management, and repeated behavior patterns."
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Review"
 academy_order: 36
@@ -205,7 +205,7 @@ Common news-trade review mistakes include:
 
 Review should judge decision quality, not just outcome.
 
-## Practical News Trade Review Checklist
+## Practical Checklist
 
 Use this checklist after news trades:
 

@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Merger News Stocks: How Traders Review M&A Catalysts"
 slug: "/learn/merger-news-stocks/"
 primary_keyword: "merger news stocks"
@@ -11,11 +11,11 @@ search_intent: "Understand what merger news stocks are, why traders watch merger
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review merger-news trades, catalyst quality, execution, and repeated decision patterns."
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
 academy_order: 35
@@ -175,7 +175,7 @@ Common merger-news mistakes include:
 
 Merger news needs terms, not just excitement.
 
-## Practical Merger News Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing merger-news trades:
 

@@ -1,4 +1,4 @@
-﻿---
+---
 title: "DEF 14A Proxy Statement"
 slug: "/learn/sec-filings/form-def-14a/"
 primary_keyword: "DEF 14A proxy statement"
@@ -7,7 +7,7 @@ search_intent: "Understand what a DEF 14A proxy statement is, why companies file
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 25
 academy_module: "Proxy Statements"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-pre-14a/", "/learn/reverse-split/", "/learn/merger-news-stocks/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -122,9 +122,9 @@ Traders may want to check whether proposals include:
 
 The filing does not guarantee dilution, but it can show that management is seeking permission for actions that may affect shareholders.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help connect proxy details to trading decisions.
+Structured review notes can help connect proxy details to trading decisions.
 
 Useful review notes include:
 

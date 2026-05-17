@@ -11,12 +11,15 @@ search_intent: "Understand what stock catalysts are, why traders watch them, and
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review catalyst-driven trades, execution quality, news context, and repeated decision patterns."
-learning_track: "News Catalysts Filings And Dilution"
-learning_stage: "Foundation"
+learning_track: "News, Catalysts And SEC Filings"
+academy_course: "News, Catalysts And SEC Filings"
+academy_module: "Catalyst Foundation"
+academy_order: 1
+academy_level: "Foundation"
 recommended_previous: "/learn/unusual-volume/"
 recommended_next: "/learn/press-releases/"
 visual_assets:
@@ -48,9 +51,19 @@ meta_description: "Learn what stock catalysts are, common catalyst types, qualit
 
 Stock catalysts are events, news, filings, or market developments that can draw attention to a stock. A catalyst can help explain why volume increases, why a stock gaps up or down, or why a quiet ticker suddenly becomes active.
 
-This lesson starts the **News Catalysts Filings And Dilution** learning path. It follows [Unusual Volume](/learn/unusual-volume/) because abnormal activity often raises the same question: what caused this?
+This lesson starts the **News, Catalysts And SEC Filings** learning path. It follows [Unusual Volume](/learn/unusual-volume/) because abnormal activity often raises the same question: what caused this?
 
 A stock catalyst does not guarantee price movement. Some catalysts create strong attention. Some create one quick spike and fade. Some sound exciting but do not contain enough detail to support the reaction. Your job is to review the catalyst, the market reaction, and the trade conditions without turning the headline into a prediction.
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain what a stock catalyst is.
+- Identify common catalyst categories.
+- Separate a headline from the details behind it.
+- Review catalyst quality beside price, volume, liquidity, and risk.
+- Avoid treating news as a guaranteed price mover.
 
 ## What You Should Understand Before Reading This
 
@@ -220,7 +233,7 @@ Common catalyst mistakes include:
 
 Good catalyst review is slower than scanner emotion. That is the point.
 
-## Practical Catalyst Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing catalyst-driven trades:
 
@@ -238,11 +251,11 @@ Use this checklist when reviewing catalyst-driven trades:
 
 The checklist helps turn catalyst excitement into a repeatable review process.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
-Catalyst trades are worth journaling carefully because they can reveal whether you trade details or emotions.
+Catalyst trades are worth reviewing carefully because they can reveal whether you trade details or emotions.
 
-Helpful journal prompts:
+Helpful review prompts:
 
 - What exact headline or filing caused the attention?
 - Did I read the full announcement before entering?

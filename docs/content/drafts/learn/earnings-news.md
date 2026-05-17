@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Earnings News: How Traders Review Financial Results"
 slug: "/learn/earnings-news/"
 primary_keyword: "earnings news stocks"
@@ -11,11 +11,11 @@ search_intent: "Understand what earnings news stocks are, why traders watch earn
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review earnings-driven trades, catalyst context, execution quality, and repeated decision patterns."
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
 academy_order: 30
@@ -169,7 +169,7 @@ Common earnings-news mistakes include:
 
 Earnings need a full-context review.
 
-## Practical Earnings Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing earnings trades:
 

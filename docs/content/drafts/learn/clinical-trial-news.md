@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Clinical Trial News: How Traders Review Biotech Data"
 slug: "/learn/clinical-trial-news/"
 primary_keyword: "clinical trial news"
@@ -11,11 +11,11 @@ search_intent: "Understand what clinical trial news means for stocks, why biotec
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review clinical-trial news trades, catalyst quality, execution, and repeated decision patterns."
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 academy_course: "News, Catalysts And SEC Filings"
 academy_module: "News Categories"
 academy_order: 32
@@ -169,7 +169,7 @@ Common clinical-trial news mistakes include:
 
 Clinical trial news requires patience because small details can change the meaning.
 
-## Practical Clinical Trial News Checklist
+## Practical Checklist
 
 Use this checklist when reviewing trial-news trades:
 

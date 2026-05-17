@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form F-3"
 slug: "/learn/sec-filings/form-f-3/"
 primary_keyword: "Form F-3"
@@ -7,7 +7,7 @@ search_intent: "Understand what Form F-3 is, why foreign private issuers file it
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 13
 academy_module: "Registration Statements"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-f-1/", "/learn/sec-filings/form-s-3/", "/learn/shelf-registration/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -120,9 +120,9 @@ Traders may want to check:
 
 The filing does not guarantee dilution, but it can increase the importance of monitoring future filings.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help you study how Form F-3 filings affect your decisions.
+Structured review notes can help you study how Form F-3 filings affect your decisions.
 
 Useful review notes include:
 

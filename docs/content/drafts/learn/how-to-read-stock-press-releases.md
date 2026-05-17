@@ -11,12 +11,15 @@ search_intent: "Learn how traders can read stock press releases more carefully, 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review press-release trades, catalyst context, execution quality, and repeated headline-driven decision patterns."
-learning_track: "News Catalysts Filings And Dilution"
-learning_stage: "Practical"
+learning_track: "News, Catalysts And SEC Filings"
+academy_course: "News, Catalysts And SEC Filings"
+academy_module: "Press Releases"
+academy_order: 3
+academy_level: "Practical"
 recommended_previous: "/learn/press-releases/"
 recommended_next: "/learn/sec-filings/"
 visual_assets:
@@ -47,9 +50,19 @@ meta_description: "Learn a practical workflow for reading stock press releases, 
 
 Learning how to read stock press releases helps traders slow down between the headline and the trade. A press release can explain why a stock is moving, but the useful information is usually in the details, not just the first sentence.
 
-This lesson is part of the **News Catalysts Filings And Dilution** learning path. It builds on [Stock Catalysts](/learn/stock-catalysts/) and [Stock Press Releases](/learn/press-releases/), then leads into [SEC Filings](/learn/sec-filings/) because filings often provide the deeper context.
+This lesson is part of the **News, Catalysts And SEC Filings** learning path. It builds on [Stock Catalysts](/learn/stock-catalysts/) and [Stock Press Releases](/learn/press-releases/), then leads into [SEC Filings](/learn/sec-filings/) because filings often provide the deeper context.
 
 A strong headline does not guarantee a strong trade. A weak-looking headline can still matter if the details are real. The goal is not to predict every move. The goal is to understand what the company actually announced before reacting to the chart.
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Read beyond the headline of a company press release.
+- Identify specific details, vague claims, dates, terms, and uncertainty language.
+- Check whether a related filing changes the context.
+- Compare the announcement with price, volume, liquidity, and spread.
+- Review whether your decision came from the details or from urgency.
 
 ## What You Should Understand Before Reading This
 
@@ -224,7 +237,7 @@ Common press-release reading mistakes include:
 
 The workflow exists to reduce those errors.
 
-## Practical Press Release Reading Checklist
+## Practical Checklist
 
 Use this checklist before reviewing a press-release trade:
 
@@ -243,9 +256,9 @@ Use this checklist before reviewing a press-release trade:
 
 This checklist turns a headline into a review process.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
-When journaling press-release trades, record the reading process, not only the outcome.
+When reviewing press-release trades, record the reading process, not only the outcome.
 
 Helpful prompts:
 

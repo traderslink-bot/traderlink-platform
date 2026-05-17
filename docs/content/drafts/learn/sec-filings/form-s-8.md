@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Form S-8"
 slug: "/learn/sec-filings/form-s-8/"
 primary_keyword: "Form S-8"
@@ -7,7 +7,7 @@ search_intent: "Understand what Form S-8 is, why companies file employee stock p
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 15
 academy_module: "Transaction Registration"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/share-structure/", "/learn/how-to-spot-dilution-risk/", "/learn/stock-offerings/", "/learn/sec-filings/form-10-k/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -118,9 +118,9 @@ Traders may want to check:
 
 The filing does not guarantee immediate dilution pressure, but it can affect the long-term share structure.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help connect Form S-8 details to trading decisions.
+Structured review notes can help connect Form S-8 details to trading decisions.
 
 Useful review notes include:
 

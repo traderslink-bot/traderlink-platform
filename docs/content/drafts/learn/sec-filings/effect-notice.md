@@ -1,4 +1,4 @@
-﻿---
+---
 title: "EFFECT Notice"
 slug: "/learn/sec-filings/effect-notice/"
 primary_keyword: "EFFECT notice"
@@ -7,7 +7,7 @@ search_intent: "Understand what an EFFECT notice is, why the SEC posts notices o
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
@@ -17,7 +17,7 @@ academy_level: "Practical"
 academy_order: 19
 academy_module: "Registration Effectiveness"
 academy_course: "News, Catalysts And SEC Filings"
-learning_track: "News Catalysts Filings And Dilution"
+learning_track: "News, Catalysts And SEC Filings"
 internal_links: ["/learn/sec-filings/", "/learn/sec-filings/form-s-1/", "/learn/sec-filings/form-s-3/", "/learn/resale-registration-statement/", "/learn/how-to-spot-dilution-risk/", "/trader-intelligence/"]
 schema:
   - "FAQPage"
@@ -118,9 +118,9 @@ Traders may want to check:
 
 The notice does not guarantee dilution pressure, but it can mark an important point in the registration timeline.
 
-## How To Review Trades Around This Filing
+## Practical Checklist
 
-A trading journal can help connect EFFECT notice details to trading decisions.
+Structured review notes can help connect EFFECT notice details to trading decisions.
 
 Useful review notes include:
 
