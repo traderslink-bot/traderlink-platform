@@ -197,7 +197,7 @@ Use this as the primary course order on the Academy homepage:
 | 6 | News, Catalysts And SEC Filings | content_upgraded | High-value TradersLink differentiator. Core course markdown lesson path is now complete through news-trade review. |
 | 7 | Small-Cap Stocks, Float And Dilution | content_upgraded | Completed markdown course path covering small-cap context, float, share structure, dilution, offerings, securities, corporate actions, cash runway, and going concern. |
 | 8 | Risk Management And Trade Planning | content_upgraded | Completed markdown course path covering plans, rules, sizing, stops, loss limits, trade management, profit protection, overnight risk, and holding through news. |
-| 9 | Trading Psychology And Discipline | planned | Best taught after users understand what they are trying to execute. |
+| 9 | Trading Psychology And Discipline | content_upgraded | Completed markdown course path covering discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. |
 | 10 | Trade Review And Improvement | planned | Final product bridge into reviewing behavior, mistakes, execution, and Trader Intelligence. |
 
 Status definitions:
@@ -632,18 +632,28 @@ Teach the behavior patterns that damage trader consistency: chasing, FOMO, reven
 
 The user should understand common behavioral traps and how to review them without shame or vague motivation.
 
-### Suggested Modules And Lessons
+### Completed Course Lesson Sequence
 
 | Order | Module | Lesson | URL | Current Asset | Status | Notes |
 |---:|---|---|---|---|---|---|
-| 1 | Discipline Foundation | Trading Discipline | `/learn/trading-discipline/` | draft | needs_upgrade | Course foundation. |
-| 2 | Impulse Patterns | FOMO Trading | `/learn/fomo-trading/` | draft | needs_upgrade | Strong product bridge. |
-| 3 | Impulse Patterns | Chasing Stocks | `/learn/chasing-stocks/` | draft | needs_upgrade | Should tie to volume/news/chart context. |
-| 4 | Impulse Patterns | Revenge Trading | `/learn/revenge-trading/` | draft | needs_upgrade | Needs practical intervention framing. |
-| 5 | Impulse Patterns | Overtrading | `/learn/overtrading/` | draft | needs_upgrade | Session behavior lesson. |
-| 6 | Trade Management Errors | Holding Losers Too Long | `/learn/holding-losers-too-long/` | draft | needs_upgrade | Review-focused, not shaming. |
-| 7 | Trade Management Errors | Cutting Winners Too Early | `/learn/cutting-winners-too-early/` | draft | needs_upgrade | Avoid profit guarantee. |
-| 8 | Position Behavior | Averaging Down | `/learn/averaging-down/` | draft | needs_upgrade | Risk/process lesson. |
+| 1 | Discipline Foundation | Trading Discipline | `/learn/trading-discipline/` | content_upgraded | complete | Course opener covering rule adherence, pressure points, vague versus reviewable rules, and discipline review. |
+| 2 | Impulse Patterns | FOMO Trading | `/learn/fomo-trading/` | content_upgraded | complete | Fear-of-missing-out triggers, late entries, scanner/social pressure, and structured review. |
+| 3 | Impulse Patterns | Chasing Stocks | `/learn/chasing-stocks/` | content_upgraded | complete | Late-entry risk, extension, spread/slippage, nearby levels, and chase-behavior review. |
+| 4 | Impulse Patterns | Revenge Trading | `/learn/revenge-trading/` | content_upgraded | complete | Emotional follow-up trades after losses, re-entry behavior, size increases, and interruption rules. |
+| 5 | Impulse Patterns | Overtrading | `/learn/overtrading/` | content_upgraded | complete | Trade quality, session triggers, boredom/frustration, repeated re-entries, and stop-trading review. |
+| 6 | Trade Management Errors | Holding Losers Too Long | `/learn/holding-losers-too-long/` | content_upgraded | complete | Planned versus unplanned losses, invalidation, stop movement, averaging down, and exit-delay review. |
+| 7 | Trade Management Errors | Cutting Winners Too Early | `/learn/cutting-winners-too-early/` | content_upgraded | complete | Planned profit protection versus fear-based exits, target review, scaling, and early-exit patterns. |
+| 8 | Position Behavior | Averaging Down | `/learn/averaging-down/` | content_upgraded | complete | Planned scaling versus emotional adding, risk expansion, invalidation, and average-down review. |
+
+### Course Status
+
+The Trading Psychology And Discipline course markdown path is **content_upgraded** across all 8 planned lessons.
+
+Before production UI implementation, this course still needs:
+
+- Visual asset review to decide whether behavior-loop, session-sequence, or trade-management diagrams would improve learning.
+- Optional course intro/landing copy for the Academy course page.
+- Progress/lesson completion wiring in the website build phase.
 
 ## Course 10: Trade Review And Improvement
 
@@ -812,34 +822,34 @@ Current known Academy-ready lesson groups:
 | Trading Styles And Playbooks | 0 | Existing drafts plus several gap lessons. |
 | Small-Cap Stocks, Float And Dilution | 28 | Full course markdown path is now content-upgraded across small-cap context, float, dilution, offerings, securities, corporate actions, cash runway, and going concern. Needs visual review before UI-ready. |
 | Risk Management And Trade Planning | 13 | Full course markdown path is now content-upgraded across planning, rules, risk basics, account protection, trade management, and event risk. Needs visual review before UI-ready. |
-| Trading Psychology And Discipline | 0 | Many drafts exist; strong retention/product bridge. |
+| Trading Psychology And Discipline | 8 | Full course markdown path is now content-upgraded across discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. Needs visual review before UI-ready. |
 | Trade Review And Improvement | 0 | Needs new course opener and product-aligned review lessons. |
 
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-114
+122
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 114 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 114 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 122 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 122 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 114 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 122 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/trading-discipline/
+/learn/trade-risk-review/
 ```
 
 Reason:
 
-The Academy just completed the Risk Management And Trade Planning course markdown path. Trading Psychology And Discipline is the natural next course because users now need behavior-pattern lessons that connect risk rules to execution discipline.
+The Academy just completed the Trading Psychology And Discipline course markdown path. Trade Review And Improvement is the natural next course because users now need a structured way to review risk, behavior, execution, and repeated patterns after trades.
 
 ## Recommended Work Method From Here
 
