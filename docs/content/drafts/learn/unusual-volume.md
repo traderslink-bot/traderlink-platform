@@ -11,12 +11,15 @@ search_intent: "Understand what unusual volume stocks are, why traders watch the
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review unusual-volume trades, catalyst context, execution quality, and repeated scanner-driven decision patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Practical"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Practical"
+academy_order: 14
+academy_module: "Scanner Context"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/volume-by-price/"
 recommended_next: "/learn/stock-catalysts/"
 visual_assets:
@@ -48,6 +51,16 @@ meta_description: "Learn what unusual volume stocks are, why abnormal activity m
 Unusual volume stocks are stocks trading far more activity than they normally do. Traders watch them because abnormal volume can show that attention has changed. The cause might be news, filings, a scanner alert, sector momentum, forced selling, short covering, or a fast intraday reaction.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Volume](/learn/volume/), [Relative Volume](/learn/relative-volume/), [Relative Volume RVOL](/learn/relative-volume-rvol/), [Volume Spike](/learn/volume-spike/), and [Volume By Price](/learn/volume-by-price/). It leads into [Stock Catalysts](/learn/stock-catalysts/) because unusual volume often starts with the question: what caused this activity?
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain unusual volume in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 Unusual volume is not a buy signal or a sell signal. It is a clue that the stock is no longer trading in its normal rhythm. Your job is to review the cause, the reaction, and the trade conditions before treating the activity as useful context.
 
@@ -219,7 +232,7 @@ Common unusual-volume mistakes include:
 
 Unusual volume should create curiosity, not urgency.
 
-## Practical Unusual Volume Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing unusual-volume trades:
 
@@ -238,7 +251,7 @@ Use this checklist when reviewing unusual-volume trades:
 
 This turns an exciting scanner result into a calmer review process.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
 Unusual-volume trades are especially useful to journal because they often expose emotional decision patterns.
 

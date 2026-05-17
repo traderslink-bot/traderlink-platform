@@ -12,12 +12,15 @@ search_intent: "Learn the difference between market orders and limit orders, why
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review order type, execution quality, slippage, liquidity, and repeated decision patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Practical"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Practical"
+academy_order: 10
+academy_module: "Quotes And Execution"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/slippage/"
 recommended_next: "/learn/level-2/"
 visual_assets:
@@ -46,6 +49,16 @@ meta_description: "Learn the difference between market orders and limit orders, 
 Market orders and limit orders are two common order types traders use to enter and exit positions. The order type can affect fill price, speed, slippage, missed fills, and real risk.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Slippage](/learn/slippage/), [Bid And Ask](/learn/bid-and-ask/), [Spread](/learn/spread/), and [Liquidity](/learn/liquidity/), then leads into [Level 2](/learn/level-2/) and [Time And Sales](/learn/time-and-sales/).
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain market orders and limit orders in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 A good chart idea can still become a poor trade if the order is executed badly. Order type is part of trade review, not an afterthought.
 
@@ -181,7 +194,7 @@ Common order-type mistakes include:
 
 Order type should be reviewed as part of execution, not treated as a small operational detail.
 
-## Practical Order Type Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing order type:
 
@@ -198,7 +211,7 @@ Use this checklist when reviewing order type:
 
 This review helps connect execution behavior to the trade result.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
 Order review helps traders find execution habits that may not show up from P&L alone.
 

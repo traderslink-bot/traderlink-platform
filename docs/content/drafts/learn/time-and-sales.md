@@ -12,12 +12,15 @@ search_intent: "Learn what time and sales means, why traders watch actual prints
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review tape context, execution quality, liquidity, and repeated decision patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Practical"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Practical"
+academy_order: 12
+academy_module: "Order Flow Tools"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/level-2/"
 recommended_next: "/learn/volume-by-price/"
 visual_assets:
@@ -46,6 +49,16 @@ meta_description: "Learn what time and sales means, how traders read actual prin
 Time and sales shows the actual trades that have printed in a stock. Traders often call it the tape. While [Level 2](/learn/level-2/) shows visible bids and asks, time and sales shows what actually traded.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on Level 2, [Bid And Ask](/learn/bid-and-ask/), [Volume](/learn/volume/), and [Liquidity](/learn/liquidity/). It leads into [Volume By Price](/learn/volume-by-price/), where traders review where volume traded on the chart.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain time and sales in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 Quotes can appear and disappear, but prints show completed transactions. That difference matters for execution review.
 
@@ -171,7 +184,7 @@ Common time and sales mistakes include:
 
 Time and sales is useful when it supports better execution awareness, not when it creates panic.
 
-## Practical Time And Sales Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing tape context:
 
@@ -187,7 +200,7 @@ Use this checklist when reviewing tape context:
 
 The checklist helps turn fast tape into structured review.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
 Tape review can help traders understand whether entries and exits matched actual order flow.
 

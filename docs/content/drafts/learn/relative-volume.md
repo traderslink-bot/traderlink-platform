@@ -12,12 +12,15 @@ search_intent: "Learn what relative volume means, why traders compare current ac
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review relative volume, catalyst context, execution quality, and repeated decision patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Practical"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Practical"
+academy_order: 2
+academy_module: "Volume Foundation"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/volume/"
 recommended_next: "/learn/relative-volume-rvol/"
 visual_assets:
@@ -48,6 +51,16 @@ meta_description: "Learn what relative volume means, why unusual volume matters,
 Relative volume compares a stock's current volume to its normal volume. Traders use it to see whether a stock is trading with unusual activity.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Stock Volume](/learn/volume/) and leads into the more metric-specific [Relative Volume RVOL](/learn/relative-volume-rvol/) lesson.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain relative volume in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 Relative volume is useful because raw volume can be misleading. One million shares can be huge for a quiet small-cap stock and normal for a heavily traded large-cap stock. Relative volume adds the missing comparison.
 
@@ -186,7 +199,7 @@ Common relative volume mistakes include:
 
 Relative volume is a context filter. It should help improve review, not create urgency by itself.
 
-## Practical Relative Volume Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing high-relative-volume trades:
 
@@ -202,7 +215,7 @@ Use this checklist when reviewing high-relative-volume trades:
 
 The point is to make the review more specific than "it had high volume."
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
 After trading a high-relative-volume stock, record the context that made the activity unusual.
 

@@ -12,12 +12,15 @@ search_intent: "Learn what the bid ask spread is, why wide spreads affect execut
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review spread, execution quality, slippage, order type, and repeated decision patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Practical"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Practical"
+academy_order: 7
+academy_module: "Liquidity Foundation"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/dollar-volume/"
 recommended_next: "/learn/bid-and-ask/"
 visual_assets:
@@ -46,6 +49,16 @@ meta_description: "Learn what the bid ask spread is, why wide spreads affect exe
 The bid ask spread is the difference between the highest price buyers are bidding and the lowest price sellers are asking. Traders watch the spread because it affects entry price, exit price, slippage, position size, and the real cost of trading a stock.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Dollar Volume](/learn/dollar-volume/) and [Liquidity](/learn/liquidity/), then leads into [Bid And Ask](/learn/bid-and-ask/) and [Slippage](/learn/slippage/).
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain spread in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 A chart may look clean, but a wide spread can make the trade much harder to execute well. Spread is not a small detail. It can change the trade before price moves at all.
 
@@ -185,7 +198,7 @@ Common spread mistakes include:
 
 Spread mistakes are execution mistakes. They may not show up if the trader only reviews the candle chart.
 
-## Practical Spread Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing spread:
 
@@ -202,7 +215,7 @@ Use this checklist when reviewing spread:
 
 This checklist helps connect the setup to the actual execution.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
 Spread review belongs in the journal whenever execution was worse than expected.
 

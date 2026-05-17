@@ -12,12 +12,15 @@ search_intent: "Understand what volume by price means, how traders review activi
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review volume-by-price context, levels, execution, mistakes, and repeated decision patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Practical"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Practical"
+academy_order: 13
+academy_module: "Volume At Price"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/time-and-sales/"
 recommended_next: "/learn/unusual-volume/"
 visual_assets:
@@ -46,6 +49,16 @@ meta_description: "Learn what volume by price means, why traders watch high-volu
 Volume by price shows how much trading activity happened at different price levels. Instead of only asking how much volume traded during a time period, it asks where that volume traded on the price chart.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Volume](/learn/volume/), [Time And Sales](/learn/time-and-sales/), and [Key Levels Trading](/learn/key-levels-trading/). It leads into [Unusual Volume](/learn/unusual-volume/).
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain volume by price in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 Volume by price does not predict the future. It helps traders review where meaningful activity happened and whether those areas later became support, resistance, chop zones, rejection areas, or reclaim zones.
 
@@ -173,7 +186,7 @@ Common volume-by-price mistakes include:
 
 Volume by price should clarify the chart, not make it more cluttered.
 
-## Practical Volume By Price Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing volume by price:
 
@@ -189,7 +202,7 @@ Use this checklist when reviewing volume by price:
 
 The checklist keeps volume by price tied to behavior, not prediction.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
 Volume by price can make trade review more specific.
 

@@ -12,12 +12,15 @@ search_intent: "Understand what dollar volume means, how traders calculate it, a
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review dollar volume, liquidity context, execution quality, slippage, and repeated decision patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Practical"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Practical"
+academy_order: 6
+academy_module: "Liquidity Foundation"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/liquidity/"
 recommended_next: "/learn/spread/"
 visual_assets:
@@ -47,6 +50,16 @@ meta_description: "Learn what dollar volume means, how to calculate it, and why 
 Dollar volume is the approximate dollar value of shares traded over a period of time. It helps traders look beyond share volume and understand how much actual money is moving through a stock.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Liquidity](/learn/liquidity/) and leads into [Spread](/learn/spread/), [Bid And Ask](/learn/bid-and-ask/), and [Slippage](/learn/slippage/).
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain dollar volume in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 A stock can trade millions of shares, but that does not always mean it has deep liquidity. Price matters. A low-priced stock can show huge share volume while still having lower dollar volume than a higher-priced stock trading fewer shares.
 
@@ -188,7 +201,7 @@ Common dollar-volume mistakes include:
 
 Dollar volume should make liquidity review more precise, not more careless.
 
-## Practical Dollar Volume Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing dollar volume:
 
@@ -204,9 +217,9 @@ Use this checklist when reviewing dollar volume:
 
 The checklist is meant to connect dollar volume with real execution quality.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
-Dollar volume can make a trading journal more specific because it gives liquidity context beyond share count.
+Dollar volume can make a review notes more specific because it gives liquidity context beyond share count.
 
 Helpful journal prompts:
 

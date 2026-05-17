@@ -12,12 +12,15 @@ search_intent: "Learn what relative volume RVOL means, how scanner-style RVOL is
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review RVOL-driven trades, execution quality, catalyst context, and repeated decision patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Practical"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Practical"
+academy_order: 3
+academy_module: "Volume Foundation"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/relative-volume/"
 recommended_next: "/learn/volume-spike/"
 visual_assets:
@@ -47,6 +50,16 @@ meta_description: "Learn what relative volume RVOL means, why scanner calculatio
 Relative volume RVOL is a scanner metric that compares current trading volume with a stock's normal trading volume. Traders use it to spot stocks that are unusually active.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Stock Volume](/learn/volume/) and [Relative Volume](/learn/relative-volume/), then leads into [Volume Spike](/learn/volume-spike/).
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain relative volume RVOL in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 RVOL is helpful because it turns the relative-volume idea into a number. But the number is only context. High RVOL does not mean a trade is clean, safe, or likely to continue.
 
@@ -173,7 +186,7 @@ Common RVOL mistakes include:
 
 RVOL should create curiosity, not urgency.
 
-## Practical RVOL Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing RVOL-driven trades:
 
@@ -190,7 +203,7 @@ Use this checklist when reviewing RVOL-driven trades:
 
 This checklist helps turn scanner excitement into trade review.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
 When journaling RVOL, record the number and the context behind it.
 
@@ -265,7 +278,7 @@ Day traders watch RVOL because it can help identify stocks with unusual attentio
 
 No. RVOL is context, not a trade signal. Traders still need level quality, catalyst review, liquidity, risk control, and execution discipline.
 
-### Should RVOL go in a trading journal?
+### Should RVOL go in a review notes?
 
 Yes, if it affected the trade idea. Recording RVOL can help traders review whether scanner activity supported the trade or encouraged chasing.
 

@@ -12,12 +12,15 @@ search_intent: "Learn what a volume spike is, why sudden activity matters, and h
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review volume-spike trades, execution quality, catalyst context, and repeated chasing patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Practical"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Practical"
+academy_order: 4
+academy_module: "Volume Foundation"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/relative-volume-rvol/"
 recommended_next: "/learn/liquidity/"
 visual_assets:
@@ -47,6 +50,16 @@ meta_description: "Learn what a volume spike means, why sudden trading activity 
 A volume spike happens when trading activity suddenly jumps above recent activity. Traders watch volume spikes because they can show that a stock is getting fresh attention, reacting to news, testing a key level, or entering a more volatile phase.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Volume](/learn/volume/), [Relative Volume](/learn/relative-volume/), and [Relative Volume RVOL](/learn/relative-volume-rvol/).
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain volume spikes in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 A volume spike can be important, but it does not guarantee continuation. It only tells you activity changed quickly. The better question is what price does after the spike appears.
 
@@ -178,7 +191,7 @@ Common volume-spike mistakes include:
 
 A volume spike should start a review process, not end it.
 
-## Practical Volume Spike Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing volume-spike trades:
 
@@ -195,7 +208,7 @@ Use this checklist when reviewing volume-spike trades:
 
 This checklist helps separate useful activity from emotional reaction.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
 Volume-spike review can show whether a trader is reacting to activity or trading a structured setup.
 

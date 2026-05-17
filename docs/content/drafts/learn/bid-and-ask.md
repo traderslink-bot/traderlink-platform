@@ -12,12 +12,15 @@ search_intent: "Learn what bid and ask mean in stock trading, why quote behavior
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review bid/ask behavior, execution quality, order type, slippage, and repeated decision patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Foundation"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Foundation"
+academy_order: 8
+academy_module: "Quotes And Execution"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/spread/"
 recommended_next: "/learn/slippage/"
 visual_assets:
@@ -46,6 +49,16 @@ meta_description: "Learn what bid and ask mean, why quotes matter for execution,
 Bid and ask are the two sides of a stock quote. The bid shows what buyers are currently willing to pay. The ask shows what sellers are currently willing to accept.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Spread](/learn/spread/) and leads into [Slippage](/learn/slippage/) and [Market Orders Vs Limit Orders](/learn/market-orders-vs-limit-orders/).
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain bid and ask in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 For active traders, bid and ask matter because they affect where orders may fill. The last traded price is useful, but it is not always the price you can enter or exit at right now.
 
@@ -176,7 +189,7 @@ Common bid and ask mistakes include:
 
 Good review asks whether the quote was tradable, not only whether the chart looked tradable.
 
-## Practical Bid And Ask Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing bid and ask behavior:
 
@@ -193,7 +206,7 @@ Use this checklist when reviewing bid and ask behavior:
 
 The checklist helps connect the chart to actual fill quality.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
 Bid and ask review helps traders understand execution quality.
 

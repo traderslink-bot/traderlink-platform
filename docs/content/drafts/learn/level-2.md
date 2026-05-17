@@ -12,12 +12,15 @@ search_intent: "Learn what Level 2 trading means, what traders watch in the orde
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review Level 2 context, execution quality, slippage, liquidity, and repeated decision patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Practical"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Practical"
+academy_order: 11
+academy_module: "Order Flow Tools"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/market-orders-vs-limit-orders/"
 recommended_next: "/learn/time-and-sales/"
 visual_assets:
@@ -46,6 +49,16 @@ meta_description: "Learn what Level 2 trading means, how traders read market dep
 Level 2 trading refers to watching visible market depth, including bids and asks at different price levels. Traders use Level 2 to see more than just the best bid and ask.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Bid And Ask](/learn/bid-and-ask/), [Spread](/learn/spread/), [Liquidity](/learn/liquidity/), and [Market Orders Vs Limit Orders](/learn/market-orders-vs-limit-orders/). It leads into [Time And Sales](/learn/time-and-sales/), where traders review actual executed trades.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain Level 2 in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 Level 2 can be useful, but it can also be noisy. It should not be treated as a magic window into what price must do next.
 
@@ -172,7 +185,7 @@ Common Level 2 trading mistakes include:
 
 Level 2 is most useful when it improves execution awareness, not when it creates panic.
 
-## Practical Level 2 Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing Level 2 context:
 
@@ -189,7 +202,7 @@ Use this checklist when reviewing Level 2 context:
 
 The checklist helps turn order-book observation into execution review.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
 Level 2 review can help traders understand whether execution conditions supported the trade.
 

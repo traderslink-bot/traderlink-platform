@@ -12,12 +12,15 @@ search_intent: "Learn what stock volume means, why traders watch participation, 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review volume context, execution quality, liquidity, and repeated decision patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Foundation"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Foundation"
+academy_order: 1
+academy_module: "Volume Foundation"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/gap-fill-trading/"
 recommended_next: "/learn/relative-volume/"
 visual_assets:
@@ -42,7 +45,7 @@ schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
 meta_title: "Stock Volume Explained for Traders"
-meta_description: "Learn what stock volume means, how traders read participation, common volume mistakes, and how to review volume in a trading journal."
+meta_description: "Learn what stock volume means, how traders read participation, common volume mistakes, and how to review volume with structured review notes."
 ---
 
 # Stock Volume: How Traders Read Participation
@@ -50,6 +53,16 @@ meta_description: "Learn what stock volume means, how traders read participation
 Stock volume is the number of shares traded during a specific period. Traders watch volume because it helps show how much participation is behind a move.
 
 This lesson begins the **Volume Liquidity And Order Flow** learning path. It builds on chart-reading lessons like [Gap Fill Trading](/learn/gap-fill-trading/), [Breakout Trading](/learn/breakout-trading/), and [Breakdown Trading](/learn/breakdown-trading/) because price levels are easier to review when you also understand participation.
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain stock volume in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 Volume is not a prediction tool by itself. High volume does not guarantee continuation, and low volume does not guarantee failure. The goal is to learn how volume changes the quality of what you are reviewing.
 
@@ -195,7 +208,7 @@ Common volume mistakes include:
 
 The most important habit is to ask what the volume appeared with. Volume plus structure is more useful than volume alone.
 
-## Practical Volume Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing a trade that involved volume:
 
@@ -211,9 +224,9 @@ Use this checklist when reviewing a trade that involved volume:
 
 The checklist is not meant to approve or reject a trade. It is meant to make review more honest.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
-When journaling volume, write down what the volume actually did instead of only saying "volume was high."
+When reviewing volume, write down what the volume actually did instead of only saying "volume was high."
 
 Helpful journal prompts:
 

@@ -12,12 +12,15 @@ search_intent: "Learn what trading slippage means, why fill prices can be worse 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review slippage, execution quality, order type, liquidity, and repeated decision patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Practical"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Practical"
+academy_order: 9
+academy_module: "Quotes And Execution"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/bid-and-ask/"
 recommended_next: "/learn/market-orders-vs-limit-orders/"
 visual_assets:
@@ -46,6 +49,16 @@ meta_description: "Learn what trading slippage is, why fill prices can be worse 
 Trading slippage happens when an order fills at a different price than expected. For active traders, slippage can turn a good-looking setup into a worse trade because the entry or exit is not where the plan assumed.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Bid And Ask](/learn/bid-and-ask/), [Spread](/learn/spread/), and [Liquidity](/learn/liquidity/), then leads into [Market Orders Vs Limit Orders](/learn/market-orders-vs-limit-orders/).
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain slippage in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 Slippage is not only a broker issue. It is often connected to liquidity, spread, order type, speed, size, and whether the trader chased a fast move.
 
@@ -173,7 +186,7 @@ Common slippage mistakes include:
 
 Slippage is often where trade planning and real execution meet.
 
-## Practical Slippage Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing slippage:
 
@@ -190,7 +203,7 @@ Use this checklist when reviewing slippage:
 
 This checklist helps keep execution review concrete.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
 Slippage review should compare the planned trade with the actual fills.
 

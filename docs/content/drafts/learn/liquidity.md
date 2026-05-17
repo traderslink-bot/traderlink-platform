@@ -12,12 +12,15 @@ search_intent: "Learn what stock liquidity means, why it affects execution, and 
 status: "draft"
 product_area: "Education"
 availability: "educational"
-content_type: "guide"
+content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Trader Intelligence is being built to help traders review liquidity, execution quality, slippage, order type, and repeated trade-management patterns."
-learning_track: "Volume Liquidity And Order Flow"
-learning_stage: "Foundation"
+learning_track: "Volume, Liquidity And Order Flow"
+academy_level: "Foundation"
+academy_order: 5
+academy_module: "Liquidity Foundation"
+academy_course: "Volume, Liquidity And Order Flow"
 recommended_previous: "/learn/volume-spike/"
 recommended_next: "/learn/dollar-volume/"
 visual_assets:
@@ -48,6 +51,16 @@ meta_description: "Learn what stock liquidity means, how it affects fills, sprea
 Stock liquidity describes how easily shares can be bought or sold without causing a major price change. For active traders, liquidity matters because it affects entries, exits, spreads, slippage, order size, and whether the trade can be managed the way the chart suggests.
 
 This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Volume Spike](/learn/volume-spike/) and leads into [Dollar Volume](/learn/dollar-volume/), [Spread](/learn/spread/), [Bid And Ask](/learn/bid-and-ask/), and [Slippage](/learn/slippage/).
+
+
+## Lesson Objective
+
+By the end of this lesson, you should be able to:
+
+- Explain liquidity in volume, liquidity, or order-flow context.
+- Identify where it appears on a realistic chart or trading dashboard.
+- Review the concept with price levels, execution quality, spread, liquidity, and risk in mind.
+- Avoid treating it as guaranteed confirmation.
 
 A stock can look exciting on a chart and still be difficult to trade if liquidity is poor. Liquidity does not make a trade safe. It helps traders understand whether the market is active enough for their plan.
 
@@ -188,7 +201,7 @@ Common liquidity mistakes include:
 
 Liquidity is not a minor detail. It can change the entire risk profile of a trade.
 
-## Practical Liquidity Review Checklist
+## Practical Checklist
 
 Use this checklist when reviewing a trade where execution mattered:
 
@@ -205,7 +218,7 @@ Use this checklist when reviewing a trade where execution mattered:
 
 The checklist is not about blaming liquidity for every loss. It is about making execution review honest.
 
-## How To Review This In Your Trading Journal
+## Apply This In Review
 
 Liquidity review can help traders understand whether a trade was managed poorly, selected poorly, or simply hard to execute cleanly.
 
