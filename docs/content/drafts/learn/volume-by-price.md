@@ -35,7 +35,6 @@ internal_links:
   - "/learn/unusual-volume/"
   - "/glossary/liquidity/"
   - "/glossary/relative-volume/"
-  - "/features/trade-review/"
 schema:
   - "Article"
   - "FAQPage"

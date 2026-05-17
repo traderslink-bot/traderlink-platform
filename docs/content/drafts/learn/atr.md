@@ -25,7 +25,7 @@ learning_track: "Technical Indicators And Tools"
 internal_links:
   - "/learn/risk-management/"
   - "/learn/position-sizing/"
-  - "/learn/stop-loss-placement/"
+  - "/learn/stop-loss/"
   - "/learn/chasing-stocks/"
   - "/learn/volume-by-price/"
 schema:
@@ -128,7 +128,7 @@ Trader Intelligence is being built to help traders review whether volatility, si
 
 - [Risk Management](/learn/risk-management/)
 - [Position Sizing](/learn/position-sizing/)
-- [Stop Loss Placement](/learn/stop-loss-placement/)
+- [Stop Loss](/learn/stop-loss/)
 - [Chasing Stocks](/learn/chasing-stocks/)
 - [Volume By Price](/learn/volume-by-price/)
 
