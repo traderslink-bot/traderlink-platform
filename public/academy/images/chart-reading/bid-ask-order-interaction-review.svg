@@ -7,24 +7,24 @@
   <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Execution review asks whether order type matched the quote conditions.</text>
   <rect x="70" y="126" width="350" height="304" rx="10" fill="#0a1322" stroke="#213858"/>
   <rect x="480" y="126" width="350" height="304" rx="10" fill="#0a1322" stroke="#213858"/>
-  <text x="96" y="158" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Immediate buy context</text>
-  <text x="506" y="158" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Immediate sell context</text>
+  <text x="96" y="158" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Ask-side immediate order context</text>
+  <text x="506" y="158" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Bid-side immediate order context</text>
   <g font-family="Arial, sans-serif" font-size="14">
     <rect x="110" y="198" width="104" height="38" rx="8" fill="#0f2f25" stroke="#22c55e"/>
     <rect x="252" y="198" width="104" height="38" rx="8" fill="#33171f" stroke="#ef4444"/>
     <text x="132" y="222" fill="#bbf7d0">Bid $2.00</text>
     <text x="274" y="222" fill="#fecdd3">Ask $2.04</text>
     <path d="M176 296 C216 276, 238 250, 274 236" fill="none" stroke="#38bdf8" stroke-width="3"/>
-    <text x="112" y="318" fill="#e8f1ff">Immediate buy often reaches sellers near ask</text>
+    <text x="112" y="318" fill="#e8f1ff">Immediate order can reach displayed ask liquidity</text>
     <rect x="520" y="198" width="104" height="38" rx="8" fill="#0f2f25" stroke="#22c55e"/>
     <rect x="662" y="198" width="104" height="38" rx="8" fill="#33171f" stroke="#ef4444"/>
     <text x="542" y="222" fill="#bbf7d0">Bid $2.00</text>
     <text x="684" y="222" fill="#fecdd3">Ask $2.04</text>
     <path d="M704 296 C664 276, 626 250, 574 236" fill="none" stroke="#38bdf8" stroke-width="3"/>
-    <text x="522" y="318" fill="#e8f1ff">Immediate sell often reaches buyers near bid</text>
+    <text x="522" y="318" fill="#e8f1ff">Immediate order can reach displayed bid liquidity</text>
   </g>
   <line x1="102" y1="354" x2="388" y2="354" stroke="#2a3d5c"/>
   <line x1="512" y1="354" x2="798" y2="354" stroke="#2a3d5c"/>
   <text x="112" y="384" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">review: size, spread, order type, fill</text>
-  <text x="522" y="384" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">review: bid strength and exit quality</text>
+  <text x="522" y="384" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">review: bid-side depth and fill quality</text>
 </svg>
