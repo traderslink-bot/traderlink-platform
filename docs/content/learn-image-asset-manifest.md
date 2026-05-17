@@ -124,6 +124,8 @@ journey_map
 | `public/images/learn/chart-reading/time-and-sales-speed-fade-review.svg` | `/learn/time-and-sales/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show tape speed increasing during a volume burst and fading afterward. | Tape Speed And Fade section. | Trading dashboard showing tape speed increasing during a volume burst and fading afterward. | editor_verified | Supports tape-speed review, uses realistic prints, candles, volume context, and avoids guarantee language. | `58ea3ca3` |
 | `public/images/learn/chart-reading/volume-by-price-profile-zones.svg` | `/learn/volume-by-price/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show horizontal volume-by-price profile with high-volume zones beside candles. | Quick Definition section. | Candlestick chart with a volume-by-price profile showing high-volume price zones. | editor_verified | Supports volume-by-price profile education, uses realistic candles and horizontal volume profile, and avoids prediction language. | `5a5bfc59` |
 | `public/images/learn/chart-reading/volume-by-price-low-volume-area-review.svg` | `/learn/volume-by-price/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show price moving through a low-volume area and stalling near a high-volume zone. | Low-Volume Areas section. | Candlestick chart with volume-by-price profile showing price moving through a low-volume area and stalling near a high-volume zone. | editor_verified | Supports low-volume-area review, uses realistic candles/profile context, and avoids guarantee language. | `5a5bfc59` |
+| `public/images/learn/chart-reading/unusual-volume-normal-vs-today.svg` | `/learn/unusual-volume/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Compare normal volume with today's unusual activity and scanner context. | Quick Definition section. | Trading dashboard showing normal volume versus today's unusual volume burst with scanner context. | editor_verified | Supports unusual-volume baseline comparison, uses realistic candles and volume bars, and avoids signal language. | `80c78592` |
+| `public/images/learn/chart-reading/unusual-volume-catalyst-fade-review.svg` | `/learn/unusual-volume/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show a catalyst volume burst that fails to hold while volume fades and spread widens. | Follow-Through Versus Fade section. | Trading dashboard showing unusual volume after a catalyst, followed by failed hold, fading volume, and spread review. | editor_verified | Supports catalyst/fade/liquidity review, uses realistic candles and bid/ask context, and avoids guarantee language. | `80c78592` |
 
 ## Editor Verification Summary
 
@@ -414,12 +416,20 @@ Volume by price SVG verification:
 - Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Unusual volume SVG verification:
+
+- Both visuals support the actual unusual-volume lesson.
+- The normal-versus-today visual compares baseline activity with an abnormal-volume session and scanner context.
+- The catalyst-fade visual shows a realistic volume burst, failed hold, fading volume, and spread review.
+- Labels avoid buy/sell signal language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
-After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
+After the completed Chart Reading and Volume Liquidity batches, the next high-value SVG batch should likely support one of these:
 
-1. Unusual Volume article: normal versus unusual activity, scanner context, catalyst/liquidity review, and fade risk.
-2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
+1. Stock Catalysts article: catalyst-quality matrix, headline-to-chart reaction, and catalyst review workflow.
+2. Press Releases or How To Read Stock Press Releases: press-release anatomy and source-detail review.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
 5. Trade review path: trade timeline, planned vs actual risk, execution review timeline.
