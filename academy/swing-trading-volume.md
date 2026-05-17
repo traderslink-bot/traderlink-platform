@@ -42,7 +42,7 @@ This lesson is part of the **Swing Trading Workflow** course. It follows [Swing 
 
 Volume helps swing traders review whether a move is attracting participation across more than one session. It does not prove that a trade will work, but it can make the difference between a clean review and a vague chart opinion.
 
-For swing trading, the question is not simply “Was volume high?” The better question is: where did volume appear, what did price do with it, and did participation continue after the first reaction?
+For swing trading, the question is not simply "Was volume high?" The better question is: where did volume appear, what did price do with it, and did participation continue after the first reaction?
 
 ![Dark trading dashboard showing a swing trading catalyst timeline with daily candles, volume expansion, catalyst date, pullback review, and follow-through labels.](/images/learn/chart-reading/swing-trading-catalyst-timeline.svg)
 

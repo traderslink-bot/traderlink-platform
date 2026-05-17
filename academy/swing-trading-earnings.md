@@ -69,6 +69,8 @@ Common earnings situations include:
 
 Holding through earnings usually carries the most uncertainty because the trader is exposed before the market reaction is known.
 
+Earnings dates, release times, and conference call schedules can change, so event timing should be verified from current company or market-calendar information before a trader treats the risk as planned.
+
 ## Why Earnings Risk Is Different
 
 Earnings can create gaps that ignore normal chart planning.

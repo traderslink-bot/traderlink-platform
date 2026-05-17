@@ -101,7 +101,7 @@ Recommended order for future runs:
 | 5 | Technical Indicators And Tools | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-technical-indicators.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-technical-indicators.md` with reputable technical-analysis/charting-source verification plus targeted plain-language accuracy guardrail edits. |
 | 6 | Trading Styles And Playbooks | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-styles.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-styles.md` with official SEC, Investor.gov, FINRA, and current FINRA 2026 intraday margin-transition source verification plus targeted plain-language accuracy guardrail edits. |
 | 7 | Day Trading Workflow | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-day-trading-workflow.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-day-trading-workflow.md` with official SEC, Investor.gov, FINRA, NYSE, and Nasdaq source verification plus targeted plain-language accuracy guardrails for premarket and after-hours broker/venue variability. |
-| 8 | Swing Trading Workflow | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; Pass 2 fixed stale swing workflow related links. |
+| 8 | Swing Trading Workflow | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-swing-trading-workflow.md`; Pass 2 fixed stale swing workflow related links; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-swing-trading-workflow.md` with official SEC, Investor.gov, and FINRA source verification plus targeted plain-language accuracy guardrails for earnings event timing. |
 | 9 | News, Catalysts And SEC Filings | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-news-catalysts-sec-filings.md`; Pass 2 completed; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md` with official SEC, Investor.gov, and FDA source verification plus targeted plain-language accuracy guardrail edits. |
 | 10 | Small-Cap Stocks, Float And Dilution | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-small-cap-float-dilution.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-small-cap-float-dilution.md` with official SEC, Investor.gov, PCAOB, and FASB source verification plus targeted plain-language accuracy guardrail edits. |
 | 11 | Halts And High-Volatility Events | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-halts-high-volatility.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-halts-high-volatility.md` with official SEC, Investor.gov, FINRA, NYSE, Nasdaq, LULD, and Cboe source verification plus targeted plain-language accuracy guardrail edits. |
@@ -211,7 +211,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 3: Accuracy/Source Audit** for **Swing Trading Workflow**.
+Continue with **Pass 3: Accuracy/Source Audit** for **Chart Reading And Market Structure**.
 
 Reason:
 
@@ -241,12 +241,13 @@ Reason:
 - Technical Indicators And Tools Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-technical-indicators.md`.
 - Trading Styles And Playbooks Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trading-styles.md`.
 - Day Trading Workflow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-day-trading-workflow.md`.
-- Swing Trading Workflow is now the next useful source-sensitive course because it includes multi-session holding, overnight risk, swing support/resistance, swing volume, catalysts, earnings, news risk, and small-cap swing-trading context. The next pass should verify gap/overnight risk, extended-hours and news language, catalyst/source framing, liquidity/spread risk, small-cap supply risk, and avoid any implication that multi-session setups guarantee continuation.
+- Swing Trading Workflow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-swing-trading-workflow.md`.
+- Chart Reading And Market Structure is now the next useful source-sensitive course because it is still marked `not_started` for Pass 3 and contains foundational support/resistance, key level, breakout, breakdown, reclaim, HOD/LOD, premarket high/low, previous-day levels, trend-structure, and market-structure lessons. The next source pass should verify anti-guarantee language, chart-reference definitions, time-of-day references, and consistency with the newer `/academy/...` URL structure.
 - Pass 3 should verify factual details against official and reputable sources before the Academy moves toward production UI planning. Source details belong in internal audit files; user-facing lessons should use clean educational wording unless a rule, filing type, or official system is itself the lesson topic.
 
 Output should include:
 
-- A Swing Trading Workflow accuracy/source audit.
+- A Chart Reading And Market Structure accuracy/source audit.
 - Any small markdown edits needed.
 - Source-sensitive findings and corrections.
 - Official-source references for SEC, Investor.gov, FINRA, exchanges, and market-structure/order-mechanics sources where needed.
