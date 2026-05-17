@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Red-to-green and green-to-red transition context</title>
+  <desc id="desc">Intraday candlestick chart showing red-to-green and green-to-red session transitions around prior close and VWAP reference areas with volume context.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="48" y="40" width="864" height="350" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g stroke="#19304d"><path d="M80 100H880M80 160H880M80 220H880M80 280H880M80 340H880"/></g>
+  <line x1="82" y1="220" x2="878" y2="220" stroke="#9cc7ff" stroke-width="2" stroke-dasharray="8 7"/>
+  <line x1="82" y1="188" x2="878" y2="188" stroke="#1f6feb" stroke-width="2" opacity=".8"/>
+  <text x="92" y="211" fill="#d6e4ff" font-family="Arial" font-size="17">Prior close reference</text>
+  <text x="92" y="180" fill="#9cc7ff" font-family="Arial" font-size="17">VWAP context</text>
+  <g stroke-width="3" stroke-linecap="round">
+    <g stroke="#ef4444" fill="#ef4444"><line x1="140" y1="235" x2="140" y2="310"/><rect x="129" y="250" width="22" height="42" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="190" y1="220" x2="190" y2="292"/><rect x="179" y="238" width="22" height="38" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="240" y1="190" x2="240" y2="268"/><rect x="229" y="205" width="22" height="48" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="290" y1="154" x2="290" y2="232"/><rect x="279" y="170" width="22" height="46" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="555" y1="128" x2="555" y2="200"/><rect x="544" y="144" width="22" height="38" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="605" y1="150" x2="605" y2="234"/><rect x="594" y="168" width="22" height="46" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="655" y1="198" x2="655" y2="284"/><rect x="644" y="216" width="22" height="48" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="705" y1="210" x2="705" y2="270"/><rect x="694" y="228" width="22" height="24" rx="2"/></g>
+  </g>
+  <text x="250" y="132" fill="#d6e4ff" font-family="Arial" font-size="18">Red-to-green: reference reclaimed</text>
+  <text x="560" y="312" fill="#d6e4ff" font-family="Arial" font-size="18">Green-to-red: reference lost</text>
+  <rect x="48" y="414" width="864" height="82" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g><rect x="132" y="452" width="22" height="31" fill="#ef4444" opacity=".75"/><rect x="182" y="462" width="22" height="21" fill="#ef4444" opacity=".75"/><rect x="232" y="433" width="22" height="50" fill="#22c55e" opacity=".75"/><rect x="282" y="421" width="22" height="62" fill="#22c55e" opacity=".75"/><rect x="547" y="444" width="22" height="39" fill="#22c55e" opacity=".75"/><rect x="597" y="425" width="22" height="58" fill="#ef4444" opacity=".75"/><rect x="647" y="434" width="22" height="49" fill="#ef4444" opacity=".75"/></g>
+  <text x="330" y="464" fill="#d6e4ff" font-family="Arial" font-size="19">Color transition is context; review hold, reclaim, or failure.</text>
+</svg>

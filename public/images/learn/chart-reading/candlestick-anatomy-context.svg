@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Candlestick anatomy with chart context</title>
+  <desc id="desc">Dark trading dashboard style candlestick chart showing candle body, upper wick, lower wick, support, resistance, and volume context.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="40" y="40" width="880" height="350" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g stroke="#19304d" stroke-width="1">
+    <path d="M80 100H880M80 160H880M80 220H880M80 280H880M80 340H880"/>
+    <path d="M120 70V370M220 70V370M320 70V370M420 70V370M520 70V370M620 70V370M720 70V370M820 70V370"/>
+  </g>
+  <rect x="80" y="106" width="800" height="32" fill="#1f6feb" opacity=".18"/>
+  <rect x="80" y="288" width="800" height="34" fill="#1f6feb" opacity=".18"/>
+  <text x="92" y="99" fill="#9cc7ff" font-family="Arial" font-size="18">Resistance context</text>
+  <text x="92" y="344" fill="#9cc7ff" font-family="Arial" font-size="18">Support context</text>
+  <g stroke-width="3" stroke-linecap="round">
+    <g stroke="#22c55e" fill="#22c55e"><line x1="150" y1="270" x2="150" y2="320"/><rect x="139" y="286" width="22" height="24" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="190" y1="220" x2="190" y2="292"/><rect x="179" y="236" width="22" height="42" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="230" y1="205" x2="230" y2="284"/><rect x="219" y="224" width="22" height="48" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="270" y1="165" x2="270" y2="250"/><rect x="259" y="186" width="22" height="50" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="310" y1="120" x2="310" y2="210"/><rect x="299" y="140" width="22" height="54" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="350" y1="112" x2="350" y2="214"/><rect x="339" y="128" width="22" height="66" rx="2"/></g>
+  </g>
+  <g transform="translate(520 84)">
+    <line x1="80" y1="10" x2="80" y2="250" stroke="#d6e4ff" stroke-width="4" stroke-linecap="round"/>
+    <rect x="54" y="80" width="52" height="108" rx="4" fill="#22c55e"/>
+    <text x="125" y="30" fill="#d6e4ff" font-family="Arial" font-size="18">Upper wick</text>
+    <path d="M103 24H88" stroke="#d6e4ff"/>
+    <text x="125" y="142" fill="#d6e4ff" font-family="Arial" font-size="18">Body: open to close</text>
+    <path d="M116 136H106" stroke="#d6e4ff"/>
+    <text x="125" y="242" fill="#d6e4ff" font-family="Arial" font-size="18">Lower wick</text>
+    <path d="M105 236H88" stroke="#d6e4ff"/>
+  </g>
+  <rect x="40" y="414" width="880" height="86" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g>
+    <rect x="82" y="465" width="20" height="18" fill="#22c55e" opacity=".75"/><rect x="122" y="452" width="20" height="31" fill="#ef4444" opacity=".75"/><rect x="162" y="438" width="20" height="45" fill="#22c55e" opacity=".75"/><rect x="202" y="429" width="20" height="54" fill="#22c55e" opacity=".75"/><rect x="242" y="417" width="20" height="66" fill="#ef4444" opacity=".75"/><rect x="282" y="446" width="20" height="37" fill="#ef4444" opacity=".75"/>
+  </g>
+  <text x="332" y="462" fill="#d6e4ff" font-family="Arial" font-size="20">Candles describe price behavior; volume and levels add context.</text>
+</svg>

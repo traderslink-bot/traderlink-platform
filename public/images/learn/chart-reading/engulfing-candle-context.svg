@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Engulfing candle context</title>
+  <desc id="desc">Realistic chart showing green and red engulfing candle pairs near support and resistance zones with volume context.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="48" y="40" width="864" height="350" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g stroke="#19304d"><path d="M80 100H880M80 160H880M80 220H880M80 280H880M80 340H880"/></g>
+  <rect x="82" y="295" width="342" height="34" fill="#1f6feb" opacity=".18"/>
+  <rect x="520" y="112" width="340" height="34" fill="#1f6feb" opacity=".18"/>
+  <text x="96" y="286" fill="#9cc7ff" font-family="Arial" font-size="17">Support area</text>
+  <text x="532" y="104" fill="#9cc7ff" font-family="Arial" font-size="17">Resistance area</text>
+  <g stroke-width="3" stroke-linecap="round">
+    <g stroke="#ef4444" fill="#ef4444"><line x1="135" y1="258" x2="135" y2="332"/><rect x="124" y="274" width="22" height="42" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="185" y1="235" x2="185" y2="335"/><rect x="174" y="246" width="22" height="78" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="235" y1="230" x2="235" y2="296"/><rect x="224" y="242" width="22" height="40" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="285" y1="205" x2="285" y2="270"/><rect x="274" y="220" width="22" height="34" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="580" y1="112" x2="580" y2="190"/><rect x="569" y="126" width="22" height="44" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="630" y1="100" x2="630" y2="210"/><rect x="619" y="116" width="22" height="82" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="680" y1="150" x2="680" y2="242"/><rect x="669" y="170" width="22" height="52" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="730" y1="164" x2="730" y2="226"/><rect x="719" y="178" width="22" height="30" rx="2"/></g>
+  </g>
+  <text x="214" y="210" fill="#d6e4ff" font-family="Arial" font-size="18">Larger body overtakes prior body</text>
+  <text x="586" y="258" fill="#d6e4ff" font-family="Arial" font-size="18">Review close, level, volume, and risk</text>
+  <rect x="48" y="414" width="864" height="82" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g><rect x="126" y="451" width="22" height="32" fill="#ef4444" opacity=".75"/><rect x="176" y="418" width="22" height="65" fill="#22c55e" opacity=".75"/><rect x="572" y="448" width="22" height="35" fill="#22c55e" opacity=".75"/><rect x="622" y="418" width="22" height="65" fill="#ef4444" opacity=".75"/></g>
+  <text x="300" y="464" fill="#d6e4ff" font-family="Arial" font-size="19">Engulfing shows a shift, not certainty.</text>
+</svg>

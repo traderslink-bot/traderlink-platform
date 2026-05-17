@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Candle volume confirmation context</title>
+  <desc id="desc">Candlestick chart comparing a candle with expanding volume and a later candle with fading participation, emphasizing review context.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="48" y="40" width="864" height="350" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g stroke="#19304d"><path d="M80 100H880M80 160H880M80 220H880M80 280H880M80 340H880"/></g>
+  <rect x="88" y="178" width="330" height="34" fill="#1f6feb" opacity=".18"/>
+  <text x="102" y="170" fill="#9cc7ff" font-family="Arial" font-size="17">Level with expanding participation</text>
+  <g stroke-width="3" stroke-linecap="round">
+    <g stroke="#22c55e" fill="#22c55e"><line x1="135" y1="270" x2="135" y2="332"/><rect x="124" y="286" width="22" height="30" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="190" y1="224" x2="190" y2="300"/><rect x="179" y="240" width="22" height="44" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="245" y1="172" x2="245" y2="266"/><rect x="234" y="188" width="22" height="64" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="300" y1="178" x2="300" y2="256"/><rect x="289" y="196" width="22" height="38" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="540" y1="150" x2="540" y2="222"/><rect x="529" y="166" width="22" height="40" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="595" y1="130" x2="595" y2="205"/><rect x="584" y="145" width="22" height="44" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="650" y1="134" x2="650" y2="226"/><rect x="639" y="160" width="22" height="42" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="705" y1="178" x2="705" y2="254"/><rect x="694" y="196" width="22" height="38" rx="2"/></g>
+  </g>
+  <text x="462" y="112" fill="#d6e4ff" font-family="Arial" font-size="18">Same chart idea can change when volume fades</text>
+  <text x="488" y="292" fill="#d6e4ff" font-family="Arial" font-size="18">High volume is context, not proof</text>
+  <rect x="48" y="414" width="864" height="82" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g><rect x="126" y="463" width="22" height="20" fill="#22c55e" opacity=".75"/><rect x="181" y="445" width="22" height="38" fill="#22c55e" opacity=".75"/><rect x="236" y="418" width="22" height="65" fill="#22c55e" opacity=".75"/><rect x="291" y="438" width="22" height="45" fill="#ef4444" opacity=".75"/><rect x="531" y="448" width="22" height="35" fill="#22c55e" opacity=".75"/><rect x="586" y="458" width="22" height="25" fill="#22c55e" opacity=".75"/><rect x="641" y="466" width="22" height="17" fill="#ef4444" opacity=".75"/></g>
+  <text x="330" y="464" fill="#d6e4ff" font-family="Arial" font-size="19">Read candle shape and volume together.</text>
+</svg>

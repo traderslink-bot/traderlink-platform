@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Hammer candle near support context</title>
+  <desc id="desc">Candlestick chart showing a hammer-style lower wick near a support zone with volume and follow-through context.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="48" y="40" width="864" height="350" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g stroke="#19304d"><path d="M80 100H880M80 160H880M80 220H880M80 280H880M80 340H880"/></g>
+  <rect x="84" y="300" width="792" height="34" fill="#1f6feb" opacity=".18"/>
+  <text x="98" y="360" fill="#9cc7ff" font-family="Arial" font-size="18">Support context</text>
+  <g stroke-width="3" stroke-linecap="round">
+    <g stroke="#ef4444" fill="#ef4444"><line x1="150" y1="185" x2="150" y2="262"/><rect x="139" y="202" width="22" height="43" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="205" y1="225" x2="205" y2="300"/><rect x="194" y="242" width="22" height="42" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="260" y1="260" x2="260" y2="332"/><rect x="249" y="278" width="22" height="38" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="315" y1="254" x2="315" y2="365"/><rect x="304" y="272" width="22" height="24" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="370" y1="235" x2="370" y2="314"/><rect x="359" y="250" width="22" height="42" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="425" y1="205" x2="425" y2="288"/><rect x="414" y="224" width="22" height="44" rx="2"/></g>
+  </g>
+  <circle cx="315" cy="284" r="32" fill="none" stroke="#9cc7ff" stroke-width="3"/>
+  <text x="380" y="318" fill="#d6e4ff" font-family="Arial" font-size="18">Lower wick tests support</text>
+  <text x="555" y="226" fill="#d6e4ff" font-family="Arial" font-size="18">Follow-through decides whether it mattered</text>
+  <rect x="48" y="414" width="864" height="82" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g><rect x="142" y="452" width="22" height="31" fill="#ef4444" opacity=".75"/><rect x="197" y="441" width="22" height="42" fill="#ef4444" opacity=".75"/><rect x="252" y="430" width="22" height="53" fill="#ef4444" opacity=".75"/><rect x="307" y="420" width="22" height="63" fill="#22c55e" opacity=".75"/><rect x="362" y="438" width="22" height="45" fill="#22c55e" opacity=".75"/></g>
+  <text x="475" y="464" fill="#d6e4ff" font-family="Arial" font-size="19">Review wick low, support, volume, and invalidation.</text>
+</svg>
