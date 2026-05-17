@@ -60,6 +60,9 @@ journey_map
 | `public/images/learn/chart-reading/failed-breakout-at-resistance.svg` | `/learn/resistance-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a breakout attempt above resistance that fails back below the zone. | When A Breakout Fails At Resistance section. | Candlestick chart showing a breakout attempt above resistance that fails back below the zone. | editor_verified | Supports the failed-breakout section, makes chase risk visible, and avoids buy/sell language or predictive claims. | `688c4ac7` |
 | `public/images/learn/chart-reading/key-level-map-current-price.svg` | `/learn/key-levels-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a clean current-price level map with nearest support, nearest resistance, and one higher timeframe level. | Quick Definition section after key-level examples. | Candlestick chart showing a clean key-level map around current price. | editor_verified | Supports the level-map lesson, uses realistic red and green candles, teaches level selection, and avoids signal or guarantee language. | `4121eaf9` |
 | `public/images/learn/chart-reading/key-level-review-workflow.svg` | `/learn/key-levels-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show hold, break, reject, and review behavior around a key level zone. | Step 3 section about review questions. | Educational chart workflow showing hold, break, reject, and reclaim behavior around key levels. | editor_verified | Supports the journal-review workflow, uses chart-based price behavior, and frames outcomes as review prompts instead of predictions. | `4121eaf9` |
+| `public/images/learn/chart-reading/breakout-with-volume-context.svg` | `/learn/breakout-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price breaking above a resistance zone with volume expanding into the move. | Quick Definition section after breakout levels. | Candlestick chart showing price breaking above resistance with volume context. | editor_verified | Supports breakout quality review, uses realistic candles and volume, and avoids signal or guaranteed-continuation language. | `bdd8664e` |
+| `public/images/learn/chart-reading/failed-breakout-review.svg` | `/learn/breakout-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a breakout attempt that fails back below the breakout level. | Failed Breakouts section. | Candlestick chart showing a breakout attempt that fails back below the breakout level. | editor_verified | Supports failed-breakout review, shows realistic behavior around the level, and avoids predictive language. | `bdd8664e` |
+| `public/images/learn/chart-reading/extended-breakout-chase-risk.svg` | `/learn/breakout-trading/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price far above the breakout level to explain extended-entry chase risk. | Extended Breakout Chase Risk section. | Candlestick chart showing a breakout far above the level with chase-risk review labels. | editor_verified | Supports chase-risk education, keeps labels focused on review, and avoids buy/sell or profit language. | `bdd8664e` |
 
 ## Editor Verification Summary
 
@@ -108,11 +111,20 @@ Key levels trading SVG batch verification:
 - The visuals are wired to article sections where they add learning value.
 - The batch is appropriate for the practical level-map bridge article.
 
+Breakout trading SVG batch verification:
+
+- All three visuals support the actual breakout trading lesson.
+- Visuals show realistic breakout behavior with red and green candlesticks, resistance zones, and volume context.
+- The failed-breakout and extended-breakout visuals teach risk and review without using signal language.
+- Labels avoid buy/sell language, profit claims, and guaranteed-continuation claims.
+- The visuals are wired to article sections where they add learning value.
+- The batch is appropriate for the breakout trading upgrade.
+
 ## Next Asset Batch Candidates
 
-After the first five Chart Reading articles, the next high-value SVG batch should likely support one of these:
+After the first six Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Breakout article: clean breakout, failed breakout, breakout with volume confirmation.
+1. Level Breakout article: breakout level hold, failed hold, retest context.
 2. Breakdown article: clean breakdown, failed breakdown/reclaim, breakdown with volume context.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
