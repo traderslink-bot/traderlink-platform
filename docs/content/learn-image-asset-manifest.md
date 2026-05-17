@@ -55,6 +55,9 @@ journey_map
 | `public/images/learn/chart-reading/support-level-hold.svg` | `/learn/support-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price testing a support zone and holding above it with volume context. | Quick Definition section after support-level sources. | Candlestick chart showing price holding above a support zone with volume context. | editor_verified | Supports the support hold section, uses realistic candles and a clear zone, includes volume context, and avoids signal or guarantee language. | `ea86c4f9` |
 | `public/images/learn/chart-reading/support-level-break.svg` | `/learn/support-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price breaking below a support zone with expanded volume and a later retest area. | When Support Breaks section. | Candlestick chart showing a support zone breaking with increased volume and a later retest. | editor_verified | Supports the support break section, explains changed context without predicting continuation, and avoids buy/sell language. | `ea86c4f9` |
 | `public/images/learn/chart-reading/support-level-reclaim.svg` | `/learn/support-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price briefly losing support, reclaiming the zone, and holding above it. | When Support Reclaims section. | Candlestick chart showing price losing support, reclaiming the zone, and holding above it. | editor_verified | Supports the reclaim section, frames reclaim as reviewable behavior rather than a guaranteed reversal, and uses mobile-readable labels. | `ea86c4f9` |
+| `public/images/learn/chart-reading/resistance-level-rejection.svg` | `/learn/resistance-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price testing a resistance zone and rejecting from it with volume context. | Quick Definition section after resistance-level sources. | Candlestick chart showing price rejecting from a resistance zone with volume context. | editor_verified | Supports the resistance rejection section, uses realistic red and green candles, shows a clear resistance zone, and avoids reversal guarantee language. | `688c4ac7` |
+| `public/images/learn/chart-reading/resistance-level-break.svg` | `/learn/resistance-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show price breaking above a resistance zone and holding above it with volume context. | When Resistance Breaks section. | Candlestick chart showing price breaking above a resistance zone and holding above it. | editor_verified | Supports the resistance break section, includes volume context, and frames the break as behavior to review rather than continuation certainty. | `688c4ac7` |
+| `public/images/learn/chart-reading/failed-breakout-at-resistance.svg` | `/learn/resistance-levels/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a breakout attempt above resistance that fails back below the zone. | When A Breakout Fails At Resistance section. | Candlestick chart showing a breakout attempt above resistance that fails back below the zone. | editor_verified | Supports the failed-breakout section, makes chase risk visible, and avoids buy/sell language or predictive claims. | `688c4ac7` |
 
 ## Editor Verification Summary
 
@@ -86,11 +89,20 @@ Support levels SVG batch verification:
 - The visuals are wired to article sections where they add learning value.
 - The batch is appropriate for the third Chart Reading And Market Structure upgrade.
 
+Resistance levels SVG batch verification:
+
+- All three visuals support the actual resistance-levels lesson.
+- Visuals explain resistance rejection, resistance breaking, and failed breakouts without using signal language.
+- Chart-based visuals use realistic red and green candlesticks, resistance zones, and volume bars.
+- Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+- The batch is appropriate for the fourth Chart Reading And Market Structure upgrade.
+
 ## Next Asset Batch Candidates
 
-After the first three Chart Reading articles, the next high-value SVG batch should likely support one of these:
+After the first four Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Resistance Levels article: clean resistance rejection, resistance break, failed breakout.
+1. Key Levels Trading article: clean key-level map, crowded chart example, level review workflow.
 2. Breakout article: clean breakout, failed breakout, breakout with volume confirmation.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
