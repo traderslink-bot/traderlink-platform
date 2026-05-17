@@ -197,7 +197,7 @@ Use this as the primary course order on the Academy homepage:
 | 6 | News, Catalysts And SEC Filings | academy_ready_core | High-value TradersLink differentiator. Core course markdown lesson path is now complete through news-trade review. |
 | 7 | Small-Cap Stocks, Float And Dilution | academy_ready_core | Completed markdown course path covering small-cap context, float, share structure, dilution, offerings, securities, corporate actions, cash runway, and going concern. |
 | 8 | Risk Management And Trade Planning | academy_ready_core | Completed markdown course path covering plans, rules, sizing, stops, loss limits, trade management, profit protection, overnight risk, and holding through news. |
-| 9 | Trading Psychology And Discipline | content_upgraded | Completed markdown course path covering discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. |
+| 9 | Trading Psychology And Discipline | academy_ready_core | Completed markdown course path covering discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. |
 | 10 | Trade Review And Improvement | content_upgraded | Completed markdown course path covering trade review, risk review, planned-vs-actual review, execution review, mistake patterns, swing review, and Trader Intelligence review bridge. |
 | 11 | Day Trading Workflow | content_upgraded | Completed markdown course path covering premarket, watchlists, market open, opening range, midday, power hour, after-hours, and session review. |
 | 12 | Practice And Improvement | content_upgraded | Completed markdown course path covering practice loops, paper trading, replay, screenshots, grading, drills, forward testing, and improvement planning. |
@@ -714,13 +714,13 @@ The user should understand common behavioral traps and how to review them withou
 
 ### Course Status
 
-The Trading Psychology And Discipline course markdown path is **content_upgraded** across all 8 planned lessons.
+The Trading Psychology And Discipline course markdown path is **academy_ready_core** across all 8 planned lessons.
 
 Before production UI implementation, this course still needs:
 
 - Visual asset review to decide whether behavior-loop, session-sequence, or trade-management diagrams would improve learning.
 - Optional course intro/landing copy for the Academy course page.
-- Progress/lesson completion wiring in the website build phase.
+- Final production UI schema review once the website build begins.
 
 ## Course 10: Trade Review And Improvement
 
@@ -1143,7 +1143,7 @@ Current known Academy-ready lesson groups:
 | Trading Styles And Playbooks | 14 | Full course sequence has passed Academy format migration check across style selector lessons, pullback context, news-fade/sell-the-news context, multi-day runner context, and cross-listed breakout, breakdown, reclaim, gap-fill, and chasing lessons. Needs visual review before UI-ready. |
 | Small-Cap Stocks, Float And Dilution | 28 | Full course markdown path has passed Academy format migration across small-cap context, float, dilution, offerings, securities, corporate actions, cash runway, and going concern. Needs visual review before UI-ready. |
 | Risk Management And Trade Planning | 13 | Full course markdown path has passed Academy format migration across planning, rules, risk basics, account protection, trade management, and event risk. Needs visual review before UI-ready. |
-| Trading Psychology And Discipline | 8 | Full course markdown path is now content-upgraded across discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. Needs visual review before UI-ready. |
+| Trading Psychology And Discipline | 8 | Full course markdown path has passed Academy format migration check across discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. Needs visual review before UI-ready. |
 | Trade Review And Improvement | 7 | Full course markdown path is now content-upgraded across review foundation, risk review, planned-vs-actual review, execution review, mistake patterns, swing review, and Trader Intelligence review bridge. The news-trade review lesson is cross-listed from the completed News course. Needs visual review before UI-ready. |
 
 Total Academy-ready lessons currently represented in this index:
@@ -1157,20 +1157,20 @@ More precise current state:
 | State | Lesson Count | Meaning |
 |---|---:|---|
 | content_upgraded | 217 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 56 | Remaining upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
-| academy_ready | 161 | Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, and Small-Cap/Float/Dilution lesson sets have passed the first Academy format migration check. |
+| academy_format_review_needed | 49 | Remaining upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| academy_ready | 168 | Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, Small-Cap/Float/Dilution, and Trading Psychology lesson sets have passed the first Academy format migration check. Trading Psychology adds 7 newly counted ready lessons here because Chasing Stocks was already counted in the Trading Styles check. |
 
 The 217 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to continue normalizing them into the final course format while creating or upgrading missing lessons only when a real gap appears.
 
 Current best next editorial action:
 
 ```text
-Trading Psychology And Discipline Academy format migration
+Trade Review And Improvement Academy format migration
 ```
 
 Reason:
 
-Trading Foundations passed the first structural check. Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, and Small-Cap/Float/Dilution have completed the first Academy format migration check. The highest-value next work is Trading Psychology And Discipline.
+Trading Foundations passed the first structural check. Chart Reading core, Candlestick Patterns, Chart Patterns, Volume/Liquidity, Technical Indicators, Trading Styles, News/SEC Filings, Risk Management, Small-Cap/Float/Dilution, and Trading Psychology have completed the first Academy format migration check. The highest-value next work is Trade Review And Improvement.
 
 ## Recommended Work Method From Here
 
