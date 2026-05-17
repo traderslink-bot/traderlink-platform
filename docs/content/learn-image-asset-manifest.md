@@ -71,6 +71,7 @@ journey_map
 | `public/images/learn/chart-reading/rejection-wick-context.svg` | `/learn/price-rejection/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show a long wick at a key level with follow-through context. | Rejection Needs Context section. | Candlestick chart showing a long wick at a key level with follow-through context. | editor_verified | Supports wick-context education, avoids treating every wick as a signal, and keeps labels focused on review. | `3ff3c7c4` |
 | `public/images/learn/chart-reading/uptrend-structure-break.svg` | `/learn/break-of-structure/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show higher highs and higher lows before price breaks below the latest higher low. | Uptrend Structure Break section. | Candlestick chart showing higher highs and higher lows before price breaks below the latest higher low. | editor_verified | Supports uptrend structure-break review, uses realistic candles and swing labels, and avoids predictive language. | `d03cf796` |
 | `public/images/learn/chart-reading/downtrend-structure-break.svg` | `/learn/break-of-structure/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show lower highs and lower lows before price breaks above the latest lower high. | Downtrend Structure Break section. | Candlestick chart showing lower highs and lower lows before price breaks above the latest lower high. | editor_verified | Supports downtrend structure-break review, uses realistic candles and swing labels, and avoids reversal certainty. | `d03cf796` |
+| `public/images/learn/chart-reading/swing-highs-swing-lows-map.svg` | `/learn/swing-highs-and-swing-lows/` | Chart Reading And Market Structure | realistic_candlestick_chart | Show major swing highs and swing lows on a realistic price move. | Quick Definition section. | Candlestick chart showing clear swing highs and swing lows on a realistic price move. | editor_verified | Supports swing-point identification, uses realistic candles, labels only major turns, and avoids predictive language. | `94fabc3b` |
 
 ## Editor Verification Summary
 
@@ -160,11 +161,19 @@ Break of structure SVG batch verification:
 - The visuals are wired to article sections where they add learning value.
 - The batch is appropriate for the break-of-structure upgrade.
 
+Swing highs and swing lows SVG verification:
+
+- The visual supports the actual swing highs and swing lows lesson.
+- It uses realistic red and green candlesticks and labels major swing turns without cluttering every candle.
+- Labels teach structure identification without buy/sell language or predictive claims.
+- The visual is wired to the article section where it adds learning value.
+- The asset is appropriate for the swing-point foundation article.
+
 ## Next Asset Batch Candidates
 
-After the first ten Chart Reading articles, the next high-value SVG batch should likely support one of these:
+After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Swing Highs And Swing Lows article: swing point identification and clean structure map.
+1. Higher Highs And Higher Lows article: uptrend structure, extension risk, higher-low failure.
 2. Breakdown article: clean breakdown, failed breakdown/reclaim, breakdown with volume context.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
