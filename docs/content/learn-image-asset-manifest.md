@@ -106,6 +106,8 @@ journey_map
 | `public/images/learn/chart-reading/rvol-scanner-context-review.svg` | `/learn/relative-volume-rvol/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show a scanner-style RVOL context panel beside chart and volume review. | RVOL On A Scanner section. | Candlestick chart with a scanner-style context panel showing high RVOL, catalyst, spread, and volume fade review. | editor_verified | Supports RVOL scanner review, uses realistic candles, volume bars, and avoids prediction language. | `f714877e` |
 | `public/images/learn/chart-reading/volume-spike-follow-through-vs-fade.svg` | `/learn/volume-spike/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Compare a spike that follows through with a spike that fades. | Quick Definition section. | Candlestick chart comparing a volume spike that follows through with one that fades after the first burst. | editor_verified | Supports volume-spike follow-through/fade review, uses realistic candles and volume bars, and avoids guarantee language. | `b74f09f9` |
 | `public/images/learn/chart-reading/volume-spike-chase-risk.svg` | `/learn/volume-spike/` | Volume Liquidity And Order Flow | realistic_candlestick_chart | Show chase risk after entering far from nearby structure after a spike. | Chase Risk After The First Spike section. | Candlestick chart showing chase risk after a late entry far above the first volume spike and nearest support. | editor_verified | Supports volume-spike chase-risk review, uses realistic candles, support context, volume bars, and avoids signal language. | `b74f09f9` |
+| `public/images/learn/chart-reading/liquidity-clean-vs-thin-market.svg` | `/learn/liquidity/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Compare clean liquidity with thin liquidity using candles, spread, depth, and volume context. | Quick Definition section. | Trading dashboard comparison showing clean liquidity versus thin liquidity with candles, spread, and depth context. | editor_verified | Supports liquidity education, uses realistic candles, volume bars, spread/depth context, and avoids guarantee language. | `debb3ce8` |
+| `public/images/learn/chart-reading/liquidity-spread-depth-review.svg` | `/learn/liquidity/` | Volume Liquidity And Order Flow | realistic_trading_dashboard | Show bid-ask spread and depth as execution review context beside a chart. | Reading Spread And Depth section. | Trading dashboard showing bid ask spread and market depth as liquidity review context. | editor_verified | Supports spread/depth liquidity review, uses realistic candles, volume bars, quote context, and avoids signal language. | `debb3ce8` |
 
 ## Editor Verification Summary
 
@@ -324,11 +326,19 @@ Volume spike SVG verification:
 - Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
 - The visuals are wired to article sections where they add learning value.
 
+Liquidity SVG verification:
+
+- Both visuals support the actual liquidity lesson.
+- The clean-versus-thin visual compares realistic candles, volume, spread, and depth so liquidity is tied to execution, not abstract theory.
+- The spread/depth review visual shows a quote panel beside a chart to teach why last price is not the same as clean execution.
+- Labels avoid buy/sell language, profit claims, and guaranteed-outcome claims.
+- The visuals are wired to article sections where they add learning value.
+
 ## Next Asset Batch Candidates
 
 After the first eleven Chart Reading articles, the next high-value SVG batch should likely support one of these:
 
-1. Liquidity article: clean versus thin liquidity, spread impact, and execution review.
+1. Dollar Volume article: share volume versus traded value, low-priced stock comparison, and liquidity review context.
 2. Fakeout gap article or glossary bridge: false breakout/breakdown behavior and review workflow.
 3. SEC filings hub: filing map, shelf-to-offering flow, dilution risk flow.
 4. Risk discipline path: FOMO loop, revenge trading loop, overtrading spiral.
