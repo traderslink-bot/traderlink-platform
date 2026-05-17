@@ -199,6 +199,10 @@ Use this as the primary course order on the Academy homepage:
 | 8 | Risk Management And Trade Planning | content_upgraded | Completed markdown course path covering plans, rules, sizing, stops, loss limits, trade management, profit protection, overnight risk, and holding through news. |
 | 9 | Trading Psychology And Discipline | content_upgraded | Completed markdown course path covering discipline, FOMO, chasing, revenge trading, overtrading, holding losers, cutting winners, and averaging down. |
 | 10 | Trade Review And Improvement | content_upgraded | Completed markdown course path covering trade review, risk review, planned-vs-actual review, execution review, mistake patterns, swing review, and Trader Intelligence review bridge. |
+| 11 | Day Trading Workflow | content_upgraded | Completed markdown course path covering premarket, watchlists, market open, opening range, midday, power hour, after-hours, and session review. |
+| 12 | Practice And Improvement | content_upgraded | Completed markdown course path covering practice loops, paper trading, replay, screenshots, grading, drills, forward testing, and improvement planning. |
+| 13 | Halts And High-Volatility Events | content_upgraded | Completed markdown course path covering halts, resumes, circuit breakers, fast spreads, low-float volatility, and volatile-trade review. |
+| 14 | Swing Trading Workflow | content_upgraded | Completed markdown course path covering beginner swing planning, risk, levels, volume, catalysts, earnings, news risk, and small-cap swing context. |
 
 Status definitions:
 
@@ -238,7 +242,7 @@ Meaning:
 
 Important:
 
-The 205 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
+The 213 already upgraded lessons should be treated as **content_upgraded** and mostly close to **academy_ready**, but they still need an Academy migration pass before final website implementation.
 
 The migration pass should check:
 
@@ -897,6 +901,54 @@ Before production UI implementation, this course still needs:
 - Optional course intro/landing copy for the Academy course page.
 - Progress/lesson completion wiring in the website build phase.
 
+## Course 14: Swing Trading Workflow
+
+### Purpose
+
+Teach swing trading as a multi-session workflow built around thesis, daily chart levels, position risk, overnight exposure, catalyst quality, volume follow-through, event risk, small-cap context, and review.
+
+### Course Outcome
+
+The user should understand that swing trading is not simply slower day trading. They should know how to plan and review a swing trade before holding, define invalidation, size around overnight risk, evaluate catalysts and news, and review hold decisions across multiple sessions.
+
+### Completed Course Lesson Sequence
+
+| Order | Module | Lesson | URL | Current Asset | Status | Notes |
+|---:|---|---|---|---|---|---|
+| 1 | Swing Trading Foundation | Swing Trading For Beginners | `/learn/swing-trading-for-beginners/` | content_upgraded | complete | Upgraded course opener with multi-session plan SVG; teaches beginner swing workflow, planned swing versus failed day trade, and review structure. |
+| 2 | Risk And Invalidation | Swing Trading Risk Management | `/learn/swing-trading-risk-management/` | content_upgraded | complete | Upgraded lesson with gap-risk SVG; teaches invalidation, position sizing, overnight exposure, event checks, and changing risk while open. |
+| 3 | Levels And Chart Planning | Swing Trading Support Resistance | `/learn/swing-trading-support-resistance/` | content_upgraded | complete | Upgraded lesson teaching higher-timeframe support/resistance zones, level maps, reaction review, volume context, and failed-level review. |
+| 4 | Participation And Follow-Through | Swing Trading Volume | `/learn/swing-trading-volume/` | content_upgraded | complete | Upgraded lesson with catalyst timeline SVG; teaches volume as participation and follow-through context, not a standalone signal. |
+| 5 | Catalyst Context | Swing Trading Catalysts | `/learn/swing-trading-catalysts/` | content_upgraded | complete | Upgraded lesson teaching source/detail review, catalyst quality, filings, chart reaction, volume follow-through, and catalyst fade. |
+| 6 | Event Risk | Swing Trading Earnings | `/learn/swing-trading-earnings/` | content_upgraded | complete | Upgraded lesson teaching pre-earnings, through-earnings, and post-earnings risk, gap exposure, guidance, and reaction review. |
+| 7 | Event Risk | Swing Trading News Risk | `/learn/swing-trading-news-risk/` | content_upgraded | complete | Upgraded lesson teaching known versus surprise risk, overnight headlines, filings, thesis changes, levels, volume, and liquidity review. |
+| 8 | Small-Cap Swing Context | Small Cap Swing Trading | `/learn/swing-trading-small-caps/` | content_upgraded | complete | Upgraded course capstone teaching float, filings, dilution, liquidity, catalyst quality, volume follow-through, halt/gap risk, and full-context review. |
+
+### Cross-Listed Support Lessons
+
+These completed lessons should be linked from the Swing Trading Workflow course UI where useful:
+
+- `/learn/swing-trading/`
+- `/learn/day-trading-vs-swing-trading/`
+- `/learn/support-and-resistance/`
+- `/learn/overnight-risk/`
+- `/learn/position-sizing/`
+- `/learn/stock-catalysts/`
+- `/learn/sec-filings/`
+- `/learn/small-cap-stocks/`
+- `/learn/trading-halts/`
+- `/learn/swing-trade-journal/`
+
+### Course Status
+
+The Swing Trading Workflow course markdown path is **content_upgraded** across 8 upgraded lessons and 3 realistic SVG assets.
+
+Before production UI implementation, this course still needs:
+
+- Final Academy migration pass for UI-ready metadata and completion behavior.
+- Optional course intro/landing copy for the Academy course page.
+- Progress/lesson completion wiring in the website build phase.
+
 ## Cross-Listed Lesson Rules
 
 Some lessons can appear in more than one course. This is good for navigation, but each lesson should still have one primary course.
@@ -1039,6 +1091,7 @@ Current known Academy-ready lesson groups:
 | Day Trading Workflow | 9 | Full day-trading workflow course markdown path is now content-upgraded across session framework, premarket prep, watchlist filtering, market open, opening range, midday filtering, power hour, after-hours context, and session review. Five realistic SVGs were created and manifest-tracked. |
 | Practice And Improvement | 9 | Full practice course markdown path is now content-upgraded across practice foundation, paper trading, replay review, watchlist review, screenshot review, trade grading, one-rule drills, forward testing, and improvement planning. Three realistic SVGs were created and manifest-tracked. |
 | Halts And High-Volatility Events | 7 | Full event-risk course markdown path is now content-upgraded across trading halts, volatility halts, halt resumes, market-wide circuit breakers, fast-spread risk, low-float volatility, and high-volatility trade review. Three realistic SVGs were created and manifest-tracked. |
+| Swing Trading Workflow | 8 | Full swing-trading workflow course markdown path is now content-upgraded across beginner swing planning, risk management, support/resistance planning, volume, catalysts, earnings, news risk, and small-cap swing context. Three realistic SVGs were created and manifest-tracked. |
 | Volume, Liquidity And Order Flow | 14 | Core course path is academy-ready. |
 | News, Catalysts And SEC Filings | 36 | Full course markdown path is now content-upgraded across catalysts, press releases, SEC filings, news categories, and news-trade review. Needs visual review before UI-ready. |
 | Trading Foundations | 4 | Beginner onboarding and market-basics lessons are content-upgraded; plan/risk/review lessons are cross-listed from completed Risk and Trade Review courses. Needs visual review before UI-ready. |
@@ -1052,28 +1105,28 @@ Current known Academy-ready lesson groups:
 Total Academy-ready lessons currently represented in this index:
 
 ```text
-205
+213
 ```
 
 More precise current state:
 
 | State | Lesson Count | Meaning |
 |---|---:|---|
-| content_upgraded | 205 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
-| academy_format_review_needed | 205 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
+| content_upgraded | 213 | Lessons already upgraded into strong educational content with realistic examples, review prompts, visuals where useful, and safer non-advice language. |
+| academy_format_review_needed | 213 | The same upgraded lessons should still receive a final Academy migration pass for metadata, course/module/order, completion assumptions, and section naming. |
 | academy_ready | 0 | No lesson should be treated as final Academy UI-ready until the migration pass confirms it. |
 
-The 205 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
+The 213 content-upgraded lessons are not throwaway work. They are the foundation of the Academy. The next step is to normalize them into the final course format while continuing to create or upgrade missing lessons.
 
 Current best next editorial action:
 
 ```text
-/learn/swing-trading-for-beginners/
+/learn/chart-reading-path/
 ```
 
 Reason:
 
-The Academy just completed the Halts And High-Volatility Events course markdown path. The highest-value next course is Swing Trading Workflow, starting with `/learn/swing-trading-for-beginners/`, because local swing-trading drafts already exist and can turn the current swing overview into a fuller multi-session learning path.
+The Academy just completed the Swing Trading Workflow course markdown path. The highest-value next work is path-hub/navigation support, starting with `/learn/chart-reading-path/`, so the completed courses can be connected into a clearer guided Academy experience before website implementation.
 
 ## Recommended Work Method From Here
 
