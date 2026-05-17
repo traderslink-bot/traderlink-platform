@@ -89,7 +89,7 @@ Start here:
 
 Good review is specific.
 
-Instead of saying “bad trade,” a stronger review asks:
+Instead of saying "bad trade," a stronger review asks:
 
 - Was the trade planned before entry?
 - Did the risk match the setup?

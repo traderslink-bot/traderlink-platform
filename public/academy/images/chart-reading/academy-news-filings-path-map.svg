@@ -4,7 +4,7 @@
   <rect width="960" height="540" fill="#07111f"/>
   <rect x="34" y="34" width="892" height="472" rx="14" fill="#0d1828" stroke="#18314f"/>
   <text x="58" y="70" fill="#e6edf7" font-family="Arial, sans-serif" font-size="24" font-weight="700">News And Filings Path</text>
-  <text x="58" y="96" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="14">Headline → source → filing type → price reaction → review</text>
+  <text x="58" y="96" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="14">Headline -> source -> filing type -> price reaction -> review</text>
   <rect x="64" y="128" width="270" height="280" rx="10" fill="#0a1422" stroke="#152b46"/>
   <text x="84" y="160" fill="#dcefff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Source Review</text>
   <rect x="84" y="182" width="220" height="36" rx="6" fill="#102743" stroke="#2f86d1"/><text x="100" y="205" fill="#cfe9ff" font-family="Arial, sans-serif" font-size="13">Press release details</text>

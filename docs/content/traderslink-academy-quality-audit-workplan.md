@@ -108,7 +108,7 @@ Recommended order for future runs:
 | 12 | Trading Psychology And Discipline | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-psychology.md`; Pass 2 corrected the Averaging Down transition into the Trade Review course opener; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-psychology.md` with reputable investor-risk, order-type, and behavioral-finance source verification plus targeted plain-language guardrail edits. |
 | 13 | Trade Review And Improvement | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trade-review-improvement.md`; Pass 2 documented the news-review cross-list exception; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trade-review-improvement.md` with official/reputable order, execution, active-trading-risk, behavioral-finance, and local product-truthfulness source checks plus targeted plain-language guardrail edits. |
 | 14 | Practice And Improvement | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-practice-improvement.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-practice-improvement.md` with official/reputable simulated-performance, performance-claim, order/execution, behavioral-finance, and local product-truthfulness source checks plus targeted plain-language guardrail edits. |
-| 15 | Academy Navigation Path Hubs | complete | complete | not_started | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-navigation-path-hubs.md`; Pass 2 confirmed path hubs are optional navigation support, not a locked course sequence. |
+| 15 | Academy Navigation Path Hubs | complete | complete | complete | not_started | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-navigation-path-hubs.md`; Pass 2 confirmed path hubs are optional navigation support, not a locked course sequence; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-navigation-path-hubs.md` with internal source checks for optional navigation, consistent path framing, risk disclaimers, and product-truthfulness restraint. |
 
 ## Lesson-Level Quality Audit Checklist
 
@@ -211,50 +211,23 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 3: Accuracy/Source Audit** for **Academy Navigation Path Hubs**.
+Continue with **Pass 4: Visual Gap Audit** for **Start Here For New Traders**.
 
 Reason:
 
-- Trading Foundations Pass 1 is complete.
-- Chart Reading And Market Structure Pass 1 is complete.
-- Volume, Liquidity And Order Flow Pass 1 is complete.
-- Risk Management And Trade Planning Pass 1 is complete.
-- Technical Indicators And Tools Pass 1 is complete.
-- Trading Styles And Playbooks Pass 1 is complete.
-- Day Trading Workflow Pass 1 is complete.
-- Swing Trading Workflow Pass 1 is complete.
-- News, Catalysts And SEC Filings Pass 1 is complete.
-- Small-Cap Stocks, Float And Dilution Pass 1 is complete.
-- Halts And High-Volatility Events Pass 1 is complete.
-- Trading Psychology And Discipline Pass 1 is complete.
-- Trade Review And Improvement Pass 1 is complete.
-- Practice And Improvement Pass 1 is complete.
-- Academy Navigation Path Hubs Pass 1 is complete.
 - The course-by-course Pass 1 lesson-level quality audit cycle is complete.
 - Pass 2 Academy-Wide Sequence And Cross-Link Audit is complete.
-- News, Catalysts And SEC Filings Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-news-catalysts-sec-filings.md`.
-- Small-Cap Stocks, Float And Dilution Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-small-cap-float-dilution.md`.
-- Halts And High-Volatility Events Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-halts-high-volatility.md`.
-- Trading Foundations Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trading-foundations.md`.
-- Volume, Liquidity And Order Flow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-volume-liquidity.md`.
-- Risk Management And Trade Planning Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-risk-management.md`.
-- Technical Indicators And Tools Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-technical-indicators.md`.
-- Trading Styles And Playbooks Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trading-styles.md`.
-- Day Trading Workflow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-day-trading-workflow.md`.
-- Swing Trading Workflow Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-swing-trading-workflow.md`.
-- Chart Reading And Market Structure Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-chart-reading.md`.
-- Trading Psychology And Discipline Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trading-psychology.md`.
-- Trade Review And Improvement Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-trade-review-improvement.md`.
-- Practice And Improvement Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-practice-improvement.md`.
-- Academy Navigation Path Hubs is now the next useful source-sensitive group because path hubs should be verified as optional navigation support rather than locked requirements, investment advice, product promises, or duplicate full lessons.
-- Pass 3 should verify factual details against official and reputable sources before the Academy moves toward production UI planning. Source details belong in internal audit files; user-facing lessons should use clean educational wording unless a rule, filing type, or official system is itself the lesson topic.
+- Pass 3 Accuracy/Source Audit is complete for all current Academy course groups and Academy Navigation Path Hubs.
+- Academy Navigation Path Hubs Pass 3 is complete in `docs/content/traderslink-academy-accuracy-source-audit-navigation-path-hubs.md`.
+- The next useful audit phase is Pass 4 Visual Gap Audit, starting in course order with Start Here For New Traders.
+- Pass 4 should identify where beginner lessons need realistic educational visuals, where existing visuals are enough, and where visual work should be deferred until production UI planning.
 
 Output should include:
 
-- An Academy Navigation Path Hubs accuracy/source audit.
-- Any small markdown edits needed.
-- Source-sensitive findings and corrections.
-- Reputable-source references for educational navigation language, course-path framing, optional learning order, progress/resume language, and app bridge restraint.
-- A clear list of items deferred to later source passes if the course is too large for one run.
+- A Start Here For New Traders visual gap audit.
+- Course-level visual coverage notes.
+- Lesson-by-lesson visual recommendations.
+- Realistic SVG opportunities and defer/no-visual decisions.
+- Image manifest task notes only where assets are created or updated.
 - Tracker and handoff update.
 - Commit.
