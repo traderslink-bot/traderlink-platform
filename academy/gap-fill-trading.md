@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether gap-fill ideas used prior-session context, clear levels, and realistic risk instead of assuming the gap must close."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: "25"
+academy_order: 25
 academy_module: "Gaps"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/chart-patterns/"

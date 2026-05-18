@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether trades happened near useful levels, into resistance, after support failed, or in the middle of an unclear range."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Foundation"
-academy_order: "2"
+academy_order: 2
 academy_module: "Chart Reading Basics And Core Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/candlestick-patterns/"

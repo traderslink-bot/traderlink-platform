@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether marked levels were clean, visible before the trade, and useful for planning risk."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: "3"
+academy_order: 3
 academy_module: "Chart Reading Basics And Core Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/support-and-resistance/"

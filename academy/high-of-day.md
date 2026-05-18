@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether high-of-day acted as a session reference level or became a chase point."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: "19"
+academy_order: 19
 academy_module: "Intraday Reference Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/premarket-high-low/"

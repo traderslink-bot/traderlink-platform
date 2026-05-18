@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether breakdown trades were planned around support loss or taken late after extension."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: "12"
+academy_order: 12
 academy_module: "Rejection, Breaks And Reclaims"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/breakout-trading/"

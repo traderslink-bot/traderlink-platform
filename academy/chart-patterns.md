@@ -18,7 +18,7 @@ cta: "Review whether chart patterns were visible before the decision or only lab
 recommended_previous: "/academy/consolidation/"
 recommended_next: "/academy/gap-fill-trading/"
 academy_level: "Foundation"
-academy_order: "24"
+academy_order: 24
 academy_module: "Ranges, Compression And Pattern Basics"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"

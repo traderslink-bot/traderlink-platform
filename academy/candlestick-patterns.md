@@ -18,7 +18,7 @@ cta: "Use candle context to review whether a decision was based on location, vol
 recommended_previous: null
 recommended_next: "/academy/support-and-resistance/"
 academy_level: "Foundation"
-academy_order: "1"
+academy_order: 1
 academy_module: "Chart Reading Basics And Core Levels"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"

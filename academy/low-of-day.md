@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether low-of-day acted as a session risk level or became a late breakdown chase."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: "20"
+academy_order: 20
 academy_module: "Intraday Reference Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/high-of-day/"

@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether new-high-of-day decisions were planned momentum attempts or alert-driven reactions."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: "21"
+academy_order: 21
 academy_module: "Intraday Reference Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/low-of-day/"
