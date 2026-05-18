@@ -1089,6 +1089,25 @@ Global Pass 6 decisions:
 - Strongest core bridge courses: Volume/Liquidity, Risk Management, Trading Styles/Playbooks, Day Trading Workflow, News/Filings, Small-Cap/Float/Dilution, Halts/Volatility, Trading Psychology, Trade Review, and Practice/Improvement.
 - Lighter bridge contexts: Trading Foundations, Chart Reading libraries, Technical Indicators, Swing Workflow, and Path Hubs.
 
+## Production Content Model Status
+
+Academy production content model planning is complete.
+
+Planning file:
+
+- `docs/content/traderslink-academy-production-content-model-plan.md`
+
+Global content model decisions:
+
+- Keep markdown lesson files in `academy/` as canonical educational content.
+- Add or generate a separate course membership layer for future production.
+- Store user completion by lesson slug.
+- Use context-specific navigation from course/path membership when a lesson is cross-listed.
+- Keep frontmatter previous/next as canonical lesson navigation.
+- Model path hubs separately from numbered courses.
+- Store future app bridge cards as route-safe UI metadata, with hard app links disabled until app routes and claims are stable.
+- Do not duplicate markdown lesson files for cross-listed placements.
+
 ## Cross-Listed Lesson Rules
 
 Some lessons can appear in more than one course. This is good for navigation, but each lesson should still have one primary course.

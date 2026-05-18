@@ -211,7 +211,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Academy production content model planning**.
+Continue with **Academy content registry draft planning**.
 
 Reason:
 
@@ -231,13 +231,14 @@ Reason:
 - Pass 5 UI Readiness Review is complete for all current Academy course groups and Academy Navigation Path Hubs.
 - Remaining visual gaps documented during Pass 4 are launch-polish items unless a future production design decision requires those visuals before launch.
 - Pass 6 App Bridge Audit is complete for all current Academy course groups and Academy Navigation Path Hubs in `docs/content/traderslink-academy-app-bridge-audit-pass6.md`.
-- The next useful planning pass is the production content model: course membership, cross-listed lesson navigation, progress tracking, path hubs, and route-safe app bridge data.
+- Academy production content model planning is complete in `docs/content/traderslink-academy-production-content-model-plan.md`.
+- The next useful planning pass is an Academy content registry draft that turns the course index into a structured planning artifact without building production website code.
 
 Output should include:
 
-- A production content model plan for Academy course data.
-- Recommended data fields for courses, modules, submodules, path hubs, cross-listed lesson membership, progress tracking, and app bridge metadata.
-- Clear separation between markdown lesson content and generated UI/navigation data.
-- A recommendation for how to preserve `/academy` URLs and avoid duplicating lesson files.
+- A draft Academy content registry as a planning artifact.
+- Every course, module, displayed lesson, membership type, completion behavior, context navigation, path hub membership, and app bridge metadata candidate.
+- Clear identification of canonical versus cross-listed lessons.
+- No production website implementation.
 - Tracker and handoff update.
 - Commit.
