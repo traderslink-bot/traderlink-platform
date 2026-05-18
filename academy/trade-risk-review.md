@@ -8,13 +8,13 @@ secondary_keywords:
   - "post trade risk review"
   - "trading risk management review"
 search_intent: "Understand how to review trade risk after a trade, what to check, and how review can surface risk-management patterns."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders compare planned risk with actual risk and review repeated risk-behavior patterns."
+cta: "Use risk review to compare planned risk with actual risk and repeated behavior patterns."
 recommended_previous: "/academy/trade-review-and-improvement/"
 recommended_next: "/academy/planned-vs-actual-trade-review/"
 academy_level: "Foundation"
@@ -30,15 +30,19 @@ internal_links:
   - "/academy/planned-vs-actual-trade-review/"
 schema:
   - "FAQPage"
+visual_assets:
+  - "/academy/images/trading-foundations/risk-plan-review-loop.svg"
 last_reviewed: "2026-05-17"
 meta_title: "Trade Risk Review Guide"
 meta_description: "Learn how to review trade risk after a trade, including size, stop behavior, invalidation, loss limits, and risk-management mistakes."
 ---
 # Trade Risk Review
 
-This lesson is part of the **Trade Review And Improvement** course. It follows [Trade Review And Improvement](/academy/trade-review-and-improvement/) and leads into [Planned Vs Actual Trade Review](/academy/planned-vs-actual-trade-review/).
+In the **Trading Foundations** path, this lesson follows [Stop Loss](/academy/stop-loss/) and completes the Course 1 core path. It also supports the later Trade Review And Improvement course.
 
 Trade risk review is the process of studying how risk was planned, taken, managed, and adjusted during a trade. It helps traders understand whether the result came from a clean process, a risk mistake, or an emotional decision.
+
+![Trading review dashboard showing a pre-trade plan, chart invalidation area, position sizing context, and post-trade review loop.](/academy/images/trading-foundations/risk-plan-review-loop.svg)
 
 A trade can make money and still have poor risk. A trade can lose money and still be managed correctly. That is why risk review needs to look deeper than profit and loss.
 

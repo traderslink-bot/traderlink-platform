@@ -8,13 +8,13 @@ secondary_keywords:
   - "stop loss order"
   - "trade invalidation level"
 search_intent: "Understand what a stop loss is, how traders use stop areas, what can go wrong, and how to review stop loss decisions."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Review stop and invalidation decisions after completed trades so risk behavior stays visible."
 recommended_next: "/academy/mental-stop-vs-hard-stop/"
 recommended_previous: "/academy/win-rate-reward-risk-and-expectancy/"
 academy_level: "Practical"
@@ -30,15 +30,19 @@ internal_links:
   - "/academy/trade-review-and-improvement/"
 schema:
   - "FAQPage"
+visual_assets:
+  - "/academy/images/trading-foundations/risk-plan-review-loop.svg"
 last_reviewed: "2026-05-17"
 meta_title: "Stop Loss Explained For Traders"
 meta_description: "Learn what a stop loss is, how traders use stop areas, common stop loss mistakes, and how to review stop decisions in a review notes."
 ---
 # Stop Loss
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Win Rate, Reward/Risk, And Expectancy](/academy/win-rate-reward-risk-and-expectancy/) and leads into [Mental Stop Vs Hard Stop](/academy/mental-stop-vs-hard-stop/).
+In the **Trading Foundations** path, this lesson follows [Position Sizing](/academy/position-sizing/) and leads into [Trade Risk Review](/academy/trade-risk-review/). It also supports the later Risk Management And Trade Planning course.
 
-The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
+For beginners, the most important stop-loss idea is not the order name. It is knowing where the trade idea is wrong, what can happen during execution, and how the decision will be reviewed afterward.
+
+![Trading review dashboard showing a pre-trade plan, chart invalidation area, position sizing context, and post-trade review loop.](/academy/images/trading-foundations/risk-plan-review-loop.svg)
 
 ## Lesson Objective
 

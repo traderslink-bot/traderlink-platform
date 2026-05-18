@@ -61,6 +61,7 @@ export default async function AcademyCoursePage({ params }: PageProps) {
   ).length;
   const deepDiveLessonCount =
     candlestickDeepDiveLessonCount + chartPatternDeepDiveLessonCount;
+  const hasDeepDiveLibraries = deepDiveLessonCount > 0;
   const firstCoreLesson = allLessons.find(
     (lesson) => lesson.counts_toward_course_progress,
   );
@@ -86,16 +87,23 @@ export default async function AcademyCoursePage({ params }: PageProps) {
 
             <div className="mt-6 flex flex-wrap gap-3 text-sm">
               <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
-                {coreLessonCount} core lessons + {deepDiveLessonCount}{" "}
-                deep-dive lessons
+                {coreLessonCount} core lessons
               </span>
-              <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
-                {candlestickDeepDiveLessonCount} candlestick deep-dive lessons
-              </span>
-              <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
-                {chartPatternDeepDiveLessonCount} chart-pattern deep-dive
-                lessons
-              </span>
+              {hasDeepDiveLibraries ? (
+                <>
+                  <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
+                    {deepDiveLessonCount} deep-dive lessons
+                  </span>
+                  <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
+                    {candlestickDeepDiveLessonCount} candlestick deep-dive
+                    lessons
+                  </span>
+                  <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
+                    {chartPatternDeepDiveLessonCount} chart-pattern deep-dive
+                    lessons
+                  </span>
+                </>
+              ) : null}
             </div>
 
             {firstCoreLesson ? (
@@ -113,9 +121,9 @@ export default async function AcademyCoursePage({ params }: PageProps) {
 
         <section className="mt-12 space-y-8">
           <p className="max-w-3xl text-base leading-7 text-slate-300">
-            Start with the guided core path, then use the candlestick and
-            chart-pattern deep dives when you want to study a specific candle
-            or pattern.
+            {hasDeepDiveLibraries
+              ? "Start with the guided core path, then use the candlestick and chart-pattern deep dives when you want to study a specific candle or pattern."
+              : "Start with the guided core path and move lesson by lesson. This course is intentionally focused on the first concepts a new trader needs before studying chart structure, volume, risk planning, or advanced workflows."}
           </p>
 
           {modules.map(({ module, lessons }) => (

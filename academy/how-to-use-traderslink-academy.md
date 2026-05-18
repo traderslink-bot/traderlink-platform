@@ -8,13 +8,13 @@ secondary_keywords:
   - "learn trading online"
   - "trading education path"
 search_intent: "Explain how users should navigate TradersLink Academy courses, lessons, progress, review prompts, and related topics."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "1"
-cta: "Use the Academy to learn the concepts, then use Trader Intelligence later to review completed trades and repeated patterns."
+cta: "Use the Academy to learn the concepts, then connect them to completed-trade review and repeated behavior patterns."
 recommended_previous: "/academy/start-here/"
 recommended_next: "/academy/what-is-a-stock-and-how-does-a-trade-work/"
 academy_level: "Foundation"
@@ -30,6 +30,8 @@ internal_links:
   - "/academy/trader-intelligence-trade-review/"
 schema:
   - "FAQPage"
+visual_assets:
+  - "/academy/images/trading-foundations/trading-foundations-course-map.svg"
 last_reviewed: "2026-05-17"
 meta_title: "How To Use TradersLink Academy"
 meta_description: "Learn how to move through TradersLink Academy courses, lessons, progress tracking, review prompts, related lessons, and glossary support."
@@ -41,6 +43,8 @@ This lesson is part of the **Trading Foundations** course. It follows [Welcome T
 TradersLink Academy is meant to feel like guided education without forcing users into a locked path. You can follow the recommended course order, jump to a specific lesson, or return to a lesson after a trade review exposes a gap.
 
 The best way to use the Academy is to treat it as a living learning path: learn, apply, review, return, and keep building.
+
+![Educational dashboard map showing the Trading Foundations course path from market mechanics through planning, risk, and review.](/academy/images/trading-foundations/trading-foundations-course-map.svg)
 
 ## Lesson Objective
 

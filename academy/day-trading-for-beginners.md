@@ -8,13 +8,13 @@ secondary_keywords:
   - "day trading basics"
   - "day trading risk"
 search_intent: "Learn the basics of day trading, what beginners should understand first, and how to avoid common early mistakes."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review completed trades, execution, risk behavior, and repeated beginner mistakes."
+cta: "Use completed-trade review to compare entries, exits, execution, risk behavior, and repeated beginner mistakes."
 recommended_previous: "/academy/stock-market-sessions-and-order-flow-basics/"
 recommended_next: "/academy/day-trading-vs-swing-trading/"
 academy_level: "Foundation"
@@ -30,6 +30,8 @@ internal_links:
   - "/academy/trade-review-and-improvement/"
 schema:
   - "FAQPage"
+visual_assets:
+  - "/academy/images/trading-foundations/session-liquidity-map.svg"
 last_reviewed: "2026-05-17"
 meta_title: "Day Trading For Beginners: Practical Guide"
 meta_description: "Learn day trading basics for beginners, including risk, entries, exits, trade review, common mistakes, and why process matters."
@@ -41,6 +43,8 @@ This lesson is part of the **Trading Foundations** course. It follows [Stock Mar
 Day trading for beginners should start with risk, process, and review. A lot of new traders start by looking for hot stocks or perfect setups, but the real foundation is learning how trades work, how losses happen, and how to review decisions honestly after the session.
 
 Day trading is fast. That is part of the appeal, but it is also what makes it risky when a trader has no plan.
+
+![Trading dashboard showing premarket, open, midday, close, and after-hours liquidity context.](/academy/images/trading-foundations/session-liquidity-map.svg)
 
 ## Lesson Objective
 

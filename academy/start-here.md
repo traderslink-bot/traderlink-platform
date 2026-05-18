@@ -8,14 +8,14 @@ secondary_keywords:
   - "trading lessons"
   - "trading academy"
 search_intent: "Introduce TradersLink Academy, how the course system works, and how users should begin learning safely."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "1"
-cta: "Start with the Academy path, then use Trader Intelligence later to review completed trades and behavior patterns."
-recommended_previous: "/academy/trader-intelligence-trade-review/"
+cta: "Start with the Academy path, then connect lessons to completed-trade review when you have trades to study."
+recommended_previous: null
 recommended_next: "/academy/how-to-use-traderslink-academy/"
 academy_level: "Foundation"
 academy_order: 1
@@ -30,17 +30,21 @@ internal_links:
   - "/academy/risk-management/"
 schema:
   - "FAQPage"
+visual_assets:
+  - "/academy/images/trading-foundations/trading-foundations-course-map.svg"
 last_reviewed: "2026-05-17"
 meta_title: "Welcome To TradersLink Academy"
 meta_description: "Start TradersLink Academy with a clear overview of courses, lessons, learning paths, progress, and educational non-advice trading education."
 ---
 # Welcome To TradersLink Academy
 
-This lesson is part of the **Trading Foundations** course. It follows [How Trader Intelligence Helps Review Trades](/academy/trader-intelligence-trade-review/) and leads into [How To Use TradersLink Academy](/academy/how-to-use-traderslink-academy/).
+This is the first lesson in the **Trading Foundations** course. It leads into [How To Use TradersLink Academy](/academy/how-to-use-traderslink-academy/).
 
 Welcome To TradersLink Academy is the starting point for the guided learning journey. The Academy is designed to teach trading concepts in a structured order while still letting users jump to any course or lesson they need.
 
 This is not a signal service, a promise of trading income, or a shortcut around risk. It is an educational system built around courses, lessons, realistic examples, review habits, and safer decision-making language.
+
+![Educational dashboard map showing the Trading Foundations course path from market mechanics through planning, risk, and review.](/academy/images/trading-foundations/trading-foundations-course-map.svg)
 
 ## Lesson Objective
 
@@ -61,7 +65,7 @@ TradersLink Academy is the structured education area of TradersLink. It organize
 - Lessons teach one focused concept or workflow.
 - Progress tracking helps users continue where they left off.
 - Review prompts help users apply lessons after trades.
-- Trader Intelligence connects later as a post-trade review tool.
+- Trade review connects later, after a trader has completed trades or paper-trading examples to study.
 
 The Academy should feel guided, but not locked. Users can follow the recommended path or jump to the lesson they need.
 

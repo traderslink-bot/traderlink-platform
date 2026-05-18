@@ -199,7 +199,10 @@ const pathHubs = (pathHubsData as PathHubsJson).path_hubs;
 const appBridges = (appBridgesData as AppBridgesJson).app_bridges;
 const visualOverrides = (visualOverridesData as VisualOverridesJson)
   .visual_overrides;
-const launchCourseIds = new Set(["chart-reading-market-structure"]);
+const launchCourseIds = new Set([
+  "trading-foundations",
+  "chart-reading-market-structure",
+]);
 
 export function getAcademyCourses(): AcademyCourse[] {
   return courses
@@ -387,12 +390,13 @@ export function getAcademyLesson(slug: string): AcademyLesson | null {
     stringValue(parsed.frontmatter.description) ??
     getDescriptionFromBody(parsed.body);
 
-  const previousSlug =
-    canonicalMembership?.recommended_previous_in_context ??
-    stringValue(parsed.frontmatter.recommended_previous);
-  const nextSlug =
-    canonicalMembership?.recommended_next_in_context ??
-    stringValue(parsed.frontmatter.recommended_next);
+  const primaryMembership = displayMemberships[0] ?? canonicalMembership;
+  const previousSlug = primaryMembership
+    ? primaryMembership.recommended_previous_in_context
+    : stringValue(parsed.frontmatter.recommended_previous);
+  const nextSlug = primaryMembership
+    ? primaryMembership.recommended_next_in_context
+    : stringValue(parsed.frontmatter.recommended_next);
 
   return {
     slug: normalizedSlug,
@@ -438,16 +442,16 @@ function sortLessonMembershipsForDisplay(
   canonicalMembership: AcademyLessonMembership | null,
 ): AcademyLessonMembership[] {
   return lessonMemberships.toSorted((a, b) => {
-    if (canonicalMembership) {
-      if (a === canonicalMembership) return -1;
-      if (b === canonicalMembership) return 1;
-    }
-
     const aIsLaunch = launchCourseIds.has(a.display_course_id);
     const bIsLaunch = launchCourseIds.has(b.display_course_id);
 
     if (aIsLaunch !== bIsLaunch) {
       return aIsLaunch ? -1 : 1;
+    }
+
+    if (canonicalMembership) {
+      if (a === canonicalMembership) return -1;
+      if (b === canonicalMembership) return 1;
     }
 
     return a.display_order - b.display_order;

@@ -107,6 +107,29 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-05-18 TradersLink Academy Course 1 Launch Pass
+
+Course 1, `Trading Foundations`, is now being brought to the same launch-ready
+standard as Course 2 while staying intentionally smaller:
+
+- structure remains a 12-lesson guided core path with no deep-dive library
+- Course 1 registry copy now has audience, outcome, display copy, ready visual
+  status, and a core-path progress model
+- four Course 1 SVGs were added for the course map, stock-trade mechanics,
+  session/liquidity context, and risk-plan/review loop
+- cross-listed risk/review lessons now render in the launched Course 1 context
+  instead of defaulting to their future canonical course navigation
+- Course 1 and Course 2 are both in the Academy launch course set
+- validation completed:
+  - `npm run validate:academy-registry`
+  - `npx vitest run src/lib/academy/__tests__/academy-content.test.ts`
+
+Best next step for Academy work:
+
+- do browser/render QA on `/academy/courses/trading-foundations/` and the
+  Course 1 lesson flow before marking the course fully ready for user-facing
+  release notes or PR handoff.
+
 ### Fresh Chat Handoff Added
 
 Current fresh-chat handoff:

@@ -8,13 +8,13 @@ secondary_keywords:
   - "risk per trade"
   - "day trading position size"
 search_intent: "Learn what position sizing is, why it matters, and how traders can review size decisions after trades."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "4"
-cta: "Review position sizing decisions with Trader Intelligence"
+cta: "Review position sizing decisions by comparing planned size, risk distance, and actual behavior."
 recommended_next: "/academy/risk-reward-ratio/"
 recommended_previous: "/academy/risk-management/"
 academy_level: "Practical"
@@ -30,15 +30,19 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
+visual_assets:
+  - "/academy/images/trading-foundations/risk-plan-review-loop.svg"
 last_reviewed: "2026-05-17"
 meta_title: "Position Sizing Explained for Traders"
 meta_description: "Learn what position sizing means, why trade size matters, and how traders can review risk per trade and sizing mistakes."
 ---
 # Position Sizing Explained for Traders
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Risk Management](/academy/risk-management/) and leads into [Risk Reward Ratio](/academy/risk-reward-ratio/).
+In the **Trading Foundations** path, this lesson follows [Risk Management](/academy/risk-management/) and leads into [Stop Loss](/academy/stop-loss/). It also supports the later Risk Management And Trade Planning course.
 
-The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
+Position sizing is where a risk idea becomes a real exposure decision. Beginners should learn it before advanced performance math because size often decides whether a trade can be managed calmly.
+
+![Trading review dashboard showing a pre-trade plan, chart invalidation area, position sizing context, and post-trade review loop.](/academy/images/trading-foundations/risk-plan-review-loop.svg)
 
 ## Lesson Objective
 

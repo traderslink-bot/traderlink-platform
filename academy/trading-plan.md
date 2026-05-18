@@ -8,13 +8,13 @@ secondary_keywords:
   - "trading rules"
   - "trade review process"
 search_intent: "Understand what a trading plan is, what it should include, and how traders can review whether they followed it."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "If you want to review your trades with more structure, Trader Intelligence is being built to help traders analyze executions, mistakes, trade management, and performance patterns."
+cta: "Use a written plan to make completed-trade review more specific and less emotional."
 recommended_next: "/academy/trading-rules/"
 recommended_previous: "/academy/unusual-volume/"
 academy_level: "Foundation"
@@ -30,15 +30,19 @@ internal_links:
   - "/academy/trade-review-and-improvement/"
 schema:
   - "FAQPage"
+visual_assets:
+  - "/academy/images/trading-foundations/risk-plan-review-loop.svg"
 last_reviewed: "2026-05-17"
 meta_title: "Trading Plan Explained"
 meta_description: "Learn what a trading plan is, what it should include, and how to review entries, exits, risk rules, and trade discipline."
 ---
 # Trading Plan
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Unusual Volume](/academy/unusual-volume/) and leads into [Trading Rules](/academy/trading-rules/).
+In the **Trading Foundations** path, this lesson follows [Day Trading Vs Swing Trading](/academy/day-trading-vs-swing-trading/) and leads into [Trading Rules](/academy/trading-rules/). It also supports the later Risk Management And Trade Planning course.
 
-The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
+A trading plan is the bridge between learning concepts and making decisions under pressure. It does not tell a trader what to trade. It defines the conditions, risk boundaries, and review questions that should exist before a trade starts.
+
+![Trading review dashboard showing a pre-trade plan, chart invalidation area, position sizing context, and post-trade review loop.](/academy/images/trading-foundations/risk-plan-review-loop.svg)
 
 ## Lesson Objective
 

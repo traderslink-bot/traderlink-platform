@@ -81,19 +81,35 @@ describe("academy content loader", () => {
     expect(params).toContain("chart-reading-path");
   });
 
-  it("limits launch static params to the open Chart Reading course", () => {
+  it("limits launch static params to the open Academy courses", () => {
     const params = getLaunchAcademyLessonStaticParams().map(({ slug }) =>
       slug.join("/"),
     );
 
     expect(getLaunchAcademyCourseIds()).toEqual([
+      "trading-foundations",
       "chart-reading-market-structure",
     ]);
     expect(getLaunchAcademyPathHubIds()).toEqual([]);
+    expect(params).toContain("start-here");
     expect(params).toContain("support-and-resistance");
     expect(params).toContain("candlestick-deep-dive-lessons");
     expect(params).toContain("candlestick-patterns/doji");
     expect(params).not.toContain("sec-filings/form-8-k");
+  });
+
+  it("uses launch course context and navigation for cross-listed foundation lessons", () => {
+    const lesson = getAcademyLesson("/academy/trading-plan/");
+
+    expect(lesson?.contexts[0]).toMatchObject({
+      courseId: "trading-foundations",
+      moduleTitle: "Process Basics",
+      displayOrder: 7,
+    });
+    expect(lesson?.previousLesson?.slug).toBe(
+      "/academy/day-trading-vs-swing-trading/",
+    );
+    expect(lesson?.nextLesson?.slug).toBe("/academy/trading-rules/");
   });
 
   it("builds path hub pages from course and lesson steps", () => {

@@ -8,7 +8,7 @@ secondary_keywords:
   - "what happens when you buy a stock"
   - "beginner trading basics"
 search_intent: "Understand what a stock represents, how trades are matched, and what beginners should know before studying trading setups."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
@@ -31,6 +31,8 @@ internal_links:
   - "/academy/trade-review-and-improvement/"
 schema:
   - "FAQPage"
+visual_assets:
+  - "/academy/images/trading-foundations/stock-trade-mechanics.svg"
 last_reviewed: "2026-05-17"
 meta_title: "What Is A Stock And How Does A Trade Work?"
 meta_description: "Learn what a stock represents, how stock trades are matched, and why beginners should understand orders, prices, liquidity, and risk first."
@@ -42,6 +44,8 @@ This lesson is part of the **Trading Foundations** course. It follows [How To Us
 Before a trader studies chart patterns, news catalysts, indicators, or SEC filings, they should understand the basic object being traded: a share of stock.
 
 A stock is not just a ticker moving on a chart. It represents ownership in a company, trades through buyers and sellers, and moves because orders interact in a market. Understanding that basic mechanic makes later lessons easier to understand.
+
+![Trading dashboard showing a stock quote, bid, ask, last price, spread, visible depth, and order review context.](/academy/images/trading-foundations/stock-trade-mechanics.svg)
 
 ## Lesson Objective
 

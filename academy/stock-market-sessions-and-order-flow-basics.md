@@ -8,7 +8,7 @@ secondary_keywords:
   - "stock market hours for traders"
   - "beginner order flow"
 search_intent: "Understand regular, premarket, and after-hours sessions and how basic order flow changes across the trading day."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
@@ -32,6 +32,8 @@ internal_links:
   - "/academy/spread/"
 schema:
   - "FAQPage"
+visual_assets:
+  - "/academy/images/trading-foundations/session-liquidity-map.svg"
 last_reviewed: "2026-05-17"
 meta_title: "Stock Market Sessions And Order Flow Basics"
 meta_description: "Learn how premarket, regular session, market open, midday, close, and after-hours trading can affect liquidity, spreads, and trade review."
@@ -43,6 +45,8 @@ This lesson is part of the **Trading Foundations** course. It follows [What Is A
 The stock market does not feel the same all day. Premarket, the open, midday, the close, and after-hours can each have different liquidity, spreads, volume, volatility, and participant behavior.
 
 This lesson gives beginners a simple map of the trading day before they study day trading workflows or specific setups.
+
+![Trading dashboard showing premarket, open, midday, close, and after-hours liquidity context.](/academy/images/trading-foundations/session-liquidity-map.svg)
 
 ## Lesson Objective
 

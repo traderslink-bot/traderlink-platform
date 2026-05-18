@@ -4,12 +4,29 @@
   "visual_overrides": [
     {
       "course_id": "trading-foundations",
-      "current_status": "under-supported but UI-planning ready",
-      "future_visual_need": "Four beginner SVGs planned as launch polish.",
-      "primary_visual_asset": null,
-      "module_visual_assets": [],
-      "launch_polish_needed": true,
-      "hard_asset_reference_ready": false
+      "current_status": "ready",
+      "future_visual_need": "Four beginner SVGs added for launch polish.",
+      "primary_visual_asset": "/academy/images/trading-foundations/trading-foundations-course-map.svg",
+      "module_visual_assets": [
+        {
+          "module_id": "start-here",
+          "asset_path": "/academy/images/trading-foundations/trading-foundations-course-map.svg"
+        },
+        {
+          "module_id": "market-mechanics",
+          "asset_path": "/academy/images/trading-foundations/stock-trade-mechanics.svg"
+        },
+        {
+          "module_id": "market-basics",
+          "asset_path": "/academy/images/trading-foundations/session-liquidity-map.svg"
+        },
+        {
+          "module_id": "risk-basics",
+          "asset_path": "/academy/images/trading-foundations/risk-plan-review-loop.svg"
+        }
+      ],
+      "launch_polish_needed": false,
+      "hard_asset_reference_ready": true
     },
     {
       "course_id": "chart-reading-market-structure",

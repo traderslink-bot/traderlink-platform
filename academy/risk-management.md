@@ -8,13 +8,13 @@ secondary_keywords:
   - "position risk trading"
   - "trading loss control"
 search_intent: "Learn what trading risk management is, why it matters, and how traders can review risk decisions after trades."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "4"
-cta: "Review risk decisions with Trader Intelligence"
+cta: "Review risk decisions by comparing planned risk with what actually happened."
 recommended_next: "/academy/position-sizing/"
 recommended_previous: "/academy/trading-rules/"
 academy_level: "Foundation"
@@ -30,15 +30,19 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
+visual_assets:
+  - "/academy/images/trading-foundations/risk-plan-review-loop.svg"
 last_reviewed: "2026-05-17"
 meta_title: "Trading Risk Management Guide for Traders"
 meta_description: "Learn trading risk management basics, including position size, stop areas, loss limits, trade review, and common risk mistakes."
 ---
 # Trading Risk Management: A Practical Guide
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Trading Rules](/academy/trading-rules/) and leads into [Position Sizing](/academy/position-sizing/).
+In the **Trading Foundations** path, this lesson follows [Trading Rules](/academy/trading-rules/) and leads into [Position Sizing](/academy/position-sizing/). It also supports the later Risk Management And Trade Planning course.
 
 The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
+
+![Trading review dashboard showing a pre-trade plan, chart invalidation area, position sizing context, and post-trade review loop.](/academy/images/trading-foundations/risk-plan-review-loop.svg)
 
 ## Lesson Objective
 

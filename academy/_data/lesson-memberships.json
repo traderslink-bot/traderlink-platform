@@ -17,7 +17,7 @@
       "recommended_previous_in_context": null,
       "recommended_next_in_context": "/academy/how-to-use-traderslink-academy/",
       "lesson_card_variant": "standard",
-      "primary_visual_asset": null,
+      "primary_visual_asset": "/academy/images/trading-foundations/trading-foundations-course-map.svg",
       "app_bridge_card_id": null,
       "hard_app_links_enabled": false
     },
@@ -36,7 +36,7 @@
       "recommended_previous_in_context": "/academy/start-here/",
       "recommended_next_in_context": "/academy/what-is-a-stock-and-how-does-a-trade-work/",
       "lesson_card_variant": "standard",
-      "primary_visual_asset": null,
+      "primary_visual_asset": "/academy/images/trading-foundations/trading-foundations-course-map.svg",
       "app_bridge_card_id": null,
       "hard_app_links_enabled": false
     },
@@ -55,7 +55,7 @@
       "recommended_previous_in_context": "/academy/how-to-use-traderslink-academy/",
       "recommended_next_in_context": "/academy/stock-market-sessions-and-order-flow-basics/",
       "lesson_card_variant": "standard",
-      "primary_visual_asset": null,
+      "primary_visual_asset": "/academy/images/trading-foundations/stock-trade-mechanics.svg",
       "app_bridge_card_id": null,
       "hard_app_links_enabled": false
     },
@@ -74,7 +74,7 @@
       "recommended_previous_in_context": "/academy/what-is-a-stock-and-how-does-a-trade-work/",
       "recommended_next_in_context": "/academy/day-trading-for-beginners/",
       "lesson_card_variant": "standard",
-      "primary_visual_asset": null,
+      "primary_visual_asset": "/academy/images/trading-foundations/session-liquidity-map.svg",
       "app_bridge_card_id": null,
       "hard_app_links_enabled": false
     },
@@ -93,7 +93,7 @@
       "recommended_previous_in_context": "/academy/stock-market-sessions-and-order-flow-basics/",
       "recommended_next_in_context": "/academy/day-trading-vs-swing-trading/",
       "lesson_card_variant": "standard",
-      "primary_visual_asset": null,
+      "primary_visual_asset": "/academy/images/trading-foundations/session-liquidity-map.svg",
       "app_bridge_card_id": null,
       "hard_app_links_enabled": false
     },
@@ -112,7 +112,7 @@
       "recommended_previous_in_context": "/academy/day-trading-for-beginners/",
       "recommended_next_in_context": "/academy/trading-plan/",
       "lesson_card_variant": "standard",
-      "primary_visual_asset": null,
+      "primary_visual_asset": "/academy/images/trading-foundations/session-liquidity-map.svg",
       "app_bridge_card_id": null,
       "hard_app_links_enabled": false
     },
@@ -131,7 +131,7 @@
       "recommended_previous_in_context": "/academy/day-trading-vs-swing-trading/",
       "recommended_next_in_context": "/academy/trading-rules/",
       "lesson_card_variant": "standard",
-      "primary_visual_asset": null,
+      "primary_visual_asset": "/academy/images/trading-foundations/risk-plan-review-loop.svg",
       "app_bridge_card_id": null,
       "hard_app_links_enabled": false
     },
@@ -150,7 +150,7 @@
       "recommended_previous_in_context": "/academy/trading-plan/",
       "recommended_next_in_context": "/academy/risk-management/",
       "lesson_card_variant": "standard",
-      "primary_visual_asset": null,
+      "primary_visual_asset": "/academy/images/trading-foundations/risk-plan-review-loop.svg",
       "app_bridge_card_id": null,
       "hard_app_links_enabled": false
     },
@@ -169,7 +169,7 @@
       "recommended_previous_in_context": "/academy/trading-rules/",
       "recommended_next_in_context": "/academy/position-sizing/",
       "lesson_card_variant": "standard",
-      "primary_visual_asset": null,
+      "primary_visual_asset": "/academy/images/trading-foundations/risk-plan-review-loop.svg",
       "app_bridge_card_id": null,
       "hard_app_links_enabled": false
     },
@@ -188,7 +188,7 @@
       "recommended_previous_in_context": "/academy/risk-management/",
       "recommended_next_in_context": "/academy/stop-loss/",
       "lesson_card_variant": "standard",
-      "primary_visual_asset": null,
+      "primary_visual_asset": "/academy/images/trading-foundations/risk-plan-review-loop.svg",
       "app_bridge_card_id": null,
       "hard_app_links_enabled": false
     },
@@ -207,7 +207,7 @@
       "recommended_previous_in_context": "/academy/position-sizing/",
       "recommended_next_in_context": "/academy/trade-risk-review/",
       "lesson_card_variant": "standard",
-      "primary_visual_asset": null,
+      "primary_visual_asset": "/academy/images/trading-foundations/risk-plan-review-loop.svg",
       "app_bridge_card_id": null,
       "hard_app_links_enabled": false
     },
@@ -226,7 +226,7 @@
       "recommended_previous_in_context": "/academy/stop-loss/",
       "recommended_next_in_context": null,
       "lesson_card_variant": "standard",
-      "primary_visual_asset": null,
+      "primary_visual_asset": "/academy/images/trading-foundations/risk-plan-review-loop.svg",
       "app_bridge_card_id": null,
       "hard_app_links_enabled": false
     },
