@@ -236,6 +236,10 @@ Ask:
 
 Structured review notes can help reveal whether rejection is a real part of your review process or something you only notice after a loss.
 
+## Key Takeaway
+
+Price rejection matters only when it happens at a meaningful area and changes the read. A wick or failed push by itself is not a complete trade plan.
+
 ## FAQ
 
 ### What is price rejection in trading?

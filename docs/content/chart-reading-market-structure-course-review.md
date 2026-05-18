@@ -979,3 +979,24 @@ The Chart Reading And Market Structure course is ready when:
 8. The course feels valuable even if the user never signs up.
 9. The course naturally makes Trader Intelligence feel like the next step for reviewing real trades.
 10. Validation passes.
+
+## Readiness QA Log - 2026-05-18
+
+Status: Required core path is structurally ready for UI/content rendering review.
+
+Completed checks:
+
+- Verified all 25 required lessons still follow the intended course order.
+- Verified previous/next links for the required path.
+- Verified every required lesson has at least one visual reference.
+- Verified all 54 required-path visual references exist under `public/academy/images/chart-reading/`.
+- Verified required-path visuals include `<title>` and `<desc>` tags.
+- Added one concise `Key Takeaway` section to each required core lesson.
+- Removed visible `guaranteed` wording from required-path SVG labels and replaced it with more neutral review-context wording.
+- Re-ran Academy registry validation and Academy content tests.
+
+Remaining watch items:
+
+- Optional candlestick and chart-pattern reference lessons are intentionally not part of required completion, but they still deserve a later polish pass for grouping, depth consistency, and lesson-card presentation.
+- `VWAP Reclaim` is cross-listed in the chart-pattern reference library but appears canonically tied to `Technical Indicators And Tools`; do not move or renumber it without checking cross-course navigation.
+- A browser/UI pass should still confirm that long lessons, tables, SVG captions, related lessons, and next/previous navigation render cleanly on desktop and mobile.

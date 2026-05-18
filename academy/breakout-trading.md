@@ -258,6 +258,10 @@ Ask:
 
 Breakout review should focus on whether the trader respected the level, the risk, and the plan.
 
+## Key Takeaway
+
+A breakout is only the start of the review. The important questions are whether the level was clear, whether price held, whether volume supported the move, and whether the entry was planned or chased.
+
 ## FAQ
 
 ### What is breakout trading?

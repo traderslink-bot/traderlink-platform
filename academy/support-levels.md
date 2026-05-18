@@ -272,6 +272,10 @@ After a trade, ask:
 
 Over time, these questions can show whether support levels are improving your process or simply giving you a story after the fact.
 
+## Key Takeaway
+
+Support is a review area, not a promise that price will bounce. The useful question is whether price respected, lost, reclaimed, or ignored the support zone.
+
 ## FAQ
 
 ### What are support levels in trading?

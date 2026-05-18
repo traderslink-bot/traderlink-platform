@@ -259,6 +259,10 @@ Useful review questions include:
 
 This is where structured review notes can help. The goal is not to prove that a level was perfect. The goal is to learn whether your decisions around the level were planned, consistent, and risk-aware.
 
+## Key Takeaway
+
+Support and resistance are decision zones, not commands. Their value comes from helping traders understand location, plan risk, and review whether decisions happened around meaningful areas.
+
 ## FAQ
 
 ### What is support and resistance in trading?

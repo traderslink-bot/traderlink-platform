@@ -249,6 +249,10 @@ Ask:
 
 This helps turn level trading from a vague chart idea into a reviewable process.
 
+## Key Takeaway
+
+Previous-day high and low are session reference points. They matter when price reacts around them with context, not simply because yesterday marked them.
+
 ## FAQ
 
 ### What does previous day high low mean?

@@ -209,6 +209,10 @@ Ask:
 
 Breakdown review should focus on whether the trader respected the level, the risk, and the plan.
 
+## Key Takeaway
+
+A breakdown should be reviewed around the support level, the volume context, and the trader response after the break. Losing support is information, not certainty.
+
 ## FAQ
 
 ### What is breakdown trading?

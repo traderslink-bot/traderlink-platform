@@ -259,6 +259,10 @@ Ask:
 
 Over time, this kind of review can show whether your level drawing is helping your process or just adding noise.
 
+## Key Takeaway
+
+Clean levels should make the chart easier to use. If a level was not obvious before the trade or does not affect the current plan, it probably does not belong on the chart.
+
 ## FAQ
 
 ### How do you draw support and resistance?

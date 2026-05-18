@@ -246,6 +246,10 @@ Ask:
 
 Over time, this review can reveal whether repeated losses happen when trades are taken against weak structure.
 
+## Key Takeaway
+
+Lower highs and lower lows describe downtrend structure, but the lower highs often matter most because they show whether sellers are still controlling bounces.
+
 ## FAQ
 
 ### What does lower highs and lower lows mean?

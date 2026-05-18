@@ -228,6 +228,10 @@ Ask:
 
 Structured review notes can help show whether reclaims are a real part of your process or just another form of chasing.
 
+## Key Takeaway
+
+A reclaim is a change in behavior around a level. It matters most when the level was clear before the move and price can hold the reclaimed area with context.
+
 ## FAQ
 
 ### What is a level reclaim?

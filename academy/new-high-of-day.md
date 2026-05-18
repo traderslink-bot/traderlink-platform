@@ -193,6 +193,10 @@ Ask:
 
 After-trade review can help show whether NHOD trades are part of a structured setup or just reactive entries.
 
+## Key Takeaway
+
+A new high of day is an event, not a plan. The review should ask whether the trader had context before the alert or reacted emotionally after it fired.
+
 ## FAQ
 
 ### What does new high of day mean?

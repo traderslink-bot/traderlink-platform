@@ -157,9 +157,9 @@ As you go, keep asking:
 - Ignoring volume, spread, or liquidity.
 - Forcing reversal meaning onto every wick or small body.
 
-## Before You Move On
+## Key Takeaway
 
-If you remember one thing from this overview, remember this: candlesticks are context, not commands. A candle can help you organize what happened, but the trade still needs a level, a plan, risk control, and follow-through.
+Candles describe behavior during a time period. They become useful only when they are read with location, volume, liquidity, risk, and follow-through.
 
 ## Related Lessons
 

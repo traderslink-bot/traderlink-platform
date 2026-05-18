@@ -184,6 +184,10 @@ Ask:
 
 After-trade review can help show whether compression improves entry quality or becomes another reason to anticipate moves too early.
 
+## Key Takeaway
+
+Compression is tightening price action. It can make risk easier to define, but it does not predict which direction expansion will happen.
+
 ## FAQ
 
 ### What is compression trading?

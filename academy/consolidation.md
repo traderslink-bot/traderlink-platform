@@ -186,6 +186,10 @@ Ask:
 
 After-trade review can help show whether consolidation trades are improving timing or just giving more reasons to overtrade.
 
+## Key Takeaway
+
+Consolidation is sideways digestion. A range can break, fail, rotate, or stay choppy, so the review should focus on structure and patience.
+
 ## FAQ
 
 ### What is consolidation trading?

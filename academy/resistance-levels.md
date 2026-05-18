@@ -274,6 +274,10 @@ After a trade, ask:
 
 Over time, these questions can show whether resistance levels are improving your process or just becoming stories after the trade.
 
+## Key Takeaway
+
+Resistance is a review area, not a promise that price will reject. The useful question is whether price stalled, broke cleanly, failed, or became extended near the zone.
+
 ## FAQ
 
 ### What are resistance levels in trading?

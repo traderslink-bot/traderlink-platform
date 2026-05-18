@@ -246,6 +246,10 @@ Ask:
 
 Over time, this review can show whether you trade better near planned pullbacks or worse when chasing late pushes.
 
+## Key Takeaway
+
+Higher highs and higher lows describe uptrend structure, but the higher lows often matter most because they show whether buyers are still defending pullbacks.
+
 ## FAQ
 
 ### What does higher highs and higher lows mean?

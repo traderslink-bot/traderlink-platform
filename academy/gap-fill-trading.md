@@ -187,6 +187,10 @@ Ask:
 
 A good gap fill review helps traders see whether they were trading a structured level or just assuming price had to return.
 
+## Key Takeaway
+
+A gap-fill idea should start with the actual gap area and nearby levels. The gap is context for review, not a requirement that price must close the space.
+
 ## FAQ
 
 ### What is gap fill trading?

@@ -239,6 +239,10 @@ Ask:
 
 The goal is to understand whether the breakout was planned and reviewable, not just whether it made or lost money.
 
+## Key Takeaway
+
+A level breakout is narrower than a broad breakout idea. The review follows one marked level and asks whether price cleared it, held it, retested it, or failed back below it.
+
 ## FAQ
 
 ### What is a level breakout?

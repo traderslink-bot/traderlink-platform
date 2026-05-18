@@ -224,6 +224,10 @@ Ask:
 
 The goal is not to find a perfect label. The goal is to understand whether the trade idea was still valid after the chart changed.
 
+## Key Takeaway
+
+A break of structure matters when it changes the idea that was supporting the trade. The best review asks whether the trader adapted after structure changed.
+
 ## FAQ
 
 ### What is a break of structure in trading?

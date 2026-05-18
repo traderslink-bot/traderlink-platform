@@ -212,6 +212,10 @@ Ask:
 
 This type of review helps separate a planned structure-based trade from a reaction to short-term movement.
 
+## Key Takeaway
+
+Swing highs and swing lows are the building blocks of structure. They help traders see whether price is progressing, weakening, or rotating without a clean direction.
+
 ## FAQ
 
 ### What are swing highs and swing lows?
