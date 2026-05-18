@@ -15,10 +15,10 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review new-high-of-day trades, alert reactions, chase risk, and repeated decision patterns."
+cta: "Review whether new-high-of-day decisions were planned momentum attempts or alert-driven reactions."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 20
+academy_order: "21"
 academy_module: "Intraday Reference Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/low-of-day/"
@@ -36,7 +36,7 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "New High of Day Explained"
 meta_description: "Learn what new high of day means, why traders watch NHOD alerts, common mistakes, and how to review intraday high breaks without chasing blindly."
 ---
@@ -47,21 +47,13 @@ New high of day means a stock has traded above its previous highest price of the
 
 NHOD alerts depend on the session rules used by the chart or scanner. A regular-session NHOD is different from an extended-hours high that printed before or after the main session.
 
-This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [High of Day](/academy/high-of-day/) and [Low of Day](/academy/low-of-day/), then connects back to [Breakout Trading](/academy/breakout-trading/) and trade review.
+This lesson is about the event, not just the level. High of day is the current session reference point; new high of day is what happens when price pushes into a fresh session high and traders have to decide whether they are following a plan or reacting to an alert.
 
-
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain new high of day in chart-reading context.
-- Identify where it appears on a realistic chart.
-- Review the concept with levels, volume, liquidity, and risk in mind.
-- Avoid treating it as a guaranteed trading signal.
+Goal: Learn how a new high of day differs from the existing high-of-day level and why alert-driven reactions need review.
 
 NHOD alerts can be useful because they show fresh intraday highs. They can also create emotional entries if the trader reacts to the alert before checking structure, volume, resistance, and extension risk.
 
-## What You Should Understand Before Reading This
+## What To Know First
 
 Before studying new high of day, remember:
 
@@ -74,7 +66,7 @@ Before studying new high of day, remember:
 
 The goal is to review whether the NHOD break was planned and supported, or whether it was a late reaction.
 
-## Quick Definition
+## What It Means
 
 New high of day is when price breaks above the current session's prior high.
 
@@ -137,7 +129,7 @@ Chase risk can show up when:
 
 A strong chart can still be a poor late entry if price is too far from structure.
 
-## Realistic Example Scenario
+## Example Chart Read
 
 A stock runs from $2.10 to $2.60, pulls back to $2.42, then builds higher lows under $2.60. Volume starts increasing and price breaks $2.60 to make a new high of day.
 
@@ -167,7 +159,7 @@ Common mistakes around new high of day include:
 
 New highs can be useful, but only when the trade has context and risk control.
 
-## Practical Checklist
+## What To Check On The Chart
 
 Before using NHOD in a plan or review, ask:
 
@@ -184,7 +176,7 @@ Before using NHOD in a plan or review, ask:
 
 This checklist keeps NHOD review practical.
 
-## Apply This In Review
+## Review This In Your Journal
 
 New-high-of-day trades are useful for reviewing breakout discipline.
 

@@ -15,11 +15,11 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review breakdown trades, failed breakdowns, risk decisions, and repeated behavior patterns."
+cta: "Review whether breakdown trades were planned around support loss or taken late after extension."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 7
-academy_module: "Breaks And Reclaims"
+academy_order: "12"
+academy_module: "Rejection, Breaks And Reclaims"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/breakout-trading/"
 recommended_next: "/academy/level-breakout/"
@@ -37,7 +37,7 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Breakdown Trading Guide for Active Traders"
 meta_description: "Learn how breakdown trading works, how to review support breaks, failed breakdowns, volume, chase risk, and trade management."
 ---
@@ -49,18 +49,11 @@ Breakdown trading means watching price move below an important support level, ra
 This lesson is part of the **Chart Reading And Market Structure** learning path. It mirrors [Breakout Trading](/academy/breakout-trading/) on the downside and connects support levels, low of day, lower-high/lower-low structure, failed breakdowns, and reclaim review.
 
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain breakdown trading in chart-reading context.
-- Identify where it appears on a realistic chart.
-- Review the concept with levels, volume, liquidity, and risk in mind.
-- Avoid treating it as a guaranteed trading signal.
+Goal: Learn how to read breakdown quality without chasing every break of support.
 
 A breakdown is not automatically a good trade. The quality depends on level quality, volume, liquidity, spread, extension, nearby support, and whether the trader had a plan before the level broke.
 
-## What You Should Understand Before Reading This
+## What Needs To Be True First
 
 Before studying breakdown trading, it helps to understand:
 
@@ -73,7 +66,7 @@ Before studying breakdown trading, it helps to understand:
 
 The goal is not to call every break of support a trade. The goal is to understand whether the breakdown was planned, confirmed, and managed with risk.
 
-## Quick Definition
+## What A Breakdown Actually Is
 
 Breakdown trading means watching for price to move below an important level and then reviewing whether the move has enough quality to matter.
 
@@ -147,7 +140,7 @@ An extended breakdown can still continue, but the review question changes:
 
 Chase risk is about recognizing when trade location becomes difficult to manage.
 
-## Realistic Example Scenario
+## Example Chart Read
 
 A small-cap stock opens weak, bounces into lower highs, and keeps testing support near $2.20. Volume increases as price breaks below $2.20.
 
@@ -180,7 +173,7 @@ Common breakdown trading mistakes include:
 
 A breakdown can be a valid setup or a valid risk warning, but a poor entry or poor response can still make it difficult to manage.
 
-## Practical Checklist
+## What To Check Before Trusting It
 
 Before using a breakdown in a trade plan or review, ask:
 
@@ -197,7 +190,7 @@ Before using a breakdown in a trade plan or review, ask:
 
 This checklist helps turn a breakdown from an emotional moment into a reviewable setup.
 
-## Apply This In Review
+## Review This In Your Journal
 
 After a breakdown trade or breakdown-related exit, review the setup and the execution separately.
 

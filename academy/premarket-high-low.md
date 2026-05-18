@@ -15,10 +15,10 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review trades around premarket levels, market open decisions, and repeated decision patterns."
+cta: "Review whether premarket levels were planned before the open or noticed only after the move."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 17
+academy_order: "18"
 academy_module: "Intraday Reference Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/previous-day-high-low/"
@@ -37,7 +37,7 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Premarket High and Low Explained"
 meta_description: "Learn why traders watch premarket high and low levels, how PMH/PML work near the open, common mistakes, and how to review trades around them."
 ---
@@ -48,21 +48,14 @@ The premarket high and premarket low are the highest and lowest prices a stock t
 
 Because extended-hours access and data visibility can vary by broker, venue, and chart platform, define PMH and PML from the same session feed you actually use for planning and review.
 
-This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Previous Day High Low](/academy/previous-day-high-low/) and leads into [High of Day](/academy/high-of-day/), [Market Open Trading](/academy/market-open-trading/), and day-trading workflow review.
+This lesson is part of the **Chart Reading And Market Structure** learning path.
 
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain premarket high and low in chart-reading context.
-- Identify where it appears on a realistic chart.
-- Review the concept with levels, volume, liquidity, and risk in mind.
-- Avoid treating it as a guaranteed trading signal.
+Goal: Learn how premarket high and low can shape open-session decisions and review.
 
 Premarket levels can be useful, especially on active stocks with news, but they do not guarantee a breakout, breakdown, bounce, rejection, or continuation.
 
-## What You Should Understand Before Reading This
+## What To Know First
 
 Before studying premarket high and low, remember:
 
@@ -76,7 +69,7 @@ Before studying premarket high and low, remember:
 
 The goal is to prepare for the open with a cleaner map, not to predict the open.
 
-## Quick Definition
+## What It Means
 
 The premarket high is the highest price a stock reaches during premarket trading before the regular session opens.
 
@@ -168,7 +161,7 @@ PML may act as:
 
 Losing PML does not guarantee continuation. A fast flush below PML can reclaim quickly, especially around the open. The review should focus on whether price held below the level, reclaimed it, or stayed noisy.
 
-## Realistic Example Scenario
+## Example Chart Read
 
 A stock releases news at 7:00 a.m. and trades from $1.80 to a premarket high of $2.65. It pulls back to $2.20, then holds above $2.25 into the open.
 
@@ -225,7 +218,7 @@ Common mistakes around premarket high and low include:
 
 The level gives structure. The reaction around the level gives the review.
 
-## Practical Checklist
+## What To Check On The Chart
 
 Before using PMH or PML in a plan or review, ask:
 
@@ -242,7 +235,7 @@ Before using PMH or PML in a plan or review, ask:
 
 This checklist keeps premarket levels practical.
 
-## Apply This In Review
+## Review This In Your Journal
 
 Premarket level review is especially useful for day traders who trade the open.
 

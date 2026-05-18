@@ -15,10 +15,10 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review high-of-day trades, chase risk, breakout failures, and repeated decision patterns."
+cta: "Review whether high-of-day acted as a session reference level or became a chase point."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 18
+academy_order: "19"
 academy_module: "Intraday Reference Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/premarket-high-low/"
@@ -37,7 +37,7 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "High of Day Explained for Traders"
 meta_description: "Learn what high of day means, why traders watch HOD levels, common mistakes, and how to review trades around intraday highs."
 ---
@@ -48,21 +48,13 @@ High of day is the highest price a stock has reached during the current trading 
 
 For most intraday stock charts, HOD is reviewed inside the active regular session unless the chart or scanner is explicitly set to include extended-hours prints.
 
-This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Premarket High Low](/academy/premarket-high-low/) and [Previous Day High Low](/academy/previous-day-high-low/), then leads into [Low of Day](/academy/low-of-day/) and [New High of Day](/academy/new-high-of-day/).
+High of day is the current session reference level. New high of day, covered later, is the live event of price pushing above that reference level and often triggering scanner or momentum attention.
 
-
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain high of day in chart-reading context.
-- Identify where it appears on a realistic chart.
-- Review the concept with levels, volume, liquidity, and risk in mind.
-- Avoid treating it as a guaranteed trading signal.
+Goal: Learn how high of day acts as a current-session reference level and why it can attract chase behavior.
 
 HOD is one of the most visible intraday levels. It can help traders review strength, breakout attempts, failed breakouts, and chase risk. It does not guarantee continuation.
 
-## What You Should Understand Before Reading This
+## What To Know First
 
 Before studying high of day, remember:
 
@@ -75,7 +67,7 @@ Before studying high of day, remember:
 
 The goal is to review how price behaved around the level, not to treat the level as a command.
 
-## Quick Definition
+## What It Means
 
 High of day is the highest price traded so far during the current session.
 
@@ -157,7 +149,7 @@ Extension risk near HOD can show up when:
 
 Reviewing extension risk helps separate planned breakout trading from chasing.
 
-## Realistic Example Scenario
+## Example Chart Read
 
 A stock opens at $3.00, runs to $3.45, pulls back to $3.20, then grinds back toward $3.45 with higher lows.
 
@@ -187,7 +179,7 @@ Common mistakes around high of day include:
 
 HOD is useful only when it improves the plan and the review.
 
-## Practical Checklist
+## What To Check On The Chart
 
 Before using HOD in a plan or review, ask:
 
@@ -204,7 +196,7 @@ Before using HOD in a plan or review, ask:
 
 This checklist keeps HOD review practical.
 
-## Apply This In Review
+## Review This In Your Journal
 
 High-of-day trades are worth reviewing because they often reveal chasing, FOMO, and breakout discipline issues.
 

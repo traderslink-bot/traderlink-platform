@@ -15,11 +15,11 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review marked levels, execution, risk, and repeated decision patterns."
+cta: "Review whether marked levels were clean, visible before the trade, and useful for planning risk."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 2
-academy_module: "Core Levels"
+academy_order: "3"
+academy_module: "Chart Reading Basics And Core Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/support-and-resistance/"
 recommended_next: "/academy/support-levels/"
@@ -40,7 +40,7 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "How to Draw Support and Resistance"
 meta_description: "Learn how to draw support and resistance using practical chart zones, obvious reactions, near-price levels, and simple trade review questions."
 ---
@@ -49,17 +49,10 @@ meta_description: "Learn how to draw support and resistance using practical char
 
 Learning how to draw support and resistance is really about learning which price areas matter and which ones are just noise. A chart can have dozens of possible levels, but not all of them are useful for trading decisions.
 
-This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Support and Resistance](/academy/support-and-resistance/) and leads into deeper lessons on support levels, resistance levels, swing highs and swing lows, breakouts, fakeouts, and trade review.
+This lesson is part of the **Chart Reading And Market Structure** learning path.
 
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain drawing support and resistance in chart-reading context.
-- Identify where it appears on a realistic chart.
-- Review the concept with levels, volume, liquidity, and risk in mind.
-- Avoid treating it as a guaranteed trading signal.
+Goal: Learn how to draw support and resistance zones that clarify decisions instead of cluttering the chart.
 
 The goal is not to cover the chart with lines. The goal is to mark the areas where price has reacted clearly enough that traders may watch them again.
 
@@ -75,7 +68,7 @@ Before drawing support and resistance, remember:
 
 If a level does not help you plan risk, understand price location, or review the trade later, it may not be worth keeping on the chart.
 
-## Quick Definition
+## What The Process Is
 
 To draw support and resistance, traders usually mark price zones where a stock has previously bounced, rejected, consolidated, broken out, or failed.
 
@@ -232,7 +225,7 @@ Common mistakes include:
 
 The best levels are usually obvious. If you have to force the level, it may not be important enough.
 
-## Practical Checklist
+## Level Review Questions
 
 Before using a marked level in your trade plan, ask:
 
@@ -247,7 +240,7 @@ Before using a marked level in your trade plan, ask:
 9. Does this level simplify the plan or clutter the chart?
 10. Can I review my decision around this level after the trade?
 
-## Apply This In Review
+## Review This In Your Journal
 
 After the trade, compare your marked levels to your actual decisions.
 

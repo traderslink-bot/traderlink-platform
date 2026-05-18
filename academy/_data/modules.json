@@ -68,16 +68,7 @@
     {
       "course_id": "chart-reading-market-structure",
       "module_id": "breaks-and-reclaims",
-      "module_title": "Breaks And Reclaims",
-      "module_order": 2,
-      "module_type": "standard",
-      "display_behavior": "expanded",
-      "progress_enabled": true
-    },
-    {
-      "course_id": "chart-reading-market-structure",
-      "module_id": "reaction-and-structure",
-      "module_title": "Reaction And Structure",
+      "module_title": "Rejection, Breaks And Reclaims",
       "module_order": 3,
       "module_type": "standard",
       "display_behavior": "expanded",
@@ -87,7 +78,7 @@
       "course_id": "chart-reading-market-structure",
       "module_id": "swing-structure",
       "module_title": "Swing Structure",
-      "module_order": 4,
+      "module_order": 2,
       "module_type": "standard",
       "display_behavior": "expanded",
       "progress_enabled": true
@@ -96,7 +87,7 @@
       "course_id": "chart-reading-market-structure",
       "module_id": "intraday-reference-levels",
       "module_title": "Intraday Reference Levels",
-      "module_order": 5,
+      "module_order": 4,
       "module_type": "standard",
       "display_behavior": "expanded",
       "progress_enabled": true
@@ -104,8 +95,8 @@
     {
       "course_id": "chart-reading-market-structure",
       "module_id": "ranges-and-compression",
-      "module_title": "Ranges And Compression",
-      "module_order": 6,
+      "module_title": "Ranges, Compression And Pattern Basics",
+      "module_order": 5,
       "module_type": "standard",
       "display_behavior": "expanded",
       "progress_enabled": true
@@ -114,7 +105,7 @@
       "course_id": "chart-reading-market-structure",
       "module_id": "gaps",
       "module_title": "Gaps",
-      "module_order": 7,
+      "module_order": 6,
       "module_type": "standard",
       "display_behavior": "expanded",
       "progress_enabled": true
@@ -123,7 +114,7 @@
       "course_id": "chart-reading-market-structure",
       "module_id": "candlestick-patterns-context",
       "module_title": "Candlestick Reference Library",
-      "module_order": 8,
+      "module_order": 7,
       "module_type": "reference_library",
       "display_behavior": "collapsed",
       "progress_enabled": false
@@ -132,7 +123,7 @@
       "course_id": "chart-reading-market-structure",
       "module_id": "chart-patterns-context",
       "module_title": "Chart Pattern Reference Library",
-      "module_order": 9,
+      "module_order": 8,
       "module_type": "reference_library",
       "display_behavior": "collapsed",
       "progress_enabled": false

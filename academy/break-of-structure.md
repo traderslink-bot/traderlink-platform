@@ -15,14 +15,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review structure-based trades, invalidation, execution, and repeated decision patterns."
+cta: "Review whether trades adapted when the structure supporting the idea changed."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Advanced"
-academy_order: 11
-academy_module: "Reaction And Structure"
+academy_order: "15"
+academy_module: "Rejection, Breaks And Reclaims"
 academy_course: "Chart Reading And Market Structure"
-recommended_previous: "/academy/price-rejection/"
-recommended_next: "/academy/swing-highs-and-swing-lows/"
+recommended_previous: "/academy/level-reclaim/"
+recommended_next: "/academy/pivot-levels/"
 visual_assets:
   - "/academy/images/chart-reading/uptrend-structure-break.svg"
   - "/academy/images/chart-reading/downtrend-structure-break.svg"
@@ -37,7 +37,7 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Break of Structure Explained"
 meta_description: "Learn what break of structure means in trading, why market structure shifts matter, and how to review trades when structure changes."
 ---
@@ -46,21 +46,13 @@ meta_description: "Learn what break of structure means in trading, why market st
 
 A break of structure happens when price breaks an important swing high, swing low, support area, or resistance area that helped define the current chart structure.
 
-This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Price Rejection](/academy/price-rejection/) and leads into [Swing Highs and Swing Lows](/academy/swing-highs-and-swing-lows/), higher-high/higher-low structure, lower-high/lower-low structure, and trade management review.
+This lesson comes after swing highs, swing lows, higher-high/higher-low structure, lower-high/lower-low structure, rejection, breakouts, breakdowns, and reclaims because those earlier lessons define what structure is before this lesson explains what it means to lose or change it.
 
-
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain break of structure in chart-reading context.
-- Identify where it appears on a realistic chart.
-- Review the concept with levels, volume, liquidity, and risk in mind.
-- Avoid treating it as a guaranteed trading signal.
+Goal: Learn how to recognize when price has changed the structure that supported the trade idea.
 
 Traders watch breaks of structure because they can show that control may be shifting. But a structure break does not guarantee the next move. It is a context change that should be reviewed with level quality, volume, timeframe, and risk.
 
-## What You Should Understand Before Reading This
+## What Needs To Be True First
 
 Before studying break of structure, it helps to understand:
 
@@ -73,7 +65,7 @@ Before studying break of structure, it helps to understand:
 
 If a structure break does not affect the plan or invalidation level, it may not be important enough to act on or review.
 
-## Quick Definition
+## What It Means
 
 A break of structure is a meaningful break of a prior structural level on the chart.
 
@@ -147,7 +139,7 @@ Ask:
 
 A structure break is more useful when it changes the trade context. If the break does not change the plan, it may not be an important break.
 
-## Realistic Example Scenario
+## Example Chart Read
 
 A stock trends higher from $2.00 to $3.20. Along the way, it forms higher lows at $2.35, $2.60, and $2.85.
 
@@ -198,7 +190,7 @@ Common mistakes with break of structure include:
 
 A useful break of structure should be tied to the actual trade idea, not just any random level on the chart.
 
-## Practical Checklist
+## What To Check Before Trusting It
 
 Before using break of structure in a trade plan or review, ask:
 
@@ -215,7 +207,7 @@ Before using break of structure in a trade plan or review, ask:
 
 This checklist keeps structure tied to practical review.
 
-## Apply This In Review
+## Review This In Your Journal
 
 Break-of-structure review helps traders understand whether they adapted when the chart changed.
 

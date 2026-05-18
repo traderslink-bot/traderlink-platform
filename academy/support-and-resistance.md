@@ -15,13 +15,13 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review trades around support, resistance, execution, and repeated decision patterns."
+cta: "Review whether trades happened near useful levels, into resistance, after support failed, or in the middle of an unclear range."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Foundation"
-academy_order: 1
-academy_module: "Core Levels"
+academy_order: "2"
+academy_module: "Chart Reading Basics And Core Levels"
 academy_course: "Chart Reading And Market Structure"
-recommended_previous: "/academy/start-here/"
+recommended_previous: "/academy/candlestick-patterns/"
 recommended_next: "/academy/how-to-draw-support-and-resistance/"
 visual_assets:
   - "/academy/images/chart-reading/support-resistance-candlestick-diagram.svg"
@@ -40,7 +40,7 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Support and Resistance Trading Guide"
 meta_description: "Learn what support and resistance are, why traders watch key levels, common mistakes, realistic examples, and how to review trades around levels."
 ---
@@ -49,21 +49,13 @@ meta_description: "Learn what support and resistance are, why traders watch key 
 
 Support and resistance are price areas where traders watch for possible reactions. Support is an area where buyers may step in or where price has held before. Resistance is an area where sellers may appear, buyers may hesitate, or price has rejected before.
 
-This lesson is part of the **Chart Reading And Market Structure** learning path. It builds the foundation for later lessons on drawing levels, breakouts, breakdowns, reclaims, rejections, fakeouts, and trade review.
+This is the broad foundation lesson for price reaction zones. The next lessons narrow the idea into drawing cleaner levels, reading support-specific behavior, reading resistance-specific behavior, and building a usable key-level map.
 
-
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain support and resistance in chart-reading context.
-- Identify where it appears on a realistic chart.
-- Review the concept with levels, volume, liquidity, and risk in mind.
-- Avoid treating it as a guaranteed trading signal.
+Goal: Learn how support and resistance help traders read price location, plan risk, and review whether trades were taken near useful levels.
 
 Support and resistance should not be treated as magic lines. They are decision areas. Price can bounce, reject, break through, fake out, reclaim, or ignore them depending on volume, liquidity, catalyst strength, order flow, and market context.
 
-## What You Should Understand Before Reading This
+## What To Know First
 
 You do not need to be advanced to understand support and resistance, but it helps to know that:
 
@@ -75,7 +67,7 @@ You do not need to be advanced to understand support and resistance, but it help
 
 If you are new, think of support and resistance as a map. The map does not drive the trade for you, but it helps you understand where the important areas may be.
 
-## Quick Definition
+## What It Means
 
 Support and resistance are price zones traders use to understand where price has reacted before or where it may react again.
 
@@ -172,7 +164,7 @@ Useful review questions include:
 - Did the trader chase far above the level?
 - Did the level actually matter after the trade?
 
-## Realistic Example Scenario
+## Example Chart Read
 
 A stock gaps up in premarket after news. It pushes from $2.20 to $3.10, then rejects near $3.15 twice before the open.
 
@@ -233,7 +225,7 @@ Common mistakes with support and resistance include:
 
 A good level should help decision-making. If it creates more confusion, it may not be useful.
 
-## Practical Checklist
+## What To Check On The Chart
 
 Before using a support or resistance level in a trade plan, ask:
 
@@ -248,7 +240,7 @@ Before using a support or resistance level in a trade plan, ask:
 
 This checklist should slow the decision down. The goal is not to create hesitation. The goal is to avoid random entries.
 
-## Apply This In Review
+## Review This In Your Journal
 
 Support and resistance become more useful when you review how your trades behaved around them.
 

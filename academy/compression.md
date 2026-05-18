@@ -15,11 +15,11 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review compression trades, failed breaks, timing, and repeated decision patterns."
+cta: "Review whether tight ranges improved patience and timing or became another reason to anticipate too early."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 21
-academy_module: "Ranges And Compression"
+academy_order: "22"
+academy_module: "Ranges, Compression And Pattern Basics"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/new-high-of-day/"
 recommended_next: "/academy/consolidation/"
@@ -37,7 +37,7 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Compression Trading Explained"
 meta_description: "Learn what compression trading means, why traders watch tightening ranges, common mistakes, and how to review compression trades."
 ---
@@ -46,21 +46,13 @@ meta_description: "Learn what compression trading means, why traders watch tight
 
 Compression trading focuses on moments when price action tightens and volatility contracts. The chart may show smaller candles, tighter pullbacks, lower volume, and price pressing near a level.
 
-This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on breakout and breakdown review, then leads into [Consolidation Trading](/academy/consolidation/) and volume-based review.
+Compression is the tightening version of range behavior: smaller candles, smaller pullbacks, and volatility contracting near a meaningful area. Consolidation, covered next, is broader sideways digestion and does not always tighten.
 
-
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain compression in chart-reading context.
-- Identify where it appears on a realistic chart.
-- Review the concept with levels, volume, liquidity, and risk in mind.
-- Avoid treating it as a guaranteed trading signal.
+Goal: Learn how tightening price action can create a clearer range without predicting direction.
 
 Compression can lead to expansion, but it does not guarantee direction. It can break higher, break lower, fake out, or stay choppy.
 
-## What You Should Understand Before Reading This
+## What To Know First
 
 Before studying compression, remember:
 
@@ -73,7 +65,7 @@ Before studying compression, remember:
 
 The goal is to review whether the chart was truly tightening and whether the trader waited for useful confirmation.
 
-## Quick Definition
+## What It Means
 
 Compression is when price movement tightens into a smaller range, often near a key level.
 
@@ -131,7 +123,7 @@ Useful questions include:
 - Was the entry near the range or late after expansion?
 - Did the trader respect the failed side of the setup?
 
-## Realistic Example Scenario
+## Example Chart Read
 
 A stock runs to $2.90, pulls back to $2.65, then keeps pressing between $2.78 and $2.90. Each pullback is smaller than the last.
 
@@ -159,7 +151,7 @@ Common compression trading mistakes include:
 
 Compression should make risk clearer, not just make the chart look interesting.
 
-## Practical Checklist
+## What To Check
 
 Before using compression in a trade plan or review, ask:
 
@@ -176,7 +168,7 @@ Before using compression in a trade plan or review, ask:
 
 This checklist keeps compression review practical.
 
-## Apply This In Review
+## Review This In Your Journal
 
 Compression trades are worth reviewing because they test patience and timing.
 

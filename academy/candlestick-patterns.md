@@ -18,7 +18,7 @@ cta: "Use candle context to review whether a decision was based on location, vol
 recommended_previous: null
 recommended_next: "/academy/support-and-resistance/"
 academy_level: "Foundation"
-academy_order: 1
+academy_order: "1"
 academy_module: "Chart Reading Basics And Core Levels"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
@@ -32,7 +32,7 @@ visual_assets:
   - "/academy/images/chart-reading/candlestick-anatomy-context.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Candlestick Pattern Basics"
 meta_description: "Learn what candlestick patterns show, why context matters, and how to review candle-based decisions safely."
 ---

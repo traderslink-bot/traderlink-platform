@@ -16,13 +16,13 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review breakout trades, failed breakouts, execution, risk, and repeated decision patterns."
+cta: "Review whether breakout entries were planned near a level or chased after extension."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 6
-academy_module: "Breaks And Reclaims"
+academy_order: "11"
+academy_module: "Rejection, Breaks And Reclaims"
 academy_course: "Chart Reading And Market Structure"
-recommended_previous: "/academy/key-levels-trading/"
+recommended_previous: "/academy/price-rejection/"
 recommended_next: "/academy/breakdown-trading/"
 visual_assets:
   - "/academy/images/chart-reading/breakout-with-volume-context.svg"
@@ -40,7 +40,7 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Breakout Trading Guide for Active Traders"
 meta_description: "Learn how breakout trading works, how to review breakout quality, failed breakouts, volume, chase risk, and trade management."
 ---
@@ -49,21 +49,13 @@ meta_description: "Learn how breakout trading works, how to review breakout qual
 
 Breakout trading is a style of trading where traders watch price move through an important level, such as resistance, high of day, premarket high, previous day high, or the top of a consolidation range.
 
-This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Key Levels Trading](/academy/key-levels-trading/) and leads into level breakouts, breakdowns, reclaims, rejections, fakeouts, volume review, and trade management.
+This is the broad breakout lesson. It teaches breakout quality, chase risk, and failed breakout behavior before the course narrows into one-level breakout review.
 
-
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain breakout trading in chart-reading context.
-- Identify where it appears on a realistic chart.
-- Review the concept with levels, volume, liquidity, and risk in mind.
-- Avoid treating it as a guaranteed trading signal.
+Goal: Learn how to read breakout quality without treating every break of resistance as a good trade.
 
 A breakout is not automatically a good trade. The quality depends on the level, volume, liquidity, catalyst context, risk, follow-through, and whether the trader planned the trade before the move or chased after it.
 
-## What You Should Understand Before Reading This
+## What Needs To Be True First
 
 Before studying breakout trading, it helps to understand:
 
@@ -76,7 +68,7 @@ Before studying breakout trading, it helps to understand:
 
 The goal is not to call every break of resistance a trade. The goal is to understand whether the breakout was planned, confirmed, and managed with risk.
 
-## Quick Definition
+## What A Breakout Actually Is
 
 Breakout trading means watching for price to move above an important level and then reviewing whether the move has enough quality to matter.
 
@@ -168,7 +160,7 @@ An extended breakout can still continue, but the review question changes:
 
 Chase risk is not about shaming the trader. It is about recognizing when trade location becomes difficult to manage.
 
-## Realistic Example Scenario
+## Example Chart Read
 
 A small-cap stock runs at the open, pulls back, and consolidates under the high of day near $3.40. Volume dries up during the consolidation, then expands as price pushes through $3.40.
 
@@ -230,7 +222,7 @@ Common breakout trading mistakes include:
 
 A breakout can be a valid setup, but a poor entry can still make it difficult to manage.
 
-## Practical Checklist
+## What To Check Before Trusting It
 
 Before using a breakout in a trade plan, ask:
 
@@ -247,7 +239,7 @@ Before using a breakout in a trade plan, ask:
 
 This checklist helps turn a breakout from an emotional moment into a reviewable setup.
 
-## Apply This In Review
+## Review This In Your Journal
 
 After a breakout trade, review the setup and the execution separately.
 

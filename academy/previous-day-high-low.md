@@ -15,10 +15,10 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review trades around previous day levels, trade location, and repeated decision patterns."
+cta: "Review whether previous-day levels affected trade location, rejection, reclaim, or breakout behavior."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 16
+academy_order: "17"
 academy_module: "Intraday Reference Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/pivot-levels/"
@@ -37,7 +37,7 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Previous Day High and Low Explained"
 meta_description: "Learn why traders watch previous day high and low, how PDH/PDL work as reference levels, common mistakes, and how to review trades around them."
 ---
@@ -48,21 +48,14 @@ The previous day high and previous day low are the highest and lowest prices fro
 
 Check your chart settings before relying on them. Some platforms can include or exclude extended-hours data, which can change what appears to be the prior day's high or low.
 
-This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Pivot Levels](/academy/pivot-levels/) and leads into [Premarket High Low](/academy/premarket-high-low/), [High of Day](/academy/high-of-day/), and market open review.
+This lesson is part of the **Chart Reading And Market Structure** learning path.
 
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain previous day high and low in chart-reading context.
-- Identify where it appears on a realistic chart.
-- Review the concept with levels, volume, liquidity, and risk in mind.
-- Avoid treating it as a guaranteed trading signal.
+Goal: Learn how previous day high and low act as session reference levels for planning and review.
 
 Previous day levels can help traders compare today's price action against yesterday's range. They do not guarantee a breakout, breakdown, bounce, rejection, or continuation.
 
-## What You Should Understand Before Reading This
+## What To Know First
 
 Before studying previous day high and low, remember:
 
@@ -76,7 +69,7 @@ Before studying previous day high and low, remember:
 
 The value of PDH and PDL is that they are simple and objective. The risk is treating that simplicity as certainty.
 
-## Quick Definition
+## What It Means
 
 The previous day high is the highest price a stock reached during the prior regular trading session.
 
@@ -166,7 +159,7 @@ The previous day low can act as:
 
 Losing PDL may show weakness, but it does not guarantee continuation. Price can flush below PDL and reclaim it quickly, especially around the open or on volatile small-cap stocks.
 
-## Realistic Example Scenario
+## Example Chart Read
 
 A stock traded yesterday between $2.10 and $2.85. Today it opens near $2.70 and pushes toward $2.85.
 
@@ -222,7 +215,7 @@ Common mistakes around previous day high and low include:
 
 The level gives structure. The reaction around the level gives the review.
 
-## Practical Checklist
+## What To Check On The Chart
 
 Before using PDH or PDL in a plan or review, ask:
 
@@ -239,7 +232,7 @@ Before using PDH or PDL in a plan or review, ask:
 
 This checklist keeps previous day levels practical and reviewable.
 
-## Apply This In Review
+## Review This In Your Journal
 
 Previous day levels are useful for review because they can be marked objectively before the session.
 

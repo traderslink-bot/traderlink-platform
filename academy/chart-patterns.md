@@ -14,12 +14,12 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Review pattern-based trades by level quality, volume behavior, entry timing, invalidation, and whether the trade was planned or reactive."
+cta: "Review whether chart patterns were visible before the decision or only labeled after the trade."
 recommended_previous: "/academy/consolidation/"
 recommended_next: "/academy/gap-fill-trading/"
 academy_level: "Foundation"
-academy_order: 1
-academy_module: "Ranges And Compression"
+academy_order: "24"
+academy_module: "Ranges, Compression And Pattern Basics"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -32,7 +32,7 @@ visual_assets:
   - "/academy/images/chart-reading/chart-pattern-context-map.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Chart Pattern Basics"
 meta_description: "Learn what chart patterns show, why context matters, and how to review pattern-based decisions safely."
 ---

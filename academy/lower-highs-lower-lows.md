@@ -15,14 +15,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review trades around lower highs, lower lows, structure shifts, and repeated decision patterns."
+cta: "Review whether trades respected downtrend structure or assumed strength before structure changed."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 14
+academy_order: "9"
 academy_module: "Swing Structure"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/higher-highs-higher-lows/"
-recommended_next: "/academy/pivot-levels/"
+recommended_next: "/academy/price-rejection/"
 visual_assets:
   - "/academy/images/chart-reading/lower-highs-lower-lows-downtrend.svg"
   - "/academy/images/chart-reading/lower-high-reclaim-review.svg"
@@ -37,7 +37,7 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Lower Highs and Lower Lows Explained"
 meta_description: "Learn what lower highs and lower lows mean, how traders read weakening chart structure, common mistakes, and how to review trades around lower highs."
 ---
@@ -49,18 +49,11 @@ Lower highs and lower lows describe weakening or downward market structure. Pric
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Higher Highs and Higher Lows](/academy/higher-highs-higher-lows/) and [Swing Highs and Swing Lows](/academy/swing-highs-and-swing-lows/), then leads into practical level review with [Pivot Levels](/academy/pivot-levels/) and other intraday reference levels.
 
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain lower highs and lower lows in chart-reading context.
-- Identify where it appears on a realistic chart.
-- Review the concept with levels, volume, liquidity, and risk in mind.
-- Avoid treating it as a guaranteed trading signal.
+Goal: Learn how lower highs and lower lows describe downtrend structure and where that structure can change.
 
 Lower-high and lower-low structure can help traders recognize weakness and avoid fighting a chart that is losing support. It does not mean price has to keep dropping, and it is not a standalone trade signal.
 
-## What You Should Understand Before Reading This
+## What To Know First
 
 Before studying lower highs and lower lows, remember:
 
@@ -74,7 +67,7 @@ Before studying lower highs and lower lows, remember:
 
 The lesson is not about labeling every red candle. It is about noticing whether price is repeatedly failing to recover important areas.
 
-## Quick Definition
+## What It Means
 
 Lower highs and lower lows happen when price forms a sequence of falling swing highs and falling swing lows.
 
@@ -162,7 +155,7 @@ Extension risk can show up when:
 
 Downtrend structure may show weakness, but late entries after a large breakdown can still be poor trade location. Structure should be paired with level context and risk review.
 
-## Realistic Example Scenario
+## Example Chart Read
 
 A stock falls from $4.20 to $3.70, bounces to $3.95, drops to $3.45, then bounces only to $3.72 before fading again.
 
@@ -219,7 +212,7 @@ Common mistakes with lower highs and lower lows include:
 
 Lower highs and lower lows are useful, but they are not a complete trade plan by themselves.
 
-## Practical Checklist
+## What To Check On The Chart
 
 Before using this structure in a plan or review, ask:
 
@@ -236,7 +229,7 @@ Before using this structure in a plan or review, ask:
 
 This checklist keeps the concept tied to practical decisions and review.
 
-## Apply This In Review
+## Review This In Your Journal
 
 Lower-high and lower-low review can show whether a trader respected weakness or kept fighting it.
 

@@ -15,10 +15,10 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review low-of-day trades, breakdown failures, risk discipline, and repeated decision patterns."
+cta: "Review whether low-of-day acted as a session risk level or became a late breakdown chase."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 19
+academy_order: "20"
 academy_module: "Intraday Reference Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/high-of-day/"
@@ -37,7 +37,7 @@ internal_links:
 schema:
   - "Article"
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Low of Day Explained for Traders"
 meta_description: "Learn what low of day means, why traders watch LOD levels, common mistakes, and how to review trades around intraday lows."
 ---
@@ -51,18 +51,11 @@ For most intraday stock charts, LOD is reviewed inside the active regular sessio
 This lesson is part of the **Chart Reading And Market Structure** learning path. It follows [High of Day](/academy/high-of-day/) and helps traders review the opposite side of the intraday map: support pressure, breakdown attempts, failed breakdowns, and risk discipline.
 
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain low of day in chart-reading context.
-- Identify where it appears on a realistic chart.
-- Review the concept with levels, volume, liquidity, and risk in mind.
-- Avoid treating it as a guaranteed trading signal.
+Goal: Learn how low of day acts as a current-session reference level and why it can create breakdown risk.
 
 LOD is useful context, but it does not guarantee a bounce or continuation lower.
 
-## What You Should Understand Before Reading This
+## What To Know First
 
 Before studying low of day, remember:
 
@@ -75,7 +68,7 @@ Before studying low of day, remember:
 
 The goal is to review how price behaved around the level, not to use LOD as an automatic decision.
 
-## Quick Definition
+## What It Means
 
 Low of day is the lowest price traded so far during the current session.
 
@@ -157,7 +150,7 @@ Extension risk near LOD can show up when:
 
 Reviewing extension risk helps traders avoid assuming that weakness at any price is a clean setup.
 
-## Realistic Example Scenario
+## Example Chart Read
 
 A stock opens at $4.20, sells off to $3.75, bounces to $3.95, then fades back toward $3.75.
 
@@ -187,7 +180,7 @@ Common mistakes around low of day include:
 
 LOD can be useful, but only if the trader has a plan for both hold and fail scenarios.
 
-## Practical Checklist
+## What To Check On The Chart
 
 Before using LOD in a plan or review, ask:
 
@@ -204,7 +197,7 @@ Before using LOD in a plan or review, ask:
 
 This checklist keeps LOD review practical.
 
-## Apply This In Review
+## Review This In Your Journal
 
 Low-of-day trades are worth reviewing because they often expose risk discipline issues.
 
