@@ -624,14 +624,15 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-18 | Chart Reading And Market Structure UI readiness review | Completed Pass 5 UI Readiness Review for Chart Reading And Market Structure, including Candlestick Patterns In Context and Chart Patterns In Context. | Passed. Created `docs/content/traderslink-academy-ui-readiness-chart-reading.md`, reviewed the 23-lesson core path plus 28 supporting pattern-library lessons, confirmed the course is ready for UI planning, documented the main production planning requirement that the UI should use parent-course/submodule grouping with separate core and library progress, and recommended Volume, Liquidity And Order Flow as the next Pass 5 review. No production website files were changed. | `c9b17ad0` |
 | 2026-05-18 | Volume, Liquidity And Order Flow UI readiness review | Completed Pass 5 UI Readiness Review for Volume, Liquidity And Order Flow. | Passed. Created `docs/content/traderslink-academy-ui-readiness-volume-liquidity.md`, reviewed the 14-lesson course path, confirmed the course is ready for UI planning, documented the main production planning requirement that execution-mechanics visuals must not be cropped into unreadable thumbnails, and recommended Risk Management And Trade Planning as the next Pass 5 review. No production website files were changed. | `3ad6d1ee` |
 | 2026-05-18 | Remaining Pass 5 UI readiness audit batch | Completed Pass 5 UI Readiness Reviews for Risk Management And Trade Planning, Technical Indicators And Tools, Trading Styles And Playbooks, Day Trading Workflow, Swing Trading Workflow, News Catalysts And SEC Filings, Small-Cap Stocks Float And Dilution, Halts And High-Volatility Events, Trading Psychology And Discipline, Trade Review And Improvement, Practice And Improvement, and Academy Navigation Path Hubs. | Passed. Created 12 UI readiness review files, marked Pass 5 complete across the remaining Academy course groups, confirmed all are ready for UI planning, documented which courses still need launch-polish visual batches, and moved the next recommended run to Pass 6 restrained app bridge review. No production website files were changed. | `d47596c5` |
+| 2026-05-18 | Pass 6 restrained app bridge audit | Completed Pass 6 App Bridge Audit for all current Academy course groups and Academy Navigation Path Hubs. | Passed. Created `docs/content/traderslink-academy-app-bridge-audit-pass6.md`, defined approved app surface vocabulary, bridge strength standards, course-level bridge placement, lesson/module placement guidance, and a hard-link deferral rule until product routes and feature claims are stable. No lesson files or production website files were changed. | `pending_commit` |
 
 ## Next Recommended Action
 
-Continue from the completed Pass 5 UI Readiness Review batch:
+Continue from the completed Pass 6 App Bridge Audit batch:
 
-1. Start `Pass 6: Restrained App Bridge Review` for `Trading Foundations` using `docs/content/traderslink-academy-quality-audit-workplan.md`.
-2. Review whether app bridge copy belongs on the course page, lesson pages, progress UI, or future app cards.
-3. Keep bridge language focused on completed-trade review, coaching, analytics, progress, and learning support without prediction, performance promises, or product-ad clutter.
+1. Start `Academy production content model planning` using `docs/content/traderslink-academy-quality-audit-workplan.md`.
+2. Define course membership, cross-listed lesson navigation, path hub behavior, progress tracking, and route-safe app bridge metadata.
+3. Keep markdown lesson files as canonical educational content and avoid duplicating lesson files for cross-listed placements.
 4. Keep this as markdown/content planning only unless the user explicitly asks for production website implementation.
 
 ## Important Reminder

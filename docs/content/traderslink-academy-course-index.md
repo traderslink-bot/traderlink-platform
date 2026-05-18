@@ -1070,6 +1070,25 @@ Global Pass 5 product notes:
 - Treat missing visual batches from Pass 4 as launch-polish work unless production design requires them earlier.
 - Keep app bridges restrained until Pass 6 and until product routes are stable.
 
+## Pass 6 App Bridge Status
+
+Pass 6 restrained app bridge audit is complete for all current Academy course groups and Academy Navigation Path Hubs.
+
+Audit file:
+
+- `docs/content/traderslink-academy-app-bridge-audit-pass6.md`
+
+Global Pass 6 decisions:
+
+- Do not add hard app route links yet.
+- Use app bridge language only where it supports completed-trade review, risk review, execution review, session review, news/filing review, coaching, analytics, progress, review notes, or playbook building.
+- Keep the Academy education-first; do not turn course pages into product funnels.
+- Use course-level or module-level bridge cards later, not repeated product cards on every lesson.
+- Keep bridge copy non-predictive, non-promissory, and non-signal-oriented.
+- Store future bridge cards as route-safe UI metadata once product routes and app feature names are stable.
+- Strongest core bridge courses: Volume/Liquidity, Risk Management, Trading Styles/Playbooks, Day Trading Workflow, News/Filings, Small-Cap/Float/Dilution, Halts/Volatility, Trading Psychology, Trade Review, and Practice/Improvement.
+- Lighter bridge contexts: Trading Foundations, Chart Reading libraries, Technical Indicators, Swing Workflow, and Path Hubs.
+
 ## Cross-Listed Lesson Rules
 
 Some lessons can appear in more than one course. This is good for navigation, but each lesson should still have one primary course.
