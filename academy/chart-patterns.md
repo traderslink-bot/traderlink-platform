@@ -140,6 +140,7 @@ Chart patterns are combinations of levels, trend, candles, volume, and failure b
 
 ## Related Lessons
 
+- [Chart Pattern Deep-Dive Lessons](/academy/chart-pattern-deep-dive-lessons/)
 - [Bull Flag Pattern](/academy/chart-patterns/bull-flag/)
 - [Bear Flag Pattern](/academy/chart-patterns/bear-flag/)
 - [Bull Pennant](/academy/chart-patterns/bull-pennant/)
