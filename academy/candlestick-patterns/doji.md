@@ -16,7 +16,7 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
 recommended_previous: "/academy/candlestick-patterns/long-wick-candle/"
-recommended_next: "/academy/candlestick-patterns/engulfing-candle/"
+recommended_next: "/academy/candlestick-patterns/spinning-top/"
 academy_level: "Foundation"
 academy_order: 3
 academy_module: "Candlestick Reference Library"
@@ -32,13 +32,13 @@ visual_assets:
   - "/academy/images/chart-reading/doji-at-key-level.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Doji Candle Explained"
 meta_description: "Learn what a doji candle shows, why context matters, and how to review doji trades without signal language."
 ---
 # Doji Candle
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Long Wick Candle](/academy/candlestick-patterns/long-wick-candle/) and leads into [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Long Wick Candle](/academy/candlestick-patterns/long-wick-candle/) and leads into [Spinning Top Candle](/academy/candlestick-patterns/spinning-top/).
 
 A doji forms when the open and close are very close together. It often shows hesitation, but hesitation is not the same thing as a reversal signal.
 

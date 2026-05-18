@@ -15,7 +15,7 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
-recommended_previous: "/academy/candlestick-patterns/spinning-top/"
+recommended_previous: "/academy/candlestick-patterns/outside-bar/"
 recommended_next: "/academy/candlestick-patterns/red-to-green-move/"
 academy_level: "Practical"
 academy_order: 12
@@ -32,13 +32,13 @@ visual_assets:
   - "/academy/images/chart-reading/candle-volume-confirmation-context.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Candle Volume Confirmation Explained"
 meta_description: "Learn how volume adds context to candle patterns and why volume still does not guarantee a move."
 ---
 # Candle Volume Confirmation
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Spinning Top Candle](/academy/candlestick-patterns/spinning-top/) and leads into [Red-To-Green Move](/academy/candlestick-patterns/red-to-green-move/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Outside Bar](/academy/candlestick-patterns/outside-bar/) and leads into [Red-To-Green Move](/academy/candlestick-patterns/red-to-green-move/).
 
 Candle volume confirmation means reviewing whether the volume behind a candle supports the price action shown by that candle. It can help traders compare participation, but it does not remove risk.
 

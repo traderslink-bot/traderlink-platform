@@ -16,8 +16,8 @@
   </g>
   <circle cx="315" cy="284" r="32" fill="none" stroke="#9cc7ff" stroke-width="3"/>
   <text x="380" y="318" fill="#d6e4ff" font-family="Arial" font-size="18">Lower wick tests support</text>
-  <text x="555" y="226" fill="#d6e4ff" font-family="Arial" font-size="18">Follow-through decides whether it mattered</text>
+  <text x="555" y="226" fill="#d6e4ff" font-family="Arial" font-size="18">Follow-through matters</text>
   <rect x="48" y="414" width="864" height="82" rx="10" fill="#0b1626" stroke="#1b3558"/>
   <g><rect x="142" y="452" width="22" height="31" fill="#ef4444" opacity=".75"/><rect x="197" y="441" width="22" height="42" fill="#ef4444" opacity=".75"/><rect x="252" y="430" width="22" height="53" fill="#ef4444" opacity=".75"/><rect x="307" y="420" width="22" height="63" fill="#22c55e" opacity=".75"/><rect x="362" y="438" width="22" height="45" fill="#22c55e" opacity=".75"/></g>
-  <text x="475" y="464" fill="#d6e4ff" font-family="Arial" font-size="19">Review wick low, support, volume, and invalidation.</text>
+  <text x="475" y="464" fill="#d6e4ff" font-family="Arial" font-size="19">Review wick low and invalidation.</text>
 </svg>

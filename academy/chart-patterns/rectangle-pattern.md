@@ -23,16 +23,16 @@ academy_module: "Chart Pattern Reference Library"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
-  - "[Consolidation](/academy/consolidation/)"
-  - "[Support And Resistance](/academy/support-and-resistance/)"
-  - "[Base Breakout](/academy/chart-patterns/base-breakout/)"
-  - "[Volume By Price](/academy/volume-by-price/)"
-  - "[Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/)"
+  - "/academy/consolidation/"
+  - "/academy/support-and-resistance/"
+  - "/academy/chart-patterns/base-breakout/"
+  - "/academy/volume-by-price/"
+  - "/academy/chart-patterns/failed-breakout-pattern/"
 visual_assets:
   - "/academy/images/chart-reading/rectangle-base-breakout-context.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Rectangle Pattern Explained"
 meta_description: "Learn what Rectangle Pattern shows, why it can fail, and how to review it with levels, volume, and risk."
 ---
@@ -112,6 +112,10 @@ The goal is to learn whether you traded a defined range or got chopped up inside
 - [Base Breakout](/academy/chart-patterns/base-breakout/)
 - [Volume By Price](/academy/volume-by-price/)
 - [Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/)
+
+## Key Takeaway
+
+A rectangle is a range. The useful review is whether the trader respected range support, range resistance, and failed breaks instead of guessing direction.
 
 ## FAQ
 

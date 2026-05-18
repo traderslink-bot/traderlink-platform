@@ -386,14 +386,14 @@ The candlestick course is **content_upgraded** across all local candlestick draf
 | 1 | Candle Foundation | Candlestick Patterns | `/academy/candlestick-patterns/` | content_upgraded | complete | Course opener; teaches candle anatomy, context, volume, levels, and review. |
 | 2 | Wicks And Indecision | Long Wick Candle | `/academy/candlestick-patterns/long-wick-candle/` | content_upgraded | complete | Long upper/lower wick rejection context with realistic SVG support. |
 | 3 | Wicks And Indecision | Doji Candle | `/academy/candlestick-patterns/doji/` | content_upgraded | complete | Indecision-at-level context with realistic SVG support. |
-| 4 | Rejection And Shift Candles | Engulfing Candle | `/academy/candlestick-patterns/engulfing-candle/` | content_upgraded | complete | Shift-of-control context with realistic SVG support. |
+| 4 | Wicks And Indecision | Spinning Top Candle | `/academy/candlestick-patterns/spinning-top/` | content_upgraded | complete | Small-body hesitation context cross-supported by the doji visual. |
 | 5 | Rejection And Shift Candles | Hammer Candlestick | `/academy/candlestick-patterns/hammer/` | content_upgraded | complete | Lower-wick recovery near support with realistic SVG support. |
-| 6 | Compression Candles | Inside Bar | `/academy/candlestick-patterns/inside-bar/` | content_upgraded | complete | Compression and range-break review with inside/outside bar SVG support. |
-| 7 | Compression Candles | Outside Bar | `/academy/candlestick-patterns/outside-bar/` | content_upgraded | complete | Range expansion and close-location review with inside/outside bar SVG support. |
-| 8 | Rejection And Shift Candles | Pin Bar | `/academy/candlestick-patterns/pin-bar/` | content_upgraded | complete | Wick rejection context cross-supported by the long-wick visual. |
-| 9 | Tail Candles | Bottoming Tail Candle | `/academy/candlestick-patterns/bottoming-tail/` | content_upgraded | complete | Lower-wick support/recovery context cross-supported by the hammer visual. |
-| 10 | Tail Candles | Topping Tail Candle | `/academy/candlestick-patterns/topping-tail/` | content_upgraded | complete | Upper-wick resistance/rejection context cross-supported by the long-wick visual. |
-| 11 | Wicks And Indecision | Spinning Top Candle | `/academy/candlestick-patterns/spinning-top/` | content_upgraded | complete | Small-body hesitation context cross-supported by the doji visual. |
+| 6 | Rejection And Shift Candles | Pin Bar | `/academy/candlestick-patterns/pin-bar/` | content_upgraded | complete | Wick rejection context cross-supported by the long-wick visual. |
+| 7 | Tail Candles | Bottoming Tail Candle | `/academy/candlestick-patterns/bottoming-tail/` | content_upgraded | complete | Lower-wick support/recovery context cross-supported by the hammer visual. |
+| 8 | Tail Candles | Topping Tail Candle | `/academy/candlestick-patterns/topping-tail/` | content_upgraded | complete | Upper-wick resistance/rejection context cross-supported by the long-wick visual. |
+| 9 | Range And Expansion Candles | Engulfing Candle | `/academy/candlestick-patterns/engulfing-candle/` | content_upgraded | complete | Shift-of-control context with realistic SVG support. |
+| 10 | Range And Expansion Candles | Inside Bar | `/academy/candlestick-patterns/inside-bar/` | content_upgraded | complete | Compression and range-break review with inside/outside bar SVG support. |
+| 11 | Range And Expansion Candles | Outside Bar | `/academy/candlestick-patterns/outside-bar/` | content_upgraded | complete | Range expansion and close-location review with inside/outside bar SVG support. |
 | 12 | Candle And Volume Review | Candle Volume Confirmation | `/academy/candlestick-patterns/candle-volume-confirmation/` | content_upgraded | complete | Connects candle shape and volume without treating volume as proof. |
 | 13 | Intraday Color Transitions | Red-To-Green Move | `/academy/candlestick-patterns/red-to-green-move/` | content_upgraded | complete | Intraday reference reclaim context with red/green transition visual. |
 | 14 | Intraday Color Transitions | Green-To-Red Move | `/academy/candlestick-patterns/green-to-red-move/` | content_upgraded | complete | Intraday reference loss context with red/green transition visual. |

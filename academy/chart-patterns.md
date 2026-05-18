@@ -85,11 +85,11 @@ Tool-based patterns use a reference level such as VWAP. A VWAP reclaim is not th
 
 Use the individual chart-pattern pages when the specific structure appears on a chart:
 
-- Bull Flag, Ascending Triangle, and Base Breakout help review continuation attempts.
-- Rectangle, Channel, and Wedge lessons help review ranges and compression.
-- Rising Wedge, Falling Wedge, Double Top, and Inverse Head And Shoulders help review possible shift or reversal structure.
-- Failed Breakout and Parabolic Move help review failure and extension behavior.
-- VWAP Reclaim belongs here as a common intraday structure traders often treat like a pattern.
+- Continuation references: Bull Flag, Ascending Triangle, and Base Breakout.
+- Range and compression references: Rectangle, Channel, Wedge, Rising Wedge, and Falling Wedge.
+- Shift or reversal references: Double Top and Inverse Head And Shoulders.
+- Failure and extension references: Failed Breakout and Parabolic Move.
+- Tool-based reclaim reference: VWAP Reclaim, which belongs here because many traders treat it like a pattern even though it depends on an indicator level.
 
 The reference pages should not feel like a required checklist before you can continue. They are there so a learner can go deeper when the pattern matters.
 
@@ -138,7 +138,9 @@ Chart patterns are combinations of levels, trend, candles, volume, and failure b
 
 - [Bull Flag Pattern](/academy/chart-patterns/bull-flag/)
 - [Ascending Triangle](/academy/chart-patterns/ascending-triangle/)
+- [Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/)
 - [Double Top](/academy/chart-patterns/double-top/)
+- [Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/)
 - [Support And Resistance](/academy/support-and-resistance/)
 - [Volume](/academy/volume/)
 

@@ -16,9 +16,9 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
 recommended_previous: "/academy/candlestick-patterns/inside-bar/"
-recommended_next: "/academy/candlestick-patterns/pin-bar/"
+recommended_next: "/academy/candlestick-patterns/candle-volume-confirmation/"
 academy_level: "Practical"
-academy_order: 7
+academy_order: 11
 academy_module: "Candlestick Reference Library"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
@@ -32,13 +32,13 @@ visual_assets:
   - "/academy/images/chart-reading/inside-outside-bar-context.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Outside Bar Explained"
 meta_description: "Learn how outside bars show range expansion and why they require level, volume, and risk review."
 ---
 # Outside Bar
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Inside Bar](/academy/candlestick-patterns/inside-bar/) and leads into [Pin Bar](/academy/candlestick-patterns/pin-bar/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Inside Bar](/academy/candlestick-patterns/inside-bar/) and leads into [Candle Volume Confirmation](/academy/candlestick-patterns/candle-volume-confirmation/).
 
 An outside bar forms when a candle trades above the prior high and below the prior low. It shows range expansion, volatility, and a wider battle between buyers and sellers.
 

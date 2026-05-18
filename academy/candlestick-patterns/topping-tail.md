@@ -16,9 +16,9 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
 recommended_previous: "/academy/candlestick-patterns/bottoming-tail/"
-recommended_next: "/academy/candlestick-patterns/spinning-top/"
+recommended_next: "/academy/candlestick-patterns/engulfing-candle/"
 academy_level: "Practical"
-academy_order: 10
+academy_order: 8
 academy_module: "Candlestick Reference Library"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
@@ -32,13 +32,13 @@ visual_assets:
   - "/academy/images/chart-reading/long-wick-rejection-context.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Topping Tail Candle Explained"
 meta_description: "Learn what topping tails show and how to review upper-wick rejection with resistance, volume, and risk."
 ---
 # Topping Tail Candle
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Bottoming Tail Candle](/academy/candlestick-patterns/bottoming-tail/) and leads into [Spinning Top Candle](/academy/candlestick-patterns/spinning-top/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Bottoming Tail Candle](/academy/candlestick-patterns/bottoming-tail/) and leads into [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/).
 
 A topping tail candle has a long upper wick that shows price pushed higher during the candle and closed away from the high. It can appear near resistance, after an extension, or during a failed breakout attempt.
 

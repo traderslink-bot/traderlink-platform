@@ -18,7 +18,7 @@ cta: "Review candle context by location, volume, follow-through, and whether the
 recommended_previous: "/academy/candlestick-patterns/pin-bar/"
 recommended_next: "/academy/candlestick-patterns/topping-tail/"
 academy_level: "Practical"
-academy_order: 9
+academy_order: 7
 academy_module: "Candlestick Reference Library"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
@@ -32,7 +32,7 @@ visual_assets:
   - "/academy/images/chart-reading/hammer-support-context.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Bottoming Tail Candle Explained"
 meta_description: "Learn what bottoming tails show and how to review lower-wick recovery with support, volume, and risk."
 ---

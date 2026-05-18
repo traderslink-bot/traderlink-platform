@@ -32,13 +32,13 @@ visual_assets:
   - "/academy/images/chart-reading/long-wick-rejection-context.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Long Wick Candle Explained"
 meta_description: "Learn how long wick candles show rejection, volatility, or liquidity events and how to review them safely."
 ---
 # Long Wick Candle
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Candlestick Patterns](/academy/candlestick-patterns/) and leads into [Doji Candle](/academy/candlestick-patterns/doji/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Candlestick Pattern Basics](/academy/candlestick-patterns/) and leads into [Doji Candle](/academy/candlestick-patterns/doji/).
 
 A long wick candle has a wick that stands out compared with the body. It can show rejection, volatility, or a failed attempt to hold an extreme price area.
 

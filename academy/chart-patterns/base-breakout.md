@@ -23,16 +23,16 @@ academy_module: "Chart Pattern Reference Library"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
-  - "[Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/)"
-  - "[Consolidation](/academy/consolidation/)"
-  - "[Level Breakout](/academy/level-breakout/)"
-  - "[Volume](/academy/volume/)"
-  - "[Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/)"
+  - "/academy/chart-patterns/rectangle-pattern/"
+  - "/academy/consolidation/"
+  - "/academy/level-breakout/"
+  - "/academy/volume/"
+  - "/academy/chart-patterns/failed-breakout-pattern/"
 visual_assets:
   - "/academy/images/chart-reading/rectangle-base-breakout-context.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Base Breakout Explained"
 meta_description: "Learn what Base Breakout shows, why it can fail, and how to review it with levels, volume, and risk."
 ---
@@ -112,6 +112,10 @@ The goal is to learn whether the trade came from a structured base or from chasi
 - [Level Breakout](/academy/level-breakout/)
 - [Volume](/academy/volume/)
 - [Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/)
+
+## Key Takeaway
+
+A base breakout should show a real base and a clear level. If the base was labeled only after price moved, the review should treat it as a late read.
 
 ## FAQ
 

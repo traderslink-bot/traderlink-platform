@@ -15,10 +15,10 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
-recommended_previous: "/academy/candlestick-patterns/doji/"
-recommended_next: "/academy/candlestick-patterns/hammer/"
+recommended_previous: "/academy/candlestick-patterns/topping-tail/"
+recommended_next: "/academy/candlestick-patterns/inside-bar/"
 academy_level: "Practical"
-academy_order: 4
+academy_order: 9
 academy_module: "Candlestick Reference Library"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
@@ -32,13 +32,13 @@ visual_assets:
   - "/academy/images/chart-reading/engulfing-candle-context.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Engulfing Candle Explained"
 meta_description: "Learn what engulfing candles show, why they can fail, and how to review them without stand-alone trade claims."
 ---
 # Engulfing Candle
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Doji Candle](/academy/candlestick-patterns/doji/) and leads into [Hammer Candlestick](/academy/candlestick-patterns/hammer/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Topping Tail Candle](/academy/candlestick-patterns/topping-tail/) and leads into [Inside Bar](/academy/candlestick-patterns/inside-bar/).
 
 An engulfing candle forms when one candle's body overtakes the body of the prior candle. It can show a sharp shift in control, but it still needs location and follow-through.
 

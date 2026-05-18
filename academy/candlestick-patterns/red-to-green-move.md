@@ -32,7 +32,7 @@ visual_assets:
   - "/academy/images/chart-reading/red-green-transition-context.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Red-To-Green Move Explained"
 meta_description: "Learn what red-to-green moves show, why they can fail, and how to review them with levels and volume."
 ---

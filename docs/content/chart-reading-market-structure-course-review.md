@@ -1000,3 +1000,25 @@ Remaining watch items:
 - Optional candlestick and chart-pattern reference lessons are intentionally not part of required completion, but they still deserve a later polish pass for grouping, depth consistency, and lesson-card presentation.
 - `VWAP Reclaim` is cross-listed in the chart-pattern reference library but appears canonically tied to `Technical Indicators And Tools`; do not move or renumber it without checking cross-course navigation.
 - A browser/UI pass should still confirm that long lessons, tables, SVG captions, related lessons, and next/previous navigation render cleanly on desktop and mobile.
+
+## Reference Library And Browser QA Log - 2026-05-18
+
+Status: First-course reference-library polish and representative rendering QA completed.
+
+Completed checks and fixes:
+
+- Reordered the candlestick reference sequence so hesitation/rejection candles come before range/relationship candles and intraday color-shift references.
+- Updated candlestick reference previous/next links in frontmatter and `academy/_data/lesson-memberships.json`.
+- Added missing `Key Takeaway` sections to chart-pattern reference lessons.
+- Cleaned malformed Markdown-style strings from chart-pattern `internal_links` frontmatter.
+- Tightened chart-pattern and candlestick overview copy so the reference libraries are grouped by learning role.
+- Shortened SVG labels that were too close to the right edge in rendered lesson cards.
+- Confirmed `/academy/candlestick-patterns/` renders as `Candlestick Pattern Basics` on a fresh dev server, not the stale production-build page from port `3102`.
+- Browser-checked representative desktop pages: core lesson, candlestick reference lesson, and chart-pattern reference lesson.
+- Mobile viewport check passed for representative core, candlestick reference, and chart-pattern reference pages with no horizontal overflow and loaded SVG images.
+
+Remaining watch items:
+
+- The production server on port `3102` was serving an older build during QA. Use a fresh build or dev server when reviewing current Academy content.
+- `VWAP Reclaim` remains cross-listed in Chart Reading but canonical to `Technical Indicators And Tools`; keep this intentional unless the course model changes.
+- A future UI enhancement should visually separate required core lessons from optional reference library lessons in the course sidebar.

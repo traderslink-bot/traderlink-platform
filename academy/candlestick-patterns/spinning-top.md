@@ -15,10 +15,10 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
-recommended_previous: "/academy/candlestick-patterns/topping-tail/"
-recommended_next: "/academy/candlestick-patterns/candle-volume-confirmation/"
+recommended_previous: "/academy/candlestick-patterns/doji/"
+recommended_next: "/academy/candlestick-patterns/hammer/"
 academy_level: "Foundation"
-academy_order: 11
+academy_order: 4
 academy_module: "Candlestick Reference Library"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
@@ -32,13 +32,13 @@ visual_assets:
   - "/academy/images/chart-reading/doji-at-key-level.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Spinning Top Candle Explained"
 meta_description: "Learn what spinning top candles show, when they matter, and how to review them with context."
 ---
 # Spinning Top Candle
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Topping Tail Candle](/academy/candlestick-patterns/topping-tail/) and leads into [Candle Volume Confirmation](/academy/candlestick-patterns/candle-volume-confirmation/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Doji Candle](/academy/candlestick-patterns/doji/) and leads into [Hammer Candlestick](/academy/candlestick-patterns/hammer/).
 
 A spinning top candle has a small body with wicks on both sides. It can show hesitation or a balanced fight between buyers and sellers.
 

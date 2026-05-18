@@ -15,8 +15,8 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
-recommended_previous: "/academy/candlestick-patterns/engulfing-candle/"
-recommended_next: "/academy/candlestick-patterns/inside-bar/"
+recommended_previous: "/academy/candlestick-patterns/spinning-top/"
+recommended_next: "/academy/candlestick-patterns/pin-bar/"
 academy_level: "Practical"
 academy_order: 5
 academy_module: "Candlestick Reference Library"
@@ -32,13 +32,13 @@ visual_assets:
   - "/academy/images/chart-reading/hammer-support-context.svg"
 schema:
   - "FAQPage"
-last_reviewed: "2026-05-17"
+last_reviewed: "2026-05-18"
 meta_title: "Hammer Candlestick Explained"
 meta_description: "Learn what hammer candles show near support, why they can fail, and how to review them with risk context."
 ---
 # Hammer Candlestick
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/) and leads into [Inside Bar](/academy/candlestick-patterns/inside-bar/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Spinning Top Candle](/academy/candlestick-patterns/spinning-top/) and leads into [Pin Bar](/academy/candlestick-patterns/pin-bar/).
 
 A hammer candle has a small body near the top of its range and a long lower wick. It shows that price sold off and recovered before the candle closed.
 

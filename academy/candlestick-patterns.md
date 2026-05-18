@@ -127,11 +127,11 @@ In both cases, the next candle matters. Follow-through, failure, reclaim, reject
 
 You do not need to treat every candle type as a required stop in the course path. Use the individual candle pages as a reference library:
 
-- Open Doji when you see a small-body candle and want to understand hesitation.
-- Open Long Wick when price tests a level and snaps away from the extreme.
-- Open Engulfing Candle when one candle range overtakes the prior candle.
-- Open Inside Bar or Outside Bar when range compression or range expansion matters.
-- Open Bottoming Tail or Topping Tail when a wick forms near support or resistance.
+- Start with Long Wick, Doji, and Spinning Top when you want to understand rejection, hesitation, and balance.
+- Use Hammer, Pin Bar, Bottoming Tail, and Topping Tail when a wick forms near support or resistance.
+- Use Engulfing Candle, Inside Bar, and Outside Bar when one candle's range changes the read of the prior candle.
+- Use Candle Volume Confirmation when the question is whether the candle had real participation.
+- Use Red-To-Green Move and Green-To-Red Move for intraday color-shift behavior around session levels.
 
 The course path moves next into support and resistance because candle meaning depends heavily on location.
 
@@ -165,6 +165,7 @@ Candles describe behavior during a time period. They become useful only when the
 
 - [Long Wick Candle](/academy/candlestick-patterns/long-wick-candle/)
 - [Doji](/academy/candlestick-patterns/doji/)
+- [Spinning Top Candle](/academy/candlestick-patterns/spinning-top/)
 - [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/)
 - [Support And Resistance](/academy/support-and-resistance/)
 - [Volume](/academy/volume/)
