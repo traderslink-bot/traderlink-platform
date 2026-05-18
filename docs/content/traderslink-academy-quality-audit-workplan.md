@@ -211,7 +211,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Academy content registry draft planning**.
+Continue with **Academy registry implementation-format decision**.
 
 Reason:
 
@@ -232,13 +232,14 @@ Reason:
 - Remaining visual gaps documented during Pass 4 are launch-polish items unless a future production design decision requires those visuals before launch.
 - Pass 6 App Bridge Audit is complete for all current Academy course groups and Academy Navigation Path Hubs in `docs/content/traderslink-academy-app-bridge-audit-pass6.md`.
 - Academy production content model planning is complete in `docs/content/traderslink-academy-production-content-model-plan.md`.
-- The next useful planning pass is an Academy content registry draft that turns the course index into a structured planning artifact without building production website code.
+- Academy content registry draft planning is complete in `docs/content/traderslink-academy-content-registry-draft.md`.
+- The next useful planning pass is deciding the future registry format before any production website implementation.
 
 Output should include:
 
-- A draft Academy content registry as a planning artifact.
-- Every course, module, displayed lesson, membership type, completion behavior, context navigation, path hub membership, and app bridge metadata candidate.
-- Clear identification of canonical versus cross-listed lessons.
+- A recommendation for whether the future registry should be author-editable JSON/YAML under `academy/_data/`, TypeScript under `src/content/academy/`, or a CMS-backed model.
+- A migration checklist from the markdown registry draft to the chosen implementation format.
+- A no-code implementation boundary unless the user explicitly asks for production website work.
 - No production website implementation.
 - Tracker and handoff update.
 - Commit.

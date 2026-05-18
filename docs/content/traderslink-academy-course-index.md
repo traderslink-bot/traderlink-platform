@@ -1108,6 +1108,29 @@ Global content model decisions:
 - Store future app bridge cards as route-safe UI metadata, with hard app links disabled until app routes and claims are stable.
 - Do not duplicate markdown lesson files for cross-listed placements.
 
+## Academy Content Registry Draft Status
+
+Academy content registry draft planning is complete.
+
+Registry draft file:
+
+- `docs/content/traderslink-academy-content-registry-draft.md`
+
+Registry draft result:
+
+- Maps the homepage course order into stable draft `course_id` values.
+- Lists module IDs, module titles, module types, display behavior, and progress behavior.
+- Lists displayed lesson membership for the current course sequences and pattern libraries.
+- Identifies canonical versus cross-listed lesson ownership.
+- Keeps completion keyed by public lesson slug.
+- Documents context-specific navigation expectations for cross-listed lessons and path hubs.
+- Keeps Academy Navigation Path Hubs as optional guided-route support, not numbered courses.
+- Adds route-safe app bridge candidates with hard links disabled.
+- Captures visual readiness and launch-polish visual flags.
+- Adds a registry QA checklist for future production conversion.
+
+No production website files, routes, schemas, or components were created.
+
 ## Cross-Listed Lesson Rules
 
 Some lessons can appear in more than one course. This is good for navigation, but each lesson should still have one primary course.
