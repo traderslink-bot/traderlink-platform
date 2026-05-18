@@ -49,7 +49,7 @@ export default async function AcademyCoursePage({ params }: PageProps) {
   }
 
   const { course, modules, previousCourse, nextCourse } = page;
-  const requiredLessonSlugs = modules.flatMap(({ lessons }) =>
+  const guidedPathLessonSlugs = modules.flatMap(({ lessons }) =>
     lessons
       .filter((lesson) => lesson.required_for_core_completion)
       .map((lesson) => lesson.lesson_slug),
@@ -76,7 +76,7 @@ export default async function AcademyCoursePage({ params }: PageProps) {
 
             <div className="mt-6 flex flex-wrap gap-3 text-sm">
               <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
-                {page.requiredLessonCount} required lessons
+                {page.requiredLessonCount} guided path lessons
               </span>
               <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
                 {page.totalLessonCount} total course listings
@@ -89,16 +89,18 @@ export default async function AcademyCoursePage({ params }: PageProps) {
 
           <aside className="space-y-4">
             <AcademyCourseProgressSummary
-              requiredLessonSlugs={requiredLessonSlugs}
+              guidedPathLessonSlugs={guidedPathLessonSlugs}
               totalLessonCount={page.totalLessonCount}
             />
 
             <div className="rounded-lg border border-white/10 bg-slate-900/72 p-5">
               <h2 className="text-lg font-semibold tracking-normal">
-                Course Progress Model
+                Course Progress
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                {course.progress_model}
+                Complete lessons in any order. Progress is measured against the
+                guided path, while reference lessons stay available whenever you
+                need them.
               </p>
             </div>
           </aside>
@@ -135,14 +137,13 @@ export default async function AcademyCoursePage({ params }: PageProps) {
                       </span>
                       <span className="mt-1 block text-sm text-slate-400">
                         {lesson.required_for_core_completion
-                          ? "Required path lesson"
+                          ? "Guided path lesson"
                           : "Optional reference lesson"}
                       </span>
                     </span>
                     <span className="flex items-center justify-start sm:justify-end">
                       <AcademyLessonStatus
                         lessonSlug={lesson.lesson_slug}
-                        required={lesson.required_for_core_completion}
                       />
                     </span>
                   </Link>

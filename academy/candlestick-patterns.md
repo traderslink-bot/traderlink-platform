@@ -125,7 +125,7 @@ In both cases, the next candle matters. Follow-through, failure, reclaim, reject
 
 ## How To Use The Reference Lessons
 
-You do not need to treat every candle type as a required stop in the course path. Use the individual candle pages as a reference library:
+You do not need to treat every candle type as a mandatory stop in the course path. Use the individual candle pages as a reference library:
 
 - Start with Long Wick, Doji, and Spinning Top when you want to understand rejection, hesitation, and balance.
 - Use Hammer, Pin Bar, Bottoming Tail, and Topping Tail when a wick forms near support or resistance.

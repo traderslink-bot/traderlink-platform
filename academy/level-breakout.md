@@ -244,7 +244,7 @@ A cleaner breakout often has a clear level, structure before the break, stronger
 
 A failed level breakout happens when price breaks above a level but cannot hold above it and falls back below the breakout zone.
 
-### Is a retest required after a breakout?
+### Is a retest needed after a breakout?
 
 No. Some breakouts do not retest. But when a retest happens, traders often review whether old resistance holds as support.
 

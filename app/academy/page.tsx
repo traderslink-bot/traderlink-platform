@@ -43,7 +43,7 @@ export default function AcademyHomePage() {
           <div className="grid gap-3 sm:grid-cols-3">
             <StatCard label="Live course" value="1" />
             <StatCard
-              label="Required lessons"
+              label="Guided path lessons"
               value={(liveCoursePage?.requiredLessonCount ?? 25).toString()}
             />
             <StatCard
@@ -89,7 +89,7 @@ export default function AcademyHomePage() {
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-300">
                   <span className="rounded border border-white/10 bg-white/5 px-3 py-2">
-                    {liveCoursePage?.requiredLessonCount ?? 25} required lessons
+                    {liveCoursePage?.requiredLessonCount ?? 25} guided path lessons
                   </span>
                   <span className="rounded border border-white/10 bg-white/5 px-3 py-2">
                     Optional candle and pattern libraries

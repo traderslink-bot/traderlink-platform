@@ -91,7 +91,7 @@ Use the individual chart-pattern pages when the specific structure appears on a 
 - Failure and extension references: Failed Breakout and Parabolic Move.
 - Tool-based reclaim reference: VWAP Reclaim, which belongs here because many traders treat it like a pattern even though it depends on an indicator level.
 
-The reference pages should not feel like a required checklist before you can continue. They are there so a learner can go deeper when the pattern matters.
+The reference pages should not feel like a checklist before you can continue. They are there so a learner can go deeper when the pattern matters.
 
 ## Context That Matters
 

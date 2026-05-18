@@ -41,20 +41,20 @@ export function AcademyLessonCompleteControl({
 }
 
 export function AcademyCourseProgressSummary({
-  requiredLessonSlugs,
+  guidedPathLessonSlugs,
   totalLessonCount,
 }: {
-  requiredLessonSlugs: string[];
+  guidedPathLessonSlugs: string[];
   totalLessonCount: number;
 }) {
   const [state] = useAcademyProgress();
-  const completedRequired = requiredLessonSlugs.filter((slug) =>
+  const completedGuidedPath = guidedPathLessonSlugs.filter((slug) =>
     state.completed.has(slug),
   ).length;
   const percent =
-    requiredLessonSlugs.length === 0
+    guidedPathLessonSlugs.length === 0
       ? 0
-      : Math.round((completedRequired / requiredLessonSlugs.length) * 100);
+      : Math.round((completedGuidedPath / guidedPathLessonSlugs.length) * 100);
 
   return (
     <div className="rounded-lg border border-cyan-200/20 bg-cyan-400/10 p-5">
@@ -62,8 +62,8 @@ export function AcademyCourseProgressSummary({
         Local Course Progress
       </h2>
       <p className="mt-2 text-sm leading-6 text-slate-300">
-        {completedRequired} of {requiredLessonSlugs.length} required lessons
-        completed on this device.
+        {completedGuidedPath} of {guidedPathLessonSlugs.length} guided path
+        lessons completed on this device.
       </p>
       <div className="mt-4 h-2 overflow-hidden rounded bg-slate-950">
         <div
@@ -81,10 +81,8 @@ export function AcademyCourseProgressSummary({
 
 export function AcademyLessonStatus({
   lessonSlug,
-  required,
 }: {
   lessonSlug: string;
-  required: boolean;
 }) {
   const [state] = useAcademyProgress();
   const isComplete = state.completed.has(lessonSlug);
@@ -97,7 +95,7 @@ export function AcademyLessonStatus({
           : "border-white/10 bg-white/5 text-slate-400"
       }`}
     >
-      {isComplete ? "Complete" : required ? "Required" : "Optional"}
+      {isComplete ? "Complete" : "Incomplete"}
     </span>
   );
 }
