@@ -1179,6 +1179,46 @@ Checklist result:
 
 No production website files, routes, schemas, or components were created.
 
+## Academy Registry JSON And Validation Status
+
+Academy registry JSON implementation and validation checks are complete.
+
+Registry files:
+
+- `academy/_data/courses.json`
+- `academy/_data/modules.json`
+- `academy/_data/lesson-memberships.json`
+- `academy/_data/path-hubs.json`
+- `academy/_data/app-bridges.json`
+- `academy/_data/visual-overrides.json`
+- `academy/_data/validate-academy-registry.mjs`
+
+Validation command:
+
+```text
+npm run validate:academy-registry
+```
+
+Validation result:
+
+- Passed.
+- Courses: 15.
+- Modules: 102.
+- Membership rows: 283.
+- Required membership rows: 205.
+- Registered lesson/path slugs: 223.
+- Path hubs: 4.
+- App bridge rows: 15.
+- Visual override rows: 15.
+- Warning: 12 local Academy markdown files are not represented in this registry, which is expected for non-Academy-ready SEO/archive drafts.
+
+Implementation boundary:
+
+- No Academy route files were created.
+- No Academy UI files were created.
+- No React components, JSX, CSS, or production page files were changed.
+- Hard app links remain disabled.
+
 ## Cross-Listed Lesson Rules
 
 Some lessons can appear in more than one course. This is good for navigation, but each lesson should still have one primary course.

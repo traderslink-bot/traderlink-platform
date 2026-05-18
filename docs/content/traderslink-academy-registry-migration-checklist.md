@@ -20,6 +20,7 @@ Recommended future files:
 
 ```text
 academy/_data/courses.json
+academy/_data/modules.json
 academy/_data/lesson-memberships.json
 academy/_data/path-hubs.json
 academy/_data/app-bridges.json
@@ -162,6 +163,31 @@ Checklist:
 - [ ] Verify each `lesson_slug` resolves to a local markdown file.
 - [ ] Verify every cross-listed lesson has one canonical owner.
 - [ ] Verify optional support rails do not count toward core progress unless explicitly promoted.
+
+### `academy/_data/modules.json`
+
+Purpose:
+
+- Course/module definitions.
+- Module display order.
+- Module display behavior.
+- Module progress behavior.
+
+Checklist:
+
+- [ ] Create `modules.json`.
+- [ ] Add every module from the markdown registry draft.
+- [ ] Add supporting-lesson rail modules where support rows exist.
+- [ ] Include `course_id`.
+- [ ] Include `module_id`.
+- [ ] Include `module_title`.
+- [ ] Include `module_order`.
+- [ ] Include `module_type`.
+- [ ] Include `display_behavior`.
+- [ ] Include `progress_enabled`.
+- [ ] Verify every `course_id` resolves to `courses.json`.
+- [ ] Verify every `module_id` is unique inside its course.
+- [ ] Verify every membership row resolves to a module in this file.
 
 Required membership type values:
 

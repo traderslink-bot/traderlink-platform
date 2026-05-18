@@ -1,0 +1,291 @@
+{
+  "version": 1,
+  "generated_from": "docs/content/traderslink-academy-content-registry-draft.md",
+  "app_bridges": [
+    {
+      "app_bridge_card_id": "trading-foundations-course-bridge",
+      "scope": "course",
+      "course_id": "trading-foundations",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "light",
+      "primary_surface": "Progress/Academy",
+      "secondary_surfaces": [
+        "Journal Notes"
+      ],
+      "placement": "course_note",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "progress_academy",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "chart-reading-market-structure-course-bridge",
+      "scope": "course",
+      "course_id": "chart-reading-market-structure",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "supporting",
+      "primary_surface": "Trade Review",
+      "secondary_surfaces": [
+        "Journal Notes",
+        "Playbook Builder"
+      ],
+      "placement": "occasional_module_card",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "trade_review",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "volume-liquidity-order-flow-course-bridge",
+      "scope": "course",
+      "course_id": "volume-liquidity-order-flow",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "core",
+      "primary_surface": "Execution Review",
+      "secondary_surfaces": [
+        "Trade Review",
+        "Analytics"
+      ],
+      "placement": "module_card",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "execution_review",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "risk-management-trade-planning-course-bridge",
+      "scope": "course",
+      "course_id": "risk-management-trade-planning",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "core",
+      "primary_surface": "Risk Review",
+      "secondary_surfaces": [
+        "Trade Review",
+        "Analytics"
+      ],
+      "placement": "module_card",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "risk_review",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "technical-indicators-tools-course-bridge",
+      "scope": "course",
+      "course_id": "technical-indicators-tools",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "supporting",
+      "primary_surface": "Trade Review",
+      "secondary_surfaces": [
+        "Journal Notes"
+      ],
+      "placement": "course_note",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "trade_review",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "trading-styles-playbooks-course-bridge",
+      "scope": "course",
+      "course_id": "trading-styles-playbooks",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "core",
+      "primary_surface": "Playbook Builder",
+      "secondary_surfaces": [
+        "Trade Review",
+        "Analytics"
+      ],
+      "placement": "module_card",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "playbook_builder",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "day-trading-workflow-course-bridge",
+      "scope": "course",
+      "course_id": "day-trading-workflow",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "core",
+      "primary_surface": "Session Review",
+      "secondary_surfaces": [
+        "Execution Review",
+        "Risk Review"
+      ],
+      "placement": "module_card",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "session_review",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "swing-trading-workflow-course-bridge",
+      "scope": "course",
+      "course_id": "swing-trading-workflow",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "supporting",
+      "primary_surface": "Trade Review",
+      "secondary_surfaces": [
+        "Journal Notes",
+        "Risk Review"
+      ],
+      "placement": "course_note",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "trade_review",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "news-catalysts-sec-filings-course-bridge",
+      "scope": "course",
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "core",
+      "primary_surface": "News/Filing Review",
+      "secondary_surfaces": [
+        "Trade Review",
+        "Journal Notes"
+      ],
+      "placement": "module_card",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "news_filing_review",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "small-cap-float-dilution-course-bridge",
+      "scope": "course",
+      "course_id": "small-cap-float-dilution",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "core",
+      "primary_surface": "News/Filing Review",
+      "secondary_surfaces": [
+        "Risk Review",
+        "Trade Review"
+      ],
+      "placement": "module_card",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "news_filing_review",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "halts-high-volatility-course-bridge",
+      "scope": "course",
+      "course_id": "halts-high-volatility",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "core",
+      "primary_surface": "Execution Review",
+      "secondary_surfaces": [
+        "Risk Review",
+        "Trade Review"
+      ],
+      "placement": "module_card",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "execution_review",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "trading-psychology-discipline-course-bridge",
+      "scope": "course",
+      "course_id": "trading-psychology-discipline",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "core",
+      "primary_surface": "Coaching",
+      "secondary_surfaces": [
+        "Trade Review",
+        "Journal Notes"
+      ],
+      "placement": "module_card",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "coaching",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "trade-review-improvement-course-bridge",
+      "scope": "course",
+      "course_id": "trade-review-improvement",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "core",
+      "primary_surface": "Trade Review",
+      "secondary_surfaces": [
+        "Risk Review",
+        "Execution Review",
+        "Coaching",
+        "Analytics"
+      ],
+      "placement": "capstone",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "trade_review",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "practice-improvement-course-bridge",
+      "scope": "course",
+      "course_id": "practice-improvement",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "core",
+      "primary_surface": "Progress/Academy",
+      "secondary_surfaces": [
+        "Trade Review",
+        "Analytics",
+        "Playbook Builder"
+      ],
+      "placement": "capstone",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "progress_academy",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    },
+    {
+      "app_bridge_card_id": "academy-navigation-path-hubs-course-bridge",
+      "scope": "course",
+      "course_id": "academy-navigation-path-hubs",
+      "module_id": null,
+      "lesson_slug": null,
+      "enabled": true,
+      "bridge_strength": "light",
+      "primary_surface": "Progress/Academy",
+      "secondary_surfaces": [
+        "Trade Review"
+      ],
+      "placement": "path_hub_note",
+      "route_key": null,
+      "hard_link_enabled": false,
+      "copy_variant": "progress_academy",
+      "claim_safety_notes": "Review-focused only; no prediction, buy/sell signal, profit claim, loss-prevention promise, guaranteed improvement claim, or psychological diagnosis."
+    }
+  ]
+}

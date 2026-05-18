@@ -629,14 +629,15 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-18 | Academy content registry draft | Created the Academy content registry draft from the existing course index. | Passed. Created `docs/content/traderslink-academy-content-registry-draft.md`, mapping courses, modules, displayed lesson membership, canonical and cross-listed ownership, progress behavior, path hub treatment, route-safe app bridge candidates, visual readiness flags, and registry QA checks. No production website files were changed. | `fd3bf4ce` |
 | 2026-05-18 | Academy registry format decision | Chose the recommended future registry location and format. | Passed. Created `docs/content/traderslink-academy-registry-format-decision.md`, recommending author-editable JSON under `academy/_data/` as the first registry source, explaining why `academy/content/`, root `content/academy/`, and `src/content/academy/` are not the best first source-of-truth locations, and preserving `src/content/academy/` as a possible typed adapter layer later. No production website files were changed. | `bfb92f51` |
 | 2026-05-18 | Academy registry migration checklist | Created the migration checklist from the markdown registry draft to future `academy/_data/*.json` files. | Passed. Created `docs/content/traderslink-academy-registry-migration-checklist.md`, defining target JSON file roles, field-level migration requirements, validation checks for slugs, membership, navigation, app bridges, visuals, and editorial/source boundaries, plus the production gate that registry data and validation should come before Academy route/UI implementation. No production website files were changed. | `c1251d91` |
+| 2026-05-18 | Academy registry JSON and validation checks | Created the author-editable Academy registry JSON files under `academy/_data/` and added validation checks. | Passed. Created `courses.json`, `modules.json`, `lesson-memberships.json`, `path-hubs.json`, `app-bridges.json`, `visual-overrides.json`, and `validate-academy-registry.mjs`; added `npm run validate:academy-registry`; validation passed with 15 courses, 102 modules, 283 membership rows, 205 required rows, 223 registered lesson/path slugs, 4 path hubs, 15 app bridge rows, and 15 visual override rows. No Academy routes or UI files were changed. | `pending_commit` |
 
 ## Next Recommended Action
 
-Continue from the completed Academy registry migration checklist pass:
+Continue from the completed Academy registry JSON and validation pass:
 
-1. Create author-editable Academy registry JSON files under `academy/_data/` only if the user approves moving from planning into machine-readable registry files.
-2. Add validation checks for lesson slugs, image references, course membership rows, cross-listed ownership, progress rules, context navigation, and route-safe app bridge fields.
-3. Keep Academy route/UI implementation separate until registry data validates.
+1. Plan the Academy production route and content-loader architecture for `/academy`, course pages, path hubs, lessons, static assets, SEO metadata, progress hooks, and registry imports.
+2. Read the relevant current Next.js docs under `node_modules/next/dist/docs/` before any production route/UI work.
+3. Keep Academy route/UI implementation separate unless explicitly requested in the next run.
 4. Keep hard app links disabled until product route keys, feature names, and claims are stable.
 
 ## Important Reminder

@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "generated_from": "docs/content/traderslink-academy-content-registry-draft.md",
+  "path_hubs": [
+    {
+      "path_id": "chart-reading-path",
+      "path_slug": "/academy/chart-reading-path/",
+      "path_title": "Chart Reading Path",
+      "path_type": "academy_path_hub",
+      "display_order": 1,
+      "status": "ui_planning_ready",
+      "path_goal": "Guide learners through levels, structure, candles, patterns, volume, workflow, and review.",
+      "recommended_for": "Learners who want a focused route through chart reading before workflows.",
+      "progress_model": "aggregate_lesson_completion",
+      "hard_app_links_enabled": false,
+      "steps": [
+        {
+          "step_id": "chart-reading-core",
+          "step_order": 1,
+          "step_type": "course",
+          "target_id": "chart-reading-market-structure",
+          "required_for_path_completion": true
+        },
+        {
+          "step_id": "volume-context",
+          "step_order": 2,
+          "step_type": "course",
+          "target_id": "volume-liquidity-order-flow",
+          "required_for_path_completion": true
+        },
+        {
+          "step_id": "trade-review",
+          "step_order": 3,
+          "step_type": "lesson",
+          "target_slug": "/academy/trade-review-and-improvement/",
+          "required_for_path_completion": true
+        }
+      ]
+    },
+    {
+      "path_id": "news-and-filings-path",
+      "path_slug": "/academy/news-and-filings-path/",
+      "path_title": "News And Filings Path",
+      "path_type": "academy_path_hub",
+      "display_order": 2,
+      "status": "ui_planning_ready",
+      "path_goal": "Guide learners through catalysts, press releases, SEC filings, dilution context, and news-trade review.",
+      "recommended_for": "Learners who want to understand event-driven movement and filings.",
+      "progress_model": "aggregate_lesson_completion",
+      "hard_app_links_enabled": false,
+      "steps": [
+        {
+          "step_id": "news-filings-core",
+          "step_order": 1,
+          "step_type": "course",
+          "target_id": "news-catalysts-sec-filings",
+          "required_for_path_completion": true
+        },
+        {
+          "step_id": "small-cap-dilution-context",
+          "step_order": 2,
+          "step_type": "course",
+          "target_id": "small-cap-float-dilution",
+          "required_for_path_completion": true
+        },
+        {
+          "step_id": "news-trade-review",
+          "step_order": 3,
+          "step_type": "lesson",
+          "target_slug": "/academy/how-to-review-news-trades/",
+          "required_for_path_completion": true
+        }
+      ]
+    },
+    {
+      "path_id": "trade-review-path",
+      "path_slug": "/academy/trade-review-path/",
+      "path_title": "Trade Review Path",
+      "path_type": "academy_path_hub",
+      "display_order": 3,
+      "status": "ui_planning_ready",
+      "path_goal": "Guide learners from structured trade review into risk, execution, mistake-pattern, playbook, and practice loops.",
+      "recommended_for": "Learners who want to turn completed trades into structured improvement notes.",
+      "progress_model": "aggregate_lesson_completion",
+      "hard_app_links_enabled": false,
+      "steps": [
+        {
+          "step_id": "review-core",
+          "step_order": 1,
+          "step_type": "course",
+          "target_id": "trade-review-improvement",
+          "required_for_path_completion": true
+        },
+        {
+          "step_id": "practice-loop",
+          "step_order": 2,
+          "step_type": "course",
+          "target_id": "practice-improvement",
+          "required_for_path_completion": true
+        },
+        {
+          "step_id": "trader-intelligence-review",
+          "step_order": 3,
+          "step_type": "lesson",
+          "target_slug": "/academy/trader-intelligence-trade-review/",
+          "required_for_path_completion": true
+        }
+      ]
+    },
+    {
+      "path_id": "risk-discipline-path",
+      "path_slug": "/academy/risk-discipline-path/",
+      "path_title": "Risk Discipline Path",
+      "path_type": "academy_path_hub",
+      "display_order": 4,
+      "status": "ui_planning_ready",
+      "path_goal": "Guide learners through risk planning, rules, position behavior, discipline, and review practice.",
+      "recommended_for": "Learners who need a guided route through risk limits, rules, discipline, and review.",
+      "progress_model": "aggregate_lesson_completion",
+      "hard_app_links_enabled": false,
+      "steps": [
+        {
+          "step_id": "risk-core",
+          "step_order": 1,
+          "step_type": "course",
+          "target_id": "risk-management-trade-planning",
+          "required_for_path_completion": true
+        },
+        {
+          "step_id": "psychology-discipline",
+          "step_order": 2,
+          "step_type": "course",
+          "target_id": "trading-psychology-discipline",
+          "required_for_path_completion": true
+        },
+        {
+          "step_id": "practice-loop",
+          "step_order": 3,
+          "step_type": "course",
+          "target_id": "practice-improvement",
+          "required_for_path_completion": true
+        }
+      ]
+    }
+  ]
+}

@@ -211,7 +211,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Academy registry JSON implementation and validation planning**.
+Continue with **Academy production route/content-loader planning and Next.js docs review**.
 
 Reason:
 
@@ -236,13 +236,14 @@ Reason:
 - Academy registry implementation-format decision is complete in `docs/content/traderslink-academy-registry-format-decision.md`.
 - The recommended first registry source is author-editable JSON under `academy/_data/`, not `academy/content/`, root `content/academy/`, or `src/content/academy/`.
 - Academy registry migration checklist planning is complete in `docs/content/traderslink-academy-registry-migration-checklist.md`.
-- The next useful implementation-prep pass is creating author-editable `academy/_data/*.json` registry files and validation checks before any Academy UI/routes are built.
+- Academy registry JSON implementation and validation checks are complete under `academy/_data/`.
+- `npm run validate:academy-registry` passes.
+- The next useful pass is production route/content-loader planning after reading the relevant current Next.js docs, before building Academy UI screens.
 
 Output should include:
 
-- Author-editable JSON files under `academy/_data/` if the user explicitly approves moving from planning into machine-readable registry files.
-- Validation checks for lesson slugs, image references, membership rows, cross-listed ownership, context navigation, and route-safe app bridge fields.
-- A clear boundary that creating registry data is not the same as building Academy routes or UI.
-- No Academy route/UI implementation unless explicitly requested.
+- A route/content-loader plan for `/academy`, course pages, path hubs, lessons, static assets, SEO metadata, progress hooks, and registry imports.
+- Current Next.js documentation notes from `node_modules/next/dist/docs/`, per repo instructions.
+- No Academy route/UI implementation unless explicitly requested in that run.
 - Tracker and handoff update.
 - Commit.
