@@ -46,17 +46,7 @@ The larger candle can feel decisive in real time. The review still has to ask wh
 
 ![Candlestick chart showing bullish and bearish engulfing candles near support and resistance with volume context.](/academy/images/chart-reading/engulfing-candle-context.svg)
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Recognize the pattern without treating the name as a trade plan.
-- Read the candle beside levels, volume, trend, and liquidity.
-- Identify common failure conditions.
-- Review entry, exit, and risk behavior after the trade.
-- Use the pattern as context rather than prediction.
-
-## Quick Definition
+## What It Is
 
 An engulfing candle is a two-candle pattern where the second candle's body overtakes the prior candle's body.
 
@@ -68,7 +58,7 @@ An engulfing candle is a two-candle pattern where the second candle's body overt
 
 Engulfing shows a shift during the candle pair, not guaranteed continuation or reversal.
 
-## What The Candle Shows
+## What It Shows
 
 Engulfing candles show one side taking control over the prior candle's body.
 
@@ -78,7 +68,7 @@ Engulfing candles show one side taking control over the prior candle's body.
 - A potential late-entry risk after a large candle.
 - A need for follow-through review.
 
-## Context That Matters
+## Where It Matters
 
 Engulfing candles should be read with level and volume context.
 
@@ -89,11 +79,11 @@ Engulfing candles should be read with level and volume context.
 - Whether the next candle holds or rejects.
 - Liquidity and spread.
 
-## When It Can Mislead
+## When It Misleads
 
 Engulfing candles can mislead when traders enter after a large candle far from risk or into the next major level.
 
-## Realistic Example
+## Example
 
 A stock pulls into support, prints a small red candle, then a wide green candle that closes back above the support zone. The review asks whether volume supported the shift and whether the entry had realistic risk.
 
@@ -109,31 +99,11 @@ Another mistake is ignoring the prior trend.
 
 A final mistake is holding after the engulfing idea fails.
 
-## Practical Checklist
+## Before You Move On
 
-- The candle is identified correctly.
-- The pattern formed near a meaningful area, not random noise.
-- Volume and liquidity are reviewed.
-- The broader trend and nearby levels are checked.
-- Risk is defined without relying on the candle name.
-- The next candles are reviewed for follow-through or failure.
-- The trade can be reviewed honestly after completion.
+An engulfing candle can look powerful, but a large candle can also create poor entry location. Before moving on, make sure you can separate the shift in control from the risk of chasing after the move has already stretched.
 
-## Apply This In Review
-
-- What candle pattern did I think I saw?
-- Where did it form on the chart?
-- What level, trend, or volume context mattered?
-- Did I react to the name or follow a plan?
-- Did the pattern follow through or fail?
-- Where was invalidation?
-- What should I tag for future review?
-
-Engulfing review should separate shift-of-control context from late-entry excitement.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by candle pattern, location, volume, entry timing, failure behavior, and repeated reaction patterns.
+In a journal, an engulfing candle is useful only if it explains context: where it formed, what it overtook, how volume behaved, and whether the next candles held the shift.
 
 ## Related Lessons
 

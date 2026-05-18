@@ -46,17 +46,7 @@ A hammer near support may be meaningful, but it still needs context and a failur
 
 ![Candlestick chart showing a hammer candle near support with volume and follow-through context.](/academy/images/chart-reading/hammer-support-context.svg)
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Recognize the pattern without treating the name as a trade plan.
-- Read the candle beside levels, volume, trend, and liquidity.
-- Identify common failure conditions.
-- Review entry, exit, and risk behavior after the trade.
-- Use the pattern as context rather than prediction.
-
-## Quick Definition
+## What It Is
 
 A hammer is a candle with a small body near the top of the range and a long lower wick.
 
@@ -68,7 +58,7 @@ A hammer is a candle with a small body near the top of the range and a long lowe
 
 A hammer shows recovery from lower prices during that candle, not proof of reversal.
 
-## What The Candle Shows
+## What It Shows
 
 Hammer candles show a test below the body and recovery into the close.
 
@@ -78,7 +68,7 @@ Hammer candles show a test below the body and recovery into the close.
 - Possible liquidity flush.
 - Possible pause before another move lower.
 
-## Context That Matters
+## Where It Matters
 
 Hammer context depends heavily on location.
 
@@ -89,11 +79,11 @@ Hammer context depends heavily on location.
 - Next candle follow-through.
 - News, float, and liquidity context.
 
-## When It Can Mislead
+## When It Misleads
 
 Hammer candles can mislead when traders assume the lower wick created support. Price can break below the wick low and continue lower.
 
-## Realistic Example
+## Example
 
 A stock pulls back toward a support zone, flushes slightly below it, then closes back above the zone with a long lower wick. The review asks whether the next candle held above support and whether risk was defined below the wick.
 
@@ -109,31 +99,11 @@ Another mistake is ignoring volume.
 
 A final mistake is holding after the wick low fails.
 
-## Practical Checklist
+## Before You Move On
 
-- The candle is identified correctly.
-- The pattern formed near a meaningful area, not random noise.
-- Volume and liquidity are reviewed.
-- The broader trend and nearby levels are checked.
-- Risk is defined without relying on the candle name.
-- The next candles are reviewed for follow-through or failure.
-- The trade can be reviewed honestly after completion.
+A hammer is mainly a lower-wick recovery candle. Before moving on, make sure you can identify the wick low, the nearby support context, and the point where the hammer idea would be invalidated.
 
-## Apply This In Review
-
-- What candle pattern did I think I saw?
-- Where did it form on the chart?
-- What level, trend, or volume context mattered?
-- Did I react to the name or follow a plan?
-- Did the pattern follow through or fail?
-- Where was invalidation?
-- What should I tag for future review?
-
-Hammer review should focus on level reaction, wick low, volume, and whether the idea failed.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by candle pattern, location, volume, entry timing, failure behavior, and repeated reaction patterns.
+If you later review a trade around a hammer, focus less on the candle name and more on whether you had realistic risk below the wick and whether follow-through appeared.
 
 ## Related Lessons
 

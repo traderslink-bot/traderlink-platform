@@ -46,17 +46,7 @@ Volume should be read with candle structure, not separately from it.
 
 ![Candlestick chart comparing candle reactions with expanding and fading volume context.](/academy/images/chart-reading/candle-volume-confirmation-context.svg)
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Explain candle volume confirmation.
-- Compare candle shape with participation.
-- Understand why high volume can still fail.
-- Review volume by time of day and context.
-- Avoid using volume as proof.
-
-## Quick Definition
+## What It Is
 
 Candle volume confirmation is the process of comparing a candle's price action with the amount of volume during that candle.
 
@@ -68,7 +58,7 @@ Candle volume confirmation is the process of comparing a candle's price action w
 
 Volume can support interpretation, but it does not prove the next move.
 
-## What The Candle Shows
+## What It Shows
 
 Volume shows participation behind a candle.
 
@@ -78,7 +68,7 @@ Volume shows participation behind a candle.
 - Whether a reaction at a level was active.
 - Whether a trader overtrusted a volume spike.
 
-## Context That Matters
+## Where It Matters
 
 Volume context depends on the candle and the session.
 
@@ -89,11 +79,11 @@ Volume context depends on the candle and the session.
 - Close location inside the candle.
 - Follow-through after the volume candle.
 
-## When It Can Mislead
+## When It Misleads
 
 Volume can mislead when traders assume high volume means continuation. High volume can appear during exhaustion, rejection, panic, or failed breakouts.
 
-## Realistic Example
+## Example
 
 A candle breaks above resistance on high volume but closes back near the middle of its range. The review asks whether volume supported a clean break or showed heavy two-sided activity near the level.
 
@@ -109,31 +99,11 @@ Another mistake is ignoring failed high-volume candles.
 
 A final mistake is using volume to justify a late entry.
 
-## Practical Checklist
+## Before You Move On
 
-- The candle is identified correctly.
-- The pattern formed near a meaningful area, not random noise.
-- Volume and liquidity are reviewed.
-- The broader trend and nearby levels are checked.
-- Risk is defined without relying on the candle name.
-- The next candles are reviewed for follow-through or failure.
-- The trade can be reviewed honestly after completion.
+Volume is not a stamp of approval. Before moving on, make sure you can compare volume with candle close, level location, time of day, and follow-through.
 
-## Apply This In Review
-
-- What candle pattern did I think I saw?
-- Where did it form on the chart?
-- What level, trend, or volume context mattered?
-- Did I react to the name or follow a plan?
-- Did the pattern follow through or fail?
-- Where was invalidation?
-- What should I tag for future review?
-
-Candle volume review should connect participation with candle close, level, and follow-through.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by candle pattern, location, volume, entry timing, failure behavior, and repeated reaction patterns.
+This is one of the candle lessons where journaling can be useful. If a trade was based on a high-volume candle, review whether the volume supported clean action or whether it marked exhaustion, rejection, or a late entry.
 
 ## Related Lessons
 

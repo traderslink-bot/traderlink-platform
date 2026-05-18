@@ -46,17 +46,7 @@ The color change is not a complete thesis. It needs levels, volume, VWAP, cataly
 
 ![Candlestick chart showing red-to-green and green-to-red intraday transitions with VWAP and volume context.](/academy/images/chart-reading/red-green-transition-context.svg)
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Recognize the pattern without treating the name as a trade plan.
-- Read the candle beside levels, volume, trend, and liquidity.
-- Identify common failure conditions.
-- Review entry, exit, and risk behavior after the trade.
-- Use the pattern as context rather than prediction.
-
-## Quick Definition
+## What It Is
 
 A green-to-red move is an intraday transition where price moves from positive territory into negative territory relative to a reference such as the prior close.
 
@@ -68,7 +58,7 @@ A green-to-red move is an intraday transition where price moves from positive te
 
 The transition shows a change in session position, not guaranteed downside.
 
-## What The Candle Shows
+## What It Shows
 
 Green-to-red moves show price losing an intraday reference.
 
@@ -78,7 +68,7 @@ Green-to-red moves show price losing an intraday reference.
 - Possible reclaim risk if price recovers.
 - Possible chase risk after the transition.
 
-## Context That Matters
+## Where It Matters
 
 This move needs level and reaction context.
 
@@ -89,11 +79,11 @@ This move needs level and reaction context.
 - Spread and liquidity.
 - Whether price reclaims the reference.
 
-## When It Can Mislead
+## When It Misleads
 
 Green-to-red moves can mislead when traders assume losing the reference means clean continuation. Price can reclaim the level or chop around it.
 
-## Realistic Example
+## Example
 
 A stock opens strong after news, fails near resistance, then loses the prior close with increasing volume. A review asks whether the catalyst was fading, whether support was nearby, and whether any entry was late after the clean loss.
 
@@ -109,31 +99,11 @@ Another mistake is ignoring a quick reclaim.
 
 A final mistake is not checking catalyst quality.
 
-## Practical Checklist
+## Before You Move On
 
-- The candle is identified correctly.
-- The pattern formed near a meaningful area, not random noise.
-- Volume and liquidity are reviewed.
-- The broader trend and nearby levels are checked.
-- Risk is defined without relying on the candle name.
-- The next candles are reviewed for follow-through or failure.
-- The trade can be reviewed honestly after completion.
+A green-to-red move matters only if the reference loss changes the structure. Losing the prior close into nearby support is different from losing it cleanly after a failed news push.
 
-## Apply This In Review
-
-- What candle pattern did I think I saw?
-- Where did it form on the chart?
-- What level, trend, or volume context mattered?
-- Did I react to the name or follow a plan?
-- Did the pattern follow through or fail?
-- Where was invalidation?
-- What should I tag for future review?
-
-Green-to-red review should focus on reference loss, catalyst reaction, volume, and reclaim risk.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by candle pattern, location, volume, entry timing, failure behavior, and repeated reaction patterns.
+When reviewing this later, focus on the reference level, catalyst reaction, volume, reclaim risk, and whether the entry was planned or late.
 
 ## Related Lessons
 

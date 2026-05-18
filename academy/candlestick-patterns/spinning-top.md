@@ -46,17 +46,7 @@ Like a doji, a spinning top is easy to overread. It needs location and follow-th
 
 ![Candlestick chart showing small-body hesitation near a key level with volume and follow-through context.](/academy/images/chart-reading/doji-at-key-level.svg)
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Recognize the pattern without treating the name as a trade plan.
-- Read the candle beside levels, volume, trend, and liquidity.
-- Identify common failure conditions.
-- Review entry, exit, and risk behavior after the trade.
-- Use the pattern as context rather than prediction.
-
-## Quick Definition
+## What It Is
 
 A spinning top is a small-body candle with upper and lower wicks.
 
@@ -68,7 +58,7 @@ A spinning top is a small-body candle with upper and lower wicks.
 
 A spinning top shows hesitation, not direction.
 
-## What The Candle Shows
+## What It Shows
 
 Spinning tops show that both sides moved price but neither side closed decisively.
 
@@ -78,7 +68,7 @@ Spinning tops show that both sides moved price but neither side closed decisivel
 - Possible balance before expansion.
 - Possible warning to avoid overconfidence.
 
-## Context That Matters
+## Where It Matters
 
 Spinning tops need location and volume context.
 
@@ -89,11 +79,11 @@ Spinning tops need location and volume context.
 - Time of day.
 - Liquidity and spread.
 
-## When It Can Mislead
+## When It Misleads
 
 Spinning tops can mislead when traders assign reversal meaning to every small-body candle.
 
-## Realistic Example
+## Example
 
 A stock rallies into resistance and forms a spinning top with a small body and wicks on both sides. The review asks whether that hesitation mattered after the next candle, not whether the candle name alone predicted a turn.
 
@@ -109,31 +99,11 @@ Another mistake is confusing hesitation with confirmation.
 
 A final mistake is ignoring nearby levels.
 
-## Practical Checklist
+## Before You Move On
 
-- The candle is identified correctly.
-- The pattern formed near a meaningful area, not random noise.
-- Volume and liquidity are reviewed.
-- The broader trend and nearby levels are checked.
-- Risk is defined without relying on the candle name.
-- The next candles are reviewed for follow-through or failure.
-- The trade can be reviewed honestly after completion.
+A spinning top is a hesitation candle. Before moving on, make sure you can tell the difference between hesitation at a meaningful level and a small-body candle in random chop.
 
-## Apply This In Review
-
-- What candle pattern did I think I saw?
-- Where did it form on the chart?
-- What level, trend, or volume context mattered?
-- Did I react to the name or follow a plan?
-- Did the pattern follow through or fail?
-- Where was invalidation?
-- What should I tag for future review?
-
-Spinning top review should describe hesitation quality and whether anything changed after it.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by candle pattern, location, volume, entry timing, failure behavior, and repeated reaction patterns.
+If this candle affected a completed trade, review whether the hesitation actually changed the decision or whether the name was added after the fact.
 
 ## Related Lessons
 

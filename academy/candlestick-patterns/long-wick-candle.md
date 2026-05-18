@@ -46,17 +46,7 @@ A wick is useful only when the trader asks where it formed and what happened aft
 
 ![Candlestick chart showing long upper and lower wick rejection around support and resistance with volume context.](/academy/images/chart-reading/long-wick-rejection-context.svg)
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Recognize the pattern without treating the name as a trade plan.
-- Read the candle beside levels, volume, trend, and liquidity.
-- Identify common failure conditions.
-- Review entry, exit, and risk behavior after the trade.
-- Use the pattern as context rather than prediction.
-
-## Quick Definition
+## What It Is
 
 A long wick candle is a candle with a noticeably long upper or lower wick compared with its body.
 
@@ -68,7 +58,7 @@ A long wick candle is a candle with a noticeably long upper or lower wick compar
 
 The wick shows movement away from an extreme, not a guaranteed reversal.
 
-## What The Candle Shows
+## What It Shows
 
 Long wicks show that price explored one area and closed away from it.
 
@@ -78,7 +68,7 @@ Long wicks show that price explored one area and closed away from it.
 - Possible failed breakout or breakdown attempt.
 - Possible emotional flush or squeeze.
 
-## Context That Matters
+## Where It Matters
 
 The same wick can mean different things in different places.
 
@@ -89,11 +79,11 @@ The same wick can mean different things in different places.
 - Timeframe and time of day.
 - Next candle follow-through.
 
-## When It Can Mislead
+## When It Misleads
 
 Long wicks can mislead in thin or volatile stocks. A wick created by a wide spread is not the same as a clean rejection at a high-volume level.
 
-## Realistic Example
+## Example
 
 Price pushes above resistance, prints a long upper wick, and closes back below the zone. The review asks whether sellers truly rejected the area, whether volume expanded, and whether the next candle stayed below or reclaimed the zone.
 
@@ -109,31 +99,11 @@ Another mistake is overvaluing wicks in the middle of a range.
 
 A final mistake is ignoring the next candle after the wick.
 
-## Practical Checklist
+## Before You Move On
 
-- The candle is identified correctly.
-- The pattern formed near a meaningful area, not random noise.
-- Volume and liquidity are reviewed.
-- The broader trend and nearby levels are checked.
-- Risk is defined without relying on the candle name.
-- The next candles are reviewed for follow-through or failure.
-- The trade can be reviewed honestly after completion.
+A long wick is worth studying only when you can explain the location and the follow-through. Before moving on, make sure you can say whether the wick formed near a meaningful level, whether liquidity was clean, and whether the next candles respected or ignored the rejection.
 
-## Apply This In Review
-
-- What candle pattern did I think I saw?
-- Where did it form on the chart?
-- What level, trend, or volume context mattered?
-- Did I react to the name or follow a plan?
-- Did the pattern follow through or fail?
-- Where was invalidation?
-- What should I tag for future review?
-
-Long wick review should connect wick direction, level location, volume, and follow-through.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by candle pattern, location, volume, entry timing, failure behavior, and repeated reaction patterns.
+If a completed trade was influenced by a long wick, it can be useful to tag the trade later with the wick direction, level, volume, and whether the reaction followed through.
 
 ## Related Lessons
 

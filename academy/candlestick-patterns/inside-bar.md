@@ -46,17 +46,7 @@ The inside bar gives traders a range to review. It does not promise a clean brea
 
 ![Candlestick chart showing inside bar compression and outside bar range expansion with volume context.](/academy/images/chart-reading/inside-outside-bar-context.svg)
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Recognize the pattern without treating the name as a trade plan.
-- Read the candle beside levels, volume, trend, and liquidity.
-- Identify common failure conditions.
-- Review entry, exit, and risk behavior after the trade.
-- Use the pattern as context rather than prediction.
-
-## Quick Definition
+## What It Is
 
 An inside bar is a candle whose high is lower than the prior candle's high and whose low is higher than the prior candle's low.
 
@@ -68,7 +58,7 @@ An inside bar is a candle whose high is lower than the prior candle's high and w
 
 An inside bar shows contraction inside a prior range.
 
-## What The Candle Shows
+## What It Shows
 
 Inside bars show temporary compression.
 
@@ -78,7 +68,7 @@ Inside bars show temporary compression.
 - A possible false break setup.
 - A range that needs follow-through review.
 
-## Context That Matters
+## Where It Matters
 
 Inside bars need range, volume, and level context.
 
@@ -89,11 +79,11 @@ Inside bars need range, volume, and level context.
 - Whether the break holds outside the range.
 - Timeframe alignment.
 
-## When It Can Mislead
+## When It Misleads
 
 Inside bars can mislead when traders assume compression must produce a large move. Price can fake out or keep moving sideways.
 
-## Realistic Example
+## Example
 
 After a momentum candle, price forms a smaller candle inside the prior range while volume contracts. A trader reviews the mother candle high and low, then studies whether any later break holds or fails back inside.
 
@@ -109,31 +99,11 @@ Another mistake is trading inside bars in dead, low-quality chop.
 
 A final mistake is using a timeframe that does not match the trade plan.
 
-## Practical Checklist
+## Before You Move On
 
-- The candle is identified correctly.
-- The pattern formed near a meaningful area, not random noise.
-- Volume and liquidity are reviewed.
-- The broader trend and nearby levels are checked.
-- Risk is defined without relying on the candle name.
-- The next candles are reviewed for follow-through or failure.
-- The trade can be reviewed honestly after completion.
+An inside bar is not important because it predicts a breakout. It is important because it defines a smaller range inside a larger candle. Before moving on, make sure you can identify the mother candle high and low and explain what would count as a hold, failure, or fakeout.
 
-## Apply This In Review
-
-- What candle pattern did I think I saw?
-- Where did it form on the chart?
-- What level, trend, or volume context mattered?
-- Did I react to the name or follow a plan?
-- Did the pattern follow through or fail?
-- Where was invalidation?
-- What should I tag for future review?
-
-Inside bar review should focus on compression, range break, failure, and follow-through.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by candle pattern, location, volume, entry timing, failure behavior, and repeated reaction patterns.
+In trade review, inside bars are useful when they explain compression before a decision. They are not useful when they are forced onto random sideways candles.
 
 ## Related Lessons
 

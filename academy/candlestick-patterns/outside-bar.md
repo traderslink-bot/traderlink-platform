@@ -46,17 +46,7 @@ An outside bar can look powerful, but it can also mark exhaustion, a trap, or me
 
 ![Candlestick chart showing inside bar compression and outside bar range expansion with volume context.](/academy/images/chart-reading/inside-outside-bar-context.svg)
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Recognize the pattern without treating the name as a trade plan.
-- Read the candle beside levels, volume, trend, and liquidity.
-- Identify common failure conditions.
-- Review entry, exit, and risk behavior after the trade.
-- Use the pattern as context rather than prediction.
-
-## Quick Definition
+## What It Is
 
 An outside bar is a candle whose high is above the prior candle's high and whose low is below the prior candle's low.
 
@@ -68,7 +58,7 @@ An outside bar is a candle whose high is above the prior candle's high and whose
 
 An outside bar shows range expansion, not guaranteed direction.
 
-## What The Candle Shows
+## What It Shows
 
 Outside bars show that price swept both sides of the prior candle range.
 
@@ -78,7 +68,7 @@ Outside bars show that price swept both sides of the prior candle range.
 - Possible exhaustion after a move.
 - A need to review where the candle closed.
 
-## Context That Matters
+## Where It Matters
 
 Outside bars need close-location and level context.
 
@@ -89,11 +79,11 @@ Outside bars need close-location and level context.
 - Prior compression or trend.
 - Follow-through after the outside bar.
 
-## When It Can Mislead
+## When It Misleads
 
 Outside bars can mislead when traders focus only on the large candle and ignore where it closed or whether the move is already extended.
 
-## Realistic Example
+## Example
 
 A stock breaks above a prior high, reverses sharply, sweeps below the prior low, and closes near support. The outside bar shows volatility, but the review must ask whether the candle created clarity or just noise.
 
@@ -109,31 +99,11 @@ Another mistake is overlooking spread and volatility.
 
 A final mistake is holding after the outside-bar idea fails.
 
-## Practical Checklist
+## Before You Move On
 
-- The candle is identified correctly.
-- The pattern formed near a meaningful area, not random noise.
-- Volume and liquidity are reviewed.
-- The broader trend and nearby levels are checked.
-- Risk is defined without relying on the candle name.
-- The next candles are reviewed for follow-through or failure.
-- The trade can be reviewed honestly after completion.
+An outside bar is a range-expansion candle. Before moving on, make sure you can explain which side of the prior range was tested, where the candle closed, and whether the size of the candle improved or worsened risk.
 
-## Apply This In Review
-
-- What candle pattern did I think I saw?
-- Where did it form on the chart?
-- What level, trend, or volume context mattered?
-- Did I react to the name or follow a plan?
-- Did the pattern follow through or fail?
-- Where was invalidation?
-- What should I tag for future review?
-
-Outside bar review should focus on range expansion, close location, and whether the candle improved or worsened risk.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by candle pattern, location, volume, entry timing, failure behavior, and repeated reaction patterns.
+If a completed trade was based on an outside bar, review whether the candle gave useful structure or simply pulled you into volatility.
 
 ## Related Lessons
 

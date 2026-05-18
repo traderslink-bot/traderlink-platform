@@ -46,17 +46,7 @@ The candle should be reviewed as rejection context, not a prediction that price 
 
 ![Candlestick chart showing upper wick rejection near resistance with volume context.](/academy/images/chart-reading/long-wick-rejection-context.svg)
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Recognize the pattern without treating the name as a trade plan.
-- Read the candle beside levels, volume, trend, and liquidity.
-- Identify common failure conditions.
-- Review entry, exit, and risk behavior after the trade.
-- Use the pattern as context rather than prediction.
-
-## Quick Definition
+## What It Is
 
 A topping tail is a candle with a long upper wick and a close below the high.
 
@@ -68,7 +58,7 @@ A topping tail is a candle with a long upper wick and a close below the high.
 
 A topping tail shows rejection of higher prices during that candle.
 
-## What The Candle Shows
+## What It Shows
 
 Topping tails show that price could not hold the upper extreme.
 
@@ -78,7 +68,7 @@ Topping tails show that price could not hold the upper extreme.
 - Possible profit-taking or supply.
 - Possible spread or liquidity distortion.
 
-## Context That Matters
+## Where It Matters
 
 Topping tails need resistance and follow-through context.
 
@@ -89,11 +79,11 @@ Topping tails need resistance and follow-through context.
 - Spread and liquidity.
 - Catalyst and float context.
 
-## When It Can Mislead
+## When It Misleads
 
 Topping tails can mislead when traders assume the move is finished. Price can reject once, consolidate, and later break higher.
 
-## Realistic Example
+## Example
 
 A stock runs into a prior high, spikes above it, then closes back below with a long upper wick. The review asks whether volume showed real rejection, whether price later reclaimed the level, and whether any entry was late.
 
@@ -109,31 +99,11 @@ Another mistake is ignoring volume and liquidity.
 
 A final mistake is using the candle to justify a trade without invalidation.
 
-## Practical Checklist
+## Before You Move On
 
-- The candle is identified correctly.
-- The pattern formed near a meaningful area, not random noise.
-- Volume and liquidity are reviewed.
-- The broader trend and nearby levels are checked.
-- Risk is defined without relying on the candle name.
-- The next candles are reviewed for follow-through or failure.
-- The trade can be reviewed honestly after completion.
+A topping tail is an upper-wick rejection candle. Before moving on, make sure you can identify the wick high, the nearby resistance or prior high, and what would count as a reclaim.
 
-## Apply This In Review
-
-- What candle pattern did I think I saw?
-- Where did it form on the chart?
-- What level, trend, or volume context mattered?
-- Did I react to the name or follow a plan?
-- Did the pattern follow through or fail?
-- Where was invalidation?
-- What should I tag for future review?
-
-Topping tail review should focus on upper-wick location, rejection quality, and reclaim/failure behavior.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by candle pattern, location, volume, entry timing, failure behavior, and repeated reaction patterns.
+In trade review, a topping tail matters only if it explains location, rejection quality, and whether the level held or failed.
 
 ## Related Lessons
 

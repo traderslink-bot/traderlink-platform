@@ -46,17 +46,7 @@ The pattern is not useful because of the name. It is useful only when the reject
 
 ![Candlestick chart showing long upper and lower wick rejection around support and resistance with volume context.](/academy/images/chart-reading/long-wick-rejection-context.svg)
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Recognize the pattern without treating the name as a trade plan.
-- Read the candle beside levels, volume, trend, and liquidity.
-- Identify common failure conditions.
-- Review entry, exit, and risk behavior after the trade.
-- Use the pattern as context rather than prediction.
-
-## Quick Definition
+## What It Is
 
 A pin bar is a rejection-style candle with a small body and a long wick.
 
@@ -68,7 +58,7 @@ A pin bar is a rejection-style candle with a small body and a long wick.
 
 A pin bar shows rejection during the candle, not guaranteed direction after it.
 
-## What The Candle Shows
+## What It Shows
 
 Pin bars show a failed attempt to hold an extreme price area.
 
@@ -78,7 +68,7 @@ Pin bars show a failed attempt to hold an extreme price area.
 - Potential spread distortion in thin names.
 - Potential reversal attempt if follow-through appears.
 
-## Context That Matters
+## Where It Matters
 
 Pin bars need more than shape.
 
@@ -89,11 +79,11 @@ Pin bars need more than shape.
 - Close location.
 - Next candle behavior.
 
-## When It Can Mislead
+## When It Misleads
 
 Pin bars can mislead when traders see a long wick and assume the market has chosen a direction.
 
-## Realistic Example
+## Example
 
 A stock spikes above resistance, prints a long upper wick, and closes back below the zone. The review asks whether this was real rejection or a thin-liquidity wick, then checks follow-through.
 
@@ -109,31 +99,11 @@ Another mistake is entering before the candle closes.
 
 A final mistake is ignoring the next candle.
 
-## Practical Checklist
+## Before You Move On
 
-- The candle is identified correctly.
-- The pattern formed near a meaningful area, not random noise.
-- Volume and liquidity are reviewed.
-- The broader trend and nearby levels are checked.
-- Risk is defined without relying on the candle name.
-- The next candles are reviewed for follow-through or failure.
-- The trade can be reviewed honestly after completion.
+A pin bar is a rejection candle, but the rejection only matters if the location matters. Before moving on, make sure you can identify the rejected area, the close location, and whether the wick was clean or caused by thin trading.
 
-## Apply This In Review
-
-- What candle pattern did I think I saw?
-- Where did it form on the chart?
-- What level, trend, or volume context mattered?
-- Did I react to the name or follow a plan?
-- Did the pattern follow through or fail?
-- Where was invalidation?
-- What should I tag for future review?
-
-Pin bar review should explain rejection quality, not just label the candle.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by candle pattern, location, volume, entry timing, failure behavior, and repeated reaction patterns.
+In a journal, a pin bar should explain rejection quality. It should not be used as a shortcut for "I saw a wick, so I took a trade."
 
 ## Related Lessons
 

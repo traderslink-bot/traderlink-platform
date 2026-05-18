@@ -465,6 +465,20 @@ Suggested replacement sections:
 
 Keep `Journal Connection` short and natural.
 
+### Pass 1 Completion Log
+
+Status: complete as of 2026-05-18.
+
+Completed work:
+
+- Rewrote the Doji lesson first as the model cleanup for the candlestick set.
+- Cleaned the Candlestick Patterns In Context course overview so candle lessons are grouped by learning role instead of appearing as a flat SEO list.
+- Removed forced visible sections from the candlestick lesson set, including `Lesson Objective`, `Practical Checklist`, `Apply This In Review`, and `Trader Intelligence Bridge`.
+- Reworked candlestick lessons around topic-specific teaching sections such as `What It Is`, `What It Shows`, `Where It Matters`, `When It Misleads`, `Example`, `Common Mistakes`, and `Before You Move On`.
+- Kept product references natural, restrained, and tied to review behavior instead of repeating a product bridge block.
+
+Next active work: Priority Pass 2, Chart Patterns In Context cleanup.
+
 ## Priority Pass 2: Chart Patterns In Context
 
 Fix the chart-pattern course after candlesticks.
