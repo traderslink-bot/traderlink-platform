@@ -19,9 +19,9 @@ recommended_previous: "/academy/chart-patterns/falling-wedge/"
 recommended_next: "/academy/chart-patterns/inverse-head-and-shoulders/"
 academy_level: "Practical"
 academy_order: 10
-academy_module: "Reversal And Failure Context"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Chart Pattern Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "[Resistance Levels](/academy/resistance-levels/)"
   - "[Price Rejection](/academy/price-rejection/)"
@@ -38,7 +38,7 @@ meta_description: "Learn what Double Top shows, why it can fail, and how to revi
 ---
 # Double Top
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Falling Wedge](/academy/chart-patterns/falling-wedge/) and leads into [Inverse Head And Shoulders](/academy/chart-patterns/inverse-head-and-shoulders/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Falling Wedge](/academy/chart-patterns/falling-wedge/) and leads into [Inverse Head And Shoulders](/academy/chart-patterns/inverse-head-and-shoulders/).
 
 Double Top is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 

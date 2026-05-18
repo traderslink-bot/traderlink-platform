@@ -14,14 +14,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review whether candle patterns supported a completed decision or became a reason to react without context."
+cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
 recommended_previous: "/academy/candlestick-patterns/spinning-top/"
 recommended_next: "/academy/candlestick-patterns/red-to-green-move/"
 academy_level: "Practical"
 academy_order: 12
-academy_module: "Candle And Volume Review"
-academy_course: "Candlestick Patterns In Context"
-learning_track: "Candlestick Patterns In Context"
+academy_module: "Candlestick Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "/academy/candlestick-patterns/"
   - "/academy/volume/"
@@ -38,7 +38,7 @@ meta_description: "Learn how volume adds context to candle patterns and why volu
 ---
 # Candle Volume Confirmation
 
-This lesson is part of the **Candlestick Patterns In Context** course. It follows [Spinning Top Candle](/academy/candlestick-patterns/spinning-top/) and leads into [Red-To-Green Move](/academy/candlestick-patterns/red-to-green-move/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Spinning Top Candle](/academy/candlestick-patterns/spinning-top/) and leads into [Red-To-Green Move](/academy/candlestick-patterns/red-to-green-move/).
 
 Candle volume confirmation means reviewing whether the volume behind a candle supports the price action shown by that candle. It can help traders compare participation, but it does not remove risk.
 

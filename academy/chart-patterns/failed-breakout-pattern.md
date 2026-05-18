@@ -19,9 +19,9 @@ recommended_previous: "/academy/chart-patterns/inverse-head-and-shoulders/"
 recommended_next: "/academy/chart-patterns/parabolic-move/"
 academy_level: "Practical"
 academy_order: 12
-academy_module: "Reversal And Failure Context"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Chart Pattern Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "[Breakout Trading](/academy/breakout-trading/)"
   - "[Level Breakout](/academy/level-breakout/)"
@@ -38,7 +38,7 @@ meta_description: "Learn what Failed Breakout Pattern shows, why it can fail, an
 ---
 # Failed Breakout Pattern
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Inverse Head And Shoulders](/academy/chart-patterns/inverse-head-and-shoulders/) and leads into [Parabolic Move](/academy/chart-patterns/parabolic-move/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Inverse Head And Shoulders](/academy/chart-patterns/inverse-head-and-shoulders/) and leads into [Parabolic Move](/academy/chart-patterns/parabolic-move/).
 
 Failed Breakout Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 

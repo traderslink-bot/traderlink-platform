@@ -19,9 +19,9 @@ recommended_previous: "/academy/chart-patterns/"
 recommended_next: "/academy/chart-patterns/ascending-triangle/"
 academy_level: "Practical"
 academy_order: 2
-academy_module: "Continuation Context"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Chart Pattern Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "/academy/chart-patterns/"
   - "/academy/pullbacks-and-dip-buy-setups/"
@@ -38,7 +38,7 @@ meta_description: "Learn what bull flags show, why they fail, and how to review 
 ---
 # Bull Flag Pattern
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Chart Patterns](/academy/chart-patterns/) and leads into [Ascending Triangle Pattern](/academy/chart-patterns/ascending-triangle/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Chart Patterns](/academy/chart-patterns/) and leads into [Ascending Triangle Pattern](/academy/chart-patterns/ascending-triangle/).
 
 A bull flag is a pattern traders watch after a strong upward move followed by a controlled pullback or consolidation. It can show that price is pausing instead of giving back the entire move.
 

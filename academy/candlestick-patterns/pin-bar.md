@@ -14,14 +14,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review whether candle patterns supported a completed decision or became a reason to react without context."
+cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
 recommended_previous: "/academy/candlestick-patterns/outside-bar/"
 recommended_next: "/academy/candlestick-patterns/bottoming-tail/"
 academy_level: "Practical"
 academy_order: 8
-academy_module: "Rejection And Shift Candles"
-academy_course: "Candlestick Patterns In Context"
-learning_track: "Candlestick Patterns In Context"
+academy_module: "Candlestick Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "/academy/candlestick-patterns/long-wick-candle/"
   - "/academy/price-rejection/"
@@ -38,7 +38,7 @@ meta_description: "Learn how pin bars show rejection, why they can fail, and how
 ---
 # Pin Bar
 
-This lesson is part of the **Candlestick Patterns In Context** course. It follows [Outside Bar](/academy/candlestick-patterns/outside-bar/) and leads into [Bottoming Tail Candle](/academy/candlestick-patterns/bottoming-tail/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Outside Bar](/academy/candlestick-patterns/outside-bar/) and leads into [Bottoming Tail Candle](/academy/candlestick-patterns/bottoming-tail/).
 
 A pin bar is a candle with a long wick and a small body, often discussed as rejection from an extreme. It overlaps with long wick candles, hammers, and topping or bottoming tails.
 

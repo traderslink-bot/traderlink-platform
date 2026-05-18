@@ -19,9 +19,9 @@ recommended_previous: "/academy/chart-patterns/rectangle-pattern/"
 recommended_next: "/academy/chart-patterns/wedge-pattern/"
 academy_level: "Practical"
 academy_order: 6
-academy_module: "Trend Channels And Wedges"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Chart Pattern Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "[Swing Highs And Swing Lows](/academy/swing-highs-and-swing-lows/)"
   - "[Support And Resistance](/academy/support-and-resistance/)"
@@ -38,7 +38,7 @@ meta_description: "Learn what Channel Pattern shows, why it can fail, and how to
 ---
 # Channel Pattern
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/) and leads into [Wedge Pattern](/academy/chart-patterns/wedge-pattern/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/) and leads into [Wedge Pattern](/academy/chart-patterns/wedge-pattern/).
 
 Channel Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 

@@ -19,9 +19,9 @@ recommended_previous: "/academy/chart-patterns/base-breakout/"
 recommended_next: "/academy/chart-patterns/channel-pattern/"
 academy_level: "Practical"
 academy_order: 5
-academy_module: "Range And Base Patterns"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Chart Pattern Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "[Consolidation](/academy/consolidation/)"
   - "[Support And Resistance](/academy/support-and-resistance/)"
@@ -38,7 +38,7 @@ meta_description: "Learn what Rectangle Pattern shows, why it can fail, and how 
 ---
 # Rectangle Pattern
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Base Breakout](/academy/chart-patterns/base-breakout/) and leads into [Channel Pattern](/academy/chart-patterns/channel-pattern/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Base Breakout](/academy/chart-patterns/base-breakout/) and leads into [Channel Pattern](/academy/chart-patterns/channel-pattern/).
 
 Rectangle Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 

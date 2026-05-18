@@ -319,7 +319,7 @@ The course sequence is mostly correct and should remain close to this:
 13. Trade Review And Improvement
 14. Practice And Improvement
 
-Keep levels and market structure before candlestick and chart-pattern libraries.
+Keep the core candlestick overview early, because beginners need to know how candles work before reading levels. Keep the deeper candlestick and chart-pattern type pages as reference libraries, not required main-path lessons.
 
 A beginner should learn:
 
@@ -336,6 +336,23 @@ A beginner should learn:
 - How news, float, dilution, and halts change risk
 - How psychology and review reveal repeated behavior
 - How practice turns lessons into improvement
+
+### Chart Reading Course Structure Correction
+
+Status: updated 2026-05-18.
+
+`Chart Reading And Market Structure` should remain one course. It should not be split into separate candlestick and chart-pattern courses at this stage, because candles, levels, structure, ranges, and chart patterns all depend on one another.
+
+Correct structure:
+
+1. The required course path teaches one core candlestick lesson: `How To Read Candlesticks In Context`.
+2. Individual candle-type pages such as Doji, Long Wick, Engulfing Candle, and Hammer are reference-library pages inside the same course.
+3. The required course path teaches one core chart-pattern lesson: `How To Read Chart Patterns In Context`.
+4. Individual pattern pages such as Bull Flag, Double Top, Wedge, Failed Breakout, and VWAP Reclaim are reference-library pages inside the same course.
+5. Reference-library pages should be available to learners, but they should not reset lesson numbering or look like the main beginner path.
+6. The main path should guide learners through candles, levels, breaks/reclaims, structure, intraday reference levels, ranges, chart-pattern context, and gaps.
+
+This keeps the Academy useful for beginners while still preserving deeper reference content for users who want to explore a specific candle or pattern.
 
 ## Course Metadata Cleanup
 

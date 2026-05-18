@@ -14,14 +14,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review whether candle patterns supported a completed decision or became a reason to react without context."
+cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
 recommended_previous: "/academy/candlestick-patterns/engulfing-candle/"
 recommended_next: "/academy/candlestick-patterns/inside-bar/"
 academy_level: "Practical"
 academy_order: 5
-academy_module: "Rejection And Shift Candles"
-academy_course: "Candlestick Patterns In Context"
-learning_track: "Candlestick Patterns In Context"
+academy_module: "Candlestick Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "/academy/candlestick-patterns/"
   - "/academy/candlestick-patterns/bottoming-tail/"
@@ -38,7 +38,7 @@ meta_description: "Learn what hammer candles show near support, why they can fai
 ---
 # Hammer Candlestick
 
-This lesson is part of the **Candlestick Patterns In Context** course. It follows [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/) and leads into [Inside Bar](/academy/candlestick-patterns/inside-bar/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/) and leads into [Inside Bar](/academy/candlestick-patterns/inside-bar/).
 
 A hammer candle has a small body near the top of its range and a long lower wick. It shows that price sold off and recovered before the candle closed.
 

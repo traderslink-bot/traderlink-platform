@@ -28,7 +28,9 @@ describe("academy content loader", () => {
       "Chart Reading And Market Structure",
     );
     expect(page?.requiredLessonCount).toBeGreaterThan(0);
-    expect(page?.modules[0]?.module.module_title).toBe("Core Levels");
+    expect(page?.modules[0]?.module.module_title).toBe(
+      "Chart Reading Basics And Core Levels",
+    );
     expect(
       page?.modules
         .flatMap(({ lessons }) => lessons)
@@ -44,9 +46,9 @@ describe("academy content loader", () => {
     );
     expect(lesson?.contexts[0]).toMatchObject({
       courseId: "chart-reading-market-structure",
-      moduleTitle: "Core Levels",
+      moduleTitle: "Chart Reading Basics And Core Levels",
     });
-    expect(lesson?.previousLesson?.slug).toBe("/academy/start-here/");
+    expect(lesson?.previousLesson?.slug).toBe("/academy/candlestick-patterns/");
     expect(lesson?.nextLesson?.slug).toBe(
       "/academy/how-to-draw-support-and-resistance/",
     );

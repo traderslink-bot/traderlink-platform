@@ -14,14 +14,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review whether candle patterns supported a completed decision or became a reason to react without context."
+cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
 recommended_previous: "/academy/candlestick-patterns/long-wick-candle/"
 recommended_next: "/academy/candlestick-patterns/engulfing-candle/"
 academy_level: "Foundation"
 academy_order: 3
-academy_module: "Wicks And Indecision"
-academy_course: "Candlestick Patterns In Context"
-learning_track: "Candlestick Patterns In Context"
+academy_module: "Candlestick Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "/academy/candlestick-patterns/"
   - "/academy/candlestick-patterns/long-wick-candle/"
@@ -38,7 +38,7 @@ meta_description: "Learn what a doji candle shows, why context matters, and how 
 ---
 # Doji Candle
 
-This lesson is part of the **Candlestick Patterns In Context** course. It follows [Long Wick Candle](/academy/candlestick-patterns/long-wick-candle/) and leads into [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Long Wick Candle](/academy/candlestick-patterns/long-wick-candle/) and leads into [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/).
 
 A doji forms when the open and close are very close together. It often shows hesitation, but hesitation is not the same thing as a reversal signal.
 

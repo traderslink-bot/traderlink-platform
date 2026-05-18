@@ -19,9 +19,9 @@ recommended_previous: "/academy/chart-patterns/rising-wedge/"
 recommended_next: "/academy/chart-patterns/double-top/"
 academy_level: "Practical"
 academy_order: 9
-academy_module: "Trend Channels And Wedges"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Chart Pattern Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "[Wedge Pattern](/academy/chart-patterns/wedge-pattern/)"
   - "[Lower Highs And Lower Lows](/academy/lower-highs-lower-lows/)"
@@ -38,7 +38,7 @@ meta_description: "Learn what Falling Wedge shows, why it can fail, and how to r
 ---
 # Falling Wedge
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Rising Wedge](/academy/chart-patterns/rising-wedge/) and leads into [Double Top](/academy/chart-patterns/double-top/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Rising Wedge](/academy/chart-patterns/rising-wedge/) and leads into [Double Top](/academy/chart-patterns/double-top/).
 
 Falling Wedge is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 

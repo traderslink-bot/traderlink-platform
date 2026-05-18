@@ -19,9 +19,9 @@ recommended_previous: "/academy/chart-patterns/failed-breakout-pattern/"
 recommended_next: "/academy/chart-patterns/vwap-reclaim/"
 academy_level: "Practical"
 academy_order: 13
-academy_module: "Extension Context"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Chart Pattern Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "[Chasing Stocks](/academy/chasing-stocks/)"
   - "[Momentum Trading](/academy/momentum-trading/)"
@@ -38,7 +38,7 @@ meta_description: "Learn what Parabolic Move shows, why it can fail, and how to 
 ---
 # Parabolic Move
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/) and leads into [VWAP Reclaim](/academy/chart-patterns/vwap-reclaim/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/) and leads into [VWAP Reclaim](/academy/chart-patterns/vwap-reclaim/).
 
 Parabolic Move is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 

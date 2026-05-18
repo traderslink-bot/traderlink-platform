@@ -19,7 +19,7 @@ recommended_previous: "/academy/volume-by-price/"
 recommended_next: "/academy/trading-styles/"
 academy_level: "Practical"
 academy_order: 12
-academy_module: "Setup Tool Context"
+academy_module: "Chart Pattern Reference Library"
 academy_course: "Technical Indicators And Tools"
 learning_track: "Technical Indicators And Tools"
 internal_links:

@@ -14,14 +14,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review whether candle patterns supported a completed decision or became a reason to react without context."
+cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
 recommended_previous: "/academy/candlestick-patterns/red-to-green-move/"
 recommended_next: "/academy/chart-patterns/"
 academy_level: "Practical"
 academy_order: 14
-academy_module: "Intraday Color Transitions"
-academy_course: "Candlestick Patterns In Context"
-learning_track: "Candlestick Patterns In Context"
+academy_module: "Candlestick Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "/academy/vwap/"
   - "/academy/level-reclaim/"
@@ -38,7 +38,7 @@ meta_description: "Learn what green-to-red moves show, why they can fail, and ho
 ---
 # Green-To-Red Move
 
-This lesson is part of the **Candlestick Patterns In Context** course. It follows [Red-To-Green Move](/academy/candlestick-patterns/red-to-green-move/) and leads into [Chart Patterns](/academy/chart-patterns/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Red-To-Green Move](/academy/candlestick-patterns/red-to-green-move/) and leads into [Chart Patterns](/academy/chart-patterns/).
 
 A green-to-red move happens when a stock that was above its previous close or session reference moves back into negative territory. Traders often watch it as a sign of weakening intraday control.
 

@@ -1,5 +1,5 @@
 ---
-title: "Chart Patterns"
+title: "How To Read Chart Patterns In Context"
 slug: "/academy/chart-patterns/"
 primary_keyword: "chart patterns"
 secondary_keywords:
@@ -15,13 +15,13 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review pattern-based trades by level quality, volume behavior, entry timing, invalidation, and whether the trade was planned or reactive."
-recommended_previous: "/academy/candlestick-patterns/green-to-red-move/"
-recommended_next: "/academy/chart-patterns/bull-flag/"
+recommended_previous: "/academy/consolidation/"
+recommended_next: "/academy/gap-fill-trading/"
 academy_level: "Foundation"
 academy_order: 1
-academy_module: "Pattern Foundation"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Ranges And Compression"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "/academy/chart-patterns/bull-flag/"
   - "/academy/chart-patterns/ascending-triangle/"
@@ -33,16 +33,16 @@ visual_assets:
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
-meta_title: "Chart Patterns Explained"
+meta_title: "How To Read Chart Patterns In Context"
 meta_description: "Learn what chart patterns show, why context matters, and how to review pattern-based decisions safely."
 ---
-# Chart Patterns
+# How To Read Chart Patterns In Context
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Green-To-Red Move](/academy/candlestick-patterns/green-to-red-move/) and leads into [Bull Flag Pattern](/academy/chart-patterns/bull-flag/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Consolidation Trading](/academy/consolidation/) and leads into [Gap Fill Trading](/academy/gap-fill-trading/).
 
 Chart patterns are recurring price structures traders use to organize what they see on a chart. They can help explain consolidation, pressure, rejection, continuation attempts, and failed moves.
 
-The pattern name is not the edge. The useful part is the structure it gives to levels, risk, and review.
+This is the core chart-pattern lesson for the course. The individual bull flag, double top, wedge, and failed-breakout pages are reference lessons. The main course path should teach how patterns work as structure, not force a beginner through every pattern name before they understand the chart.
 
 ![Educational chart showing patterns as combinations of levels, trend, volume, and risk context.](/academy/images/chart-reading/chart-pattern-context-map.svg)
 
@@ -80,6 +80,18 @@ Compression patterns describe price getting tighter. Wedges, triangles, and narr
 Reversal and failure patterns describe a move losing control. Double tops, failed breakouts, inverse head and shoulders, and parabolic moves need careful level and volume review because traders often see them too early.
 
 Tool-based patterns use a reference level such as VWAP. A VWAP reclaim is not the same as a classic chart pattern, but it belongs near this course because beginners often treat it like one.
+
+## How To Use The Reference Lessons
+
+Use the individual chart-pattern pages when the specific structure appears on a chart:
+
+- Bull Flag, Ascending Triangle, and Base Breakout help review continuation attempts.
+- Rectangle, Channel, and Wedge lessons help review ranges and compression.
+- Rising Wedge, Falling Wedge, Double Top, and Inverse Head And Shoulders help review possible shift or reversal structure.
+- Failed Breakout and Parabolic Move help review failure and extension behavior.
+- VWAP Reclaim belongs here as a common intraday structure traders often treat like a pattern.
+
+The reference pages should not feel like a required checklist before you can continue. They are there so a learner can go deeper when the pattern matters.
 
 ## Context That Matters
 

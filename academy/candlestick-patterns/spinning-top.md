@@ -14,14 +14,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review whether candle patterns supported a completed decision or became a reason to react without context."
+cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
 recommended_previous: "/academy/candlestick-patterns/topping-tail/"
 recommended_next: "/academy/candlestick-patterns/candle-volume-confirmation/"
 academy_level: "Foundation"
 academy_order: 11
-academy_module: "Wicks And Indecision"
-academy_course: "Candlestick Patterns In Context"
-learning_track: "Candlestick Patterns In Context"
+academy_module: "Candlestick Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "/academy/candlestick-patterns/doji/"
   - "/academy/candlestick-patterns/long-wick-candle/"
@@ -38,7 +38,7 @@ meta_description: "Learn what spinning top candles show, when they matter, and h
 ---
 # Spinning Top Candle
 
-This lesson is part of the **Candlestick Patterns In Context** course. It follows [Topping Tail Candle](/academy/candlestick-patterns/topping-tail/) and leads into [Candle Volume Confirmation](/academy/candlestick-patterns/candle-volume-confirmation/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Topping Tail Candle](/academy/candlestick-patterns/topping-tail/) and leads into [Candle Volume Confirmation](/academy/candlestick-patterns/candle-volume-confirmation/).
 
 A spinning top candle has a small body with wicks on both sides. It can show hesitation or a balanced fight between buyers and sellers.
 

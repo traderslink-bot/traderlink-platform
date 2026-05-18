@@ -19,9 +19,9 @@ recommended_previous: "/academy/chart-patterns/ascending-triangle/"
 recommended_next: "/academy/chart-patterns/rectangle-pattern/"
 academy_level: "Practical"
 academy_order: 4
-academy_module: "Range And Base Patterns"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Chart Pattern Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "[Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/)"
   - "[Consolidation](/academy/consolidation/)"
@@ -38,7 +38,7 @@ meta_description: "Learn what Base Breakout shows, why it can fail, and how to r
 ---
 # Base Breakout
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Ascending Triangle Pattern](/academy/chart-patterns/ascending-triangle/) and leads into [Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Ascending Triangle Pattern](/academy/chart-patterns/ascending-triangle/) and leads into [Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/).
 
 Base Breakout is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 

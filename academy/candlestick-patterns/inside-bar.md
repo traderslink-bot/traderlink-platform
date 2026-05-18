@@ -14,14 +14,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review whether candle patterns supported a completed decision or became a reason to react without context."
+cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
 recommended_previous: "/academy/candlestick-patterns/hammer/"
 recommended_next: "/academy/candlestick-patterns/outside-bar/"
 academy_level: "Practical"
 academy_order: 6
-academy_module: "Compression Candles"
-academy_course: "Candlestick Patterns In Context"
-learning_track: "Candlestick Patterns In Context"
+academy_module: "Candlestick Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "/academy/candlestick-patterns/"
   - "/academy/candlestick-patterns/outside-bar/"
@@ -38,7 +38,7 @@ meta_description: "Learn how inside bars show compression, why false breaks happ
 ---
 # Inside Bar
 
-This lesson is part of the **Candlestick Patterns In Context** course. It follows [Hammer Candlestick](/academy/candlestick-patterns/hammer/) and leads into [Outside Bar](/academy/candlestick-patterns/outside-bar/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Hammer Candlestick](/academy/candlestick-patterns/hammer/) and leads into [Outside Bar](/academy/candlestick-patterns/outside-bar/).
 
 An inside bar forms when a candle stays inside the high and low of the prior candle. It can show compression or a temporary pause.
 

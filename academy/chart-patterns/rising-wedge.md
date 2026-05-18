@@ -19,9 +19,9 @@ recommended_previous: "/academy/chart-patterns/wedge-pattern/"
 recommended_next: "/academy/chart-patterns/falling-wedge/"
 academy_level: "Practical"
 academy_order: 8
-academy_module: "Trend Channels And Wedges"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Chart Pattern Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "[Wedge Pattern](/academy/chart-patterns/wedge-pattern/)"
   - "[Higher Highs And Higher Lows](/academy/higher-highs-higher-lows/)"
@@ -38,7 +38,7 @@ meta_description: "Learn what Rising Wedge shows, why it can fail, and how to re
 ---
 # Rising Wedge
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Wedge Pattern](/academy/chart-patterns/wedge-pattern/) and leads into [Falling Wedge](/academy/chart-patterns/falling-wedge/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Wedge Pattern](/academy/chart-patterns/wedge-pattern/) and leads into [Falling Wedge](/academy/chart-patterns/falling-wedge/).
 
 Rising Wedge is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 

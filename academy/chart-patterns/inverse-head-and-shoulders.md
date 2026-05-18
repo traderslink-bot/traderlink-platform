@@ -19,9 +19,9 @@ recommended_previous: "/academy/chart-patterns/double-top/"
 recommended_next: "/academy/chart-patterns/failed-breakout-pattern/"
 academy_level: "Practical"
 academy_order: 11
-academy_module: "Reversal And Failure Context"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Chart Pattern Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "[Support Levels](/academy/support-levels/)"
   - "[Level Reclaim](/academy/level-reclaim/)"
@@ -38,7 +38,7 @@ meta_description: "Learn what Inverse Head And Shoulders shows, why it can fail,
 ---
 # Inverse Head And Shoulders
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Double Top](/academy/chart-patterns/double-top/) and leads into [Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Double Top](/academy/chart-patterns/double-top/) and leads into [Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/).
 
 Inverse Head And Shoulders is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 

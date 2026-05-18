@@ -14,14 +14,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review whether candle patterns supported a completed decision or became a reason to react without context."
+cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
 recommended_previous: "/academy/candlestick-patterns/inside-bar/"
 recommended_next: "/academy/candlestick-patterns/pin-bar/"
 academy_level: "Practical"
 academy_order: 7
-academy_module: "Compression Candles"
-academy_course: "Candlestick Patterns In Context"
-learning_track: "Candlestick Patterns In Context"
+academy_module: "Candlestick Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "/academy/candlestick-patterns/inside-bar/"
   - "/academy/volume/"
@@ -38,7 +38,7 @@ meta_description: "Learn how outside bars show range expansion and why they requ
 ---
 # Outside Bar
 
-This lesson is part of the **Candlestick Patterns In Context** course. It follows [Inside Bar](/academy/candlestick-patterns/inside-bar/) and leads into [Pin Bar](/academy/candlestick-patterns/pin-bar/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Inside Bar](/academy/candlestick-patterns/inside-bar/) and leads into [Pin Bar](/academy/candlestick-patterns/pin-bar/).
 
 An outside bar forms when a candle trades above the prior high and below the prior low. It shows range expansion, volatility, and a wider battle between buyers and sellers.
 

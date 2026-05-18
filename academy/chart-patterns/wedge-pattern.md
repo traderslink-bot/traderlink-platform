@@ -19,9 +19,9 @@ recommended_previous: "/academy/chart-patterns/channel-pattern/"
 recommended_next: "/academy/chart-patterns/rising-wedge/"
 academy_level: "Practical"
 academy_order: 7
-academy_module: "Trend Channels And Wedges"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Chart Pattern Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "[Compression](/academy/compression/)"
   - "[Rising Wedge](/academy/chart-patterns/rising-wedge/)"
@@ -38,7 +38,7 @@ meta_description: "Learn what Wedge Pattern shows, why it can fail, and how to r
 ---
 # Wedge Pattern
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Channel Pattern](/academy/chart-patterns/channel-pattern/) and leads into [Rising Wedge](/academy/chart-patterns/rising-wedge/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Channel Pattern](/academy/chart-patterns/channel-pattern/) and leads into [Rising Wedge](/academy/chart-patterns/rising-wedge/).
 
 Wedge Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 

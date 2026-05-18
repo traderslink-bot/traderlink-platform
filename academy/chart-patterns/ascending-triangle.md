@@ -19,9 +19,9 @@ recommended_previous: "/academy/chart-patterns/bull-flag/"
 recommended_next: "/academy/chart-patterns/base-breakout/"
 academy_level: "Practical"
 academy_order: 3
-academy_module: "Continuation Context"
-academy_course: "Chart Patterns In Context"
-learning_track: "Chart Patterns In Context"
+academy_module: "Chart Pattern Reference Library"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "[Bull Flag Pattern](/academy/chart-patterns/bull-flag/)"
   - "[Support And Resistance](/academy/support-and-resistance/)"
@@ -38,7 +38,7 @@ meta_description: "Learn what Ascending Triangle Pattern shows, why it can fail,
 ---
 # Ascending Triangle Pattern
 
-This lesson is part of the **Chart Patterns In Context** course. It follows [Bull Flag Pattern](/academy/chart-patterns/bull-flag/) and leads into [Base Breakout](/academy/chart-patterns/base-breakout/).
+This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Bull Flag Pattern](/academy/chart-patterns/bull-flag/) and leads into [Base Breakout](/academy/chart-patterns/base-breakout/).
 
 Ascending Triangle Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 

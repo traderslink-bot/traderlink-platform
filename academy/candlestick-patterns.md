@@ -1,5 +1,5 @@
 ---
-title: "Candlestick Patterns"
+title: "How To Read Candlesticks In Context"
 slug: "/academy/candlestick-patterns/"
 primary_keyword: "candlestick patterns"
 secondary_keywords:
@@ -14,14 +14,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review whether candle patterns supported a completed decision or became a reason to react without context."
-recommended_previous: "/academy/chasing-stocks/"
-recommended_next: "/academy/candlestick-patterns/long-wick-candle/"
+cta: "Use candle context to review whether a decision was based on location, volume, and follow-through instead of a candle name."
+recommended_previous: null
+recommended_next: "/academy/support-and-resistance/"
 academy_level: "Foundation"
 academy_order: 1
-academy_module: "Candle Foundation"
-academy_course: "Candlestick Patterns In Context"
-learning_track: "Candlestick Patterns In Context"
+academy_module: "Chart Reading Basics And Core Levels"
+academy_course: "Chart Reading And Market Structure"
+learning_track: "Chart Reading And Market Structure"
 internal_links:
   - "/academy/candlestick-patterns/long-wick-candle/"
   - "/academy/candlestick-patterns/doji/"
@@ -33,16 +33,16 @@ visual_assets:
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
-meta_title: "Candlestick Patterns Explained"
+meta_title: "How To Read Candlesticks In Context"
 meta_description: "Learn what candlestick patterns show, why context matters, and how to review candle-based decisions safely."
 ---
-# Candlestick Patterns
+# How To Read Candlesticks In Context
 
-This lesson is part of the **Candlestick Patterns In Context** course. It follows [Chasing Stocks](/academy/chasing-stocks/) and leads into [Long Wick Candle](/academy/candlestick-patterns/long-wick-candle/).
+This lesson starts the **Chart Reading And Market Structure** course. It leads into [Support And Resistance](/academy/support-and-resistance/).
 
-Candlestick patterns are price formations created by one or more candles. They help traders describe what happened during a period of price action: momentum, hesitation, rejection, compression, expansion, or a shift in control.
+Candlesticks are the first language of most stock charts. Before a trader studies support, resistance, breakouts, reclaims, or chart patterns, they need to understand what a single candle is showing and what it is not showing.
 
-The danger is treating candle names as instructions. A doji, hammer, engulfing candle, or inside bar has meaning only when it is read with location, volume, trend, liquidity, and risk.
+This is the core candlestick lesson for the course. The individual Doji, hammer, engulfing candle, and long-wick pages are reference lessons you can use later. The main learning goal here is not to memorize every candle type. It is to understand how candles fit into chart context.
 
 ![Educational candlestick chart showing candle anatomy, wick, body, support, resistance, and volume context.](/academy/images/chart-reading/candlestick-anatomy-context.svg)
 
@@ -58,15 +58,15 @@ A candlestick turns a period of trading into a simple visual:
 
 Candles describe what happened during the period. They do not prove what comes next.
 
-## The Main Candle Groups
+## The Main Candle Types
 
-For this Academy section, candle lessons are grouped by what they usually help a trader notice.
+Most candle names are just shortcuts for a few basic ideas.
 
-**Indecision candles** show pause or balance. Doji and spinning top candles belong here.
+**Indecision candles** show pause or balance. Doji and spinning top candles belong here. They matter more near important levels than they do in random sideways action.
 
-**Wick and rejection candles** show that price tested an area and closed away from the extreme. Long wick candles, pin bars, bottoming tails, and topping tails belong here.
+**Wick and rejection candles** show that price tested an area and closed away from the extreme. Long wick candles, pin bars, bottoming tails, and topping tails belong here. They are easier to read when the wick forms into support, resistance, VWAP, or another visible area.
 
-**Range and expansion candles** show compression or a shift outside a prior candle range. Inside bars, outside bars, and engulfing candles belong here.
+**Range and expansion candles** show compression or a shift outside a prior candle range. Inside bars, outside bars, and engulfing candles belong here. They can show pressure changing, but they still need follow-through.
 
 **Intraday color-shift moves** describe a stock changing from red to green or green to red during the session. These moves need level, volume, and time-of-day context.
 
@@ -89,9 +89,19 @@ Candlestick patterns can mislead when traders memorize names but ignore context.
 
 The same candle can mean different things in different locations. A long upper wick into resistance may show rejection. A long upper wick in a thin stock with a wide spread may show poor liquidity. A doji after a clean move into a level may show hesitation. A doji in dead sideways action may mean nothing.
 
-## How To Study This Section
+## How To Use The Reference Lessons
 
-Move through the candle lessons in order. The goal is not to memorize names. The goal is to learn what each candle is trying to show and when that information matters.
+You do not need to treat every candle type as a required stop in the course path. Use the individual candle pages as a reference library:
+
+- Open Doji when you see a small-body candle and want to understand hesitation.
+- Open Long Wick when price tests a level and snaps away from the extreme.
+- Open Engulfing Candle when one candle range overtakes the prior candle.
+- Open Inside Bar or Outside Bar when range compression or range expansion matters.
+- Open Bottoming Tail or Topping Tail when a wick forms near support or resistance.
+
+The course path moves next into support and resistance because candle meaning depends heavily on location.
+
+## Questions To Ask On Any Candle
 
 As you go, keep asking:
 

@@ -59,7 +59,7 @@
     {
       "course_id": "chart-reading-market-structure",
       "module_id": "core-levels",
-      "module_title": "Core Levels",
+      "module_title": "Chart Reading Basics And Core Levels",
       "module_order": 1,
       "module_type": "standard",
       "display_behavior": "expanded",
@@ -122,20 +122,20 @@
     {
       "course_id": "chart-reading-market-structure",
       "module_id": "candlestick-patterns-context",
-      "module_title": "Candlestick Patterns In Context",
+      "module_title": "Candlestick Reference Library",
       "module_order": 8,
-      "module_type": "library",
+      "module_type": "reference_library",
       "display_behavior": "collapsed",
-      "progress_enabled": "separate"
+      "progress_enabled": false
     },
     {
       "course_id": "chart-reading-market-structure",
       "module_id": "chart-patterns-context",
-      "module_title": "Chart Patterns In Context",
+      "module_title": "Chart Pattern Reference Library",
       "module_order": 9,
-      "module_type": "library",
+      "module_type": "reference_library",
       "display_behavior": "collapsed",
-      "progress_enabled": "separate"
+      "progress_enabled": false
     },
     {
       "course_id": "volume-liquidity-order-flow",
