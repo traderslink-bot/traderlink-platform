@@ -19,7 +19,7 @@ priority: "3"
 cta: "Review whether entries pushed into resistance, waited for a clean break, or chased after the best location passed."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 5
+academy_order: 6
 academy_module: "Chart Reading Basics And Core Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/support-levels/"

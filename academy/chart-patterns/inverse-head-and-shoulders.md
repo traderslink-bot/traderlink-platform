@@ -15,14 +15,15 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review pattern-based trades by level quality, volume behavior, entry timing, invalidation, and whether the trade was planned or reactive."
-recommended_previous: "/academy/chart-patterns/double-top/"
-recommended_next: "/academy/chart-patterns/failed-breakout-pattern/"
+recommended_previous: "/academy/chart-patterns/head-and-shoulders/"
+recommended_next: "/academy/chart-patterns/rounding-top/"
 academy_level: "Practical"
-academy_order: 11
+academy_order: 60
 academy_module: "Chart Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
+  - "/academy/chart-patterns/head-and-shoulders/"
   - "/academy/support-levels/"
   - "/academy/level-reclaim/"
   - "/academy/break-of-structure/"
@@ -38,9 +39,11 @@ meta_description: "Learn what Inverse Head And Shoulders shows, why it can fail,
 ---
 # Inverse Head And Shoulders
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Double Top](/academy/chart-patterns/double-top/) and leads into [Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Head And Shoulders Pattern](/academy/chart-patterns/head-and-shoulders/) and leads into [Rounding Top Pattern](/academy/chart-patterns/rounding-top/).
 
-Inverse Head And Shoulders is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
+**Best suited for:** day trading and swing trading.
+
+Inverse Head And Shoulders is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
@@ -102,6 +105,7 @@ A final mistake is using the pattern label to justify a reactive trade.
 ## Related Lessons
 
 - [Support Levels](/academy/support-levels/)
+- [Head And Shoulders Pattern](/academy/chart-patterns/head-and-shoulders/)
 - [Level Reclaim](/academy/level-reclaim/)
 - [Break Of Structure](/academy/break-of-structure/)
 - [Volume](/academy/volume/)
@@ -117,9 +121,9 @@ An inverse head and shoulders pattern is useful only when the neckline, higher l
 
 An inverse head and shoulders forms when price makes a lower low between two higher reaction lows and then tests a neckline area.
 
-### Does this pattern guarantee a move?
+### Can this pattern fail?
 
-No. It can fail, fake out, or become choppy.
+Yes. It can fail, fake out, or become choppy.
 
 ### What context matters most?
 
@@ -136,7 +140,3 @@ Review pattern quality, entry timing, volume, level behavior, invalidation, and 
 ### Can this pattern be used alone?
 
 No. It should be one part of a broader review process.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Chart patterns can support review, but they do not predict price, guarantee trading results, or replace risk management.

@@ -16,9 +16,9 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "Review pattern-based trades by level quality, volume behavior, entry timing, invalidation, and whether the trade was planned or reactive."
 recommended_previous: "/academy/candlestick-patterns/green-to-red-move/"
-recommended_next: "/academy/chart-patterns/ascending-triangle/"
+recommended_next: "/academy/chart-patterns/bear-flag/"
 academy_level: "Practical"
-academy_order: 2
+academy_order: 41
 academy_module: "Chart Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
@@ -38,7 +38,9 @@ meta_description: "Learn what bull flags show, why they fail, and how to review 
 ---
 # Bull Flag Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Green-To-Red Move](/academy/candlestick-patterns/green-to-red-move/) and leads into [Ascending Triangle Pattern](/academy/chart-patterns/ascending-triangle/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Chart Pattern Deep-Dive Lessons](/academy/chart-pattern-deep-dive-lessons/) and leads into [Bear Flag Pattern](/academy/chart-patterns/bear-flag/).
+
+**Best suited for:** day trading and momentum swing trading.
 
 A bull flag is a pattern traders watch after a strong upward move followed by a controlled pullback or consolidation. It can show that price is pausing instead of giving back the entire move.
 
@@ -125,6 +127,7 @@ A final mistake is holding after the flag loses its support area.
 ## Related Lessons
 
 - [Chart Patterns](/academy/chart-patterns/)
+- [Bear Flag Pattern](/academy/chart-patterns/bear-flag/)
 - [Pullbacks And Dip-Buy Setups](/academy/pullbacks-and-dip-buy-setups/)
 - [Volume](/academy/volume/)
 - [Chasing Stocks](/academy/chasing-stocks/)
@@ -159,7 +162,3 @@ Review initial move, pullback quality, volume, entry timing, risk, and failure.
 ### Is a bull flag enough by itself?
 
 No. It is a structure to review with levels, volume, entry location, and risk.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Chart patterns can support review, but they do not predict price, guarantee trading results, or replace risk management.

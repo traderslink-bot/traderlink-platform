@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether price rejected a meaningful area or whether the rejection label was added after the fact."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 10
+academy_order: 11
 academy_module: "Rejection, Breaks And Reclaims"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/lower-highs-lower-lows/"

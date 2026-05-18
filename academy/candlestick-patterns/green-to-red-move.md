@@ -18,7 +18,7 @@ cta: "Review candle context by location, volume, follow-through, and whether the
 recommended_previous: "/academy/candlestick-patterns/red-to-green-move/"
 recommended_next: "/academy/chart-patterns/bull-flag/"
 academy_level: "Practical"
-academy_order: 14
+academy_order: 40
 academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"

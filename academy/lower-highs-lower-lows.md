@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether trades respected downtrend structure or assumed strength before structure changed."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 9
+academy_order: 10
 academy_module: "Swing Structure"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/higher-highs-higher-lows/"

@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether premarket levels were planned before the open or noticed only after the move."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 18
+academy_order: 19
 academy_module: "Intraday Reference Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/previous-day-high-low/"

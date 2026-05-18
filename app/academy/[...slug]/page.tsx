@@ -12,7 +12,6 @@ import {
   isAcademyLessonLaunchReady,
 } from "@/src/lib/academy/academy-content";
 import { AcademyMarkdown } from "@/src/lib/academy/academy-markdown";
-import { AcademyLessonCompleteControl } from "@/src/lib/academy/academy-progress";
 
 type PageProps = {
   params: Promise<{ slug: string[] }>;
@@ -136,8 +135,6 @@ export default async function AcademyLessonPage({ params }: PageProps) {
         </article>
 
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-          <AcademyLessonCompleteControl lessonSlug={lesson.slug} />
-
           {primaryContext ? (
             <div className="rounded-lg border border-cyan-200/20 bg-cyan-400/10 p-5">
               <p className="text-sm font-semibold uppercase tracking-[0.14em] text-cyan-200">

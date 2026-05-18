@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether pivot areas clarified turning points or added unnecessary lines to the chart."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 16
+academy_order: 17
 academy_module: "Intraday Reference Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/break-of-structure/"

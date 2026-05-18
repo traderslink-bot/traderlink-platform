@@ -7,10 +7,6 @@ import {
   getLaunchAcademyCourseIds,
   isAcademyCourseLaunchReady,
 } from "@/src/lib/academy/academy-content";
-import {
-  AcademyCourseProgressSummary,
-  AcademyLessonStatus,
-} from "@/src/lib/academy/academy-progress";
 
 type PageProps = {
   params: Promise<{ courseId: string }>;
@@ -49,10 +45,6 @@ export default async function AcademyCoursePage({ params }: PageProps) {
   }
 
   const { course, modules, previousCourse, nextCourse } = page;
-  const lessonSlugs = modules.flatMap(({ lessons }) =>
-    lessons.map((lesson) => lesson.lesson_slug),
-  );
-
   return (
     <main className="min-h-screen bg-[#050a14] text-white">
       <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
@@ -60,8 +52,8 @@ export default async function AcademyCoursePage({ params }: PageProps) {
           Academy
         </Link>
 
-        <section className="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">
-          <div>
+        <section className="mt-8">
+          <div className="max-w-4xl">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-200">
               Course {course.course_order}
             </p>
@@ -78,23 +70,6 @@ export default async function AcademyCoursePage({ params }: PageProps) {
               </span>
             </div>
           </div>
-
-          <aside className="space-y-4">
-            <AcademyCourseProgressSummary
-              lessonSlugs={lessonSlugs}
-              totalLessonCount={page.totalLessonCount}
-            />
-
-            <div className="rounded-lg border border-white/10 bg-slate-900/72 p-5">
-              <h2 className="text-lg font-semibold tracking-normal">
-                Course Progress
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-300">
-                Complete lessons in any order. Your progress is saved on this
-                device for now.
-              </p>
-            </div>
-          </aside>
         </section>
 
         <section className="mt-12 space-y-8">
@@ -117,7 +92,7 @@ export default async function AcademyCoursePage({ params }: PageProps) {
                   <Link
                     key={`${lesson.display_course_id}-${lesson.lesson_slug}-${lesson.display_order}`}
                     href={lesson.lesson_slug}
-                    className="grid gap-3 px-5 py-4 transition hover:bg-white/[0.03] sm:grid-cols-[3rem_1fr_auto]"
+                    className="grid gap-3 px-5 py-4 transition hover:bg-white/[0.03] sm:grid-cols-[3rem_1fr]"
                   >
                     <span className="text-sm text-slate-500">
                       {lesson.display_order}
@@ -126,11 +101,6 @@ export default async function AcademyCoursePage({ params }: PageProps) {
                       <span className="block font-semibold tracking-normal text-white">
                         {lesson.display_title}
                       </span>
-                    </span>
-                    <span className="flex items-center justify-start sm:justify-end">
-                      <AcademyLessonStatus
-                        lessonSlug={lesson.lesson_slug}
-                      />
                     </span>
                   </Link>
                 ))}

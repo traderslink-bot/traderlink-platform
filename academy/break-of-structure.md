@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether trades adapted when the structure supporting the idea changed."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Advanced"
-academy_order: 15
+academy_order: 16
 academy_module: "Rejection, Breaks And Reclaims"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/level-reclaim/"

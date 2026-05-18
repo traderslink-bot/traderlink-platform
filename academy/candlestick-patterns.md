@@ -16,7 +16,7 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "Use candle context to review whether a decision was based on location, volume, and follow-through instead of a candle name."
 recommended_previous: null
-recommended_next: "/academy/support-and-resistance/"
+recommended_next: "/academy/candlestick-deep-dive-lessons/"
 academy_level: "Foundation"
 academy_order: 1
 academy_module: "Chart Reading Basics And Core Levels"
@@ -38,7 +38,7 @@ meta_description: "Learn what candlestick patterns show, why context matters, an
 ---
 # Candlestick Pattern Basics
 
-This lesson starts the **Chart Reading And Market Structure** course. It leads into [Support And Resistance](/academy/support-and-resistance/).
+This lesson starts the **Chart Reading And Market Structure** course. It leads into [Candlestick Deep-Dive Lessons](/academy/candlestick-deep-dive-lessons/).
 
 Candlesticks are the first language of most stock charts. Before a trader studies support, resistance, breakouts, reclaims, or chart patterns, they need to understand what a single candle is showing and what it is not showing.
 
@@ -133,7 +133,7 @@ You do not need to treat every candle type as a mandatory stop in the course pat
 - Use Candle Volume Confirmation when the question is whether the candle had real participation.
 - Use Red-To-Green Move and Green-To-Red Move for intraday color-shift behavior around session levels.
 
-The course path moves next into support and resistance because candle meaning depends heavily on location.
+The next page groups the focused candle lessons so you can explore specific candle behavior now or return to it later. The core course then moves into support and resistance because candle meaning depends heavily on location.
 
 ## Questions To Ask On Any Candle
 

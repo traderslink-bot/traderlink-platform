@@ -18,7 +18,7 @@ cta: "Review candle context by location, volume, follow-through, and whether the
 recommended_previous: "/academy/gap-fill-trading/"
 recommended_next: "/academy/candlestick-patterns/doji/"
 academy_level: "Foundation"
-academy_order: 2
+academy_order: 28
 academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"

@@ -19,7 +19,7 @@ priority: "3"
 cta: "Review whether breakout entries were planned near a level or chased after extension."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 11
+academy_order: 12
 academy_module: "Rejection, Breaks And Reclaims"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/price-rejection/"

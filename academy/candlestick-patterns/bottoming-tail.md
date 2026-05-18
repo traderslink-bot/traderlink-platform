@@ -18,7 +18,7 @@ cta: "Review candle context by location, volume, follow-through, and whether the
 recommended_previous: "/academy/candlestick-patterns/pin-bar/"
 recommended_next: "/academy/candlestick-patterns/topping-tail/"
 academy_level: "Practical"
-academy_order: 7
+academy_order: 33
 academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"

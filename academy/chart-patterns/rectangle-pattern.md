@@ -15,10 +15,10 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review pattern-based trades by level quality, volume behavior, entry timing, invalidation, and whether the trade was planned or reactive."
-recommended_previous: "/academy/chart-patterns/base-breakout/"
+recommended_previous: "/academy/chart-patterns/falling-wedge/"
 recommended_next: "/academy/chart-patterns/channel-pattern/"
 academy_level: "Practical"
-academy_order: 5
+academy_order: 53
 academy_module: "Chart Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
@@ -38,9 +38,11 @@ meta_description: "Learn what Rectangle Pattern shows, why it can fail, and how 
 ---
 # Rectangle Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Base Breakout](/academy/chart-patterns/base-breakout/) and leads into [Channel Pattern](/academy/chart-patterns/channel-pattern/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Falling Wedge](/academy/chart-patterns/falling-wedge/) and leads into [Channel Pattern](/academy/chart-patterns/channel-pattern/).
 
-Rectangle Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
+**Best suited for:** day trading and swing trading.
+
+Rectangle Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
@@ -117,9 +119,9 @@ A rectangle is a range. The useful review is whether the trader respected range 
 
 A rectangle pattern is a sideways range where price repeatedly reacts between support and resistance.
 
-### Does this pattern guarantee a move?
+### Can this pattern fail?
 
-No. It can fail, fake out, or become choppy.
+Yes. It can fail, fake out, or become choppy.
 
 ### What context matters most?
 
@@ -136,7 +138,3 @@ Review pattern quality, entry timing, volume, level behavior, invalidation, and 
 ### Can this pattern be used alone?
 
 No. It should be one part of a broader review process.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Chart patterns can support review, but they do not predict price, guarantee trading results, or replace risk management.

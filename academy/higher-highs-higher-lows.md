@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether trades aligned with uptrend structure or ignored weakening higher lows."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 8
+academy_order: 9
 academy_module: "Swing Structure"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/swing-highs-and-swing-lows/"

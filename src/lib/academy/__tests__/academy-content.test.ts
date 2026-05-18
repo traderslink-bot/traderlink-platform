@@ -51,7 +51,9 @@ describe("academy content loader", () => {
       courseId: "chart-reading-market-structure",
       moduleTitle: "Chart Reading Basics And Core Levels",
     });
-    expect(lesson?.previousLesson?.slug).toBe("/academy/candlestick-patterns/");
+    expect(lesson?.previousLesson?.slug).toBe(
+      "/academy/candlestick-deep-dive-lessons/",
+    );
     expect(lesson?.nextLesson?.slug).toBe(
       "/academy/how-to-draw-support-and-resistance/",
     );
@@ -89,6 +91,7 @@ describe("academy content loader", () => {
     ]);
     expect(getLaunchAcademyPathHubIds()).toEqual([]);
     expect(params).toContain("support-and-resistance");
+    expect(params).toContain("candlestick-deep-dive-lessons");
     expect(params).toContain("candlestick-patterns/doji");
     expect(params).not.toContain("sec-filings/form-8-k");
   });

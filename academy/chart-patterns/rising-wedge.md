@@ -18,7 +18,7 @@ cta: "Review pattern-based trades by level quality, volume behavior, entry timin
 recommended_previous: "/academy/chart-patterns/wedge-pattern/"
 recommended_next: "/academy/chart-patterns/falling-wedge/"
 academy_level: "Practical"
-academy_order: 8
+academy_order: 51
 academy_module: "Chart Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
@@ -40,7 +40,9 @@ meta_description: "Learn what Rising Wedge shows, why it can fail, and how to re
 
 This lesson is part of the **Chart Reading And Market Structure** course. It follows [Wedge Pattern](/academy/chart-patterns/wedge-pattern/) and leads into [Falling Wedge](/academy/chart-patterns/falling-wedge/).
 
-Rising Wedge is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
+**Best suited for:** day trading and swing trading.
+
+Rising Wedge is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
@@ -117,9 +119,9 @@ A rising wedge can show tightening structure into a move, but it is not useful u
 
 A rising wedge forms when price moves upward inside a narrowing structure.
 
-### Does this pattern guarantee a move?
+### Can this pattern fail?
 
-No. It can fail, fake out, or become choppy.
+Yes. It can fail, fake out, or become choppy.
 
 ### What context matters most?
 
@@ -136,7 +138,3 @@ Review pattern quality, entry timing, volume, level behavior, invalidation, and 
 ### Can this pattern be used alone?
 
 No. It should be one part of a broader review process.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Chart patterns can support review, but they do not predict price, guarantee trading results, or replace risk management.

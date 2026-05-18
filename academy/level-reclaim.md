@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether price truly reclaimed a level or only briefly crossed it before failing again."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 14
+academy_order: 15
 academy_module: "Rejection, Breaks And Reclaims"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/level-breakout/"

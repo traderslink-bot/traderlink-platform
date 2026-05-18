@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether tight ranges improved patience and timing or became another reason to anticipate too early."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 22
+academy_order: 23
 academy_module: "Ranges, Compression And Pattern Basics"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/new-high-of-day/"

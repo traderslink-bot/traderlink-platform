@@ -18,7 +18,7 @@ cta: "Review candle context by location, volume, follow-through, and whether the
 recommended_previous: "/academy/candlestick-patterns/long-wick-candle/"
 recommended_next: "/academy/candlestick-patterns/spinning-top/"
 academy_level: "Foundation"
-academy_order: 3
+academy_order: 29
 academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"

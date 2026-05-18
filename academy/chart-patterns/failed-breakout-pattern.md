@@ -15,10 +15,10 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review pattern-based trades by level quality, volume behavior, entry timing, invalidation, and whether the trade was planned or reactive."
-recommended_previous: "/academy/chart-patterns/inverse-head-and-shoulders/"
-recommended_next: "/academy/chart-patterns/parabolic-move/"
+recommended_previous: "/academy/chart-patterns/parabolic-move/"
+recommended_next: "/academy/chart-patterns/failed-breakdown-pattern/"
 academy_level: "Practical"
-academy_order: 12
+academy_order: 64
 academy_module: "Chart Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
@@ -38,9 +38,11 @@ meta_description: "Learn what Failed Breakout Pattern shows, why it can fail, an
 ---
 # Failed Breakout Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Inverse Head And Shoulders](/academy/chart-patterns/inverse-head-and-shoulders/) and leads into [Parabolic Move](/academy/chart-patterns/parabolic-move/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Parabolic Move](/academy/chart-patterns/parabolic-move/) and leads into [Failed Breakdown Pattern](/academy/chart-patterns/failed-breakdown-pattern/).
 
-Failed Breakout Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
+**Best suited for:** day trading and swing trading.
+
+Failed Breakout Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
@@ -117,9 +119,9 @@ A failed breakout is most useful when it shows how the trader responded after a 
 
 A failed breakout happens when price moves beyond resistance but cannot hold above the breakout area.
 
-### Does this pattern guarantee a move?
+### Can this pattern fail?
 
-No. It can fail, fake out, or become choppy.
+Yes. It can fail, fake out, or become choppy.
 
 ### What context matters most?
 
@@ -136,7 +138,3 @@ Review pattern quality, entry timing, volume, level behavior, invalidation, and 
 ### Can this pattern be used alone?
 
 No. It should be one part of a broader review process.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Chart patterns can support review, but they do not predict price, guarantee trading results, or replace risk management.

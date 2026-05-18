@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether entries and exits respected the swing points that defined the chart structure."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Foundation"
-academy_order: 7
+academy_order: 8
 academy_module: "Swing Structure"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/key-levels-trading/"

@@ -18,7 +18,7 @@ priority: "3"
 cta: "Review whether the trade used a clean level map or reacted to too many competing lines."
 learning_track: "Chart Reading And Market Structure"
 academy_level: "Practical"
-academy_order: 6
+academy_order: 7
 academy_module: "Chart Reading Basics And Core Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/resistance-levels/"

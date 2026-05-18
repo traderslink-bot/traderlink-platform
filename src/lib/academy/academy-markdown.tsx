@@ -11,6 +11,7 @@ type MarkdownBlock =
   | { type: "quote"; text: string; key: string }
   | { type: "image"; alt: string; src: string; key: string }
   | { type: "list"; items: MarkdownListItem[]; key: string }
+  | { type: "cardGrid"; groups: MarkdownCardGroup[]; key: string }
   | { type: "table"; rows: string[][]; key: string }
   | { type: "code"; code: string; key: string }
   | { type: "rule"; key: string };
@@ -19,6 +20,14 @@ type MarkdownListItem = {
   text: string;
   ordered: boolean;
   depth: number;
+};
+
+type MarkdownCardGroup = {
+  title: string;
+  links: Array<{
+    text: string;
+    href: string;
+  }>;
 };
 
 export function AcademyMarkdown({ body }: { body: string }) {
@@ -117,6 +126,48 @@ function renderBlock(block: MarkdownBlock) {
     );
   }
 
+  if (block.type === "cardGrid") {
+    return (
+      <div
+        key={block.key}
+        className="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-4"
+      >
+        {block.groups.map((group) => (
+          <section
+            key={`${block.key}-${group.title}`}
+            className="rounded-lg border border-cyan-200/20 bg-cyan-400/10 p-4"
+          >
+            <h3 className="text-base font-semibold tracking-normal text-cyan-100">
+              {group.title}
+            </h3>
+            <div className="mt-4 space-y-2">
+              {group.links.map((link) => {
+                const unavailable = isUnavailableAcademyHref(link.href);
+
+                return unavailable ? (
+                  <span
+                    key={link.href}
+                    className="block rounded border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-slate-300"
+                  >
+                    {link.text}
+                  </span>
+                ) : (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="block rounded border border-white/10 bg-slate-950/45 px-3 py-2 text-sm font-medium text-slate-100 transition hover:border-cyan-200/40 hover:bg-cyan-300/10"
+                  >
+                    {link.text}
+                  </a>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+    );
+  }
+
   if (block.type === "table") {
     const [header, ...rows] = block.rows;
 
@@ -187,6 +238,24 @@ function parseMarkdownBlocks(body: string): MarkdownBlock[] {
 
     if (/^---+$/.test(trimmed)) {
       blocks.push({ type: "rule", key: `rule-${index}` });
+      index += 1;
+      continue;
+    }
+
+    if (trimmed === ":::lesson-card-grid") {
+      const gridLines: string[] = [];
+      index += 1;
+
+      while (index < lines.length && lines[index].trim() !== ":::") {
+        gridLines.push(lines[index]);
+        index += 1;
+      }
+
+      blocks.push({
+        type: "cardGrid",
+        groups: parseCardGrid(gridLines),
+        key: `card-grid-${index}`,
+      });
       index += 1;
       continue;
     }
@@ -354,6 +423,32 @@ function parseTableRow(line: string): string[] {
 
 function isSeparatorRow(row: string[]): boolean {
   return row.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+function parseCardGrid(lines: string[]): MarkdownCardGroup[] {
+  const groups: MarkdownCardGroup[] = [];
+  let currentGroup: MarkdownCardGroup | null = null;
+
+  for (const line of lines) {
+    const heading = line.trim().match(/^###\s+(.+)$/);
+
+    if (heading) {
+      currentGroup = { title: heading[1], links: [] };
+      groups.push(currentGroup);
+      continue;
+    }
+
+    const link = line.trim().match(/^[-*]\s+\[([^\]]+)\]\(([^)]+)\)$/);
+
+    if (link && currentGroup) {
+      currentGroup.links.push({
+        text: link[1],
+        href: link[2],
+      });
+    }
+  }
+
+  return groups;
 }
 
 function renderInline(text: string): ReactNode[] {
