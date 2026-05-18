@@ -419,6 +419,19 @@ The chart-pattern course is **content_upgraded** across all local chart-pattern 
 | 13 | Extension Context | Parabolic Move | `/academy/chart-patterns/parabolic-move/` | content_upgraded | complete | Acceleration/extension risk context with realistic SVG support. |
 | 14 | Setup Tool Context | VWAP Reclaim | `/academy/chart-patterns/vwap-reclaim/` | content_upgraded | complete | Cross-listed from Technical Indicators And Tools. |
 
+### UI Readiness Status
+
+Pass 5 UI readiness review is complete in `docs/content/traderslink-academy-ui-readiness-chart-reading.md`.
+
+Recommended future UI model:
+
+- Show Chart Reading And Market Structure as one parent course.
+- Show the 23 core Chart Reading lessons as the primary course path.
+- Show Candlestick Patterns In Context and Chart Patterns In Context as supporting submodules or pattern libraries.
+- Track core course progress separately from candlestick and chart-pattern library progress.
+- Store lesson completion by slug so cross-listed lessons such as `/academy/chart-patterns/vwap-reclaim/` can count in every course or library where they appear.
+- Use context-specific navigation inside the future UI so learners entering from Chart Patterns can continue through the chart-pattern library while canonical lesson ownership stays unchanged.
+
 ## Course 3: Volume, Liquidity And Order Flow
 
 ### Purpose
