@@ -176,7 +176,7 @@ Level reclaims can go wrong when:
 - The trader ignores the broader downtrend.
 - The trader uses the reclaim as a reason to ignore risk.
 
-A reclaim is context, not safety.
+A reclaim still needs risk control, follow-through, and a clear failure area.
 
 ## Common Mistakes
 

@@ -19,7 +19,7 @@ recommended_previous: "/academy/candlestick-patterns/outside-bar/"
 recommended_next: "/academy/candlestick-patterns/red-to-green-move/"
 academy_level: "Practical"
 academy_order: 12
-academy_module: "Candlestick Reference Library"
+academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn how volume adds context to candle patterns and why volu
 ---
 # Candle Volume Confirmation
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Outside Bar](/academy/candlestick-patterns/outside-bar/) and leads into [Red-To-Green Move](/academy/candlestick-patterns/red-to-green-move/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Outside Bar](/academy/candlestick-patterns/outside-bar/) and leads into [Red-To-Green Move](/academy/candlestick-patterns/red-to-green-move/).
 
 Candle volume confirmation means reviewing whether the volume behind a candle supports the price action shown by that candle. It can help traders compare participation, but it does not remove risk.
 
@@ -56,7 +56,7 @@ Candle volume confirmation is the process of comparing a candle's price action w
 - A high-volume candle can still mark exhaustion.
 - Volume needs time-of-day context.
 
-Volume can support interpretation, but it does not prove the next move.
+Volume can support interpretation by showing whether participation changed around the candle.
 
 ## What It Usually Shows
 

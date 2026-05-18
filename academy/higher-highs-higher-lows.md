@@ -138,7 +138,7 @@ Useful review questions include:
 - Did the trader keep using the old structure after it changed?
 - Was the break on the timeframe that mattered for the trade?
 
-The failure of a higher low is a review point, not a prediction.
+The failure of a higher low is a review point because it can show the prior structure weakening.
 
 ## Extension Risk
 

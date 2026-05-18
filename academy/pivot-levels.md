@@ -51,7 +51,7 @@ This lesson is part of the **Chart Reading And Market Structure** learning path.
 
 Goal: Learn how pivot areas can help traders review turning points without covering the chart in lines.
 
-A pivot level is not a prediction. It is a place on the chart where price behavior deserves attention and where a trade plan may need clearer risk, confirmation, or review.
+A pivot level is a place on the chart where price behavior deserves attention and where a trade plan may need clearer risk, confirmation, or review.
 
 ## What To Know First
 

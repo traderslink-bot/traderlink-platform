@@ -7,7 +7,7 @@ secondary_keywords:
   - "hammer candlestick pattern"
   - "hammer candle meaning"
   - "lower wick candle"
-search_intent: "Learn hammer candles as lower-wick recovery context without automatic reversal claims."
+search_intent: "Learn hammer candles as lower-wick recovery context with location and follow-through context."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -19,7 +19,7 @@ recommended_previous: "/academy/candlestick-patterns/spinning-top/"
 recommended_next: "/academy/candlestick-patterns/pin-bar/"
 academy_level: "Practical"
 academy_order: 5
-academy_module: "Candlestick Reference Library"
+academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what hammer candles show near support, why they can fai
 ---
 # Hammer Candlestick
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Spinning Top Candle](/academy/candlestick-patterns/spinning-top/) and leads into [Pin Bar](/academy/candlestick-patterns/pin-bar/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Spinning Top Candle](/academy/candlestick-patterns/spinning-top/) and leads into [Pin Bar](/academy/candlestick-patterns/pin-bar/).
 
 A hammer candle has a small body near the top of its range and a long lower wick. It shows that price sold off and recovered before the candle closed.
 
@@ -56,7 +56,7 @@ A hammer is a candle with a small body near the top of the range and a long lowe
 - The wick low can help review invalidation.
 - Follow-through matters after the candle closes.
 
-A hammer shows recovery from lower prices during that candle, not proof of reversal.
+A hammer shows recovery from lower prices during that candle. Follow-through decides whether the recovery mattered.
 
 ## What It Usually Shows
 

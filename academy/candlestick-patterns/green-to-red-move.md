@@ -16,10 +16,10 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
 recommended_previous: "/academy/candlestick-patterns/red-to-green-move/"
-recommended_next: null
+recommended_next: "/academy/chart-patterns/bull-flag/"
 academy_level: "Practical"
 academy_order: 14
-academy_module: "Candlestick Reference Library"
+academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what green-to-red moves show, why they can fail, and ho
 ---
 # Green-To-Red Move
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Red-To-Green Move](/academy/candlestick-patterns/red-to-green-move/) and closes the candlestick reference sequence.
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Red-To-Green Move](/academy/candlestick-patterns/red-to-green-move/) and leads into [Bull Flag Pattern](/academy/chart-patterns/bull-flag/).
 
 A green-to-red move happens when a stock that was above its previous close or session reference moves back into negative territory. Traders often watch it as a sign of weakening intraday control.
 

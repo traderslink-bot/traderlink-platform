@@ -122,7 +122,7 @@ Useful review questions include:
 - Did the trader keep assuming weakness after structure changed?
 - Was nearby resistance still close above the break?
 
-A downtrend structure break is not a guaranteed reversal. It is a reason to review whether the prior weakness is still intact.
+A downtrend structure break is a reason to review whether the prior weakness is still intact.
 
 ## How Break Of Structure Works
 

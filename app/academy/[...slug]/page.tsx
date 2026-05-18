@@ -8,6 +8,7 @@ import {
   getAcademyCoursePage,
   getAcademyLessonBySegments,
   getLaunchAcademyLessonStaticParams,
+  isAcademyCourseLaunchReady,
   isAcademyLessonLaunchReady,
 } from "@/src/lib/academy/academy-content";
 import { AcademyMarkdown } from "@/src/lib/academy/academy-markdown";
@@ -54,13 +55,12 @@ export default async function AcademyLessonPage({ params }: PageProps) {
     ? getAcademyCoursePage(primaryContext.courseId)
     : null;
   const courseModules = primaryCoursePage?.modules ?? [];
-  const coreModules = courseModules.filter(
-    ({ module }) => module.module_type !== "reference_library",
-  );
-  const referenceModules = courseModules.filter(
-    ({ module }) => module.module_type === "reference_library",
-  );
   const learningPathSection = splitLearningPathSection(lesson.body);
+  const visibleSecondaryContexts = lesson.contexts.filter(
+    (context) =>
+      context.courseId !== primaryContext?.courseId &&
+      isAcademyCourseLaunchReady(context.courseId),
+  );
 
   return (
     <main className="min-h-screen bg-[#050a14] text-white">
@@ -159,13 +159,13 @@ export default async function AcademyLessonPage({ params }: PageProps) {
             </div>
           ) : null}
 
-          {lesson.memberships.length > 1 ? (
+          {visibleSecondaryContexts.length > 0 ? (
             <div className="rounded-lg border border-white/10 bg-slate-900/72 p-5">
               <h2 className="text-lg font-semibold tracking-normal">
                 Also Appears In
               </h2>
               <div className="mt-3 space-y-2 text-sm text-slate-300">
-                {lesson.contexts.map((context) => (
+                {visibleSecondaryContexts.map((context) => (
                   <Link
                     key={`${context.courseId}-${context.moduleId}`}
                     href={context.courseSlug}
@@ -195,13 +195,8 @@ export default async function AcademyLessonPage({ params }: PageProps) {
               <div className="mt-4 max-h-[30rem] space-y-5 overflow-y-auto pr-1 text-sm">
                 <CourseLessonGroups
                   currentSlug={lesson.slug}
-                  groups={coreModules}
-                  label="Course lessons"
-                />
-                <CourseLessonGroups
-                  currentSlug={lesson.slug}
-                  groups={referenceModules}
-                  label="Reference library"
+                  groups={courseModules}
+                  label="Lessons"
                 />
               </div>
             </div>

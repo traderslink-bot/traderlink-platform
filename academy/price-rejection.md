@@ -170,7 +170,7 @@ Traders may use rejection to:
 - Study whether they ignore failed holds after entry.
 - Connect candle wicks to real level context.
 
-The best use of rejection is not prediction. It is better post-trade evidence.
+The best use of rejection is better post-trade evidence: where price failed, how it reacted, and whether the trade respected that information.
 
 ## What Can Go Wrong
 

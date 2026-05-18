@@ -7,7 +7,7 @@ secondary_keywords:
   - "lower wick candle"
   - "buyer rejection candle"
   - "candlestick reversal context"
-search_intent: "Learn bottoming tail candles as lower-wick recovery context near support, not guaranteed reversals."
+search_intent: "Learn bottoming tail candles as lower-wick recovery context near support, with location and follow-through context."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -19,7 +19,7 @@ recommended_previous: "/academy/candlestick-patterns/pin-bar/"
 recommended_next: "/academy/candlestick-patterns/topping-tail/"
 academy_level: "Practical"
 academy_order: 7
-academy_module: "Candlestick Reference Library"
+academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what bottoming tails show and how to review lower-wick 
 ---
 # Bottoming Tail Candle
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Pin Bar](/academy/candlestick-patterns/pin-bar/) and leads into [Topping Tail Candle](/academy/candlestick-patterns/topping-tail/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Pin Bar](/academy/candlestick-patterns/pin-bar/) and leads into [Topping Tail Candle](/academy/candlestick-patterns/topping-tail/).
 
 A bottoming tail candle has a long lower wick that shows price dropped during the candle and recovered before the close. It can appear near support, after a flush, or during a failed breakdown attempt.
 
@@ -56,7 +56,7 @@ A bottoming tail is a candle with a long lower wick and a close above the low.
 - It often overlaps with hammer-style candles.
 - The wick low becomes an important review point.
 
-A bottoming tail shows lower-price rejection during the candle, not proof that a bottom is in.
+A bottoming tail shows lower-price rejection during the candle. Follow-through decides whether that rejection mattered.
 
 ## What It Usually Shows
 

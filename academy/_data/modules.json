@@ -113,20 +113,20 @@
     {
       "course_id": "chart-reading-market-structure",
       "module_id": "candlestick-patterns-context",
-      "module_title": "Candlestick Reference Library",
+      "module_title": "Candlestick Patterns In Context",
       "module_order": 7,
-      "module_type": "reference_library",
-      "display_behavior": "collapsed",
-      "progress_enabled": false
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
     },
     {
       "course_id": "chart-reading-market-structure",
       "module_id": "chart-patterns-context",
-      "module_title": "Chart Pattern Reference Library",
+      "module_title": "Chart Patterns In Context",
       "module_order": 8,
-      "module_type": "reference_library",
-      "display_behavior": "collapsed",
-      "progress_enabled": false
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
     },
     {
       "course_id": "volume-liquidity-order-flow",

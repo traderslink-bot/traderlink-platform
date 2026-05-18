@@ -19,7 +19,7 @@ recommended_previous: "/academy/candlestick-patterns/engulfing-candle/"
 recommended_next: "/academy/candlestick-patterns/outside-bar/"
 academy_level: "Practical"
 academy_order: 10
-academy_module: "Candlestick Reference Library"
+academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn how inside bars show compression, why false breaks happ
 ---
 # Inside Bar
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/) and leads into [Outside Bar](/academy/candlestick-patterns/outside-bar/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/) and leads into [Outside Bar](/academy/candlestick-patterns/outside-bar/).
 
 An inside bar forms when a candle stays inside the high and low of the prior candle. It can show compression or a temporary pause.
 

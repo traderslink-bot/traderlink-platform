@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Base Breakout as chart context without guaranteed-outcome claims."
+search_intent: "Learn Base Breakout as chart context with level, volume, and failure context."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -19,7 +19,7 @@ recommended_previous: "/academy/chart-patterns/ascending-triangle/"
 recommended_next: "/academy/chart-patterns/rectangle-pattern/"
 academy_level: "Practical"
 academy_order: 4
-academy_module: "Chart Pattern Reference Library"
+academy_module: "Chart Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what Base Breakout shows, why it can fail, and how to r
 ---
 # Base Breakout
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Ascending Triangle Pattern](/academy/chart-patterns/ascending-triangle/) and leads into [Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Ascending Triangle Pattern](/academy/chart-patterns/ascending-triangle/) and leads into [Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/).
 
 Base Breakout is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 
@@ -56,7 +56,7 @@ A base breakout forms when price moves out of a sideways base or consolidation r
 - Break above the range or failure back inside.
 - Retest or hold behavior after the break.
 
-The pattern is context, not certainty.
+The useful question is where the pattern formed, how volume behaved, and where the pattern would fail.
 
 ## Pattern Structure
 

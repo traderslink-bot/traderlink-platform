@@ -63,5 +63,5 @@
   </g>
   <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
   <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: is current price above PDH, below PDL, or inside yesterday's range?</text>
-  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">These levels are objective references, not trade instructions.</text>
+  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">These levels are objective references for session review.</text>
 </svg>

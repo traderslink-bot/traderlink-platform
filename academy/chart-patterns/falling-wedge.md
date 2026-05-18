@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Falling Wedge as chart context without guaranteed-outcome claims."
+search_intent: "Learn Falling Wedge as chart context with level, volume, and failure context."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -19,7 +19,7 @@ recommended_previous: "/academy/chart-patterns/rising-wedge/"
 recommended_next: "/academy/chart-patterns/double-top/"
 academy_level: "Practical"
 academy_order: 9
-academy_module: "Chart Pattern Reference Library"
+academy_module: "Chart Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what Falling Wedge shows, why it can fail, and how to r
 ---
 # Falling Wedge
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Rising Wedge](/academy/chart-patterns/rising-wedge/) and leads into [Double Top](/academy/chart-patterns/double-top/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Rising Wedge](/academy/chart-patterns/rising-wedge/) and leads into [Double Top](/academy/chart-patterns/double-top/).
 
 Falling Wedge is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 
@@ -56,11 +56,11 @@ A falling wedge forms when price moves downward inside a narrowing structure.
 - Possible upside break or failed reclaim.
 - Need for support and volume review.
 
-The pattern is context, not certainty.
+The useful question is where the pattern formed, how volume behaved, and where the pattern would fail.
 
 ## Pattern Structure
 
-The pattern can show slowing downside progress, but it is not a reversal guarantee.
+The pattern can show slowing downside progress. The next review is whether price reclaims structure or stays weak.
 
 - Lower highs and lower lows inside compression.
 - Converging downward boundaries.

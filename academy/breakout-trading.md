@@ -87,7 +87,7 @@ Traders watch these areas because a clean break can attract attention, volume, a
 
 ![Candlestick chart showing price breaking above resistance with volume context.](/academy/images/chart-reading/breakout-with-volume-context.svg)
 
-The visual above shows a breakout attempt with volume expanding as price clears a resistance zone. This is not a signal. It is an example of the kind of behavior traders may review: level quality, volume, and whether price holds above the zone.
+The visual above shows a breakout attempt with volume expanding as price clears a resistance zone. Use it to study the behavior traders may review: level quality, volume, and whether price holds above the zone.
 
 ## Why Breakout Trading Matters
 

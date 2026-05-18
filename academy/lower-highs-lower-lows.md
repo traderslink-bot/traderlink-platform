@@ -138,7 +138,7 @@ Useful questions include:
 - Was nearby resistance still close above the move?
 - Did the trader keep assuming weakness after structure shifted?
 
-A lower-high reclaim is a structure review point, not a prediction.
+A lower-high reclaim is a structure review point because it can show pressure changing around a prior weak area.
 
 ## Breakdown Extension Risk
 

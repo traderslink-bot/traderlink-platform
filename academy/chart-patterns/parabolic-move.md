@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Parabolic Move as chart context without guaranteed-outcome claims."
+search_intent: "Learn Parabolic Move as chart context with level, volume, and failure context."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -19,7 +19,7 @@ recommended_previous: "/academy/chart-patterns/failed-breakout-pattern/"
 recommended_next: "/academy/chart-patterns/vwap-reclaim/"
 academy_level: "Practical"
 academy_order: 13
-academy_module: "Chart Pattern Reference Library"
+academy_module: "Chart Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what Parabolic Move shows, why it can fail, and how to 
 ---
 # Parabolic Move
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/) and leads into [VWAP Reclaim](/academy/chart-patterns/vwap-reclaim/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/) and leads into [VWAP Reclaim](/academy/chart-patterns/vwap-reclaim/).
 
 Parabolic Move is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 
@@ -56,11 +56,11 @@ A parabolic move is an accelerating price move where each push becomes faster an
 - Possible halt or liquidity risk in small caps.
 - Sharp reversal or failed continuation risk.
 
-The pattern is context, not certainty.
+The useful question is where the pattern formed, how volume behaved, and where the pattern would fail.
 
 ## Pattern Structure
 
-The pattern shows acceleration and extension, not safety.
+The pattern shows acceleration and extension, which usually makes risk harder to define.
 
 - Increasing candle range or speed.
 - Price stretching away from support or VWAP.

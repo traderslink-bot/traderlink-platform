@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
 
+import {
+  getAcademyLesson,
+  isAcademyLessonLaunchReady,
+} from "@/src/lib/academy/academy-content";
+
 type MarkdownBlock =
   | { type: "heading"; level: 1 | 2 | 3 | 4; text: string; key: string }
   | { type: "paragraph"; text: string; key: string }
@@ -381,11 +386,23 @@ function renderInline(text: string): ReactNode[] {
       const link = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
 
       if (link) {
-        nodes.push(
-          <a key={key} href={link[2]} className="text-cyan-200 underline decoration-cyan-300/40 underline-offset-4">
-            {link[1]}
-          </a>,
-        );
+        if (isUnavailableAcademyHref(link[2])) {
+          nodes.push(
+            <span key={key} className="font-medium text-slate-100">
+              {link[1]}
+            </span>,
+          );
+        } else {
+          nodes.push(
+            <a
+              key={key}
+              href={link[2]}
+              className="text-cyan-200 underline decoration-cyan-300/40 underline-offset-4"
+            >
+              {link[1]}
+            </a>,
+          );
+        }
       }
     }
 
@@ -397,4 +414,14 @@ function renderInline(text: string): ReactNode[] {
   }
 
   return nodes;
+}
+
+function isUnavailableAcademyHref(href: string): boolean {
+  if (!href.startsWith("/academy/")) {
+    return false;
+  }
+
+  const lesson = getAcademyLesson(href);
+
+  return !lesson || !isAcademyLessonLaunchReady(lesson);
 }

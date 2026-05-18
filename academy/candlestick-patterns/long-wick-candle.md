@@ -15,11 +15,11 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review candle context by location, volume, follow-through, and whether the candle name helped or distracted from the plan."
-recommended_previous: "/academy/candlestick-patterns/"
+recommended_previous: "/academy/gap-fill-trading/"
 recommended_next: "/academy/candlestick-patterns/doji/"
 academy_level: "Foundation"
 academy_order: 2
-academy_module: "Candlestick Reference Library"
+academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn how long wick candles show rejection, volatility, or li
 ---
 # Long Wick Candle
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Candlestick Pattern Basics](/academy/candlestick-patterns/) and leads into [Doji Candle](/academy/candlestick-patterns/doji/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Gap Fill Trading](/academy/gap-fill-trading/) and leads into [Doji Candle](/academy/candlestick-patterns/doji/).
 
 A long wick candle has a wick that stands out compared with the body. It can show rejection, volatility, or a failed attempt to hold an extreme price area.
 
@@ -56,7 +56,7 @@ A long wick candle is a candle with a noticeably long upper or lower wick compar
 - The body shows where price opened and closed.
 - The next candles help review whether rejection mattered.
 
-The wick shows movement away from an extreme, not a guaranteed reversal.
+The wick shows movement away from an extreme. The next candles show whether that rejection actually mattered.
 
 ## What It Usually Shows
 

@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Rising Wedge as chart context without guaranteed-outcome claims."
+search_intent: "Learn Rising Wedge as chart context with level, volume, and failure context."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -19,7 +19,7 @@ recommended_previous: "/academy/chart-patterns/wedge-pattern/"
 recommended_next: "/academy/chart-patterns/falling-wedge/"
 academy_level: "Practical"
 academy_order: 8
-academy_module: "Chart Pattern Reference Library"
+academy_module: "Chart Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what Rising Wedge shows, why it can fail, and how to re
 ---
 # Rising Wedge
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Wedge Pattern](/academy/chart-patterns/wedge-pattern/) and leads into [Falling Wedge](/academy/chart-patterns/falling-wedge/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Wedge Pattern](/academy/chart-patterns/wedge-pattern/) and leads into [Falling Wedge](/academy/chart-patterns/falling-wedge/).
 
 Rising Wedge is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 
@@ -56,11 +56,11 @@ A rising wedge forms when price moves upward inside a narrowing structure.
 - Possible downside break or failed break.
 - Need for level and volume review.
 
-The pattern is context, not certainty.
+The useful question is where the pattern formed, how volume behaved, and where the pattern would fail.
 
 ## Pattern Structure
 
-The pattern can show weakening progress, but it is not a reversal guarantee.
+The pattern can show weakening progress. The next review is whether price loses structure or keeps grinding higher.
 
 - Higher highs and higher lows inside compression.
 - Converging upward boundaries.

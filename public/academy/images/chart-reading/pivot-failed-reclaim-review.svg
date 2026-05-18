@@ -66,5 +66,5 @@
   </g>
   <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
   <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: did the reclaim hold, or did price reject back below the pivot?</text>
-  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Failed reclaims are review context, not prediction.</text>
+  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Failed reclaims show where price could not stay accepted.</text>
 </svg>

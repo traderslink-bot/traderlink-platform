@@ -17,7 +17,7 @@
     <g stroke="#22c55e" fill="#22c55e"><line x1="525" y1="185" x2="525" y2="250"/><rect x="514" y="202" width="22" height="32" rx="2"/></g>
   </g>
   <circle cx="360" cy="158" r="24" fill="none" stroke="#9cc7ff" stroke-width="3"/>
-  <text x="410" y="128" fill="#d6e4ff" font-family="Arial" font-size="18">Doji = pause, not proof</text>
+  <text x="410" y="128" fill="#d6e4ff" font-family="Arial" font-size="18">Doji = pause at level</text>
   <text x="600" y="224" fill="#d6e4ff" font-family="Arial" font-size="18">Next candles decide context</text>
   <rect x="48" y="414" width="864" height="82" rx="10" fill="#0b1626" stroke="#1b3558"/>
   <g><rect x="120" y="463" width="22" height="20" fill="#22c55e" opacity=".75"/><rect x="175" y="452" width="22" height="31" fill="#22c55e" opacity=".75"/><rect x="230" y="441" width="22" height="42" fill="#22c55e" opacity=".75"/><rect x="285" y="428" width="22" height="55" fill="#22c55e" opacity=".75"/><rect x="340" y="420" width="22" height="63" fill="#d6e4ff" opacity=".75"/><rect x="395" y="444" width="22" height="39" fill="#ef4444" opacity=".75"/></g>

@@ -204,7 +204,7 @@ Obvious levels are useful, but obvious levels can also create fakeouts.
 Common mistakes around previous day high and low include:
 
 - Not marking PDH and PDL before the session.
-- Treating PDH as an automatic breakout level.
+- Treating PDH as a breakout level without waiting for hold, failure, or volume context.
 - Treating PDL as an automatic breakdown level.
 - Ignoring whether price is opening inside or outside yesterday's range.
 - Chasing into PDH after a large premarket move.

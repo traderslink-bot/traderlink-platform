@@ -54,7 +54,7 @@ This lesson is resistance-specific. The broad support-and-resistance lesson teac
 
 Goal: Learn how resistance levels affect trade location, breakout attempts, rejection, and review.
 
-Resistance is useful context, not a promise. A resistance level can reject, break, consolidate, fake out, become support later, or stop mattering. The goal is to read the level clearly, plan around it, and review your decisions afterward.
+Resistance is useful because it gives traders a clear area to watch. A resistance level can reject, break, consolidate, fake out, become support later, or stop mattering. The goal is to read the level clearly, plan around it, and review your decisions afterward.
 
 ## What To Know First
 
@@ -149,7 +149,7 @@ A trader reviewing that resistance area might ask:
 - Was the entry taken directly into resistance?
 - Was there a plan for what to do if the level rejected?
 
-The resistance level does not prove what happens next. It gives the trader a structured area for planning and review.
+The resistance level gives the trader a structured area for planning and review.
 
 ## When Resistance Breaks
 
@@ -205,7 +205,7 @@ Traders may use resistance levels to:
 - Compare planned entries with actual execution.
 - Study whether late entries happen repeatedly near resistance.
 
-The strongest use of resistance is not prediction. It is better structure before and after the trade.
+The strongest use of resistance is better structure before and after the trade.
 
 ## What Can Go Wrong
 
@@ -257,7 +257,7 @@ This checklist is meant to slow down the read. Resistance is most useful when it
 
 ## Key Takeaway
 
-Resistance is a review area, not a promise that price will reject. The useful question is whether price stalled, broke cleanly, failed, or became extended near the zone.
+Resistance is a review area. The useful question is whether price stalled, broke cleanly, failed, or became extended near the zone.
 
 ## FAQ
 

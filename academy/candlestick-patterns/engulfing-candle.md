@@ -19,7 +19,7 @@ recommended_previous: "/academy/candlestick-patterns/topping-tail/"
 recommended_next: "/academy/candlestick-patterns/inside-bar/"
 academy_level: "Practical"
 academy_order: 9
-academy_module: "Candlestick Reference Library"
+academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what engulfing candles show, why they can fail, and how
 ---
 # Engulfing Candle
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Topping Tail Candle](/academy/candlestick-patterns/topping-tail/) and leads into [Inside Bar](/academy/candlestick-patterns/inside-bar/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Topping Tail Candle](/academy/candlestick-patterns/topping-tail/) and leads into [Inside Bar](/academy/candlestick-patterns/inside-bar/).
 
 An engulfing candle forms when one candle's body overtakes the body of the prior candle. It can show a sharp shift in control, but it still needs location and follow-through.
 
@@ -56,7 +56,7 @@ An engulfing candle is a two-candle pattern where the second candle's body overt
 - The close location matters.
 - Volume and level context affect interpretation.
 
-Engulfing shows a shift during the candle pair, not guaranteed continuation or reversal.
+Engulfing shows a shift during the candle pair. The next candles show whether that shift mattered.
 
 ## What It Usually Shows
 

@@ -42,7 +42,7 @@ This lesson is part of the **Chart Reading And Market Structure** course. It fol
 
 Chart patterns are recurring price structures traders use to organize what they see on a chart. They can help explain consolidation, pressure, rejection, continuation attempts, and failed moves.
 
-This is the foundation chart-pattern lesson for the course. The individual bull flag, double top, wedge, and failed-breakout pages are deeper reference lessons. The main course path should teach how patterns work as structure, not force a beginner through every pattern name before they understand the chart.
+This is the foundation chart-pattern lesson for the course. The individual bull flag, double top, wedge, and failed-breakout pages are focused follow-up lessons. The main course path should teach how patterns work as structure, not force a beginner through every pattern name before they understand the chart.
 
 ![Educational chart showing patterns as combinations of levels, trend, volume, and risk context.](/academy/images/chart-reading/chart-pattern-context-map.svg)
 
@@ -54,9 +54,9 @@ A chart pattern is a recognizable price structure made from support, resistance,
 - Patterns can describe reversal attempts.
 - Patterns can describe compression or range behavior.
 - Patterns can fail, fake out, or become choppy.
-- Patterns should create review questions, not certainty.
+- Patterns should create review questions about level quality, volume, risk, and failure.
 
-A pattern is a map of behavior, not a promise.
+A pattern is a way to map behavior so the trader can compare structure, volume, and failure areas.
 
 ## Pattern Structure
 
@@ -83,7 +83,7 @@ Tool-based patterns use a reference level such as VWAP. A VWAP reclaim is not th
 
 ## How To Use The Reference Lessons
 
-Use the individual chart-pattern pages when the specific structure appears on a chart:
+Use the individual chart-pattern lessons when the specific structure appears on a chart:
 
 - Continuation references: Bull Flag, Ascending Triangle, and Base Breakout.
 - Range and compression references: Rectangle, Channel, Wedge, Rising Wedge, and Falling Wedge.
@@ -162,7 +162,7 @@ Yes. Review whether the pattern was clean and whether the trade followed a plan.
 
 ### Can patterns predict price?
 
-No. They provide context, not prediction.
+No. They help organize chart behavior, but the next move still depends on follow-through, volume, liquidity, and risk.
 
 ## Educational Disclaimer
 

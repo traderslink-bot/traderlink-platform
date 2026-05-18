@@ -207,7 +207,7 @@ Premarket levels are useful, but they are only part of the picture.
 Common mistakes around premarket high and low include:
 
 - Not marking PMH and PML before the open.
-- Treating PMH as an automatic breakout level.
+- Treating PMH as a breakout level without waiting for hold, failure, or volume context.
 - Treating PML as an automatic breakdown level.
 - Ignoring thin premarket volume.
 - Chasing into PMH after a large gap-up move.

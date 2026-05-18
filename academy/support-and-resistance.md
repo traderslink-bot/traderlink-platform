@@ -154,7 +154,7 @@ A resistance area can become support after price breaks above it. Traders often 
 
 ![Candlestick chart showing broken resistance later acting as support during a pullback.](/academy/images/chart-reading/resistance-breaks-becomes-support.svg)
 
-In this example, price struggles under resistance, breaks above it, then pulls back and holds near the old resistance zone. Again, this is context, not certainty. The trader still needs volume, liquidity, risk control, and confirmation.
+In this example, price struggles under resistance, breaks above it, then pulls back and holds near the old resistance zone. The useful read is whether volume, liquidity, risk control, and follow-through support the new structure.
 
 Useful review questions include:
 

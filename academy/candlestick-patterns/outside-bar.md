@@ -19,7 +19,7 @@ recommended_previous: "/academy/candlestick-patterns/inside-bar/"
 recommended_next: "/academy/candlestick-patterns/candle-volume-confirmation/"
 academy_level: "Practical"
 academy_order: 11
-academy_module: "Candlestick Reference Library"
+academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn how outside bars show range expansion and why they requ
 ---
 # Outside Bar
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Inside Bar](/academy/candlestick-patterns/inside-bar/) and leads into [Candle Volume Confirmation](/academy/candlestick-patterns/candle-volume-confirmation/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Inside Bar](/academy/candlestick-patterns/inside-bar/) and leads into [Candle Volume Confirmation](/academy/candlestick-patterns/candle-volume-confirmation/).
 
 An outside bar forms when a candle trades above the prior high and below the prior low. It shows range expansion, volatility, and a wider battle between buyers and sellers.
 

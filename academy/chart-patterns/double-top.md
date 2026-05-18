@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Double Top as chart context without guaranteed-outcome claims."
+search_intent: "Learn Double Top as chart context with level, volume, and failure context."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -19,7 +19,7 @@ recommended_previous: "/academy/chart-patterns/falling-wedge/"
 recommended_next: "/academy/chart-patterns/inverse-head-and-shoulders/"
 academy_level: "Practical"
 academy_order: 10
-academy_module: "Chart Pattern Reference Library"
+academy_module: "Chart Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what Double Top shows, why it can fail, and how to revi
 ---
 # Double Top
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Falling Wedge](/academy/chart-patterns/falling-wedge/) and leads into [Inverse Head And Shoulders](/academy/chart-patterns/inverse-head-and-shoulders/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Falling Wedge](/academy/chart-patterns/falling-wedge/) and leads into [Inverse Head And Shoulders](/academy/chart-patterns/inverse-head-and-shoulders/).
 
 Double Top is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 
@@ -56,11 +56,11 @@ A double top forms when price tests a similar resistance area twice and fails to
 - Neckline or support area below.
 - Possible support break or failed breakdown.
 
-The pattern is context, not certainty.
+The useful question is where the pattern formed, how volume behaved, and where the pattern would fail.
 
 ## Pattern Structure
 
-The pattern shows repeated resistance, not guaranteed reversal.
+The pattern shows repeated resistance. The next review is whether price breaks, rejects, or stays trapped near that area.
 
 - First test into resistance.
 - Pullback from the first test.

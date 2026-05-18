@@ -59,7 +59,7 @@ Before studying new high of day, remember:
 
 - HOD is the highest price of the current session so far.
 - NHOD happens when price trades above the prior HOD.
-- A new high is a breakout attempt, not guaranteed continuation.
+- A new high is a breakout attempt that needs hold, volume, and extension context.
 - The quality of the move depends on structure below the break.
 - Nearby PMH, PDH, daily resistance, and spread still matter.
 - Scanner alerts are information, not a trade plan.

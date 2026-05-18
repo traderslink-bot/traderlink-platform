@@ -22,7 +22,7 @@ academy_order: 25
 academy_module: "Gaps"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/chart-patterns/"
-recommended_next: null
+recommended_next: "/academy/candlestick-patterns/long-wick-candle/"
 visual_assets:
   - "/academy/images/chart-reading/gap-fill-zone-map.svg"
   - "/academy/images/chart-reading/failed-gap-fill-hold-review.svg"

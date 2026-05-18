@@ -19,7 +19,7 @@ recommended_previous: "/academy/candlestick-patterns/candle-volume-confirmation/
 recommended_next: "/academy/candlestick-patterns/green-to-red-move/"
 academy_level: "Practical"
 academy_order: 13
-academy_module: "Candlestick Reference Library"
+academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what red-to-green moves show, why they can fail, and ho
 ---
 # Red-To-Green Move
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Candle Volume Confirmation](/academy/candlestick-patterns/candle-volume-confirmation/) and leads into [Green-To-Red Move](/academy/candlestick-patterns/green-to-red-move/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Candle Volume Confirmation](/academy/candlestick-patterns/candle-volume-confirmation/) and leads into [Green-To-Red Move](/academy/candlestick-patterns/green-to-red-move/).
 
 A red-to-green move happens when a stock that was below its previous close or session reference moves back into positive territory. Traders often watch this because it can show changing intraday control.
 
@@ -56,7 +56,7 @@ A red-to-green move is an intraday transition where price moves from negative te
 - VWAP or prior close may be watched.
 - The move can hold, chop, or fail.
 
-The transition shows a change in session position, not guaranteed continuation.
+The transition shows a change in session position. The next review is whether price holds the new side of the reference area.
 
 ## What It Usually Shows
 

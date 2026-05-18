@@ -148,7 +148,7 @@ Traders may use swing highs and swing lows to:
 - Identify when a break of structure may have happened.
 - Avoid reacting to one candle without context.
 
-The strongest use of swing points is reviewable structure, not prediction.
+The strongest use of swing points is reviewable structure: where the market turned, where it failed, and whether control changed.
 
 ## What Can Go Wrong
 

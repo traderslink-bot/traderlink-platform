@@ -42,7 +42,7 @@ This lesson starts the **Chart Reading And Market Structure** course. It leads i
 
 Candlesticks are the first language of most stock charts. Before a trader studies support, resistance, breakouts, reclaims, or chart patterns, they need to understand what a single candle is showing and what it is not showing.
 
-This is the foundation lesson. The individual Doji, hammer, engulfing candle, and long-wick pages are deeper reference lessons you can use later. The main learning goal here is not to memorize every candle type. It is to understand how candles work, how patterns form, and why candle names are not trade signals.
+This is the foundation lesson. The individual Doji, hammer, engulfing candle, and long-wick pages are focused follow-up lessons you can use later. The main learning goal here is not to memorize every candle type. It is to understand how candles work, how patterns form, and why candle names are not trade signals.
 
 ![Educational candlestick chart showing candle anatomy, wick, body, support, resistance, and volume context.](/academy/images/chart-reading/candlestick-anatomy-context.svg)
 
@@ -125,7 +125,7 @@ In both cases, the next candle matters. Follow-through, failure, reclaim, reject
 
 ## How To Use The Reference Lessons
 
-You do not need to treat every candle type as a mandatory stop in the course path. Use the individual candle pages as a reference library:
+You do not need to treat every candle type as a mandatory stop in the course path. Use the individual candle pages to go deeper:
 
 - Start with Long Wick, Doji, and Spinning Top when you want to understand rejection, hesitation, and balance.
 - Use Hammer, Pin Bar, Bottoming Tail, and Topping Tail when a wick forms near support or resistance.

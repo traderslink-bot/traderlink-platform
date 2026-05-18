@@ -54,7 +54,7 @@ This lesson is support-specific. The broad support-and-resistance lesson teaches
 
 Goal: Learn how support levels behave, how they fail, and how to review decisions made around them.
 
-Support is useful context, not a promise. A support level can hold, break, fake out, reclaim, or turn into resistance later. The educational goal is to learn how to read the level, plan around it, and review your decisions after the trade.
+Support is useful because it gives traders a clear area to watch. A support level can hold, break, fake out, reclaim, or turn into resistance later. The educational goal is to learn how to read the level, plan around it, and review your decisions after the trade.
 
 ## What To Know First
 
@@ -180,7 +180,7 @@ A support reclaim happens when price breaks below a support zone, then moves bac
 
 ![Candlestick chart showing price losing support, reclaiming the zone, and holding above it.](/academy/images/chart-reading/support-level-reclaim.svg)
 
-A reclaim is not a guaranteed reversal. It is a behavior to review. Traders may watch whether price can hold back above the zone, whether volume improves, and whether the failed break changed the risk plan.
+A reclaim is a behavior to review. Traders may watch whether price can hold back above the zone, whether volume improves, and whether the failed break changed the risk plan.
 
 Useful reclaim review questions include:
 
@@ -202,7 +202,7 @@ Traders may use support levels to:
 - Study whether support breaks led to avoidable hold-and-hope decisions.
 - Compare planned risk with actual trade behavior.
 
-The strongest use of support is not prediction. It is structure.
+The strongest use of support is structure: it helps define the area being tested and the behavior to review afterward.
 
 ## What Can Go Wrong
 
@@ -254,7 +254,7 @@ This checklist is meant to slow down the read. Support is most useful when it he
 
 ## Key Takeaway
 
-Support is a review area, not a promise that price will bounce. The useful question is whether price respected, lost, reclaimed, or ignored the support zone.
+Support is a review area. The useful question is whether price respected, lost, reclaimed, or ignored the support zone.
 
 ## FAQ
 

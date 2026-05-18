@@ -19,7 +19,7 @@ recommended_previous: "/academy/candlestick-patterns/doji/"
 recommended_next: "/academy/candlestick-patterns/hammer/"
 academy_level: "Foundation"
 academy_order: 4
-academy_module: "Candlestick Reference Library"
+academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what spinning top candles show, when they matter, and h
 ---
 # Spinning Top Candle
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Doji Candle](/academy/candlestick-patterns/doji/) and leads into [Hammer Candlestick](/academy/candlestick-patterns/hammer/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Doji Candle](/academy/candlestick-patterns/doji/) and leads into [Hammer Candlestick](/academy/candlestick-patterns/hammer/).
 
 A spinning top candle has a small body with wicks on both sides. It can show hesitation or a balanced fight between buyers and sellers.
 

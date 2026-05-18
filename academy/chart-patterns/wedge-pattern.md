@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Wedge Pattern as chart context without guaranteed-outcome claims."
+search_intent: "Learn Wedge Pattern as chart context with level, volume, and failure context."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -19,7 +19,7 @@ recommended_previous: "/academy/chart-patterns/channel-pattern/"
 recommended_next: "/academy/chart-patterns/rising-wedge/"
 academy_level: "Practical"
 academy_order: 7
-academy_module: "Chart Pattern Reference Library"
+academy_module: "Chart Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what Wedge Pattern shows, why it can fail, and how to r
 ---
 # Wedge Pattern
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Channel Pattern](/academy/chart-patterns/channel-pattern/) and leads into [Rising Wedge](/academy/chart-patterns/rising-wedge/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Channel Pattern](/academy/chart-patterns/channel-pattern/) and leads into [Rising Wedge](/academy/chart-patterns/rising-wedge/).
 
 Wedge Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 
@@ -56,11 +56,11 @@ A wedge pattern forms when price compresses between converging trendlines.
 - Possible break in either direction.
 - Failure or reclaim after the break.
 
-The pattern is context, not certainty.
+The useful question is where the pattern formed, how volume behaved, and where the pattern would fail.
 
 ## Pattern Structure
 
-The pattern shows compression, not guaranteed direction.
+The pattern shows compression. The next review is whether price expands, fails, or stays choppy.
 
 - Narrowing price range.
 - Converging upper and lower boundaries.

@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Channel Pattern as chart context without guaranteed-outcome claims."
+search_intent: "Learn Channel Pattern as chart context with level, volume, and failure context."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -19,7 +19,7 @@ recommended_previous: "/academy/chart-patterns/rectangle-pattern/"
 recommended_next: "/academy/chart-patterns/wedge-pattern/"
 academy_level: "Practical"
 academy_order: 6
-academy_module: "Chart Pattern Reference Library"
+academy_module: "Chart Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn what Channel Pattern shows, why it can fail, and how to
 ---
 # Channel Pattern
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/) and leads into [Wedge Pattern](/academy/chart-patterns/wedge-pattern/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/) and leads into [Wedge Pattern](/academy/chart-patterns/wedge-pattern/).
 
 Channel Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it should not be treated as a stand-alone decision.
 
@@ -56,7 +56,7 @@ A channel pattern forms when price moves between roughly parallel support and re
 - Possible break or failure outside the channel.
 - Volume and extension review.
 
-The pattern is context, not certainty.
+The useful question is where the pattern formed, how volume behaved, and where the pattern would fail.
 
 ## Pattern Structure
 

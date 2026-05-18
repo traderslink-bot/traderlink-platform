@@ -376,6 +376,10 @@ export function getAcademyLesson(slug: string): AcademyLesson | null {
     ) ??
     lessonMemberships[0] ??
     null;
+  const displayMemberships = sortLessonMembershipsForDisplay(
+    lessonMemberships,
+    canonicalMembership,
+  );
 
   const title = stringValue(parsed.frontmatter.title) ?? getTitleFromBody(parsed.body);
   const description =
@@ -397,12 +401,12 @@ export function getAcademyLesson(slug: string): AcademyLesson | null {
     description,
     body: parsed.body,
     frontmatter: parsed.frontmatter,
-    memberships: lessonMemberships,
+    memberships: displayMemberships,
     canonicalMembership,
     previousLesson: previousSlug ? getLessonLink(previousSlug) : null,
     nextLesson: nextSlug ? getLessonLink(nextSlug) : null,
     visualAssets: stringArrayValue(parsed.frontmatter.visual_assets),
-    contexts: lessonMemberships.flatMap((membership) => {
+    contexts: displayMemberships.flatMap((membership) => {
       const course = findCourse(membership.display_course_id);
       const academyModule = findModule(
         membership.display_course_id,
@@ -427,6 +431,27 @@ export function getAcademyLesson(slug: string): AcademyLesson | null {
       ];
     }),
   };
+}
+
+function sortLessonMembershipsForDisplay(
+  lessonMemberships: AcademyLessonMembership[],
+  canonicalMembership: AcademyLessonMembership | null,
+): AcademyLessonMembership[] {
+  return lessonMemberships.toSorted((a, b) => {
+    if (canonicalMembership) {
+      if (a === canonicalMembership) return -1;
+      if (b === canonicalMembership) return 1;
+    }
+
+    const aIsLaunch = launchCourseIds.has(a.display_course_id);
+    const bIsLaunch = launchCourseIds.has(b.display_course_id);
+
+    if (aIsLaunch !== bIsLaunch) {
+      return aIsLaunch ? -1 : 1;
+    }
+
+    return a.display_order - b.display_order;
+  });
 }
 
 export function getAcademyLessonTitle(slug: string): string {

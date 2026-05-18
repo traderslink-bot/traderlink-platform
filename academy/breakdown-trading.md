@@ -82,7 +82,7 @@ Common breakdown levels include:
 
 ![Candlestick chart showing price breaking below support with volume context.](/academy/images/chart-reading/breakdown-with-volume-context.svg)
 
-The visual above shows a breakdown attempt with volume expanding as price loses a support zone. This is not a signal. It is an example of behavior traders may review: level quality, volume, and whether price holds below the zone.
+The visual above shows a breakdown attempt with volume expanding as price loses a support zone. Use it to study behavior traders may review: level quality, volume, and whether price holds below the zone.
 
 ## Why Breakdown Trading Matters
 
@@ -191,7 +191,7 @@ This checklist helps turn a breakdown from an emotional moment into a reviewable
 
 ## Key Takeaway
 
-A breakdown should be reviewed around the support level, the volume context, and the trader response after the break. Losing support is information, not certainty.
+A breakdown should be reviewed around the support level, the volume context, and the trader response after the break. Losing support is information that needs follow-through, volume context, and risk review.
 
 ## FAQ
 

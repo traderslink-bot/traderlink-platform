@@ -7,7 +7,7 @@ secondary_keywords:
   - "upper wick candle"
   - "seller rejection candle"
   - "candlestick resistance rejection"
-search_intent: "Learn topping tail candles as upper-wick rejection context near resistance, not guaranteed reversals."
+search_intent: "Learn topping tail candles as upper-wick rejection context near resistance, with location and follow-through context."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -19,7 +19,7 @@ recommended_previous: "/academy/candlestick-patterns/bottoming-tail/"
 recommended_next: "/academy/candlestick-patterns/engulfing-candle/"
 academy_level: "Practical"
 academy_order: 8
-academy_module: "Candlestick Reference Library"
+academy_module: "Candlestick Patterns In Context"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links:
@@ -38,11 +38,11 @@ meta_description: "Learn what topping tails show and how to review upper-wick re
 ---
 # Topping Tail Candle
 
-This is a reference lesson inside the **Chart Reading And Market Structure** course. It follows [Bottoming Tail Candle](/academy/candlestick-patterns/bottoming-tail/) and leads into [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/).
+This lesson is part of the **Chart Reading And Market Structure** course. It follows [Bottoming Tail Candle](/academy/candlestick-patterns/bottoming-tail/) and leads into [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/).
 
 A topping tail candle has a long upper wick that shows price pushed higher during the candle and closed away from the high. It can appear near resistance, after an extension, or during a failed breakout attempt.
 
-The candle should be reviewed as rejection context, not a prediction that price must reverse.
+The candle should be reviewed as rejection context: where it formed, how it closed, and what happened next.
 
 ![Candlestick chart showing upper wick rejection near resistance with volume context.](/academy/images/chart-reading/long-wick-rejection-context.svg)
 

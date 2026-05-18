@@ -22,5 +22,5 @@
   <text x="586" y="258" fill="#d6e4ff" font-family="Arial" font-size="18">Review close, level, and risk</text>
   <rect x="48" y="414" width="864" height="82" rx="10" fill="#0b1626" stroke="#1b3558"/>
   <g><rect x="126" y="451" width="22" height="32" fill="#ef4444" opacity=".75"/><rect x="176" y="418" width="22" height="65" fill="#22c55e" opacity=".75"/><rect x="572" y="448" width="22" height="35" fill="#22c55e" opacity=".75"/><rect x="622" y="418" width="22" height="65" fill="#ef4444" opacity=".75"/></g>
-  <text x="300" y="464" fill="#d6e4ff" font-family="Arial" font-size="19">Engulfing shows a shift, not certainty.</text>
+  <text x="300" y="464" fill="#d6e4ff" font-family="Arial" font-size="19">Engulfing shows a shift to review.</text>
 </svg>

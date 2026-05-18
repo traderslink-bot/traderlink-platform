@@ -41,5 +41,5 @@
   </g>
   <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
   <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: did the break hold above HOD, or did price fail back below?</text>
-  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">A failed HOD break is review context, not automatic reversal.</text>
+  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Failed HOD break: compare the break, rejection, and follow-through.</text>
 </svg>

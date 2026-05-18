@@ -83,7 +83,7 @@ Common breakout levels include:
 - Swing highs.
 - Prior failed breakout areas.
 
-A breakout can continue, fail, retest, or turn into a fakeout. The level gives context, not certainty.
+A breakout can continue, fail, retest, or turn into a fakeout. The level gives traders a cleaner place to compare the breakout, retest, and failure behavior.
 
 ## Why Level Breakouts Matter
 
