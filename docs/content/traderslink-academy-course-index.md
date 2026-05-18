@@ -1038,6 +1038,38 @@ Before production UI implementation, this course still needs:
 - Optional course intro/landing copy for the Academy course page.
 - Final production UI schema review once the website build begins.
 
+## Pass 5 UI Readiness Batch Status
+
+Pass 5 UI readiness review is complete for all current Academy course groups and Academy Navigation Path Hubs.
+
+Completed Pass 5 audit files:
+
+| Course / Group | Pass 5 File | UI Planning Result |
+|---|---|---|
+| Trading Foundations | `docs/content/traderslink-academy-ui-readiness-trading-foundations.md` | Ready for UI planning once course membership/cross-listing model is decided. |
+| Chart Reading And Market Structure | `docs/content/traderslink-academy-ui-readiness-chart-reading.md` | Ready with parent-course/submodule model for core path plus pattern libraries. |
+| Volume, Liquidity And Order Flow | `docs/content/traderslink-academy-ui-readiness-volume-liquidity.md` | Ready as a compact 14-lesson execution-awareness path. |
+| Risk Management And Trade Planning | `docs/content/traderslink-academy-ui-readiness-risk-management.md` | Ready for UI planning; six-SVG risk visual batch remains launch-polish work. |
+| Technical Indicators And Tools | `docs/content/traderslink-academy-ui-readiness-technical-indicators.md` | Ready for UI planning; seven-SVG indicator visual batch remains launch-polish work. |
+| Trading Styles And Playbooks | `docs/content/traderslink-academy-ui-readiness-trading-styles.md` | Ready with cross-listed lesson support and shared completion by slug. |
+| Day Trading Workflow | `docs/content/traderslink-academy-ui-readiness-day-trading-workflow.md` | Ready as a session-timeline course. |
+| Swing Trading Workflow | `docs/content/traderslink-academy-ui-readiness-swing-trading-workflow.md` | Ready as a multi-session workflow course. |
+| News, Catalysts And SEC Filings | `docs/content/traderslink-academy-ui-readiness-news-catalysts-sec-filings.md` | Ready as a large hierarchical course with filing-library/module-progress behavior. |
+| Small-Cap Stocks, Float And Dilution | `docs/content/traderslink-academy-ui-readiness-small-cap-float-dilution.md` | Ready with grouped supply-and-risk modules; visual batch remains launch-polish work. |
+| Halts And High-Volatility Events | `docs/content/traderslink-academy-ui-readiness-halts-high-volatility.md` | Ready as a compact risk-event course. |
+| Trading Psychology And Discipline | `docs/content/traderslink-academy-ui-readiness-trading-psychology.md` | Ready as a non-shaming behavior-review course; behavior-loop visuals remain launch-polish work. |
+| Trade Review And Improvement | `docs/content/traderslink-academy-ui-readiness-trade-review-improvement.md` | Ready as the Academy review hub and restrained Trader Intelligence bridge. |
+| Practice And Improvement | `docs/content/traderslink-academy-ui-readiness-practice-improvement.md` | Ready as a practice-loop course. |
+| Academy Navigation Path Hubs | `docs/content/traderslink-academy-ui-readiness-navigation-path-hubs.md` | Ready as optional guided-route support, not numbered courses. |
+
+Global Pass 5 product notes:
+
+- Store completion by lesson slug.
+- Support course-specific membership and navigation for cross-listed lessons.
+- Use module progress for large courses such as News/Filings and Small-Cap/Floating/Dilution.
+- Treat missing visual batches from Pass 4 as launch-polish work unless production design requires them earlier.
+- Keep app bridges restrained until Pass 6 and until product routes are stable.
+
 ## Cross-Listed Lesson Rules
 
 Some lessons can appear in more than one course. This is good for navigation, but each lesson should still have one primary course.
