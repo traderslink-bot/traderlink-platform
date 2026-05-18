@@ -312,9 +312,15 @@ The Trading Foundations course markdown path is **content_upgraded** across 6 ne
 
 Before production UI implementation, this course still needs:
 
-- Visual asset review to decide whether an Academy path map or beginner workflow diagram would improve learning.
-- Optional course intro/landing copy for the Academy course page.
+- Final course membership/cross-listing model so cross-listed Risk and Trade Review lessons can appear in the Trading Foundations sequence without changing canonical lesson ownership.
+- Optional first-course visual polish, especially a Trading Foundations course map.
 - Progress/lesson completion wiring in the website build phase.
+
+Pass 5 UI readiness note:
+
+- Trading Foundations is ready for UI planning.
+- The 12-lesson displayed course path should come from the course index or a future course-membership layer, not only from each lesson's canonical frontmatter.
+- Completion should be tracked by lesson slug and count toward every course/path where a cross-listed lesson appears.
 
 ### UI Notes
 

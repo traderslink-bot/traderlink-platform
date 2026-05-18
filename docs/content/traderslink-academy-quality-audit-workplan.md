@@ -94,7 +94,7 @@ Recommended order for future runs:
 
 | Order | Course / Group | Pass 1 Quality | Pass 2 Sequence | Pass 3 Accuracy | Pass 4 Visual | Pass 5 UI | Pass 6 App Bridge | Notes |
 |---:|---|---|---|---|---|---|---|---|
-| 1 | Trading Foundations | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-foundations.md` with official SEC, Investor.gov, FINRA, and Regulation SHO source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-trading-foundations.md` with 4 priority beginner SVGs planned and risk/review visuals deferred to their dedicated course passes. |
+| 1 | Trading Foundations | complete | complete | complete | complete | complete | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-trading-foundations.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-trading-foundations.md` with official SEC, Investor.gov, FINRA, and Regulation SHO source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-trading-foundations.md` with 4 priority beginner SVGs planned and risk/review visuals deferred to their dedicated course passes; Pass 5 completed in `docs/content/traderslink-academy-ui-readiness-trading-foundations.md` and found the course ready for UI planning once a course membership/cross-listing model is decided. |
 | 2 | Chart Reading And Market Structure | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-chart-reading.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-chart-reading.md` with reputable charting references plus official SEC, NYSE, and Nasdaq source checks for session/extended-hours language; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-chart-reading.md` with 69 scoped SVGs verified and no required new assets. |
 | 3 | Volume, Liquidity And Order Flow | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-volume-liquidity.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-volume-liquidity.md` with official SEC, Investor.gov, FINRA, Nasdaq, and NYSE source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-volume-liquidity.md` with 29 scoped SVGs verified, no required new assets, and one bid/ask label cleanup. |
 | 4 | Risk Management And Trade Planning | complete | complete | complete | complete | not_started | not_started | Pass 1 completed in `docs/content/traderslink-academy-quality-audit-risk-management.md`; Pass 2 completed in `docs/content/traderslink-academy-sequence-cross-link-audit.md`; Pass 3 completed in `docs/content/traderslink-academy-accuracy-source-audit-risk-management.md` with official SEC, Investor.gov, and FINRA source verification plus targeted plain-language accuracy guardrail edits; Pass 4 completed in `docs/content/traderslink-academy-visual-gap-audit-risk-management.md` and identified a six-SVG priority risk visual batch before UI-ready status. |
@@ -211,7 +211,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Pass 5: UI Readiness Review** for **Trading Foundations**.
+Continue with **Pass 5: UI Readiness Review** for **Chart Reading And Market Structure**.
 
 Reason:
 
@@ -228,14 +228,15 @@ Reason:
 - Swing Trading Workflow Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-swing-trading-workflow.md`.
 - News, Catalysts And SEC Filings Pass 4 Visual Gap Audit is complete in `docs/content/traderslink-academy-visual-gap-audit-news-catalysts-sec-filings.md`.
 - Pass 4 Visual Gap Audit is complete for all current Academy course groups and Academy Navigation Path Hubs.
-- Trading Foundations is the first course in the Academy order and should start the UI-readiness pass before production implementation.
-- Pass 5 should check course-page metadata needs, lesson-card readiness, completion states, progress tracking expectations, next/previous lesson behavior, and whether visual gaps identified in Pass 4 block initial UI planning.
+- Trading Foundations Pass 5 UI Readiness Review is complete in `docs/content/traderslink-academy-ui-readiness-trading-foundations.md`.
+- Chart Reading And Market Structure is the next course in the Academy order.
+- Chart Reading And Market Structure is visually strong, but its core course, candlestick submodule, chart-pattern submodule, and cross-listed lessons need a UI-readiness review for course grouping, lesson-card behavior, progress, and module/submodule navigation.
 
 Output should include:
 
-- A Trading Foundations UI Readiness Review.
-- Course-level UI notes across onboarding, beginner stock-market mechanics, risk, rules, and review cross-listing.
+- A Chart Reading And Market Structure UI Readiness Review.
+- Course-level UI notes across core chart reading, candlestick context, chart-pattern context, and cross-listed support lessons.
 - Required Academy UI fields, progress/completion expectations, route/schema planning notes, visual blockers, and no-production-build boundaries.
-- A recommendation for whether UI planning can begin before all optional Pass 4 SVG batches are created.
+- A recommendation for how to present submodules without making the course feel like one overwhelming list.
 - Tracker and handoff update.
 - Commit.
