@@ -61,6 +61,10 @@ export default async function AcademyCoursePage({ params }: PageProps) {
   ).length;
   const deepDiveLessonCount =
     candlestickDeepDiveLessonCount + chartPatternDeepDiveLessonCount;
+  const firstCoreLesson = allLessons.find(
+    (lesson) => lesson.counts_toward_course_progress,
+  );
+
   return (
     <main className="min-h-screen bg-[#050a14] text-white">
       <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
@@ -93,10 +97,27 @@ export default async function AcademyCoursePage({ params }: PageProps) {
                 lessons
               </span>
             </div>
+
+            {firstCoreLesson ? (
+              <div className="mt-6">
+                <Link
+                  href={firstCoreLesson.lesson_slug}
+                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-cyan-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-200 focus:ring-offset-2 focus:ring-offset-[#050a14]"
+                >
+                  Start Course
+                </Link>
+              </div>
+            ) : null}
           </div>
         </section>
 
         <section className="mt-12 space-y-8">
+          <p className="max-w-3xl text-base leading-7 text-slate-300">
+            Start with the guided core path, then use the candlestick and
+            chart-pattern deep dives when you want to study a specific candle
+            or pattern.
+          </p>
+
           {modules.map(({ module, lessons }) => (
             <div
               key={module.module_id}

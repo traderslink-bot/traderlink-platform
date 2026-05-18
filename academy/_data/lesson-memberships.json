@@ -699,7 +699,7 @@
       "counts_toward_course_progress": true,
       "counts_toward_parent_progress": true,
       "recommended_previous_in_context": "/academy/chart-pattern-deep-dive-lessons/",
-      "recommended_next_in_context": "/academy/candlestick-patterns/long-wick-candle/",
+      "recommended_next_in_context": null,
       "lesson_card_variant": "standard",
       "primary_visual_asset": null,
       "app_bridge_card_id": null,
