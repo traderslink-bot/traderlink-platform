@@ -38,7 +38,7 @@ meta_description: "Learn trading risk management basics, including position size
 ---
 # Trading Risk Management: A Practical Guide
 
-In the **Trading Foundations** path, this lesson follows [Trading Rules](/academy/trading-rules/) and leads into [Position Sizing](/academy/position-sizing/). It also supports the later Risk Management And Trade Planning course.
+This lesson is part of the **Trading Foundations** course. It follows [Trading Rules](/academy/trading-rules/) and leads into [Position Sizing](/academy/position-sizing/).
 
 The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
 
@@ -191,7 +191,7 @@ Review whether you knew your risk before entry, respected the invalidation area,
 
 A daily loss limit is a maximum amount a trader is willing to lose in one session before stopping or reducing activity. It is a risk-control rule, not a guarantee.
 
-### Can Trader Intelligence help review risk behavior?
+### How should traders review risk behavior?
 
 A useful risk review connects executions, trade management, mistakes, and risk-related behavior after trades are complete.
 

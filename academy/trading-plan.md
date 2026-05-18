@@ -38,7 +38,7 @@ meta_description: "Learn what a trading plan is, what it should include, and how
 ---
 # Trading Plan
 
-In the **Trading Foundations** path, this lesson follows [Day Trading Vs Swing Trading](/academy/day-trading-vs-swing-trading/) and leads into [Trading Rules](/academy/trading-rules/). It also supports the later Risk Management And Trade Planning course.
+This lesson is part of the **Trading Foundations** course. It follows [Day Trading Vs Swing Trading](/academy/day-trading-vs-swing-trading/) and leads into [Trading Rules](/academy/trading-rules/).
 
 A trading plan is the bridge between learning concepts and making decisions under pressure. It does not tell a trader what to trade. It defines the conditions, risk boundaries, and review questions that should exist before a trade starts.
 

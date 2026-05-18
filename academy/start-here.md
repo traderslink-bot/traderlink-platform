@@ -103,7 +103,7 @@ Users can also mistake completion for competence. Completing a lesson means the 
 
 Another mistake is expecting one lesson to cover every edge case. Deep topics may require a full course.
 
-A final mistake is treating Trader Intelligence as prediction. Its Academy bridge should stay focused on reviewing completed decisions.
+A final mistake is treating education as prediction. The Academy should stay focused on concepts, process, and reviewable decisions.
 
 ## Practical Checklist
 
@@ -156,9 +156,9 @@ It means the user completed the educational lesson. It does not prove trading sk
 
 Beginners should start with Trading Foundations and then move into chart reading, volume, news, risk, psychology, and review.
 
-### How does Trader Intelligence fit?
+### How does trade review fit?
 
-Trader Intelligence should connect as post-trade review support, not as a prediction or signal tool.
+Trade review should come after a completed trade or paper-trading example. It is for studying decisions, not predicting the next trade.
 
 ## Educational Disclaimer
 

@@ -38,7 +38,7 @@ meta_description: "Learn what position sizing means, why trade size matters, and
 ---
 # Position Sizing Explained for Traders
 
-In the **Trading Foundations** path, this lesson follows [Risk Management](/academy/risk-management/) and leads into [Stop Loss](/academy/stop-loss/). It also supports the later Risk Management And Trade Planning course.
+This lesson is part of the **Trading Foundations** course. It follows [Risk Management](/academy/risk-management/) and leads into [Stop Loss](/academy/stop-loss/).
 
 Position sizing is where a risk idea becomes a real exposure decision. Beginners should learn it before advanced performance math because size often decides whether a trade can be managed calmly.
 

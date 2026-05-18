@@ -38,7 +38,7 @@ meta_description: "Learn what a stop loss is, how traders use stop areas, common
 ---
 # Stop Loss
 
-In the **Trading Foundations** path, this lesson follows [Position Sizing](/academy/position-sizing/) and leads into [Trade Risk Review](/academy/trade-risk-review/). It also supports the later Risk Management And Trade Planning course.
+This lesson is part of the **Trading Foundations** course. It follows [Position Sizing](/academy/position-sizing/) and leads into [Trade Risk Review](/academy/trade-risk-review/).
 
 For beginners, the most important stop-loss idea is not the order name. It is knowing where the trade idea is wrong, what can happen during execution, and how the decision will be reviewed afterward.
 

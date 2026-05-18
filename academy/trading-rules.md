@@ -37,7 +37,7 @@ meta_description: "Learn what trading rules are, why they matter, common rule ty
 ---
 # Trading Rules
 
-In the **Trading Foundations** path, this lesson follows [Trading Plan](/academy/trading-plan/) and leads into [Risk Management](/academy/risk-management/). It also supports the later Risk Management And Trade Planning course.
+This lesson is part of the **Trading Foundations** course. It follows [Trading Plan](/academy/trading-plan/) and leads into [Risk Management](/academy/risk-management/).
 
 Rules turn a trading plan into decisions that can be checked. A beginner does not need dozens of rules. They need a small set of clear boundaries that can be followed before emotions make everything feel flexible.
 

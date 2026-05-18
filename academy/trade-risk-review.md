@@ -38,7 +38,7 @@ meta_description: "Learn how to review trade risk after a trade, including size,
 ---
 # Trade Risk Review
 
-In the **Trading Foundations** path, this lesson follows [Stop Loss](/academy/stop-loss/) and completes the Course 1 core path. It also supports the later Trade Review And Improvement course.
+This lesson is part of the **Trading Foundations** course. It follows [Stop Loss](/academy/stop-loss/) and completes the Course 1 core path.
 
 Trade risk review is the process of studying how risk was planned, taken, managed, and adjusted during a trade. It helps traders understand whether the result came from a clean process, a risk mistake, or an emotional decision.
 

@@ -27,7 +27,6 @@ internal_links:
   - "/academy/day-trading-for-beginners/"
   - "/academy/support-and-resistance/"
   - "/academy/trade-review-and-improvement/"
-  - "/academy/trader-intelligence-trade-review/"
 schema:
   - "FAQPage"
 visual_assets:
@@ -133,7 +132,6 @@ The Academy is strongest when users move between learning and review instead of 
 - [Day Trading For Beginners](/academy/day-trading-for-beginners/)
 - [Support And Resistance](/academy/support-and-resistance/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
-- [How Trader Intelligence Helps Review Trades](/academy/trader-intelligence-trade-review/)
 
 ## FAQ
 
