@@ -46,7 +46,7 @@ A hammer near support may be meaningful, but it still needs context and a failur
 
 ![Candlestick chart showing a hammer candle near support with volume and follow-through context.](/academy/images/chart-reading/hammer-support-context.svg)
 
-## What It Is
+## What It Looks Like
 
 A hammer is a candle with a small body near the top of the range and a long lower wick.
 
@@ -58,7 +58,7 @@ A hammer is a candle with a small body near the top of the range and a long lowe
 
 A hammer shows recovery from lower prices during that candle, not proof of reversal.
 
-## What It Shows
+## What It Usually Shows
 
 Hammer candles show a test below the body and recovery into the close.
 
@@ -68,7 +68,7 @@ Hammer candles show a test below the body and recovery into the close.
 - Possible liquidity flush.
 - Possible pause before another move lower.
 
-## Where It Matters
+## Where It Matters Most
 
 Hammer context depends heavily on location.
 
@@ -79,15 +79,15 @@ Hammer context depends heavily on location.
 - Next candle follow-through.
 - News, float, and liquidity context.
 
-## When It Misleads
+## What Makes It Weak Or Misleading
 
 Hammer candles can mislead when traders assume the lower wick created support. Price can break below the wick low and continue lower.
 
-## Example
+## Example Chart Read
 
 A stock pulls back toward a support zone, flushes slightly below it, then closes back above the zone with a long lower wick. The review asks whether the next candle held above support and whether risk was defined below the wick.
 
-## Common Mistakes
+## Beginner Traps
 
 One common mistake is entering every hammer candle.
 
@@ -99,7 +99,7 @@ Another mistake is ignoring volume.
 
 A final mistake is holding after the wick low fails.
 
-## Before You Move On
+## Key Takeaway
 
 A hammer is mainly a lower-wick recovery candle. Before moving on, make sure you can identify the wick low, the nearby support context, and the point where the hammer idea would be invalidated.
 

@@ -46,7 +46,7 @@ The larger candle can feel decisive in real time. The review still has to ask wh
 
 ![Candlestick chart showing bullish and bearish engulfing candles near support and resistance with volume context.](/academy/images/chart-reading/engulfing-candle-context.svg)
 
-## What It Is
+## What It Looks Like
 
 An engulfing candle is a two-candle pattern where the second candle's body overtakes the prior candle's body.
 
@@ -58,7 +58,7 @@ An engulfing candle is a two-candle pattern where the second candle's body overt
 
 Engulfing shows a shift during the candle pair, not guaranteed continuation or reversal.
 
-## What It Shows
+## What It Usually Shows
 
 Engulfing candles show one side taking control over the prior candle's body.
 
@@ -68,7 +68,7 @@ Engulfing candles show one side taking control over the prior candle's body.
 - A potential late-entry risk after a large candle.
 - A need for follow-through review.
 
-## Where It Matters
+## Where It Matters Most
 
 Engulfing candles should be read with level and volume context.
 
@@ -79,15 +79,15 @@ Engulfing candles should be read with level and volume context.
 - Whether the next candle holds or rejects.
 - Liquidity and spread.
 
-## When It Misleads
+## What Makes It Weak Or Misleading
 
 Engulfing candles can mislead when traders enter after a large candle far from risk or into the next major level.
 
-## Example
+## Example Chart Read
 
 A stock pulls into support, prints a small red candle, then a wide green candle that closes back above the support zone. The review asks whether volume supported the shift and whether the entry had realistic risk.
 
-## Common Mistakes
+## Beginner Traps
 
 One common mistake is chasing after the engulfing candle is already extended.
 
@@ -99,7 +99,7 @@ Another mistake is ignoring the prior trend.
 
 A final mistake is holding after the engulfing idea fails.
 
-## Before You Move On
+## Key Takeaway
 
 An engulfing candle can look powerful, but a large candle can also create poor entry location. Before moving on, make sure you can separate the shift in control from the risk of chasing after the move has already stretched.
 

@@ -46,7 +46,7 @@ The pattern is not useful because of the name. It is useful only when the reject
 
 ![Candlestick chart showing long upper and lower wick rejection around support and resistance with volume context.](/academy/images/chart-reading/long-wick-rejection-context.svg)
 
-## What It Is
+## What It Looks Like
 
 A pin bar is a rejection-style candle with a small body and a long wick.
 
@@ -58,7 +58,7 @@ A pin bar is a rejection-style candle with a small body and a long wick.
 
 A pin bar shows rejection during the candle, not guaranteed direction after it.
 
-## What It Shows
+## What It Usually Shows
 
 Pin bars show a failed attempt to hold an extreme price area.
 
@@ -68,7 +68,7 @@ Pin bars show a failed attempt to hold an extreme price area.
 - Potential spread distortion in thin names.
 - Potential reversal attempt if follow-through appears.
 
-## Where It Matters
+## Where It Matters Most
 
 Pin bars need more than shape.
 
@@ -79,15 +79,15 @@ Pin bars need more than shape.
 - Close location.
 - Next candle behavior.
 
-## When It Misleads
+## What Makes It Weak Or Misleading
 
 Pin bars can mislead when traders see a long wick and assume the market has chosen a direction.
 
-## Example
+## Example Chart Read
 
 A stock spikes above resistance, prints a long upper wick, and closes back below the zone. The review asks whether this was real rejection or a thin-liquidity wick, then checks follow-through.
 
-## Common Mistakes
+## Beginner Traps
 
 One common mistake is entering only because a pin bar appeared.
 
@@ -99,7 +99,7 @@ Another mistake is entering before the candle closes.
 
 A final mistake is ignoring the next candle.
 
-## Before You Move On
+## Key Takeaway
 
 A pin bar is a rejection candle, but the rejection only matters if the location matters. Before moving on, make sure you can identify the rejected area, the close location, and whether the wick was clean or caused by thin trading.
 

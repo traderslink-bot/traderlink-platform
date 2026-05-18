@@ -46,7 +46,7 @@ The color change is not a complete thesis. It needs levels, volume, VWAP, cataly
 
 ![Candlestick chart showing red-to-green and green-to-red intraday transitions with VWAP and volume context.](/academy/images/chart-reading/red-green-transition-context.svg)
 
-## What It Is
+## What It Looks Like
 
 A green-to-red move is an intraday transition where price moves from positive territory into negative territory relative to a reference such as the prior close.
 
@@ -58,7 +58,7 @@ A green-to-red move is an intraday transition where price moves from positive te
 
 The transition shows a change in session position, not guaranteed downside.
 
-## What It Shows
+## What It Usually Shows
 
 Green-to-red moves show price losing an intraday reference.
 
@@ -68,7 +68,7 @@ Green-to-red moves show price losing an intraday reference.
 - Possible reclaim risk if price recovers.
 - Possible chase risk after the transition.
 
-## Where It Matters
+## Where It Matters Most
 
 This move needs level and reaction context.
 
@@ -79,15 +79,15 @@ This move needs level and reaction context.
 - Spread and liquidity.
 - Whether price reclaims the reference.
 
-## When It Misleads
+## What Makes It Weak Or Misleading
 
 Green-to-red moves can mislead when traders assume losing the reference means clean continuation. Price can reclaim the level or chop around it.
 
-## Example
+## Example Chart Read
 
 A stock opens strong after news, fails near resistance, then loses the prior close with increasing volume. A review asks whether the catalyst was fading, whether support was nearby, and whether any entry was late after the clean loss.
 
-## Common Mistakes
+## Beginner Traps
 
 One common mistake is treating the color change as confirmation by itself.
 
@@ -99,7 +99,7 @@ Another mistake is ignoring a quick reclaim.
 
 A final mistake is not checking catalyst quality.
 
-## Before You Move On
+## Key Takeaway
 
 A green-to-red move matters only if the reference loss changes the structure. Losing the prior close into nearby support is different from losing it cleanly after a failed news push.
 

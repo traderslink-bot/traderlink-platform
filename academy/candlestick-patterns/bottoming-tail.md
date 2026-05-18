@@ -46,7 +46,7 @@ The candle can be useful, but only if the trader reviews whether the lower area 
 
 ![Candlestick chart showing a hammer-style lower wick near support with volume and follow-through context.](/academy/images/chart-reading/hammer-support-context.svg)
 
-## What It Is
+## What It Looks Like
 
 A bottoming tail is a candle with a long lower wick and a close above the low.
 
@@ -58,7 +58,7 @@ A bottoming tail is a candle with a long lower wick and a close above the low.
 
 A bottoming tail shows lower-price rejection during the candle, not proof that a bottom is in.
 
-## What It Shows
+## What It Usually Shows
 
 Bottoming tails show recovery from lower prices.
 
@@ -68,7 +68,7 @@ Bottoming tails show recovery from lower prices.
 - A possible liquidity flush.
 - A need to watch whether the wick low holds.
 
-## Where It Matters
+## Where It Matters Most
 
 Bottoming tails need support and follow-through context.
 
@@ -79,15 +79,15 @@ Bottoming tails need support and follow-through context.
 - Spread and liquidity.
 - Broader trend and catalyst context.
 
-## When It Misleads
+## What Makes It Weak Or Misleading
 
 Bottoming tails can mislead during downtrends because price can print several lower wicks and continue lower.
 
-## Example
+## Example Chart Read
 
 A stock flushes below the prior low, recovers, and closes back above the level with a long lower wick. The review asks whether volume increased, whether the level held afterward, and whether the trader chased far from risk.
 
-## Common Mistakes
+## Beginner Traps
 
 One common mistake is assuming the bottom is in.
 
@@ -99,7 +99,7 @@ Another mistake is ignoring volume and liquidity.
 
 A final mistake is holding after the wick low fails.
 
-## Before You Move On
+## Key Takeaway
 
 A bottoming tail is a lower-wick recovery candle. Before moving on, make sure you can identify the wick low, the nearby support or prior low, and what would prove that the lower-wick idea failed.
 

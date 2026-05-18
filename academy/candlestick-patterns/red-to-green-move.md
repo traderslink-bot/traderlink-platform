@@ -46,7 +46,7 @@ The color change is only context. A move from red to green can fail quickly if p
 
 ![Candlestick chart showing red-to-green and green-to-red intraday transitions with VWAP and volume context.](/academy/images/chart-reading/red-green-transition-context.svg)
 
-## What It Is
+## What It Looks Like
 
 A red-to-green move is an intraday transition where price moves from negative territory into positive territory relative to a reference such as the prior close.
 
@@ -58,7 +58,7 @@ A red-to-green move is an intraday transition where price moves from negative te
 
 The transition shows a change in session position, not guaranteed continuation.
 
-## What It Shows
+## What It Usually Shows
 
 Red-to-green moves show price reclaiming an intraday reference.
 
@@ -68,7 +68,7 @@ Red-to-green moves show price reclaiming an intraday reference.
 - Possible chase risk after a fast push.
 - Possible failure if the reclaim does not hold.
 
-## Where It Matters
+## Where It Matters Most
 
 This move needs reference-level and volume context.
 
@@ -79,15 +79,15 @@ This move needs reference-level and volume context.
 - Spread and liquidity.
 - Whether price holds after the transition.
 
-## When It Misleads
+## What Makes It Weak Or Misleading
 
 Red-to-green moves can mislead when traders chase the color change instead of reviewing the level, volume, and risk.
 
-## Example
+## Example Chart Read
 
 A stock opens below the prior close, bases, then reclaims the prior close with volume. A review asks whether the reclaim held, whether VWAP was nearby, and whether the trader entered with a plan or reacted after scanner attention increased.
 
-## Common Mistakes
+## Beginner Traps
 
 One common mistake is entering only because the stock turned green.
 
@@ -99,7 +99,7 @@ Another mistake is ignoring volume quality.
 
 A final mistake is holding after the reclaimed level fails.
 
-## Before You Move On
+## Key Takeaway
 
 A red-to-green move is not important because the candle changed color. It is important only if price reclaimed a meaningful reference and then behaved well around it.
 

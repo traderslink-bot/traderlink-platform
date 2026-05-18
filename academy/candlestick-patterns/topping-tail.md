@@ -46,7 +46,7 @@ The candle should be reviewed as rejection context, not a prediction that price 
 
 ![Candlestick chart showing upper wick rejection near resistance with volume context.](/academy/images/chart-reading/long-wick-rejection-context.svg)
 
-## What It Is
+## What It Looks Like
 
 A topping tail is a candle with a long upper wick and a close below the high.
 
@@ -58,7 +58,7 @@ A topping tail is a candle with a long upper wick and a close below the high.
 
 A topping tail shows rejection of higher prices during that candle.
 
-## What It Shows
+## What It Usually Shows
 
 Topping tails show that price could not hold the upper extreme.
 
@@ -68,7 +68,7 @@ Topping tails show that price could not hold the upper extreme.
 - Possible profit-taking or supply.
 - Possible spread or liquidity distortion.
 
-## Where It Matters
+## Where It Matters Most
 
 Topping tails need resistance and follow-through context.
 
@@ -79,15 +79,15 @@ Topping tails need resistance and follow-through context.
 - Spread and liquidity.
 - Catalyst and float context.
 
-## When It Misleads
+## What Makes It Weak Or Misleading
 
 Topping tails can mislead when traders assume the move is finished. Price can reject once, consolidate, and later break higher.
 
-## Example
+## Example Chart Read
 
 A stock runs into a prior high, spikes above it, then closes back below with a long upper wick. The review asks whether volume showed real rejection, whether price later reclaimed the level, and whether any entry was late.
 
-## Common Mistakes
+## Beginner Traps
 
 One common mistake is assuming every upper wick means a top.
 
@@ -99,7 +99,7 @@ Another mistake is ignoring volume and liquidity.
 
 A final mistake is using the candle to justify a trade without invalidation.
 
-## Before You Move On
+## Key Takeaway
 
 A topping tail is an upper-wick rejection candle. Before moving on, make sure you can identify the wick high, the nearby resistance or prior high, and what would count as a reclaim.
 

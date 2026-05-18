@@ -46,7 +46,7 @@ The inside bar gives traders a range to review. It does not promise a clean brea
 
 ![Candlestick chart showing inside bar compression and outside bar range expansion with volume context.](/academy/images/chart-reading/inside-outside-bar-context.svg)
 
-## What It Is
+## What It Looks Like
 
 An inside bar is a candle whose high is lower than the prior candle's high and whose low is higher than the prior candle's low.
 
@@ -58,7 +58,7 @@ An inside bar is a candle whose high is lower than the prior candle's high and w
 
 An inside bar shows contraction inside a prior range.
 
-## What It Shows
+## What It Usually Shows
 
 Inside bars show temporary compression.
 
@@ -68,7 +68,7 @@ Inside bars show temporary compression.
 - A possible false break setup.
 - A range that needs follow-through review.
 
-## Where It Matters
+## Where It Matters Most
 
 Inside bars need range, volume, and level context.
 
@@ -79,15 +79,15 @@ Inside bars need range, volume, and level context.
 - Whether the break holds outside the range.
 - Timeframe alignment.
 
-## When It Misleads
+## What Makes It Weak Or Misleading
 
 Inside bars can mislead when traders assume compression must produce a large move. Price can fake out or keep moving sideways.
 
-## Example
+## Example Chart Read
 
 After a momentum candle, price forms a smaller candle inside the prior range while volume contracts. A trader reviews the mother candle high and low, then studies whether any later break holds or fails back inside.
 
-## Common Mistakes
+## Beginner Traps
 
 One common mistake is entering before the range breaks.
 
@@ -99,7 +99,7 @@ Another mistake is trading inside bars in dead, low-quality chop.
 
 A final mistake is using a timeframe that does not match the trade plan.
 
-## Before You Move On
+## Key Takeaway
 
 An inside bar is not important because it predicts a breakout. It is important because it defines a smaller range inside a larger candle. Before moving on, make sure you can identify the mother candle high and low and explain what would count as a hold, failure, or fakeout.
 

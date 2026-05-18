@@ -46,7 +46,7 @@ Volume should be read with candle structure, not separately from it.
 
 ![Candlestick chart comparing candle reactions with expanding and fading volume context.](/academy/images/chart-reading/candle-volume-confirmation-context.svg)
 
-## What It Is
+## What It Looks Like
 
 Candle volume confirmation is the process of comparing a candle's price action with the amount of volume during that candle.
 
@@ -58,7 +58,7 @@ Candle volume confirmation is the process of comparing a candle's price action w
 
 Volume can support interpretation, but it does not prove the next move.
 
-## What It Shows
+## What It Usually Shows
 
 Volume shows participation behind a candle.
 
@@ -68,7 +68,7 @@ Volume shows participation behind a candle.
 - Whether a reaction at a level was active.
 - Whether a trader overtrusted a volume spike.
 
-## Where It Matters
+## Where It Matters Most
 
 Volume context depends on the candle and the session.
 
@@ -79,15 +79,15 @@ Volume context depends on the candle and the session.
 - Close location inside the candle.
 - Follow-through after the volume candle.
 
-## When It Misleads
+## What Makes It Weak Or Misleading
 
 Volume can mislead when traders assume high volume means continuation. High volume can appear during exhaustion, rejection, panic, or failed breakouts.
 
-## Example
+## Example Chart Read
 
 A candle breaks above resistance on high volume but closes back near the middle of its range. The review asks whether volume supported a clean break or showed heavy two-sided activity near the level.
 
-## Common Mistakes
+## Beginner Traps
 
 One common mistake is treating high volume as automatic confirmation.
 
@@ -99,7 +99,7 @@ Another mistake is ignoring failed high-volume candles.
 
 A final mistake is using volume to justify a late entry.
 
-## Before You Move On
+## Key Takeaway
 
 Volume is not a stamp of approval. Before moving on, make sure you can compare volume with candle close, level location, time of day, and follow-through.
 

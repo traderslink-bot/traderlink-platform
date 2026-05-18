@@ -46,7 +46,7 @@ A doji is useful when you can explain where it formed, why that location matters
 
 ![Candlestick chart showing a doji candle near resistance with volume and follow-through context.](/academy/images/chart-reading/doji-at-key-level.svg)
 
-## What It Is
+## What A Doji Looks Like
 
 A doji is a candle with a very small body because the open and close are close together.
 
@@ -54,13 +54,13 @@ The candle may have upper and lower wicks, and the body often looks like a cross
 
 A doji does not tell you what the next candle will do. It only tells you that the candle closed without clear control from either side.
 
-## What It Shows
+## What A Doji Actually Shows
 
 A doji shows pause, hesitation, or temporary balance during that candle.
 
 That can matter if price was moving strongly before the doji. For example, if a stock pushes into resistance and then prints a doji, the candle may show that momentum paused at that level. If a stock is already drifting sideways on low volume, the same doji may mean very little.
 
-## Where It Matters
+## Where A Doji Matters
 
 Location is what separates useful doji context from random chart noise.
 
@@ -72,9 +72,9 @@ A doji is more useful to study when it forms:
 - Around a catalyst where traders are waiting for more information.
 - With volume that shows real participation.
 
-The candle after the doji matters. A doji followed by continuation is different from a doji followed by rejection, reclaim, or a failed break.
+Wick size matters too. A doji with long wicks shows price traveled in both directions before closing near the open. A doji with tiny wicks may simply show low activity. That difference matters when volume, spread, and location are reviewed together.
 
-## When It Misleads
+## When A Doji Means Almost Nothing
 
 A doji misleads traders when they treat the name as confirmation.
 
@@ -82,13 +82,19 @@ The most common mistake is thinking, "Doji means reversal." It does not. A doji 
 
 If the candle forms in the middle of a messy range with weak volume, it may not deserve much attention.
 
-## Example
+## Confirmation And Failure
+
+The candle after the doji matters. A doji followed by continuation is different from a doji followed by rejection, reclaim, or a failed break.
+
+Confirmation does not mean certainty. It means the next candles made the hesitation more meaningful. If price pauses at resistance with a doji and then rejects, the doji becomes part of a resistance reaction. If price pauses at resistance and then reclaims the level, the doji was not a reversal. It was only hesitation before continuation.
+
+## Example Chart Read
 
 Imagine a stock has moved up quickly and is approaching a resistance zone from earlier in the day. It prints a doji with elevated volume near that zone. The useful lesson is not "short the doji" or "buy the reversal." The useful lesson is that price hesitated at a place traders were already watching.
 
 From there, the next candles tell the story. If price rejects and stays below the zone, the doji becomes part of a resistance reaction. If price reclaims the zone and holds above it, the doji was only a pause.
 
-## Common Mistakes
+## Beginner Traps
 
 - Treating every doji as a reversal signal.
 - Ignoring where the doji formed.
@@ -96,11 +102,13 @@ From there, the next candles tell the story. If price rejects and stays below th
 - Giving meaning to small-body candles in dead chop.
 - Forgetting that wide spreads can create misleading candle shapes.
 
-## Before You Move On
+## Journal Connection
+
+If a doji affected a completed trade decision, the useful note is simple: where it formed, what volume looked like, what the next candle did, and whether the trader reacted to the candle name or waited for context.
+
+## Key Takeaway
 
 You do not need to memorize every doji variation before continuing. The main idea is enough: a doji shows hesitation, and hesitation only matters when the location and follow-through matter.
-
-When you review a completed trade later, a doji can be useful as a chart-context tag if it affected your decision. The more important review question is whether the candle fit the level, trend, volume, and risk plan.
 
 ## Related Lessons
 

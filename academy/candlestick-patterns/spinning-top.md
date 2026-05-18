@@ -46,7 +46,7 @@ Like a doji, a spinning top is easy to overread. It needs location and follow-th
 
 ![Candlestick chart showing small-body hesitation near a key level with volume and follow-through context.](/academy/images/chart-reading/doji-at-key-level.svg)
 
-## What It Is
+## What It Looks Like
 
 A spinning top is a small-body candle with upper and lower wicks.
 
@@ -58,7 +58,7 @@ A spinning top is a small-body candle with upper and lower wicks.
 
 A spinning top shows hesitation, not direction.
 
-## What It Shows
+## What It Usually Shows
 
 Spinning tops show that both sides moved price but neither side closed decisively.
 
@@ -68,7 +68,7 @@ Spinning tops show that both sides moved price but neither side closed decisivel
 - Possible balance before expansion.
 - Possible warning to avoid overconfidence.
 
-## Where It Matters
+## Where It Matters Most
 
 Spinning tops need location and volume context.
 
@@ -79,15 +79,15 @@ Spinning tops need location and volume context.
 - Time of day.
 - Liquidity and spread.
 
-## When It Misleads
+## What Makes It Weak Or Misleading
 
 Spinning tops can mislead when traders assign reversal meaning to every small-body candle.
 
-## Example
+## Example Chart Read
 
 A stock rallies into resistance and forms a spinning top with a small body and wicks on both sides. The review asks whether that hesitation mattered after the next candle, not whether the candle name alone predicted a turn.
 
-## Common Mistakes
+## Beginner Traps
 
 One common mistake is treating every spinning top as important.
 
@@ -99,7 +99,7 @@ Another mistake is confusing hesitation with confirmation.
 
 A final mistake is ignoring nearby levels.
 
-## Before You Move On
+## Key Takeaway
 
 A spinning top is a hesitation candle. Before moving on, make sure you can tell the difference between hesitation at a meaningful level and a small-body candle in random chop.
 

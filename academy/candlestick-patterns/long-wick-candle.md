@@ -46,7 +46,7 @@ A wick is useful only when the trader asks where it formed and what happened aft
 
 ![Candlestick chart showing long upper and lower wick rejection around support and resistance with volume context.](/academy/images/chart-reading/long-wick-rejection-context.svg)
 
-## What It Is
+## What It Looks Like
 
 A long wick candle is a candle with a noticeably long upper or lower wick compared with its body.
 
@@ -58,7 +58,7 @@ A long wick candle is a candle with a noticeably long upper or lower wick compar
 
 The wick shows movement away from an extreme, not a guaranteed reversal.
 
-## What It Shows
+## What It Usually Shows
 
 Long wicks show that price explored one area and closed away from it.
 
@@ -68,7 +68,7 @@ Long wicks show that price explored one area and closed away from it.
 - Possible failed breakout or breakdown attempt.
 - Possible emotional flush or squeeze.
 
-## Where It Matters
+## Where It Matters Most
 
 The same wick can mean different things in different places.
 
@@ -79,15 +79,15 @@ The same wick can mean different things in different places.
 - Timeframe and time of day.
 - Next candle follow-through.
 
-## When It Misleads
+## What Makes It Weak Or Misleading
 
 Long wicks can mislead in thin or volatile stocks. A wick created by a wide spread is not the same as a clean rejection at a high-volume level.
 
-## Example
+## Example Chart Read
 
 Price pushes above resistance, prints a long upper wick, and closes back below the zone. The review asks whether sellers truly rejected the area, whether volume expanded, and whether the next candle stayed below or reclaimed the zone.
 
-## Common Mistakes
+## Beginner Traps
 
 One common mistake is treating every wick as reversal.
 
@@ -99,7 +99,7 @@ Another mistake is overvaluing wicks in the middle of a range.
 
 A final mistake is ignoring the next candle after the wick.
 
-## Before You Move On
+## Key Takeaway
 
 A long wick is worth studying only when you can explain the location and the follow-through. Before moving on, make sure you can say whether the wick formed near a meaningful level, whether liquidity was clean, and whether the next candles respected or ignored the rejection.
 

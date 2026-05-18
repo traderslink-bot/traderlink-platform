@@ -46,7 +46,7 @@ An outside bar can look powerful, but it can also mark exhaustion, a trap, or me
 
 ![Candlestick chart showing inside bar compression and outside bar range expansion with volume context.](/academy/images/chart-reading/inside-outside-bar-context.svg)
 
-## What It Is
+## What It Looks Like
 
 An outside bar is a candle whose high is above the prior candle's high and whose low is below the prior candle's low.
 
@@ -58,7 +58,7 @@ An outside bar is a candle whose high is above the prior candle's high and whose
 
 An outside bar shows range expansion, not guaranteed direction.
 
-## What It Shows
+## What It Usually Shows
 
 Outside bars show that price swept both sides of the prior candle range.
 
@@ -68,7 +68,7 @@ Outside bars show that price swept both sides of the prior candle range.
 - Possible exhaustion after a move.
 - A need to review where the candle closed.
 
-## Where It Matters
+## Where It Matters Most
 
 Outside bars need close-location and level context.
 
@@ -79,15 +79,15 @@ Outside bars need close-location and level context.
 - Prior compression or trend.
 - Follow-through after the outside bar.
 
-## When It Misleads
+## What Makes It Weak Or Misleading
 
 Outside bars can mislead when traders focus only on the large candle and ignore where it closed or whether the move is already extended.
 
-## Example
+## Example Chart Read
 
 A stock breaks above a prior high, reverses sharply, sweeps below the prior low, and closes near support. The outside bar shows volatility, but the review must ask whether the candle created clarity or just noise.
 
-## Common Mistakes
+## Beginner Traps
 
 One common mistake is treating a large outside bar as automatic confirmation.
 
@@ -99,7 +99,7 @@ Another mistake is overlooking spread and volatility.
 
 A final mistake is holding after the outside-bar idea fails.
 
-## Before You Move On
+## Key Takeaway
 
 An outside bar is a range-expansion candle. Before moving on, make sure you can explain which side of the prior range was tested, where the candle closed, and whether the size of the candle improved or worsened risk.
 

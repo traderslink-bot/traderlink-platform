@@ -1,5 +1,5 @@
 ---
-title: "How To Read Chart Patterns In Context"
+title: "Chart Pattern Basics"
 slug: "/academy/chart-patterns/"
 primary_keyword: "chart patterns"
 secondary_keywords:
@@ -33,16 +33,16 @@ visual_assets:
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-17"
-meta_title: "How To Read Chart Patterns In Context"
+meta_title: "Chart Pattern Basics"
 meta_description: "Learn what chart patterns show, why context matters, and how to review pattern-based decisions safely."
 ---
-# How To Read Chart Patterns In Context
+# Chart Pattern Basics
 
 This lesson is part of the **Chart Reading And Market Structure** course. It follows [Consolidation Trading](/academy/consolidation/) and leads into [Gap Fill Trading](/academy/gap-fill-trading/).
 
 Chart patterns are recurring price structures traders use to organize what they see on a chart. They can help explain consolidation, pressure, rejection, continuation attempts, and failed moves.
 
-This is the core chart-pattern lesson for the course. The individual bull flag, double top, wedge, and failed-breakout pages are reference lessons. The main course path should teach how patterns work as structure, not force a beginner through every pattern name before they understand the chart.
+This is the foundation chart-pattern lesson for the course. The individual bull flag, double top, wedge, and failed-breakout pages are deeper reference lessons. The main course path should teach how patterns work as structure, not force a beginner through every pattern name before they understand the chart.
 
 ![Educational chart showing patterns as combinations of levels, trend, volume, and risk context.](/academy/images/chart-reading/chart-pattern-context-map.svg)
 

@@ -669,7 +669,7 @@
     },
     {
       "lesson_slug": "/academy/candlestick-patterns/",
-      "display_title": "How To Read Candlesticks In Context",
+      "display_title": "Candlestick Pattern Basics",
       "display_course_id": "chart-reading-market-structure",
       "module_id": "core-levels",
       "display_order": 1,
@@ -935,7 +935,7 @@
     },
     {
       "lesson_slug": "/academy/chart-patterns/",
-      "display_title": "How To Read Chart Patterns In Context",
+      "display_title": "Chart Pattern Basics",
       "display_course_id": "chart-reading-market-structure",
       "module_id": "ranges-and-compression",
       "display_order": 24,
