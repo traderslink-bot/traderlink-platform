@@ -15,13 +15,13 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "4"
 cta: "Review position sizing decisions by comparing planned size, risk distance, and actual behavior."
-recommended_next: "/academy/risk-reward-ratio/"
+recommended_next: "/academy/stop-loss/"
 recommended_previous: "/academy/risk-management/"
 academy_level: "Practical"
-academy_order: 4
-academy_module: "Risk Basics"
-academy_course: "Risk Management And Trade Planning"
-learning_track: "Risk Management And Trade Planning"
+academy_order: 12
+academy_module: "Risk And Review"
+academy_course: "Trading Foundations"
+learning_track: "Trading Foundations"
 internal_links:
   - "/academy/risk-management/"
   - "/academy/revenge-trading/"

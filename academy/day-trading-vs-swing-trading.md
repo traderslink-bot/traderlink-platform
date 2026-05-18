@@ -15,11 +15,11 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Use completed-trade review to check whether each trade matched its intended timeframe, risk plan, and management process."
-recommended_previous: "/academy/day-trading-for-beginners/"
+recommended_previous: "/academy/swing-trading-for-beginners/"
 recommended_next: "/academy/trading-plan/"
 academy_level: "Foundation"
-academy_order: 6
-academy_module: "Market Basics"
+academy_order: 8
+academy_module: "Trading Styles"
 academy_course: "Trading Foundations"
 learning_track: "Trading Foundations"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Compare day trading vs swing trading, including holding time,
 ---
 # Day Trading Vs Swing Trading
 
-This lesson is part of the **Trading Foundations** course. It follows [Day Trading For Beginners](/academy/day-trading-for-beginners/) and leads into [Trading Plan](/academy/trading-plan/).
+This lesson is part of the **Trading Foundations** course. It follows [Swing Trading For Beginners](/academy/swing-trading-for-beginners/) and leads into [Trading Plan](/academy/trading-plan/).
 
 Day trading versus swing trading comes down to timeframe, risk, and how the trade is managed. Day traders open and close trades within the same session. Swing traders hold trades across multiple sessions, often for days or weeks.
 

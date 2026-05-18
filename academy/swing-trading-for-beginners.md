@@ -8,20 +8,20 @@ secondary_keywords:
   - "swing trading basics"
   - "swing trading guide"
 search_intent: "Learn the beginner swing trading workflow, including multi-session planning, levels, risk, catalysts, and review."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review completed swing trades by thesis, levels, risk, catalysts, hold decisions, and repeated behavior."
-recommended_previous: "/academy/day-trading-session-review/"
-recommended_next: "/academy/swing-trading-risk-management/"
+cta: "Use swing-trading basics to understand multi-session planning, overnight risk, and style drift before comparing trading styles."
+recommended_previous: "/academy/day-trading-for-beginners/"
+recommended_next: "/academy/day-trading-vs-swing-trading/"
 academy_level: "Foundation"
-academy_order: 1
-academy_module: "Swing Trading Foundation"
-academy_course: "Swing Trading Workflow"
-learning_track: "Swing Trading Workflow"
+academy_order: 7
+academy_module: "Trading Styles"
+academy_course: "Trading Foundations"
+learning_track: "Trading Foundations"
 internal_links:
   - "/academy/swing-trading/"
   - "/academy/day-trading-vs-swing-trading/"
@@ -38,7 +38,7 @@ meta_description: "Learn beginner swing trading as a practical multi-session wor
 ---
 # Swing Trading For Beginners
 
-This lesson opens the **Swing Trading Workflow** course. It follows [Day Trading Session Review](/academy/day-trading-session-review/) and leads into [Swing Trading Risk Management](/academy/swing-trading-risk-management/).
+This lesson is part of the **Trading Foundations** course. It follows [Day Trading For Beginners](/academy/day-trading-for-beginners/) and leads into [Day Trading Vs Swing Trading](/academy/day-trading-vs-swing-trading/).
 
 Swing trading means holding a planned trade across more than one market session. A beginner should not think of it as "day trading but slower." Swing trading has its own workflow, because the trade can change while the market is closed.
 

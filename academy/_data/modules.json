@@ -4,8 +4,8 @@
   "modules": [
     {
       "course_id": "trading-foundations",
-      "module_id": "start-here",
-      "module_title": "Start Here",
+      "module_id": "trade-mechanics",
+      "module_title": "Trade Mechanics",
       "module_order": 1,
       "module_type": "standard",
       "display_behavior": "expanded",
@@ -13,8 +13,8 @@
     },
     {
       "course_id": "trading-foundations",
-      "module_id": "market-mechanics",
-      "module_title": "Market Mechanics",
+      "module_id": "trading-terms",
+      "module_title": "Trading Terms",
       "module_order": 2,
       "module_type": "standard",
       "display_behavior": "expanded",
@@ -22,8 +22,8 @@
     },
     {
       "course_id": "trading-foundations",
-      "module_id": "market-basics",
-      "module_title": "Market Basics",
+      "module_id": "sessions-and-orders",
+      "module_title": "Sessions And Orders",
       "module_order": 3,
       "module_type": "standard",
       "display_behavior": "expanded",
@@ -31,8 +31,8 @@
     },
     {
       "course_id": "trading-foundations",
-      "module_id": "process-basics",
-      "module_title": "Process Basics",
+      "module_id": "trading-styles",
+      "module_title": "Trading Styles",
       "module_order": 4,
       "module_type": "standard",
       "display_behavior": "expanded",
@@ -40,8 +40,8 @@
     },
     {
       "course_id": "trading-foundations",
-      "module_id": "risk-basics",
-      "module_title": "Risk Basics",
+      "module_id": "planning-and-rules",
+      "module_title": "Planning And Rules",
       "module_order": 5,
       "module_type": "standard",
       "display_behavior": "expanded",
@@ -49,8 +49,8 @@
     },
     {
       "course_id": "trading-foundations",
-      "module_id": "review-basics",
-      "module_title": "Review Basics",
+      "module_id": "risk-and-review",
+      "module_title": "Risk And Review",
       "module_order": 6,
       "module_type": "standard",
       "display_behavior": "expanded",

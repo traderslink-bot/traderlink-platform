@@ -14,14 +14,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "1"
-cta: "Use the Academy to learn the concepts, then connect them to completed-trade review and repeated behavior patterns."
+cta: "Use this help page to understand how to move through Academy courses and lessons."
 recommended_previous: "/academy/start-here/"
-recommended_next: "/academy/what-is-a-stock-and-how-does-a-trade-work/"
-academy_level: "Foundation"
-academy_order: 2
-academy_module: "Start Here"
-academy_course: "Trading Foundations"
-learning_track: "Trading Foundations"
+recommended_next: null
+academy_level: "Help"
+academy_order: 0
+academy_module: "Academy Help"
+academy_course: "Academy Onboarding"
+learning_track: "Academy Help"
 internal_links:
   - "/academy/start-here/"
   - "/academy/day-trading-for-beginners/"
@@ -29,21 +29,17 @@ internal_links:
   - "/academy/trade-review-and-improvement/"
 schema:
   - "FAQPage"
-visual_assets:
-  - "/academy/images/trading-foundations/trading-foundations-course-map.svg"
 last_reviewed: "2026-05-17"
 meta_title: "How To Use TradersLink Academy"
 meta_description: "Learn how to move through TradersLink Academy courses, lessons, progress tracking, review prompts, related lessons, and glossary support."
 ---
 # How To Use TradersLink Academy
 
-This lesson is part of the **Trading Foundations** course. It follows [Welcome To TradersLink Academy](/academy/start-here/) and leads into [What Is A Stock And How Does A Trade Work?](/academy/what-is-a-stock-and-how-does-a-trade-work/).
+This is an Academy help page. It follows [Welcome To TradersLink Academy](/academy/start-here/) and explains how to use courses, lessons, progress, and review prompts.
 
 TradersLink Academy is meant to feel like guided education without forcing users into a locked path. You can follow the recommended course order, jump to a specific lesson, or return to a lesson after a trade review exposes a gap.
 
 The best way to use the Academy is to treat it as a living learning path: learn, apply, review, return, and keep building.
-
-![Educational dashboard map showing the Trading Foundations course path from market mechanics through planning, risk, and review.](/academy/images/trading-foundations/trading-foundations-course-map.svg)
 
 ## Lesson Objective
 

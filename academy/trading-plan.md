@@ -16,12 +16,12 @@ funnel_stage: "awareness"
 priority: "3"
 cta: "Use a written plan to make completed-trade review more specific and less emotional."
 recommended_next: "/academy/trading-rules/"
-recommended_previous: "/academy/unusual-volume/"
+recommended_previous: "/academy/day-trading-vs-swing-trading/"
 academy_level: "Foundation"
-academy_order: 1
-academy_module: "Planning"
-academy_course: "Risk Management And Trade Planning"
-learning_track: "Risk Management And Trade Planning"
+academy_order: 9
+academy_module: "Planning And Rules"
+academy_course: "Trading Foundations"
+learning_track: "Trading Foundations"
 internal_links:
   - "/academy/risk-management/"
   - "/academy/trading-discipline/"

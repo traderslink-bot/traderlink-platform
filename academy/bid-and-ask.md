@@ -1,5 +1,5 @@
 ---
-title: "Bid And Ask: How Stock Quotes Affect Real Fills"
+title: "Bid, Ask, Spread, And Last Price Basics"
 slug: "/academy/bid-and-ask/"
 primary_keyword: "bid and ask"
 secondary_keywords:
@@ -9,20 +9,20 @@ secondary_keywords:
   - "stock quotes explained"
   - "bid ask trading"
 search_intent: "Learn what bid and ask mean in stock trading, why quote behavior matters for execution, and how to review trades around fills and spread."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review bid/ask behavior, execution quality, order type, slippage, and repeated decision patterns."
-learning_track: "Volume, Liquidity And Order Flow"
+cta: "Use bid, ask, spread, and last price to understand the quote before reviewing order choices."
+learning_track: "Trading Foundations"
 academy_level: "Foundation"
-academy_order: 8
-academy_module: "Quotes And Execution"
-academy_course: "Volume, Liquidity And Order Flow"
-recommended_previous: "/academy/spread/"
-recommended_next: "/academy/slippage/"
+academy_order: 4
+academy_module: "Sessions And Orders"
+academy_course: "Trading Foundations"
+recommended_previous: "/academy/stock-market-sessions-and-order-flow-basics/"
+recommended_next: "/academy/market-orders-vs-limit-orders/"
 visual_assets:
   - "/academy/images/chart-reading/bid-ask-quote-mechanics.svg"
   - "/academy/images/chart-reading/bid-ask-order-interaction-review.svg"
@@ -35,20 +35,19 @@ internal_links:
   - "/glossary/spread/"
   - "/glossary/liquidity/"
   - "/glossary/slippage/"
-  - "/features/execution-analysis/"
 schema:
   - "Article"
   - "FAQPage"
 last_reviewed: "2026-05-17"
-meta_title: "Bid and Ask Explained for Traders"
-meta_description: "Learn what bid and ask mean, why quotes matter for execution, common mistakes, and how traders review bid and ask behavior."
+meta_title: "Bid, Ask, Spread, And Last Price Basics"
+meta_description: "Learn bid, ask, spread, and last price basics so beginner traders understand stock quotes, fills, and execution review."
 ---
 
-# Bid And Ask: How Stock Quotes Affect Real Fills
+# Bid, Ask, Spread, And Last Price Basics
 
-Bid and ask are the two sides of a stock quote. The bid shows what buyers are currently willing to pay. The ask shows what sellers are currently willing to accept.
+This lesson is part of the **Trading Foundations** course. It follows [Stock Market Sessions And Order Flow Basics](/academy/stock-market-sessions-and-order-flow-basics/) and leads into [Market Orders Vs Limit Orders](/academy/market-orders-vs-limit-orders/).
 
-This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Spread](/academy/spread/) and leads into [Slippage](/academy/slippage/) and [Market Orders Vs Limit Orders](/academy/market-orders-vs-limit-orders/).
+Bid and ask are the two sides of a stock quote. The bid shows what buyers are currently willing to pay. The ask shows what sellers are currently willing to accept. The spread is the gap between them, and the last price is only the most recent completed trade.
 
 
 ## Lesson Objective

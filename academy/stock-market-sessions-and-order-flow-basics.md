@@ -15,11 +15,11 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "1"
 cta: "Use session context to review trades more clearly before moving into day trading and workflow lessons."
-recommended_previous: "/academy/what-is-a-stock-and-how-does-a-trade-work/"
-recommended_next: "/academy/day-trading-for-beginners/"
+recommended_previous: "/academy/basic-trading-terms-and-position-mechanics/"
+recommended_next: "/academy/bid-and-ask/"
 academy_level: "Foundation"
-academy_order: 4
-academy_module: "Market Mechanics"
+academy_order: 3
+academy_module: "Sessions And Orders"
 academy_course: "Trading Foundations"
 learning_track: "Trading Foundations"
 internal_links:
@@ -40,7 +40,7 @@ meta_description: "Learn how premarket, regular session, market open, midday, cl
 ---
 # Stock Market Sessions And Order Flow Basics
 
-This lesson is part of the **Trading Foundations** course. It follows [What Is A Stock And How Does A Trade Work?](/academy/what-is-a-stock-and-how-does-a-trade-work/) and leads into [Day Trading For Beginners](/academy/day-trading-for-beginners/).
+This lesson is part of the **Trading Foundations** course. It follows [Basic Trading Terms And Position Mechanics](/academy/basic-trading-terms-and-position-mechanics/) and leads into [Bid, Ask, Spread, And Last Price Basics](/academy/bid-and-ask/).
 
 The stock market does not feel the same all day. Premarket, the open, midday, the close, and after-hours can each have different liquidity, spreads, volume, volatility, and participant behavior.
 

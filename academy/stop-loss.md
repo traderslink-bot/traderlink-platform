@@ -1,5 +1,5 @@
 ---
-title: "Stop Loss"
+title: "Stop Loss And Invalidation"
 slug: "/academy/stop-loss/"
 primary_keyword: "stop loss"
 secondary_keywords:
@@ -15,13 +15,13 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review stop and invalidation decisions after completed trades so risk behavior stays visible."
-recommended_next: "/academy/mental-stop-vs-hard-stop/"
-recommended_previous: "/academy/win-rate-reward-risk-and-expectancy/"
+recommended_next: "/academy/trade-risk-review/"
+recommended_previous: "/academy/position-sizing/"
 academy_level: "Practical"
-academy_order: 7
-academy_module: "Risk Basics"
-academy_course: "Risk Management And Trade Planning"
-learning_track: "Risk Management And Trade Planning"
+academy_order: 13
+academy_module: "Risk And Review"
+academy_course: "Trading Foundations"
+learning_track: "Trading Foundations"
 internal_links:
   - "/academy/risk-management/"
   - "/academy/risk-reward-ratio/"
@@ -33,10 +33,10 @@ schema:
 visual_assets:
   - "/academy/images/trading-foundations/risk-plan-review-loop.svg"
 last_reviewed: "2026-05-17"
-meta_title: "Stop Loss Explained For Traders"
-meta_description: "Learn what a stop loss is, how traders use stop areas, common stop loss mistakes, and how to review stop decisions in a review notes."
+meta_title: "Stop Loss And Invalidation Explained For Traders"
+meta_description: "Learn what stop loss and invalidation mean, how traders use stop areas, common stop mistakes, and how to review stop decisions."
 ---
-# Stop Loss
+# Stop Loss And Invalidation
 
 This lesson is part of the **Trading Foundations** course. It follows [Position Sizing](/academy/position-sizing/) and leads into [Trade Risk Review](/academy/trade-risk-review/).
 

@@ -1,5 +1,5 @@
 ---
-title: "Market Orders Vs Limit Orders: How Traders Review Execution Choices"
+title: "Market Orders Vs Limit Orders"
 slug: "/academy/market-orders-vs-limit-orders/"
 primary_keyword: "market orders vs limit orders"
 secondary_keywords:
@@ -9,20 +9,20 @@ secondary_keywords:
   - "trade execution"
   - "market order vs limit order"
 search_intent: "Learn the difference between market orders and limit orders, why order type matters, and how to review execution mistakes around speed, price control, fills, and slippage."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review order type, execution quality, slippage, liquidity, and repeated decision patterns."
-learning_track: "Volume, Liquidity And Order Flow"
-academy_level: "Practical"
-academy_order: 10
-academy_module: "Quotes And Execution"
-academy_course: "Volume, Liquidity And Order Flow"
-recommended_previous: "/academy/slippage/"
-recommended_next: "/academy/level-2/"
+cta: "Use order-type basics to understand the tradeoff between execution speed and price control."
+learning_track: "Trading Foundations"
+academy_level: "Foundation"
+academy_order: 5
+academy_module: "Sessions And Orders"
+academy_course: "Trading Foundations"
+recommended_previous: "/academy/bid-and-ask/"
+recommended_next: "/academy/day-trading-for-beginners/"
 visual_assets:
   - "/academy/images/chart-reading/market-vs-limit-order-tradeoff.svg"
   - "/academy/images/chart-reading/limit-order-no-fill-review.svg"
@@ -35,20 +35,19 @@ internal_links:
   - "/academy/time-and-sales/"
   - "/glossary/spread/"
   - "/glossary/slippage/"
-  - "/features/execution-analysis/"
 schema:
   - "Article"
   - "FAQPage"
 last_reviewed: "2026-05-17"
-meta_title: "Market Orders vs Limit Orders"
-meta_description: "Learn the difference between market orders and limit orders, why order type affects execution, and how traders review order mistakes."
+meta_title: "Market Orders Vs Limit Orders"
+meta_description: "Learn the difference between market orders and limit orders, why order type affects execution, and how beginner traders review order choices."
 ---
 
-# Market Orders Vs Limit Orders: How Traders Review Execution Choices
+# Market Orders Vs Limit Orders
+
+This lesson is part of the **Trading Foundations** course. It follows [Bid, Ask, Spread, And Last Price Basics](/academy/bid-and-ask/) and leads into [Day Trading For Beginners](/academy/day-trading-for-beginners/).
 
 Market orders and limit orders are two common order types traders use to enter and exit positions. The order type can affect fill price, speed, slippage, missed fills, and real risk.
-
-This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Slippage](/academy/slippage/), [Bid And Ask](/academy/bid-and-ask/), [Spread](/academy/spread/), and [Liquidity](/academy/liquidity/), then leads into [Level 2](/academy/level-2/) and [Time And Sales](/academy/time-and-sales/).
 
 
 ## Lesson Objective

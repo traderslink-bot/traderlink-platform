@@ -15,11 +15,11 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Use completed-trade review to compare entries, exits, execution, risk behavior, and repeated beginner mistakes."
-recommended_previous: "/academy/stock-market-sessions-and-order-flow-basics/"
-recommended_next: "/academy/day-trading-vs-swing-trading/"
+recommended_previous: "/academy/market-orders-vs-limit-orders/"
+recommended_next: "/academy/swing-trading-for-beginners/"
 academy_level: "Foundation"
-academy_order: 5
-academy_module: "Market Basics"
+academy_order: 6
+academy_module: "Trading Styles"
 academy_course: "Trading Foundations"
 learning_track: "Trading Foundations"
 internal_links:
@@ -38,7 +38,7 @@ meta_description: "Learn day trading basics for beginners, including risk, entri
 ---
 # Day Trading For Beginners
 
-This lesson is part of the **Trading Foundations** course. It follows [Stock Market Sessions And Order Flow Basics](/academy/stock-market-sessions-and-order-flow-basics/) and leads into [Day Trading Vs Swing Trading](/academy/day-trading-vs-swing-trading/).
+This lesson is part of the **Trading Foundations** course. It follows [Market Orders Vs Limit Orders](/academy/market-orders-vs-limit-orders/) and leads into [Swing Trading For Beginners](/academy/swing-trading-for-beginners/).
 
 Day trading for beginners should start with risk, process, and review. A lot of new traders start by looking for hot stocks or perfect setups, but the real foundation is learning how trades work, how losses happen, and how to review decisions honestly after the session.
 

@@ -18,10 +18,10 @@ cta: "Use written rules to make completed-trade review clearer and more consiste
 recommended_next: "/academy/risk-management/"
 recommended_previous: "/academy/trading-plan/"
 academy_level: "Foundation"
-academy_order: 2
-academy_module: "Planning"
-academy_course: "Risk Management And Trade Planning"
-learning_track: "Risk Management And Trade Planning"
+academy_order: 10
+academy_module: "Planning And Rules"
+academy_course: "Trading Foundations"
+learning_track: "Trading Foundations"
 internal_links:
   - "/academy/trading-plan/"
   - "/academy/trading-discipline/"

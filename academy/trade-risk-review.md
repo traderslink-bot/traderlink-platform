@@ -15,13 +15,13 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Use risk review to compare planned risk with actual risk and repeated behavior patterns."
-recommended_previous: "/academy/trade-review-and-improvement/"
-recommended_next: "/academy/planned-vs-actual-trade-review/"
+recommended_previous: "/academy/stop-loss/"
+recommended_next: null
 academy_level: "Foundation"
-academy_order: 2
-academy_module: "Review Foundation"
-academy_course: "Trade Review And Improvement"
-learning_track: "Trade Review And Improvement"
+academy_order: 14
+academy_module: "Risk And Review"
+academy_course: "Trading Foundations"
+learning_track: "Trading Foundations"
 internal_links:
   - "/academy/risk-management/"
   - "/academy/position-sizing/"
@@ -38,7 +38,7 @@ meta_description: "Learn how to review trade risk after a trade, including size,
 ---
 # Trade Risk Review
 
-This lesson is part of the **Trading Foundations** course. It follows [Stop Loss](/academy/stop-loss/) and completes the Course 1 core path.
+This lesson is part of the **Trading Foundations** course. It follows [Stop Loss And Invalidation](/academy/stop-loss/) and completes the Course 1 core path.
 
 Trade risk review is the process of studying how risk was planned, taken, managed, and adjusted during a trade. It helps traders understand whether the result came from a clean process, a risk mistake, or an emotional decision.
 

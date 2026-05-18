@@ -14,14 +14,14 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "1"
-cta: "Start with the Academy path, then connect lessons to completed-trade review when you have trades to study."
+cta: "Use this help page to understand how the Academy is organized."
 recommended_previous: null
 recommended_next: "/academy/how-to-use-traderslink-academy/"
-academy_level: "Foundation"
-academy_order: 1
-academy_module: "Start Here"
-academy_course: "Trading Foundations"
-learning_track: "Trading Foundations"
+academy_level: "Help"
+academy_order: 0
+academy_module: "Academy Help"
+academy_course: "Academy Onboarding"
+learning_track: "Academy Help"
 internal_links:
   - "/academy/how-to-use-traderslink-academy/"
   - "/academy/day-trading-for-beginners/"
@@ -30,21 +30,17 @@ internal_links:
   - "/academy/risk-management/"
 schema:
   - "FAQPage"
-visual_assets:
-  - "/academy/images/trading-foundations/trading-foundations-course-map.svg"
 last_reviewed: "2026-05-17"
 meta_title: "Welcome To TradersLink Academy"
 meta_description: "Start TradersLink Academy with a clear overview of courses, lessons, learning paths, progress, and educational non-advice trading education."
 ---
 # Welcome To TradersLink Academy
 
-This is the first lesson in the **Trading Foundations** course. It leads into [How To Use TradersLink Academy](/academy/how-to-use-traderslink-academy/).
+This is an Academy help page. It explains how the learning area is organized.
 
 Welcome To TradersLink Academy is the starting point for the guided learning journey. The Academy is designed to teach trading concepts in a structured order while still letting users jump to any course or lesson they need.
 
 This is not a signal service, a promise of trading income, or a shortcut around risk. It is an educational system built around courses, lessons, realistic examples, review habits, and safer decision-making language.
-
-![Educational dashboard map showing the Trading Foundations course path from market mechanics through planning, risk, and review.](/academy/images/trading-foundations/trading-foundations-course-map.svg)
 
 ## Lesson Objective
 

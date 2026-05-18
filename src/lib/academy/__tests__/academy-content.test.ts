@@ -91,7 +91,9 @@ describe("academy content loader", () => {
       "chart-reading-market-structure",
     ]);
     expect(getLaunchAcademyPathHubIds()).toEqual([]);
-    expect(params).toContain("start-here");
+    expect(params).toContain("what-is-a-stock-and-how-does-a-trade-work");
+    expect(params).toContain("basic-trading-terms-and-position-mechanics");
+    expect(params).not.toContain("start-here");
     expect(params).toContain("support-and-resistance");
     expect(params).toContain("candlestick-deep-dive-lessons");
     expect(params).toContain("candlestick-patterns/doji");
@@ -103,8 +105,8 @@ describe("academy content loader", () => {
 
     expect(lesson?.contexts[0]).toMatchObject({
       courseId: "trading-foundations",
-      moduleTitle: "Process Basics",
-      displayOrder: 7,
+      moduleTitle: "Planning And Rules",
+      displayOrder: 9,
     });
     expect(lesson?.previousLesson?.slug).toBe(
       "/academy/day-trading-vs-swing-trading/",

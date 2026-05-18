@@ -15,15 +15,15 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "1"
 cta: "Use this lesson as a foundation before studying charts, setups, risk, and trade review."
-recommended_previous: "/academy/how-to-use-traderslink-academy/"
-recommended_next: "/academy/stock-market-sessions-and-order-flow-basics/"
+recommended_previous: null
+recommended_next: "/academy/basic-trading-terms-and-position-mechanics/"
 academy_level: "Foundation"
-academy_order: 3
-academy_module: "Market Mechanics"
+academy_order: 1
+academy_module: "Trade Mechanics"
 academy_course: "Trading Foundations"
 learning_track: "Trading Foundations"
 internal_links:
-  - "/academy/how-to-use-traderslink-academy/"
+  - "/academy/basic-trading-terms-and-position-mechanics/"
   - "/academy/stock-market-sessions-and-order-flow-basics/"
   - "/academy/market-orders-vs-limit-orders/"
   - "/academy/bid-and-ask/"
@@ -39,7 +39,7 @@ meta_description: "Learn what a stock represents, how stock trades are matched, 
 ---
 # What Is A Stock And How Does A Trade Work?
 
-This lesson is part of the **Trading Foundations** course. It follows [How To Use TradersLink Academy](/academy/how-to-use-traderslink-academy/) and leads into [Stock Market Sessions And Order Flow Basics](/academy/stock-market-sessions-and-order-flow-basics/).
+This lesson starts the **Trading Foundations** course. It leads into [Basic Trading Terms And Position Mechanics](/academy/basic-trading-terms-and-position-mechanics/).
 
 Before a trader studies chart patterns, news catalysts, indicators, or SEC filings, they should understand the basic object being traded: a share of stock.
 

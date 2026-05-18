@@ -18,10 +18,10 @@ cta: "Review risk decisions by comparing planned risk with what actually happene
 recommended_next: "/academy/position-sizing/"
 recommended_previous: "/academy/trading-rules/"
 academy_level: "Foundation"
-academy_order: 3
-academy_module: "Risk Basics"
-academy_course: "Risk Management And Trade Planning"
-learning_track: "Risk Management And Trade Planning"
+academy_order: 11
+academy_module: "Risk And Review"
+academy_course: "Trading Foundations"
+learning_track: "Trading Foundations"
 internal_links:
   - "/academy/position-sizing/"
   - "/academy/revenge-trading/"

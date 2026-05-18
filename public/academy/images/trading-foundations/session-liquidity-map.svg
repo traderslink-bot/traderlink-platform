@@ -62,7 +62,7 @@
     </g>
   </g>
   <g class="txt small">
-    <text x="68" y="386">Premarket: thinner context</text>
+    <text x="68" y="386">Premarket: thinner liquidity</text>
     <text x="190" y="386">Open: fast price discovery</text>
     <text x="336" y="386">Midday: slower filtering</text>
     <text x="492" y="386">Close: reassessment</text>

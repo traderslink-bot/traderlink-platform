@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430" role="img" aria-labelledby="title desc">
   <title id="title">Trading Foundations Course Map</title>
-  <desc id="desc">Educational dashboard map showing the Trading Foundations course path from market mechanics through planning, risk, and review.</desc>
+  <desc id="desc">Educational dashboard map showing the Trading Foundations course path from trade mechanics and trading terms through sessions, orders, styles, planning, rules, risk, and review.</desc>
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0" stop-color="#08111f"/>
@@ -24,37 +24,37 @@
   </defs>
   <rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
   <text class="txt title" x="34" y="46">Trading Foundations: guided beginner path</text>
-  <text class="txt small muted" x="34" y="68">Learn the market object, the trading environment, the process, and the review loop before advanced setups.</text>
+  <text class="txt small muted" x="34" y="68">Learn trade mechanics, core terms, sessions, orders, styles, planning, risk, and review before chart structure.</text>
   <g transform="translate(48 100)">
     <rect class="card" x="0" y="0" width="162" height="92" rx="7"/>
-    <text class="txt label" x="18" y="28">1. Start Here</text>
-    <text class="txt small muted" x="18" y="52">Academy flow</text>
-    <text class="txt small muted" x="18" y="70">Learning expectations</text>
+    <text class="txt label" x="18" y="28">1. Trade Mechanics</text>
+    <text class="txt small muted" x="18" y="52">Stocks and trades</text>
+    <text class="txt small muted" x="18" y="70">How fills work</text>
     <line class="line" x1="162" y1="46" x2="214" y2="46"/>
     <rect class="active" x="214" y="0" width="162" height="92" rx="7"/>
-    <text class="txt label" x="232" y="28">2. Market Mechanics</text>
-    <text class="txt small muted" x="232" y="52">Stocks and orders</text>
-    <text class="txt small muted" x="232" y="70">Sessions and liquidity</text>
+    <text class="txt label" x="232" y="28">2. Trading Terms</text>
+    <text class="txt small muted" x="232" y="52">Positions and shares</text>
+    <text class="txt small muted" x="232" y="70">P&amp;L and fills</text>
     <line class="line" x1="376" y1="46" x2="428" y2="46"/>
     <rect class="card" x="428" y="0" width="162" height="92" rx="7"/>
-    <text class="txt label" x="446" y="28">3. Style Basics</text>
-    <text class="txt small muted" x="446" y="52">Day vs swing</text>
-    <text class="txt small muted" x="446" y="70">Timeframe fit</text>
+    <text class="txt label" x="446" y="28">3. Sessions And Orders</text>
+    <text class="txt small muted" x="446" y="52">Quotes and spread</text>
+    <text class="txt small muted" x="446" y="70">Order choices</text>
     <line class="line" x1="509" y1="92" x2="509" y2="132"/>
     <rect class="card" x="428" y="132" width="162" height="92" rx="7"/>
-    <text class="txt label" x="446" y="160">4. Process</text>
-    <text class="txt small muted" x="446" y="184">Plan and rules</text>
-    <text class="txt small muted" x="446" y="202">Behavior boundaries</text>
+    <text class="txt label" x="446" y="160">4. Trading Styles</text>
+    <text class="txt small muted" x="446" y="184">Day trading</text>
+    <text class="txt small muted" x="446" y="202">Swing trading</text>
     <line class="line" x1="428" y1="178" x2="376" y2="178"/>
     <rect class="active" x="214" y="132" width="162" height="92" rx="7"/>
-    <text class="txt label" x="232" y="160">5. Risk Basics</text>
-    <text class="txt small muted" x="232" y="184">Sizing and stops</text>
-    <text class="txt small muted" x="232" y="202">Defined invalidation</text>
+    <text class="txt label" x="232" y="160">5. Planning And Rules</text>
+    <text class="txt small muted" x="232" y="184">Written process</text>
+    <text class="txt small muted" x="232" y="202">Decision rules</text>
     <line class="line" x1="214" y1="178" x2="162" y2="178"/>
     <rect class="card" x="0" y="132" width="162" height="92" rx="7"/>
-    <text class="txt label" x="18" y="160">6. Review Basics</text>
-    <text class="txt small muted" x="18" y="184">Planned vs actual</text>
-    <text class="txt small muted" x="18" y="202">Risk behavior notes</text>
+    <text class="txt label" x="18" y="160">6. Risk And Review</text>
+    <text class="txt small muted" x="18" y="184">Sizing and stops</text>
+    <text class="txt small muted" x="18" y="202">Trade risk review</text>
   </g>
   <g transform="translate(80 354)">
     <line class="mutedLine" x1="0" y1="0" x2="600" y2="0"/>
