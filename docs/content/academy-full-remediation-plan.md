@@ -1,20 +1,53 @@
 # TradersLink Academy Full Remediation Plan
 
 Created: 2026-05-18
+Last updated: 2026-05-18
 Branch target: `codex/trader-ui-product-pass`
 Repo: `traderslink-bot/traderslink-trader-improvement-system`
 
 ## Purpose
 
-This document is the control plan for improving TradersLink Academy across content, course flow, UI presentation, and product funnel strategy.
+This document is the control plan for improving TradersLink Academy across content quality, course flow, lesson structure, product funnel strategy, and only later UI presentation.
 
 The Academy should feel like a professional free education system for new and developing traders. It should build trust, teach clearly, and naturally guide the right users toward the Trader Intelligence journal app.
 
 The goal is not to create a generic SEO lesson library. The goal is to create useful beginner trading education that connects naturally to the journal, analytics, coaching, review, and improvement features of Trader Intelligence.
 
+## Immediate Priority: Content And Course Structure First
+
+The current problem is mainly the content and course structure, not the UI.
+
+Codex should prioritize:
+
+1. Lesson content quality.
+2. Lesson order.
+3. Lesson naming.
+4. Course and module flow.
+5. Removing repeated template sections that do not fit.
+6. Making each lesson teach the actual topic clearly.
+7. Making Trader Intelligence mentions natural instead of forced.
+8. Making the Academy feel like a real beginner trading course.
+
+UI polish can come later. Only touch UI now if a UI issue is directly causing content confusion, broken navigation, duplicate captions, incorrect lesson ordering, or forced product cards.
+
+## UI Priority Rule
+
+Do not redesign the Academy UI during the content remediation unless the UI is blocking the content work.
+
+Only touch UI if needed for one of these reasons:
+
+- The content is displayed in a confusing order.
+- Lesson navigation is wrong.
+- Images or captions are duplicated or awkward.
+- Product-funnel cards are showing in the wrong place.
+- Course metadata cannot display because the UI does not support it.
+- A content structure improvement requires a small renderer change.
+
+Otherwise, leave UI polish for a later pass.
+
 ## Core Diagnosis
 
-The current Academy direction is good, but the lesson content has become too template-driven.
+The current Academy direction is good, but the lesson content became too template-driven.
 
 Common issues to fix:
 
@@ -196,6 +229,66 @@ Recommended sections:
 
 Do not use a checklist if the lesson is only explaining a definition and the checklist adds no value.
 
+## Candlestick Course Structure
+
+It is acceptable to have a first lesson called `Candlestick Patterns` followed by individual candle-type lessons such as Doji, Hammer, Engulfing Candle, Long Wick Candle, and Inside Bar.
+
+That structure is correct only if the first lesson is a true overview/foundation lesson.
+
+The first candlestick lesson should not try to teach every candle pattern in detail. It should teach the foundation that makes the later individual candle lessons easier to understand.
+
+### Recommended Display Title
+
+The route can remain `/academy/candlestick-patterns/` for SEO, but the display title should be clearer.
+
+Recommended display title:
+
+> Candlestick Pattern Basics
+
+Other acceptable options:
+
+- How Candlestick Patterns Work
+- Candlestick Reading Basics
+- Candlestick Anatomy And Context
+- How To Read Candlesticks In Context
+
+### What The First Candlestick Lesson Should Teach
+
+The overview lesson should teach:
+
+1. What a candlestick is.
+2. Candle body.
+3. Candle wick.
+4. Open, high, low, close.
+5. Close location.
+6. Candle range.
+7. Why timeframe matters.
+8. Why volume matters.
+9. Why location matters.
+10. Why candle names are not trade signals.
+11. How to think about single-candle and multi-candle patterns.
+12. Why the next candle and broader chart context matter.
+
+The overview lesson should answer:
+
+> How do candlesticks work, and how should I think about patterns?
+
+Individual candle-type lessons should answer:
+
+> What does this specific candle look like, where does it matter, how does it fail, and what should I watch next?
+
+### Correct Relationship Between Overview And Type Lessons
+
+`Candlestick Pattern Basics` should teach anatomy, context, volume, timeframe, and why patterns are not signals by themselves.
+
+`Doji Candle` should teach what a doji looks like, what hesitation means, when it matters, when it is noise, how confirmation/failure works, and how beginners misuse it.
+
+`Long Wick Candle` should teach rejection, failed pushes, wick direction, close location, level context, and why not every wick is meaningful.
+
+`Engulfing Candle` should teach shift in control, candle relationship, volume/context, false engulfing signals, and confirmation/failure.
+
+The problem is not the existence of an overview lesson. The problem is whether the overview lesson is doing the right job.
+
 ## Candlestick Lesson Template
 
 Use for doji, hammer, engulfing candle, long wick, pin bar, inside bar, outside bar, topping tail, bottoming tail, spinning top, red-to-green, green-to-red, and candle-volume confirmation.
@@ -222,6 +315,36 @@ Avoid these in normal candlestick lessons unless they truly fit:
 - Generic `Trader Intelligence Bridge`
 
 Candlestick lessons should teach chart reading, not worksheet behavior.
+
+## Chart Pattern Course Structure
+
+The chart-pattern course should follow the same overview-plus-specific-lessons rule.
+
+It is acceptable to have:
+
+1. Chart Patterns
+2. Bull Flag Pattern
+3. Ascending Triangle Pattern
+4. Failed Breakout Pattern
+5. Other specific pattern lessons
+
+But the first chart-pattern lesson should be an overview/foundation lesson, not a shallow duplicate of the individual pattern pages.
+
+Recommended display title options:
+
+- Chart Pattern Basics
+- How Chart Patterns Work
+- Chart Patterns In Context
+
+The chart-pattern overview should teach:
+
+1. Patterns are structures, not predictions.
+2. Clean patterns versus forced patterns.
+3. Volume and level context.
+4. Risk location.
+5. Failure conditions.
+6. Why a pattern label is not enough.
+7. How the individual pattern lessons will be organized.
 
 ## Chart-Pattern Lesson Template
 
@@ -319,35 +442,32 @@ The course sequence is mostly correct and should remain close to this:
 13. Trade Review And Improvement
 14. Practice And Improvement
 
-Keep the core candlestick overview early, because beginners need to know how candles work before reading levels. Keep the deeper candlestick and chart-pattern type pages as reference libraries, not required main-path lessons.
-
 A beginner should learn:
 
-- What a stock/trade is
-- How sessions and order flow work
-- Basic day trading versus swing trading
-- Why risk comes first
-- How support and resistance work
-- How breakouts, breakdowns, reclaims, and rejections work
-- How trend structure works
-- How volume and liquidity affect moves
-- How indicators support context but do not replace price action
-- How styles/playbooks differ
-- How news, float, dilution, and halts change risk
-- How psychology and review reveal repeated behavior
-- How practice turns lessons into improvement
+- What a stock/trade is.
+- How sessions and order flow work.
+- Basic day trading versus swing trading.
+- Why risk comes first.
+- How candlesticks work at a basic level.
+- How support and resistance work.
+- How breakouts, breakdowns, reclaims, and rejections work.
+- How trend structure works.
+- How volume and liquidity affect moves.
+- How indicators support context but do not replace price action.
+- How styles/playbooks differ.
+- How news, float, dilution, and halts change risk.
+- How psychology and review reveal repeated behavior.
+- How practice turns lessons into improvement.
 
 ### Chart Reading Course Structure Correction
-
-Status: updated 2026-05-18.
 
 `Chart Reading And Market Structure` should remain one course. It should not be split into separate candlestick and chart-pattern courses at this stage, because candles, levels, structure, ranges, and chart patterns all depend on one another.
 
 Correct structure:
 
-1. The required course path teaches one core candlestick lesson: `How To Read Candlesticks In Context`.
+1. The required course path teaches one core candlestick overview lesson.
 2. Individual candle-type pages such as Doji, Long Wick, Engulfing Candle, and Hammer are reference-library pages inside the same course.
-3. The required course path teaches one core chart-pattern lesson: `How To Read Chart Patterns In Context`.
+3. The required course path teaches one core chart-pattern overview lesson.
 4. Individual pattern pages such as Bull Flag, Double Top, Wedge, Failed Breakout, and VWAP Reclaim are reference-library pages inside the same course.
 5. Reference-library pages should be available to learners, but they should not reset lesson numbering or look like the main beginner path.
 6. The main path should guide learners through candles, levels, breaks/reclaims, structure, intraday reference levels, ranges, chart-pattern context, and gaps.
@@ -369,11 +489,11 @@ Example for `chart-reading-market-structure`:
 
 Audience:
 
-> Beginner and developing traders who need to understand levels, price reactions, trend structure, and intraday chart context before studying advanced setups.
+> Beginner and developing traders who need to understand candles, levels, price reactions, trend structure, and intraday chart context before studying advanced setups.
 
 Course outcome:
 
-> By the end, the trader should be able to map key levels, recognize basic structure shifts, avoid chasing poor locations, and explain trades using chart context.
+> By the end, the trader should be able to read basic candles, map key levels, recognize basic structure shifts, avoid chasing poor locations, and explain trades using chart context.
 
 Example for `trade-review-improvement`:
 
@@ -410,6 +530,7 @@ Each visual should teach one specific idea.
 
 Good visual uses:
 
+- Candle body, wick, open, high, low, close.
 - Doji at resistance with next-candle rejection.
 - Doji in chop showing why it is noise.
 - Bull flag with clean pullback and defined failure.
@@ -424,9 +545,18 @@ Avoid:
 - Duplicate image caption text appearing twice.
 - Decorative visuals that add no teaching value.
 
-## Priority Pass 1: Candlestick Patterns In Context
+## Priority Pass 1: Candlestick Content And Course Structure
 
-Fix the candlestick course first because the Doji example exposes the template problem clearly.
+Fix the candlestick overview and type lessons first because the Doji example exposes the template problem clearly.
+
+Content-first remediation order:
+
+1. Fix `academy/candlestick-patterns.md` as the foundation lesson.
+2. Fix each individual candlestick lesson so it teaches the unique candle clearly.
+3. Clean up forced `Apply This In Review`, `Practical Checklist`, and `Trader Intelligence Bridge` sections across these files.
+4. Update lesson display titles if needed for clarity.
+5. Keep product mentions natural and minimal unless a journal/review connection is genuinely helpful.
+6. Leave UI polish for later unless required by the content.
 
 Files likely involved:
 
@@ -482,23 +612,18 @@ Suggested replacement sections:
 
 Keep `Journal Connection` short and natural.
 
-### Pass 1 Completion Log
-
-Status: complete as of 2026-05-18.
-
-Completed work:
-
-- Rewrote the Doji lesson first as the model cleanup for the candlestick set.
-- Cleaned the Candlestick Patterns In Context course overview so candle lessons are grouped by learning role instead of appearing as a flat SEO list.
-- Removed forced visible sections from the candlestick lesson set, including `Lesson Objective`, `Practical Checklist`, `Apply This In Review`, and `Trader Intelligence Bridge`.
-- Reworked candlestick lessons around topic-specific teaching sections such as `What It Is`, `What It Shows`, `Where It Matters`, `When It Misleads`, `Example`, `Common Mistakes`, and `Before You Move On`.
-- Kept product references natural, restrained, and tied to review behavior instead of repeating a product bridge block.
-
-Next active work: Priority Pass 2, Chart Patterns In Context cleanup.
-
 ## Priority Pass 2: Chart Patterns In Context
 
-Fix the chart-pattern course after candlesticks.
+Fix the chart-pattern overview and type lessons after candlesticks.
+
+Content-first remediation order:
+
+1. Fix `academy/chart-patterns.md` as the chart-pattern foundation lesson.
+2. Fix each individual chart-pattern lesson so it teaches the unique structure clearly.
+3. Clean up forced `Apply This In Review`, `Practical Checklist`, and `Trader Intelligence Bridge` sections across these files.
+4. Update lesson display titles if needed for clarity.
+5. Keep product mentions natural and minimal unless a journal/review connection is genuinely helpful.
+6. Leave UI polish for later unless required by the content.
 
 Files likely involved:
 
@@ -544,20 +669,6 @@ Suggested replacement sections:
 11. FAQ
 12. Educational Disclaimer
 
-### Pass 2 Completion Log
-
-Status: complete as of 2026-05-18 for the current Chart Patterns In Context markdown files.
-
-Completed work:
-
-- Cleaned the Chart Patterns course overview so it explains pattern groups, including continuation, compression, reversal/failure, and tool-based patterns.
-- Reworked the Bull Flag lesson as the model chart-pattern cleanup with clean-versus-forced structure, volume context, risk concept, failure behavior, and a topic-specific journal review section.
-- Removed forced visible sections from the chart-pattern lesson set, including `Lesson Objective`, `Practical Checklist`, `Apply This In Review`, and `Trader Intelligence Bridge`.
-- Replaced repeated product bridge blocks with topic-specific `Review This In Your Journal` sections focused on the actual pattern being taught.
-- Neutralized repeated frontmatter CTA copy in the chart-pattern set so product routing can be handled by registry/app bridge data instead of visible template language.
-
-Next active work: Priority Pass 3, Academy-wide Product Funnel Cleanup.
-
 ## Priority Pass 3: Product Funnel Cleanup
 
 Audit every lesson for the current `Trader Intelligence Bridge` copy.
@@ -599,20 +710,6 @@ Use:
 Use:
 
 > This is the core reason Trader Intelligence exists: to turn completed trades into reviewable patterns so traders can see what they are repeating instead of guessing from memory.
-
-### Pass 3 Cleanup Log
-
-Status: broad visible-heading cleanup complete as of 2026-05-18.
-
-Completed work:
-
-- Removed the repeated visible `Trader Intelligence Bridge` section from Academy markdown lessons.
-- Removed remaining repeated body-level `Trader Intelligence is being built...` sentences from small-cap, dilution, and SEC filing lessons where the copy was acting like a generic product bridge instead of lesson-specific education.
-- Replaced those repeated small-cap and filing mentions with neutral journal-review language focused on float, filings, dilution context, risk, execution, research gaps, and source context.
-
-Remaining recommendation:
-
-- Frontmatter `cta` fields and intentionally product-focused lessons still contain Trader Intelligence references. Keep those as registry/product-funnel inputs for now, then review them during Priority Pass 5 so route cards can decide when they should be visible.
 
 ## Priority Pass 4: Lesson Body Cleanup
 
@@ -691,9 +788,11 @@ Goals:
 5. Make app bridge placement match bridge strength.
 6. Keep hard app links disabled unless the route actually exists and is ready.
 
-## Priority Pass 6: UI Rendering Improvements
+## Priority Pass 6: UI Rendering Improvements Later
 
-Review:
+UI work is not the current priority.
+
+Review these only after the content/course pass, or earlier only if content is being displayed incorrectly:
 
 - `app/academy/[...slug]/page.tsx`
 - `app/academy/page.tsx`
@@ -703,7 +802,7 @@ Review:
 - `src/lib/academy/academy-content.ts`
 - `src/lib/academy/academy-progress.tsx`
 
-Goals:
+Goals for the later UI pass:
 
 1. Lesson pages should read like professional articles.
 2. Course pages should clearly show course outcomes.
@@ -769,6 +868,52 @@ Codex should deliver:
 5. A summary of changed files.
 6. A short explanation of what changed and why.
 7. Validation results.
+
+## Current Branch Progress Notes
+
+These notes preserve the current branch direction and should be updated by Codex after each remediation pass.
+
+### Pass 1: Candlestick Content
+
+Status from current branch: reported complete as of 2026-05-18.
+
+Reported work:
+
+- Rewrote the Doji lesson first as the model cleanup for the candlestick set.
+- Cleaned the Candlestick Patterns In Context course overview so candle lessons are grouped by learning role instead of appearing as a flat SEO list.
+- Removed forced visible sections from the candlestick lesson set, including `Lesson Objective`, `Practical Checklist`, `Apply This In Review`, and `Trader Intelligence Bridge`.
+- Reworked candlestick lessons around topic-specific teaching sections.
+- Kept product references natural, restrained, and tied to review behavior instead of repeating a product bridge block.
+
+Codex should verify that this pass now follows the clarified overview-plus-type-lesson structure above.
+
+### Pass 2: Chart Patterns
+
+Status from current branch: reported complete as of 2026-05-18 for the current Chart Patterns In Context markdown files.
+
+Reported work:
+
+- Cleaned the Chart Patterns course overview so it explains pattern groups, including continuation, compression, reversal/failure, and tool-based patterns.
+- Reworked the Bull Flag lesson as the model chart-pattern cleanup with clean-versus-forced structure, volume context, risk concept, failure behavior, and a topic-specific journal review section.
+- Removed forced visible sections from the chart-pattern lesson set, including `Lesson Objective`, `Practical Checklist`, `Apply This In Review`, and `Trader Intelligence Bridge`.
+- Replaced repeated product bridge blocks with topic-specific review sections focused on the actual pattern being taught.
+- Neutralized repeated frontmatter CTA copy in the chart-pattern set so product routing can be handled by registry/app bridge data instead of visible template language.
+
+Codex should verify that this pass now follows the clarified overview-plus-type-lesson structure above.
+
+### Pass 3: Product Funnel Cleanup
+
+Status from current branch: broad visible-heading cleanup reported complete as of 2026-05-18.
+
+Reported work:
+
+- Removed the repeated visible `Trader Intelligence Bridge` section from Academy markdown lessons.
+- Removed remaining repeated body-level `Trader Intelligence is being built...` sentences from small-cap, dilution, and SEC filing lessons where the copy acted like a generic product bridge instead of lesson-specific education.
+- Replaced those repeated small-cap and filing mentions with neutral journal-review language focused on float, filings, dilution context, risk, execution, research gaps, and source context.
+
+Remaining recommendation:
+
+- Frontmatter `cta` fields and intentionally product-focused lessons still contain Trader Intelligence references. Keep those as registry/product-funnel inputs for now, then review them during Priority Pass 5 so route cards can decide when they should be visible.
 
 ## Final Reminder
 
