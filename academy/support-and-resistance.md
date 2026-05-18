@@ -240,25 +240,6 @@ Before using a support or resistance level in a trade plan, ask:
 
 This checklist should slow the decision down. The goal is not to create hesitation. The goal is to avoid random entries.
 
-## Review This In Your Journal
-
-Support and resistance become more useful when you review how your trades behaved around them.
-
-Useful review questions include:
-
-- Did I enter near support, near resistance, or in the middle of a range?
-- Was I chasing into an obvious resistance area?
-- Did I respect the level I planned around?
-- Did I hold after price lost the support area?
-- Did I exit too early before a planned target level?
-- Did I add into weakness at a broken support level?
-- Did the level actually matter, or did I force it onto the chart after the trade?
-- Did volume confirm the reaction at the level?
-- Did the stock reclaim the level or reject from it?
-- Was my risk based on the level or based on hope?
-
-This is where structured review notes can help. The goal is not to prove that a level was perfect. The goal is to learn whether your decisions around the level were planned, consistent, and risk-aware.
-
 ## Key Takeaway
 
 Support and resistance are decision zones, not commands. Their value comes from helping traders understand location, plan risk, and review whether decisions happened around meaningful areas.

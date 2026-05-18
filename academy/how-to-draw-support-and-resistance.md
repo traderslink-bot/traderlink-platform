@@ -51,7 +51,6 @@ Learning how to draw support and resistance is really about learning which price
 
 This lesson is part of the **Chart Reading And Market Structure** learning path.
 
-
 Goal: Learn how to draw support and resistance zones that clarify decisions instead of cluttering the chart.
 
 The goal is not to cover the chart with lines. The goal is to mark the areas where price has reacted clearly enough that traders may watch them again.
@@ -239,25 +238,6 @@ Before using a marked level in your trade plan, ask:
 8. Am I using the level before the trade, not after the trade?
 9. Does this level simplify the plan or clutter the chart?
 10. Can I review my decision around this level after the trade?
-
-## Review This In Your Journal
-
-After the trade, compare your marked levels to your actual decisions.
-
-Ask:
-
-- Did I draw the level before the trade or after the trade?
-- Did the level come from a clear reaction area?
-- Did I enter too close to resistance?
-- Did I ignore support breaking down?
-- Did I take profit before a planned resistance area or after it rejected?
-- Did I clutter the chart so much that my plan became unclear?
-- Which levels actually mattered during the session?
-- Which levels did I draw but never use?
-- Did I move a level after the fact to make the trade look better?
-- Did the level help me define risk?
-
-Over time, this kind of review can show whether your level drawing is helping your process or just adding noise.
 
 ## Key Takeaway
 

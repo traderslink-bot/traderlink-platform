@@ -50,7 +50,6 @@ For most intraday stock charts, LOD is reviewed inside the active regular sessio
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It follows [High of Day](/academy/high-of-day/) and helps traders review the opposite side of the intraday map: support pressure, breakdown attempts, failed breakdowns, and risk discipline.
 
-
 Goal: Learn how low of day acts as a current-session reference level and why it can create breakdown risk.
 
 LOD is useful context, but it does not guarantee a bounce or continuation lower.
@@ -196,23 +195,6 @@ Before using LOD in a plan or review, ask:
 10. Did the trader manage risk or react emotionally?
 
 This checklist keeps LOD review practical.
-
-## Review This In Your Journal
-
-Low-of-day trades are worth reviewing because they often expose risk discipline issues.
-
-Ask:
-
-- Did I know where LOD was before entering?
-- Did I enter near LOD with a plan, or did I buy because the stock looked cheap?
-- Did I respect the level when it failed?
-- Did I add to a losing trade below LOD?
-- Did price reclaim LOD after a flush?
-- Did I short a breakdown too late after the move was already extended?
-- Was the trade based on structure, or was it emotional?
-- Do I repeatedly hold long trades after LOD fails?
-
-Reviewing these questions helps traders understand whether they used LOD as structure or as an excuse to stay in a weak trade.
 
 ## Key Takeaway
 

@@ -99,12 +99,6 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Review This In Your Journal
-
-After a completed trade, write down whether the two resistance tests were clear before the decision. Note the first high, pullback area, second test, volume difference, neckline or support area, and whether price broke down, reclaimed, or trapped the idea.
-
-The goal is to learn whether the double top was a real structure or a label added before the pattern had enough evidence.
-
 ## Related Lessons
 
 - [Resistance Levels](/academy/resistance-levels/)

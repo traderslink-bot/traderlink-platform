@@ -99,12 +99,6 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Review This In Your Journal
-
-After a completed trade, write down when the move started to become extended. Note candle size, volume expansion, distance from VWAP or key support, liquidity, halt risk where relevant, and whether your decision was planned or emotional.
-
-The goal is to learn how you behave around fast extension, not to prove that every parabolic move must immediately reverse.
-
 ## Related Lessons
 
 - [Chasing Stocks](/academy/chasing-stocks/)

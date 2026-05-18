@@ -239,25 +239,6 @@ Before using a breakout in a trade plan, ask:
 
 This checklist helps turn a breakout from an emotional moment into a reviewable setup.
 
-## Review This In Your Journal
-
-After a breakout trade, review the setup and the execution separately.
-
-Ask:
-
-- What level broke?
-- Was the level actually important?
-- Did I define the level before the trade?
-- Did volume confirm the breakout?
-- Did price hold above the breakout level?
-- Was my entry planned or late?
-- Was I close enough to defined risk?
-- Did I exit or reduce if the breakout failed?
-- Did I chase because other traders were watching it?
-- Is failed-breakout chasing a repeated mistake?
-
-Breakout review should focus on whether the trader respected the level, the risk, and the plan.
-
 ## Key Takeaway
 
 A breakout is only the start of the review. The important questions are whether the level was clear, whether price held, whether volume supported the move, and whether the entry was planned or chased.

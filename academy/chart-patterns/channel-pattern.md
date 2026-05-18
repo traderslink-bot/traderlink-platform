@@ -99,12 +99,6 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Review This In Your Journal
-
-After a completed trade, write down whether price was respecting both sides of the channel before the decision. Note the upper boundary, lower boundary, trend direction, volume at each test, and whether the channel broke, reclaimed, or simply became wider chop.
-
-The goal is to learn whether the channel helped define risk or became a loose drawing used to justify a trade.
-
 ## Related Lessons
 
 - [Swing Highs And Swing Lows](/academy/swing-highs-and-swing-lows/)

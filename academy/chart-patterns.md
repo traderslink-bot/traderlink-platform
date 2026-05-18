@@ -124,12 +124,6 @@ Another mistake is ignoring volume and liquidity.
 
 A final mistake is holding after the pattern clearly fails.
 
-## Review This In Your Journal
-
-After a completed trade, write down whether the pattern was visible before the decision or only labeled afterward. Note the key level, volume behavior, entry timing, invalidation area, and whether price held, failed, reclaimed, or turned into chop.
-
-The goal is not to prove the pattern was right. The goal is to learn whether the decision was planned, late, or reactive.
-
 ## Key Takeaway
 
 Chart patterns are combinations of levels, trend, candles, volume, and failure behavior. The pattern name matters less than whether the structure was visible and reviewable before the trade.

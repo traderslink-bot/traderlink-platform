@@ -49,7 +49,6 @@ A level reclaim happens when price loses an important level, then moves back abo
 
 This lesson is part of the **Chart Reading And Market Structure** learning path.
 
-
 Goal: Learn how to review price winning back a key level without assuming every reclaim will continue.
 
 A reclaim can be useful context, but it does not guarantee continuation. Price still needs to hold the reclaimed level and prove that the move is not just another fakeout.
@@ -210,23 +209,6 @@ Before using a reclaim in a trade plan, ask:
 10. How will I review my response if the reclaim fails?
 
 This checklist helps separate a structured reclaim from a fast bounce that only looks good for a moment.
-
-## Review This In Your Journal
-
-Level reclaim trades are useful to review because they often involve fast decisions after a shakeout or failed breakdown.
-
-Ask:
-
-- Did I identify the level before price reclaimed it?
-- Did price truly hold the reclaim or only spike above it?
-- Was volume present on the reclaim?
-- Did I enter too late after the reclaim move was extended?
-- Did I respect the level if price lost it again?
-- Was nearby resistance too close for the trade to make sense?
-- Did the reclaim fit the broader market structure?
-- Did I treat the reclaim as confirmation, or did I react to the first bounce?
-
-Structured review notes can help show whether reclaims are a real part of your process or just another form of chasing.
 
 ## Key Takeaway
 

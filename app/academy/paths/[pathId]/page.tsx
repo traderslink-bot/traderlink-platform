@@ -3,16 +3,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
-  getAcademyPathHubIds,
   getAcademyPathHubPage,
+  getLaunchAcademyPathHubIds,
+  isAcademyPathHubLaunchReady,
 } from "@/src/lib/academy/academy-content";
 
 type PageProps = {
   params: Promise<{ pathId: string }>;
 };
 
+export const dynamicParams = false;
+
 export function generateStaticParams() {
-  return getAcademyPathHubIds().map((pathId) => ({ pathId }));
+  return getLaunchAcademyPathHubIds().map((pathId) => ({ pathId }));
 }
 
 export async function generateMetadata({
@@ -21,7 +24,7 @@ export async function generateMetadata({
   const { pathId } = await params;
   const page = getAcademyPathHubPage(pathId);
 
-  if (!page) {
+  if (!page || !isAcademyPathHubLaunchReady(pathId)) {
     return {
       title: "Academy Path",
     };
@@ -37,7 +40,7 @@ export default async function AcademyPathPage({ params }: PageProps) {
   const { pathId } = await params;
   const page = getAcademyPathHubPage(pathId);
 
-  if (!page) {
+  if (!page || !isAcademyPathHubLaunchReady(pathId)) {
     notFound();
   }
 

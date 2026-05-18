@@ -47,7 +47,6 @@ Gap fill trading is based on the idea that a stock may move back into a price ga
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on consolidation and previous-day levels, and it connects chart gaps with catalyst, volume, and trade review.
 
-
 Goal: Learn what a gap fill means, why traders watch gap areas, and why gaps do not have to close.
 
 A gap fill is not guaranteed. Some gaps fill quickly. Some take days or weeks. Some never fill. The important part is understanding why the gap happened, how price reacts near the gap area, and whether volume supports the move.
@@ -169,23 +168,6 @@ Before using a gap fill idea in a plan or review, ask:
 10. Did the trader assume the gap had to fill?
 
 This checklist keeps gap fill review tied to price behavior instead of assumption.
-
-## Review This In Your Journal
-
-Gap fill trades should be reviewed with clear chart context.
-
-Ask:
-
-- What caused the gap?
-- Was it a gap up or gap down?
-- Where were the gap top and gap bottom?
-- Did price hold the gap or move into it?
-- Did volume confirm the move?
-- Did I enter near a clear level or chase after the move started?
-- Did the trade have a defined invalidation area?
-- Did I respect the plan when the gap did not fill?
-
-A good gap fill review helps traders see whether they were trading a structured level or just assuming price had to return.
 
 ## Key Takeaway
 

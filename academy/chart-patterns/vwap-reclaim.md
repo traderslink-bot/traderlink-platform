@@ -95,12 +95,6 @@ Another mistake is entering a reclaim with no invalidation level.
 
 A final mistake is holding after VWAP is lost again even though the reclaim idea failed.
 
-## Review This In Your Journal
-
-After a completed trade, write down whether price was clearly below VWAP before reclaiming it. Note reclaim volume, whether VWAP held afterward, nearby resistance, entry timing, spread, slippage, and the point where the reclaim idea failed.
-
-The goal is to learn whether the reclaim was structured or whether you chased because price crossed a popular line.
-
 ## Related Lessons
 
 - [VWAP](/academy/vwap/)

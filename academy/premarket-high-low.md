@@ -50,7 +50,6 @@ Because extended-hours access and data visibility can vary by broker, venue, and
 
 This lesson is part of the **Chart Reading And Market Structure** learning path.
 
-
 Goal: Learn how premarket high and low can shape open-session decisions and review.
 
 Premarket levels can be useful, especially on active stocks with news, but they do not guarantee a breakout, breakdown, bounce, rejection, or continuation.
@@ -234,23 +233,6 @@ Before using PMH or PML in a plan or review, ask:
 10. Did the trader review the actual reaction instead of assuming the level would work?
 
 This checklist keeps premarket levels practical.
-
-## Review This In Your Journal
-
-Premarket level review is especially useful for day traders who trade the open.
-
-Ask:
-
-- Did I mark premarket high and low before the open?
-- Was my entry near one of those levels?
-- Did I chase a break of PMH without waiting for a hold?
-- Did I ignore a failed PMH breakout?
-- Did price lose PML, and did I respect that weakness?
-- Did price reclaim PML after a flush?
-- Was premarket volume strong enough for the level to matter?
-- Did the stock trade cleanly after the open, or was it too whippy?
-
-Reviewing these questions can show whether you are using premarket levels as structure or reacting emotionally to early movement.
 
 ## Key Takeaway
 

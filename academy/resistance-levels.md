@@ -255,25 +255,6 @@ Before using a resistance level in a trade plan, ask:
 
 This checklist is meant to slow down the read. Resistance is most useful when it helps a trader avoid emotional entries and review breakout quality.
 
-## Review This In Your Journal
-
-Resistance-level review can be revealing because many trader mistakes happen near the top of a move.
-
-After a trade, ask:
-
-- Did I enter directly under resistance?
-- Did I chase after price was already extended above resistance?
-- Did I identify the resistance zone before entering?
-- Did I take profit or reduce risk near a planned resistance area?
-- Did I ignore rejection near the level?
-- Did a breakout hold above the zone or fail back below it?
-- Did volume confirm the move or fade near resistance?
-- Did old resistance become support after the break?
-- Did I force the level after the trade to justify my decision?
-- Did my exit follow the plan or react to emotion?
-
-Over time, these questions can show whether resistance levels are improving your process or just becoming stories after the trade.
-
 ## Key Takeaway
 
 Resistance is a review area, not a promise that price will reject. The useful question is whether price stalled, broke cleanly, failed, or became extended near the zone.

@@ -99,12 +99,6 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Review This In Your Journal
-
-After a completed trade, write down whether the base was tight enough to matter before the breakout attempt. Note the range high, range low, volume inside the base, the breakout candle, entry location, and whether price held or returned inside the base.
-
-The goal is to learn whether the trade came from a structured base or from chasing the first candle that moved.
-
 ## Related Lessons
 
 - [Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/)

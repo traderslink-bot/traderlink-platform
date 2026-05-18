@@ -103,7 +103,7 @@ A final mistake is holding after the reclaimed level fails.
 
 A red-to-green move is not important because the candle changed color. It is important only if price reclaimed a meaningful reference and then behaved well around it.
 
-When reviewing this later, ask whether the transition improved structure or simply created urgency. If the trade came from scanner excitement, that is worth noting in your journal.
+When reviewing this later, ask whether the transition improved structure or simply created urgency. If the trade came from scanner excitement, that is worth reviewing later.
 
 ## Related Lessons
 

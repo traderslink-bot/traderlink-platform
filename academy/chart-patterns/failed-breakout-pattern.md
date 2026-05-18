@@ -99,12 +99,6 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Review This In Your Journal
-
-After a completed trade, write down where the breakout level was, how price moved above it, and what proved the breakout failed. Note volume, speed of rejection, whether the level was reclaimed again, and whether you reacted late after the failure was already obvious.
-
-The goal is to learn how failed breakouts behave in your own trades without assuming every failed move becomes a clean opposite-side opportunity.
-
 ## Related Lessons
 
 - [Breakout Trading](/academy/breakout-trading/)

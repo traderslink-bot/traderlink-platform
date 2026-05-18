@@ -99,12 +99,6 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Review This In Your Journal
-
-After a completed trade, write down whether the left shoulder, head, right shoulder, and neckline were visible before the decision. Note volume, neckline behavior, entry timing, invalidation, and whether price held above the neckline or failed back below it.
-
-The goal is to learn whether structure was improving or whether the pattern was named too early.
-
 ## Related Lessons
 
 - [Support Levels](/academy/support-levels/)

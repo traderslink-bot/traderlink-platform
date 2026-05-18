@@ -99,12 +99,6 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Review This In Your Journal
-
-After a completed trade, write down whether the range was clear before the decision. Note the range high, range low, number of tests, volume inside the range, attempted break direction, and whether price accepted outside the range or snapped back inside.
-
-The goal is to learn whether you traded a defined range or got chopped up inside a box that was too loose to matter.
-
 ## Related Lessons
 
 - [Consolidation](/academy/consolidation/)

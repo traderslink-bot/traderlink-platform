@@ -102,10 +102,6 @@ From there, the next candles tell the story. If price rejects and stays below th
 - Giving meaning to small-body candles in dead chop.
 - Forgetting that wide spreads can create misleading candle shapes.
 
-## Journal Connection
-
-If a doji affected a completed trade decision, the useful note is simple: where it formed, what volume looked like, what the next candle did, and whether the trader reacted to the candle name or waited for context.
-
 ## Key Takeaway
 
 You do not need to memorize every doji variation before continuing. The main idea is enough: a doji shows hesitation, and hesitation only matters when the location and follow-through matter.

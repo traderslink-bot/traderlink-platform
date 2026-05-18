@@ -48,7 +48,6 @@ Higher highs and higher lows describe rising market structure. Price pushes to a
 
 This lesson is part of the **Chart Reading And Market Structure** learning path.
 
-
 Goal: Learn how higher highs and higher lows describe uptrend structure without treating the trend as guaranteed.
 
 Higher-high and higher-low structure can help traders understand whether a chart is still making upward progress. It does not mean the move has to continue, and it should never be treated as a standalone trade signal.
@@ -228,23 +227,6 @@ Before using this structure in a plan or review, ask:
 10. Did the trader adjust when structure changed?
 
 This checklist keeps the structure tied to practical review.
-
-## Review This In Your Journal
-
-Higher-high and higher-low review can show whether a trade matched the actual chart structure or reacted to momentum excitement.
-
-Ask:
-
-- Did I identify the swing highs and swing lows before the trade?
-- Did I enter near a planned higher low or after price was already extended?
-- What higher low was my trade idea depending on?
-- Did I respect that level if it failed?
-- Did I confuse a small intraday pullback with a meaningful higher low?
-- Was price pushing into resistance when I entered?
-- Did volume fade while I kept assuming strength?
-- Did my exit follow the structure or my emotion?
-
-Over time, this review can show whether you trade better near planned pullbacks or worse when chasing late pushes.
 
 ## Key Takeaway
 

@@ -51,7 +51,6 @@ Key levels trading means using important price areas to plan, manage, and review
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on [Support Levels](/academy/support-levels/) and [Resistance Levels](/academy/resistance-levels/), then leads into breakout trading, breakdowns, reclaims, rejections, fakeouts, and intraday level review.
 
-
 Goal: Learn how to combine important levels into a usable map for planning, risk, and review.
 
 The point is not to predict every move. The point is to know where price is, what level matters next, and what you will review if price holds, breaks, rejects, or reclaims.
@@ -256,25 +255,6 @@ Before using key levels in a trade plan, ask:
 10. How will I review the trade around this level later?
 
 This checklist turns levels into a process instead of a chart-marking habit.
-
-## Review This In Your Journal
-
-Key levels are one of the most useful things to review after a trade.
-
-Ask:
-
-- Was my entry near a planned key level?
-- Did I enter in the middle of two levels with unclear risk?
-- Did I chase into resistance?
-- Did I hold after support failed?
-- Did I take profit near a planned level or exit randomly?
-- Did the trade work because the level held, or because momentum bailed me out?
-- Did I mark the level before the trade?
-- Which levels actually mattered during the trade?
-- Which levels were clutter?
-- Do I repeat the same mistake around certain types of levels?
-
-The goal is not to prove that every level was perfect. The goal is to learn whether your decisions around levels were planned, consistent, and risk-aware.
 
 ## Key Takeaway
 

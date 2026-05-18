@@ -176,23 +176,6 @@ Before using NHOD in a plan or review, ask:
 
 This checklist keeps NHOD review practical.
 
-## Review This In Your Journal
-
-New-high-of-day trades are useful for reviewing breakout discipline.
-
-Ask:
-
-- Did I enter before, during, or after the NHOD break?
-- Was the stock already extended when I entered?
-- Did the break happen with meaningful volume?
-- Did price hold above the old high?
-- Did I ignore a nearby resistance area?
-- Did I take the trade because of a plan or because of an alert?
-- Do I repeatedly lose money chasing new highs late?
-- Did I follow my plan when the break failed?
-
-After-trade review can help show whether NHOD trades are part of a structured setup or just reactive entries.
-
 ## Key Takeaway
 
 A new high of day is an event, not a plan. The review should ask whether the trader had context before the alert or reacted emotionally after it fired.

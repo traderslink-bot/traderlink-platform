@@ -99,12 +99,6 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Review This In Your Journal
-
-After a completed trade, write down whether the wedge was narrowing enough to matter. Note both boundaries, volume behavior, attempted break direction, nearby levels, and whether price followed through, failed, or stayed choppy.
-
-The goal is to learn whether compression gave you usable structure or whether you drew lines around noise.
-
 ## Related Lessons
 
 - [Compression](/academy/compression/)

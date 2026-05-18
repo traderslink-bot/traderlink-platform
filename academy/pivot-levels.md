@@ -49,7 +49,6 @@ Pivot levels are price areas where a stock has clearly turned, paused, rejected,
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It builds on support, resistance, swing points, and trend structure, then leads into objective session levels like [Previous Day High Low](/academy/previous-day-high-low/) and [Premarket High Low](/academy/premarket-high-low/).
 
-
 Goal: Learn how pivot areas can help traders review turning points without covering the chart in lines.
 
 A pivot level is not a prediction. It is a place on the chart where price behavior deserves attention and where a trade plan may need clearer risk, confirmation, or review.
@@ -230,23 +229,6 @@ Before using a pivot in a trade plan or after-trade review, ask:
 10. Did the trader move the pivot after the trade?
 
 This checklist keeps pivot levels practical.
-
-## Review This In Your Journal
-
-Pivot levels are useful for reviewing trade location and trade management.
-
-Ask:
-
-- Did I identify the pivot before entering?
-- Was the trade taken near a meaningful turn or in the middle of a move?
-- Did price hold, break, reclaim, or reject the pivot?
-- Did I chase after price was already extended away from the pivot?
-- Did the pivot fail, and did I respond according to plan?
-- Did I treat a small candle pause as a major level?
-- Did I manage risk differently once the pivot changed?
-- Did I use the pivot as a plan, or as a story after the trade?
-
-This kind of review can show whether you are using levels as a process or only as a label.
 
 ## Key Takeaway
 

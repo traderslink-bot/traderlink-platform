@@ -50,7 +50,6 @@ Price rejection happens when a stock pushes into a level, fails to hold there, a
 
 This lesson is part of the **Chart Reading And Market Structure** learning path.
 
-
 Goal: Learn how to read price rejection at meaningful areas without treating every wick as a signal.
 
 A rejection can be useful information, but it does not guarantee a full reversal. It simply shows that price failed to hold a certain area at that moment.
@@ -218,23 +217,6 @@ Before using rejection in a trade review, ask:
 10. How will this rejection be tagged in review notes?
 
 This checklist helps avoid turning every wick into a story.
-
-## Review This In Your Journal
-
-Price rejection review can help traders study entries, exits, and failed breakout behavior.
-
-Ask:
-
-- What level rejected price?
-- Did I know that level before the trade?
-- Did I enter before or after the rejection candle?
-- Did the rejection invalidate my trade idea?
-- Did I exit according to plan or freeze?
-- Did price later reclaim the rejected level?
-- Do I often enter into rejection near resistance?
-- Do I ignore rejection when I am already in the trade?
-
-Structured review notes can help reveal whether rejection is a real part of your review process or something you only notice after a loss.
 
 ## Key Takeaway
 

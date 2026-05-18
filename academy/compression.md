@@ -168,22 +168,6 @@ Before using compression in a trade plan or review, ask:
 
 This checklist keeps compression review practical.
 
-## Review This In Your Journal
-
-Compression trades are worth reviewing because they test patience and timing.
-
-Ask:
-
-- Was price actually compressing, or was it just choppy?
-- Did I identify the compression range before entering?
-- Did I enter before the break, on the break, or after the move was extended?
-- Did volume confirm the expansion?
-- Did price hold the breakout or breakdown level?
-- Did I respect the range when it failed?
-- Was this a planned trade or an impatient guess?
-
-After-trade review can help show whether compression improves entry quality or becomes another reason to anticipate moves too early.
-
 ## Key Takeaway
 
 Compression is tightening price action. It can make risk easier to define, but it does not predict which direction expansion will happen.

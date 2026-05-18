@@ -222,23 +222,6 @@ Before using a level breakout in a trade plan, ask:
 
 This checklist helps keep the focus on the level and the trader's response.
 
-## Review This In Your Journal
-
-Level breakout review can show whether a trader is patient or reactive.
-
-Ask:
-
-- Did I identify the breakout level before the trade?
-- Did I enter before the break, on the break, on the retest, or after the move was extended?
-- Did volume support the breakout?
-- Did price hold the level after breaking?
-- Did I ignore rejection or failed follow-through?
-- Did I take profit according to plan or hold through failure?
-- Did old resistance become support?
-- Do I often chase breakouts without waiting for structure?
-
-The goal is to understand whether the breakout was planned and reviewable, not just whether it made or lost money.
-
 ## Key Takeaway
 
 A level breakout is narrower than a broad breakout idea. The review follows one marked level and asks whether price cleared it, held it, retested it, or failed back below it.

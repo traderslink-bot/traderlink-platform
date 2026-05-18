@@ -103,7 +103,7 @@ A final mistake is holding after the engulfing idea fails.
 
 An engulfing candle can look powerful, but a large candle can also create poor entry location. Before moving on, make sure you can separate the shift in control from the risk of chasing after the move has already stretched.
 
-In a journal, an engulfing candle is useful only if it explains context: where it formed, what it overtook, how volume behaved, and whether the next candles held the shift.
+When reviewing a completed trade, an engulfing candle is useful only if it explains context: where it formed, what it overtook, how volume behaved, and whether the next candles held the shift.
 
 ## Related Lessons
 

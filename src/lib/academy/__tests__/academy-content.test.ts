@@ -10,6 +10,9 @@ import {
   getAcademyLessonStaticParams,
   getAcademyPathHubIds,
   getAcademyPathHubPage,
+  getLaunchAcademyCourseIds,
+  getLaunchAcademyLessonStaticParams,
+  getLaunchAcademyPathHubIds,
 } from "../academy-content";
 
 describe("academy content loader", () => {
@@ -74,6 +77,20 @@ describe("academy content loader", () => {
     expect(params).toContain("support-and-resistance");
     expect(params).toContain("sec-filings/form-8-k");
     expect(params).toContain("chart-reading-path");
+  });
+
+  it("limits launch static params to the open Chart Reading course", () => {
+    const params = getLaunchAcademyLessonStaticParams().map(({ slug }) =>
+      slug.join("/"),
+    );
+
+    expect(getLaunchAcademyCourseIds()).toEqual([
+      "chart-reading-market-structure",
+    ]);
+    expect(getLaunchAcademyPathHubIds()).toEqual([]);
+    expect(params).toContain("support-and-resistance");
+    expect(params).toContain("candlestick-patterns/doji");
+    expect(params).not.toContain("sec-filings/form-8-k");
   });
 
   it("builds path hub pages from course and lesson steps", () => {

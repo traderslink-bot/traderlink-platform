@@ -3,8 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
-  getAcademyCourseIds,
   getAcademyCoursePage,
+  getLaunchAcademyCourseIds,
+  isAcademyCourseLaunchReady,
 } from "@/src/lib/academy/academy-content";
 import {
   AcademyCourseProgressSummary,
@@ -15,8 +16,10 @@ type PageProps = {
   params: Promise<{ courseId: string }>;
 };
 
+export const dynamicParams = false;
+
 export function generateStaticParams() {
-  return getAcademyCourseIds().map((courseId) => ({ courseId }));
+  return getLaunchAcademyCourseIds().map((courseId) => ({ courseId }));
 }
 
 export async function generateMetadata({
@@ -25,7 +28,7 @@ export async function generateMetadata({
   const { courseId } = await params;
   const page = getAcademyCoursePage(courseId);
 
-  if (!page) {
+  if (!page || !isAcademyCourseLaunchReady(courseId)) {
     return {
       title: "Academy Course",
     };
@@ -41,11 +44,11 @@ export default async function AcademyCoursePage({ params }: PageProps) {
   const { courseId } = await params;
   const page = getAcademyCoursePage(courseId);
 
-  if (!page) {
+  if (!page || !isAcademyCourseLaunchReady(courseId)) {
     notFound();
   }
 
-  const { course, modules, previousCourse, nextCourse, bridge, visual } = page;
+  const { course, modules, previousCourse, nextCourse } = page;
   const requiredLessonSlugs = modules.flatMap(({ lessons }) =>
     lessons
       .filter((lesson) => lesson.required_for_core_completion)
@@ -98,30 +101,6 @@ export default async function AcademyCoursePage({ params }: PageProps) {
                 {course.progress_model}
               </p>
             </div>
-
-            {bridge ? (
-              <div className="rounded-lg border border-white/10 bg-slate-900/72 p-5">
-                <h2 className="text-lg font-semibold tracking-normal">
-                  Review Connection
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-300">
-                  {bridge.primary_surface} can support this course later by
-                  helping traders review completed decisions and patterns. This
-                  stays educational and review-focused.
-                </p>
-              </div>
-            ) : null}
-
-            {visual?.launch_polish_needed ? (
-              <div className="rounded-lg border border-amber-200/20 bg-amber-400/10 p-5">
-                <h2 className="text-lg font-semibold tracking-normal">
-                  Visual Polish
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-300">
-                  {visual.future_visual_need}
-                </p>
-              </div>
-            ) : null}
           </aside>
         </section>
 
@@ -155,9 +134,9 @@ export default async function AcademyCoursePage({ params }: PageProps) {
                         {lesson.display_title}
                       </span>
                       <span className="mt-1 block text-sm text-slate-400">
-                        {lesson.membership_type === "canonical"
-                          ? "Core lesson"
-                          : "Cross-listed lesson"}
+                        {lesson.required_for_core_completion
+                          ? "Required path lesson"
+                          : "Optional reference lesson"}
                       </span>
                     </span>
                     <span className="flex items-center justify-start sm:justify-end">
@@ -175,26 +154,22 @@ export default async function AcademyCoursePage({ params }: PageProps) {
 
         <nav className="mt-10 grid gap-4 sm:grid-cols-2">
           {previousCourse ? (
-            <Link
-              href={previousCourse.course_slug}
-              className="rounded-lg border border-white/10 bg-slate-900/70 p-5"
-            >
+            <div className="rounded-lg border border-white/10 bg-slate-900/70 p-5">
               <p className="text-sm text-slate-400">Previous course</p>
-              <p className="mt-2 font-semibold text-cyan-100">
+              <p className="mt-2 font-semibold text-slate-100">
                 {previousCourse.course_title}
               </p>
-            </Link>
+              <p className="mt-2 text-sm text-slate-500">Coming soon</p>
+            </div>
           ) : null}
           {nextCourse ? (
-            <Link
-              href={nextCourse.course_slug}
-              className="rounded-lg border border-white/10 bg-slate-900/70 p-5 sm:text-right"
-            >
+            <div className="rounded-lg border border-white/10 bg-slate-900/70 p-5 sm:text-right">
               <p className="text-sm text-slate-400">Next course</p>
-              <p className="mt-2 font-semibold text-cyan-100">
+              <p className="mt-2 font-semibold text-slate-100">
                 {nextCourse.course_title}
               </p>
-            </Link>
+              <p className="mt-2 text-sm text-slate-500">Coming soon</p>
+            </div>
           ) : null}
         </nav>
       </div>

@@ -99,12 +99,6 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Review This In Your Journal
-
-After a completed trade, write down whether the wedge was narrowing in a meaningful way or whether the lines were forced. Note the lower highs, lower lows, volume trend, nearby support, attempted reclaim area, and where the wedge idea failed.
-
-The goal is to learn whether downside pressure was actually slowing or whether the pattern label made the trade feel safer than it was.
-
 ## Related Lessons
 
 - [Wedge Pattern](/academy/chart-patterns/wedge-pattern/)

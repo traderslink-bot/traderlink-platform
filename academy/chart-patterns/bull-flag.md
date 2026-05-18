@@ -122,12 +122,6 @@ Another mistake is using volume as proof instead of context.
 
 A final mistake is holding after the flag loses its support area.
 
-## Review This In Your Journal
-
-After a completed trade, write down whether the flag was visible before the decision or only labeled afterward. Note the first move, pullback quality, volume change, support area, resistance overhead, entry timing, and the exact point where the flag stopped being valid.
-
-The goal is not to prove the bull flag was right. The goal is to learn whether the decision was planned, late, or reactive.
-
 ## Related Lessons
 
 - [Chart Patterns](/academy/chart-patterns/)

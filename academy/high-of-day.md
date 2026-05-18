@@ -196,23 +196,6 @@ Before using HOD in a plan or review, ask:
 
 This checklist keeps HOD review practical.
 
-## Review This In Your Journal
-
-High-of-day trades are worth reviewing because they often reveal chasing, FOMO, and breakout discipline issues.
-
-Ask:
-
-- Did I enter before the HOD break, on the break, or after the stock was already extended?
-- Was there a base or consolidation below HOD?
-- Did volume support the breakout attempt?
-- Did price hold above HOD after breaking it?
-- Did I ignore nearby resistance above HOD?
-- Did I take profit into strength or hold through a failed breakout?
-- Was this a planned trade or a reaction to a scanner alert?
-- Do my worst trades happen after late HOD alerts?
-
-Reviewing these details helps separate strong execution from emotional entry timing.
-
 ## Key Takeaway
 
 High of day is a live session reference level. It is useful for reviewing breakout attempts, failed pushes, and chase risk, not for assuming continuation.

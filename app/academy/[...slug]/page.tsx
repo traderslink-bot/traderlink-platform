@@ -3,10 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
-  getAcademyAppBridgeForLesson,
+  type AcademyLessonMembership,
+  type AcademyModule,
   getAcademyCoursePage,
   getAcademyLessonBySegments,
-  getAcademyLessonStaticParams,
+  getLaunchAcademyLessonStaticParams,
+  isAcademyLessonLaunchReady,
 } from "@/src/lib/academy/academy-content";
 import { AcademyMarkdown } from "@/src/lib/academy/academy-markdown";
 import { AcademyLessonCompleteControl } from "@/src/lib/academy/academy-progress";
@@ -15,8 +17,10 @@ type PageProps = {
   params: Promise<{ slug: string[] }>;
 };
 
+export const dynamicParams = false;
+
 export function generateStaticParams() {
-  return getAcademyLessonStaticParams();
+  return getLaunchAcademyLessonStaticParams();
 }
 
 export async function generateMetadata({
@@ -25,7 +29,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const lesson = getAcademyLessonBySegments(slug);
 
-  if (!lesson) {
+  if (!lesson || !isAcademyLessonLaunchReady(lesson)) {
     return {
       title: "Academy Lesson",
     };
@@ -41,18 +45,21 @@ export default async function AcademyLessonPage({ params }: PageProps) {
   const { slug } = await params;
   const lesson = getAcademyLessonBySegments(slug);
 
-  if (!lesson) {
+  if (!lesson || !isAcademyLessonLaunchReady(lesson)) {
     notFound();
   }
 
-  const bridge = getAcademyAppBridgeForLesson(lesson);
   const primaryContext = lesson.contexts[0] ?? null;
   const primaryCoursePage = primaryContext
     ? getAcademyCoursePage(primaryContext.courseId)
     : null;
-  const courseLessons = primaryCoursePage
-    ? primaryCoursePage.modules.flatMap(({ lessons }) => lessons)
-    : [];
+  const courseModules = primaryCoursePage?.modules ?? [];
+  const coreModules = courseModules.filter(
+    ({ module }) => module.module_type !== "reference_library",
+  );
+  const referenceModules = courseModules.filter(
+    ({ module }) => module.module_type === "reference_library",
+  );
   const learningPathSection = splitLearningPathSection(lesson.body);
 
   return (
@@ -181,54 +188,83 @@ export default async function AcademyLessonPage({ params }: PageProps) {
             </div>
           ) : null}
 
-          {courseLessons.length > 0 ? (
+          {courseModules.length > 0 ? (
             <div className="rounded-lg border border-white/10 bg-slate-900/72 p-5">
               <h2 className="text-lg font-semibold tracking-normal">
-                Course Lessons
+                Course Path
               </h2>
-              <div className="mt-3 max-h-[26rem] space-y-2 overflow-y-auto pr-1 text-sm">
-                {courseLessons.map((courseLesson) => {
-                  const isCurrent = courseLesson.lesson_slug === lesson.slug;
-
-                  return (
-                    <Link
-                      key={`${courseLesson.display_course_id}-${courseLesson.lesson_slug}-${courseLesson.display_order}`}
-                      href={courseLesson.lesson_slug}
-                      className={`block rounded border px-3 py-2 transition ${
-                        isCurrent
-                          ? "border-cyan-200/40 bg-cyan-300/10 text-cyan-50"
-                          : "border-white/10 text-slate-300 hover:border-cyan-200/30"
-                      }`}
-                    >
-                      <span className="block text-xs text-slate-500">
-                        Lesson {courseLesson.display_order}
-                      </span>
-                      <span className="mt-1 block font-medium">
-                        {courseLesson.display_title}
-                      </span>
-                    </Link>
-                  );
-                })}
+              <p className="mt-2 text-sm leading-6 text-slate-400">
+                Follow the required path first. The reference libraries are
+                optional lookups when a candle or pattern comes up.
+              </p>
+              <div className="mt-4 max-h-[30rem] space-y-5 overflow-y-auto pr-1 text-sm">
+                <CourseLessonGroups
+                  currentSlug={lesson.slug}
+                  groups={coreModules}
+                  label="Required path"
+                />
+                <CourseLessonGroups
+                  currentSlug={lesson.slug}
+                  groups={referenceModules}
+                  label="Reference library"
+                />
               </div>
             </div>
           ) : null}
-
-          {bridge ? (
-            <div className="rounded-lg border border-white/10 bg-slate-900/72 p-5">
-              <h2 className="text-lg font-semibold tracking-normal">
-                Trader Intelligence Bridge
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-300">
-                {bridge.primary_surface} can connect this concept to completed
-                trade review later. The Academy keeps the lesson educational,
-                with no prediction, signal, or guaranteed outcome claim.
-              </p>
-            </div>
-          ) : null}
-
         </aside>
       </div>
     </main>
+  );
+}
+
+function CourseLessonGroups({
+  currentSlug,
+  groups,
+  label,
+}: {
+  currentSlug: string;
+  groups: Array<{ module: AcademyModule; lessons: AcademyLessonMembership[] }>;
+  label: string;
+}) {
+  if (groups.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+        {label}
+      </p>
+      {groups.map(({ module, lessons }) => (
+        <div key={module.module_id} className="space-y-2">
+          <p className="text-xs font-medium text-cyan-200">
+            {module.module_title}
+          </p>
+          {lessons.map((courseLesson) => {
+            const isCurrent = courseLesson.lesson_slug === currentSlug;
+
+            return (
+              <Link
+                key={`${courseLesson.display_course_id}-${courseLesson.lesson_slug}-${courseLesson.display_order}`}
+                href={courseLesson.lesson_slug}
+                className={`block rounded border px-3 py-2 transition ${
+                  isCurrent
+                    ? "border-cyan-200/40 bg-cyan-300/10 text-cyan-50"
+                    : "border-white/10 text-slate-300 hover:border-cyan-200/30"
+                }`}
+              >
+                <span className="block text-xs text-slate-500">
+                  Lesson {courseLesson.display_order}
+                </span>
+                <span className="mt-1 block font-medium">
+                  {courseLesson.display_title}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      ))}
+    </div>
   );
 }
 

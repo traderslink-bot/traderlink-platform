@@ -99,12 +99,6 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Review This In Your Journal
-
-After a completed trade, write down whether the rising wedge was actually narrowing or whether the lines were forced. Note higher highs, higher lows, volume changes, nearby resistance, breakdown or failed-breakdown behavior, and your invalidation point.
-
-The goal is to learn whether upside progress was weakening or whether the pattern label made you predict a reversal too early.
-
 ## Related Lessons
 
 - [Wedge Pattern](/academy/chart-patterns/wedge-pattern/)

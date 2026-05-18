@@ -169,23 +169,6 @@ Before using consolidation in a plan or review, ask:
 
 This checklist keeps consolidation review tied to the actual range.
 
-## Review This In Your Journal
-
-Consolidation trades are useful to review because they show whether the trader waited for structure or forced an entry.
-
-Ask:
-
-- Was there a clear consolidation range before I entered?
-- Did I enter near support, near resistance, or in the middle?
-- Did volume support the breakout or breakdown?
-- Did I wait for confirmation, or did I guess the direction?
-- Did price hold the range after breaking out?
-- Did I respect the range low when it failed?
-- Was the trade planned around structure or boredom?
-- Do I overtrade while price is still inside the range?
-
-After-trade review can help show whether consolidation trades are improving timing or just giving more reasons to overtrade.
-
 ## Key Takeaway
 
 Consolidation is sideways digestion. A range can break, fail, rotate, or stay choppy, so the review should focus on structure and patience.

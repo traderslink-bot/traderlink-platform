@@ -103,7 +103,7 @@ A final mistake is using volume to justify a late entry.
 
 Volume is not a stamp of approval. Before moving on, make sure you can compare volume with candle close, level location, time of day, and follow-through.
 
-This is one of the candle lessons where journaling can be useful. If a trade was based on a high-volume candle, review whether the volume supported clean action or whether it marked exhaustion, rejection, or a late entry.
+If a trade was based on a high-volume candle, review whether the volume supported clean action or whether it marked exhaustion, rejection, or a late entry.
 
 ## Related Lessons
 

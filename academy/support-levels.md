@@ -252,26 +252,6 @@ Before using a support level in a trade plan, ask:
 
 This checklist is meant to slow down the read. Support is most useful when it helps a trader define risk before emotion takes over.
 
-## Review This In Your Journal
-
-Support-level review is important because many risk-management mistakes happen around broken levels.
-
-After a trade, ask:
-
-- Did I enter near a planned support area?
-- Did I draw the support level before the trade?
-- Did support come from a clear reaction area?
-- Did I know where the support idea was invalid?
-- Did I respect the level when it failed?
-- Did I average down after support broke?
-- Did I mistake a small pause for real support?
-- Did lower highs warn that support was weakening?
-- Did volume confirm the reaction, break, or reclaim?
-- Did I exit because the level failed or because I panicked before my plan played out?
-- Did old support later act as resistance?
-
-Over time, these questions can show whether support levels are improving your process or simply giving you a story after the fact.
-
 ## Key Takeaway
 
 Support is a review area, not a promise that price will bounce. The useful question is whether price respected, lost, reclaimed, or ignored the support zone.

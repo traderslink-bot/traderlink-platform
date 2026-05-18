@@ -47,7 +47,6 @@ Swing highs and swing lows are turning points on a chart. Traders use them to un
 
 This lesson is part of the **Chart Reading And Market Structure** learning path.
 
-
 Goal: Learn how swing highs and swing lows define the basic structure of a chart.
 
 Swing points are simple ideas, but they can tell you a lot about how a trade is developing. The important part is to mark the obvious turns, not every tiny candle wiggle.
@@ -195,22 +194,6 @@ Before using swing points in a trade plan or review, ask:
 10. Did the swing structure simplify or clutter the review?
 
 This checklist keeps swing analysis practical.
-
-## Review This In Your Journal
-
-Swing highs and swing lows are useful for reviewing whether your trade matched the actual structure.
-
-Ask:
-
-- Did I enter while structure was improving or weakening?
-- Did I chase after multiple extended swing highs?
-- Did I ignore lower highs forming before support broke?
-- Did I enter near a higher low or in the middle of nowhere?
-- Did I exit because structure changed or because one candle shook me out?
-- Did I add after structure broke down?
-- Did the trade idea depend on a specific swing low holding?
-
-This type of review helps separate a planned structure-based trade from a reaction to short-term movement.
 
 ## Key Takeaway
 

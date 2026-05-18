@@ -103,7 +103,7 @@ A final mistake is ignoring the next candle.
 
 A pin bar is a rejection candle, but the rejection only matters if the location matters. Before moving on, make sure you can identify the rejected area, the close location, and whether the wick was clean or caused by thin trading.
 
-In a journal, a pin bar should explain rejection quality. It should not be used as a shortcut for "I saw a wick, so I took a trade."
+When reviewing a completed trade, a pin bar should explain rejection quality. It should not be used as a shortcut for "I saw a wick, so I took a trade."
 
 ## Related Lessons
 

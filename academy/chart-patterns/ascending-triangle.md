@@ -99,12 +99,6 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Review This In Your Journal
-
-After a completed trade, write down whether the higher lows and repeated resistance tests were visible before the decision. Note the resistance area, the quality of the lows, volume into the level, nearby overhead supply, and where the triangle stopped being valid.
-
-The goal is to learn whether pressure was actually building or whether you were forcing a bullish label onto ordinary chop.
-
 ## Related Lessons
 
 - [Bull Flag Pattern](/academy/chart-patterns/bull-flag/)

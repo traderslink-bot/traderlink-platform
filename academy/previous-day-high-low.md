@@ -50,7 +50,6 @@ Check your chart settings before relying on them. Some platforms can include or 
 
 This lesson is part of the **Chart Reading And Market Structure** learning path.
 
-
 Goal: Learn how previous day high and low act as session reference levels for planning and review.
 
 Previous day levels can help traders compare today's price action against yesterday's range. They do not guarantee a breakout, breakdown, bounce, rejection, or continuation.
@@ -231,23 +230,6 @@ Before using PDH or PDL in a plan or review, ask:
 10. Did I review the actual reaction instead of assuming what the level should do?
 
 This checklist keeps previous day levels practical and reviewable.
-
-## Review This In Your Journal
-
-Previous day levels are useful for review because they can be marked objectively before the session.
-
-Ask:
-
-- Did I know the previous day high and low before trading?
-- Did I enter near PDH, near PDL, or far away from both?
-- Did I chase a PDH break after price was already extended?
-- Did I respect a failed PDH breakout?
-- Did price lose PDL, and did it reclaim quickly?
-- Did I ignore a cleaner level nearby, such as premarket high or support?
-- Did the level actually matter during the session?
-- Was my decision based on the level reaction or on excitement around the move?
-
-This helps turn level trading from a vague chart idea into a reviewable process.
 
 ## Key Takeaway
 

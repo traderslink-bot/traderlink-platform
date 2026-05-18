@@ -48,7 +48,6 @@ Breakdown trading means watching price move below an important support level, ra
 
 This lesson is part of the **Chart Reading And Market Structure** learning path. It mirrors [Breakout Trading](/academy/breakout-trading/) on the downside and connects support levels, low of day, lower-high/lower-low structure, failed breakdowns, and reclaim review.
 
-
 Goal: Learn how to read breakdown quality without chasing every break of support.
 
 A breakdown is not automatically a good trade. The quality depends on level quality, volume, liquidity, spread, extension, nearby support, and whether the trader had a plan before the level broke.
@@ -189,25 +188,6 @@ Before using a breakdown in a trade plan or review, ask:
 10. How will I review the trade if the breakdown reclaims?
 
 This checklist helps turn a breakdown from an emotional moment into a reviewable setup.
-
-## Review This In Your Journal
-
-After a breakdown trade or breakdown-related exit, review the setup and the execution separately.
-
-Ask:
-
-- What level broke?
-- Was the level actually important?
-- Did I define the level before the trade?
-- Did volume confirm the breakdown?
-- Did price hold below the breakdown level?
-- Was my entry or exit planned?
-- Was I close enough to defined risk?
-- Did I adapt if the breakdown reclaimed?
-- Did I buy weakness because the stock looked cheap?
-- Is failed-breakdown behavior a repeated mistake?
-
-Breakdown review should focus on whether the trader respected the level, the risk, and the plan.
 
 ## Key Takeaway
 

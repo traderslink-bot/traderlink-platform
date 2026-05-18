@@ -207,23 +207,6 @@ Before using break of structure in a trade plan or review, ask:
 
 This checklist keeps structure tied to practical review.
 
-## Review This In Your Journal
-
-Break-of-structure review helps traders understand whether they adapted when the chart changed.
-
-Ask:
-
-- What structure was my trade based on?
-- What level would show that structure was changing?
-- Did that level break during the trade?
-- Did I respond according to my plan?
-- Did I keep holding after structure failed?
-- Did I exit too early before structure actually broke?
-- Did the break hold, or did price reclaim quickly?
-- Did I judge the trade on the correct timeframe?
-
-The goal is not to find a perfect label. The goal is to understand whether the trade idea was still valid after the chart changed.
-
 ## Key Takeaway
 
 A break of structure matters when it changes the idea that was supporting the trade. The best review asks whether the trader adapted after structure changed.

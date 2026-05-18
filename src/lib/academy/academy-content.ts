@@ -199,6 +199,7 @@ const pathHubs = (pathHubsData as PathHubsJson).path_hubs;
 const appBridges = (appBridgesData as AppBridgesJson).app_bridges;
 const visualOverrides = (visualOverridesData as VisualOverridesJson)
   .visual_overrides;
+const launchCourseIds = new Set(["chart-reading-market-structure"]);
 
 export function getAcademyCourses(): AcademyCourse[] {
   return courses
@@ -208,6 +209,16 @@ export function getAcademyCourses(): AcademyCourse[] {
 
 export function getAcademyCourseIds(): string[] {
   return getAcademyCourses().map((course) => course.course_id);
+}
+
+export function getLaunchAcademyCourseIds(): string[] {
+  return getAcademyCourseIds().filter((courseId) =>
+    launchCourseIds.has(courseId),
+  );
+}
+
+export function isAcademyCourseLaunchReady(courseId: string): boolean {
+  return launchCourseIds.has(courseId);
 }
 
 export function getAcademyCoursePage(
@@ -265,6 +276,14 @@ export function getAcademyPathHubIds(): string[] {
   return getAcademyPathHubs().map((hub) => hub.path_id);
 }
 
+export function getLaunchAcademyPathHubIds(): string[] {
+  return [];
+}
+
+export function isAcademyPathHubLaunchReady(pathId: string): boolean {
+  return getLaunchAcademyPathHubIds().includes(pathId);
+}
+
 export function getAcademyPathHubPage(
   pathId: string,
 ): AcademyPathHubPage | null {
@@ -307,6 +326,26 @@ export function getAcademyLessonStaticParams(): Array<{ slug: string[] }> {
   return [...allSlugs].map((slug) => ({
     slug: slugToSegments(slug),
   }));
+}
+
+export function getLaunchAcademyLessonStaticParams(): Array<{ slug: string[] }> {
+  const launchSlugs = new Set<string>();
+
+  for (const membership of memberships) {
+    if (launchCourseIds.has(membership.display_course_id)) {
+      launchSlugs.add(normalizeAcademySlug(membership.lesson_slug));
+    }
+  }
+
+  return [...launchSlugs].map((slug) => ({
+    slug: slugToSegments(slug),
+  }));
+}
+
+export function isAcademyLessonLaunchReady(lesson: AcademyLesson): boolean {
+  return lesson.memberships.some((membership) =>
+    launchCourseIds.has(membership.display_course_id),
+  );
 }
 
 export function getAcademyLessonBySegments(
