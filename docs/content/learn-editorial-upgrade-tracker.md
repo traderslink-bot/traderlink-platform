@@ -627,14 +627,15 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-18 | Pass 6 restrained app bridge audit | Completed Pass 6 App Bridge Audit for all current Academy course groups and Academy Navigation Path Hubs. | Passed. Created `docs/content/traderslink-academy-app-bridge-audit-pass6.md`, defined approved app surface vocabulary, bridge strength standards, course-level bridge placement, lesson/module placement guidance, and a hard-link deferral rule until product routes and feature claims are stable. No lesson files or production website files were changed. | `f593bf28` |
 | 2026-05-18 | Academy production content model planning | Planned the production Academy content model for courses, modules, membership, cross-listed lesson navigation, progress tracking, path hubs, and route-safe app bridge data. | Passed. Created `docs/content/traderslink-academy-production-content-model-plan.md`, defined canonical markdown versus course membership data, recommended fields for courses/modules/lesson memberships/path hubs/app bridge metadata, slug-based completion, context-specific navigation, route-safety rules, and future registry file options. No production website files were changed. | `959499bb` |
 | 2026-05-18 | Academy content registry draft | Created the Academy content registry draft from the existing course index. | Passed. Created `docs/content/traderslink-academy-content-registry-draft.md`, mapping courses, modules, displayed lesson membership, canonical and cross-listed ownership, progress behavior, path hub treatment, route-safe app bridge candidates, visual readiness flags, and registry QA checks. No production website files were changed. | `fd3bf4ce` |
+| 2026-05-18 | Academy registry format decision | Chose the recommended future registry location and format. | Passed. Created `docs/content/traderslink-academy-registry-format-decision.md`, recommending author-editable JSON under `academy/_data/` as the first registry source, explaining why `academy/content/`, root `content/academy/`, and `src/content/academy/` are not the best first source-of-truth locations, and preserving `src/content/academy/` as a possible typed adapter layer later. No production website files were changed. | `pending_commit` |
 
 ## Next Recommended Action
 
-Continue from the completed Academy content registry draft planning pass:
+Continue from the completed Academy registry format decision pass:
 
-1. Decide the future Academy registry format: author-editable JSON/YAML under `academy/_data/`, TypeScript under `src/content/academy/`, or a CMS-backed model.
-2. Create a migration checklist from `docs/content/traderslink-academy-content-registry-draft.md` to the chosen format.
-3. Keep this as planning unless the user explicitly asks for production routes, components, schemas, or generated app registries.
+1. Create a migration checklist from `docs/content/traderslink-academy-content-registry-draft.md` to future `academy/_data/*.json` files.
+2. Include validation checks for lesson slugs, image references, course membership rows, cross-listed ownership, progress rules, and route-safe app bridge fields.
+3. Keep this as planning unless the user explicitly asks to create machine-readable registry files or production routes, components, schemas, or app imports.
 4. Keep hard app links disabled until product route keys, feature names, and claims are stable.
 
 ## Important Reminder

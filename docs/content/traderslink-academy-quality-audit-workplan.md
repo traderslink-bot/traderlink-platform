@@ -211,7 +211,7 @@ Completed before this workplan:
 
 ## Recommended Next Run
 
-Continue with **Academy registry implementation-format decision**.
+Continue with **Academy registry migration checklist planning**.
 
 Reason:
 
@@ -233,12 +233,14 @@ Reason:
 - Pass 6 App Bridge Audit is complete for all current Academy course groups and Academy Navigation Path Hubs in `docs/content/traderslink-academy-app-bridge-audit-pass6.md`.
 - Academy production content model planning is complete in `docs/content/traderslink-academy-production-content-model-plan.md`.
 - Academy content registry draft planning is complete in `docs/content/traderslink-academy-content-registry-draft.md`.
-- The next useful planning pass is deciding the future registry format before any production website implementation.
+- Academy registry implementation-format decision is complete in `docs/content/traderslink-academy-registry-format-decision.md`.
+- The recommended first registry source is author-editable JSON under `academy/_data/`, not `academy/content/`, root `content/academy/`, or `src/content/academy/`.
+- The next useful planning pass is a migration checklist from the markdown registry draft into future `academy/_data/*.json` files before any production website implementation.
 
 Output should include:
 
-- A recommendation for whether the future registry should be author-editable JSON/YAML under `academy/_data/`, TypeScript under `src/content/academy/`, or a CMS-backed model.
-- A migration checklist from the markdown registry draft to the chosen implementation format.
+- A migration checklist from the markdown registry draft to future `academy/_data/*.json` files.
+- Suggested validation checks for lesson slugs, image references, membership rows, cross-listed ownership, and route-safe app bridge fields.
 - A no-code implementation boundary unless the user explicitly asks for production website work.
 - No production website implementation.
 - Tracker and handoff update.

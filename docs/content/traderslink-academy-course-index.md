@@ -1131,6 +1131,33 @@ Registry draft result:
 
 No production website files, routes, schemas, or components were created.
 
+## Academy Registry Format Decision
+
+Academy registry implementation-format planning is complete.
+
+Decision file:
+
+- `docs/content/traderslink-academy-registry-format-decision.md`
+
+Decision:
+
+- Use author-editable JSON under `academy/_data/` as the first future registry source.
+- Do not use `academy/content/` because `academy/` is already the Academy content root.
+- Do not use root `content/academy/` unless the whole site later adopts a root content convention.
+- Do not use `src/content/academy/` as the first authoring source unless the registry is being implemented as TypeScript app code.
+- Reserve `src/content/academy/` as a possible typed adapter or generated app-facing layer later.
+- Keep `docs/content/` for internal planning, audits, trackers, and handoff notes.
+
+Recommended future files, only if implementation is explicitly requested:
+
+- `academy/_data/courses.json`
+- `academy/_data/lesson-memberships.json`
+- `academy/_data/path-hubs.json`
+- `academy/_data/app-bridges.json`
+- `academy/_data/visual-overrides.json`
+
+No production website files, routes, schemas, or components were created.
+
 ## Cross-Listed Lesson Rules
 
 Some lessons can appear in more than one course. This is good for navigation, but each lesson should still have one primary course.
