@@ -467,6 +467,19 @@ The core Volume, Liquidity And Order Flow course is **academy_ready_core**.
 
 Future additions can exist, but the main path is already strong enough for a website course build.
 
+### UI Readiness Status
+
+Pass 5 UI readiness review is complete in `docs/content/traderslink-academy-ui-readiness-volume-liquidity.md`.
+
+Recommended future UI model:
+
+- Show Volume, Liquidity And Order Flow as one compact 14-lesson course.
+- Group the course into Volume Foundation, Liquidity Foundation, Quotes And Execution, Order Flow Tools, Volume At Price, and Scanner Context.
+- Use a straightforward `completed lessons / 14` progress model.
+- Treat execution-mechanics visuals as important learning assets; do not crop quote panels, spread labels, fills, Level 2 depth, time-and-sales prints, or volume-by-price profiles into unreadable thumbnails.
+- Keep app bridges restrained and review-focused, with Execution Review as the strongest future surface once routes and fields are stable.
+- Store completion by lesson slug so cross-listed uses of volume, liquidity, spread, slippage, volume-by-price, and unusual volume can count wherever those lessons appear.
+
 ## Course 4: Technical Indicators And Tools
 
 ### Purpose
