@@ -220,36 +220,6 @@ Helpful review prompts:
 
 Over time, this can help traders understand whether they enter clean areas, crowded areas, or levels where the chart often becomes messy.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-Volume-by-price context can help answer:
-
-- Did the trader often enter into crowded high-volume zones?
-- Did trades work better after reclaiming high-volume areas?
-- Did low-volume-area moves create chasing?
-- Did liquidity worsen near crowded levels?
-- Did the trader use volume-by-price as context or as a certainty tool?
-
-The purpose is review, not prediction. Volume by price helps describe where activity happened around the trade.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Unusual Volume](/academy/unusual-volume/) to review activity above normal.
-- [Volume](/academy/volume/) for participation basics.
-- [Support And Resistance](/academy/support-and-resistance/) for zone-based level review.
-- [Key Levels Trading](/academy/key-levels-trading/) to choose levels near current price.
-- [Price Rejection](/academy/price-rejection/) to study reactions at levels.
-
-Related glossary terms:
-
-- [Liquidity](/glossary/liquidity/)
-- [Relative Volume](/glossary/relative-volume/)
-- [Volume Spike](/glossary/volume-spike/)
-
 ## FAQ
 
 ### What does volume by price mean?

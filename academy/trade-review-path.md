@@ -134,10 +134,6 @@ A final mistake is using review to predict the next trade instead of improving t
 
 Trade review becomes more useful when it leads to a small, specific adjustment.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by plan, risk, execution, management, context, and repeated behavior. It should help organize evidence from past trades, not promise future outcomes.
-
 ## Related Lessons
 
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)

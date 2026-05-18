@@ -221,46 +221,6 @@ Ask:
 
 Reviewing these details helps separate strong execution from emotional entry timing.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own trades with more structure.
-
-For HOD trades, that can mean reviewing:
-
-- Whether entries happened before, during, or after the HOD break.
-- Whether the stock was extended from support.
-- Whether volume supported the breakout attempt.
-- Whether HOD held or failed.
-- Whether repeated losses happen after scanner alerts.
-- Whether exits and reductions matched the original plan.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around HOD, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Premarket High Low](/academy/premarket-high-low/)
-2. [Previous Day High Low](/academy/previous-day-high-low/)
-
-Recommended next lessons:
-
-1. [Low of Day](/academy/low-of-day/)
-2. [New High of Day](/academy/new-high-of-day/)
-3. [Breakout Trading](/academy/breakout-trading/)
-
-Useful related terms:
-
-- [High of Day](/glossary/high-of-day/)
-- [Premarket High](/glossary/premarket-high/)
-- [Previous Day High](/glossary/previous-day-high/)
-- [Breakout](/glossary/breakout/)
-- [Rejection](/glossary/rejection/)
-
-Related product education:
-
-- [Trade Management Feedback](/features/trade-management-feedback/)
-
 ## FAQ
 
 ### What does high of day mean in trading?

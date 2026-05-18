@@ -197,12 +197,6 @@ After an earnings-driven trade, record:
 
 This helps you learn which earnings situations you understand well and which ones pull you into reactive trades.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For earnings trades, useful context may include the release time, earnings category, whether the trader read the report, whether guidance changed the review, and whether similar earnings reactions create repeated mistakes.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)

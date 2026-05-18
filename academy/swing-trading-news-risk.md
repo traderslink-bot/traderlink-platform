@@ -150,10 +150,6 @@ A final mistake is keeping the same thesis after new information changes the tra
 
 News-risk review helps traders separate market events from avoidable planning gaps.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades around news timing, filings, overnight gaps, liquidity changes, and repeated behavior after the original thesis changes.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)

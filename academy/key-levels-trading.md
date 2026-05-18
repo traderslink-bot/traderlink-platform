@@ -283,48 +283,6 @@ Ask:
 
 The goal is not to prove that every level was perfect. The goal is to learn whether your decisions around levels were planned, consistent, and risk-aware.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own trades with more structure.
-
-For key-level trades, that can mean reviewing:
-
-- Entry location compared with nearby support and resistance.
-- Whether the trader entered near a planned level or in the middle.
-- Whether exits or reductions happened near planned areas.
-- Whether support breaks, resistance rejections, breakouts, or reclaims repeated across trades.
-- Whether the trader respected invalidation.
-- Whether the same level-related mistakes show up over time.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around key levels, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Support and Resistance](/academy/support-and-resistance/)
-2. [How to Draw Support and Resistance](/academy/how-to-draw-support-and-resistance/)
-3. [Support Levels](/academy/support-levels/)
-4. [Resistance Levels](/academy/resistance-levels/)
-
-Recommended next lessons:
-
-1. [Breakout Trading](/academy/breakout-trading/)
-2. [Pivot Levels](/academy/pivot-levels/)
-3. [Previous Day High Low](/academy/previous-day-high-low/)
-
-Useful related terms:
-
-- [Breakout](/glossary/breakout/)
-- [Breakdown](/glossary/breakdown/)
-- [Reclaim](/glossary/reclaim/)
-- [Rejection](/glossary/rejection/)
-- [High of Day](/glossary/high-of-day/)
-
-Related product education:
-
-- [Support and Resistance Trade Review](/features/support-resistance-trade-review/)
-
 ## FAQ
 
 ### What are key levels in trading?

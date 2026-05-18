@@ -132,10 +132,6 @@ A final mistake is reviewing only charts while ignoring spread, slippage, sizing
 - Did I stop when the plan was gone?
 - What is the one rule or filter I will carry forward?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed sessions by setup, timing, execution, risk, and repeated behavior patterns. It should support honest review, not replace judgment or promise future outcomes.
-
 ## Related Lessons
 
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)

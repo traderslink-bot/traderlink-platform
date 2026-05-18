@@ -238,38 +238,6 @@ Helpful review prompts:
 
 Over time, these notes can show whether execution problems are random or repeated.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-Liquidity context can make that review more useful by helping answer:
-
-- Did the trader's worst fills happen in wide-spread stocks?
-- Did position size exceed realistic liquidity?
-- Did market orders create avoidable slippage?
-- Did thin liquidity appear more often in losing trades?
-- Did the trader ignore liquidity after a volume spike faded?
-
-The purpose is review, not prediction. Liquidity data helps explain the real conditions around the trade.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Dollar Volume](/academy/dollar-volume/) to understand traded value, not just share count.
-- [Spread](/academy/spread/) to study the bid-ask cost of entering and exiting.
-- [Bid And Ask](/academy/bid-and-ask/) to understand quote mechanics.
-- [Slippage](/academy/slippage/) to review worse-than-expected fills.
-- [Market Orders Vs Limit Orders](/academy/market-orders-vs-limit-orders/) to connect order type with liquidity.
-
-Related glossary terms:
-
-- [Liquidity](/glossary/liquidity/)
-- [Spread](/glossary/spread/)
-- [Slippage](/glossary/slippage/)
-- [Relative Volume](/glossary/relative-volume/)
-- [Volume Spike](/glossary/volume-spike/)
-
 ## FAQ
 
 ### What is stock liquidity?

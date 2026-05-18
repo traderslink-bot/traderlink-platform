@@ -130,10 +130,6 @@ A final mistake is fighting continued strength because the phrase sounds familia
 
 Sell-the-news review should explain why the reaction happened, not simply repeat the phrase.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review event reactions by pre-news run-up, catalyst detail, volume, level behavior, and whether the trader acted from analysis or a catchy label.
-
 ## Related Lessons
 
 - [News Fade](/academy/news-fade/)

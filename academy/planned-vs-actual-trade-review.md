@@ -129,12 +129,6 @@ A final mistake is not updating the future checklist after repeated differences 
 
 Planned-vs-actual review helps make discipline measurable instead of vague.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders compare intended behavior with actual behavior: planned setup, actual entry, risk changes, rule breaks, and exit decisions.
-
-For this lesson, the product value is review clarity. It should help traders see where the trade changed and why.
-
 ## Related Lessons
 
 - [Trading Plan](/academy/trading-plan/)

@@ -128,10 +128,6 @@ A final mistake is increasing risk during market-wide uncertainty without review
 - Did I have a plan for interruption?
 - What market-wide risk rule should I add?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades in context. Market-wide circuit breaker review can help separate ticker-specific decisions from broad-market stress conditions.
-
 ## Related Lessons
 
 - [Trading Halts](/academy/trading-halts/)

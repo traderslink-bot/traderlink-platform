@@ -141,12 +141,6 @@ After a trade or session, ask:
 
 This review can reveal whether chasing tends to happen after missed moves, losses, scanner alerts, or social pressure.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review execution patterns after trades close: entry timing, distance from planned levels, repeated chase tags, slippage, and outcomes after late entries.
-
-For chasing stocks, the useful review is not whether the stock later moved higher or lower. The better question is whether the trader entered while the setup was still structured and reviewable.
-
 ## Related Lessons
 
 - [FOMO Trading](/academy/fomo-trading/)

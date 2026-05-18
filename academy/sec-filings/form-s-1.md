@@ -217,12 +217,6 @@ After an S-1-related trade, review:
 
 The goal is to improve filing literacy, not to memorize form names.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For S-1-related trades, useful review context may include the filing type, whether it was resale or new issuance, whether warrants were involved, whether the trader checked effectiveness status, and whether similar filing situations create repeated mistakes.
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)

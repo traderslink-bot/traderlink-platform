@@ -159,10 +159,6 @@ A final mistake is reviewing the trade only by the size of the move instead of t
 
 Small-cap swing review should include the background risk, not only the chart.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed small-cap swing trades by catalyst type, filing context, float, liquidity, levels, overnight risk, and repeated behavior such as chasing after volume has already faded.
-
 ## Related Lessons
 
 - [Small Cap Stocks](/academy/small-cap-stocks/)

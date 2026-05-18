@@ -150,10 +150,6 @@ A final mistake is skipping review after the catalyst fades.
 
 News and filing review is about understanding what changed and how traders reacted, not predicting the next headline.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades around catalysts, filings, offering risk, dilution context, news timing, price reaction, and repeated behavior after attention fades.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)

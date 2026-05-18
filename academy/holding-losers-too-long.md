@@ -143,12 +143,6 @@ After a trade or session, ask:
 
 The goal is to find the moment where the loss stopped being planned.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review risk expansion after entry: planned loss versus actual loss, stop movement, average-down behavior, holding time, and repeated exit delays.
-
-For holding losers, the useful review is not whether the trade eventually bounced after exit. The better review is whether the trader followed the risk decision that existed before the trade became emotional.
-
 ## Related Lessons
 
 - [Stop Loss](/academy/stop-loss/)

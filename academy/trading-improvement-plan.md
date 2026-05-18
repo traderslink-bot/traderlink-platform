@@ -146,10 +146,6 @@ A final mistake is skipping the review date.
 - What would show process improvement?
 - When will I review the plan?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders connect completed-trade review, repeated behavior patterns, and improvement notes. A trading improvement plan gives that review a clear next step instead of leaving the trader with vague observations.
-
 ## Related Lessons
 
 - [Practice Trading](/academy/practice-trading/)

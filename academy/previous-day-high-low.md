@@ -256,46 +256,6 @@ Ask:
 
 This helps turn level trading from a vague chart idea into a reviewable process.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own trades with more structure.
-
-For PDH and PDL trades, that can mean reviewing:
-
-- Whether the levels were known before the trade.
-- Whether entries happened near PDH/PDL or far away from structure.
-- Whether price held, broke, reclaimed, or rejected the level.
-- Whether failed breakouts or failed breakdowns repeated across trades.
-- Whether the trader respected the plan when the level failed.
-- Whether market open decisions were aligned with the level map.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around previous day levels, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Pivot Levels](/academy/pivot-levels/)
-2. [Key Levels Trading](/academy/key-levels-trading/)
-
-Recommended next lessons:
-
-1. [Premarket High Low](/academy/premarket-high-low/)
-2. [High of Day](/academy/high-of-day/)
-3. [Market Open Trading](/academy/market-open-trading/)
-
-Useful related terms:
-
-- [Previous Day High](/glossary/previous-day-high/)
-- [Previous Day Low](/glossary/previous-day-low/)
-- [Breakout](/glossary/breakout/)
-- [Breakdown](/glossary/breakdown/)
-- [Reclaim](/glossary/reclaim/)
-
-Related product education:
-
-- [Trade Management Feedback](/features/trade-management-feedback/)
-
 ## FAQ
 
 ### What does previous day high low mean?

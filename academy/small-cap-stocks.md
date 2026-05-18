@@ -228,12 +228,6 @@ When reviewing a small-cap trade or watchlist idea connected to Small-Cap Stocks
 - Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
 - What would I want to notice faster the next time this situation appears?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review small-cap trades after the fact: what the trader saw, what they missed, how the stock actually behaved, and whether risk was respected.
-
-For Small-Cap Stocks, the useful review is not whether the concept predicted the move. The better review is whether the trader understood the small-cap context before acting and whether the trade matched a realistic risk plan.
-
 ## Related Lessons
 
 - [How To Review News Trades](/academy/how-to-review-news-trades/)

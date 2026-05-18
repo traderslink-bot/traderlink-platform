@@ -225,36 +225,6 @@ Helpful review prompts:
 
 This review can reveal execution habits that P&L alone may hide.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-Bid and ask context can help answer:
-
-- Did the trader enter near the ask during wide-spread moves?
-- Did exits happen into weak bids?
-- Did poor quote awareness create avoidable slippage?
-- Did fast quote changes appear before poor fills?
-- Did order type fit the bid/ask conditions?
-
-The purpose is review, not prediction. Quote behavior helps explain what execution was actually available.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Slippage](/academy/slippage/) to review worse-than-expected fills.
-- [Market Orders Vs Limit Orders](/academy/market-orders-vs-limit-orders/) to connect order type with quote behavior.
-- [Level 2](/academy/level-2/) to understand deeper quote context.
-- [Spread](/academy/spread/) to review the gap between buyers and sellers.
-- [Liquidity](/academy/liquidity/) to understand whether the quote has enough depth.
-
-Related glossary terms:
-
-- [Spread](/glossary/spread/)
-- [Liquidity](/glossary/liquidity/)
-- [Slippage](/glossary/slippage/)
-
 ## FAQ
 
 ### What does bid and ask mean?

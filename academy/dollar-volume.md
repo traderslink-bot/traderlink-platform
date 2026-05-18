@@ -234,38 +234,6 @@ Helpful review prompts:
 
 This review can help separate trade idea quality from execution conditions.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-Dollar volume context can help answer:
-
-- Did the trader take too much size in low-dollar-volume stocks?
-- Were poor fills concentrated in low-priced names with misleading share volume?
-- Did higher dollar volume actually improve execution quality?
-- Did volume fade after entry in trades with poor exits?
-- Did the trader confuse scanner activity with usable liquidity?
-
-The point is review, not prediction. Dollar volume helps describe the trading environment around the decision.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Spread](/academy/spread/) to understand the bid-ask cost of entering and exiting.
-- [Bid And Ask](/academy/bid-and-ask/) to understand quote mechanics.
-- [Slippage](/academy/slippage/) to review worse-than-expected fills.
-- [Market Orders Vs Limit Orders](/academy/market-orders-vs-limit-orders/) to connect order type with execution.
-- [Low-Float Stocks](/academy/low-float-stocks/) to understand why some small caps move quickly.
-
-Related glossary terms:
-
-- [Liquidity](/glossary/liquidity/)
-- [Spread](/glossary/spread/)
-- [Slippage](/glossary/slippage/)
-- [Relative Volume](/glossary/relative-volume/)
-- [Volume Spike](/glossary/volume-spike/)
-
 ## FAQ
 
 ### What is dollar volume in stocks?

@@ -280,46 +280,6 @@ After a trade, ask:
 
 Over time, these questions can show whether support levels are improving your process or simply giving you a story after the fact.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own decisions around levels with more structure.
-
-For support-level trades, that can mean reviewing:
-
-- Entry location compared with the nearest support zone.
-- Whether the support level was marked before the trade.
-- Whether the trader held after support failed.
-- Whether average-down behavior appeared around broken support.
-- Whether support breaks, fakeouts, or reclaims repeated across trades.
-- Whether exits followed the original invalidation plan.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around support levels, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Support and Resistance](/academy/support-and-resistance/)
-2. [How to Draw Support and Resistance](/academy/how-to-draw-support-and-resistance/)
-
-Recommended next lessons:
-
-1. [Resistance Levels](/academy/resistance-levels/)
-2. [Key Levels Trading](/academy/key-levels-trading/)
-3. [Risk Management](/academy/risk-management/)
-
-Useful related terms:
-
-- [Support Level](/glossary/support-level/)
-- [Breakdown](/glossary/breakdown/)
-- [Reclaim](/glossary/reclaim/)
-- [Rejection](/glossary/rejection/)
-- [Low of Day](/glossary/low-of-day/)
-
-Related product education:
-
-- [Support and Resistance Trade Review](/features/support-resistance-trade-review/)
-
 ## FAQ
 
 ### What are support levels in trading?

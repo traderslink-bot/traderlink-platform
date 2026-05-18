@@ -123,10 +123,6 @@ A final mistake is expecting the Academy to tell users what to trade. It should 
 
 The Academy is strongest when users move between learning and review instead of only consuming lessons.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence can later help users see which Academy concepts are showing up in their completed trades. If a user repeatedly tags late entries, the Academy can support that review with FOMO, chasing, execution, and risk lessons.
-
 ## Related Lessons
 
 - [Welcome To TradersLink Academy](/academy/start-here/)

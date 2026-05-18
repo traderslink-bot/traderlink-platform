@@ -221,36 +221,6 @@ Helpful review prompts:
 
 This review can reveal whether Level 2 is improving decision quality or increasing reactivity.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-Level 2 context can help answer:
-
-- Did poor depth appear before slippage?
-- Did the trader use too much size for visible liquidity?
-- Did order-book noise trigger early entries or exits?
-- Did time and sales confirm or contradict the Level 2 read?
-- Did Level 2 help the trader manage execution or create hesitation?
-
-The purpose is review, not prediction. Level 2 can describe the execution environment around the trade.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Time And Sales](/academy/time-and-sales/) to review actual prints.
-- [Volume By Price](/academy/volume-by-price/) to study where volume traded on the chart.
-- [Unusual Volume](/academy/unusual-volume/) to review activity above normal levels.
-- [Liquidity](/academy/liquidity/) to connect depth with execution.
-- [Slippage](/academy/slippage/) to review worse-than-expected fills.
-
-Related glossary terms:
-
-- [Liquidity](/glossary/liquidity/)
-- [Spread](/glossary/spread/)
-- [Slippage](/glossary/slippage/)
-
 ## FAQ
 
 ### What is Level 2 trading?

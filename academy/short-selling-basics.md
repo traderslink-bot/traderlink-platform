@@ -166,12 +166,6 @@ Ask:
 - Did the loss expand faster than planned?
 - What should my short-trade rule be next time?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by setup, risk, and behavior. For short selling, the useful review is whether the trader respected borrow constraints, invalidation, spread, halt risk, and short-squeeze context.
-
-The product bridge should stay review-focused. It should not tell users when to short.
-
 ## Related Lessons
 
 - [Trading Styles Overview](/academy/trading-styles/)

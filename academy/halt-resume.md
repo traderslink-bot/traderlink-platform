@@ -132,10 +132,6 @@ A final mistake is treating a resume gap as guaranteed continuation.
 - Did the original plan still apply?
 - What resume rule should I use next time?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by execution quality, spread, slippage, timing, and repeated behavior. Halt-resume review can show whether unstable conditions repeatedly damage execution.
-
 ## Related Lessons
 
 - [Volatility Halts](/academy/volatility-halts/)

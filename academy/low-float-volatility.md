@@ -132,10 +132,6 @@ A final mistake is assuming halt continuation after a low-float spike.
 - Did I assume low float meant continuation?
 - What low-float rule should I adjust?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by ticker context, volatility, liquidity, spread, risk, and repeated behavior. Low-float review can show whether fast small-cap conditions repeatedly create weak decisions.
-
 ## Related Lessons
 
 - [Low-Float Stocks](/academy/low-float-stocks/)

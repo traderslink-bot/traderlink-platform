@@ -188,12 +188,6 @@ Ask:
 - What condition should disqualify the trade?
 - What rule should I forward test next?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders organize completed trades into patterns. For playbook building, the useful bridge is grouping examples, surfacing repeated mistakes, and helping the trader see whether a rule is based on evidence.
-
-The final rule still belongs to the trader. The tool should support review, not promise an edge.
-
 ## Related Lessons
 
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)

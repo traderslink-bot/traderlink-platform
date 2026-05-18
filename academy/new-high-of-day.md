@@ -201,46 +201,6 @@ Ask:
 
 After-trade review can help show whether NHOD trades are part of a structured setup or just reactive entries.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own trades with more structure.
-
-For NHOD trades, that can mean reviewing:
-
-- Whether entries happened before, during, or after the alert.
-- Whether price was extended from support.
-- Whether volume supported the new high.
-- Whether the old HOD held or failed.
-- Whether repeated mistakes happen after scanner alerts.
-- Whether the trader adapted when the new high failed.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around NHOD alerts, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [High of Day](/academy/high-of-day/)
-2. [Low of Day](/academy/low-of-day/)
-
-Recommended next lessons:
-
-1. [Breakout Trading](/academy/breakout-trading/)
-2. [Resistance Levels](/academy/resistance-levels/)
-3. [Key Levels Trading](/academy/key-levels-trading/)
-
-Useful related terms:
-
-- [High of Day](/glossary/high-of-day/)
-- [Breakout](/glossary/breakout/)
-- [Rejection](/glossary/rejection/)
-- [Premarket High](/glossary/premarket-high/)
-- [Relative Volume](/glossary/relative-volume/)
-
-Related product education:
-
-- [Trade Management Feedback](/features/trade-management-feedback/)
-
 ## FAQ
 
 ### What does new high of day mean?

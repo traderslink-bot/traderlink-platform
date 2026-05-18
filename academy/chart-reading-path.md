@@ -149,10 +149,6 @@ A final mistake is studying chart reading only in hindsight.
 
 Chart-reading skill improves when traders review what they saw before the decision, not only what became obvious after.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades against chart context, including levels, candles, volume, entries, exits, and repeated behavior around failed or respected levels.
-
 ## Related Lessons
 
 - [Support And Resistance](/academy/support-and-resistance/)

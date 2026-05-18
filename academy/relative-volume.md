@@ -232,38 +232,6 @@ Helpful review prompts:
 
 Over time, this review can show whether unusual volume helps your process or pulls you into reactive trades.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-Relative volume can support that review by helping answer:
-
-- Did the trader perform better when unusual volume had a clear catalyst?
-- Were losses concentrated in high-relative-volume stocks with fading participation?
-- Did scanner-driven trades lead to chasing?
-- Did liquidity actually improve, or did spreads remain difficult?
-- Did the trader enter before or after the main attention burst?
-
-The purpose is review, not prediction. Relative volume can help describe the environment around a trade.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Relative Volume RVOL](/academy/relative-volume-rvol/) for metric-specific RVOL review.
-- [Volume Spike](/academy/volume-spike/) for sudden bursts in activity.
-- [Liquidity](/academy/liquidity/) for execution quality.
-- [Low-Float Stocks](/academy/low-float-stocks/) for fast-moving small-cap context.
-- [Stock Catalysts](/academy/stock-catalysts/) for why activity appears.
-
-Related glossary terms:
-
-- [Relative Volume](/glossary/relative-volume/)
-- [Volume Spike](/glossary/volume-spike/)
-- [Liquidity](/glossary/liquidity/)
-- [Spread](/glossary/spread/)
-- [Slippage](/glossary/slippage/)
-
 ## FAQ
 
 ### What is relative volume?

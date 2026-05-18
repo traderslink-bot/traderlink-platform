@@ -174,10 +174,6 @@ A final mistake is turning a failed swing trade into an unplanned long-term hold
 
 The best swing risk review studies whether the risk decision was planned, updated for valid reasons, and followed consistently.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed swing trades by risk plan, overnight exposure, gap behavior, size decisions, and repeated patterns such as moving invalidation or holding after the thesis changed.
-
 ## Related Lessons
 
 - [Swing Trading For Beginners](/academy/swing-trading-for-beginners/)

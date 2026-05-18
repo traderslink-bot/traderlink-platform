@@ -235,42 +235,6 @@ Ask:
 
 Structured review notes can help show whether reclaims are a real part of your process or just another form of chasing.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review reclaim trades with more structure.
-
-For level reclaims, that can mean reviewing:
-
-- Whether the reclaimed level was marked before the trade.
-- Whether price held the reclaim or failed again.
-- Whether the entry was near the reclaimed level or extended.
-- Whether failed reclaim behavior repeats across trades.
-- Whether the trader respected the failure point.
-- Whether volume and nearby levels were reviewed.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around reclaim levels, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Level Breakout](/academy/level-breakout/)
-2. [Key Levels Trading](/academy/key-levels-trading/)
-
-Recommended next lessons:
-
-1. [Price Rejection](/academy/price-rejection/)
-2. [Break of Structure](/academy/break-of-structure/)
-3. [Breakout Trading](/academy/breakout-trading/)
-
-Useful related terms:
-
-- [Reclaim](/glossary/reclaim/)
-- [Confirmation](/glossary/confirmation/)
-- [Failed Setup](/glossary/failed-setup/)
-- [Breakdown](/glossary/breakdown/)
-- [Rejection](/glossary/rejection/)
-
 ## FAQ
 
 ### What is a level reclaim?

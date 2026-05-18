@@ -267,40 +267,6 @@ Useful review questions include:
 
 This is where structured review notes can help. The goal is not to prove that a level was perfect. The goal is to learn whether your decisions around the level were planned, consistent, and risk-aware.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own trades with more structure. For support and resistance trades, that means reviewing things like:
-
-- Entry location compared with nearby levels.
-- Whether the trade chased into resistance.
-- Whether the trader held after support failed.
-- Whether partial exits happened near logical levels.
-- Whether repeated mistakes appear around breakouts, fakeouts, or reclaims.
-- Whether the trader followed the original invalidation plan.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around levels, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended next lessons:
-
-1. [How to Draw Support and Resistance](/academy/how-to-draw-support-and-resistance/)
-2. [Support Levels](/academy/support-levels/)
-3. [Resistance Levels](/academy/resistance-levels/)
-4. [Key Levels Trading](/academy/key-levels-trading/)
-
-Useful related terms:
-
-- [Breakout](/glossary/breakout/)
-- [Breakdown](/glossary/breakdown/)
-- [Reclaim](/glossary/reclaim/)
-- [Rejection](/glossary/rejection/)
-- [Fakeout](/glossary/fakeout/)
-
-Related product education:
-
-- [Support and Resistance Trade Review](/features/support-resistance-trade-review/)
-
 ## FAQ
 
 ### What is support and resistance in trading?

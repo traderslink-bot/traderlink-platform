@@ -133,10 +133,6 @@ A final mistake is testing outcomes while ignoring whether the trader followed t
 - What did the test not prove?
 - Should I repeat, refine, or stop this test?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed samples of trades and repeated patterns. Forward testing gives that review a cleaner structure because the trader defines the sample before drawing conclusions.
-
 ## Related Lessons
 
 - [One-Rule Practice Drill](/academy/one-rule-practice-drill/)

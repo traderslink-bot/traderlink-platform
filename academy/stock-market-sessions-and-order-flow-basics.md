@@ -187,12 +187,6 @@ When reviewing a completed trade, ask:
 - Did the trade fit my rules for that session?
 - What session-specific mistake repeated?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by context. Session context can help explain whether a mistake happened during the open, midday boredom, late-session pressure, or after-hours headline risk.
-
-That review is not prediction. It is a way to understand where a trader's process breaks down.
-
 ## Related Lessons
 
 - [Day Trading For Beginners](/academy/day-trading-for-beginners/)

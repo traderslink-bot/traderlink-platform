@@ -122,10 +122,6 @@ A final mistake is treating Trader Intelligence as prediction. Its Academy bridg
 
 The Academy becomes more useful when users treat learning as a path they return to, not a one-time reading session.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help users review completed trades after they have learned the concepts. The Academy teaches the language; Trader Intelligence helps organize how those concepts appeared in real decisions.
-
 ## Related Lessons
 
 - [How To Use TradersLink Academy](/academy/how-to-use-traderslink-academy/)

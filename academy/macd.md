@@ -122,10 +122,6 @@ A final mistake is not reviewing whether MACD improved timing or made the trader
 
 MACD review should focus on whether it clarified momentum or delayed the decision.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades where momentum tools affected entries, exits, or late confirmation. MACD can be one tag in that review, not the reason by itself.
-
 ## Related Lessons
 
 - [Moving Averages](/academy/moving-averages/)

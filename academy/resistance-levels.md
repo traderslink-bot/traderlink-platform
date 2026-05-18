@@ -282,47 +282,6 @@ After a trade, ask:
 
 Over time, these questions can show whether resistance levels are improving your process or just becoming stories after the trade.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own decisions around levels with more structure.
-
-For resistance-level trades, that can mean reviewing:
-
-- Entry location compared with the nearest resistance zone.
-- Whether the resistance level was marked before the trade.
-- Whether the trader chased into resistance.
-- Whether breakout entries happened close to the level or far above it.
-- Whether failed breakouts repeated across trades.
-- Whether exits or reductions followed planned resistance areas.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around resistance levels, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Support and Resistance](/academy/support-and-resistance/)
-2. [How to Draw Support and Resistance](/academy/how-to-draw-support-and-resistance/)
-3. [Support Levels](/academy/support-levels/)
-
-Recommended next lessons:
-
-1. [Key Levels Trading](/academy/key-levels-trading/)
-2. [Breakout Trading](/academy/breakout-trading/)
-3. [Risk Management](/academy/risk-management/)
-
-Useful related terms:
-
-- [Resistance Level](/glossary/resistance-level/)
-- [Rejection](/glossary/rejection/)
-- [Breakout](/glossary/breakout/)
-- [Reclaim](/glossary/reclaim/)
-- [High of Day](/glossary/high-of-day/)
-
-Related product education:
-
-- [Support and Resistance Trade Review](/features/support-resistance-trade-review/)
-
 ## FAQ
 
 ### What are resistance levels in trading?

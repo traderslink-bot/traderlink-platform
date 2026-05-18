@@ -527,6 +527,20 @@ Suggested replacement sections:
 11. FAQ
 12. Educational Disclaimer
 
+### Pass 2 Completion Log
+
+Status: complete as of 2026-05-18 for the current Chart Patterns In Context markdown files.
+
+Completed work:
+
+- Cleaned the Chart Patterns course overview so it explains pattern groups, including continuation, compression, reversal/failure, and tool-based patterns.
+- Reworked the Bull Flag lesson as the model chart-pattern cleanup with clean-versus-forced structure, volume context, risk concept, failure behavior, and a topic-specific journal review section.
+- Removed forced visible sections from the chart-pattern lesson set, including `Lesson Objective`, `Practical Checklist`, `Apply This In Review`, and `Trader Intelligence Bridge`.
+- Replaced repeated product bridge blocks with topic-specific `Review This In Your Journal` sections focused on the actual pattern being taught.
+- Neutralized repeated frontmatter CTA copy in the chart-pattern set so product routing can be handled by registry/app bridge data instead of visible template language.
+
+Next active work: Priority Pass 3, Academy-wide Product Funnel Cleanup.
+
 ## Priority Pass 3: Product Funnel Cleanup
 
 Audit every lesson for the current `Trader Intelligence Bridge` copy.
@@ -568,6 +582,20 @@ Use:
 Use:
 
 > This is the core reason Trader Intelligence exists: to turn completed trades into reviewable patterns so traders can see what they are repeating instead of guessing from memory.
+
+### Pass 3 Cleanup Log
+
+Status: broad visible-heading cleanup complete as of 2026-05-18.
+
+Completed work:
+
+- Removed the repeated visible `Trader Intelligence Bridge` section from Academy markdown lessons.
+- Removed remaining repeated body-level `Trader Intelligence is being built...` sentences from small-cap, dilution, and SEC filing lessons where the copy was acting like a generic product bridge instead of lesson-specific education.
+- Replaced those repeated small-cap and filing mentions with neutral journal-review language focused on float, filings, dilution context, risk, execution, research gaps, and source context.
+
+Remaining recommendation:
+
+- Frontmatter `cta` fields and intentionally product-focused lessons still contain Trader Intelligence references. Keep those as registry/product-funnel inputs for now, then review them during Priority Pass 5 so route cards can decide when they should be visible.
 
 ## Priority Pass 4: Lesson Body Cleanup
 

@@ -270,20 +270,6 @@ Helpful review prompts:
 
 Over time, these notes can show whether unusual volume is helping your process or pulling you into reactive trades.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For unusual-volume trades, useful review context may include:
-
-- Whether the trade came from a scanner alert.
-- Whether the catalyst was reviewed before entry.
-- Whether volume was still expanding or already fading.
-- Whether spread and slippage affected the execution.
-- Whether similar high-activity trades show repeated chase behavior.
-
-That kind of review is about learning from your decisions. It is not about predicting what the next unusual-volume stock will do.
-
 ## Related Lessons
 
 - [Volume](/academy/volume/)

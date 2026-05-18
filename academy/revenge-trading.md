@@ -142,12 +142,6 @@ After a trade or session, ask:
 
 The key is to track the trigger. Revenge trading is easier to reduce when the pattern becomes visible.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review behavior patterns such as trades after losses, quick re-entries, size increases, rule breaks, and emotional sequences across a session.
-
-For revenge trading, the useful review is not whether the follow-up trade happened to work. The better review is whether the second decision was cleaner than the first or simply more emotional.
-
 ## Related Lessons
 
 - [Chasing Stocks](/academy/chasing-stocks/)

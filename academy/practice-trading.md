@@ -138,10 +138,6 @@ A final mistake is assuming practice removes the need for live risk control.
 - What one rule or checklist item should I test next?
 - How will I know the practice is improving process quality?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades and repeated behavior patterns. A practice workflow can use the same review mindset: collect evidence, tag decisions, compare plan versus actual, and look for improvement over a sample.
-
 ## Related Lessons
 
 - [Paper Trading](/academy/paper-trading/)

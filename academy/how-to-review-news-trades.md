@@ -241,14 +241,6 @@ Repeat pattern:
 
 The repeat-pattern line matters. It helps reveal whether you keep making the same type of news-trade mistake.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For news trades, useful review context may include catalyst category, source, release time, detail quality, filing context, entry timing, volume continuation, spread/slippage, exit quality, and repeated headline-chasing patterns.
-
-This is the natural bridge from learning about catalysts to reviewing how you actually trade them.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)

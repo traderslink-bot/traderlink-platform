@@ -194,12 +194,6 @@ After a contract-news trade, record:
 
 This helps separate meaningful contract catalysts from vague announcements.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For contract-news trades, useful context may include customer name, contract value, disclosure quality, filing context, entry timing, and whether similar customer headlines lead to repeated chase behavior.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)

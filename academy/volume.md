@@ -241,38 +241,6 @@ Helpful review prompts:
 
 This kind of review helps separate market context from trader behavior.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-Volume context can make that review more useful because it helps answer questions like:
-
-- Did the trader usually enter after volume had already peaked?
-- Were losing trades often taken in thin liquidity?
-- Did the trader perform better when volume expanded at a planned level?
-- Did the trader confuse volume spikes with guaranteed follow-through?
-- Did exits improve when volume faded after a move?
-
-The point is review, not prediction. Volume data can help a trader understand what they did around participation changes.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Relative Volume](/academy/relative-volume/) to compare current activity with normal activity.
-- [Relative Volume RVOL](/academy/relative-volume-rvol/) for a more specific metric traders use.
-- [Volume Spike](/academy/volume-spike/) to study sudden bursts of participation.
-- [Liquidity](/academy/liquidity/) to connect volume with execution quality.
-- [Dollar Volume](/academy/dollar-volume/) to understand traded value, not just share count.
-
-Related glossary terms:
-
-- [Relative Volume](/glossary/relative-volume/)
-- [Volume Spike](/glossary/volume-spike/)
-- [Liquidity](/glossary/liquidity/)
-- [Spread](/glossary/spread/)
-- [Slippage](/glossary/slippage/)
-
 ## FAQ
 
 ### What is stock volume?

@@ -222,38 +222,6 @@ Helpful review prompts:
 
 The best RVOL review connects scanner context to trader behavior.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-RVOL context can make that review more precise by helping answer:
-
-- Did high-RVOL trades perform differently from normal-volume trades?
-- Did the trader enter after RVOL had already peaked?
-- Were scanner-driven trades more emotional?
-- Did catalyst-backed RVOL trades behave differently from no-news RVOL trades?
-- Did liquidity improve enough to support the trader's size?
-
-The point is review, not prediction. RVOL can help describe the environment around the decision.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Volume Spike](/academy/volume-spike/) to study sudden bursts in activity.
-- [Liquidity](/academy/liquidity/) to connect activity with execution quality.
-- [Premarket High And Low](/academy/premarket-high-low/) to review early-session levels.
-- [Stock Catalysts](/academy/stock-catalysts/) to understand why unusual activity appears.
-- [Spread](/academy/spread/) to understand the cost of entering and exiting.
-
-Related glossary terms:
-
-- [Relative Volume](/glossary/relative-volume/)
-- [Volume Spike](/glossary/volume-spike/)
-- [Liquidity](/glossary/liquidity/)
-- [Spread](/glossary/spread/)
-- [Slippage](/glossary/slippage/)
-
 ## FAQ
 
 ### What does RVOL mean?

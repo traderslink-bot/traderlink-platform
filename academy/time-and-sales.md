@@ -219,36 +219,6 @@ Helpful review prompts:
 
 Over time, this can show whether tape reading is useful for your process or just another source of noise.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-Time and sales context can help answer:
-
-- Did the trader enter when prints were active or fading?
-- Did tape context improve execution quality?
-- Did the trader overreact to one large print?
-- Did losing trades often happen after tape speed faded?
-- Did Level 2 and time and sales agree or conflict?
-
-The purpose is review, not prediction. Tape context helps describe actual participation around the decision.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Volume By Price](/academy/volume-by-price/) to study where volume traded on the chart.
-- [Unusual Volume](/academy/unusual-volume/) to review activity above normal levels.
-- [Volume](/academy/volume/) to revisit participation basics.
-- [Level 2](/academy/level-2/) to compare displayed orders with actual prints.
-- [Liquidity](/academy/liquidity/) to review execution conditions.
-
-Related glossary terms:
-
-- [Liquidity](/glossary/liquidity/)
-- [Spread](/glossary/spread/)
-- [Slippage](/glossary/slippage/)
-
 ## FAQ
 
 ### What is time and sales in trading?

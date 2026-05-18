@@ -139,7 +139,7 @@ Useful review notes include:
 
 This is not about assuming every proxy is bad. It is about understanding what shareholders are being asked to approve.
 
-Trader Intelligence is being built to help traders review completed filing-driven trades by source context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
+A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
 
 ## Related SEC Filings
 
@@ -194,12 +194,6 @@ When reviewing a trade or watchlist idea connected to Form DEF 14A, ask:
 - Did liquidity, spread, or volatility make the move harder to execute cleanly?
 - Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
 - What would I want to notice faster the next time this filing appears?
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review filing-driven trades after the fact: what information was available, what was missed, how the stock reacted, and whether the trader followed a repeatable review process.
-
-For Form DEF 14A, the useful review is not whether the filing predicted the move. The better review is whether the trader understood the filing context before acting and whether their execution matched their actual risk plan.
 
 ## Related Lessons
 

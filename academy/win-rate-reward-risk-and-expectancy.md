@@ -184,12 +184,6 @@ Ask:
 - Is the sample large enough to learn from?
 - What one rule would improve the math?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trade samples. For expectancy, the useful product bridge is grouping trades by setup, style, risk behavior, and outcome so the trader can see whether the real pattern matches the intended process.
-
-That review is not a forecast. It is feedback from completed trades.
-
 ## Related Lessons
 
 - [Risk Reward Ratio](/academy/risk-reward-ratio/)

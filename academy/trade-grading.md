@@ -138,10 +138,6 @@ A final mistake is grading every trade without looking for patterns across a sam
 - What grade pattern repeats across recent trades?
 - What one category should I practice next?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by process and repeated behavior. A trade-grading habit can make those patterns easier to compare over time.
-
 ## Related Lessons
 
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)

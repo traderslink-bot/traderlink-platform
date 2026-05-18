@@ -186,12 +186,6 @@ Ask:
 - Did I trade a headline before reading the source?
 - What filing term should I learn next?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades with context. For filing-driven trades, the useful bridge is whether the trader checked the source document, understood the relevant form, and connected the filing to risk, liquidity, and execution.
-
-This is review support, not a prediction engine.
-
 ## Related Lessons
 
 - [SEC Filings: What Traders Should Know](/academy/sec-filings/)

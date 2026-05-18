@@ -14,7 +14,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review whether chart patterns supported completed decisions or became labels for reactive trades."
+cta: "Review pattern-based trades by level quality, volume behavior, entry timing, invalidation, and whether the trade was planned or reactive."
 recommended_previous: "/academy/chart-patterns/wedge-pattern/"
 recommended_next: "/academy/chart-patterns/falling-wedge/"
 academy_level: "Practical"
@@ -46,17 +46,7 @@ The useful question is whether the pattern creates clear levels, risk, volume co
 
 ![Candlestick chart showing a rising wedge narrowing upward with volume and break-review context.](/academy/images/chart-reading/wedge-channel-context.svg)
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Recognize the pattern without treating the name as a trade plan.
-- Identify the levels, trend, volume, and risk areas that give the pattern context.
-- Understand common failure conditions.
-- Review whether the trade was planned, late, or reactive.
-- Use the pattern as a review framework rather than prediction.
-
-## Quick Definition
+## What It Is
 
 A rising wedge forms when price moves upward inside a narrowing structure.
 
@@ -93,7 +83,7 @@ The pattern needs surrounding context before it can be reviewed well.
 
 Rising wedges mislead when traders call a top before price confirms anything.
 
-## Realistic Example
+## Example Chart Read
 
 A stock keeps making higher highs, but each push becomes smaller and volume fades. Review asks whether a break below the wedge actually followed through.
 
@@ -109,31 +99,11 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Practical Checklist
+## Review This In Your Journal
 
-- The pattern is visible without forcing it.
-- Key support and resistance areas are mapped.
-- Volume and liquidity are reviewed.
-- The entry is not far from a realistic risk area.
-- The failure condition is defined before the trade.
-- The broader catalyst or market context is checked.
-- The completed trade can be reviewed honestly.
+After a completed trade, write down whether the rising wedge was actually narrowing or whether the lines were forced. Note higher highs, higher lows, volume changes, nearby resistance, breakdown or failed-breakdown behavior, and your invalidation point.
 
-## Apply This In Review
-
-- What pattern did I think I was trading?
-- Was the pattern clean or forced?
-- Where was the key level?
-- What did volume do?
-- Was my entry early, structured, or late?
-- Where did the pattern fail or hold?
-- Did I follow the plan after failure?
-
-Rising Wedge review should focus on structure, failure behavior, and decision quality.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by pattern label, level quality, volume behavior, entry timing, risk location, failed-pattern behavior, and repeated chase or hold patterns.
+The goal is to learn whether upside progress was weakening or whether the pattern label made you predict a reversal too early.
 
 ## Related Lessons
 

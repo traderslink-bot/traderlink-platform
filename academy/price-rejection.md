@@ -243,46 +243,6 @@ Ask:
 
 Structured review notes can help reveal whether rejection is a real part of your review process or something you only notice after a loss.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review rejection behavior with more structure.
-
-For rejection trades, that can mean reviewing:
-
-- Whether the rejected level was marked before the trade.
-- Whether the trader entered before or after rejection.
-- Whether rejection invalidated the original idea.
-- Whether failed breakout behavior repeats.
-- Whether the trader respected the failed hold.
-- Whether volume and nearby levels were reviewed.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around rejection, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Level Reclaim](/academy/level-reclaim/)
-2. [Level Breakout](/academy/level-breakout/)
-
-Recommended next lessons:
-
-1. [Break of Structure](/academy/break-of-structure/)
-2. [Long Wick Candle](/academy/candlestick-patterns/long-wick-candle/)
-3. [Resistance Levels](/academy/resistance-levels/)
-
-Useful related terms:
-
-- [Rejection](/glossary/rejection/)
-- [Failed Setup](/glossary/failed-setup/)
-- [Breakout](/glossary/breakout/)
-- [Reclaim](/glossary/reclaim/)
-- [Confirmation](/glossary/confirmation/)
-
-Related product education:
-
-- [Trade Review](/features/trade-review/)
-
 ## FAQ
 
 ### What is price rejection in trading?

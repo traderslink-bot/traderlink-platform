@@ -216,43 +216,6 @@ Ask:
 
 Breakdown review should focus on whether the trader respected the level, the risk, and the plan.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own breakdown trades and risk decisions with more structure.
-
-For breakdown trades, that can mean reviewing:
-
-- Whether the breakdown level was marked before entry.
-- Whether the entry was close to the level or extended.
-- Whether the trader held long after support failed.
-- Whether failed breakdown behavior repeats across trades.
-- Whether volume and level context were reviewed.
-- Whether exits followed the invalidation plan.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around breakdowns, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [New High of Day](/academy/new-high-of-day/)
-2. [Low of Day](/academy/low-of-day/)
-3. [Support Levels](/academy/support-levels/)
-
-Recommended next lessons:
-
-1. [Level Reclaim](/academy/level-reclaim/)
-2. [Lower Highs and Lower Lows](/academy/lower-highs-lower-lows/)
-3. [Breakout Trading](/academy/breakout-trading/)
-
-Useful related terms:
-
-- [Breakdown](/glossary/breakdown/)
-- [Support Level](/glossary/support-level/)
-- [Reclaim](/glossary/reclaim/)
-- [Low of Day](/glossary/low-of-day/)
-- [Failed Setup](/glossary/failed-setup/)
-
 ## FAQ
 
 ### What is breakdown trading?

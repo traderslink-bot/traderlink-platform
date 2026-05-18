@@ -137,10 +137,6 @@ A final mistake is using too much size in a name that can halt quickly.
 - Did I assume a direction because of the halt?
 - What halt-risk rule should I add or adjust?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades around volatility, timing, spread, slippage, risk, and repeated behavior. Halt review can show whether a trader repeatedly underestimates interruption risk.
-
 ## Related Lessons
 
 - [Volatility Halts](/academy/volatility-halts/)

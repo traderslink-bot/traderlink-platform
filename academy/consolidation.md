@@ -194,46 +194,6 @@ Ask:
 
 After-trade review can help show whether consolidation trades are improving timing or just giving more reasons to overtrade.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own trades with more structure.
-
-For consolidation trades, that can mean reviewing:
-
-- Whether the range was marked before the trade.
-- Whether entries happened near range edges or in the middle.
-- Whether volume supported the range break.
-- Whether the trader respected failed range breaks.
-- Whether overtrading happens inside sideways ranges.
-- Whether trade management changed when price returned inside the range.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around consolidation, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Compression Trading](/academy/compression/)
-2. [Breakout Trading](/academy/breakout-trading/)
-
-Recommended next lessons:
-
-1. [Gap Fill Trading](/academy/gap-fill-trading/)
-2. [Level Breakout](/academy/level-breakout/)
-3. [Breakdown Trading](/academy/breakdown-trading/)
-
-Useful related terms:
-
-- [Support Level](/glossary/support-level/)
-- [Resistance Level](/glossary/resistance-level/)
-- [Breakout](/glossary/breakout/)
-- [Breakdown](/glossary/breakdown/)
-- [Fakeout](/glossary/fakeout/)
-
-Related product education:
-
-- [Trade Management Feedback](/features/trade-management-feedback/)
-
 ## FAQ
 
 ### What is consolidation trading?

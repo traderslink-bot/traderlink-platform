@@ -131,10 +131,6 @@ A final mistake is using normal rules in abnormal market conditions.
 - Did I tag the event properly?
 - What rule would prevent the same weak decision?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by event context, execution, risk, and repeated behavior. High-volatility review can help identify whether fast markets improve decision quality or repeatedly pull the trader away from the plan.
-
 ## Related Lessons
 
 - [Trading Halts](/academy/trading-halts/)

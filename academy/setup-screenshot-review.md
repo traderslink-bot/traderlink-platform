@@ -134,10 +134,6 @@ A final mistake is using screenshots to prove a bias instead of studying the dec
 - What repeated pattern appears across screenshots?
 - What should I capture next time?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built around completed-trade review. Screenshot review can support that process by giving the trader visual evidence of levels, timing, context, and behavior.
-
 ## Related Lessons
 
 - [Watchlist Review](/academy/watchlist-review/)

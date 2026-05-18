@@ -270,21 +270,6 @@ Helpful review prompts:
 
 These notes can help you separate catalyst understanding from headline chasing.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For catalyst-driven trades, useful review context may include:
-
-- Catalyst category.
-- Source and release time.
-- Whether the details were read before entry.
-- Whether related filings were checked.
-- Whether volume continued or faded.
-- Whether the trader repeatedly chases certain headline types.
-
-That review is about improving process. It is not about predicting which future catalyst will move.
-
 ## Related Lessons
 
 - [Unusual Volume](/academy/unusual-volume/)

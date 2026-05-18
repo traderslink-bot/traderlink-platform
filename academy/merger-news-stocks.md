@@ -204,12 +204,6 @@ After a merger-news trade, record:
 
 This helps avoid treating every M&A headline as simple.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For merger-news trades, useful context may include deal type, consideration, filing details, approval status, entry timing, and whether similar M&A headlines lead to repeated emotional decisions.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)

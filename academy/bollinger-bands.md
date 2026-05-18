@@ -122,10 +122,6 @@ A final mistake is ignoring support and resistance because the bands look active
 
 Bollinger Band review works best when volatility context is connected to price behavior.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review whether volatility tools appeared in chase trades, early fades, range trades, or missed context around expansion and contraction.
-
 ## Related Lessons
 
 - [What Are Trading Indicators?](/academy/trading-indicators/)

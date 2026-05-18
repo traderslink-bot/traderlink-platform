@@ -122,10 +122,6 @@ A final mistake is entering during unstable resume conditions without checking d
 - Did I judge the trade only from the candle?
 - What spread rule should I add?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review execution quality, spread, slippage, timing, and repeated patterns. Fast-spread review can show whether the trader repeatedly enters conditions where fills are unrealistic for the plan.
-
 ## Related Lessons
 
 - [Spread](/academy/spread/)

@@ -202,12 +202,6 @@ After a clinical-trial news trade, record:
 
 This helps turn biotech headline reaction into a more structured review process.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For clinical-trial trades, useful review context may include trial phase, endpoint status, data type, cash context, entry timing, and whether similar biotech headlines trigger repeated mistakes.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)

@@ -139,12 +139,6 @@ After a trade or session, ask:
 
 The goal is not to regret every missed move. The goal is to know whether early exits are a repeated pattern. This review should avoid hindsight. A smaller planned profit can be valid; the issue is whether the exit matched the plan and information available at the time.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review planned exits versus actual exits, early profit-taking, giveback, partial exits, and whether winning trades were managed according to the plan.
-
-For cutting winners too early, the useful review is not whether the trader captured the entire move. The better review is whether the exit decision was planned, consistent, and repeatable.
-
 ## Related Lessons
 
 - [Trade Management](/academy/trade-management/)

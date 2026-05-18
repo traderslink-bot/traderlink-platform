@@ -194,42 +194,6 @@ Ask:
 
 A good gap fill review helps traders see whether they were trading a structured level or just assuming price had to return.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own trades with more structure.
-
-For gap fill trades, that can mean reviewing:
-
-- Whether gap levels were marked before the trade.
-- Whether the catalyst was noted.
-- Whether price entered, held, or rejected the gap.
-- Whether the trader entered early, late, or after most of the gap was already filled.
-- Whether volume supported the move.
-- Whether failed gap fills repeat across trades.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around gaps, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Consolidation Trading](/academy/consolidation/)
-2. [Previous Day High Low](/academy/previous-day-high-low/)
-
-Recommended next lessons:
-
-1. [Volume](/academy/volume/)
-2. [Stock Catalysts](/academy/stock-catalysts/)
-3. [Swing Trading](/academy/swing-trading/)
-
-Useful related terms:
-
-- [Gap Up](/glossary/gap-up/)
-- [Gap Down](/glossary/gap-down/)
-- [Previous Day High](/glossary/previous-day-high/)
-- [Previous Day Low](/glossary/previous-day-low/)
-- [Volume](/glossary/volume/)
-
 ## FAQ
 
 ### What is gap fill trading?

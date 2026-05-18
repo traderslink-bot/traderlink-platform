@@ -230,36 +230,6 @@ Helpful review prompts:
 
 Over time, this can show whether execution choices are helping or hurting the trading process.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-Order-type context can help answer:
-
-- Did market orders create avoidable slippage?
-- Did limit orders miss planned exits?
-- Did the trader chase after missed fills?
-- Did order type problems happen more in wide-spread stocks?
-- Did execution mistakes cluster around opening-drive or news moves?
-
-The purpose is review, not prediction. Order type helps explain how the trader interacted with the market.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Level 2](/academy/level-2/) to review visible bid/ask depth.
-- [Time And Sales](/academy/time-and-sales/) to understand actual prints.
-- [Slippage](/academy/slippage/) to review worse-than-expected fills.
-- [Spread](/academy/spread/) to review hidden execution cost.
-- [Liquidity](/academy/liquidity/) to understand executable depth.
-
-Related glossary terms:
-
-- [Spread](/glossary/spread/)
-- [Slippage](/glossary/slippage/)
-- [Liquidity](/glossary/liquidity/)
-
 ## FAQ
 
 ### What is a market order?

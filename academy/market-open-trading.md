@@ -129,10 +129,6 @@ A final mistake is letting one open trade define the emotional tone of the entir
 - Did I continue trading emotionally after the open?
 - What open-specific rule should be adjusted?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed market-open trades by session timing, setup type, entry distance, execution quality, and repeated behavior under pressure.
-
 ## Related Lessons
 
 - [Premarket Trading](/academy/premarket-trading/)

@@ -225,38 +225,6 @@ Helpful review prompts:
 
 Writing this down makes volume-spike trades easier to compare over time.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-Volume-spike context can help review:
-
-- Whether the trader enters during the spike or after it.
-- Whether volume-spike trades have worse execution than planned trades.
-- Whether catalyst-backed spikes perform differently from random spikes.
-- Whether late entries happen far from structure.
-- Whether volume fade appears before exits or losses.
-
-The purpose is review, not prediction. Volume spikes can describe the trading environment around the decision.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Liquidity](/academy/liquidity/) to understand whether activity supports clean execution.
-- [Dollar Volume](/academy/dollar-volume/) to understand traded value.
-- [Spread](/academy/spread/) to review entry and exit cost.
-- [Breakout Trading](/academy/breakout-trading/) for level context around spikes.
-- [Stock Catalysts](/academy/stock-catalysts/) for why activity appears.
-
-Related glossary terms:
-
-- [Volume Spike](/glossary/volume-spike/)
-- [Relative Volume](/glossary/relative-volume/)
-- [Liquidity](/glossary/liquidity/)
-- [Spread](/glossary/spread/)
-- [Slippage](/glossary/slippage/)
-
 ## FAQ
 
 ### What is a volume spike?

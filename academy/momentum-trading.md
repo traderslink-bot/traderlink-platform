@@ -128,10 +128,6 @@ A final mistake is refusing to mark the trade as a chase in review.
 
 Momentum review should separate strong stock behavior from strong trade quality.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review momentum trades by catalyst, volume, entry timing, extension, chase behavior, and risk.
-
 ## Related Lessons
 
 - [Volume](/academy/volume/)

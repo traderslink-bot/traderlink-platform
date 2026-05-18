@@ -14,7 +14,7 @@ availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Trader Intelligence is being built to help traders review whether chart patterns supported completed decisions or became labels for reactive trades."
+cta: "Review pattern-based trades by level quality, volume behavior, entry timing, invalidation, and whether the trade was planned or reactive."
 recommended_previous: "/academy/chart-patterns/failed-breakout-pattern/"
 recommended_next: "/academy/chart-patterns/vwap-reclaim/"
 academy_level: "Practical"
@@ -46,17 +46,7 @@ The useful question is whether the pattern creates clear levels, risk, volume co
 
 ![Candlestick chart showing an accelerating parabolic move far above support with volume and extension-risk labels.](/academy/images/chart-reading/parabolic-extension-context.svg)
 
-## Lesson Objective
-
-By the end of this lesson, you should be able to:
-
-- Recognize the pattern without treating the name as a trade plan.
-- Identify the levels, trend, volume, and risk areas that give the pattern context.
-- Understand common failure conditions.
-- Review whether the trade was planned, late, or reactive.
-- Use the pattern as a review framework rather than prediction.
-
-## Quick Definition
+## What It Is
 
 A parabolic move is an accelerating price move where each push becomes faster and farther from nearby structure.
 
@@ -93,7 +83,7 @@ The pattern needs surrounding context before it can be reviewed well.
 
 Parabolic moves mislead because speed can feel like certainty while risk distance is expanding.
 
-## Realistic Example
+## Example Chart Read
 
 A stock starts with controlled momentum, then candles become larger and farther from support. Review asks whether the trader entered a structured setup or chased after acceleration.
 
@@ -109,31 +99,11 @@ Another mistake is holding after the pattern fails.
 
 A final mistake is using the pattern label to justify a reactive trade.
 
-## Practical Checklist
+## Review This In Your Journal
 
-- The pattern is visible without forcing it.
-- Key support and resistance areas are mapped.
-- Volume and liquidity are reviewed.
-- The entry is not far from a realistic risk area.
-- The failure condition is defined before the trade.
-- The broader catalyst or market context is checked.
-- The completed trade can be reviewed honestly.
+After a completed trade, write down when the move started to become extended. Note candle size, volume expansion, distance from VWAP or key support, liquidity, halt risk where relevant, and whether your decision was planned or emotional.
 
-## Apply This In Review
-
-- What pattern did I think I was trading?
-- Was the pattern clean or forced?
-- Where was the key level?
-- What did volume do?
-- Was my entry early, structured, or late?
-- Where did the pattern fail or hold?
-- Did I follow the plan after failure?
-
-Parabolic Move review should focus on structure, failure behavior, and decision quality.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by pattern label, level quality, volume behavior, entry timing, risk location, failed-pattern behavior, and repeated chase or hold patterns.
+The goal is to learn how you behave around fast extension, not to prove that every parabolic move must immediately reverse.
 
 ## Related Lessons
 

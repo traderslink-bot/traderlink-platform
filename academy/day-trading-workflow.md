@@ -149,10 +149,6 @@ A final mistake is using workflow language to justify a reactive trade.
 
 Reviewing the workflow makes the trading day less random.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by session segment, setup type, risk, execution, and repeated behavior. The goal is not to predict the next move. The goal is to make the trader's process easier to study after the fact.
-
 ## Related Lessons
 
 - [Day Trading](/academy/day-trading/)

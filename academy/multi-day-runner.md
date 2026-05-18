@@ -130,10 +130,6 @@ A final mistake is holding through failure because of runner hype.
 
 Multi-day runner review should measure context, not excitement.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review multi-day moves by catalyst, float, volume, levels, extension, failed continuation, and chase behavior.
-
 ## Related Lessons
 
 - [Momentum Trading](/academy/momentum-trading/)

@@ -205,12 +205,6 @@ After an S-3-related trade, review:
 
 This helps turn filing fear into filing literacy.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For S-3-related trades, useful review context may include whether the trader checked for a 424B5, whether ATM language appeared, whether the company had offering history, and whether the trade came from planned context or a filing headline reaction.
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)

@@ -132,10 +132,6 @@ A final mistake is ignoring boredom as a real trading risk.
 - Did I trade better at the open than midday?
 - Should my plan include stricter midday rules?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by session segment, so midday behavior such as boredom trades, repeated entries, and low-volume chop can become visible over time.
-
 ## Related Lessons
 
 - [Opening Range](/academy/opening-range/)

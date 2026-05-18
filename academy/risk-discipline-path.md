@@ -141,10 +141,6 @@ A final mistake is shaming the behavior instead of identifying the trigger and r
 
 Risk discipline review works best when it turns behavior into a specific next rule.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review repeated risk and discipline patterns across completed trades, including oversized risk, rule breaks, overtrading, revenge behavior, holding losers, cutting winners, and missed protection decisions.
-
 ## Related Lessons
 
 - [Risk Management](/academy/risk-management/)

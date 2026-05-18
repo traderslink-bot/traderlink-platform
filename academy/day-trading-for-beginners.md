@@ -129,10 +129,6 @@ A final mistake is judging progress only by P&L instead of reviewing decision qu
 
 A good review should be honest, but not emotional. The point is to learn, not to beat yourself up.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed day trades: entries, exits, risk, execution, overtrading, and repeated mistake patterns. For beginners, the useful bridge is feedback after trades, not predictions before trades.
-
 ## Related Lessons
 
 - [Day Trading](/academy/day-trading/)

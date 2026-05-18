@@ -130,10 +130,6 @@ A final mistake is not reviewing adds, reductions, and overnight decisions separ
 
 Swing review should include every decision made while the position was open, not only entry and exit.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review swing trades by thesis, hold decisions, catalyst changes, risk, and repeated behavior across multiple sessions.
-
 ## Related Lessons
 
 - [Swing Trading For Beginners](/academy/swing-trading-for-beginners/)

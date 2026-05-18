@@ -131,10 +131,6 @@ A final mistake is never tracking which style produces the trader's repeated mis
 
 A style is useful only if it makes the plan and review clearer.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders tag completed trades by style, setup, timeframe, execution quality, and repeated mistake patterns so review becomes more specific.
-
 ## Related Lessons
 
 - [Day Trading](/academy/day-trading/)

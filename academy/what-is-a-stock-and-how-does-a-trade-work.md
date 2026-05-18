@@ -160,10 +160,6 @@ When reviewing a completed trade, ask:
 
 This review keeps the lesson practical. A trader is not just reviewing whether price moved. They are reviewing whether they understood the instrument and execution conditions.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades, including execution, slippage, risk, and repeated behavior patterns. For this lesson, the useful bridge is basic: did the trade behave like the trader expected, and did the execution evidence match the plan?
-
 ## Related Lessons
 
 - [Stock Market Sessions And Order Flow Basics](/academy/stock-market-sessions-and-order-flow-basics/)

@@ -266,43 +266,6 @@ Ask:
 
 Breakout review should focus on whether the trader respected the level, the risk, and the plan.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own breakout trades with more structure.
-
-For breakout trades, that can mean reviewing:
-
-- Whether the breakout level was marked before entry.
-- Whether the entry was close to the level or extended.
-- Whether the trader held after the breakout failed.
-- Whether failed breakout behavior repeats across trades.
-- Whether volume and level context were reviewed.
-- Whether exits followed the invalidation plan.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around breakouts, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Key Levels Trading](/academy/key-levels-trading/)
-2. [Resistance Levels](/academy/resistance-levels/)
-
-Recommended next lessons:
-
-1. [Level Breakout](/academy/level-breakout/)
-2. [Price Rejection](/academy/price-rejection/)
-3. [Relative Volume](/academy/relative-volume/)
-4. [Momentum Trading](/academy/momentum-trading/)
-
-Useful related terms:
-
-- [Breakout](/glossary/breakout/)
-- [Confirmation](/glossary/confirmation/)
-- [Failed Setup](/glossary/failed-setup/)
-- [Reclaim](/glossary/reclaim/)
-- [Rejection](/glossary/rejection/)
-
 ## FAQ
 
 ### What is breakout trading?

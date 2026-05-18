@@ -122,10 +122,6 @@ A final mistake is holding after VWAP is lost even though the original VWAP-base
 
 VWAP review should focus on behavior around the level, not blind faith in the line.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review VWAP-related decisions: late entries above VWAP, failed reclaims, VWAP holds, slippage around fast moves, and whether VWAP improved or weakened the plan.
-
 ## Related Lessons
 
 - [Moving Averages](/academy/moving-averages/)

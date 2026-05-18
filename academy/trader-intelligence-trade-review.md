@@ -54,7 +54,7 @@ By the end of this lesson, you should be able to:
 
 ## Quick Definition
 
-Trader Intelligence is being built to help traders review completed trades, organize decision data, and identify repeated patterns in risk, execution, management, and behavior.
+Trader Intelligence is a review system concept for organizing completed trade data and identifying repeated patterns in risk, execution, management, and behavior.
 
 - Trade plan versus actual behavior.
 - Risk and position-size review.
@@ -127,10 +127,6 @@ A final mistake is trying to review everything at once. Start with the highest-i
 - Did the review stay focused on completed trades?
 
 The best product bridge is practical: use the tool to see completed decisions more clearly, then use the Academy to understand what to improve.
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to connect trade data, notes, behavior tags, and educational review. Its role in the Academy should be soft and honest: help users review what happened, not promise what will happen next.
 
 ## Related Lessons
 

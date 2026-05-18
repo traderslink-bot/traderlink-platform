@@ -140,12 +140,6 @@ After a trade or session, ask:
 
 FOMO becomes easier to manage when the trader can see when and why it appears.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review repeated entry patterns: late entries, emotional re-entries, chase behavior, sizing changes, and trades taken after alerts.
-
-For FOMO trading, the useful review is not whether the move eventually continued. The better review is whether the trade had defined risk and matched the plan at the moment of entry.
-
 ## Related Lessons
 
 - [Trading Discipline](/academy/trading-discipline/)

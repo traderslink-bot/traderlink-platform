@@ -130,10 +130,6 @@ A final mistake is turning a failed day trade into an overnight hold.
 
 A day-trading review should study decision quality, not just the final number.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review intraday trades by setup, timing, execution, risk, and repeated behavior patterns after the session is complete.
-
 ## Related Lessons
 
 - [Day Trading For Beginners](/academy/day-trading-for-beginners/)

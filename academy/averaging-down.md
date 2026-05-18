@@ -138,12 +138,6 @@ After a trade or session, ask:
 
 This review can help traders see whether averaging down is part of a planned strategy or part of a loss-avoidance habit.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review position adds, average price changes, risk expansion, invalidation behavior, and whether average-down trades repeat in larger losses.
-
-For averaging down, the useful review is not whether one add happened to reduce the loss. The better review is whether the add was planned, sized, and still valid when it happened.
-
 ## Related Lessons
 
 - [Position Sizing](/academy/position-sizing/)

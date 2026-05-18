@@ -208,12 +208,6 @@ After a 424B5-related trade, review:
 
 This review helps turn offering headlines into structured filing literacy.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For 424B5-related trades, useful review context may include offering type, price, warrant terms, whether the trader read the filing before entry, whether the stock was extended before the filing, and whether similar offering headlines trigger repeated emotional decisions.
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)

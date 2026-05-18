@@ -130,10 +130,6 @@ A final mistake is reviewing only win rate instead of execution quality.
 
 Scalping review should pay close attention to the difference between chart idea and actual fill quality.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review short-term trades by execution, slippage, spread, trade count, and repeated fast-decision behavior.
-
 ## Related Lessons
 
 - [Spread](/academy/spread/)

@@ -219,44 +219,6 @@ Ask:
 
 This type of review helps separate a planned structure-based trade from a reaction to short-term movement.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review trades around structure with more clarity.
-
-For swing highs and swing lows, that can mean reviewing:
-
-- Whether entries happened near meaningful swing points.
-- Whether the trade aligned with higher highs/higher lows or lower highs/lower lows.
-- Whether the trader held after a key swing low or swing high failed.
-- Whether repeated mistakes happen around structure breaks.
-- Whether exits or adds followed the original structure plan.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around structure, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lesson:
-
-- [Break of Structure](/academy/break-of-structure/)
-
-Recommended next lessons:
-
-1. [Higher Highs and Higher Lows](/academy/higher-highs-higher-lows/)
-2. [Lower Highs and Lower Lows](/academy/lower-highs-lower-lows/)
-3. [Key Levels Trading](/academy/key-levels-trading/)
-
-Useful related terms:
-
-- [Support Level](/glossary/support-level/)
-- [Resistance Level](/glossary/resistance-level/)
-- [Breakout](/glossary/breakout/)
-- [Breakdown](/glossary/breakdown/)
-- [Invalidation Level](/glossary/invalidation-level/)
-
-Related product education:
-
-- [Trade Management Feedback](/features/trade-management-feedback/)
-
 ## FAQ
 
 ### What are swing highs and swing lows?

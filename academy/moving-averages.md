@@ -120,10 +120,6 @@ A final mistake is using moving averages in low-liquidity stocks without reviewi
 
 A moving average is most useful when it makes context clearer, not when it replaces the plan.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review whether moving averages appeared in late entries, trend-following decisions, or choppy trades where the tool created noise.
-
 ## Related Lessons
 
 - [What Are Trading Indicators?](/academy/trading-indicators/)

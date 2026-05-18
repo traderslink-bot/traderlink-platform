@@ -130,10 +130,6 @@ A final mistake is using power hour to recover emotionally from earlier mistakes
 - Was the trade based on structure or emotion?
 - Should power hour have stricter rules in my plan?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review whether late-session trades were planned decisions or emotional attempts to change the day after earlier results.
-
 ## Related Lessons
 
 - [Midday Trading](/academy/midday-trading/)

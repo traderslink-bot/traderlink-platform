@@ -130,10 +130,6 @@ A final mistake is paper trading in a way that does not match the trader's inten
 - What behavior would become harder with real money?
 - What should I practice again before adding pressure?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is focused on completed-trade review. Paper trading can use the same structure: tag the setup, note planned risk, compare planned versus actual behavior, and look for repeated process issues.
-
 ## Related Lessons
 
 - [Practice Trading](/academy/practice-trading/)

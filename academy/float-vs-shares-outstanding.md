@@ -156,7 +156,7 @@ Useful review notes include:
 
 Over time, this helps traders understand whether float-based assumptions are helping or hurting their process.
 
-Trader Intelligence is being built to help traders review completed small-cap trades by float, filings, dilution context, risk, execution, and repeated research gaps. This is review support, not prediction or a trade signal.
+A trade journal can connect float, filings, dilution context, risk, execution, and research notes after the trade. That review is for learning, not prediction or a trade signal.
 
 ## Related Terms And Guides
 
@@ -210,12 +210,6 @@ When reviewing a small-cap trade or watchlist idea connected to Float Vs Shares 
 - What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
 - Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
 - What would I want to notice faster the next time this situation appears?
-
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review small-cap trades after the fact: what the trader saw, what they missed, how the stock actually behaved, and whether risk was respected.
-
-For Float Vs Shares Outstanding, the useful review is not whether the concept predicted the move. The better review is whether the trader understood the small-cap context before acting and whether the trade matched a realistic risk plan.
 
 ## Related Lessons
 

@@ -122,10 +122,6 @@ A final mistake is using RSI to justify an entry without defined risk.
 
 RSI review should explain how momentum affected the decision, not pretend the indicator knew the future.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review whether RSI or momentum context appeared in early exits, countertrend entries, chase trades, or missed trend continuation.
-
 ## Related Lessons
 
 - [What Are Trading Indicators?](/academy/trading-indicators/)

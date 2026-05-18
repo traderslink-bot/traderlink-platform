@@ -128,10 +128,6 @@ A final mistake is not reviewing whether the indicator actually helped the trade
 
 The goal is to make indicators useful, not magical.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed decisions. For indicators, that means reviewing whether a tool supported context, distracted from the plan, or appeared in repeated mistakes.
-
 ## Related Lessons
 
 - [Why Indicators Lag Price](/academy/why-indicators-lag/)

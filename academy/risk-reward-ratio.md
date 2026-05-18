@@ -196,12 +196,6 @@ When reviewing a trade connected to Risk Reward Ratio, ask:
 - If I broke the rule, what was the trigger: fear, hope, boredom, revenge, or confusion?
 - What should I change in my plan so this decision is easier to review next time?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review risk decisions after the fact: whether the trade followed the plan, where risk expanded, and which behavior patterns repeated.
-
-For Risk Reward Ratio, the useful review is not whether one trade made money. The better review is whether the decision was planned, controlled, and repeatable.
-
 ## Related Lessons
 
 - [Position Sizing](/academy/position-sizing/)

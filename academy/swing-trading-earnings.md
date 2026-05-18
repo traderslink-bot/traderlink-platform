@@ -155,10 +155,6 @@ A final mistake is holding after earnings change the original thesis.
 
 Earnings review should separate event risk from ordinary chart risk.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed earnings-related trades by event timing, gap behavior, position size, thesis changes, and whether repeated decisions happen around known report dates.
-
 ## Related Lessons
 
 - [Earnings News](/academy/earnings-news/)

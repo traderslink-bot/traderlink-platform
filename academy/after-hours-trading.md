@@ -135,10 +135,6 @@ A final mistake is overlooking filing or dilution risk in small-cap names.
 - Did I hold overnight with a plan?
 - Did after-hours activity fit my workflow or interrupt it?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review after-hours trades and watchlist decisions by catalyst, source quality, liquidity, spread, overnight exposure, and whether the decision fit the prepared plan.
-
 ## Related Lessons
 
 - [Power Hour Trading](/academy/power-hour-trading/)

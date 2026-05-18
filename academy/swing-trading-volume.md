@@ -149,10 +149,6 @@ A final mistake is using volume to justify a late chase after most of the move h
 
 Volume review should help the trader understand participation and timing, not create certainty.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed swing trades by volume context, liquidity, entry timing, follow-through, and whether repeated trades happen after participation has already faded.
-
 ## Related Lessons
 
 - [Volume](/academy/volume/)

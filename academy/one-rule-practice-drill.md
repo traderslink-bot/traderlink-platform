@@ -139,10 +139,6 @@ A final mistake is practicing the rule only on easy charts.
 - Was the rule too vague or too strict?
 - Should I repeat, adjust, or replace the drill?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review repeated behaviors across completed trades. One-rule drills create cleaner evidence for that kind of review because the trader knows exactly what behavior they were testing.
-
 ## Related Lessons
 
 - [Trade Grading](/academy/trade-grading/)

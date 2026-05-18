@@ -266,47 +266,6 @@ Ask:
 
 Over time, this kind of review can show whether your level drawing is helping your process or just adding noise.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review whether their marked levels actually supported their decisions.
-
-For support and resistance drawing, that can mean reviewing:
-
-- Whether entries happened near planned levels.
-- Whether losses came from chasing into resistance.
-- Whether support breaks were respected.
-- Whether the trader drew too many levels and lost clarity.
-- Whether repeated mistakes happened around the same type of level.
-- Whether planned risk matched the marked level.
-
-The product connection is review, not prediction. The goal is to help traders study what they did around their levels and improve the decision process.
-
-## Continue The Learning Path
-
-Recommended previous lesson:
-
-- [Support and Resistance](/academy/support-and-resistance/)
-
-Recommended next lessons:
-
-1. [Support Levels](/academy/support-levels/)
-2. [Resistance Levels](/academy/resistance-levels/)
-3. [Swing Highs and Swing Lows](/academy/swing-highs-and-swing-lows/)
-4. [Key Levels Trading](/academy/key-levels-trading/)
-
-Useful related terms:
-
-- [High of Day](/glossary/high-of-day/)
-- [Low of Day](/glossary/low-of-day/)
-- [Premarket High](/glossary/premarket-high/)
-- [Premarket Low](/glossary/premarket-low/)
-- [Reclaim](/glossary/reclaim/)
-- [Rejection](/glossary/rejection/)
-
-Related product education:
-
-- [Support and Resistance Trade Review](/features/support-resistance-trade-review/)
-
 ## FAQ
 
 ### How do you draw support and resistance?

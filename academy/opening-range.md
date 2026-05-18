@@ -128,10 +128,6 @@ A final mistake is staying involved after the opening-range idea has clearly fai
 - Did premarket levels affect the decision?
 - What would I change about my open process?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by time of day, entry distance, level quality, spread, slippage, and whether opening-range decisions were planned or reactive.
-
 ## Related Lessons
 
 - [Market Open Trading](/academy/market-open-trading/)

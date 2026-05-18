@@ -125,10 +125,6 @@ A final mistake is switching styles because of emotion instead of planning the t
 
 This type of review can help traders spot style drift: starting with one plan, then quietly changing the trade into something else.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review whether completed trades matched their intended timeframe, risk plan, and management process. That can help separate day-trade execution issues from swing-trade management issues.
-
 ## Related Lessons
 
 - [Day Trading](/academy/day-trading/)

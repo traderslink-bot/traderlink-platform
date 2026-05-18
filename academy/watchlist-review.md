@@ -135,10 +135,6 @@ A final mistake is changing watchlist criteria every day without a sample.
 - Did my watchlist match my current skill level?
 - What one filter should change next session?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by source, setup, timing, and behavior. Watchlist review can show whether trades came from preparation or from reactive ticker selection.
-
 ## Related Lessons
 
 - [Day Trading Watchlist](/academy/day-trading-watchlist/)

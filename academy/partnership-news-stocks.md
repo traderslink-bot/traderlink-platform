@@ -195,12 +195,6 @@ After a partnership-news trade, record:
 - Whether the first move held.
 - Whether you reacted to the word partnership or reviewed the actual mechanics.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For partnership-news trades, useful context may include partner name, agreement type, term quality, filing context, entry timing, and whether similar partnership headlines lead to repeated chase behavior.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)

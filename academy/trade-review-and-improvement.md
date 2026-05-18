@@ -131,12 +131,6 @@ A final mistake is treating review like punishment. Review should be honest, but
 
 Good review is not about perfect hindsight. It is about building a clearer feedback loop.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders organize completed trades into reviewable patterns: risk behavior, execution quality, trade management, missed rules, and repeated mistakes.
-
-For trade review, the product bridge is simple: the tool should help the trader see their own decisions more clearly after the trade, not tell them what the next trade will do.
-
 ## Related Lessons
 
 - [Trade Risk Review](/academy/trade-risk-review/)

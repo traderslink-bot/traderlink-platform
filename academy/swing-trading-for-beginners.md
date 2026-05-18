@@ -178,10 +178,6 @@ A final mistake is reviewing only the entry and exit. Swing trades also need rev
 
 Swing trading review should focus on decision quality across the full holding period, not only whether the final outcome was profitable.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed swing trades by thesis, levels, overnight exposure, adds, reductions, exits, and repeated hold behavior. The useful question is not whether the tool can predict the next move. The useful question is whether the trader can see the pattern in their own decisions.
-
 ## Related Lessons
 
 - [Swing Trading](/academy/swing-trading/)

@@ -120,10 +120,6 @@ A final mistake is never removing a tool after it stops adding value.
 
 Indicator overload is fixed by simplifying the decision process, not by finding the perfect tool.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review whether repeated mistakes involve tool confusion, late confirmation, or ignoring simple levels.
-
 ## Related Lessons
 
 - [What Are Trading Indicators?](/academy/trading-indicators/)

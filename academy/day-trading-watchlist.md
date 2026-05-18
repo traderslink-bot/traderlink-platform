@@ -136,10 +136,6 @@ A final mistake is failing to remove a name when the original reason no longer a
 - Did I trade a name that was not on the plan?
 - What watchlist filter should be stricter next session?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review whether completed trades came from planned watchlist names or from reactive additions. That review can make watchlist quality easier to study over time.
-
 ## Related Lessons
 
 - [Premarket Trading](/academy/premarket-trading/)

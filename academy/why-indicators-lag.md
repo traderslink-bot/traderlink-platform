@@ -126,10 +126,6 @@ A final mistake is not reviewing whether indicator confirmation improved or wors
 
 Understanding lag makes indicator review more honest.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review whether delayed confirmation led to late entries, chase behavior, or better patience. That review is about completed decisions, not predicting the next indicator move.
-
 ## Related Lessons
 
 - [What Are Trading Indicators?](/academy/trading-indicators/)

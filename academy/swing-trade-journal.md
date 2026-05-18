@@ -134,12 +134,6 @@ A final mistake is writing too much but reviewing too little. The journal should
 
 Over time, these notes can help traders find patterns in how they manage multi-session trades.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, trade management, context changes, mistakes, and performance patterns with more structure.
-
-For swing traders, review is not only about one entry candle. The useful review includes whether the trader followed the plan, managed risk, and responded to changing context.
-
 ## Related Lessons
 
 - [Swing Trading](/academy/swing-trading/)

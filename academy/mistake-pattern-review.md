@@ -129,12 +129,6 @@ A final mistake is reviewing with shame language. Shame makes review harder to r
 
 The goal is not to eliminate every mistake immediately. The goal is to make the most important repeated mistakes visible enough to work on.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders identify repeated behavior patterns across trades: chasing, overtrading, risk expansion, emotional exits, and execution issues.
-
-For mistake pattern review, the product should help the trader find the pattern faster and review it with less guesswork.
-
 ## Related Lessons
 
 - [Trading Discipline](/academy/trading-discipline/)

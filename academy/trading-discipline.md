@@ -140,12 +140,6 @@ After a trade or session, ask:
 
 A discipline review helps traders stop treating mistakes as random. Patterns can be named, measured, and improved.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review behavior after the fact: rule breaks, repeated mistakes, emotional entries, trade-management decisions, and whether trades matched the plan.
-
-For trading discipline, the useful review is not whether one trade was green or red. The better question is whether the trade was planned, controlled, and repeatable.
-
 ## Related Lessons
 
 - [Trading Plan](/academy/trading-plan/)

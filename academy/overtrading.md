@@ -144,12 +144,6 @@ After a trade or session, ask:
 
 Overtrading usually becomes easier to manage once the pattern is visible.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review trade frequency, timing, repeated tickers, setup quality, and behavior changes after wins or losses.
-
-For overtrading, the useful review is not simply the number of trades. The better review is whether trade quality dropped as the session continued.
-
 ## Related Lessons
 
 - [Revenge Trading](/academy/revenge-trading/)

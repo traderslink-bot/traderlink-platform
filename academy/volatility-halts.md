@@ -124,10 +124,6 @@ A final mistake is chasing immediately after resume without reviewing spread and
 - Did I assume continuation or reversal?
 - What rule would reduce halt-related risk next time?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades by volatility, timing, execution, spread, and risk behavior. Volatility halt review can reveal whether the trader repeatedly enters fast names without interruption planning.
-
 ## Related Lessons
 
 - [Trading Halts](/academy/trading-halts/)

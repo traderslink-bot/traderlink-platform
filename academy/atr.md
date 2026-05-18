@@ -122,10 +122,6 @@ A final mistake is using ATR without reviewing price structure and levels.
 
 ATR review should make risk more honest, especially when volatility changes quickly.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review whether volatility, sizing, stop distance, spread, or slippage repeatedly affected trade outcomes. ATR can support that review as range context.
-
 ## Related Lessons
 
 - [Risk Management](/academy/risk-management/)

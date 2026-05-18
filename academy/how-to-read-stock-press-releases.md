@@ -274,20 +274,6 @@ Helpful prompts:
 
 These notes can show whether your news process is improving.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For press-release reading, useful review context may include:
-
-- Whether the full release was read before entry.
-- Which detail was used to justify the trade.
-- Whether related filings were checked.
-- Whether the trader entered before or after the main volume event.
-- Whether similar headline categories lead to repeated mistakes.
-
-This review is about decision quality, not predicting the next news reaction.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)

@@ -192,46 +192,6 @@ Ask:
 
 After-trade review can help show whether compression improves entry quality or becomes another reason to anticipate moves too early.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own trades with more structure.
-
-For compression trades, that can mean reviewing:
-
-- Whether the range was marked before the trade.
-- Whether entries happened before, during, or after expansion.
-- Whether volume supported the break.
-- Whether the trader held after a failed break.
-- Whether repeated impatience appears around tight ranges.
-- Whether compression trades were planned or guessed.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around compression, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Breakdown Trading](/academy/breakdown-trading/)
-2. [Breakout Trading](/academy/breakout-trading/)
-
-Recommended next lessons:
-
-1. [Consolidation Trading](/academy/consolidation/)
-2. [Volume](/academy/volume/)
-3. [Key Levels Trading](/academy/key-levels-trading/)
-
-Useful related terms:
-
-- [Breakout](/glossary/breakout/)
-- [Breakdown](/glossary/breakdown/)
-- [Support Level](/glossary/support-level/)
-- [Resistance Level](/glossary/resistance-level/)
-- [Volume](/glossary/volume/)
-
-Related product education:
-
-- [Trade Management Feedback](/features/trade-management-feedback/)
-
 ## FAQ
 
 ### What is compression trading?

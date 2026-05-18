@@ -130,10 +130,6 @@ A final mistake is treating a fade thesis as proof instead of a review category.
 
 News-fade review should begin with the catalyst and reaction, not with a bias that the move is too big.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review news trades by catalyst quality, filing context, reaction, volume, fade behavior, and repeated headline-chasing or fade-bias patterns.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)

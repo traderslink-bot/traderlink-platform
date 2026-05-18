@@ -132,10 +132,6 @@ A final mistake is not looking for repeated behavior. One risk mistake matters. 
 
 The more specific the risk review, the easier it becomes to improve rules.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders study more than final P&L. For risk review, that means showing where risk was planned, where risk changed, and whether the trader followed the original rules.
-
 ## Related Lessons
 
 - [Risk Management](/academy/risk-management/)

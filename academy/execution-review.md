@@ -131,12 +131,6 @@ A final mistake is not tracking repeated execution issues by ticker type, time o
 
 Execution review helps traders see whether their process works in the actual market conditions they trade.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review execution quality after trades: entry timing, expected versus actual fills, spread, slippage, exit quality, and repeated conditions where execution gets worse.
-
-For execution review, the value is not prediction. It is better visibility into how trades were actually handled.
-
 ## Related Lessons
 
 - [Bid And Ask](/academy/bid-and-ask/)

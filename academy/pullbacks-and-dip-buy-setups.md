@@ -128,10 +128,6 @@ A final mistake is using the phrase dip-buy to justify hope.
 
 Pullback review should protect the trader from confusing patience with denial.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review pullback trades by prior move, level quality, volume behavior, invalidation, adds, and repeated averaging-down patterns.
-
 ## Related Lessons
 
 - [Support Levels](/academy/support-levels/)

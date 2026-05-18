@@ -134,10 +134,6 @@ A final mistake is holding into the open without a plan for changing conditions.
 - Did I trade from preparation or from excitement?
 - What premarket filter should be stricter next time?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed premarket trades by catalyst, spread, liquidity, timing, level quality, and whether the trade fit the prepared session plan.
-
 ## Related Lessons
 
 - [Day Trading Workflow](/academy/day-trading-workflow/)

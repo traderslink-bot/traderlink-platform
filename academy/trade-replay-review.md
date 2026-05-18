@@ -134,10 +134,6 @@ A final mistake is treating replay performance as equal to live performance.
 - Did I change my interpretation after seeing the outcome?
 - What decision skill should I replay again?
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed trades after they happen. Replay review uses the same mindset: reconstruct the decision with the information available at the time, then compare plan versus actual behavior.
-
 ## Related Lessons
 
 - [Paper Trading](/academy/paper-trading/)

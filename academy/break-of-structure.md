@@ -232,46 +232,6 @@ Ask:
 
 The goal is not to find a perfect label. The goal is to understand whether the trade idea was still valid after the chart changed.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review decisions like entries, exits, adds, reductions, and trade management.
-
-For break of structure, that can mean reviewing:
-
-- Whether the trade was aligned with the active structure.
-- Whether the trader held after the structure level failed.
-- Whether adds happened after structure weakened.
-- Whether exits happened before or after the key structure break.
-- Whether repeated losses happen when structure changes.
-- Whether the trader used the right timeframe for review.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did when structure changed, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Price Rejection](/academy/price-rejection/)
-2. [Level Reclaim](/academy/level-reclaim/)
-
-Recommended next lessons:
-
-1. [Swing Highs and Swing Lows](/academy/swing-highs-and-swing-lows/)
-2. [Higher Highs and Higher Lows](/academy/higher-highs-higher-lows/)
-3. [Lower Highs and Lower Lows](/academy/lower-highs-lower-lows/)
-
-Useful related terms:
-
-- [Invalidation Level](/glossary/invalidation-level/)
-- [Support Level](/glossary/support-level/)
-- [Resistance Level](/glossary/resistance-level/)
-- [Reclaim](/glossary/reclaim/)
-- [Rejection](/glossary/rejection/)
-
-Related product education:
-
-- [Trade Management Feedback](/features/trade-management-feedback/)
-
 ## FAQ
 
 ### What is a break of structure in trading?

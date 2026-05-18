@@ -200,12 +200,6 @@ After an FDA-news trade, record:
 
 This makes FDA catalyst review less emotional over time.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For FDA-news trades, useful review context may include event type, expected versus surprise status, development stage, financing context, entry timing, and whether similar FDA headlines trigger repeated chase behavior.
-
 ## Related Lessons
 
 - [Clinical Trial News](/academy/clinical-trial-news/)

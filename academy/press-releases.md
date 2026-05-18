@@ -245,21 +245,6 @@ Helpful review prompts:
 
 Over time, these notes can show whether press releases are helping your process or triggering reactive trades.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For press-release trades, useful review context may include:
-
-- The headline and release time.
-- Catalyst category.
-- Whether the full release was read before entry.
-- Whether related filings were checked.
-- Whether volume continued or faded.
-- Whether the trader repeatedly reacts to similar headline words.
-
-This is review support, not prediction.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)

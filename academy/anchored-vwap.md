@@ -123,10 +123,6 @@ A final mistake is not recording why the anchor was chosen.
 
 Anchored VWAP is most useful when the anchor is meaningful and the review stays honest.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review event context after trades. Anchored VWAP can be one review input when connected to a real catalyst, breakout, high, low, or trend event.
-
 ## Related Lessons
 
 - [VWAP](/academy/vwap/)

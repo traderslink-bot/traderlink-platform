@@ -247,46 +247,6 @@ Ask:
 
 The goal is to understand whether the breakout was planned and reviewable, not just whether it made or lost money.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review their own breakout decisions with more structure.
-
-For level breakouts, that can mean reviewing:
-
-- Whether the breakout level was marked before the trade.
-- Whether the entry was close to the level, on a retest, or extended.
-- Whether price held above the breakout zone.
-- Whether the trader respected failed holds.
-- Whether chase entries around breakout levels repeat.
-- Whether exits followed the planned failure point.
-
-The product connection is review, not prediction. Trader Intelligence should help traders study what they did around breakout levels, not tell them what to buy or sell.
-
-## Continue The Learning Path
-
-Recommended previous lessons:
-
-1. [Key Levels Trading](/academy/key-levels-trading/)
-2. [Breakout Trading](/academy/breakout-trading/)
-
-Recommended next lessons:
-
-1. [Level Reclaim](/academy/level-reclaim/)
-2. [Price Rejection](/academy/price-rejection/)
-3. [Break of Structure](/academy/break-of-structure/)
-
-Useful related terms:
-
-- [Breakout](/glossary/breakout/)
-- [Confirmation](/glossary/confirmation/)
-- [Failed Setup](/glossary/failed-setup/)
-- [Reclaim](/glossary/reclaim/)
-- [Rejection](/glossary/rejection/)
-
-Related product education:
-
-- [Trade Review](/features/trade-review/)
-
 ## FAQ
 
 ### What is a level breakout?

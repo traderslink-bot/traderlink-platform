@@ -141,10 +141,6 @@ A final mistake is refusing to accept that the level failed.
 
 Level review helps traders separate planned structure from emotional justification.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed swing trades around levels, entries, exits, failed holds, reclaims, and repeated behavior near support and resistance.
-
 ## Related Lessons
 
 - [Support And Resistance](/academy/support-and-resistance/)

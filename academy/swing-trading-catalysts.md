@@ -164,10 +164,6 @@ A final mistake is skipping filing review in small-cap catalyst trades.
 
 Catalyst review helps traders avoid treating all news as equal.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review completed catalyst trades by headline quality, filing context, chart reaction, volume, risk, and whether repeated decisions happen after attention has already faded.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)

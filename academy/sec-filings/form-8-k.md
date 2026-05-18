@@ -219,14 +219,6 @@ After a filing-driven trade, write down:
 
 This helps separate filing research from filing reaction.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For 8-K-driven trades, useful review context may include the filing type, release time, event category, whether exhibits were checked, whether financing language appeared, and whether the trader entered before understanding the filing.
-
-That review is about process quality, not predicting how the next 8-K will move.
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)

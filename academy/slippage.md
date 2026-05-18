@@ -220,36 +220,6 @@ Helpful review prompts:
 
 Over time, this review can show whether slippage is occasional or part of a repeated execution pattern.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-Slippage context can help answer:
-
-- Did the trader's worst losses include large entry or exit slippage?
-- Did slippage happen more often in low-liquidity names?
-- Did immediate orders create worse fills during wide spreads?
-- Did the trader size too large for available depth?
-- Did slippage turn planned risk into unplanned risk?
-
-The purpose is review, not prediction. Slippage helps explain the difference between the trade idea and the actual execution.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Market Orders Vs Limit Orders](/academy/market-orders-vs-limit-orders/) to connect order type with fill quality.
-- [Level 2](/academy/level-2/) to understand quote depth.
-- [Time And Sales](/academy/time-and-sales/) to review actual prints.
-- [Liquidity](/academy/liquidity/) to review executable depth.
-- [Spread](/academy/spread/) to review hidden execution cost.
-
-Related glossary terms:
-
-- [Slippage](/glossary/slippage/)
-- [Spread](/glossary/spread/)
-- [Liquidity](/glossary/liquidity/)
-
 ## FAQ
 
 ### What is trading slippage?

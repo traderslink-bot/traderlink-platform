@@ -232,37 +232,6 @@ Helpful review prompts:
 
 Over time, this review can show whether wide-spread trades are a repeated problem.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-Spread context can help answer:
-
-- Did wide spreads appear before poor fills?
-- Did market orders create avoidable slippage?
-- Did the trader choose position size without considering spread?
-- Did losses cluster in premarket or thin-liquidity names?
-- Did the trader ignore spread when chasing volume spikes?
-
-The purpose is review, not prediction. Spread helps describe the actual execution environment.
-
-## Continue The Learning Path
-
-After this lesson, continue with:
-
-- [Bid And Ask](/academy/bid-and-ask/) to understand quote mechanics.
-- [Slippage](/academy/slippage/) to review worse-than-expected fills.
-- [Market Orders Vs Limit Orders](/academy/market-orders-vs-limit-orders/) to connect order type with execution.
-- [Liquidity](/academy/liquidity/) to review whether the stock had enough depth.
-- [Dollar Volume](/academy/dollar-volume/) to understand traded value.
-
-Related glossary terms:
-
-- [Spread](/glossary/spread/)
-- [Liquidity](/glossary/liquidity/)
-- [Slippage](/glossary/slippage/)
-- [Volume Spike](/glossary/volume-spike/)
-
 ## FAQ
 
 ### What is the bid ask spread?

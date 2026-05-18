@@ -281,39 +281,6 @@ Helpful prompts:
 
 Structured review notes can show whether filing research is part of your process or an afterthought.
 
-## Trader Intelligence Bridge
-
-Trader Intelligence is being built to help traders review executions, mistakes, trade management, and repeated decision patterns.
-
-For filing-driven trades, useful review context may include:
-
-- Filing type.
-- Release time.
-- Related press release.
-- Whether dilution language appeared.
-- Whether the trader checked the filing before entry.
-- Whether similar filing types lead to repeated mistakes.
-
-This review is about process quality, not predicting the next filing reaction.
-
-## Related SEC Filings And Guides
-
-- [Form 8-K](/academy/sec-filings/form-8-k/)
-- [Form S-1](/academy/sec-filings/form-s-1/)
-- [Form S-3](/academy/sec-filings/form-s-3/)
-- [Form 424B5](/academy/sec-filings/form-424b5/)
-- [How To Spot Dilution Risk](/academy/how-to-spot-dilution-risk/)
-- [Dilution](/academy/dilution/)
-- [Stock Catalysts](/academy/stock-catalysts/)
-- [How To Read Stock Press Releases](/academy/how-to-read-stock-press-releases/)
-
-## Related Glossary Terms
-
-- [Catalyst](/glossary/catalyst/)
-- [News Catalyst](/glossary/news-catalyst/)
-- [Dilution](/glossary/dilution/)
-- [Volume Spike](/glossary/volume-spike/)
-
 ## FAQ
 
 ### What are SEC filings?
