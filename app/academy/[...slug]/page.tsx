@@ -53,6 +53,7 @@ export default async function AcademyLessonPage({ params }: PageProps) {
   const courseLessons = primaryCoursePage
     ? primaryCoursePage.modules.flatMap(({ lessons }) => lessons)
     : [];
+  const learningPathSection = splitLearningPathSection(lesson.body);
 
   return (
     <main className="min-h-screen bg-[#050a14] text-white">
@@ -63,7 +64,7 @@ export default async function AcademyLessonPage({ params }: PageProps) {
           </Link>
 
           <div className="mt-8 rounded-lg border border-white/10 bg-slate-900/58 p-5 sm:p-8">
-            <AcademyMarkdown body={lesson.body} />
+            <AcademyMarkdown body={learningPathSection.mainBody} />
           </div>
 
           <nav className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -119,6 +120,12 @@ export default async function AcademyLessonPage({ params }: PageProps) {
               </Link>
             )}
           </nav>
+
+          {learningPathSection.learningPathBody ? (
+            <div className="mt-6 rounded-lg border border-white/10 bg-slate-900/46 p-5 sm:p-8">
+              <AcademyMarkdown body={learningPathSection.learningPathBody} />
+            </div>
+          ) : null}
         </article>
 
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
@@ -223,4 +230,35 @@ export default async function AcademyLessonPage({ params }: PageProps) {
       </div>
     </main>
   );
+}
+
+function splitLearningPathSection(body: string): {
+  mainBody: string;
+  learningPathBody: string | null;
+} {
+  const heading = /^## Continue The Learning Path\s*$/m.exec(body);
+
+  if (!heading) {
+    return {
+      mainBody: body,
+      learningPathBody: null,
+    };
+  }
+
+  const sectionStart = heading.index;
+  const afterHeadingIndex = sectionStart + heading[0].length;
+  const remainingBody = body.slice(afterHeadingIndex);
+  const nextHeading = /^##\s+/m.exec(remainingBody);
+  const sectionEnd = nextHeading
+    ? afterHeadingIndex + nextHeading.index
+    : body.length;
+  const beforeSection = body.slice(0, sectionStart).trimEnd();
+  const learningPathBody = body.slice(sectionStart, sectionEnd).trim();
+  const afterSection = body.slice(sectionEnd).trimStart();
+  const mainBody = [beforeSection, afterSection].filter(Boolean).join("\n\n");
+
+  return {
+    mainBody,
+    learningPathBody,
+  };
 }
