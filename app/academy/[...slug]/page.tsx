@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 
 import {
   getAcademyAppBridgeForLesson,
+  getAcademyCoursePage,
   getAcademyLessonBySegments,
   getAcademyLessonStaticParams,
-  getCourseTitle,
 } from "@/src/lib/academy/academy-content";
 import { AcademyMarkdown } from "@/src/lib/academy/academy-markdown";
+import { AcademyLessonCompleteControl } from "@/src/lib/academy/academy-progress";
 
 type PageProps = {
   params: Promise<{ slug: string[] }>;
@@ -45,6 +46,13 @@ export default async function AcademyLessonPage({ params }: PageProps) {
   }
 
   const bridge = getAcademyAppBridgeForLesson(lesson);
+  const primaryContext = lesson.contexts[0] ?? null;
+  const primaryCoursePage = primaryContext
+    ? getAcademyCoursePage(primaryContext.courseId)
+    : null;
+  const courseLessons = primaryCoursePage
+    ? primaryCoursePage.modules.flatMap(({ lessons }) => lessons)
+    : [];
 
   return (
     <main className="min-h-screen bg-[#050a14] text-white">
@@ -57,22 +65,88 @@ export default async function AcademyLessonPage({ params }: PageProps) {
           <div className="mt-8 rounded-lg border border-white/10 bg-slate-900/58 p-5 sm:p-8">
             <AcademyMarkdown body={lesson.body} />
           </div>
+
+          <nav className="mt-6 grid gap-4 sm:grid-cols-2">
+            {lesson.previousLesson ? (
+              <Link
+                href={lesson.previousLesson.slug}
+                className="rounded-lg border border-white/10 bg-slate-900/72 p-5 transition hover:border-cyan-200/50"
+              >
+                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Previous lesson
+                </p>
+                <p className="mt-3 text-lg font-semibold tracking-normal text-cyan-100">
+                  {lesson.previousLesson.title}
+                </p>
+              </Link>
+            ) : (
+              <Link
+                href="/academy/"
+                className="rounded-lg border border-white/10 bg-slate-900/72 p-5 transition hover:border-cyan-200/50"
+              >
+                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Academy home
+                </p>
+                <p className="mt-3 text-lg font-semibold tracking-normal text-cyan-100">
+                  View all courses
+                </p>
+              </Link>
+            )}
+
+            {lesson.nextLesson ? (
+              <Link
+                href={lesson.nextLesson.slug}
+                className="rounded-lg border border-cyan-200/30 bg-cyan-300/10 p-5 text-left transition hover:bg-cyan-300/20 sm:text-right"
+              >
+                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-cyan-200">
+                  Next lesson
+                </p>
+                <p className="mt-3 text-lg font-semibold tracking-normal text-white">
+                  {lesson.nextLesson.title}
+                </p>
+              </Link>
+            ) : (
+              <Link
+                href="/academy/"
+                className="rounded-lg border border-cyan-200/30 bg-cyan-300/10 p-5 text-left transition hover:bg-cyan-300/20 sm:text-right"
+              >
+                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-cyan-200">
+                  Course complete
+                </p>
+                <p className="mt-3 text-lg font-semibold tracking-normal text-white">
+                  Return to Academy
+                </p>
+              </Link>
+            )}
+          </nav>
         </article>
 
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-          {lesson.canonicalMembership ? (
+          <AcademyLessonCompleteControl lessonSlug={lesson.slug} />
+
+          {primaryContext ? (
             <div className="rounded-lg border border-cyan-200/20 bg-cyan-400/10 p-5">
               <p className="text-sm font-semibold uppercase tracking-[0.14em] text-cyan-200">
                 Course Context
               </p>
               <h2 className="mt-2 text-lg font-semibold tracking-normal">
-                {getCourseTitle(lesson.canonicalMembership.display_course_id)}
+                {primaryContext.courseTitle}
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-300">
-                {lesson.canonicalMembership.membership_type === "canonical"
-                  ? "Core lesson"
-                  : "Cross-listed lesson"}
-              </p>
+              <div className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
+                <p>{primaryContext.moduleTitle}</p>
+                <p>
+                  Lesson {primaryContext.displayOrder} -{" "}
+                  {primaryContext.requiredForCoreCompletion
+                    ? "required"
+                    : "optional"}
+                </p>
+              </div>
+              <Link
+                href={primaryContext.courseSlug}
+                className="mt-4 inline-flex rounded border border-cyan-200/30 px-3 py-2 text-sm font-semibold text-cyan-100"
+              >
+                View course
+              </Link>
             </div>
           ) : null}
 
@@ -82,11 +156,52 @@ export default async function AcademyLessonPage({ params }: PageProps) {
                 Also Appears In
               </h2>
               <div className="mt-3 space-y-2 text-sm text-slate-300">
-                {lesson.memberships.map((membership) => (
-                  <p key={`${membership.display_course_id}-${membership.module_id}`}>
-                    {getCourseTitle(membership.display_course_id)}
-                  </p>
+                {lesson.contexts.map((context) => (
+                  <Link
+                    key={`${context.courseId}-${context.moduleId}`}
+                    href={context.courseSlug}
+                    className="block rounded border border-white/10 px-3 py-2 transition hover:border-cyan-200/40"
+                  >
+                    <span className="block font-medium text-slate-100">
+                      {context.courseTitle}
+                    </span>
+                    <span className="mt-1 block text-xs text-slate-500">
+                      {context.moduleTitle}
+                    </span>
+                  </Link>
                 ))}
+              </div>
+            </div>
+          ) : null}
+
+          {courseLessons.length > 0 ? (
+            <div className="rounded-lg border border-white/10 bg-slate-900/72 p-5">
+              <h2 className="text-lg font-semibold tracking-normal">
+                Course Lessons
+              </h2>
+              <div className="mt-3 max-h-[26rem] space-y-2 overflow-y-auto pr-1 text-sm">
+                {courseLessons.map((courseLesson) => {
+                  const isCurrent = courseLesson.lesson_slug === lesson.slug;
+
+                  return (
+                    <Link
+                      key={`${courseLesson.display_course_id}-${courseLesson.lesson_slug}-${courseLesson.display_order}`}
+                      href={courseLesson.lesson_slug}
+                      className={`block rounded border px-3 py-2 transition ${
+                        isCurrent
+                          ? "border-cyan-200/40 bg-cyan-300/10 text-cyan-50"
+                          : "border-white/10 text-slate-300 hover:border-cyan-200/30"
+                      }`}
+                    >
+                      <span className="block text-xs text-slate-500">
+                        Lesson {courseLesson.display_order}
+                      </span>
+                      <span className="mt-1 block font-medium">
+                        {courseLesson.display_title}
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ) : null}
@@ -104,45 +219,6 @@ export default async function AcademyLessonPage({ params }: PageProps) {
             </div>
           ) : null}
 
-          {lesson.visualAssets.length > 0 ? (
-            <div className="rounded-lg border border-white/10 bg-slate-900/72 p-5">
-              <h2 className="text-lg font-semibold tracking-normal">
-                Visual Assets
-              </h2>
-              <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                {lesson.visualAssets.map((asset) => (
-                  <li key={asset} className="break-words">
-                    {asset}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          <nav className="grid gap-3">
-            {lesson.previousLesson ? (
-              <Link
-                href={lesson.previousLesson.slug}
-                className="rounded-lg border border-white/10 bg-slate-900/72 p-5"
-              >
-                <p className="text-sm text-slate-400">Previous lesson</p>
-                <p className="mt-2 font-semibold text-cyan-100">
-                  {lesson.previousLesson.title}
-                </p>
-              </Link>
-            ) : null}
-            {lesson.nextLesson ? (
-              <Link
-                href={lesson.nextLesson.slug}
-                className="rounded-lg border border-white/10 bg-slate-900/72 p-5"
-              >
-                <p className="text-sm text-slate-400">Next lesson</p>
-                <p className="mt-2 font-semibold text-cyan-100">
-                  {lesson.nextLesson.title}
-                </p>
-              </Link>
-            ) : null}
-          </nav>
         </aside>
       </div>
     </main>

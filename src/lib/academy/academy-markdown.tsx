@@ -5,9 +5,16 @@ type MarkdownBlock =
   | { type: "paragraph"; text: string; key: string }
   | { type: "quote"; text: string; key: string }
   | { type: "image"; alt: string; src: string; key: string }
-  | { type: "list"; ordered: boolean; items: string[]; key: string }
+  | { type: "list"; items: MarkdownListItem[]; key: string }
   | { type: "table"; rows: string[][]; key: string }
-  | { type: "code"; code: string; key: string };
+  | { type: "code"; code: string; key: string }
+  | { type: "rule"; key: string };
+
+type MarkdownListItem = {
+  text: string;
+  ordered: boolean;
+  depth: number;
+};
 
 export function AcademyMarkdown({ body }: { body: string }) {
   const blocks = parseMarkdownBlocks(body);
@@ -87,19 +94,21 @@ function renderBlock(block: MarkdownBlock) {
   }
 
   if (block.type === "list") {
-    const ListTag = block.ordered ? "ol" : "ul";
-
     return (
-      <ListTag
+      <ul
         key={block.key}
-        className={`space-y-3 text-base leading-7 text-slate-200 ${
-          block.ordered ? "list-decimal" : "list-disc"
-        } pl-6`}
+        className="space-y-3 pl-6 text-base leading-7 text-slate-200"
       >
         {block.items.map((item, index) => (
-          <li key={`${block.key}-${index}`}>{renderInline(item)}</li>
+          <li
+            key={`${block.key}-${index}`}
+            className={item.ordered ? "list-decimal" : "list-disc"}
+            style={{ marginLeft: `${item.depth * 1.25}rem` }}
+          >
+            {renderInline(item.text)}
+          </li>
         ))}
-      </ListTag>
+      </ul>
     );
   }
 
@@ -107,12 +116,18 @@ function renderBlock(block: MarkdownBlock) {
     const [header, ...rows] = block.rows;
 
     return (
-      <div key={block.key} className="overflow-x-auto rounded-lg border border-white/10">
-        <table className="min-w-full divide-y divide-white/10 text-left text-sm">
+      <div
+        key={block.key}
+        className="overflow-x-auto rounded-lg border border-white/10"
+      >
+        <table className="min-w-[42rem] divide-y divide-white/10 text-left text-sm sm:min-w-full">
           <thead className="bg-white/5 text-slate-200">
             <tr>
               {header.map((cell, index) => (
-                <th key={`${block.key}-h-${index}`} className="px-4 py-3 font-semibold">
+                <th
+                  key={`${block.key}-h-${index}`}
+                  className="max-w-[18rem] px-4 py-3 font-semibold"
+                >
                   {renderInline(cell)}
                 </th>
               ))}
@@ -122,7 +137,10 @@ function renderBlock(block: MarkdownBlock) {
             {rows.map((row, rowIndex) => (
               <tr key={`${block.key}-r-${rowIndex}`}>
                 {row.map((cell, cellIndex) => (
-                  <td key={`${block.key}-c-${rowIndex}-${cellIndex}`} className="px-4 py-3 align-top">
+                  <td
+                    key={`${block.key}-c-${rowIndex}-${cellIndex}`}
+                    className="max-w-[18rem] px-4 py-3 align-top leading-6"
+                  >
                     {renderInline(cell)}
                   </td>
                 ))}
@@ -132,6 +150,10 @@ function renderBlock(block: MarkdownBlock) {
         </table>
       </div>
     );
+  }
+
+  if (block.type === "rule") {
+    return <hr key={block.key} className="border-white/10" />;
   }
 
   return (
@@ -154,6 +176,12 @@ function parseMarkdownBlocks(body: string): MarkdownBlock[] {
     const trimmed = line.trim();
 
     if (!trimmed) {
+      index += 1;
+      continue;
+    }
+
+    if (/^---+$/.test(trimmed)) {
+      blocks.push({ type: "rule", key: `rule-${index}` });
       index += 1;
       continue;
     }
@@ -219,29 +247,31 @@ function parseMarkdownBlocks(body: string): MarkdownBlock[] {
       continue;
     }
 
-    const unordered = trimmed.match(/^[-*]\s+(.+)$/);
-    const ordered = trimmed.match(/^\d+\.\s+(.+)$/);
+    const unordered = line.match(/^(\s*)[-*]\s+(.+)$/);
+    const ordered = line.match(/^(\s*)\d+\.\s+(.+)$/);
 
     if (unordered || ordered) {
-      const isOrdered = Boolean(ordered);
-      const items: string[] = [];
+      const items: MarkdownListItem[] = [];
 
       while (index < lines.length) {
-        const itemMatch = isOrdered
-          ? lines[index].trim().match(/^\d+\.\s+(.+)$/)
-          : lines[index].trim().match(/^[-*]\s+(.+)$/);
+        const unorderedItem = lines[index].match(/^(\s*)[-*]\s+(.+)$/);
+        const orderedItem = lines[index].match(/^(\s*)\d+\.\s+(.+)$/);
+        const itemMatch = unorderedItem ?? orderedItem;
 
         if (!itemMatch) {
           break;
         }
 
-        items.push(itemMatch[1]);
+        items.push({
+          text: itemMatch[2],
+          ordered: Boolean(orderedItem),
+          depth: Math.floor(itemMatch[1].length / 2),
+        });
         index += 1;
       }
 
       blocks.push({
         type: "list",
-        ordered: isOrdered,
         items,
         key: `list-${index}`,
       });

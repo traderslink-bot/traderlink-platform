@@ -1,12 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import appBridgesData from "@/academy/_data/app-bridges.json";
-import coursesData from "@/academy/_data/courses.json";
-import lessonMembershipsData from "@/academy/_data/lesson-memberships.json";
-import modulesData from "@/academy/_data/modules.json";
-import pathHubsData from "@/academy/_data/path-hubs.json";
-import visualOverridesData from "@/academy/_data/visual-overrides.json";
+import appBridgesData from "../../../academy/_data/app-bridges.json";
+import coursesData from "../../../academy/_data/courses.json";
+import lessonMembershipsData from "../../../academy/_data/lesson-memberships.json";
+import modulesData from "../../../academy/_data/modules.json";
+import pathHubsData from "../../../academy/_data/path-hubs.json";
+import visualOverridesData from "../../../academy/_data/visual-overrides.json";
 
 const academyRoot = path.join(process.cwd(), "academy");
 
@@ -126,11 +126,23 @@ export type AcademyLesson = {
   previousLesson: AcademyLessonLink | null;
   nextLesson: AcademyLessonLink | null;
   visualAssets: string[];
+  contexts: AcademyLessonContext[];
 };
 
 export type AcademyLessonLink = {
   slug: string;
   title: string;
+};
+
+export type AcademyLessonContext = {
+  courseId: string;
+  courseTitle: string;
+  courseSlug: string;
+  moduleId: string;
+  moduleTitle: string;
+  displayOrder: number;
+  membershipType: string;
+  requiredForCoreCompletion: boolean;
 };
 
 export type AcademyCoursePage = {
@@ -351,6 +363,30 @@ export function getAcademyLesson(slug: string): AcademyLesson | null {
     previousLesson: previousSlug ? getLessonLink(previousSlug) : null,
     nextLesson: nextSlug ? getLessonLink(nextSlug) : null,
     visualAssets: stringArrayValue(parsed.frontmatter.visual_assets),
+    contexts: lessonMemberships.flatMap((membership) => {
+      const course = findCourse(membership.display_course_id);
+      const academyModule = findModule(
+        membership.display_course_id,
+        membership.module_id,
+      );
+
+      if (!course || !academyModule) {
+        return [];
+      }
+
+      return [
+        {
+          courseId: course.course_id,
+          courseTitle: course.course_title,
+          courseSlug: course.course_slug,
+          moduleId: academyModule.module_id,
+          moduleTitle: academyModule.module_title,
+          displayOrder: membership.display_order,
+          membershipType: membership.membership_type,
+          requiredForCoreCompletion: membership.required_for_core_completion,
+        },
+      ];
+    }),
   };
 }
 
@@ -393,8 +429,22 @@ export function getCourseTitle(courseId: string): string {
   return findCourse(courseId)?.course_title ?? titleFromSlug(courseId);
 }
 
+export function getCourseSlug(courseId: string): string {
+  return findCourse(courseId)?.course_slug ?? `/academy/courses/${courseId}/`;
+}
+
 function findCourse(courseId: string): AcademyCourse | null {
   return courses.find((course) => course.course_id === courseId) ?? null;
+}
+
+function findModule(courseId: string, moduleId: string): AcademyModule | null {
+  return (
+    modules.find(
+      (academyModule) =>
+        academyModule.course_id === courseId &&
+        academyModule.module_id === moduleId,
+    ) ?? null
+  );
 }
 
 function getLessonLink(slug: string): AcademyLessonLink | null {

@@ -6,6 +6,10 @@ import {
   getAcademyCourseIds,
   getAcademyCoursePage,
 } from "@/src/lib/academy/academy-content";
+import {
+  AcademyCourseProgressSummary,
+  AcademyLessonStatus,
+} from "@/src/lib/academy/academy-progress";
 
 type PageProps = {
   params: Promise<{ courseId: string }>;
@@ -42,6 +46,11 @@ export default async function AcademyCoursePage({ params }: PageProps) {
   }
 
   const { course, modules, previousCourse, nextCourse, bridge, visual } = page;
+  const requiredLessonSlugs = modules.flatMap(({ lessons }) =>
+    lessons
+      .filter((lesson) => lesson.required_for_core_completion)
+      .map((lesson) => lesson.lesson_slug),
+  );
 
   return (
     <main className="min-h-screen bg-[#050a14] text-white">
@@ -76,7 +85,12 @@ export default async function AcademyCoursePage({ params }: PageProps) {
           </div>
 
           <aside className="space-y-4">
-            <div className="rounded-lg border border-cyan-200/20 bg-cyan-400/10 p-5">
+            <AcademyCourseProgressSummary
+              requiredLessonSlugs={requiredLessonSlugs}
+              totalLessonCount={page.totalLessonCount}
+            />
+
+            <div className="rounded-lg border border-white/10 bg-slate-900/72 p-5">
               <h2 className="text-lg font-semibold tracking-normal">
                 Course Progress Model
               </h2>
@@ -146,7 +160,12 @@ export default async function AcademyCoursePage({ params }: PageProps) {
                           : "Cross-listed lesson"}
                       </span>
                     </span>
-                    <span className="text-sm text-cyan-200">Open</span>
+                    <span className="flex items-center justify-start sm:justify-end">
+                      <AcademyLessonStatus
+                        lessonSlug={lesson.lesson_slug}
+                        required={lesson.required_for_core_completion}
+                      />
+                    </span>
                   </Link>
                 ))}
               </div>

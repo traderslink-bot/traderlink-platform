@@ -219,11 +219,41 @@ Production server browser verification passed on `http://127.0.0.1:3102`:
 
 Browser console error count during the production verification: `0`.
 
+## Second Build Slice
+
+Implemented after the first route/content-loader slice:
+
+- Added local-only lesson completion controls backed by browser storage.
+- Added local-only course progress summaries based on required lesson slugs.
+- Added per-lesson status badges on course pages.
+- Added learner-first bottom navigation on lesson pages with obvious previous and next lesson actions.
+- Added a secondary scrollable course lesson list in the lesson sidebar.
+- Added course/module context links on lesson pages.
+- Improved markdown rendering for long tables, horizontal rules, and indented list content.
+- Added focused Vitest coverage for the Academy content loader, static params, nested lesson slugs, path hubs, and app bridge hard-link guardrails.
+
+Second-slice verification:
+
+```text
+npm run validate:academy-registry - passed
+npx vitest run src/lib/academy/__tests__/academy-content.test.ts - passed
+npx eslint app/academy src/lib/academy - passed
+npx tsc --noEmit --pretty false - passed
+npm run build - passed
+```
+
+Browser verification on `http://127.0.0.1:3102/academy/support-and-resistance` confirmed:
+
+- Lesson progress card visible.
+- Course context and view-course link visible.
+- Course lesson sidebar visible.
+- Previous and next lesson navigation visible at the bottom of the lesson.
+- Browser console error count: `0`.
+
 ## Next Recommended Action
 
 Build the next Academy production slice:
 
-- Add a small client progress component that is honest about local-only completion state.
-- Add route-safe navigation affordances from lesson pages back to their course/module context.
-- Add a renderer polish pass for long lesson tables, nested list cases, and mobile lesson reading ergonomics.
-- Add focused tests for the Academy loader and static param generation.
+- Add a persistent top/bottom course progress rail that remains subtle on desktop and collapses cleanly on mobile.
+- Add an Academy landing-page polish pass for path choice and resume-state messaging.
+- Add click-level UI tests for marking lessons complete once the preferred browser automation path is stable.
