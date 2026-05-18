@@ -45,6 +45,22 @@ export default async function AcademyCoursePage({ params }: PageProps) {
   }
 
   const { course, modules, previousCourse, nextCourse } = page;
+  const allLessons = modules.flatMap(({ lessons }) => lessons);
+  const coreLessonCount = allLessons.filter(
+    (lesson) => lesson.counts_toward_course_progress,
+  ).length;
+  const candlestickDeepDiveLessonCount = allLessons.filter(
+    (lesson) =>
+      lesson.module_id === "candlestick-patterns-context" &&
+      lesson.completion_behavior === "library",
+  ).length;
+  const chartPatternDeepDiveLessonCount = allLessons.filter(
+    (lesson) =>
+      lesson.module_id === "chart-patterns-context" &&
+      lesson.completion_behavior === "library",
+  ).length;
+  const deepDiveLessonCount =
+    candlestickDeepDiveLessonCount + chartPatternDeepDiveLessonCount;
   return (
     <main className="min-h-screen bg-[#050a14] text-white">
       <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
@@ -66,7 +82,15 @@ export default async function AcademyCoursePage({ params }: PageProps) {
 
             <div className="mt-6 flex flex-wrap gap-3 text-sm">
               <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
-                {page.totalLessonCount} lessons
+                {coreLessonCount} core lessons + {deepDiveLessonCount}{" "}
+                deep-dive lessons
+              </span>
+              <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
+                {candlestickDeepDiveLessonCount} candlestick deep-dive lessons
+              </span>
+              <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
+                {chartPatternDeepDiveLessonCount} chart-pattern deep-dive
+                lessons
               </span>
             </div>
           </div>

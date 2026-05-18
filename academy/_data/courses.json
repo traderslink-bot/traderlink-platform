@@ -33,7 +33,7 @@
       "recommended_next_course": "volume-liquidity-order-flow",
       "completion_mode": "core_lessons",
       "progress_model": "core path progress, with candlestick and chart-pattern deep-dive library progress tracked separately",
-      "display_model": "chart-reading course with a guided core path plus separate candlestick and chart-pattern deep-dive libraries",
+      "display_model": "Learn how to read stock charts from the ground up with a guided core path covering candlesticks, support and resistance, key levels, market structure, breakouts, breakdowns, reclaims, intraday levels, compression, consolidation, and gap-fill context. The course also includes deep-dive lessons on 13 candlestick and candle-context setups plus 26 chart patterns for day traders and swing traders.",
       "visual_status": "ready",
       "app_bridge_strength": "supporting",
       "hard_app_links_enabled": false
