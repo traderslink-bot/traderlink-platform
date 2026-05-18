@@ -32,8 +32,8 @@
       "recommended_previous_course": "trading-foundations",
       "recommended_next_course": "volume-liquidity-order-flow",
       "completion_mode": "core_lessons",
-      "progress_model": "completed guided path lessons / 25; candlestick and chart-pattern type pages are optional reference-library progress",
-      "display_model": "single chart-reading course with a guided path plus optional candlestick and chart-pattern reference libraries",
+      "progress_model": "completed lessons / 51",
+      "display_model": "chart-reading course with lessons on candlesticks, levels, structure, breaks, ranges, gaps, and chart patterns",
       "visual_status": "ready",
       "app_bridge_strength": "supporting",
       "hard_app_links_enabled": false

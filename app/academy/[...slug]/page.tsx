@@ -148,12 +148,7 @@ export default async function AcademyLessonPage({ params }: PageProps) {
               </h2>
               <div className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
                 <p>{primaryContext.moduleTitle}</p>
-                <p>
-                  Lesson {primaryContext.displayOrder} -{" "}
-                  {primaryContext.requiredForCoreCompletion
-                    ? "guided path"
-                    : "reference library"}
-                </p>
+                <p>Lesson {primaryContext.displayOrder}</p>
               </div>
               <Link
                 href={primaryContext.courseSlug}
@@ -194,14 +189,14 @@ export default async function AcademyLessonPage({ params }: PageProps) {
                 Course Path
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                Follow the guided path first. The reference libraries are
-                optional lookups when a candle or pattern comes up.
+                Move through the course in order, or jump to the lesson you
+                need.
               </p>
               <div className="mt-4 max-h-[30rem] space-y-5 overflow-y-auto pr-1 text-sm">
                 <CourseLessonGroups
                   currentSlug={lesson.slug}
                   groups={coreModules}
-                  label="Guided path"
+                  label="Course lessons"
                 />
                 <CourseLessonGroups
                   currentSlug={lesson.slug}

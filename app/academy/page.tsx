@@ -34,17 +34,17 @@ export default function AcademyHomePage() {
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200">
               The first Academy course is open now. It gives new traders a
-              guided path through candlesticks, levels, structure, breaks,
-              ranges, and chart-pattern context without locking them into the
-              order.
+              clear course sequence through candlesticks, levels, structure,
+              breaks, ranges, and chart-pattern context without locking them
+              into the order.
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
             <StatCard label="Live course" value="1" />
             <StatCard
-              label="Guided path lessons"
-              value={(liveCoursePage?.requiredLessonCount ?? 25).toString()}
+              label="Lessons"
+              value={(liveCoursePage?.totalLessonCount ?? 51).toString()}
             />
             <StatCard
               label="Coming soon"
@@ -89,10 +89,7 @@ export default function AcademyHomePage() {
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-300">
                   <span className="rounded border border-white/10 bg-white/5 px-3 py-2">
-                    {liveCoursePage?.requiredLessonCount ?? 25} guided path lessons
-                  </span>
-                  <span className="rounded border border-white/10 bg-white/5 px-3 py-2">
-                    Optional candle and pattern libraries
+                    {liveCoursePage?.totalLessonCount ?? 51} lessons
                   </span>
                 </div>
                 <p className="mt-6 text-sm font-semibold text-cyan-200">

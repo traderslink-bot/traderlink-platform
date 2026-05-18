@@ -49,10 +49,8 @@ export default async function AcademyCoursePage({ params }: PageProps) {
   }
 
   const { course, modules, previousCourse, nextCourse } = page;
-  const guidedPathLessonSlugs = modules.flatMap(({ lessons }) =>
-    lessons
-      .filter((lesson) => lesson.required_for_core_completion)
-      .map((lesson) => lesson.lesson_slug),
+  const lessonSlugs = modules.flatMap(({ lessons }) =>
+    lessons.map((lesson) => lesson.lesson_slug),
   );
 
   return (
@@ -76,20 +74,14 @@ export default async function AcademyCoursePage({ params }: PageProps) {
 
             <div className="mt-6 flex flex-wrap gap-3 text-sm">
               <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
-                {page.requiredLessonCount} guided path lessons
-              </span>
-              <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
-                {page.totalLessonCount} total course listings
-              </span>
-              <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
-                Visual status: {course.visual_status}
+                {page.totalLessonCount} lessons
               </span>
             </div>
           </div>
 
           <aside className="space-y-4">
             <AcademyCourseProgressSummary
-              guidedPathLessonSlugs={guidedPathLessonSlugs}
+              lessonSlugs={lessonSlugs}
               totalLessonCount={page.totalLessonCount}
             />
 
@@ -98,9 +90,8 @@ export default async function AcademyCoursePage({ params }: PageProps) {
                 Course Progress
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                Complete lessons in any order. Progress is measured against the
-                guided path, while reference lessons stay available whenever you
-                need them.
+                Complete lessons in any order. Your progress is saved on this
+                device for now.
               </p>
             </div>
           </aside>
@@ -134,11 +125,6 @@ export default async function AcademyCoursePage({ params }: PageProps) {
                     <span>
                       <span className="block font-semibold tracking-normal text-white">
                         {lesson.display_title}
-                      </span>
-                      <span className="mt-1 block text-sm text-slate-400">
-                        {lesson.required_for_core_completion
-                          ? "Guided path lesson"
-                          : "Optional reference lesson"}
                       </span>
                     </span>
                     <span className="flex items-center justify-start sm:justify-end">

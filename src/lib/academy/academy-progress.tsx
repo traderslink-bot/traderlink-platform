@@ -41,20 +41,20 @@ export function AcademyLessonCompleteControl({
 }
 
 export function AcademyCourseProgressSummary({
-  guidedPathLessonSlugs,
+  lessonSlugs,
   totalLessonCount,
 }: {
-  guidedPathLessonSlugs: string[];
+  lessonSlugs: string[];
   totalLessonCount: number;
 }) {
   const [state] = useAcademyProgress();
-  const completedGuidedPath = guidedPathLessonSlugs.filter((slug) =>
+  const completedLessons = lessonSlugs.filter((slug) =>
     state.completed.has(slug),
   ).length;
   const percent =
-    guidedPathLessonSlugs.length === 0
+    lessonSlugs.length === 0
       ? 0
-      : Math.round((completedGuidedPath / guidedPathLessonSlugs.length) * 100);
+      : Math.round((completedLessons / lessonSlugs.length) * 100);
 
   return (
     <div className="rounded-lg border border-cyan-200/20 bg-cyan-400/10 p-5">
@@ -62,8 +62,8 @@ export function AcademyCourseProgressSummary({
         Local Course Progress
       </h2>
       <p className="mt-2 text-sm leading-6 text-slate-300">
-        {completedGuidedPath} of {guidedPathLessonSlugs.length} guided path
-        lessons completed on this device.
+        {completedLessons} of {lessonSlugs.length} lessons completed on this
+        device.
       </p>
       <div className="mt-4 h-2 overflow-hidden rounded bg-slate-950">
         <div
