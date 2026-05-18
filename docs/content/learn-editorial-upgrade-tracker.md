@@ -628,14 +628,15 @@ Summary of completed Chart Reading SVG batches:
 | 2026-05-18 | Academy production content model planning | Planned the production Academy content model for courses, modules, membership, cross-listed lesson navigation, progress tracking, path hubs, and route-safe app bridge data. | Passed. Created `docs/content/traderslink-academy-production-content-model-plan.md`, defined canonical markdown versus course membership data, recommended fields for courses/modules/lesson memberships/path hubs/app bridge metadata, slug-based completion, context-specific navigation, route-safety rules, and future registry file options. No production website files were changed. | `959499bb` |
 | 2026-05-18 | Academy content registry draft | Created the Academy content registry draft from the existing course index. | Passed. Created `docs/content/traderslink-academy-content-registry-draft.md`, mapping courses, modules, displayed lesson membership, canonical and cross-listed ownership, progress behavior, path hub treatment, route-safe app bridge candidates, visual readiness flags, and registry QA checks. No production website files were changed. | `fd3bf4ce` |
 | 2026-05-18 | Academy registry format decision | Chose the recommended future registry location and format. | Passed. Created `docs/content/traderslink-academy-registry-format-decision.md`, recommending author-editable JSON under `academy/_data/` as the first registry source, explaining why `academy/content/`, root `content/academy/`, and `src/content/academy/` are not the best first source-of-truth locations, and preserving `src/content/academy/` as a possible typed adapter layer later. No production website files were changed. | `bfb92f51` |
+| 2026-05-18 | Academy registry migration checklist | Created the migration checklist from the markdown registry draft to future `academy/_data/*.json` files. | Passed. Created `docs/content/traderslink-academy-registry-migration-checklist.md`, defining target JSON file roles, field-level migration requirements, validation checks for slugs, membership, navigation, app bridges, visuals, and editorial/source boundaries, plus the production gate that registry data and validation should come before Academy route/UI implementation. No production website files were changed. | `pending_commit` |
 
 ## Next Recommended Action
 
-Continue from the completed Academy registry format decision pass:
+Continue from the completed Academy registry migration checklist pass:
 
-1. Create a migration checklist from `docs/content/traderslink-academy-content-registry-draft.md` to future `academy/_data/*.json` files.
-2. Include validation checks for lesson slugs, image references, course membership rows, cross-listed ownership, progress rules, and route-safe app bridge fields.
-3. Keep this as planning unless the user explicitly asks to create machine-readable registry files or production routes, components, schemas, or app imports.
+1. Create author-editable Academy registry JSON files under `academy/_data/` only if the user approves moving from planning into machine-readable registry files.
+2. Add validation checks for lesson slugs, image references, course membership rows, cross-listed ownership, progress rules, context navigation, and route-safe app bridge fields.
+3. Keep Academy route/UI implementation separate until registry data validates.
 4. Keep hard app links disabled until product route keys, feature names, and claims are stable.
 
 ## Important Reminder

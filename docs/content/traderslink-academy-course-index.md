@@ -1158,6 +1158,27 @@ Recommended future files, only if implementation is explicitly requested:
 
 No production website files, routes, schemas, or components were created.
 
+## Academy Registry Migration Checklist Status
+
+Academy registry migration checklist planning is complete.
+
+Checklist file:
+
+- `docs/content/traderslink-academy-registry-migration-checklist.md`
+
+Checklist result:
+
+- Confirms the next production-prep step is creating machine-readable registry data, not jumping directly to Academy UI.
+- Maps the markdown registry draft to future `academy/_data/*.json` files.
+- Defines target file roles for `courses.json`, `lesson-memberships.json`, `path-hubs.json`, `app-bridges.json`, and `visual-overrides.json`.
+- Defines required field groups for course, module, and lesson membership rows.
+- Adds validation requirements for lesson slugs, course/module IDs, membership rows, cross-listed ownership, context navigation, app bridge route safety, and visual asset references.
+- Keeps source-audit citations out of user-facing lessons by default.
+- Keeps hard app links disabled until product route keys, feature names, and claims are stable.
+- Establishes the production gate that registry data and validation should exist before building Academy routes or UI.
+
+No production website files, routes, schemas, or components were created.
+
 ## Cross-Listed Lesson Rules
 
 Some lessons can appear in more than one course. This is good for navigation, but each lesson should still have one primary course.
