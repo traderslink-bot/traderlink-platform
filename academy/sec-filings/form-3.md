@@ -27,8 +27,6 @@ meta_description: "Learn what Form 3 is, why initial insider ownership filings m
 ---
 # Form 3
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [EFFECT Notice](/academy/sec-filings/effect-notice/) and leads into [Form 4](/academy/sec-filings/form-4/).
-
 The goal is not to turn Form 3 into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -119,26 +117,6 @@ Traders may want to check:
 
 The filing does not guarantee dilution, but it can show securities that affect insider ownership.
 
-## Practical Checklist
-
-Structured review notes can help connect Form 3 details to trade decisions.
-
-Useful review notes include:
-
-1. Filing date.
-2. Insider name.
-3. Insider role.
-4. Securities reported.
-5. Direct or indirect ownership.
-6. Options or warrants.
-7. Whether later Form 4 filings appeared.
-8. Stock reaction after the filing.
-9. Whether you understood it was an initial report.
-
-This helps avoid mistaking Form 3 for open-market insider buying.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). Form 3 connects directly with [Form 4 insider transactions](/academy/sec-filings/form-4/) and [Form 5](/academy/sec-filings/form-5/).
@@ -182,24 +160,9 @@ It is not automatically either. It provides ownership context but does not guara
 
 Form 3 reports initial ownership. Form 4 reports changes in ownership after that baseline is established.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to Form 3, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [EFFECT Notice](/academy/sec-filings/effect-notice/)
 - [Form 4](/academy/sec-filings/form-4/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Form 3 filings do not guarantee price movement, insider buying, dilution, or trading results. Always review the full filing, related disclosures, liquidity, risk, and your own trading plan.

@@ -27,8 +27,6 @@ meta_description: "Learn the difference between a shelf registration and an offe
 ---
 # Shelf Registration vs Offering
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Shelf Registration](/academy/shelf-registration/) and leads into [Warrants](/academy/warrants/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -164,18 +162,6 @@ Review the full guides on [shelf registration](/academy/shelf-registration/) and
 
 For broader risk context, review [how to spot dilution risk](/academy/how-to-spot-dilution-risk/).
 
-## Practical Checklist
-
-Before treating Shelf Registration Vs Offering as meaningful context, review:
-
-- Registration filing.
-- Actual sale document.
-- Prospectus supplement.
-- Offering price.
-- Share count.
-- Use of proceeds.
-- Market reaction.
-
 ## FAQ
 
 ### What is the difference between a shelf registration and an offering?
@@ -202,17 +188,6 @@ Traders often watch for an EFFECT notice, 424B filings, ATM agreements, prospect
 
 No. It can provide financing flexibility, but traders should understand the potential dilution risk if it is used later.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Shelf Registration Vs Offering, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Shelf Registration](/academy/shelf-registration/)
@@ -220,7 +195,3 @@ When reviewing a small-cap trade or watchlist idea connected to Shelf Registrati
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Shelf registrations and offerings do not guarantee price movement, dilution impact, selling pressure, or trading outcomes. Always review the full filings, terms, liquidity, risk, and your own trading plan.

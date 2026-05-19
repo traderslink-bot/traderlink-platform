@@ -27,8 +27,6 @@ meta_description: "Learn the difference between stock float and shares outstandi
 ---
 # Float vs Shares Outstanding
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Float Rotation](/academy/float-rotation/) and leads into [Fully Diluted Shares](/academy/fully-diluted-shares/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -162,18 +160,6 @@ A trade journal can connect float, filings, dilution context, risk, execution, a
 
 Start with [stock float](/academy/stock-float/). For more complete share-structure context, review [fully diluted shares](/academy/fully-diluted-shares/), [dilution](/academy/dilution/), [low float stocks](/academy/low-float-stocks/), and [market cap versus fully diluted market cap](/academy/market-cap-vs-fully-diluted-market-cap/).
 
-## Practical Checklist
-
-Before treating Float Vs Shares Outstanding as meaningful context, review:
-
-- Float.
-- Shares outstanding.
-- Restricted shares.
-- Insider ownership.
-- Recent issuance.
-- Potential future shares.
-- Source filing.
-
 ## FAQ
 
 ### What is the difference between float and shares outstanding?
@@ -200,17 +186,6 @@ Yes. Float can change after offerings, resale registrations, lockup expirations,
 
 No. Low float can create volatility, but it does not guarantee a good trade or a price move.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Float Vs Shares Outstanding, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Float Rotation](/academy/float-rotation/)
@@ -218,7 +193,3 @@ When reviewing a small-cap trade or watchlist idea connected to Float Vs Shares 
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Float and shares outstanding do not guarantee price movement, liquidity, volatility, or trading outcomes. Always review filings, data sources, liquidity, risk, and your own trading plan.

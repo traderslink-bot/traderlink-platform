@@ -36,8 +36,6 @@ meta_description: "Learn what MACD measures, how traders use it as momentum cont
 ---
 # MACD
 
-This lesson is part of the **Technical Indicators And Tools** course. It follows [RSI](/academy/rsi/) and leads into [Bollinger Bands](/academy/bollinger-bands/).
-
 MACD stands for Moving Average Convergence Divergence. It is a momentum and trend tool built from moving averages, which means it can help describe changing momentum but also carries lag.
 
 Many traders notice MACD crosses, but a cross by itself is not a trade plan.
@@ -100,28 +98,6 @@ Another mistake is using MACD in choppy price action without recognizing repeate
 
 A final mistake is not reviewing whether MACD improved timing or made the trader late.
 
-## Practical Checklist
-
-- I know MACD is based on moving averages.
-- I checked whether price already moved before the cross.
-- I reviewed support and resistance.
-- I checked volume and trend context.
-- I did not enter because of MACD alone.
-- I considered chop risk.
-- I reviewed whether MACD helped timing.
-
-## Apply This In Review
-
-- What did MACD show before entry?
-- Did the cross happen before or after the key price move?
-- Was price near support, resistance, or extension?
-- Was the market trending or choppy?
-- Did histogram momentum expand or fade?
-- Did I use MACD as confirmation or as a complete plan?
-- Did MACD help the trade review?
-
-MACD review should focus on whether it clarified momentum or delayed the decision.
-
 ## Related Lessons
 
 - [Moving Averages](/academy/moving-averages/)
@@ -155,7 +131,3 @@ MACD can mislead in choppy markets or when confirmation appears after the clean 
 ### How should MACD be reviewed?
 
 Review whether MACD clarified momentum, conflicted with price, or caused a late entry.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. MACD can support momentum review, but it does not predict price or guarantee trading results.

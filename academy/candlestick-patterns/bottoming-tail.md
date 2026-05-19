@@ -29,7 +29,7 @@ internal_links:
   - "/academy/price-rejection/"
   - "/academy/volume/"
 visual_assets:
-  - "/academy/images/chart-reading/hammer-support-context.svg"
+  - "/academy/images/chart-reading/bottoming-tail-candle-shape.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-18"
@@ -38,13 +38,11 @@ meta_description: "Learn what bottoming tails show and how to review lower-wick 
 ---
 # Bottoming Tail Candle
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Pin Bar](/academy/candlestick-patterns/pin-bar/) and leads into [Topping Tail Candle](/academy/candlestick-patterns/topping-tail/).
-
 A bottoming tail candle has a long lower wick that shows price dropped during the candle and recovered before the close. It can appear near support, after a flush, or during a failed breakdown attempt.
 
 The candle can be useful, but only if the trader reviews whether the lower area actually mattered afterward.
 
-![Candlestick chart showing a hammer-style lower wick near support with volume and follow-through context.](/academy/images/chart-reading/hammer-support-context.svg)
+![Clean candle diagram showing a bottoming tail candle with a long lower tail and body near the upper part of the candle.](/academy/images/chart-reading/bottoming-tail-candle-shape.svg)
 
 ## What It Looks Like
 

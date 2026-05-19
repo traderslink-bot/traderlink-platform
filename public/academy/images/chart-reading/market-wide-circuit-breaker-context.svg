@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430" role="img" aria-labelledby="title desc">
   <title id="title">Market Wide Circuit Breaker Context</title>
-  <desc id="desc">Dark market dashboard showing an index decline with Level 1, Level 2, and Level 3 circuit breaker reference bands and educational review labels.</desc>
+  <desc id="desc">Dark market dashboard showing an index decline with Level 1, Level 2, and Level 3 circuit breaker reference bands and context labels.</desc>
   <defs><style>
     .bg{fill:#0b1220}.panel{fill:#0f1a2b;stroke:#203651;stroke-width:1.5}.txt{fill:#d7e3f4;font-family:Arial,Helvetica,sans-serif}.small{font-size:12px}.label{font-size:13px;font-weight:700}.muted{fill:#8ea1bd}.grid{stroke:#22364f;opacity:.65}.band1{stroke:#f59e0b;stroke-width:2;stroke-dasharray:6 5}.band2{stroke:#fb7185;stroke-width:2;stroke-dasharray:6 5}.band3{stroke:#ef4444;stroke-width:2;stroke-dasharray:6 5}.red{fill:#ef4444;stroke:#ef4444}.green{fill:#22c55e;stroke:#22c55e}.line{fill:none;stroke:#ef4444;stroke-width:3}.note{fill:#12263f;stroke:#2f80ed;stroke-width:1}
   </style></defs>

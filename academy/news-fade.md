@@ -36,8 +36,6 @@ meta_description: "Learn what a news fade is, why strong headlines can fade, wha
 ---
 # News Fade
 
-This lesson is part of the **Trading Styles And Playbooks** course. It follows [Gap Fill Trading](/academy/gap-fill-trading/) and leads into [Sell The News](/academy/sell-the-news/).
-
 A news fade happens when a stock initially reacts to news, then gives back part or all of the move. Fades can happen after vague headlines, weak details, dilution concerns, thin liquidity, extended gaps, or simple exhaustion.
 
 A news fade is not automatic. Strong news can continue, weak-looking reactions can stabilize, and headlines need review.
@@ -108,28 +106,6 @@ Another mistake is entering against strength without invalidation.
 
 A final mistake is treating a fade thesis as proof instead of a review category.
 
-## Practical Checklist
-
-- The catalyst has been read, not just the headline.
-- Related filings are checked if relevant.
-- The reaction is mapped against levels and VWAP.
-- Volume behavior is reviewed.
-- Liquidity and spread are acceptable.
-- Invalidation is defined.
-- The trade is not based only on disbelief.
-
-## Apply This In Review
-
-- What was the actual news?
-- Were details specific, vague, financial, regulatory, or promotional?
-- Did related filings matter?
-- Where did the move fail or hold?
-- Did volume fade or continue?
-- Did I assume the move was wrong?
-- Was invalidation respected?
-
-News-fade review should begin with the catalyst and reaction, not with a bias that the move is too big.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)
@@ -163,7 +139,3 @@ Yes. Strong catalysts and participation can continue against a fade idea.
 ### How should news fades be reviewed?
 
 Review catalyst quality, reaction behavior, volume, levels, filing context, entry timing, and whether invalidation was respected.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trading styles and playbooks can help organize review, but they do not guarantee outcomes or replace independent risk decisions.

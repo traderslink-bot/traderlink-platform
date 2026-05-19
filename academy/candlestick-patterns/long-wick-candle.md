@@ -29,7 +29,7 @@ internal_links:
   - "/academy/support-and-resistance/"
   - "/academy/spread/"
 visual_assets:
-  - "/academy/images/chart-reading/long-wick-rejection-context.svg"
+  - "/academy/images/chart-reading/long-wick-candle-shapes.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-18"
@@ -38,13 +38,11 @@ meta_description: "Learn how long wick candles show rejection, volatility, or li
 ---
 # Long Wick Candle
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Gap Fill Trading](/academy/gap-fill-trading/) and leads into [Doji Candle](/academy/candlestick-patterns/doji/).
-
 A long wick candle has a wick that stands out compared with the body. It can show rejection, volatility, or a failed attempt to hold an extreme price area.
 
 A wick is useful only when the trader asks where it formed and what happened after it.
 
-![Candlestick chart showing long upper and lower wick rejection around support and resistance with volume context.](/academy/images/chart-reading/long-wick-rejection-context.svg)
+![Clean candle diagram showing long upper wick and long lower wick candle shapes.](/academy/images/chart-reading/long-wick-candle-shapes.svg)
 
 ## What It Looks Like
 

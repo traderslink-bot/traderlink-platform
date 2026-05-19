@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
   <title id="title">RVOL scanner context review</title>
-  <desc id="desc">A dark trading dashboard style chart with candles, volume bars, and a scanner context panel for RVOL, catalyst, spread, and volume fade review.</desc>
+  <desc id="desc">A dark trading dashboard style chart with candles, volume bars, and a scanner context panel for RVOL, catalyst, spread, and volume fade context.</desc>
   <rect width="900" height="520" fill="#08111f"/>
   <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
   <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">RVOL scanner result needs chart context</text>
@@ -10,7 +10,7 @@
   <rect x="632" y="166" width="168" height="34" rx="8" fill="#12345a" stroke="#38bdf8"/>
   <text x="648" y="188" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="14">RVOL: unusually high</text>
   <rect x="632" y="214" width="168" height="34" rx="8" fill="#111827" stroke="#334155"/>
-  <text x="648" y="236" fill="#cbd5e1" font-family="Arial, sans-serif" font-size="14">Catalyst: review first</text>
+  <text x="648" y="236" fill="#cbd5e1" font-family="Arial, sans-serif" font-size="14">Catalyst first</text>
   <rect x="632" y="262" width="168" height="34" rx="8" fill="#111827" stroke="#334155"/>
   <text x="648" y="284" fill="#cbd5e1" font-family="Arial, sans-serif" font-size="14">Spread: check fills</text>
   <rect x="632" y="310" width="168" height="34" rx="8" fill="#111827" stroke="#334155"/>
@@ -47,5 +47,5 @@
     <rect x="459" y="430" width="22" height="22" fill="#ef4444" opacity="0.46"/>
   </g>
   <path d="M236 284 C300 306, 388 326, 474 336" fill="none" stroke="#38bdf8" stroke-width="3"/>
-  <text x="300" y="316" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="14">review fade, not just RVOL</text>
+  <text x="300" y="316" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="14">fade risk, not just RVOL</text>
 </svg>

@@ -38,8 +38,6 @@ meta_description: "Learn what rounding tops show, why gradual weakening matters,
 ---
 # Rounding Top Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Inverse Head And Shoulders](/academy/chart-patterns/inverse-head-and-shoulders/) and leads into [Rounding Bottom Pattern](/academy/chart-patterns/rounding-bottom/).
-
 **Best suited for:** swing trading and multi-day exhaustion review.
 
 A rounding top is a slower structure where price stops pushing strongly higher, begins to flatten, and gradually weakens. It is usually more useful on multi-day charts than on very fast intraday charts.

@@ -161,7 +161,3 @@ Yes. A readout can include both positive and negative details, such as encouragi
 ### Should traders check financing risk after a readout?
 
 Yes. Biotech companies often need capital for future trials, and data events can sometimes be followed by financing activity.
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Biotech data readouts do not guarantee approval, price movement, continuation, or profitable trades. Always review the full release, filings, risk, liquidity, and your own trading plan.

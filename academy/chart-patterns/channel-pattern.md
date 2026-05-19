@@ -38,8 +38,6 @@ meta_description: "Learn what Channel Pattern shows, why it can fail, and how to
 ---
 # Channel Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/) and leads into [Double Top](/academy/chart-patterns/double-top/).
-
 **Best suited for:** day trading and swing trading.
 
 Channel Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.

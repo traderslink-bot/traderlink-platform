@@ -165,7 +165,3 @@ Traders may look for repeated failed breakouts, heavy volume without progress, l
 ### Should I use an accumulation distribution indicator?
 
 Some traders use indicators, but no indicator should be treated as a complete answer. It is usually better to combine indicator context with price action, volume, levels, and trade review.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Accumulation and distribution concepts can help traders review market behavior, but they do not predict price direction or guarantee trading results.

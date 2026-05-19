@@ -38,8 +38,6 @@ meta_description: "Learn what bear pennants show, where traders force them, and 
 ---
 # Bear Pennant
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Bull Pennant](/academy/chart-patterns/bull-pennant/) and leads into [Cup and Handle Pattern](/academy/chart-patterns/cup-and-handle/).
-
 **Best suited for:** day trading and momentum swing trading.
 
 A bear pennant forms after a strong downward move when price compresses into a small tightening range. It is related to a bear flag, but the pause is usually tighter and more triangular.

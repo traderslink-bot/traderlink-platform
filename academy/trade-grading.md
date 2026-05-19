@@ -36,8 +36,6 @@ meta_description: "Learn how to grade trades by plan quality, risk, execution, m
 ---
 # Trade Grading
 
-This lesson is part of the **Practice And Improvement** course. It follows [Setup Screenshot Review](/academy/setup-screenshot-review/) and leads into [One-Rule Practice Drill](/academy/one-rule-practice-drill/).
-
 Trade grading means assigning a process grade to a completed trade. The grade should measure decision quality, not just outcome.
 
 A profitable trade can receive a weak process grade. A losing trade can receive a strong process grade. That is the point.
@@ -118,26 +116,6 @@ Another mistake is using grades as shame instead of feedback.
 
 A final mistake is grading every trade without looking for patterns across a sample.
 
-## Practical Checklist
-
-- The grade measures process quality.
-- The grading categories are simple.
-- Risk and execution are reviewed separately.
-- Green trades can receive weak grades.
-- Red trades can receive strong grades.
-- Grades are reviewed across a sample.
-- The grade leads to one improvement focus.
-
-## Apply This In Review
-
-- What grade did the trade earn by process?
-- Which category lowered the grade?
-- Did outcome bias affect the grade?
-- Did I follow risk and size rules?
-- Did execution match the plan?
-- What grade pattern repeats across recent trades?
-- What one category should I practice next?
-
 ## Related Lessons
 
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
@@ -145,15 +123,6 @@ A final mistake is grading every trade without looking for patterns across a sam
 - [Execution Review](/academy/execution-review/)
 - [Planned Vs Actual Trade Review](/academy/planned-vs-actual-trade-review/)
 - [Mistake Pattern Review](/academy/mistake-pattern-review/)
-
-## Related Glossary Terms
-
-- Trade grade
-- Process quality
-- Execution
-- Risk review
-- Rule adherence
-- Outcome bias
 
 ## FAQ
 
@@ -172,7 +141,3 @@ No. A losing trade can have strong process if the plan and risk were followed.
 ### How detailed should trade grading be?
 
 Start simple. A grading system that is easy to repeat is usually more useful than one with too many categories.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

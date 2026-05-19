@@ -42,8 +42,6 @@ meta_description: "Learn what a Form S-3 filing means, how shelf registrations w
 
 A Form S-3 is a shorter registration statement that eligible public companies can use to register securities with the SEC. Traders often watch S-3 filings because they can create a shelf registration, which may allow a company to offer securities later.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form S-1](/academy/sec-filings/form-s-1/) and leads into [Form F-1](/academy/sec-filings/form-f-1/).
-
 An S-3 does not automatically mean an offering is happening today. It often means the company is setting up or maintaining the ability to raise capital under certain conditions.
 
 ## Lesson Objective
@@ -178,33 +176,6 @@ Common S-3 mistakes include:
 
 The S-3 should become context, not panic.
 
-## Practical Checklist
-
-Use this checklist when reviewing an S-3:
-
-- What securities are registered?
-- What is the shelf size?
-- Is the shelf effective?
-- Is there a related 424B5 or prospectus supplement?
-- Is an ATM program mentioned?
-- Does the company have recent cash needs or offering history?
-- Are warrants, preferred stock, or debt securities included?
-- Did volume and price react to the filing?
-- Did I understand the filing before entering a trade?
-- Did the trade follow a plan or a filing reaction?
-
-## Apply This In Review
-
-After an S-3-related trade, review:
-
-- Whether you confused shelf availability with actual offering terms.
-- Whether you checked for later 424B filings.
-- Whether you understood the securities registered.
-- Whether the filing changed your risk view.
-- Whether the chart reaction supported or contradicted your assumption.
-
-This helps turn filing fear into filing literacy.
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
@@ -241,7 +212,3 @@ Traders watch S-3 filings because they can reveal future financing flexibility, 
 ### Is an S-3 a trading signal?
 
 No. An S-3 is filing context. It should be reviewed with the company situation, related filings, price action, liquidity, and risk plan.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Form S-3 filings do not guarantee price movement, continuation, reversal, dilution timing, or profitable trades. Always review the actual filing, related news, liquidity, risk, and your own trading plan.

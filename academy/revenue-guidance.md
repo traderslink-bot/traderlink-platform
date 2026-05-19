@@ -152,7 +152,3 @@ Traders should also review margins, expenses, cash, debt, dilution risk, managem
 ### Is guidance the same as earnings?
 
 No. Earnings usually report past financial results. Guidance is management's outlook for future results.
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Revenue guidance does not guarantee company performance, price movement, continuation, or profitable trades. Always review risk, liquidity, filings, and your own trading plan.

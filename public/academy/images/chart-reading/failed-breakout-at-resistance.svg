@@ -40,7 +40,7 @@
     </g>
   </g>
   <path d="M96 296 C152 265 197 236 229 222 C269 203 314 177 361 152 C408 126 443 165 493 249 C530 310 580 278 625 288" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".55"/>
-  <text x="342" y="96" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Break attempt</text>
+  <text x="342" y="112" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Break attempt</text>
   <text x="422" y="242" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Fails back below resistance</text>
   <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
   <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Volume fades after failed hold</text>

@@ -49,8 +49,6 @@ meta_description: "Learn what stock press releases are, why traders watch compan
 
 Stock press releases are official company announcements shared with investors, media, data providers, and the market. Traders watch them because a press release can introduce a catalyst, explain unusual volume, or create sudden attention around a stock.
 
-This lesson is part of the **News, Catalysts And SEC Filings** learning path. It builds on [Stock Catalysts](/academy/stock-catalysts/) and leads into [How To Read Stock Press Releases](/academy/how-to-read-stock-press-releases/).
-
 A stock press release does not guarantee a clean move. Some news creates volume and follow-through. Some news fades quickly. Some headlines sound exciting but have weak details. The headline is only the start.
 
 ## Lesson Objective
@@ -208,43 +206,6 @@ Common press-release mistakes include:
 
 The release should start the review. It should not end it.
 
-## Practical Checklist
-
-Use this checklist when reviewing press-release trades:
-
-- What was the exact headline?
-- What time was it released?
-- Was the source official?
-- What category of news was it?
-- What specific details were included?
-- What important details were missing?
-- Was the language about completed facts or future plans?
-- Was there related SEC filing context?
-- Did volume expand after the release?
-- Did price hold, fade, reject, or reclaim key levels?
-- Was liquidity clean enough for the trade size?
-- Did the trade follow a plan or a fast headline reaction?
-
-This checklist helps turn news into reviewable context.
-
-## Apply This In Review
-
-Press-release trades are useful to review because they show whether a trader reads details or reacts to excitement.
-
-Helpful review prompts:
-
-- Did I read the full release before entering?
-- What detail made the release meaningful or weak?
-- What did I miss in the release?
-- Did I check for related filings?
-- Was the trade based on the release details or the first candle?
-- Did volume continue after the first move?
-- Did the stock hold the level I cared about?
-- Did the spread or slippage affect my execution?
-- Do I repeatedly chase certain headline words?
-
-Over time, these notes can show whether press releases are helping your process or triggering reactive trades.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)
@@ -254,14 +215,6 @@ Over time, these notes can show whether press releases are helping your process 
 - [Small-Cap Stocks](/academy/small-cap-stocks/)
 - [Unusual Volume](/academy/unusual-volume/)
 - [Volume Spike](/academy/volume-spike/)
-
-## Related Glossary Terms
-
-- [Catalyst](/glossary/catalyst/)
-- [News Catalyst](/glossary/news-catalyst/)
-- [Dilution](/glossary/dilution/)
-- [Liquidity](/glossary/liquidity/)
-- [Volume Spike](/glossary/volume-spike/)
 
 ## FAQ
 
@@ -292,7 +245,3 @@ Yes. Many press-release moves fade, especially if the headline is weak, the stoc
 ### Should traders keep review notes on press-release trades?
 
 Yes. Structured review can help traders see whether they read the release, checked filings, planned the trade, and managed execution risk.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Stock press releases do not guarantee price movement, continuation, reversal, or profitable trades. Always review the full release, filings, liquidity, risk, and your own trading plan.

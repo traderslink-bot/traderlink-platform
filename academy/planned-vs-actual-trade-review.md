@@ -36,8 +36,6 @@ meta_description: "Learn how to compare trade plans with actual trading decision
 ---
 # Planned Vs Actual Trade Review
 
-This lesson is part of the **Trade Review And Improvement** course. It follows [Trade Risk Review](/academy/trade-risk-review/) and leads into [Execution Review](/academy/execution-review/).
-
 A planned-vs-actual trade review compares what the trader intended to do before the trade with what actually happened during the trade. This is one of the cleanest ways to find the difference between a strategy issue and a behavior issue.
 
 The goal is not to shame the trader for every difference. The goal is to identify which differences were justified by new information and which were emotional changes made under pressure.
@@ -106,29 +104,6 @@ Another mistake is making review notes too vague. "Did not follow plan" is less 
 
 A final mistake is not updating the future checklist after repeated differences appear.
 
-## Practical Checklist
-
-- The original trade plan was written before entry.
-- The actual trade decisions are recorded honestly.
-- Entry, risk, size, management, and exit are compared separately.
-- Each difference is labeled clearly.
-- The review separates valid adjustment from emotional change.
-- The final lesson is specific enough to use next time.
-- Repeated differences are turned into rules or tags.
-
-## Apply This In Review
-
-- What did I plan to trade?
-- What did I actually trade?
-- Where did my entry differ from the plan?
-- Where did my risk differ from the plan?
-- Did position size match the plan?
-- Did I change management rules during the trade?
-- Was the change justified by new information?
-- What should be clearer in the next plan?
-
-Planned-vs-actual review helps make discipline measurable instead of vague.
-
 ## Related Lessons
 
 - [Trading Plan](/academy/trading-plan/)
@@ -162,7 +137,3 @@ Yes. A trade can make money while still breaking the plan.
 ### How detailed should this review be?
 
 Detailed enough to identify the decision that changed and what should be clearer next time.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Planned-vs-actual review can improve process awareness, but it does not guarantee trading results.

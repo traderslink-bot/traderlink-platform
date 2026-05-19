@@ -4,7 +4,7 @@
   <rect width="900" height="520" fill="#08111f"/>
   <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
   <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Orders interact with available bid and ask liquidity</text>
-  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Execution review asks whether order type matched the quote conditions.</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Execution quality depends on whether order type matched the quote conditions.</text>
   <rect x="70" y="126" width="350" height="304" rx="10" fill="#0a1322" stroke="#213858"/>
   <rect x="480" y="126" width="350" height="304" rx="10" fill="#0a1322" stroke="#213858"/>
   <text x="96" y="158" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Ask-side immediate order context</text>
@@ -25,6 +25,6 @@
   </g>
   <line x1="102" y1="354" x2="388" y2="354" stroke="#2a3d5c"/>
   <line x1="512" y1="354" x2="798" y2="354" stroke="#2a3d5c"/>
-  <text x="112" y="384" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">review: size, spread, order type, fill</text>
-  <text x="522" y="384" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">review: bid-side depth and fill quality</text>
+  <text x="112" y="384" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">size, spread, order type, fill</text>
+  <text x="522" y="384" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">bid-side depth and fill quality</text>
 </svg>

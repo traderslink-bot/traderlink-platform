@@ -157,7 +157,3 @@ Neither is automatically worse. Traders should review pricing, size, warrants, c
 ### What should traders check first?
 
 Traders should identify the offering type, pricing, size, securities involved, use of proceeds, and whether later filings show actual sales.
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. ATM offerings and public offerings do not guarantee price movement, dilution impact, selling pressure, or trading outcomes. Always review the full terms, filings, liquidity, risk, and your own trading plan.

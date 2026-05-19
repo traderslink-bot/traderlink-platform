@@ -36,8 +36,6 @@ meta_description: "Learn how pullbacks and dip-buy setups work as context, what 
 ---
 # Pullbacks And Dip-Buy Setups
 
-This lesson is part of the **Trading Styles And Playbooks** course. It follows [Momentum Trading](/academy/momentum-trading/) and leads into [Breakout Trading](/academy/breakout-trading/).
-
 Pullbacks and dip-buy setups review what happens when price pauses or pulls back after a move. The idea is not that every dip should be entered. The useful lesson is how to judge whether a pullback is controlled, messy, or failing.
 
 This lesson uses the common phrase dip-buy because traders use it, but the Academy framing is educational and review-based.
@@ -106,28 +104,6 @@ Another mistake is entering before the pullback has structure.
 
 A final mistake is using the phrase dip-buy to justify hope.
 
-## Practical Checklist
-
-- There was a clear prior move.
-- The pullback has a meaningful reference area.
-- Volume is reviewed.
-- Support or VWAP behavior is checked.
-- Invalidation is defined.
-- The trade is not just averaging down.
-- Failure scenarios are considered.
-
-## Apply This In Review
-
-- What was the prior move?
-- Was the pullback controlled or disorderly?
-- What level or reference area mattered?
-- Did volume support or weaken the idea?
-- Where was invalidation?
-- Did I average down emotionally?
-- Did I label a failure as a dip?
-
-Pullback review should protect the trader from confusing patience with denial.
-
 ## Related Lessons
 
 - [Support Levels](/academy/support-levels/)
@@ -161,7 +137,3 @@ Yes. Volume can help review whether selling pressure is expanding or cooling, bu
 ### How should pullbacks be reviewed?
 
 Review prior move, level quality, volume, invalidation, entry timing, adds, and whether the trader followed the plan.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trading styles and playbooks can help organize review, but they do not guarantee outcomes or replace independent risk decisions.

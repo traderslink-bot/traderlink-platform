@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume/"
   - "/academy/support-levels/"
 visual_assets:
-  - "/academy/images/chart-reading/wedge-channel-context.svg"
+  - "/academy/images/chart-reading/falling-wedge-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-18"
@@ -38,15 +38,13 @@ meta_description: "Learn what Falling Wedge shows, why it can fail, and how to r
 ---
 # Falling Wedge
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Rising Wedge](/academy/chart-patterns/rising-wedge/) and leads into [Rectangle Pattern](/academy/chart-patterns/rectangle-pattern/).
-
 **Best suited for:** day trading and swing trading.
 
 Falling Wedge is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing a falling wedge narrowing downward with volume and reclaim-review context.](/academy/images/chart-reading/wedge-channel-context.svg)
+![Candlestick chart showing a falling wedge narrowing downward with volume and reclaim-review context.](/academy/images/chart-reading/falling-wedge-context.svg)
 
 ## What It Is
 

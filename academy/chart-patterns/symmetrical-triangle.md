@@ -38,8 +38,6 @@ meta_description: "Learn what symmetrical triangles show, why they can fail, and
 ---
 # Symmetrical Triangle Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Descending Triangle Pattern](/academy/chart-patterns/descending-triangle/) and leads into [Wedge Pattern](/academy/chart-patterns/wedge-pattern/).
-
 **Best suited for:** day trading and swing trading.
 
 A symmetrical triangle forms when price makes lower highs and higher lows at the same time. The range tightens from both sides, creating compression.

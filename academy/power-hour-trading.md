@@ -38,8 +38,6 @@ meta_description: "Learn what power hour trading is, why volume may return late 
 ---
 # Power Hour Trading
 
-This lesson is part of the **Day Trading Workflow** course. It follows [Midday Trading](/academy/midday-trading/) and leads into [After-Hours Trading](/academy/after-hours-trading/).
-
 Power hour usually refers to the final hour of the regular session. Traders watch this period because volume and movement can sometimes return after a slower midday.
 
 Power hour is also a discipline test. The trader may be tired, green, red, frustrated, or tempted to force one more decision before the close.
@@ -110,26 +108,6 @@ Another mistake is chasing late-day extension far from a risk area.
 
 A final mistake is using power hour to recover emotionally from earlier mistakes.
 
-## Practical Checklist
-
-- Volume has returned or the level is clearly active.
-- The setup still has a realistic risk area.
-- The trader knows the plan for the close.
-- The decision is not based on being green or red.
-- Spread and liquidity are acceptable.
-- The trade fits the watchlist or a clear late-day reason.
-- Final-hour trades are reviewed separately.
-
-## Apply This In Review
-
-- Did I trade better or worse in the final hour?
-- Did I force a trade because time was running out?
-- Did I give back earlier progress?
-- Did volume support the move?
-- Did I have a plan for the close?
-- Was the trade based on structure or emotion?
-- Should power hour have stricter rules in my plan?
-
 ## Related Lessons
 
 - [Midday Trading](/academy/midday-trading/)
@@ -137,15 +115,6 @@ A final mistake is using power hour to recover emotionally from earlier mistakes
 - [High Of Day](/academy/high-of-day/)
 - [Momentum Trading](/academy/momentum-trading/)
 - [Overtrading](/academy/overtrading/)
-
-## Related Glossary Terms
-
-- Power hour
-- High of day
-- Volume
-- Momentum
-- Overtrading
-- Risk management
 
 ## FAQ
 
@@ -164,7 +133,3 @@ No. Some final hours are active, and others remain slow or choppy.
 ### What is the biggest power hour risk?
 
 A common risk is forcing a late trade because of frustration, urgency, or the desire to change the day's outcome.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

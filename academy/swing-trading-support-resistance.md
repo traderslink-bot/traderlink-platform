@@ -38,8 +38,6 @@ meta_description: "Learn how swing traders use support and resistance zones to p
 ---
 # Swing Trading Support Resistance
 
-This lesson is part of the **Swing Trading Workflow** course. It follows [Swing Trading Risk Management](/academy/swing-trading-risk-management/) and leads into [Swing Trading Volume](/academy/swing-trading-volume/).
-
 Support and resistance help swing traders organize the daily chart. They do not predict a move. They create reference zones for planning, risk, and review.
 
 For swing trading, the most useful levels are usually the ones that matter across multiple sessions: prior highs, prior lows, breakout zones, failed breakout areas, gap zones, consolidation ranges, and high-volume reaction areas.
@@ -119,28 +117,6 @@ Another mistake is ignoring volume around a level. A level break on thin partici
 
 A final mistake is refusing to accept that the level failed.
 
-## Practical Checklist
-
-- Higher-timeframe support and resistance are mapped.
-- Levels are drawn as zones where appropriate.
-- The current price is compared with nearby support and resistance.
-- The trade has a defined invalidation area.
-- Volume around key levels is reviewed.
-- The trader avoids adding clutter levels after the outcome is known.
-- The level reaction is reviewed without assuming a guaranteed result.
-
-## Apply This In Review
-
-- Which support zone mattered before entry?
-- Which resistance zone was closest overhead?
-- Did I enter near structure or chase into resistance?
-- Did the level reaction support or weaken the thesis?
-- Did volume confirm interest or show fading participation?
-- Did I respect the failed level?
-- Did I redraw levels after the fact to make the trade look better?
-
-Level review helps traders separate planned structure from emotional justification.
-
 ## Related Lessons
 
 - [Support And Resistance](/academy/support-and-resistance/)
@@ -148,15 +124,6 @@ Level review helps traders separate planned structure from emotional justificati
 - [Resistance Levels](/academy/resistance-levels/)
 - [Key Levels Trading](/academy/key-levels-trading/)
 - [Swing Trading Volume](/academy/swing-trading-volume/)
-
-## Related Glossary Terms
-
-- Support
-- Resistance
-- Key level
-- Breakout
-- Reclaim
-- Invalidation
 
 ## FAQ
 
@@ -183,7 +150,3 @@ Yes. Support can fail, and the failure may require the swing thesis to be review
 ### Does a breakout above resistance guarantee continuation?
 
 No. Breakouts can fail. Swing traders should review whether price holds the level, whether volume supports the move, and whether the thesis remains valid.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Support and resistance can help organize chart context, but no level guarantees a bounce, rejection, breakout, or continuation.

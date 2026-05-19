@@ -38,8 +38,6 @@ meta_description: "Learn how to build a trading improvement plan from review not
 ---
 # Trading Improvement Plan
 
-This lesson completes the **Practice And Improvement** course. It follows [Forward Testing Trading](/academy/forward-testing-trading/) and leads into [Trading Halts](/academy/trading-halts/) when the Academy continues into high-volatility event risk.
-
 A trading improvement plan turns review into action. It connects what the trader notices after trades with what they will practice next.
 
 The plan does not need to be complicated. It needs to be specific enough to repeat.
@@ -126,26 +124,6 @@ Another mistake is choosing too many focus areas.
 
 A final mistake is skipping the review date.
 
-## Practical Checklist
-
-- The plan names one priority.
-- The priority comes from review evidence.
-- The practice method is clear.
-- The rule or behavior change is observable.
-- The sample size or time window is defined.
-- Success is measured by process quality.
-- The plan has a review date.
-
-## Apply This In Review
-
-- What repeated pattern matters most right now?
-- What evidence supports that priority?
-- What practice method fits it?
-- What rule will I test?
-- How many examples will I collect?
-- What would show process improvement?
-- When will I review the plan?
-
 ## Related Lessons
 
 - [Practice Trading](/academy/practice-trading/)
@@ -153,15 +131,6 @@ A final mistake is skipping the review date.
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
 - [Trading Discipline](/academy/trading-discipline/)
 - [Trader Intelligence Trade Review](/academy/trader-intelligence-trade-review/)
-
-## Related Glossary Terms
-
-- Improvement plan
-- Practice drill
-- Forward testing
-- Trade grade
-- Mistake pattern
-- Process quality
 
 ## FAQ
 
@@ -180,7 +149,3 @@ No. Process quality, rule adherence, risk control, and execution behavior can be
 ### How often should the plan be reviewed?
 
 Use a defined sample or time window, such as a number of sessions or trades, instead of changing the plan after every result.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

@@ -27,8 +27,6 @@ meta_description: "Learn the difference between reverse splits and dilution, why
 ---
 # Reverse Split vs Dilution
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Reverse Split](/academy/reverse-split/) and leads into [Forward Split](/academy/forward-split/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -157,18 +155,6 @@ A trade journal can connect float, filings, dilution context, risk, execution, a
 
 Start with the full guides on [reverse stock splits](/academy/reverse-split/) and [dilution](/academy/dilution/). For broader risk context, review [dilution risk](/academy/dilution-risk/), [float versus shares outstanding](/academy/float-vs-shares-outstanding/), and [how to spot dilution risk](/academy/how-to-spot-dilution-risk/).
 
-## Practical Checklist
-
-Before treating Reverse Split Vs Dilution as meaningful context, review:
-
-- Share consolidation.
-- Ownership percentage.
-- New issuance.
-- Post-split financing.
-- Adjusted securities.
-- Float change.
-- Risk context.
-
 ## FAQ
 
 ### Is a reverse split the same as dilution?
@@ -195,17 +181,6 @@ A higher post-split price can sometimes make future financing easier, especially
 
 Traders should review cash, active shelf registrations, warrants, convertibles, authorized shares, compliance notices, and post-split financing history.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Reverse Split Vs Dilution, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Reverse Split](/academy/reverse-split/)
@@ -213,7 +188,3 @@ When reviewing a small-cap trade or watchlist idea connected to Reverse Split Vs
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Reverse splits and dilution risk do not guarantee price movement, financing activity, selling pressure, or trading outcomes. Always review filings, terms, liquidity, risk, and your own trading plan.

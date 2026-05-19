@@ -205,42 +205,6 @@ Common news-trade review mistakes include:
 
 Review should judge decision quality, not just outcome.
 
-## Practical Checklist
-
-Use this checklist after news trades:
-
-- What was the exact catalyst?
-- What type of news was it?
-- Was the catalyst specific or vague?
-- Did I read the full release or filing?
-- What details mattered most?
-- What details were missing?
-- Did volume expand and continue?
-- Did price hold, fade, reject, or reclaim key levels?
-- Was liquidity clean enough for my size?
-- Was risk defined before entry?
-- Did the exit follow the plan?
-- What is the specific lesson?
-
-## Apply This In Review
-
-Create a short review template for news trades:
-
-```text
-Catalyst:
-Details I checked:
-Details I missed:
-Chart reaction:
-Volume/liquidity:
-Entry quality:
-Risk plan:
-Exit quality:
-Main lesson:
-Repeat pattern:
-```
-
-The repeat-pattern line matters. It helps reveal whether you keep making the same type of news-trade mistake.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)
@@ -272,7 +236,3 @@ News trades often go wrong because traders react before reading details, enter a
 ### How soon should traders review news trades?
 
 Review them as soon as practical while the details, chart behavior, and decision process are still fresh.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Reviewing news trades does not guarantee future performance or profitable trades. Always review risk, liquidity, filings, news quality, and your own trading plan.

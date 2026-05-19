@@ -38,8 +38,6 @@ meta_description: "Follow the TradersLink Academy trade review path for risk rev
 ---
 # Trade Review Path
 
-This path hub organizes the completed **Trade Review And Improvement** and **Practice And Improvement** lessons. It follows [News And Filings Path](/academy/news-and-filings-path/) and leads into [Risk Discipline Path](/academy/risk-discipline-path/).
-
 Trade review is where education becomes useful. A trader can understand levels, volume, news, and risk in theory but still repeat the same execution and management mistakes. Review turns completed trades into evidence.
 
 ![Dark dashboard path map showing a completed trade review workflow with realistic candles, risk review, execution review, mistake pattern review, and improvement loop.](/academy/images/chart-reading/academy-trade-review-path-map.svg)
@@ -112,28 +110,6 @@ Another mistake is reviewing too many things at once.
 
 A final mistake is using review to predict the next trade instead of improving the next decision.
 
-## Practical Checklist
-
-- The original plan is compared with actual decisions.
-- Risk is reviewed before execution quality.
-- Entries, adds, reductions, and exits are reviewed separately.
-- Chart, news, volume, liquidity, and time-of-day context are included.
-- Mistakes are grouped into patterns.
-- Strengths are recorded too.
-- One improvement focus is chosen for the next practice cycle.
-
-## Apply This In Review
-
-- What did I plan?
-- What did I actually do?
-- Where did the trade context change?
-- Which decision helped the trade?
-- Which decision hurt the trade?
-- Was this a repeated behavior?
-- What is the next one-rule improvement focus?
-
-Trade review becomes more useful when it leads to a small, specific adjustment.
-
 ## Related Lessons
 
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
@@ -141,15 +117,6 @@ Trade review becomes more useful when it leads to a small, specific adjustment.
 - [Mistake Pattern Review](/academy/mistake-pattern-review/)
 - [Practice Trading](/academy/practice-trading/)
 - [Trading Improvement Plan](/academy/trading-improvement-plan/)
-
-## Related Glossary Terms
-
-- Trade review
-- Execution
-- Risk management
-- Trade plan
-- Mistake pattern
-- Forward testing
 
 ## FAQ
 
@@ -176,7 +143,3 @@ No. The intended bridge is completed-trade review, behavior recognition, and imp
 ### What comes after this path?
 
 Risk and discipline lessons help users understand the behavior and protection rules that appear repeatedly in trade review.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trade review can help traders study decisions and patterns, but it does not guarantee future trading results.

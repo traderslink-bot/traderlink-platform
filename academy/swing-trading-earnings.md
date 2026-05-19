@@ -38,8 +38,6 @@ meta_description: "Learn how earnings affect swing trades, including gap risk, p
 ---
 # Swing Trading Earnings
 
-This lesson is part of the **Swing Trading Workflow** course. It follows [Swing Trading Catalysts](/academy/swing-trading-catalysts/) and leads into [Swing Trading News Risk](/academy/swing-trading-news-risk/).
-
 Earnings can change a swing trade quickly because the market is reacting to new business information while the position may already be open.
 
 For swing traders, the most important question is whether they are trading before earnings, after earnings, or intentionally through earnings. Those are different situations with different risks.
@@ -132,29 +130,6 @@ Another mistake is ignoring after-hours liquidity and spread behavior.
 
 A final mistake is holding after earnings change the original thesis.
 
-## Practical Checklist
-
-- Earnings date is checked before entry.
-- The trader knows whether the plan is before, through, or after earnings.
-- Position size accounts for event and gap risk.
-- Guidance and market reaction are reviewed, not only headline results.
-- Price reaction is compared with key levels.
-- Volume and liquidity are reviewed after the report.
-- The original thesis is updated or retired if earnings change it.
-
-## Apply This In Review
-
-- Did I know earnings were coming?
-- Was I intentionally holding through the report?
-- Did I size for earnings gap risk?
-- What did the report and guidance actually say?
-- Did price hold or reject key levels after earnings?
-- Did volume support the reaction or fade?
-- Did I chase the first reaction?
-- Did I keep holding after the original reason changed?
-
-Earnings review should separate event risk from ordinary chart risk.
-
 ## Related Lessons
 
 - [Earnings News](/academy/earnings-news/)
@@ -162,15 +137,6 @@ Earnings review should separate event risk from ordinary chart risk.
 - [Risk Management](/academy/risk-management/)
 - [Revenue Guidance](/academy/revenue-guidance/)
 - [Swing Trading News Risk](/academy/swing-trading-news-risk/)
-
-## Related Glossary Terms
-
-- Earnings report
-- Guidance
-- Overnight risk
-- Gap risk
-- Liquidity
-- Event risk
 
 ## FAQ
 
@@ -197,7 +163,3 @@ Review the report, guidance, price reaction, volume, liquidity, key levels, and 
 ### How can earnings trades be reviewed better?
 
 Separate the chart plan from the event-risk plan, then review whether size, timing, and hold decisions matched the risk.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Earnings can create major volatility, and no report, guidance update, or chart setup guarantees a price move.

@@ -36,8 +36,6 @@ meta_description: "Learn what FOMO trading is, why traders chase moves, common m
 ---
 # FOMO Trading
 
-This lesson is part of the **Trading Psychology And Discipline** course. It follows [Trading Discipline](/academy/trading-discipline/) and leads into [Chasing Stocks](/academy/chasing-stocks/).
-
 FOMO trading happens when a trader enters because they are afraid of missing a move. The trade is driven more by urgency than by a clean plan.
 
 A stock can be active, news-driven, and strong, and still be a poor trade for the person entering late without defined risk. FOMO is not about whether the stock is interesting. It is about why the trader entered and whether the trade still had structure.
@@ -113,33 +111,6 @@ Another mistake is increasing size because the trade feels urgent. Urgency is no
 
 A final mistake is refusing to exit when the FOMO trade fails. The trader may hold because admitting the entry was emotional feels uncomfortable.
 
-## Practical Checklist
-
-Before judging this behavior, check:
-
-- The setup still matches your plan.
-- The entry is not only based on missing an earlier move.
-- Risk is defined before entry.
-- The nearest support or resistance is known.
-- Spread and liquidity are acceptable for your plan.
-- Position size matches the actual risk distance.
-- The trade would still make sense without scanner, chat, or social pressure.
-
-## Apply This In Review
-
-After a trade or session, ask:
-
-- Did I enter because of a plan or because I feared missing the move?
-- Was the stock already extended?
-- Was there nearby resistance or support?
-- Did I define risk before entry?
-- Did scanner, chat, or social activity influence me?
-- Did I size larger because the move felt urgent?
-- Did I chase after missing a better entry?
-- Would I take the same trade again with the same information?
-
-FOMO becomes easier to manage when the trader can see when and why it appears.
-
 ## Related Lessons
 
 - [Trading Discipline](/academy/trading-discipline/)
@@ -173,7 +144,3 @@ Yes. FOMO can happen in either direction when a trader rushes into a move becaus
 ### How should FOMO be reviewed?
 
 Review the trigger, entry location, distance from risk, nearby levels, position size, and whether the trade would have been taken without urgency.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. FOMO trading can increase risk, and no fast-moving trade guarantees continuation.

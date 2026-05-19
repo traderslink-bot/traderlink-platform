@@ -37,8 +37,6 @@ meta_description: "Learn what small-cap stocks are, why traders watch them, and 
 ---
 # Small-Cap Stocks: What Traders Should Know
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [How To Review News Trades](/academy/how-to-review-news-trades/) and leads into [Penny Stocks](/academy/penny-stocks/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -179,18 +177,6 @@ Useful related pages include:
 - [Relative Volume](/academy/relative-volume/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
 
-## Practical Checklist
-
-Before treating Small-Cap Stocks as meaningful context, review:
-
-- Market cap context.
-- Float and liquidity.
-- Catalyst quality.
-- SEC filing context.
-- Dilution risk.
-- Spread and volatility.
-- Review after the move.
-
 ## FAQ
 
 ### What are small-cap stocks?
@@ -217,27 +203,12 @@ Traders often review float, volume, liquidity, catalyst quality, filings, diluti
 
 Yes. Structured review notes can help traders review whether small-cap trades were planned, whether entries were late, whether liquidity mattered, and whether repeated mistakes appeared.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Small-Cap Stocks, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
 - [Penny Stocks](/academy/penny-stocks/)
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock.
 
 ## Conclusion
 

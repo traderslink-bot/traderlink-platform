@@ -48,8 +48,6 @@ meta_description: "Learn what time and sales means, how traders read actual prin
 
 Time and sales shows the actual trades that have printed in a stock. Traders often call it the tape. While [Level 2](/academy/level-2/) shows visible bids and asks, time and sales shows what actually traded.
 
-This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on Level 2, [Bid And Ask](/academy/bid-and-ask/), [Volume](/academy/volume/), and [Liquidity](/academy/liquidity/). It leads into [Volume By Price](/academy/volume-by-price/), where traders review where volume traded on the chart.
-
 
 ## Lesson Objective
 
@@ -186,39 +184,6 @@ Common time and sales mistakes include:
 
 Time and sales is useful when it supports better execution awareness, not when it creates panic.
 
-## Practical Checklist
-
-Use this checklist when reviewing tape context:
-
-- Were trades printing near the ask or bid when I entered?
-- Did print speed increase or slow down?
-- Did large prints lead to continuation, rejection, or no reaction?
-- Did the tape confirm or contradict Level 2?
-- Was the spread tight enough for the tape read to matter?
-- Did I react to one print instead of context?
-- Did tape slow down after my entry?
-- Did actual prints support my exit decision?
-- Did I use tape as confirmation or as an emotional trigger?
-
-The checklist helps turn fast tape into structured review.
-
-## Apply This In Review
-
-Tape review can help traders understand whether entries and exits matched actual order flow.
-
-Helpful review prompts:
-
-- What were prints doing when I entered?
-- Were prints near the ask, bid, or between them?
-- Did print speed change after entry?
-- Did time and sales match what I saw on Level 2?
-- Did I react to a single print?
-- Did the tape slow before the trade failed?
-- Did selling pressure appear before I exited?
-- Did tape reading improve execution or make me emotional?
-
-Over time, this can show whether tape reading is useful for your process or just another source of noise.
-
 ## FAQ
 
 ### What is time and sales in trading?
@@ -248,7 +213,3 @@ Prints near the bid can suggest sellers are hitting available bids, but this als
 ### How should traders review tape-reading mistakes?
 
 Review whether the tape supported the trade idea, whether print speed changed, whether Level 2 agreed, and whether the trader reacted emotionally to individual prints.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock. Time and sales does not guarantee price movement, clean fills, profitability, better decisions, or reduced losses. Always use risk management and review your own trades carefully.

@@ -38,8 +38,6 @@ meta_description: "Learn what trading halts are, why stocks may be halted, what 
 ---
 # Trading Halts
 
-This lesson opens the **Halts And High-Volatility Events** course. It follows [Trading Improvement Plan](/academy/trading-improvement-plan/) and leads into [Volatility Halts](/academy/volatility-halts/).
-
 A trading halt is a temporary pause in trading for a security or, in extreme cases, across the broader market. Halts can happen for different reasons, including volatility, pending news, regulatory concerns, order imbalances, or market-wide circuit breaker rules.
 
 The important lesson is risk. A halt can interrupt a plan, freeze exits, widen uncertainty, and change execution conditions after trading resumes.
@@ -117,26 +115,6 @@ Another mistake is assuming resume liquidity will be clean.
 
 A final mistake is using too much size in a name that can halt quickly.
 
-## Practical Checklist
-
-- The trader understands the possible halt type.
-- Official halt or exchange information is checked when relevant.
-- Position size accounts for interruption risk.
-- Spread and liquidity are reviewed before and after the halt.
-- The trader does not assume resume direction.
-- The trade plan includes what happens if exits are delayed.
-- The event is reviewed after the session.
-
-## Apply This In Review
-
-- What type of halt was it?
-- Did I know halt risk before the trade?
-- Was the stock low float or unusually volatile?
-- Did spread change after resume?
-- Did liquidity support my plan?
-- Did I assume a direction because of the halt?
-- What halt-risk rule should I add or adjust?
-
 ## Related Lessons
 
 - [Volatility Halts](/academy/volatility-halts/)
@@ -144,15 +122,6 @@ A final mistake is using too much size in a name that can halt quickly.
 - [Spread](/academy/spread/)
 - [Slippage](/academy/slippage/)
 - [Risk Management](/academy/risk-management/)
-
-## Related Glossary Terms
-
-- Trading halt
-- Volatility halt
-- Trading suspension
-- Spread
-- Slippage
-- Liquidity
 
 ## Official References To Check
 
@@ -177,7 +146,3 @@ Normal trading is paused during a halt, so exit control can be limited until tra
 ### Where should traders check halt information?
 
 Traders should check official exchange, FINRA, or SEC sources where applicable.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

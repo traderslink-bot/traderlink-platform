@@ -35,8 +35,6 @@ meta_description: "Learn what risk reward ratio means in trading, why it matters
 ---
 # Risk Reward Ratio
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Position Sizing](/academy/position-sizing/) and leads into [Win Rate, Reward/Risk, And Expectancy](/academy/win-rate-reward-risk-and-expectancy/).
-
 The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
 
 ## Lesson Objective
@@ -147,18 +145,6 @@ For more context, read:
 - [Stop loss](/academy/stop-loss/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
 
-## Practical Checklist
-
-Before relying on Risk Reward Ratio, confirm:
-
-- Planned risk.
-- Potential reward.
-- Win rate context.
-- Execution quality.
-- Realistic targets.
-- Invalidation.
-- Review after exit.
-
 ## FAQ
 
 ### What is risk reward ratio in trading?
@@ -185,24 +171,9 @@ Yes, but the trader should understand whether the potential reward justifies the
 
 Record the planned risk, planned target, actual exit, slippage, whether the target was realistic, and whether you followed the plan.
 
-## Apply This In Review
-
-When reviewing a trade connected to Risk Reward Ratio, ask:
-
-- Was the rule or plan written before the trade started?
-- Did the position size match the planned risk?
-- Did I know where the idea was wrong before entering?
-- Did I follow the rule when the trade became uncomfortable?
-- If I broke the rule, what was the trigger: fear, hope, boredom, revenge, or confusion?
-- What should I change in my plan so this decision is easier to review next time?
-
 ## Related Lessons
 
 - [Position Sizing](/academy/position-sizing/)
 - [Stop Loss](/academy/stop-loss/)
 - [Risk Management](/academy/risk-management/)
 - [Trade Risk Review](/academy/trade-risk-review/)
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Risk reward ratio can help organize trade planning, but it does not predict price direction or guarantee results.

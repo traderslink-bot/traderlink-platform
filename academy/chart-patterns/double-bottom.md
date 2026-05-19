@@ -38,8 +38,6 @@ meta_description: "Learn what double bottoms show, why they can fail, and how to
 ---
 # Double Bottom
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Double Top](/academy/chart-patterns/double-top/) and leads into [Triple Top](/academy/chart-patterns/triple-top/).
-
 **Best suited for:** day trading and swing trading.
 
 A double bottom forms when price tests a similar support area twice and the second test holds or reclaims. It can show that sellers failed to push through the same area again.

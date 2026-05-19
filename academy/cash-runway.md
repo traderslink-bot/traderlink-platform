@@ -27,8 +27,6 @@ meta_description: "Learn what cash runway means, why cash burn matters, and how 
 ---
 # Cash Runway
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Forward Split](/academy/forward-split/) and leads into [Going Concern](/academy/going-concern/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -144,18 +142,6 @@ Cash runway connects directly with [dilution risk](/academy/dilution-risk/) and 
 
 For financing context, review [stock offerings](/academy/stock-offerings/).
 
-## Practical Checklist
-
-Before treating Cash Runway as meaningful context, review:
-
-- Cash balance.
-- Quarterly burn.
-- Debt.
-- Upcoming obligations.
-- Trial or operating costs.
-- Financing history.
-- Runway estimate.
-
 ## FAQ
 
 ### What is cash runway?
@@ -182,17 +168,6 @@ Traders often review Form 10-Q, Form 10-K, cash flow statements, management disc
 
 Yes. Runway can change after financing, revenue changes, cost increases, debt payments, or new spending plans.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Cash Runway, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Forward Split](/academy/forward-split/)
@@ -200,7 +175,3 @@ When reviewing a small-cap trade or watchlist idea connected to Cash Runway, ask
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Cash runway estimates do not guarantee dilution, financing, price movement, or trading outcomes. Always review filings, assumptions, liquidity, risk, and your own trading plan.

@@ -79,5 +79,5 @@
     <rect x="786" y="436" width="22" height="46" fill="#ef4444" opacity=".78"/>
   </g>
 
-  <text x="60" y="520" fill="#8ca9c7" font-family="Arial" font-size="14">Review the VWAP area with levels, volume, timing, and failure behavior. The line is only one part of the review.</text>
+  <text x="60" y="520" fill="#8ca9c7" font-family="Arial" font-size="14">Read VWAP with levels, volume, timing, and failure behavior. The line is only one part of the picture.</text>
 </svg>

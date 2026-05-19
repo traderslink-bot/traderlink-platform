@@ -38,8 +38,6 @@ meta_description: "Learn what the opening range is, how it frames early volatili
 ---
 # Opening Range
 
-This lesson is part of the **Day Trading Workflow** course. It follows [Market Open Trading](/academy/market-open-trading/) and leads into [Midday Trading](/academy/midday-trading/).
-
 The opening range is the high and low formed during the first part of the regular session. Traders use it to organize the early volatility into reference levels they can review.
 
 The opening range does not guarantee continuation or reversal. It gives the trader a cleaner way to ask what happened after the open.
@@ -108,26 +106,6 @@ Another mistake is entering far away from a realistic invalidation area.
 
 A final mistake is staying involved after the opening-range idea has clearly failed.
 
-## Practical Checklist
-
-- The opening-range time window is defined.
-- Opening range high and low are marked as zones.
-- Premarket and previous day levels are checked.
-- Volume and spread are reviewed.
-- The attempted move outside the range is reviewed for hold or failure.
-- Risk is realistic for the range width.
-- The decision can be reviewed after the session.
-
-## Apply This In Review
-
-- What time window did I use for the opening range?
-- Did I wait for the range to form?
-- Did I chase a candle outside the range?
-- Did the move hold or return inside the range?
-- Was the range too wide for my risk plan?
-- Did premarket levels affect the decision?
-- What would I change about my open process?
-
 ## Related Lessons
 
 - [Market Open Trading](/academy/market-open-trading/)
@@ -135,15 +113,6 @@ A final mistake is staying involved after the opening-range idea has clearly fai
 - [High Of Day](/academy/high-of-day/)
 - [Low Of Day](/academy/low-of-day/)
 - [Volume](/academy/volume/)
-
-## Related Glossary Terms
-
-- Opening range
-- Premarket high
-- Premarket low
-- High of day
-- Low of day
-- Volume
 
 ## FAQ
 
@@ -162,7 +131,3 @@ Traders use different windows. The important part is using a consistent window t
 ### Why is volume important at the opening range?
 
 Volume helps show whether attention is expanding or fading around early reference levels.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

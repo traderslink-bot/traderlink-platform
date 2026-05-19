@@ -35,8 +35,6 @@ meta_description: "Learn what trade management means, why decisions after entry 
 ---
 # Trade Management
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Daily Loss Limit](/academy/daily-loss-limit/) and leads into [Profit Protection](/academy/profit-protection/).
-
 The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
 
 ## Lesson Objective
@@ -161,18 +159,6 @@ For more context, read:
 - [Profit protection](/academy/profit-protection/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
 
-## Practical Checklist
-
-Before relying on Trade Management, confirm:
-
-- Initial plan.
-- Risk adjustment.
-- Partial exits.
-- Stop movement.
-- Adding rules.
-- Time in trade.
-- Exit review.
-
 ## FAQ
 
 ### What is trade management?
@@ -199,24 +185,9 @@ Traders can define the plan before entry, track decisions during the trade, and 
 
 Track the plan, key levels, adds, reductions, exits, emotional decisions, and whether the trade was managed according to the original thesis.
 
-## Apply This In Review
-
-When reviewing a trade connected to Trade Management, ask:
-
-- Was the rule or plan written before the trade started?
-- Did the position size match the planned risk?
-- Did I know where the idea was wrong before entering?
-- Did I follow the rule when the trade became uncomfortable?
-- If I broke the rule, what was the trigger: fear, hope, boredom, revenge, or confusion?
-- What should I change in my plan so this decision is easier to review next time?
-
 ## Related Lessons
 
 - [Daily Loss Limit](/academy/daily-loss-limit/)
 - [Profit Protection](/academy/profit-protection/)
 - [Risk Management](/academy/risk-management/)
 - [Trade Risk Review](/academy/trade-risk-review/)
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trade management can help organize decisions, but it does not guarantee trading results.

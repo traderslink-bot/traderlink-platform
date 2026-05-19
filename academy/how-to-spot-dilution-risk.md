@@ -38,8 +38,6 @@ meta_description: "Learn how traders review dilution risk using SEC filings, off
 ---
 # How to Spot Dilution Risk in Small-Cap Stocks
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Dilution Risk](/academy/dilution-risk/) and leads into [Stock Offerings](/academy/stock-offerings/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -163,18 +161,6 @@ Useful related pages include:
 - [Reverse Stock Split](/academy/reverse-split/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
 
-## Practical Checklist
-
-Before treating How To Spot Dilution Risk as meaningful context, review:
-
-- Cash runway.
-- Active shelf.
-- ATM program.
-- S-1 or S-3 filings.
-- 424B filings.
-- Warrants and convertibles.
-- Recent price spike.
-
 ## FAQ
 
 ### What is dilution risk?
@@ -201,24 +187,9 @@ It depends on context. Raising capital may help a company fund operations, but i
 
 Yes, especially if you trade small-cap or penny stocks. Tracking whether you checked filings can help you avoid repeating the same research mistakes.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to How To Spot Dilution Risk, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Dilution Risk](/academy/dilution-risk/)
 - [Stock Offerings](/academy/stock-offerings/)
 - [SEC Filings](/academy/sec-filings/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock.

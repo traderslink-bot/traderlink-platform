@@ -37,8 +37,6 @@ meta_description: "Learn what low-float stocks are, why they can move fast, and 
 ---
 # Low-Float Stocks: What Traders Should Know
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Stock Float](/academy/stock-float/) and leads into [Float Rotation](/academy/float-rotation/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -141,18 +139,6 @@ Useful related pages include:
 - [Relative Volume](/academy/relative-volume/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
 
-## Practical Checklist
-
-Before treating Low-Float Stocks as meaningful context, review:
-
-- Float size.
-- Average volume.
-- Spread width.
-- Halt risk.
-- News quality.
-- Offering risk.
-- Crowding risk.
-
 ## FAQ
 
 ### What are low-float stocks?
@@ -179,17 +165,6 @@ Traders often check float, volume, liquidity, catalyst quality, filings, dilutio
 
 Yes. Structured review notes can help traders review whether they chased, over-sized, ignored liquidity, or failed to manage risk in low-float trades.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Low-Float Stocks, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Stock Float](/academy/stock-float/)
@@ -197,10 +172,6 @@ When reviewing a small-cap trade or watchlist idea connected to Low-Float Stocks
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock.
 
 ## Conclusion
 

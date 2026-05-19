@@ -278,7 +278,7 @@ Before trusting the name, ask:
 
 If the answer is unclear, the candle name may not help much.
 
-![Three chart panels showing the same candle shape at resistance, in random chop, and at support.](/academy/images/chart-reading/same-candle-different-context.svg)
+![Three simple panels showing the same candle shape in different chart locations.](/academy/images/chart-reading/same-candle-different-context.svg)
 
 ## Realistic Example
 

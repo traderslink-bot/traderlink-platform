@@ -35,8 +35,6 @@ meta_description: "Learn the difference between mental stops and hard stops, com
 ---
 # Mental Stop Vs Hard Stop
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Stop Loss](/academy/stop-loss/) and leads into [Max Loss](/academy/max-loss/).
-
 The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
 
 ## Lesson Objective
@@ -151,18 +149,6 @@ For more context, read:
 - [Holding losers too long](/academy/holding-losers-too-long/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
 
-## Practical Checklist
-
-Before relying on Mental Stop Vs Hard Stop, confirm:
-
-- Execution discipline.
-- Order risk.
-- Liquidity.
-- Gap risk.
-- Platform access.
-- Emotional delay.
-- Review evidence.
-
 ## FAQ
 
 ### What is a mental stop?
@@ -189,24 +175,9 @@ Mental stops fail when traders hesitate, move the level, hope for a bounce, or i
 
 Track the stop type, planned level, actual exit, slippage, whether the stop was followed, and whether the stop type fit the trade.
 
-## Apply This In Review
-
-When reviewing a trade connected to Mental Stop Vs Hard Stop, ask:
-
-- Was the rule or plan written before the trade started?
-- Did the position size match the planned risk?
-- Did I know where the idea was wrong before entering?
-- Did I follow the rule when the trade became uncomfortable?
-- If I broke the rule, what was the trigger: fear, hope, boredom, revenge, or confusion?
-- What should I change in my plan so this decision is easier to review next time?
-
 ## Related Lessons
 
 - [Stop Loss](/academy/stop-loss/)
 - [Max Loss](/academy/max-loss/)
 - [Risk Management](/academy/risk-management/)
 - [Trade Risk Review](/academy/trade-risk-review/)
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Stop methods can help define risk, but they do not remove market risk or guarantee exact exit prices.

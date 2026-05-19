@@ -43,8 +43,6 @@ meta_description: "Learn how FDA news can affect biotech stocks, what traders re
 
 FDA news stocks are stocks that move or attract attention because of news related to the U.S. Food and Drug Administration. This can include approvals, complete response letters, meeting updates, trial design feedback, Fast Track designation, orphan drug designation, PDUFA dates, or other regulatory milestones.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Earnings News](/academy/earnings-news/) and leads into [Clinical Trial News](/academy/clinical-trial-news/).
-
 FDA news can be powerful, especially in biotech and healthcare names, but it does not guarantee a stock will move in a clean direction. The exact type of FDA news matters. So do expectations, cash position, dilution history, and the chart reaction after the headline.
 
 ## Lesson Objective
@@ -172,34 +170,6 @@ Common FDA-news mistakes include:
 
 FDA news should create review questions, not automatic conclusions.
 
-## Practical Checklist
-
-Use this checklist when reviewing FDA-news trades:
-
-- What exact FDA event occurred?
-- Was it approval, rejection, designation, meeting feedback, date, hold, or update?
-- Was the event expected or surprising?
-- What product or program was involved?
-- What development stage is it in?
-- What milestone comes next?
-- Did the company have cash or financing risk?
-- Were related filings released?
-- Did volume expand and continue?
-- Did price hold or fade after the first reaction?
-
-## Apply This In Review
-
-After an FDA-news trade, record:
-
-- The exact regulatory event.
-- What you thought it meant before entry.
-- What the details actually said.
-- Whether cash or dilution context mattered.
-- Whether the first move held.
-- Whether you reacted to the FDA keyword or reviewed the event type.
-
-This makes FDA catalyst review less emotional over time.
-
 ## Related Lessons
 
 - [Clinical Trial News](/academy/clinical-trial-news/)
@@ -231,7 +201,3 @@ Some biotech companies depend heavily on one product candidate or regulatory mil
 ### What should traders check after FDA news?
 
 Review the exact event, program stage, related trial data, next milestone, company cash, related filings, volume, liquidity, and chart reaction.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. FDA news does not guarantee price movement, continuation, reversal, approval, or profitable trades. Always review the full announcement, related filings, liquidity, risk, and your own trading plan.

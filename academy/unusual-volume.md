@@ -50,8 +50,6 @@ meta_description: "Learn what unusual volume stocks are, why abnormal activity m
 
 Unusual volume stocks are stocks trading far more activity than they normally do. Traders watch them because abnormal volume can show that attention has changed. The cause might be news, filings, a scanner alert, sector momentum, forced selling, short covering, or a fast intraday reaction.
 
-This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Volume](/academy/volume/), [Relative Volume](/academy/relative-volume/), [Relative Volume RVOL](/academy/relative-volume-rvol/), [Volume Spike](/academy/volume-spike/), and [Volume By Price](/academy/volume-by-price/). It leads into [Trading Plan](/academy/trading-plan/) because unusual activity and execution conditions need risk rules before they become trade decisions.
-
 
 ## Lesson Objective
 
@@ -232,44 +230,6 @@ Common unusual-volume mistakes include:
 
 Unusual volume should create curiosity, not urgency.
 
-## Practical Checklist
-
-Use this checklist when reviewing unusual-volume trades:
-
-- What was normal volume for this stock?
-- How unusual was today's volume compared with that baseline?
-- Was the comparison based on daily volume, time-of-day volume, or RVOL?
-- What caused the activity?
-- Was the catalyst specific, official, and current?
-- Did price hold important levels after the first burst?
-- Did volume continue or fade after the alert?
-- Was the spread manageable?
-- Was liquidity deep enough for the trader's size?
-- Was the entry near structure or after an extended move?
-- Did the trade come from a plan or from scanner urgency?
-- Did any SEC filing, offering, or dilution risk change the review?
-
-This turns an exciting scanner result into a calmer review process.
-
-## Apply This In Review
-
-Unusual-volume trades are especially useful to review because they often expose emotional decision patterns.
-
-Helpful review prompts:
-
-- What scanner or source brought the stock to my attention?
-- What was unusual about the volume?
-- What was the catalyst?
-- Did I read the catalyst before entering?
-- Did I check spread, liquidity, and dollar volume?
-- Did I enter before the strongest volume event, during it, or after it?
-- Was volume still building, or was I reacting after it faded?
-- Did price hold the level I cared about?
-- Did I feel urgency because the ticker was active?
-- Do my unusual-volume trades show a pattern of chasing, oversized risk, or late entries?
-
-Over time, these notes can show whether unusual volume is helping your process or pulling you into reactive trades.
-
 ## Related Lessons
 
 - [Volume](/academy/volume/)
@@ -280,14 +240,6 @@ Over time, these notes can show whether unusual volume is helping your process o
 - [Spread](/academy/spread/)
 - [Stock Catalysts](/academy/stock-catalysts/)
 - [How To Read Stock Press Releases](/academy/how-to-read-stock-press-releases/)
-
-## Related Glossary Terms
-
-- [Relative Volume](/glossary/relative-volume/)
-- [Volume Spike](/glossary/volume-spike/)
-- [Liquidity](/glossary/liquidity/)
-- [Spread](/glossary/spread/)
-- [Catalyst](/glossary/catalyst/)
 
 ## FAQ
 
@@ -318,7 +270,3 @@ Unusual volume can come with fast candles, widening spreads, thin depth, crowded
 ### How should I review unusual-volume trades?
 
 Review the catalyst, volume baseline, price reaction, key levels, liquidity, spread, timing, and whether your entry happened before or after the main volume event.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Unusual volume can help traders identify active stocks, but it does not predict price direction or guarantee a trading opportunity.

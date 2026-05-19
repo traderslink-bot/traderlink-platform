@@ -36,8 +36,6 @@ meta_description: "Learn what revenge trading is, why traders do it after losses
 ---
 # Revenge Trading
 
-This lesson is part of the **Trading Psychology And Discipline** course. It follows [Chasing Stocks](/academy/chasing-stocks/) and leads into [Overtrading](/academy/overtrading/).
-
 Revenge trading happens when a trader takes another trade mainly to make back money, fix a loss, or prove they were right. It usually comes from emotion, not from a clean setup.
 
 Many active traders recognize the feeling. A loss happens, a stock moves without them, or they feel like they got shaken out. The next trade feels urgent. That urgency is often the warning sign.
@@ -115,33 +113,6 @@ Another mistake is trading faster after frustration. Speed can reduce the chance
 
 A final mistake is treating revenge trading as something to hide. If the behavior is not recorded, it is harder to reduce.
 
-## Practical Checklist
-
-Before judging this behavior, check:
-
-- Am I trying to take a setup or fix a feeling?
-- Did I wait long enough to reassess clearly?
-- Is this a new setup with a new reason?
-- Is my size the same or smaller than planned?
-- Have I hit my daily loss limit or rule-break limit?
-- Would I take this trade if the previous trade had not happened?
-- Do I need a break before making another decision?
-
-## Apply This In Review
-
-After a trade or session, ask:
-
-- Did I take a trade mainly because I was frustrated?
-- Did I increase size after a loss?
-- Did I re-enter too quickly?
-- Did I ignore my daily loss limit?
-- Did I trade worse after my first red trade?
-- Did the setup meet my normal standards?
-- What was the emotional trigger?
-- What interruption rule would have helped?
-
-The key is to track the trigger. Revenge trading is easier to reduce when the pattern becomes visible.
-
 ## Related Lessons
 
 - [Chasing Stocks](/academy/chasing-stocks/)
@@ -175,7 +146,3 @@ Yes. A revenge trade can make money and still be a process problem if the reason
 ### How should revenge trading be reviewed?
 
 Track the trigger, time between trades, size change, setup quality, whether the daily loss limit was respected, and what rule could interrupt the pattern next time.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Revenge trading can increase risk, and no emotional recovery trade guarantees a better outcome.

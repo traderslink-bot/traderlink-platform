@@ -38,13 +38,11 @@ meta_description: "Learn what a doji candle shows, why context matters, and how 
 ---
 # Doji Candle
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Long Wick Candle](/academy/candlestick-patterns/long-wick-candle/) and leads into [Spinning Top Candle](/academy/candlestick-patterns/spinning-top/).
-
 A doji forms when the open and close are very close together. It often shows hesitation, but hesitation is not the same thing as a reversal signal.
 
 A doji is useful when you can explain where it formed, why that location matters, and what price did after the candle. A doji in random chop is usually noise. A doji after a strong move into a key level may deserve more attention.
 
-![Candlestick chart showing a doji candle near resistance with volume and follow-through context.](/academy/images/chart-reading/doji-at-key-level.svg)
+![Clean candle diagram showing a doji candle with the open and close nearly equal.](/academy/images/chart-reading/doji-at-key-level.svg)
 
 ## What A Doji Looks Like
 

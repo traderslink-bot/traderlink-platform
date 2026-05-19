@@ -27,8 +27,6 @@ meta_description: "Learn what Form 5 is, why annual insider ownership filings ma
 ---
 # Form 5
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form 4](/academy/sec-filings/form-4/) and leads into [Schedule 13D](/academy/sec-filings/schedule-13d/).
-
 The goal is not to turn Form 5 into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -120,26 +118,6 @@ Traders may want to check:
 
 The filing can add ownership context, but it does not automatically indicate supply pressure or dilution.
 
-## Practical Checklist
-
-Structured review notes can help connect Form 5 details to trade decisions.
-
-Useful review notes include:
-
-1. Filing date.
-2. Insider name and role.
-3. Transaction date.
-4. Transaction code.
-5. Shares involved.
-6. Whether the transaction was current or old.
-7. Whether it was open-market or exempt.
-8. Stock reaction after the filing.
-9. Whether you confused Form 5 with Form 4.
-
-This helps traders avoid reacting to annual filings without checking timing and transaction type.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). Form 5 connects with [Form 3](/academy/sec-filings/form-3/) and [Form 4 insider transactions](/academy/sec-filings/form-4/).
@@ -183,24 +161,9 @@ It is not automatically either. It provides insider ownership context but does n
 
 Timing matters because the filing may describe transactions that happened months earlier, not fresh activity.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to Form 5, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [Form 4](/academy/sec-filings/form-4/)
 - [Schedule 13D](/academy/sec-filings/schedule-13d/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Form 5 filings do not guarantee price movement, insider intent, dilution, or trading results. Always review the full filing, related disclosures, liquidity, risk, and your own trading plan.

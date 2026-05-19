@@ -40,7 +40,7 @@
     <path d="M326 110 L316 134" stroke="#bbf7d0" stroke-width="2"/>
     <text x="394" y="138" fill="#fecaca">Fails under PMH</text>
     <path d="M432 144 L420 190" stroke="#fecaca" stroke-width="2"/>
-    <text x="504" y="322" fill="#fecaca">Review plan response</text>
+    <text x="504" y="322" fill="#fecaca">Context plan response</text>
   </g>
   <g>
     <rect x="58" y="330" width="14" height="14" fill="#21c784" opacity=".45"/>
@@ -62,6 +62,6 @@
     <rect x="474" y="308" width="14" height="36" fill="#ef4444" opacity=".86"/>
   </g>
   <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: did regular-session volume hold above PMH, or did the breakout fail?</text>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: did regular-session volume hold above PMH, or did the breakout fail?</text>
   <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Failed PMH break: compare the break, rejection, and follow-through.</text>
 </svg>

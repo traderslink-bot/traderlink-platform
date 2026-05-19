@@ -38,8 +38,6 @@ meta_description: "Learn what Parabolic Move shows, why it can fail, and how to 
 ---
 # Parabolic Move
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Rounding Bottom Pattern](/academy/chart-patterns/rounding-bottom/) and leads into [Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/).
-
 **Best suited for:** intraday trading and short-term momentum review.
 
 Parabolic Move is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.

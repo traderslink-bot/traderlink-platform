@@ -38,8 +38,6 @@ meta_description: "Learn what triple tops show, where traders force them, and ho
 ---
 # Triple Top
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Double Bottom](/academy/chart-patterns/double-bottom/) and leads into [Triple Bottom](/academy/chart-patterns/triple-bottom/).
-
 **Best suited for:** day trading and swing trading.
 
 A triple top forms when price tests a similar resistance area three times and cannot hold above it. It is a repeated-resistance structure, not a reason to assume the next move by itself.

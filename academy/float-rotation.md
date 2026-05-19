@@ -36,8 +36,6 @@ meta_description: "Learn what float rotation means, how it is estimated, and why
 ---
 # Float Rotation
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Low-Float Stocks](/academy/low-float-stocks/) and leads into [Float Vs Shares Outstanding](/academy/float-vs-shares-outstanding/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -171,18 +169,6 @@ For more context, read:
 - [Relative volume RVOL](/academy/relative-volume-rvol/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
 
-## Practical Checklist
-
-Before treating Float Rotation as meaningful context, review:
-
-- Float estimate.
-- Session volume.
-- Relative volume.
-- Repeated turnover.
-- Liquidity changes.
-- Crowding risk.
-- Post-move fade risk.
-
 ## FAQ
 
 ### What is float rotation?
@@ -209,17 +195,6 @@ Not always. High float rotation can appear during strong momentum, heavy churn, 
 
 Float data can be outdated or different across sources. Traders should treat float rotation as an estimate and review it with share structure, filings, volume, and chart context.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Float Rotation, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Low-Float Stocks](/academy/low-float-stocks/)
@@ -227,7 +202,3 @@ When reviewing a small-cap trade or watchlist idea connected to Float Rotation, 
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Float rotation can help traders understand volume context, but it does not predict price direction or guarantee any trading outcome.

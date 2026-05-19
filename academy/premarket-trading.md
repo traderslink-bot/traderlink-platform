@@ -38,8 +38,6 @@ meta_description: "Learn how premarket trading works, what traders review before
 ---
 # Premarket Trading
 
-This lesson is part of the **Day Trading Workflow** course. It follows [Day Trading Workflow](/academy/day-trading-workflow/) and leads into [Day Trading Watchlist](/academy/day-trading-watchlist/).
-
 Premarket trading happens before the regular session opens. It can reveal active names, early levels, catalyst reactions, and liquidity conditions before the bell.
 
 The important lesson is preparation. Premarket movement can be useful context, but extended-hours trading can be thin, spread out, and easy to misread.
@@ -114,26 +112,6 @@ Another mistake is reacting to a headline before reading the source.
 
 A final mistake is holding into the open without a plan for changing conditions.
 
-## Practical Checklist
-
-- The catalyst or reason for movement is understood.
-- Premarket high and low are marked as zones.
-- Volume is meaningful for the time of day.
-- Spread and liquidity are reviewed.
-- The move is checked for extension.
-- Recent filings or dilution risk are reviewed when relevant.
-- The plan accounts for regular-hours volume changing the setup.
-
-## Apply This In Review
-
-- Did I understand the catalyst before acting?
-- Was liquidity good enough for my plan?
-- Did spread affect execution?
-- Did I chase a premarket high or low?
-- Did the regular open confirm or reject the premarket context?
-- Did I trade from preparation or from excitement?
-- What premarket filter should be stricter next time?
-
 ## Related Lessons
 
 - [Day Trading Workflow](/academy/day-trading-workflow/)
@@ -141,15 +119,6 @@ A final mistake is holding into the open without a plan for changing conditions.
 - [Premarket High Low](/academy/premarket-high-low/)
 - [Relative Volume](/academy/relative-volume-rvol/)
 - [Spread](/academy/spread/)
-
-## Related Glossary Terms
-
-- Premarket
-- Premarket high
-- Premarket low
-- Relative volume
-- Spread
-- Liquidity
 
 ## FAQ
 
@@ -168,7 +137,3 @@ Yes. Premarket can have lower liquidity, wider spreads, and sharper moves on few
 ### Do premarket levels always matter after the open?
 
 No. Premarket levels are reference areas. Regular-hours volume can respect, ignore, or reshape them.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

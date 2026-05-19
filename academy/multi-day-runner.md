@@ -36,8 +36,6 @@ meta_description: "Learn what multi-day runners are, why they attract attention,
 ---
 # Multi-Day Runner
 
-This lesson is part of the **Trading Styles And Playbooks** course. It follows [Sell The News](/academy/sell-the-news/) and leads into [Chasing Stocks](/academy/chasing-stocks/).
-
 A multi-day runner is a stock that keeps attracting attention across more than one session. It may be driven by news, low float, short interest, sector attention, unusual volume, or repeated intraday continuation attempts.
 
 The phrase can create excitement, but the Academy approach is sober: multi-day runners are volatile contexts to review, not continuation setups with guaranteed outcomes.
@@ -108,28 +106,6 @@ Another mistake is oversizing because the stock feels popular.
 
 A final mistake is holding through failure because of runner hype.
 
-## Practical Checklist
-
-- The original catalyst is understood.
-- Volume across sessions is reviewed.
-- Float and supply risks are checked.
-- Daily and intraday levels are mapped.
-- Extension from support is considered.
-- Halt and gap risk are respected.
-- The trade has a clear failure plan.
-
-## Apply This In Review
-
-- What started the multi-day move?
-- Is the catalyst still relevant?
-- What did volume do across sessions?
-- Were there dilution or filing risks?
-- Was my entry early, structured, or late?
-- Did I chase because of attention?
-- Did the stock show continuation or exhaustion?
-
-Multi-day runner review should measure context, not excitement.
-
 ## Related Lessons
 
 - [Momentum Trading](/academy/momentum-trading/)
@@ -163,7 +139,3 @@ Review catalyst, volume trend, float, supply risk, levels, extension, entry timi
 ### Is multi-day runner a signal?
 
 No. It is a context label for review, not a trade instruction.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trading styles and playbooks can help organize review, but they do not guarantee outcomes or replace independent risk decisions.

@@ -36,8 +36,6 @@ meta_description: "Learn how to review a trading watchlist by catalyst, volume, 
 ---
 # Watchlist Review
 
-This lesson is part of the **Practice And Improvement** course. It follows [Trade Replay Review](/academy/trade-replay-review/) and leads into [Setup Screenshot Review](/academy/setup-screenshot-review/).
-
 Watchlist review is the process of studying the names you planned to watch after the session ends. It helps answer a simple question: did the watchlist improve your decision-making, or did it create noise?
 
 A good watchlist is not judged only by whether a stock moved. It is judged by whether it gave the trader a clearer plan.
@@ -115,26 +113,6 @@ Another mistake is ignoring names that did nothing but still had good preparatio
 
 A final mistake is changing watchlist criteria every day without a sample.
 
-## Practical Checklist
-
-- Every watchlist name had a written reason.
-- Catalyst, volume, liquidity, and spread were reviewed.
-- Key levels were mapped before pressure increased.
-- Reactive additions were tracked separately.
-- The trader reviewed names that worked and names that did not.
-- The review produced one filter adjustment.
-- The next watchlist uses the updated filter.
-
-## Apply This In Review
-
-- Which planned names produced clear decisions?
-- Which planned names created noise?
-- Which trades came from names not on the list?
-- Did I add tickers too late?
-- Did I ignore liquidity or spread?
-- Did my watchlist match my current skill level?
-- What one filter should change next session?
-
 ## Related Lessons
 
 - [Day Trading Watchlist](/academy/day-trading-watchlist/)
@@ -142,15 +120,6 @@ A final mistake is changing watchlist criteria every day without a sample.
 - [Stock Catalysts](/academy/stock-catalysts/)
 - [Relative Volume](/academy/relative-volume-rvol/)
 - [Mistake Pattern Review](/academy/mistake-pattern-review/)
-
-## Related Glossary Terms
-
-- Watchlist
-- Scanner
-- Catalyst
-- Relative volume
-- Liquidity
-- Mistake pattern
 
 ## FAQ
 
@@ -169,7 +138,3 @@ No, but they should be reviewed separately because they often come with less pre
 ### What is a useful watchlist review note?
 
 A useful note is specific, such as "skip wide-spread names unless liquidity improves," instead of vague, such as "pick better stocks."
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

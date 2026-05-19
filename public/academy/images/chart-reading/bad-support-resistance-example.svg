@@ -9,7 +9,7 @@
   <text x="70" y="116" fill="#9fb4c9" font-family="Arial" font-size="18">Too many exact lines can make the chart harder to use. Useful levels should clarify decisions.</text>
   <rect x="80" y="150" width="500" height="450" fill="#0b1422" stroke="#22354e" stroke-width="2"/>
   <rect x="620" y="150" width="500" height="450" fill="#0b1422" stroke="#22354e" stroke-width="2"/>
-  <g font-family="Arial"><text x="95" y="138" fill="#fca5a5" font-size="21" font-weight="700">Cluttered / Less Useful</text><text x="635" y="138" fill="#a7f3d0" font-size="21" font-weight="700">Cleaner Zones</text></g>
+  <g font-family="Arial"><text x="95" y="145" fill="#fca5a5" font-size="21" font-weight="700">Cluttered / Less Useful</text><text x="635" y="145" fill="#a7f3d0" font-size="21" font-weight="700">Cleaner Zones</text></g>
   <g stroke="#203247" stroke-width="1" opacity="0.7">
     <line x1="80" y1="210" x2="580" y2="210"/><line x1="80" y1="270" x2="580" y2="270"/><line x1="80" y1="330" x2="580" y2="330"/><line x1="80" y1="390" x2="580" y2="390"/><line x1="80" y1="450" x2="580" y2="450"/><line x1="80" y1="510" x2="580" y2="510"/>
     <line x1="620" y1="210" x2="1120" y2="210"/><line x1="620" y1="270" x2="1120" y2="270"/><line x1="620" y1="330" x2="1120" y2="330"/><line x1="620" y1="390" x2="1120" y2="390"/><line x1="620" y1="450" x2="1120" y2="450"/><line x1="620" y1="510" x2="1120" y2="510"/>

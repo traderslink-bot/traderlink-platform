@@ -51,8 +51,6 @@ meta_description: "Learn what SEC filings are, why traders watch them, and how f
 
 SEC filings are official documents that public companies submit to the U.S. Securities and Exchange Commission. Traders watch SEC filings because they can reveal company events, financial results, offerings, dilution risk, insider transactions, mergers, reverse splits, and other material updates.
 
-This lesson is part of the **News, Catalysts And SEC Filings** learning path. It builds on [Stock Catalysts](/academy/stock-catalysts/), [Stock Press Releases](/academy/press-releases/), and [How To Read Stock Press Releases](/academy/how-to-read-stock-press-releases/). It leads into [How To Use EDGAR Source Documents](/academy/how-to-use-edgar-source-documents/) so traders learn to verify source filings before studying individual form types.
-
 For small-cap traders, filings can be especially important. A press release may sound exciting, but a filing can provide deeper context about financing, share structure, risk, and company obligations.
 
 ## Lesson Objective
@@ -246,41 +244,6 @@ Common SEC filing mistakes include:
 
 Filings can feel dense, but repeated review makes the common patterns easier to recognize.
 
-## Practical Checklist
-
-Use this checklist when reviewing filing-driven trades:
-
-- What form was filed?
-- What event or information does the filing report?
-- Was there a related press release?
-- Was there financing, dilution, warrants, or convertible language?
-- Were dates, prices, share counts, or terms included?
-- Was the filing new or connected to prior filings?
-- Did volume expand after the filing?
-- Did price hold or fade after the market had time to react?
-- Was liquidity clean enough for the trade size?
-- Did I understand the filing before entering?
-- Did the trade follow a plan or a filing headline reaction?
-
-This checklist turns filing review into a repeatable process.
-
-## Apply This In Review
-
-If a filing influenced your trade, record the filing context in your review notes.
-
-Helpful prompts:
-
-- What form did I review?
-- Did I read the actual filing or only the headline?
-- What detail mattered most?
-- Did I miss financing, warrants, resale shares, or dilution language?
-- Did the filing change my risk view?
-- How did volume and price react after the filing?
-- Did I enter before understanding the filing?
-- Is ignoring filings a repeated mistake in my trades?
-
-Structured review notes can show whether filing research is part of your process or an afterthought.
-
 ## FAQ
 
 ### What are SEC filings?
@@ -310,7 +273,3 @@ No. A press release is a company announcement. An SEC filing is a formal regulat
 ### Should I review SEC filings in my review notes?
 
 Yes, if a filing influenced your trade. Reviewing the filing context can help you understand whether you reacted to the headline or understood the details.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. SEC filings do not guarantee price movement, continuation, reversal, or profitable trades. Always review the actual filing, related news, liquidity, risk, and your own trading plan.

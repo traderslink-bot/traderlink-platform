@@ -38,8 +38,6 @@ meta_description: "Learn how spreads can widen during fast markets, why executio
 ---
 # Fast Spread Risk
 
-This lesson is part of the **Halts And High-Volatility Events** course. It follows [Market-Wide Circuit Breakers](/academy/market-wide-circuit-breakers/) and leads into [Low-Float Volatility](/academy/low-float-volatility/).
-
 Fast spread risk happens when the bid-ask spread widens during a volatile or thin market. The chart may look active, but the actual cost and difficulty of entering or exiting can change quickly.
 
 This matters around halts, resumes, news spikes, low-float stocks, market-wide stress, and any fast candle where liquidity is not stable.
@@ -102,26 +100,6 @@ Another mistake is blaming only the broker without reviewing market conditions.
 
 A final mistake is entering during unstable resume conditions without checking depth.
 
-## Practical Checklist
-
-- The bid-ask spread is reviewed before the decision.
-- Displayed depth is checked when relevant.
-- Position size accounts for possible slippage.
-- The order type fits the trader's risk plan.
-- The chart is reviewed together with quote conditions.
-- Halt, resume, or news context is considered.
-- Execution quality is reviewed after completion.
-
-## Apply This In Review
-
-- What was the spread at the decision point?
-- Did spread widen during the trade?
-- Did slippage affect the outcome?
-- Was displayed depth thin?
-- Was my size realistic for the liquidity?
-- Did I judge the trade only from the candle?
-- What spread rule should I add?
-
 ## Related Lessons
 
 - [Spread](/academy/spread/)
@@ -129,15 +107,6 @@ A final mistake is entering during unstable resume conditions without checking d
 - [Liquidity](/academy/liquidity/)
 - [Market Orders Vs Limit Orders](/academy/market-orders-vs-limit-orders/)
 - [Halt Resume](/academy/halt-resume/)
-
-## Related Glossary Terms
-
-- Spread
-- Slippage
-- Liquidity
-- Depth
-- Halt resume
-- Fast market
 
 ## FAQ
 
@@ -156,7 +125,3 @@ Yes. Chart movement and execution quality are related but not the same.
 ### What should traders review after a wide-spread trade?
 
 Review spread, depth, slippage, order type, size, and whether the trade fit the plan.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

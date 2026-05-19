@@ -39,8 +39,6 @@ meta_description: "Learn what Base Breakout shows, why it can fail, and how to r
 ---
 # Base Breakout
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Cup and Handle Pattern](/academy/chart-patterns/cup-and-handle/) and leads into [Ascending Triangle Pattern](/academy/chart-patterns/ascending-triangle/).
-
 **Best suited for:** day trading and swing trading.
 
 Base Breakout is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.

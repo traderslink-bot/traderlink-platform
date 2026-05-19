@@ -36,8 +36,6 @@ meta_description: "Learn what ATR measures, how average true range helps review 
 ---
 # ATR
 
-This lesson is part of the **Technical Indicators And Tools** course. It follows [Bollinger Bands](/academy/bollinger-bands/) and leads into [Volume By Price](/academy/volume-by-price/).
-
 ATR stands for Average True Range. It measures how much a stock has been moving over a selected period, which makes it useful for reviewing volatility and risk distance.
 
 ATR does not say whether price should go up or down. It helps traders understand how large recent movement has been.
@@ -100,28 +98,6 @@ Another mistake is ignoring slippage and spread in volatile names.
 
 A final mistake is using ATR without reviewing price structure and levels.
 
-## Practical Checklist
-
-- I know whether ATR was elevated or quiet.
-- I reviewed range expansion before sizing.
-- I checked whether my stop distance made sense.
-- I considered spread and slippage.
-- I did not treat ATR as a direction signal.
-- I reviewed whether volatility changed the trade quality.
-- I connected ATR to risk, not excitement.
-
-## Apply This In Review
-
-- Was ATR elevated, normal, or compressed?
-- Did volatility expand before entry?
-- Was my stop distance realistic for the range?
-- Was position size appropriate for volatility?
-- Did I chase because the stock was moving more?
-- Did spread or slippage matter?
-- Did ATR help explain the outcome after the trade?
-
-ATR review should make risk more honest, especially when volatility changes quickly.
-
 ## Related Lessons
 
 - [Risk Management](/academy/risk-management/)
@@ -155,7 +131,3 @@ ATR should be reviewed with price structure, levels, liquidity, spread, and a ri
 ### How should ATR be reviewed?
 
 Review whether volatility expanded or contracted, whether sizing matched range, and whether the trade respected realistic movement.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. ATR can support volatility and risk review, but it does not predict price or guarantee trading results.

@@ -47,8 +47,6 @@ meta_description: "Learn what volume by price means, why traders watch high-volu
 
 Volume by price shows how much trading activity happened at different price levels. Instead of only asking how much volume traded during a time period, it asks where that volume traded on the price chart.
 
-This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Volume](/academy/volume/), [Time And Sales](/academy/time-and-sales/), and [Key Levels Trading](/academy/key-levels-trading/). It leads into [Unusual Volume](/academy/unusual-volume/).
-
 
 ## Lesson Objective
 
@@ -187,39 +185,6 @@ Common volume-by-price mistakes include:
 
 Volume by price should clarify the chart, not make it more cluttered.
 
-## Practical Checklist
-
-Use this checklist when reviewing volume by price:
-
-- What price zones had the most volume?
-- Was my entry near a high-volume zone or low-volume area?
-- Was I entering into a crowded resistance zone?
-- Did price accept, reject, reclaim, or fail the zone?
-- Did volume expand when price returned?
-- Did liquidity support clean execution near the zone?
-- Did I chase after price moved through a low-volume area?
-- Did I mark too many volume areas?
-- Did the zone help review, or did it create bias?
-
-The checklist keeps volume by price tied to behavior, not prediction.
-
-## Apply This In Review
-
-Volume by price can make trade review more specific.
-
-Helpful review prompts:
-
-- Was my entry near a high-volume price area?
-- Was I trading into a crowded zone?
-- Did price accept or reject the level after I entered?
-- Did volume expand or fade near the zone?
-- Did I chase through a low-volume area?
-- Did the stock fail to reclaim a major volume area before I entered?
-- Did liquidity or spread change near the zone?
-- Did the volume-by-price read help my plan or reinforce bias?
-
-Over time, this can help traders understand whether they enter clean areas, crowded areas, or levels where the chart often becomes messy.
-
 ## FAQ
 
 ### What does volume by price mean?
@@ -245,7 +210,3 @@ A low-volume area is a price range where relatively little trading occurred. Pri
 ### How can traders review volume by price in review notes?
 
 Traders can note whether entries and exits happened near high-volume zones, low-volume areas, support, resistance, or previous rejection areas, then compare those notes with execution quality and outcome.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock. Volume by price does not guarantee price movement, profitability, clean fills, better decisions, or reduced losses. Always use risk management and review your own trades carefully.

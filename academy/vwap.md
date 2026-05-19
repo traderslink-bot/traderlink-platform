@@ -36,8 +36,6 @@ meta_description: "Learn what VWAP measures, why traders use it as intraday aver
 ---
 # VWAP
 
-This lesson is part of the **Technical Indicators And Tools** course. It follows [Moving Averages](/academy/moving-averages/) and leads into [Anchored VWAP](/academy/anchored-vwap/).
-
 VWAP stands for volume weighted average price. It is an intraday reference that blends price and volume to show the average price where shares have traded during the session.
 
 VWAP is widely watched, especially by intraday traders. That does not make it a magic line.
@@ -100,28 +98,6 @@ Another mistake is using VWAP without reviewing spread, volume, or liquidity.
 
 A final mistake is holding after VWAP is lost even though the original VWAP-based idea failed.
 
-## Practical Checklist
-
-- I know whether price is above, below, or chopping around VWAP.
-- I checked volume and liquidity.
-- I checked nearby support and resistance.
-- I did not treat VWAP as a guarantee.
-- I defined risk before using VWAP as context.
-- I reviewed time of day.
-- I checked whether VWAP actually helped the trade.
-
-## Apply This In Review
-
-- Was price above, below, or around VWAP before entry?
-- Did VWAP act as context or as my only reason?
-- Did volume support the behavior around VWAP?
-- Was there nearby resistance or support?
-- Did price reclaim, hold, reject, or lose VWAP?
-- Did I chase after a VWAP move?
-- Did I exit if the VWAP idea failed?
-
-VWAP review should focus on behavior around the level, not blind faith in the line.
-
 ## Related Lessons
 
 - [Moving Averages](/academy/moving-averages/)
@@ -155,7 +131,3 @@ It can be useful context, but it is not a standalone signal and does not guarant
 ### How should VWAP be reviewed?
 
 Review price behavior around VWAP, volume, nearby levels, liquidity, entry timing, and whether the trade followed a plan.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. VWAP can support intraday context and review, but it does not predict price or guarantee trading results.

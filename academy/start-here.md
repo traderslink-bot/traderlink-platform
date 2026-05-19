@@ -101,27 +101,6 @@ Another mistake is expecting one lesson to cover every edge case. Deep topics ma
 
 A final mistake is treating education as prediction. The Academy should stay focused on concepts, process, and reviewable decisions.
 
-## Practical Checklist
-
-- Start with the recommended course if you are unsure.
-- Use previous/next lessons for flow.
-- Jump to specific lessons when needed.
-- Mark completion as learning progress, not trading skill proof.
-- Return to review lessons after real trades.
-- Keep risk and non-advice framing in mind.
-- Use glossary terms as support, not as the main journey.
-
-## Apply This In Review
-
-- What course am I currently working through?
-- What lesson should I take next?
-- Did this lesson answer the concept I came for?
-- What related concept do I need before going deeper?
-- How could this lesson show up in a real trade review?
-- What should I revisit after I have more examples?
-
-The Academy becomes more useful when users treat learning as a path they return to, not a one-time reading session.
-
 ## Related Lessons
 
 - [How To Use TradersLink Academy](/academy/how-to-use-traderslink-academy/)
@@ -155,7 +134,3 @@ Beginners should start with Trading Foundations and then move into chart reading
 ### How does trade review fit?
 
 Trade review should come after a completed trade or paper-trading example. It is for studying decisions, not predicting the next trade.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. TradersLink Academy can support learning and review, but it does not guarantee trading results.

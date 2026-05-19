@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430" role="img" aria-labelledby="title desc">
   <title id="title">Premarket Trading Preparation Map</title>
-  <desc id="desc">Realistic premarket candlestick chart showing premarket high, premarket low, opening bell, volume bars, spread note, and catalyst review labels.</desc>
+  <desc id="desc">Realistic premarket candlestick chart showing premarket high, premarket low, opening bell, volume bars, spread note, and catalyst context labels.</desc>
   <defs>
     <style>
       .bg{fill:#0b1220}.panel{fill:#0f1a2b;stroke:#203651;stroke-width:1.5}.grid{stroke:#22364f;opacity:.65}.txt{fill:#d7e3f4;font-family:Arial,Helvetica,sans-serif}.small{font-size:12px}.label{font-size:13px;font-weight:700}.muted{fill:#8ea1bd}.zone{fill:rgba(56,189,248,.12);stroke:#38bdf8;stroke-width:1.5}.line{stroke:#38bdf8;stroke-width:1.5;stroke-dasharray:6 5}.green{fill:#22c55e;stroke:#22c55e}.red{fill:#ef4444;stroke:#ef4444}.wickG{stroke:#22c55e;stroke-width:2}.wickR{stroke:#ef4444;stroke-width:2}.volG{fill:#22c55e;opacity:.45}.volR{fill:#ef4444;opacity:.45}.note{fill:#12263f;stroke:#2f80ed;stroke-width:1}
@@ -39,6 +39,6 @@
   <g>
     <rect class="note" x="602" y="102" width="118" height="60" rx="6"/><text class="txt small" x="616" y="126">Catalyst</text><text class="txt small muted" x="616" y="146">Read source</text>
     <rect class="note" x="602" y="180" width="118" height="60" rx="6"/><text class="txt small" x="616" y="204">Liquidity</text><text class="txt small muted" x="616" y="224">Check spread</text>
-    <rect class="note" x="602" y="258" width="118" height="60" rx="6"/><text class="txt small" x="616" y="282">Review</text><text class="txt small muted" x="616" y="302">Did plan hold?</text>
+    <rect class="note" x="602" y="258" width="118" height="60" rx="6"/><text class="txt small" x="616" y="282">Context</text><text class="txt small muted" x="616" y="302">Did plan hold?</text>
   </g>
 </svg>

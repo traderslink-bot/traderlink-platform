@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume/"
   - "/academy/chasing-stocks/"
 visual_assets:
-  - "/academy/images/chart-reading/long-wick-rejection-context.svg"
+  - "/academy/images/chart-reading/topping-tail-candle-shape.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-18"
@@ -38,13 +38,11 @@ meta_description: "Learn what topping tails show and how to review upper-wick re
 ---
 # Topping Tail Candle
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Bottoming Tail Candle](/academy/candlestick-patterns/bottoming-tail/) and leads into [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/).
-
 A topping tail candle has a long upper wick that shows price pushed higher during the candle and closed away from the high. It can appear near resistance, after an extension, or during a failed breakout attempt.
 
 The candle should be reviewed as rejection context: where it formed, how it closed, and what happened next.
 
-![Candlestick chart showing upper wick rejection near resistance with volume context.](/academy/images/chart-reading/long-wick-rejection-context.svg)
+![Clean candle diagram showing a topping tail candle with a long upper tail and body near the lower part of the candle.](/academy/images/chart-reading/topping-tail-candle-shape.svg)
 
 ## What It Looks Like
 

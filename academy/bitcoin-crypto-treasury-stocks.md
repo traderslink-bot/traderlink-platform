@@ -157,7 +157,3 @@ Financing matters because companies may issue shares, warrants, or debt to buy c
 ### Are crypto treasury stocks the same as owning bitcoin?
 
 No. A stock has company-specific risks, share structure, financing terms, management decisions, and market behavior that are different from holding bitcoin directly.
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Bitcoin crypto treasury news does not guarantee price movement, crypto gains, continuation, or profitable trades. Always review filings, financing terms, liquidity, volatility, and your own trading plan.

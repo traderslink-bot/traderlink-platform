@@ -36,8 +36,6 @@ meta_description: "Learn what day trading is, what it requires, common mistakes,
 ---
 # Day Trading
 
-This lesson is part of the **Trading Styles And Playbooks** course. It follows [Trading Styles Overview](/academy/trading-styles/) and leads into [Swing Trading](/academy/swing-trading/).
-
 Day trading means opening and closing a position during the same trading session. It is a style built around intraday movement, execution quality, risk control, and review.
 
 Day trading can look fast from the outside, but good day trading is not random speed. It is preparation, selection, execution, and stopping when the plan is gone.
@@ -108,28 +106,6 @@ Another mistake is overtrading after a loss.
 
 A final mistake is turning a failed day trade into an overnight hold.
 
-## Practical Checklist
-
-- The trade is intended to close the same session.
-- The setup category is clear.
-- Intraday support and resistance are mapped.
-- Volume, spread, and liquidity are reviewed.
-- Risk and size are defined before entry.
-- Time-of-day context is understood.
-- The trade has a review question after completion.
-
-## Apply This In Review
-
-- Was this a planned day trade or a reaction?
-- What time of day did the decision happen?
-- Did I respect intraday risk?
-- Did spread or slippage matter?
-- Did I chase after a large candle?
-- Did I stop when the plan failed?
-- What repeated intraday behavior should I tag?
-
-A day-trading review should study decision quality, not just the final number.
-
 ## Related Lessons
 
 - [Day Trading For Beginners](/academy/day-trading-for-beginners/)
@@ -163,7 +139,3 @@ It can, but changing timeframe after the original idea fails is a common style-d
 ### Does day trading guarantee profits?
 
 No. Day trading can lead to losses and requires risk management and review.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trading styles and playbooks can help organize review, but they do not guarantee outcomes or replace independent risk decisions.

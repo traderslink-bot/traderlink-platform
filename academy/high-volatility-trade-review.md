@@ -38,8 +38,6 @@ meta_description: "Learn how to review trades taken during volatile conditions, 
 ---
 # High-Volatility Trade Review
 
-This lesson completes the **Halts And High-Volatility Events** course. It follows [Low-Float Volatility](/academy/low-float-volatility/) and points back toward the broader [Chart Reading Path](/academy/chart-reading-path/) for chart context after volatile event-risk review.
-
 High-volatility trade review is the process of studying trades taken during fast, unstable, or interruption-prone conditions.
 
 The review should be stricter than normal because the risk is different. A fast market can make a trade harder to execute, harder to exit, and harder to judge from the chart alone.
@@ -111,26 +109,6 @@ Another mistake is repeating halt-resume decisions without tagging them.
 
 A final mistake is using normal rules in abnormal market conditions.
 
-## Practical Checklist
-
-- Volatility context is documented.
-- Halt and resume risk are reviewed.
-- Spread, depth, and slippage are reviewed.
-- Position size is compared with liquidity.
-- The catalyst or event source is checked.
-- The trade is graded by process, not only outcome.
-- A specific volatility rule is added if needed.
-
-## Apply This In Review
-
-- Was this trade inside my normal risk environment?
-- Did halt risk exist before the decision?
-- Did spread or slippage change the trade?
-- Was my size realistic?
-- Did I react to speed or follow a plan?
-- Did I tag the event properly?
-- What rule would prevent the same weak decision?
-
 ## Related Lessons
 
 - [Trading Halts](/academy/trading-halts/)
@@ -138,15 +116,6 @@ A final mistake is using normal rules in abnormal market conditions.
 - [Halt Resume](/academy/halt-resume/)
 - [Slippage](/academy/slippage/)
 - [Trade Risk Review](/academy/trade-risk-review/)
-
-## Related Glossary Terms
-
-- Volatility
-- Trading halt
-- Halt resume
-- Spread
-- Slippage
-- Risk review
 
 ## FAQ
 
@@ -165,7 +134,3 @@ Start with conditions: volatility, halt risk, spread, liquidity, catalyst, and w
 ### Should traders tag high-volatility trades?
 
 Yes. Tags can help show whether fast markets repeatedly create better or worse process.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

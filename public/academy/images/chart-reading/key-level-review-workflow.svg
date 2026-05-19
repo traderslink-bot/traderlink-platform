@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
-  <title id="title">Key-Level Review Workflow</title>
+  <title id="title">Key-Level Context Workflow</title>
   <desc id="desc">Educational chart workflow showing hold, break, reject, and reclaim behavior around key levels.</desc>
   <rect width="760" height="440" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554"/>

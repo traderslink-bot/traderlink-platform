@@ -38,8 +38,6 @@ meta_description: "Learn a practical day trading workflow for premarket preparat
 ---
 # Day Trading Workflow
 
-This lesson opens the **Day Trading Workflow** course. It follows [VWAP Reclaim](/academy/chart-patterns/vwap-reclaim/) and leads into [Premarket Trading](/academy/premarket-trading/).
-
 A day trading workflow is the repeatable process a trader uses before, during, and after the session. It is not a secret setup. It is the structure that keeps decisions connected to preparation, risk, execution, and review.
 
 Without a workflow, the trading day can become a stream of alerts, candles, headlines, and emotions. With a workflow, each part of the session has a job.
@@ -127,28 +125,6 @@ Another mistake is skipping review after a winning trade because the outcome fel
 
 A final mistake is using workflow language to justify a reactive trade.
 
-## Practical Checklist
-
-- The session has a clear preparation step.
-- The watchlist is filtered instead of endless.
-- Key levels and liquidity are reviewed before entry pressure rises.
-- The trader understands the time-of-day context.
-- The trade has a clear failure condition.
-- The trader knows when to stop or reduce activity.
-- Completed trades are reviewed by plan, risk, execution, and behavior.
-
-## Apply This In Review
-
-- Which part of the workflow produced the trade?
-- Was the trade planned before the candle moved?
-- Did the time of day increase risk?
-- Was liquidity acceptable?
-- Did I follow the failure condition?
-- Did I keep trading after my best setup was gone?
-- What workflow step needs to be tightened next session?
-
-Reviewing the workflow makes the trading day less random.
-
 ## Related Lessons
 
 - [Day Trading](/academy/day-trading/)
@@ -156,15 +132,6 @@ Reviewing the workflow makes the trading day less random.
 - [Market Open Trading](/academy/market-open-trading/)
 - [Midday Trading](/academy/midday-trading/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
-
-## Related Glossary Terms
-
-- Day trading
-- Premarket
-- Relative volume
-- Liquidity
-- Slippage
-- Risk management
 
 ## FAQ
 
@@ -183,7 +150,3 @@ No. A workflow does not guarantee outcomes. It creates structure so decisions ca
 ### Why does time of day matter?
 
 Liquidity, volume, spread, volatility, and trader behavior can change throughout the session.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

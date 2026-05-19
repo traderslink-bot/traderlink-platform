@@ -27,8 +27,6 @@ meta_description: "Learn what Form F-1 is, why foreign private issuers file it, 
 ---
 # Form F-1
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form S-3](/academy/sec-filings/form-s-3/) and leads into [Form F-3](/academy/sec-filings/form-f-3/).
-
 The goal is not to turn Form F-1 into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -124,26 +122,6 @@ Traders may want to check:
 
 The filing does not guarantee selling pressure, but it can show potential future supply.
 
-## Practical Checklist
-
-Structured review notes can help connect Form F-1 details to actual trades.
-
-Useful review notes include:
-
-1. Filing date.
-2. Type of registration.
-3. Securities being registered.
-4. Selling shareholders, if any.
-5. Use of proceeds.
-6. Dilution details.
-7. Effectiveness status.
-8. Price reaction after the filing.
-9. Whether you read the filing or reacted to the alert.
-
-The goal is not to predict every move. It is to understand the financing context before trading around the filing.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). Form F-1 is related to [Form F-3](/academy/sec-filings/form-f-3/) and [Form S-1](/academy/sec-filings/form-s-1/).
@@ -187,24 +165,9 @@ Yes. Foreign private issuers may use Form F-1 for IPO registration or other secu
 
 It can reveal offering terms, resale registration, potential share supply, and risk factors that may affect trading context.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to Form F-1, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [Form S-3](/academy/sec-filings/form-s-3/)
 - [Form F-3](/academy/sec-filings/form-f-3/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Form F-1 filings do not guarantee price movement, dilution, or trading outcomes. Always review the full filing, related disclosures, liquidity, risk, and your own trading plan.

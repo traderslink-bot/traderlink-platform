@@ -38,8 +38,6 @@ meta_description: "Learn what head and shoulders patterns show, why they can fai
 ---
 # Head And Shoulders Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Triple Bottom](/academy/chart-patterns/triple-bottom/) and leads into [Inverse Head And Shoulders](/academy/chart-patterns/inverse-head-and-shoulders/).
-
 **Best suited for:** day trading and swing trading.
 
 A head and shoulders pattern forms when price makes a high, then a higher high, then a lower high while holding a neckline area underneath. It can show a move losing strength near resistance.

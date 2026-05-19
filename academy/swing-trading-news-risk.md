@@ -38,8 +38,6 @@ meta_description: "Learn how swing trading news risk works, including overnight 
 ---
 # Swing Trading News Risk
 
-This lesson is part of the **Swing Trading Workflow** course. It follows [Swing Trading Earnings](/academy/swing-trading-earnings/) and leads into [Small Cap Swing Trading](/academy/swing-trading-small-caps/).
-
 News risk is the risk that new information changes the trade while a swing position is open.
 
 This matters because swing trades cross sessions. A trader can enter with a clean chart and wake up to a different setup after a headline, filing, sector event, or broad-market move.
@@ -127,29 +125,6 @@ Another mistake is assuming news risk only applies to small caps. Sector and bro
 
 A final mistake is keeping the same thesis after new information changes the trade.
 
-## Practical Checklist
-
-- Known events are checked before holding overnight.
-- Unexpected news is reviewed against the original thesis.
-- Source documents are reviewed when available.
-- Price reaction is compared with key levels.
-- Volume and liquidity are reviewed after the news.
-- Filing risk is checked for small-cap and catalyst trades.
-- The trader knows whether the original plan still applies.
-
-## Apply This In Review
-
-- Was there known news risk before entry?
-- Did unexpected news appear while I was holding?
-- Did I read the source or only react to the headline?
-- Did the news support, weaken, or change the thesis?
-- Did price hold or lose the key level after the news?
-- Did liquidity or spread change?
-- Did I change the plan for a valid reason?
-- Did I ignore the news because I was emotionally attached to the trade?
-
-News-risk review helps traders separate market events from avoidable planning gaps.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)
@@ -157,15 +132,6 @@ News-risk review helps traders separate market events from avoidable planning ga
 - [SEC Filings](/academy/sec-filings/)
 - [Overnight Risk](/academy/overnight-risk/)
 - [Small Cap Swing Trading](/academy/swing-trading-small-caps/)
-
-## Related Glossary Terms
-
-- News risk
-- Press release
-- SEC filing
-- Offering
-- Overnight risk
-- Gap risk
 
 ## FAQ
 
@@ -192,7 +158,3 @@ No. They can reduce or plan for some known risks, but unexpected news can still 
 ### How should news-risk trades be reviewed?
 
 Review the news source, timing, market reaction, key levels, volume, liquidity, thesis change, and whether decisions followed the original risk plan.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. News can create sharp price movement, and no headline, filing, or catalyst guarantees a specific trading outcome.

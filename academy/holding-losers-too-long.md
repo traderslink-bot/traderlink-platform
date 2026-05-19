@@ -36,8 +36,6 @@ meta_description: "Learn why traders hold losers too long, how losing trades gro
 ---
 # Holding Losers Too Long
 
-This lesson is part of the **Trading Psychology And Discipline** course. It follows [Overtrading](/academy/overtrading/) and leads into [Cutting Winners Too Early](/academy/cutting-winners-too-early/).
-
 Holding losers too long means staying in a losing trade after the original trade idea has failed. It is one of the most common trade-management mistakes because it often starts with a small decision: waiting just a little longer.
 
 A losing trade is not automatically a mistake. Losses are part of trading. The problem is when the trader ignores the invalidation level, moves the risk, or holds because accepting the planned loss feels uncomfortable.
@@ -116,33 +114,6 @@ Another mistake is averaging down after the trade has already failed. That incre
 
 A final mistake is not tagging the behavior in review. If holding losers is not tracked, it can repeat unnoticed.
 
-## Practical Checklist
-
-Before judging this behavior, check:
-
-- The planned invalidation level was defined before entry.
-- The trade thesis is still valid.
-- The reason for holding is based on the plan, not hope.
-- Position size still fits the risk limit.
-- No unplanned average-down has increased exposure.
-- The trade has not changed timeframes by accident.
-- Planned loss and actual loss are being tracked.
-
-## Apply This In Review
-
-After a trade or session, ask:
-
-- What was the planned invalidation level?
-- Did I exit when the level failed?
-- If I held, what was the reason?
-- Did I move the stop or risk area?
-- Did I average down after the setup failed?
-- Did I turn the trade into a different timeframe?
-- What was the planned loss versus the actual loss?
-- Is this a repeated pattern in my losing trades?
-
-The goal is to find the moment where the loss stopped being planned.
-
 ## Related Lessons
 
 - [Stop Loss](/academy/stop-loss/)
@@ -176,7 +147,3 @@ Yes. Averaging down after a setup fails can increase exposure and make the loss 
 ### How should losing trades be reviewed?
 
 Track planned risk, actual exit, reason for holding, whether the setup failed, and whether the loss grew because of a management decision.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Cutting losses and managing risk depend on strategy, context, and personal risk rules.

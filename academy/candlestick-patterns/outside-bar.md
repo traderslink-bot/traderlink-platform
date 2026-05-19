@@ -29,7 +29,7 @@ internal_links:
   - "/academy/breakout-trading/"
   - "/academy/breakdown-trading/"
 visual_assets:
-  - "/academy/images/chart-reading/inside-outside-bar-context.svg"
+  - "/academy/images/chart-reading/outside-bar-candle-shape.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-18"
@@ -38,13 +38,11 @@ meta_description: "Learn how outside bars show range expansion and why they requ
 ---
 # Outside Bar
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Inside Bar](/academy/candlestick-patterns/inside-bar/) and leads into [Candle Volume Confirmation](/academy/candlestick-patterns/candle-volume-confirmation/).
-
 An outside bar forms when a candle trades above the prior high and below the prior low. It shows range expansion, volatility, and a wider battle between buyers and sellers.
 
 An outside bar can look powerful, but it can also mark exhaustion, a trap, or messy volatility.
 
-![Candlestick chart showing inside bar compression and outside bar range expansion with volume context.](/academy/images/chart-reading/inside-outside-bar-context.svg)
+![Clean candle diagram showing an outside bar that trades above the prior high and below the prior low.](/academy/images/chart-reading/outside-bar-candle-shape.svg)
 
 ## What It Looks Like
 

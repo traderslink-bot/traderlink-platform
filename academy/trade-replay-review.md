@@ -38,8 +38,6 @@ meta_description: "Learn how to use chart replay to pause, plan, reveal, and rev
 ---
 # Trade Replay Review
 
-This lesson is part of the **Practice And Improvement** course. It follows [Paper Trading](/academy/paper-trading/) and leads into [Watchlist Review](/academy/watchlist-review/).
-
 Trade replay review means replaying a chart or session one step at a time so the trader can practice decisions without seeing the full future outcome.
 
 The value is not in pretending replay is live trading. The value is in slowing down the decision process and asking what was known at each point.
@@ -114,26 +112,6 @@ Another mistake is replaying only perfect examples.
 
 A final mistake is treating replay performance as equal to live performance.
 
-## Practical Checklist
-
-- The replay has one practice focus.
-- Future candles are hidden or ignored.
-- Pause points are chosen before the outcome is obvious.
-- Levels and risk are marked at the pause.
-- A planned response is written before revealing more candles.
-- The review compares the decision with the information available.
-- Replay results are treated as practice, not proof.
-
-## Apply This In Review
-
-- Did I know the future outcome?
-- Did I pause before the key candle?
-- What information was available at the decision point?
-- Did I define risk before revealing more price action?
-- Did volume support the context or confuse it?
-- Did I change my interpretation after seeing the outcome?
-- What decision skill should I replay again?
-
 ## Related Lessons
 
 - [Paper Trading](/academy/paper-trading/)
@@ -141,15 +119,6 @@ A final mistake is treating replay performance as equal to live performance.
 - [Planned Vs Actual Trade Review](/academy/planned-vs-actual-trade-review/)
 - [Execution Review](/academy/execution-review/)
 - [Mistake Pattern Review](/academy/mistake-pattern-review/)
-
-## Related Glossary Terms
-
-- Replay review
-- Hindsight bias
-- Opening range
-- Planned versus actual
-- Execution
-- Mistake pattern
 
 ## FAQ
 
@@ -168,7 +137,3 @@ No. Replay can train decision clarity, but it does not recreate real fills, emot
 ### What should I write during replay?
 
 Write the known context, planned risk, decision reason, and what would make the idea invalid.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

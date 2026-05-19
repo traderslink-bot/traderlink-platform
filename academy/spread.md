@@ -48,8 +48,6 @@ meta_description: "Learn what the bid ask spread is, why wide spreads affect exe
 
 The bid ask spread is the difference between the highest price buyers are bidding and the lowest price sellers are asking. Traders watch the spread because it affects entry price, exit price, slippage, position size, and the real cost of trading a stock.
 
-This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Dollar Volume](/academy/dollar-volume/) and [Liquidity](/academy/liquidity/), then leads into [Bid And Ask](/academy/bid-and-ask/) and [Slippage](/academy/slippage/).
-
 
 ## Lesson Objective
 
@@ -198,40 +196,6 @@ Common spread mistakes include:
 
 Spread mistakes are execution mistakes. They may not show up if the trader only reviews the candle chart.
 
-## Practical Checklist
-
-Use this checklist when reviewing spread:
-
-- What was the bid when I entered?
-- What was the ask when I entered?
-- What was the spread in cents and as a percentage of price?
-- Was the spread normal for the stock?
-- Did the spread widen during volatility?
-- Did I use a market order, limit order, or stop order?
-- Did my fill happen near the price I expected?
-- Did the spread make my planned risk unrealistic?
-- Was my position size too large for the spread and depth?
-- Did the spread affect my exit?
-
-This checklist helps connect the setup to the actual execution.
-
-## Apply This In Review
-
-Spread review belongs in after-trade notes whenever execution was worse than expected.
-
-Helpful review prompts:
-
-- What was the spread before entry?
-- What was the spread before exit?
-- Did the spread widen after I entered?
-- Did I chase the ask or sell into a weak bid?
-- Did the spread change my real risk?
-- Did the spread affect my stop or exit?
-- Did similar spread conditions appear in other poor trades?
-- Would smaller size or a different order type have made more sense?
-
-Over time, this review can show whether wide-spread trades are a repeated problem.
-
 ## FAQ
 
 ### What is the bid ask spread?
@@ -257,7 +221,3 @@ A wide spread can make execution much harder and can make planned risk unrealist
 ### Should traders track spread in review notes?
 
 Yes, especially when fills are worse than expected. Spread review can reveal execution problems that a chart-only review misses.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock. A tight spread does not guarantee clean execution, profitability, better decisions, or reduced losses. Always use risk management and review your own trades carefully.

@@ -38,8 +38,6 @@ meta_description: "Learn what Wedge Pattern shows, why it can fail, and how to r
 ---
 # Wedge Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Symmetrical Triangle Pattern](/academy/chart-patterns/symmetrical-triangle/) and leads into [Rising Wedge](/academy/chart-patterns/rising-wedge/).
-
 **Best suited for:** day trading and swing trading.
 
 Wedge Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.

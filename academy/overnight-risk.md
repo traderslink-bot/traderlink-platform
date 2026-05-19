@@ -36,8 +36,6 @@ meta_description: "Learn what overnight risk means, why gaps and news matter, an
 ---
 # Overnight Risk
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Profit Protection](/academy/profit-protection/) and leads into [Holding Through News](/academy/holding-through-news/).
-
 The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
 
 ## Lesson Objective
@@ -169,18 +167,6 @@ For more context, read:
 - [Gap fill trading](/academy/gap-fill-trading/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
 
-## Practical Checklist
-
-Before relying on Overnight Risk, confirm:
-
-- Gap risk.
-- News risk.
-- Position size.
-- Liquidity.
-- Borrow or margin risk.
-- Exit access.
-- Next-day plan.
-
 ## FAQ
 
 ### What is overnight risk in trading?
@@ -207,24 +193,9 @@ That depends on the trader's strategy and risk plan. The key is to know when ove
 
 Track why the trade was held overnight, what risks were known, whether position size made sense, how the stock opened, and whether the plan was followed.
 
-## Apply This In Review
-
-When reviewing a trade connected to Overnight Risk, ask:
-
-- Was the rule or plan written before the trade started?
-- Did the position size match the planned risk?
-- Did I know where the idea was wrong before entering?
-- Did I follow the rule when the trade became uncomfortable?
-- If I broke the rule, what was the trigger: fear, hope, boredom, revenge, or confusion?
-- What should I change in my plan so this decision is easier to review next time?
-
 ## Related Lessons
 
 - [Profit Protection](/academy/profit-protection/)
 - [Holding Through News](/academy/holding-through-news/)
 - [Risk Management](/academy/risk-management/)
 - [Trade Risk Review](/academy/trade-risk-review/)
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Overnight risk can create losses beyond planned chart levels, and no trade plan can remove all market risk.

@@ -36,8 +36,6 @@ meta_description: "Learn what sell-the-news means, why stocks can fade after exp
 ---
 # Sell The News
 
-This lesson is part of the **Trading Styles And Playbooks** course. It follows [News Fade](/academy/news-fade/) and leads into [Multi-Day Runner](/academy/multi-day-runner/).
-
 Sell the news is a phrase traders use when a stock declines or fades after a catalyst becomes public. The phrase can describe a reaction, but it should not be treated as an instruction.
 
 Sometimes the market already expected the news. Sometimes details disappoint. Sometimes supply, valuation, liquidity, or positioning matter more than the headline.
@@ -108,28 +106,6 @@ Another mistake is ignoring volume and levels after the news.
 
 A final mistake is fighting continued strength because the phrase sounds familiar.
 
-## Practical Checklist
-
-- Pre-news price movement is reviewed.
-- The actual catalyst details are read.
-- Expectations versus actual details are compared.
-- Volume and liquidity are reviewed after the release.
-- Support, resistance, and VWAP behavior are checked.
-- Related filings are checked if relevant.
-- Invalidation is defined.
-
-## Apply This In Review
-
-- Did price run before the news?
-- Was the catalyst expected or surprising?
-- Were details stronger, weaker, or in line with expectations?
-- What did volume do after the announcement?
-- Which level mattered after the news?
-- Did I use a phrase instead of analysis?
-- Was invalidation respected?
-
-Sell-the-news review should explain why the reaction happened, not simply repeat the phrase.
-
 ## Related Lessons
 
 - [News Fade](/academy/news-fade/)
@@ -163,7 +139,3 @@ Review pre-news run-up, expectations, actual details, filings, volume, levels, a
 ### How is sell the news different from news fade?
 
 News fade is broad reaction weakness after news; sell the news often emphasizes expected catalysts and prior positioning.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trading styles and playbooks can help organize review, but they do not guarantee outcomes or replace independent risk decisions.

@@ -36,8 +36,6 @@ meta_description: "Learn what averaging down means in trading, why it can be ris
 ---
 # Averaging Down
 
-This lesson is part of the **Trading Psychology And Discipline** course. It follows [Cutting Winners Too Early](/academy/cutting-winners-too-early/) and leads into [Trade Review And Improvement](/academy/trade-review-and-improvement/).
-
 Averaging down means adding to a position after price moves against the trader, lowering the average entry price. It can sound logical because the average price improves, but it can also increase risk quickly if the original trade idea is failing.
 
 Averaging down is not automatically wrong in every strategy, but it needs a clear plan, position-size control, and a defined invalidation area. The review should also include total exposure, liquidity, and whether the trader could still exit without creating a larger problem. Without those checks, it can become emotional risk-taking.
@@ -111,33 +109,6 @@ Another mistake is confusing a lower average price with lower risk. The average 
 
 A final mistake is not tracking average-down behavior in review. If the trader does not review it, the pattern can repeat.
 
-## Practical Checklist
-
-Before judging this behavior, check:
-
-- The add was planned before entry.
-- Total position size stays within the plan.
-- The setup is still valid.
-- The invalidation level has not failed.
-- Maximum loss after the add is known.
-- Liquidity and spread still support an exit.
-- The add is based on structure, not discomfort.
-
-## Apply This In Review
-
-After a trade or session, ask:
-
-- Did I average down on this trade?
-- Was the add planned before entry?
-- Was the setup still valid when I added?
-- Did I add after an invalidation level failed?
-- Did the add increase risk beyond my plan?
-- Did I add because of structure or emotion?
-- What would the trade have looked like without the add?
-- Is averaging down a repeated pattern in my losing trades?
-
-This review can help traders see whether averaging down is part of a planned strategy or part of a loss-avoidance habit.
-
 ## Related Lessons
 
 - [Position Sizing](/academy/position-sizing/)
@@ -171,7 +142,3 @@ Review whether the add was planned, whether the setup was still valid, and wheth
 ### How should averaging down be reviewed?
 
 Track each add, the reason for it, whether the setup was still valid, the new total risk, and what would have happened without the add.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Averaging down can increase trading risk and does not guarantee a better outcome.

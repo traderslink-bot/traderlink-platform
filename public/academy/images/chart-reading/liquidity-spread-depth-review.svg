@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
   <title id="title">Liquidity spread and depth review</title>
-  <desc id="desc">A dark trading dashboard style chart showing bid ask spread, market depth, candles, and volume as liquidity review context.</desc>
+  <desc id="desc">A dark trading dashboard style chart showing bid ask spread, market depth, candles, and volume as liquidity context.</desc>
   <rect width="900" height="520" fill="#08111f"/>
   <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
-  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Review liquidity before trusting the chart</text>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Context liquidity before trusting the chart</text>
   <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Spread and depth can change the real entry, exit, and risk.</text>
   <line x1="72" y1="128" x2="548" y2="128" stroke="#182943"/>
   <line x1="72" y1="188" x2="548" y2="188" stroke="#182943"/>

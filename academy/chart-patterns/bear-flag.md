@@ -38,8 +38,6 @@ meta_description: "Learn what bear flags show, why they can fail, and how to rev
 ---
 # Bear Flag Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Bull Flag Pattern](/academy/chart-patterns/bull-flag/) and leads into [Bull Pennant](/academy/chart-patterns/bull-pennant/).
-
 **Best suited for:** day trading and momentum swing trading.
 
 A bear flag is a pattern traders watch after a strong downward move followed by a controlled bounce or sideways pause. It can show that price is resting after selling pressure instead of fully reclaiming the prior drop.

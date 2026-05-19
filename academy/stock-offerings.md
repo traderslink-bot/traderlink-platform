@@ -27,8 +27,6 @@ meta_description: "Learn what a stock offering is, why companies raise money thr
 ---
 # Stock Offering
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [How To Spot Dilution Risk](/academy/how-to-spot-dilution-risk/) and leads into [Public Offering](/academy/public-offering/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -150,18 +148,6 @@ A trade journal can connect float, filings, dilution context, risk, execution, a
 
 Start with the main [SEC filings guide](/academy/sec-filings/) and [how to spot dilution risk](/academy/how-to-spot-dilution-risk/). Then review the specific offering types: [public offering stock](/academy/public-offering/), [registered direct offering](/academy/registered-direct-offering/), and [private placement stock](/academy/private-placement/).
 
-## Practical Checklist
-
-Before treating Stock Offerings as meaningful context, review:
-
-- Offering type.
-- Price.
-- Size.
-- Warrants.
-- Use of proceeds.
-- Discount to market.
-- Float impact.
-
 ## FAQ
 
 ### What is a stock offering?
@@ -188,17 +174,6 @@ Yes. Some stocks recover or move higher if the market views the financing as pos
 
 Traders should review offering type, size, price, warrants, share count impact, use of proceeds, cash runway, and related SEC filings.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Stock Offerings, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [How To Spot Dilution Risk](/academy/how-to-spot-dilution-risk/)
@@ -206,7 +181,3 @@ When reviewing a small-cap trade or watchlist idea connected to Stock Offerings,
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Stock offerings do not guarantee price movement, dilution impact, selling pressure, or trading outcomes. Always review the full filing, terms, liquidity, risk, and your own trading plan.

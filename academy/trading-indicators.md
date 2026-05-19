@@ -36,8 +36,6 @@ meta_description: "Learn what trading indicators measure, why they should be use
 ---
 # What Are Trading Indicators?
 
-This lesson is part of the **Technical Indicators And Tools** course. It follows [Holding Through News](/academy/holding-through-news/) and leads into [Why Indicators Lag Price](/academy/why-indicators-lag/).
-
 Trading indicators are tools that transform price, volume, volatility, or time into a visual reference. They can help traders organize context, but they should not be treated as automatic instructions.
 
 This course teaches indicators as measurement tools. The purpose is to understand what each tool adds, what it misses, and how to review it beside price, volume, levels, and risk.
@@ -105,29 +103,6 @@ Another mistake is changing indicator settings until the chart confirms what the
 
 A final mistake is not reviewing whether the indicator actually helped the trade decision.
 
-## Practical Checklist
-
-- I know what the indicator measures.
-- I know what the indicator does not measure.
-- I checked price structure and levels separately.
-- I checked volume or liquidity where relevant.
-- I did not treat the indicator as a guarantee.
-- I had a risk plan independent of the indicator.
-- I can review whether the indicator helped or distracted.
-
-## Apply This In Review
-
-- What indicator did I use?
-- What did it measure?
-- Did it agree with price and volume?
-- Did it conflict with key levels?
-- Did I enter because of the indicator alone?
-- Did I ignore risk because of the indicator?
-- Did the indicator help the review after the trade?
-- Should this tool stay in my process?
-
-The goal is to make indicators useful, not magical.
-
 ## Related Lessons
 
 - [Why Indicators Lag Price](/academy/why-indicators-lag/)
@@ -161,7 +136,3 @@ Use only tools that add clear review value. Too many indicators can create confu
 ### How should indicators be reviewed?
 
 Review what the indicator showed, whether it matched price and volume, and whether it improved or weakened the decision.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trading indicators can support review and context, but they do not predict price or guarantee trading results.

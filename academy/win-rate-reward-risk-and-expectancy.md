@@ -36,8 +36,6 @@ meta_description: "Learn how win rate, reward/risk, average winner, average lose
 ---
 # Win Rate, Reward/Risk, And Expectancy
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Risk Reward Ratio](/academy/risk-reward-ratio/) and leads into [Stop Loss](/academy/stop-loss/).
-
 Many traders talk about risk/reward as if a clean ratio automatically makes a trade good. That is incomplete. A trading process also depends on win rate, average winner, average loser, costs, slippage, and sample size.
 
 Expectancy helps connect those pieces. It is a review concept, not a promise.
@@ -157,33 +155,6 @@ Another mistake is changing rules after only a few trades.
 
 A final mistake is treating expectancy as permanent. Market conditions, execution quality, and trader behavior can change.
 
-## Practical Checklist
-
-When reviewing expectancy, confirm:
-
-- Number of trades in the sample.
-- Setup or style being reviewed.
-- Win rate.
-- Average winner.
-- Average loser.
-- Largest winner and largest loser.
-- Slippage and spread conditions.
-- Whether the trader followed the same rules.
-- Whether outliers are distorting the sample.
-
-## Apply This In Review
-
-Ask:
-
-- What was my win rate for this setup sample?
-- What was my average winner?
-- What was my average loser?
-- Did one large loss distort the results?
-- Did early exits shrink average winners?
-- Did poor stops expand average losers?
-- Is the sample large enough to learn from?
-- What one rule would improve the math?
-
 ## Related Lessons
 
 - [Risk Reward Ratio](/academy/risk-reward-ratio/)
@@ -191,16 +162,6 @@ Ask:
 - [Stop Loss](/academy/stop-loss/)
 - [Trade Risk Review](/academy/trade-risk-review/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
-
-## Related Glossary Terms
-
-- Win rate
-- Reward/risk
-- Expectancy
-- Average winner
-- Average loser
-- Sample size
-- Slippage
 
 ## FAQ
 
@@ -227,7 +188,3 @@ No. Expectancy is based on reviewed data. Future results can change because of m
 ### Should beginners focus only on expectancy?
 
 No. Beginners should first learn risk control, position sizing, stops, execution, and review. Expectancy becomes more useful once trade samples are organized.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Expectancy can support trading review, but it does not predict future results or guarantee profitability.

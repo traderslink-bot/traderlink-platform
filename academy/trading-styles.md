@@ -36,8 +36,6 @@ meta_description: "Learn the major trading styles, how they differ, what each re
 ---
 # Trading Styles Overview
 
-This lesson is part of the **Trading Styles And Playbooks** course. It follows [VWAP Reclaim](/academy/chart-patterns/vwap-reclaim/) and leads into [Day Trading](/academy/day-trading/).
-
 A trading style is a way to organize timeframe, setup type, risk, execution speed, and review. It is not an identity and it is not a promise that one approach is better than another.
 
 This course helps traders understand styles as playbooks. A playbook gives structure to what the trader is looking for, what can go wrong, and how the result should be reviewed.
@@ -109,28 +107,6 @@ Another mistake is using day-trading risk on swing trades or swing-trading patie
 
 A final mistake is never tracking which style produces the trader's repeated mistakes.
 
-## Practical Checklist
-
-- I know the style before the trade.
-- The timeframe matches the plan.
-- The setup category is clear.
-- Risk rules match the style.
-- Liquidity and execution needs are understood.
-- I know what invalidates the idea.
-- I can review the trade under the correct playbook.
-
-## Apply This In Review
-
-- What style was this trade supposed to be?
-- Did the timeframe change after entry?
-- Did I switch styles to avoid taking a loss?
-- Did the setup match the style label?
-- Which mistake patterns appeared?
-- Did the style fit my available attention and risk?
-- Which style should I study next?
-
-A style is useful only if it makes the plan and review clearer.
-
 ## Related Lessons
 
 - [Day Trading](/academy/day-trading/)
@@ -164,7 +140,3 @@ The same mistake can look different in day trading, swing trading, scalping, or 
 ### Should beginners choose a style right away?
 
 Beginners can study several styles first, then narrow focus based on schedule, risk, attention, and review results.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trading styles and playbooks can help organize review, but they do not guarantee outcomes or replace independent risk decisions.

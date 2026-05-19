@@ -158,7 +158,3 @@ Traders should review the drug, indication, expected decision, prior data, marke
 ### Is a PDUFA trade risky?
 
 Yes. PDUFA events can be highly volatile, and outcomes can create sharp moves in either direction.
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. A PDUFA date does not guarantee FDA approval, price movement, continuation, or profitable trades. Always review filings, data, risk, liquidity, and your own trading plan.

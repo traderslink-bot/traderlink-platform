@@ -42,8 +42,6 @@ meta_description: "Learn what a Form 424B5 filing means, how prospectus suppleme
 
 A Form 424B5 is a prospectus supplement that can provide specific details about an offering. Traders often watch 424B5 filings because they may include the number of shares, offering price, warrant terms, proceeds, underwriters, placement agents, or other terms connected to a registered offering.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form S-8](/academy/sec-filings/form-s-8/) and leads into [Form 424B3](/academy/sec-filings/form-424b3/).
-
 For small-cap traders, a 424B5 can be important because it may move a financing situation from "possible future offering" to actual offering terms.
 
 ## Lesson Objective
@@ -179,35 +177,6 @@ Common 424B5 mistakes include:
 
 The terms matter more than the label.
 
-## Practical Checklist
-
-Use this checklist when reviewing a 424B5:
-
-- What securities are being offered?
-- What is the offering price?
-- How many shares or units are involved?
-- Are warrants or pre-funded warrants included?
-- What are gross and net proceeds?
-- What is the use of proceeds?
-- Who is the underwriter or placement agent?
-- What is the expected closing date?
-- How do the terms compare with recent market price?
-- Did price and volume stabilize, fade, or continue reacting after the filing?
-- Did the trade follow a plan or an emotional filing reaction?
-
-## Apply This In Review
-
-After a 424B5-related trade, review:
-
-- Whether you read the actual terms.
-- Whether you understood the securities offered.
-- Whether warrant terms changed your risk view.
-- Whether the offering was expected or surprising.
-- Whether the market reaction matched your initial assumption.
-- Whether you managed the trade according to a plan.
-
-This review helps turn offering headlines into structured filing literacy.
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
@@ -244,7 +213,3 @@ No. A 424B5 does not guarantee any price move. The reaction depends on the terms
 ### What should traders check first?
 
 Start with offering price, securities offered, share or unit count, warrants, proceeds, use of proceeds, and closing details.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Form 424B5 filings do not guarantee price movement, continuation, reversal, or profitable trades. Always review the actual filing, related news, liquidity, risk, and your own trading plan.

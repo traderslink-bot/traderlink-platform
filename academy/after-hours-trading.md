@@ -38,8 +38,6 @@ meta_description: "Learn how after-hours trading works, why liquidity and spread
 ---
 # After-Hours Trading
 
-This lesson is part of the **Day Trading Workflow** course. It follows [Power Hour Trading](/academy/power-hour-trading/) and leads into [Day Trading Session Review](/academy/day-trading-session-review/).
-
 After-hours trading happens after the regular session closes. Stocks can move after the bell because of earnings, press releases, SEC filings, analyst updates, sector news, or trader reaction to the regular session.
 
 After-hours can look exciting, but it is often thinner and less forgiving than regular-hours trading. The chart may move quickly while the actual liquidity is limited.
@@ -115,26 +113,6 @@ Another mistake is holding overnight without a defined plan.
 
 A final mistake is overlooking filing or dilution risk in small-cap names.
 
-## Practical Checklist
-
-- The news or filing source is reviewed.
-- The spread and liquidity are acceptable for the plan.
-- Volume is checked after the initial reaction.
-- The trader understands overnight risk.
-- The move is not treated as a next-day guarantee.
-- Any next-day watchlist note includes levels and risk context.
-- The after-hours decision can be reviewed clearly.
-
-## Apply This In Review
-
-- What caused the after-hours move?
-- Did I read the full source?
-- Did spread affect execution?
-- Was liquidity good enough?
-- Did volume continue or fade?
-- Did I hold overnight with a plan?
-- Did after-hours activity fit my workflow or interrupt it?
-
 ## Related Lessons
 
 - [Power Hour Trading](/academy/power-hour-trading/)
@@ -142,15 +120,6 @@ A final mistake is overlooking filing or dilution risk in small-cap names.
 - [SEC Filings](/academy/sec-filings/)
 - [Earnings News](/academy/earnings-news/)
 - [Overnight Risk](/academy/overnight-risk/)
-
-## Related Glossary Terms
-
-- After-hours
-- Extended hours
-- SEC filing
-- Earnings
-- Spread
-- Overnight risk
 
 ## FAQ
 
@@ -169,7 +138,3 @@ Yes. After-hours trading can have lower liquidity, wider spreads, and sharper mo
 ### Can after-hours moves reverse the next day?
 
 Yes. Regular-hours volume can change or reverse the after-hours reaction.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

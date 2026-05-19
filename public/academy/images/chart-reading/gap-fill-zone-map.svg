@@ -32,5 +32,5 @@
   <path d="M112 304 L166 288 L220 192 M274 170 L328 206 L382 232 L436 250 L490 266" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
   <g><rect x="84" y="326" width="14" height="18" fill="#21c784" opacity=".7"/><rect x="118" y="316" width="14" height="28" fill="#21c784" opacity=".8"/><rect x="152" y="292" width="14" height="52" fill="#21c784" opacity=".95"/><rect x="186" y="302" width="14" height="42" fill="#ef4444" opacity=".86"/><rect x="220" y="310" width="14" height="34" fill="#ef4444" opacity=".78"/><rect x="254" y="318" width="14" height="26" fill="#ef4444" opacity=".7"/></g>
   <rect x="28" y="376" width="704" height="36" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="399" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: did price enter the gap with volume, or only drift into it?</text>
+  <text x="44" y="399" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: did price enter the gap with volume, or only drift into it?</text>
 </svg>

@@ -29,7 +29,7 @@ internal_links:
   - "/academy/spread/"
   - "/academy/volume/"
 visual_assets:
-  - "/academy/images/chart-reading/long-wick-rejection-context.svg"
+  - "/academy/images/chart-reading/pin-bar-candle-shape.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-18"
@@ -38,13 +38,11 @@ meta_description: "Learn how pin bars show rejection, why they can fail, and how
 ---
 # Pin Bar
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Hammer Candlestick](/academy/candlestick-patterns/hammer/) and leads into [Bottoming Tail Candle](/academy/candlestick-patterns/bottoming-tail/).
-
 A pin bar is a candle with a long wick and a small body, often discussed as rejection from an extreme. It overlaps with long wick candles, hammers, and topping or bottoming tails.
 
 The pattern is not useful because of the name. It is useful only when the rejection happened in a meaningful area.
 
-![Candlestick chart showing long upper and lower wick rejection around support and resistance with volume context.](/academy/images/chart-reading/long-wick-rejection-context.svg)
+![Clean candle diagram showing pin bar candles with small bodies and one dominant wick.](/academy/images/chart-reading/pin-bar-candle-shape.svg)
 
 ## What It Looks Like
 

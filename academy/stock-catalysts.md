@@ -233,43 +233,6 @@ Common catalyst mistakes include:
 
 Good catalyst review is slower than scanner emotion. That is the point.
 
-## Practical Checklist
-
-Use this checklist when reviewing catalyst-driven trades:
-
-- What was the catalyst category?
-- What was the source?
-- Was the information new or previously known?
-- Was the headline specific or vague?
-- Were names, numbers, dates, or terms included?
-- Was there a related SEC filing?
-- Did the catalyst include financing, warrants, dilution, or offering language?
-- Did volume expand compared with normal activity?
-- Did price hold, fade, reject, or reclaim key levels after the news?
-- Was liquidity clean enough for the trade size?
-- Was the trade based on a plan or a fast reaction to the headline?
-
-The checklist helps turn catalyst excitement into a repeatable review process.
-
-## Apply This In Review
-
-Catalyst trades are worth reviewing carefully because they can reveal whether you trade details or emotions.
-
-Helpful review prompts:
-
-- What exact headline or filing caused the attention?
-- Did I read the full announcement before entering?
-- What catalyst category was it?
-- What details were specific?
-- What important details were missing?
-- Did I check related filings or dilution risk?
-- What did volume do after the news?
-- Did the first move hold or fade?
-- Did my execution happen before structure formed, during the first burst, or late after the move?
-- Do I perform better or worse with certain catalyst types?
-
-These notes can help you separate catalyst understanding from headline chasing.
-
 ## Related Lessons
 
 - [Unusual Volume](/academy/unusual-volume/)
@@ -282,14 +245,6 @@ These notes can help you separate catalyst understanding from headline chasing.
 - [Contract News Stocks](/academy/contract-news-stocks/)
 - [Partnership News Stocks](/academy/partnership-news-stocks/)
 - [How To Spot Dilution Risk](/academy/how-to-spot-dilution-risk/)
-
-## Related Glossary Terms
-
-- [Catalyst](/glossary/catalyst/)
-- [News Catalyst](/glossary/news-catalyst/)
-- [Liquidity](/glossary/liquidity/)
-- [Relative Volume](/glossary/relative-volume/)
-- [Volume Spike](/glossary/volume-spike/)
 
 ## FAQ
 
@@ -320,7 +275,3 @@ Yes. Catalysts can be positive, negative, mixed, or unclear. Offerings, weak ear
 ### What should traders check after a catalyst appears?
 
 Review the full announcement, related filings, key details, volume response, price reaction, liquidity, spread, and whether the move is already extended.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Stock catalysts do not guarantee price movement, continuation, reversal, or profitable trades. Always review risk, liquidity, filings, news quality, and your own trading plan.

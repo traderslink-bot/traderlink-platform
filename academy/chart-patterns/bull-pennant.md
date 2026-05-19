@@ -38,8 +38,6 @@ meta_description: "Learn what bull pennants show, where traders force them, and 
 ---
 # Bull Pennant
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Bear Flag Pattern](/academy/chart-patterns/bear-flag/) and leads into [Bear Pennant](/academy/chart-patterns/bear-pennant/).
-
 **Best suited for:** day trading and momentum swing trading.
 
 A bull pennant forms after a strong upward move when price compresses into a small tightening range. It is related to a bull flag, but the pause is usually tighter and more triangular.

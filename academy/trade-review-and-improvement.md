@@ -36,8 +36,6 @@ meta_description: "Learn how structured trade review helps traders improve risk,
 ---
 # Trade Review And Improvement
 
-This lesson is part of the **Trade Review And Improvement** course. It follows [Averaging Down](/academy/averaging-down/) and leads into [Trade Risk Review](/academy/trade-risk-review/).
-
 Trade review is the process of studying completed trades so the trader can understand what actually happened: the plan, the risk, the execution, the management decisions, and the behavior pattern.
 
 This course is the bridge between learning concepts and improving from real trades. Reading lessons can build knowledge, but review turns that knowledge into feedback.
@@ -108,29 +106,6 @@ Another mistake is tracking too many details but never turning them into a pract
 
 A final mistake is treating review like punishment. Review should be honest, but it should also be useful and repeatable.
 
-## Practical Checklist
-
-- The trade has an original plan to compare against.
-- Risk and position size are reviewed separately from outcome.
-- Execution quality is reviewed separately from setup quality.
-- The review names any behavior pattern clearly.
-- The final lesson is specific enough to use next time.
-- The review avoids blaming the market for every result.
-- The next improvement step is small and practical.
-
-## Apply This In Review
-
-- What was the trade plan?
-- What actually happened?
-- Where did risk change?
-- Was the entry planned or emotional?
-- Was the exit planned or emotional?
-- What context did I miss?
-- What repeated pattern showed up?
-- What one rule or checklist item should I improve?
-
-Good review is not about perfect hindsight. It is about building a clearer feedback loop.
-
 ## Related Lessons
 
 - [Trade Risk Review](/academy/trade-risk-review/)
@@ -164,7 +139,3 @@ A journal is one way to record review. The key is the review process, not the la
 ### Can review guarantee better results?
 
 No. Review can improve awareness and process, but it cannot guarantee outcomes.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trade review can help organize decisions and behavior patterns, but it does not guarantee trading results.

@@ -36,8 +36,6 @@ meta_description: "Learn what forward testing means in trading, how to test a se
 ---
 # Forward Testing Trading
 
-This lesson is part of the **Practice And Improvement** course. It follows [One-Rule Practice Drill](/academy/one-rule-practice-drill/) and leads into [Trading Improvement Plan](/academy/trading-improvement-plan/).
-
 Forward testing means tracking a setup, rule, or process in real time going forward. It can be done in paper trading, simulation, tiny-risk environments, or observation-only review.
 
 The key is that the trader is not only studying old charts. They are collecting new examples under current conditions.
@@ -113,26 +111,6 @@ Another mistake is ignoring market context changes during the sample.
 
 A final mistake is testing outcomes while ignoring whether the trader followed the process.
 
-## Practical Checklist
-
-- The test has one setup, rule, or behavior focus.
-- The sample size is defined.
-- The trader records context the same way each time.
-- Process grade is tracked separately from outcome.
-- Market condition changes are noted.
-- The test is not changed after one result.
-- The conclusion is written cautiously.
-
-## Apply This In Review
-
-- What exactly was I forward testing?
-- How many examples did I collect?
-- Did I follow the same criteria each time?
-- Did process quality improve?
-- Did market context change the sample?
-- What did the test not prove?
-- Should I repeat, refine, or stop this test?
-
 ## Related Lessons
 
 - [One-Rule Practice Drill](/academy/one-rule-practice-drill/)
@@ -140,15 +118,6 @@ A final mistake is testing outcomes while ignoring whether the trader followed t
 - [Planned Vs Actual Trade Review](/academy/planned-vs-actual-trade-review/)
 - [Risk Management](/academy/risk-management/)
 - [Mistake Pattern Review](/academy/mistake-pattern-review/)
-
-## Related Glossary Terms
-
-- Forward testing
-- Sample size
-- Setup
-- Process grade
-- Risk management
-- Market context
 
 ## FAQ
 
@@ -167,7 +136,3 @@ No. It can provide evidence about process and context, but market conditions can
 ### What should I forward test first?
 
 Start with one rule or setup that is already clearly defined and easy to review.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

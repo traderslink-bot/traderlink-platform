@@ -39,8 +39,6 @@ meta_description: "Learn what Double Top shows, why it can fail, and how to revi
 ---
 # Double Top
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Channel Pattern](/academy/chart-patterns/channel-pattern/) and leads into [Double Bottom](/academy/chart-patterns/double-bottom/).
-
 **Best suited for:** day trading and swing trading.
 
 Double Top is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.

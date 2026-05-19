@@ -38,8 +38,6 @@ meta_description: "Learn how swing traders plan risk with invalidation levels, p
 ---
 # Swing Trading Risk Management
 
-This lesson is part of the **Swing Trading Workflow** course. It follows [Swing Trading For Beginners](/academy/swing-trading-for-beginners/) and leads into [Swing Trading Support Resistance](/academy/swing-trading-support-resistance/).
-
 Swing trading risk management is the process of deciding how much risk belongs in a multi-session trade before the trade is already under pressure.
 
 The key difference is overnight exposure. A day trader can often close before the session ends. A swing trader may still be exposed to earnings, filings, offerings, sector headlines, broad-market weakness, and gaps before the next regular-hours open.
@@ -152,28 +150,6 @@ Another mistake is holding through earnings or filings without acknowledging tha
 
 A final mistake is turning a failed swing trade into an unplanned long-term hold.
 
-## Practical Checklist
-
-- The invalidation area is defined before entry.
-- Position size fits the distance to invalidation.
-- Overnight gap risk is considered.
-- Earnings, filings, and known events are checked.
-- Liquidity and spread are acceptable for the planned size.
-- The trader knows what would change the thesis.
-- Risk is reviewed after each session while the trade is open.
-
-## Apply This In Review
-
-- Did I define risk before entering?
-- Did my position size match the real invalidation area?
-- Did I account for overnight or event risk?
-- Did I move risk because the chart changed or because I hoped?
-- Did a filing, headline, or market event change the thesis?
-- Did I reduce risk when the trade became less clean?
-- Did I turn a swing trade into an unplanned hold?
-
-The best swing risk review studies whether the risk decision was planned, updated for valid reasons, and followed consistently.
-
 ## Related Lessons
 
 - [Swing Trading For Beginners](/academy/swing-trading-for-beginners/)
@@ -181,15 +157,6 @@ The best swing risk review studies whether the risk decision was planned, update
 - [Position Sizing](/academy/position-sizing/)
 - [Overnight Risk](/academy/overnight-risk/)
 - [Stop Loss](/academy/stop-loss/)
-
-## Related Glossary Terms
-
-- Risk management
-- Position sizing
-- Invalidation
-- Overnight risk
-- Gap risk
-- Stop loss
 
 ## FAQ
 
@@ -216,7 +183,3 @@ Yes. Risk management does not prevent losses. It helps keep losses planned, revi
 ### How should swing risk be reviewed?
 
 Review the original risk plan, size, invalidation area, event checks, overnight decisions, and whether the trader followed the plan when conditions changed.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Swing trading involves risk, including overnight and gap risk, and no risk plan can eliminate the possibility of loss.

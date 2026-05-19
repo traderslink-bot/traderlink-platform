@@ -4,7 +4,7 @@
   <rect width="760" height="440" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554"/>
   <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Uptrend Structure Break</text>
-  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Example only: structure break is a context change to review.</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Example only: a structure break changes context.</text>
   <g stroke="#18304e" stroke-width="1">
     <line x1="58" y1="118" x2="704" y2="118"/>
     <line x1="58" y1="170" x2="704" y2="170"/>
@@ -36,5 +36,5 @@
   <text x="410" y="118" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Higher high</text>
   <text x="535" y="348" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Break below structure</text>
   <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: did the trade plan depend on the latest higher low holding?</text>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Did the plan depend on the latest higher low holding?</text>
 </svg>

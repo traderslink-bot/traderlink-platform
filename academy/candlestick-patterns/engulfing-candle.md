@@ -38,13 +38,11 @@ meta_description: "Learn what engulfing candles show, why they can fail, and how
 ---
 # Engulfing Candle
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Topping Tail Candle](/academy/candlestick-patterns/topping-tail/) and leads into [Inside Bar](/academy/candlestick-patterns/inside-bar/).
-
 An engulfing candle forms when one candle's body overtakes the body of the prior candle. It can show a sharp shift in control, but it still needs location and follow-through.
 
 The larger candle can feel decisive in real time. The review still has to ask whether the entry was structured or late.
 
-![Candlestick chart showing bullish and bearish engulfing candles near support and resistance with volume context.](/academy/images/chart-reading/engulfing-candle-context.svg)
+![Clean candle diagram showing bullish and bearish engulfing candle pairs.](/academy/images/chart-reading/engulfing-candle-context.svg)
 
 ## What It Looks Like
 

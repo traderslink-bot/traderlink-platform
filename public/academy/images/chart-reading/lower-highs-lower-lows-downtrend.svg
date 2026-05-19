@@ -37,7 +37,7 @@
   <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
     <text x="78" y="110" fill="#fecaca">Swing high</text>
     <text x="190" y="300" fill="#fecaca">LL</text>
-    <text x="246" y="156" fill="#fecaca">Lower high</text>
+    <text x="270" y="145" fill="#fecaca">Lower high</text>
     <text x="402" y="340" fill="#fecaca">Lower low</text>
     <text x="560" y="226" fill="#fecaca">Weak bounce</text>
   </g>
@@ -66,6 +66,6 @@
     <rect x="604" y="300" width="14" height="34" fill="#ef4444" opacity=".8"/>
   </g>
   <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: were lower highs forming before support failed?</text>
-  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review lower highs and lower lows in order.</text>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: were lower highs forming before support failed?</text>
+  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context lower highs and lower lows in order.</text>
 </svg>

@@ -27,8 +27,6 @@ meta_description: "Learn what a shelf registration is, why shelf filings matter,
 ---
 # Shelf Registration
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [At The Market Offering](/academy/at-the-market-offering/) and leads into [Shelf Registration Vs Offering](/academy/shelf-registration-vs-offering/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -147,18 +145,6 @@ A trade journal can connect float, filings, dilution context, risk, execution, a
 
 Start with [stock offerings](/academy/stock-offerings/) and [how to spot dilution risk](/academy/how-to-spot-dilution-risk/). Shelf registrations often connect with [at-the-market offerings](/academy/at-the-market-offering/), [Form S-3](/academy/sec-filings/form-s-3/), and [EFFECT notices](/academy/sec-filings/effect-notice/).
 
-## Practical Checklist
-
-Before treating Shelf Registration as meaningful context, review:
-
-- Registration amount.
-- Eligible securities.
-- Primary or resale.
-- Prospectus supplement risk.
-- Shelf age.
-- ATM connection.
-- Actual offering evidence.
-
 ## FAQ
 
 ### What is a shelf registration?
@@ -185,17 +171,6 @@ Traders often check whether the shelf becomes effective, whether a prospectus su
 
 No. It can provide flexibility, but it can also create future dilution risk depending on how the company uses it.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Shelf Registration, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [At The Market Offering](/academy/at-the-market-offering/)
@@ -203,7 +178,3 @@ When reviewing a small-cap trade or watchlist idea connected to Shelf Registrati
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Shelf registrations do not guarantee dilution, price movement, selling pressure, or trading outcomes. Always review the full filing, related supplements, liquidity, risk, and your own trading plan.

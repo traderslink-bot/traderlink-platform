@@ -37,8 +37,6 @@ meta_description: "Learn what a reverse stock split means, why companies do it, 
 ---
 # Reverse Stock Split Explained for Traders
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Preferred Stock](/academy/preferred-stock/) and leads into [Reverse Split Vs Dilution](/academy/reverse-split-vs-dilution/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -122,22 +120,6 @@ Traders often watch whether the company has:
 
 This is not about assuming every reverse split creates dilution. It is about understanding whether the split is part of a larger risk picture.
 
-## Apply This In Review
-
-If you traded a stock around a reverse split, review the trade carefully.
-
-Ask:
-
-- Did I know the reverse split date?
-- Did I understand the ratio?
-- Was liquidity different after the split?
-- Did the stock have recent financing risk?
-- Did I react to the higher post-split price without reviewing the share structure?
-- Did I chase a low-float post-split move?
-- Did the trade follow a plan?
-
-Reverse split names can move quickly, but they can also be messy. Review the decision, not just the result.
-
 ## Related Terms And Guides
 
 Useful related pages include:
@@ -158,18 +140,6 @@ Common mistakes with Reverse Split include:
 - Forgetting that small-cap stocks can move sharply in both directions.
 - Assuming a clean chart makes financing or liquidity risk disappear.
 - Reviewing the idea before the trade but not checking what actually happened afterward.
-
-## Practical Checklist
-
-Before treating Reverse Split as meaningful context, review:
-
-- Split ratio.
-- Effective date.
-- Listing reason.
-- Post-split float.
-- Adjusted warrants.
-- Liquidity after split.
-- Follow-up offering risk.
 
 ## FAQ
 
@@ -215,7 +185,3 @@ When reviewing a small-cap trade or watchlist idea connected to Reverse Split, a
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock.

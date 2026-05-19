@@ -11,7 +11,7 @@
   <line x1="76" y1="300" x2="824" y2="300" stroke="#182943"/>
   <rect x="76" y="188" width="748" height="30" fill="#2563eb" opacity="0.16"/>
   <line x1="76" y1="203" x2="824" y2="203" stroke="#38bdf8" stroke-width="2" stroke-dasharray="8 8"/>
-  <text x="654" y="184" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="14">level to review</text>
+  <text x="654" y="184" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="14">level to watch</text>
   <rect x="94" y="112" width="104" height="28" rx="14" fill="#12345a" stroke="#38bdf8"/>
   <text x="112" y="131" fill="#d8ecff" font-family="Arial, sans-serif" font-size="13">news appears</text>
   <g stroke-width="3" stroke-linecap="round">

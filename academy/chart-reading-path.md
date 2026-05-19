@@ -38,8 +38,6 @@ meta_description: "Follow the TradersLink Academy chart reading path from suppor
 ---
 # Chart Reading Path
 
-This path hub helps organize the completed **Chart Reading And Market Structure** lessons into a recommended Academy flow. It follows [Small Cap Swing Trading](/academy/swing-trading-small-caps/) and leads into [News And Filings Path](/academy/news-and-filings-path/).
-
 Chart reading is the skill of understanding price, levels, candles, structure, volume, and context without turning every pattern into a prediction.
 
 The recommended learning order is intentional: learn levels first, then structure, then candles and patterns in context, then volume and workflow.

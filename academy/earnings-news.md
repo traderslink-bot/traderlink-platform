@@ -42,8 +42,6 @@ meta_description: "Learn how earnings news can affect stocks, what traders revie
 
 Earnings news stocks are stocks moving or getting attention because of an earnings report, earnings press release, conference call, or financial update. Traders watch earnings because the report can change expectations around revenue, losses, margins, cash, guidance, and future outlook.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows the SEC filing lessons and leads into [FDA News Stocks](/academy/fda-news-stocks/) as the course moves into specific catalyst categories.
-
 An earnings report does not guarantee a stock will move higher or lower. A company can beat expectations and still fade. A company can miss expectations and still move higher if traders expected worse. The market reaction depends on expectations, guidance, liquidity, valuation, and chart context.
 
 ## Lesson Objective
@@ -169,34 +167,6 @@ Common earnings-news mistakes include:
 
 Earnings need a full-context review.
 
-## Practical Checklist
-
-Use this checklist when reviewing earnings trades:
-
-- What time were earnings released?
-- What were revenue, loss, margin, and cash details?
-- Was guidance issued or changed?
-- Was the reaction expected or surprising?
-- Did related filings add context?
-- Did volume expand and continue?
-- Did price hold, fade, reject, or reclaim important levels?
-- Was liquidity clean enough for the trade size?
-- Did I enter because of the numbers or because of headline urgency?
-
-## Apply This In Review
-
-After an earnings-driven trade, record:
-
-- The exact earnings catalyst.
-- The strongest detail.
-- The weakest detail.
-- Whether guidance mattered.
-- Whether cash or financing risk mattered.
-- Whether price held after the first reaction.
-- Whether your trade followed a plan.
-
-This helps you learn which earnings situations you understand well and which ones pull you into reactive trades.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)
@@ -228,7 +198,3 @@ Review revenue, losses, margins, cash, guidance, management commentary, related 
 ### Is earnings trading risky?
 
 Earnings reactions can be fast and volatile, especially outside regular market hours. Traders should review liquidity, spread, risk, and their own plan.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Earnings news does not guarantee price movement, continuation, reversal, or profitable trades. Always review the full report, related filings, liquidity, risk, and your own trading plan.

@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
   <title id="title">Stock catalyst headline versus chart reaction</title>
-  <desc id="desc">Dark trading dashboard showing a catalyst headline, red and green candlesticks, a volume burst, a failed hold review label, and filing check notes.</desc>
+  <desc id="desc">Dark trading dashboard showing a catalyst headline, red and green candlesticks, a volume burst, a failed hold label, and filing check notes.</desc>
   <rect width="960" height="560" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="904" height="504" rx="14" fill="#0b1628" stroke="#1d3557"/>
   <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Headline Versus Reaction</text>
-  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">A catalyst starts the review. The chart, volume, filings, and liquidity add context.</text>
+  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">A catalyst starts the read. The chart, volume, filings, and liquidity add context.</text>
 
   <rect x="52" y="118" width="856" height="74" rx="10" fill="#081323" stroke="#172a46"/>
   <text x="78" y="148" fill="#7bb4ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">CATALYST HEADLINE</text>
@@ -79,7 +79,7 @@
   </g>
 
   <rect x="700" y="216" width="208" height="250" rx="10" fill="#081323" stroke="#172a46"/>
-  <text x="724" y="248" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Review Notes</text>
+  <text x="724" y="248" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Context Notes</text>
   <g font-family="Arial, sans-serif" font-size="13">
     <text x="724" y="286" fill="#8fa7c8">Source</text>
     <text x="884" y="286" fill="#e6f0ff" text-anchor="end">Company PR</text>
@@ -90,6 +90,6 @@
     <text x="724" y="394" fill="#8fa7c8">Volume</text>
     <text x="884" y="394" fill="#ef5350" text-anchor="end">Fading</text>
     <text x="724" y="430" fill="#8fa7c8">Liquidity</text>
-    <text x="884" y="430" fill="#f5c26b" text-anchor="end">Review</text>
+    <text x="884" y="430" fill="#f5c26b" text-anchor="end">Context</text>
   </g>
 </svg>

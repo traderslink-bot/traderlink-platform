@@ -38,8 +38,6 @@ meta_description: "Learn what market-wide circuit breakers are, why broad-market
 ---
 # Market-Wide Circuit Breakers
 
-This lesson is part of the **Halts And High-Volatility Events** course. It follows [Halt Resume](/academy/halt-resume/) and leads into [Fast Spread Risk](/academy/fast-spread-risk/).
-
 Market-wide circuit breakers are rules that can pause broad market trading during severe market declines. They are different from a single-stock volatility halt.
 
 The goal of this lesson is not to memorize rules as a trade setup. The goal is to understand broad-market interruption risk and know where to verify current rules.
@@ -108,26 +106,6 @@ Another mistake is relying on outdated rule details.
 
 A final mistake is increasing risk during market-wide uncertainty without reviewing liquidity and spread.
 
-## Practical Checklist
-
-- The trader identifies whether the event is single-stock or market-wide.
-- Current official exchange rules are checked.
-- Broad-market stress is included in the trade review.
-- Spread and liquidity changes are reviewed.
-- Position size and risk are reassessed.
-- The trader does not treat circuit breaker levels as signals.
-- The session is reviewed for emotional decisions.
-
-## Apply This In Review
-
-- Was this a single-stock halt or broad-market event?
-- Did the broader market affect my trade?
-- Did spreads or liquidity change?
-- Did I rely on outdated assumptions?
-- Did I increase risk during market stress?
-- Did I have a plan for interruption?
-- What market-wide risk rule should I add?
-
 ## Related Lessons
 
 - [Trading Halts](/academy/trading-halts/)
@@ -135,15 +113,6 @@ A final mistake is increasing risk during market-wide uncertainty without review
 - [Overnight Risk](/academy/overnight-risk/)
 - [Spread](/academy/spread/)
 - [Trade Risk Review](/academy/trade-risk-review/)
-
-## Related Glossary Terms
-
-- Market-wide circuit breaker
-- Trading halt
-- Volatility
-- Spread
-- Liquidity
-- Market risk
 
 ## Official References To Check
 
@@ -168,7 +137,3 @@ As of this lesson review, NYSE describes Level 1, Level 2, and Level 3 threshold
 ### Are circuit breaker levels trade signals?
 
 No. They are market structure rules and risk context, not trade instructions.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

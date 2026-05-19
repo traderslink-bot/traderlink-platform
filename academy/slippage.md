@@ -48,8 +48,6 @@ meta_description: "Learn what trading slippage is, why fill prices can be worse 
 
 Trading slippage happens when an order fills at a different price than expected. For active traders, slippage can turn a good-looking setup into a worse trade because the entry or exit is not where the plan assumed.
 
-This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Bid And Ask](/academy/bid-and-ask/), [Spread](/academy/spread/), and [Liquidity](/academy/liquidity/), then leads into [Market Orders Vs Limit Orders](/academy/market-orders-vs-limit-orders/).
-
 
 ## Lesson Objective
 
@@ -186,40 +184,6 @@ Common slippage mistakes include:
 
 Slippage is often where trade planning and real execution meet.
 
-## Practical Checklist
-
-Use this checklist when reviewing slippage:
-
-- What price did I expect?
-- What price actually filled?
-- How much slippage occurred in cents and percentage terms?
-- Was the spread wide when I placed the order?
-- Was liquidity thin?
-- Was the stock moving quickly?
-- What order type did I use?
-- Was my position size too large for available depth?
-- Did slippage change my planned stop or risk?
-- Was the slippage normal for the conditions or avoidable?
-
-This checklist helps keep execution review concrete.
-
-## Apply This In Review
-
-Slippage review should compare the planned trade with the actual fills.
-
-Helpful review prompts:
-
-- What was my intended entry or exit price?
-- What was my actual fill?
-- What caused the difference?
-- Did spread, liquidity, speed, or order type contribute?
-- Did I size too large for the market?
-- Did slippage change the risk enough that the trade no longer matched the plan?
-- Do similar trades show repeated slippage problems?
-- What would I change next time: size, order type, timing, or trade selection?
-
-Over time, this review can show whether slippage is occasional or part of a repeated execution pattern.
-
 ## FAQ
 
 ### What is trading slippage?
@@ -245,7 +209,3 @@ Compare expected price with actual fill price, then review spread, liquidity, or
 ### Can slippage be eliminated?
 
 No. Slippage cannot be fully eliminated, and no order type guarantees a perfect fill. Traders can only review and manage the conditions that make slippage more likely.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock. Slippage review does not guarantee clean fills, profitability, better decisions, or reduced losses. Always use risk management and review your own trades carefully.

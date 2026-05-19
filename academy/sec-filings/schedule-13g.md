@@ -27,8 +27,6 @@ meta_description: "Learn what Schedule 13G is, why passive ownership filings mat
 ---
 # Schedule 13G
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Schedule 13D](/academy/sec-filings/schedule-13d/) and leads into [Form DEF 14A](/academy/sec-filings/form-def-14a/).
-
 The goal is not to turn Schedule 13G into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -120,26 +118,6 @@ Traders may want to check:
 
 The filing does not guarantee supply or demand, but it can provide ownership context.
 
-## Practical Checklist
-
-Structured review notes can help connect Schedule 13G details to trades.
-
-Useful review notes include:
-
-1. Filing date.
-2. Filer name.
-3. Ownership percentage.
-4. Shares beneficially owned.
-5. Voting and dispositive power.
-6. Initial filing or amendment.
-7. Change from prior ownership.
-8. Stock reaction after the filing.
-9. Whether the trade was based on filing details or social reaction.
-
-This helps traders avoid treating every ownership filing as the same catalyst.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). Schedule 13G is closely related to [Schedule 13D](/academy/sec-filings/schedule-13d/), which is generally more detailed and often tied to active intent.
@@ -183,24 +161,9 @@ Not necessarily. It reports ownership at a point in time and may not mean the in
 
 Yes. Large ownership positions can affect how traders think about available supply, but the filing must be reviewed carefully.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to Schedule 13G, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [Schedule 13D](/academy/sec-filings/schedule-13d/)
 - [Form DEF 14A](/academy/sec-filings/form-def-14a/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Schedule 13G filings do not guarantee price movement, ownership outcomes, or trading results. Always review the full filing, related disclosures, liquidity, risk, and your own trading plan.

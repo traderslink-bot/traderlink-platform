@@ -49,8 +49,6 @@ meta_description: "Learn what relative volume RVOL means, why scanner calculatio
 
 Relative volume RVOL is a scanner metric that compares current trading volume with a stock's normal trading volume. Traders use it to spot stocks that are unusually active.
 
-This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Stock Volume](/academy/volume/) and [Relative Volume](/academy/relative-volume/), then leads into [Volume Spike](/academy/volume-spike/).
-
 
 ## Lesson Objective
 
@@ -188,40 +186,6 @@ Common RVOL mistakes include:
 
 RVOL should create curiosity, not urgency.
 
-## Practical Checklist
-
-Use this checklist when reviewing RVOL-driven trades:
-
-- What was the RVOL number when I noticed the stock?
-- What was the RVOL number when I entered?
-- What baseline did the platform use?
-- Did the scanner include premarket volume?
-- What caused the unusual activity?
-- Did price hold important levels after RVOL appeared?
-- Did volume continue or fade?
-- Was the spread manageable?
-- Did I enter because the setup was structured or because the RVOL number was exciting?
-- Did high RVOL improve liquidity, or did execution still feel unstable?
-
-This checklist helps turn scanner excitement into trade review.
-
-## Apply This In Review
-
-When reviewing RVOL, record the number and the context behind it.
-
-Helpful review prompts:
-
-- Which platform or scanner showed RVOL?
-- What did that platform compare against?
-- Was the stock already extended when I found it?
-- Was RVOL tied to news, a filing, a level break, or sector activity?
-- Did I read the catalyst before trading?
-- Did high RVOL lead me to ignore spread or risk?
-- Did volume continue after entry?
-- Did similar high-RVOL trades produce better execution or more chasing?
-
-The best RVOL review connects scanner context to trader behavior.
-
 ## FAQ
 
 ### What does RVOL mean?
@@ -251,7 +215,3 @@ No. RVOL is context, not a trade signal. Traders still need level quality, catal
 ### Should RVOL go in a review notes?
 
 Yes, if it affected the trade idea. Recording RVOL can help traders review whether scanner activity supported the trade or encouraged chasing.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock. RVOL does not guarantee price movement, profitability, better decisions, or reduced losses. Always use risk management and review your own trades carefully.

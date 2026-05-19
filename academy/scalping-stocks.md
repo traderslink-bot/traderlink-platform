@@ -36,8 +36,6 @@ meta_description: "Learn what stock scalping is, what it requires, common mistak
 ---
 # Scalping Stocks
 
-This lesson is part of the **Trading Styles And Playbooks** course. It follows [Swing Trading](/academy/swing-trading/) and leads into [Short Selling Basics](/academy/short-selling-basics/).
-
 Scalping is a very short-term trading style focused on small price movements, fast decisions, and execution quality. Because holding periods are short, spread, slippage, fills, and discipline matter heavily.
 
 Scalping is not easier because trades are shorter. The shorter the trade, the less room there is for sloppy execution.
@@ -108,28 +106,6 @@ Another mistake is using market orders without understanding fill risk.
 
 A final mistake is reviewing only win rate instead of execution quality.
 
-## Practical Checklist
-
-- The spread is manageable.
-- Liquidity is sufficient for the planned size.
-- The trade has a clear level or context.
-- Risk is defined before entry.
-- Order type and fill risk are understood.
-- Trade count is controlled.
-- Execution quality will be reviewed.
-
-## Apply This In Review
-
-- Was the spread acceptable?
-- Did I get the expected fill?
-- Did slippage affect the trade?
-- Was the trade planned or impulsive?
-- Did I overtrade after one scalp failed?
-- Did liquidity support the size?
-- Was the style appropriate for the stock?
-
-Scalping review should pay close attention to the difference between chart idea and actual fill quality.
-
 ## Related Lessons
 
 - [Spread](/academy/spread/)
@@ -163,7 +139,3 @@ Short trades can make it easy to keep clicking after losses or missed moves.
 ### How should scalps be reviewed?
 
 Review fill quality, spread, slippage, plan quality, trade count, and whether the stock matched the style.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trading styles and playbooks can help organize review, but they do not guarantee outcomes or replace independent risk decisions.

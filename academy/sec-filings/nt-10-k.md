@@ -27,8 +27,6 @@ meta_description: "Learn what NT 10-K means, why companies file late annual repo
 ---
 # NT 10-K
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form PRE 14A](/academy/sec-filings/form-pre-14a/) and leads into [NT 10-Q](/academy/sec-filings/nt-10-q/).
-
 The goal is not to turn NT 10-K into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -115,25 +113,6 @@ Traders may want to check:
 
 The filing does not guarantee dilution, but it can increase uncertainty until the annual report is filed.
 
-## Practical Checklist
-
-Structured review notes can help connect NT 10-K details to trading decisions.
-
-Useful review notes include:
-
-1. Filing date.
-2. Reason for the annual report delay.
-3. Whether significant changes were expected.
-4. Prior cash and risk context.
-5. Whether the company filed within the extension period.
-6. What the eventual 10-K showed.
-7. Stock reaction after the NT 10-K.
-8. Whether you traded while annual financials were still pending.
-
-This helps traders avoid ignoring reporting risk during active trades.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). NT 10-K connects directly with [Form 10-K](/academy/sec-filings/form-10-k/) and [NT 10-Q](/academy/sec-filings/nt-10-q/).
@@ -177,24 +156,9 @@ It can in some situations, especially if reporting delays continue. Traders shou
 
 The eventual 10-K contains the full annual report. It may confirm whether the delay was minor or tied to larger financial or reporting issues.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to NT 10-K, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [Form PRE 14A](/academy/sec-filings/form-pre-14a/)
 - [NT 10-Q](/academy/sec-filings/nt-10-q/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. NT 10-K filings do not guarantee bad news, price movement, dilution, delisting, or trading outcomes. Always review the full filing, the eventual 10-K, related disclosures, liquidity, risk, and your own trading plan.

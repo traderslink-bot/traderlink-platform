@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
   <title id="title">Swing Trading Multi-Session Plan</title>
-  <desc id="desc">Dark trading dashboard showing daily red and green candlesticks across multiple sessions, support and resistance zones, volume bars, overnight markers, and review-focused labels.</desc>
+  <desc id="desc">Dark trading dashboard showing daily red and green candlesticks across multiple sessions, support and resistance zones, volume bars, overnight markers, and planning labels.</desc>
   <rect width="960" height="540" fill="#07111f"/>
   <rect x="34" y="34" width="892" height="472" rx="14" fill="#0d1828" stroke="#18314f"/>
   <text x="58" y="70" fill="#e6edf7" font-family="Arial, sans-serif" font-size="24" font-weight="700">Swing Trading Workflow: Multi-Session Plan</text>
-  <text x="58" y="96" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="14">Daily chart context • levels • overnight review • educational planning view</text>
+  <text x="58" y="96" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="14">Daily chart context, levels, overnight risk, and planning view</text>
 
   <rect x="74" y="128" width="700" height="250" fill="#0a1422" stroke="#152b46"/>
   <g stroke="#162943" stroke-width="1">
@@ -15,7 +15,7 @@
   </g>
   <rect x="74" y="146" width="700" height="30" fill="#1d3d5d" opacity="0.55"/>
   <rect x="74" y="306" width="700" height="32" fill="#0f5f86" opacity="0.35"/>
-  <text x="88" y="165" fill="#9fd0ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Resistance zone for review</text>
+  <text x="88" y="165" fill="#9fd0ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Resistance zone</text>
   <text x="88" y="327" fill="#9fd0ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Support / invalidation area</text>
 
   <g font-family="Arial, sans-serif" font-size="12" fill="#6f8299">
@@ -57,7 +57,7 @@
 
   <g font-family="Arial, sans-serif" font-size="14">
     <rect x="800" y="132" width="96" height="220" rx="10" fill="#0b2035" stroke="#204d73"/>
-    <text x="818" y="162" fill="#e6edf7" font-weight="700">Review</text>
+    <text x="818" y="162" fill="#e6edf7" font-weight="700">Context</text>
     <text x="818" y="195" fill="#a7b6c8">Thesis?</text>
     <text x="818" y="225" fill="#a7b6c8">Levels?</text>
     <text x="818" y="255" fill="#a7b6c8">Volume?</text>

@@ -38,8 +38,6 @@ meta_description: "Follow the TradersLink Academy news and filings path for cata
 ---
 # News And Filings Path
 
-This path hub organizes the completed **News, Catalysts, Filings, And Dilution** lessons. It follows [Chart Reading Path](/academy/chart-reading-path/) and leads into [Trade Review Path](/academy/trade-review-path/).
-
 News and filings can overwhelm traders because the information comes fast and not all headlines have the same quality. The path teaches users to slow down, read the source, understand the filing type, connect the information to price reaction, and review risk.
 
 ![Dark dashboard path map showing catalyst news, SEC filing cards, realistic chart reaction, volume, and review steps for the news and filings learning path.](/academy/images/chart-reading/academy-news-filings-path-map.svg)
@@ -128,28 +126,6 @@ Another mistake is assuming positive-sounding news means the stock must move hig
 
 A final mistake is skipping review after the catalyst fades.
 
-## Practical Checklist
-
-- The source document is identified.
-- The catalyst type is clear.
-- Filing type and timing are reviewed.
-- Offering, dilution, and cash-risk context are checked when relevant.
-- Price reaction is compared with key levels.
-- Volume and liquidity are reviewed.
-- The trade is reviewed after the initial reaction and after follow-through or fade.
-
-## Apply This In Review
-
-- What was the actual catalyst or filing?
-- Did I read the source or only the headline?
-- Did the filing change dilution, cash, ownership, or event risk?
-- Did price hold the level created by the news?
-- Did volume continue or fade?
-- Did I confuse attention with confirmation?
-- Did I keep holding after the news thesis weakened?
-
-News and filing review is about understanding what changed and how traders reacted, not predicting the next headline.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)
@@ -157,16 +133,6 @@ News and filing review is about understanding what changed and how traders react
 - [Dilution Risk](/academy/dilution-risk/)
 - [Small Cap Stocks](/academy/small-cap-stocks/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Related Glossary Terms
-
-- Catalyst
-- Press release
-- SEC filing
-- Offering
-- Dilution
-- Shelf registration
-- Form 8-K
 
 ## FAQ
 
@@ -193,7 +159,3 @@ Small-cap stocks often react sharply to news and may carry financing, dilution, 
 ### What comes after this path?
 
 The next useful step is trade review, where users study how their actual decisions responded to news, filings, and chart context.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. News, filings, catalysts, offerings, and dilution context can affect risk, but no headline or filing guarantees a trading outcome.

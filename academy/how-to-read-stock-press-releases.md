@@ -50,8 +50,6 @@ meta_description: "Learn a practical workflow for reading stock press releases, 
 
 Learning how to read stock press releases helps traders slow down between the headline and the trade. A press release can explain why a stock is moving, but the useful information is usually in the details, not just the first sentence.
 
-This lesson is part of the **News, Catalysts And SEC Filings** learning path. It builds on [Stock Catalysts](/academy/stock-catalysts/) and [Stock Press Releases](/academy/press-releases/), then leads into [SEC Filings](/academy/sec-filings/) because filings often provide the deeper context.
-
 A strong headline does not guarantee a strong trade. A weak-looking headline can still matter if the details are real. The goal is not to predict every move. The goal is to understand what the company actually announced before reacting to the chart.
 
 ## Lesson Objective
@@ -237,43 +235,6 @@ Common press-release reading mistakes include:
 
 The workflow exists to reduce those errors.
 
-## Practical Checklist
-
-Use this checklist before reviewing a press-release trade:
-
-- Did I confirm the source?
-- What time was the release issued?
-- What category of news is this?
-- What are the confirmed facts?
-- What details are missing?
-- Are the statements completed facts or future plans?
-- Is there risk language?
-- Is there a related SEC filing?
-- Did volume expand and continue?
-- Did price hold, fade, reject, or reclaim important levels?
-- Was liquidity clean enough for the trade size?
-- Did I enter from a plan or from headline urgency?
-
-This checklist turns a headline into a review process.
-
-## Apply This In Review
-
-When reviewing press-release trades, record the reading process, not only the outcome.
-
-Helpful prompts:
-
-- Did I read the release before entering?
-- Which detail mattered most?
-- Which important detail was missing?
-- Did I check for related filings?
-- Did I notice vague or forward-looking language?
-- Did the chart reaction match the strength of the details?
-- Did volume continue after the first move?
-- Did I chase because I saw the headline late?
-- Do I repeat mistakes around certain words like partnership, FDA, AI, contract, or acquisition?
-
-These notes can show whether your news process is improving.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)
@@ -284,14 +245,6 @@ These notes can show whether your news process is improving.
 - [Partnership News Stocks](/academy/partnership-news-stocks/)
 - [Clinical Trial News](/academy/clinical-trial-news/)
 - [Unusual Volume](/academy/unusual-volume/)
-
-## Related Glossary Terms
-
-- [Catalyst](/glossary/catalyst/)
-- [News Catalyst](/glossary/news-catalyst/)
-- [Dilution](/glossary/dilution/)
-- [Volume Spike](/glossary/volume-spike/)
-- [Liquidity](/glossary/liquidity/)
 
 ## FAQ
 
@@ -318,7 +271,3 @@ Yes. Even strong-looking news can fade if the move is extended, liquidity is wea
 ### Does reading press releases replace a trading plan?
 
 No. Reading press releases helps with context, but it does not replace risk management, trade planning, or post-trade review.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Press releases do not guarantee stock movement, continuation, reversal, or profitable trades. Always review the full announcement, related filings, liquidity, risk, and your own trading plan.

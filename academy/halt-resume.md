@@ -38,8 +38,6 @@ meta_description: "Learn what traders review when a halted stock resumes, includ
 ---
 # Halt Resume
 
-This lesson is part of the **Halts And High-Volatility Events** course. It follows [Volatility Halts](/academy/volatility-halts/) and leads into [Market-Wide Circuit Breakers](/academy/market-wide-circuit-breakers/).
-
 A halt resume is the moment trading begins again after a halt. This can be one of the most unstable parts of a fast-moving stock.
 
 The resume is not a clean reset. Orders, emotion, news reaction, imbalance, spread, and liquidity can all change at once.
@@ -112,26 +110,6 @@ Another mistake is using order size that does not match resume liquidity.
 
 A final mistake is treating a resume gap as guaranteed continuation.
 
-## Practical Checklist
-
-- The official halt/resume information is checked when available.
-- Spread and depth are reviewed after resume.
-- The first candle is not treated as proof.
-- The original plan is reassessed.
-- Position size accounts for unstable fills.
-- Slippage risk is considered.
-- Resume behavior is logged after the trade or observation.
-
-## Apply This In Review
-
-- What changed between the halt and resume?
-- How wide was the spread?
-- Was displayed depth reliable?
-- Did I react to the first candle?
-- Did slippage affect execution?
-- Did the original plan still apply?
-- What resume rule should I use next time?
-
 ## Related Lessons
 
 - [Volatility Halts](/academy/volatility-halts/)
@@ -139,15 +117,6 @@ A final mistake is treating a resume gap as guaranteed continuation.
 - [Level 2](/academy/level-2/)
 - [Slippage](/academy/slippage/)
 - [Execution Review](/academy/execution-review/)
-
-## Related Glossary Terms
-
-- Halt resume
-- Spread
-- Level 2
-- Slippage
-- Liquidity
-- Order imbalance
 
 ## FAQ
 
@@ -166,7 +135,3 @@ No. The first resume candle can be unstable and should be reviewed with spread, 
 ### What should traders review after a halt resume?
 
 Review spread, depth, slippage, volume, price behavior, and whether the original plan still applied.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

@@ -38,8 +38,6 @@ meta_description: "Learn what bull flags show, why they fail, and how to review 
 ---
 # Bull Flag Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Chart Pattern Deep-Dive Lessons](/academy/chart-pattern-deep-dive-lessons/) and leads into [Bear Flag Pattern](/academy/chart-patterns/bear-flag/).
-
 **Best suited for:** day trading and momentum swing trading.
 
 A bull flag is a pattern traders watch after a strong upward move followed by a controlled pullback or consolidation. It can show that price is pausing instead of giving back the entire move.

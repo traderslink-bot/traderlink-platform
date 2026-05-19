@@ -37,8 +37,6 @@ meta_description: "Learn how to turn reviewed trades into a trading playbook wit
 ---
 # Building A Playbook From Reviewed Trades
 
-This lesson is part of the **Trade Review And Improvement** course. It follows [Mistake Pattern Review](/academy/mistake-pattern-review/) and leads into [How To Review News Trades](/academy/how-to-review-news-trades/).
-
 A trading playbook is more useful when it comes from reviewed trades, not from memory, screenshots, or one exciting outcome. The purpose is to turn repeated evidence into clearer setup criteria, risk rules, disqualifiers, and review questions.
 
 This lesson connects Academy education to the habit of building a process over time.
@@ -162,32 +160,6 @@ Another mistake is ignoring execution. A setup may look good on a chart but fail
 
 A final mistake is changing the playbook after every single trade.
 
-## Practical Checklist
-
-Before adding a rule to a playbook, confirm:
-
-- The rule came from a reviewed sample.
-- The sample uses the same setup or style.
-- Winners and losers were both reviewed.
-- Risk and execution were included.
-- Disqualifiers were written.
-- The rule can be checked before entry.
-- The rule can be reviewed after exit.
-- The change will be forward tested.
-
-## Apply This In Review
-
-Ask:
-
-- Which setup or style am I reviewing?
-- How many completed trades are in this sample?
-- What did the best examples share?
-- What did the worst examples share?
-- Which mistakes repeated?
-- What condition should be required?
-- What condition should disqualify the trade?
-- What rule should I forward test next?
-
 ## Related Lessons
 
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
@@ -196,17 +168,6 @@ Ask:
 - [Trade Grading](/academy/trade-grading/)
 - [Forward Testing Trading](/academy/forward-testing-trading/)
 - [How Trader Intelligence Helps Review Trades](/academy/trader-intelligence-trade-review/)
-
-## Related Glossary Terms
-
-- Playbook
-- Setup
-- Disqualifier
-- Sample size
-- Forward testing
-- Trade review
-- Execution review
-- Risk rule
 
 ## FAQ
 
@@ -233,7 +194,3 @@ A disqualifier is a condition that should prevent a trade from fitting the playb
 ### How does Trader Intelligence help?
 
 Trader Intelligence can help organize completed trades and repeated patterns so playbook rules are based on review evidence.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. A trading playbook can support planning and review, but it does not predict price movement or guarantee trading results.

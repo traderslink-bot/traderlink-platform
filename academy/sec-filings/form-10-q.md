@@ -27,8 +27,6 @@ meta_description: "Learn what Form 10-Q is, why quarterly reports matter, and wh
 ---
 # Form 10-Q
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form 10-K](/academy/sec-filings/form-10-k/) and leads into [Form 20-F](/academy/sec-filings/form-20-f/).
-
 The goal is not to turn Form 10-Q into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -124,26 +122,6 @@ Review areas such as:
 
 The filing does not guarantee dilution, but it can help traders understand whether capital needs are building.
 
-## Practical Checklist
-
-Structured review notes can help connect the filing to your trades.
-
-Useful review notes include:
-
-1. Filing date and quarter.
-2. Cash balance.
-3. Revenue and losses.
-4. Burn rate.
-5. Going concern language.
-6. Share count changes.
-7. Any subsequent events.
-8. Whether you checked the filing before trading.
-9. Whether filing details changed your risk view.
-
-This is not about predicting every move. It is about understanding risk before and after a trade.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). Form 10-Q is closely related to [Form 10-K](/academy/sec-filings/form-10-k/), which gives the annual view.
@@ -187,24 +165,9 @@ Yes, but not always. A stock may react if the filing includes surprising informa
 
 Cash helps traders understand whether the company may need more financing. Low cash and heavy losses can increase financing risk.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to Form 10-Q, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [Form 10-K](/academy/sec-filings/form-10-k/)
 - [Form 20-F](/academy/sec-filings/form-20-f/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Form 10-Q filings do not guarantee price movement, dilution, or trading outcomes. Always review the full filing, related disclosures, liquidity, risk, and your own trading plan.

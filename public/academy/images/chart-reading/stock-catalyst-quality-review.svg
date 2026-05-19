@@ -3,15 +3,15 @@
   <desc id="desc">Dark trading dashboard showing a catalyst quality checklist beside a realistic red and green candlestick reaction chart with volume bars.</desc>
   <rect width="960" height="560" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="904" height="504" rx="14" fill="#0b1628" stroke="#1d3557"/>
-  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Catalyst Quality Review</text>
-  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">Review the details, source, filings, and market reaction before judging the news.</text>
+  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Catalyst Quality Context</text>
+  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">Context the details, source, filings, and market reaction before judging the news.</text>
 
   <rect x="52" y="120" width="360" height="370" rx="10" fill="#081323" stroke="#172a46"/>
   <text x="78" y="154" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Catalyst Detail Panel</text>
   <g font-family="Arial, sans-serif" font-size="14">
     <rect x="78" y="180" width="306" height="44" rx="7" fill="#10233c" stroke="#2d8cff"/>
     <text x="96" y="207" fill="#d8eaff">Specific terms included?</text>
-    <text x="354" y="207" fill="#26c281" text-anchor="end">Review</text>
+    <text x="354" y="207" fill="#26c281" text-anchor="end">Context</text>
     <rect x="78" y="238" width="306" height="44" rx="7" fill="#10233c" stroke="#2d8cff"/>
     <text x="96" y="265" fill="#d8eaff">Named party or source?</text>
     <text x="354" y="265" fill="#26c281" text-anchor="end">Check</text>
@@ -20,7 +20,7 @@
     <text x="354" y="323" fill="#f5c26b" text-anchor="end">Verify</text>
     <rect x="78" y="354" width="306" height="44" rx="7" fill="#10233c" stroke="#2d8cff"/>
     <text x="96" y="381" fill="#d8eaff">Dilution language?</text>
-    <text x="354" y="381" fill="#f5c26b" text-anchor="end">Review</text>
+    <text x="354" y="381" fill="#f5c26b" text-anchor="end">Context</text>
     <rect x="78" y="412" width="306" height="44" rx="7" fill="#10233c" stroke="#2d8cff"/>
     <text x="96" y="439" fill="#d8eaff">Volume still building?</text>
     <text x="354" y="439" fill="#8fa7c8" text-anchor="end">Observe</text>

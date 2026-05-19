@@ -50,8 +50,6 @@ meta_description: "Learn what relative volume means, why unusual volume matters,
 
 Relative volume compares a stock's current volume to its normal volume. Traders use it to see whether a stock is trading with unusual activity.
 
-This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Stock Volume](/academy/volume/) and leads into the more metric-specific [Relative Volume RVOL](/academy/relative-volume-rvol/) lesson.
-
 
 ## Lesson Objective
 
@@ -199,39 +197,6 @@ Common relative volume mistakes include:
 
 Relative volume is a context filter. It should help improve review, not create urgency by itself.
 
-## Practical Checklist
-
-Use this checklist when reviewing high-relative-volume trades:
-
-- Was current volume clearly unusual for this stock?
-- Was the comparison based on daily volume or time-of-day volume?
-- What caused the unusual activity?
-- Was there a real catalyst, filing, sector move, or technical level?
-- Did the stock hold meaningful levels after volume appeared?
-- Did volume continue or fade?
-- Did liquidity improve enough for clean execution?
-- Was the spread manageable?
-- Did the trader enter because the setup was clear or because the scanner looked exciting?
-
-The point is to make the review more specific than "it had high volume."
-
-## Apply This In Review
-
-After trading a high-relative-volume stock, record the context that made the activity unusual.
-
-Helpful review prompts:
-
-- What was relative volume when I first noticed the stock?
-- What was relative volume when I entered?
-- Was the unusual volume tied to news, filings, sector activity, or a chart level?
-- Did I read the catalyst before acting?
-- Did the move continue after entry, or did volume fade?
-- Did liquidity and spread match my planned size?
-- Did high relative volume make me enter too late or size too aggressively?
-- Are my high-relative-volume trades better planned or more emotional than my normal-volume trades?
-
-Over time, this review can show whether unusual volume helps your process or pulls you into reactive trades.
-
 ## FAQ
 
 ### What is relative volume?
@@ -261,7 +226,3 @@ Yes. High relative volume can bring fast movement, volatility, halts, wide sprea
 ### Should traders track relative volume in review notes?
 
 Yes, if unusual volume was part of the trade idea. Tracking it can help traders review whether relative volume supported the setup or encouraged chasing.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock. Relative volume does not guarantee price movement, profitability, better decisions, or reduced losses. Always use risk management and review your own trades carefully.

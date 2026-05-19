@@ -27,8 +27,6 @@ meta_description: "Learn what Form 424B4 is, why final prospectus filings matter
 ---
 # Form 424B4
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form 424B3](/academy/sec-filings/form-424b3/) and leads into [EFFECT Notice](/academy/sec-filings/effect-notice/).
-
 The goal is not to turn Form 424B4 into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -122,26 +120,6 @@ Traders may want to check:
 
 The filing does not guarantee a specific reaction, but it can clarify how the offering changes the company's capital structure.
 
-## Practical Checklist
-
-Structured review notes can help connect Form 424B4 details to actual decisions.
-
-Useful review notes include:
-
-1. Filing date.
-2. Offering price.
-3. Shares or units offered.
-4. Warrants, if any.
-5. Use of proceeds.
-6. Post-offering share count.
-7. Lock-up details.
-8. Stock reaction after the final prospectus.
-9. Whether you understood the final terms before trading.
-
-This kind of review helps separate filing knowledge from headline reaction.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). Form 424B4 often follows [Form S-1](/academy/sec-filings/form-s-1/) or [Form F-1](/academy/sec-filings/form-f-1/).
@@ -185,24 +163,9 @@ No. Both are prospectus filings, but they are used in different offering and pro
 
 Yes. It can show how many shares are being issued and how the offering affects share count and ownership.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to Form 424B4, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [Form 424B3](/academy/sec-filings/form-424b3/)
 - [EFFECT Notice](/academy/sec-filings/effect-notice/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Form 424B4 filings do not guarantee price movement, dilution impact, or trading outcomes. Always review the full filing, related disclosures, liquidity, risk, and your own trading plan.

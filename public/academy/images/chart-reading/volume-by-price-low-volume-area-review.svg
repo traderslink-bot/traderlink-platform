@@ -3,7 +3,7 @@
   <desc id="desc">A dark trading dashboard candlestick chart showing price moving through a low-volume area and stalling near a high-volume zone.</desc>
   <rect width="900" height="520" fill="#08111f"/>
   <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
-  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Low-volume areas need reaction review</text>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Low-volume areas can move quickly</text>
   <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Price may move quickly through low-activity areas, but context still matters.</text>
   <line x1="78" y1="128" x2="650" y2="128" stroke="#182943"/>
   <line x1="78" y1="188" x2="650" y2="188" stroke="#182943"/>
@@ -32,7 +32,7 @@
     <rect x="684" y="292" width="98" height="18" fill="#38bdf8" opacity="0.5" rx="4"/>
   </g>
   <path d="M206 324 C258 300, 306 278, 360 256" fill="none" stroke="#38bdf8" stroke-width="3"/>
-  <text x="370" y="260" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="14">review speed through area</text>
+  <text x="370" y="260" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="14">speed through area</text>
   <line x1="78" y1="340" x2="650" y2="340" stroke="#2a3d5c"/>
   <g>
     <rect x="101" y="420" width="22" height="38" fill="#22c55e" opacity="0.55"/>

@@ -38,8 +38,6 @@ meta_description: "Learn how traders can use official SEC EDGAR filings, company
 ---
 # How To Use EDGAR Source Documents
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [SEC Filings: What Traders Should Know](/academy/sec-filings/) and leads into [Form 8-K](/academy/sec-filings/form-8-k/).
-
 EDGAR is the SEC's public filing system. Traders use it to review official company filings instead of relying only on headlines, social media posts, scanner summaries, or copied snippets.
 
 The goal is not to become a securities lawyer. The goal is to know how to find the source document, confirm the form type and date, open the right exhibit, and review the actual language before drawing conclusions.
@@ -160,32 +158,6 @@ Another mistake is searching by ticker but not confirming company identity or CI
 
 A final mistake is treating one scary or exciting filing phrase as a guaranteed market reaction.
 
-## Practical Checklist
-
-When using EDGAR, confirm:
-
-- Official SEC source was opened.
-- Correct company was selected.
-- Form type was identified.
-- Filing date and accepted time were checked.
-- Primary document was reviewed.
-- Relevant exhibits were opened.
-- Key terms were searched.
-- The filing was connected to related press releases or later filings.
-- The trade review separated filing facts from market assumptions.
-
-## Apply This In Review
-
-Ask:
-
-- Did I read the official filing or only a summary?
-- Did I identify the form type correctly?
-- Did I open the exhibits?
-- Did I confuse registered shares with sold shares?
-- Did I check whether a later filing changed the context?
-- Did I trade a headline before reading the source?
-- What filing term should I learn next?
-
 ## Related Lessons
 
 - [SEC Filings: What Traders Should Know](/academy/sec-filings/)
@@ -194,18 +166,6 @@ Ask:
 - [Form S-3](/academy/sec-filings/form-s-3/)
 - [Form 424B5](/academy/sec-filings/form-424b5/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Related Glossary Terms
-
-- EDGAR
-- CIK
-- Accession number
-- Exhibit
-- Registration statement
-- Prospectus supplement
-- 8-K
-- 424B5
-- Dilution
 
 ## FAQ
 
@@ -232,7 +192,3 @@ Full-text search can help locate filings containing specific terms, but the trad
 ### Do filings always explain the whole market reaction?
 
 No. Market reaction also depends on expectations, liquidity, volume, chart context, risk, and trader behavior.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice or legal advice. SEC filings can support research and trade review, but they do not predict market direction or guarantee trading outcomes.

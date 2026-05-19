@@ -27,8 +27,6 @@ meta_description: "Learn what going concern means in SEC filings, why traders re
 ---
 # Going Concern
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Cash Runway](/academy/cash-runway/) and leads into [Trading Plan](/academy/trading-plan/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -151,18 +149,6 @@ Going concern language connects directly with [cash runway](/academy/cash-runway
 
 For financing context, review [stock offerings](/academy/stock-offerings/).
 
-## Practical Checklist
-
-Before treating Going Concern as meaningful context, review:
-
-- Auditor language.
-- Substantial doubt.
-- Cash balance.
-- Losses.
-- Debt.
-- Management plan.
-- Financing need.
-
 ## FAQ
 
 ### What does going concern mean?
@@ -189,17 +175,6 @@ No. It does not guarantee dilution, but it can increase financing risk if the co
 
 Traders should review cash, burn rate, debt, management's plan, offering history, active shelf registrations, and later financing activity.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Going Concern, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Cash Runway](/academy/cash-runway/)
@@ -207,7 +182,3 @@ When reviewing a small-cap trade or watchlist idea connected to Going Concern, a
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Going concern language does not guarantee bankruptcy, dilution, price movement, or trading outcomes. Always review filings, liquidity, risk, and your own trading plan.

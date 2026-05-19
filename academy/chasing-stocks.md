@@ -36,8 +36,6 @@ meta_description: "Learn what chasing stocks means, why traders chase moves, the
 ---
 # Chasing Stocks
 
-This lesson is part of the **Trading Psychology And Discipline** course. It follows [FOMO Trading](/academy/fomo-trading/) and leads into [Revenge Trading](/academy/revenge-trading/).
-
 Chasing stocks means entering after a move has already become extended, usually because the trader feels pressure to get in before the move goes farther. It often overlaps with FOMO, overtrading, and emotional decision-making.
 
 A stock can be strong and still be a bad chase. The issue is not only whether the stock is moving. The issue is whether the entry still has a clear plan, realistic risk, and enough room before the next meaningful level.
@@ -114,33 +112,6 @@ Another mistake is using large size on a late entry. A late entry usually deserv
 
 A final mistake is refusing to label the trade honestly in review. If the trade was a chase, the review should say so.
 
-## Practical Checklist
-
-Before judging this behavior, check:
-
-- The original clean setup has not already passed.
-- There is still a defined invalidation area.
-- Distance to risk is acceptable for your plan.
-- The next support or resistance level is not too close.
-- Spread and slippage are realistic.
-- Position size reflects the actual risk.
-- The reason for entry is structure, not feeling late.
-
-## Apply This In Review
-
-After a trade or session, ask:
-
-- Was my entry late relative to the setup?
-- Did I miss the cleaner entry?
-- Did I enter because of FOMO?
-- Was price already extended?
-- Was there nearby resistance or support?
-- Did I define risk before entering?
-- Did spread or slippage affect the trade?
-- Would I take the same entry again if the stock was not moving fast?
-
-This review can reveal whether chasing tends to happen after missed moves, losses, scanner alerts, or social pressure.
-
 ## Related Lessons
 
 - [FOMO Trading](/academy/fomo-trading/)
@@ -174,7 +145,3 @@ Review whether the entry was late, whether risk was defined, whether price was e
 ### How should chasing be reviewed?
 
 Track the original clean entry, actual entry, distance from support or resistance, emotional trigger, risk plan, and whether the trade fit your rules.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Chasing stocks can increase risk, and no fast-moving stock guarantees continuation.

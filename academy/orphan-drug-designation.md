@@ -154,7 +154,3 @@ Yes. A drug can receive orphan drug designation and still fail trials, face safe
 ### Does orphan drug designation remove dilution risk?
 
 No. It does not remove financing risk. A company may still need capital to continue trials or operations.
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Orphan drug designation does not guarantee approval, price movement, continuation, or profitable trades. Always review the full announcement, filings, clinical data, liquidity, risk, and your own trading plan.

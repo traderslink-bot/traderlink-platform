@@ -41,8 +41,6 @@ meta_description: "Learn how contract news can affect stocks, what traders revie
 
 Contract news stocks are stocks that move or attract attention because a company announces a contract, customer agreement, purchase order, supply deal, or commercial arrangement. Traders watch this kind of news because it can suggest future revenue, customer validation, or stronger business momentum.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Clinical Trial News](/academy/clinical-trial-news/) and leads into [Partnership News Stocks](/academy/partnership-news-stocks/).
-
 A contract announcement does not guarantee a stock will move higher. Some contract news is meaningful and specific. Some is vague, small, delayed, conditional, or already expected. The details matter more than the headline.
 
 ## Lesson Objective
@@ -166,34 +164,6 @@ Common contract-news mistakes include:
 
 Contract news should be reviewed for substance, not just excitement.
 
-## Practical Checklist
-
-Use this checklist when reviewing contract-news trades:
-
-- Is the customer named?
-- Is the contract signed, conditional, or only proposed?
-- Is the dollar value disclosed?
-- Is revenue near-term or spread over time?
-- Are margins, costs, or delivery obligations discussed?
-- Is there a related 8-K or agreement exhibit?
-- Does the company have enough cash to fulfill the contract?
-- Did volume continue after the first reaction?
-- Did price hold or fade after the headline?
-- Did the trade follow a plan?
-
-## Apply This In Review
-
-After a contract-news trade, record:
-
-- The customer name, if disclosed.
-- Contract value and timing.
-- Missing details.
-- Whether related filings mattered.
-- Whether the stock held the first move.
-- Whether you traded the details or the headline.
-
-This helps separate meaningful contract catalysts from vague announcements.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)
@@ -224,7 +194,3 @@ No. A letter of intent may describe a planned relationship, but it may not have 
 ### Can good contract news still fade?
 
 Yes. A move can fade if details are vague, the stock is extended, volume dries up, or traders decide the contract is less meaningful than the headline suggested.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Contract news does not guarantee price movement, continuation, reversal, revenue growth, or profitable trades. Always review the full announcement, related filings, liquidity, risk, and your own trading plan.

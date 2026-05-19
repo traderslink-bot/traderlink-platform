@@ -50,8 +50,6 @@ meta_description: "Learn what stock liquidity means, how it affects fills, sprea
 
 Stock liquidity describes how easily shares can be bought or sold without causing a major price change. For active traders, liquidity matters because it affects entries, exits, spreads, slippage, order size, and whether the trade can be managed the way the chart suggests.
 
-This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Volume Spike](/academy/volume-spike/) and leads into [Dollar Volume](/academy/dollar-volume/), [Spread](/academy/spread/), [Bid And Ask](/academy/bid-and-ask/), and [Slippage](/academy/slippage/).
-
 
 ## Lesson Objective
 
@@ -203,41 +201,6 @@ Common liquidity mistakes include:
 
 Liquidity is not a minor detail. It can change the entire risk profile of a trade.
 
-## Practical Checklist
-
-Use this checklist when reviewing a trade where execution mattered:
-
-- Was the stock liquid enough for my intended position size?
-- What was the spread before entry?
-- How much bid and ask size was available near the current price?
-- Did I use an order type that matched the liquidity conditions?
-- Did my entry fill near the planned price?
-- Did my exit fill near the planned price?
-- Did slippage change the real risk?
-- Did liquidity improve or worsen after I entered?
-- Was I trading during premarket, after-hours, news, or a fast spike?
-- Would smaller size or no trade have been more appropriate?
-
-The checklist is not about blaming liquidity for every loss. It is about making execution review honest.
-
-## Apply This In Review
-
-Liquidity review can help traders understand whether a trade was managed poorly, selected poorly, or simply hard to execute cleanly.
-
-Helpful review prompts:
-
-- What was the spread when I entered?
-- What was the spread when I exited?
-- Did I check bid and ask size before entering?
-- Did I use a market order, limit order, or stop order?
-- Did the order type fit the conditions?
-- Did slippage affect the trade?
-- Did my position size match available liquidity?
-- Did liquidity get worse after attention faded?
-- Do my worst trades often happen in thin names?
-
-Over time, these notes can show whether execution problems are random or repeated.
-
 ## FAQ
 
 ### What is stock liquidity?
@@ -267,7 +230,3 @@ Review spread, bid and ask size, fill prices, slippage, order type, position siz
 ### Can liquidity guarantee clean execution?
 
 No. Better liquidity can support cleaner execution, but it does not guarantee fill quality, trade outcome, profitability, or reduced risk.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock. Liquidity does not guarantee price movement, profitability, better decisions, clean fills, or reduced losses. Always use risk management and review your own trades carefully.

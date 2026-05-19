@@ -3,7 +3,7 @@
   <desc id="desc">Dark trading dashboard showing red and green candlesticks, normal volume bars, a large unusual volume burst, and scanner context labels.</desc>
   <rect width="960" height="560" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="904" height="504" rx="14" fill="#0b1628" stroke="#1d3557"/>
-  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Unusual Volume Review</text>
+  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Unusual Volume Context</text>
   <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">Compare today's activity with the stock's normal baseline before judging context.</text>
 
   <rect x="52" y="118" width="642" height="282" rx="10" fill="#081323" stroke="#172a46"/>
@@ -83,14 +83,14 @@
     <text x="740" y="220" fill="#8fa7c8">Catalyst</text>
     <text x="852" y="220" fill="#e6f0ff" text-anchor="end">Press release</text>
     <text x="740" y="256" fill="#8fa7c8">Spread</text>
-    <text x="852" y="256" fill="#f5c26b" text-anchor="end">Review</text>
+    <text x="852" y="256" fill="#f5c26b" text-anchor="end">Context</text>
     <text x="740" y="292" fill="#8fa7c8">Volume</text>
     <text x="852" y="292" fill="#26c281" text-anchor="end">Elevated</text>
     <text x="740" y="328" fill="#8fa7c8">Price context</text>
     <text x="852" y="328" fill="#e6f0ff" text-anchor="end">Extended</text>
   </g>
   <rect x="740" y="366" width="146" height="74" rx="8" fill="#0d213a" stroke="#2d8cff"/>
-  <text x="756" y="392" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Review Question</text>
+  <text x="756" y="392" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Key Question</text>
   <text x="756" y="416" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="12">Is activity still building,</text>
   <text x="756" y="434" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="12">or already fading?</text>
 </svg>

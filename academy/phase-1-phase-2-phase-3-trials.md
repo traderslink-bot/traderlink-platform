@@ -157,7 +157,3 @@ Yes. Early-stage trial news can move stocks, especially small-cap biotech names,
 ### Why should traders review cash runway with trial phases?
 
 Clinical trials can be expensive. A company may need additional financing to move from one phase to the next, which can affect risk.
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Clinical trial phases do not guarantee approval, price movement, continuation, or profitable trades. Always review full data, filings, cash, risk, liquidity, and your own trading plan.

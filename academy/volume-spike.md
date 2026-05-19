@@ -49,8 +49,6 @@ meta_description: "Learn what a volume spike means, why sudden trading activity 
 
 A volume spike happens when trading activity suddenly jumps above recent activity. Traders watch volume spikes because they can show that a stock is getting fresh attention, reacting to news, testing a key level, or entering a more volatile phase.
 
-This lesson is part of the **Volume Liquidity And Order Flow** learning path. It builds on [Volume](/academy/volume/), [Relative Volume](/academy/relative-volume/), and [Relative Volume RVOL](/academy/relative-volume-rvol/).
-
 
 ## Lesson Objective
 
@@ -191,40 +189,6 @@ Common volume-spike mistakes include:
 
 A volume spike should start a review process, not end it.
 
-## Practical Checklist
-
-Use this checklist when reviewing volume-spike trades:
-
-- What caused the spike?
-- Did the spike happen near a meaningful level?
-- Was the stock already extended?
-- Did volume continue after the first burst?
-- Did price hold, reject, reclaim, or fade after the spike?
-- Was the spread manageable during the spike?
-- Did liquidity improve enough for the trader's size?
-- Did the trader enter before, during, or after the main spike?
-- Was there a clear invalidation area?
-- Did the trade follow a plan, or did the spike create urgency?
-
-This checklist helps separate useful activity from emotional reaction.
-
-## Apply This In Review
-
-Volume-spike review can show whether a trader is reacting to activity or trading a structured setup.
-
-Helpful review prompts:
-
-- What candle created the spike?
-- What was the catalyst or level context?
-- Did I know the reason for the spike before entering?
-- Did the next candles confirm participation or fade?
-- Was my entry close to structure or far from it?
-- Did I enter because of a plan or because I feared missing the move?
-- Did the spread affect my fill?
-- Did similar spike trades show a repeated chasing pattern?
-
-Writing this down makes volume-spike trades easier to compare over time.
-
 ## FAQ
 
 ### What is a volume spike?
@@ -250,7 +214,3 @@ Traders watch volume spikes because they can show sudden attention, catalyst rea
 ### Should volume spikes be tracked in review notes?
 
 Yes, if the spike affected the trade idea. Reviewing spike context can help traders identify chasing, late entries, and execution problems.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock. Volume spikes do not guarantee price movement, profitability, better decisions, or reduced losses. Always use risk management and review your own trades carefully.

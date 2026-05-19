@@ -38,8 +38,6 @@ meta_description: "Learn why midday trading can be difficult, how volume and ran
 ---
 # Midday Trading
 
-This lesson is part of the **Day Trading Workflow** course. It follows [Opening Range](/academy/opening-range/) and leads into [Power Hour Trading](/academy/power-hour-trading/).
-
 Midday trading happens after the opening volatility settles and before late-day activity may return. For many day traders, this is where discipline matters most.
 
 Midday is not automatically bad. But it often has slower movement, lower urgency, fading volume, and more temptation to force trades.
@@ -112,26 +110,6 @@ Another mistake is using too much size in a slower setup.
 
 A final mistake is ignoring boredom as a real trading risk.
 
-## Practical Checklist
-
-- Volume is still active enough for the plan.
-- The range or level is clear.
-- The trade is not only boredom.
-- Spread and liquidity remain acceptable.
-- The setup is different from random chop.
-- Risk is realistic for slower movement.
-- Midday trades are tagged separately in review.
-
-## Apply This In Review
-
-- How many trades did I take midday?
-- Were they planned or forced?
-- Did volume support the decision?
-- Did I give back earlier gains?
-- Did boredom or frustration influence the trade?
-- Did I trade better at the open than midday?
-- Should my plan include stricter midday rules?
-
 ## Related Lessons
 
 - [Opening Range](/academy/opening-range/)
@@ -139,15 +117,6 @@ A final mistake is ignoring boredom as a real trading risk.
 - [Overtrading](/academy/overtrading/)
 - [VWAP](/academy/vwap/)
 - [Volume](/academy/volume/)
-
-## Related Glossary Terms
-
-- Midday trading
-- Volume
-- VWAP
-- Overtrading
-- Range
-- Liquidity
 
 ## FAQ
 
@@ -166,7 +135,3 @@ They may overtrade because of boredom, frustration, a desire to recover, or the 
 ### Should midday trades be reviewed separately?
 
 Yes. Reviewing them separately can reveal whether midday helps or hurts the trader's process.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

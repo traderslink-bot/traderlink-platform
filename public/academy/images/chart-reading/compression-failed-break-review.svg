@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
-  <title id="title">Compression Failed Break Review</title>
+  <title id="title">Compression Failed Break Context</title>
   <desc id="desc">Educational candlestick chart showing a compression breakout attempt that fails back inside the range.</desc>
   <rect width="760" height="440" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554"/>
-  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Compression Failed Break Review</text>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Compression Failed Break Context</text>
   <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A tight range can break and still fail back inside.</text>
   <g stroke="#18304e" stroke-width="1"><line x1="58" y1="116" x2="704" y2="116"/><line x1="58" y1="166" x2="704" y2="166"/><line x1="58" y1="216" x2="704" y2="216"/><line x1="58" y1="266" x2="704" y2="266"/></g>
   <rect x="104" y="158" width="430" height="76" fill="#1d4ed8" opacity=".12"/>
@@ -33,5 +33,5 @@
   </g>
   <g><rect x="82" y="340" width="14" height="26" fill="#21c784" opacity=".65"/><rect x="116" y="346" width="14" height="20" fill="#21c784" opacity=".6"/><rect x="150" y="350" width="14" height="16" fill="#ef4444" opacity=".55"/><rect x="184" y="352" width="14" height="14" fill="#21c784" opacity=".5"/><rect x="218" y="318" width="14" height="48" fill="#21c784" opacity=".95"/><rect x="252" y="326" width="14" height="40" fill="#ef4444" opacity=".85"/></g>
   <rect x="28" y="376" width="704" height="36" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="399" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: did expansion hold, or did price return inside the range?</text>
+  <text x="44" y="399" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: did expansion hold, or did price return inside the range?</text>
 </svg>

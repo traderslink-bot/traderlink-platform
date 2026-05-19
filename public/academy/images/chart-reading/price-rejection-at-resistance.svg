@@ -40,8 +40,8 @@
     </g>
   </g>
   <path d="M96 302 C152 264 198 228 229 224 C268 219 309 157 361 185 C411 212 445 242 493 252 C535 263 581 260 625 278" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".55"/>
-  <text x="308" y="91" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Wick rejects above level</text>
+  <text x="326" y="112" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Wick rejects above level</text>
   <text x="424" y="296" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="13">Follow-through confirms failed hold</text>
   <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: what level rejected, and did price hold or fail after the wick?</text>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: what level rejected, and did price hold or fail after the wick?</text>
 </svg>

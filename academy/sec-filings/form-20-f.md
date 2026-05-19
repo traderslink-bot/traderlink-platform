@@ -27,8 +27,6 @@ meta_description: "Learn what Form 20-F is, why foreign private issuer annual re
 ---
 # Form 20-F
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form 10-Q](/academy/sec-filings/form-10-q/) and leads into [Form 6-K](/academy/sec-filings/form-6-k/).
-
 The goal is not to turn Form 20-F into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -125,26 +123,6 @@ Traders may want to check:
 
 The filing does not guarantee dilution, but it can show whether the company may need capital.
 
-## Practical Checklist
-
-Structured review notes can help connect Form 20-F details to trades.
-
-Useful review notes include:
-
-1. Filing date.
-2. Cash balance.
-3. Revenue and losses.
-4. Going concern language.
-5. Share structure details.
-6. Financing risk.
-7. Related Form 6-K updates.
-8. Stock reaction after the filing.
-9. Whether you reviewed the full filing before trading.
-
-This helps traders understand risk instead of reacting only to filing alerts.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). Form 20-F connects with [Form 6-K](/academy/sec-filings/form-6-k/), [Form F-1](/academy/sec-filings/form-f-1/), and [Form F-3](/academy/sec-filings/form-f-3/).
@@ -188,24 +166,9 @@ Yes. It can show financing pressure, warrants, convertible securities, share cou
 
 Foreign private issuers file Form 20-F to provide annual disclosures to U.S. investors and markets.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to Form 20-F, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [Form 10-Q](/academy/sec-filings/form-10-q/)
 - [Form 6-K](/academy/sec-filings/form-6-k/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Form 20-F filings do not guarantee price movement, dilution, or trading outcomes. Always review the full filing, related disclosures, liquidity, risk, and your own trading plan.

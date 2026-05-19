@@ -38,8 +38,6 @@ meta_description: "Learn short selling basics, borrow risk, squeezes, loss risk,
 ---
 # Short Selling Basics
 
-This lesson is part of the **Trading Styles And Playbooks** course. It follows [Scalping Stocks](/academy/scalping-stocks/) and leads into [Momentum Trading](/academy/momentum-trading/).
-
 Short selling is one of the most misunderstood trading concepts for beginners. It can be useful to understand even if a trader never sells short, because short interest, borrow conditions, squeezes, low-float moves, and breakdown attempts often affect market behavior.
 
 This lesson explains the concept without treating short selling as a recommendation or a signal.
@@ -140,32 +138,6 @@ Another mistake is holding a short position through news or halts without unders
 
 A final mistake is sizing a short trade like a long trade without accounting for different risk.
 
-## Practical Checklist
-
-Before reviewing a short-biased trade, note:
-
-- Was the trade actually short or just a bearish idea?
-- Was borrow available?
-- Were borrow costs relevant?
-- Was the stock low float or crowded?
-- Was the spread stable?
-- Was there halt risk?
-- What level invalidated the idea?
-- Did volume support the fade or show continued participation?
-- Was the position held overnight or through news?
-
-## Apply This In Review
-
-Ask:
-
-- Why did I think the stock could move lower?
-- Was the idea based on a real level, failed move, catalyst fade, or just extension?
-- Did I understand borrow and locate conditions?
-- Did short-covering risk appear?
-- Did I respect invalidation?
-- Did the loss expand faster than planned?
-- What should my short-trade rule be next time?
-
 ## Related Lessons
 
 - [Trading Styles Overview](/academy/trading-styles/)
@@ -174,17 +146,6 @@ Ask:
 - [Low Float Stocks](/academy/low-float-stocks/)
 - [Overnight Risk](/academy/overnight-risk/)
 - [Risk Management](/academy/risk-management/)
-
-## Related Glossary Terms
-
-- Short selling
-- Borrow
-- Locate
-- Short squeeze
-- Covering
-- Hard-to-borrow
-- Low float
-- Halt risk
 
 ## FAQ
 
@@ -211,7 +172,3 @@ Beginners should understand the concept before considering any short-biased stra
 ### Does this lesson give short trade signals?
 
 No. It teaches risk and review context only.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. It does not recommend short selling, buying, selling, or holding any security. Short selling can involve significant risk and does not guarantee trading results.

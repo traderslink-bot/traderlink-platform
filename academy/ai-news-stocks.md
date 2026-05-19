@@ -156,7 +156,3 @@ Small-cap stocks can move sharply on hot themes because they may have lower liqu
 ### Should AI news be reviewed in a trading journal?
 
 Yes. Reviewing AI news trades can help traders see whether they followed a plan or reacted emotionally to a theme.
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. AI news does not guarantee revenue, price movement, continuation, or profitable trades. Always review the full announcement, filings, liquidity, risk, and your own trading plan.

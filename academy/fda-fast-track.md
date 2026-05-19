@@ -160,7 +160,3 @@ Yes. A drug can receive Fast Track designation and still fail trials, face safet
 ### Does Fast Track reduce dilution risk?
 
 No. Fast Track does not remove financing risk. A company may still need capital to fund trials or operations.
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. FDA Fast Track does not guarantee approval, price movement, continuation, or profitable trades. Always review the full announcement, filings, clinical data, liquidity, risk, and your own trading plan.

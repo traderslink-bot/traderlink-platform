@@ -27,8 +27,6 @@ meta_description: "Learn what Form 25 delisting means, why exchange delisting fi
 ---
 # Form 25 Delisting
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [NT 10-Q](/academy/sec-filings/nt-10-q/) and leads into [Earnings News](/academy/earnings-news/).
-
 The goal is not to turn Form 25 into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -121,26 +119,6 @@ Traders may want to check:
 
 Delisting can affect trade execution, spreads, and access more than share count itself.
 
-## Practical Checklist
-
-Structured review notes can help connect Form 25 details to trade decisions.
-
-Useful review notes include:
-
-1. Filing date.
-2. Exchange involved.
-3. Delisting reason.
-4. Voluntary or involuntary status.
-5. Effective date.
-6. Prior warnings or notices.
-7. Liquidity before and after filing.
-8. Stock reaction after the filing.
-9. Whether you understood the listing risk before trading.
-
-This kind of review is especially useful for small-cap and low-priced stocks where listing risk can be significant.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). Delisting risk can connect with [reverse stock splits](/academy/reverse-split/), [small-cap stocks](/academy/small-cap-stocks/), and [how to spot dilution risk](/academy/how-to-spot-dilution-risk/).
@@ -184,24 +162,9 @@ Traders should check the exchange involved, effective date, reason for delisting
 
 No. Form 25 does not guarantee a price move. The reaction depends on context, expectations, liquidity, and why the filing was made.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to Form 25, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [NT 10-Q](/academy/sec-filings/nt-10-q/)
 - [Earnings News](/academy/earnings-news/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Form 25 delisting filings do not guarantee price movement, trading outcomes, or company failure. Always review the full filing, related disclosures, liquidity, risk, and your own trading plan.

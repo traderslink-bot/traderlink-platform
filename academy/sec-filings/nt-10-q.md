@@ -27,8 +27,6 @@ meta_description: "Learn what NT 10-Q means, why companies file late quarterly r
 ---
 # NT 10-Q
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [NT 10-K](/academy/sec-filings/nt-10-k/) and leads into [Form 25](/academy/sec-filings/form-25/).
-
 The goal is not to turn NT 10-Q into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -115,25 +113,6 @@ Traders may want to check:
 
 The late filing notice does not guarantee dilution, but it can increase the need to review the eventual quarterly report.
 
-## Practical Checklist
-
-Structured review notes can help connect NT 10-Q details to decisions.
-
-Useful review notes include:
-
-1. Filing date.
-2. Reason for the delay.
-3. Whether significant changes were expected.
-4. Whether the company filed within the extension period.
-5. What the eventual 10-Q showed.
-6. Stock reaction after the NT 10-Q.
-7. Whether you traded before reading the reason for delay.
-8. Whether risk should have been reduced while the quarterly report was pending.
-
-This helps traders avoid treating all late filing notices the same way.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). NT 10-Q connects directly with [Form 10-Q](/academy/sec-filings/form-10-q/) and [NT 10-K](/academy/sec-filings/nt-10-k/).
@@ -177,24 +156,9 @@ It can, but it does not guarantee a move. The reaction depends on the reason for
 
 Repeated late filings may suggest reporting, accounting, or internal control issues that traders may want to review more carefully.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to NT 10-Q, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [NT 10-K](/academy/sec-filings/nt-10-k/)
 - [Form 25](/academy/sec-filings/form-25/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. NT 10-Q filings do not guarantee bad news, price movement, dilution, or trading outcomes. Always review the full filing, the eventual 10-Q, related disclosures, liquidity, risk, and your own trading plan.

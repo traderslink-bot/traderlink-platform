@@ -27,8 +27,6 @@ meta_description: "Learn what a PRE 14A proxy statement is, why preliminary prox
 ---
 # PRE 14A Proxy Statement
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form DEF 14A](/academy/sec-filings/form-def-14a/) and leads into [NT 10-K](/academy/sec-filings/nt-10-k/).
-
 The goal is not to turn Form PRE 14A into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -124,25 +122,6 @@ Traders may want to check for:
 
 The filing does not guarantee dilution, but it can show what management is asking shareholders to approve.
 
-## Practical Checklist
-
-Structured review notes can help connect preliminary proxy details to trade decisions.
-
-Useful review notes include:
-
-1. Filing date.
-2. Preliminary proposal list.
-3. Any reverse split language.
-4. Any authorized share increase language.
-5. Any merger or share issuance proposal.
-6. Expected definitive proxy filing.
-7. Stock reaction after the filing.
-8. Whether you adjusted risk after reading it.
-
-This is not about assuming every PRE 14A is negative. It is about understanding the vote pipeline.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). PRE 14A is closely related to [DEF 14A proxy statements](/academy/sec-filings/form-def-14a/) because the definitive proxy usually follows the preliminary version.
@@ -186,24 +165,9 @@ Yes. Since it is preliminary, details can change before the definitive proxy is 
 
 No. PRE 14A filings do not guarantee a price move. The reaction depends on the proposals and market context.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to Form PRE 14A, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [Form DEF 14A](/academy/sec-filings/form-def-14a/)
 - [NT 10-K](/academy/sec-filings/nt-10-k/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. PRE 14A filings do not guarantee vote outcomes, price movement, dilution, or trading results. Always review the full filing, related disclosures, liquidity, risk, and your own trading plan.

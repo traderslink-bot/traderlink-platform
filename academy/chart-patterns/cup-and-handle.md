@@ -38,8 +38,6 @@ meta_description: "Learn what cup and handle patterns show, why handles matter, 
 ---
 # Cup and Handle Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Bear Pennant](/academy/chart-patterns/bear-pennant/) and leads into [Base Breakout](/academy/chart-patterns/base-breakout/).
-
 **Best suited for:** swing trading and multi-day breakout review.
 
 A cup and handle is a rounded base followed by a smaller pullback or consolidation near resistance. It is most useful when a trader is reviewing multi-day structure, not when forcing a quick intraday shape onto a few candles.

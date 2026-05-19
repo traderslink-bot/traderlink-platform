@@ -38,8 +38,6 @@ meta_description: "Learn what triple bottoms show, where traders force them, and
 ---
 # Triple Bottom
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Triple Top](/academy/chart-patterns/triple-top/) and leads into [Head And Shoulders Pattern](/academy/chart-patterns/head-and-shoulders/).
-
 **Best suited for:** day trading and swing trading.
 
 A triple bottom forms when price tests a similar support area three times and cannot stay below it. It is a repeated-support structure that needs reclaim, resistance, and volume review.

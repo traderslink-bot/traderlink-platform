@@ -36,8 +36,6 @@ meta_description: "Learn how to practice one trading rule at a time, track adher
 ---
 # One-Rule Practice Drill
 
-This lesson is part of the **Practice And Improvement** course. It follows [Trade Grading](/academy/trade-grading/) and leads into [Forward Testing Trading](/academy/forward-testing-trading/).
-
 A one-rule practice drill is a focused practice session where the trader works on one rule only. It is simple on purpose.
 
 Many traders try to fix everything at once. That usually makes review blurry. One-rule drills make improvement specific enough to track.
@@ -119,26 +117,6 @@ Another mistake is treating a broken rule as failure instead of feedback.
 
 A final mistake is practicing the rule only on easy charts.
 
-## Practical Checklist
-
-- The rule is specific and observable.
-- The drill has a defined session or sample size.
-- The trader knows what evidence to collect.
-- The drill connects to a real mistake pattern.
-- The rule is not changed after one trade.
-- Broken rules are reviewed without shame.
-- The drill ends with one adjustment or continuation decision.
-
-## Apply This In Review
-
-- What rule did I practice?
-- Did I follow it?
-- If not, when did it break?
-- What triggered the break?
-- Did the rule reduce a repeated mistake?
-- Was the rule too vague or too strict?
-- Should I repeat, adjust, or replace the drill?
-
 ## Related Lessons
 
 - [Trade Grading](/academy/trade-grading/)
@@ -146,15 +124,6 @@ A final mistake is practicing the rule only on easy charts.
 - [Trading Discipline](/academy/trading-discipline/)
 - [Overtrading](/academy/overtrading/)
 - [Mistake Pattern Review](/academy/mistake-pattern-review/)
-
-## Related Glossary Terms
-
-- Trading rule
-- Discipline
-- Mistake pattern
-- Process grade
-- Overtrading
-- Review sample
 
 ## FAQ
 
@@ -173,7 +142,3 @@ A good rule is specific, observable, connected to a real mistake pattern, and si
 ### What if I break the rule?
 
 Review when and why it happened. A broken rule is feedback, not a reason to abandon the entire drill.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

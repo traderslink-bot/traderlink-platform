@@ -101,27 +101,6 @@ Another mistake is ignoring review prompts because they are not quizzes. Review 
 
 A final mistake is expecting the Academy to tell users what to trade. It should teach concepts and review process.
 
-## Practical Checklist
-
-- Choose a course or lesson based on your current need.
-- Read the objective first.
-- Use previous and next links when you want guided flow.
-- Use related lessons when a concept needs support.
-- Use glossary terms for definitions.
-- Mark completion when the lesson is actually read.
-- Return after trade review exposes a repeated gap.
-
-## Apply This In Review
-
-- Which course am I in?
-- What lesson did I just complete?
-- What concept still feels unclear?
-- Which related lesson would help?
-- What real trade or example connects to this lesson?
-- What should I read next?
-
-The Academy is strongest when users move between learning and review instead of only consuming lessons.
-
 ## Related Lessons
 
 - [Welcome To TradersLink Academy](/academy/start-here/)
@@ -154,7 +133,3 @@ Use them when you have a real or practice trade that connects to the lesson.
 ### Does completion mean I am ready to trade?
 
 No. Completion means educational progress, not trading readiness or guaranteed skill.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. TradersLink Academy is a learning system, not a trading recommendation service.

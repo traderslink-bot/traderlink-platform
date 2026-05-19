@@ -36,8 +36,6 @@ meta_description: "Learn what to track in a swing trade journal, including thesi
 ---
 # Swing Trade Journal
 
-This lesson is part of the **Trade Review And Improvement** course. It follows [How To Review News Trades](/academy/how-to-review-news-trades/) and leads into [How Trader Intelligence Helps Review Trades](/academy/trader-intelligence-trade-review/).
-
 A swing trade journal is a structured record of trades held across multiple sessions. It helps the trader review the original idea, risk plan, key levels, catalyst, overnight risk, and decisions made while the trade was open.
 
 Swing trades need more than a quick entry and exit note. A trade can change over several days as news appears, volume fades, support breaks, or the trader adjusts the plan.
@@ -111,29 +109,6 @@ Another mistake is ignoring management decisions across the hold period.
 
 A final mistake is writing too much but reviewing too little. The journal should be useful, not just long.
 
-## Practical Checklist
-
-- The original thesis is recorded before entry.
-- Key levels and invalidation are clear.
-- Position size accounts for overnight risk.
-- Catalysts, earnings, filings, and news risk are checked.
-- Daily management notes capture important changes.
-- The final review compares thesis with actual behavior.
-- Repeated swing-trade mistakes are tagged.
-
-## Apply This In Review
-
-- What was the original thesis?
-- What was the entry reason?
-- What was the invalidation level?
-- Did I size correctly for overnight risk?
-- Did I check news, earnings, and filings?
-- Did price hold the key level after entry?
-- Did I change the plan for a valid reason?
-- What mistake, if any, repeated from past swing trades?
-
-Over time, these notes can help traders find patterns in how they manage multi-session trades.
-
 ## Related Lessons
 
 - [Swing Trading](/academy/swing-trading/)
@@ -167,7 +142,3 @@ Many traders update notes after each session or whenever new information changes
 ### Can a swing journal identify mistakes?
 
 Yes. It can show repeated issues like chasing, ignoring invalidation, oversizing, holding through news without a plan, or exiting too early.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. A swing trade journal can help organize review, but it does not guarantee better results or remove trading risk.

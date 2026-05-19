@@ -27,8 +27,6 @@ meta_description: "Learn what Form S-4 is, why merger and business combination f
 ---
 # Form S-4
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form F-3](/academy/sec-filings/form-f-3/) and leads into [Form S-8](/academy/sec-filings/form-s-8/).
-
 The goal is not to turn Form S-4 into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -123,26 +121,6 @@ Traders may want to check:
 
 The filing does not guarantee dilution-related selling, but it can show how ownership and share count may change.
 
-## Practical Checklist
-
-Structured review notes can help you connect Form S-4 details to trade decisions.
-
-Useful review notes include:
-
-1. Filing date.
-2. Deal type.
-3. Securities being issued.
-4. Ownership split after closing.
-5. Vote or approval requirements.
-6. Closing conditions.
-7. Dilution details.
-8. Price reaction after the filing.
-9. Whether the trade was based on headline or filing details.
-
-This is not about predicting the deal. It is about understanding what the filing says before trusting the move.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). Form S-4 often connects with [merger news stocks](/academy/merger-news-stocks/) and [Form 8-K](/academy/sec-filings/form-8-k/) because merger agreements are often announced before the S-4 is filed.
@@ -186,24 +164,9 @@ It is not automatically either. The reaction depends on the deal terms, expectat
 
 Small-cap traders often check new shares issued, ownership split, lockups, resale rights, financing needs, and closing conditions.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to Form S-4, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [Form F-3](/academy/sec-filings/form-f-3/)
 - [Form S-8](/academy/sec-filings/form-s-8/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Form S-4 filings do not guarantee merger completion, price movement, dilution, or trading outcomes. Always review the full filing, related disclosures, liquidity, risk, and your own trading plan.

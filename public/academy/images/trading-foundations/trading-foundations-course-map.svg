@@ -33,28 +33,28 @@
     <line class="line" x1="162" y1="46" x2="214" y2="46"/>
     <rect class="active" x="214" y="0" width="162" height="92" rx="7"/>
     <text class="txt label" x="232" y="28">2. Trading Terms</text>
-    <text class="txt small muted" x="232" y="52">Positions and shares</text>
-    <text class="txt small muted" x="232" y="70">P&amp;L and fills</text>
+    <text class="txt small muted" x="232" y="52">Positions and P&amp;L</text>
+    <text class="txt small muted" x="232" y="70">Core vocabulary</text>
     <line class="line" x1="376" y1="46" x2="428" y2="46"/>
     <rect class="card" x="428" y="0" width="162" height="92" rx="7"/>
     <text class="txt label" x="446" y="28">3. Sessions And Orders</text>
-    <text class="txt small muted" x="446" y="52">Quotes and spread</text>
-    <text class="txt small muted" x="446" y="70">Order choices</text>
+    <text class="txt small muted" x="446" y="52">Quotes and orders</text>
+    <text class="txt small muted" x="446" y="70">Liquidity basics</text>
     <line class="line" x1="509" y1="92" x2="509" y2="132"/>
     <rect class="card" x="428" y="132" width="162" height="92" rx="7"/>
     <text class="txt label" x="446" y="160">4. Trading Styles</text>
-    <text class="txt small muted" x="446" y="184">Day trading</text>
-    <text class="txt small muted" x="446" y="202">Swing trading</text>
+    <text class="txt small muted" x="446" y="184">Day vs swing</text>
+    <text class="txt small muted" x="446" y="202">Timeframe fit</text>
     <line class="line" x1="428" y1="178" x2="376" y2="178"/>
     <rect class="active" x="214" y="132" width="162" height="92" rx="7"/>
     <text class="txt label" x="232" y="160">5. Planning And Rules</text>
-    <text class="txt small muted" x="232" y="184">Written process</text>
-    <text class="txt small muted" x="232" y="202">Decision rules</text>
+    <text class="txt small muted" x="232" y="184">Process</text>
+    <text class="txt small muted" x="232" y="202">Boundaries</text>
     <line class="line" x1="214" y1="178" x2="162" y2="178"/>
     <rect class="card" x="0" y="132" width="162" height="92" rx="7"/>
     <text class="txt label" x="18" y="160">6. Risk And Review</text>
-    <text class="txt small muted" x="18" y="184">Sizing and stops</text>
-    <text class="txt small muted" x="18" y="202">Trade risk review</text>
+    <text class="txt small muted" x="18" y="184">Sizing, stops</text>
+    <text class="txt small muted" x="18" y="202">Review</text>
   </g>
   <g transform="translate(80 354)">
     <line class="mutedLine" x1="0" y1="0" x2="600" y2="0"/>

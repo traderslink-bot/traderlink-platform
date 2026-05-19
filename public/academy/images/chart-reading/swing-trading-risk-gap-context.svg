@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
   <title id="title">Swing Trading Gap Risk Context</title>
-  <desc id="desc">Dark trading dashboard showing a multi-session daily candlestick chart with an overnight gap below a planned invalidation zone, volume bars, and review labels for gap and event risk.</desc>
+  <desc id="desc">Dark trading dashboard showing a multi-session daily candlestick chart with an overnight gap below a planned invalidation zone, volume bars, and context labels for gap and event risk.</desc>
   <rect width="960" height="540" fill="#07111f"/>
   <rect x="34" y="34" width="892" height="472" rx="14" fill="#0d1828" stroke="#18314f"/>
-  <text x="58" y="70" fill="#e6edf7" font-family="Arial, sans-serif" font-size="24" font-weight="700">Swing Risk: Gap And Invalidation Review</text>
+  <text x="58" y="70" fill="#e6edf7" font-family="Arial, sans-serif" font-size="24" font-weight="700">Swing Risk: Gap And Invalidation Context</text>
   <text x="58" y="96" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="14">Overnight exposure can open beyond the planned chart level</text>
 
   <rect x="70" y="130" width="720" height="250" fill="#0a1422" stroke="#152b46"/>
@@ -35,7 +35,7 @@
     </marker>
   </defs>
   <text x="520" y="266" fill="#8fc7ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Overnight gap below plan</text>
-  <text x="520" y="286" fill="#a7b6c8" font-family="Arial, sans-serif" font-size="12">Review size, event risk, and thesis change</text>
+  <text x="520" y="286" fill="#a7b6c8" font-family="Arial, sans-serif" font-size="12">Context size, event risk, and thesis change</text>
 
   <g>
     <rect x="70" y="410" width="720" height="58" fill="#0a1422" stroke="#152b46"/>

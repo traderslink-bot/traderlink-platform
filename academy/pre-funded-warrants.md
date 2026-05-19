@@ -27,8 +27,6 @@ meta_description: "Learn what pre-funded warrants are, why they matter in offeri
 ---
 # Pre-Funded Warrants
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Warrants Vs Options](/academy/warrants-vs-options/) and leads into [Convertible Notes](/academy/convertible-notes/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -150,18 +148,6 @@ Start with [stock offerings](/academy/stock-offerings/) and [stock warrants](/ac
 
 For risk context, review [how to spot dilution risk](/academy/how-to-spot-dilution-risk/).
 
-## Practical Checklist
-
-Before treating Pre-Funded Warrants as meaningful context, review:
-
-- Offering structure.
-- Exercise price.
-- Ownership cap.
-- Share equivalent count.
-- Registration status.
-- Investor terms.
-- Dilution context.
-
 ## FAQ
 
 ### What are pre-funded warrants?
@@ -188,17 +174,6 @@ Traders often consider them in fully diluted share count analysis because they c
 
 Traders often check the number of pre-funded warrants, exercise price, ownership limits, exercisability, resale registration, and whether other warrants are included.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Pre-Funded Warrants, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Warrants Vs Options](/academy/warrants-vs-options/)
@@ -206,7 +181,3 @@ When reviewing a small-cap trade or watchlist idea connected to Pre-Funded Warra
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Pre-funded warrants do not guarantee dilution, price movement, selling pressure, or trading outcomes. Always review the full terms, filings, liquidity, risk, and your own trading plan.

@@ -27,8 +27,6 @@ meta_description: "Learn what private placement stock means, why private financi
 ---
 # Private Placement Stock
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Registered Direct Offering](/academy/registered-direct-offering/) and leads into [At The Market Offering](/academy/at-the-market-offering/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -154,18 +152,6 @@ Start with the broader [stock offering](/academy/stock-offerings/) guide. Privat
 
 For follow-up filings, review [resale registration statements](/academy/resale-registration-statement/) and [how to spot dilution risk](/academy/how-to-spot-dilution-risk/).
 
-## Practical Checklist
-
-Before treating Private Placement as meaningful context, review:
-
-- Exemption context.
-- Restricted securities.
-- Registration rights.
-- Investor terms.
-- Warrants.
-- Resale filing risk.
-- Liquidity impact.
-
 ## FAQ
 
 ### What is private placement stock?
@@ -192,17 +178,6 @@ Resale registration can allow privately placed shares to become registered for r
 
 Traders often check price, securities issued, warrants, investor names, use of proceeds, resale registration rights, and related SEC filings.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Private Placement, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Registered Direct Offering](/academy/registered-direct-offering/)
@@ -210,7 +185,3 @@ When reviewing a small-cap trade or watchlist idea connected to Private Placemen
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Private placements do not guarantee price movement, dilution impact, selling pressure, or trading outcomes. Always review the full terms, filings, liquidity, risk, and your own trading plan.

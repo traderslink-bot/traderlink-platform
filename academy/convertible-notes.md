@@ -27,8 +27,6 @@ meta_description: "Learn what convertible notes are, why convertible debt matter
 ---
 # Convertible Notes
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Pre-Funded Warrants](/academy/pre-funded-warrants/) and leads into [Preferred Stock](/academy/preferred-stock/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -154,18 +152,6 @@ Convertible notes are part of broader [stock offerings](/academy/stock-offerings
 
 For share count context, review [float versus shares outstanding](/academy/float-vs-shares-outstanding/).
 
-## Practical Checklist
-
-Before treating Convertible Notes as meaningful context, review:
-
-- Principal amount.
-- Conversion price.
-- Fixed or variable terms.
-- Maturity.
-- Interest.
-- Floor price.
-- Registration rights.
-
 ## FAQ
 
 ### What are convertible notes?
@@ -192,17 +178,6 @@ No. Some may be repaid in cash, amended, refinanced, or converted depending on t
 
 Traders often check principal amount, conversion terms, maturity, discount, floors, default provisions, registration rights, and potential share count impact.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Convertible Notes, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Pre-Funded Warrants](/academy/pre-funded-warrants/)
@@ -210,7 +185,3 @@ When reviewing a small-cap trade or watchlist idea connected to Convertible Note
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Convertible notes do not guarantee dilution, price movement, selling pressure, or trading outcomes. Always review full note terms, filings, liquidity, risk, and your own trading plan.

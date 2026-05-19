@@ -38,8 +38,6 @@ meta_description: "Learn what Rectangle Pattern shows, why it can fail, and how 
 ---
 # Rectangle Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Falling Wedge](/academy/chart-patterns/falling-wedge/) and leads into [Channel Pattern](/academy/chart-patterns/channel-pattern/).
-
 **Best suited for:** day trading and swing trading.
 
 Rectangle Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.

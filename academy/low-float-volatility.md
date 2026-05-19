@@ -38,8 +38,6 @@ meta_description: "Learn why low-float stocks can move quickly, how volatility a
 ---
 # Low-Float Volatility
 
-This lesson is part of the **Halts And High-Volatility Events** course. It follows [Fast Spread Risk](/academy/fast-spread-risk/) and leads into [High-Volatility Trade Review](/academy/high-volatility-trade-review/).
-
 Low-float volatility happens when a stock with limited publicly tradable shares moves quickly because attention, volume, or order pressure increases.
 
 Low float can make a stock more sensitive to demand and supply changes, but it does not guarantee a clean move. It can also mean faster reversals, wider spreads, halts, and difficult exits.
@@ -112,26 +110,6 @@ Another mistake is forgetting dilution or offering risk in small-cap stocks.
 
 A final mistake is assuming halt continuation after a low-float spike.
 
-## Practical Checklist
-
-- Float and share structure are reviewed.
-- Volume is compared with normal activity.
-- Spread and depth are checked.
-- Halt risk is considered before the decision.
-- Catalyst and filing context are reviewed when relevant.
-- Position size accounts for volatility.
-- The trader reviews whether the move was clean or chaotic.
-
-## Apply This In Review
-
-- What was the float context?
-- Did volume meaningfully change?
-- Did spread widen?
-- Was the stock halt-prone?
-- Did I size for volatility?
-- Did I assume low float meant continuation?
-- What low-float rule should I adjust?
-
 ## Related Lessons
 
 - [Low-Float Stocks](/academy/low-float-stocks/)
@@ -139,15 +117,6 @@ A final mistake is assuming halt continuation after a low-float spike.
 - [Volume Spike](/academy/volume-spike/)
 - [Volatility Halts](/academy/volatility-halts/)
 - [Risk Management](/academy/risk-management/)
-
-## Related Glossary Terms
-
-- Low float
-- Float
-- Volume spike
-- Volatility halt
-- Spread
-- Liquidity
 
 ## FAQ
 
@@ -166,7 +135,3 @@ They may halt when price moves rapidly enough to trigger volatility halt rules, 
 ### What should traders review in low-float names?
 
 Review float, volume, spread, liquidity, catalyst quality, filing context, halt risk, and position size.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

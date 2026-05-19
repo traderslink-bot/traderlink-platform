@@ -38,8 +38,6 @@ meta_description: "Learn what descending triangles show, why they can fail, and 
 ---
 # Descending Triangle Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Ascending Triangle Pattern](/academy/chart-patterns/ascending-triangle/) and leads into [Symmetrical Triangle Pattern](/academy/chart-patterns/symmetrical-triangle/).
-
 **Best suited for:** day trading and swing trading.
 
 A descending triangle forms when price repeatedly tests a similar support area while making lower highs above it. The pattern shows pressure building against support, but the support area still needs to be tested and reviewed.

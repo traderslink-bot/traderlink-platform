@@ -42,8 +42,6 @@ meta_description: "Learn what a Form S-1 filing means, why companies file it, an
 
 A Form S-1 is a registration statement filed with the SEC to register securities for sale or resale. Traders watch S-1 filings because they can involve IPOs, resale shares, financing structures, warrants, and other details that may affect future share supply.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form 6-K](/academy/sec-filings/form-6-k/) and leads into [Form S-3](/academy/sec-filings/form-s-3/).
-
 An S-1 is not automatically good or bad. It is a filing that answers a practical question: what securities are being registered, and who may be able to sell them after the registration process moves forward?
 
 ## Lesson Objective
@@ -189,34 +187,6 @@ Common S-1 mistakes include:
 
 An S-1 should create review questions, not automatic conclusions.
 
-## Practical Checklist
-
-Use this checklist when reviewing an S-1:
-
-- What securities are being registered?
-- Are the shares new, resale, or underlying other securities?
-- Who are the selling stockholders?
-- Does the company receive proceeds?
-- Are warrants, convertibles, or preferred shares involved?
-- Is the registration effective yet?
-- Is the S-1 connected to a prior financing?
-- Are there amendments or later filings to check?
-- Did volume and price reaction show that the market cared?
-- Did the trade follow a plan or a filing-headline reaction?
-
-## Apply This In Review
-
-After an S-1-related trade, review:
-
-- Whether you read the actual filing.
-- Whether you understood the securities being registered.
-- Whether you checked effectiveness status.
-- Whether you missed resale or warrant language.
-- Whether the filing changed your risk view.
-- Whether the market reaction held or faded.
-
-The goal is to improve filing literacy, not to memorize form names.
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
@@ -253,7 +223,3 @@ An EFFECT notice indicates that a registration statement has become effective. I
 ### Is an S-1 a trading signal?
 
 No. An S-1 is filing context. It should be reviewed with the details, market reaction, liquidity, and risk plan.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Form S-1 filings do not guarantee price movement, continuation, reversal, or profitable trades. Always review the actual filing, related news, liquidity, risk, and your own trading plan.

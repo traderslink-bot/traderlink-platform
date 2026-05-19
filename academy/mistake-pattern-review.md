@@ -36,8 +36,6 @@ meta_description: "Learn how to identify repeated trading mistake patterns and t
 ---
 # Mistake Pattern Review
 
-This lesson is part of the **Trade Review And Improvement** course. It follows [Execution Review](/academy/execution-review/) and leads into [Building A Playbook From Reviewed Trades](/academy/building-a-playbook-from-reviewed-trades/).
-
 Mistake pattern review is the process of looking across trades to find repeated behaviors. One mistake may be noise. A repeated mistake is a pattern that can be named, tracked, and improved.
 
 The point is not to shame the trader. The point is to stop treating repeated decisions as random.
@@ -106,29 +104,6 @@ Another mistake is treating all mistakes equally. Some mistakes are annoying; ot
 
 A final mistake is reviewing with shame language. Shame makes review harder to repeat. Specific language works better.
 
-## Practical Checklist
-
-- The mistake is named as a behavior, not a personality trait.
-- The same behavior appeared across multiple trades.
-- The context of the pattern is recorded.
-- The effect on risk, execution, or management is clear.
-- A rule or checklist item is created from the pattern.
-- Future trades are reviewed against that rule.
-- The review stays specific and usable.
-
-## Apply This In Review
-
-- What mistake repeated?
-- How many times did it appear?
-- When did it appear?
-- What triggered it?
-- Did it change risk, entry, exit, or management?
-- Was it connected to a specific ticker type or time of day?
-- What rule would interrupt it?
-- Did the new rule reduce the pattern?
-
-The goal is not to eliminate every mistake immediately. The goal is to make the most important repeated mistakes visible enough to work on.
-
 ## Related Lessons
 
 - [Trading Discipline](/academy/trading-discipline/)
@@ -162,7 +137,3 @@ Create a rule, checklist item, or session limit that directly addresses the repe
 ### Can pattern review guarantee improvement?
 
 No. It can improve awareness and feedback, but the trader still needs to apply the rules.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Mistake pattern review can support better process awareness, but it does not guarantee trading results.

@@ -36,8 +36,6 @@ meta_description: "Learn how moving averages smooth price, what they show about 
 ---
 # Moving Averages
 
-This lesson is part of the **Technical Indicators And Tools** course. It follows [Indicator Overload](/academy/indicator-overload/) and leads into [VWAP](/academy/vwap/).
-
 Moving averages smooth price data into a line that can help traders review trend direction, average price, and distance from recent price behavior. They are common because they are simple, but simple does not mean automatic.
 
 ## Lesson Objective
@@ -98,28 +96,6 @@ Another mistake is changing settings until the average fits a desired trade.
 
 A final mistake is using moving averages in low-liquidity stocks without reviewing spread and slippage.
 
-## Practical Checklist
-
-- I know which moving average I used and why.
-- I know whether the market was trending or choppy.
-- I checked nearby support and resistance.
-- I checked volume and liquidity.
-- I did not enter because of the average alone.
-- I reviewed whether the average caused a late entry.
-- I had risk defined outside of the indicator.
-
-## Apply This In Review
-
-- What moving average was on the chart?
-- Was price trending or chopping around it?
-- Did the moving average add useful context?
-- Did I enter because of the average alone?
-- Was the nearest risk area too far away?
-- Did price respect or ignore the average?
-- Would the trade still make sense without it?
-
-A moving average is most useful when it makes context clearer, not when it replaces the plan.
-
 ## Related Lessons
 
 - [What Are Trading Indicators?](/academy/trading-indicators/)
@@ -153,7 +129,3 @@ They can mislead in choppy markets, low-liquidity stocks, or after price is alre
 ### How should moving averages be reviewed?
 
 Review whether they clarified trend context, caused a late entry, or distracted from price structure and risk.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Moving averages can support context and review, but they do not predict price or guarantee trading results.

@@ -36,8 +36,6 @@ meta_description: "Learn what swing trading is, what it requires, common mistake
 ---
 # Swing Trading
 
-This lesson is part of the **Trading Styles And Playbooks** course. It follows [Day Trading](/academy/day-trading/) and leads into [Scalping Stocks](/academy/scalping-stocks/).
-
 Swing trading means holding a trade across more than one session. The trade may last days or weeks depending on the plan, but the defining feature is exposure beyond the current trading day.
 
 Swing trading gives trades more time to develop, but it also adds overnight, gap, news, and position-management risk.
@@ -108,28 +106,6 @@ Another mistake is holding after the thesis changes.
 
 A final mistake is not reviewing adds, reductions, and overnight decisions separately.
 
-## Practical Checklist
-
-- The trade was planned as a swing before holding.
-- Daily chart context is clear.
-- Catalyst and filing risk are reviewed.
-- Position size accounts for overnight risk.
-- Invalidation is defined.
-- News calendar and company events are checked.
-- The review will track each hold decision.
-
-## Apply This In Review
-
-- Was this planned as a swing trade from the start?
-- What was the multi-day thesis?
-- What invalidated the idea?
-- Did overnight news or gaps affect the trade?
-- Did I add, reduce, or hold according to plan?
-- Did I use too much size for the timeframe?
-- What did I learn about my swing-trade behavior?
-
-Swing review should include every decision made while the position was open, not only entry and exit.
-
 ## Related Lessons
 
 - [Swing Trading For Beginners](/academy/swing-trading-for-beginners/)
@@ -163,7 +139,3 @@ Review the thesis, hold decisions, overnight risk, adds, reductions, exits, and 
 ### Does swing trading reduce risk?
 
 No. It changes the type of risk and requires its own planning.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trading styles and playbooks can help organize review, but they do not guarantee outcomes or replace independent risk decisions.

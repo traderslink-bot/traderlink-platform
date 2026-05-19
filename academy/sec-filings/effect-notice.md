@@ -27,8 +27,6 @@ meta_description: "Learn what an EFFECT notice is, why registration effectivenes
 ---
 # EFFECT Notice
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form 424B4](/academy/sec-filings/form-424b4/) and leads into [Form 3](/academy/sec-filings/form-3/).
-
 The goal is not to turn EFFECT Notice into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -118,26 +116,6 @@ Traders may want to check:
 
 The notice does not guarantee dilution pressure, but it can mark an important point in the registration timeline.
 
-## Practical Checklist
-
-Structured review notes can help connect EFFECT notice details to trading decisions.
-
-Useful review notes include:
-
-1. EFFECT notice date.
-2. Related registration statement.
-3. Securities covered.
-4. Primary or resale structure.
-5. Selling shareholders, if any.
-6. Float and share count context.
-7. Related 424B filings.
-8. Stock reaction after effectiveness.
-9. Whether you understood the registration before trading.
-
-This helps traders avoid reacting to the notice without reading the underlying filing.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). EFFECT notices often connect with [Form S-1](/academy/sec-filings/form-s-1/), [Form S-3](/academy/sec-filings/form-s-3/), and [resale registration statements](/academy/resale-registration-statement/).
@@ -181,24 +159,9 @@ It can, but it does not guarantee a move. The reaction depends on the registrati
 
 No. It means the registration statement is effective. An actual offering or resale activity depends on the filing structure and follow-up actions.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to EFFECT Notice, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [Form 424B4](/academy/sec-filings/form-424b4/)
 - [Form 3](/academy/sec-filings/form-3/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. EFFECT notices do not guarantee dilution, selling pressure, price movement, or trading outcomes. Always review the full registration statement, related filings, liquidity, risk, and your own trading plan.

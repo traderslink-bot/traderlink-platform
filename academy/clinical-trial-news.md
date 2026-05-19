@@ -41,8 +41,6 @@ meta_description: "Learn how clinical trial news can affect biotech stocks, what
 
 Clinical trial news can become a major stock catalyst, especially for biotech and healthcare companies. Traders watch these updates because trial data, enrollment progress, regulatory milestones, and study results can quickly change market attention.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [FDA News Stocks](/academy/fda-news-stocks/) and leads into [Contract News Stocks](/academy/contract-news-stocks/).
-
 Clinical trial news does not guarantee a stock will move higher. Some trial updates are strong, some are mixed, some are early-stage, and some are misunderstood by traders reacting too quickly. The details matter.
 
 ## Lesson Objective
@@ -173,35 +171,6 @@ Common clinical-trial news mistakes include:
 
 Clinical trial news requires patience because small details can change the meaning.
 
-## Practical Checklist
-
-Use this checklist when reviewing trial-news trades:
-
-- What trial phase was involved?
-- Was the update about enrollment, interim data, final data, safety, or endpoints?
-- Was the primary endpoint met?
-- Was the data statistically significant?
-- How many patients were included?
-- Were safety issues reported?
-- What is the next milestone?
-- Does the company have cash to continue?
-- Were related filings released?
-- Did volume and price reaction continue or fade?
-
-## Apply This In Review
-
-After a clinical-trial news trade, record:
-
-- The exact trial update.
-- The phase and patient count.
-- Endpoint and safety details.
-- Whether the data was interim or final.
-- Whether cash or dilution context mattered.
-- Whether the chart reaction held.
-- Whether you understood the data before entering.
-
-This helps turn biotech headline reaction into a more structured review process.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)
@@ -231,7 +200,3 @@ Review phase, endpoints, statistical significance, sample size, safety, interim 
 ### Can good trial news still fade?
 
 Yes. A move can fade if the data is early, mixed, expected, poorly understood, or if financing risk and liquidity concerns outweigh the headline.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Clinical trial news does not guarantee price movement, continuation, approval, reversal, or profitable trades. Always review the full announcement, related filings, liquidity, risk, and your own trading plan.

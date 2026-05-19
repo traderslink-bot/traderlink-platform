@@ -27,8 +27,6 @@ meta_description: "Learn what dilution risk means, why traders watch offerings a
 ---
 # Dilution Risk
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Dilution](/academy/dilution/) and leads into [How To Spot Dilution Risk](/academy/how-to-spot-dilution-risk/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -149,18 +147,6 @@ A trade journal can connect float, filings, dilution context, risk, execution, a
 
 Start with [dilution](/academy/dilution/) and [how to spot dilution risk](/academy/how-to-spot-dilution-risk/). Dilution risk often connects with [stock offerings](/academy/stock-offerings/), [shelf registration](/academy/shelf-registration/), and [fully diluted shares](/academy/fully-diluted-shares/).
 
-## Practical Checklist
-
-Before treating Dilution Risk as meaningful context, review:
-
-- Cash balance.
-- Cash burn.
-- Shelf or ATM capacity.
-- Recent offerings.
-- Warrants.
-- Convertibles.
-- Going concern language.
-
 ## FAQ
 
 ### What is dilution risk?
@@ -187,24 +173,9 @@ Yes. Filing history, cash position, and outstanding securities can show risk bef
 
 Not always. Raising capital can help a company survive or grow, but traders still need to understand the impact on share count and supply.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Dilution Risk, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Dilution](/academy/dilution/)
 - [How To Spot Dilution Risk](/academy/how-to-spot-dilution-risk/)
 - [SEC Filings](/academy/sec-filings/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Dilution risk does not guarantee dilution, price movement, selling pressure, or trading outcomes. Always review filings, terms, liquidity, risk, and your own trading plan.

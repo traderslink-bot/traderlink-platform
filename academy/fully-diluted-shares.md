@@ -27,8 +27,6 @@ meta_description: "Learn what fully diluted shares means, why fully diluted shar
 ---
 # Fully Diluted Shares
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Float Vs Shares Outstanding](/academy/float-vs-shares-outstanding/) and leads into [Market Cap Vs Fully Diluted Market Cap](/academy/market-cap-vs-fully-diluted-market-cap/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -149,18 +147,6 @@ A trade journal can connect float, filings, dilution context, risk, execution, a
 
 Start with [dilution](/academy/dilution/) and [dilution risk](/academy/dilution-risk/). Fully diluted share count often requires reviewing [stock warrants](/academy/warrants/), [convertible notes](/academy/convertible-notes/), and [float versus shares outstanding](/academy/float-vs-shares-outstanding/).
 
-## Practical Checklist
-
-Before treating Fully Diluted Shares as meaningful context, review:
-
-- Common shares.
-- Warrants.
-- Options.
-- Convertibles.
-- Preferred stock.
-- Exercise or conversion prices.
-- Fully diluted market cap.
-
 ## FAQ
 
 ### What are fully diluted shares?
@@ -187,17 +173,6 @@ Warrants, pre-funded warrants, options, RSUs, convertible notes, convertible pre
 
 No. It can be an estimate, especially when securities have variable conversion prices or complex terms.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Fully Diluted Shares, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Float Vs Shares Outstanding](/academy/float-vs-shares-outstanding/)
@@ -205,7 +180,3 @@ When reviewing a small-cap trade or watchlist idea connected to Fully Diluted Sh
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Fully diluted share count does not guarantee dilution, price movement, selling pressure, or trading outcomes. Always review filings, terms, liquidity, risk, and your own trading plan.

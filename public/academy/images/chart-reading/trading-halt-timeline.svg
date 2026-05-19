@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430" role="img" aria-labelledby="title desc">
   <title id="title">Trading Halt Timeline</title>
-  <desc id="desc">Dark trading dashboard chart showing realistic red and green candles before a trading halt, a paused period, resume candles, and volume bars with educational review labels.</desc>
+  <desc id="desc">Dark trading dashboard chart showing realistic red and green candles before a trading halt, a paused period, resume candles, and volume bars with context labels.</desc>
   <defs>
     <style>
       .bg{fill:#0b1220}.panel{fill:#0f1a2b;stroke:#203651;stroke-width:1.5}.txt{fill:#d7e3f4;font-family:Arial,Helvetica,sans-serif}.small{font-size:12px}.label{font-size:13px;font-weight:700}.muted{fill:#8ea1bd}.grid{stroke:#22364f;opacity:.65}.halt{fill:rgba(245,158,11,.16);stroke:#f59e0b;stroke-width:1.5;stroke-dasharray:7 5}.zone{fill:rgba(56,189,248,.12);stroke:#38bdf8;stroke-width:1.5}.green{fill:#22c55e;stroke:#22c55e}.red{fill:#ef4444;stroke:#ef4444}.wickG{stroke:#22c55e;stroke-width:2}.wickR{stroke:#ef4444;stroke-width:2}.volG{fill:#22c55e;opacity:.45}.volR{fill:#ef4444;opacity:.45}

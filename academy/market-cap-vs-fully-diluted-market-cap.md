@@ -27,8 +27,6 @@ meta_description: "Learn the difference between market cap and fully diluted mar
 ---
 # Market Cap vs Fully Diluted Market Cap
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Fully Diluted Shares](/academy/fully-diluted-shares/) and leads into [Dilution](/academy/dilution/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -154,18 +152,6 @@ A trade journal can connect float, filings, dilution context, risk, execution, a
 
 Start with [market cap versus fully diluted market cap](/academy/market-cap-vs-fully-diluted-market-cap/) and [fully diluted shares](/academy/fully-diluted-shares/). For dilution context, review [dilution](/academy/dilution/), [float versus shares outstanding](/academy/float-vs-shares-outstanding/), and [stock warrants](/academy/warrants/).
 
-## Practical Checklist
-
-Before treating Market Cap Vs Fully Diluted Market Cap as meaningful context, review:
-
-- Basic market cap.
-- Fully diluted share count.
-- Warrants and convertibles.
-- Preferred stock.
-- Offering history.
-- Valuation gap.
-- Risk context.
-
 ## FAQ
 
 ### What is market cap?
@@ -192,17 +178,6 @@ Traders review it to understand whether a stock's valuation still makes sense af
 
 Yes. It can change after new offerings, warrant exercises, conversions, equity grants, or changes in security terms.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Market Cap Vs Fully Diluted Market Cap, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Fully Diluted Shares](/academy/fully-diluted-shares/)
@@ -210,7 +185,3 @@ When reviewing a small-cap trade or watchlist idea connected to Market Cap Vs Fu
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Market cap and fully diluted market cap do not guarantee price movement, valuation outcomes, dilution, or trading results. Always review filings, terms, liquidity, risk, and your own trading plan.

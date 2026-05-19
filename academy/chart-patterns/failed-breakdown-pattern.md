@@ -38,8 +38,6 @@ meta_description: "Learn what failed breakdowns show, why support breaks can rec
 ---
 # Failed Breakdown Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Failed Breakout Pattern](/academy/chart-patterns/failed-breakout-pattern/) and leads into [VWAP Reclaim](/academy/chart-patterns/vwap-reclaim/).
-
 **Best suited for:** day trading and swing trading.
 
 A failed breakdown happens when price breaks below a support area, then reclaims that area instead of continuing lower. It often catches traders who reacted to the support break without waiting to see whether the break could hold.

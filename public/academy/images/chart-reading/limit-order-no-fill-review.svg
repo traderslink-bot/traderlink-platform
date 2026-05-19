@@ -3,7 +3,7 @@
   <desc id="desc">A dark trading dashboard style chart showing price moving away from a limit order that does not fill.</desc>
   <rect width="900" height="520" fill="#08111f"/>
   <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
-  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Price control can create no-fill review</text>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Price control can mean no fill</text>
   <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A limit order may protect price, but it may not participate if price moves away.</text>
   <line x1="76" y1="128" x2="604" y2="128" stroke="#182943"/>
   <line x1="76" y1="188" x2="604" y2="188" stroke="#182943"/>
@@ -33,7 +33,7 @@
     <rect x="353" y="354" width="22" height="104" fill="#22c55e" opacity="0.82"/>
   </g>
   <rect x="642" y="144" width="182" height="184" rx="12" fill="#0a1322" stroke="#213858"/>
-  <text x="666" y="178" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Review prompt</text>
+  <text x="666" y="178" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Context prompt</text>
   <text x="666" y="216" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="14">Price control helped</text>
   <text x="666" y="246" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="14">Fill did not happen</text>
   <text x="666" y="276" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Did trader chase after?</text>

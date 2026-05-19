@@ -27,8 +27,6 @@ meta_description: "Learn what Form F-3 is, why foreign private issuers use shelf
 ---
 # Form F-3
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Form F-1](/academy/sec-filings/form-f-1/) and leads into [Form S-4](/academy/sec-filings/form-s-4/).
-
 The goal is not to turn Form F-3 into a trading signal. The goal is to understand what the filing says, what it does not say, and how it changes the review context around news, price, volume, liquidity, and risk.
 
 ## Lesson Objective
@@ -120,26 +118,6 @@ Traders may want to check:
 
 The filing does not guarantee dilution, but it can increase the importance of monitoring future filings.
 
-## Practical Checklist
-
-Structured review notes can help you study how Form F-3 filings affect your decisions.
-
-Useful review notes include:
-
-1. Filing date.
-2. Shelf size.
-3. Securities registered.
-4. Primary or resale structure.
-5. Use of proceeds.
-6. Company cash context.
-7. Whether a prospectus supplement followed.
-8. Stock reaction after the filing.
-9. Whether you adjusted risk around potential financing.
-
-This is not about assuming every F-3 is immediate dilution. It is about understanding the risk window.
-
-A trade journal can connect the filing source, catalyst context, risk, execution, and research gaps after the trade. That review is for learning, not prediction or a trade signal.
-
 ## Related SEC Filings
 
 Start with the main [SEC filings guide](/academy/sec-filings/). Form F-3 is related to [Form F-1](/academy/sec-filings/form-f-1/) and [Form S-3](/academy/sec-filings/form-s-3/).
@@ -183,24 +161,9 @@ Traders often review shelf size, securities registered, use of proceeds, selling
 
 Small-cap traders watch F-3 filings because they can signal future financing flexibility and potential share supply.
 
-## Apply This In Review
-
-When reviewing a trade or watchlist idea connected to Form F-3, ask:
-
-- What exact filing was released, and what event or disclosure did it contain?
-- Was the market reacting to the filing itself, a related press release, or a prior expectation?
-- What did price and volume do before, during, and after the filing became visible?
-- Did liquidity, spread, or volatility make the move harder to execute cleanly?
-- Did I read the filing details, or did I rely on a headline, scanner alert, or social post?
-- What would I want to notice faster the next time this filing appears?
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
 - [Form F-1](/academy/sec-filings/form-f-1/)
 - [Form S-4](/academy/sec-filings/form-s-4/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Form F-3 filings do not guarantee dilution, price movement, or trading outcomes. Always review the full filing, related disclosures, liquidity, risk, and your own trading plan.

@@ -27,8 +27,6 @@ meta_description: "Learn what preferred stock is, why preferred shares matter, a
 ---
 # Preferred Stock
 
-This lesson is part of the **Small-Cap Stocks, Float And Dilution** course. It follows [Convertible Notes](/academy/convertible-notes/) and leads into [Reverse Split](/academy/reverse-split/).
-
 The goal is not to make small-cap trading look easy or exciting. The goal is to understand the company, share structure, financing context, liquidity, and risk before treating any move as meaningful.
 
 ## Lesson Objective
@@ -152,18 +150,6 @@ Preferred stock can appear in [stock offerings](/academy/stock-offerings/) and p
 
 For broader ownership context, review [float versus shares outstanding](/academy/float-vs-shares-outstanding/).
 
-## Practical Checklist
-
-Before treating Preferred Stock as meaningful context, review:
-
-- Conversion rights.
-- Liquidation preference.
-- Voting rights.
-- Dividends.
-- Redemption terms.
-- Anti-dilution terms.
-- Common share impact.
-
 ## FAQ
 
 ### What is preferred stock?
@@ -190,17 +176,6 @@ A certificate of designation explains the rights and terms of a preferred stock 
 
 No. It depends on the terms, conversion rights, voting power, and company context.
 
-## Apply This In Review
-
-When reviewing a small-cap trade or watchlist idea connected to Preferred Stock, ask:
-
-- What did I know about the company, float, share structure, and filings before the move?
-- Was the move driven by news, filings, volume, social attention, sector momentum, or thin liquidity?
-- Did the concept actually matter in this case, or was I forcing it onto the chart?
-- What changed after the move: volume, spread, dilution risk, offering risk, or liquidity?
-- Did I account for the downside scenario, or did I focus only on the exciting version of the setup?
-- What would I want to notice faster the next time this situation appears?
-
 ## Related Lessons
 
 - [Convertible Notes](/academy/convertible-notes/)
@@ -208,7 +183,3 @@ When reviewing a small-cap trade or watchlist idea connected to Preferred Stock,
 - [SEC Filings](/academy/sec-filings/)
 - [Dilution Risk](/academy/dilution-risk/)
 - [How To Review News Trades](/academy/how-to-review-news-trades/)
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Preferred stock does not guarantee dilution, price movement, control changes, or trading outcomes. Always review the full terms, filings, liquidity, risk, and your own trading plan.

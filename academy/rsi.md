@@ -36,8 +36,6 @@ meta_description: "Learn what RSI measures, how traders use it as momentum conte
 ---
 # RSI
 
-This lesson is part of the **Technical Indicators And Tools** course. It follows [Anchored VWAP](/academy/anchored-vwap/) and leads into [MACD](/academy/macd/).
-
 RSI stands for Relative Strength Index. It is a momentum oscillator that compares recent gains and losses to show whether momentum has been strong, weak, stretched, or fading.
 
 RSI is often described with overbought and oversold labels, but those labels are not trading instructions.
@@ -100,28 +98,6 @@ Another mistake is treating divergence as a guaranteed reversal.
 
 A final mistake is using RSI to justify an entry without defined risk.
 
-## Practical Checklist
-
-- I know what RSI was showing about momentum.
-- I checked whether the market was trending or ranging.
-- I reviewed support and resistance.
-- I checked volume and catalyst context.
-- I did not treat overbought or oversold as a command.
-- I had a risk plan independent of RSI.
-- I reviewed whether RSI helped or hurt the decision.
-
-## Apply This In Review
-
-- What was RSI showing before entry?
-- Was price trending or ranging?
-- Was RSI elevated because momentum was strong?
-- Did I exit early because RSI looked high?
-- Did I enter against trend because RSI looked stretched?
-- Did divergence appear near a real level?
-- Did RSI improve the trade review?
-
-RSI review should explain how momentum affected the decision, not pretend the indicator knew the future.
-
 ## Related Lessons
 
 - [What Are Trading Indicators?](/academy/trading-indicators/)
@@ -155,7 +131,3 @@ RSI can mislead in strong trends, weak trends, or when used without levels, volu
 ### How should RSI be reviewed?
 
 Review whether RSI showed momentum context, whether price structure agreed, and whether the trader used RSI responsibly.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. RSI can support momentum review, but it does not predict price or guarantee trading results.

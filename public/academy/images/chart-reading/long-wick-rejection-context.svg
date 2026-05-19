@@ -1,30 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
-  <title id="title">Long wick rejection context</title>
-  <desc id="desc">Realistic candlestick chart showing long upper wick rejection near resistance and long lower wick rejection near support with volume bars.</desc>
+  <title id="title">Long wick and tail candle shapes</title>
+  <desc id="desc">Clean candle diagram showing a topping tail, bottoming tail, and pin bar candle shape.</desc>
   <rect width="960" height="540" fill="#07111f"/>
-  <rect x="46" y="38" width="868" height="352" rx="10" fill="#0b1626" stroke="#1b3558"/>
-  <g stroke="#19304d"><path d="M80 100H880M80 160H880M80 220H880M80 280H880M80 340H880"/></g>
-  <rect x="74" y="90" width="812" height="34" fill="#1f6feb" opacity=".18"/>
-  <rect x="74" y="300" width="812" height="34" fill="#1f6feb" opacity=".18"/>
-  <text x="90" y="84" fill="#9cc7ff" font-family="Arial" font-size="17">Upper wick near resistance</text>
-  <text x="90" y="358" fill="#9cc7ff" font-family="Arial" font-size="17">Lower wick near support</text>
-  <g stroke-width="3" stroke-linecap="round">
-    <g stroke="#22c55e" fill="#22c55e"><line x1="130" y1="285" x2="130" y2="336"/><rect x="119" y="298" width="22" height="26" rx="2"/></g>
-    <g stroke="#22c55e" fill="#22c55e"><line x1="180" y1="245" x2="180" y2="315"/><rect x="169" y="263" width="22" height="40" rx="2"/></g>
-    <g stroke="#ef4444" fill="#ef4444"><line x1="230" y1="100" x2="230" y2="258"/><rect x="219" y="154" width="22" height="72" rx="2"/></g>
-    <g stroke="#ef4444" fill="#ef4444"><line x1="280" y1="118" x2="280" y2="238"/><rect x="269" y="146" width="22" height="65" rx="2"/></g>
-    <g stroke="#ef4444" fill="#ef4444"><line x1="330" y1="170" x2="330" y2="292"/><rect x="319" y="199" width="22" height="58" rx="2"/></g>
-    <g stroke="#22c55e" fill="#22c55e"><line x1="390" y1="294" x2="390" y2="356"/><rect x="379" y="302" width="22" height="26" rx="2"/></g>
-    <g stroke="#22c55e" fill="#22c55e"><line x1="445" y1="238" x2="445" y2="336"/><rect x="434" y="262" width="22" height="40" rx="2"/></g>
-    <g stroke="#22c55e" fill="#22c55e"><line x1="500" y1="112" x2="500" y2="276"/><rect x="489" y="132" width="22" height="82" rx="2"/></g>
-    <g stroke="#ef4444" fill="#ef4444"><line x1="555" y1="112" x2="555" y2="222"/><rect x="544" y="126" width="22" height="55" rx="2"/></g>
-    <g stroke="#ef4444" fill="#ef4444"><line x1="610" y1="155" x2="610" y2="284"/><rect x="599" y="185" width="22" height="65" rx="2"/></g>
+  <rect x="48" y="40" width="864" height="420" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g stroke="#19304d" stroke-width="1">
+    <path d="M88 130H872M88 220H872M88 310H872M88 400H872"/>
   </g>
-  <text x="650" y="120" fill="#d6e4ff" font-family="Arial" font-size="18">Wick = rejected extreme</text>
-  <text x="650" y="322" fill="#d6e4ff" font-family="Arial" font-size="18">Context decides meaning</text>
-  <rect x="46" y="414" width="868" height="82" rx="10" fill="#0b1626" stroke="#1b3558"/>
-  <g>
-    <rect x="95" y="464" width="22" height="19" fill="#22c55e" opacity=".75"/><rect x="145" y="456" width="22" height="27" fill="#22c55e" opacity=".75"/><rect x="195" y="424" width="22" height="59" fill="#ef4444" opacity=".75"/><rect x="245" y="431" width="22" height="52" fill="#ef4444" opacity=".75"/><rect x="295" y="452" width="22" height="31" fill="#ef4444" opacity=".75"/><rect x="380" y="462" width="22" height="21" fill="#22c55e" opacity=".75"/><rect x="435" y="444" width="22" height="39" fill="#22c55e" opacity=".75"/><rect x="490" y="418" width="22" height="65" fill="#22c55e" opacity=".75"/>
+  <text x="64" y="88" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Long wick and tail candle shapes</text>
+  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">A topping tail is the upper-wick version; a bottoming tail is the lower-wick version.</text>
+
+  <g transform="translate(220 175)">
+    <text x="-82" y="-22" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="20" font-weight="700">Topping tail</text>
+    <line x1="0" y1="0" x2="0" y2="220" stroke="#d6e4ff" stroke-width="8" stroke-linecap="round"/>
+    <rect x="-40" y="136" width="80" height="58" rx="5" fill="#ef4444"/>
+    <text x="-104" y="260" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Body near the lower part.</text>
   </g>
-  <text x="560" y="464" fill="#d6e4ff" font-family="Arial" font-size="19">Review level and follow-through.</text>
+
+  <g transform="translate(480 175)">
+    <text x="-82" y="-22" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="20" font-weight="700">Bottoming tail</text>
+    <line x1="0" y1="0" x2="0" y2="220" stroke="#d6e4ff" stroke-width="8" stroke-linecap="round"/>
+    <rect x="-40" y="28" width="80" height="58" rx="5" fill="#22c55e"/>
+    <text x="-104" y="260" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Body near the upper part.</text>
+  </g>
+
+  <g transform="translate(740 175)">
+    <text x="-58" y="-22" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="20" font-weight="700">Pin bar</text>
+    <line x1="0" y1="0" x2="0" y2="220" stroke="#d6e4ff" stroke-width="8" stroke-linecap="round"/>
+    <rect x="-34" y="42" width="68" height="40" rx="5" fill="#22c55e"/>
+    <text x="-106" y="260" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Small body, one dominant wick.</text>
+  </g>
 </svg>

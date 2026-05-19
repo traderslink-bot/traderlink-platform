@@ -38,8 +38,6 @@ meta_description: "Learn what rounding bottoms show, why base-building context m
 ---
 # Rounding Bottom Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Rounding Top Pattern](/academy/chart-patterns/rounding-top/) and leads into [Parabolic Move](/academy/chart-patterns/parabolic-move/).
-
 **Best suited for:** swing trading and longer base-building review.
 
 A rounding bottom is a slower structure where price stops making sharp new lows, begins to stabilize, and gradually turns upward. It is usually more useful on multi-day charts than on fast intraday charts.

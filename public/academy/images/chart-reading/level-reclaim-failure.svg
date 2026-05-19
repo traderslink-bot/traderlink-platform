@@ -44,5 +44,5 @@
   <text x="336" y="166" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Brief reclaim</text>
   <text x="442" y="330" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Fails below zone</text>
   <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Journal prompt: did I wait for the reclaim to hold, or react to the first bounce?</text>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: did the reclaim hold, or was it only the first bounce?</text>
 </svg>

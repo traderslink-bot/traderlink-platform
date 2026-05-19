@@ -41,8 +41,6 @@ meta_description: "Learn how merger news can affect stocks, what traders review 
 
 Merger news stocks are stocks that move or attract attention because of a merger, acquisition, takeover, reverse merger, business combination, or similar corporate transaction. Traders watch merger news because it can quickly change how the market values a company.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Partnership News Stocks](/academy/partnership-news-stocks/) and leads into [How To Review News Trades](/academy/how-to-review-news-trades/).
-
 Merger news does not guarantee a stock will move higher. Deal structure, price, financing, shareholder approval, regulatory review, closing conditions, and dilution risk all matter. The headline is only the start.
 
 ## Lesson Objective
@@ -175,35 +173,6 @@ Common merger-news mistakes include:
 
 Merger news needs terms, not just excitement.
 
-## Practical Checklist
-
-Use this checklist when reviewing merger-news trades:
-
-- What type of deal is it?
-- Is the agreement signed or proposed?
-- Is consideration cash, stock, or mixed?
-- What valuation is implied?
-- What approvals are needed?
-- Are new shares being issued?
-- Are financing or closing conditions involved?
-- What filings explain the deal?
-- Did volume continue after the headline?
-- Did price hold or fade after traders reviewed the terms?
-
-## Apply This In Review
-
-After a merger-news trade, record:
-
-- The deal type.
-- Cash, stock, or mixed consideration.
-- Closing conditions.
-- Filing details.
-- Dilution or share-issuance context.
-- Whether the first move held.
-- Whether you understood the deal terms before entering.
-
-This helps avoid treating every M&A headline as simple.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)
@@ -234,7 +203,3 @@ No. A letter of intent may describe a possible future transaction, but it is not
 ### Why are filings important for merger news?
 
 Filings can include merger agreements, exhibits, proxy materials, S-4 registration statements, approval details, and closing conditions that are not fully explained in the press release.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Merger news does not guarantee price movement, continuation, reversal, deal completion, or profitable trades. Always review the full announcement, related filings, liquidity, risk, and your own trading plan.

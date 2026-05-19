@@ -38,8 +38,6 @@ meta_description: "Learn how swing traders review catalysts, news quality, filin
 ---
 # Swing Trading Catalysts
 
-This lesson is part of the **Swing Trading Workflow** course. It follows [Swing Trading Volume](/academy/swing-trading-volume/) and leads into [Swing Trading Earnings](/academy/swing-trading-earnings/).
-
 Swing trading catalysts are events, news, filings, or themes that give the market a reason to pay attention to a stock across more than one session.
 
 A catalyst is not a guarantee. It is a reason to review market reaction. The headline may attract attention, but swing traders still need to evaluate the details, price behavior, volume, liquidity, and risk.
@@ -141,29 +139,6 @@ Another mistake is forgetting that catalysts can attract sellers as well as buye
 
 A final mistake is skipping filing review in small-cap catalyst trades.
 
-## Practical Checklist
-
-- The catalyst is identified clearly.
-- The actual source is reviewed, not just the headline.
-- The catalyst is specific enough to understand.
-- Price reaction is compared with key levels.
-- Volume follow-through is reviewed after the first reaction.
-- Filings, offering risk, and liquidity are checked when relevant.
-- The trade plan does not rely on the catalyst guaranteeing direction.
-
-## Apply This In Review
-
-- What was the catalyst?
-- Did I read the actual news, filing, or report?
-- Was the catalyst specific or vague?
-- Did price hold the level created by the reaction?
-- Did volume continue after the first move?
-- Did filing or dilution risk change the context?
-- Did I hold because the catalyst remained valid or because I hoped?
-- Did the trade fail because the catalyst faded, because execution was poor, or both?
-
-Catalyst review helps traders avoid treating all news as equal.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)
@@ -171,15 +146,6 @@ Catalyst review helps traders avoid treating all news as equal.
 - [Press Releases](/academy/press-releases/)
 - [SEC Filings](/academy/sec-filings/)
 - [Swing Trading Earnings](/academy/swing-trading-earnings/)
-
-## Related Glossary Terms
-
-- Catalyst
-- Press release
-- SEC filing
-- Volume
-- Relative volume
-- Offering risk
 
 ## FAQ
 
@@ -206,7 +172,3 @@ Yes. Many catalysts create a first reaction and then fade if volume slows, detai
 ### How should catalyst trades be reviewed?
 
 Review the source, details, price reaction, volume, key levels, filing risk, liquidity, and whether the trader followed the original plan.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Catalysts can increase volatility, but no headline, filing, or event guarantees price direction or trade success.

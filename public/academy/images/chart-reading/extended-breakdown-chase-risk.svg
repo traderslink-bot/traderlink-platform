@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
   <title id="title">Extended Breakdown Chase Risk</title>
-  <desc id="desc">Educational candlestick chart showing a breakdown far below support with chase-risk review labels.</desc>
+  <desc id="desc">Educational candlestick chart showing a breakdown far below support with chase-risk context labels.</desc>
   <rect width="760" height="440" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554"/>
   <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Extended Breakdown Chase Risk</text>
@@ -38,6 +38,6 @@
     <rect x="70" y="326" width="14" height="18" fill="#ef4444" opacity=".7"/><rect x="96" y="314" width="14" height="30" fill="#ef4444" opacity=".85"/><rect x="122" y="306" width="14" height="38" fill="#ef4444" opacity=".9"/><rect x="148" y="296" width="14" height="48" fill="#ef4444" opacity=".95"/><rect x="174" y="288" width="14" height="56" fill="#ef4444" opacity=".98"/><rect x="200" y="318" width="14" height="26" fill="#21c784" opacity=".66"/><rect x="226" y="302" width="14" height="42" fill="#ef4444" opacity=".88"/><rect x="252" y="314" width="14" height="30" fill="#21c784" opacity=".7"/>
   </g>
   <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: was the entry near the broken level, or late after several red candles?</text>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: was the entry near the broken level, or late after several red candles?</text>
   <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Weakness can still be poor trade location when price is extended.</text>
 </svg>

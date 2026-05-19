@@ -38,8 +38,6 @@ meta_description: "Learn how small-cap swing trades should be reviewed with cata
 ---
 # Small Cap Swing Trading
 
-This lesson completes the **Swing Trading Workflow** course. It follows [Swing Trading News Risk](/academy/swing-trading-news-risk/) and leads into [Stock Catalysts](/academy/stock-catalysts/).
-
 Small cap swing trading means holding smaller-company stocks across multiple sessions. These trades can move sharply because small caps may have lower liquidity, smaller floats, stronger catalyst reactions, wider spreads, and more financing risk.
 
 That can make the charts look exciting, but it also makes review more demanding.
@@ -134,31 +132,6 @@ Another mistake is using too much size for a thin or volatile stock.
 
 A final mistake is reviewing the trade only by the size of the move instead of the quality of the plan.
 
-## Practical Checklist
-
-- The trade thesis is clear.
-- Catalyst quality is reviewed.
-- Daily chart support and resistance are mapped.
-- Float and share structure are checked.
-- Recent filings and dilution risk are reviewed.
-- Liquidity and spread fit the planned size.
-- Volume follow-through is reviewed after the first reaction.
-- Overnight, halt, and gap risk are considered.
-- The trader has a review plan if the catalyst fades.
-
-## Apply This In Review
-
-- What was the reason for the small-cap swing trade?
-- Was the setup technical, catalyst-based, or both?
-- Did I check filings before holding overnight?
-- Was dilution risk visible before the trade?
-- Did liquidity support my position size?
-- Did volume continue after the first move?
-- Did the stock hold the key level after entry?
-- Did I hold because the thesis was intact or because I wanted the move to come back?
-
-Small-cap swing review should include the background risk, not only the chart.
-
 ## Related Lessons
 
 - [Small Cap Stocks](/academy/small-cap-stocks/)
@@ -166,16 +139,6 @@ Small-cap swing review should include the background risk, not only the chart.
 - [Dilution Risk](/academy/dilution-risk/)
 - [SEC Filings](/academy/sec-filings/)
 - [Trading Halts](/academy/trading-halts/)
-
-## Related Glossary Terms
-
-- Small cap
-- Low float
-- Dilution
-- Offering
-- Shelf registration
-- Liquidity
-- Trading halt
 
 ## FAQ
 
@@ -202,7 +165,3 @@ They can fail because volume fades, catalysts are weak, resistance holds, filing
 ### How should small-cap swing trades be reviewed?
 
 Review the catalyst, levels, float, filings, dilution risk, liquidity, volume behavior, risk plan, and whether the trader followed the original thesis.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Small cap swing trading can be highly risky, and no catalyst, chart pattern, volume pattern, or filing interpretation guarantees a price move.

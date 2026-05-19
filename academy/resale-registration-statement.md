@@ -153,7 +153,3 @@ Traders often check selling shareholders, share count, warrant shares, original 
 ### Is resale registration always bad?
 
 No. It depends on the size, structure, holders, restrictions, and market context.
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Resale registration statements do not guarantee selling pressure, dilution impact, price movement, or trading outcomes. Always review the full filing, related disclosures, liquidity, risk, and your own trading plan.

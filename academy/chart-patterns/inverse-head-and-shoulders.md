@@ -39,8 +39,6 @@ meta_description: "Learn what Inverse Head And Shoulders shows, why it can fail,
 ---
 # Inverse Head And Shoulders
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Head And Shoulders Pattern](/academy/chart-patterns/head-and-shoulders/) and leads into [Rounding Top Pattern](/academy/chart-patterns/rounding-top/).
-
 **Best suited for:** day trading and swing trading.
 
 Inverse Head And Shoulders is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.

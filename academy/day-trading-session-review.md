@@ -36,8 +36,6 @@ meta_description: "Learn how to review a day trading session using preparation, 
 ---
 # Day Trading Session Review
 
-This lesson completes the **Day Trading Workflow** course. It follows [After-Hours Trading](/academy/after-hours-trading/) and connects next to [Swing Trading For Beginners](/academy/swing-trading-for-beginners/).
-
 A day trading session review is the process of studying the day after trades are complete. It turns the workflow into feedback.
 
 The goal is not to relive every candle. The goal is to identify what was planned, what was reactive, what was managed well, and what needs a rule or adjustment.
@@ -112,26 +110,6 @@ Another mistake is writing vague notes that cannot change future behavior.
 
 A final mistake is reviewing only charts while ignoring spread, slippage, sizing, and emotional state.
 
-## Practical Checklist
-
-- I reviewed the original watchlist.
-- I tagged each trade by session segment.
-- I compared planned versus actual behavior.
-- I checked risk, size, spread, and slippage.
-- I identified one repeated mistake or strength.
-- I wrote one practical adjustment for the next session.
-- I did not confuse outcome with process quality.
-
-## Apply This In Review
-
-- What was my best-planned decision today?
-- What was my most reactive decision?
-- Which session segment created the most trouble?
-- Did I respect my risk limits?
-- Did execution quality affect the result?
-- Did I stop when the plan was gone?
-- What is the one rule or filter I will carry forward?
-
 ## Related Lessons
 
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
@@ -139,15 +117,6 @@ A final mistake is reviewing only charts while ignoring spread, slippage, sizing
 - [Execution Review](/academy/execution-review/)
 - [Overtrading](/academy/overtrading/)
 - [Trader Intelligence Trade Review](/academy/trader-intelligence-trade-review/)
-
-## Related Glossary Terms
-
-- Trade review
-- Execution
-- Slippage
-- Overtrading
-- Risk management
-- Trading rules
 
 ## FAQ
 
@@ -166,7 +135,3 @@ Start with whether the trades matched the plan, then review risk, timing, execut
 ### How detailed should session review be?
 
 It should be detailed enough to create useful improvement notes, but not so long that it becomes impossible to repeat.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

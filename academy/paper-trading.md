@@ -38,8 +38,6 @@ meta_description: "Learn how paper trading works, what it can teach beginners, w
 ---
 # Paper Trading
 
-This lesson is part of the **Practice And Improvement** course. It follows [Practice Trading](/academy/practice-trading/) and leads into [Trade Replay Review](/academy/trade-replay-review/).
-
 Paper trading is simulated trading. It lets a trader practice decisions without using real money.
 
 That makes it useful, but also limited. Paper trading can help with process, order familiarity, setup recognition, and review habits. It cannot fully recreate live emotion, slippage, liquidity, or the pressure of real risk.
@@ -110,26 +108,6 @@ Another mistake is treating a small sample of paper trades as proof.
 
 A final mistake is paper trading in a way that does not match the trader's intended live rules.
 
-## Practical Checklist
-
-- The paper trade follows the same rules the trader wants to practice live.
-- Position size is realistic for the future plan.
-- Spread and liquidity are noted.
-- Risk is defined before the simulated decision.
-- The trader records why the trade was taken.
-- The trade is reviewed after completion.
-- Simulated results are treated as process data, not proof.
-
-## Apply This In Review
-
-- Did I use realistic size?
-- Did I define risk before the simulated trade?
-- Did I ignore fills that would be difficult live?
-- Did I follow my intended rules?
-- Did the platform fill unrealistically?
-- What behavior would become harder with real money?
-- What should I practice again before adding pressure?
-
 ## Related Lessons
 
 - [Practice Trading](/academy/practice-trading/)
@@ -137,15 +115,6 @@ A final mistake is paper trading in a way that does not match the trader's inten
 - [Position Sizing](/academy/position-sizing/)
 - [Slippage](/academy/slippage/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
-
-## Related Glossary Terms
-
-- Paper trading
-- Simulation
-- Slippage
-- Liquidity
-- Position sizing
-- Trade review
 
 ## FAQ
 
@@ -164,7 +133,3 @@ Track setup, risk, size, timing, liquidity, spread, management decisions, and wh
 ### Can paper trading create bad habits?
 
 Yes, if the trader uses unrealistic size, ignores execution, or treats simulated outcomes as proof.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security. Simulated trades can support practice, but they do not represent actual trading performance or guarantee live results.

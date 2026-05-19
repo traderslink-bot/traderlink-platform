@@ -157,7 +157,3 @@ Traders should review proposal language, securities involved, potential share co
 ### Does approval guarantee a price move?
 
 No. Shareholder approval does not guarantee a price move. The reaction depends on expectations, dilution risk, liquidity, and market context.
-
-## Educational Disclaimer
-
-This page is for educational purposes only and is not financial advice. Shareholder approval for dilution does not guarantee dilution, price movement, selling pressure, or trading outcomes. Always review proxy filings, financing terms, liquidity, risk, and your own trading plan.

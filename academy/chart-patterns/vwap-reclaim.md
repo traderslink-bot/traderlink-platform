@@ -39,8 +39,6 @@ meta_description: "Learn what a VWAP reclaim is, why intraday traders watch it, 
 ---
 # VWAP Reclaim
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Failed Breakdown Pattern](/academy/chart-patterns/failed-breakdown-pattern/) and is the final chart-pattern deep-dive lesson.
-
 **Best suited for:** intraday trading.
 
 A VWAP reclaim happens when price moves back above VWAP after trading below it. Traders often watch this because VWAP can act as an intraday reference area for average price, participation, and session control.

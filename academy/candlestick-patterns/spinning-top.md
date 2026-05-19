@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume/"
   - "/academy/support-and-resistance/"
 visual_assets:
-  - "/academy/images/chart-reading/doji-at-key-level.svg"
+  - "/academy/images/chart-reading/spinning-top-candle-shape.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-18"
@@ -38,13 +38,11 @@ meta_description: "Learn what spinning top candles show, when they matter, and h
 ---
 # Spinning Top Candle
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Doji Candle](/academy/candlestick-patterns/doji/) and leads into [Hammer Candlestick](/academy/candlestick-patterns/hammer/).
-
 A spinning top candle has a small body with wicks on both sides. It can show hesitation or a balanced fight between buyers and sellers.
 
 Like a doji, a spinning top is easy to overread. It needs location and follow-through before it becomes useful review context.
 
-![Candlestick chart showing small-body hesitation near a key level with volume and follow-through context.](/academy/images/chart-reading/doji-at-key-level.svg)
+![Clean candle diagram showing a spinning top candle with a small body and wicks on both sides.](/academy/images/chart-reading/spinning-top-candle-shape.svg)
 
 ## What It Looks Like
 

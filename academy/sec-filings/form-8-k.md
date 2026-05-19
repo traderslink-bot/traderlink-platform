@@ -42,8 +42,6 @@ meta_description: "Learn what a Form 8-K filing means, why companies file it, an
 
 A Form 8-K is a current report that public companies file with the SEC to report important events between regular quarterly and annual reports. Traders watch 8-K filings because they can reveal news that may matter quickly: financing agreements, material contracts, mergers, leadership changes, delisting notices, reverse split updates, press release exhibits, and other company events.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [How To Use EDGAR Source Documents](/academy/how-to-use-edgar-source-documents/) and leads into [Form 10-K](/academy/sec-filings/form-10-k/).
-
 An 8-K is not automatically good or bad. It is a container for current-event information. The item, exhibit, terms, timing, and market reaction decide what the filing actually means for review.
 
 ## Lesson Objective
@@ -189,36 +187,6 @@ Common Form 8-K mistakes include:
 
 The 8-K should slow the review down, not create urgency by itself.
 
-## Practical Checklist
-
-Use this checklist when reviewing an 8-K:
-
-- What event did the 8-K report?
-- What item number is listed?
-- Are there exhibits attached?
-- Is a press release included as an exhibit?
-- Are agreement terms specific or vague?
-- Is there financing, dilution, warrant, or registration-rights language?
-- Are there dates, prices, share counts, or closing conditions?
-- Did volume expand after the filing?
-- Did price hold, fade, reject, or reclaim important levels?
-- Was liquidity clean enough for the trade size?
-- Did the trade follow a plan or a filing-headline reaction?
-
-## Apply This In Review
-
-After a filing-driven trade, write down:
-
-- The exact filing type.
-- The event reported.
-- The important exhibit or detail.
-- What you understood before entry.
-- What you missed before entry.
-- Whether the market reaction continued or faded.
-- Whether the filing changed your risk view.
-
-This helps separate filing research from filing reaction.
-
 ## Related Lessons
 
 - [SEC Filings](/academy/sec-filings/)
@@ -255,7 +223,3 @@ No. A Form 8-K does not guarantee a price move. The impact depends on the filing
 ### Should traders read the exhibits?
 
 Yes. Exhibits can contain the press release, agreement, financing terms, or other details that explain the actual event.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Form 8-K filings do not guarantee price movement, continuation, reversal, or profitable trades. Always review the actual filing, related news, liquidity, risk, and your own trading plan.

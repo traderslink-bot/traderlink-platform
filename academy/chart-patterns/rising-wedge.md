@@ -38,8 +38,6 @@ meta_description: "Learn what Rising Wedge shows, why it can fail, and how to re
 ---
 # Rising Wedge
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Wedge Pattern](/academy/chart-patterns/wedge-pattern/) and leads into [Falling Wedge](/academy/chart-patterns/falling-wedge/).
-
 **Best suited for:** day trading and swing trading.
 
 Rising Wedge is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.

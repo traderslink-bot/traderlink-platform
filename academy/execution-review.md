@@ -36,8 +36,6 @@ meta_description: "Learn how to review trade execution, including entry timing, 
 ---
 # Execution Review
 
-This lesson is part of the **Trade Review And Improvement** course. It follows [Planned Vs Actual Trade Review](/academy/planned-vs-actual-trade-review/) and leads into [Mistake Pattern Review](/academy/mistake-pattern-review/).
-
 Execution review studies how the trade was actually entered, filled, managed, and exited. It asks whether the trader got into the trade cleanly, whether the order choice fit the conditions, and whether spread, slippage, or timing changed the result.
 
 A good idea can still be executed poorly. A poor idea can sometimes get a lucky fill. Execution review keeps those two things separate.
@@ -108,29 +106,6 @@ Another mistake is reviewing entry but not exit. Exit slippage can matter too.
 
 A final mistake is not tracking repeated execution issues by ticker type, time of day, or liquidity level.
 
-## Practical Checklist
-
-- Expected entry and actual fill are compared.
-- Spread was recorded or estimated.
-- Slippage was reviewed.
-- Order type was reviewed in context.
-- Liquidity and volume were considered.
-- Exit fill quality was reviewed.
-- Repeated execution issues are tagged.
-
-## Apply This In Review
-
-- What price did I expect?
-- What price did I get?
-- What was the spread?
-- Did slippage change the trade?
-- Was my order type appropriate?
-- Was the stock liquid enough for my size?
-- Did I enter late because of urgency?
-- Did my exit execution follow the plan?
-
-Execution review helps traders see whether their process works in the actual market conditions they trade.
-
 ## Related Lessons
 
 - [Bid And Ask](/academy/bid-and-ask/)
@@ -164,7 +139,3 @@ No. The goal is not perfection. The goal is to understand recurring execution co
 ### How does execution connect to liquidity?
 
 Thin liquidity and wide spreads can make fills worse, especially when size is too large or price is moving quickly.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Execution review can improve awareness of fills and trading costs, but it does not guarantee better results.

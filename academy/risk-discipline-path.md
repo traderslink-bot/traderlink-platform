@@ -38,8 +38,6 @@ meta_description: "Follow the TradersLink Academy risk discipline path for tradi
 ---
 # Risk Discipline Path
 
-This path hub organizes the completed **Risk Management And Trade Planning** and **Trading Psychology And Discipline** lessons. It follows [Trade Review Path](/academy/trade-review-path/) and can send users back to [How To Use TradersLink Academy](/academy/how-to-use-traderslink-academy/) for broader navigation.
-
 Risk and discipline are not separate from chart reading. They decide whether the trader can act on a plan without letting size, emotion, or hope take over.
 
 ![Dark dashboard path map showing risk planning, position sizing, loss limits, discipline behaviors, realistic candles, and review loop.](/academy/images/chart-reading/academy-risk-discipline-path-map.svg)
@@ -119,28 +117,6 @@ Another mistake is focusing on entries while ignoring position size.
 
 A final mistake is shaming the behavior instead of identifying the trigger and rule that failed.
 
-## Practical Checklist
-
-- A written plan exists before the trade.
-- Position size is connected to risk.
-- Stops and invalidation are defined.
-- Daily and trade-level loss limits are clear.
-- Known emotional triggers are identified.
-- Rule breaks are reviewed without hiding them.
-- One discipline improvement is practiced at a time.
-
-## Apply This In Review
-
-- What rule mattered most in this trade?
-- Did I size according to the plan?
-- Did I respect invalidation?
-- Did I move risk for a valid reason or an emotional reason?
-- Did FOMO, revenge, boredom, or hope affect the trade?
-- Did I stop trading when my limit said to stop?
-- What rule should I practice next?
-
-Risk discipline review works best when it turns behavior into a specific next rule.
-
 ## Related Lessons
 
 - [Risk Management](/academy/risk-management/)
@@ -148,15 +124,6 @@ Risk discipline review works best when it turns behavior into a specific next ru
 - [Trading Discipline](/academy/trading-discipline/)
 - [Overtrading](/academy/overtrading/)
 - [Trade Risk Review](/academy/trade-risk-review/)
-
-## Related Glossary Terms
-
-- Risk management
-- Position sizing
-- Stop loss
-- Max loss
-- Daily loss limit
-- Trading discipline
 
 ## FAQ
 
@@ -183,7 +150,3 @@ Trader Intelligence is intended to help review completed trades and repeated beh
 ### What should users do after this path?
 
 They can return to practice and trade review lessons to turn risk and discipline concepts into repeatable improvement work.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Risk and discipline concepts can support structured review, but they do not remove trading risk or guarantee outcomes.

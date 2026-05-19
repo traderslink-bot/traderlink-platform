@@ -36,8 +36,6 @@ meta_description: "Learn how to build a practical day trading watchlist with cat
 ---
 # Day Trading Watchlist
 
-This lesson is part of the **Day Trading Workflow** course. It follows [Premarket Trading](/academy/premarket-trading/) and leads into [Market Open Trading](/academy/market-open-trading/).
-
 A day trading watchlist is a focused list of names a trader is prepared to observe during the session. It should reduce noise, not create more of it.
 
 The point is not to find every moving stock. The point is to know why each name is being watched and what would make it reviewable.
@@ -116,26 +114,6 @@ Another mistake is treating a scanner alert as a complete reason.
 
 A final mistake is failing to remove a name when the original reason no longer applies.
 
-## Practical Checklist
-
-- Each watchlist name has a clear reason.
-- The catalyst or source is understood.
-- Relative volume and liquidity are reviewed.
-- Spread is acceptable for the trader's plan.
-- Key levels are mapped.
-- Extension risk is considered.
-- The watchlist is short enough to follow.
-
-## Apply This In Review
-
-- Which watchlist names actually produced planned trades?
-- Which names caused reactive decisions?
-- Did I add names too late?
-- Did I ignore spread or liquidity?
-- Was my list too large to manage?
-- Did I trade a name that was not on the plan?
-- What watchlist filter should be stricter next session?
-
 ## Related Lessons
 
 - [Premarket Trading](/academy/premarket-trading/)
@@ -143,15 +121,6 @@ A final mistake is failing to remove a name when the original reason no longer a
 - [Relative Volume](/academy/relative-volume-rvol/)
 - [Liquidity](/academy/liquidity/)
 - [Spread](/academy/spread/)
-
-## Related Glossary Terms
-
-- Watchlist
-- Scanner
-- Relative volume
-- Liquidity
-- Spread
-- Catalyst
 
 ## FAQ
 
@@ -166,7 +135,3 @@ Not always, but every name should have a clear reason for attention, such as vol
 ### Is a watchlist a trading plan?
 
 No. A watchlist identifies names to observe. A trading plan still needs risk, levels, timing, and review criteria.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

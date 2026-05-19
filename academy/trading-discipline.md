@@ -36,8 +36,6 @@ meta_description: "Learn what trading discipline means, why traders break rules,
 ---
 # Trading Discipline
 
-This lesson is part of the **Trading Psychology And Discipline** course. It follows [Holding Through News](/academy/holding-through-news/) and leads into [FOMO Trading](/academy/fomo-trading/).
-
 Trading discipline means following a process when the market is moving fast, emotions are high, or a trade is not doing what the trader wanted. It is the difference between having rules and actually using them under pressure.
 
 Most traders do not struggle because they have never heard of risk management. They struggle because risk rules become harder to follow in real time. A trading plan is only useful if the trader can follow it when pressure shows up.
@@ -113,33 +111,6 @@ Another mistake is expecting discipline to come from motivation. Motivation chan
 
 A final mistake is not tracking rule breaks. If broken rules are not recorded, a trader may underestimate how often they happen.
 
-## Practical Checklist
-
-Before judging this behavior, check:
-
-- The rule was written or clearly defined before the trade.
-- The setup matched the plan before entry.
-- Risk and position size were defined before entry.
-- The invalidation level was known.
-- The exit decision matched the plan or had a clear reason.
-- The trade was reviewed for rule adherence, not only outcome.
-- Any rule break was tagged plainly.
-
-## Apply This In Review
-
-After a trade or session, ask:
-
-- Did I follow my trading plan today?
-- Which rule did I break, if any?
-- What emotion or market condition was present when I broke it?
-- Did I chase, overtrade, revenge trade, oversize, or move risk?
-- Did I respect my daily loss limit?
-- Did I exit based on structure, plan, or emotion?
-- Was a green trade still undisciplined?
-- What rule needs to be clearer next time?
-
-A discipline review helps traders stop treating mistakes as random. Patterns can be named, measured, and improved.
-
 ## Related Lessons
 
 - [Trading Plan](/academy/trading-plan/)
@@ -173,7 +144,3 @@ Traders can use clearer rules, smaller size, checklists, daily loss limits, trad
 ### How should discipline be reviewed?
 
 Review whether the trade followed the plan, which rule was followed or broken, what triggered any break, and what rule or process should be clearer next time.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trading discipline can support better review and risk control, but it does not remove market risk, guarantee better decisions, or guarantee trading results.

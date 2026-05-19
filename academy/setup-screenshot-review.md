@@ -38,8 +38,6 @@ meta_description: "Learn how to use setup screenshots to compare planned levels,
 ---
 # Setup Screenshot Review
 
-This lesson is part of the **Practice And Improvement** course. It follows [Watchlist Review](/academy/watchlist-review/) and leads into [Trade Grading](/academy/trade-grading/).
-
 Setup screenshots help traders preserve context. A chart after the fact can feel obvious. A screenshot taken near the decision point can show what the trader actually saw.
 
 The goal is not to collect pretty charts. The goal is to make decisions reviewable.
@@ -114,26 +112,6 @@ Another mistake is collecting too many screenshots and never reviewing them.
 
 A final mistake is using screenshots to prove a bias instead of studying the decision.
 
-## Practical Checklist
-
-- The screenshot includes the relevant timeframe.
-- Important levels are visible.
-- Volume and nearby context are visible.
-- The planned decision area is marked.
-- The actual decision is reviewable.
-- The screenshot includes a short note.
-- The review produces one clear lesson or question.
-
-## Apply This In Review
-
-- What did I know before the decision?
-- Did the screenshot match the written plan?
-- Was the decision near the planned area?
-- Did I crop out important context?
-- Did volume or liquidity change the quality?
-- What repeated pattern appears across screenshots?
-- What should I capture next time?
-
 ## Related Lessons
 
 - [Watchlist Review](/academy/watchlist-review/)
@@ -141,15 +119,6 @@ A final mistake is using screenshots to prove a bias instead of studying the dec
 - [Execution Review](/academy/execution-review/)
 - [Mistake Pattern Review](/academy/mistake-pattern-review/)
 - [Support And Resistance](/academy/support-and-resistance/)
-
-## Related Glossary Terms
-
-- Setup
-- Screenshot review
-- Support
-- Resistance
-- Execution
-- Hindsight bias
 
 ## FAQ
 
@@ -168,7 +137,3 @@ Include levels, volume, timeframe, decision area, and a short note about the pla
 ### Can screenshots create hindsight bias?
 
 Yes, especially if they are taken only after the result is obvious. Before screenshots reduce that problem.
-
-## Educational Disclaimer
-
-This lesson is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any security.

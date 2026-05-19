@@ -36,8 +36,6 @@ meta_description: "Learn how anchored VWAP uses a chosen starting point to revie
 ---
 # Anchored VWAP
 
-This lesson is part of the **Technical Indicators And Tools** course. It follows [VWAP](/academy/vwap/) and leads into [RSI](/academy/rsi/).
-
 Anchored VWAP is a version of VWAP that starts from a chosen point instead of resetting only at the session open. Traders may anchor it to an event, high, low, breakout, earnings reaction, or major catalyst.
 
 Because the anchor is chosen by the user, anchored VWAP requires extra discipline.
@@ -101,28 +99,6 @@ Another mistake is using too many anchors at once until the chart is cluttered.
 
 A final mistake is not recording why the anchor was chosen.
 
-## Practical Checklist
-
-- The anchor point has a clear reason.
-- The anchor was chosen before the trade review, not after the outcome.
-- Price structure is reviewed separately.
-- Volume and catalyst context are checked.
-- The line is treated as context, not exact certainty.
-- Only useful anchors remain on the chart.
-- The review asks whether the anchor helped.
-
-## Apply This In Review
-
-- Where did I anchor VWAP?
-- Why was that point meaningful?
-- Was the anchor chosen before or after the trade?
-- Did price actually react near the anchored line?
-- Was another level more important?
-- Did the anchor create confidence without risk control?
-- Should I keep using that anchor type?
-
-Anchored VWAP is most useful when the anchor is meaningful and the review stays honest.
-
 ## Related Lessons
 
 - [VWAP](/academy/vwap/)
@@ -156,7 +132,3 @@ No. It is an event-based average price reference, not a standalone trade signal.
 ### How should anchored VWAP be reviewed?
 
 Review why the anchor was chosen, whether price reacted near it, and whether it improved context alongside levels, volume, and risk.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Anchored VWAP can support event-based review, but it does not predict price or guarantee trading results.

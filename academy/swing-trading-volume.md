@@ -38,8 +38,6 @@ meta_description: "Learn how swing traders review volume, participation, pullbac
 ---
 # Swing Trading Volume
 
-This lesson is part of the **Swing Trading Workflow** course. It follows [Swing Trading Support Resistance](/academy/swing-trading-support-resistance/) and leads into [Swing Trading Catalysts](/academy/swing-trading-catalysts/).
-
 Volume helps swing traders review whether a move is attracting participation across more than one session. It does not prove that a trade will work, but it can make the difference between a clean review and a vague chart opinion.
 
 For swing trading, the question is not simply "Was volume high?" The better question is: where did volume appear, what did price do with it, and did participation continue after the first reaction?
@@ -127,28 +125,6 @@ Another mistake is separating volume from liquidity. A stock can show unusual vo
 
 A final mistake is using volume to justify a late chase after most of the move has already happened.
 
-## Practical Checklist
-
-- Volume is compared with recent average volume.
-- Volume is reviewed at the level that matters.
-- Pullback volume is compared with breakout or catalyst volume.
-- Follow-through volume is checked after the first reaction.
-- Liquidity and spread are reviewed, not just share volume.
-- High-volume churn is treated as a review warning.
-- Volume is never treated as proof of a future move.
-
-## Apply This In Review
-
-- Was volume above normal at entry?
-- Where did volume appear on the chart?
-- Did price make progress on that volume?
-- Did volume fade after the first reaction?
-- Did pullbacks happen on lighter or heavier volume?
-- Was liquidity strong enough for the planned size?
-- Did I enter after volume had already become crowded?
-
-Volume review should help the trader understand participation and timing, not create certainty.
-
 ## Related Lessons
 
 - [Volume](/academy/volume/)
@@ -156,15 +132,6 @@ Volume review should help the trader understand participation and timing, not cr
 - [Volume Spike](/academy/volume-spike/)
 - [Unusual Volume](/academy/unusual-volume/)
 - [Swing Trading Catalysts](/academy/swing-trading-catalysts/)
-
-## Related Glossary Terms
-
-- Volume
-- Relative volume
-- Volume spike
-- Liquidity
-- Spread
-- Follow-through
 
 ## FAQ
 
@@ -191,7 +158,3 @@ Yes. Strong volume does not guarantee continuation. Price can fail at resistance
 ### How should volume be reviewed after a swing trade?
 
 Review volume at entry, around key levels, during pullbacks, after catalysts, and near exits, then compare it with the original plan.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Volume can help traders review participation and context, but it does not predict price direction or guarantee trade results.

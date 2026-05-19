@@ -36,8 +36,6 @@ meta_description: "Learn what momentum trading is, what it requires, common mist
 ---
 # Momentum Trading
 
-This lesson is part of the **Trading Styles And Playbooks** course. It follows [Short Selling Basics](/academy/short-selling-basics/) and leads into [Pullbacks And Dip-Buy Setups](/academy/pullbacks-and-dip-buy-setups/).
-
 Momentum trading focuses on stocks with strong directional movement, participation, and attention. The style can involve breakouts, high relative volume, news reactions, or continuation attempts.
 
 Momentum is not the same as chasing. A momentum trade can be planned. Chasing usually happens after the clean plan is gone.
@@ -106,28 +104,6 @@ Another mistake is adding size after missing the first move.
 
 A final mistake is refusing to mark the trade as a chase in review.
 
-## Practical Checklist
-
-- The source of momentum is understood.
-- Volume and liquidity are reviewed.
-- Nearby support and resistance are mapped.
-- The entry is not far from a realistic risk area.
-- The trade is not only based on urgency.
-- Position size respects volatility.
-- There is a plan for missed entries.
-
-## Apply This In Review
-
-- What created the momentum?
-- Was volume actually supporting the move?
-- Was my entry structured or late?
-- Where was the clean risk area?
-- Did I chase after missing the first move?
-- Did I ignore resistance because the stock looked strong?
-- Would I take the same entry again?
-
-Momentum review should separate strong stock behavior from strong trade quality.
-
 ## Related Lessons
 
 - [Volume](/academy/volume/)
@@ -161,7 +137,3 @@ Review catalyst, volume, levels, entry timing, extension, risk, and whether the 
 ### Can momentum trades fail quickly?
 
 Yes. Momentum can fade or reverse, especially when entries are late or liquidity changes.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Trading styles and playbooks can help organize review, but they do not guarantee outcomes or replace independent risk decisions.

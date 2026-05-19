@@ -36,8 +36,6 @@ meta_description: "Learn how Bollinger Bands show volatility and price extension
 ---
 # Bollinger Bands
 
-This lesson is part of the **Technical Indicators And Tools** course. It follows [MACD](/academy/macd/) and leads into [ATR](/academy/atr/).
-
 Bollinger Bands place volatility bands around a moving average. They help traders review whether price is compressed, expanding, or stretched compared with recent movement.
 
 The bands can be useful, but a touch of the upper or lower band is not a command.
@@ -100,28 +98,6 @@ Another mistake is using band squeezes without checking volume and catalyst cont
 
 A final mistake is ignoring support and resistance because the bands look active.
 
-## Practical Checklist
-
-- I know whether bands were narrow or wide.
-- I reviewed trend versus range context.
-- I checked nearby support and resistance.
-- I checked volume and catalyst context.
-- I did not treat a band touch as a command.
-- I reviewed whether volatility expansion created chase risk.
-- I had risk defined outside of the indicator.
-
-## Apply This In Review
-
-- Were the bands expanding or contracting?
-- Was price trending, ranging, or chopping?
-- Did I chase after a volatility expansion?
-- Did I assume a band touch meant reversal?
-- Was there nearby support or resistance?
-- Did volume support the move?
-- Did Bollinger Bands clarify volatility or distract from structure?
-
-Bollinger Band review works best when volatility context is connected to price behavior.
-
 ## Related Lessons
 
 - [What Are Trading Indicators?](/academy/trading-indicators/)
@@ -155,7 +131,3 @@ They can mislead in strong trends, choppy markets, or when used without levels, 
 ### How should Bollinger Bands be reviewed?
 
 Review whether they clarified volatility expansion, contraction, extension, or whether they caused a trader to chase or fade too early.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Bollinger Bands can support volatility review, but they do not predict price or guarantee trading results.

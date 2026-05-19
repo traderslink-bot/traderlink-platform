@@ -36,8 +36,6 @@ meta_description: "Learn what overtrading is, why it happens, and how traders ca
 ---
 # Overtrading
 
-This lesson is part of the **Trading Psychology And Discipline** course. It follows [Revenge Trading](/academy/revenge-trading/) and leads into [Holding Losers Too Long](/academy/holding-losers-too-long/).
-
 Overtrading happens when a trader takes too many trades, forces low-quality setups, or keeps trading after the best opportunities are gone. It is one of the most common active-trading problems because it often feels productive in the moment.
 
 The tricky part is that overtrading does not always look obvious while it is happening. It can feel like staying active, making up for missed opportunities, or trying to get the day back on track. Review usually makes it clearer afterward.
@@ -117,33 +115,6 @@ Another mistake is ignoring the difference between A-level and low-quality setup
 
 A final mistake is confusing activity with progress. More trades do not automatically mean better learning.
 
-## Practical Checklist
-
-Before judging this behavior, check:
-
-- How many trades were planned before entry?
-- How many trades happened after a loss?
-- Has setup quality declined?
-- Is volume or liquidity still strong enough for the plan?
-- Am I trading because of boredom or frustration?
-- Have I hit my daily loss, rule-break, or focus limit?
-- Would I be comfortable reviewing this trade later as part of my plan?
-
-## Apply This In Review
-
-After a trade or session, ask:
-
-- How many trades did I take?
-- How many were planned before entry?
-- How many were taken after a loss?
-- How many happened during low-volume or low-focus periods?
-- Did I trade worse after going green or red?
-- Did I re-enter the same ticker too many times?
-- Which trades should not have been taken at all?
-- What session rule would have reduced the extra trades?
-
-Overtrading usually becomes easier to manage once the pattern is visible.
-
 ## Related Lessons
 
 - [Revenge Trading](/academy/revenge-trading/)
@@ -177,7 +148,3 @@ Look for trades taken after losses, repeated re-entries, low-quality setups, tra
 ### How should overtrading be reviewed?
 
 Review trade count, setup quality, timing, emotional state, repeated tickers, and which trades should have been skipped.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Reducing overtrading can support process review, but it does not guarantee trading results.

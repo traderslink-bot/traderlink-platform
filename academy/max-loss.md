@@ -36,8 +36,6 @@ meta_description: "Learn what max loss means in trading, why loss limits matter,
 ---
 # Max Loss Trading
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Mental Stop Vs Hard Stop](/academy/mental-stop-vs-hard-stop/) and leads into [Daily Loss Limit](/academy/daily-loss-limit/).
-
 The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
 
 ## Lesson Objective
@@ -164,18 +162,6 @@ For more context, read:
 - [Stop loss](/academy/stop-loss/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
 
-## Practical Checklist
-
-Before relying on Max Loss, confirm:
-
-- Per-trade max loss.
-- Session max loss.
-- Account impact.
-- Position sizing.
-- Stop discipline.
-- Rule trigger.
-- Shutdown plan.
-
 ## FAQ
 
 ### What is max loss in trading?
@@ -202,24 +188,9 @@ No. It can help control risk, but it cannot remove market risk, slippage, gap ri
 
 Track the rule, whether it was followed, what trades led to the limit, what emotions appeared, and whether any rule breaks made the loss worse.
 
-## Apply This In Review
-
-When reviewing a trade connected to Max Loss, ask:
-
-- Was the rule or plan written before the trade started?
-- Did the position size match the planned risk?
-- Did I know where the idea was wrong before entering?
-- Did I follow the rule when the trade became uncomfortable?
-- If I broke the rule, what was the trigger: fear, hope, boredom, revenge, or confusion?
-- What should I change in my plan so this decision is easier to review next time?
-
 ## Related Lessons
 
 - [Mental Stop Vs Hard Stop](/academy/mental-stop-vs-hard-stop/)
 - [Daily Loss Limit](/academy/daily-loss-limit/)
 - [Risk Management](/academy/risk-management/)
 - [Trade Risk Review](/academy/trade-risk-review/)
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Max loss rules can help traders manage risk, but they do not guarantee outcomes or prevent all losses.

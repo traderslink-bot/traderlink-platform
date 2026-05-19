@@ -4,7 +4,7 @@
   <rect width="760" height="440" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554"/>
   <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Failed Breakout At Previous Day High</text>
-  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A break above PDH needs review if price cannot hold the level.</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A break above PDH can fail if price cannot hold the level.</text>
   <g stroke="#18304e" stroke-width="1">
     <line x1="58" y1="116" x2="704" y2="116"/>
     <line x1="58" y1="166" x2="704" y2="166"/>
@@ -40,7 +40,7 @@
     <path d="M326 112 L318 136" stroke="#bbf7d0" stroke-width="2"/>
     <text x="392" y="138" fill="#fecaca">Fails back below</text>
     <path d="M430 144 L420 186" stroke="#fecaca" stroke-width="2"/>
-    <text x="508" y="318" fill="#fecaca">Review response</text>
+    <text x="508" y="318" fill="#fecaca">Context response</text>
   </g>
   <g>
     <rect x="58" y="326" width="14" height="18" fill="#21c784" opacity=".7"/>
@@ -64,6 +64,6 @@
     <rect x="526" y="318" width="14" height="26" fill="#ef4444" opacity=".72"/>
   </g>
   <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review: did price hold above PDH, or did it fail back below the level?</text>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: did price hold above PDH, or did it fail back below the level?</text>
   <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Failed breakout: compare the break, rejection, and follow-through.</text>
 </svg>

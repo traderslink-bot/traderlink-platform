@@ -38,8 +38,6 @@ meta_description: "Learn what Failed Breakout Pattern shows, why it can fail, an
 ---
 # Failed Breakout Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Parabolic Move](/academy/chart-patterns/parabolic-move/) and leads into [Failed Breakdown Pattern](/academy/chart-patterns/failed-breakdown-pattern/).
-
 **Best suited for:** day trading and swing trading.
 
 Failed Breakout Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.

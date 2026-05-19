@@ -29,7 +29,7 @@ internal_links:
   - "/academy/price-rejection/"
   - "/academy/stop-loss/"
 visual_assets:
-  - "/academy/images/chart-reading/hammer-support-context.svg"
+  - "/academy/images/chart-reading/hammer-candle-shape.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-18"
@@ -38,13 +38,11 @@ meta_description: "Learn what hammer candles show near support, why they can fai
 ---
 # Hammer Candlestick
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Spinning Top Candle](/academy/candlestick-patterns/spinning-top/) and leads into [Pin Bar](/academy/candlestick-patterns/pin-bar/).
-
 A hammer candle has a small body near the top of its range and a long lower wick. It shows that price sold off and recovered before the candle closed.
 
 A hammer near support may be meaningful, but it still needs context and a failure plan.
 
-![Candlestick chart showing a hammer candle near support with volume and follow-through context.](/academy/images/chart-reading/hammer-support-context.svg)
+![Clean candle diagram showing a hammer candle with a small body near the top and a long lower wick.](/academy/images/chart-reading/hammer-candle-shape.svg)
 
 ## What It Looks Like
 

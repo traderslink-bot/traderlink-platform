@@ -39,8 +39,6 @@ meta_description: "Learn what Ascending Triangle Pattern shows, why it can fail,
 ---
 # Ascending Triangle Pattern
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Base Breakout](/academy/chart-patterns/base-breakout/) and leads into [Descending Triangle Pattern](/academy/chart-patterns/descending-triangle/).
-
 **Best suited for:** day trading and swing trading.
 
 Ascending Triangle Pattern is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.

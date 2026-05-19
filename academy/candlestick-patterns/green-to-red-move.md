@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume/"
   - "/academy/news-fade/"
 visual_assets:
-  - "/academy/images/chart-reading/red-green-transition-context.svg"
+  - "/academy/images/chart-reading/green-to-red-move-shape.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-18"
@@ -38,13 +38,11 @@ meta_description: "Learn what green-to-red moves show, why they can fail, and ho
 ---
 # Green-To-Red Move
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Red-To-Green Move](/academy/candlestick-patterns/red-to-green-move/) and leads into [Bull Flag Pattern](/academy/chart-patterns/bull-flag/).
-
 A green-to-red move happens when a stock that was above its previous close or session reference moves back into negative territory. Traders often watch it as a sign of weakening intraday control.
 
 The color change is not a complete thesis. It needs levels, volume, VWAP, catalyst, and risk context.
 
-![Candlestick chart showing red-to-green and green-to-red intraday transitions with VWAP and volume context.](/academy/images/chart-reading/red-green-transition-context.svg)
+![Clean intraday candle diagram showing price starting green above the prior close and then losing it to turn red.](/academy/images/chart-reading/green-to-red-move-shape.svg)
 
 ## What It Looks Like
 

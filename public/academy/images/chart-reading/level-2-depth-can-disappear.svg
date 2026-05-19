@@ -29,7 +29,7 @@
     <rect x="311" y="424" width="22" height="34" fill="#ef4444" opacity="0.5"/>
   </g>
   <rect x="560" y="122" width="264" height="318" rx="12" fill="#0a1322" stroke="#213858"/>
-  <text x="584" y="154" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Depth change review</text>
+  <text x="584" y="154" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Depth can change</text>
   <g font-family="Arial, sans-serif" font-size="13">
     <text x="584" y="190" fill="#bbf7d0">Before move</text>
     <rect x="584" y="204" width="142" height="24" fill="#0f2f25" rx="4"/><text x="596" y="221" fill="#bbf7d0">2.48 bid x 22k</text>

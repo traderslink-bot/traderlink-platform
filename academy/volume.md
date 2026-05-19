@@ -208,39 +208,6 @@ Common volume mistakes include:
 
 The most important habit is to ask what the volume appeared with. Volume plus structure is more useful than volume alone.
 
-## Practical Checklist
-
-Use this checklist when reviewing a trade that involved volume:
-
-- Was volume clearly above recent candles?
-- Was the stock also showing strong relative volume?
-- Did volume appear at a meaningful level?
-- Did the move happen near support, resistance, high of day, low of day, or a gap area?
-- Did volume continue after the first spike?
-- Did volume fade before price failed?
-- Was the spread reasonable for the trade size?
-- Did the trader enter before, during, or after the main volume burst?
-- Did volume support the trade idea, or did the trader use it as an excuse to chase?
-
-The checklist is not meant to approve or reject a trade. It is meant to make review more honest.
-
-## Apply This In Review
-
-When reviewing volume, write down what the volume actually did instead of only saying "volume was high."
-
-Helpful review prompts:
-
-- What was normal volume for this stock before the trade?
-- What changed when I entered?
-- Was the volume tied to a level, catalyst, or opening-drive move?
-- Did I wait for volume at the level, or did I react after the spike?
-- Did the spread or liquidity make execution harder?
-- Did volume continue after entry?
-- Did I exit because the plan changed, or because the volume bar made me emotional?
-- What would I want to see next time before trusting the move?
-
-This kind of review helps separate market context from trader behavior.
-
 ## FAQ
 
 ### What is stock volume?
@@ -270,7 +237,3 @@ Traders often review whether volume expands, fades, or stays thin when price tes
 ### Can volume guarantee a move?
 
 No. Volume can support analysis, but it does not guarantee price direction, trade outcome, profitability, or reduced risk.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock. Volume does not guarantee price movement, profitability, better decisions, or reduced losses. Always use risk management and review your own trades carefully.

@@ -41,8 +41,6 @@ meta_description: "Learn how partnership news can affect stocks, what traders re
 
 Partnership news stocks are stocks that move or attract attention because a company announces a partnership, collaboration, strategic alliance, reseller agreement, distribution relationship, or joint development effort. Traders watch this type of news because it can suggest business validation, future revenue potential, or access to a larger customer base.
 
-This lesson is part of the **News, Catalysts And SEC Filings** course. It follows [Contract News Stocks](/academy/contract-news-stocks/) and leads into [Merger News Stocks](/academy/merger-news-stocks/).
-
 A partnership announcement does not guarantee a stock will move higher. Some partnerships have clear financial terms and business impact. Others are vague, early-stage, exploratory, or mostly promotional. The details matter more than the label.
 
 ## Lesson Objective
@@ -169,32 +167,6 @@ Common partnership-news mistakes include:
 
 Partnership news should be reviewed for substance, not just brand names.
 
-## Practical Checklist
-
-Use this checklist when reviewing partnership-news trades:
-
-- Is the partner named?
-- Is the partner credible and relevant?
-- What type of agreement is it?
-- Are financial terms disclosed?
-- Is revenue expected now or later?
-- Is the agreement binding?
-- Are milestones or launch dates included?
-- Is there a related 8-K or exhibit?
-- Did volume continue after the first reaction?
-- Did price hold or fade after traders had time to read the details?
-
-## Apply This In Review
-
-After a partnership-news trade, record:
-
-- Partner name and credibility.
-- Agreement type.
-- Terms included and missing.
-- Whether a related filing mattered.
-- Whether the first move held.
-- Whether you reacted to the word partnership or reviewed the actual mechanics.
-
 ## Related Lessons
 
 - [Stock Catalysts](/academy/stock-catalysts/)
@@ -225,7 +197,3 @@ No. A memorandum of understanding may describe a planned relationship, but it ma
 ### Can partnership news fade?
 
 Yes. A move can fade if the announcement is vague, expected, missing financial terms, or if the first reaction becomes extended.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Partnership news does not guarantee price movement, continuation, reversal, revenue growth, or profitable trades. Always review the full announcement, related filings, liquidity, risk, and your own trading plan.

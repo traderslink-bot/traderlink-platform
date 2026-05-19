@@ -36,8 +36,6 @@ meta_description: "Learn what holding through news means, why catalyst risk matt
 ---
 # Holding Through News
 
-This lesson is part of the **Risk Management And Trade Planning** course. It follows [Overnight Risk](/academy/overnight-risk/) and leads into [What Are Trading Indicators?](/academy/trading-indicators/).
-
 The goal is not to make risk feel like a slogan. The goal is to make risk specific enough that a trader can plan it before the trade and review it after the trade.
 
 ## Lesson Objective
@@ -166,18 +164,6 @@ For more context, read:
 - [Overnight risk](/academy/overnight-risk/)
 - [Trade Review And Improvement](/academy/trade-review-and-improvement/)
 
-## Practical Checklist
-
-Before relying on Holding Through News, confirm:
-
-- Scheduled catalyst.
-- Unexpected news.
-- Position size.
-- Gap risk.
-- Liquidity.
-- Thesis dependence.
-- Review outcome.
-
 ## FAQ
 
 ### What does holding through news mean?
@@ -204,24 +190,9 @@ Traders can check the event type, timing, position size, liquidity, filings, pri
 
 Track the known event, why you held, position size, news details, price reaction, and whether your post-news decisions followed the plan.
 
-## Apply This In Review
-
-When reviewing a trade connected to Holding Through News, ask:
-
-- Was the rule or plan written before the trade started?
-- Did the position size match the planned risk?
-- Did I know where the idea was wrong before entering?
-- Did I follow the rule when the trade became uncomfortable?
-- If I broke the rule, what was the trigger: fear, hope, boredom, revenge, or confusion?
-- What should I change in my plan so this decision is easier to review next time?
-
 ## Related Lessons
 
 - [Overnight Risk](/academy/overnight-risk/)
 - [Trading Discipline](/academy/trading-discipline/)
 - [Risk Management](/academy/risk-management/)
 - [Trade Risk Review](/academy/trade-risk-review/)
-
-## Educational Disclaimer
-
-This guide is for educational purposes only and is not financial advice. Holding through news can create major price movement, and no catalyst guarantees a favorable trade outcome.

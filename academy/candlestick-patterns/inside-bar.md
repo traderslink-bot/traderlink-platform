@@ -29,7 +29,7 @@ internal_links:
   - "/academy/consolidation/"
   - "/academy/level-breakout/"
 visual_assets:
-  - "/academy/images/chart-reading/inside-outside-bar-context.svg"
+  - "/academy/images/chart-reading/inside-bar-candle-shape.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-18"
@@ -38,13 +38,11 @@ meta_description: "Learn how inside bars show compression, why false breaks happ
 ---
 # Inside Bar
 
-This lesson is part of the **Chart Reading And Market Structure** course. It follows [Engulfing Candle](/academy/candlestick-patterns/engulfing-candle/) and leads into [Outside Bar](/academy/candlestick-patterns/outside-bar/).
-
 An inside bar forms when a candle stays inside the high and low of the prior candle. It can show compression or a temporary pause.
 
 The inside bar gives traders a range to review. It does not promise a clean break.
 
-![Candlestick chart showing inside bar compression and outside bar range expansion with volume context.](/academy/images/chart-reading/inside-outside-bar-context.svg)
+![Clean candle diagram showing an inside bar contained within the high and low of the prior mother candle.](/academy/images/chart-reading/inside-bar-candle-shape.svg)
 
 ## What It Looks Like
 

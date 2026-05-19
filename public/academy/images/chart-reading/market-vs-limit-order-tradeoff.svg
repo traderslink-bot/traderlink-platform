@@ -22,7 +22,7 @@
     <text x="532" y="228" fill="#bbf7d0">Bid 1.98</text>
     <text x="662" y="228" fill="#fecdd3">Ask 2.08</text>
     <line x1="518" y1="280" x2="740" y2="280" stroke="#38bdf8" stroke-width="2" stroke-dasharray="8 8"/>
-    <text x="526" y="270" fill="#bcd7ff">limit price review</text>
+    <text x="526" y="270" fill="#bcd7ff">limit price</text>
     <text x="522" y="326" fill="#e8f1ff">Prioritizes price control</text>
     <text x="522" y="354" fill="#8ea6c8">Order may not fill</text>
   </g>

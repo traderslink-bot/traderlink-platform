@@ -4,7 +4,7 @@
   <rect width="760" height="440" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554"/>
   <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Support Level Hold</text>
-  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Example only: support is a zone to review, not an automatic bounce.</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Example only: support is a zone, not an automatic bounce.</text>
   <g stroke="#18304e" stroke-width="1">
     <line x1="58" y1="118" x2="704" y2="118"/>
     <line x1="58" y1="170" x2="704" y2="170"/>
