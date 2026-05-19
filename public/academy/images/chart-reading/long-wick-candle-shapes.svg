@@ -7,17 +7,21 @@
     <path d="M88 130H872M88 220H872M88 310H872M88 400H872"/>
   </g>
   <text x="64" y="88" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Long wick candle shapes</text>
-  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">A long wick means price traded far beyond the body before closing back inside the range.</text>
-  <g transform="translate(330 170)">
-    <text x="-82" y="-22" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="21" font-weight="700">Long upper wick</text>
-    <line x1="0" y1="0" x2="0" y2="220" stroke="#d6e4ff" stroke-width="9" stroke-linecap="round"/>
-    <rect x="-46" y="136" width="92" height="58" rx="6" fill="#ef4444"/>
-    <text x="-116" y="260" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Body near the lower part.</text>
+  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Each example highlights the wick that is much longer than the body.</text>
+
+  <g transform="translate(315 168)">
+    <text x="-88" y="-24" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="21" font-weight="700">Long upper wick</text>
+    <line x1="0" y1="0" x2="0" y2="224" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
+    <rect x="-50" y="142" width="100" height="66" rx="7" fill="#ef4444"/>
+    <path d="M70 44L22 44" stroke="#38bdf8" stroke-width="3"/>
+    <text x="78" y="50" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">dominant upper wick</text>
   </g>
-  <g transform="translate(650 170)">
-    <text x="-82" y="-22" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="21" font-weight="700">Long lower wick</text>
-    <line x1="0" y1="0" x2="0" y2="220" stroke="#d6e4ff" stroke-width="9" stroke-linecap="round"/>
-    <rect x="-46" y="28" width="92" height="58" rx="6" fill="#22c55e"/>
-    <text x="-116" y="260" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Body near the upper part.</text>
+
+  <g transform="translate(655 168)">
+    <text x="-88" y="-24" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="21" font-weight="700">Long lower wick</text>
+    <line x1="0" y1="0" x2="0" y2="224" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
+    <rect x="-50" y="16" width="100" height="66" rx="7" fill="#22c55e"/>
+    <path d="M70 184L22 184" stroke="#38bdf8" stroke-width="3"/>
+    <text x="78" y="190" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">dominant lower wick</text>
   </g>
 </svg>
