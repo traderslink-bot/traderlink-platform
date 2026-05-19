@@ -42,7 +42,7 @@ meta_description: "Learn what bear pennants show, where traders force them, and 
 
 A bear pennant forms after a strong downward move when price compresses into a small tightening range. It is related to a bear flag, but the pause is usually tighter and more triangular.
 
-![Candlestick chart showing a strong downward move, tight pennant compression, volume, and reclaim context.](/academy/images/chart-reading/bear-pennant-context.svg)
+![Candlestick chart showing a sharp drop followed by a small pennant.](/academy/images/chart-reading/bear-pennant-context.svg)
 
 ## What The Structure Looks Like
 

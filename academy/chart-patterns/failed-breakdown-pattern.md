@@ -42,7 +42,7 @@ meta_description: "Learn what failed breakdowns show, why support breaks can rec
 
 A failed breakdown happens when price breaks below a support area, then reclaims that area instead of continuing lower. It often catches traders who reacted to the support break without waiting to see whether the break could hold.
 
-![Candlestick chart showing a support break, reclaim, volume, and failed breakdown review context.](/academy/images/chart-reading/failed-breakdown-pattern-context.svg)
+![Candlestick chart showing price breaking below support and then reclaiming back above it.](/academy/images/chart-reading/failed-breakdown-pattern-context.svg)
 
 ## What The Structure Looks Like
 

@@ -42,7 +42,7 @@ meta_description: "Learn what triple tops show, where traders force them, and ho
 
 A triple top forms when price tests a similar resistance area three times and cannot hold above it. It is a repeated-resistance structure, not a reason to assume the next move by itself.
 
-![Candlestick chart showing three resistance tests, support area, volume, and triple top failure context.](/academy/images/chart-reading/triple-top-context.svg)
+![Candlestick chart showing a triple top with three resistance tests.](/academy/images/chart-reading/triple-top-context.svg)
 
 ## What The Structure Looks Like
 

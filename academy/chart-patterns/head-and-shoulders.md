@@ -44,7 +44,7 @@ A head and shoulders pattern forms when price makes a high, then a higher high, 
 
 The pattern needs neckline and follow-through context. Without that, the chart may only be showing normal swings near a high.
 
-![Candlestick chart showing head and shoulders structure with neckline, volume, and failed-neckline review context.](/academy/images/chart-reading/head-and-shoulders-context.svg)
+![Candlestick chart showing a head and shoulders pattern with a higher middle peak.](/academy/images/chart-reading/head-and-shoulders-context.svg)
 
 ## What It Is
 

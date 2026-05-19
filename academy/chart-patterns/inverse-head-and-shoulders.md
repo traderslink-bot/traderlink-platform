@@ -45,7 +45,7 @@ Inverse Head And Shoulders is a chart pattern traders use to organize price beha
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing inverse head and shoulders structure with neckline and failed-neckline review context.](/academy/images/chart-reading/inverse-head-shoulders-context.svg)
+![Candlestick chart showing an inverse head and shoulders pattern with a lower middle low.](/academy/images/chart-reading/inverse-head-shoulders-context.svg)
 
 ## What It Is
 

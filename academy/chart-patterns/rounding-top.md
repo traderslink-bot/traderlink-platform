@@ -42,7 +42,7 @@ meta_description: "Learn what rounding tops show, why gradual weakening matters,
 
 A rounding top is a slower structure where price stops pushing strongly higher, begins to flatten, and gradually weakens. It is usually more useful on multi-day charts than on very fast intraday charts.
 
-![Candlestick chart showing a gradual rounding top, support loss, volume, and failure context.](/academy/images/chart-reading/rounding-top-context.svg)
+![Candlestick chart showing a gradual rounding top.](/academy/images/chart-reading/rounding-top-context.svg)
 
 ## What The Structure Looks Like
 

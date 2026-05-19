@@ -44,7 +44,7 @@ A double bottom forms when price tests a similar support area twice and the seco
 
 The useful review is whether support actually held, whether price reclaimed a meaningful area, and whether volume and structure improved after the second test.
 
-![Candlestick chart showing two support tests, neckline area, volume, and double bottom failure context.](/academy/images/chart-reading/double-bottom-context.svg)
+![Candlestick chart showing a double bottom with two support tests.](/academy/images/chart-reading/double-bottom-context.svg)
 
 ## What It Is
 

@@ -44,7 +44,7 @@ Channel Pattern is a chart pattern traders use to organize price behavior. The p
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing a rising channel and narrowing wedge structure with trendline context.](/academy/images/chart-reading/wedge-channel-context.svg)
+![Candlestick chart showing price moving between parallel channel boundaries.](/academy/images/chart-reading/wedge-channel-context.svg)
 
 ## What It Is
 

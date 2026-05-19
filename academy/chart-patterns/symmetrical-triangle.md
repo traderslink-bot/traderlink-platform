@@ -44,7 +44,7 @@ A symmetrical triangle forms when price makes lower highs and higher lows at the
 
 The pattern does not answer direction by itself. The useful read is where compression is forming, how volume behaves, and what happens when price leaves the range.
 
-![Candlestick chart showing lower highs, higher lows, compression, volume, and failed range break context.](/academy/images/chart-reading/symmetrical-triangle-context.svg)
+![Candlestick chart showing a symmetrical triangle with lower highs and higher lows.](/academy/images/chart-reading/symmetrical-triangle-context.svg)
 
 ## What It Is
 

@@ -44,7 +44,7 @@ A descending triangle forms when price repeatedly tests a similar support area w
 
 The best use of the pattern is to organize the chart: where support is, where lower highs are forming, how volume behaves, and where the read changes.
 
-![Candlestick chart showing repeated support tests, lower highs, compression, volume, and descending triangle failure context.](/academy/images/chart-reading/descending-triangle-context.svg)
+![Candlestick chart showing a descending triangle with flat support and lower highs.](/academy/images/chart-reading/descending-triangle-context.svg)
 
 ## What It Is
 

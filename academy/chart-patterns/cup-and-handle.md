@@ -42,7 +42,7 @@ meta_description: "Learn what cup and handle patterns show, why handles matter, 
 
 A cup and handle is a rounded base followed by a smaller pullback or consolidation near resistance. It is most useful when a trader is reviewing multi-day structure, not when forcing a quick intraday shape onto a few candles.
 
-![Candlestick chart showing a rounded cup, handle near resistance, volume, and failed breakout review context.](/academy/images/chart-reading/cup-and-handle-context.svg)
+![Candlestick chart showing a rounded cup with a smaller handle near resistance.](/academy/images/chart-reading/cup-and-handle-context.svg)
 
 ## What The Structure Looks Like
 

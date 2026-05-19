@@ -45,7 +45,7 @@ Double Top is a chart pattern traders use to organize price behavior. The patter
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing two resistance tests, neckline area, volume, and failed-breakdown review context.](/academy/images/chart-reading/double-top-context.svg)
+![Candlestick chart showing a double top with two resistance tests.](/academy/images/chart-reading/double-top-context.svg)
 
 ## What It Is
 

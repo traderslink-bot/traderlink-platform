@@ -44,7 +44,7 @@ A bear flag is a pattern traders watch after a strong downward move followed by 
 
 The important part is not the name. The useful read is whether the bounce stays controlled, where resistance forms, how volume behaves, and where the structure stops making sense.
 
-![Candlestick chart showing a sharp drop, controlled bounce, resistance area, volume, and bear flag failure context.](/academy/images/chart-reading/bear-flag-context.svg)
+![Candlestick chart showing a sharp drop followed by a rising flag.](/academy/images/chart-reading/bear-flag-context.svg)
 
 ## What It Is
 

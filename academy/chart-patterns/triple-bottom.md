@@ -42,7 +42,7 @@ meta_description: "Learn what triple bottoms show, where traders force them, and
 
 A triple bottom forms when price tests a similar support area three times and cannot stay below it. It is a repeated-support structure that needs reclaim, resistance, and volume review.
 
-![Candlestick chart showing three support tests, reclaim area, volume, and triple bottom failure context.](/academy/images/chart-reading/triple-bottom-context.svg)
+![Candlestick chart showing a triple bottom with three support tests.](/academy/images/chart-reading/triple-bottom-context.svg)
 
 ## What The Structure Looks Like
 

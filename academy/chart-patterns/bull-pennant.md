@@ -42,7 +42,7 @@ meta_description: "Learn what bull pennants show, where traders force them, and 
 
 A bull pennant forms after a strong upward move when price compresses into a small tightening range. It is related to a bull flag, but the pause is usually tighter and more triangular.
 
-![Candlestick chart showing a strong upward move, tight pennant compression, volume, and failure context.](/academy/images/chart-reading/bull-pennant-context.svg)
+![Candlestick chart showing a sharp rise followed by a small pennant.](/academy/images/chart-reading/bull-pennant-context.svg)
 
 ## What The Structure Looks Like
 

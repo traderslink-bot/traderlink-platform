@@ -44,7 +44,7 @@ Rectangle Pattern is a chart pattern traders use to organize price behavior. The
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing a rectangular range with support, resistance, volume, and breakout failure context.](/academy/images/chart-reading/rectangle-base-breakout-context.svg)
+![Candlestick chart showing a rectangle range between horizontal support and resistance.](/academy/images/chart-reading/rectangle-base-breakout-context.svg)
 
 ## What It Is
 

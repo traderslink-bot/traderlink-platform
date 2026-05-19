@@ -45,7 +45,7 @@ A VWAP reclaim happens when price moves back above VWAP after trading below it. 
 
 A VWAP reclaim still needs follow-through. Price can reclaim VWAP, fail, and move back below it quickly. The reclaim matters only if the price action, volume, and context support the idea.
 
-![Candlestick chart showing price reclaiming VWAP, retesting the VWAP area, and either holding or failing with volume context.](/academy/images/chart-reading/vwap-reclaim-context.svg)
+![Candlestick chart showing price reclaiming a sloped reference line and holding above it.](/academy/images/chart-reading/vwap-reclaim-context.svg)
 
 ## What It Is
 

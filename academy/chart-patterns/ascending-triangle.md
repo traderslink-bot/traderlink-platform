@@ -45,7 +45,7 @@ Ascending Triangle Pattern is a chart pattern traders use to organize price beha
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing flat resistance, higher lows, compression, and failed-breakout review context.](/academy/images/chart-reading/ascending-triangle-context.svg)
+![Candlestick chart showing an ascending triangle with flat resistance and rising lows.](/academy/images/chart-reading/ascending-triangle-context.svg)
 
 ## What It Is
 

@@ -29,7 +29,7 @@ internal_links:
   - "/academy/volume/"
   - "/academy/price-rejection/"
 visual_assets:
-  - "/academy/images/chart-reading/wedge-channel-context.svg"
+  - "/academy/images/chart-reading/rising-wedge-context.svg"
 schema:
   - "FAQPage"
 last_reviewed: "2026-05-18"
@@ -44,7 +44,7 @@ Rising Wedge is a chart pattern traders use to organize price behavior. The patt
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing a rising wedge narrowing upward with volume and break-review context.](/academy/images/chart-reading/wedge-channel-context.svg)
+![Candlestick chart showing a rising wedge narrowing upward between converging boundaries.](/academy/images/chart-reading/rising-wedge-context.svg)
 
 ## What It Is
 

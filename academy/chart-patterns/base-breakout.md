@@ -45,7 +45,7 @@ Base Breakout is a chart pattern traders use to organize price behavior. The pat
 
 The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
 
-![Candlestick chart showing a base range, breakout attempt, retest, and failed-breakout review context.](/academy/images/chart-reading/rectangle-base-breakout-context.svg)
+![Candlestick chart showing a sideways base with a breakout above the range.](/academy/images/chart-reading/rectangle-base-breakout-context.svg)
 
 ## What It Is
 

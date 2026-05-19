@@ -44,7 +44,7 @@ A bull flag is a pattern traders watch after a strong upward move followed by a 
 
 A bull flag can also fail quickly, especially when the entry is late or the stock is already extended.
 
-![Candlestick chart showing a strong move, controlled pullback, and bull flag failure-plan context.](/academy/images/chart-reading/bull-flag-context.svg)
+![Candlestick chart showing a sharp rise followed by a controlled flag pullback.](/academy/images/chart-reading/bull-flag-context.svg)
 
 ## What It Is
 

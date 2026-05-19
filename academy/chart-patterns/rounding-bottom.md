@@ -42,7 +42,7 @@ meta_description: "Learn what rounding bottoms show, why base-building context m
 
 A rounding bottom is a slower structure where price stops making sharp new lows, begins to stabilize, and gradually turns upward. It is usually more useful on multi-day charts than on fast intraday charts.
 
-![Candlestick chart showing a gradual rounding bottom, reclaim area, volume, and failure context.](/academy/images/chart-reading/rounding-bottom-context.svg)
+![Candlestick chart showing a gradual rounding bottom.](/academy/images/chart-reading/rounding-bottom-context.svg)
 
 ## What The Structure Looks Like
 
