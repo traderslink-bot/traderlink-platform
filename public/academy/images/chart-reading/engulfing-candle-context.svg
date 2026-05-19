@@ -7,27 +7,25 @@
     <path d="M88 130H872M88 220H872M88 310H872M88 400H872"/>
   </g>
   <text x="64" y="88" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Engulfing candle shapes</text>
-  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">The second candle body fully overtakes the prior candle body.</text>
+  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">The second candle body clearly covers the prior candle body.</text>
 
   <g transform="translate(270 175)">
     <text x="-92" y="-26" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="21" font-weight="700">Bullish engulfing</text>
-    <line x1="-56" y1="88" x2="-56" y2="190" stroke="#d6e4ff" stroke-width="7" stroke-linecap="round"/>
-    <rect x="-90" y="112" width="68" height="54" rx="5" fill="#ef4444"/>
-    <line x1="58" y1="42" x2="58" y2="226" stroke="#d6e4ff" stroke-width="7" stroke-linecap="round"/>
-    <rect x="14" y="64" width="88" height="138" rx="5" fill="#22c55e"/>
-    <rect x="4" y="54" width="108" height="158" rx="8" fill="none" stroke="#38bdf8" stroke-width="3"/>
-    <text x="0" y="238" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="15" font-weight="700">Engulfing candle</text>
-    <text x="-140" y="268" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Large green body covers the prior red body.</text>
+    <line x1="-60" y1="92" x2="-60" y2="188" stroke="#d6e4ff" stroke-width="8" stroke-linecap="round"/>
+    <rect x="-94" y="116" width="68" height="50" rx="6" fill="#ef4444"/>
+    <line x1="62" y1="34" x2="62" y2="230" stroke="#d6e4ff" stroke-width="8" stroke-linecap="round"/>
+    <rect x="14" y="56" width="96" height="152" rx="7" fill="#22c55e"/>
+    <rect x="2" y="44" width="120" height="176" rx="10" fill="none" stroke="#38bdf8" stroke-width="3"/>
+    <text x="-132" y="266" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Large green body covers prior red body.</text>
   </g>
 
   <g transform="translate(690 175)">
     <text x="-92" y="-26" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="21" font-weight="700">Bearish engulfing</text>
-    <line x1="-56" y1="42" x2="-56" y2="226" stroke="#d6e4ff" stroke-width="7" stroke-linecap="round"/>
-    <rect x="-100" y="64" width="88" height="138" rx="5" fill="#22c55e"/>
-    <line x1="58" y1="40" x2="58" y2="226" stroke="#d6e4ff" stroke-width="7" stroke-linecap="round"/>
-    <rect x="14" y="46" width="88" height="174" rx="5" fill="#ef4444"/>
-    <rect x="4" y="36" width="108" height="194" rx="8" fill="none" stroke="#38bdf8" stroke-width="3"/>
-    <text x="0" y="246" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="15" font-weight="700">Engulfing candle</text>
-    <text x="-142" y="276" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Large red body covers the prior green body.</text>
+    <line x1="-60" y1="34" x2="-60" y2="230" stroke="#d6e4ff" stroke-width="8" stroke-linecap="round"/>
+    <rect x="-108" y="56" width="96" height="152" rx="7" fill="#22c55e"/>
+    <line x1="62" y1="30" x2="62" y2="234" stroke="#d6e4ff" stroke-width="8" stroke-linecap="round"/>
+    <rect x="14" y="38" width="96" height="184" rx="7" fill="#ef4444"/>
+    <rect x="2" y="26" width="120" height="208" rx="10" fill="none" stroke="#38bdf8" stroke-width="3"/>
+    <text x="-132" y="276" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Large red body covers prior green body.</text>
   </g>
 </svg>
