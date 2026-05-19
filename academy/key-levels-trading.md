@@ -9,7 +9,7 @@ secondary_keywords:
   - "support and resistance levels"
   - "level map trading"
 search_intent: "Learn what key levels are in trading, how to choose the levels that matter now, and how to review trades around important price areas."
-status: "draft"
+status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
@@ -289,7 +289,3 @@ It depends on the trade, but the nearest support, nearest resistance, and the le
 ### How do I review trades around key levels?
 
 Review where you entered, where the nearest levels were, whether price respected or failed those levels, and whether your trade management matched your plan.
-
-## Educational Disclaimer
-
-This guide is for educational purposes only. It is not financial advice and does not tell you to buy, sell, or hold any stock. Key levels do not guarantee price movement, profitability, better decisions, or reduced losses. Always use risk management and review your own trades carefully.
