@@ -30,9 +30,9 @@
   <path d="M96 162 L150 226 L204 260 L258 292 L312 312 L366 318 L420 290 L474 308 L528 284" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
   <path d="M270 204 C350 232 440 270 530 296" fill="none" stroke="#fecaca" stroke-width="3" stroke-dasharray="7 7"/>
   <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
-    <text x="286" y="184" fill="#fecaca">Late entry far from level</text>
-    <text x="412" y="232" fill="#bbf7d0">Possible reclaim area</text>
-    <text x="500" y="338" fill="#fecaca">Chase-risk review</text>
+    <text x="286" y="184" fill="#fecaca">Entry far below level</text>
+    <text x="412" y="232" fill="#bbf7d0">Support nearby</text>
+    <text x="500" y="338" fill="#fecaca">Risk harder to define</text>
   </g>
   <g>
     <rect x="70" y="326" width="14" height="18" fill="#ef4444" opacity=".7"/><rect x="96" y="314" width="14" height="30" fill="#ef4444" opacity=".85"/><rect x="122" y="306" width="14" height="38" fill="#ef4444" opacity=".9"/><rect x="148" y="296" width="14" height="48" fill="#ef4444" opacity=".95"/><rect x="174" y="288" width="14" height="56" fill="#ef4444" opacity=".98"/><rect x="200" y="318" width="14" height="26" fill="#21c784" opacity=".66"/><rect x="226" y="302" width="14" height="42" fill="#ef4444" opacity=".88"/><rect x="252" y="314" width="14" height="30" fill="#21c784" opacity=".7"/>

@@ -24,7 +24,7 @@
     <rect x="54" y="80" width="52" height="108" rx="4" fill="#22c55e"/>
     <text x="125" y="30" fill="#d6e4ff" font-family="Arial" font-size="18">Upper wick</text>
     <path d="M103 24H88" stroke="#d6e4ff"/>
-    <text x="125" y="142" fill="#d6e4ff" font-family="Arial" font-size="18">Body: open to close</text>
+    <text x="125" y="142" fill="#d6e4ff" font-family="Arial" font-size="18">Body: between open and close</text>
     <path d="M116 136H106" stroke="#d6e4ff"/>
     <text x="125" y="242" fill="#d6e4ff" font-family="Arial" font-size="18">Lower wick</text>
     <path d="M105 236H88" stroke="#d6e4ff"/>

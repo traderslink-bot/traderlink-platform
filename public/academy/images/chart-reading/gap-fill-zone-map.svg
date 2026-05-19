@@ -10,9 +10,11 @@
   <line x1="78" y1="154" x2="678" y2="154" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
   <line x1="78" y1="254" x2="678" y2="254" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
   <line x1="78" y1="204" x2="678" y2="204" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5 7" opacity=".85"/>
-  <text x="88" y="146" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Gap top / current open</text>
-  <text x="88" y="276" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Gap bottom / prior close</text>
-  <text x="520" y="198" fill="#fbbf24" font-family="Arial, sans-serif" font-size="12">Gap midpoint</text>
+  <text x="88" y="146" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Current open</text>
+  <text x="88" y="276" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Prior close</text>
+  <text x="520" y="198" fill="#fbbf24" font-family="Arial, sans-serif" font-size="12">Partial fill</text>
+  <text x="526" y="236" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="12">Gap area</text>
+  <text x="500" y="276" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="12">Full fill area</text>
   <g stroke-linecap="round" stroke-width="3">
     <g stroke="#21c784" fill="#21c784">
       <line x1="112" y1="260" x2="112" y2="318"/><rect x="102" y="278" width="20" height="26" rx="2"/>

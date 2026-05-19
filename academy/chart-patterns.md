@@ -19,7 +19,7 @@ academy_module: "Ranges, Compression And Pattern Basics"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/chart-pattern-deep-dive-lessons/", "/academy/chart-patterns/bull-flag/", "/academy/chart-patterns/bear-flag/", "/academy/chart-patterns/cup-and-handle/", "/academy/chart-patterns/ascending-triangle/", "/academy/chart-patterns/descending-triangle/", "/academy/chart-patterns/symmetrical-triangle/", "/academy/chart-patterns/double-top/", "/academy/chart-patterns/double-bottom/", "/academy/chart-patterns/head-and-shoulders/", "/academy/chart-patterns/failed-breakout-pattern/", "/academy/chart-patterns/failed-breakdown-pattern/", "/academy/support-and-resistance/", "/academy/compression/", "/academy/consolidation/", "/academy/volume/"]
-visual_assets: ["/academy/images/chart-reading/chart-pattern-context-map.svg"]
+visual_assets: ["/academy/images/chart-reading/chart-pattern-context-map.svg", "/academy/images/chart-reading/clean-vs-forced-chart-pattern.svg"]
 schema: ["FAQPage"]
 last_reviewed: "2026-05-19"
 meta_title: "Chart Pattern Basics"
@@ -176,6 +176,8 @@ A clean pattern helps the trader understand the chart.
 A forced pattern gives the trader a story.
 
 That difference matters.
+
+![Two chart panels comparing a clean chart pattern with a forced pattern.](/academy/images/chart-reading/clean-vs-forced-chart-pattern.svg)
 
 ## Context Still Matters
 

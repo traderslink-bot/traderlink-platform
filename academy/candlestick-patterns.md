@@ -19,7 +19,7 @@ academy_module: "Chart Reading Basics And Core Levels"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candlestick-deep-dive-lessons/", "/academy/candlestick-patterns/long-wick-candle/", "/academy/candlestick-patterns/doji/", "/academy/candlestick-patterns/engulfing-candle/", "/academy/support-and-resistance/", "/academy/volume/"]
-visual_assets: ["/academy/images/chart-reading/candlestick-anatomy-context.svg"]
+visual_assets: ["/academy/images/chart-reading/candlestick-anatomy-context.svg", "/academy/images/chart-reading/same-candle-different-context.svg"]
 schema: ["FAQPage"]
 last_reviewed: "2026-05-19"
 meta_title: "Candlestick Pattern Basics"
@@ -277,6 +277,8 @@ Before trusting the name, ask:
 * Was the stock liquid enough for the candle to be trusted?
 
 If the answer is unclear, the candle name may not help much.
+
+![Three chart panels showing the same candle shape at resistance, in random chop, and at support.](/academy/images/chart-reading/same-candle-different-context.svg)
 
 ## Realistic Example
 

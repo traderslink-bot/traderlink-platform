@@ -3,8 +3,8 @@
   <desc id="desc">Educational chart workflow showing hold, break, reject, and reclaim behavior around key levels.</desc>
   <rect width="760" height="440" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554"/>
-  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Key-Level Review Workflow</text>
-  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Use levels to review behavior, not to predict certainty.</text>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Key-Level Behavior Map</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Watch what changes when price reaches the level.</text>
   <g stroke="#18304e" stroke-width="1">
     <line x1="58" y1="128" x2="704" y2="128"/>
     <line x1="58" y1="188" x2="704" y2="188"/>
@@ -45,11 +45,11 @@
   </g>
   <path d="M97 263 C141 223 170 197 187 209 C219 229 257 222 275 217 C303 209 325 163 363 212 C394 251 426 260 451 250 C482 238 504 207 539 224 C570 239 596 238 626 286" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".55"/>
   <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
-    <text x="78" y="318" fill="#bbf7d0">Hold?</text>
-    <text x="288" y="124" fill="#bbf7d0">Break?</text>
-    <text x="364" y="270" fill="#fecaca">Reject?</text>
-    <text x="548" y="326" fill="#c8d7ee">Review response</text>
+    <text x="78" y="318" fill="#bbf7d0">Hold</text>
+    <text x="288" y="124" fill="#bbf7d0">Break</text>
+    <text x="364" y="270" fill="#fecaca">Reject</text>
+    <text x="548" y="326" fill="#c8d7ee">Reclaim</text>
   </g>
   <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Journal prompt: What did price do at the level, and did my decision follow the plan?</text>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">What changed when price reached the level?</text>
 </svg>

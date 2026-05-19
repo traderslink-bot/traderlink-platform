@@ -41,8 +41,8 @@
   </g>
   <path d="M96 312 C149 283 191 264 229 254 C271 244 315 194 361 170 C402 148 445 106 493 111 C538 116 579 151 625 191" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".55"/>
   <path d="M410 246 L410 114" stroke="#f59e0b" stroke-width="3" stroke-dasharray="6 6"/>
-  <text x="424" y="244" fill="#fbbf24" font-family="Arial, sans-serif" font-size="13">Distance from level</text>
-  <text x="470" y="74" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Extended area to review</text>
+  <text x="424" y="244" fill="#fbbf24" font-family="Arial, sans-serif" font-size="13">Entry far above level</text>
+  <text x="470" y="74" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Next resistance nearby</text>
   <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Journal prompt: was the entry near defined risk or far above the breakout level?</text>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Risk harder to define when price is extended far from the breakout level.</text>
 </svg>

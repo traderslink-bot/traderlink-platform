@@ -18,7 +18,7 @@ academy_module: "Chart Reading Basics And Core Levels"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/resistance-levels/"
 recommended_next: "/academy/swing-highs-and-swing-lows/"
-visual_assets: ["/academy/images/chart-reading/key-level-map-current-price.svg", "/academy/images/chart-reading/key-level-review-workflow.svg"]
+visual_assets: ["/academy/images/chart-reading/key-level-map-current-price.svg", "/academy/images/chart-reading/clean-vs-cluttered-level-map.svg", "/academy/images/chart-reading/key-level-review-workflow.svg"]
 internal_links: ["/academy/support-and-resistance/", "/academy/how-to-draw-support-and-resistance/", "/academy/support-levels/", "/academy/resistance-levels/", "/academy/breakout-trading/", "/academy/pivot-levels/", "/academy/previous-day-high-low/", "/glossary/reclaim/", "/glossary/rejection/", "/features/support-resistance-trade-review/"]
 schema: ["Article", "FAQPage"]
 last_reviewed: "2026-05-19"
@@ -99,6 +99,8 @@ On a cluttered map, every candle has a line above it and below it. That can make
 A good rule is to ask: "Will this level affect the next decision or the next review?"
 
 If the answer is no, it may belong in notes instead of on the active chart.
+
+![Two chart panels comparing a clean level map with a cluttered level map.](/academy/images/chart-reading/clean-vs-cluttered-level-map.svg)
 
 ## Higher Timeframe Levels
 
