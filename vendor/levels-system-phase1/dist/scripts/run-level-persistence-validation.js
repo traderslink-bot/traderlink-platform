@@ -1,0 +1,140 @@
+import "dotenv/config";
+import { CandleFetchService } from "../lib/market-data/candle-fetch-service.js";
+import { createHistoricalCandleProvider } from "../lib/market-data/provider-factory.js";
+import { LevelEngine } from "../lib/levels/level-engine.js";
+import { checkCandleSourceHealth, formatCandleSourceHealthReport, } from "../lib/validation/candle-source-health.js";
+import { formatLevelPersistenceReport, validateLevelPersistence, } from "../lib/validation/level-persistence-validator.js";
+import { isStructurallyRequiredValidationTimeframe, resolveValidationLookbacks, } from "../lib/validation/validation-lookback-config.js";
+import { waitForIbkrConnection } from "./shared/ibkr-connection.js";
+import { createValidationIbkrClient } from "./shared/ibkr-runtime.js";
+import { createReplayOnlyHistoricalProvider, createValidationCandleFetchService, } from "./shared/validation-candle-cache.js";
+const DEFAULT_WINDOW_COUNT = 6;
+const DEFAULT_STEP_MINUTES = 15;
+function resolveProviderName() {
+    const requested = process.env.LEVEL_VALIDATION_PROVIDER?.trim().toLowerCase();
+    if (requested === "ibkr" || requested === "stub") {
+        return requested;
+    }
+    return "ibkr";
+}
+function resolvePositiveInteger(rawValue, fallback) {
+    const parsed = Number.parseInt(rawValue ?? "", 10);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+function resolveOptionalPositiveInteger(rawValue) {
+    const parsed = Number.parseInt(rawValue ?? "", 10);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+function buildHistoricalRequests(symbol, providerName, endTimeMs, lookbacks) {
+    return {
+        daily: {
+            symbol,
+            timeframe: "daily",
+            lookbackBars: lookbacks.daily,
+            endTimeMs,
+            preferredProvider: providerName,
+        },
+        "4h": {
+            symbol,
+            timeframe: "4h",
+            lookbackBars: lookbacks["4h"],
+            endTimeMs,
+            preferredProvider: providerName,
+        },
+        "5m": {
+            symbol,
+            timeframe: "5m",
+            lookbackBars: lookbacks["5m"],
+            endTimeMs,
+            preferredProvider: providerName,
+        },
+    };
+}
+async function verifyProviderHealth(candleFetchService, symbol, providerName, lookbacks) {
+    const requests = ["daily", "4h", "5m"].map((timeframe) => ({
+        symbol,
+        timeframe,
+        lookbackBars: lookbacks[timeframe],
+        preferredProvider: providerName,
+    }));
+    const reports = await Promise.all(requests.map((request) => checkCandleSourceHealth(candleFetchService, request)));
+    console.log(`[LevelValidation] Candle source health for ${symbol}`);
+    for (const report of reports) {
+        console.log(formatCandleSourceHealthReport(report));
+    }
+    const unavailableReports = reports.filter((report) => isStructurallyRequiredValidationTimeframe(report.timeframe) &&
+        report.status === "unavailable");
+    if (unavailableReports.length > 0) {
+        throw new Error(`Candle provider is unavailable for ${unavailableReports
+            .map((report) => report.timeframe)
+            .join(", ")}.`);
+    }
+}
+async function main() {
+    const symbol = process.argv[2]?.toUpperCase() ?? "AAPL";
+    const providerName = resolveProviderName();
+    const windowCount = resolvePositiveInteger(process.env.LEVEL_VALIDATION_WINDOWS, DEFAULT_WINDOW_COUNT);
+    const stepMinutes = resolvePositiveInteger(process.env.LEVEL_VALIDATION_STEP_MINUTES, DEFAULT_STEP_MINUTES);
+    const lookbacks = resolveValidationLookbacks();
+    const ibkrTimeoutMs = resolveOptionalPositiveInteger(process.env.LEVEL_VALIDATION_IBKR_TIMEOUT_MS);
+    const stepMs = stepMinutes * 60 * 1000;
+    const replayOnly = process.env.LEVEL_VALIDATION_CACHE_MODE?.trim().toLowerCase() === "replay";
+    const needsIbkr = providerName === "ibkr" && !replayOnly;
+    const ib = needsIbkr ? createValidationIbkrClient() : undefined;
+    try {
+        if (needsIbkr && ib) {
+            await waitForIbkrConnection(ib);
+        }
+        const provider = replayOnly
+            ? createReplayOnlyHistoricalProvider(providerName)
+            : createHistoricalCandleProvider({
+                provider: providerName,
+                ib,
+                ibkrTimeoutMs,
+            });
+        const baseFetchService = new CandleFetchService(provider);
+        const { candleFetchService, cacheMode, cacheDirectoryPath } = createValidationCandleFetchService(baseFetchService);
+        const levelEngine = new LevelEngine(candleFetchService);
+        console.log(`[LevelValidation] Active provider path: ${provider.providerName}`);
+        console.log(`[LevelValidation] Candle cache | mode=${cacheMode} | dir=${cacheDirectoryPath}`);
+        console.log(`[LevelValidation] Persistence run config | symbol=${symbol} | windows=${windowCount} | stepMinutes=${stepMinutes}`);
+        console.log(`[LevelValidation] Lookbacks | daily=${lookbacks.daily} | 4h=${lookbacks["4h"]} | 5m=${lookbacks["5m"]}`);
+        if (providerName === "ibkr" && ibkrTimeoutMs) {
+            console.log(`[LevelValidation] IBKR historical timeout | ms=${ibkrTimeoutMs}`);
+        }
+        await verifyProviderHealth(candleFetchService, symbol, providerName, lookbacks);
+        const outputs = [];
+        const anchorTimeMs = Date.now();
+        for (let index = 0; index < windowCount; index += 1) {
+            const endTimeMs = anchorTimeMs - (windowCount - 1 - index) * stepMs;
+            const output = await levelEngine.generateLevels({
+                symbol,
+                historicalRequests: buildHistoricalRequests(symbol, providerName, endTimeMs, lookbacks),
+            });
+            const normalizedOutput = {
+                ...output,
+                generatedAt: endTimeMs,
+            };
+            outputs.push(normalizedOutput);
+            const surfacedSupportCount = normalizedOutput.majorSupport.length +
+                normalizedOutput.intermediateSupport.length +
+                normalizedOutput.intradaySupport.length;
+            const surfacedResistanceCount = normalizedOutput.majorResistance.length +
+                normalizedOutput.intermediateResistance.length +
+                normalizedOutput.intradayResistance.length;
+            console.log(`[LevelValidation] Generated window ${index + 1}/${windowCount} | endTime=${new Date(endTimeMs).toISOString()} | surfacedSupport=${surfacedSupportCount} | surfacedResistance=${surfacedResistanceCount} | extensionSupport=${normalizedOutput.extensionLevels.support.length} | extensionResistance=${normalizedOutput.extensionLevels.resistance.length}`);
+        }
+        const report = validateLevelPersistence(outputs);
+        for (const line of formatLevelPersistenceReport(report)) {
+            console.log(line);
+        }
+    }
+    finally {
+        ib?.disconnect();
+    }
+}
+main().catch((error) => {
+    const message = error instanceof Error ? error.stack ?? error.message : String(error);
+    console.error(message);
+    process.exit(1);
+});

@@ -1,0 +1,1 @@
+{"version":3,"file":"candle-validation.d.ts","sourceRoot":"","sources":["../../../src/lib/market-data/candle-validation.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EACV,0BAA0B,EAE1B,6BAA6B,EAC7B,qBAAqB,EACtB,MAAM,mBAAmB,CAAC;AA6B3B,wBAAgB,sBAAsB,CACpC,QAAQ,EAAE,0BAA0B,GACnC;IACD,gBAAgB,EAAE,qBAAqB,EAAE,CAAC;IAC1C,kBAAkB,EAAE,6BAA6B,CAAC;IAClD,KAAK,EAAE,OAAO,CAAC;CAChB,CAuHA"}

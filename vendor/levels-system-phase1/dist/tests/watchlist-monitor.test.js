@@ -1,0 +1,591 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { LevelStore } from "../lib/monitoring/level-store.js";
+import { WatchlistMonitor } from "../lib/monitoring/watchlist-monitor.js";
+class FakeLivePriceProvider {
+    listener;
+    async start(entries, onUpdate) {
+        this.listener = onUpdate;
+    }
+    async stop() {
+        this.listener = undefined;
+    }
+}
+function buildZone(params) {
+    return {
+        timeframeBias: "5m",
+        zoneLow: params.kind === "support" ? 1.9 : 2.4,
+        zoneHigh: params.kind === "support" ? 2.0 : 2.5,
+        representativePrice: params.kind === "support" ? 1.95 : 2.45,
+        strengthScore: 22,
+        strengthLabel: "moderate",
+        touchCount: 3,
+        confluenceCount: 1,
+        sourceTypes: [params.kind === "support" ? "swing_low" : "swing_high"],
+        timeframeSources: ["5m"],
+        reactionQualityScore: 0.62,
+        rejectionScore: 0.4,
+        displacementScore: 0.55,
+        sessionSignificanceScore: 0.25,
+        followThroughScore: params.followThroughScore ?? 0.7,
+        gapContinuationScore: params.gapContinuationScore ?? 0,
+        sourceEvidenceCount: 2,
+        firstTimestamp: 1,
+        lastTimestamp: Date.now(),
+        isExtension: false,
+        freshness: "fresh",
+        notes: [],
+        ...params,
+    };
+}
+function buildLevelOutput(symbol, overrides = {}) {
+    return {
+        symbol,
+        generatedAt: Date.now(),
+        metadata: {
+            providerByTimeframe: {},
+            dataQualityFlags: [],
+            freshness: "fresh",
+        },
+        majorSupport: [],
+        majorResistance: [],
+        intermediateSupport: [],
+        intermediateResistance: [],
+        intradaySupport: [],
+        intradayResistance: [],
+        extensionLevels: {
+            support: [],
+            resistance: [],
+        },
+        specialLevels: {},
+        ...overrides,
+    };
+}
+test("WatchlistMonitor omits empty higher-timeframe market-structure buckets", () => {
+    const monitor = new WatchlistMonitor(new LevelStore(), new FakeLivePriceProvider());
+    const snapshot = monitor.buildMarketStructureSnapshot("ALBT", {
+        "4h": {},
+    });
+    assert.equal(snapshot, null);
+});
+test("WatchlistMonitor reconciles refreshed levels and emits events for the new active zone set", async () => {
+    const levelStore = new LevelStore();
+    const liveProvider = new FakeLivePriceProvider();
+    const events = [];
+    const monitor = new WatchlistMonitor(levelStore, liveProvider);
+    levelStore.setLevels(buildLevelOutput("ALBT", {
+        intradayResistance: [
+            buildZone({
+                id: "R1",
+                symbol: "ALBT",
+                kind: "resistance",
+                zoneLow: 2.4,
+                zoneHigh: 2.5,
+                representativePrice: 2.45,
+            }),
+        ],
+    }));
+    await monitor.start([{ symbol: "ALBT", active: true, priority: 1, tags: ["manual"] }], (event) => events.push(event));
+    levelStore.setLevels(buildLevelOutput("ALBT", {
+        intradayResistance: [
+            buildZone({
+                id: "R2",
+                symbol: "ALBT",
+                kind: "resistance",
+                zoneLow: 3.0,
+                zoneHigh: 3.1,
+                representativePrice: 3.05,
+            }),
+        ],
+    }));
+    liveProvider.listener?.({
+        symbol: "ALBT",
+        timestamp: 1000,
+        lastPrice: 3.04,
+    });
+    assert.equal(events.length, 1);
+    assert.equal(events[0]?.eventContext.canonicalZoneId, "R2");
+    assert.ok(events[0]?.zoneId.startsWith("ALBT-resistance-monitored-"));
+    assert.equal(events[0]?.eventType, "level_touch");
+});
+test("WatchlistMonitor emits support approach when price nears the next lower support", async () => {
+    const levelStore = new LevelStore();
+    const liveProvider = new FakeLivePriceProvider();
+    const events = [];
+    const monitor = new WatchlistMonitor(levelStore, liveProvider);
+    levelStore.setLevels(buildLevelOutput("FATN", {
+        intradaySupport: [
+            buildZone({
+                id: "S1",
+                symbol: "FATN",
+                kind: "support",
+                zoneLow: 2.90,
+                zoneHigh: 2.93,
+                representativePrice: 2.93,
+                strengthLabel: "major",
+                strengthScore: 36,
+            }),
+        ],
+    }));
+    await monitor.start([{ symbol: "FATN", active: true, priority: 1, tags: ["manual"] }], (event) => events.push(event));
+    liveProvider.listener?.({
+        symbol: "FATN",
+        timestamp: 1000,
+        lastPrice: 2.95,
+    });
+    assert.equal(events.length, 1);
+    assert.equal(events[0]?.eventType, "level_touch");
+    assert.equal(events[0]?.zoneKind, "support");
+    assert.equal(events[0]?.zoneId.startsWith("FATN-support-monitored-"), true);
+});
+test("WatchlistMonitor does not emit support approach when price is still too far from support", async () => {
+    const levelStore = new LevelStore();
+    const liveProvider = new FakeLivePriceProvider();
+    const events = [];
+    const monitor = new WatchlistMonitor(levelStore, liveProvider);
+    levelStore.setLevels(buildLevelOutput("FATN", {
+        intradaySupport: [
+            buildZone({
+                id: "S1",
+                symbol: "FATN",
+                kind: "support",
+                zoneLow: 2.90,
+                zoneHigh: 2.93,
+                representativePrice: 2.93,
+                strengthLabel: "major",
+                strengthScore: 36,
+            }),
+        ],
+    }));
+    await monitor.start([{ symbol: "FATN", active: true, priority: 1, tags: ["manual"] }], (event) => events.push(event));
+    liveProvider.listener?.({
+        symbol: "FATN",
+        timestamp: 1000,
+        lastPrice: 2.96,
+    });
+    assert.equal(events.length, 0);
+});
+test("WatchlistMonitor suppresses a one-off extreme live price anomaly before alerts use it", async () => {
+    const levelStore = new LevelStore();
+    const liveProvider = new FakeLivePriceProvider();
+    const events = [];
+    const acceptedUpdates = [];
+    const monitor = new WatchlistMonitor(levelStore, liveProvider);
+    levelStore.setLevels(buildLevelOutput("PBM", {
+        intradaySupport: [
+            buildZone({
+                id: "S1",
+                symbol: "PBM",
+                kind: "support",
+                zoneLow: 5.30,
+                zoneHigh: 5.36,
+                representativePrice: 5.33,
+                strengthLabel: "major",
+                strengthScore: 40,
+            }),
+        ],
+    }));
+    await monitor.start([{ symbol: "PBM", active: true, priority: 1, tags: ["manual"] }], (event) => events.push(event), (update) => acceptedUpdates.push(update.lastPrice));
+    liveProvider.listener?.({
+        symbol: "PBM",
+        timestamp: 1_000,
+        lastPrice: 6.02,
+    });
+    liveProvider.listener?.({
+        symbol: "PBM",
+        timestamp: 2_000,
+        lastPrice: 0.9415,
+    });
+    liveProvider.listener?.({
+        symbol: "PBM",
+        timestamp: 3_000,
+        lastPrice: 6.01,
+    });
+    assert.deepEqual(acceptedUpdates, [6.02, 6.01]);
+    assert.equal(events.some((event) => event.eventType === "breakdown"), false);
+});
+test("WatchlistMonitor accepts an extreme live price move after a nearby confirming print", async () => {
+    const levelStore = new LevelStore();
+    const liveProvider = new FakeLivePriceProvider();
+    const acceptedUpdates = [];
+    const monitor = new WatchlistMonitor(levelStore, liveProvider);
+    levelStore.setLevels(buildLevelOutput("MOVE", {
+        intradaySupport: [
+            buildZone({
+                id: "S1",
+                symbol: "MOVE",
+                kind: "support",
+                zoneLow: 5.30,
+                zoneHigh: 5.36,
+                representativePrice: 5.33,
+            }),
+        ],
+    }));
+    await monitor.start([{ symbol: "MOVE", active: true, priority: 1, tags: ["manual"] }], () => { }, (update) => acceptedUpdates.push(update.lastPrice));
+    liveProvider.listener?.({
+        symbol: "MOVE",
+        timestamp: 1_000,
+        lastPrice: 6.02,
+    });
+    liveProvider.listener?.({
+        symbol: "MOVE",
+        timestamp: 2_000,
+        lastPrice: 0.9415,
+    });
+    liveProvider.listener?.({
+        symbol: "MOVE",
+        timestamp: 3_000,
+        lastPrice: 0.95,
+    });
+    assert.deepEqual(acceptedUpdates, [6.02, 0.95]);
+});
+test("WatchlistMonitor evaluates posted extension zones after they are activated in the level store", async () => {
+    const levelStore = new LevelStore();
+    const liveProvider = new FakeLivePriceProvider();
+    const events = [];
+    const monitor = new WatchlistMonitor(levelStore, liveProvider);
+    levelStore.setLevels(buildLevelOutput("BIRD", {
+        intradayResistance: [
+            buildZone({
+                id: "R1",
+                symbol: "BIRD",
+                kind: "resistance",
+                zoneLow: 2.4,
+                zoneHigh: 2.5,
+                representativePrice: 2.45,
+            }),
+        ],
+        extensionLevels: {
+            support: [],
+            resistance: [
+                buildZone({
+                    id: "XR1",
+                    symbol: "BIRD",
+                    kind: "resistance",
+                    zoneLow: 2.9,
+                    zoneHigh: 3.0,
+                    representativePrice: 2.95,
+                    isExtension: true,
+                }),
+            ],
+        },
+    }));
+    await monitor.start([{ symbol: "BIRD", active: true, priority: 1, tags: ["manual"] }], (event) => events.push(event));
+    levelStore.activateExtensionLevels("BIRD", "resistance");
+    liveProvider.listener?.({
+        symbol: "BIRD",
+        timestamp: 1000,
+        lastPrice: 2.96,
+    });
+    assert.equal(events.length, 1);
+    assert.equal(events[0]?.eventContext.canonicalZoneId, "XR1");
+    assert.equal(events[0]?.eventContext.zoneOrigin, "promoted_extension");
+    assert.equal(events[0]?.eventType, "level_touch");
+});
+test("WatchlistMonitor preserves monitored identity when a refreshed canonical zone replaces a promoted extension", async () => {
+    const levelStore = new LevelStore();
+    const liveProvider = new FakeLivePriceProvider();
+    const events = [];
+    const monitor = new WatchlistMonitor(levelStore, liveProvider);
+    levelStore.setLevels(buildLevelOutput("IMMP", {
+        intradayResistance: [
+            buildZone({
+                id: "R1",
+                symbol: "IMMP",
+                kind: "resistance",
+                zoneLow: 2.4,
+                zoneHigh: 2.5,
+                representativePrice: 2.45,
+            }),
+        ],
+        extensionLevels: {
+            support: [],
+            resistance: [
+                buildZone({
+                    id: "XR1",
+                    symbol: "IMMP",
+                    kind: "resistance",
+                    zoneLow: 2.9,
+                    zoneHigh: 3.0,
+                    representativePrice: 2.95,
+                    isExtension: true,
+                }),
+            ],
+        },
+    }));
+    await monitor.start([{ symbol: "IMMP", active: true, priority: 1, tags: ["manual"] }], (event) => events.push(event));
+    const promoted = levelStore.activateExtensionLevels("IMMP", "resistance");
+    const promotedZone = promoted.find((zone) => zone.representativePrice === 2.95);
+    assert.ok(promotedZone);
+    levelStore.setLevels(buildLevelOutput("IMMP", {
+        intradayResistance: [
+            buildZone({
+                id: "R2",
+                symbol: "IMMP",
+                kind: "resistance",
+                zoneLow: 2.91,
+                zoneHigh: 3.01,
+                representativePrice: 2.96,
+            }),
+        ],
+    }));
+    liveProvider.listener?.({
+        symbol: "IMMP",
+        timestamp: 1000,
+        lastPrice: 2.97,
+    });
+    assert.equal(events.length, 1);
+    assert.equal(events[0]?.zoneId, promotedZone?.id);
+    assert.equal(events[0]?.eventContext.canonicalZoneId, "R2");
+    assert.equal(events[0]?.eventContext.remapStatus, "replaced");
+    assert.equal(events[0]?.eventContext.zoneOrigin, "canonical");
+});
+test("WatchlistMonitor emits breakout diagnostics for weak fly-by suppression when enabled", async () => {
+    const levelStore = new LevelStore();
+    const liveProvider = new FakeLivePriceProvider();
+    const events = [];
+    const diagnostics = [];
+    const monitor = new WatchlistMonitor(levelStore, liveProvider, undefined, {
+        diagnosticListener: (diagnostic) => diagnostics.push(diagnostic),
+    });
+    levelStore.setLevels(buildLevelOutput("AAPL", {
+        intradayResistance: [
+            buildZone({
+                id: "R1",
+                symbol: "AAPL",
+                kind: "resistance",
+                zoneLow: 100,
+                zoneHigh: 101,
+                representativePrice: 100.5,
+            }),
+        ],
+    }));
+    await monitor.start([{ symbol: "AAPL", active: true, priority: 1, tags: ["manual"] }], (event) => events.push(event));
+    liveProvider.listener?.({
+        symbol: "AAPL",
+        timestamp: 1,
+        lastPrice: 99.5,
+    });
+    liveProvider.listener?.({
+        symbol: "AAPL",
+        timestamp: 2,
+        lastPrice: 101.3,
+    });
+    assert.equal(events.some((event) => event.eventType === "breakout"), false);
+    const breakoutDiagnostic = diagnostics.find((diagnostic) => diagnostic.eventType === "breakout" &&
+        diagnostic.timestamp === 2);
+    assert.ok(breakoutDiagnostic);
+    assert.equal(breakoutDiagnostic?.decision, "suppressed");
+    assert.ok(breakoutDiagnostic?.reasons.includes("missing_prior_interaction_backfill"));
+});
+test("WatchlistMonitor includes nearby barrier clearance in emitted event context", async () => {
+    const levelStore = new LevelStore();
+    const liveProvider = new FakeLivePriceProvider();
+    const events = [];
+    const monitor = new WatchlistMonitor(levelStore, liveProvider);
+    levelStore.setLevels(buildLevelOutput("AGPU", {
+        intradaySupport: [
+            buildZone({
+                id: "S1",
+                symbol: "AGPU",
+                kind: "support",
+                zoneLow: 1.95,
+                zoneHigh: 2.0,
+                representativePrice: 1.98,
+                strengthLabel: "strong",
+            }),
+        ],
+        intradayResistance: [
+            buildZone({
+                id: "R1",
+                symbol: "AGPU",
+                kind: "resistance",
+                zoneLow: 2.01,
+                zoneHigh: 2.03,
+                representativePrice: 2.02,
+            }),
+        ],
+    }));
+    await monitor.start([{ symbol: "AGPU", active: true, priority: 1, tags: ["manual"] }], (event) => events.push(event));
+    liveProvider.listener?.({
+        symbol: "AGPU",
+        timestamp: 100,
+        lastPrice: 1.985,
+    });
+    assert.equal(events.length, 1);
+    assert.equal(events[0]?.eventType, "level_touch");
+    assert.equal(events[0]?.eventContext.nextBarrierKind, "resistance");
+    assert.equal(events[0]?.eventContext.nextBarrierLevel, 2.02);
+    assert.equal(events[0]?.eventContext.clearanceLabel, "limited");
+});
+test("WatchlistMonitor attaches stable 5m structure metadata after enough live buckets", async () => {
+    const levelStore = new LevelStore();
+    const liveProvider = new FakeLivePriceProvider();
+    const events = [];
+    const monitor = new WatchlistMonitor(levelStore, liveProvider);
+    const fiveMinutes = 5 * 60 * 1000;
+    levelStore.setLevels(buildLevelOutput("STBL", {
+        intradayResistance: [
+            buildZone({
+                id: "R1",
+                symbol: "STBL",
+                kind: "resistance",
+                zoneLow: 2.40,
+                zoneHigh: 2.50,
+                representativePrice: 2.45,
+                strengthLabel: "major",
+                strengthScore: 40,
+            }),
+        ],
+    }));
+    await monitor.start([{ symbol: "STBL", active: true, priority: 1, tags: ["manual"] }], (event) => events.push(event));
+    [
+        2.00,
+        2.08,
+        1.98,
+        2.10,
+        2.01,
+        2.12,
+        2.03,
+        2.14,
+        2.05,
+        2.16,
+        2.08,
+        2.18,
+        2.45,
+    ].forEach((price, index) => {
+        liveProvider.listener?.({
+            symbol: "STBL",
+            timestamp: index * fiveMinutes,
+            lastPrice: price,
+            volume: 1000 + index * 100,
+        });
+    });
+    const eventWithStructure = events.find((event) => event.eventContext.stableMarketStructureState);
+    assert.ok(eventWithStructure);
+    assert.equal(typeof eventWithStructure.eventContext.stableMarketStructureKey, "string");
+    assert.ok(eventWithStructure.eventContext.stableMarketStructureConfidence);
+    assert.equal(typeof eventWithStructure.eventContext.stableMarketStructureMaterialityScore, "number");
+    assert.equal(typeof eventWithStructure.eventContext.stableMarketStructureRawState, "string");
+    assert.equal(typeof eventWithStructure.eventContext.stableMarketStructureReason, "string");
+    assert.equal(typeof eventWithStructure.eventContext.stableMarketStructureCandleCount, "number");
+    assert.equal(typeof eventWithStructure.eventContext.stableMarketStructureTrendDirection, "string");
+    assert.equal(typeof eventWithStructure.eventContext.stableMarketStructureHigherLowCount, "number");
+    assert.equal(typeof eventWithStructure.eventContext.stableMarketStructureHigherHighCount, "number");
+});
+test("WatchlistMonitor attaches formal BOS/CHOCH structure metadata after enough completed 5m buckets", async () => {
+    const levelStore = new LevelStore();
+    const liveProvider = new FakeLivePriceProvider();
+    const events = [];
+    const monitor = new WatchlistMonitor(levelStore, liveProvider);
+    const fiveMinutes = 5 * 60 * 1000;
+    levelStore.setLevels(buildLevelOutput("FMS", {
+        intradayResistance: [
+            buildZone({
+                id: "R1",
+                symbol: "FMS",
+                kind: "resistance",
+                zoneLow: 2.50,
+                zoneHigh: 2.55,
+                representativePrice: 2.525,
+                strengthLabel: "major",
+                strengthScore: 42,
+            }),
+        ],
+    }));
+    await monitor.start([{ symbol: "FMS", active: true, priority: 1, tags: ["manual"] }], (event) => events.push(event));
+    [
+        2.00,
+        2.18,
+        2.00,
+        2.30,
+        2.10,
+        2.34,
+        2.22,
+        2.28,
+        2.16,
+        2.35,
+        2.24,
+        2.31,
+        2.18,
+        2.36,
+        2.26,
+        2.32,
+        2.20,
+        2.37,
+        2.28,
+        2.33,
+        2.22,
+        2.38,
+        2.30,
+        2.52,
+        2.57,
+    ].forEach((price, index) => {
+        liveProvider.listener?.({
+            symbol: "FMS",
+            timestamp: index * fiveMinutes,
+            lastPrice: price,
+            volume: 1000 + index * 100,
+        });
+    });
+    const eventWithFormalStructure = events.find((event) => event.eventContext.formalStructureEventType === "bos_bullish");
+    assert.ok(eventWithFormalStructure);
+    assert.equal(eventWithFormalStructure.eventContext.formalStructureTimeframe, "5m");
+    assert.equal(eventWithFormalStructure.eventContext.formalStructureBias, "bullish");
+    assert.equal(eventWithFormalStructure.eventContext.formalStructureMaterialChange, true);
+    assert.equal(eventWithFormalStructure.eventContext.formalStructureConfidence, "medium");
+    assert.equal(typeof eventWithFormalStructure.eventContext.formalStructureConfidenceScore, "number");
+    assert.equal(typeof eventWithFormalStructure.eventContext.formalStructureBrokenSwingPrice, "number");
+    assert.equal(typeof eventWithFormalStructure.eventContext.formalStructureProtectedLow, "number");
+    assert.match(eventWithFormalStructure.eventContext.formalStructureTraderLine ?? "", /bullish BOS/);
+    assert.ok(eventWithFormalStructure.eventContext.formalStructureDebugReasons?.includes("trend_continuation"));
+});
+test("WatchlistMonitor treats recently cleared resistance below price as a nearby hold area", async () => {
+    const levelStore = new LevelStore();
+    const liveProvider = new FakeLivePriceProvider();
+    const events = [];
+    const monitor = new WatchlistMonitor(levelStore, liveProvider);
+    levelStore.setLevels(buildLevelOutput("AKAN", {
+        intradaySupport: [
+            buildZone({
+                id: "S1",
+                symbol: "AKAN",
+                kind: "support",
+                zoneLow: 42.2,
+                zoneHigh: 42.6,
+                representativePrice: 42.41,
+            }),
+        ],
+        intradayResistance: [
+            buildZone({
+                id: "R-cleared",
+                symbol: "AKAN",
+                kind: "resistance",
+                zoneLow: 54.65,
+                zoneHigh: 55.13,
+                representativePrice: 55.13,
+                strengthLabel: "strong",
+            }),
+            buildZone({
+                id: "R-test",
+                symbol: "AKAN",
+                kind: "resistance",
+                zoneLow: 62.4,
+                zoneHigh: 62.55,
+                representativePrice: 62.55,
+                strengthLabel: "moderate",
+            }),
+        ],
+    }));
+    await monitor.start([{ symbol: "AKAN", active: true, priority: 1, tags: ["manual"] }], (event) => events.push(event));
+    liveProvider.listener?.({
+        symbol: "AKAN",
+        timestamp: 100,
+        lastPrice: 62.49,
+    });
+    assert.equal(events.length, 1);
+    assert.equal(events[0]?.eventType, "level_touch");
+    assert.equal(events[0]?.eventContext.nextBarrierKind, "support");
+    assert.equal(events[0]?.eventContext.nextBarrierLevel, 55.13);
+    assert.equal(events[0]?.eventContext.nextBarrierRoleFlipFromKind, "resistance");
+});
