@@ -45,7 +45,7 @@ describe("academy content loader", () => {
     const lesson = getAcademyLesson("/academy/support-and-resistance/");
 
     expect(lesson?.title).toBe(
-      "Support and Resistance: A Practical Trading Guide",
+      "Support and Resistance: How Traders Read Key Price Areas",
     );
     expect(lesson?.contexts[0]).toMatchObject({
       courseId: "chart-reading-market-structure",
