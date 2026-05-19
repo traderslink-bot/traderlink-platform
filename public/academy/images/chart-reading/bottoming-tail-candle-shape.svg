@@ -7,18 +7,19 @@
     <path d="M88 130H872M88 220H872M88 310H872M88 400H872"/>
   </g>
   <text x="64" y="88" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Bottoming tail candle shape</text>
-  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Price traded lower, then closed back near the upper part of the candle range.</text>
-  <g transform="translate(480 150)">
-    <line x1="0" y1="58" x2="0" y2="280" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
-    <rect x="-54" y="42" width="108" height="64" rx="6" fill="#22c55e"/>
-    <text x="-178" y="320" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="16">Long lower tail, body near the top.</text>
+  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Body sits near the upper part while the lower tail stands out.</text>
+
+  <g transform="translate(480 145)">
+    <line x1="0" y1="46" x2="0" y2="300" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
+    <rect x="-62" y="36" width="124" height="78" rx="7" fill="#22c55e"/>
   </g>
+
   <g font-family="Arial, sans-serif" font-size="15" fill="#8ea6c8">
-    <text x="626" y="222">Body closes away from the low</text>
-    <path d="M620 216L538 218" stroke="#38bdf8" stroke-width="2" fill="none"/>
-    <circle cx="538" cy="218" r="4" fill="#38bdf8"/>
-    <text x="234" y="386">Lower tail is the feature</text>
-    <path d="M384 380L474 410" stroke="#38bdf8" stroke-width="2" fill="none"/>
-    <circle cx="474" cy="410" r="4" fill="#38bdf8"/>
+    <text x="626" y="216">Body near upper range</text>
+    <path d="M622 210L542 218" stroke="#38bdf8" stroke-width="2" fill="none"/>
+    <circle cx="542" cy="218" r="4" fill="#38bdf8"/>
+    <text x="238" y="404">Long lower tail</text>
+    <path d="M348 398L474 430" stroke="#38bdf8" stroke-width="2" fill="none"/>
+    <circle cx="474" cy="430" r="4" fill="#38bdf8"/>
   </g>
 </svg>
