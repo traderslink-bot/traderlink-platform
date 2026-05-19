@@ -10,7 +10,7 @@
   <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">The second candle range expands above and below the prior candle.</text>
 
   <g transform="translate(360 150)">
-    <text x="-72" y="-18" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="18" font-weight="700">Prior candle</text>
+    <text x="-72" y="-2" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="18" font-weight="700">Prior candle</text>
     <line x1="0" y1="86" x2="0" y2="190" stroke="#94a3b8" stroke-width="10" stroke-linecap="round"/>
     <rect x="-44" y="112" width="88" height="48" rx="7" fill="#64748b"/>
     <path d="M74 86H198M74 190H198" stroke="#64748b" stroke-width="2" stroke-dasharray="7 6"/>
@@ -19,7 +19,7 @@
   </g>
 
   <g transform="translate(575 150)">
-    <text x="-58" y="-18" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="22" font-weight="700">Outside bar</text>
+    <text x="-58" y="-2" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="22" font-weight="700">Outside bar</text>
     <line x1="0" y1="18" x2="0" y2="258" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
     <rect x="-58" y="58" width="116" height="158" rx="7" fill="#ef4444"/>
     <rect x="-82" y="12" width="164" height="252" rx="10" fill="none" stroke="#38bdf8" stroke-width="3" stroke-dasharray="8 7"/>

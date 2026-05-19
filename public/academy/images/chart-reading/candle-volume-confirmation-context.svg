@@ -13,22 +13,19 @@
     <text x="-118" y="-18" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="21" font-weight="700">Strong candle</text>
     <line x1="0" y1="28" x2="0" y2="194" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
     <rect x="-42" y="60" width="84" height="104" rx="7" fill="#22c55e"/>
-    <path d="M-68 222H68" stroke="#38bdf8" stroke-width="3"/>
-    <text x="-86" y="250" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">high volume below</text>
   </g>
 
   <g transform="translate(665 160)" opacity=".9">
     <text x="-116" y="-18" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="21" font-weight="700">Weaker volume</text>
     <line x1="0" y1="42" x2="0" y2="188" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
     <rect x="-42" y="76" width="84" height="84" rx="7" fill="#22c55e"/>
-    <path d="M-46 222H46" stroke="#64748b" stroke-width="3"/>
-    <text x="-86" y="250" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">lower volume below</text>
   </g>
 
-  <rect x="48" y="410" width="864" height="86" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <rect x="48" y="398" width="864" height="98" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <text x="222" y="424" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Higher volume</text>
+  <text x="612" y="424" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Lower volume</text>
   <g>
-    <rect x="235" y="424" width="80" height="59" rx="5" fill="#22c55e" opacity=".8"/>
-    <rect x="625" y="454" width="80" height="29" rx="5" fill="#22c55e" opacity=".45"/>
+    <rect x="235" y="438" width="80" height="46" rx="5" fill="#22c55e" opacity=".8"/>
+    <rect x="625" y="462" width="80" height="22" rx="5" fill="#22c55e" opacity=".45"/>
   </g>
-  <text x="374" y="464" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="19">Same idea: read candle shape with its volume bar.</text>
 </svg>
