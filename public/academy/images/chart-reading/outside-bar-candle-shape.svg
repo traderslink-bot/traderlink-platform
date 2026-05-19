@@ -7,18 +7,23 @@
     <path d="M88 130H872M88 220H872M88 310H872M88 400H872"/>
   </g>
   <text x="64" y="88" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Outside bar candle shape</text>
-  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">The outside bar trades above and below the prior candle range.</text>
+  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">The second candle range expands above and below the prior candle.</text>
+
   <g transform="translate(360 150)">
     <text x="-72" y="-18" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="18" font-weight="700">Prior candle</text>
-    <line x1="0" y1="80" x2="0" y2="190" stroke="#94a3b8" stroke-width="9" stroke-linecap="round"/>
-    <rect x="-42" y="108" width="84" height="48" rx="6" fill="#64748b"/>
-    <rect x="-66" y="76" width="132" height="118" rx="9" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="7 6"/>
+    <line x1="0" y1="86" x2="0" y2="190" stroke="#94a3b8" stroke-width="10" stroke-linecap="round"/>
+    <rect x="-44" y="112" width="88" height="48" rx="7" fill="#64748b"/>
+    <path d="M74 86H198M74 190H198" stroke="#64748b" stroke-width="2" stroke-dasharray="7 6"/>
+    <text x="92" y="78" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">prior high</text>
+    <text x="92" y="216" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">prior low</text>
   </g>
+
   <g transform="translate(575 150)">
-    <text x="-56" y="-18" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="22" font-weight="700">Outside bar</text>
-    <line x1="0" y1="22" x2="0" y2="252" stroke="#d6e4ff" stroke-width="9" stroke-linecap="round"/>
-    <rect x="-54" y="62" width="108" height="148" rx="6" fill="#ef4444"/>
-    <rect x="-76" y="18" width="152" height="238" rx="10" fill="none" stroke="#38bdf8" stroke-width="3" stroke-dasharray="8 7"/>
+    <text x="-58" y="-18" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="22" font-weight="700">Outside bar</text>
+    <line x1="0" y1="18" x2="0" y2="258" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
+    <rect x="-58" y="58" width="116" height="158" rx="7" fill="#ef4444"/>
+    <rect x="-82" y="12" width="164" height="252" rx="10" fill="none" stroke="#38bdf8" stroke-width="3" stroke-dasharray="8 7"/>
   </g>
-  <text x="328" y="432" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="16">The highlighted candle expands beyond both sides of the prior candle.</text>
+
+  <text x="322" y="432" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="16">Highlighted candle breaks both sides of the prior candle range.</text>
 </svg>
