@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Bottoming tail candle shape</title>
+  <desc id="desc">Clean candle diagram showing a bottoming tail candle with a long lower tail and body near the upper part of the candle.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="48" y="40" width="864" height="420" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g stroke="#19304d" stroke-width="1">
+    <path d="M88 130H872M88 220H872M88 310H872M88 400H872"/>
+  </g>
+  <text x="64" y="88" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Bottoming tail candle shape</text>
+  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Body sits near the upper part while the lower tail stands out.</text>
+
+  <g transform="translate(480 145)">
+    <line x1="0" y1="46" x2="0" y2="300" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
+    <rect x="-62" y="36" width="124" height="78" rx="7" fill="#22c55e"/>
+  </g>
+
+  <g font-family="Arial, sans-serif" font-size="15" fill="#8ea6c8">
+    <text x="626" y="216">Body near upper range</text>
+    <path d="M622 210L542 218" stroke="#38bdf8" stroke-width="2" fill="none"/>
+    <circle cx="542" cy="218" r="4" fill="#38bdf8"/>
+    <text x="238" y="404">Long lower tail</text>
+    <path d="M348 398L474 430" stroke="#38bdf8" stroke-width="2" fill="none"/>
+    <circle cx="474" cy="430" r="4" fill="#38bdf8"/>
+  </g>
+</svg>

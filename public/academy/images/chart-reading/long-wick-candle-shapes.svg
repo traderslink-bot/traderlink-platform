@@ -1,27 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
-  <title id="title">Long wick candle shapes</title>
-  <desc id="desc">Clean candle diagram showing long upper wick and long lower wick candle shapes.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" aria-hidden="true">
   <rect width="960" height="540" fill="#07111f"/>
-  <rect x="48" y="40" width="864" height="420" rx="10" fill="#0b1626" stroke="#1b3558"/>
-  <g stroke="#19304d" stroke-width="1">
-    <path d="M88 130H872M88 220H872M88 310H872M88 400H872"/>
+  <rect x="64" y="54" width="832" height="432" rx="12" fill="#0b1626" stroke="#1b3558" stroke-width="2"/>
+  <g stroke="#18304d" stroke-width="1.5" opacity=".9">
+    <path d="M104 142H856M104 230H856M104 318H856M104 406H856"/>
   </g>
-  <text x="64" y="88" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Long wick candle shapes</text>
-  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Each example highlights the wick that is much longer than the body.</text>
-
-  <g transform="translate(315 168)">
-    <text x="-88" y="-24" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="21" font-weight="700">Long upper wick</text>
-    <line x1="0" y1="0" x2="0" y2="224" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
-    <rect x="-50" y="142" width="100" height="66" rx="7" fill="#ef4444"/>
-    <path d="M70 44L22 44" stroke="#38bdf8" stroke-width="3"/>
-    <text x="78" y="50" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">dominant upper wick</text>
+  
+  <g transform="translate(330 270)">
+    <line x1="0" y1="-162" x2="0" y2="130" stroke="#d6e4ff" stroke-width="11" stroke-linecap="round"/>
+    <rect x="-56" y="48" width="112" height="64" rx="9" fill="#ef4444"/>
   </g>
-
-  <g transform="translate(655 168)">
-    <text x="-88" y="-24" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="21" font-weight="700">Long lower wick</text>
-    <line x1="0" y1="0" x2="0" y2="224" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
-    <rect x="-50" y="16" width="100" height="66" rx="7" fill="#22c55e"/>
-    <path d="M70 184L22 184" stroke="#38bdf8" stroke-width="3"/>
-    <text x="78" y="190" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">dominant lower wick</text>
+  <g transform="translate(630 270)">
+    <line x1="0" y1="-130" x2="0" y2="162" stroke="#d6e4ff" stroke-width="11" stroke-linecap="round"/>
+    <rect x="-56" y="-112" width="112" height="64" rx="9" fill="#22c55e"/>
   </g>
 </svg>

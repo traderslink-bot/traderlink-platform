@@ -1,31 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
-  <title id="title">Candle volume confirmation context</title>
-  <desc id="desc">Clean chart diagram comparing a strong candle with high volume against a similar candle with lower volume.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" aria-hidden="true">
   <rect width="960" height="540" fill="#07111f"/>
-  <rect x="48" y="40" width="864" height="340" rx="10" fill="#0b1626" stroke="#1b3558"/>
-  <g stroke="#19304d" stroke-width="1">
-    <path d="M88 108H872M88 174H872M88 240H872M88 306H872"/>
+  <rect x="64" y="54" width="832" height="432" rx="12" fill="#0b1626" stroke="#1b3558" stroke-width="2"/>
+  <g stroke="#18304d" stroke-width="1.5" opacity=".9">
+    <path d="M104 142H856M104 230H856M104 318H856M104 406H856"/>
   </g>
-  <text x="64" y="88" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Candle volume confirmation</text>
-  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Match the candle to the volume bar directly below it.</text>
-
-  <g transform="translate(275 160)">
-    <text x="-118" y="-18" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="21" font-weight="700">Strong candle</text>
-    <line x1="0" y1="28" x2="0" y2="194" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
-    <rect x="-42" y="60" width="84" height="104" rx="7" fill="#22c55e"/>
+  
+  <g transform="translate(330 246)">
+    <line x1="0" y1="-92" x2="0" y2="116" stroke="#d6e4ff" stroke-width="11" stroke-linecap="round"/>
+    <rect x="-56" y="-48" width="112" height="112" rx="9" fill="#22c55e"/>
+    <rect x="-62" y="144" width="124" height="76" rx="7" fill="#22c55e" opacity=".85"/>
   </g>
-
-  <g transform="translate(665 160)" opacity=".9">
-    <text x="-116" y="-18" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="21" font-weight="700">Weaker volume</text>
-    <line x1="0" y1="42" x2="0" y2="188" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
-    <rect x="-42" y="76" width="84" height="84" rx="7" fill="#22c55e"/>
-  </g>
-
-  <rect x="48" y="398" width="864" height="98" rx="10" fill="#0b1626" stroke="#1b3558"/>
-  <text x="222" y="424" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Higher volume</text>
-  <text x="612" y="424" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Lower volume</text>
-  <g>
-    <rect x="235" y="438" width="80" height="46" rx="5" fill="#22c55e" opacity=".8"/>
-    <rect x="625" y="462" width="80" height="22" rx="5" fill="#22c55e" opacity=".45"/>
+  <g transform="translate(630 246)" opacity=".72">
+    <line x1="0" y1="-68" x2="0" y2="106" stroke="#d6e4ff" stroke-width="11" stroke-linecap="round"/>
+    <rect x="-52" y="-32" width="104" height="88" rx="9" fill="#22c55e"/>
+    <rect x="-62" y="188" width="124" height="32" rx="7" fill="#22c55e" opacity=".5"/>
   </g>
 </svg>
