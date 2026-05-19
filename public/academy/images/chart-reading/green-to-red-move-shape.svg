@@ -1,22 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
-  <title id="title">Green-to-red move shape</title>
-  <desc id="desc">Clean intraday candle diagram showing price starting green above the prior close and then losing it to turn red.</desc>
+  <title id="title">Green to red move shape</title>
+  <desc id="desc">Clean intraday candle diagram showing price starting above the prior close and then moving below it.</desc>
   <rect width="960" height="540" fill="#07111f"/>
   <rect x="48" y="40" width="864" height="420" rx="10" fill="#0b1626" stroke="#1b3558"/>
   <g stroke="#19304d" stroke-width="1">
     <path d="M88 130H872M88 220H872M88 310H872M88 400H872"/>
   </g>
-  <text x="64" y="88" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Green-to-red move</text>
-  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Price starts above the prior close, then loses it and trades below.</text>
-  <line x1="110" y1="250" x2="850" y2="250" stroke="#9cc7ff" stroke-width="3" stroke-dasharray="9 8"/>
-  <text x="118" y="238" fill="#9cc7ff" font-family="Arial, sans-serif" font-size="16">Prior close / green-red line</text>
+  <text x="64" y="88" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Green to red move</text>
+  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Price begins above the reference line, then moves below it.</text>
+
+  <line x1="110" y1="260" x2="850" y2="260" stroke="#9cc7ff" stroke-width="3" stroke-dasharray="9 8"/>
+  <text x="118" y="246" fill="#9cc7ff" font-family="Arial, sans-serif" font-size="16">Prior close line</text>
+
   <g stroke-width="4" stroke-linecap="round">
-    <g stroke="#22c55e" fill="#22c55e"><line x1="240" y1="150" x2="240" y2="244"/><rect x="222" y="174" width="36" height="52" rx="4"/></g>
-    <g stroke="#22c55e" fill="#22c55e"><line x1="335" y1="176" x2="335" y2="268"/><rect x="317" y="196" width="36" height="44" rx="4"/></g>
-    <g stroke="#ef4444" fill="#ef4444"><line x1="430" y1="214" x2="430" y2="310"/><rect x="412" y="238" width="36" height="50" rx="4"/></g>
-    <g stroke="#ef4444" fill="#ef4444"><line x1="525" y1="252" x2="525" y2="360"/><rect x="507" y="276" width="36" height="60" rx="4"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="230" y1="150" x2="230" y2="246"/><rect x="210" y="178" width="40" height="50" rx="5"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="330" y1="176" x2="330" y2="268"/><rect x="310" y="200" width="40" height="42" rx="5"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="430" y1="220" x2="430" y2="316"/><rect x="410" y="248" width="40" height="50" rx="5"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="530" y1="262" x2="530" y2="370"/><rect x="510" y="292" width="40" height="58" rx="5"/></g>
   </g>
-  <path d="M250 190C338 208 428 250 526 330" fill="none" stroke="#38bdf8" stroke-width="3"/>
-  <text x="570" y="292" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="20" font-weight="700">Loss below the line</text>
-  <text x="570" y="320" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">The red candle is the visible shift.</text>
+
+  <path d="M238 190C330 208 426 252 532 334" fill="none" stroke="#38bdf8" stroke-width="3"/>
+  <text x="584" y="304" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="20" font-weight="700">Move below the line</text>
+  <text x="584" y="332" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Green candles first, then red candles below.</text>
 </svg>
