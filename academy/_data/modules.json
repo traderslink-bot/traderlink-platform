@@ -112,9 +112,45 @@
     },
     {
       "course_id": "chart-reading-market-structure",
-      "module_id": "candlestick-patterns-context",
-      "module_title": "Candlestick Patterns In Context",
+      "module_id": "bullish-candle-patterns",
+      "module_title": "Bullish Candle Patterns",
       "module_order": 7,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "bearish-candle-patterns",
+      "module_title": "Bearish Candle Patterns",
+      "module_order": 8,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "indecision-neutral-candles",
+      "module_title": "Indecision And Neutral Candles",
+      "module_order": 9,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "momentum-continuation-candles",
+      "module_title": "Momentum And Continuation Candles",
+      "module_order": 10,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "session-gap-behavior",
+      "module_title": "Session And Gap Behavior",
+      "module_order": 11,
       "module_type": "standard",
       "display_behavior": "expanded",
       "progress_enabled": true
@@ -123,7 +159,7 @@
       "course_id": "chart-reading-market-structure",
       "module_id": "chart-patterns-context",
       "module_title": "Chart Patterns In Context",
-      "module_order": 8,
+      "module_order": 12,
       "module_type": "standard",
       "display_behavior": "expanded",
       "progress_enabled": true

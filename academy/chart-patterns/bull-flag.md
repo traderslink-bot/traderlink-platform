@@ -15,7 +15,7 @@ content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
 cta: "Review pattern-based trades by level quality, volume behavior, entry timing, invalidation, and whether the trade was planned or reactive."
-recommended_previous: "/academy/candlestick-patterns/green-to-red-move/"
+recommended_previous: "/academy/candle-behavior/session-and-gap-behavior/"
 recommended_next: "/academy/chart-patterns/bear-flag/"
 academy_level: "Practical"
 academy_order: 41

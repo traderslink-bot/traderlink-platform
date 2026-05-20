@@ -17,7 +17,7 @@ academy_order: 27
 academy_module: "Gaps"
 academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/chart-pattern-deep-dive-lessons/"
-recommended_next: null
+recommended_next: "/academy/candle-behavior/bullish-candle-patterns/"
 visual_assets: ["/academy/images/chart-reading/gap-fill-zone-map.svg", "/academy/images/chart-reading/failed-gap-fill-hold-review.svg"]
 internal_links: ["/academy/consolidation/", "/academy/support-and-resistance/", "/academy/previous-day-high-low/", "/academy/premarket-high-low/", "/academy/volume/", "/academy/stock-catalysts/"]
 schema: ["Article", "FAQPage"]
