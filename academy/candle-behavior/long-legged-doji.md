@@ -30,7 +30,7 @@ meta_description: "Learn Long-Legged Doji by shape, candle count, context, buyer
 
 A long-legged doji has a tiny body with long wicks on both sides.
 
-![Wordless candle recognition chart for Long-Legged Doji.](/academy/images/chart-reading/candle-behavior/long-legged-doji-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/long-legged-doji-shape.svg)
 
 ## At A Glance
 

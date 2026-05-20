@@ -30,7 +30,7 @@ meta_description: "Learn Three Black Crows by shape, candle count, context, buye
 
 Three black crows are three strong red candles in a row.
 
-![Wordless candle recognition chart for Three Black Crows.](/academy/images/chart-reading/candle-behavior/three-black-crows-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/three-black-crows-shape.svg)
 
 ## At A Glance
 

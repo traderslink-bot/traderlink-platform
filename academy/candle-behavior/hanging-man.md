@@ -30,7 +30,7 @@ meta_description: "Learn Hanging Man by shape, candle count, context, buyer-sell
 
 A hanging man has a small body near the top and a long lower wick after strength.
 
-![Wordless candle recognition chart for Hanging Man.](/academy/images/chart-reading/candle-behavior/hanging-man-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/hanging-man-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Hanging Man is to start with the shape first, then c
 
 The long lower wick after an up move shows price dipped sharply during the candle before recovering.
 
-![Wordless context chart for Hanging Man.](/academy/images/chart-reading/candle-behavior/hanging-man-context.svg)
+![](/academy/images/chart-reading/candle-behavior/hanging-man-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

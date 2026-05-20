@@ -30,7 +30,7 @@ meta_description: "Learn Three White Soldiers by shape, candle count, context, b
 
 Three white soldiers are three strong green candles in a row.
 
-![Wordless candle recognition chart for Three White Soldiers.](/academy/images/chart-reading/candle-behavior/three-white-soldiers-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/three-white-soldiers-shape.svg)
 
 ## At A Glance
 

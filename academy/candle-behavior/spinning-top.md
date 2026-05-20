@@ -30,7 +30,7 @@ meta_description: "Learn Spinning Top by shape, candle count, context, buyer-sel
 
 A spinning top has a small body with wicks on both sides.
 
-![Wordless candle recognition chart for Spinning Top.](/academy/images/chart-reading/candle-behavior/spinning-top-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/spinning-top-shape.svg)
 
 ## At A Glance
 

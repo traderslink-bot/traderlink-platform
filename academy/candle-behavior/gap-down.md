@@ -30,7 +30,7 @@ meta_description: "Learn Gap Down by shape, candle count, context, buyer-seller 
 
 A gap down happens when price opens below the prior session's close.
 
-![Wordless candle recognition chart for Gap Down.](/academy/images/chart-reading/candle-behavior/gap-down-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/gap-down-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Gap Down is to start with the shape first, then chec
 
 Gap down behavior depends on the prior close, current open, premarket action, and whether price stays below or reclaims the gap area.
 
-![Wordless context chart for Gap Down.](/academy/images/chart-reading/candle-behavior/gap-down-context.svg)
+![](/academy/images/chart-reading/candle-behavior/gap-down-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

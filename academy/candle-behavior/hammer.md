@@ -30,7 +30,7 @@ meta_description: "Learn Hammer by shape, candle count, context, buyer-seller be
 
 A hammer is a lower-rejection candle. It shows price trading down during the candle and then recovering before the close.
 
-![Wordless candle recognition chart for Hammer.](/academy/images/chart-reading/candle-behavior/hammer-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/hammer-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Hammer is to start with the shape first, then check 
 
 A hammer is most useful to study after selling pressure, near support, a prior low, VWAP, or another area where buyers may step in.
 
-![Wordless context chart for Hammer.](/academy/images/chart-reading/candle-behavior/hammer-context.svg)
+![](/academy/images/chart-reading/candle-behavior/hammer-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

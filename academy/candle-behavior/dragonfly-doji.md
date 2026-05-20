@@ -30,7 +30,7 @@ meta_description: "Learn Dragonfly Doji by shape, candle count, context, buyer-s
 
 A dragonfly doji is a doji-style candle with the open and close near the high and a long lower wick.
 
-![Wordless candle recognition chart for Dragonfly Doji.](/academy/images/chart-reading/candle-behavior/dragonfly-doji-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/dragonfly-doji-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Dragonfly Doji is to start with the shape first, the
 
 This candle matters most after price has tested lower and returned near the open by the close.
 
-![Wordless context chart for Dragonfly Doji.](/academy/images/chart-reading/candle-behavior/dragonfly-doji-context.svg)
+![](/academy/images/chart-reading/candle-behavior/dragonfly-doji-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

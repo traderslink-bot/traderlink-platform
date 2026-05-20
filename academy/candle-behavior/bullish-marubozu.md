@@ -30,7 +30,7 @@ meta_description: "Learn Bullish Marubozu by shape, candle count, context, buyer
 
 A bullish marubozu is a green momentum candle with little or no wick.
 
-![Wordless candle recognition chart for Bullish Marubozu.](/academy/images/chart-reading/candle-behavior/bullish-marubozu-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/bullish-marubozu-shape.svg)
 
 ## At A Glance
 

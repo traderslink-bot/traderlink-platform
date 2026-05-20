@@ -30,7 +30,7 @@ meta_description: "Learn Gap And Go by shape, candle count, context, buyer-selle
 
 Gap and go behavior happens when price gaps and then continues in the gap direction.
 
-![Wordless candle recognition chart for Gap And Go.](/academy/images/chart-reading/candle-behavior/gap-and-go-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/gap-and-go-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Gap And Go is to start with the shape first, then ch
 
 Gap and go behavior depends on the open, prior close, volume, and whether dips hold above the gap area.
 
-![Wordless context chart for Gap And Go.](/academy/images/chart-reading/candle-behavior/gap-and-go-context.svg)
+![](/academy/images/chart-reading/candle-behavior/gap-and-go-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

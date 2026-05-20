@@ -30,7 +30,7 @@ meta_description: "Learn Morning Star by shape, candle count, context, buyer-sel
 
 A morning star is a three-candle pattern showing selling, pause, and buyer response.
 
-![Wordless candle recognition chart for Morning Star.](/academy/images/chart-reading/candle-behavior/morning-star-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/morning-star-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Morning Star is to start with the shape first, then 
 
 Morning star behavior is most useful when it appears after a clear move lower.
 
-![Wordless context chart for Morning Star.](/academy/images/chart-reading/candle-behavior/morning-star-context.svg)
+![](/academy/images/chart-reading/candle-behavior/morning-star-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

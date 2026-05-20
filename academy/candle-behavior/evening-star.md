@@ -30,7 +30,7 @@ meta_description: "Learn Evening Star by shape, candle count, context, buyer-sel
 
 An evening star is a three-candle pattern showing buying, pause, and seller response.
 
-![Wordless candle recognition chart for Evening Star.](/academy/images/chart-reading/candle-behavior/evening-star-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/evening-star-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Evening Star is to start with the shape first, then 
 
 Evening star behavior is most useful when it appears after a clear move higher.
 
-![Wordless context chart for Evening Star.](/academy/images/chart-reading/candle-behavior/evening-star-context.svg)
+![](/academy/images/chart-reading/candle-behavior/evening-star-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

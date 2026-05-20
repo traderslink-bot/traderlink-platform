@@ -30,7 +30,7 @@ meta_description: "Learn Shooting Star by shape, candle count, context, buyer-se
 
 A shooting star is an upper-rejection candle after strength.
 
-![Wordless candle recognition chart for Shooting Star.](/academy/images/chart-reading/candle-behavior/shooting-star-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/shooting-star-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Shooting Star is to start with the shape first, then
 
 A shooting star is most useful to study after a rally, near resistance, high of day, or another upper reference area.
 
-![Wordless context chart for Shooting Star.](/academy/images/chart-reading/candle-behavior/shooting-star-context.svg)
+![](/academy/images/chart-reading/candle-behavior/shooting-star-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

@@ -30,7 +30,7 @@ meta_description: "Learn Outside Bar by shape, candle count, context, buyer-sell
 
 An outside bar forms when the second candle breaks above the prior high and below the prior low.
 
-![Wordless candle recognition chart for Outside Bar.](/academy/images/chart-reading/candle-behavior/outside-bar-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/outside-bar-shape.svg)
 
 ## At A Glance
 

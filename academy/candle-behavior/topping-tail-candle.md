@@ -30,7 +30,7 @@ meta_description: "Learn Topping Tail Candle by shape, candle count, context, bu
 
 A topping tail candle is an upper-wick rejection candle.
 
-![Wordless candle recognition chart for Topping Tail Candle.](/academy/images/chart-reading/candle-behavior/topping-tail-candle-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/topping-tail-candle-shape.svg)
 
 ## At A Glance
 

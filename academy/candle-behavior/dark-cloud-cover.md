@@ -30,7 +30,7 @@ meta_description: "Learn Dark Cloud Cover by shape, candle count, context, buyer
 
 Dark cloud cover is a two-candle rejection pattern. The red candle closes down into the prior green candle body.
 
-![Wordless candle recognition chart for Dark Cloud Cover.](/academy/images/chart-reading/candle-behavior/dark-cloud-cover-shape.svg)
+![](/academy/images/chart-reading/candle-behavior/dark-cloud-cover-shape.svg)
 
 ## At A Glance
 
