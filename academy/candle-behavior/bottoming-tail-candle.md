@@ -18,7 +18,7 @@ academy_order: 30
 academy_module: "Bullish Candle Patterns"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/inverted-hammer/", "/academy/candle-behavior/bullish-pin-bar/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/inverted-hammer/", "/academy/candle-behavior/bullish-pin-bar/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/bottoming-tail-candle-shape.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -79,5 +79,4 @@ A bottoming tail is lower rejection: price dropped, got bought, and closed away 
 * [Inverted Hammer](/academy/candle-behavior/inverted-hammer/)
 * [Bullish Pin Bar](/academy/candle-behavior/bullish-pin-bar/)
 * [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

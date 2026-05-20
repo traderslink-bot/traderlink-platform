@@ -18,7 +18,7 @@ academy_order: 40
 academy_module: "Bearish Candle Patterns"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/topping-tail-candle/", "/academy/candle-behavior/gravestone-doji/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/topping-tail-candle/", "/academy/candle-behavior/gravestone-doji/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/bearish-pin-bar-shape.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -79,5 +79,4 @@ A bearish pin bar is an upper-rejection candle with a small body and a dominant 
 * [Topping Tail Candle](/academy/candle-behavior/topping-tail-candle/)
 * [Gravestone Doji](/academy/candle-behavior/gravestone-doji/)
 * [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

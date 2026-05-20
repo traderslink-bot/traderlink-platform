@@ -52,7 +52,7 @@ describe("academy content loader", () => {
       moduleTitle: "Chart Reading Basics And Core Levels",
     });
     expect(lesson?.previousLesson?.slug).toBe(
-      "/academy/candlestick-deep-dive-lessons/",
+      "/academy/candlestick-patterns/",
     );
     expect(lesson?.nextLesson?.slug).toBe(
       "/academy/how-to-draw-support-and-resistance/",
@@ -95,7 +95,7 @@ describe("academy content loader", () => {
     expect(params).toContain("basic-trading-terms-and-position-mechanics");
     expect(params).not.toContain("start-here");
     expect(params).toContain("support-and-resistance");
-    expect(params).toContain("candlestick-deep-dive-lessons");
+    expect(params).not.toContain("candlestick-deep-dive-lessons");
     expect(params).toContain("candle-behavior/hammer");
     expect(params).toContain("candle-behavior/green-to-red-move");
     expect(params).not.toContain("candlestick-patterns/doji");

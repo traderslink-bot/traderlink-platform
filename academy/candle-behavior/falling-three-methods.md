@@ -18,7 +18,7 @@ academy_order: 58
 academy_module: "Momentum And Continuation Candles"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/rising-three-methods/", "/academy/candle-behavior/high-volume-green-candle/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/rising-three-methods/", "/academy/candle-behavior/high-volume-green-candle/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/falling-three-methods-shape.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -79,5 +79,4 @@ Falling three methods shows bearish continuation after a controlled pause.
 * [Rising Three Methods](/academy/candle-behavior/rising-three-methods/)
 * [High-Volume Green Candle](/academy/candle-behavior/high-volume-green-candle/)
 * [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

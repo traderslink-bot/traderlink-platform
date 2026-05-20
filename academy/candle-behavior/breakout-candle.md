@@ -18,7 +18,7 @@ academy_order: 55
 academy_module: "Momentum And Continuation Candles"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/bearish-marubozu/", "/academy/candle-behavior/breakdown-candle/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/bearish-marubozu/", "/academy/candle-behavior/breakdown-candle/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/breakout-candle-shape.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -79,5 +79,4 @@ A breakout candle is momentum through a visible upper level.
 * [Bearish Marubozu](/academy/candle-behavior/bearish-marubozu/)
 * [Breakdown Candle](/academy/candle-behavior/breakdown-candle/)
 * [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

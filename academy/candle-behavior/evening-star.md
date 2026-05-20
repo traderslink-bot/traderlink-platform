@@ -18,7 +18,7 @@ academy_order: 44
 academy_module: "Bearish Candle Patterns"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/dark-cloud-cover/", "/academy/candle-behavior/three-black-crows/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/dark-cloud-cover/", "/academy/candle-behavior/three-black-crows/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/evening-star-shape.svg", "/academy/images/chart-reading/candle-behavior/evening-star-context.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -81,5 +81,4 @@ Evening star shows buying pressure slowing and sellers responding across three c
 * [Dark Cloud Cover](/academy/candle-behavior/dark-cloud-cover/)
 * [Three Black Crows](/academy/candle-behavior/three-black-crows/)
 * [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

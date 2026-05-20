@@ -18,7 +18,7 @@ academy_order: 45
 academy_module: "Bearish Candle Patterns"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/evening-star/", "/academy/candle-behavior/standard-doji/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/evening-star/", "/academy/candle-behavior/standard-doji/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/three-black-crows-shape.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -79,5 +79,4 @@ Three black crows show sustained seller pressure across three candles.
 * [Evening Star](/academy/candle-behavior/evening-star/)
 * [Standard Doji](/academy/candle-behavior/standard-doji/)
 * [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

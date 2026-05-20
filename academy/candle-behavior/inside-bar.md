@@ -18,7 +18,7 @@ academy_order: 50
 academy_module: "Indecision And Neutral Candles"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/high-wave-candle/", "/academy/candle-behavior/full-body-candle/", "/academy/candle-behavior/indecision-and-neutral-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/high-wave-candle/", "/academy/candle-behavior/full-body-candle/", "/academy/candle-behavior/indecision-and-neutral-candles/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/inside-bar-shape.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -79,5 +79,4 @@ An inside bar shows compression inside the prior candle range.
 * [High-Wave Candle](/academy/candle-behavior/high-wave-candle/)
 * [Full Body Candle](/academy/candle-behavior/full-body-candle/)
 * [Indecision And Neutral Candles](/academy/candle-behavior/indecision-and-neutral-candles/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

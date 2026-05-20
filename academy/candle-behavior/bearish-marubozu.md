@@ -18,7 +18,7 @@ academy_order: 54
 academy_module: "Momentum And Continuation Candles"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/bullish-marubozu/", "/academy/candle-behavior/breakout-candle/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/bullish-marubozu/", "/academy/candle-behavior/breakout-candle/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/bearish-marubozu-shape.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -79,5 +79,4 @@ A bearish marubozu shows clean seller control inside one candle.
 * [Bullish Marubozu](/academy/candle-behavior/bullish-marubozu/)
 * [Breakout Candle](/academy/candle-behavior/breakout-candle/)
 * [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

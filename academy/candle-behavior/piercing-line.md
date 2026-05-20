@@ -18,7 +18,7 @@ academy_order: 34
 academy_module: "Bullish Candle Patterns"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/bullish-engulfing/", "/academy/candle-behavior/morning-star/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/bullish-engulfing/", "/academy/candle-behavior/morning-star/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/piercing-line-shape.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -79,5 +79,4 @@ Piercing line shows a rebound into prior selling pressure.
 * [Bullish Engulfing](/academy/candle-behavior/bullish-engulfing/)
 * [Morning Star](/academy/candle-behavior/morning-star/)
 * [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

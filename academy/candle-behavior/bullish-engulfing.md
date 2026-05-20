@@ -18,7 +18,7 @@ academy_order: 33
 academy_module: "Bullish Candle Patterns"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/dragonfly-doji/", "/academy/candle-behavior/piercing-line/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/dragonfly-doji/", "/academy/candle-behavior/piercing-line/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/bullish-engulfing-shape.svg", "/academy/images/chart-reading/candle-behavior/bullish-engulfing-context.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -81,5 +81,4 @@ Bullish engulfing shows buyers taking back the prior red candle body.
 * [Dragonfly Doji](/academy/candle-behavior/dragonfly-doji/)
 * [Piercing Line](/academy/candle-behavior/piercing-line/)
 * [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

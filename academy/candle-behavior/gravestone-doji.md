@@ -18,7 +18,7 @@ academy_order: 41
 academy_module: "Bearish Candle Patterns"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/bearish-pin-bar/", "/academy/candle-behavior/bearish-engulfing/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/bearish-pin-bar/", "/academy/candle-behavior/bearish-engulfing/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/gravestone-doji-shape.svg", "/academy/images/chart-reading/candle-behavior/gravestone-doji-context.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -81,5 +81,4 @@ A gravestone doji is upper rejection with a doji body.
 * [Bearish Pin Bar](/academy/candle-behavior/bearish-pin-bar/)
 * [Bearish Engulfing](/academy/candle-behavior/bearish-engulfing/)
 * [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

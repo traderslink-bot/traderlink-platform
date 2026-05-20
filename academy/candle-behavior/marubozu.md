@@ -18,7 +18,7 @@ academy_order: 52
 academy_module: "Momentum And Continuation Candles"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/full-body-candle/", "/academy/candle-behavior/bullish-marubozu/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/full-body-candle/", "/academy/candle-behavior/bullish-marubozu/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/marubozu-shape.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -79,5 +79,4 @@ A marubozu is a clean momentum candle with little wick noise.
 * [Full Body Candle](/academy/candle-behavior/full-body-candle/)
 * [Bullish Marubozu](/academy/candle-behavior/bullish-marubozu/)
 * [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

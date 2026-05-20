@@ -18,7 +18,7 @@ academy_order: 29
 academy_module: "Bullish Candle Patterns"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/hammer/", "/academy/candle-behavior/bottoming-tail-candle/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/hammer/", "/academy/candle-behavior/bottoming-tail-candle/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/inverted-hammer-shape.svg", "/academy/images/chart-reading/candle-behavior/inverted-hammer-context.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -81,5 +81,4 @@ An inverted hammer is an upside attempt after weakness, not the same thing as a 
 * [Hammer](/academy/candle-behavior/hammer/)
 * [Bottoming Tail Candle](/academy/candle-behavior/bottoming-tail-candle/)
 * [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

@@ -18,7 +18,7 @@ academy_order: 31
 academy_module: "Bullish Candle Patterns"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/bottoming-tail-candle/", "/academy/candle-behavior/dragonfly-doji/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/bottoming-tail-candle/", "/academy/candle-behavior/dragonfly-doji/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/bullish-pin-bar-shape.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -79,5 +79,4 @@ A bullish pin bar is a lower-rejection candle with a small body and a dominant l
 * [Bottoming Tail Candle](/academy/candle-behavior/bottoming-tail-candle/)
 * [Dragonfly Doji](/academy/candle-behavior/dragonfly-doji/)
 * [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

@@ -5,6 +5,16 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/academy/candlestick-deep-dive-lessons",
+        destination: "/academy/candlestick-patterns/",
+        permanent: true,
+      },
+      {
+        source: "/academy/candlestick-deep-dive-lessons/",
+        destination: "/academy/candlestick-patterns/",
+        permanent: true,
+      },
+      {
         source: "/academy/candlestick-patterns/hammer/",
         destination: "/academy/candle-behavior/hammer/",
         permanent: true,
@@ -56,17 +66,17 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/academy/candlestick-patterns/long-wick-candle/",
-        destination: "/academy/candlestick-deep-dive-lessons/",
+        destination: "/academy/candlestick-patterns/",
         permanent: true,
       },
       {
         source: "/academy/candlestick-patterns/pin-bar/",
-        destination: "/academy/candlestick-deep-dive-lessons/",
+        destination: "/academy/candlestick-patterns/",
         permanent: true,
       },
       {
         source: "/academy/candlestick-patterns/engulfing-candle/",
-        destination: "/academy/candlestick-deep-dive-lessons/",
+        destination: "/academy/candlestick-patterns/",
         permanent: true,
       },
     ];

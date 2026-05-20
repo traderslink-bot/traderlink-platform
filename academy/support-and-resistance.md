@@ -16,7 +16,7 @@ academy_level: "Foundation"
 academy_order: 3
 academy_module: "Chart Reading Basics And Core Levels"
 academy_course: "Chart Reading And Market Structure"
-recommended_previous: "/academy/candlestick-deep-dive-lessons/"
+recommended_previous: "/academy/candlestick-patterns/"
 recommended_next: "/academy/how-to-draw-support-and-resistance/"
 visual_assets: ["/academy/images/chart-reading/support-resistance-candlestick-diagram.svg", "/academy/images/chart-reading/support-breaks-becomes-resistance.svg", "/academy/images/chart-reading/resistance-breaks-becomes-support.svg", "/academy/images/chart-reading/bad-support-resistance-example.svg"]
 internal_links: ["/academy/how-to-draw-support-and-resistance/", "/academy/support-levels/", "/academy/resistance-levels/", "/academy/key-levels-trading/", "/academy/breakout-trading/", "/academy/level-reclaim/"]

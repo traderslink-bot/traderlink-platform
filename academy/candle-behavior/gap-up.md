@@ -18,7 +18,7 @@ academy_order: 62
 academy_module: "Session And Gap Behavior"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/outside-bar/", "/academy/candle-behavior/gap-down/", "/academy/candle-behavior/session-and-gap-behavior/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/outside-bar/", "/academy/candle-behavior/gap-down/", "/academy/candle-behavior/session-and-gap-behavior/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/gap-up-shape.svg", "/academy/images/chart-reading/candle-behavior/gap-up-context.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -81,5 +81,4 @@ A gap up shows the new session starting above the prior close.
 * [Outside Bar](/academy/candle-behavior/outside-bar/)
 * [Gap Down](/academy/candle-behavior/gap-down/)
 * [Session And Gap Behavior](/academy/candle-behavior/session-and-gap-behavior/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

@@ -18,7 +18,7 @@ academy_order: 68
 academy_module: "Session And Gap Behavior"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/red-to-green-move/", "/academy/chart-patterns/bull-flag/", "/academy/candle-behavior/session-and-gap-behavior/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/red-to-green-move/", "/academy/chart-patterns/bull-flag/", "/academy/candle-behavior/session-and-gap-behavior/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/green-to-red-move-shape.svg", "/academy/images/chart-reading/candle-behavior/green-to-red-move-context.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -81,5 +81,4 @@ A green-to-red move shows an intraday shift from above a reference to below it.
 * [Red-To-Green Move](/academy/candle-behavior/red-to-green-move/)
 * [Bull Flag Pattern](/academy/chart-patterns/bull-flag/)
 * [Session And Gap Behavior](/academy/candle-behavior/session-and-gap-behavior/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

@@ -18,7 +18,7 @@ academy_order: 46
 academy_module: "Indecision And Neutral Candles"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/three-black-crows/", "/academy/candle-behavior/long-legged-doji/", "/academy/candle-behavior/indecision-and-neutral-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/three-black-crows/", "/academy/candle-behavior/long-legged-doji/", "/academy/candle-behavior/indecision-and-neutral-candles/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/standard-doji-shape.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -81,5 +81,4 @@ A doji is a visual pause where open and close finish nearly equal.
 * [Three Black Crows](/academy/candle-behavior/three-black-crows/)
 * [Long-Legged Doji](/academy/candle-behavior/long-legged-doji/)
 * [Indecision And Neutral Candles](/academy/candle-behavior/indecision-and-neutral-candles/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)

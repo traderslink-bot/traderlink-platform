@@ -18,7 +18,7 @@ academy_order: 47
 academy_module: "Indecision And Neutral Candles"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/standard-doji/", "/academy/candle-behavior/spinning-top/", "/academy/candle-behavior/indecision-and-neutral-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
+internal_links: ["/academy/candle-behavior/standard-doji/", "/academy/candle-behavior/spinning-top/", "/academy/candle-behavior/indecision-and-neutral-candles/", "/academy/candlestick-patterns/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/long-legged-doji-shape.svg"]
 schema: ["Article"]
 last_reviewed: "2026-05-19"
@@ -79,5 +79,4 @@ A long-legged doji shows wide two-sided movement that closes near the open.
 * [Standard Doji](/academy/candle-behavior/standard-doji/)
 * [Spinning Top](/academy/candle-behavior/spinning-top/)
 * [Indecision And Neutral Candles](/academy/candle-behavior/indecision-and-neutral-candles/)
-* [Candlestick Pattern Basics](/academy/candlestick-patterns/)
-* [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
+* [Candlestick Basics](/academy/candlestick-patterns/)
