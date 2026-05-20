@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/hammer/", "/academy/candle-behavior/bottoming-tail-candle/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/inverted-hammer-shape.svg", "/academy/images/chart-reading/candle-behavior/inverted-hammer-context.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Inverted Hammer Explained"
 meta_description: "Learn Inverted Hammer by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ An inverted hammer has a small body with a long upper wick after weakness. It sh
 * **Wicks:** Long upper wick with little or no lower wick.
 * **Relationship:** The single candle needs prior weakness to be read as an inverted hammer instead of an upper-rejection candle in strength.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Inverted Hammer is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -64,7 +66,7 @@ Buyers made an upside attempt, but the candle did not close near the high. The n
 
 Watch whether later candles move back through the upper wick or hold above the body.
 
-The read weakens if price stays below the body or continues lower without reclaiming the wick area.
+The read weakens if price stays below the body or continues lower without reclaiming the wick area. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -81,17 +83,3 @@ An inverted hammer is an upside attempt after weakness, not the same thing as a 
 * [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Inverted Hammer?
-
-Inverted Hammer uses 1 candle.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

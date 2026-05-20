@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/marubozu/", "/academy/candle-behavior/bearish-marubozu/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/bullish-marubozu-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Bullish Marubozu Explained"
 meta_description: "Learn Bullish Marubozu by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A bullish marubozu is a green momentum candle with little or no wick.
 * **Wicks:** Very small or no wicks.
 * **Relationship:** The single candle is read by the strong close near the top of the range.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Bullish Marubozu is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Buyers controlled the candle from open to close.
 
 Watch whether price holds the upper half of the body or continues above the high.
 
-The read weakens if price immediately falls back through the body.
+The read weakens if price immediately falls back through the body. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ A bullish marubozu shows clean buyer control inside one candle.
 * [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Bullish Marubozu?
-
-Bullish Marubozu uses 1 candle.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

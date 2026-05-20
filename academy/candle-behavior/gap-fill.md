@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/gap-and-go/", "/academy/candle-behavior/exhaustion-gap/", "/academy/candle-behavior/session-and-gap-behavior/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/gap-fill-shape.svg", "/academy/images/chart-reading/candle-behavior/gap-fill-context.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Gap Fill Explained"
 meta_description: "Learn Gap Fill by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A gap fill happens when price moves back into the empty space between the prior 
 * **Wicks:** Wicks vary. The key is price traveling through the gap space.
 * **Relationship:** The current session starts away from the prior close, then moves back into that space.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Gap Fill is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -64,7 +66,7 @@ The market is moving back into an area skipped by the gap.
 
 Watch whether the fill is partial, complete, or rejected before reaching the prior close.
 
-The read weakens if price holds the opening side and refuses to move into the gap.
+The read weakens if price holds the opening side and refuses to move into the gap. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -81,17 +83,3 @@ A gap fill shows price returning into the gap area.
 * [Session And Gap Behavior](/academy/candle-behavior/session-and-gap-behavior/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Gap Fill?
-
-Gap Fill uses Session sequence.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

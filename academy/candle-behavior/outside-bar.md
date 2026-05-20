@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/high-volume-red-candle/", "/academy/candle-behavior/gap-up/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/outside-bar-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Outside Bar Explained"
 meta_description: "Learn Outside Bar by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ An outside bar forms when the second candle breaks above the prior high and belo
 * **Wicks:** The second candle's high and low extend outside the prior candle range.
 * **Relationship:** The second candle fully expands beyond the prior candle high-low range.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Outside Bar is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Price expanded beyond the prior candle range, showing a wider battle or a range 
 
 Watch which side of the outside bar range price holds after expansion.
 
-The read weakens if price remains trapped inside the outside bar range.
+The read weakens if price remains trapped inside the outside bar range. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ An outside bar is range expansion beyond the prior candle.
 * [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Outside Bar?
-
-Outside Bar uses 2 candles.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

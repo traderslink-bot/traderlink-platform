@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/shooting-star/", "/academy/candle-behavior/topping-tail-candle/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/hanging-man-shape.svg", "/academy/images/chart-reading/candle-behavior/hanging-man-context.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Hanging Man Explained"
 meta_description: "Learn Hanging Man by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A hanging man has a small body near the top and a long lower wick after strength
 * **Wicks:** Long lower wick with little or no upper wick.
 * **Relationship:** The shape looks like a hammer, but it is discussed after price has already moved up.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Hanging Man is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -64,7 +66,7 @@ Buyers recovered the candle, but the deep intraperiod drop shows selling appeare
 
 Watch whether later candles lose the hanging man body or break below its low.
 
-The read weakens if price holds strong and continues above the candle high.
+The read weakens if price holds strong and continues above the candle high. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -81,17 +83,3 @@ A hanging man is hammer-shaped, but its context is after strength.
 * [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Hanging Man?
-
-Hanging Man uses 1 candle.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

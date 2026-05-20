@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/exhaustion-gap/", "/academy/candle-behavior/green-to-red-move/", "/academy/candle-behavior/session-and-gap-behavior/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/red-to-green-move-shape.svg", "/academy/images/chart-reading/candle-behavior/red-to-green-move-context.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Red-To-Green Move Explained"
 meta_description: "Learn Red-To-Green Move by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A red-to-green move happens when price moves from below a session reference area
 * **Wicks:** Wicks vary. The important visual is the cross from below to above the reference.
 * **Relationship:** The sequence needs a reference such as prior close, session open, or another session line.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Red-To-Green Move is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -64,7 +66,7 @@ Sellers or weak session positioning gave way to buyers reclaiming the reference 
 
 Watch whether price holds above the reference after crossing it.
 
-The read weakens if price crosses up and immediately falls back below the reference.
+The read weakens if price crosses up and immediately falls back below the reference. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -81,17 +83,3 @@ A red-to-green move shows an intraday shift from below a reference to above it.
 * [Session And Gap Behavior](/academy/candle-behavior/session-and-gap-behavior/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Red-To-Green Move?
-
-Red-To-Green Move uses Session sequence.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

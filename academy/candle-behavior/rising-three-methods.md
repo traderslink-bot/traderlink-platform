@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/breakdown-candle/", "/academy/candle-behavior/falling-three-methods/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/rising-three-methods-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Rising Three Methods Explained"
 meta_description: "Learn Rising Three Methods by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ Rising three methods is a continuation sequence: strong green candle, small paus
 * **Wicks:** Wicks can vary, but the small middle candles should stay controlled inside the first candle range.
 * **Relationship:** The middle candles pause without fully undoing the first green candle.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Rising Three Methods is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Buyers push, the market pauses without losing structure, then buyers push again.
 
 Watch whether the final green candle holds and continues beyond the pause.
 
-The read weakens if the middle candles break down through the first candle range.
+The read weakens if the middle candles break down through the first candle range. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ Rising three methods shows bullish continuation after a controlled pause.
 * [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Rising Three Methods?
-
-Rising Three Methods uses 5 candles.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

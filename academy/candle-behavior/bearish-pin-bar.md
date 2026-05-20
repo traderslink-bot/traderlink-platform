@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/topping-tail-candle/", "/academy/candle-behavior/gravestone-doji/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/bearish-pin-bar-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Bearish Pin Bar Explained"
 meta_description: "Learn Bearish Pin Bar by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A bearish pin bar is a candle with a small body and one dominant upper wick.
 * **Wicks:** Long upper wick that stands out as the main feature.
 * **Relationship:** The candle is usually compared with a nearby upper level or the prior candle range.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Bearish Pin Bar is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Price probed higher and then closed back down, showing sellers defended or rejec
 
 Watch whether price stays below the pin bar body and avoids reclaiming the wick high.
 
-The read weakens if price reclaims the wick high.
+The read weakens if price reclaims the wick high. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ A bearish pin bar is an upper-rejection candle with a small body and a dominant 
 * [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Bearish Pin Bar?
-
-Bearish Pin Bar uses 1 candle.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/standard-doji/", "/academy/candle-behavior/spinning-top/", "/academy/candle-behavior/indecision-and-neutral-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/long-legged-doji-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Long-Legged Doji Explained"
 meta_description: "Learn Long-Legged Doji by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A long-legged doji has a tiny body with long wicks on both sides.
 * **Wicks:** Long upper and lower wicks.
 * **Relationship:** The candle shows a wide battle that still closed near the open.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Long-Legged Doji is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Both sides pushed price, but neither side held control by the close.
 
 Watch whether the next candles break and hold outside the long-legged doji range.
 
-The read weakens if the next candles stay trapped inside the same range.
+The read weakens if the next candles stay trapped inside the same range. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ A long-legged doji shows wide two-sided movement that closes near the open.
 * [Indecision And Neutral Candles](/academy/candle-behavior/indecision-and-neutral-candles/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Long-Legged Doji?
-
-Long-Legged Doji uses 1 candle.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

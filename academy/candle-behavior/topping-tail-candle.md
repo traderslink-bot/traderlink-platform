@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/hanging-man/", "/academy/candle-behavior/bearish-pin-bar/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/topping-tail-candle-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Topping Tail Candle Explained"
 meta_description: "Learn Topping Tail Candle by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A topping tail candle is an upper-wick rejection candle.
 * **Wicks:** Dominant upper tail that is clearly longer than the body.
 * **Relationship:** The candle is read by comparing the upper tail with the body and nearby candles.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Topping Tail Candle is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Buyers moved price higher, but sellers stepped in strongly enough to pull the cl
 
 Watch whether price stays below the body or rejects the upper tail area again.
 
-The read weakens if price reclaims the tail high.
+The read weakens if price reclaims the tail high. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ A topping tail is upper rejection: price pushed up, got sold, and closed away fr
 * [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Topping Tail Candle?
-
-Topping Tail Candle uses 1 candle.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

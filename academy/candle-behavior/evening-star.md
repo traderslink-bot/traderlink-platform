@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/dark-cloud-cover/", "/academy/candle-behavior/three-black-crows/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/evening-star-shape.svg", "/academy/images/chart-reading/candle-behavior/evening-star-context.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Evening Star Explained"
 meta_description: "Learn Evening Star by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ An evening star is a three-candle pattern showing buying, pause, and seller resp
 * **Wicks:** The middle candle may have wicks, but its small body is the main pause clue.
 * **Relationship:** The third candle pushes back into the first candle range after the small middle candle.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Evening Star is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -64,7 +66,7 @@ Buyers controlled the first candle, pressure paused in the second, and sellers r
 
 Watch whether price stays below the middle candle area and continues through the third candle low.
 
-The read weakens if price reclaims the third candle body or moves back above the middle candle.
+The read weakens if price reclaims the third candle body or moves back above the middle candle. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -81,17 +83,3 @@ Evening star shows buying pressure slowing and sellers responding across three c
 * [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Evening Star?
-
-Evening Star uses 3 candles.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

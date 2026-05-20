@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/outside-bar/", "/academy/candle-behavior/gap-down/", "/academy/candle-behavior/session-and-gap-behavior/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/gap-up-shape.svg", "/academy/images/chart-reading/candle-behavior/gap-up-context.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Gap Up Explained"
 meta_description: "Learn Gap Up by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A gap up happens when price opens above the prior session's close.
 * **Wicks:** Wicks vary. The important visual is the empty space between sessions.
 * **Relationship:** The current session starts above where the prior session finished.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Gap Up is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -64,7 +66,7 @@ The market repriced higher before regular trading continued.
 
 Watch whether price holds above the prior close area or moves back into the gap.
 
-The read weakens if price immediately sells back into the gap area.
+The read weakens if price immediately sells back into the gap area. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -81,17 +83,3 @@ A gap up shows the new session starting above the prior close.
 * [Session And Gap Behavior](/academy/candle-behavior/session-and-gap-behavior/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Gap Up?
-
-Gap Up uses Session sequence.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

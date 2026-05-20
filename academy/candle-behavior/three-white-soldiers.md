@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/morning-star/", "/academy/candle-behavior/shooting-star/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/three-white-soldiers-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Three White Soldiers Explained"
 meta_description: "Learn Three White Soldiers by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ Three white soldiers are three strong green candles in a row.
 * **Wicks:** Small or moderate wicks. Strong closes near the highs make the pattern clearer.
 * **Relationship:** Each candle continues buyer pressure from the prior candle.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Three White Soldiers is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Buyers controlled multiple candles instead of only one brief push.
 
 Watch whether later candles hold the progress made by the three green bodies.
 
-The read weakens if the sequence immediately gives back the full move.
+The read weakens if the sequence immediately gives back the full move. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ Three white soldiers show sustained buyer pressure across three candles.
 * [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Three White Soldiers?
-
-Three White Soldiers uses 3 candles.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

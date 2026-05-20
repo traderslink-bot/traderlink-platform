@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/gap-fill-trading/", "/academy/candle-behavior/inverted-hammer/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/hammer-shape.svg", "/academy/images/chart-reading/candle-behavior/hammer-context.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Hammer Explained"
 meta_description: "Learn Hammer by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A hammer is a lower-rejection candle. It shows price trading down during the can
 * **Wicks:** Long lower wick with little or no upper wick.
 * **Relationship:** The single candle matters most after price has already been moving down or testing a lower area.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Hammer is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -64,7 +66,7 @@ Sellers pushed price lower first, then buyers absorbed the move and closed the c
 
 Watch whether the next candle can hold above the hammer body or reclaim the hammer high.
 
-The read weakens if price breaks back below the hammer low or cannot hold the upper part of the candle.
+The read weakens if price breaks back below the hammer low or cannot hold the upper part of the candle. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -81,17 +83,3 @@ A hammer is a lower-rejection shape that teaches buyers stepping in after a push
 * [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Hammer?
-
-Hammer uses 1 candle.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

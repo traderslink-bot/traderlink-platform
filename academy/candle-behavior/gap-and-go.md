@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/gap-down/", "/academy/candle-behavior/gap-fill/", "/academy/candle-behavior/session-and-gap-behavior/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/gap-and-go-shape.svg", "/academy/images/chart-reading/candle-behavior/gap-and-go-context.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Gap And Go Explained"
 meta_description: "Learn Gap And Go by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ Gap and go behavior happens when price gaps and then continues in the gap direct
 * **Wicks:** Cleaner candles often have bodies closing in the continuation direction.
 * **Relationship:** The gap is followed by continuation instead of an immediate move back into the gap.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Gap And Go is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -64,7 +66,7 @@ The gap attracted continued participation instead of immediate fading.
 
 Watch whether price holds the opening area and keeps building away from the prior close.
 
-The read weakens if price loses the open area and starts filling the gap.
+The read weakens if price loses the open area and starts filling the gap. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -81,17 +83,3 @@ Gap and go shows session continuation after a gap.
 * [Session And Gap Behavior](/academy/candle-behavior/session-and-gap-behavior/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Gap And Go?
-
-Gap And Go uses Session sequence.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

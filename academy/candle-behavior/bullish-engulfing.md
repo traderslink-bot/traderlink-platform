@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/dragonfly-doji/", "/academy/candle-behavior/piercing-line/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/bullish-engulfing-shape.svg", "/academy/images/chart-reading/candle-behavior/bullish-engulfing-context.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Bullish Engulfing Explained"
 meta_description: "Learn Bullish Engulfing by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A bullish engulfing pattern uses two candles. The second green body covers the p
 * **Wicks:** Wicks can vary, but the body relationship is the main visual clue.
 * **Relationship:** The green body opens below or near the prior body and closes above it, taking back the prior candle body.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Bullish Engulfing is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -64,7 +66,7 @@ Seller control in the first candle shifts to buyer control in the second candle.
 
 Watch whether price holds the green body and continues above the engulfing candle high.
 
-The read weakens if price falls back through the engulfing body.
+The read weakens if price falls back through the engulfing body. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -81,17 +83,3 @@ Bullish engulfing shows buyers taking back the prior red candle body.
 * [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Bullish Engulfing?
-
-Bullish Engulfing uses 2 candles.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/three-white-soldiers/", "/academy/candle-behavior/hanging-man/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/shooting-star-shape.svg", "/academy/images/chart-reading/candle-behavior/shooting-star-context.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Shooting Star Explained"
 meta_description: "Learn Shooting Star by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A shooting star is an upper-rejection candle after strength.
 * **Wicks:** Long upper wick with little or no lower wick.
 * **Relationship:** The single candle matters most after price has already pushed higher.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Shooting Star is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -53,8 +55,6 @@ The fastest way to identify Shooting Star is to start with the shape first, then
 A shooting star is most useful to study after a rally, near resistance, high of day, or another upper reference area.
 
 ![Shooting star candle forming after an upward move near an upper resistance area.](/academy/images/chart-reading/candle-behavior/shooting-star-context.svg)
-
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 
 ## What It Shows
 
@@ -64,7 +64,7 @@ Buyers pushed price higher first, then sellers rejected the push and forced the 
 
 Watch whether the next candle stays below the body or breaks below the shooting star low.
 
-The read weakens if price reclaims the upper wick area.
+The read weakens if price reclaims the upper wick area. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -81,17 +81,3 @@ A shooting star is upper rejection after strength.
 * [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Shooting Star?
-
-Shooting Star uses 1 candle.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

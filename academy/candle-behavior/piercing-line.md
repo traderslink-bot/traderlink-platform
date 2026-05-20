@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/bullish-engulfing/", "/academy/candle-behavior/morning-star/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/piercing-line-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Piercing Line Explained"
 meta_description: "Learn Piercing Line by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A piercing line is a two-candle rebound pattern. The green candle closes back in
 * **Wicks:** Wicks are secondary. The close into the prior body is the key.
 * **Relationship:** The green candle does not need to cover the full red body like a bullish engulfing candle.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Piercing Line is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Sellers had control first, but buyers recovered enough of the prior body to chan
 
 Watch whether price can continue above the midpoint or upper part of the prior red body.
 
-The read weakens if price cannot hold inside the prior red body.
+The read weakens if price cannot hold inside the prior red body. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ Piercing line shows a rebound into prior selling pressure.
 * [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Piercing Line?
-
-Piercing Line uses 2 candles.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

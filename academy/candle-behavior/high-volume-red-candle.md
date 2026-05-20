@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/high-volume-green-candle/", "/academy/candle-behavior/outside-bar/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/high-volume-red-candle-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "High-Volume Red Candle Explained"
 meta_description: "Learn High-Volume Red Candle by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A high-volume red candle combines a strong red candle with a larger volume bar.
 * **Wicks:** Wicks can vary, but a close near the low makes the candle cleaner.
 * **Relationship:** The volume bar under the candle should be larger than nearby volume bars.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify High-Volume Red Candle is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Sellers moved price while volume increased, showing more participation during th
 
 Watch whether price stays below the body and whether selling volume continues or fades.
 
-The read weakens if price immediately reclaims the candle on strong buying.
+The read weakens if price immediately reclaims the candle on strong buying. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ A high-volume red candle shows seller movement with stronger participation.
 * [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form High-Volume Red Candle?
-
-High-Volume Red Candle uses 1 candle with volume.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

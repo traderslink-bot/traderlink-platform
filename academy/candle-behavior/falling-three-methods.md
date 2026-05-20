@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/rising-three-methods/", "/academy/candle-behavior/high-volume-green-candle/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/falling-three-methods-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Falling Three Methods Explained"
 meta_description: "Learn Falling Three Methods by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ Falling three methods is a continuation sequence: strong red candle, small pause
 * **Wicks:** Wicks can vary, but the small middle candles should stay controlled inside the first candle range.
 * **Relationship:** The middle candles pause without fully undoing the first red candle.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Falling Three Methods is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Sellers push, the market pauses without reclaiming structure, then sellers push 
 
 Watch whether the final red candle holds and continues below the pause.
 
-The read weakens if the middle candles reclaim the first candle range.
+The read weakens if the middle candles reclaim the first candle range. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ Falling three methods shows bearish continuation after a controlled pause.
 * [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Falling Three Methods?
-
-Falling Three Methods uses 5 candles.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

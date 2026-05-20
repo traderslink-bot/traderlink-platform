@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/bearish-engulfing/", "/academy/candle-behavior/evening-star/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/dark-cloud-cover-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Dark Cloud Cover Explained"
 meta_description: "Learn Dark Cloud Cover by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ Dark cloud cover is a two-candle rejection pattern. The red candle closes down i
 * **Wicks:** Wicks are secondary. The close into the prior body is the key.
 * **Relationship:** The red candle does not need to cover the full green body like a bearish engulfing candle.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Dark Cloud Cover is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Buyers had control first, but sellers recovered enough of the prior body to chan
 
 Watch whether price continues below the midpoint or lower part of the prior green body.
 
-The read weakens if price cannot stay inside the prior green body.
+The read weakens if price cannot stay inside the prior green body. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ Dark cloud cover shows a sell response into prior buying pressure.
 * [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Dark Cloud Cover?
-
-Dark Cloud Cover uses 2 candles.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

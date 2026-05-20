@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/inverted-hammer/", "/academy/candle-behavior/bullish-pin-bar/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/bottoming-tail-candle-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Bottoming Tail Candle Explained"
 meta_description: "Learn Bottoming Tail Candle by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A bottoming tail candle is a lower-wick rejection candle. It belongs to the same
 * **Wicks:** Dominant lower tail that is clearly longer than the body.
 * **Relationship:** The candle is read by comparing the lower tail with the body and nearby candles.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Bottoming Tail Candle is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Sellers moved price lower, but buyers stepped in strongly enough to pull the clo
 
 Watch whether price respects the lower tail area and continues holding above the body.
 
-The read weakens if price quickly breaks below the tail low.
+The read weakens if price quickly breaks below the tail low. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ A bottoming tail is lower rejection: price dropped, got bought, and closed away 
 * [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Bottoming Tail Candle?
-
-Bottoming Tail Candle uses 1 candle.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

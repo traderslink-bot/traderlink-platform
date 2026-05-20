@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/high-wave-candle/", "/academy/candle-behavior/full-body-candle/", "/academy/candle-behavior/indecision-and-neutral-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/inside-bar-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Inside Bar Explained"
 meta_description: "Learn Inside Bar by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ An inside bar forms when the second candle stays inside the high and low of the 
 * **Wicks:** The second candle's full high-low range sits inside the prior candle range.
 * **Relationship:** The first candle is the mother candle. The second candle is contained inside it.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Inside Bar is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Price tightened instead of expanding beyond the prior candle.
 
 Watch whether price breaks and holds outside the mother candle high or low.
 
-The read weakens if price stays stuck inside the mother candle range.
+The read weakens if price stays stuck inside the mother candle range. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ An inside bar shows compression inside the prior candle range.
 * [Indecision And Neutral Candles](/academy/candle-behavior/indecision-and-neutral-candles/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Inside Bar?
-
-Inside Bar uses 2 candles.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

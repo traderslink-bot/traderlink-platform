@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/piercing-line/", "/academy/candle-behavior/three-white-soldiers/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/morning-star-shape.svg", "/academy/images/chart-reading/candle-behavior/morning-star-context.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Morning Star Explained"
 meta_description: "Learn Morning Star by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A morning star is a three-candle pattern showing selling, pause, and buyer respo
 * **Wicks:** The middle candle may have wicks, but its small body is the main pause clue.
 * **Relationship:** The third candle pushes back into the first candle range after the small middle candle.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Morning Star is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -64,7 +66,7 @@ Sellers controlled the first candle, pressure paused in the second, and buyers r
 
 Watch whether price holds above the middle candle area and continues through the third candle high.
 
-The read weakens if price falls back below the middle candle or loses the third candle body.
+The read weakens if price falls back below the middle candle or loses the third candle body. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -81,17 +83,3 @@ Morning star shows selling pressure slowing and buyers responding across three c
 * [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Morning Star?
-
-Morning Star uses 3 candles.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

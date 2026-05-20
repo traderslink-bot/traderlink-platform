@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/breakout-candle/", "/academy/candle-behavior/rising-three-methods/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/breakdown-candle-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Breakdown Candle Explained"
 meta_description: "Learn Breakdown Candle by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A breakdown candle is a strong candle that moves through a visible lower level.
 * **Wicks:** Often closes near the lower part of the range when the break is strong.
 * **Relationship:** The candle is read against the level it breaks.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Breakdown Candle is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Sellers expanded price through an area where price had previously held or bounce
 
 Watch whether price stays below the lost level or reclaims it.
 
-The read weakens if price quickly reclaims the breakdown level.
+The read weakens if price quickly reclaims the breakdown level. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ A breakdown candle is momentum through a visible lower level.
 * [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Breakdown Candle?
-
-Breakdown Candle uses 1 candle with a level.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

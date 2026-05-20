@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/spinning-top/", "/academy/candle-behavior/inside-bar/", "/academy/candle-behavior/indecision-and-neutral-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/high-wave-candle-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "High-Wave Candle Explained"
 meta_description: "Learn High-Wave Candle by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A high-wave candle has a small body and very long wicks on both sides.
 * **Wicks:** Long upper and lower wicks that dominate the candle.
 * **Relationship:** The candle is read by the contrast between the small body and large total range.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify High-Wave Candle is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ Buyers and sellers both pushed price far, but the close ended near the middle ar
 
 Watch whether the next candles choose a direction outside the high-wave range.
 
-The read weakens if later price stays noisy inside the same wide range.
+The read weakens if later price stays noisy inside the same wide range. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ A high-wave candle shows a big two-sided battle with no clean close control.
 * [Indecision And Neutral Candles](/academy/candle-behavior/indecision-and-neutral-candles/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form High-Wave Candle?
-
-High-Wave Candle uses 1 candle.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

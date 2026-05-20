@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/long-legged-doji/", "/academy/candle-behavior/high-wave-candle/", "/academy/candle-behavior/indecision-and-neutral-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/spinning-top-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Spinning Top Explained"
 meta_description: "Learn Spinning Top by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A spinning top has a small body with wicks on both sides.
 * **Wicks:** Upper and lower wicks are both visible.
 * **Relationship:** The single candle is read by comparing the small body with the wick movement around it.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Spinning Top is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -64,6 +66,8 @@ Watch whether the next candle expands away from the spinning top range.
 
 The read is less useful if the candle forms inside random low-volume chop.
 
+The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.
+
 ## Common Confusion
 
 A doji has open and close almost equal. A spinning top has a small but visible body.
@@ -79,17 +83,3 @@ A spinning top shows a small-body pause with movement on both sides.
 * [Indecision And Neutral Candles](/academy/candle-behavior/indecision-and-neutral-candles/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Spinning Top?
-
-Spinning Top uses 1 candle.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

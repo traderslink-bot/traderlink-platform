@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/inside-bar/", "/academy/candle-behavior/marubozu/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/full-body-candle-shape.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Full Body Candle Explained"
 meta_description: "Learn Full Body Candle by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A full body candle has a large real body compared with its wicks.
 * **Wicks:** Small wicks compared with the body.
 * **Relationship:** The single candle is read by body size versus recent candles.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Full Body Candle is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -62,7 +64,7 @@ One side controlled most of the candle from open to close.
 
 Watch whether the next candle holds the body or immediately gives it back.
 
-The read weakens if the full body candle is fully retraced right away.
+The read weakens if the full body candle is fully retraced right away. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -79,17 +81,3 @@ A full body candle shows directional pressure inside one candle.
 * [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Full Body Candle?
-
-Full Body Candle uses 1 candle.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.

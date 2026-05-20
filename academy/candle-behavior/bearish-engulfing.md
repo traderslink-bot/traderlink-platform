@@ -20,7 +20,7 @@ academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
 internal_links: ["/academy/candle-behavior/gravestone-doji/", "/academy/candle-behavior/dark-cloud-cover/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candlestick-patterns/", "/academy/candlestick-deep-dive-lessons/"]
 visual_assets: ["/academy/images/chart-reading/candle-behavior/bearish-engulfing-shape.svg", "/academy/images/chart-reading/candle-behavior/bearish-engulfing-context.svg"]
-schema: ["Article", "FAQPage"]
+schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Bearish Engulfing Explained"
 meta_description: "Learn Bearish Engulfing by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
@@ -46,6 +46,8 @@ A bearish engulfing pattern uses two candles. The second red body covers the pri
 * **Wicks:** Wicks can vary, but the body relationship is the main visual clue.
 * **Relationship:** The red body opens above or near the prior body and closes below it, taking back the prior candle body.
 
+Start with body size, wick direction, and where the candle sits in the recent price action.
+
 The fastest way to identify Bearish Engulfing is to start with the shape first, then check whether the surrounding candles match the context.
 
 ## Context
@@ -64,7 +66,7 @@ Buyer control in the first candle shifts to seller control in the second candle.
 
 Watch whether price stays below the red body and continues below the engulfing candle low.
 
-The read weakens if price reclaims the engulfing body.
+The read weakens if price reclaims the engulfing body. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
 
 ## Common Confusion
 
@@ -81,17 +83,3 @@ Bearish engulfing shows sellers taking back the prior green candle body.
 * [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
 * [Candlestick Pattern Basics](/academy/candlestick-patterns/)
 * [Candle Behavior Library](/academy/candlestick-deep-dive-lessons/)
-
-## FAQ
-
-### How many candles form Bearish Engulfing?
-
-Bearish Engulfing uses 2 candles.
-
-### What should I look at first?
-
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-### What makes the read weaker?
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.
