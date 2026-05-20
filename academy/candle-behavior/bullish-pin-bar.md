@@ -30,7 +30,7 @@ meta_description: "Learn Bullish Pin Bar by shape, candle count, context, buyer-
 
 A bullish pin bar is a candle with a small body and one dominant lower wick.
 
-![](/academy/images/chart-reading/candle-behavior/bullish-pin-bar-shape.svg)
+![Bullish pin bar candle with a small body near the high and a dominant lower wick.](/academy/images/chart-reading/candle-behavior/bullish-pin-bar-shape.svg)
 
 ## At A Glance
 

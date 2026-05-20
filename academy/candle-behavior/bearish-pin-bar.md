@@ -30,7 +30,7 @@ meta_description: "Learn Bearish Pin Bar by shape, candle count, context, buyer-
 
 A bearish pin bar is a candle with a small body and one dominant upper wick.
 
-![](/academy/images/chart-reading/candle-behavior/bearish-pin-bar-shape.svg)
+![Bearish pin bar candle with a small body near the low and a dominant upper wick.](/academy/images/chart-reading/candle-behavior/bearish-pin-bar-shape.svg)
 
 ## At A Glance
 

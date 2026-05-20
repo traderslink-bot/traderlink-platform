@@ -30,7 +30,7 @@ meta_description: "Learn High-Wave Candle by shape, candle count, context, buyer
 
 A high-wave candle has a small body and very long wicks on both sides.
 
-![](/academy/images/chart-reading/candle-behavior/high-wave-candle-shape.svg)
+![High-wave candle with a small body and very long upper and lower wicks.](/academy/images/chart-reading/candle-behavior/high-wave-candle-shape.svg)
 
 ## At A Glance
 

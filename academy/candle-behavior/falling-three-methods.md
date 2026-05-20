@@ -30,7 +30,7 @@ meta_description: "Learn Falling Three Methods by shape, candle count, context, 
 
 Falling three methods is a continuation sequence: strong red candle, small pause candles, then another strong red candle.
 
-![](/academy/images/chart-reading/candle-behavior/falling-three-methods-shape.svg)
+![Falling three methods pattern with a strong red candle, small bounce candles, and another red candle.](/academy/images/chart-reading/candle-behavior/falling-three-methods-shape.svg)
 
 ## At A Glance
 

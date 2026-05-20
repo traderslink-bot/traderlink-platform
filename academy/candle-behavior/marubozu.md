@@ -30,7 +30,7 @@ meta_description: "Learn Marubozu by shape, candle count, context, buyer-seller 
 
 A marubozu is a candle with a large body and little or no wick.
 
-![](/academy/images/chart-reading/candle-behavior/marubozu-shape.svg)
+![Marubozu candles with large bodies and little to no upper or lower wick.](/academy/images/chart-reading/candle-behavior/marubozu-shape.svg)
 
 ## At A Glance
 

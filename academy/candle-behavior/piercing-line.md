@@ -30,7 +30,7 @@ meta_description: "Learn Piercing Line by shape, candle count, context, buyer-se
 
 A piercing line is a two-candle rebound pattern. The green candle closes back into the prior red candle body.
 
-![](/academy/images/chart-reading/candle-behavior/piercing-line-shape.svg)
+![Red candle followed by a green candle that opens lower and closes deep into the prior body.](/academy/images/chart-reading/candle-behavior/piercing-line-shape.svg)
 
 ## At A Glance
 

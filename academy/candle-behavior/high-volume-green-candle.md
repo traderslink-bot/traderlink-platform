@@ -30,7 +30,7 @@ meta_description: "Learn High-Volume Green Candle by shape, candle count, contex
 
 A high-volume green candle combines a strong green candle with a larger volume bar.
 
-![](/academy/images/chart-reading/candle-behavior/high-volume-green-candle-shape.svg)
+![Large green candle shown with a taller volume bar than the surrounding candles.](/academy/images/chart-reading/candle-behavior/high-volume-green-candle-shape.svg)
 
 ## At A Glance
 

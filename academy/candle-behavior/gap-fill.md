@@ -30,7 +30,7 @@ meta_description: "Learn Gap Fill by shape, candle count, context, buyer-seller 
 
 A gap fill happens when price moves back into the empty space between the prior close and current session area.
 
-![](/academy/images/chart-reading/candle-behavior/gap-fill-shape.svg)
+![Gap followed by candles moving back into the open gap area.](/academy/images/chart-reading/candle-behavior/gap-fill-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Gap Fill is to start with the shape first, then chec
 
 Gap fill behavior depends on the prior close, the opening price, and how much of the gap area price retraces.
 
-![](/academy/images/chart-reading/candle-behavior/gap-fill-context.svg)
+![Gap fill sequence with price returning toward the prior range.](/academy/images/chart-reading/candle-behavior/gap-fill-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

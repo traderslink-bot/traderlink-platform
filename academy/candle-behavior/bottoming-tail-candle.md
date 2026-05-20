@@ -30,7 +30,7 @@ meta_description: "Learn Bottoming Tail Candle by shape, candle count, context, 
 
 A bottoming tail candle is a lower-wick rejection candle. It belongs to the same family as hammers and bullish pin bars.
 
-![](/academy/images/chart-reading/candle-behavior/bottoming-tail-candle-shape.svg)
+![Bottoming tail candle with a long lower tail and the body near the top of its range.](/academy/images/chart-reading/candle-behavior/bottoming-tail-candle-shape.svg)
 
 ## At A Glance
 

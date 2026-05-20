@@ -30,7 +30,7 @@ meta_description: "Learn Bearish Engulfing by shape, candle count, context, buye
 
 A bearish engulfing pattern uses two candles. The second red body covers the prior green body.
 
-![](/academy/images/chart-reading/candle-behavior/bearish-engulfing-shape.svg)
+![Small green candle followed by a larger red candle whose body covers the first body.](/academy/images/chart-reading/candle-behavior/bearish-engulfing-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Bearish Engulfing is to start with the shape first, 
 
 This pattern is most useful to study after buyers have been in control and sellers suddenly take back the prior candle.
 
-![](/academy/images/chart-reading/candle-behavior/bearish-engulfing-context.svg)
+![Bearish engulfing pattern forming after an upward move near an upper resistance area.](/academy/images/chart-reading/candle-behavior/bearish-engulfing-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

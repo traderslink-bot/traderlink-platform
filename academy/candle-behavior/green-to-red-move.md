@@ -30,7 +30,7 @@ meta_description: "Learn Green-To-Red Move by shape, candle count, context, buye
 
 A green-to-red move happens when price moves from above a session reference area to below it.
 
-![](/academy/images/chart-reading/candle-behavior/green-to-red-move-shape.svg)
+![Green candles above a prior close area followed by red candles moving below it.](/academy/images/chart-reading/candle-behavior/green-to-red-move-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Green-To-Red Move is to start with the shape first, 
 
 Green-to-red behavior is session context, not a single candlestick pattern.
 
-![](/academy/images/chart-reading/candle-behavior/green-to-red-move-context.svg)
+![Green-to-red move crossing below the prior close area after trading above it.](/academy/images/chart-reading/candle-behavior/green-to-red-move-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

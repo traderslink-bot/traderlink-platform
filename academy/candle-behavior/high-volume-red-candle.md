@@ -30,7 +30,7 @@ meta_description: "Learn High-Volume Red Candle by shape, candle count, context,
 
 A high-volume red candle combines a strong red candle with a larger volume bar.
 
-![](/academy/images/chart-reading/candle-behavior/high-volume-red-candle-shape.svg)
+![Large red candle shown with a taller volume bar than the surrounding candles.](/academy/images/chart-reading/candle-behavior/high-volume-red-candle-shape.svg)
 
 ## At A Glance
 

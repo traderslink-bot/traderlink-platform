@@ -95,14 +95,12 @@ function renderBlock(block: MarkdownBlock) {
 
   if (block.type === "image") {
     return (
-      <figure key={block.key} className="overflow-hidden rounded-lg border border-cyan-200/20 bg-slate-950/80">
+      <figure
+        key={block.key}
+        className="overflow-hidden rounded-lg border border-cyan-200/20 bg-slate-950/80"
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={block.src} alt={block.alt} className="h-auto w-full" />
-        {block.alt ? (
-          <figcaption className="border-t border-white/10 px-4 py-3 text-sm text-slate-400">
-            {block.alt}
-          </figcaption>
-        ) : null}
       </figure>
     );
   }

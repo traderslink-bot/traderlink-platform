@@ -30,7 +30,7 @@ meta_description: "Learn Full Body Candle by shape, candle count, context, buyer
 
 A full body candle has a large real body compared with its wicks.
 
-![](/academy/images/chart-reading/candle-behavior/full-body-candle-shape.svg)
+![Full body candle with a large body and short upper and lower wicks.](/academy/images/chart-reading/candle-behavior/full-body-candle-shape.svg)
 
 ## At A Glance
 

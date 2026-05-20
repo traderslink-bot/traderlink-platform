@@ -30,7 +30,7 @@ meta_description: "Learn Exhaustion Gap by shape, candle count, context, buyer-s
 
 An exhaustion gap is a gap that stretches price and then loses control.
 
-![](/academy/images/chart-reading/candle-behavior/exhaustion-gap-shape.svg)
+![Late gap higher followed by candles stalling and turning back down.](/academy/images/chart-reading/candle-behavior/exhaustion-gap-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Exhaustion Gap is to start with the shape first, the
 
 Exhaustion gaps are most useful to study after a move is already extended and new participation chases late.
 
-![](/academy/images/chart-reading/candle-behavior/exhaustion-gap-context.svg)
+![Exhaustion gap after an extended move with price failing to continue.](/academy/images/chart-reading/candle-behavior/exhaustion-gap-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

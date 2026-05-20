@@ -30,7 +30,7 @@ meta_description: "Learn Rising Three Methods by shape, candle count, context, b
 
 Rising three methods is a continuation sequence: strong green candle, small pause candles, then another strong green candle.
 
-![](/academy/images/chart-reading/candle-behavior/rising-three-methods-shape.svg)
+![Rising three methods pattern with a strong green candle, small pullback candles, and another green candle.](/academy/images/chart-reading/candle-behavior/rising-three-methods-shape.svg)
 
 ## At A Glance
 

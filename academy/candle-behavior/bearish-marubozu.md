@@ -30,7 +30,7 @@ meta_description: "Learn Bearish Marubozu by shape, candle count, context, buyer
 
 A bearish marubozu is a red momentum candle with little or no wick.
 
-![](/academy/images/chart-reading/candle-behavior/bearish-marubozu-shape.svg)
+![Bearish marubozu candle with a large red body and almost no wick.](/academy/images/chart-reading/candle-behavior/bearish-marubozu-shape.svg)
 
 ## At A Glance
 

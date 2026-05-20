@@ -30,7 +30,7 @@ meta_description: "Learn Breakdown Candle by shape, candle count, context, buyer
 
 A breakdown candle is a strong candle that moves through a visible lower level.
 
-![](/academy/images/chart-reading/candle-behavior/breakdown-candle-shape.svg)
+![Large red candle pushing below a prior support area.](/academy/images/chart-reading/candle-behavior/breakdown-candle-shape.svg)
 
 ## At A Glance
 

@@ -30,7 +30,7 @@ meta_description: "Learn Bullish Engulfing by shape, candle count, context, buye
 
 A bullish engulfing pattern uses two candles. The second green body covers the prior red body.
 
-![](/academy/images/chart-reading/candle-behavior/bullish-engulfing-shape.svg)
+![Small red candle followed by a larger green candle whose body covers the first body.](/academy/images/chart-reading/candle-behavior/bullish-engulfing-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Bullish Engulfing is to start with the shape first, 
 
 This pattern is most useful to study after sellers have been in control and buyers suddenly take back the prior candle.
 
-![](/academy/images/chart-reading/candle-behavior/bullish-engulfing-context.svg)
+![Bullish engulfing pattern forming after a downward move near a lower support area.](/academy/images/chart-reading/candle-behavior/bullish-engulfing-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

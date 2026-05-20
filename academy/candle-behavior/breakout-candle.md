@@ -30,7 +30,7 @@ meta_description: "Learn Breakout Candle by shape, candle count, context, buyer-
 
 A breakout candle is a strong candle that moves through a visible upper level.
 
-![](/academy/images/chart-reading/candle-behavior/breakout-candle-shape.svg)
+![Large green candle pushing above a prior resistance area.](/academy/images/chart-reading/candle-behavior/breakout-candle-shape.svg)
 
 ## At A Glance
 

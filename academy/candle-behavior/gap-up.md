@@ -30,7 +30,7 @@ meta_description: "Learn Gap Up by shape, candle count, context, buyer-seller be
 
 A gap up happens when price opens above the prior session's close.
 
-![](/academy/images/chart-reading/candle-behavior/gap-up-shape.svg)
+![Candles opening above the prior trading range with a visible upward price gap.](/academy/images/chart-reading/candle-behavior/gap-up-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Gap Up is to start with the shape first, then check 
 
 Gap up behavior depends on the prior close, current open, premarket action, and whether price holds above the gap area.
 
-![](/academy/images/chart-reading/candle-behavior/gap-up-context.svg)
+![Gap up shown after prior candles with price opening above the previous range.](/academy/images/chart-reading/candle-behavior/gap-up-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

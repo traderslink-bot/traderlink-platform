@@ -30,7 +30,7 @@ meta_description: "Learn Gravestone Doji by shape, candle count, context, buyer-
 
 A gravestone doji is a doji-style candle with the open and close near the low and a long upper wick.
 
-![](/academy/images/chart-reading/candle-behavior/gravestone-doji-shape.svg)
+![Gravestone doji candle with open and close near the low and a long upper wick.](/academy/images/chart-reading/candle-behavior/gravestone-doji-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Gravestone Doji is to start with the shape first, th
 
 This candle matters most after price has tested higher and returned near the open by the close.
 
-![](/academy/images/chart-reading/candle-behavior/gravestone-doji-context.svg)
+![Gravestone doji forming after an upward move near an upper resistance area.](/academy/images/chart-reading/candle-behavior/gravestone-doji-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 

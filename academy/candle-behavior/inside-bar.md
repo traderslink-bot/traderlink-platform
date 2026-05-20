@@ -30,7 +30,7 @@ meta_description: "Learn Inside Bar by shape, candle count, context, buyer-selle
 
 An inside bar forms when the second candle stays inside the high and low of the prior candle.
 
-![](/academy/images/chart-reading/candle-behavior/inside-bar-shape.svg)
+![Large mother candle followed by a smaller inside bar contained within the prior high and low.](/academy/images/chart-reading/candle-behavior/inside-bar-shape.svg)
 
 ## At A Glance
 

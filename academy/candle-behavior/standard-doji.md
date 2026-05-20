@@ -30,7 +30,7 @@ meta_description: "Learn Standard Doji by shape, candle count, context, buyer-se
 
 A standard doji forms when the open and close are nearly equal.
 
-![](/academy/images/chart-reading/candle-behavior/standard-doji-shape.svg)
+![Standard doji candle with nearly equal open and close and balanced upper and lower wicks.](/academy/images/chart-reading/candle-behavior/standard-doji-shape.svg)
 
 ## At A Glance
 

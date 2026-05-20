@@ -30,7 +30,7 @@ meta_description: "Learn Inverted Hammer by shape, candle count, context, buyer-
 
 An inverted hammer has a small body with a long upper wick after weakness. It shows buyers attempted to push price higher during the candle.
 
-![](/academy/images/chart-reading/candle-behavior/inverted-hammer-shape.svg)
+![Inverted hammer candle with a small body near the low and a long upper wick.](/academy/images/chart-reading/candle-behavior/inverted-hammer-shape.svg)
 
 ## At A Glance
 
@@ -52,7 +52,7 @@ The fastest way to identify Inverted Hammer is to start with the shape first, th
 
 This candle is most useful to study after selling pressure, when the upper wick shows buyers tested higher prices from a lower area.
 
-![](/academy/images/chart-reading/candle-behavior/inverted-hammer-context.svg)
+![Inverted hammer candle forming after a downward move near a lower support area.](/academy/images/chart-reading/candle-behavior/inverted-hammer-context.svg)
 
 Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
 
