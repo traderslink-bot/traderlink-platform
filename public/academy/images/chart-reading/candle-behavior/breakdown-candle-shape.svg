@@ -9,12 +9,12 @@
   </g>
   <rect x="130" y="70" width="640" height="380" rx="20" fill="#101B2B" stroke="#2E4058" stroke-width="2"/><line x1="220" y1="270" x2="680" y2="270" stroke="#F8FAFC" stroke-width="5" stroke-dasharray="14 12"/>
     <line x1="330" y1="165" x2="330" y2="288" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
-    <rect x="298" y="190" width="64" height="65" rx="7" fill="#EF4444"/>
-    <line x1="298" y1="190" x2="362" y2="190" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
+    <rect x="298" y="190" width="64" height="65" fill="#EF4444"/>
+
     <line x1="450" y1="190" x2="450" y2="395" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
-    <rect x="404" y="220" width="92" height="145" rx="7" fill="#EF4444"/>
-    <line x1="404" y1="220" x2="496" y2="220" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
+    <rect x="404" y="220" width="92" height="145" fill="#EF4444"/>
+
     <line x1="570" y1="285" x2="570" y2="420" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
-    <rect x="535" y="315" width="70" height="75" rx="7" fill="#EF4444"/>
-    <line x1="535" y1="315" x2="605" y2="315" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
+    <rect x="535" y="315" width="70" height="75" fill="#EF4444"/>
+
 </svg>

@@ -9,9 +9,9 @@
   </g>
   <rect x="120" y="70" width="300" height="380" rx="20" fill="#101B2B" stroke="#2E4058" stroke-width="2"/><rect x="480" y="70" width="300" height="380" rx="20" fill="#101B2B" stroke="#2E4058" stroke-width="2"/>
     <line x1="270" y1="100" x2="270" y2="408" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
-    <rect x="225" y="120" width="90" height="268" rx="7" fill="#22C55E"/>
-    <line x1="225" y1="120" x2="315" y2="120" stroke="#86EFAC" stroke-width="3" stroke-linecap="round"/>
+    <rect x="225" y="120" width="90" height="268" fill="#22C55E"/>
+
     <line x1="630" y1="100" x2="630" y2="408" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
-    <rect x="585" y="120" width="90" height="268" rx="7" fill="#EF4444"/>
-    <line x1="585" y1="120" x2="675" y2="120" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
+    <rect x="585" y="120" width="90" height="268" fill="#EF4444"/>
+
 </svg>

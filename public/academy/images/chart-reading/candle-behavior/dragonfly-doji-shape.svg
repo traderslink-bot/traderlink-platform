@@ -9,5 +9,5 @@
   </g>
   <rect x="180" y="58" width="540" height="404" rx="20" fill="#101B2B" stroke="#2E4058" stroke-width="2"/>
     <line x1="450" y1="125" x2="450" y2="405" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
-    <rect x="409" y="141" width="82" height="8" rx="4" fill="#E5E7EB"/>
+    <rect x="409" y="141" width="82" height="8" fill="#E5E7EB"/>
 </svg>

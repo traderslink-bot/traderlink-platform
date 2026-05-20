@@ -7,5 +7,5 @@
     <line x1="70" y1="350" x2="830" y2="350"/>
     <line x1="70" y1="430" x2="830" y2="430"/>
   </g>
-  <rect x="180" y="58" width="540" height="404" rx="20" fill="#101B2B" stroke="#2E4058" stroke-width="2"/><rect x="405" y="112" width="90" height="296" rx="10" fill="#EF4444"/>
+  <rect x="180" y="58" width="540" height="404" rx="20" fill="#101B2B" stroke="#2E4058" stroke-width="2"/><rect x="405" y="112" width="90" height="296" fill="#EF4444"/>
 </svg>

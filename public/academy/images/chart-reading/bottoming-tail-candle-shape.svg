@@ -4,7 +4,7 @@
   <g stroke="#18304d" stroke-width="1.5" opacity=".9">
     <path d="M104 142H856M104 230H856M104 318H856M104 406H856"/>
   </g>
-  
+
   <g transform="translate(480 270)">
     <line x1="0" y1="-54" x2="0" y2="176" stroke="#d6e4ff" stroke-width="11" stroke-linecap="round"/>
     <rect x="-68" y="-82" width="136" height="78" rx="9" fill="#22c55e"/>

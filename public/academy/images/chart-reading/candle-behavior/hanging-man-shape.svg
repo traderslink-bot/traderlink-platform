@@ -9,6 +9,6 @@
   </g>
   <rect x="180" y="58" width="540" height="404" rx="20" fill="#101B2B" stroke="#2E4058" stroke-width="2"/>
     <line x1="450" y1="130" x2="450" y2="408" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
-    <rect x="409" y="152" width="82" height="72" rx="7" fill="#EF4444"/>
-    <line x1="409" y1="152" x2="491" y2="152" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
+    <rect x="409" y="152" width="82" height="72" fill="#EF4444"/>
+
 </svg>
