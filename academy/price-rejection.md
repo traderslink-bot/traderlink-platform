@@ -19,7 +19,7 @@ academy_course: "Chart Reading And Market Structure"
 recommended_previous: "/academy/lower-highs-lower-lows/"
 recommended_next: "/academy/breakout-trading/"
 visual_assets: ["/academy/images/chart-reading/price-rejection-at-resistance.svg", "/academy/images/chart-reading/rejection-wick-context.svg"]
-internal_links: ["/academy/resistance-levels/", "/academy/support-levels/", "/academy/key-levels-trading/", "/academy/level-breakout/", "/academy/level-reclaim/", "/academy/candle-behavior/bullish-candle-patterns/", "/academy/candle-behavior/bearish-candle-patterns/"]
+internal_links: ["/academy/resistance-levels/", "/academy/support-levels/", "/academy/key-levels-trading/", "/academy/level-breakout/", "/academy/level-reclaim/", "/academy/candle-behavior/bottoming-tail-candle/", "/academy/candle-behavior/topping-tail-candle/"]
 schema: ["Article", "FAQPage"]
 last_reviewed: "2026-05-19"
 meta_title: "Price Rejection Explained for Traders"
@@ -288,8 +288,8 @@ Do not read every wick as rejection. Read the failed hold.
 * [Key Levels Trading](/academy/key-levels-trading/)
 * [Level Breakout](/academy/level-breakout/)
 * [Level Reclaim](/academy/level-reclaim/)
-* [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
-* [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
+* [Bottoming Tail Candle](/academy/candle-behavior/bottoming-tail-candle/)
+* [Topping Tail Candle](/academy/candle-behavior/topping-tail-candle/)
 
 ## FAQ
 

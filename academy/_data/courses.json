@@ -32,8 +32,8 @@
       "recommended_previous_course": "trading-foundations",
       "recommended_next_course": "volume-liquidity-order-flow",
       "completion_mode": "core_lessons",
-      "progress_model": "core path progress, with candle behavior category lessons and chart-pattern library progress tracked separately",
-      "display_model": "Learn how to read stock charts from the ground up with a guided core path covering candlesticks, support and resistance, key levels, market structure, breakouts, breakdowns, reclaims, intraday levels, compression, consolidation, and gap-fill context. Then explore 5 candle behavior category lessons plus 26 chart-pattern lessons for day traders and swing traders.",
+      "progress_model": "core path progress, with individual candle behavior lessons and chart-pattern library progress tracked separately",
+      "display_model": "Learn how to read stock charts from the ground up with a guided core path covering candlesticks, support and resistance, key levels, market structure, breakouts, breakdowns, reclaims, intraday levels, compression, consolidation, and gap-fill context. Then explore 41 individual candle behavior lessons plus 26 chart-pattern lessons for day traders and swing traders.",
       "visual_status": "ready",
       "app_bridge_strength": "supporting",
       "hard_app_links_enabled": false

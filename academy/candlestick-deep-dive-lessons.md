@@ -1,79 +1,97 @@
 ---
 title: "Candle Behavior Library"
 slug: "/academy/candlestick-deep-dive-lessons/"
-primary_keyword: "candle behavior library"
-secondary_keywords: ["candlestick lessons", "candlestick types", "candle pattern lessons", "candle behavior lessons"]
-search_intent: "Help new traders choose focused candle behavior lessons grouped by bullish, bearish, indecision, momentum, and session behavior."
+primary_keyword: "candlestick patterns"
+secondary_keywords: ["candlestick lessons", "candle behavior", "candle pattern lessons"]
+search_intent: "Learn candle behavior through individual candlestick pattern lessons grouped by behavior."
 status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Use this candle behavior library to study the major candle groups without jumping through one-off candle pages."
-recommended_previous: "/academy/candlestick-patterns/"
-recommended_next: "/academy/support-and-resistance/"
+cta: "Use the candle behavior library to study individual candle and pattern lessons."
+recommended_previous: null
+recommended_next: "/academy/candlestick-deep-dive-lessons/"
 academy_level: "Foundation"
-academy_order: 2
+academy_order: 1
 academy_module: "Chart Reading Basics And Core Levels"
 academy_course: "Chart Reading And Market Structure"
 learning_track: "Chart Reading And Market Structure"
-internal_links: ["/academy/candle-behavior/bullish-candle-patterns/", "/academy/candle-behavior/bearish-candle-patterns/", "/academy/candle-behavior/indecision-and-neutral-candles/", "/academy/candle-behavior/momentum-and-continuation-candles/", "/academy/candle-behavior/session-and-gap-behavior/", "/academy/support-and-resistance/"]
+internal_links: ["/academy/candle-behavior/hammer/", "/academy/candle-behavior/inverted-hammer/", "/academy/candle-behavior/bottoming-tail-candle/", "/academy/candle-behavior/bullish-pin-bar/", "/academy/candle-behavior/dragonfly-doji/", "/academy/candle-behavior/bullish-engulfing/", "/academy/candle-behavior/piercing-line/", "/academy/candle-behavior/morning-star/", "/academy/candle-behavior/three-white-soldiers/", "/academy/candle-behavior/shooting-star/", "/academy/candle-behavior/hanging-man/", "/academy/candle-behavior/topping-tail-candle/"]
+visual_assets: ["/academy/images/chart-reading/candlestick-anatomy-context.svg", "/academy/images/chart-reading/same-candle-different-context.svg"]
+schema: ["FAQPage"]
 last_reviewed: "2026-05-19"
 meta_title: "Candle Behavior Library"
-meta_description: "Study candle behavior through five focused categories: bullish patterns, bearish patterns, indecision candles, momentum candles, and session or gap behavior."
+meta_description: "Learn candle behavior by shape, context, buyer-seller pressure, confirmation, failure, and common confusion."
 ---
 
 # Candle Behavior Library
 
-Candles are easier to learn when they are grouped by behavior instead of memorized one at a time.
+This library organizes the individual candle and pattern lessons into five behavior groups.
 
-This library organizes candle lessons into five practical categories. Each category uses one clean wordless image, so the lesson text teaches the behavior and the image teaches the shape.
+Candles should be learned in two layers: first the shape, then the context. The individual lessons below teach both.
 
-You can use this page as a reference while moving through the chart-reading course.
+![Educational candlestick chart showing candle anatomy, wick, body, support, resistance, and volume context.](/academy/images/chart-reading/candlestick-anatomy-context.svg)
 
-:::lesson-card-grid
+## Candle Behavior Lessons
+
 ### Bullish Candle Patterns
 
-Lower rejection, buyer reclaim, bullish engulfing pressure, morning star behavior, and three white soldiers.
-
-- [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
+* [Hammer](/academy/candle-behavior/hammer/)
+* [Inverted Hammer](/academy/candle-behavior/inverted-hammer/)
+* [Bottoming Tail Candle](/academy/candle-behavior/bottoming-tail-candle/)
+* [Bullish Pin Bar](/academy/candle-behavior/bullish-pin-bar/)
+* [Dragonfly Doji](/academy/candle-behavior/dragonfly-doji/)
+* [Bullish Engulfing](/academy/candle-behavior/bullish-engulfing/)
+* [Piercing Line](/academy/candle-behavior/piercing-line/)
+* [Morning Star](/academy/candle-behavior/morning-star/)
+* [Three White Soldiers](/academy/candle-behavior/three-white-soldiers/)
 
 ### Bearish Candle Patterns
 
-Upper rejection, failed pushes, bearish engulfing pressure, evening star behavior, and three black crows.
-
-- [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
+* [Shooting Star](/academy/candle-behavior/shooting-star/)
+* [Hanging Man](/academy/candle-behavior/hanging-man/)
+* [Topping Tail Candle](/academy/candle-behavior/topping-tail-candle/)
+* [Bearish Pin Bar](/academy/candle-behavior/bearish-pin-bar/)
+* [Gravestone Doji](/academy/candle-behavior/gravestone-doji/)
+* [Bearish Engulfing](/academy/candle-behavior/bearish-engulfing/)
+* [Dark Cloud Cover](/academy/candle-behavior/dark-cloud-cover/)
+* [Evening Star](/academy/candle-behavior/evening-star/)
+* [Three Black Crows](/academy/candle-behavior/three-black-crows/)
 
 ### Indecision And Neutral Candles
 
-Doji variations, spinning tops, high-wave candles, and inside-bar compression.
-
-- [Indecision And Neutral Candles](/academy/candle-behavior/indecision-and-neutral-candles/)
+* [Standard Doji](/academy/candle-behavior/standard-doji/)
+* [Long-Legged Doji](/academy/candle-behavior/long-legged-doji/)
+* [Spinning Top](/academy/candle-behavior/spinning-top/)
+* [High-Wave Candle](/academy/candle-behavior/high-wave-candle/)
+* [Inside Bar](/academy/candle-behavior/inside-bar/)
 
 ### Momentum And Continuation Candles
 
-Full-body candles, marubozu candles, breakout and breakdown candles, volume candles, outside bars, and continuation sequences.
-
-- [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
+* [Full Body Candle](/academy/candle-behavior/full-body-candle/)
+* [Marubozu](/academy/candle-behavior/marubozu/)
+* [Bullish Marubozu](/academy/candle-behavior/bullish-marubozu/)
+* [Bearish Marubozu](/academy/candle-behavior/bearish-marubozu/)
+* [Breakout Candle](/academy/candle-behavior/breakout-candle/)
+* [Breakdown Candle](/academy/candle-behavior/breakdown-candle/)
+* [Rising Three Methods](/academy/candle-behavior/rising-three-methods/)
+* [Falling Three Methods](/academy/candle-behavior/falling-three-methods/)
+* [High-Volume Green Candle](/academy/candle-behavior/high-volume-green-candle/)
+* [High-Volume Red Candle](/academy/candle-behavior/high-volume-red-candle/)
+* [Outside Bar](/academy/candle-behavior/outside-bar/)
 
 ### Session And Gap Behavior
 
-Gap up, gap down, gap and go, gap fill, exhaustion gaps, red-to-green moves, and green-to-red moves.
+* [Gap Up](/academy/candle-behavior/gap-up/)
+* [Gap Down](/academy/candle-behavior/gap-down/)
+* [Gap And Go](/academy/candle-behavior/gap-and-go/)
+* [Gap Fill](/academy/candle-behavior/gap-fill/)
+* [Exhaustion Gap](/academy/candle-behavior/exhaustion-gap/)
+* [Red-To-Green Move](/academy/candle-behavior/red-to-green-move/)
+* [Green-To-Red Move](/academy/candle-behavior/green-to-red-move/)
 
-- [Session And Gap Behavior](/academy/candle-behavior/session-and-gap-behavior/)
-:::
+## Key Takeaway
 
-## Suggested Reading Order
-
-Read the five category lessons in this order:
-
-1. [Bullish Candle Patterns](/academy/candle-behavior/bullish-candle-patterns/)
-2. [Bearish Candle Patterns](/academy/candle-behavior/bearish-candle-patterns/)
-3. [Indecision And Neutral Candles](/academy/candle-behavior/indecision-and-neutral-candles/)
-4. [Momentum And Continuation Candles](/academy/candle-behavior/momentum-and-continuation-candles/)
-5. [Session And Gap Behavior](/academy/candle-behavior/session-and-gap-behavior/)
-
-## Continue The Core Course
-
-[Continue Core Course: Support and Resistance](/academy/support-and-resistance/)
+Candle names are useful after the shape and context make sense. Learn what the candle looks like, where it appears, what it shows about buyers and sellers, and what later candles do around it.

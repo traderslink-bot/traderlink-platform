@@ -96,8 +96,8 @@ describe("academy content loader", () => {
     expect(params).not.toContain("start-here");
     expect(params).toContain("support-and-resistance");
     expect(params).toContain("candlestick-deep-dive-lessons");
-    expect(params).toContain("candle-behavior/bullish-candle-patterns");
-    expect(params).toContain("candle-behavior/session-and-gap-behavior");
+    expect(params).toContain("candle-behavior/hammer");
+    expect(params).toContain("candle-behavior/green-to-red-move");
     expect(params).not.toContain("candlestick-patterns/doji");
     expect(params).not.toContain("sec-filings/form-8-k");
   });

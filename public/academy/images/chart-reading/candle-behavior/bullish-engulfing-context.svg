@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" fill="none">
+  <rect width="900" height="520" rx="28" fill="#08111F"/>
+  <g stroke="#223149" stroke-width="1.5" opacity="0.9">
+    <line x1="70" y1="110" x2="830" y2="110"/>
+    <line x1="70" y1="190" x2="830" y2="190"/>
+    <line x1="70" y1="270" x2="830" y2="270"/>
+    <line x1="70" y1="350" x2="830" y2="350"/>
+    <line x1="70" y1="430" x2="830" y2="430"/>
+  </g>
+  <line x1="120" y1="360" x2="780" y2="360" stroke="#F8FAFC" stroke-width="5" stroke-dasharray="14 12"/>
+    <line x1="240" y1="130" x2="240" y2="265" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
+    <rect x="215" y="155" width="50" height="80" rx="7" fill="#EF4444"/>
+    <line x1="215" y1="155" x2="265" y2="155" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
+    <line x1="340" y1="190" x2="340" y2="330" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
+    <rect x="315" y="215" width="50" height="85" rx="7" fill="#EF4444"/>
+    <line x1="315" y1="215" x2="365" y2="215" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
+    <line x1="470" y1="230" x2="470" y2="380" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
+    <rect x="441" y="255" width="58" height="95" rx="7" fill="#EF4444"/>
+    <line x1="441" y1="255" x2="499" y2="255" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
+    <line x1="560" y1="190" x2="560" y2="395" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
+    <rect x="522" y="210" width="76" height="162" rx="7" fill="#22C55E"/>
+    <line x1="522" y1="210" x2="598" y2="210" stroke="#86EFAC" stroke-width="3" stroke-linecap="round"/><rect x="435" y="185" width="165" height="225" rx="24" fill="none" stroke="#FACC15" stroke-width="7"/>
+    <line x1="670" y1="165" x2="670" y2="285" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
+    <rect x="644" y="190" width="52" height="65" rx="7" fill="#22C55E"/>
+    <line x1="644" y1="190" x2="696" y2="190" stroke="#86EFAC" stroke-width="3" stroke-linecap="round"/>
+</svg>
