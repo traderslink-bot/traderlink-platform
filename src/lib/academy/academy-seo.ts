@@ -265,6 +265,6 @@ function normalizePathname(pathname: string): string {
   }
 
   return withLeadingSlash.endsWith("/")
-    ? withLeadingSlash
-    : `${withLeadingSlash}/`;
+    ? withLeadingSlash.slice(0, -1)
+    : withLeadingSlash;
 }

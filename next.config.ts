@@ -5,6 +5,17 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "www.traderslink.pro",
+          },
+        ],
+        destination: "https://traderslink.pro/:path*",
+        permanent: true,
+      },
+      {
         source: "/academy/candlestick-deep-dive-lessons",
         destination: "/academy/candlestick-patterns",
         permanent: true,
