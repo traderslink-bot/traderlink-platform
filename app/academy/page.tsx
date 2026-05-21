@@ -318,8 +318,16 @@ function getAuthNotice(authStatus: string | undefined): AuthNotice {
       return {
         tone: "warning",
         title: "Discord login could not connect.",
-        body: "The login attempt did not finish cleanly. Join the free TradersLink Discord if you have not already, then try logging in again with the same Discord account.",
+        body: "Discord approved the login request, but the Academy could not finish the connection. Try again with the same Discord account. If it still fails, the site owner may need to refresh the Discord app settings.",
         showInvite: true,
+        showLogin: true,
+      };
+    case "progress-storage-failed":
+      return {
+        tone: "warning",
+        title: "Discord login worked, but progress could not be saved.",
+        body: "Your Discord account was verified, but the Academy could not create the progress session. Try again in a moment. If it keeps happening, the progress database connection needs to be checked.",
+        showInvite: false,
         showLogin: true,
       };
     case "missing-config":

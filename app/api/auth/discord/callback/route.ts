@@ -8,9 +8,10 @@ import {
 } from "@/src/lib/academy/academy-progress-store";
 import {
   exchangeDiscordCode,
-  fetchDiscordCurrentGuildMember,
   fetchDiscordCurrentUser,
+  getSafeDiscordAuthErrorMessage,
   getDiscordOAuthConfig,
+  resolveDiscordCurrentGuildMembership,
 } from "@/src/lib/academy/discord-oauth";
 
 export const runtime = "nodejs";
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const token = await exchangeDiscordCode({ config, code });
     const [discordUser, guildMember] = await Promise.all([
       fetchDiscordCurrentUser(token.access_token),
-      fetchDiscordCurrentGuildMember({
+      resolveDiscordCurrentGuildMembership({
         accessToken: token.access_token,
         guildId: config.guildId,
       }),
@@ -48,18 +49,33 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return response;
     }
 
-    const store = new AcademyProgressStore();
-    await store.upsertUser({
-      discordUserId: discordUser.id,
-      username: discordUser.username,
-      globalName: discordUser.global_name ?? null,
-      avatar: discordUser.avatar ?? null,
-      guildId: config.guildId,
-      joinedAt: guildMember.joined_at ?? null,
-      rawUser: discordUser,
-      rawMember: guildMember,
-    });
-    const { token: sessionToken } = await store.createSession(discordUser.id);
+    let sessionToken: string;
+
+    try {
+      const store = new AcademyProgressStore();
+      await store.upsertUser({
+        discordUserId: discordUser.id,
+        username: discordUser.username,
+        globalName: discordUser.global_name ?? null,
+        avatar: discordUser.avatar ?? null,
+        guildId: config.guildId,
+        joinedAt: guildMember.joined_at ?? null,
+        rawUser: discordUser,
+        rawMember: guildMember,
+      });
+      const session = await store.createSession(discordUser.id);
+      sessionToken = session.token;
+    } catch (error) {
+      console.error(
+        "Discord Academy progress session failed",
+        getSafeDiscordAuthErrorMessage(error),
+      );
+
+      const response = academyRedirect(request, "?auth=progress-storage-failed");
+      response.cookies.delete(ACADEMY_OAUTH_STATE_COOKIE);
+      return response;
+    }
+
     const response = academyRedirect(request, "?auth=connected");
 
     response.cookies.delete(ACADEMY_OAUTH_STATE_COOKIE);
@@ -73,9 +89,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     return response;
   } catch (error) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("Discord Academy login failed", error);
-    }
+    console.error(
+      "Discord Academy login failed",
+      getSafeDiscordAuthErrorMessage(error),
+    );
 
     const response = academyRedirect(request, "?auth=failed");
     response.cookies.delete(ACADEMY_OAUTH_STATE_COOKIE);

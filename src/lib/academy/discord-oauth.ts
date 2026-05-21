@@ -18,6 +18,11 @@ export interface DiscordGuildMember {
   user?: DiscordUser;
 }
 
+export interface DiscordUserGuild {
+  id: string;
+  name?: string | null;
+}
+
 interface DiscordTokenResponse {
   access_token: string;
   token_type: string;
@@ -28,6 +33,7 @@ interface DiscordTokenResponse {
 
 const DISCORD_API_BASE = "https://discord.com/api/v10";
 const TRADERSLINK_DISCORD_GUILD_ID = "1433570740430573642";
+const DISCORD_OAUTH_SCOPES = "identify guilds guilds.members.read";
 
 export function getDiscordOAuthConfig(origin: string): DiscordOAuthConfig {
   const clientId = process.env.DISCORD_CLIENT_ID;
@@ -60,7 +66,7 @@ export function buildDiscordAuthorizeUrl(args: {
   url.searchParams.set("response_type", "code");
   url.searchParams.set("client_id", args.config.clientId);
   url.searchParams.set("redirect_uri", args.config.redirectUri);
-  url.searchParams.set("scope", "identify guilds.members.read");
+  url.searchParams.set("scope", DISCORD_OAUTH_SCOPES);
   url.searchParams.set("state", args.state);
 
   return url.toString();
@@ -137,4 +143,53 @@ export async function fetchDiscordCurrentGuildMember(args: {
   }
 
   return (await response.json()) as DiscordGuildMember;
+}
+
+export async function fetchDiscordCurrentUserGuilds(
+  accessToken: string,
+): Promise<DiscordUserGuild[]> {
+  const response = await fetch(`${DISCORD_API_BASE}/users/@me/guilds`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Discord guild list lookup failed with ${response.status}.`);
+  }
+
+  return (await response.json()) as DiscordUserGuild[];
+}
+
+export async function resolveDiscordCurrentGuildMembership(args: {
+  accessToken: string;
+  guildId: string;
+}): Promise<DiscordGuildMember | null> {
+  let memberLookupError: unknown = null;
+
+  try {
+    const guildMember = await fetchDiscordCurrentGuildMember(args);
+
+    if (guildMember) {
+      return guildMember;
+    }
+  } catch (error) {
+    memberLookupError = error;
+  }
+
+  try {
+    const guilds = await fetchDiscordCurrentUserGuilds(args.accessToken);
+
+    if (guilds.some((guild) => guild.id === args.guildId)) {
+      return { joined_at: null };
+    }
+
+    return null;
+  } catch (error) {
+    throw memberLookupError ?? error;
+  }
+}
+
+export function getSafeDiscordAuthErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown Discord auth error.";
 }
