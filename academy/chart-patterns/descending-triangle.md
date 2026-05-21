@@ -7,7 +7,7 @@ secondary_keywords:
   - "descending triangle chart pattern"
   - "stock chart pattern"
   - "technical analysis pattern"
-search_intent: "Learn descending triangles as lower-high pressure structures with support, volume, and failure context."
+search_intent: "Learn descending triangles as lower-high pressure structures with support, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -42,7 +42,7 @@ meta_description: "Learn what descending triangles show, why they can fail, and 
 
 A descending triangle forms when price repeatedly tests a similar support area while making lower highs above it. The pattern shows pressure building against support, but the support area still needs to be tested and reviewed.
 
-The best use of the pattern is to organize the chart: where support is, where lower highs are forming, how volume behaves, and where the read changes.
+The pattern is most useful when support is clear, the lower highs are obvious, and traders can see exactly where the pressure read would change.
 
 ![Candlestick chart showing a descending triangle with flat support and lower highs.](/academy/images/chart-reading/descending-triangle-context.svg)
 
@@ -87,7 +87,7 @@ Descending triangles mislead when traders assume repeated support tests mean sup
 
 ## Example Chart Read
 
-A stock tests the same support zone three times while each bounce becomes weaker. Volume rises on the latest test, but price quickly reclaims the support area. The review asks whether the breakdown had follow-through or whether the reclaim changed the read.
+A stock tests the same support zone three times while each bounce becomes weaker. Volume rises on the latest test, but price quickly reclaims the support area. The next read is whether the breakdown follows through or whether the reclaim changes the structure.
 
 ## Common Mistakes
 
@@ -111,7 +111,7 @@ A final mistake is forgetting to check nearby support below the pattern.
 
 ## Key Takeaway
 
-A descending triangle is repeated support plus lower highs. The useful review is whether pressure, volume, and follow-through confirm or weaken that read.
+A descending triangle is repeated support plus lower highs. The useful read is whether pressure, volume, and follow-through support that structure or weaken it.
 
 ## FAQ
 

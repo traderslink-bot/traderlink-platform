@@ -2,15 +2,15 @@
 title: "Red-To-Green Move"
 slug: "/academy/candle-behavior/red-to-green-move/"
 primary_keyword: "red-to-green move"
-secondary_keywords: ["red-to-green move candle", "red-to-green move pattern", "candle behavior"]
-search_intent: "Learn how to identify and read Red-To-Green Move candle behavior."
+secondary_keywords: ["red-to-green move", "red to green stocks", "session reclaim behavior"]
+search_intent: "Learn how to identify and read Red-To-Green Move session behavior."
 status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Learn how to identify Red-To-Green Move and read the behavior around it."
+cta: "Learn how to identify a Red-To-Green Move and read the session behavior around it."
 recommended_previous: "/academy/candle-behavior/exhaustion-gap/"
 recommended_next: "/academy/candle-behavior/green-to-red-move/"
 academy_level: "Practical"
@@ -23,7 +23,7 @@ visual_assets: ["/academy/images/chart-reading/candle-behavior/red-to-green-move
 schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Red-To-Green Move Explained"
-meta_description: "Learn Red-To-Green Move by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
+meta_description: "Learn Red-To-Green Move behavior by prior close, session open, reclaim behavior, volume, acceptance, and failed reclaim risk."
 ---
 
 # Red-To-Green Move
@@ -42,9 +42,9 @@ A red-to-green move happens when price starts below a session reference and then
 
 ## How To Identify It
 
-* **Body:** Early candles are below the reference area, then green candles reclaim above it.
-* **Wicks:** Wicks vary. The important visual is the cross from below to above the reference.
-* **Relationship:** The sequence needs a reference such as prior close, session open, or another session line.
+* **Starting location:** Price trades below the reference area first.
+* **Reclaim:** Price crosses back above the reference and starts holding above it.
+* **Reference levels:** The sequence needs a clear prior close, session open, VWAP, or premarket level.
 
 Start with the reference line. Price should trade below it first, then cross back above it and begin holding above that area instead of immediately fading.
 

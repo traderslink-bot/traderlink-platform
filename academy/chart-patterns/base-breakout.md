@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Base Breakout as chart context with level, volume, and failure context."
+search_intent: "Learn Base Breakout as chart context with levels, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"

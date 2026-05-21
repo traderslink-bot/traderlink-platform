@@ -2,8 +2,8 @@
 title: "Bottoming Tail Candle"
 slug: "/academy/candle-behavior/bottoming-tail-candle/"
 primary_keyword: "bottoming tail candle"
-secondary_keywords: ["bottoming tail candle candle", "bottoming tail candle pattern", "candle behavior"]
-search_intent: "Learn how to identify and read Bottoming Tail Candle candle behavior."
+secondary_keywords: ["bottoming tail candle", "bottoming tail pattern", "lower rejection candle"]
+search_intent: "Learn how to identify and read Bottoming Tail Candle behavior."
 status: "ready"
 product_area: "Education"
 availability: "educational"
@@ -52,7 +52,7 @@ Focus on the long lower tail and the body sitting closer to the upper part of th
 
 Bottoming tails are most useful to study where price tests lower levels and then closes away from the low.
 
-Bottoming tails matter most near support, prior lows, reclaim areas, or after a sharp flush. Away from a meaningful level, the candle can simply show volatility instead of a useful rejection area.
+Bottoming tails matter most near support, prior lows, reclaim areas, or after a sharp flush. Away from a meaningful level, the same lower tail may only show volatility instead of a useful rejection area.
 
 ## What It Shows
 
@@ -62,7 +62,7 @@ A bottoming tail shows failed selling pressure. Price traded down first, buyers 
 
 Watch whether price holds above the tail low and whether later candles can build above the body. The tail low becomes the area that should not be casually lost.
 
-The read weakens if price quickly breaks below the tail low. That means the lower area was not rejected for long.
+The read weakens if price quickly breaks below the tail low. That means sellers returned to the same lower area and buyers did not hold the recovery.
 
 ## Common Confusion
 

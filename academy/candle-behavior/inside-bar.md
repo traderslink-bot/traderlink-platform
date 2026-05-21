@@ -70,7 +70,7 @@ An inside bar is not a single candle pattern. It needs the prior candle for comp
 
 ## Key Takeaway
 
-An inside bar shows compression inside a prior candle range. The important read comes from how price leaves, or fails to leave, that range.
+An inside bar shows compression inside the mother candle range. The important read comes from whether price can leave that range and hold outside it.
 
 ## Related Lessons
 

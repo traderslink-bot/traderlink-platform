@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Falling Wedge as chart context with level, volume, and failure context."
+search_intent: "Learn Falling Wedge as chart context with levels, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -85,7 +85,7 @@ Falling wedges mislead when traders assume every narrowing decline has to revers
 
 ## Example Chart Read
 
-A stock trends lower but each push lower becomes smaller. Review asks whether any reclaim had volume and whether the old resistance area became support or failed.
+A stock trends lower but each push lower becomes smaller. The useful read is whether a reclaim comes with volume and whether the old resistance area turns into support or fails again.
 
 ## Common Mistakes
 
@@ -109,7 +109,7 @@ A final mistake is using the pattern label to justify a reactive trade.
 
 ## Key Takeaway
 
-A falling wedge describes tightening structure. It needs level, volume, and failure context before it becomes useful for review.
+A falling wedge is useful when the tightening decline is visible and the upper boundary gives price a clear area to reclaim or fail.
 
 ## FAQ
 

@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Rising Wedge as chart context with level, volume, and failure context."
+search_intent: "Learn Rising Wedge as chart context with levels, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -85,7 +85,7 @@ Rising wedges mislead when traders call a top before price confirms anything.
 
 ## Example Chart Read
 
-A stock keeps making higher highs, but each push becomes smaller and volume fades. Review asks whether a break below the wedge actually followed through.
+A stock keeps making higher highs, but each push becomes smaller and volume fades. The useful read is whether a break below the wedge actually follows through.
 
 ## Common Mistakes
 

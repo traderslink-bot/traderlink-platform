@@ -7,7 +7,7 @@ secondary_keywords:
   - "double bottom chart pattern"
   - "stock chart pattern"
   - "support reversal pattern"
-search_intent: "Learn double bottoms as repeated-support structures with reclaim, volume, and failure context."
+search_intent: "Learn double bottoms as repeated-support structures with reclaim behavior, volume, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -42,7 +42,7 @@ meta_description: "Learn what double bottoms show, why they can fail, and how to
 
 A double bottom forms when price tests a similar support area twice and the second test holds or reclaims. It can show that sellers failed to push through the same area again.
 
-The useful review is whether support actually held, whether price reclaimed a meaningful area, and whether volume and structure improved after the second test.
+The useful read is whether support actually held, whether price reclaimed a meaningful area, and whether volume and structure improved after the second test.
 
 ![Candlestick chart showing a double bottom with two support tests.](/academy/images/chart-reading/double-bottom-context.svg)
 
@@ -87,7 +87,7 @@ Double bottoms mislead when traders call the pattern before price reacts after t
 
 ## Example Chart Read
 
-A stock sells into low of day, bounces, then revisits the same support zone. The second test holds with less selling pressure, and price reclaims the midpoint of the prior bounce. The review asks whether the reclaim held or failed.
+A stock sells into low of day, bounces, then revisits the same support zone. The second test holds with less selling pressure, and price reclaims the midpoint of the prior bounce. The next read is whether that reclaim holds or fails.
 
 ## Common Mistakes
 

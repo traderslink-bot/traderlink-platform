@@ -2,15 +2,15 @@
 title: "Gap Fill"
 slug: "/academy/candle-behavior/gap-fill/"
 primary_keyword: "gap fill"
-secondary_keywords: ["gap fill candle", "gap fill pattern", "candle behavior"]
-search_intent: "Learn how to identify and read Gap Fill candle behavior."
+secondary_keywords: ["gap fill trading", "gap fill stocks", "session gap behavior"]
+search_intent: "Learn how to identify and read Gap Fill session behavior."
 status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Learn how to identify Gap Fill and read the behavior around it."
+cta: "Learn how to identify Gap Fill behavior and read the session context around it."
 recommended_previous: "/academy/candle-behavior/gap-and-go/"
 recommended_next: "/academy/candle-behavior/exhaustion-gap/"
 academy_level: "Practical"
@@ -23,7 +23,7 @@ visual_assets: ["/academy/images/chart-reading/candle-behavior/gap-fill-shape.sv
 schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Gap Fill Explained"
-meta_description: "Learn Gap Fill by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
+meta_description: "Learn Gap Fill behavior by prior close, current open, gap space, premarket context, fade, reclaim, and reference levels."
 ---
 
 # Gap Fill
@@ -42,8 +42,8 @@ A gap fill happens when price moves back into the empty space between the new se
 
 ## How To Identify It
 
-* **Body:** Candles move back toward the prior close area.
-* **Wicks:** Wicks vary. The key is price traveling through the gap space.
+* **Gap space:** Price moves back into the space between the current open and prior close.
+* **Reference area:** The prior close is the main destination area to watch.
 * **Relationship:** The current session starts away from the prior close, then moves back into that space.
 
 Find the prior close and the current session open. A gap fill begins when price moves back through that gap area instead of holding the opening side.

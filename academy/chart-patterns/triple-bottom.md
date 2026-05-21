@@ -7,7 +7,7 @@ secondary_keywords:
   - "triple bottom chart pattern"
   - "repeated support pattern"
   - "stock chart pattern"
-search_intent: "Learn triple bottoms as repeated-support structures with resistance, volume, and failure context."
+search_intent: "Learn triple bottoms as repeated-support structures with resistance, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"

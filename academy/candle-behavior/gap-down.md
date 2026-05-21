@@ -2,15 +2,15 @@
 title: "Gap Down"
 slug: "/academy/candle-behavior/gap-down/"
 primary_keyword: "gap down"
-secondary_keywords: ["gap down candle", "gap down pattern", "candle behavior"]
-search_intent: "Learn how to identify and read Gap Down candle behavior."
+secondary_keywords: ["gap down stocks", "gap down trading", "session gap behavior"]
+search_intent: "Learn how to identify and read Gap Down session behavior."
 status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Learn how to identify Gap Down and read the behavior around it."
+cta: "Learn how to identify a Gap Down and read the session behavior around it."
 recommended_previous: "/academy/candle-behavior/gap-up/"
 recommended_next: "/academy/candle-behavior/gap-and-go/"
 academy_level: "Practical"
@@ -23,7 +23,7 @@ visual_assets: ["/academy/images/chart-reading/candle-behavior/gap-down-shape.sv
 schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Gap Down Explained"
-meta_description: "Learn Gap Down by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
+meta_description: "Learn Gap Down behavior by prior close, current open, premarket context, reference levels, acceptance, reclaim, and gap fill risk."
 ---
 
 # Gap Down
@@ -42,9 +42,9 @@ A gap down happens when a new session opens below the prior session close. It ca
 
 ## How To Identify It
 
-* **Body:** The first current-session candle starts below the prior close area.
-* **Wicks:** Wicks vary. The important visual is the empty space between sessions.
-* **Relationship:** The current session starts below where the prior session finished.
+* **Opening location:** The current session starts below the prior close area.
+* **Gap space:** The important visual is the empty space between the prior close and current open.
+* **Reference levels:** Compare the open with the prior close, previous day low, premarket low, and nearby support.
 
 Start with the current session open. It should open below the prior session close, then be compared with the previous day low, premarket low, and nearby support.
 

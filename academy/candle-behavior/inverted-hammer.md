@@ -58,7 +58,7 @@ This candle matters most after a pullback, selloff, or test near support because
 
 ## What It Shows
 
-An inverted hammer shows that buyers tried to push price higher after a weak move, but they could not keep price near the high by the close. That makes it an early warning of a possible shift, not automatic proof that control has changed.
+An inverted hammer shows that buyers tried to push price higher after a weak move, but they could not keep price near the high by the close. The next read is whether buyers can come back and accept price above that upper wick area.
 
 ## What To Watch Next
 
@@ -72,7 +72,7 @@ The same shape can be called a shooting star after an up move. Context changes t
 
 ## Key Takeaway
 
-An inverted hammer shows buyers testing higher prices after weakness. It needs follow-through because the candle did not close near the high.
+An inverted hammer shows buyers testing higher prices after weakness. The candle becomes more useful when later price action can reclaim and hold the upper-wick area.
 
 ## Related Lessons
 

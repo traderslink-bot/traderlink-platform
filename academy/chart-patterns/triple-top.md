@@ -7,7 +7,7 @@ secondary_keywords:
   - "triple top chart pattern"
   - "repeated resistance pattern"
   - "stock chart pattern"
-search_intent: "Learn triple tops as repeated-resistance structures with support, volume, and failure context."
+search_intent: "Learn triple tops as repeated-resistance structures with support, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"

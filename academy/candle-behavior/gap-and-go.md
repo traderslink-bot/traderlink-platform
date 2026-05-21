@@ -2,15 +2,15 @@
 title: "Gap And Go"
 slug: "/academy/candle-behavior/gap-and-go/"
 primary_keyword: "gap and go"
-secondary_keywords: ["gap and go candle", "gap and go pattern", "candle behavior"]
-search_intent: "Learn how to identify and read Gap And Go candle behavior."
+secondary_keywords: ["gap and go stocks", "gap and go trading", "session gap behavior"]
+search_intent: "Learn how to identify and read Gap And Go session behavior."
 status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Learn how to identify Gap And Go and read the behavior around it."
+cta: "Learn how to identify Gap And Go behavior and read the session context around it."
 recommended_previous: "/academy/candle-behavior/gap-down/"
 recommended_next: "/academy/candle-behavior/gap-fill/"
 academy_level: "Practical"
@@ -23,7 +23,7 @@ visual_assets: ["/academy/images/chart-reading/candle-behavior/gap-and-go-shape.
 schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Gap And Go Explained"
-meta_description: "Learn Gap And Go by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
+meta_description: "Learn Gap And Go behavior by opening location, prior close, premarket structure, volume, acceptance, and gap fill risk."
 ---
 
 # Gap And Go
@@ -42,8 +42,8 @@ A gap and go happens when price opens with a gap and then continues in the gap d
 
 ## How To Identify It
 
-* **Body:** Current-session candles expand away from the prior close.
-* **Wicks:** Cleaner candles often have bodies closing in the continuation direction.
+* **Opening location:** Price starts away from the prior close instead of opening inside the prior range.
+* **Acceptance:** Price holds the opening side and keeps moving away from the gap area.
 * **Relationship:** The gap is followed by continuation instead of an immediate move back into the gap.
 
 Look for a session that opens away from the prior close and then holds the opening side. The follow-through after the open is what separates gap and go behavior from a simple gap.

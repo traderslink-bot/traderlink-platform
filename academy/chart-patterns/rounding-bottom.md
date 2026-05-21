@@ -7,7 +7,7 @@ secondary_keywords:
   - "rounding bottom chart pattern"
   - "swing trading base pattern"
   - "longer base building pattern"
-search_intent: "Learn rounding bottoms as longer base-building structures with trend, volume, and failure context."
+search_intent: "Learn rounding bottoms as longer base-building structures with trend, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"

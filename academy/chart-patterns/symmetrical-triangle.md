@@ -7,7 +7,7 @@ secondary_keywords:
   - "symmetrical triangle chart pattern"
   - "stock chart pattern"
   - "compression pattern"
-search_intent: "Learn symmetrical triangles as compression structures with level, volume, and failure context."
+search_intent: "Learn symmetrical triangles as compression structures with levels, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -87,7 +87,7 @@ Symmetrical triangles mislead when traders guess direction before price leaves t
 
 ## Example Chart Read
 
-A stock makes lower highs and higher lows for 20 minutes while volume dries up. Price breaks above the upper boundary, then falls back inside the triangle. The review asks whether the break had volume, whether it held, and whether the failed move changed the read.
+A stock makes lower highs and higher lows for 20 minutes while volume dries up. Price breaks above the upper boundary, then falls back inside the triangle. The useful read is whether the break had volume, whether it held, and whether the failed move changed the structure.
 
 ## Common Mistakes
 

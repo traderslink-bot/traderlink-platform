@@ -7,7 +7,7 @@ secondary_keywords:
   - "bear flag chart pattern"
   - "bear flag breakdown"
   - "day trading bear flag"
-search_intent: "Learn bear flags as controlled-bounce patterns with level, volume, and failure context."
+search_intent: "Learn bear flags as controlled-bounce patterns with levels, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -93,7 +93,7 @@ Bear flags mislead when traders enter late after the easy location has passed, i
 
 ## Example Chart Read
 
-A stock breaks below a morning support level on rising volume, then bounces in a tight upward channel. Volume cools during the bounce. The review asks whether resistance held, whether support below was too close, and whether a reclaim changed the structure.
+A stock breaks below a morning support level on rising volume, then bounces in a tight upward channel. Volume cools during the bounce. The useful read is whether resistance holds, whether support below is too close, and whether a reclaim changes the structure.
 
 ## Common Mistakes
 
@@ -133,6 +133,6 @@ A clear first move, controlled bounce, visible resistance, volume context, and a
 
 They often fail when price reclaims resistance, support holds strongly, volume shifts, or the setup is already extended.
 
-### Should a bear flag be used by itself?
+### What else should a bear flag be compared with?
 
-No. It should be reviewed with levels, volume, trend, liquidity, and risk.
+Compare the flag with nearby support, resistance created by the bounce, volume during the pause, liquidity, and the reclaim area that would change the read.

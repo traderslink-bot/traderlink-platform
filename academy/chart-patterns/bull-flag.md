@@ -7,7 +7,7 @@ secondary_keywords:
   - "bull flag chart pattern"
   - "bull flag breakout"
   - "day trading bull flag"
-search_intent: "Learn bull flags as controlled-pullback patterns with level, volume, and failure context."
+search_intent: "Learn bull flags as controlled-pullback patterns with levels, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -108,7 +108,7 @@ Bull flags mislead when traders chase after the break, ignore extension, or call
 
 ## Example Chart Read
 
-A stock gaps up on news, moves sharply higher, then pulls back in a tight range while holding above VWAP. The review asks whether the pullback stayed controlled, whether volume supported a later attempt, and where the flag failed.
+A stock gaps up on news, moves sharply higher, then pulls back in a tight range while holding above VWAP. The useful read is whether the pullback stayed controlled, whether volume supported the next attempt, and where the flag stopped working.
 
 ## Common Mistakes
 
@@ -141,9 +141,9 @@ The pattern name matters less than whether the structure was visible, reviewable
 
 It is a strong move followed by a controlled pullback or consolidation.
 
-### Does a bull flag always continue?
+### What weakens a bull flag?
 
-No. It can fail or fake out.
+A bull flag weakens when the pullback loses structure, price gets too extended, volume fades on the next attempt, or nearby resistance stops the move.
 
 ### What makes it cleaner?
 
@@ -157,6 +157,6 @@ They fail when price is extended, volume fades, resistance holds, or the flag su
 
 Review initial move, pullback quality, volume, entry timing, risk, and failure.
 
-### Is a bull flag enough by itself?
+### What else should a bull flag be compared with?
 
-No. It is a structure to review with levels, volume, entry location, and risk.
+Compare the flag with nearby support, nearby resistance, volume during the pause, and whether the entry is still close to the area that would prove the read wrong.

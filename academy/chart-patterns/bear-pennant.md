@@ -7,7 +7,7 @@ secondary_keywords:
   - "bear pennant chart pattern"
   - "downside momentum pattern"
   - "pennant pattern"
-search_intent: "Learn bear pennants as downside momentum-compression structures with volume, level, and failure context."
+search_intent: "Learn bear pennants as downside momentum-compression structures with volume, levels, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"

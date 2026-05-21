@@ -7,7 +7,7 @@ secondary_keywords:
   - "cup and handle chart pattern"
   - "swing trading chart pattern"
   - "multi-day breakout pattern"
-search_intent: "Learn cup and handle patterns as multi-day base structures with handle, volume, and failure context."
+search_intent: "Learn cup and handle patterns as multi-day base structures with handle quality, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"

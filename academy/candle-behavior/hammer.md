@@ -46,7 +46,7 @@ A hammer shows lower rejection after weakness. Sellers pushed price down during 
 * **Wicks:** Long lower wick with little or no upper wick.
 * **Relationship:** The single candle matters most after price has already been moving down or testing a lower area.
 
-Start with the lower wick. The body should be small and near the high, showing price traded down first and then closed away from the low. After that, check whether it formed after weakness or near a support area.
+Start with the lower wick. The body should be small and near the high, showing price traded down first and then closed away from the low. Then check the location: the candle reads much better after weakness or into a support area than it does in the middle of a messy range.
 
 ## Context
 
@@ -54,7 +54,7 @@ A hammer is most useful to study after selling pressure, near support, a prior l
 
 ![Hammer candle forming after a downward move near a lower support area.](/academy/images/chart-reading/candle-behavior/hammer-context.svg)
 
-The shape matters most when it appears after selling pressure, near support, a prior low, VWAP, or another area where buyers were already expected to defend price. The same candle in the middle of chop carries much less information.
+The shape matters most when it appears after selling pressure, near support, a prior low, VWAP, or another area where buyers were already expected to defend price. In the middle of chop, the same shape may only show a temporary bounce inside noise.
 
 ## What It Shows
 
@@ -64,7 +64,7 @@ A hammer shows that sellers had control early in the candle, but they could not 
 
 Watch whether the next candles hold above the hammer body, reclaim the hammer high, or at least respect the hammer low.
 
-The read weakens if price breaks back below the hammer low or cannot hold the upper part of the candle. That means buyers did not defend the area the hammer was supposed to show them defending.
+The read weakens if price breaks back below the hammer low or cannot hold the upper part of the candle. That tells you the lower rejection did not turn into a defended area.
 
 ## Common Confusion
 

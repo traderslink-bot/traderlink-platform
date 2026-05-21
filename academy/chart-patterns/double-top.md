@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Double Top as chart context with level, volume, and failure context."
+search_intent: "Learn Double Top as chart context with levels, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -86,7 +86,7 @@ Double tops mislead when traders call the pattern before the second rejection an
 
 ## Example Chart Read
 
-A stock tests high of day, pulls back, then tests the same area again and rejects. Review asks whether the second test was weaker and whether support later failed or reclaimed.
+A stock tests high of day, pulls back, then tests the same area again and rejects. The useful read is whether the second test was weaker and whether price later lost or reclaimed the support between the two highs.
 
 ## Common Mistakes
 

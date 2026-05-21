@@ -2,8 +2,8 @@
 title: "Topping Tail Candle"
 slug: "/academy/candle-behavior/topping-tail-candle/"
 primary_keyword: "topping tail candle"
-secondary_keywords: ["topping tail candle candle", "topping tail candle pattern", "candle behavior"]
-search_intent: "Learn how to identify and read Topping Tail Candle candle behavior."
+secondary_keywords: ["topping tail candle", "topping tail pattern", "upper rejection candle"]
+search_intent: "Learn how to identify and read Topping Tail Candle behavior."
 status: "ready"
 product_area: "Education"
 availability: "educational"
@@ -62,7 +62,7 @@ A topping tail shows failed upside continuation. Buyers pushed first, but the ca
 
 Watch whether price stays below the tail high and starts accepting under the candle body. The rejected high becomes the first area price should not easily reclaim.
 
-The read weakens if price reclaims the tail high. That means the rejection did not hold.
+The read weakens if price reclaims the tail high. That means buyers returned to the rejected area and sellers did not keep control of it.
 
 ## Common Confusion
 

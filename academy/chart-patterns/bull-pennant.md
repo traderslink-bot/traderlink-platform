@@ -7,7 +7,7 @@ secondary_keywords:
   - "bull pennant chart pattern"
   - "momentum continuation pattern"
   - "pennant pattern"
-search_intent: "Learn bull pennants as momentum-compression structures with volume, level, and failure context."
+search_intent: "Learn bull pennants as momentum-compression structures with volume, levels, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"

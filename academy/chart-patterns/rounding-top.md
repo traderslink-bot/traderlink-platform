@@ -7,7 +7,7 @@ secondary_keywords:
   - "rounding top chart pattern"
   - "swing trading distribution pattern"
   - "multi-day topping pattern"
-search_intent: "Learn rounding tops as gradual weakening structures with resistance, volume, and failure context."
+search_intent: "Learn rounding tops as gradual weakening structures with resistance, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"

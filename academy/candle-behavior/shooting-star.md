@@ -50,7 +50,7 @@ Look for a small body near the lower part of the candle and a long upper wick. T
 
 ## Context
 
-A shooting star is most useful to study after a rally, near resistance, high of day, or another upper reference area.
+A shooting star is most useful to study after a rally, near resistance, high of day, or another upper reference area. That location matters because the candle is showing an upside attempt that could not hold where buyers wanted continuation.
 
 ![Shooting star candle forming after an upward move near an upper resistance area.](/academy/images/chart-reading/candle-behavior/shooting-star-context.svg)
 
@@ -62,7 +62,7 @@ A shooting star shows that buyers tried to continue higher, but sellers rejected
 
 Watch whether price stays below the upper wick area and starts losing the candle body. A stronger bearish response usually avoids reclaiming the rejected high.
 
-The read weakens if price reclaims the upper wick area. That means the rejection is being taken back.
+The read weakens if price reclaims the upper wick area. That means traders are accepting the price zone that sellers had rejected.
 
 ## Common Confusion
 

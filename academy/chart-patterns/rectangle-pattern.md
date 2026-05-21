@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Rectangle Pattern as chart context with level, volume, and failure context."
+search_intent: "Learn Rectangle Pattern as chart context with levels, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -85,7 +85,7 @@ Rectangles mislead when traders enter in the middle of the range with no clear r
 
 ## Example Chart Read
 
-A stock trades between the same support and resistance zones for several sessions. A review asks whether a later break held outside the range or failed back inside.
+A stock trades between the same support and resistance zones for several sessions. The useful read is whether a later break holds outside the range or fails back inside.
 
 ## Common Mistakes
 
@@ -109,7 +109,7 @@ A final mistake is using the pattern label to justify a reactive trade.
 
 ## Key Takeaway
 
-A rectangle is a range. The useful review is whether the trader respected range support, range resistance, and failed breaks instead of guessing direction.
+A rectangle is a range. The useful read is whether price respects range support, range resistance, and failed breaks instead of forcing a direction too early.
 
 ## FAQ
 

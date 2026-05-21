@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Parabolic Move as chart context with level, volume, and failure context."
+search_intent: "Learn Parabolic Move as chart context with levels, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -85,7 +85,7 @@ Parabolic moves mislead because speed can feel like certainty while risk distanc
 
 ## Example Chart Read
 
-A stock starts with controlled momentum, then candles become larger and farther from support. Review asks whether the trader entered a structured setup or chased after acceleration.
+A stock starts with controlled momentum, then candles become larger and farther from support. The useful read is whether the entry came from a structured setup or from chasing after acceleration.
 
 ## Common Mistakes
 

@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Failed Breakout Pattern as chart context with level, volume, and failure context."
+search_intent: "Learn Failed Breakout Pattern as chart context with levels, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -85,7 +85,7 @@ Failed breakouts mislead when traders refuse to accept that the original breakou
 
 ## Example Chart Read
 
-A stock breaks high of day, draws scanner attention, then falls back below the level with fading volume. Review asks whether the entry was late and whether the failure plan was followed.
+A stock breaks high of day, draws scanner attention, then falls back below the level with fading volume. The useful read is whether late buyers are now trapped and whether price can reclaim the breakout area.
 
 ## Common Mistakes
 

@@ -7,7 +7,7 @@ secondary_keywords:
   - "head and shoulders chart pattern"
   - "stock chart pattern"
   - "neckline pattern"
-search_intent: "Learn head and shoulders patterns as weakening-structure setups with neckline, volume, and failure context."
+search_intent: "Learn head and shoulders patterns as weakening-structure setups with neckline behavior, volume, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -87,7 +87,7 @@ Head and shoulders patterns mislead when traders focus on the shape while ignori
 
 ## Example Chart Read
 
-A stock makes a new high, pulls back, pushes to a higher high on weaker volume, then forms a lower high near resistance. Price tests the neckline and briefly breaks it, but then reclaims. The review asks whether the neckline break held or failed.
+A stock makes a new high, pulls back, pushes to a higher high on weaker volume, then forms a lower high near resistance. Price tests the neckline and briefly breaks it, but then reclaims. The next read is whether the neckline break holds or turns into a failed breakdown.
 
 ## Common Mistakes
 

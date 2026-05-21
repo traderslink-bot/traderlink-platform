@@ -2,15 +2,15 @@
 title: "Exhaustion Gap"
 slug: "/academy/candle-behavior/exhaustion-gap/"
 primary_keyword: "exhaustion gap"
-secondary_keywords: ["exhaustion gap candle", "exhaustion gap pattern", "candle behavior"]
-search_intent: "Learn how to identify and read Exhaustion Gap candle behavior."
+secondary_keywords: ["exhaustion gap trading", "exhaustion gap stocks", "session gap behavior"]
+search_intent: "Learn how to identify and read Exhaustion Gap session behavior."
 status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Learn how to identify Exhaustion Gap and read the behavior around it."
+cta: "Learn how to identify Exhaustion Gap behavior and read the session context around it."
 recommended_previous: "/academy/candle-behavior/gap-fill/"
 recommended_next: "/academy/candle-behavior/red-to-green-move/"
 academy_level: "Practical"
@@ -23,7 +23,7 @@ visual_assets: ["/academy/images/chart-reading/candle-behavior/exhaustion-gap-sh
 schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Exhaustion Gap Explained"
-meta_description: "Learn Exhaustion Gap by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
+meta_description: "Learn Exhaustion Gap behavior by extension, opening location, late participation, acceptance, rejection, and gap fill behavior."
 ---
 
 # Exhaustion Gap
@@ -42,8 +42,8 @@ An exhaustion gap happens late in a move when price gaps in the trend direction 
 
 ## How To Identify It
 
-* **Body:** The gap is followed by a final push and then a reversal or sharp giveback.
-* **Wicks:** A rejection wick or strong opposite candle often appears after the final extension.
+* **Opening location:** The gap appears after price has already traveled far in one direction.
+* **Acceptance:** Price struggles to keep accepting the new high or low after the gap.
 * **Relationship:** The gap and extension happen first, then price fails to hold the stretched area.
 
 Look for a gap after price has already made a large move. The gap should be followed by stalling, rejection, or a move back into the gap area rather than clean continuation.

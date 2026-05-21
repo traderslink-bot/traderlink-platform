@@ -7,7 +7,7 @@ secondary_keywords:
   - "stock chart pattern"
   - "technical analysis pattern"
   - "pattern review"
-search_intent: "Learn Inverse Head And Shoulders as chart context with level, volume, and failure context."
+search_intent: "Learn Inverse Head And Shoulders as chart context with levels, volume behavior, and where the read changes."
 status: "draft"
 product_area: "Education"
 availability: "educational"
@@ -86,7 +86,7 @@ Inverse head and shoulders patterns mislead when traders force the shape before 
 
 ## Example Chart Read
 
-A stock sells off, makes a lower low, then fails to make another lower low and presses into a neckline. Review asks whether neckline behavior improved structure or failed again.
+A stock sells off, makes a lower low, then fails to make another lower low and presses into a neckline. The useful read is whether the neckline behavior improves structure or fails again.
 
 ## Common Mistakes
 

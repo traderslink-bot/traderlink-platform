@@ -2,15 +2,15 @@
 title: "Gap Up"
 slug: "/academy/candle-behavior/gap-up/"
 primary_keyword: "gap up"
-secondary_keywords: ["gap up candle", "gap up pattern", "candle behavior"]
-search_intent: "Learn how to identify and read Gap Up candle behavior."
+secondary_keywords: ["gap up stocks", "gap up trading", "session gap behavior"]
+search_intent: "Learn how to identify and read Gap Up session behavior."
 status: "ready"
 product_area: "Education"
 availability: "educational"
 content_type: "academy_lesson"
 funnel_stage: "awareness"
 priority: "3"
-cta: "Learn how to identify Gap Up and read the behavior around it."
+cta: "Learn how to identify a Gap Up and read the session behavior around it."
 recommended_previous: "/academy/candle-behavior/outside-bar/"
 recommended_next: "/academy/candle-behavior/gap-down/"
 academy_level: "Practical"
@@ -23,7 +23,7 @@ visual_assets: ["/academy/images/chart-reading/candle-behavior/gap-up-shape.svg"
 schema: ["Article"]
 last_reviewed: "2026-05-19"
 meta_title: "Gap Up Explained"
-meta_description: "Learn Gap Up by shape, candle count, context, buyer-seller behavior, confirmation, failure, and common confusion."
+meta_description: "Learn Gap Up behavior by prior close, current open, premarket context, reference levels, acceptance, fade, and gap fill risk."
 ---
 
 # Gap Up
@@ -42,9 +42,9 @@ A gap up happens when a new session opens above the prior session close. The mov
 
 ## How To Identify It
 
-* **Body:** The first current-session candle starts above the prior close area.
-* **Wicks:** Wicks vary. The important visual is the empty space between sessions.
-* **Relationship:** The current session starts above where the prior session finished.
+* **Opening location:** The current session starts above the prior close area.
+* **Gap space:** The important visual is the empty space between the prior close and current open.
+* **Reference levels:** Compare the open with the prior close, previous day high, premarket high, and nearby resistance.
 
 Start with the current session open. It should open above the prior session close, then be compared with the previous day high, premarket high, and nearby resistance.
 
