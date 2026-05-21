@@ -5,15 +5,15 @@
     <path d="M104 142H856M104 230H856M104 318H856M104 406H856"/>
     <path d="M200 82V458M320 82V458M440 82V458M560 82V458M680 82V458M800 82V458"/>
   </g>
-  <g opacity="1"><line x1="165" y1="118" x2="165" y2="232" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="145" y="144" width="40" height="64" rx="6" fill="#ef4444"/></g>
-  <g opacity="1"><line x1="225" y1="180" x2="225" y2="316" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="203" y="210" width="44" height="76" rx="6" fill="#ef4444"/></g>
-  <g opacity="1"><line x1="285" y1="258" x2="285" y2="406" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="261" y="288" width="48" height="88" rx="6" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="165" y1="118" x2="165" y2="232" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="145" y="144" width="40" height="64" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="225" y1="180" x2="225" y2="316" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="203" y="210" width="44" height="76" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="285" y1="258" x2="285" y2="406" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="261" y="288" width="48" height="88" fill="#ef4444"/></g>
   <polygon points="382,318 704,276 684,162 362,204" fill="#38bdf8" fill-opacity="0.1" stroke="#38bdf8" stroke-width="4" stroke-linejoin="round" opacity=".95"/>
   <path d="M382 318L704 276" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" opacity="0.95"/>
   <path d="M362 204L684 162" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" opacity="0.95"/>
-  <g opacity="1"><line x1="405" y1="260" x2="405" y2="368" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="388" y="292" width="34" height="48" rx="6" fill="#22c55e"/></g>
-  <g opacity="1"><line x1="475" y1="238" x2="475" y2="348" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="458" y="270" width="34" height="46" rx="6" fill="#ef4444"/></g>
-  <g opacity="1"><line x1="545" y1="218" x2="545" y2="326" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="528" y="248" width="34" height="48" rx="6" fill="#22c55e"/></g>
-  <g opacity="1"><line x1="615" y1="196" x2="615" y2="304" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="598" y="228" width="34" height="44" rx="6" fill="#ef4444"/></g>
-  <g opacity="1"><line x1="710" y1="274" x2="710" y2="420" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="688" y="306" width="44" height="76" rx="6" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="405" y1="260" x2="405" y2="368" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="388" y="292" width="34" height="48" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="475" y1="238" x2="475" y2="348" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="458" y="270" width="34" height="46" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="545" y1="218" x2="545" y2="326" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="528" y="248" width="34" height="48" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="615" y1="196" x2="615" y2="304" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="598" y="228" width="34" height="44" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="710" y1="274" x2="710" y2="420" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="688" y="306" width="44" height="76" fill="#ef4444"/></g>
 </svg>

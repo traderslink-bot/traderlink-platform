@@ -16,14 +16,14 @@
     <line x1="54" y1="224" x2="344" y2="224" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
     <g stroke-linecap="round" stroke-width="3">
       <g stroke="#21c784" fill="#21c784">
-        <line x1="80" y1="208" x2="80" y2="248"/><rect x="71" y="218" width="18" height="18" rx="2"/>
-        <line x1="128" y1="172" x2="128" y2="226"/><rect x="119" y="188" width="18" height="24" rx="2"/>
-        <line x1="176" y1="130" x2="176" y2="202"/><rect x="167" y="150" width="18" height="34" rx="2"/>
-        <line x1="224" y1="166" x2="224" y2="222"/><rect x="215" y="182" width="18" height="26" rx="2"/>
-        <line x1="272" y1="118" x2="272" y2="188"/><rect x="263" y="138" width="18" height="32" rx="2"/>
+        <line x1="80" y1="208" x2="80" y2="248"/><rect x="71" y="218" width="18" height="18"/>
+        <line x1="128" y1="172" x2="128" y2="226"/><rect x="119" y="188" width="18" height="24"/>
+        <line x1="176" y1="130" x2="176" y2="202"/><rect x="167" y="150" width="18" height="34"/>
+        <line x1="224" y1="166" x2="224" y2="222"/><rect x="215" y="182" width="18" height="26"/>
+        <line x1="272" y1="118" x2="272" y2="188"/><rect x="263" y="138" width="18" height="32"/>
       </g>
       <g stroke="#ef4444" fill="#ef4444">
-        <line x1="320" y1="108" x2="320" y2="178"/><rect x="311" y="128" width="18" height="32" rx="2"/>
+        <line x1="320" y1="108" x2="320" y2="178"/><rect x="311" y="128" width="18" height="32"/>
       </g>
     </g>
     <path d="M80 236 C114 206 143 190 176 168 C198 154 218 206 224 202 C252 183 262 155 272 154 C292 154 307 146 320 160" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
@@ -44,15 +44,15 @@
     <path d="M58 202 C100 246 133 152 170 214 C203 270 244 126 288 188 C308 216 324 170 342 206" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7" opacity=".72"/>
     <g stroke-linecap="round" stroke-width="3">
       <g stroke="#21c784" fill="#21c784">
-        <line x1="72" y1="190" x2="72" y2="254"/><rect x="63" y="208" width="18" height="28" rx="2"/>
-        <line x1="120" y1="132" x2="120" y2="230"/><rect x="111" y="156" width="18" height="54" rx="2"/>
-        <line x1="216" y1="150" x2="216" y2="256"/><rect x="207" y="176" width="18" height="58" rx="2"/>
-        <line x1="312" y1="118" x2="312" y2="214"/><rect x="303" y="142" width="18" height="52" rx="2"/>
+        <line x1="72" y1="190" x2="72" y2="254"/><rect x="63" y="208" width="18" height="28"/>
+        <line x1="120" y1="132" x2="120" y2="230"/><rect x="111" y="156" width="18" height="54"/>
+        <line x1="216" y1="150" x2="216" y2="256"/><rect x="207" y="176" width="18" height="58"/>
+        <line x1="312" y1="118" x2="312" y2="214"/><rect x="303" y="142" width="18" height="52"/>
       </g>
       <g stroke="#ef4444" fill="#ef4444">
-        <line x1="168" y1="128" x2="168" y2="238"/><rect x="159" y="154" width="18" height="62" rx="2"/>
-        <line x1="264" y1="104" x2="264" y2="246"/><rect x="255" y="132" width="18" height="92" rx="2"/>
-        <line x1="344" y1="158" x2="344" y2="254"/><rect x="335" y="182" width="18" height="50" rx="2"/>
+        <line x1="168" y1="128" x2="168" y2="238"/><rect x="159" y="154" width="18" height="62"/>
+        <line x1="264" y1="104" x2="264" y2="246"/><rect x="255" y="132" width="18" height="92"/>
+        <line x1="344" y1="158" x2="344" y2="254"/><rect x="335" y="182" width="18" height="50"/>
       </g>
     </g>
     <g font-family="Arial, sans-serif" font-size="12" font-weight="700">

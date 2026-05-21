@@ -13,18 +13,18 @@
   <text x="94" y="294" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Range support</text>
   <g stroke-linecap="round" stroke-width="3">
     <g stroke="#21c784" fill="#21c784">
-      <line x1="108" y1="240" x2="108" y2="304"/><rect x="98" y="258" width="20" height="28" rx="2"/>
-      <line x1="216" y1="178" x2="216" y2="250"/><rect x="206" y="198" width="20" height="34" rx="2"/>
-      <line x1="324" y1="236" x2="324" y2="300"/><rect x="314" y="254" width="20" height="28" rx="2"/>
-      <line x1="432" y1="174" x2="432" y2="246"/><rect x="422" y="194" width="20" height="34" rx="2"/>
-      <line x1="540" y1="232" x2="540" y2="298"/><rect x="530" y="250" width="20" height="30" rx="2"/>
+      <line x1="108" y1="240" x2="108" y2="304"/><rect x="98" y="258" width="20" height="28"/>
+      <line x1="216" y1="178" x2="216" y2="250"/><rect x="206" y="198" width="20" height="34"/>
+      <line x1="324" y1="236" x2="324" y2="300"/><rect x="314" y="254" width="20" height="28"/>
+      <line x1="432" y1="174" x2="432" y2="246"/><rect x="422" y="194" width="20" height="34"/>
+      <line x1="540" y1="232" x2="540" y2="298"/><rect x="530" y="250" width="20" height="30"/>
     </g>
     <g stroke="#ef4444" fill="#ef4444">
-      <line x1="162" y1="136" x2="162" y2="218"/><rect x="152" y="158" width="20" height="42" rx="2"/>
-      <line x1="270" y1="138" x2="270" y2="220"/><rect x="260" y="160" width="20" height="42" rx="2"/>
-      <line x1="378" y1="140" x2="378" y2="220"/><rect x="368" y="160" width="20" height="40" rx="2"/>
-      <line x1="486" y1="138" x2="486" y2="220"/><rect x="476" y="160" width="20" height="42" rx="2"/>
-      <line x1="594" y1="142" x2="594" y2="222"/><rect x="584" y="162" width="20" height="40" rx="2"/>
+      <line x1="162" y1="136" x2="162" y2="218"/><rect x="152" y="158" width="20" height="42"/>
+      <line x1="270" y1="138" x2="270" y2="220"/><rect x="260" y="160" width="20" height="42"/>
+      <line x1="378" y1="140" x2="378" y2="220"/><rect x="368" y="160" width="20" height="40"/>
+      <line x1="486" y1="138" x2="486" y2="220"/><rect x="476" y="160" width="20" height="42"/>
+      <line x1="594" y1="142" x2="594" y2="222"/><rect x="584" y="162" width="20" height="40"/>
     </g>
   </g>
   <path d="M108 286 L162 200 L216 232 L270 200 L324 282 L378 200 L432 228 L486 202 L540 280 L594 202" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>

@@ -10,11 +10,11 @@
   <ellipse cx="270" cy="214" rx="62" ry="72" fill="none" stroke="#38bdf8" stroke-width="5" opacity="0.95"/>
   <ellipse cx="435" cy="130" rx="72" ry="96" fill="none" stroke="#38bdf8" stroke-width="5" opacity="0.95"/>
   <ellipse cx="612" cy="216" rx="62" ry="72" fill="none" stroke="#38bdf8" stroke-width="5" opacity="0.95"/>
-  <g opacity="1"><line x1="185" y1="250" x2="185" y2="360" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="168" y="286" width="34" height="54" rx="6" fill="#22c55e"/></g>
-  <g opacity="1"><line x1="270" y1="158" x2="270" y2="286" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="249" y="190" width="42" height="60" rx="6" fill="#ef4444"/></g>
-  <g opacity="1"><line x1="350" y1="252" x2="350" y2="362" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="333" y="286" width="34" height="52" rx="6" fill="#ef4444"/></g>
-  <g opacity="1"><line x1="435" y1="74" x2="435" y2="222" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="411" y="102" width="48" height="80" rx="6" fill="#ef4444"/></g>
-  <g opacity="1"><line x1="520" y1="252" x2="520" y2="364" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="503" y="288" width="34" height="52" rx="6" fill="#ef4444"/></g>
-  <g opacity="1"><line x1="612" y1="160" x2="612" y2="286" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="591" y="192" width="42" height="58" rx="6" fill="#ef4444"/></g>
-  <g opacity="1"><line x1="705" y1="304" x2="705" y2="438" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="688" y="338" width="34" height="70" rx="6" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="185" y1="250" x2="185" y2="360" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="168" y="286" width="34" height="54" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="270" y1="158" x2="270" y2="286" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="249" y="190" width="42" height="60" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="350" y1="252" x2="350" y2="362" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="333" y="286" width="34" height="52" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="435" y1="74" x2="435" y2="222" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="411" y="102" width="48" height="80" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="520" y1="252" x2="520" y2="364" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="503" y="288" width="34" height="52" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="612" y1="160" x2="612" y2="286" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="591" y="192" width="42" height="58" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="705" y1="304" x2="705" y2="438" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="688" y="338" width="34" height="70" fill="#ef4444"/></g>
 </svg>

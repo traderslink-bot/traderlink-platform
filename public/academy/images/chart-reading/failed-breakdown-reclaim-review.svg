@@ -14,17 +14,17 @@
   <text x="82" y="230" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Broken support zone</text>
   <g stroke-linecap="round" stroke-width="3">
     <g stroke="#ef4444" fill="#ef4444">
-      <line x1="96" y1="160" x2="96" y2="238"/><rect x="86" y="180" width="20" height="38" rx="2"/>
-      <line x1="204" y1="210" x2="204" y2="292"/><rect x="194" y="232" width="20" height="40" rx="2"/>
-      <line x1="312" y1="238" x2="312" y2="326"/><rect x="302" y="260" width="20" height="46" rx="2"/>
+      <line x1="96" y1="160" x2="96" y2="238"/><rect x="86" y="180" width="20" height="38"/>
+      <line x1="204" y1="210" x2="204" y2="292"/><rect x="194" y="232" width="20" height="40"/>
+      <line x1="312" y1="238" x2="312" y2="326"/><rect x="302" y="260" width="20" height="46"/>
     </g>
     <g stroke="#21c784" fill="#21c784">
-      <line x1="150" y1="186" x2="150" y2="258"/><rect x="140" y="206" width="20" height="34" rx="2"/>
-      <line x1="258" y1="206" x2="258" y2="278"/><rect x="248" y="226" width="20" height="34" rx="2"/>
-      <line x1="366" y1="228" x2="366" y2="302"/><rect x="356" y="248" width="20" height="34" rx="2"/>
-      <line x1="420" y1="206" x2="420" y2="280"/><rect x="410" y="226" width="20" height="34" rx="2"/>
-      <line x1="474" y1="180" x2="474" y2="254"/><rect x="464" y="200" width="20" height="34" rx="2"/>
-      <line x1="528" y1="166" x2="528" y2="238"/><rect x="518" y="186" width="20" height="34" rx="2"/>
+      <line x1="150" y1="186" x2="150" y2="258"/><rect x="140" y="206" width="20" height="34"/>
+      <line x1="258" y1="206" x2="258" y2="278"/><rect x="248" y="226" width="20" height="34"/>
+      <line x1="366" y1="228" x2="366" y2="302"/><rect x="356" y="248" width="20" height="34"/>
+      <line x1="420" y1="206" x2="420" y2="280"/><rect x="410" y="226" width="20" height="34"/>
+      <line x1="474" y1="180" x2="474" y2="254"/><rect x="464" y="200" width="20" height="34"/>
+      <line x1="528" y1="166" x2="528" y2="238"/><rect x="518" y="186" width="20" height="34"/>
     </g>
   </g>
   <path d="M96 200 L150 240 L204 272 L258 244 L312 306 L366 266 L420 244 L474 220 L528 204" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>

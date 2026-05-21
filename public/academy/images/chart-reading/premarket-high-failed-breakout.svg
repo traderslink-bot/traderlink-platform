@@ -17,21 +17,21 @@
   <text x="82" y="150" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Premarket high zone</text>
   <g stroke-linecap="round" stroke-width="3">
     <g stroke="#21c784" fill="#21c784">
-      <line x1="96" y1="256" x2="96" y2="316"/><rect x="86" y="274" width="20" height="28" rx="2"/>
-      <line x1="150" y1="216" x2="150" y2="286"/><rect x="140" y="236" width="20" height="32" rx="2"/>
-      <line x1="204" y1="180" x2="204" y2="252"/><rect x="194" y="200" width="20" height="34" rx="2"/>
-      <line x1="258" y1="152" x2="258" y2="222"/><rect x="248" y="172" width="20" height="32" rx="2"/>
-      <line x1="312" y1="114" x2="312" y2="196"/><rect x="302" y="134" width="20" height="42" rx="2"/>
+      <line x1="96" y1="256" x2="96" y2="316"/><rect x="86" y="274" width="20" height="28"/>
+      <line x1="150" y1="216" x2="150" y2="286"/><rect x="140" y="236" width="20" height="32"/>
+      <line x1="204" y1="180" x2="204" y2="252"/><rect x="194" y="200" width="20" height="34"/>
+      <line x1="258" y1="152" x2="258" y2="222"/><rect x="248" y="172" width="20" height="32"/>
+      <line x1="312" y1="114" x2="312" y2="196"/><rect x="302" y="134" width="20" height="42"/>
     </g>
     <g stroke="#ef4444" fill="#ef4444">
-      <line x1="366" y1="118" x2="366" y2="220"/><rect x="356" y="144" width="20" height="54" rx="2"/>
-      <line x1="420" y1="168" x2="420" y2="254"/><rect x="410" y="190" width="20" height="42" rx="2"/>
-      <line x1="474" y1="198" x2="474" y2="280"/><rect x="464" y="218" width="20" height="42" rx="2"/>
-      <line x1="528" y1="220" x2="528" y2="300"/><rect x="518" y="240" width="20" height="40" rx="2"/>
-      <line x1="636" y1="226" x2="636" y2="306"/><rect x="626" y="246" width="20" height="40" rx="2"/>
+      <line x1="366" y1="118" x2="366" y2="220"/><rect x="356" y="144" width="20" height="54"/>
+      <line x1="420" y1="168" x2="420" y2="254"/><rect x="410" y="190" width="20" height="42"/>
+      <line x1="474" y1="198" x2="474" y2="280"/><rect x="464" y="218" width="20" height="42"/>
+      <line x1="528" y1="220" x2="528" y2="300"/><rect x="518" y="240" width="20" height="40"/>
+      <line x1="636" y1="226" x2="636" y2="306"/><rect x="626" y="246" width="20" height="40"/>
     </g>
     <g stroke="#21c784" fill="#21c784">
-      <line x1="582" y1="224" x2="582" y2="292"/><rect x="572" y="242" width="20" height="32" rx="2"/>
+      <line x1="582" y1="224" x2="582" y2="292"/><rect x="572" y="242" width="20" height="32"/>
     </g>
   </g>
   <path d="M96 302 L150 252 L204 218 L258 188 L312 154 L366 198 L420 232 L474 260 L528 280 L582 258 L636 284" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>

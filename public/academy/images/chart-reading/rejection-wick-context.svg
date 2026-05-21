@@ -18,27 +18,27 @@
   <g stroke-linecap="round" stroke-width="3">
     <g stroke="#21c784" fill="#21c784">
       <line x1="96" y1="248" x2="96" y2="302"/>
-      <rect x="86" y="264" width="20" height="24" rx="2"/>
+      <rect x="86" y="264" width="20" height="24"/>
       <line x1="162" y1="224" x2="162" y2="284"/>
-      <rect x="152" y="240" width="20" height="28" rx="2"/>
+      <rect x="152" y="240" width="20" height="28"/>
       <line x1="228" y1="196" x2="228" y2="262"/>
-      <rect x="218" y="214" width="20" height="30" rx="2"/>
+      <rect x="218" y="214" width="20" height="30"/>
     </g>
     <g stroke="#ef4444" fill="#ef4444">
       <line x1="294" y1="96" x2="294" y2="230"/>
-      <rect x="284" y="158" width="20" height="46" rx="2"/>
+      <rect x="284" y="158" width="20" height="46"/>
       <line x1="360" y1="154" x2="360" y2="252"/>
-      <rect x="350" y="182" width="20" height="46" rx="2"/>
+      <rect x="350" y="182" width="20" height="46"/>
       <line x1="426" y1="192" x2="426" y2="278"/>
-      <rect x="416" y="212" width="20" height="42" rx="2"/>
+      <rect x="416" y="212" width="20" height="42"/>
       <line x1="492" y1="210" x2="492" y2="294"/>
-      <rect x="482" y="230" width="20" height="40" rx="2"/>
+      <rect x="482" y="230" width="20" height="40"/>
       <line x1="558" y1="218" x2="558" y2="300"/>
-      <rect x="548" y="238" width="20" height="38" rx="2"/>
+      <rect x="548" y="238" width="20" height="38"/>
     </g>
     <g stroke="#21c784" fill="#21c784">
       <line x1="624" y1="232" x2="624" y2="300"/>
-      <rect x="614" y="250" width="20" height="30" rx="2"/>
+      <rect x="614" y="250" width="20" height="30"/>
     </g>
   </g>
   <path d="M96 285 C144 258 193 233 229 232 C261 231 285 160 295 203 C316 247 344 219 361 228 C398 247 442 252 493 270 C538 289 584 275 625 272" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".55"/>

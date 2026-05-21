@@ -14,18 +14,18 @@
   <text x="422" y="234" fill="#fbbf24" font-family="Arial, sans-serif" font-size="13" font-weight="700">Higher lows tighten</text>
   <g stroke-linecap="round" stroke-width="3">
     <g stroke="#21c784" fill="#21c784">
-      <line x1="104" y1="250" x2="104" y2="316"/><rect x="94" y="270" width="20" height="28" rx="2"/>
-      <line x1="158" y1="222" x2="158" y2="292"/><rect x="148" y="242" width="20" height="32" rx="2"/>
-      <line x1="212" y1="196" x2="212" y2="268"/><rect x="202" y="216" width="20" height="34" rx="2"/>
-      <line x1="266" y1="174" x2="266" y2="244"/><rect x="256" y="194" width="20" height="32" rx="2"/>
-      <line x1="374" y1="168" x2="374" y2="226"/><rect x="364" y="184" width="20" height="26" rx="2"/>
-      <line x1="482" y1="158" x2="482" y2="208"/><rect x="472" y="174" width="20" height="22" rx="2"/>
-      <line x1="590" y1="152" x2="590" y2="198"/><rect x="580" y="166" width="20" height="20" rx="2"/>
+      <line x1="104" y1="250" x2="104" y2="316"/><rect x="94" y="270" width="20" height="28"/>
+      <line x1="158" y1="222" x2="158" y2="292"/><rect x="148" y="242" width="20" height="32"/>
+      <line x1="212" y1="196" x2="212" y2="268"/><rect x="202" y="216" width="20" height="34"/>
+      <line x1="266" y1="174" x2="266" y2="244"/><rect x="256" y="194" width="20" height="32"/>
+      <line x1="374" y1="168" x2="374" y2="226"/><rect x="364" y="184" width="20" height="26"/>
+      <line x1="482" y1="158" x2="482" y2="208"/><rect x="472" y="174" width="20" height="22"/>
+      <line x1="590" y1="152" x2="590" y2="198"/><rect x="580" y="166" width="20" height="20"/>
     </g>
     <g stroke="#ef4444" fill="#ef4444">
-      <line x1="320" y1="154" x2="320" y2="230"/><rect x="310" y="176" width="20" height="36" rx="2"/>
-      <line x1="428" y1="150" x2="428" y2="212"/><rect x="418" y="168" width="20" height="28" rx="2"/>
-      <line x1="536" y1="150" x2="536" y2="202"/><rect x="526" y="166" width="20" height="24" rx="2"/>
+      <line x1="320" y1="154" x2="320" y2="230"/><rect x="310" y="176" width="20" height="36"/>
+      <line x1="428" y1="150" x2="428" y2="212"/><rect x="418" y="168" width="20" height="28"/>
+      <line x1="536" y1="150" x2="536" y2="202"/><rect x="526" y="166" width="20" height="24"/>
     </g>
   </g>
   <path d="M104 298 L158 258 L212 234 L266 210 L320 212 L374 198 L428 196 L482 186 L536 190 L590 176" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>

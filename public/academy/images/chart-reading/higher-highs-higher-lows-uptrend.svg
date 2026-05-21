@@ -17,20 +17,20 @@
   <text x="394" y="192" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="12" font-weight="700">Higher low zone</text>
   <g stroke-linecap="round" stroke-width="3">
     <g stroke="#21c784" fill="#21c784">
-      <line x1="92" y1="268" x2="92" y2="324"/><rect x="82" y="286" width="20" height="24" rx="2"/>
-      <line x1="145" y1="222" x2="145" y2="294"/><rect x="135" y="242" width="20" height="34" rx="2"/>
-      <line x1="198" y1="240" x2="198" y2="304"/><rect x="188" y="258" width="20" height="28" rx="2"/>
-      <line x1="251" y1="184" x2="251" y2="260"/><rect x="241" y="204" width="20" height="38" rx="2"/>
-      <line x1="304" y1="218" x2="304" y2="286"/><rect x="294" y="238" width="20" height="28" rx="2"/>
-      <line x1="357" y1="150" x2="357" y2="230"/><rect x="347" y="170" width="20" height="40" rx="2"/>
-      <line x1="410" y1="194" x2="410" y2="260"/><rect x="400" y="214" width="20" height="28" rx="2"/>
-      <line x1="463" y1="124" x2="463" y2="204"/><rect x="453" y="144" width="20" height="42" rx="2"/>
-      <line x1="516" y1="160" x2="516" y2="230"/><rect x="506" y="180" width="20" height="30" rx="2"/>
-      <line x1="622" y1="96" x2="622" y2="174"/><rect x="612" y="114" width="20" height="40" rx="2"/>
+      <line x1="92" y1="268" x2="92" y2="324"/><rect x="82" y="286" width="20" height="24"/>
+      <line x1="145" y1="222" x2="145" y2="294"/><rect x="135" y="242" width="20" height="34"/>
+      <line x1="198" y1="240" x2="198" y2="304"/><rect x="188" y="258" width="20" height="28"/>
+      <line x1="251" y1="184" x2="251" y2="260"/><rect x="241" y="204" width="20" height="38"/>
+      <line x1="304" y1="218" x2="304" y2="286"/><rect x="294" y="238" width="20" height="28"/>
+      <line x1="357" y1="150" x2="357" y2="230"/><rect x="347" y="170" width="20" height="40"/>
+      <line x1="410" y1="194" x2="410" y2="260"/><rect x="400" y="214" width="20" height="28"/>
+      <line x1="463" y1="124" x2="463" y2="204"/><rect x="453" y="144" width="20" height="42"/>
+      <line x1="516" y1="160" x2="516" y2="230"/><rect x="506" y="180" width="20" height="30"/>
+      <line x1="622" y1="96" x2="622" y2="174"/><rect x="612" y="114" width="20" height="40"/>
     </g>
     <g stroke="#ef4444" fill="#ef4444">
-      <line x1="569" y1="120" x2="569" y2="206"/><rect x="559" y="142" width="20" height="44" rx="2"/>
-      <line x1="675" y1="112" x2="675" y2="196"/><rect x="665" y="134" width="20" height="42" rx="2"/>
+      <line x1="569" y1="120" x2="569" y2="206"/><rect x="559" y="142" width="20" height="44"/>
+      <line x1="675" y1="112" x2="675" y2="196"/><rect x="665" y="134" width="20" height="42"/>
     </g>
   </g>
   <path d="M92 302 L145 258 L198 276 L251 224 L304 256 L357 190 L410 230 L463 166 L516 210 L569 184 L622 134 L675 176" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
