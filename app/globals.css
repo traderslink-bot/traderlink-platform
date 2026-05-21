@@ -1281,6 +1281,7 @@ body {
 .academy-lesson-row {
   display: grid;
   gap: 0.85rem;
+  align-items: center;
   border-bottom: 1px solid var(--academy-border);
   padding: 1rem 1.25rem;
   transition:
@@ -1307,6 +1308,28 @@ body {
 .academy-lesson-title {
   color: var(--academy-heading);
   font-weight: 720;
+}
+
+.academy-lesson-status-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--academy-border);
+  border-radius: 8px;
+  background: var(--academy-surface-muted);
+  color: var(--academy-muted);
+  font-size: 0.78rem;
+  font-weight: 760;
+  line-height: 1;
+  padding: 0.45rem 0.6rem;
+  white-space: nowrap;
+}
+
+.academy-lesson-status-badge-complete {
+  border-color: rgba(22, 163, 74, 0.28);
+  background: rgba(22, 163, 74, 0.1);
+  color: #15803d;
 }
 
 .academy-nav-grid {
@@ -1697,7 +1720,7 @@ body {
   }
 
   .academy-lesson-row {
-    grid-template-columns: 3.5rem 1fr;
+    grid-template-columns: 3.5rem minmax(0, 1fr) auto;
   }
 
   .academy-path-card {

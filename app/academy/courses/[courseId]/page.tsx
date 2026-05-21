@@ -181,22 +181,42 @@ export default async function AcademyCoursePage({ params }: PageProps) {
                 </div>
 
                 <div className="academy-lesson-list">
-                  {lessons.map((lesson) => (
-                    <Link
-                      key={`${lesson.display_course_id}-${lesson.lesson_slug}-${lesson.display_order}`}
-                      href={lesson.lesson_slug}
-                      className="academy-lesson-row"
-                    >
-                      <span className="academy-lesson-number">
-                        {lesson.display_order}
-                      </span>
-                      <span>
-                        <span className="academy-lesson-title">
-                          {lesson.display_title}
+                  {lessons.map((lesson) => {
+                    const isCompleted = completedLessonSlugs.has(
+                      lesson.lesson_slug,
+                    );
+                    const statusLabel = academySession
+                      ? isCompleted
+                        ? "Complete"
+                        : "Incomplete"
+                      : "Log in to track progress";
+
+                    return (
+                      <Link
+                        key={`${lesson.display_course_id}-${lesson.lesson_slug}-${lesson.display_order}`}
+                        href={lesson.lesson_slug}
+                        className="academy-lesson-row"
+                      >
+                        <span className="academy-lesson-number">
+                          {lesson.display_order}
                         </span>
-                      </span>
-                    </Link>
-                  ))}
+                        <span>
+                          <span className="academy-lesson-title">
+                            {lesson.display_title}
+                          </span>
+                        </span>
+                        <span
+                          className={
+                            isCompleted
+                              ? "academy-lesson-status-badge academy-lesson-status-badge-complete"
+                              : "academy-lesson-status-badge"
+                          }
+                        >
+                          {statusLabel}
+                        </span>
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             ))}
