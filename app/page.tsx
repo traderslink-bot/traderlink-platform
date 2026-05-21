@@ -1,13 +1,18 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { LandingHeroCanvas } from "./landing-hero-canvas";
+import { HomeScrollReveal } from "./home-scroll-reveal";
+import { getAcademyCoursePage } from "@/src/lib/academy/academy-content";
+import { TRADERSLINK_TWITTER_HANDLE } from "@/src/lib/academy/academy-seo";
 
 const discordInviteUrl = "https://discord.gg/sTWd3KwWC";
 
 export const metadata: Metadata = {
-  title: "TradersLink Beta | Small Cap Scanner, AI Press Releases, Trader Intelligence",
+  title:
+    "TradersLink Beta | Small Cap Scanner, AI Press Releases, Academy, Trader Intelligence",
   description:
-    "TradersLink is a beta suite of trading tools with a small cap scanner, AI-summarized press releases and SEC filings, Discord alerts, generated chart levels, and Trader Intelligence coming soon.",
+    "TradersLink is a beta suite of trading tools with a small cap scanner, AI-summarized press releases and SEC filings, Discord alerts, generated chart levels, TradersLink Academy, and Trader Intelligence coming soon.",
   keywords: [
     "TradersLink",
     "small cap scanner",
@@ -17,6 +22,9 @@ export const metadata: Metadata = {
     "stock scanner",
     "day trading alerts",
     "support and resistance levels",
+    "trading academy",
+    "free trading lessons",
+    "TradersLink Academy",
     "chart levels",
     "generated chart levels",
     "AI chart following",
@@ -31,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "TradersLink Beta",
     description:
-      "Small cap scanner alerts, AI-summarized press releases and SEC filings, generated chart levels, and Trader Intelligence coming soon.",
+      "Small cap scanner alerts, AI-summarized press releases and SEC filings, generated chart levels, TradersLink Academy, and Trader Intelligence coming soon.",
     type: "website",
   },
   twitter: {
@@ -39,6 +47,8 @@ export const metadata: Metadata = {
     title: "TradersLink Beta",
     description:
       "Join the Discord beta for $30 USD before public launch pricing goes up.",
+    site: TRADERSLINK_TWITTER_HANDLE,
+    creator: TRADERSLINK_TWITTER_HANDLE,
   },
 };
 
@@ -61,7 +71,7 @@ const featureBlocks = [
   {
     eyebrow: "Coming Soon",
     title: "Trader Intelligence will be the execution-review tool.",
-    body: "Trader Intelligence is the next tool in the TradersLink platform: broker execution imports, saved trade analytics, session timing, and evidence-backed trade review.",
+    body: "Trader Intelligence is the next tool in the TradersLink platform: broker execution imports, saved trade analytics, session timing, and trade review tied to saved evidence.",
   },
 ];
 
@@ -82,6 +92,8 @@ const seoTopics = [
   "AI press release summaries",
   "SEC filing alerts for traders",
   "Discord stock alerts",
+  "Free trading academy",
+  "Beginner trading lessons",
   "Day trading news scanner",
   "Support and resistance generation",
   "AI chart following for day traders",
@@ -92,7 +104,7 @@ const faqItems = [
   {
     question: "What is TradersLink?",
     answer:
-      "TradersLink is a suite of trading tools. The beta includes scanner and press-release/filing tools now, with Trader Intelligence coming soon as another tool in the platform.",
+      "TradersLink is a suite of trading tools. The beta includes scanner and press-release/filing tools now, the free TradersLink Academy is open on the website, and Trader Intelligence is coming soon as another tool in the platform.",
   },
   {
     question: "What does the $30 USD beta include?",
@@ -100,18 +112,23 @@ const faqItems = [
       "Beta access includes the Discord alerts, the website tools as they launch, the scanner, press release and SEC filing summaries, chart-level tools, and access to Trader Intelligence when it opens to beta members.",
   },
   {
+    question: "Is TradersLink Academy free?",
+    answer:
+      "Yes. TradersLink Academy is free. Anyone can read the open Academy lessons, and free TradersLink Discord members can log in with Discord to track lesson progress across the Academy.",
+  },
+  {
     question: "Will beta testers keep the $30.00 price?",
     answer:
       "Yes. Beta testers are grandfathered at $30.00 USD while the public website launch price increases for new users.",
   },
-  {
-    question: "Does TradersLink make trade calls?",
-    answer:
-      "No. TradersLink is built for scanning, alerts, summaries, chart data, preparation, and trade review. It is not financial advice.",
-  },
 ];
 
 export default function Home() {
+  const chartReadingCoursePage = getAcademyCoursePage(
+    "chart-reading-market-structure",
+  );
+  const chartReadingCourse = chartReadingCoursePage?.course;
+  const chartReadingModules = chartReadingCoursePage?.modules ?? [];
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -119,7 +136,7 @@ export default function Home() {
     applicationCategory: "FinanceApplication",
     operatingSystem: "Web",
     description:
-      "Beta trading-tools platform with small cap scanner alerts, AI-summarized press releases and SEC filings, generated chart levels, and Trader Intelligence coming soon.",
+      "Beta trading-tools platform with small cap scanner alerts, AI-summarized press releases and SEC filings, generated chart levels, TradersLink Academy, and Trader Intelligence coming soon.",
     offers: {
       "@type": "Offer",
       price: "30.00",
@@ -131,28 +148,41 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#020817] text-slate-100">
+    <main className="tl-home min-h-screen overflow-hidden bg-[#020817] text-slate-100">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <HomeScrollReveal />
 
-      <section className="relative min-h-[82vh] overflow-hidden border-b border-cyan-400/20">
+      <section className="tl-home-hero relative min-h-[82vh] overflow-hidden border-b border-cyan-400/20">
         <LandingHeroCanvas />
         <div className="absolute inset-0 z-0 bg-[linear-gradient(90deg,rgba(2,8,23,0.96)_0%,rgba(2,8,23,0.8)_36%,rgba(2,8,23,0.28)_70%,rgba(2,8,23,0.08)_100%)]" />
 
         <nav className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
           <Link
             href="/"
-            className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-200"
+            className="flex items-center"
             aria-label="TradersLink homepage"
           >
-            TradersLink
+            <span className="tl-home-logo-card flex h-12 w-[232px] items-center overflow-hidden rounded-md border border-sky-900/60 bg-[#011E56] px-3 shadow-[0_12px_30px_rgba(1,30,86,0.35)]">
+              <Image
+                alt="TradersLink"
+                className="h-auto w-full"
+                height={74}
+                priority
+                src="/logo-horizontal-main.png"
+                width={360}
+              />
+            </span>
           </Link>
         </nav>
 
         <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-10 px-5 pb-12 pt-12 sm:px-8 lg:grid-cols-[minmax(0,0.62fr)_minmax(320px,0.38fr)] lg:pb-16 lg:pt-20">
-          <div className="flex max-w-4xl flex-col">
+          <div
+            className="tl-home-hero-copy flex max-w-4xl flex-col"
+            data-home-animate
+          >
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-300">
               Discord beta now open at $30 USD
             </p>
@@ -161,30 +191,31 @@ export default function Home() {
             </h1>
             <p className="mt-5 max-w-3xl text-xl leading-8 text-slate-300 sm:text-2xl">
               Small-cap scanner alerts, AI-summarized press releases and SEC
-              filings, generated chart levels, and the Trader Intelligence
-              system coming soon for beta members.
+              filings, generated chart levels, TradersLink Academy, and the
+              Trader Intelligence system coming soon for beta members.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
                 href={discordInviteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-12 items-center justify-center border border-cyan-300 bg-cyan-300 px-5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
+                className="tl-home-cta inline-flex min-h-12 items-center justify-center border border-cyan-300 bg-cyan-300 px-5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
               >
                 Join the $30 beta
               </a>
               <Link
-                href="/trader-intelligence"
-                className="inline-flex min-h-12 items-center justify-center border border-cyan-300/50 bg-slate-950/50 px-5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200"
+                href="/academy"
+                className="tl-home-cta tl-home-cta-secondary inline-flex min-h-12 items-center justify-center border border-cyan-300/50 bg-slate-950/50 px-5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200"
               >
-                Preview Trader Intelligence
+                TradersLink Academy
               </Link>
             </div>
           </div>
 
           <aside
-            className="self-end border border-cyan-300/20 bg-slate-950/58 p-5 shadow-2xl shadow-cyan-950/40 backdrop-blur"
+            className="tl-home-panel self-end border border-cyan-300/20 bg-slate-950/58 p-5 shadow-2xl shadow-cyan-950/40 backdrop-blur"
             aria-label="Beta pricing summary"
+            data-home-animate
           >
             <div className="text-xs uppercase tracking-[0.24em] text-cyan-200">
               Beta Access
@@ -212,6 +243,10 @@ export default function Home() {
                 <span className="text-cyan-300">Included</span>
               </div>
               <div className="flex justify-between border-t border-slate-800 pt-2">
+                <span>TradersLink Academy</span>
+                <span className="text-emerald-300">Free</span>
+              </div>
+              <div className="flex justify-between border-t border-slate-800 pt-2">
                 <span>Trader Intelligence</span>
                 <span className="text-amber-300">Coming soon</span>
               </div>
@@ -226,7 +261,9 @@ export default function Home() {
 
       <section
         id="features"
-        className="mx-auto grid w-full max-w-7xl gap-6 px-5 py-16 sm:px-8 lg:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]"
+        className="tl-home-section mx-auto grid w-full max-w-7xl gap-6 px-5 py-16 sm:px-8 lg:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]"
+        data-home-animate
+        data-scroll-reveal
       >
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
@@ -246,7 +283,8 @@ export default function Home() {
           {featureBlocks.map((feature) => (
             <article
               key={feature.title}
-              className="border border-slate-800 bg-slate-950/70 p-5"
+              className="tl-home-card border border-slate-800 bg-slate-950/70 p-5"
+              data-scroll-reveal
             >
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
                 {feature.eyebrow}
@@ -263,8 +301,108 @@ export default function Home() {
       </section>
 
       <section
+        id="academy"
+        className="tl-home-section tl-home-section-surface border-y border-slate-800 bg-slate-950 px-5 py-16 sm:px-8"
+        data-home-animate
+        data-scroll-reveal
+      >
+        <div className="mx-auto grid w-full max-w-7xl gap-10 lg:grid-cols-[minmax(0,0.44fr)_minmax(0,0.56fr)]">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-300">
+              TradersLink Academy
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">
+              A free structured trading course path is open now.
+            </h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
+              TradersLink Academy gives new and developing traders a clear path
+              through trading foundations, chart reading, market structure, risk
+              planning, catalysts, psychology, and trade review. Lessons are
+              built to be read in order, revisited later, and connected to the
+              tools TradersLink is building.
+            </p>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
+              The Academy is free. If you are a free member of the TradersLink
+              Discord and you log in with your Discord account, the Academy can
+              save lesson completion and show your progress across the course
+              list.
+            </p>
+            <Link
+              href="/academy"
+              className="tl-home-cta mt-7 inline-flex min-h-12 items-center justify-center border border-cyan-300 bg-cyan-300 px-5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
+            >
+              Open TradersLink Academy
+            </Link>
+          </div>
+
+          <div className="tl-home-panel border border-cyan-300/20 bg-[#041328] p-5">
+            <div className="border-b border-slate-800 pb-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                  Featured course
+                </p>
+                <h3 className="mt-2 text-2xl font-semibold text-white">
+                  {chartReadingCourse?.course_title ??
+                    "Chart Reading And Market Structure"}
+                </h3>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-300">
+                {chartReadingCourse?.course_outcome ??
+                  "Build a practical chart-reading foundation for small cap trading: read candles in context, map levels, understand breaks and reclaims, recognize structure changes, and use chart patterns as references."}
+              </p>
+            </div>
+
+            <div className="mt-5">
+              <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.16em]">
+                <span className="border border-emerald-300/30 bg-emerald-300/10 px-2.5 py-1 text-emerald-200">
+                  Open now
+                </span>
+                <span className="border border-cyan-300/25 bg-cyan-300/10 px-2.5 py-1 text-cyan-200">
+                  {chartReadingCoursePage?.totalLessonCount ?? 93} lessons
+                </span>
+                <span className="border border-slate-700 bg-slate-900 px-2.5 py-1 text-slate-300">
+                  {chartReadingModules.length} modules
+                </span>
+              </div>
+
+              <div className="mt-5 grid gap-2">
+                {chartReadingModules.map(({ module, lessons }) => (
+                  <div
+                    key={module.module_id}
+                    className="tl-home-list-row border-t border-slate-800 py-3"
+                    data-scroll-reveal
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="mt-1.5 h-2 w-2 shrink-0 bg-cyan-300" />
+                      <div>
+                        <p className="font-semibold text-slate-100">
+                          {module.module_title}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {lessons.length} lessons
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Link
+                href={chartReadingCourse?.course_slug ?? "/academy"}
+                className="tl-home-cta tl-home-cta-secondary mt-5 inline-flex min-h-11 items-center justify-center border border-cyan-300/50 bg-slate-950/50 px-4 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200"
+              >
+                Open Chart Reading Course
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
         id="levels"
-        className="border-y border-slate-800 bg-[#041328] px-5 py-16 sm:px-8"
+        className="tl-home-section tl-home-section-surface border-y border-slate-800 bg-[#041328] px-5 py-16 sm:px-8"
+        data-home-animate
+        data-scroll-reveal
       >
         <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[minmax(0,0.52fr)_minmax(320px,0.48fr)]">
           <div>
@@ -288,7 +426,8 @@ export default function Home() {
             {pressFeatures.map((feature) => (
               <div
                 key={feature}
-                className="flex items-start gap-3 border-t border-slate-700/70 py-3"
+                className="tl-home-list-row flex items-start gap-3 border-t border-slate-700/70 py-3"
+                data-scroll-reveal
               >
                 <span className="mt-1 h-2 w-2 shrink-0 bg-cyan-300" />
                 <span className="text-sm leading-6 text-slate-200">
@@ -300,9 +439,16 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8">
+      <section
+        className="tl-home-section mx-auto w-full max-w-7xl px-5 py-16 sm:px-8"
+        data-home-animate
+        data-scroll-reveal
+      >
         <div className="grid gap-5 md:grid-cols-3">
-          <div className="border border-slate-800 bg-slate-950 p-5">
+          <div
+            className="tl-home-card border border-slate-800 bg-slate-950 p-5"
+            data-scroll-reveal
+          >
             <div className="text-3xl font-semibold text-cyan-300">01</div>
             <h3 className="mt-4 text-xl font-semibold text-white">
               Scan the market
@@ -312,7 +458,10 @@ export default function Home() {
               live Discord scanner alerts.
             </p>
           </div>
-          <div className="border border-slate-800 bg-slate-950 p-5">
+          <div
+            className="tl-home-card border border-slate-800 bg-slate-950 p-5"
+            data-scroll-reveal
+          >
             <div className="text-3xl font-semibold text-emerald-300">02</div>
             <h3 className="mt-4 text-xl font-semibold text-white">
               Generate levels
@@ -324,14 +473,17 @@ export default function Home() {
               and possible dip areas.
             </p>
           </div>
-          <div className="border border-slate-800 bg-slate-950 p-5">
+          <div
+            className="tl-home-card border border-slate-800 bg-slate-950 p-5"
+            data-scroll-reveal
+          >
             <div className="text-3xl font-semibold text-amber-300">03</div>
             <h3 className="mt-4 text-xl font-semibold text-white">
               Review the trade soon
             </h3>
             <p className="mt-3 text-sm leading-6 text-slate-400">
-              Trader Intelligence will add broker execution imports, saved
-              trade analytics, and evidence-backed review for beta members.
+              Trader Intelligence will add broker execution imports, saved trade
+              analytics, and saved-evidence review for beta members.
             </p>
           </div>
         </div>
@@ -339,7 +491,9 @@ export default function Home() {
 
       <section
         id="pricing"
-        className="mx-auto grid w-full max-w-7xl gap-8 px-5 py-16 sm:px-8 lg:grid-cols-[minmax(0,0.48fr)_minmax(320px,0.52fr)]"
+        className="tl-home-section mx-auto grid w-full max-w-7xl gap-8 px-5 py-16 sm:px-8 lg:grid-cols-[minmax(0,0.48fr)_minmax(320px,0.52fr)]"
+        data-home-animate
+        data-scroll-reveal
       >
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-300">
@@ -358,13 +512,13 @@ export default function Home() {
               href={discordInviteUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center justify-center border border-emerald-300 bg-emerald-300 px-5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200"
+              className="tl-home-cta tl-home-cta-green inline-flex min-h-12 items-center justify-center border border-emerald-300 bg-emerald-300 px-5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200"
             >
               Join on Discord
             </a>
           </div>
         </div>
-        <div className="border border-cyan-300/25 bg-slate-950 p-6">
+        <div className="tl-home-panel border border-cyan-300/25 bg-slate-950 p-6">
           <div className="text-sm uppercase tracking-[0.2em] text-cyan-300">
             What beta testers lock in
           </div>
@@ -375,7 +529,11 @@ export default function Home() {
               "Live scanner, press release, and SEC filing alerts",
               "Website access as scanner, generated levels, AI chart following, and Trader Intelligence roll out",
             ].map((item) => (
-              <div key={item} className="border-t border-slate-800 pt-4 text-slate-200">
+              <div
+                key={item}
+                className="tl-home-list-row border-t border-slate-800 pt-4 text-slate-200"
+                data-scroll-reveal
+              >
                 {item}
               </div>
             ))}
@@ -383,7 +541,11 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-y border-slate-800 bg-slate-950 px-5 py-16 sm:px-8">
+      <section
+        className="tl-home-section tl-home-section-surface border-y border-slate-800 bg-slate-950 px-5 py-16 sm:px-8"
+        data-home-animate
+        data-scroll-reveal
+      >
         <div className="mx-auto w-full max-w-7xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
             Search-friendly topics
@@ -395,7 +557,8 @@ export default function Home() {
             {seoTopics.map((topic) => (
               <span
                 key={topic}
-                className="border border-slate-700 px-3 py-2 text-sm text-slate-300"
+                className="tl-home-chip border border-slate-700 px-3 py-2 text-sm text-slate-300"
+                data-scroll-reveal
               >
                 {topic}
               </span>
@@ -404,10 +567,18 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8">
+      <section
+        className="tl-home-section mx-auto w-full max-w-7xl px-5 py-16 sm:px-8"
+        data-home-animate
+        data-scroll-reveal
+      >
         <div className="grid gap-5 md:grid-cols-2">
           {faqItems.map((item) => (
-            <div key={item.question} className="border border-slate-800 bg-slate-950 p-5">
+            <div
+              key={item.question}
+              className="tl-home-card border border-slate-800 bg-slate-950 p-5"
+              data-scroll-reveal
+            >
               <h3 className="text-lg font-semibold text-white">
                 {item.question}
               </h3>

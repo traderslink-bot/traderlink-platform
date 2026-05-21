@@ -2,17 +2,36 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AcademyShell } from "../../academy-shell";
+import { getCurrentAcademySession } from "../../academy-server-session";
 import {
   getAcademyCoursePage,
   getLaunchAcademyCourseIds,
   isAcademyCourseLaunchReady,
 } from "@/src/lib/academy/academy-content";
+import { AcademyProgressStore } from "@/src/lib/academy/academy-progress-store";
+import {
+  buildAcademyMetadata,
+  buildCourseJsonLd,
+  getAcademyCourseSeoDescription,
+  jsonLdScript,
+} from "@/src/lib/academy/academy-seo";
 
 type PageProps = {
   params: Promise<{ courseId: string }>;
 };
 
-export const dynamicParams = false;
+const candlestickModuleIds = new Set([
+  "bullish-candle-patterns",
+  "bearish-candle-patterns",
+  "indecision-neutral-candles",
+  "momentum-continuation-candles",
+  "session-gap-behavior",
+]);
+const chartPatternModuleIds = new Set(["chart-patterns-context"]);
+
+export const dynamicParams = true;
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
   return getLaunchAcademyCourseIds().map((courseId) => ({ courseId }));
@@ -25,15 +44,19 @@ export async function generateMetadata({
   const page = getAcademyCoursePage(courseId);
 
   if (!page || !isAcademyCourseLaunchReady(courseId)) {
-    return {
+    return buildAcademyMetadata({
       title: "Academy Course",
-    };
+      description: "A TradersLink Academy course for structured trading education.",
+      pathname: "/academy/",
+      noIndex: true,
+    });
   }
 
-  return {
-    title: `${page.course.course_title} | TradersLink Academy`,
-    description: page.course.display_model,
-  };
+  return buildAcademyMetadata({
+    title: page.course.course_title,
+    description: getAcademyCourseSeoDescription(page.course),
+    pathname: page.course.course_slug,
+  });
 }
 
 export default async function AcademyCoursePage({ params }: PageProps) {
@@ -44,145 +67,175 @@ export default async function AcademyCoursePage({ params }: PageProps) {
     notFound();
   }
 
+  const academySession = await getCurrentAcademySession();
+  const completedLessonSlugs = academySession
+    ? new Set(
+        await new AcademyProgressStore().listCompletedLessonSlugs(
+          academySession.discordUserId,
+        ),
+      )
+    : new Set<string>();
   const { course, modules, previousCourse, nextCourse } = page;
   const allLessons = modules.flatMap(({ lessons }) => lessons);
   const coreLessonCount = allLessons.filter(
-    (lesson) => lesson.counts_toward_course_progress,
-  ).length;
-  const candlestickDeepDiveLessonCount = allLessons.filter(
     (lesson) =>
-      lesson.module_id === "candlestick-patterns-context" &&
-      lesson.completion_behavior === "library",
+      lesson.counts_toward_course_progress &&
+      !candlestickModuleIds.has(lesson.module_id) &&
+      !chartPatternModuleIds.has(lesson.module_id),
   ).length;
-  const chartPatternDeepDiveLessonCount = allLessons.filter(
-    (lesson) =>
-      lesson.module_id === "chart-patterns-context" &&
-      lesson.completion_behavior === "library",
+  const candlestickLessonCount = allLessons.filter((lesson) =>
+    candlestickModuleIds.has(lesson.module_id),
   ).length;
-  const deepDiveLessonCount =
-    candlestickDeepDiveLessonCount + chartPatternDeepDiveLessonCount;
-  const hasDeepDiveLibraries = deepDiveLessonCount > 0;
+  const chartPatternLessonCount = allLessons.filter((lesson) =>
+    chartPatternModuleIds.has(lesson.module_id),
+  ).length;
+  const hasSpecializedLessonGroups =
+    candlestickLessonCount > 0 || chartPatternLessonCount > 0;
   const firstCoreLesson = allLessons.find(
     (lesson) => lesson.counts_toward_course_progress,
   );
+  const previousCourseIsOpen = previousCourse
+    ? isAcademyCourseLaunchReady(previousCourse.course_id)
+    : false;
+  const nextCourseIsOpen = nextCourse
+    ? isAcademyCourseLaunchReady(nextCourse.course_id)
+    : false;
+  const courseJsonLd = buildCourseJsonLd(course);
 
   return (
-    <main className="min-h-screen bg-[#050a14] text-white">
-      <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
-        <Link href="/academy/" className="text-sm font-medium text-cyan-200">
-          Academy
-        </Link>
+    <AcademyShell>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(courseJsonLd)}
+      />
+      <div className="academy-container">
+        <section className="academy-hero">
+          <div className="academy-hero-copy">
+            <p className="academy-eyebrow">Course {course.course_order}</p>
+            <h1 className="academy-title-sm">{course.course_title}</h1>
+            <p className="academy-lede">{course.display_model}</p>
 
-        <section className="mt-8">
-          <div className="max-w-4xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-200">
-              Course {course.course_order}
-            </p>
-            <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-normal text-white sm:text-5xl">
-              {course.course_title}
-            </h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-200">
-              {course.display_model}
-            </p>
-
-            <div className="mt-6 flex flex-wrap gap-3 text-sm">
-              <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
+            <div className="academy-chip-row">
+              <span className="academy-chip">
                 {coreLessonCount} core lessons
               </span>
-              {hasDeepDiveLibraries ? (
-                <>
-                  <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
-                    {deepDiveLessonCount} deep-dive lessons
-                  </span>
-                  <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
-                    {candlestickDeepDiveLessonCount} candlestick deep-dive
-                    lessons
-                  </span>
-                  <span className="rounded border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
-                    {chartPatternDeepDiveLessonCount} chart-pattern deep-dive
-                    lessons
-                  </span>
-                </>
+              {candlestickLessonCount > 0 ? (
+                <span className="academy-chip">
+                  {candlestickLessonCount} candlestick lessons
+                </span>
+              ) : null}
+              {chartPatternLessonCount > 0 ? (
+                <span className="academy-chip">
+                  {chartPatternLessonCount} chart pattern lessons
+                </span>
               ) : null}
             </div>
 
             {firstCoreLesson ? (
-              <div className="mt-6">
+              <div className="academy-chip-row">
                 <Link
                   href={firstCoreLesson.lesson_slug}
-                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-cyan-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-200 focus:ring-offset-2 focus:ring-offset-[#050a14]"
+                  className="academy-button"
                 >
                   Start Course
+                </Link>
+                <Link
+                  href="/academy/"
+                  className="academy-button academy-button-secondary"
+                >
+                  Academy Home
                 </Link>
               </div>
             ) : null}
           </div>
         </section>
 
-        <section className="mt-12 space-y-8">
-          <p className="max-w-3xl text-base leading-7 text-slate-300">
-            {hasDeepDiveLibraries
-              ? "Start with the guided core path, then use the candlestick and chart-pattern deep dives when you want to study a specific candle or pattern."
+        <section className="academy-section">
+          <p className="academy-body-copy">
+            {hasSpecializedLessonGroups
+              ? "Start with the guided core path, then use the candlestick and chart-pattern lessons when you want to study a specific candle, behavior, or pattern."
               : "Start with the guided core path and move lesson by lesson. This course is intentionally focused on the first concepts a new trader needs before studying chart structure, volume, risk planning, or advanced workflows."}
           </p>
 
-          {modules.map(({ module, lessons }) => (
-            <div
-              key={module.module_id}
-              className="rounded-lg border border-white/10 bg-slate-900/70"
-            >
-              <div className="border-b border-white/10 px-5 py-4">
-                <p className="text-sm text-cyan-200">
-                  Module {module.module_order}
-                </p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-normal">
-                  {module.module_title}
-                </h2>
-              </div>
+          <div className="academy-module-list">
+            {modules.map(({ module, lessons }) => (
+              <div key={module.module_id} className="academy-module-card">
+                <div className="academy-module-header">
+                  <div className="academy-module-heading">
+                    <p className="academy-kicker">
+                      Module {module.module_order}
+                    </p>
+                    <h2 className="academy-module-title">
+                      {module.module_title}
+                    </h2>
+                  </div>
+                  <span className="academy-module-progress-badge">
+                    Completed{" "}
+                    {
+                      lessons.filter((lesson) =>
+                        completedLessonSlugs.has(lesson.lesson_slug),
+                      ).length
+                    }
+                    /{lessons.length}
+                  </span>
+                </div>
 
-              <div className="divide-y divide-white/10">
-                {lessons.map((lesson) => (
-                  <Link
-                    key={`${lesson.display_course_id}-${lesson.lesson_slug}-${lesson.display_order}`}
-                    href={lesson.lesson_slug}
-                    className="grid gap-3 px-5 py-4 transition hover:bg-white/[0.03] sm:grid-cols-[3rem_1fr]"
-                  >
-                    <span className="text-sm text-slate-500">
-                      {lesson.display_order}
-                    </span>
-                    <span>
-                      <span className="block font-semibold tracking-normal text-white">
-                        {lesson.display_title}
+                <div className="academy-lesson-list">
+                  {lessons.map((lesson) => (
+                    <Link
+                      key={`${lesson.display_course_id}-${lesson.lesson_slug}-${lesson.display_order}`}
+                      href={lesson.lesson_slug}
+                      className="academy-lesson-row"
+                    >
+                      <span className="academy-lesson-number">
+                        {lesson.display_order}
                       </span>
-                    </span>
-                  </Link>
-                ))}
+                      <span>
+                        <span className="academy-lesson-title">
+                          {lesson.display_title}
+                        </span>
+                      </span>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </section>
 
-        <nav className="mt-10 grid gap-4 sm:grid-cols-2">
+        <nav className="academy-nav-grid">
           {previousCourse ? (
-            <div className="rounded-lg border border-white/10 bg-slate-900/70 p-5">
-              <p className="text-sm text-slate-400">Previous course</p>
-              <p className="mt-2 font-semibold text-slate-100">
-                {previousCourse.course_title}
-              </p>
-              <p className="mt-2 text-sm text-slate-500">Coming soon</p>
-            </div>
+            <Link
+              href={
+                previousCourseIsOpen
+                  ? previousCourse.course_slug
+                  : course.course_slug
+              }
+              aria-disabled={!previousCourseIsOpen}
+              className="academy-nav-card"
+            >
+              <p className="academy-nav-label">Previous course</p>
+              <p className="academy-nav-title">{previousCourse.course_title}</p>
+              {previousCourseIsOpen ? null : (
+                <p className="academy-card-text">Coming soon</p>
+              )}
+            </Link>
           ) : null}
           {nextCourse ? (
-            <div className="rounded-lg border border-white/10 bg-slate-900/70 p-5 sm:text-right">
-              <p className="text-sm text-slate-400">Next course</p>
-              <p className="mt-2 font-semibold text-slate-100">
-                {nextCourse.course_title}
-              </p>
-              <p className="mt-2 text-sm text-slate-500">Coming soon</p>
-            </div>
+            <Link
+              href={nextCourseIsOpen ? nextCourse.course_slug : course.course_slug}
+              aria-disabled={!nextCourseIsOpen}
+              className="academy-nav-card"
+            >
+              <p className="academy-nav-label">Next course</p>
+              <p className="academy-nav-title">{nextCourse.course_title}</p>
+              {nextCourseIsOpen ? null : (
+                <p className="academy-card-text">Coming soon</p>
+              )}
+            </Link>
           ) : null}
         </nav>
       </div>
-    </main>
+    </AcademyShell>
   );
 }

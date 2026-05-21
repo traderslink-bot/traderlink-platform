@@ -118,6 +118,7 @@ export type AcademyLesson = {
   slug: string;
   slugSegments: string[];
   title: string;
+  seoTitle: string;
   description: string;
   body: string;
   frontmatter: AcademyFrontmatter;
@@ -384,7 +385,9 @@ export function getAcademyLesson(slug: string): AcademyLesson | null {
     canonicalMembership,
   );
 
-  const title = stringValue(parsed.frontmatter.title) ?? getTitleFromBody(parsed.body);
+  const title =
+    stringValue(parsed.frontmatter.title) ?? getTitleFromBody(parsed.body);
+  const seoTitle = stringValue(parsed.frontmatter.meta_title) ?? title;
   const description =
     stringValue(parsed.frontmatter.meta_description) ??
     stringValue(parsed.frontmatter.description) ??
@@ -402,6 +405,7 @@ export function getAcademyLesson(slug: string): AcademyLesson | null {
     slug: normalizedSlug,
     slugSegments: slugToSegments(normalizedSlug),
     title,
+    seoTitle,
     description,
     body: parsed.body,
     frontmatter: parsed.frontmatter,

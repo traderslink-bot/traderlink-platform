@@ -2,11 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AcademyShell } from "../../academy-shell";
 import {
   getAcademyPathHubPage,
   getLaunchAcademyPathHubIds,
   isAcademyPathHubLaunchReady,
 } from "@/src/lib/academy/academy-content";
+import {
+  buildAcademyMetadata,
+  buildPathHubJsonLd,
+  jsonLdScript,
+} from "@/src/lib/academy/academy-seo";
 
 type PageProps = {
   params: Promise<{ pathId: string }>;
@@ -25,15 +31,19 @@ export async function generateMetadata({
   const page = getAcademyPathHubPage(pathId);
 
   if (!page || !isAcademyPathHubLaunchReady(pathId)) {
-    return {
+    return buildAcademyMetadata({
       title: "Academy Path",
-    };
+      description: "A TradersLink Academy learning path for structured trading education.",
+      pathname: "/academy/",
+      noIndex: true,
+    });
   }
 
-  return {
-    title: `${page.hub.path_title} | TradersLink Academy`,
+  return buildAcademyMetadata({
+    title: page.hub.path_title,
     description: page.hub.path_goal,
-  };
+    pathname: page.hub.path_slug,
+  });
 }
 
 export default async function AcademyPathPage({ params }: PageProps) {
@@ -43,30 +53,23 @@ export default async function AcademyPathPage({ params }: PageProps) {
   if (!page || !isAcademyPathHubLaunchReady(pathId)) {
     notFound();
   }
+  const pathJsonLd = buildPathHubJsonLd(page.hub);
 
   return (
-    <main className="min-h-screen bg-[#050a14] text-white">
-      <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 lg:px-10">
-        <Link href="/academy/" className="text-sm font-medium text-cyan-200">
-          Academy
-        </Link>
-
-        <section className="mt-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-200">
-            Guided Path
-          </p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-normal text-white sm:text-5xl">
-            {page.hub.path_title}
-          </h1>
-          <p className="mt-5 text-lg leading-8 text-slate-200">
-            {page.hub.path_goal}
-          </p>
-          <p className="mt-3 text-base leading-7 text-slate-300">
-            {page.hub.recommended_for}
-          </p>
+    <AcademyShell>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(pathJsonLd)}
+      />
+      <div className="academy-container-narrow">
+        <section className="academy-hero">
+          <p className="academy-eyebrow">Guided Path</p>
+          <h1 className="academy-title-sm">{page.hub.path_title}</h1>
+          <p className="academy-lede">{page.hub.path_goal}</p>
+          <p className="academy-body-copy">{page.hub.recommended_for}</p>
         </section>
 
-        <section className="mt-10 space-y-4">
+        <section className="academy-path-list">
           {page.steps.map((item) => {
             const href =
               item.type === "course"
@@ -82,25 +85,21 @@ export default async function AcademyPathPage({ params }: PageProps) {
               <Link
                 key={item.step.step_id}
                 href={href}
-                className="grid gap-4 rounded-lg border border-white/10 bg-slate-900/72 p-5 transition hover:border-cyan-200/50 sm:grid-cols-[4rem_1fr_auto]"
+                className="academy-path-card"
               >
-                <span className="text-2xl font-semibold text-cyan-100">
+                <span className="academy-path-number">
                   {item.step.step_order}
                 </span>
                 <span>
-                  <span className="block text-sm font-semibold uppercase tracking-[0.12em] text-slate-400">
-                    {label}
-                  </span>
-                  <span className="mt-2 block text-xl font-semibold tracking-normal text-white">
-                    {title}
-                  </span>
+                  <span className="academy-path-meta">{label}</span>
+                  <span className="academy-path-title">{title}</span>
                 </span>
-                <span className="text-sm font-medium text-cyan-200">Open</span>
+                <span className="academy-path-action">Open</span>
               </Link>
             );
           })}
         </section>
       </div>
-    </main>
+    </AcademyShell>
   );
 }

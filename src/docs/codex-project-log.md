@@ -107,6 +107,66 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-05-20 TradersLink Academy Live Product, SEO, And Analytics Pass
+
+The active website/Academy worktree for the current launch pass is:
+
+- `C:\Users\jerac\Documents\TraderLink\trader-intelligence-v2-svg-qa`
+- local preview target: `http://localhost:3204`
+
+Do not confuse it with the older local preview that was running on port `3103`.
+
+Current product state:
+
+- Root homepage has been updated to promote TradersLink Academy, use the
+  Academy-style logo treatment, include homepage scroll-reveal animation, and
+  present the Chart Reading And Market Structure course as available.
+- Academy UI has been redesigned toward a lighter Material-inspired surface
+  with dark-mode toggle support, updated top navigation, social links, SEO
+  metadata, sitemap/robots support, favicon/app icons, and course progress
+  presentation.
+- Discord auth/progress UX has been expanded so logged-out users are told how
+  to save progress, lesson/course/module progress can render in Academy views,
+  and failed Discord membership/auth states can point users toward the free
+  TradersLink Discord.
+- The candle section has moved from the earlier single-page/category-only
+  approach toward individual candle behavior lessons grouped by bullish,
+  bearish, indecision/neutral, momentum/continuation, and session/gap behavior.
+  SVGs for these lessons should remain wordless and focused on visual
+  recognition.
+- Google Analytics is now wired globally from `app/layout.tsx` through
+  `app/google-analytics.tsx` with measurement ID `G-KKDBE5323S`. It sends App
+  Router page-view events, avoids duplicate automatic page views, and keeps
+  local/dev traffic out of GA unless `NEXT_PUBLIC_ENABLE_GA_IN_DEV=true` is set.
+- Academy progress storage now supports Neon Postgres for live/preview
+  deployments through `DATABASE_URL` or `ACADEMY_DATABASE_URL`, while preserving
+  the local SQLite fallback for development. `DATABASE_URL` has been added as a
+  sensitive Vercel env var for Production and Preview, and a hosted Neon smoke
+  test passed against the configured database.
+
+Recent verification:
+
+- `npx --no-install tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npx --no-install vitest run src/lib/academy/__tests__/academy-content.test.ts`
+  passed after the Neon progress-store adapter work.
+- `npm run build:webpack` passed after the Neon progress-store adapter work.
+- Hosted Neon Academy progress smoke test passed: create user, create session,
+  complete lesson, remove lesson completion, and revoke session.
+- The production build includes the Google Analytics loader/config for
+  `G-KKDBE5323S`.
+- The webpack Vercel build still reports an existing warning from
+  `src/lib/support-resistance/levels-system-runtime-options.ts` about a dynamic
+  dependency expression; it is unrelated to the Academy storage change.
+
+Best next step for this branch:
+
+- Run a final browser QA on the active `3204` preview for `/`, `/academy`,
+  `/academy/courses/trading-foundations`, and
+  `/academy/courses/chart-reading-market-structure`, then commit only the
+  intended homepage, Academy, SEO, auth/progress, analytics, icon, and content
+  changes once the user approves the visible state.
+
 ### 2026-05-18 TradersLink Academy Course 1 Launch Pass
 
 Course 1, `Trading Foundations`, is now being brought to the same launch-ready

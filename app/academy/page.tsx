@@ -1,150 +1,353 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
+import { AcademyShell } from "./academy-shell";
+import { getCurrentAcademySession } from "./academy-server-session";
 import {
   getAcademyCoursePage,
   getAcademyCourses,
   getLaunchAcademyCourseIds,
 } from "@/src/lib/academy/academy-content";
+import { AcademyProgressStore } from "@/src/lib/academy/academy-progress-store";
+import {
+  ACADEMY_HOME_DESCRIPTION,
+  ACADEMY_HOME_TITLE,
+  buildAcademyHomeJsonLd,
+  buildAcademyMetadata,
+  jsonLdScript,
+  TRADERSLINK_DISCORD_INVITE_URL,
+} from "@/src/lib/academy/academy-seo";
 
-export const metadata = {
-  title: "TradersLink Academy",
-  description:
-    "A structured trading education path with courses, lessons, market context, risk planning, review practice, and realistic chart-learning support.",
+const discordInviteUrl = TRADERSLINK_DISCORD_INVITE_URL;
+
+type AcademyHomePageProps = {
+  searchParams: Promise<{ auth?: string | string[] }>;
 };
 
-export default function AcademyHomePage() {
+type AuthNotice = {
+  tone: "warning" | "success";
+  title: string;
+  body: string;
+  showInvite: boolean;
+  showLogin: boolean;
+} | null;
+
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  searchParams,
+}: AcademyHomePageProps): Promise<Metadata> {
+  const authStatus = normalizeSearchParam((await searchParams).auth);
+
+  return buildAcademyMetadata({
+    title: ACADEMY_HOME_TITLE,
+    description: ACADEMY_HOME_DESCRIPTION,
+    pathname: "/academy/",
+    type: "website",
+    keywords: [
+      "free stock market lessons",
+      "small cap trading academy",
+      "stock market academy",
+      "chart reading lessons",
+      "candlestick lessons",
+      "trading risk management",
+    ],
+    noIndex: Boolean(authStatus),
+  });
+}
+
+export default async function AcademyHomePage({
+  searchParams,
+}: AcademyHomePageProps) {
+  const authStatus = normalizeSearchParam((await searchParams).auth);
+  const authNotice = getAuthNotice(authStatus);
+  const academySession = await getCurrentAcademySession();
+  const completedLessonSlugs = academySession
+    ? new Set(
+        await new AcademyProgressStore().listCompletedLessonSlugs(
+          academySession.discordUserId,
+        ),
+      )
+    : new Set<string>();
   const courses = getAcademyCourses();
-  const [liveCourseId] = getLaunchAcademyCourseIds();
-  const liveCourse = courses.find((course) => course.course_id === liveCourseId);
-  const liveCoursePage = liveCourse ? getAcademyCoursePage(liveCourseId) : null;
+  const liveCourseIds = getLaunchAcademyCourseIds();
+  const liveCourseIdSet = new Set(liveCourseIds);
+  const liveCourses = liveCourseIds
+    .map((courseId) => {
+      const course = courses.find((item) => item.course_id === courseId);
+      const coursePage = getAcademyCoursePage(courseId);
+
+      return course && coursePage ? { course, coursePage } : null;
+    })
+    .filter((item) => item !== null);
+  const liveLessonCount = liveCourses.reduce(
+    (total, item) => total + item.coursePage.totalLessonCount,
+    0,
+  );
   const comingSoonCourses = courses.filter(
-    (course) => course.course_id !== liveCourseId,
+    (course) => !liveCourseIdSet.has(course.course_id),
+  );
+  const academyJsonLd = buildAcademyHomeJsonLd(
+    liveCourses.map((item) => item.course),
   );
 
   return (
-    <main className="min-h-screen bg-[#050a14] text-white">
-      <section className="border-b border-cyan-200/10 bg-[linear-gradient(180deg,rgba(7,59,120,0.36),rgba(5,10,20,1))]">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-16 sm:px-8 lg:px-10">
-          <div className="max-w-4xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-200">
-              TradersLink Academy
-            </p>
-            <h1 className="mt-4 text-4xl font-semibold tracking-normal text-white sm:text-6xl">
-              Start with chart reading, market structure, and real lesson-by-lesson progress.
+    <AcademyShell>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(academyJsonLd)}
+      />
+      <div className="academy-container">
+        <section className="academy-hero">
+          <div className="academy-hero-copy">
+            <p className="academy-eyebrow">TradersLink Academy</p>
+            <h1 className="academy-title">
+              Free Stock Market Lessons for Small Cap Stock Traders
             </h1>
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200">
-              The first Academy course is open now. It gives new traders a
-              clear course sequence through candlesticks, levels, structure,
-              breaks, ranges, and chart-pattern context without locking them
-              into the order.
+            <p className="academy-lede">
+              Learn how small cap stock traders read charts, understand candles,
+              track market structure, manage risk, and build better trading
+              habits through structured small cap academy courses.
             </p>
+            {authNotice ? (
+              <div
+                className={`academy-auth-alert academy-auth-alert-${authNotice.tone}`}
+                role={authNotice.tone === "warning" ? "alert" : "status"}
+              >
+                <p className="academy-auth-alert-title">{authNotice.title}</p>
+                <p>{authNotice.body}</p>
+                <div className="academy-auth-alert-actions">
+                  {authNotice.showInvite ? (
+                    <a
+                      href={discordInviteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="academy-auth-alert-button"
+                    >
+                      Join the free Discord
+                    </a>
+                  ) : null}
+                  {authNotice.showLogin ? (
+                    <Link
+                      href="/api/auth/discord/login"
+                      className="academy-auth-alert-link"
+                    >
+                      Log in with Discord
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+            <div className="academy-progress-note">
+              <p className="academy-progress-note-title">
+                Save your place as you learn.
+              </p>
+              <p>
+                Academy lessons are open to read for free. To save completed
+                lessons and keep your progress synced, join the free{" "}
+                <a
+                  href={discordInviteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  TradersLink Discord
+                </a>
+                , then log in here with the same Discord account.
+              </p>
+            </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <StatCard label="Live course" value="1" />
+          <div className="academy-stat-grid">
             <StatCard
-              label="Lessons"
-              value={(liveCoursePage?.totalLessonCount ?? 51).toString()}
+              label="Live courses"
+              value={liveCourses.length.toString()}
             />
+            <StatCard label="Lessons" value={liveLessonCount.toString()} />
             <StatCard
               label="Coming soon"
               value={comingSoonCourses.length.toString()}
             />
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[minmax(0,1fr)_23rem] lg:px-10">
-        <div>
-          <div className="mb-5 flex items-end justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-cyan-200">
-                Available Now
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-normal">
-                Begin The Academy Path
-              </h2>
-            </div>
-          </div>
-
-          {liveCourse ? (
-            <div className="grid gap-4">
-              <Link
-                href={liveCourse.course_slug}
-                className="group rounded-lg border border-cyan-200/30 bg-slate-900/72 p-6 transition hover:border-cyan-200/60 hover:bg-slate-900"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <p className="text-sm font-semibold uppercase tracking-[0.14em] text-cyan-200">
-                    Course {liveCourse.course_order}
-                  </p>
-                  <span className="rounded border border-emerald-200/30 bg-emerald-300/10 px-2 py-1 text-xs font-medium text-emerald-100">
-                    Open now
-                  </span>
-                </div>
-                <h3 className="mt-4 text-2xl font-semibold tracking-normal text-white group-hover:text-cyan-100">
-                  {liveCourse.course_title}
-                </h3>
-                <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-                  {liveCourse.course_outcome || liveCourse.display_model}
-                </p>
-                <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-300">
-                  <span className="rounded border border-white/10 bg-white/5 px-3 py-2">
-                    {liveCoursePage?.totalLessonCount ?? 51} lessons
-                  </span>
-                </div>
-                <p className="mt-6 text-sm font-semibold text-cyan-200">
-                  Open course
-                </p>
-              </Link>
-            </div>
-          ) : null}
-        </div>
-
-        <aside className="space-y-4">
-          <div className="rounded-lg border border-cyan-200/20 bg-cyan-400/10 p-5">
-            <h2 className="text-lg font-semibold tracking-normal">
-              Coming Soon
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
-              These courses stay in planning until their content and visuals
-              are ready for the same standard as the first course.
-            </p>
-          </div>
-
-          {comingSoonCourses.map((course) => (
-            <div
-              key={course.course_id}
-              className="rounded-lg border border-white/10 bg-slate-900/72 p-5"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm text-slate-500">
-                  Course {course.course_order}
-                </p>
-                <span className="rounded border border-white/10 bg-white/5 px-2 py-1 text-xs font-medium text-slate-300">
-                  Coming soon
-                </span>
+        <section className="academy-section academy-grid-sidebar">
+          <div>
+            <div className="academy-section-heading">
+              <div>
+                <p className="academy-section-label">Available Now</p>
+                <h2 className="academy-section-title">
+                  Begin The Academy Path
+                </h2>
               </div>
-              <h3 className="mt-3 font-semibold tracking-normal text-white">
-                {course.course_title}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                {course.display_model}
+            </div>
+
+            {liveCourses.length > 0 ? (
+              <div className="academy-module-list">
+                {liveCourses.map(({ course, coursePage }) => {
+                  const progress = getCourseProgress(
+                    coursePage.modules.flatMap(({ lessons }) => lessons),
+                    completedLessonSlugs,
+                  );
+
+                  return (
+                    <Link
+                      key={course.course_id}
+                      href={course.course_slug}
+                      className="academy-card academy-card-link"
+                    >
+                      <div className="academy-card-topline">
+                        <p className="academy-kicker">
+                          Course {course.course_order}
+                        </p>
+                        <span className="academy-chip academy-chip-success">
+                          Open now
+                        </span>
+                      </div>
+                      <h3 className="academy-card-title">
+                        {course.course_title}
+                      </h3>
+                      <p className="academy-card-text">
+                        {course.course_outcome || course.display_model}
+                      </p>
+                      <div className="academy-chip-row">
+                        <span className="academy-chip">
+                          {coursePage.totalLessonCount} lessons
+                        </span>
+                      </div>
+                      <div className="academy-course-progress">
+                        <div className="academy-course-progress-track">
+                          <span
+                            className="academy-course-progress-fill"
+                            style={{ width: `${progress.percent}%` }}
+                          />
+                        </div>
+                        <div className="academy-course-progress-meta">
+                          <span>
+                            {academySession
+                              ? `${progress.percent}% complete`
+                              : "Log in to track progress"}
+                          </span>
+                          <span>
+                            {progress.completed}/{progress.total}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="academy-card-action">Open course</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+
+          <section aria-label="Coming soon Academy courses" className="academy-sidebar">
+            <div className="academy-sidebar-card academy-sidebar-card-accent">
+              <h2 className="academy-sidebar-title">Coming Soon</h2>
+              <p className="academy-sidebar-text">
+                These courses stay in planning until their content and visuals
+                are ready for the same standard as the live courses.
               </p>
             </div>
-          ))}
-        </aside>
-      </section>
-    </main>
+
+            {comingSoonCourses.map((course) => (
+              <div key={course.course_id} className="academy-sidebar-card">
+                <div className="academy-card-topline">
+                  <p className="academy-card-text">
+                    Course {course.course_order}
+                  </p>
+                  <span className="academy-chip academy-chip-warning">
+                    Coming soon
+                  </span>
+                </div>
+                <h3 className="academy-sidebar-title">{course.course_title}</h3>
+                <p className="academy-sidebar-text">{course.display_model}</p>
+              </div>
+            ))}
+          </section>
+        </section>
+      </div>
+    </AcademyShell>
   );
+}
+
+function normalizeSearchParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function getCourseProgress(
+  lessons: Array<{
+    lesson_slug: string;
+    counts_toward_course_progress: boolean;
+  }>,
+  completedLessonSlugs: Set<string>,
+) {
+  const progressLessons = lessons.filter(
+    (lesson) => lesson.counts_toward_course_progress,
+  );
+  const completed = progressLessons.filter((lesson) =>
+    completedLessonSlugs.has(lesson.lesson_slug),
+  ).length;
+  const total = progressLessons.length;
+
+  return {
+    completed,
+    total,
+    percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+  };
+}
+
+function getAuthNotice(authStatus: string | undefined): AuthNotice {
+  switch (authStatus) {
+    case "join-discord":
+      return {
+        tone: "warning",
+        title: "Join the free TradersLink Discord to save progress.",
+        body: "Your Discord login worked, but this account is not a member of the TradersLink server yet. Join the free Discord, then come back and log in again with the same Discord account so the Academy can track completed lessons.",
+        showInvite: true,
+        showLogin: true,
+      };
+    case "invalid-state":
+      return {
+        tone: "warning",
+        title: "Discord login did not finish.",
+        body: "The login session expired or restarted before it could connect. Try logging in again; if you are not already in the free TradersLink Discord, join the server first so progress tracking can turn on.",
+        showInvite: true,
+        showLogin: true,
+      };
+    case "failed":
+      return {
+        tone: "warning",
+        title: "Discord login could not connect.",
+        body: "The login attempt did not finish cleanly. Join the free TradersLink Discord if you have not already, then try logging in again with the same Discord account.",
+        showInvite: true,
+        showLogin: true,
+      };
+    case "missing-config":
+      return {
+        tone: "warning",
+        title: "Discord login is not ready in this environment.",
+        body: "The Academy can still be read for free, but progress tracking needs the Discord login settings to be configured before it can save lesson completion.",
+        showInvite: false,
+        showLogin: false,
+      };
+    case "connected":
+      return {
+        tone: "success",
+        title: "You are logged in.",
+        body: "Your Discord account is connected to the Academy. Lesson progress can now be saved as you work through the courses.",
+        showInvite: false,
+        showLogin: false,
+      };
+    default:
+      return null;
+  }
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-slate-950/54 p-5">
-      <p className="text-sm text-slate-400">{label}</p>
-      <p className="mt-2 text-3xl font-semibold tracking-normal text-cyan-100">
-        {value}
-      </p>
+    <div className="academy-stat-card">
+      <p className="academy-stat-label">{label}</p>
+      <p className="academy-stat-value">{value}</p>
     </div>
   );
 }

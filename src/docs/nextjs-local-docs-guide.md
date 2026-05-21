@@ -1,6 +1,6 @@
 # Next.js Local Docs Guide
 
-**Last checked:** 2026-05-09
+**Last checked:** 2026-05-20
 
 ## Purpose
 
@@ -19,7 +19,8 @@ The installed package version checked during this note was:
 - `next@16.2.3`
 
 Important: if a future run says this path is missing, verify the current working
-directory and dependency install first. In this checkout, the path exists.
+directory and dependency install first. In this checkout and the current Academy
+launch worktree, the path exists.
 
 ## How Future Codex Should Use It
 
@@ -40,7 +41,8 @@ Do not create fake Next.js framework docs inside this repo.
 
 Instead:
 
-1. Confirm the repo root is `trader-intelligence-v2`.
+1. Confirm the repo root is `trader-intelligence-v2` or the active launch
+   worktree `trader-intelligence-v2-svg-qa`.
 2. Confirm dependencies are installed.
 3. Check `node_modules/next/package.json` for the installed version.
 4. Use installed TypeScript definitions and the Vercel/Next.js skill as the

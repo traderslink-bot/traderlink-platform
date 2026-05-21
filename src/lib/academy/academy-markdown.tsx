@@ -34,7 +34,7 @@ export function AcademyMarkdown({ body }: { body: string }) {
   const blocks = parseMarkdownBlocks(body);
 
   return (
-    <div className="space-y-6">
+    <div className="academy-markdown">
       {blocks.map((block) => renderBlock(block))}
     </div>
   );
@@ -44,10 +44,7 @@ function renderBlock(block: MarkdownBlock) {
   if (block.type === "heading") {
     if (block.level === 1) {
       return (
-        <h1
-          key={block.key}
-          className="text-4xl font-semibold tracking-normal text-white sm:text-5xl"
-        >
+        <h1 key={block.key} className="academy-md-h1">
           {renderInline(block.text)}
         </h1>
       );
@@ -55,20 +52,14 @@ function renderBlock(block: MarkdownBlock) {
 
     if (block.level === 2) {
       return (
-        <h2
-          key={block.key}
-          className="border-t border-white/10 pt-8 text-2xl font-semibold tracking-normal text-white"
-        >
+        <h2 key={block.key} className="academy-md-h2">
           {renderInline(block.text)}
         </h2>
       );
     }
 
     return (
-      <h3
-        key={block.key}
-        className="text-xl font-semibold tracking-normal text-cyan-100"
-      >
+      <h3 key={block.key} className="academy-md-h3">
         {renderInline(block.text)}
       </h3>
     );
@@ -76,7 +67,7 @@ function renderBlock(block: MarkdownBlock) {
 
   if (block.type === "paragraph") {
     return (
-      <p key={block.key} className="text-base leading-8 text-slate-200">
+      <p key={block.key} className="academy-md-p">
         {renderInline(block.text)}
       </p>
     );
@@ -84,10 +75,7 @@ function renderBlock(block: MarkdownBlock) {
 
   if (block.type === "quote") {
     return (
-      <blockquote
-        key={block.key}
-        className="border-l-2 border-cyan-300 bg-cyan-400/10 px-5 py-4 text-base leading-7 text-cyan-50"
-      >
+      <blockquote key={block.key} className="academy-md-quote">
         {renderInline(block.text)}
       </blockquote>
     );
@@ -95,10 +83,7 @@ function renderBlock(block: MarkdownBlock) {
 
   if (block.type === "image") {
     return (
-      <figure
-        key={block.key}
-        className="overflow-hidden rounded-lg border border-cyan-200/20 bg-slate-950/80"
-      >
+      <figure key={block.key} className="academy-md-figure">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={block.src} alt={block.alt} className="h-auto w-full" />
       </figure>
@@ -107,10 +92,7 @@ function renderBlock(block: MarkdownBlock) {
 
   if (block.type === "list") {
     return (
-      <ul
-        key={block.key}
-        className="space-y-3 pl-6 text-base leading-7 text-slate-200"
-      >
+      <ul key={block.key} className="academy-md-list">
         {block.items.map((item, index) => (
           <li
             key={`${block.key}-${index}`}
@@ -126,34 +108,26 @@ function renderBlock(block: MarkdownBlock) {
 
   if (block.type === "cardGrid") {
     return (
-      <div
-        key={block.key}
-        className="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-4"
-      >
+      <div key={block.key} className="academy-md-card-grid">
         {block.groups.map((group) => (
           <section
             key={`${block.key}-${group.title}`}
-            className="rounded-lg border border-cyan-200/20 bg-cyan-400/10 p-4"
+            className="academy-md-card-group"
           >
-            <h3 className="text-base font-semibold tracking-normal text-cyan-100">
-              {group.title}
-            </h3>
-            <div className="mt-4 space-y-2">
+            <h3 className="academy-md-card-title">{group.title}</h3>
+            <div className="academy-md-card-links">
               {group.links.map((link) => {
                 const unavailable = isUnavailableAcademyHref(link.href);
 
                 return unavailable ? (
-                  <span
-                    key={link.href}
-                    className="block rounded border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-slate-300"
-                  >
+                  <span key={link.href} className="academy-md-unavailable-card">
                     {link.text}
                   </span>
                 ) : (
                   <a
                     key={link.href}
                     href={link.href}
-                    className="block rounded border border-white/10 bg-slate-950/45 px-3 py-2 text-sm font-medium text-slate-100 transition hover:border-cyan-200/40 hover:bg-cyan-300/10"
+                    className="academy-md-link-card"
                   >
                     {link.text}
                   </a>
@@ -170,31 +144,20 @@ function renderBlock(block: MarkdownBlock) {
     const [header, ...rows] = block.rows;
 
     return (
-      <div
-        key={block.key}
-        className="overflow-x-auto rounded-lg border border-white/10"
-      >
-        <table className="min-w-[42rem] divide-y divide-white/10 text-left text-sm sm:min-w-full">
-          <thead className="bg-white/5 text-slate-200">
+      <div key={block.key} className="academy-md-table-wrap">
+        <table className="academy-md-table">
+          <thead>
             <tr>
               {header.map((cell, index) => (
-                <th
-                  key={`${block.key}-h-${index}`}
-                  className="max-w-[18rem] px-4 py-3 font-semibold"
-                >
-                  {renderInline(cell)}
-                </th>
+                <th key={`${block.key}-h-${index}`}>{renderInline(cell)}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/10 text-slate-300">
+          <tbody>
             {rows.map((row, rowIndex) => (
               <tr key={`${block.key}-r-${rowIndex}`}>
                 {row.map((cell, cellIndex) => (
-                  <td
-                    key={`${block.key}-c-${rowIndex}-${cellIndex}`}
-                    className="max-w-[18rem] px-4 py-3 align-top leading-6"
-                  >
+                  <td key={`${block.key}-c-${rowIndex}-${cellIndex}`}>
                     {renderInline(cell)}
                   </td>
                 ))}
@@ -207,14 +170,11 @@ function renderBlock(block: MarkdownBlock) {
   }
 
   if (block.type === "rule") {
-    return <hr key={block.key} className="border-white/10" />;
+    return <hr key={block.key} className="academy-md-rule" />;
   }
 
   return (
-    <pre
-      key={block.key}
-      className="overflow-x-auto rounded-lg border border-white/10 bg-slate-950 p-4 text-sm leading-6 text-slate-200"
-    >
+    <pre key={block.key} className="academy-md-pre">
       <code>{block.code}</code>
     </pre>
   );
@@ -465,13 +425,13 @@ function renderInline(text: string): ReactNode[] {
 
     if (token.startsWith("**")) {
       nodes.push(
-        <strong key={key} className="font-semibold text-white">
+        <strong key={key} className="academy-md-strong">
           {token.slice(2, -2)}
         </strong>,
       );
     } else if (token.startsWith("`")) {
       nodes.push(
-        <code key={key} className="rounded bg-white/10 px-1.5 py-0.5 text-sm text-cyan-100">
+        <code key={key} className="academy-md-code">
           {token.slice(1, -1)}
         </code>,
       );
@@ -481,17 +441,13 @@ function renderInline(text: string): ReactNode[] {
       if (link) {
         if (isUnavailableAcademyHref(link[2])) {
           nodes.push(
-            <span key={key} className="font-medium text-slate-100">
+            <span key={key} className="academy-md-strong">
               {link[1]}
             </span>,
           );
         } else {
           nodes.push(
-            <a
-              key={key}
-              href={link[2]}
-              className="text-cyan-200 underline decoration-cyan-300/40 underline-offset-4"
-            >
+            <a key={key} href={link[2]} className="academy-md-link">
               {link[1]}
             </a>,
           );

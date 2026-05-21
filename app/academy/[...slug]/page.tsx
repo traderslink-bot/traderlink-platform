@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { getCurrentAcademySession } from "../academy-server-session";
+import { AcademyShell } from "../academy-shell";
 import {
   type AcademyLessonMembership,
   type AcademyModule,
@@ -12,12 +14,21 @@ import {
   isAcademyLessonLaunchReady,
 } from "@/src/lib/academy/academy-content";
 import { AcademyMarkdown } from "@/src/lib/academy/academy-markdown";
+import {
+  buildAcademyMetadata,
+  buildLessonJsonLd,
+  jsonLdScript,
+  TRADERSLINK_DISCORD_INVITE_URL,
+} from "@/src/lib/academy/academy-seo";
 
 type PageProps = {
   params: Promise<{ slug: string[] }>;
 };
 
+const discordInviteUrl = TRADERSLINK_DISCORD_INVITE_URL;
+
 export const dynamicParams = false;
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
   return getLaunchAcademyLessonStaticParams();
@@ -30,15 +41,19 @@ export async function generateMetadata({
   const lesson = getAcademyLessonBySegments(slug);
 
   if (!lesson || !isAcademyLessonLaunchReady(lesson)) {
-    return {
+    return buildAcademyMetadata({
       title: "Academy Lesson",
-    };
+      description: "A TradersLink Academy lesson for practical trading education.",
+      pathname: "/academy/",
+      noIndex: true,
+    });
   }
 
-  return {
-    title: `${lesson.title} | TradersLink Academy`,
+  return buildAcademyMetadata({
+    title: lesson.seoTitle,
     description: lesson.description,
-  };
+    pathname: lesson.slug,
+  });
 }
 
 export default async function AcademyLessonPage({ params }: PageProps) {
@@ -49,6 +64,7 @@ export default async function AcademyLessonPage({ params }: PageProps) {
     notFound();
   }
 
+  const academySession = await getCurrentAcademySession();
   const primaryContext = lesson.contexts[0] ?? null;
   const primaryCoursePage = primaryContext
     ? getAcademyCoursePage(primaryContext.courseId)
@@ -60,96 +76,103 @@ export default async function AcademyLessonPage({ params }: PageProps) {
       context.courseId !== primaryContext?.courseId &&
       isAcademyCourseLaunchReady(context.courseId),
   );
+  const lessonJsonLd = buildLessonJsonLd(lesson);
 
   return (
-    <main className="min-h-screen bg-[#050a14] text-white">
-      <div className="mx-auto grid w-full max-w-7xl gap-10 px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:px-10">
-        <article className="min-w-0">
-          <Link href="/academy/" className="text-sm font-medium text-cyan-200">
-            Academy
-          </Link>
+    <AcademyShell>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(lessonJsonLd)}
+      />
+      <div className="academy-container-wide academy-grid-sidebar">
+        <article className="academy-article">
+          {academySession ? null : (
+            <div className="academy-progress-label">
+              <p className="academy-progress-label-title">
+                Track your progress
+              </p>
+              <p>
+                To save this lesson to your Academy progress, join the free{" "}
+                <a
+                  href={discordInviteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  TradersLink Discord
+                </a>{" "}
+                and log in with your Discord account.
+              </p>
+              <Link
+                href="/api/auth/discord/login"
+                className="academy-progress-label-link"
+              >
+                Log in with Discord
+              </Link>
+            </div>
+          )}
 
-          <div className="mt-8 rounded-lg border border-white/10 bg-slate-900/58 p-5 sm:p-8">
+          <div>
             <AcademyMarkdown body={learningPathSection.mainBody} />
           </div>
 
-          <nav className="mt-6 grid gap-4 sm:grid-cols-2">
+          <nav className="academy-nav-grid">
             {lesson.previousLesson ? (
               <Link
                 href={lesson.previousLesson.slug}
-                className="rounded-lg border border-white/10 bg-slate-900/72 p-5 transition hover:border-cyan-200/50"
+                className="academy-nav-card"
               >
-                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-400">
-                  Previous lesson
-                </p>
-                <p className="mt-3 text-lg font-semibold tracking-normal text-cyan-100">
+                <p className="academy-nav-label">Previous lesson</p>
+                <p className="academy-nav-title">
                   {lesson.previousLesson.title}
                 </p>
               </Link>
             ) : (
-              <Link
-                href="/academy/"
-                className="rounded-lg border border-white/10 bg-slate-900/72 p-5 transition hover:border-cyan-200/50"
-              >
-                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-400">
-                  Academy home
-                </p>
-                <p className="mt-3 text-lg font-semibold tracking-normal text-cyan-100">
-                  View all courses
-                </p>
+              <Link href="/academy/" className="academy-nav-card">
+                <p className="academy-nav-label">Academy home</p>
+                <p className="academy-nav-title">View all courses</p>
               </Link>
             )}
 
             {lesson.nextLesson ? (
               <Link
                 href={lesson.nextLesson.slug}
-                className="rounded-lg border border-cyan-200/30 bg-cyan-300/10 p-5 text-left transition hover:bg-cyan-300/20 sm:text-right"
+                className="academy-nav-card academy-nav-card-accent"
               >
-                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-cyan-200">
-                  Next lesson
-                </p>
-                <p className="mt-3 text-lg font-semibold tracking-normal text-white">
-                  {lesson.nextLesson.title}
-                </p>
+                <p className="academy-nav-label">Next lesson</p>
+                <p className="academy-nav-title">{lesson.nextLesson.title}</p>
               </Link>
             ) : (
               <Link
                 href="/academy/"
-                className="rounded-lg border border-cyan-200/30 bg-cyan-300/10 p-5 text-left transition hover:bg-cyan-300/20 sm:text-right"
+                className="academy-nav-card academy-nav-card-accent"
               >
-                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-cyan-200">
-                  Course complete
-                </p>
-                <p className="mt-3 text-lg font-semibold tracking-normal text-white">
-                  Return to Academy
-                </p>
+                <p className="academy-nav-label">Course complete</p>
+                <p className="academy-nav-title">Return to Academy</p>
               </Link>
             )}
           </nav>
 
           {learningPathSection.learningPathBody ? (
-            <div className="mt-6 rounded-lg border border-white/10 bg-slate-900/46 p-5 sm:p-8">
+            <div className="academy-learning-path">
               <AcademyMarkdown body={learningPathSection.learningPathBody} />
             </div>
           ) : null}
         </article>
 
-        <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+        <section aria-label="Academy lesson navigation" className="academy-sidebar">
           {primaryContext ? (
-            <div className="rounded-lg border border-cyan-200/20 bg-cyan-400/10 p-5">
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-cyan-200">
-                Course Context
-              </p>
-              <h2 className="mt-2 text-lg font-semibold tracking-normal">
+            <div className="academy-sidebar-card academy-sidebar-card-accent">
+              <p className="academy-kicker">Course Context</p>
+              <h2 className="academy-sidebar-title">
                 {primaryContext.courseTitle}
               </h2>
-              <div className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
+              <div className="academy-sidebar-text">
                 <p>{primaryContext.moduleTitle}</p>
                 <p>Lesson {primaryContext.displayOrder}</p>
               </div>
               <Link
                 href={primaryContext.courseSlug}
-                className="mt-4 inline-flex rounded border border-cyan-200/30 px-3 py-2 text-sm font-semibold text-cyan-100"
+                className="academy-sidebar-link"
               >
                 View course
               </Link>
@@ -157,21 +180,19 @@ export default async function AcademyLessonPage({ params }: PageProps) {
           ) : null}
 
           {visibleSecondaryContexts.length > 0 ? (
-            <div className="rounded-lg border border-white/10 bg-slate-900/72 p-5">
-              <h2 className="text-lg font-semibold tracking-normal">
-                Also Appears In
-              </h2>
-              <div className="mt-3 space-y-2 text-sm text-slate-300">
+            <div className="academy-sidebar-card">
+              <h2 className="academy-sidebar-title">Also Appears In</h2>
+              <div className="academy-sidebar-list">
                 {visibleSecondaryContexts.map((context) => (
                   <Link
                     key={`${context.courseId}-${context.moduleId}`}
                     href={context.courseSlug}
-                    className="block rounded border border-white/10 px-3 py-2 transition hover:border-cyan-200/40"
+                    className="academy-course-link"
                   >
-                    <span className="block font-medium text-slate-100">
+                    <span className="academy-course-link-title">
                       {context.courseTitle}
                     </span>
-                    <span className="mt-1 block text-xs text-slate-500">
+                    <span className="academy-course-link-order">
                       {context.moduleTitle}
                     </span>
                   </Link>
@@ -181,15 +202,13 @@ export default async function AcademyLessonPage({ params }: PageProps) {
           ) : null}
 
           {courseModules.length > 0 ? (
-            <div className="rounded-lg border border-white/10 bg-slate-900/72 p-5">
-              <h2 className="text-lg font-semibold tracking-normal">
-                Course Path
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
+            <div className="academy-sidebar-card">
+              <h2 className="academy-sidebar-title">Course Path</h2>
+              <p className="academy-sidebar-text">
                 Move through the course in order, or jump to the lesson you
                 need.
               </p>
-              <div className="mt-4 max-h-[30rem] space-y-5 overflow-y-auto pr-1 text-sm">
+              <div className="academy-course-path">
                 <CourseLessonGroups
                   currentSlug={lesson.slug}
                   groups={courseModules}
@@ -198,9 +217,9 @@ export default async function AcademyLessonPage({ params }: PageProps) {
               </div>
             </div>
           ) : null}
-        </aside>
+        </section>
       </div>
-    </main>
+    </AcademyShell>
   );
 }
 
@@ -218,15 +237,11 @@ function CourseLessonGroups({
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-        {label}
-      </p>
+    <div className="academy-course-groups">
+      <p className="academy-nav-label">{label}</p>
       {groups.map(({ module, lessons }) => (
-        <div key={module.module_id} className="space-y-2">
-          <p className="text-xs font-medium text-cyan-200">
-            {module.module_title}
-          </p>
+        <div key={module.module_id} className="academy-course-group">
+          <p className="academy-course-group-title">{module.module_title}</p>
           {lessons.map((courseLesson) => {
             const isCurrent = courseLesson.lesson_slug === currentSlug;
 
@@ -234,16 +249,14 @@ function CourseLessonGroups({
               <Link
                 key={`${courseLesson.display_course_id}-${courseLesson.lesson_slug}-${courseLesson.display_order}`}
                 href={courseLesson.lesson_slug}
-                className={`block rounded border px-3 py-2 transition ${
-                  isCurrent
-                    ? "border-cyan-200/40 bg-cyan-300/10 text-cyan-50"
-                    : "border-white/10 text-slate-300 hover:border-cyan-200/30"
+                className={`academy-course-link ${
+                  isCurrent ? "academy-course-link-current" : ""
                 }`}
               >
-                <span className="block text-xs text-slate-500">
+                <span className="academy-course-link-order">
                   Lesson {courseLesson.display_order}
                 </span>
-                <span className="mt-1 block font-medium">
+                <span className="academy-course-link-title">
                   {courseLesson.display_title}
                 </span>
               </Link>
