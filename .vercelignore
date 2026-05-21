@@ -2,5 +2,8 @@ node_modules
 .next
 .git
 .vercel
+.env*
+.codex-dev-server
+tsconfig.tsbuildinfo
 data
 __svg-qa.html
