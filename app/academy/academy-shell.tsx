@@ -22,6 +22,7 @@ const signedOutAuthSnapshot: AcademyAuthSnapshot = {
 export function AcademyShell({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<AcademyTheme>("light");
   const [auth, setAuth] = useState<AcademyAuthSnapshot>(signedOutAuthSnapshot);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const logoSrc =
     theme === "light"
       ? "/logo-horizontal-light.png"
@@ -67,6 +68,20 @@ export function AcademyShell({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
   function selectTheme(nextTheme: AcademyTheme) {
     setTheme(nextTheme);
     window.localStorage.setItem(storageKey, nextTheme);
@@ -97,52 +112,97 @@ export function AcademyShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="academy-topbar-actions">
-            <SocialIconLinks />
+            <AcademyTopbarControls
+              auth={auth}
+              onSelectTheme={selectTheme}
+              theme={theme}
+            />
+          </div>
 
-            {auth.authenticated ? (
-              <div className="academy-auth-group">
-                <span className="academy-auth-status">
-                  Signed in as {auth.displayName}
-                </span>
-                <form action="/api/auth/logout" method="post">
-                  <button type="submit" className="academy-logout-button">
-                    Log out
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <Link
-                href="/api/auth/discord/login"
-                className="academy-login-link"
-              >
-                Log in with Discord
-              </Link>
-            )}
-            <div
-              className="academy-theme-toggle"
-              role="group"
-              aria-label="Academy color theme"
-            >
-              <button
-                type="button"
-                aria-pressed={theme === "light"}
-                onClick={() => selectTheme("light")}
-              >
-                Light
-              </button>
-              <button
-                type="button"
-                aria-pressed={theme === "dark"}
-                onClick={() => selectTheme("dark")}
-              >
-                Dark
-              </button>
-            </div>
+          <button
+            type="button"
+            className="academy-menu-button"
+            aria-controls="academy-mobile-menu"
+            aria-expanded={isMenuOpen}
+            aria-label={isMenuOpen ? "Close Academy menu" : "Open Academy menu"}
+            onClick={() => setIsMenuOpen((current) => !current)}
+          >
+            <span aria-hidden="true" />
+            <span aria-hidden="true" />
+            <span aria-hidden="true" />
+          </button>
+
+          <div
+            id="academy-mobile-menu"
+            className="academy-mobile-menu"
+            data-open={isMenuOpen}
+          >
+            <AcademyTopbarControls
+              auth={auth}
+              onSelectTheme={(nextTheme) => {
+                selectTheme(nextTheme);
+                setIsMenuOpen(false);
+              }}
+              theme={theme}
+            />
           </div>
         </div>
       </header>
       {children}
     </main>
+  );
+}
+
+function AcademyTopbarControls({
+  auth,
+  onSelectTheme,
+  theme,
+}: {
+  auth: AcademyAuthSnapshot;
+  onSelectTheme: (theme: AcademyTheme) => void;
+  theme: AcademyTheme;
+}) {
+  return (
+    <>
+      <SocialIconLinks />
+
+      {auth.authenticated ? (
+        <div className="academy-auth-group">
+          <span className="academy-auth-status">
+            Signed in as {auth.displayName}
+          </span>
+          <form action="/api/auth/logout" method="post">
+            <button type="submit" className="academy-logout-button">
+              Log out
+            </button>
+          </form>
+        </div>
+      ) : (
+        <Link href="/api/auth/discord/login" className="academy-login-link">
+          Log in with Discord
+        </Link>
+      )}
+      <div
+        className="academy-theme-toggle"
+        role="group"
+        aria-label="Academy color theme"
+      >
+        <button
+          type="button"
+          aria-pressed={theme === "light"}
+          onClick={() => onSelectTheme("light")}
+        >
+          Light
+        </button>
+        <button
+          type="button"
+          aria-pressed={theme === "dark"}
+          onClick={() => onSelectTheme("dark")}
+        >
+          Dark
+        </button>
+      </div>
+    </>
   );
 }
 

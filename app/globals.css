@@ -451,6 +451,7 @@ body {
 
 .academy-topbar-inner {
   display: flex;
+  position: relative;
   width: 100%;
   max-width: 80rem;
   align-items: center;
@@ -498,6 +499,71 @@ body {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
+}
+
+.academy-menu-button {
+  display: none;
+  position: relative;
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--academy-border);
+  border-radius: 999px;
+  background: var(--academy-surface);
+  color: var(--academy-heading);
+  cursor: pointer;
+  box-shadow: var(--academy-shadow-1);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.academy-menu-button span {
+  position: absolute;
+  width: 1.15rem;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.academy-menu-button span:nth-child(1) {
+  transform: translateY(-0.38rem);
+}
+
+.academy-menu-button span:nth-child(3) {
+  transform: translateY(0.38rem);
+}
+
+.academy-menu-button[aria-expanded="true"] span:nth-child(1) {
+  transform: rotate(45deg);
+}
+
+.academy-menu-button[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+}
+
+.academy-menu-button[aria-expanded="true"] span:nth-child(3) {
+  transform: rotate(-45deg);
+}
+
+.academy-menu-button:hover,
+.academy-menu-button:focus-visible {
+  border-color: rgba(11, 87, 208, 0.35);
+  background: var(--academy-primary-tint);
+  box-shadow: var(--academy-shadow-2);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.academy-mobile-menu {
+  display: none;
 }
 
 .academy-topbar-link {
@@ -1757,13 +1823,68 @@ body {
 
 @media (max-width: 760px) {
   .academy-topbar-inner {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+  }
+
+  .academy-brand {
+    gap: 0.55rem;
+  }
+
+  .academy-brand-logo {
+    width: 8.8rem;
+    max-width: 38vw;
+  }
+
+  .academy-brand-label {
+    font-size: 0.85rem;
   }
 
   .academy-topbar-actions {
-    width: 100%;
+    display: none;
+  }
+
+  .academy-menu-button {
+    display: inline-flex;
+  }
+
+  .academy-mobile-menu {
+    position: absolute;
+    top: calc(100% + 0.55rem);
+    right: 1rem;
+    left: 1rem;
+    z-index: 50;
+    display: none;
+    gap: 0.9rem;
+    border: 1px solid var(--academy-border);
+    border-radius: 8px;
+    background: var(--academy-surface);
+    box-shadow: var(--academy-shadow-3);
+    padding: 1rem;
+  }
+
+  .academy-mobile-menu[data-open="true"] {
+    display: grid;
+  }
+
+  .academy-mobile-menu .academy-social-links,
+  .academy-mobile-menu .academy-auth-group {
     justify-content: flex-start;
+  }
+
+  .academy-mobile-menu .academy-login-link,
+  .academy-mobile-menu .academy-theme-toggle {
+    width: 100%;
+  }
+
+  .academy-mobile-menu .academy-login-link {
+    min-height: 2.75rem;
+  }
+
+  .academy-mobile-menu .academy-theme-toggle button {
+    min-height: 2.35rem;
   }
 
   .academy-title,
