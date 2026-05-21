@@ -28,7 +28,7 @@ meta_description: "Learn Bottoming Tail Candle by shape, candle count, context, 
 
 # Bottoming Tail Candle
 
-A bottoming tail candle is a lower-wick rejection candle. It belongs to the same family as hammers and bullish pin bars.
+A bottoming tail candle shows price pushing lower and then recovering before the close. The lower tail is the message: sellers tested a lower area, but price did not stay there.
 
 ![Bottoming tail candle with a long lower tail and the body near the top of its range.](/academy/images/chart-reading/candle-behavior/bottoming-tail-candle-shape.svg)
 
@@ -46,25 +46,23 @@ A bottoming tail candle is a lower-wick rejection candle. It belongs to the same
 * **Wicks:** Dominant lower tail that is clearly longer than the body.
 * **Relationship:** The candle is read by comparing the lower tail with the body and nearby candles.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Bottoming Tail Candle is to start with the shape first, then check whether the surrounding candles match the context.
+Focus on the long lower tail and the body sitting closer to the upper part of the candle range. The lower the test and the stronger the recovery, the clearer the rejection becomes.
 
 ## Context
 
 Bottoming tails are most useful to study where price tests lower levels and then closes away from the low.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Bottoming tails matter most near support, prior lows, reclaim areas, or after a sharp flush. Away from a meaningful level, the candle can simply show volatility instead of a useful rejection area.
 
 ## What It Shows
 
-Sellers moved price lower, but buyers stepped in strongly enough to pull the close back up.
+A bottoming tail shows failed selling pressure. Price traded down first, buyers stepped in, and the candle closed away from the low instead of accepting that lower area.
 
 ## What To Watch Next
 
-Watch whether price respects the lower tail area and continues holding above the body.
+Watch whether price holds above the tail low and whether later candles can build above the body. The tail low becomes the area that should not be casually lost.
 
-The read weakens if price quickly breaks below the tail low. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price quickly breaks below the tail low. That means the lower area was not rejected for long.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ A hammer is a specific bottoming-tail shape. Bottoming tail is the broader famil
 
 ## Key Takeaway
 
-A bottoming tail is lower rejection: price dropped, got bought, and closed away from the low.
+A bottoming tail shows lower rejection. Price pushed down, failed to hold near the low, and closed back up. It matters most when that rejection happens near a level traders were already watching.
 
 ## Related Lessons
 

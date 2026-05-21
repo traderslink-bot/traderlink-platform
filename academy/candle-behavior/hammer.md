@@ -28,7 +28,7 @@ meta_description: "Learn Hammer by shape, candle count, context, buyer-seller be
 
 # Hammer
 
-A hammer is a lower-rejection candle. It shows price trading down during the candle and then recovering before the close.
+A hammer shows lower rejection after weakness. Sellers pushed price down during the candle, but buyers brought it back up before the close, leaving a long lower wick and a small body near the high.
 
 ![Hammer candle with a small body near the high and a long lower wick.](/academy/images/chart-reading/candle-behavior/hammer-shape.svg)
 
@@ -46,9 +46,7 @@ A hammer is a lower-rejection candle. It shows price trading down during the can
 * **Wicks:** Long lower wick with little or no upper wick.
 * **Relationship:** The single candle matters most after price has already been moving down or testing a lower area.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Hammer is to start with the shape first, then check whether the surrounding candles match the context.
+Start with the lower wick. The body should be small and near the high, showing price traded down first and then closed away from the low. After that, check whether it formed after weakness or near a support area.
 
 ## Context
 
@@ -56,17 +54,17 @@ A hammer is most useful to study after selling pressure, near support, a prior l
 
 ![Hammer candle forming after a downward move near a lower support area.](/academy/images/chart-reading/candle-behavior/hammer-context.svg)
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+The shape matters most when it appears after selling pressure, near support, a prior low, VWAP, or another area where buyers were already expected to defend price. The same candle in the middle of chop carries much less information.
 
 ## What It Shows
 
-Sellers pushed price lower first, then buyers absorbed the move and closed the candle near the upper part of the range.
+A hammer shows that sellers had control early in the candle, but they could not keep price near the low. Buyers absorbed the push down and closed the candle near the upper part of its range.
 
 ## What To Watch Next
 
-Watch whether the next candle can hold above the hammer body or reclaim the hammer high.
+Watch whether the next candles hold above the hammer body, reclaim the hammer high, or at least respect the hammer low.
 
-The read weakens if price breaks back below the hammer low or cannot hold the upper part of the candle. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price breaks back below the hammer low or cannot hold the upper part of the candle. That means buyers did not defend the area the hammer was supposed to show them defending.
 
 ## Common Confusion
 
@@ -74,7 +72,7 @@ The shape can look like a hanging man. The difference is context: hammer is disc
 
 ## Key Takeaway
 
-A hammer is a lower-rejection shape that teaches buyers stepping in after a push down.
+A hammer shows lower rejection after weakness. It becomes more useful when it forms near support and the next candles respect the hammer low or push back through the hammer high.
 
 ## Related Lessons
 

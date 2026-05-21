@@ -28,7 +28,7 @@ meta_description: "Learn Gap And Go by shape, candle count, context, buyer-selle
 
 # Gap And Go
 
-Gap and go behavior happens when price gaps and then continues in the gap direction.
+A gap and go happens when price opens with a gap and then continues in the gap direction instead of filling it right away.
 
 ![Gap up followed by green candles continuing higher from the opening area.](/academy/images/chart-reading/candle-behavior/gap-and-go-shape.svg)
 
@@ -46,9 +46,7 @@ Gap and go behavior happens when price gaps and then continues in the gap direct
 * **Wicks:** Cleaner candles often have bodies closing in the continuation direction.
 * **Relationship:** The gap is followed by continuation instead of an immediate move back into the gap.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Gap And Go is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a session that opens away from the prior close and then holds the opening side. The follow-through after the open is what separates gap and go behavior from a simple gap.
 
 ## Context
 
@@ -56,17 +54,17 @@ Gap and go behavior depends on the open, prior close, volume, and whether dips h
 
 ![Gap and go sequence with price holding the gap and continuing upward.](/academy/images/chart-reading/candle-behavior/gap-and-go-context.svg)
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Gap and go behavior is cleaner when price opens above or below meaningful levels, holds premarket structure, and continues with volume. A gap into nearby resistance or support can struggle quickly.
 
 ## What It Shows
 
-The gap attracted continued participation instead of immediate fading.
+The pattern shows that the opening repricing was accepted. Traders did not fade the gap immediately; price continued in the same direction after the open.
 
 ## What To Watch Next
 
-Watch whether price holds the opening area and keeps building away from the prior close.
+Watch whether price holds the open area, premarket support or resistance, and the prior close reference. A strong gap and go should not quickly fill the gap.
 
-The read weakens if price loses the open area and starts filling the gap. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price loses the open area and starts filling the gap. That means the open was not being accepted as continuation.
 
 ## Common Confusion
 
@@ -74,7 +72,7 @@ Gap and go is different from a gap fill because price continues away from the ga
 
 ## Key Takeaway
 
-Gap and go shows session continuation after a gap.
+A gap and go is gap behavior plus continuation. The gap starts the move, but holding and extending after the open is what matters.
 
 ## Related Lessons
 

@@ -28,7 +28,7 @@ meta_description: "Learn Spinning Top by shape, candle count, context, buyer-sel
 
 # Spinning Top
 
-A spinning top has a small body with wicks on both sides.
+A spinning top has a small body with wicks on both sides. It often shows a pause where neither buyers nor sellers finished with strong control.
 
 ![Spinning top candle with a small body and visible upper and lower wicks.](/academy/images/chart-reading/candle-behavior/spinning-top-shape.svg)
 
@@ -46,27 +46,23 @@ A spinning top has a small body with wicks on both sides.
 * **Wicks:** Upper and lower wicks are both visible.
 * **Relationship:** The single candle is read by comparing the small body with the wick movement around it.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Spinning Top is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a small real body and visible upper and lower wicks. It should not be as bodyless as a doji; the candle has a body, but the body is not dominant.
 
 ## Context
 
 Spinning tops are most useful when they appear after stronger candles and show momentum slowing.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+A spinning top matters most after a strong move or near a level where momentum may be slowing. In sideways chop, it often just blends into the range.
 
 ## What It Shows
 
-Price moved both ways during the candle, but the close did not show strong control.
+A spinning top shows hesitation. Price moved above and below the open, but neither buyers nor sellers finished with clear control. After a strong move, that pause can matter because it may show momentum slowing.
 
 ## What To Watch Next
 
-Watch whether the next candle expands away from the spinning top range.
+Watch whether the next candles break away from the spinning top range or keep rotating around it. The candle is more useful when the reaction after it becomes clear.
 
-The read is less useful if the candle forms inside random low-volume chop.
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price keeps chopping through the same area. That means the candle was just part of an unclear range.
 
 ## Common Confusion
 
@@ -74,7 +70,7 @@ A doji has open and close almost equal. A spinning top has a small but visible b
 
 ## Key Takeaway
 
-A spinning top shows a small-body pause with movement on both sides.
+A spinning top shows hesitation with a small body and wicks on both sides. It becomes more useful when it appears after a strong move or at a key level.
 
 ## Related Lessons
 

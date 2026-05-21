@@ -28,7 +28,7 @@ meta_description: "Learn Long-Legged Doji by shape, candle count, context, buyer
 
 # Long-Legged Doji
 
-A long-legged doji has a tiny body with long wicks on both sides.
+A long-legged doji has a tiny body with long upper and lower wicks. It shows a wide fight between buyers and sellers that still ended near the open.
 
 ![Long-legged doji candle with a tiny body and long upper and lower wicks.](/academy/images/chart-reading/candle-behavior/long-legged-doji-shape.svg)
 
@@ -46,25 +46,23 @@ A long-legged doji has a tiny body with long wicks on both sides.
 * **Wicks:** Long upper and lower wicks.
 * **Relationship:** The candle shows a wide battle that still closed near the open.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Long-Legged Doji is to start with the shape first, then check whether the surrounding candles match the context.
+Look for an open and close close together, plus long wicks on both sides. The wide range is what separates it from a smaller standard doji.
 
 ## Context
 
 This candle is most useful when the wide range appears after directional movement or at a visible level.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+This candle matters most at major levels, after a strong move, or during volatile turning points. It can show that both sides pushed hard but neither side held control into the close.
 
 ## What It Shows
 
-Both sides pushed price, but neither side held control by the close.
+Buyers pushed price up and sellers pushed price down, but the candle closed near where it opened. That makes it a high-volatility indecision candle rather than a clean directional candle.
 
 ## What To Watch Next
 
-Watch whether the next candles break and hold outside the long-legged doji range.
+Watch whether price breaks above or below the full doji range and holds there. Until that happens, the candle is mostly showing a wide unresolved battle.
 
-The read weakens if the next candles stay trapped inside the same range. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if the next candles stay trapped inside the same range. That means the market has not chosen a cleaner direction yet.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ A high-wave candle can look similar, but a doji has an even smaller body.
 
 ## Key Takeaway
 
-A long-legged doji shows wide two-sided movement that closes near the open.
+A long-legged doji shows wide indecision. The range matters because the next clean hold outside it can show which side finally took control.
 
 ## Related Lessons
 

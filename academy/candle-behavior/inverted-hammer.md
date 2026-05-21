@@ -28,7 +28,7 @@ meta_description: "Learn Inverted Hammer by shape, candle count, context, buyer-
 
 # Inverted Hammer
 
-An inverted hammer has a small body with a long upper wick after weakness. It shows buyers attempted to push price higher during the candle.
+An inverted hammer shows an upside attempt after weakness. Buyers pushed price higher during the candle, but the close did not finish near the high, so the next candles matter a lot.
 
 ![Inverted hammer candle with a small body near the low and a long upper wick.](/academy/images/chart-reading/candle-behavior/inverted-hammer-shape.svg)
 
@@ -46,9 +46,7 @@ An inverted hammer has a small body with a long upper wick after weakness. It sh
 * **Wicks:** Long upper wick with little or no lower wick.
 * **Relationship:** The single candle needs prior weakness to be read as an inverted hammer instead of an upper-rejection candle in strength.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Inverted Hammer is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a small body near the lower part of the candle and a long upper wick. Then check the prior move. The candle is read as an inverted hammer when it forms after weakness, not after a clean run up.
 
 ## Context
 
@@ -56,17 +54,17 @@ This candle is most useful to study after selling pressure, when the upper wick 
 
 ![Inverted hammer candle forming after a downward move near a lower support area.](/academy/images/chart-reading/candle-behavior/inverted-hammer-context.svg)
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+This candle matters most after a pullback, selloff, or test near support because it shows buyers finally tried to push back. In the middle of a range, the same upper wick can just be noise.
 
 ## What It Shows
 
-Buyers made an upside attempt, but the candle did not close near the high. The next candles decide whether that attempt matters.
+An inverted hammer shows that buyers tried to push price higher after a weak move, but they could not keep price near the high by the close. That makes it an early warning of a possible shift, not automatic proof that control has changed.
 
 ## What To Watch Next
 
-Watch whether later candles move back through the upper wick or hold above the body.
+Watch whether price can reclaim the upper wick area or build above the candle high. That is where the buyer attempt becomes easier to take seriously.
 
-The read weakens if price stays below the body or continues lower without reclaiming the wick area. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price stays below the body or continues lower without reclaiming the wick area. In that case, the upside test was rejected instead of accepted.
 
 ## Common Confusion
 
@@ -74,7 +72,7 @@ The same shape can be called a shooting star after an up move. Context changes t
 
 ## Key Takeaway
 
-An inverted hammer is an upside attempt after weakness, not the same thing as a clean lower-rejection hammer.
+An inverted hammer shows buyers testing higher prices after weakness. It needs follow-through because the candle did not close near the high.
 
 ## Related Lessons
 

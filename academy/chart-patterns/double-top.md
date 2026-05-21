@@ -41,9 +41,9 @@ meta_description: "Learn what Double Top shows, why it can fail, and how to revi
 
 **Best suited for:** day trading and swing trading.
 
-Double Top is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.
+A double top forms when price tests a similar resistance area twice and fails to hold above it. The second rejection matters because it shows buyers struggled at the same area again.
 
-The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
+The pattern is cleaner when both highs are easy to see and the pullback between them gives the chart a clear support area to watch.
 
 ![Candlestick chart showing a double top with two resistance tests.](/academy/images/chart-reading/double-top-context.svg)
 
@@ -57,7 +57,7 @@ A double top forms when price tests a similar resistance area twice and fails to
 - Neckline or support area below.
 - Possible support break or failed breakdown.
 
-The useful question is where the pattern formed, how volume behaved, and where the pattern would fail.
+Review the two resistance tests, the pullback between them, and the level price would need to lose for the pattern to matter.
 
 ## Pattern Structure
 
@@ -71,7 +71,7 @@ The pattern shows repeated resistance. The next review is whether price breaks, 
 
 ## Context That Matters
 
-The pattern needs surrounding context before it can be reviewed well.
+Double tops matter most after a push into resistance or an extended move where buyers may be running out of clean progress.
 
 - Support and resistance quality.
 - Trend before the pattern.
@@ -119,9 +119,9 @@ A double top is repeated resistance plus follow-through context, not two similar
 
 A double top forms when price tests a similar resistance area twice and fails to hold above it.
 
-### Can this pattern fail?
+### What weakens a double top?
 
-Yes. It can fail, fake out, or become choppy.
+It weakens if price reclaims the resistance area and starts holding above the prior highs.
 
 ### What context matters most?
 
@@ -135,6 +135,6 @@ They often fail because entries are late, volume fades, a key level fails, or th
 
 Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
 
-### Can this pattern be used alone?
+### What should this pattern be compared with?
 
-No. It should be one part of a broader review process.
+Compare it with resistance quality, the depth of the middle pullback, volume on each test, and whether price loses the support between the tops.

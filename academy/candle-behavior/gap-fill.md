@@ -28,7 +28,7 @@ meta_description: "Learn Gap Fill by shape, candle count, context, buyer-seller 
 
 # Gap Fill
 
-A gap fill happens when price moves back into the empty space between the prior close and current session area.
+A gap fill happens when price moves back into the empty space between the new session open and the prior session close.
 
 ![Gap followed by candles moving back into the open gap area.](/academy/images/chart-reading/candle-behavior/gap-fill-shape.svg)
 
@@ -46,9 +46,7 @@ A gap fill happens when price moves back into the empty space between the prior 
 * **Wicks:** Wicks vary. The key is price traveling through the gap space.
 * **Relationship:** The current session starts away from the prior close, then moves back into that space.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Gap Fill is to start with the shape first, then check whether the surrounding candles match the context.
+Find the prior close and the current session open. A gap fill begins when price moves back through that gap area instead of holding the opening side.
 
 ## Context
 
@@ -56,17 +54,17 @@ Gap fill behavior depends on the prior close, the opening price, and how much of
 
 ![Gap fill sequence with price returning toward the prior range.](/academy/images/chart-reading/candle-behavior/gap-fill-context.svg)
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Gap fills often matter when the opening move cannot hold, when price opens into resistance or support, or when premarket levels fail. Not every gap fills, so the reference levels matter.
 
 ## What It Shows
 
-The market is moving back into an area skipped by the gap.
+A gap fill shows that the market is taking back the opening repricing. Traders who expected the gap to hold may be forced to adjust as price moves back toward the prior close.
 
 ## What To Watch Next
 
-Watch whether the fill is partial, complete, or rejected before reaching the prior close.
+Watch whether price moves cleanly through the gap or stalls at the prior close, previous day high or low, or premarket levels. Those references can slow or reverse the fill.
 
-The read weakens if price holds the opening side and refuses to move into the gap. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price holds the opening side and refuses to move into the gap. That means the gap is still being defended.
 
 ## Common Confusion
 
@@ -74,7 +72,7 @@ A gap fill can be partial. It does not have to return all the way to the prior c
 
 ## Key Takeaway
 
-A gap fill shows price returning into the gap area.
+A gap fill shows price moving back into the gap area. The prior close and nearby session levels are the main references.
 
 ## Related Lessons
 

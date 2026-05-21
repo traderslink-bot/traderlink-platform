@@ -28,7 +28,7 @@ meta_description: "Learn Inside Bar by shape, candle count, context, buyer-selle
 
 # Inside Bar
 
-An inside bar forms when the second candle stays inside the high and low of the prior candle.
+An inside bar forms when a candle stays inside the high and low of the prior candle. It shows compression, not direction by itself.
 
 ![Large mother candle followed by a smaller inside bar contained within the prior high and low.](/academy/images/chart-reading/candle-behavior/inside-bar-shape.svg)
 
@@ -46,25 +46,23 @@ An inside bar forms when the second candle stays inside the high and low of the 
 * **Wicks:** The second candle's full high-low range sits inside the prior candle range.
 * **Relationship:** The first candle is the mother candle. The second candle is contained inside it.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Inside Bar is to start with the shape first, then check whether the surrounding candles match the context.
+Find the mother candle first. The next candle should have a high below the mother candle high and a low above the mother candle low, sitting fully inside that range.
 
 ## Context
 
 Inside bars are most useful to study as compression after movement or before a range expands.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Inside bars matter when price is tightening after a move, near a level, or before expansion. The mother candle range is the reference; the inside candle is the pause.
 
 ## What It Shows
 
-Price tightened instead of expanding beyond the prior candle.
+An inside bar shows price getting smaller inside the prior candle range. Buyers and sellers are compressing, and the break of the mother candle range matters more than the inside bar alone.
 
 ## What To Watch Next
 
-Watch whether price breaks and holds outside the mother candle high or low.
+Watch whether price breaks above or below the mother candle range and actually holds outside it. A quick break that snaps back inside the range is not clean expansion.
 
-The read weakens if price stays stuck inside the mother candle range. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price stays stuck inside the mother candle range. Until price holds outside it, the behavior is still compression.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ An inside bar is not a single candle pattern. It needs the prior candle for comp
 
 ## Key Takeaway
 
-An inside bar shows compression inside the prior candle range.
+An inside bar shows compression inside a prior candle range. The important read comes from how price leaves, or fails to leave, that range.
 
 ## Related Lessons
 

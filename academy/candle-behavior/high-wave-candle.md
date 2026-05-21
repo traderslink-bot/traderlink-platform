@@ -28,7 +28,7 @@ meta_description: "Learn High-Wave Candle by shape, candle count, context, buyer
 
 # High-Wave Candle
 
-A high-wave candle has a small body and very long wicks on both sides.
+A high-wave candle has a small body with very long wicks on both sides. It shows a wide, volatile fight where neither side held the move into the close.
 
 ![High-wave candle with a small body and very long upper and lower wicks.](/academy/images/chart-reading/candle-behavior/high-wave-candle-shape.svg)
 
@@ -46,25 +46,23 @@ A high-wave candle has a small body and very long wicks on both sides.
 * **Wicks:** Long upper and lower wicks that dominate the candle.
 * **Relationship:** The candle is read by the contrast between the small body and large total range.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify High-Wave Candle is to start with the shape first, then check whether the surrounding candles match the context.
+Look for long upper and lower wicks with a small body near the middle of the range. Compared with a spinning top, the range is wider and the battle is more dramatic.
 
 ## Context
 
 High-wave candles are most useful to study when volatility expands and neither side holds the move.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+High-wave candles matter most near major levels, after a fast move, or during volatile sessions. They often warn that price is unstable and control is not clean.
 
 ## What It Shows
 
-Buyers and sellers both pushed price far, but the close ended near the middle area.
+Both sides pushed hard. Buyers forced price up, sellers forced price down, and the candle still closed with a small body. That is volatility without clean control.
 
 ## What To Watch Next
 
-Watch whether the next candles choose a direction outside the high-wave range.
+Watch whether price breaks out of the wide high-wave range or stays trapped inside it. A clean hold outside the range gives more information than the candle alone.
 
-The read weakens if later price stays noisy inside the same wide range. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if later price stays noisy inside the same wide range. That means the battle is still unresolved.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ A spinning top is smaller. A high-wave candle has much longer wicks and a larger
 
 ## Key Takeaway
 
-A high-wave candle shows a big two-sided battle with no clean close control.
+A high-wave candle shows a wide, messy battle between buyers and sellers. The next important clue is whether price breaks out of that wide range or stays trapped inside it.
 
 ## Related Lessons
 

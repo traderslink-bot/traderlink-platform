@@ -28,7 +28,7 @@ meta_description: "Learn Marubozu by shape, candle count, context, buyer-seller 
 
 # Marubozu
 
-A marubozu is a candle with a large body and little or no wick.
+A marubozu is an extreme full body candle with little or no wick. It shows price moving strongly from open to close with very little rejection.
 
 ![Marubozu candles with large bodies and little to no upper or lower wick.](/academy/images/chart-reading/candle-behavior/marubozu-shape.svg)
 
@@ -46,25 +46,23 @@ A marubozu is a candle with a large body and little or no wick.
 * **Wicks:** Very small or no upper and lower wicks.
 * **Relationship:** The single candle is read by how little price moved away from the open-close body.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Marubozu is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a large body and almost no visible wick on either end. The candle should look controlled from one side of the range to the other.
 
 ## Context
 
 Marubozu candles are easiest to study when they stand out from recent candles and appear with range expansion.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+A marubozu matters most around breakouts, breakdowns, reclaims, or strong continuation moves. After a very extended run, it can also be a sign of emotional late pressure.
 
 ## What It Shows
 
-One side controlled nearly the entire candle.
+The candle shows one-sided control. Buyers or sellers pushed through the candle without much visible rejection before the close.
 
 ## What To Watch Next
 
-Watch whether price holds the marubozu body or retraces it quickly.
+Watch whether price holds the marubozu body or quickly reverses through it. A strong body should not be erased casually if the move is still clean.
 
-The read weakens if the candle is immediately engulfed the other way. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if the candle is immediately engulfed the other way. That means the one-sided control disappeared quickly.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ A full body candle can still have small wicks. A marubozu is cleaner and more ex
 
 ## Key Takeaway
 
-A marubozu is a clean momentum candle with little wick noise.
+A marubozu shows strong control with little wick rejection. The key follow-up is whether that control holds after the candle closes.
 
 ## Related Lessons
 

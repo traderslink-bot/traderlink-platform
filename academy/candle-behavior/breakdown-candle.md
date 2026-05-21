@@ -28,7 +28,7 @@ meta_description: "Learn Breakdown Candle by shape, candle count, context, buyer
 
 # Breakdown Candle
 
-A breakdown candle is a strong candle that moves through a visible lower level.
+A breakdown candle pushes through a clear support area. The important part is whether price loses the level in a way that shows acceptance below it.
 
 ![Large red candle pushing below a prior support area.](/academy/images/chart-reading/candle-behavior/breakdown-candle-shape.svg)
 
@@ -46,25 +46,23 @@ A breakdown candle is a strong candle that moves through a visible lower level.
 * **Wicks:** Often closes near the lower part of the range when the break is strong.
 * **Relationship:** The candle is read against the level it breaks.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Breakdown Candle is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a candle that moves through a visible support area with a meaningful red body. A cleaner breakdown candle closes below the level instead of leaving only a wick under it.
 
 ## Context
 
 Breakdown candles need a visible reference area. Without a level, it is just a strong candle.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Breakdown candles matter most after price has built a clear support level or range. If the level is messy or price is already very extended, the breakdown read is less clean.
 
 ## What It Shows
 
-Sellers expanded price through an area where price had previously held or bounced.
+The candle shows sellers forcing price below an area where buyers had previously defended it. The body shows whether the break was accepted or only briefly tested.
 
 ## What To Watch Next
 
-Watch whether price stays below the lost level or reclaims it.
+Watch whether price stays below the breakdown level, rejects it on a bounce, or quickly reclaims it. The level becomes the first test of whether the breakdown was accepted.
 
-The read weakens if price quickly reclaims the breakdown level. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price quickly reclaims the breakdown level. That turns the move into a failed breakdown read instead of clean continuation.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ A breakdown candle is defined by level interaction, not red color alone.
 
 ## Key Takeaway
 
-A breakdown candle is momentum through a visible lower level.
+A breakdown candle shows price losing support. The quality comes from the level, the close, and whether price stays below the break.
 
 ## Related Lessons
 

@@ -28,7 +28,7 @@ meta_description: "Learn Bullish Engulfing by shape, candle count, context, buye
 
 # Bullish Engulfing
 
-A bullish engulfing pattern uses two candles. The second green body covers the prior red body.
+A bullish engulfing pattern uses two candles. The second green body takes back the prior red body and shows buyers overpowering the previous candle.
 
 ![Small red candle followed by a larger green candle whose body covers the first body.](/academy/images/chart-reading/candle-behavior/bullish-engulfing-shape.svg)
 
@@ -46,9 +46,7 @@ A bullish engulfing pattern uses two candles. The second green body covers the p
 * **Wicks:** Wicks can vary, but the body relationship is the main visual clue.
 * **Relationship:** The green body opens below or near the prior body and closes above it, taking back the prior candle body.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Bullish Engulfing is to start with the shape first, then check whether the surrounding candles match the context.
+Focus on the body relationship. The second candle should be a larger green body that covers the prior red body. The wicks can vary, but the body takeover is the main clue.
 
 ## Context
 
@@ -56,17 +54,17 @@ This pattern is most useful to study after sellers have been in control and buye
 
 ![Bullish engulfing pattern forming after a downward move near a lower support area.](/academy/images/chart-reading/candle-behavior/bullish-engulfing-context.svg)
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+This pattern is most useful after sellers have been in control, especially near support, a prior low, or a pullback area. A bullish engulfing candle in the middle of chop is easier to overread.
 
 ## What It Shows
 
-Seller control in the first candle shifts to buyer control in the second candle.
+The first candle shows sellers in control. The second candle changes the tone by closing strong enough to take back that red body, which tells you buyers did more than just pause the selling.
 
 ## What To Watch Next
 
-Watch whether price holds the green body and continues above the engulfing candle high.
+Watch whether price holds the green body and can continue above the engulfing candle high. Stronger reactions usually do not give back the whole body right away.
 
-The read weakens if price falls back through the engulfing body. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price falls back through the engulfing body. That means the buyer takeover did not hold.
 
 ## Common Confusion
 
@@ -74,7 +72,7 @@ An outside bar breaks the prior high and low. An engulfing pattern focuses on th
 
 ## Key Takeaway
 
-Bullish engulfing shows buyers taking back the prior red candle body.
+Bullish engulfing shows buyers taking back the prior red candle body. It is strongest when that takeover happens after weakness and holds on the next candles.
 
 ## Related Lessons
 

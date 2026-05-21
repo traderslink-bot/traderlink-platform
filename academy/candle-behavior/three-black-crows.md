@@ -28,7 +28,7 @@ meta_description: "Learn Three Black Crows by shape, candle count, context, buye
 
 # Three Black Crows
 
-Three black crows are three strong red candles in a row.
+Three black crows is a three-candle bearish pattern made of consecutive red bodies. It shows sellers pressing for more than one candle instead of only one quick drop.
 
 ![Three strong red candles stepping lower in sequence.](/academy/images/chart-reading/candle-behavior/three-black-crows-shape.svg)
 
@@ -46,25 +46,23 @@ Three black crows are three strong red candles in a row.
 * **Wicks:** Small or moderate wicks. Strong closes near the lows make the pattern clearer.
 * **Relationship:** Each candle continues seller pressure from the prior candle.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Three Black Crows is to start with the shape first, then check whether the surrounding candles match the context.
+Look for three red candles in a row, each closing weak and generally pushing lower than the prior candle. The bodies should be meaningful, not tiny candles with messy overlap.
 
 ## Context
 
 The pattern is easiest to study when it appears after a failed push, compression, or a shift from strong to weak candles.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+This pattern is most useful after a top, failed move, or breakdown where sellers begin to stack candles. If it appears after a huge extended drop, it may be late rather than clean.
 
 ## What It Shows
 
-Sellers controlled multiple candles instead of only one brief push.
+The sequence shows repeated seller control. Instead of one isolated red candle, sellers keep accepting lower prices across several candles.
 
 ## What To Watch Next
 
-Watch whether later candles stay below the progress made by the three red bodies.
+Watch whether price stays below the three-candle sequence or quickly reclaims it. A small bounce is different from taking back the whole move.
 
-The read weakens if the sequence immediately reclaims the full move. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if the sequence immediately reclaims the full move. That means the multi-candle sell pressure did not create durable weakness.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ Three random red candles in chop are less useful than three organized red candle
 
 ## Key Takeaway
 
-Three black crows show sustained seller pressure across three candles.
+Three black crows shows repeated seller pressure across three candles. It reads best when it starts from a failed top, resistance area, or breakdown.
 
 ## Related Lessons
 

@@ -28,7 +28,7 @@ meta_description: "Learn Topping Tail Candle by shape, candle count, context, bu
 
 # Topping Tail Candle
 
-A topping tail candle is an upper-wick rejection candle.
+A topping tail candle shows price pushing higher and then failing to hold near the high. The long upper tail is the message: buyers tested higher prices, but sellers took control before the close.
 
 ![Topping tail candle with a long upper tail and the body near the bottom of its range.](/academy/images/chart-reading/candle-behavior/topping-tail-candle-shape.svg)
 
@@ -46,25 +46,23 @@ A topping tail candle is an upper-wick rejection candle.
 * **Wicks:** Dominant upper tail that is clearly longer than the body.
 * **Relationship:** The candle is read by comparing the upper tail with the body and nearby candles.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Topping Tail Candle is to start with the shape first, then check whether the surrounding candles match the context.
+Focus on the long upper tail and the body sitting closer to the lower part of the candle range. The more clearly price closed away from the high, the clearer the upper rejection becomes.
 
 ## Context
 
 Topping tails are most useful to study where price tests higher levels and then closes away from the high.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Topping tails matter most near resistance, after a fast move, or during a failed breakout attempt. They can also show late buyers getting trapped when price pushes through a level and then falls back below it.
 
 ## What It Shows
 
-Buyers moved price higher, but sellers stepped in strongly enough to pull the close back down.
+A topping tail shows failed upside continuation. Buyers pushed first, but the candle closed away from the high because sellers rejected the higher area.
 
 ## What To Watch Next
 
-Watch whether price stays below the body or rejects the upper tail area again.
+Watch whether price stays below the tail high and starts accepting under the candle body. The rejected high becomes the first area price should not easily reclaim.
 
-The read weakens if price reclaims the tail high. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price reclaims the tail high. That means the rejection did not hold.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ A shooting star is a specific topping-tail shape. Topping tail is the broader fa
 
 ## Key Takeaway
 
-A topping tail is upper rejection: price pushed up, got sold, and closed away from the high.
+A topping tail shows upper rejection. Price pushed higher, failed to hold near the high, and closed back down. It matters most near resistance, after a fast move, or during a failed breakout attempt.
 
 ## Related Lessons
 

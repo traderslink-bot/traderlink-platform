@@ -28,7 +28,7 @@ meta_description: "Learn High-Volume Red Candle by shape, candle count, context,
 
 # High-Volume Red Candle
 
-A high-volume red candle combines a strong red candle with a larger volume bar.
+A high-volume red candle shows seller pressure paired with unusual activity. The candle body tells you direction; the volume tells you participation increased.
 
 ![Large red candle shown with a taller volume bar than the surrounding candles.](/academy/images/chart-reading/candle-behavior/high-volume-red-candle-shape.svg)
 
@@ -46,25 +46,23 @@ A high-volume red candle combines a strong red candle with a larger volume bar.
 * **Wicks:** Wicks can vary, but a close near the low makes the candle cleaner.
 * **Relationship:** The volume bar under the candle should be larger than nearby volume bars.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify High-Volume Red Candle is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a meaningful red body and a volume bar that clearly stands out from nearby candles. The strongest examples close near the low instead of leaving a large lower wick.
 
 ## Context
 
 This candle matters most when participation expands near a lost level, failed reclaim, or selloff.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+This candle matters most at breakdowns, failed reclaims, resistance reactions, or the first hard sell after a catalyst. High volume after a large extended drop can also be exhaustion, so location matters.
 
 ## What It Shows
 
-Sellers moved price while volume increased, showing more participation during that candle.
+The candle shows sellers stepping in with more participation than normal. It can mark momentum leaving, a level being lost, or a move that forced traders to react.
 
 ## What To Watch Next
 
-Watch whether price stays below the body and whether selling volume continues or fades.
+Watch whether price stays below the candle body or rejects it on a bounce. Strong sell volume should leave behind an area price struggles to reclaim.
 
-The read weakens if price immediately reclaims the candle on strong buying. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price immediately reclaims the candle on strong buying. That means the sell pressure did not hold.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ A big red candle without stronger volume is a price candle, not a high-volume re
 
 ## Key Takeaway
 
-A high-volume red candle shows seller movement with stronger participation.
+A high-volume red candle shows seller pressure with increased participation. The next read is whether that pressure creates resistance or gets fully erased.
 
 ## Related Lessons
 

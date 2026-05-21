@@ -28,7 +28,7 @@ meta_description: "Learn Gap Up by shape, candle count, context, buyer-seller be
 
 # Gap Up
 
-A gap up happens when price opens above the prior session's close.
+A gap up happens when a new session opens above the prior session close. The move can look bullish, but the gap itself is only the starting point.
 
 ![Candles opening above the prior trading range with a visible upward price gap.](/academy/images/chart-reading/candle-behavior/gap-up-shape.svg)
 
@@ -46,9 +46,7 @@ A gap up happens when price opens above the prior session's close.
 * **Wicks:** Wicks vary. The important visual is the empty space between sessions.
 * **Relationship:** The current session starts above where the prior session finished.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Gap Up is to start with the shape first, then check whether the surrounding candles match the context.
+Start with the current session open. It should open above the prior session close, then be compared with the previous day high, premarket high, and nearby resistance.
 
 ## Context
 
@@ -56,17 +54,17 @@ Gap up behavior depends on the prior close, current open, premarket action, and 
 
 ![Gap up shown after prior candles with price opening above the previous range.](/academy/images/chart-reading/candle-behavior/gap-up-context.svg)
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Gap up behavior depends on more than the prior close. Check whether price is opening above a clean breakout area, into resistance, below premarket highs, or already extended before regular trading begins.
 
 ## What It Shows
 
-The market repriced higher before regular trading continued.
+A gap up shows the market repriced higher before the regular session continued. The important question is whether traders accept that higher price or immediately sell it back into the gap.
 
 ## What To Watch Next
 
-Watch whether price holds above the prior close area or moves back into the gap.
+Watch whether price holds above the prior close, previous day high, premarket support, or another clear reference area. Stronger gaps usually defend important levels instead of fading immediately.
 
-The read weakens if price immediately sells back into the gap area. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price immediately sells back into the gap area. That means the higher open was not accepted.
 
 ## Common Confusion
 
@@ -74,7 +72,7 @@ A gap up is not one candle shape. It is session placement above the prior close.
 
 ## Key Takeaway
 
-A gap up shows the new session starting above the prior close.
+A gap up means the new session started above the prior close. The quality of the gap depends on where it opens and whether price holds important reference levels.
 
 ## Related Lessons
 

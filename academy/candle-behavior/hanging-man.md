@@ -28,7 +28,7 @@ meta_description: "Learn Hanging Man by shape, candle count, context, buyer-sell
 
 # Hanging Man
 
-A hanging man has a small body near the top and a long lower wick after strength.
+A hanging man has the same basic shape as a hammer, but the context is different. It forms after strength and warns that sellers were able to create a sharp drop during the candle.
 
 ![Hanging man candle with a small body near the high and a long lower wick.](/academy/images/chart-reading/candle-behavior/hanging-man-shape.svg)
 
@@ -46,9 +46,7 @@ A hanging man has a small body near the top and a long lower wick after strength
 * **Wicks:** Long lower wick with little or no upper wick.
 * **Relationship:** The shape looks like a hammer, but it is discussed after price has already moved up.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Hanging Man is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a small body near the upper part of the candle and a long lower wick. Then check the prior move. After an up move, that lower wick is read as a warning, not the same as a hammer after weakness.
 
 ## Context
 
@@ -56,17 +54,17 @@ The long lower wick after an up move shows price dipped sharply during the candl
 
 ![Hanging man candle forming after an upward move near an upper resistance area.](/academy/images/chart-reading/candle-behavior/hanging-man-context.svg)
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+A hanging man matters most after a strong push, near resistance, or when price is extended. The shape tells you price recovered by the close, but the location tells you why the intraperiod drop is worth noticing.
 
 ## What It Shows
 
-Buyers recovered the candle, but the deep intraperiod drop shows selling appeared inside the up move.
+A hanging man shows that price recovered before the close, but the lower wick reveals that sellers were able to hit the stock hard during the candle. After a strong move up, that can be an early warning that momentum is becoming less clean.
 
 ## What To Watch Next
 
-Watch whether later candles lose the hanging man body or break below its low.
+Watch whether the next candles hold above the hanging man high or start losing the lower wick area. The reaction after the candle decides whether the warning matters.
 
-The read weakens if price holds strong and continues above the candle high. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price holds strong and continues above the candle high. That means buyers absorbed the warning and kept control.
 
 ## Common Confusion
 
@@ -74,7 +72,7 @@ Hammer and hanging man share the same shape. The prior move changes how traders 
 
 ## Key Takeaway
 
-A hanging man is hammer-shaped, but its context is after strength.
+A hanging man is a warning candle after strength. The shape alone is not the point; the prior up move is what changes the read.
 
 ## Related Lessons
 

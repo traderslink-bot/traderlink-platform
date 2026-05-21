@@ -28,7 +28,7 @@ meta_description: "Learn Standard Doji by shape, candle count, context, buyer-se
 
 # Standard Doji
 
-A standard doji forms when the open and close are nearly equal.
+A standard doji has an open and close that are very close together. It shows a candle where neither side finished with clear control.
 
 ![Standard doji candle with nearly equal open and close and balanced upper and lower wicks.](/academy/images/chart-reading/candle-behavior/standard-doji-shape.svg)
 
@@ -46,27 +46,23 @@ A standard doji forms when the open and close are nearly equal.
 * **Wicks:** Upper and lower wicks may be short or moderate.
 * **Relationship:** The single candle is read by comparing the tiny body with the full range.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Standard Doji is to start with the shape first, then check whether the surrounding candles match the context.
+Start with the body. It should be tiny because the open and close are nearly equal. The wicks can vary, but the small body is what makes it a doji.
 
 ## Context
 
 A doji matters more when it appears after a clean move or near a level traders already care about.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+A doji matters most after a strong move or at a key level because it can show hesitation where control previously looked clearer. In the middle of chop, it often just confirms the market is already undecided.
 
 ## What It Shows
 
-Neither buyers nor sellers controlled the close strongly enough to move it far from the open.
+A doji shows balance by the close. Buyers and sellers both had a chance to move price, but the candle finished close to where it opened.
 
 ## What To Watch Next
 
-Watch whether the next candle expands above or below the doji range.
+Watch which side of the doji range breaks and whether price holds outside that range. The next candle often matters more than the doji itself.
 
-The read becomes less useful if price stays in dead chop with no range expansion.
-
-The read weakens when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price keeps chopping inside the same small range. That means the doji did not lead to a clearer decision.
 
 ## Common Confusion
 
@@ -74,7 +70,7 @@ A spinning top has a small body, but a doji has an open and close that are much 
 
 ## Key Takeaway
 
-A doji is a visual pause where open and close finish nearly equal.
+A standard doji shows indecision. It becomes more useful when it appears after a strong move or at a level where a decision matters.
 
 ## Related Lessons
 

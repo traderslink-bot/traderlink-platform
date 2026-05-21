@@ -28,7 +28,7 @@ meta_description: "Learn Falling Three Methods by shape, candle count, context, 
 
 # Falling Three Methods
 
-Falling three methods is a continuation sequence: strong red candle, small pause candles, then another strong red candle.
+Falling three methods is a bearish continuation pattern. It shows a strong move down, a controlled pause, and then another push in the same direction.
 
 ![Falling three methods pattern with a strong red candle, small bounce candles, and another red candle.](/academy/images/chart-reading/candle-behavior/falling-three-methods-shape.svg)
 
@@ -46,25 +46,23 @@ Falling three methods is a continuation sequence: strong red candle, small pause
 * **Wicks:** Wicks can vary, but the small middle candles should stay controlled inside the first candle range.
 * **Relationship:** The middle candles pause without fully undoing the first red candle.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Falling Three Methods is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a strong red candle, several smaller bounce candles that stay inside its range, and a final red candle that continues lower. The pause should look controlled, not like a full reclaim.
 
 ## Context
 
 This pattern is most useful when it appears during an existing downward move.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+This pattern matters during a downtrend or after a breakdown where price pauses without reclaiming the first candle range. The middle candles are the test of whether sellers are still controlling the move.
 
 ## What It Shows
 
-Sellers push, the market pauses without reclaiming structure, then sellers push again.
+The pattern shows sellers pressing, then absorbing a small bounce, then pressing again. The middle candles show a pause without fully taking back the prior red candle.
 
 ## What To Watch Next
 
-Watch whether the final red candle holds and continues below the pause.
+Watch whether the final candle can push below the pause and whether price stays under the earlier strong candle range. That range is the structure behind the continuation read.
 
-The read weakens if the middle candles reclaim the first candle range. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if the middle candles reclaim the first candle range. That means the pause is no longer controlled.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ The small middle candles are not strength by themselves; the pattern depends on 
 
 ## Key Takeaway
 
-Falling three methods shows bearish continuation after a controlled pause.
+Falling three methods shows bearish continuation when a bounce stays contained inside a prior strong red candle and price pushes lower again.
 
 ## Related Lessons
 

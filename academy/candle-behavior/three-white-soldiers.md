@@ -28,7 +28,7 @@ meta_description: "Learn Three White Soldiers by shape, candle count, context, b
 
 # Three White Soldiers
 
-Three white soldiers are three strong green candles in a row.
+Three white soldiers is a three-candle bullish pattern made of consecutive green bodies. It shows buyers pressing for more than one candle instead of only one quick push.
 
 ![Three strong green candles stepping higher in sequence.](/academy/images/chart-reading/candle-behavior/three-white-soldiers-shape.svg)
 
@@ -46,25 +46,23 @@ Three white soldiers are three strong green candles in a row.
 * **Wicks:** Small or moderate wicks. Strong closes near the highs make the pattern clearer.
 * **Relationship:** Each candle continues buyer pressure from the prior candle.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Three White Soldiers is to start with the shape first, then check whether the surrounding candles match the context.
+Look for three green candles in a row, each closing strong and generally pushing higher than the prior candle. The bodies should be meaningful, not tiny candles with messy overlap.
 
 ## Context
 
 The pattern is easiest to study when it appears after compression, a pullback, or a shift from weak to strong candles.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+This pattern is most useful after a base, pullback, or reversal attempt where buyers begin to stack candles. If it appears after a huge extended move, it may be more about chase than clean strength.
 
 ## What It Shows
 
-Buyers controlled multiple candles instead of only one brief push.
+The sequence shows repeated buyer control. Instead of one isolated green candle, buyers keep accepting higher prices across several candles.
 
 ## What To Watch Next
 
-Watch whether later candles hold the progress made by the three green bodies.
+Watch whether price can hold the progress made by the three-candle sequence. A controlled pullback is different from giving back the whole move immediately.
 
-The read weakens if the sequence immediately gives back the full move. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if the sequence immediately gives back the full move. That means the multi-candle push did not create durable demand.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ Three random green candles in chop are less useful than three organized green ca
 
 ## Key Takeaway
 
-Three white soldiers show sustained buyer pressure across three candles.
+Three white soldiers shows repeated buyer pressure across three candles. It reads best when it starts from a clean base, pullback, or support area.
 
 ## Related Lessons
 

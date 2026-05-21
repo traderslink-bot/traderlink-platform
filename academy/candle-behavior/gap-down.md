@@ -28,7 +28,7 @@ meta_description: "Learn Gap Down by shape, candle count, context, buyer-seller 
 
 # Gap Down
 
-A gap down happens when price opens below the prior session's close.
+A gap down happens when a new session opens below the prior session close. It can look bearish, but the gap itself still needs context.
 
 ![Candles opening below the prior trading range with a visible downward price gap.](/academy/images/chart-reading/candle-behavior/gap-down-shape.svg)
 
@@ -46,9 +46,7 @@ A gap down happens when price opens below the prior session's close.
 * **Wicks:** Wicks vary. The important visual is the empty space between sessions.
 * **Relationship:** The current session starts below where the prior session finished.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Gap Down is to start with the shape first, then check whether the surrounding candles match the context.
+Start with the current session open. It should open below the prior session close, then be compared with the previous day low, premarket low, and nearby support.
 
 ## Context
 
@@ -56,17 +54,17 @@ Gap down behavior depends on the prior close, current open, premarket action, an
 
 ![Gap down shown after prior candles with price opening below the previous range.](/academy/images/chart-reading/candle-behavior/gap-down-context.svg)
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Gap down behavior depends on where price opens. A gap into support can bounce, while a gap below a clean level can create heavier pressure if that level turns into resistance.
 
 ## What It Shows
 
-The market repriced lower before regular trading continued.
+A gap down shows the market repriced lower before the regular session continued. The important question is whether traders accept that lower price or quickly reclaim the gap area.
 
 ## What To Watch Next
 
-Watch whether price stays below the prior close area or moves back into the gap.
+Watch whether price stays below the prior close, previous day low, premarket resistance, or another clear reference area. Stronger gap downs usually fail to reclaim important levels.
 
-The read weakens if price immediately reclaims the gap area. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price immediately reclaims the gap area. That means the lower open was not accepted.
 
 ## Common Confusion
 
@@ -74,7 +72,7 @@ A gap down is not one candle shape. It is session placement below the prior clos
 
 ## Key Takeaway
 
-A gap down shows the new session starting below the prior close.
+A gap down means the new session started below the prior close. The quality of the gap depends on where it opens and whether price stays below important reference levels.
 
 ## Related Lessons
 

@@ -28,7 +28,7 @@ meta_description: "Learn Dragonfly Doji by shape, candle count, context, buyer-s
 
 # Dragonfly Doji
 
-A dragonfly doji is a doji-style candle with the open and close near the high and a long lower wick.
+A dragonfly doji has an open and close near the high with a long lower wick. It shows a deep push down that was almost fully recovered by the close.
 
 ![Dragonfly doji candle with open and close near the high and a long lower wick.](/academy/images/chart-reading/candle-behavior/dragonfly-doji-shape.svg)
 
@@ -46,9 +46,7 @@ A dragonfly doji is a doji-style candle with the open and close near the high an
 * **Wicks:** Long lower wick with little or no upper wick.
 * **Relationship:** The doji body is important because the candle closes very near where it opened.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Dragonfly Doji is to start with the shape first, then check whether the surrounding candles match the context.
+Look for almost no real body near the top of the candle and a long lower wick. The open and close should be close together, which is what separates it from a regular bottoming tail.
 
 ## Context
 
@@ -56,17 +54,17 @@ This candle matters most after price has tested lower and returned near the open
 
 ![Dragonfly doji forming after a downward move near a lower support area.](/academy/images/chart-reading/candle-behavior/dragonfly-doji-context.svg)
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+A dragonfly doji is most useful after weakness or near support because the lower wick shows a failed push down. In the middle of a choppy range, it may only show indecision.
 
 ## What It Shows
 
-Sellers pushed down, but buyers recovered the move before the candle finished.
+The candle shows sellers pushed price sharply lower, but buyers brought it back near the open by the close. That creates lower rejection, but the tiny body also says the candle did not finish with a big directional body.
 
 ## What To Watch Next
 
-Watch whether the next candle holds above the dragonfly body or moves through the high.
+Watch whether the next candles hold the lower wick and push above the doji high. The high and low of the doji become the first areas to judge the reaction.
 
-The read weakens if price immediately breaks the lower wick. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price immediately breaks the lower wick. That means the recovery inside the candle did not hold up after the close.
 
 ## Common Confusion
 
@@ -74,7 +72,7 @@ A dragonfly doji is close to a hammer shape, but the body is much thinner becaus
 
 ## Key Takeaway
 
-A dragonfly doji is lower rejection with a doji body.
+A dragonfly doji combines lower rejection with doji-style indecision. It matters most when it forms after weakness or at a level buyers may defend.
 
 ## Related Lessons
 

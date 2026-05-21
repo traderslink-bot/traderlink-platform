@@ -28,7 +28,7 @@ meta_description: "Learn Full Body Candle by shape, candle count, context, buyer
 
 # Full Body Candle
 
-A full body candle has a large real body compared with its wicks.
+A full body candle has a large real body and small wicks. It shows one side controlled most of the candle from open to close.
 
 ![Full body candle with a large body and short upper and lower wicks.](/academy/images/chart-reading/candle-behavior/full-body-candle-shape.svg)
 
@@ -46,25 +46,23 @@ A full body candle has a large real body compared with its wicks.
 * **Wicks:** Small wicks compared with the body.
 * **Relationship:** The single candle is read by body size versus recent candles.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Full Body Candle is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a body that takes up most of the candle range. The wicks should be small compared with the body, showing price closed near one end of the candle.
 
 ## Context
 
 Full body candles matter more when they appear with increasing range or near an important level.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Full body candles matter most when they appear at a breakout, breakdown, reclaim, or continuation area. In an extended move, the same candle can also mark a late emotional push.
 
 ## What It Shows
 
-One side controlled most of the candle from open to close.
+The candle shows directional control. A green full body candle shows buyers kept pressure on into the close; a red one shows sellers did the same.
 
 ## What To Watch Next
 
-Watch whether the next candle holds the body or immediately gives it back.
+Watch whether price respects the body or immediately retraces it. Strong candles usually create an area traders can judge on the next pullback.
 
-The read weakens if the full body candle is fully retraced right away. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if the full body candle is fully retraced right away. That means the strong-looking candle did not hold its ground.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ A marubozu is a stricter full-body candle with little or no wick.
 
 ## Key Takeaway
 
-A full body candle shows directional pressure inside one candle.
+A full body candle shows strong directional pressure during that candle. The next read is whether price respects or erases that pressure.
 
 ## Related Lessons
 

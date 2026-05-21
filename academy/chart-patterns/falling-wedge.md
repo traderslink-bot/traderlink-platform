@@ -40,9 +40,9 @@ meta_description: "Learn what Falling Wedge shows, why it can fail, and how to r
 
 **Best suited for:** day trading and swing trading.
 
-Falling Wedge is a chart pattern traders use to organize price behavior. The pattern can help frame structure, but it still needs levels, volume, risk, and failure context.
+A falling wedge forms when price keeps making lower highs and lower lows, but the range narrows as it moves down. The narrowing shape can show selling pressure becoming less clean.
 
-The useful question is whether the pattern creates clear levels, risk, volume context, and reviewable failure behavior.
+The pattern matters most when the upper boundary is clear and price begins to reclaim structure instead of continuing to slide.
 
 ![Candlestick chart showing a falling wedge narrowing downward between converging boundaries.](/academy/images/chart-reading/falling-wedge-context.svg)
 
@@ -56,7 +56,7 @@ A falling wedge forms when price moves downward inside a narrowing structure.
 - Possible upside break or failed reclaim.
 - Need for support and volume review.
 
-The useful question is where the pattern formed, how volume behaved, and where the pattern would fail.
+Review the lower highs, lower lows, narrowing range, and the upper boundary price would need to reclaim.
 
 ## Pattern Structure
 
@@ -70,7 +70,7 @@ The pattern can show slowing downside progress. The next review is whether price
 
 ## Context That Matters
 
-The pattern needs surrounding context before it can be reviewed well.
+Falling wedges need visible compression and a clear boundary. Without that, the pattern can become a forced bullish label on a weak chart.
 
 - Support and resistance quality.
 - Trend before the pattern.
@@ -117,9 +117,9 @@ A falling wedge describes tightening structure. It needs level, volume, and fail
 
 A falling wedge forms when price moves downward inside a narrowing structure.
 
-### Can this pattern fail?
+### What weakens a falling wedge?
 
-Yes. It can fail, fake out, or become choppy.
+It weakens if price keeps making clean lower lows or fails every attempt to reclaim the upper boundary.
 
 ### What context matters most?
 
@@ -133,6 +133,6 @@ They often fail because entries are late, volume fades, a key level fails, or th
 
 Review pattern quality, entry timing, volume, level behavior, invalidation, and whether the plan was followed.
 
-### Can this pattern be used alone?
+### What should this pattern be compared with?
 
-No. It should be one part of a broader review process.
+Compare it with trend, compression quality, volume, and whether the reclaim attempt actually holds.

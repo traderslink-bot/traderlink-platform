@@ -28,7 +28,7 @@ meta_description: "Learn Outside Bar by shape, candle count, context, buyer-sell
 
 # Outside Bar
 
-An outside bar forms when the second candle breaks above the prior high and below the prior low.
+An outside bar forms when one candle breaks both the high and the low of the prior candle. It shows expansion beyond the previous range.
 
 ![Outside bar breaking above the prior high and below the prior low.](/academy/images/chart-reading/candle-behavior/outside-bar-shape.svg)
 
@@ -46,25 +46,23 @@ An outside bar forms when the second candle breaks above the prior high and belo
 * **Wicks:** The second candle's high and low extend outside the prior candle range.
 * **Relationship:** The second candle fully expands beyond the prior candle high-low range.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Outside Bar is to start with the shape first, then check whether the surrounding candles match the context.
+Compare the second candle to the prior candle. The outside bar must trade above the prior high and below the prior low, making a wider range than the mother candle.
 
 ## Context
 
 Outside bars are most useful to study when they appear after tight action or near an important level.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Outside bars matter most near levels, after compression, or during expansion because they show price leaving the prior candle range on both sides. The close helps decide which side ended with more control.
 
 ## What It Shows
 
-Price expanded beyond the prior candle range, showing a wider battle or a range shift.
+An outside bar shows range expansion. Both sides of the prior candle were tested, and the close tells you whether buyers or sellers finished with the stronger response.
 
 ## What To Watch Next
 
-Watch which side of the outside bar range price holds after expansion.
+Watch which side of the outside bar range price respects next. Holding above or below that wide range gives a cleaner read than the outside bar alone.
 
-The read weakens if price remains trapped inside the outside bar range. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price remains trapped inside the outside bar range. That means the expansion did not lead to clean direction.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ An engulfing candle focuses on the body covering the prior body. An outside bar 
 
 ## Key Takeaway
 
-An outside bar is range expansion beyond the prior candle.
+An outside bar shows expansion beyond the prior candle range. The close and the next hold decide whether that expansion has direction.
 
 ## Related Lessons
 

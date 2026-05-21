@@ -28,7 +28,7 @@ meta_description: "Learn Shooting Star by shape, candle count, context, buyer-se
 
 # Shooting Star
 
-A shooting star is an upper-rejection candle after strength.
+A shooting star is an upper-rejection candle after strength. Price pushed higher during the candle, but sellers forced it back down before the close.
 
 ![Shooting star candle with a small body near the low and a long upper wick.](/academy/images/chart-reading/candle-behavior/shooting-star-shape.svg)
 
@@ -46,9 +46,7 @@ A shooting star is an upper-rejection candle after strength.
 * **Wicks:** Long upper wick with little or no lower wick.
 * **Relationship:** The single candle matters most after price has already pushed higher.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Shooting Star is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a small body near the lower part of the candle and a long upper wick. The prior move matters: it is a shooting star when it appears after a push up, not after a selloff.
 
 ## Context
 
@@ -58,13 +56,13 @@ A shooting star is most useful to study after a rally, near resistance, high of 
 
 ## What It Shows
 
-Buyers pushed price higher first, then sellers rejected the push and forced the close lower in the range.
+A shooting star shows that buyers tried to continue higher, but sellers rejected the move before the close. The upper wick is the evidence that higher prices were tested and not accepted.
 
 ## What To Watch Next
 
-Watch whether the next candle stays below the body or breaks below the shooting star low.
+Watch whether price stays below the upper wick area and starts losing the candle body. A stronger bearish response usually avoids reclaiming the rejected high.
 
-The read weakens if price reclaims the upper wick area. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price reclaims the upper wick area. That means the rejection is being taken back.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ The same shape can be called an inverted hammer after a down move. Context chang
 
 ## Key Takeaway
 
-A shooting star is upper rejection after strength.
+A shooting star shows upper rejection after strength. It matters most when it appears near resistance or after an extended push.
 
 ## Related Lessons
 

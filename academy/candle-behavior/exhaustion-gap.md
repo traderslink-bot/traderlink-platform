@@ -28,7 +28,7 @@ meta_description: "Learn Exhaustion Gap by shape, candle count, context, buyer-s
 
 # Exhaustion Gap
 
-An exhaustion gap is a gap that stretches price and then loses control.
+An exhaustion gap happens late in a move when price gaps in the trend direction but then struggles to keep going. It often shows emotional late participation instead of clean continuation.
 
 ![Late gap higher followed by candles stalling and turning back down.](/academy/images/chart-reading/candle-behavior/exhaustion-gap-shape.svg)
 
@@ -46,9 +46,7 @@ An exhaustion gap is a gap that stretches price and then loses control.
 * **Wicks:** A rejection wick or strong opposite candle often appears after the final extension.
 * **Relationship:** The gap and extension happen first, then price fails to hold the stretched area.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Exhaustion Gap is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a gap after price has already made a large move. The gap should be followed by stalling, rejection, or a move back into the gap area rather than clean continuation.
 
 ## Context
 
@@ -56,17 +54,17 @@ Exhaustion gaps are most useful to study after a move is already extended and ne
 
 ![Exhaustion gap after an extended move with price failing to continue.](/academy/images/chart-reading/candle-behavior/exhaustion-gap-context.svg)
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Exhaustion gaps matter most after extended moves, heavy attention, or late-session chase behavior. The same gap early in a fresh move may be continuation, so the prior trend and location are important.
 
 ## What It Shows
 
-Price stretched away from the prior area, then the final push failed to hold.
+The gap shows traders chasing in the direction of the existing move. The exhaustion read starts when price cannot keep accepting those new highs or lows and begins giving the gap back.
 
 ## What To Watch Next
 
-Watch whether price loses the opening push and starts moving back into the gap area.
+Watch whether price holds the gap or starts filling it after an extended move. Rejection near the new high or low makes the exhaustion read easier to see.
 
-The read weakens if price holds the gap and continues building higher or lower. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price holds the gap and continues building higher or lower. That means the move is still being accepted as continuation.
 
 ## Common Confusion
 
@@ -74,7 +72,7 @@ An exhaustion gap can look like a gap and go at first. The difference is the fai
 
 ## Key Takeaway
 
-An exhaustion gap shows a late stretch that fails to hold.
+An exhaustion gap is about late movement after extension. The key clue is whether the gap holds or quickly starts getting taken back.
 
 ## Related Lessons
 

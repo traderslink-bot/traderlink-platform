@@ -28,7 +28,7 @@ meta_description: "Learn Bearish Marubozu by shape, candle count, context, buyer
 
 # Bearish Marubozu
 
-A bearish marubozu is a red momentum candle with little or no wick.
+A bearish marubozu is a strong red candle with little or no wick. It shows sellers controlled most of the candle from open to close.
 
 ![Bearish marubozu candle with a large red body and almost no wick.](/academy/images/chart-reading/candle-behavior/bearish-marubozu-shape.svg)
 
@@ -46,25 +46,23 @@ A bearish marubozu is a red momentum candle with little or no wick.
 * **Wicks:** Very small or no wicks.
 * **Relationship:** The single candle is read by the strong close near the bottom of the range.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Bearish Marubozu is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a large red body with very small wicks. The candle should close near the low, showing sellers kept pressure on through the close.
 
 ## Context
 
 This candle is most useful when it appears during increasing seller pressure or through a visible level.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Bearish marubozu candles matter most when they lose support, reject an important area, or appear early in a strong move lower. After a huge drop, they can also be late and extended.
 
 ## What It Shows
 
-Sellers controlled the candle from open to close.
+The candle shows steady seller control. Buyers had little success forcing price away from the low before the close.
 
 ## What To Watch Next
 
-Watch whether price stays below the lower half of the body or continues below the low.
+Watch whether price stays below the body or uses it as resistance on a bounce. Strong seller control usually leaves an area price should struggle to reclaim.
 
-The read weakens if price immediately reclaims the body. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price immediately reclaims the body. That means the seller pressure was quickly erased.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ Bearish marubozu is a stricter form of a strong red full body candle.
 
 ## Key Takeaway
 
-A bearish marubozu shows clean seller control inside one candle.
+A bearish marubozu shows strong seller control. It matters most when the body holds as overhead pressure after the candle closes.
 
 ## Related Lessons
 

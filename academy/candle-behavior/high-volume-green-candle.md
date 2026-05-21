@@ -28,7 +28,7 @@ meta_description: "Learn High-Volume Green Candle by shape, candle count, contex
 
 # High-Volume Green Candle
 
-A high-volume green candle combines a strong green candle with a larger volume bar.
+A high-volume green candle shows buyer pressure paired with unusual activity. The candle body tells you direction; the volume tells you participation increased.
 
 ![Large green candle shown with a taller volume bar than the surrounding candles.](/academy/images/chart-reading/candle-behavior/high-volume-green-candle-shape.svg)
 
@@ -46,25 +46,23 @@ A high-volume green candle combines a strong green candle with a larger volume b
 * **Wicks:** Wicks can vary, but a close near the high makes the candle cleaner.
 * **Relationship:** The volume bar under the candle should be larger than nearby volume bars.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify High-Volume Green Candle is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a meaningful green body and a volume bar that clearly stands out from nearby candles. The strongest examples close near the high instead of leaving a large upper wick.
 
 ## Context
 
 This candle matters most when participation expands near a level, breakout, reclaim, or continuation move.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+This candle matters most at breakouts, reclaims, support reactions, or the first strong move after a catalyst. High volume in the middle of an extended chase can still be risky and crowded.
 
 ## What It Shows
 
-Buyers moved price while volume increased, showing more participation during that candle.
+The candle shows buyers stepping in with more participation than normal. It can mark momentum entering, a level being reclaimed, or a move that attracted fresh attention.
 
 ## What To Watch Next
 
-Watch whether price holds the body and whether volume continues or fades.
+Watch whether price holds the candle body or keeps building above it. Strong volume should leave behind an area buyers are willing to defend.
 
-The read weakens if price immediately gives back the candle on heavy selling. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price immediately gives back the candle on heavy selling. That means the volume did not create lasting support.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ A big green candle without stronger volume is a price candle, not a high-volume 
 
 ## Key Takeaway
 
-A high-volume green candle shows buyer movement with stronger participation.
+A high-volume green candle shows buyer pressure with increased participation. The next read is whether that participation creates support or gets fully erased.
 
 ## Related Lessons
 

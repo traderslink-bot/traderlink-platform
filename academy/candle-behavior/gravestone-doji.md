@@ -28,7 +28,7 @@ meta_description: "Learn Gravestone Doji by shape, candle count, context, buyer-
 
 # Gravestone Doji
 
-A gravestone doji is a doji-style candle with the open and close near the low and a long upper wick.
+A gravestone doji opens and closes near the low with a long upper wick. It shows price pushed higher during the candle, but that higher area was rejected by the close.
 
 ![Gravestone doji candle with open and close near the low and a long upper wick.](/academy/images/chart-reading/candle-behavior/gravestone-doji-shape.svg)
 
@@ -46,9 +46,7 @@ A gravestone doji is a doji-style candle with the open and close near the low an
 * **Wicks:** Long upper wick with little or no lower wick.
 * **Relationship:** The doji body is important because the candle closes very near where it opened.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Gravestone Doji is to start with the shape first, then check whether the surrounding candles match the context.
+Look for almost no real body near the bottom of the candle and a long upper wick. The open and close should be close together, which separates it from a regular topping tail.
 
 ## Context
 
@@ -56,17 +54,17 @@ This candle matters most after price has tested higher and returned near the ope
 
 ![Gravestone doji forming after an upward move near an upper resistance area.](/academy/images/chart-reading/candle-behavior/gravestone-doji-context.svg)
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+A gravestone doji matters most after strength, near resistance, or during a failed breakout attempt. In a choppy range, it may only show a volatile candle with no clean control.
 
 ## What It Shows
 
-Buyers pushed up, but sellers recovered the move before the candle finished.
+The candle shows buyers pushed price up, but sellers brought it back near the open by the close. That creates upper rejection, while the doji body still shows the candle ended without a big directional body.
 
 ## What To Watch Next
 
-Watch whether the next candle stays below the gravestone body or breaks lower.
+Watch whether price stays below the upper wick and starts losing the doji low. The wick high is the area the rejection should keep overhead.
 
-The read weakens if price reclaims the upper wick. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price reclaims the upper wick. That means the rejected area is being accepted again.
 
 ## Common Confusion
 
@@ -74,7 +72,7 @@ A gravestone doji is close to a shooting star shape, but the body is much thinne
 
 ## Key Takeaway
 
-A gravestone doji is upper rejection with a doji body.
+A gravestone doji combines upper rejection with doji-style indecision. It matters most when it forms after strength or near resistance.
 
 ## Related Lessons
 

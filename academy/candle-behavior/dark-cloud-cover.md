@@ -28,7 +28,7 @@ meta_description: "Learn Dark Cloud Cover by shape, candle count, context, buyer
 
 # Dark Cloud Cover
 
-Dark cloud cover is a two-candle rejection pattern. The red candle closes down into the prior green candle body.
+Dark cloud cover is a two-candle bearish reversal pattern. The second candle opens strong, then closes deep inside the prior green candle body.
 
 ![Green candle followed by a red candle that opens higher and closes deep into the prior body.](/academy/images/chart-reading/candle-behavior/dark-cloud-cover-shape.svg)
 
@@ -46,25 +46,23 @@ Dark cloud cover is a two-candle rejection pattern. The red candle closes down i
 * **Wicks:** Wicks are secondary. The close into the prior body is the key.
 * **Relationship:** The red candle does not need to cover the full green body like a bearish engulfing candle.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Dark Cloud Cover is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a green candle followed by a red candle that opens higher and then closes well into the prior green body. It does not have to engulf the whole candle; the failed higher open is the key.
 
 ## Context
 
 This pattern is most useful when a higher open or push gets sold and price closes back into the prior buying candle.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Dark cloud cover matters most after a run up, near resistance, or when price gaps or opens strong and then cannot hold that strength. The location makes the failed upside attempt easier to read.
 
 ## What It Shows
 
-Buyers had control first, but sellers recovered enough of the prior body to change the pressure.
+The first candle shows buyer control. The second candle starts with more strength, but sellers reverse the tone by pushing price back into the prior candle body.
 
 ## What To Watch Next
 
-Watch whether price continues below the midpoint or lower part of the prior green body.
+Watch whether price stays inside or below the prior green body and starts losing the red candle low. That shows the failed strength is being accepted.
 
-The read weakens if price cannot stay inside the prior green body. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price cannot stay inside the prior green body. That means sellers did not take back enough of the prior move.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ Dark cloud cover is weaker visually than bearish engulfing because it only moves
 
 ## Key Takeaway
 
-Dark cloud cover shows a sell response into prior buying pressure.
+Dark cloud cover shows a strong open that fails into the prior green candle body after a bullish move.
 
 ## Related Lessons
 

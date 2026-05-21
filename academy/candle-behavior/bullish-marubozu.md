@@ -28,7 +28,7 @@ meta_description: "Learn Bullish Marubozu by shape, candle count, context, buyer
 
 # Bullish Marubozu
 
-A bullish marubozu is a green momentum candle with little or no wick.
+A bullish marubozu is a strong green candle with little or no wick. It shows buyers controlled most of the candle from open to close.
 
 ![Bullish marubozu candle with a large green body and almost no wick.](/academy/images/chart-reading/candle-behavior/bullish-marubozu-shape.svg)
 
@@ -46,25 +46,23 @@ A bullish marubozu is a green momentum candle with little or no wick.
 * **Wicks:** Very small or no wicks.
 * **Relationship:** The single candle is read by the strong close near the top of the range.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Bullish Marubozu is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a large green body with very small wicks. The candle should close near the high, showing buyers kept pressure on through the close.
 
 ## Context
 
 This candle is most useful when it appears during increasing buyer pressure or through a visible level.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Bullish marubozu candles matter most when they clear resistance, reclaim an important area, or appear early in a strong move. After a huge extension, they can also attract late chasers.
 
 ## What It Shows
 
-Buyers controlled the candle from open to close.
+The candle shows steady buyer control. Sellers had little success forcing price away from the high before the close.
 
 ## What To Watch Next
 
-Watch whether price holds the upper half of the body or continues above the high.
+Watch whether price holds the upper part of the body or uses the body as support on a pullback. Strong buyer control usually leaves a level price should respect.
 
-The read weakens if price immediately falls back through the body. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price immediately falls back through the body. That means the buyer pressure was quickly erased.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ Bullish marubozu is a stricter form of a strong green full body candle.
 
 ## Key Takeaway
 
-A bullish marubozu shows clean buyer control inside one candle.
+A bullish marubozu shows strong buyer control. It matters most when the body holds after the candle closes.
 
 ## Related Lessons
 

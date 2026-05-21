@@ -28,7 +28,7 @@ meta_description: "Learn Piercing Line by shape, candle count, context, buyer-se
 
 # Piercing Line
 
-A piercing line is a two-candle rebound pattern. The green candle closes back into the prior red candle body.
+A piercing line is a two-candle bullish reversal pattern. The second candle opens weak, then pushes back up into the prior red candle body.
 
 ![Red candle followed by a green candle that opens lower and closes deep into the prior body.](/academy/images/chart-reading/candle-behavior/piercing-line-shape.svg)
 
@@ -46,25 +46,23 @@ A piercing line is a two-candle rebound pattern. The green candle closes back in
 * **Wicks:** Wicks are secondary. The close into the prior body is the key.
 * **Relationship:** The green candle does not need to cover the full red body like a bullish engulfing candle.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Piercing Line is to start with the shape first, then check whether the surrounding candles match the context.
+Look for a red candle followed by a green candle that opens lower and closes deep inside the prior red body. It does not fully engulf the prior candle; it pierces into it.
 
 ## Context
 
 This pattern is most useful when a weak open or lower push gets bought and price closes back into the prior selling candle.
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Piercing lines matter most after a pullback or selloff where price opens lower but buyers respond instead of letting the selling continue. The location near support or a prior low makes the recovery more meaningful.
 
 ## What It Shows
 
-Sellers had control first, but buyers recovered enough of the prior body to change the pressure.
+The first candle shows sellers in control. The second candle starts with more weakness, but buyers reverse the tone by closing back into the prior candle body.
 
 ## What To Watch Next
 
-Watch whether price can continue above the midpoint or upper part of the prior red body.
+Watch whether price can hold inside the prior red body and continue toward the top of that range. Holding the recovery is more important than the label.
 
-The read weakens if price cannot hold inside the prior red body. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price cannot hold inside the prior red body. That means the bounce did not reclaim enough of the prior selling pressure.
 
 ## Common Confusion
 
@@ -72,7 +70,7 @@ Piercing line is weaker visually than bullish engulfing because it only moves in
 
 ## Key Takeaway
 
-Piercing line shows a rebound into prior selling pressure.
+A piercing line shows buyers recovering a meaningful part of the prior red candle after an initial weak open.
 
 ## Related Lessons
 

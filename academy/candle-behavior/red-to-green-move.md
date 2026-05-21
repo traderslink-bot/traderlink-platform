@@ -28,7 +28,7 @@ meta_description: "Learn Red-To-Green Move by shape, candle count, context, buye
 
 # Red-To-Green Move
 
-A red-to-green move happens when price moves from below a session reference area to above it.
+A red-to-green move happens when price starts below a session reference and then moves back above it. In stocks, that reference is often the prior close or the current session open.
 
 ![Red candles below a prior close area followed by green candles moving above it.](/academy/images/chart-reading/candle-behavior/red-to-green-move-shape.svg)
 
@@ -46,9 +46,7 @@ A red-to-green move happens when price moves from below a session reference area
 * **Wicks:** Wicks vary. The important visual is the cross from below to above the reference.
 * **Relationship:** The sequence needs a reference such as prior close, session open, or another session line.
 
-Start with body size, wick direction, and where the candle sits in the recent price action.
-
-The fastest way to identify Red-To-Green Move is to start with the shape first, then check whether the surrounding candles match the context.
+Start with the reference line. Price should trade below it first, then cross back above it and begin holding above that area instead of immediately fading.
 
 ## Context
 
@@ -56,17 +54,17 @@ Red-to-green behavior is session context, not a single candlestick pattern.
 
 ![Red-to-green move crossing above the prior close area after trading below it.](/academy/images/chart-reading/candle-behavior/red-to-green-move-context.svg)
 
-Context does not replace the candle shape. It explains why the same shape can matter more in one area than another.
+Red-to-green behavior matters most when the reference is clear, such as the prior close, open, VWAP, or premarket level. It is cleaner when the reclaim happens with volume and does not run straight into resistance.
 
 ## What It Shows
 
-Sellers or weak session positioning gave way to buyers reclaiming the reference area.
+The move shows a session shift. Sellers had price red against the reference, then buyers reclaimed it and changed the intraday tone.
 
 ## What To Watch Next
 
-Watch whether price holds above the reference after crossing it.
+Watch whether price holds above the reference after crossing it. A clean red-to-green move should keep the reclaimed level from turning into chop.
 
-The read weakens if price crosses up and immediately falls back below the reference. A weak response also shows up when the next candles immediately move against the pattern and fail to respect the key candle area.
+The read weakens if price crosses up and immediately falls back below the reference. That means the session shift did not hold.
 
 ## Common Confusion
 
@@ -74,7 +72,7 @@ Red-to-green is not a candle shape. It is a sequence around a session reference.
 
 ## Key Takeaway
 
-A red-to-green move shows an intraday shift from below a reference to above it.
+A red-to-green move is session behavior, not a single candle. It shows price reclaiming an important reference after starting below it.
 
 ## Related Lessons
 
