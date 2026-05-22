@@ -32,6 +32,16 @@ type AuthNotice = {
   showLogin: boolean;
 } | null;
 
+const chartReadingCourseId = "chart-reading-market-structure";
+const candlestickModuleIds = new Set([
+  "bullish-candle-patterns",
+  "bearish-candle-patterns",
+  "indecision-neutral-candles",
+  "momentum-continuation-candles",
+  "session-gap-behavior",
+]);
+const chartPatternModuleIds = new Set(["chart-patterns-context"]);
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
@@ -184,8 +194,16 @@ export default async function AcademyHomePage({
             {liveCourses.length > 0 ? (
               <div className="academy-module-list">
                 {liveCourses.map(({ course, coursePage }) => {
+                  const lessons = coursePage.modules.flatMap(
+                    ({ lessons }) => lessons,
+                  );
                   const progress = getCourseProgress(
-                    coursePage.modules.flatMap(({ lessons }) => lessons),
+                    lessons,
+                    completedLessonSlugs,
+                  );
+                  const lessonGroupProgress = getCourseLessonGroupProgress(
+                    course.course_id,
+                    lessons,
                     completedLessonSlugs,
                   );
 
@@ -215,22 +233,23 @@ export default async function AcademyHomePage({
                         </span>
                       </div>
                       <div className="academy-course-progress">
-                        <div className="academy-course-progress-track">
-                          <span
-                            className="academy-course-progress-fill"
-                            style={{ width: `${progress.percent}%` }}
+                        <CourseProgressMeter
+                          isAuthenticated={Boolean(academySession)}
+                          label={
+                            course.course_id === chartReadingCourseId
+                              ? "Core lessons"
+                              : undefined
+                          }
+                          progress={progress}
+                        />
+                        {lessonGroupProgress.map((groupProgress) => (
+                          <CourseProgressMeter
+                            key={groupProgress.label}
+                            isAuthenticated={Boolean(academySession)}
+                            label={groupProgress.label}
+                            progress={groupProgress}
                           />
-                        </div>
-                        <div className="academy-course-progress-meta">
-                          <span>
-                            {academySession
-                              ? `${progress.percent}% complete`
-                              : "Log in to track progress"}
-                          </span>
-                          <span>
-                            {progress.completed}/{progress.total}
-                          </span>
-                        </div>
+                        ))}
                       </div>
                       <span className="academy-card-action">Open course</span>
                     </Link>
@@ -273,6 +292,7 @@ function normalizeSearchParam(value: string | string[] | undefined) {
 function getCourseProgress(
   lessons: Array<{
     lesson_slug: string;
+    module_id: string;
     counts_toward_course_progress: boolean;
   }>,
   completedLessonSlugs: Set<string>,
@@ -287,6 +307,53 @@ function getCourseProgress(
 
   return {
     completed,
+    total,
+    percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+  };
+}
+
+function getCourseLessonGroupProgress(
+  courseId: string,
+  lessons: Array<{
+    lesson_slug: string;
+    module_id: string;
+    counts_toward_course_progress: boolean;
+  }>,
+  completedLessonSlugs: Set<string>,
+) {
+  if (courseId !== chartReadingCourseId) {
+    return [];
+  }
+
+  return [
+    getLessonGroupProgress(
+      "Candlestick lessons",
+      lessons.filter((lesson) => candlestickModuleIds.has(lesson.module_id)),
+      completedLessonSlugs,
+    ),
+    getLessonGroupProgress(
+      "Chart pattern lessons",
+      lessons.filter((lesson) => chartPatternModuleIds.has(lesson.module_id)),
+      completedLessonSlugs,
+    ),
+  ].filter((progress) => progress.total > 0);
+}
+
+function getLessonGroupProgress(
+  label: string,
+  lessons: Array<{
+    lesson_slug: string;
+  }>,
+  completedLessonSlugs: Set<string>,
+) {
+  const completed = lessons.filter((lesson) =>
+    completedLessonSlugs.has(lesson.lesson_slug),
+  ).length;
+  const total = lessons.length;
+
+  return {
+    completed,
+    label,
     total,
     percent: total > 0 ? Math.round((completed / total) * 100) : 0,
   };
@@ -352,6 +419,44 @@ function StatCard({ label, value }: { label: string; value: string }) {
     <div className="academy-stat-card">
       <p className="academy-stat-label">{label}</p>
       <p className="academy-stat-value">{value}</p>
+    </div>
+  );
+}
+
+function CourseProgressMeter({
+  isAuthenticated,
+  label,
+  progress,
+}: {
+  isAuthenticated: boolean;
+  label?: string;
+  progress: {
+    completed: number;
+    total: number;
+    percent: number;
+  };
+}) {
+  return (
+    <div className="academy-course-progress-row">
+      {label ? (
+        <p className="academy-course-progress-label">{label}</p>
+      ) : null}
+      <div className="academy-course-progress-track">
+        <span
+          className="academy-course-progress-fill"
+          style={{ width: `${progress.percent}%` }}
+        />
+      </div>
+      <div className="academy-course-progress-meta">
+        <span>
+          {isAuthenticated
+            ? `${progress.percent}% complete`
+            : "Log in to track progress"}
+        </span>
+        <span>
+          {progress.completed}/{progress.total}
+        </span>
+      </div>
     </div>
   );
 }
