@@ -178,9 +178,9 @@ function AcademyTopbarControls({
           </form>
         </div>
       ) : (
-        <Link href="/api/auth/discord/login" className="academy-login-link">
+        <a href="/api/auth/discord/login" className="academy-login-link">
           Log in with Discord
-        </Link>
+        </a>
       )}
       <div
         className="academy-theme-toggle"

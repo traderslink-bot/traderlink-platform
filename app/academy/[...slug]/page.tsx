@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { getCurrentAcademySession } from "../academy-server-session";
 import { AcademyShell } from "../academy-shell";
+import { LessonCompletionLink } from "../lesson-completion-link";
 import {
   type AcademyLessonMembership,
   type AcademyModule,
@@ -102,12 +103,12 @@ export default async function AcademyLessonPage({ params }: PageProps) {
                 </a>{" "}
                 and log in with your Discord account.
               </p>
-              <Link
+              <a
                 href="/api/auth/discord/login"
                 className="academy-progress-label-link"
               >
                 Log in with Discord
-              </Link>
+              </a>
             </div>
           )}
 
@@ -134,21 +135,25 @@ export default async function AcademyLessonPage({ params }: PageProps) {
             )}
 
             {lesson.nextLesson ? (
-              <Link
+              <LessonCompletionLink
                 href={lesson.nextLesson.slug}
                 className="academy-nav-card academy-nav-card-accent"
+                lessonSlug={lesson.slug}
+                shouldTrack={Boolean(academySession)}
               >
                 <p className="academy-nav-label">Next lesson</p>
                 <p className="academy-nav-title">{lesson.nextLesson.title}</p>
-              </Link>
+              </LessonCompletionLink>
             ) : (
-              <Link
+              <LessonCompletionLink
                 href="/academy/"
                 className="academy-nav-card academy-nav-card-accent"
+                lessonSlug={lesson.slug}
+                shouldTrack={Boolean(academySession)}
               >
                 <p className="academy-nav-label">Course complete</p>
                 <p className="academy-nav-title">Return to Academy</p>
-              </Link>
+              </LessonCompletionLink>
             )}
           </nav>
 
