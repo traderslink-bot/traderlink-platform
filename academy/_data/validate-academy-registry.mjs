@@ -104,6 +104,8 @@ const membershipsData = readJson("lesson-memberships.json");
 const pathHubsData = readJson("path-hubs.json");
 const appBridgesData = readJson("app-bridges.json");
 const visualOverridesData = readJson("visual-overrides.json");
+const progressAliasesData = readJson("progress-slug-aliases.json");
+const progressBaselineData = readJson("progress-slug-baseline.json");
 
 const courses = coursesData.courses ?? [];
 const modules = modulesData.modules ?? [];
@@ -111,6 +113,11 @@ const memberships = membershipsData.lesson_memberships ?? [];
 const pathHubs = pathHubsData.path_hubs ?? [];
 const appBridges = appBridgesData.app_bridges ?? [];
 const visualOverrides = visualOverridesData.visual_overrides ?? [];
+const progressAliases = progressAliasesData.aliases ?? [];
+const protectedLaunchCourseIds = new Set(
+  progressBaselineData.protected_launch_course_ids ?? [],
+);
+const protectedProgressSlugs = progressBaselineData.protected_lesson_slugs ?? [];
 
 const courseById = requireUnique(courses, (course) => course.course_id, "courses");
 const moduleByKey = requireUnique(
@@ -158,11 +165,13 @@ for (const module of modules) {
 }
 
 const allRegisteredSlugs = new Set();
+const membershipSlugs = new Set();
 const owningRowsBySlug = new Map();
 const membershipOrderByCourse = new Map();
 
 for (const row of memberships) {
   allRegisteredSlugs.add(row.lesson_slug);
+  membershipSlugs.add(row.lesson_slug);
   if (!allowedMembershipTypes.has(row.membership_type)) {
     fail(`${row.lesson_slug} has invalid membership_type ${row.membership_type}.`);
   }
@@ -231,6 +240,65 @@ for (const [slug, owners] of owningRowsBySlug.entries()) {
   const canonicalCourseIds = new Set(owners.map((owner) => owner.canonical_course_id));
   if (canonicalCourseIds.size !== 1) {
     fail(`${slug} has multiple canonical owners: ${[...canonicalCourseIds].join(", ")}`);
+  }
+}
+
+const protectedProgressSlugMap = requireUnique(
+  protectedProgressSlugs,
+  (slug) => slug,
+  "progress-slug-baseline.protected_lesson_slugs",
+);
+const aliasByOldSlug = requireUnique(
+  progressAliases,
+  (alias) => alias.old_slug,
+  "progress-slug-aliases.aliases.old_slug",
+);
+const activeProtectedSlugs = new Set(
+  memberships
+    .filter((row) => protectedLaunchCourseIds.has(row.display_course_id))
+    .map((row) => row.lesson_slug),
+);
+
+for (const courseId of protectedLaunchCourseIds) {
+  if (!courseById.has(courseId)) {
+    fail(`progress-slug-baseline protects missing course ${courseId}.`);
+  }
+}
+
+for (const alias of progressAliases) {
+  if (!alias.old_slug || !alias.current_slug || !alias.reason) {
+    fail("Each progress slug alias requires old_slug, current_slug, and reason.");
+    continue;
+  }
+  lessonSlugToMarkdownPath(alias.old_slug);
+  lessonSlugToMarkdownPath(alias.current_slug);
+  if (alias.old_slug === alias.current_slug) {
+    fail(`${alias.old_slug} aliases itself.`);
+  }
+  if (membershipSlugs.has(alias.old_slug)) {
+    fail(`${alias.old_slug} is still an active lesson slug and should not be a progress alias old_slug.`);
+  }
+  if (!activeProtectedSlugs.has(alias.current_slug)) {
+    fail(`${alias.old_slug} aliases to ${alias.current_slug}, but the current slug is not active in a protected launch course.`);
+  }
+  if (!protectedProgressSlugMap.has(alias.old_slug)) {
+    fail(`${alias.old_slug} has a progress alias but is not preserved in progress-slug-baseline.json.`);
+  }
+  if (aliasByOldSlug.has(alias.current_slug)) {
+    fail(`${alias.old_slug} aliases to ${alias.current_slug}, but chained progress aliases are not allowed.`);
+  }
+}
+
+for (const slug of protectedProgressSlugs) {
+  lessonSlugToMarkdownPath(slug);
+  if (!activeProtectedSlugs.has(slug) && !aliasByOldSlug.has(slug)) {
+    fail(`${slug} was removed from protected launch Academy progress without an alias in progress-slug-aliases.json.`);
+  }
+}
+
+for (const slug of activeProtectedSlugs) {
+  if (!protectedProgressSlugMap.has(slug)) {
+    fail(`${slug} is an active protected launch lesson but is missing from progress-slug-baseline.json.`);
   }
 }
 

@@ -4,6 +4,11 @@ import { dirname, isAbsolute, join } from "node:path";
 import { neon } from "@neondatabase/serverless";
 import type Database from "better-sqlite3";
 
+import {
+  expandCompletedLessonSlugs,
+  getCanonicalProgressLessonSlug,
+} from "./academy-progress-slugs";
+
 type SqliteDatabase = Database.Database;
 type NeonSql = ReturnType<typeof neon>;
 
@@ -47,7 +52,7 @@ function academyDatabaseUrl(): string | undefined {
   return process.env.ACADEMY_DATABASE_URL ?? process.env.DATABASE_URL;
 }
 
-function useSqliteFallback(): boolean {
+function shouldUseSqliteFallback(): boolean {
   if (process.env.ACADEMY_PROGRESS_STORAGE === "sqlite") {
     return true;
   }
@@ -249,7 +254,7 @@ export class AcademyProgressStore {
   async upsertUser(input: UpsertAcademyUserInput): Promise<AcademyUser> {
     const now = new Date().toISOString();
 
-    if (!useSqliteFallback()) {
+    if (!shouldUseSqliteFallback()) {
       await ensureNeonSchema();
       const sql = getNeonSql();
       await sql`
@@ -352,7 +357,7 @@ export class AcademyProgressStore {
     const expiresAt = new Date(now.getTime() + ACADEMY_SESSION_TTL_MS);
     const id = randomBytes(16).toString("hex");
 
-    if (!useSqliteFallback()) {
+    if (!shouldUseSqliteFallback()) {
       await ensureNeonSchema();
       const sql = getNeonSql();
       await sql`
@@ -412,7 +417,7 @@ export class AcademyProgressStore {
       return null;
     }
 
-    if (!useSqliteFallback()) {
+    if (!shouldUseSqliteFallback()) {
       await ensureNeonSchema();
       const sql = getNeonSql();
       const rows = (await sql`
@@ -470,7 +475,7 @@ export class AcademyProgressStore {
       return;
     }
 
-    if (!useSqliteFallback()) {
+    if (!shouldUseSqliteFallback()) {
       await ensureNeonSchema();
       const sql = getNeonSql();
       await sql`
@@ -492,7 +497,7 @@ export class AcademyProgressStore {
   }
 
   async listCompletedLessonSlugs(discordUserId: string): Promise<string[]> {
-    if (!useSqliteFallback()) {
+    if (!shouldUseSqliteFallback()) {
       await ensureNeonSchema();
       const sql = getNeonSql();
       const rows = (await sql`
@@ -502,7 +507,7 @@ export class AcademyProgressStore {
         ORDER BY completed_at
       `) as Array<{ lesson_slug: string }>;
 
-      return rows.map((row) => row.lesson_slug);
+      return expandCompletedLessonSlugs(rows.map((row) => row.lesson_slug));
     }
 
     const db = await getSqliteDatabase();
@@ -517,40 +522,20 @@ export class AcademyProgressStore {
       )
       .all(discordUserId) as Array<{ lesson_slug: string }>;
 
-    return rows.map((row) => row.lesson_slug);
+    return expandCompletedLessonSlugs(rows.map((row) => row.lesson_slug));
   }
 
   async isLessonCompleted(
     discordUserId: string,
     lessonSlug: string,
   ): Promise<boolean> {
-    if (!useSqliteFallback()) {
-      await ensureNeonSchema();
-      const sql = getNeonSql();
-      const rows = (await sql`
-        SELECT 1
-        FROM academy_lesson_completions
-        WHERE discord_user_id = ${discordUserId}
-          AND lesson_slug = ${lessonSlug}
-        LIMIT 1
-      `) as Array<Record<string, unknown>>;
+    const completedLessonSlugs = await this.listCompletedLessonSlugs(
+      discordUserId,
+    );
 
-      return rows.length > 0;
-    }
-
-    const db = await getSqliteDatabase();
-    const row = db
-      .prepare(
-        `
-          SELECT 1
-          FROM academy_lesson_completions
-          WHERE discord_user_id = ?
-            AND lesson_slug = ?
-        `,
-      )
-      .get(discordUserId, lessonSlug);
-
-    return Boolean(row);
+    return completedLessonSlugs.includes(
+      getCanonicalProgressLessonSlug(lessonSlug),
+    );
   }
 
   async setLessonCompleted(args: {
@@ -558,7 +543,9 @@ export class AcademyProgressStore {
     lessonSlug: string;
     completed: boolean;
   }): Promise<void> {
-    if (!useSqliteFallback()) {
+    const lessonSlug = getCanonicalProgressLessonSlug(args.lessonSlug);
+
+    if (!shouldUseSqliteFallback()) {
       await ensureNeonSchema();
       const sql = getNeonSql();
 
@@ -571,7 +558,7 @@ export class AcademyProgressStore {
           )
           VALUES (
             ${args.discordUserId},
-            ${args.lessonSlug},
+            ${lessonSlug},
             ${new Date().toISOString()}
           )
           ON CONFLICT (discord_user_id, lesson_slug) DO UPDATE SET
@@ -583,7 +570,7 @@ export class AcademyProgressStore {
       await sql`
         DELETE FROM academy_lesson_completions
         WHERE discord_user_id = ${args.discordUserId}
-          AND lesson_slug = ${args.lessonSlug}
+          AND lesson_slug = ${lessonSlug}
       `;
       return;
     }
@@ -602,7 +589,7 @@ export class AcademyProgressStore {
           ON CONFLICT(discord_user_id, lesson_slug) DO UPDATE SET
             completed_at = excluded.completed_at
         `,
-      ).run(args.discordUserId, args.lessonSlug, new Date().toISOString());
+      ).run(args.discordUserId, lessonSlug, new Date().toISOString());
       return;
     }
 
@@ -612,6 +599,6 @@ export class AcademyProgressStore {
         WHERE discord_user_id = ?
           AND lesson_slug = ?
       `,
-    ).run(args.discordUserId, args.lessonSlug);
+    ).run(args.discordUserId, lessonSlug);
   }
 }

@@ -5,6 +5,7 @@ import {
   AcademyProgressStore,
 } from "@/src/lib/academy/academy-progress-store";
 import { getAcademyLesson } from "@/src/lib/academy/academy-content";
+import { getCanonicalProgressLessonSlug } from "@/src/lib/academy/academy-progress-slugs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,10 +44,12 @@ async function setCompletion(
 
   const body = await readBody(request);
 
-  if (
-    typeof body.lessonSlug !== "string" ||
-    !getAcademyLesson(body.lessonSlug)
-  ) {
+  const lessonSlug =
+    typeof body.lessonSlug === "string"
+      ? getCanonicalProgressLessonSlug(body.lessonSlug)
+      : null;
+
+  if (!lessonSlug || !getAcademyLesson(lessonSlug)) {
     return NextResponse.json(
       {
         error: {
@@ -60,13 +63,13 @@ async function setCompletion(
 
   await store.setLessonCompleted({
     discordUserId: session.discordUserId,
-    lessonSlug: body.lessonSlug,
+    lessonSlug,
     completed,
   });
 
   return NextResponse.json({
     completed,
-    lessonSlug: body.lessonSlug,
+    lessonSlug,
   });
 }
 

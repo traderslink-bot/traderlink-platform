@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "description": "When a live Academy lesson slug changes, add an alias from the old slug to the current slug so saved user progress still counts.",
+  "aliases": []
+}

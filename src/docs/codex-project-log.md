@@ -14686,3 +14686,28 @@ Current best next step:
   from `/workspace` through upload, imports, saved trades, review, analytics,
   coach, and progress. Preserve the completed beginner-first IA and fix only
   concrete route/copy/layout issues found in the review.
+
+## 2026-05-22 - Academy Progress Preservation Guard
+
+Added explicit protection for live Academy lesson progress after the Academy
+launch work. Progress rows are keyed by `discord_user_id` and `lesson_slug`, so
+future lesson URL changes must preserve old saved slugs.
+
+Changes:
+
+- Added `academy/_data/progress-slug-baseline.json` for the current launch
+  Course 1 and Course 2 lesson slugs.
+- Added `academy/_data/progress-slug-aliases.json` for future old-to-current
+  slug mappings.
+- Updated `npm run validate:academy-registry` so a protected launch lesson slug
+  cannot disappear without an alias.
+- Added runtime progress slug expansion so old saved completions count toward
+  their current replacement lesson when an alias exists.
+- Added `docs/academy-progress-preservation.md` and AGENTS notes for future
+  Academy routing, slug, database, and deploy work.
+
+Current best next step:
+
+- Before any Academy deploy, run `npm run validate:academy-registry`.
+- If renaming a live Academy lesson, add the new slug to the baseline and add an
+  alias from the old slug to the new slug before deploy.
