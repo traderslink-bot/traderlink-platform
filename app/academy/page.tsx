@@ -242,11 +242,7 @@ export default async function AcademyHomePage({
 
           <section aria-label="Coming soon Academy courses" className="academy-sidebar">
             <div className="academy-sidebar-card academy-sidebar-card-accent">
-              <h2 className="academy-sidebar-title">Coming Soon</h2>
-              <p className="academy-sidebar-text">
-                These courses stay in planning until their content and visuals
-                are ready for the same standard as the live courses.
-              </p>
+              <h2 className="academy-sidebar-title">Courses Coming Soon</h2>
             </div>
 
             {comingSoonCourses.map((course) => (
