@@ -104,15 +104,17 @@ function DetailTile({ label, value }: { label: string; value: string }) {
 
 function SectionCard({
   children,
+  className,
   kicker,
   title,
 }: {
   children: ReactNode;
+  className?: string;
   kicker?: string;
   title: string;
 }) {
   return (
-    <section className="news-surface-card">
+    <section className={["news-surface-card", className].filter(Boolean).join(" ")}>
       {kicker ? <p className="news-card-kicker">{kicker}</p> : null}
       <h2 className="news-card-title">{title}</h2>
       {children}
@@ -250,7 +252,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
               </SectionCard>
 
               <div className="news-two-column">
-                <SectionCard title="Positives">
+                <SectionCard className="news-original-post-font-card" title="Positives">
                   <BulletList
                     empty="No positive notes were stored with this alert."
                     items={article.positives}
@@ -258,7 +260,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
                   />
                 </SectionCard>
 
-                <SectionCard title="Negatives">
+                <SectionCard className="news-original-post-font-card" title="Negatives">
                   <BulletList
                     empty="No negative notes were stored with this alert."
                     items={article.negatives}
@@ -282,7 +284,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
             </main>
 
             <aside className="news-sidebar-stack">
-              <SectionCard title="Alert Snapshot">
+              <SectionCard title="Snapshot">
                 {snapshotRows.length > 0 ? (
                   <div className="news-detail-grid news-detail-grid-compact">
                     {snapshotRows.map(([label, value]) => (

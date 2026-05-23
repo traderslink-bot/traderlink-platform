@@ -2244,6 +2244,25 @@ main.bg-zinc-950 .text-zinc-500 {
   margin: 0.85rem 0 0;
 }
 
+.news-original-post-font-card {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.news-original-post-font-card .news-card-title {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+.news-original-post-font-card .news-bullet-list,
+.news-original-post-font-card .news-muted {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.00938em;
+  line-height: 1.5;
+}
+
 .news-muted {
   margin: 0.8rem 0 0;
 }
