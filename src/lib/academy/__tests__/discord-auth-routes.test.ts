@@ -68,6 +68,9 @@ describe("Discord Academy auth routes", () => {
     expect(setCookieHeader).toContain(ACADEMY_OAUTH_STATE_COOKIE);
     expect(setCookieHeader).toContain(`${ACADEMY_OAUTH_PROMPT_COOKIE}=none`);
     expect(setCookieHeader).toContain("Domain=.traderslink.pro");
+    expect(setCookieHeader).toContain(
+      `${ACADEMY_OAUTH_STATE_COOKIE}=; Path=/; Max-Age=0`,
+    );
   });
 
   it("falls back to a consent prompt when silent Discord OAuth is unavailable", async () => {
@@ -87,6 +90,14 @@ describe("Discord Academy auth routes", () => {
 
     expect(response.headers.get("location")).toBe(
       "https://traderslink.pro/api/auth/discord/login?prompt=consent",
+    );
+
+    const setCookieHeader = getSetCookieHeaders(response).join("\n");
+    expect(setCookieHeader).toContain(
+      `${ACADEMY_OAUTH_STATE_COOKIE}=; Path=/; Max-Age=0; Domain=.traderslink.pro`,
+    );
+    expect(setCookieHeader).toContain(
+      `${ACADEMY_OAUTH_STATE_COOKIE}=; Path=/; Max-Age=0`,
     );
   });
 });

@@ -45,11 +45,16 @@ export function setAcademyCookie(
 ): void {
   const options = buildAcademyCookieOptions(request, maxAge);
 
-  if (options.domain) {
-    expireAcademyHostCookie(response, name);
-  }
+  appendAcademySetCookieHeader(response, name, value, options);
 
-  response.cookies.set(name, value, options);
+  if (options.domain) {
+    appendAcademySetCookieHeader(
+      response,
+      name,
+      "",
+      buildHostOnlyOptions(options, 0),
+    );
+  }
 }
 
 export function deleteAcademyCookie(
@@ -57,24 +62,60 @@ export function deleteAcademyCookie(
   request: NextRequest,
   name: string,
 ): void {
-  expireAcademyHostCookie(response, name);
-
   const options = buildAcademyCookieOptions(request, 0);
 
   if (options.domain) {
-    response.cookies.set(name, "", options);
+    appendAcademySetCookieHeader(response, name, "", options);
+    appendAcademySetCookieHeader(
+      response,
+      name,
+      "",
+      buildHostOnlyOptions(options, 0),
+    );
+    return;
   }
+
+  appendAcademySetCookieHeader(response, name, "", options);
 }
 
-function expireAcademyHostCookie(
+function buildHostOnlyOptions(
+  options: AcademyCookieOptions,
+  maxAge: number,
+): AcademyCookieOptions {
+  return {
+    httpOnly: options.httpOnly,
+    maxAge,
+    path: options.path,
+    sameSite: options.sameSite,
+    secure: options.secure,
+  };
+}
+
+function appendAcademySetCookieHeader(
   response: NextResponse,
   name: string,
+  value: string,
+  options: AcademyCookieOptions,
 ): void {
-  response.cookies.set(name, "", {
-    httpOnly: true,
-    maxAge: 0,
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
+  const cookieParts = [
+    `${name}=${encodeURIComponent(value)}`,
+    `Path=${options.path}`,
+    `Max-Age=${options.maxAge}`,
+  ];
+
+  if (options.domain) {
+    cookieParts.push(`Domain=${options.domain}`);
+  }
+
+  if (options.secure) {
+    cookieParts.push("Secure");
+  }
+
+  if (options.httpOnly) {
+    cookieParts.push("HttpOnly");
+  }
+
+  cookieParts.push("SameSite=Lax");
+
+  response.headers.append("Set-Cookie", cookieParts.join("; "));
 }

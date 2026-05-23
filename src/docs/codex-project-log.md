@@ -14835,6 +14835,10 @@ Findings and changes:
   cookie.
 - Vitest now resolves the repo `@` alias so route-handler auth tests can import
   app routes directly.
+- Live header QA on the first auth deploy showed Next's response cookie helper
+  collapsed duplicate same-name cleanup cookies. The Academy cookie helper now
+  appends explicit `Set-Cookie` headers so the `.traderslink.pro` cookie and
+  old host-only cookie cleanup both reach the browser.
 
 Verification:
 
@@ -14844,9 +14848,14 @@ Verification:
 - `npx tsc --noEmit --pretty false` passed.
 - `npm run build:webpack` passed with the existing support-resistance dynamic
   dependency warning.
+- After the explicit `Set-Cookie` cleanup adjustment, the focused Academy auth
+  Vitest suite, focused ESLint, and `npx tsc --noEmit --pretty false` passed
+  again.
+- `npm run build:webpack` passed again after the explicit `Set-Cookie` cleanup
+  adjustment, with the existing support-resistance dynamic dependency warning.
 
 Current best next step:
 
-- Commit the auth persistence fix, deploy from the clean
+- Commit the final auth persistence fix, deploy from the clean
   `traderslink-news-on-live-academy-20260523` worktree, then verify live
   `/api/auth/discord/login` emits `prompt=none` and `.traderslink.pro` cookies.
