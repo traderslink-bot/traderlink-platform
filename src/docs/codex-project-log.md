@@ -14711,3 +14711,51 @@ Current best next step:
 - Before any Academy deploy, run `npm run validate:academy-registry`.
 - If renaming a live Academy lesson, add the new slug to the baseline and add an
   alias from the old slug to the new slug before deploy.
+
+## 2026-05-23 - Clean Live Academy News Merge Candidate
+
+Reconciled the production news work onto a clean source base instead of the
+dirty local `trader-intelligence-v2` tree.
+
+Source safety result:
+
+- Created clean live base worktree
+  `C:\Users\jerac\Documents\TraderLink\deploy-candidates\traderslink-live-academy-base-20260523`
+  on branch `codex/live-academy-news-base` from
+  `origin/codex/trader-ui-product-pass` at `d36cf0fa`.
+- Confirmed its Academy registry output matches the current Vercel production
+  build log: 15 courses, 105 modules, 326 memberships, 264 registered
+  lesson/path slugs, 4 path hubs.
+- Created separate news candidate worktree
+  `C:\Users\jerac\Documents\TraderLink\deploy-candidates\traderslink-news-on-live-academy-20260523`
+  on branch `codex/news-on-live-academy`.
+- Merged only the news article feature onto that restored live base: public
+  `/news/[ticker]`, `/news/[ticker]/[slug]`, and `POST /api/news/articles`.
+- Reused the live `AcademyShell` topbar for news pages so the current Academy
+  header/mobile menu/theme/auth controls stay identical.
+- Did not carry forward the overlay `next.config.ts` fallback rewrite to
+  `https://traderslink.pro`, avoiding a promotion loop.
+- Did not modify `app/academy`, `app/page.tsx`, `next.config.ts`,
+  `package.json`, `package-lock.json`, or `.vercelignore` in the news candidate.
+
+Verification:
+
+- `npm run validate:academy-registry` passed with the same counts as production.
+- `npx tsc --noEmit --pretty false` passed.
+- Focused ESLint for the new news route/API/store files passed.
+- `npm run build:webpack` passed and surfaced `/news/[ticker]`,
+  `/news/[ticker]/[slug]`, and `/api/news/articles` as dynamic routes while
+  keeping the Academy static generation count at 136 pages.
+- Local smoke test published an isolated FJET article to
+  `http://localhost:3020/api/news/articles`; `/news/FJET/...`, `/news/FJET`,
+  `/academy`, and `/` returned 200.
+- Playwright checked desktop and mobile header behavior: Academy and News pages
+  share the same `academy-topbar` height, brand label, login control, mobile
+  menu display behavior, and no horizontal overflow.
+
+Current best next step:
+
+- Review the clean news candidate diff, configure/confirm production
+  `NEWS_PUBLISH_TOKEN` and production database URL in Vercel, then deploy from
+  `traderslink-news-on-live-academy-20260523` only after confirming the file
+  list remains limited to the news feature and project log.
