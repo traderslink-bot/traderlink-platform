@@ -14759,3 +14759,28 @@ Current best next step:
   `NEWS_PUBLISH_TOKEN` and production database URL in Vercel, then deploy from
   `traderslink-news-on-live-academy-20260523` only after confirming the file
   list remains limited to the news feature and project log.
+
+## 2026-05-23 - Academy Logged-In Save Prompt Fix
+
+Fixed the Academy home hero so the `Save your place as you learn` prompt only
+shows for visitors without an Academy session. Logged-in Discord users can still
+see the `You are logged in` success notice after OAuth redirect, but the
+signed-out save-progress prompt no longer appears underneath it.
+
+Verification:
+
+- `npm run validate:academy-registry` passed.
+- `npx eslint app/academy/page.tsx` passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build:webpack` passed with the existing support-resistance dynamic
+  dependency warning.
+- Local smoke test with an isolated SQLite Academy session confirmed:
+  anonymous `/academy` still shows the save prompt, while
+  `/academy?auth=connected` with a valid `tl_academy_session` cookie shows
+  `You are logged in` and does not show the save prompt.
+
+Current best next step:
+
+- Deploy from the clean
+  `traderslink-news-on-live-academy-20260523` worktree after confirming
+  production env vars and the final file list.

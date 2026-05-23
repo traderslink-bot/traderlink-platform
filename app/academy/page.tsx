@@ -148,23 +148,25 @@ export default async function AcademyHomePage({
                 </div>
               </div>
             ) : null}
-            <div className="academy-progress-note">
-              <p className="academy-progress-note-title">
-                Save your place as you learn.
-              </p>
-              <p>
-                Academy lessons are open to read for free. To save completed
-                lessons and keep your progress synced, join the free{" "}
-                <a
-                  href={discordInviteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  TradersLink Discord
-                </a>
-                , then log in here with the same Discord account.
-              </p>
-            </div>
+            {!academySession ? (
+              <div className="academy-progress-note">
+                <p className="academy-progress-note-title">
+                  Save your place as you learn.
+                </p>
+                <p>
+                  Academy lessons are open to read for free. To save completed
+                  lessons and keep your progress synced, join the free{" "}
+                  <a
+                    href={discordInviteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    TradersLink Discord
+                  </a>
+                  , then log in here with the same Discord account.
+                </p>
+              </div>
+            ) : null}
           </div>
 
           <div className="academy-stat-grid">
