@@ -14813,3 +14813,40 @@ Current best next step:
 - If a user still has to authorize Discord on every Academy visit, inspect
   whether the `tl_academy_session` first-party cookie is being retained for
   `traderslink.pro` and whether `/api/me` returns `authenticated: true`.
+
+## 2026-05-23 - Academy Discord Login Persistence QA
+
+Ran an engineering pass on the Academy Discord login system after a report that
+Discord authorization was appearing on repeated visits in the same browser.
+
+Findings and changes:
+
+- The login route always started Discord OAuth, even if the browser already had
+  a valid `tl_academy_session`. It now checks the current Academy session first
+  and redirects straight back to `/academy/` when already signed in.
+- Academy OAuth/session cookies were host-scoped. They now use
+  `.traderslink.pro` on the apex and `www` hosts, while remaining host-scoped
+  on localhost and Vercel preview URLs. This prevents losing session/state when
+  a user crosses between `traderslink.pro` and `www.traderslink.pro`.
+- Discord OAuth now requests `prompt=none` first so prior Discord consent can be
+  reused without another authorization screen. If Discord says silent reuse is
+  unavailable, the callback retries once with `prompt=consent`.
+- Logout now clears both the domain cookie and any legacy host-only session
+  cookie.
+- Vitest now resolves the repo `@` alias so route-handler auth tests can import
+  app routes directly.
+
+Verification:
+
+- Focused Academy auth Vitest suite passed:
+  `npx vitest run src/lib/academy/__tests__/discord-oauth.test.ts src/lib/academy/__tests__/academy-auth-cookies.test.ts src/lib/academy/__tests__/discord-auth-routes.test.ts`
+- Focused ESLint for the touched auth routes/helpers/tests passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build:webpack` passed with the existing support-resistance dynamic
+  dependency warning.
+
+Current best next step:
+
+- Commit the auth persistence fix, deploy from the clean
+  `traderslink-news-on-live-academy-20260523` worktree, then verify live
+  `/api/auth/discord/login` emits `prompt=none` and `.traderslink.pro` cookies.

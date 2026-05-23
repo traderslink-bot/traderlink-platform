@@ -31,9 +31,17 @@ interface DiscordTokenResponse {
   scope: string;
 }
 
+export type DiscordOAuthPrompt = "consent" | "none";
+
 const DISCORD_API_BASE = "https://discord.com/api/v10";
 const TRADERSLINK_DISCORD_GUILD_ID = "1433570740430573642";
 const DISCORD_OAUTH_SCOPES = "identify guilds guilds.members.read";
+const SILENT_OAUTH_RETRY_ERRORS = new Set([
+  "account_selection_required",
+  "consent_required",
+  "interaction_required",
+  "login_required",
+]);
 
 export function getDiscordOAuthConfig(origin: string): DiscordOAuthConfig {
   const clientId = process.env.DISCORD_CLIENT_ID;
@@ -60,6 +68,7 @@ export function getDiscordOAuthConfig(origin: string): DiscordOAuthConfig {
 
 export function buildDiscordAuthorizeUrl(args: {
   config: DiscordOAuthConfig;
+  prompt: DiscordOAuthPrompt;
   state: string;
 }): string {
   const url = new URL("https://discord.com/oauth2/authorize");
@@ -67,9 +76,21 @@ export function buildDiscordAuthorizeUrl(args: {
   url.searchParams.set("client_id", args.config.clientId);
   url.searchParams.set("redirect_uri", args.config.redirectUri);
   url.searchParams.set("scope", DISCORD_OAUTH_SCOPES);
+  url.searchParams.set("prompt", args.prompt);
   url.searchParams.set("state", args.state);
 
   return url.toString();
+}
+
+export function shouldRetryDiscordOAuthWithConsent(args: {
+  error: string | null;
+  prompt: string | undefined;
+}): boolean {
+  return (
+    args.prompt === "none" &&
+    typeof args.error === "string" &&
+    SILENT_OAUTH_RETRY_ERRORS.has(args.error)
+  );
 }
 
 export async function exchangeDiscordCode(args: {

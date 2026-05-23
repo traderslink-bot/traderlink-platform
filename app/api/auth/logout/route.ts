@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { deleteAcademyCookie } from "@/src/lib/academy/academy-auth-cookies";
 import {
   ACADEMY_SESSION_COOKIE,
   AcademyProgressStore,
@@ -15,6 +16,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const response = NextResponse.redirect(
     new URL("/academy/", request.nextUrl.origin),
   );
-  response.cookies.delete(ACADEMY_SESSION_COOKIE);
+  deleteAcademyCookie(response, request, ACADEMY_SESSION_COOKIE);
   return response;
 }

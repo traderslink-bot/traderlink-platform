@@ -3,9 +3,15 @@
 // Vitest configuration for the trader-improvement-system project.
 // This enables TypeScript test execution in a jsdom environment.
 
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL(".", import.meta.url)),
+    },
+  },
   test: {
     environment: "jsdom",
     globals: true,

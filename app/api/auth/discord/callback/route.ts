@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
+  deleteAcademyCookie,
+  setAcademyCookie,
+} from "@/src/lib/academy/academy-auth-cookies";
+import {
+  ACADEMY_OAUTH_PROMPT_COOKIE,
   ACADEMY_OAUTH_STATE_COOKIE,
   ACADEMY_SESSION_COOKIE,
   ACADEMY_SESSION_TTL_MS,
@@ -12,6 +17,7 @@ import {
   getSafeDiscordAuthErrorMessage,
   getDiscordOAuthConfig,
   resolveDiscordCurrentGuildMembership,
+  shouldRetryDiscordOAuthWithConsent,
 } from "@/src/lib/academy/discord-oauth";
 
 export const runtime = "nodejs";
@@ -25,11 +31,33 @@ function academyRedirect(request: NextRequest, search: string): NextResponse {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const code = request.nextUrl.searchParams.get("code");
+  const oauthError = request.nextUrl.searchParams.get("error");
   const state = request.nextUrl.searchParams.get("state");
   const expectedState = request.cookies.get(ACADEMY_OAUTH_STATE_COOKIE)?.value;
+  const prompt = request.cookies.get(ACADEMY_OAUTH_PROMPT_COOKIE)?.value;
 
-  if (!code || !state || !expectedState || state !== expectedState) {
+  if (!state || !expectedState || state !== expectedState) {
     return academyRedirect(request, "?auth=invalid-state");
+  }
+
+  if (oauthError) {
+    if (shouldRetryDiscordOAuthWithConsent({ error: oauthError, prompt })) {
+      const response = NextResponse.redirect(
+        new URL("/api/auth/discord/login?prompt=consent", request.nextUrl.origin),
+      );
+      clearDiscordOAuthCookies(response, request);
+      return response;
+    }
+
+    const response = academyRedirect(request, "?auth=failed");
+    clearDiscordOAuthCookies(response, request);
+    return response;
+  }
+
+  if (!code) {
+    const response = academyRedirect(request, "?auth=invalid-state");
+    clearDiscordOAuthCookies(response, request);
+    return response;
   }
 
   try {
@@ -45,7 +73,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (!guildMember) {
       const response = academyRedirect(request, "?auth=join-discord");
-      response.cookies.delete(ACADEMY_OAUTH_STATE_COOKIE);
+      clearDiscordOAuthCookies(response, request);
       return response;
     }
 
@@ -72,20 +100,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
 
       const response = academyRedirect(request, "?auth=progress-storage-failed");
-      response.cookies.delete(ACADEMY_OAUTH_STATE_COOKIE);
+      clearDiscordOAuthCookies(response, request);
       return response;
     }
 
     const response = academyRedirect(request, "?auth=connected");
 
-    response.cookies.delete(ACADEMY_OAUTH_STATE_COOKIE);
-    response.cookies.set(ACADEMY_SESSION_COOKIE, sessionToken, {
-      httpOnly: true,
-      maxAge: Math.floor(ACADEMY_SESSION_TTL_MS / 1000),
-      path: "/",
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
+    clearDiscordOAuthCookies(response, request);
+    setAcademyCookie(
+      response,
+      request,
+      ACADEMY_SESSION_COOKIE,
+      sessionToken,
+      Math.floor(ACADEMY_SESSION_TTL_MS / 1000),
+    );
 
     return response;
   } catch (error) {
@@ -95,7 +123,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
 
     const response = academyRedirect(request, "?auth=failed");
-    response.cookies.delete(ACADEMY_OAUTH_STATE_COOKIE);
+    clearDiscordOAuthCookies(response, request);
     return response;
   }
+}
+
+function clearDiscordOAuthCookies(
+  response: NextResponse,
+  request: NextRequest,
+): void {
+  deleteAcademyCookie(response, request, ACADEMY_OAUTH_STATE_COOKIE);
+  deleteAcademyCookie(response, request, ACADEMY_OAUTH_PROMPT_COOKIE);
 }
