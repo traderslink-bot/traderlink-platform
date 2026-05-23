@@ -188,7 +188,7 @@ function NewsSectionIconGraphic({ icon }: { icon: NewsSectionIcon }) {
     case "trendUp":
       return (
         <svg viewBox="0 0 24 24">
-          <path d="M17 6.4 6.4 17 5 15.6 15.6 5H11V3h8v8h-2V6.4ZM14 19h5v-5h-2v1.6l-4.2-4.2-1.4 1.4 4.2 4.2H14v2Z" />
+          <path d="M3.4 18 2 16.6l7.4-7.4 4 4L18.6 8H15V6h7v7h-2V9.4L13.4 16l-4-4-6 6Z" />
         </svg>
       );
   }
