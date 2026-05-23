@@ -2225,6 +2225,44 @@ main.bg-zinc-950 .text-zinc-500 {
   text-transform: uppercase;
 }
 
+.news-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.news-section-icon {
+  display: inline-flex;
+  width: 2.05rem;
+  height: 2.05rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(var(--academy-primary-rgb), 0.18);
+  border-radius: 8px;
+  background: var(--academy-primary-tint);
+  color: var(--academy-primary-strong);
+}
+
+.news-section-icon svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  fill: currentColor;
+}
+
+.news-section-icon-success {
+  border-color: rgba(19, 115, 51, 0.18);
+  background: var(--academy-positive-soft);
+  color: var(--academy-positive);
+}
+
+.news-section-icon-warning {
+  border-color: rgba(161, 92, 0, 0.2);
+  background: var(--academy-warning-soft);
+  color: var(--academy-warning);
+}
+
 .news-card-title {
   margin: 0;
   color: var(--academy-heading);

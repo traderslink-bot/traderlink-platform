@@ -23,6 +23,17 @@ type PageProps = {
   }>;
 };
 
+type NewsSectionIcon =
+  | "assessment"
+  | "book"
+  | "check"
+  | "rule"
+  | "timeline"
+  | "trendDown"
+  | "trendUp";
+
+type NewsSectionIconTone = "primary" | "success" | "warning";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -105,21 +116,82 @@ function DetailTile({ label, value }: { label: string; value: string }) {
 function SectionCard({
   children,
   className,
+  icon,
+  iconTone = "primary",
   kicker,
   title,
 }: {
   children: ReactNode;
   className?: string;
+  icon?: NewsSectionIcon;
+  iconTone?: NewsSectionIconTone;
   kicker?: string;
   title: string;
 }) {
   return (
     <section className={["news-surface-card", className].filter(Boolean).join(" ")}>
       {kicker ? <p className="news-card-kicker">{kicker}</p> : null}
-      <h2 className="news-card-title">{title}</h2>
+      <div className="news-card-heading">
+        {icon ? (
+          <span
+            aria-hidden="true"
+            className={`news-section-icon news-section-icon-${iconTone}`}
+          >
+            <NewsSectionIconGraphic icon={icon} />
+          </span>
+        ) : null}
+        <h2 className="news-card-title">{title}</h2>
+      </div>
       {children}
     </section>
   );
+}
+
+function NewsSectionIconGraphic({ icon }: { icon: NewsSectionIcon }) {
+  switch (icon) {
+    case "assessment":
+      return (
+        <svg viewBox="0 0 24 24">
+          <path d="M4 19h16v2H4v-2Zm1-5h3v3H5v-3Zm5-5h3v8h-3V9Zm5-4h3v12h-3V5Z" />
+        </svg>
+      );
+    case "book":
+      return (
+        <svg viewBox="0 0 24 24">
+          <path d="M5 4.5A3.5 3.5 0 0 1 8.5 1H21v17H8.5A1.5 1.5 0 0 0 7 19.5 1.5 1.5 0 0 0 8.5 21H21v2H8.5A3.5 3.5 0 0 1 5 19.5v-15Zm2 11.34A3.48 3.48 0 0 1 8.5 15H19V3H8.5A1.5 1.5 0 0 0 7 4.5v11.34Z" />
+        </svg>
+      );
+    case "check":
+      return (
+        <svg viewBox="0 0 24 24">
+          <path d="M10.2 16.6 5.8 12.2l1.4-1.4 3 3 6.6-6.6 1.4 1.4-8 8ZM4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm1 2v14h14V5H5Z" />
+        </svg>
+      );
+    case "rule":
+      return (
+        <svg viewBox="0 0 24 24">
+          <path d="M4 4h16v16H4V4Zm2 2v12h12V6H6Zm2 2h8v2H8V8Zm0 4h5v2H8v-2Z" />
+        </svg>
+      );
+    case "timeline":
+      return (
+        <svg viewBox="0 0 24 24">
+          <path d="M5 5h2v10h3v2H5V5Zm12.7 2.3 1.4 1.4-5.8 5.8-2.8-2.8-2.8 2.8-1.4-1.4 4.2-4.2 2.8 2.8 4.4-4.4ZM17 15h2v4h-2v-4Zm-5 1h2v3h-2v-3Z" />
+        </svg>
+      );
+    case "trendDown":
+      return (
+        <svg viewBox="0 0 24 24">
+          <path d="M17 17.6 6.4 7 5 8.4 15.6 19H11v2h8v-8h-2v4.6ZM14 5h5v5h-2V8.4l-4.2 4.2-1.4-1.4L15.6 7H14V5Z" />
+        </svg>
+      );
+    case "trendUp":
+      return (
+        <svg viewBox="0 0 24 24">
+          <path d="M17 6.4 6.4 17 5 15.6 15.6 5H11V3h8v8h-2V6.4ZM14 19h5v-5h-2v1.6l-4.2-4.2-1.4 1.4 4.2 4.2H14v2Z" />
+        </svg>
+      );
+  }
 }
 
 function BulletList({
@@ -247,12 +319,17 @@ export default async function NewsArticlePage({ params }: PageProps) {
 
           <div className="news-dashboard-grid">
             <main className="news-main-stack">
-              <SectionCard title="AI Summary">
+              <SectionCard icon="assessment" title="AI Summary">
                 <p className="news-body-copy">{alertSummary}</p>
               </SectionCard>
 
               <div className="news-two-column">
-                <SectionCard className="news-original-post-font-card" title="Positives">
+                <SectionCard
+                  className="news-original-post-font-card"
+                  icon="trendUp"
+                  iconTone="success"
+                  title="Positives"
+                >
                   <BulletList
                     empty="No positive notes were stored with this alert."
                     items={article.positives}
@@ -260,7 +337,12 @@ export default async function NewsArticlePage({ params }: PageProps) {
                   />
                 </SectionCard>
 
-                <SectionCard className="news-original-post-font-card" title="Negatives">
+                <SectionCard
+                  className="news-original-post-font-card"
+                  icon="trendDown"
+                  iconTone="warning"
+                  title="Negatives"
+                >
                   <BulletList
                     empty="No negative notes were stored with this alert."
                     items={article.negatives}
@@ -271,6 +353,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
 
               {dilutionRows.length > 0 ? (
                 <SectionCard
+                  icon="rule"
                   kicker="Filing Context"
                   title="Filing and Dilution Context"
                 >
@@ -284,7 +367,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
             </main>
 
             <aside className="news-sidebar-stack">
-              <SectionCard title="Snapshot">
+              <SectionCard icon="check" title="Snapshot">
                 {snapshotRows.length > 0 ? (
                   <div className="news-detail-grid news-detail-grid-compact">
                     {snapshotRows.map(([label, value]) => (
@@ -309,13 +392,17 @@ export default async function NewsArticlePage({ params }: PageProps) {
               </SectionCard>
 
               {supportResistanceLevels ? (
-                <SectionCard title="Support and Resistance">
+                <SectionCard icon="timeline" title="Support and Resistance">
                   <pre className="news-levels-block">{supportResistanceLevels}</pre>
                 </SectionCard>
               ) : null}
 
               {availableCourses.length > 0 ? (
-                <SectionCard kicker="Available Now" title="Begin The Academy Path">
+                <SectionCard
+                  icon="book"
+                  kicker="Available Now"
+                  title="Begin The Academy Path"
+                >
                   <div className="academy-module-list news-academy-course-list">
                     {availableCourses.map(({ course, coursePage }) => {
                       const lessons = coursePage.modules.flatMap(
