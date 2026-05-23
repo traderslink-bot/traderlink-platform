@@ -14853,9 +14853,22 @@ Verification:
   again.
 - `npm run build:webpack` passed again after the explicit `Set-Cookie` cleanup
   adjustment, with the existing support-resistance dynamic dependency warning.
+- Deployed production from the clean
+  `traderslink-news-on-live-academy-20260523` worktree. Final Vercel
+  deployment `dpl_9Y7mK5qExbnBGXxsHqAwQhRvbuLG` is Ready and aliased to
+  `https://traderslink.pro`.
+- Live `/api/auth/discord/login` returns Discord OAuth with `prompt=none`,
+  writes `.traderslink.pro` OAuth cookies, and emits host-only cleanup cookies
+  for prior stale state/prompt cookies.
+- Live OAuth callback simulation for `error=consent_required` redirects to
+  `/api/auth/discord/login?prompt=consent` and clears both domain and host-only
+  OAuth cookies.
+- Live `www.traderslink.pro/api/auth/discord/login` redirects to the apex
+  `traderslink.pro` login route.
 
 Current best next step:
 
-- Commit the final auth persistence fix, deploy from the clean
-  `traderslink-news-on-live-academy-20260523` worktree, then verify live
-  `/api/auth/discord/login` emits `prompt=none` and `.traderslink.pro` cookies.
+- If the same browser still shows Discord authorization on repeated Academy
+  visits, test after one fresh login on `https://traderslink.pro/academy/`, then
+  inspect whether `tl_academy_session` is present for `.traderslink.pro` and
+  whether `/api/me` returns `authenticated: true`.
