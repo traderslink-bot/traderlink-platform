@@ -27,9 +27,9 @@ type NewsSectionIcon =
   | "assessment"
   | "book"
   | "check"
+  | "levels"
+  | "negative"
   | "rule"
-  | "timeline"
-  | "trendDown"
   | "trendUp";
 
 type NewsSectionIconTone = "primary" | "success" | "warning";
@@ -173,16 +173,16 @@ function NewsSectionIconGraphic({ icon }: { icon: NewsSectionIcon }) {
           <path d="M4 4h16v16H4V4Zm2 2v12h12V6H6Zm2 2h8v2H8V8Zm0 4h5v2H8v-2Z" />
         </svg>
       );
-    case "timeline":
+    case "levels":
       return (
         <svg viewBox="0 0 24 24">
-          <path d="M5 5h2v10h3v2H5V5Zm12.7 2.3 1.4 1.4-5.8 5.8-2.8-2.8-2.8 2.8-1.4-1.4 4.2-4.2 2.8 2.8 4.4-4.4ZM17 15h2v4h-2v-4Zm-5 1h2v3h-2v-3Z" />
+          <path d="M4 6h16v2H4V6Zm3 5h10v2H7v-2Zm-3 5h16v2H4v-2Zm2-1a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm12-5a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-3 10a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" />
         </svg>
       );
-    case "trendDown":
+    case "negative":
       return (
         <svg viewBox="0 0 24 24">
-          <path d="M17 17.6 6.4 7 5 8.4 15.6 19H11v2h8v-8h-2v4.6ZM14 5h5v5h-2V8.4l-4.2 4.2-1.4-1.4L15.6 7H14V5Z" />
+          <path d="M12 3 2.7 20h18.6L12 3Zm0 4.15L17.9 18H6.1L12 7.15ZM11 10h2v4h-2v-4Zm0 5h2v2h-2v-2Z" />
         </svg>
       );
     case "trendUp":
@@ -339,7 +339,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
 
                 <SectionCard
                   className="news-original-post-font-card"
-                  icon="trendDown"
+                  icon="negative"
                   iconTone="warning"
                   title="Negatives"
                 >
@@ -392,7 +392,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
               </SectionCard>
 
               {supportResistanceLevels ? (
-                <SectionCard icon="timeline" title="Support and Resistance">
+                <SectionCard icon="levels" title="Support and Resistance">
                   <pre className="news-levels-block">{supportResistanceLevels}</pre>
                 </SectionCard>
               ) : null}
