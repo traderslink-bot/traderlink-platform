@@ -90,19 +90,19 @@ function DetailTile({ label, value }: { label: string; value: string }) {
   );
 }
 
-function NewsPanel({
+function SectionCard({
   children,
-  eyebrow,
+  kicker,
   title,
 }: {
   children: ReactNode;
-  eyebrow?: string;
+  kicker?: string;
   title: string;
 }) {
   return (
-    <section className="news-panel">
-      {eyebrow ? <p className="academy-eyebrow">{eyebrow}</p> : null}
-      <h2 className="news-panel-title">{title}</h2>
+    <section className="news-surface-card">
+      {kicker ? <p className="news-card-kicker">{kicker}</p> : null}
+      <h2 className="news-card-title">{title}</h2>
       {children}
     </section>
   );
@@ -111,16 +111,18 @@ function NewsPanel({
 function BulletList({
   empty,
   items,
+  tone,
 }: {
   empty: string;
   items: string[];
+  tone: "positive" | "negative";
 }) {
   if (items.length === 0) {
     return <p className="news-muted">{empty}</p>;
   }
 
   return (
-    <ul className="news-bullet-list">
+    <ul className={`news-bullet-list news-bullet-list-${tone}`}>
       {items.map((item) => (
         <li key={item}>{item}</li>
       ))}
@@ -218,22 +220,21 @@ export default async function NewsArticlePage({ params }: PageProps) {
   return (
     <AcademyShell>
       <article className="academy-container news-article-page">
-        <header className="news-article-hero">
-          <div className="news-chip-row">
-            <span className="news-chip news-chip-primary">${article.ticker}</span>
-            <span className="news-chip">{formatDate(article.publishedAt)}</span>
-            <span className="news-chip">AI processed</span>
-            {filingType !== "N/A" ? <span className="news-chip">{filingType}</span> : null}
-          </div>
-
-          <div className="news-hero-grid">
-            <div>
-              <p className="academy-eyebrow">TradersLink News</p>
-              <h1 className="academy-title-sm">{article.headline}</h1>
-              <p className="academy-lede">{alertSummary}</p>
+        <div className="news-article-stack">
+          <header className="news-surface-card news-article-header-card">
+            <div className="news-article-header-copy">
+              <div className="news-chip-row">
+                <span className="news-chip news-chip-primary">${article.ticker}</span>
+                <span className="news-chip">{formatDate(article.publishedAt)}</span>
+                <span className="news-chip">AI processed</span>
+                {filingType !== "N/A" ? (
+                  <span className="news-chip">{filingType}</span>
+                ) : null}
+              </div>
+              <h1 className="news-article-title">{article.headline}</h1>
             </div>
 
-            <div className="news-action-card">
+            <div className="news-action-stack">
               <Link className="academy-card-action" href={`/news/${article.ticker}`}>
                 {article.ticker} news
               </Link>
@@ -248,84 +249,96 @@ export default async function NewsArticlePage({ params }: PageProps) {
                 </a>
               ) : null}
             </div>
-          </div>
-        </header>
+          </header>
 
-        <div className="news-layout">
-          <div className="news-main-column">
-            <NewsPanel eyebrow="Alert Snapshot" title="What the alert found">
-              <p className="news-body-copy">{alertSummary}</p>
-              {snapshotRows.length > 0 ? (
-                <div className="news-detail-grid">
-                  {snapshotRows.map(([label, value]) => (
-                    <DetailTile key={label} label={label} value={value} />
-                  ))}
-                </div>
-              ) : null}
-            </NewsPanel>
+          <div className="news-dashboard-grid">
+            <main className="news-main-stack">
+              <SectionCard title="AI Summary">
+                <p className="news-body-copy">{alertSummary}</p>
+              </SectionCard>
 
-            <div className="news-two-column">
-              <NewsPanel eyebrow="Positive Context" title="Potential positives">
-                <BulletList
-                  empty="No positive notes were stored with this alert."
-                  items={article.positives}
-                />
-              </NewsPanel>
+              <div className="news-two-column">
+                <SectionCard title="Positives">
+                  <BulletList
+                    empty="No positive notes were stored with this alert."
+                    items={article.positives}
+                    tone="positive"
+                  />
+                </SectionCard>
 
-              <NewsPanel eyebrow="Risk Context" title="Risks and negatives">
-                <BulletList
-                  empty="No negative notes were stored with this alert."
-                  items={article.negatives}
-                />
-              </NewsPanel>
-            </div>
-
-            {supportResistanceLevels ? (
-              <NewsPanel eyebrow="Chart Context" title="Support and Resistance">
-                <pre className="news-levels-block">{supportResistanceLevels}</pre>
-              </NewsPanel>
-            ) : null}
-
-            {dilutionRows.length > 0 ? (
-              <NewsPanel eyebrow="Filing Context" title="Dilution and filing checks">
-                <div className="news-detail-grid">
-                  {dilutionRows.map(([label, value]) => (
-                    <DetailTile key={label} label={label} value={value} />
-                  ))}
-                </div>
-              </NewsPanel>
-            ) : null}
-          </div>
-
-          <aside className="news-sidebar">
-            <NewsPanel title="Academy Context">
-              <p className="news-muted">
-                News alerts are easier to review when the trader separates the
-                headline, filing context, chart reaction, and execution plan.
-              </p>
-              <div className="news-course-list">
-                {availableCourses.slice(0, 4).map((course) => {
-                  const counts = getCourseLessonCounts(course.course_id);
-
-                  return (
-                    <Link
-                      className="news-course-link"
-                      href={course.course_slug}
-                      key={course.course_id}
-                    >
-                      <span>{course.course_title}</span>
-                      <small>
-                        {counts.coreLessonCount} core lessons
-                        {counts.deepDiveLessonCount
-                          ? ` + ${counts.deepDiveLessonCount} references`
-                          : ""}
-                      </small>
-                    </Link>
-                  );
-                })}
+                <SectionCard title="Negatives">
+                  <BulletList
+                    empty="No negative notes were stored with this alert."
+                    items={article.negatives}
+                    tone="negative"
+                  />
+                </SectionCard>
               </div>
-            </NewsPanel>
-          </aside>
+
+              {dilutionRows.length > 0 ? (
+                <SectionCard
+                  kicker="Filing Context"
+                  title="Filing and Dilution Context"
+                >
+                  <div className="news-detail-grid">
+                    {dilutionRows.map(([label, value]) => (
+                      <DetailTile key={label} label={label} value={value} />
+                    ))}
+                  </div>
+                </SectionCard>
+              ) : null}
+            </main>
+
+            <aside className="news-sidebar-stack">
+              <SectionCard title="Alert Snapshot">
+                {snapshotRows.length > 0 ? (
+                  <div className="news-detail-grid news-detail-grid-compact">
+                    {snapshotRows.map(([label, value]) => (
+                      <DetailTile key={label} label={label} value={value} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="news-muted">
+                    No market snapshot fields were stored with this alert.
+                  </p>
+                )}
+              </SectionCard>
+
+              {supportResistanceLevels ? (
+                <SectionCard title="Support and Resistance">
+                  <pre className="news-levels-block">{supportResistanceLevels}</pre>
+                </SectionCard>
+              ) : null}
+
+              {availableCourses.length > 0 ? (
+                <SectionCard kicker="Available Now" title="Begin The Academy Path">
+                  <div className="news-course-list">
+                    {availableCourses.map((course) => {
+                      const counts = getCourseLessonCounts(course.course_id);
+
+                      return (
+                        <Link
+                          className="news-course-link"
+                          href={course.course_slug}
+                          key={course.course_id}
+                        >
+                          <small>Course {course.course_order}</small>
+                          <span>{course.course_title}</span>
+                          <p>{course.course_outcome || course.display_model}</p>
+                          <div className="news-course-chip-row">
+                            <span>{counts.coreLessonCount} core lessons</span>
+                            {counts.deepDiveLessonCount > 0 ? (
+                              <span>{counts.deepDiveLessonCount} references</span>
+                            ) : null}
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </SectionCard>
+              ) : null}
+            </aside>
+          </div>
         </div>
       </article>
     </AcademyShell>
