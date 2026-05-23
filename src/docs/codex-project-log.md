@@ -14784,3 +14784,23 @@ Current best next step:
 - Deploy from the clean
   `traderslink-news-on-live-academy-20260523` worktree after confirming
   production env vars and the final file list.
+
+## 2026-05-23 - Academy OAuth Success Prompt Edge Case
+
+Adjusted the Academy home save-progress prompt so it also stays hidden while
+the Discord OAuth success notice is active. This covers the live redirect case
+where `/academy?auth=connected` renders the `You are logged in` card before the
+server-rendered session state is available, preventing the signed-out
+`Save your place as you learn` card from appearing beneath it.
+
+Verification:
+
+- `npx eslint app/academy/page.tsx` passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run validate:academy-registry` passed.
+
+Current best next step:
+
+- Run `npm run build:webpack`, commit the focused Academy fix, deploy the clean
+  `traderslink-news-on-live-academy-20260523` worktree to Vercel production,
+  then verify live `/academy?auth=connected` only shows the success notice.

@@ -100,6 +100,8 @@ export default async function AcademyHomePage({
   const academyJsonLd = buildAcademyHomeJsonLd(
     liveCourses.map((item) => item.course),
   );
+  const shouldShowSaveProgressNote =
+    !academySession && authNotice?.tone !== "success";
 
   return (
     <AcademyShell>
@@ -148,7 +150,7 @@ export default async function AcademyHomePage({
                 </div>
               </div>
             ) : null}
-            {!academySession ? (
+            {shouldShowSaveProgressNote ? (
               <div className="academy-progress-note">
                 <p className="academy-progress-note-title">
                   Save your place as you learn.
