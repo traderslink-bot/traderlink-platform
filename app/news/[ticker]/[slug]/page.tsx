@@ -275,13 +275,13 @@ export default async function NewsArticlePage({ params }: PageProps) {
               <NewsPanel eyebrow="Risk Context" title="Risks and negatives">
                 <BulletList
                   empty="No negative notes were stored with this alert."
-                  items={[...article.negatives, ...article.riskFlags]}
+                  items={article.negatives}
                 />
               </NewsPanel>
             </div>
 
             {supportResistanceLevels ? (
-              <NewsPanel eyebrow="Support And Resistance" title="Generated levels">
+              <NewsPanel eyebrow="Chart Context" title="Support and Resistance">
                 <pre className="news-levels-block">{supportResistanceLevels}</pre>
               </NewsPanel>
             ) : null}
@@ -295,32 +295,9 @@ export default async function NewsArticlePage({ params }: PageProps) {
                 </div>
               </NewsPanel>
             ) : null}
-
-            <NewsPanel eyebrow="Source Context" title="Stored source text">
-              {article.articleText ? (
-                <div className="news-source-text">{article.articleText}</div>
-              ) : (
-                <p className="news-muted">
-                  No full source text was stored for this alert. Discord should
-                  link only to a user-facing source when full article text is
-                  unavailable.
-                </p>
-              )}
-            </NewsPanel>
           </div>
 
           <aside className="news-sidebar">
-            <NewsPanel title="Processing Checks">
-              <div className="news-check-list">
-                <DetailTile label="Event type" value={eventType} />
-                <DetailTile label="Route tag" value={asText(article.routeTag)} />
-                <DetailTile
-                  label="Source"
-                  value={secArticle ? "SEC source" : "Stored alert context"}
-                />
-              </div>
-            </NewsPanel>
-
             <NewsPanel title="Academy Context">
               <p className="news-muted">
                 News alerts are easier to review when the trader separates the
