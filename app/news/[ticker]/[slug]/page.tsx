@@ -4,11 +4,13 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { AcademyShell } from "@/app/academy/academy-shell";
+import { getCurrentAcademySession } from "@/app/academy/academy-server-session";
 import {
   getAcademyCoursePage,
   getAcademyCourses,
   getLaunchAcademyCourseIds,
 } from "@/src/lib/academy/academy-content";
+import { AcademyProgressStore } from "@/src/lib/academy/academy-progress-store";
 import {
   getNewsArticle,
   type NewsArticle,
@@ -23,6 +25,16 @@ type PageProps = {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const chartReadingCourseId = "chart-reading-market-structure";
+const candlestickModuleIds = new Set([
+  "bullish-candle-patterns",
+  "bearish-candle-patterns",
+  "indecision-neutral-candles",
+  "momentum-continuation-candles",
+  "session-gap-behavior",
+]);
+const chartPatternModuleIds = new Set(["chart-patterns-context"]);
 
 function asText(value: unknown, fallback = "N/A"): string {
   if (value === null || value === undefined || value === "") return fallback;
@@ -130,23 +142,6 @@ function BulletList({
   );
 }
 
-function getCourseLessonCounts(courseId: string): {
-  coreLessonCount: number;
-  deepDiveLessonCount: number;
-} {
-  const coursePage = getAcademyCoursePage(courseId);
-  const lessons = coursePage?.modules.flatMap(({ lessons }) => lessons) ?? [];
-
-  return {
-    coreLessonCount: lessons.filter(
-      (lesson) => lesson.counts_toward_course_progress,
-    ).length,
-    deepDiveLessonCount: lessons.filter(
-      (lesson) => !lesson.counts_toward_course_progress,
-    ).length,
-  };
-}
-
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
@@ -212,10 +207,23 @@ export default async function NewsArticlePage({ params }: PageProps) {
     detailRow("Trigger type", asText(metadata.dilutionTriggerType || ai.dilutionTriggerType)),
     detailRow("Trigger date", asText(metadata.dilutionTriggerDate || ai.dilutionTriggerDate)),
   ].filter(([, value]) => value !== "N/A" && value !== "Not specified");
-  const launchCourseIds = new Set(getLaunchAcademyCourseIds());
-  const availableCourses = getAcademyCourses().filter((course) =>
-    launchCourseIds.has(course.course_id),
-  );
+  const academyCourses = getAcademyCourses();
+  const availableCourses = getLaunchAcademyCourseIds()
+    .map((courseId) => {
+      const course = academyCourses.find((item) => item.course_id === courseId);
+      const coursePage = getAcademyCoursePage(courseId);
+
+      return course && coursePage ? { course, coursePage } : null;
+    })
+    .filter((item) => item !== null);
+  const academySession = await getCurrentAcademySession();
+  const completedLessonSlugs = academySession
+    ? new Set(
+        await new AcademyProgressStore().listCompletedLessonSlugs(
+          academySession.discordUserId,
+        ),
+      )
+    : new Set<string>();
 
   return (
     <AcademyShell>
@@ -232,22 +240,6 @@ export default async function NewsArticlePage({ params }: PageProps) {
                 ) : null}
               </div>
               <h1 className="news-article-title">{article.headline}</h1>
-            </div>
-
-            <div className="news-action-stack">
-              <Link className="academy-card-action" href={`/news/${article.ticker}`}>
-                {article.ticker} news
-              </Link>
-              {article.sourceUrl && secArticle ? (
-                <a
-                  className="news-secondary-action"
-                  href={article.sourceUrl}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  Open SEC filing
-                </a>
-              ) : null}
             </div>
           </header>
 
@@ -302,6 +294,16 @@ export default async function NewsArticlePage({ params }: PageProps) {
                     No market snapshot fields were stored with this alert.
                   </p>
                 )}
+                {article.sourceUrl && secArticle ? (
+                  <a
+                    className="news-secondary-action news-sec-source-link"
+                    href={article.sourceUrl}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    Open SEC filing
+                  </a>
+                ) : null}
               </SectionCard>
 
               {supportResistanceLevels ? (
@@ -312,25 +314,66 @@ export default async function NewsArticlePage({ params }: PageProps) {
 
               {availableCourses.length > 0 ? (
                 <SectionCard kicker="Available Now" title="Begin The Academy Path">
-                  <div className="news-course-list">
-                    {availableCourses.map((course) => {
-                      const counts = getCourseLessonCounts(course.course_id);
+                  <div className="academy-module-list news-academy-course-list">
+                    {availableCourses.map(({ course, coursePage }) => {
+                      const lessons = coursePage.modules.flatMap(
+                        ({ lessons }) => lessons,
+                      );
+                      const progress = getCourseProgress(
+                        lessons,
+                        completedLessonSlugs,
+                      );
+                      const lessonGroupProgress = getCourseLessonGroupProgress(
+                        course.course_id,
+                        lessons,
+                        completedLessonSlugs,
+                      );
 
                       return (
                         <Link
-                          className="news-course-link"
+                          className="academy-card academy-card-link"
                           href={course.course_slug}
                           key={course.course_id}
                         >
-                          <small>Course {course.course_order}</small>
-                          <span>{course.course_title}</span>
-                          <p>{course.course_outcome || course.display_model}</p>
-                          <div className="news-course-chip-row">
-                            <span>{counts.coreLessonCount} core lessons</span>
-                            {counts.deepDiveLessonCount > 0 ? (
-                              <span>{counts.deepDiveLessonCount} references</span>
-                            ) : null}
+                          <div className="academy-card-topline">
+                            <p className="academy-kicker">
+                              Course {course.course_order}
+                            </p>
+                            <span className="academy-chip academy-chip-success">
+                              Open now
+                            </span>
                           </div>
+                          <h3 className="academy-card-title">
+                            {course.course_title}
+                          </h3>
+                          <p className="academy-card-text">
+                            {course.course_outcome || course.display_model}
+                          </p>
+                          <div className="academy-chip-row">
+                            <span className="academy-chip">
+                              {coursePage.totalLessonCount} lessons
+                            </span>
+                          </div>
+                          <div className="academy-course-progress">
+                            <CourseProgressMeter
+                              isAuthenticated={Boolean(academySession)}
+                              label={
+                                course.course_id === chartReadingCourseId
+                                  ? "Core lessons"
+                                  : undefined
+                              }
+                              progress={progress}
+                            />
+                            {lessonGroupProgress.map((groupProgress) => (
+                              <CourseProgressMeter
+                                isAuthenticated={Boolean(academySession)}
+                                key={groupProgress.label}
+                                label={groupProgress.label}
+                                progress={groupProgress}
+                              />
+                            ))}
+                          </div>
+                          <span className="academy-card-action">Open course</span>
                         </Link>
                       );
                     })}
@@ -342,5 +385,113 @@ export default async function NewsArticlePage({ params }: PageProps) {
         </div>
       </article>
     </AcademyShell>
+  );
+}
+
+function getCourseProgress(
+  lessons: Array<{
+    lesson_slug: string;
+    module_id: string;
+    counts_toward_course_progress: boolean;
+  }>,
+  completedLessonSlugs: Set<string>,
+) {
+  const progressLessons = lessons.filter(
+    (lesson) => lesson.counts_toward_course_progress,
+  );
+  const completed = progressLessons.filter((lesson) =>
+    completedLessonSlugs.has(lesson.lesson_slug),
+  ).length;
+  const total = progressLessons.length;
+
+  return {
+    completed,
+    total,
+    percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+  };
+}
+
+function getCourseLessonGroupProgress(
+  courseId: string,
+  lessons: Array<{
+    lesson_slug: string;
+    module_id: string;
+    counts_toward_course_progress: boolean;
+  }>,
+  completedLessonSlugs: Set<string>,
+) {
+  if (courseId !== chartReadingCourseId) {
+    return [];
+  }
+
+  return [
+    getLessonGroupProgress(
+      "Candlestick lessons",
+      lessons.filter((lesson) => candlestickModuleIds.has(lesson.module_id)),
+      completedLessonSlugs,
+    ),
+    getLessonGroupProgress(
+      "Chart pattern lessons",
+      lessons.filter((lesson) => chartPatternModuleIds.has(lesson.module_id)),
+      completedLessonSlugs,
+    ),
+  ].filter((progress) => progress.total > 0);
+}
+
+function getLessonGroupProgress(
+  label: string,
+  lessons: Array<{
+    lesson_slug: string;
+  }>,
+  completedLessonSlugs: Set<string>,
+) {
+  const completed = lessons.filter((lesson) =>
+    completedLessonSlugs.has(lesson.lesson_slug),
+  ).length;
+  const total = lessons.length;
+
+  return {
+    completed,
+    label,
+    total,
+    percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+  };
+}
+
+function CourseProgressMeter({
+  isAuthenticated,
+  label,
+  progress,
+}: {
+  isAuthenticated: boolean;
+  label?: string;
+  progress: {
+    completed: number;
+    total: number;
+    percent: number;
+  };
+}) {
+  return (
+    <div className="academy-course-progress-row">
+      {label ? (
+        <p className="academy-course-progress-label">{label}</p>
+      ) : null}
+      <div className="academy-course-progress-track">
+        <span
+          className="academy-course-progress-fill"
+          style={{ width: `${progress.percent}%` }}
+        />
+      </div>
+      <div className="academy-course-progress-meta">
+        <span>
+          {isAuthenticated
+            ? `${progress.percent}% complete`
+            : "Log in to track progress"}
+        </span>
+        <span>
+          {progress.completed}/{progress.total}
+        </span>
+      </div>
+    </div>
   );
 }
