@@ -14798,9 +14798,18 @@ Verification:
 - `npx eslint app/academy/page.tsx` passed.
 - `npx tsc --noEmit --pretty false` passed.
 - `npm run validate:academy-registry` passed.
+- `npm run build:webpack` passed with the existing support-resistance dynamic
+  dependency warning.
+- Deployed production from the clean
+  `traderslink-news-on-live-academy-20260523` worktree. Vercel deployment
+  `dpl_7LdWZtVfkpvkRnEaUXfExMF6GmWN` is Ready and aliased to
+  `https://traderslink.pro`.
+- Live smoke confirmed `/academy?auth=connected` returns `You are logged in`
+  without `Save your place as you learn`, while anonymous `/academy` still
+  shows the save-progress prompt.
 
 Current best next step:
 
-- Run `npm run build:webpack`, commit the focused Academy fix, deploy the clean
-  `traderslink-news-on-live-academy-20260523` worktree to Vercel production,
-  then verify live `/academy?auth=connected` only shows the success notice.
+- If a user still has to authorize Discord on every Academy visit, inspect
+  whether the `tl_academy_session` first-party cookie is being retained for
+  `traderslink.pro` and whether `/api/me` returns `authenticated: true`.
