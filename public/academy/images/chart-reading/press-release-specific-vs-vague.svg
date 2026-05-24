@@ -17,7 +17,7 @@
     <text x="78" y="356">Clear milestone</text>
   </g>
   <rect x="340" y="122" width="260" height="268" rx="10" fill="#081323" stroke="#8a5b1f"/>
-  <text x="366" y="158" fill="#f5c26b" font-family="Arial, sans-serif" font-size="17" font-weight="700">Needs More Context</text>
+  <text x="366" y="158" fill="#f5c26b" font-family="Arial, sans-serif" font-size="17" font-weight="700">Needs More Detail</text>
   <g font-family="Arial, sans-serif" font-size="13" fill="#d8eaff">
     <text x="366" y="196">No named party</text>
     <text x="366" y="228">Plans or intends</text>
@@ -44,9 +44,9 @@
     <line x1="830" y1="260" x2="830" y2="330" stroke="#ef5350"/><rect x="821" y="276" width="18" height="34" rx="2" fill="#ef5350"/>
     <line x1="862" y1="278" x2="862" y2="340" stroke="#ef5350"/><rect x="853" y="292" width="18" height="30" rx="2" fill="#ef5350"/>
   </g>
-  <text x="650" y="366" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="12">Reaction still needs volume, level, and spread context.</text>
+  <text x="650" y="366" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="12">Reaction still needs volume, level, and spread checks.</text>
 
   <rect x="52" y="414" width="856" height="76" rx="10" fill="#081323" stroke="#172a46"/>
-  <text x="78" y="444" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="15" font-weight="700">Context Prompt</text>
-  <text x="78" y="470" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="13">Specific details improve context, but no press release detail guarantees continuation or clean execution.</text>
+  <text x="78" y="444" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="15" font-weight="700">Reaction Check</text>
+  <text x="78" y="470" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="13">Specific details help; then compare volume, levels, spread, and follow-through.</text>
 </svg>

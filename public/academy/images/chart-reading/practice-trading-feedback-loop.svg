@@ -9,7 +9,7 @@
   </defs>
   <rect class="bg" width="760" height="430"/>
   <rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
-  <text class="txt label" x="34" y="42">Practice Trading Loop: Focus, Simulate, Context, Adjust</text>
+  <text class="txt label" x="34" y="42">Practice Trading Loop: Focus, Simulate, Review, Adjust</text>
   <text class="txt small muted" x="34" y="64">Practice is a feedback loop. It is not proof that future live results will match.</text>
   <g transform="translate(42 92)">
     <rect x="0" y="0" width="365" height="210" fill="#0c1626" stroke="#203651"/>
@@ -33,7 +33,7 @@
   <g>
     <rect class="card" x="462" y="94" width="214" height="46" rx="6"/><text class="txt small" x="480" y="120">1. Pick one practice focus</text>
     <rect class="card" x="462" y="156" width="214" height="46" rx="6"/><text class="txt small" x="480" y="182">2. Make a simulated decision</text>
-    <rect class="card" x="462" y="218" width="214" height="46" rx="6"/><text class="txt small" x="480" y="244">3. Context plan vs actual</text>
+    <rect class="card" x="462" y="218" width="214" height="46" rx="6"/><text class="txt small" x="480" y="244">3. Compare plan vs actual</text>
     <rect class="card" x="462" y="280" width="214" height="46" rx="6"/><text class="txt small" x="480" y="306">4. Adjust one rule</text>
     <path class="arrow" d="M676 118 C718 150 718 274 676 306"/>
     <path class="arrow" d="M462 303 C420 324 384 310 360 284"/>

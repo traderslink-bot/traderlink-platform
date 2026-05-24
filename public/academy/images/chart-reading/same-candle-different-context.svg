@@ -3,7 +3,7 @@
   <desc id="desc">Three simple panels showing the same long upper wick candle shape in different chart locations.</desc>
   <rect width="960" height="540" fill="#07111f"/>
   <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="25" font-weight="700">Same candle shape, different location</text>
-  <text x="44" y="88" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">The candle shape is identical in each panel. The lesson explains how context changes the read.</text>
+  <text x="44" y="88" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">The same candle can read differently by level, trend, and volume.</text>
 
   <g transform="translate(44 120)">
     <rect width="270" height="330" rx="10" fill="#0b1626" stroke="#1b3558"/>

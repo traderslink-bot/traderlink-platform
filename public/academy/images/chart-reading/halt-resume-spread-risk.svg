@@ -6,7 +6,7 @@
   </style></defs>
   <rect class="bg" width="760" height="430"/><rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
   <text class="txt label" x="34" y="42">Halt Resume: Spread, Depth, And Fill Risk</text>
-  <text class="txt small muted" x="34" y="64">Resume conditions can change quickly. Context execution risk before interpreting the chart.</text>
+  <text class="txt small muted" x="34" y="64">Resume conditions can change quickly. Check spread and depth first.</text>
   <g transform="translate(44 94)">
     <rect x="0" y="0" width="420" height="220" fill="#0c1626" stroke="#203651"/>
     <line class="grid" x1="0" y1="44" x2="420" y2="44"/><line class="grid" x1="0" y1="88" x2="420" y2="88"/><line class="grid" x1="0" y1="132" x2="420" y2="132"/><line class="grid" x1="0" y1="176" x2="420" y2="176"/>
@@ -26,7 +26,7 @@
   </g>
   <g transform="translate(505 100)">
     <rect class="box" x="0" y="0" width="190" height="86" rx="6"/>
-    <text class="txt label" x="18" y="24">Quote Context</text>
+    <text class="txt label" x="18" y="24">Quote Check</text>
     <text class="txt small muted" x="18" y="48">Bid 2.42 x 300</text>
     <text class="txt small muted" x="18" y="68">Ask 2.67 x 200</text>
     <rect class="box" x="0" y="112" width="190" height="86" rx="6"/>

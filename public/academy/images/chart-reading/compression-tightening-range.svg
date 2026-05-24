@@ -31,5 +31,5 @@
   <path d="M104 298 L158 258 L212 234 L266 210 L320 212 L374 198 L428 196 L482 186 L536 190 L590 176" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
   <g><rect x="74" y="326" width="14" height="40" fill="#21c784" opacity=".85"/><rect x="112" y="336" width="14" height="30" fill="#21c784" opacity=".75"/><rect x="150" y="344" width="14" height="22" fill="#ef4444" opacity=".65"/><rect x="188" y="346" width="14" height="20" fill="#21c784" opacity=".65"/><rect x="226" y="350" width="14" height="16" fill="#ef4444" opacity=".6"/><rect x="264" y="352" width="14" height="14" fill="#21c784" opacity=".55"/><rect x="302" y="354" width="14" height="12" fill="#21c784" opacity=".5"/></g>
   <rect x="28" y="376" width="704" height="36" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="399" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: did range and volume truly tighten before expansion?</text>
+  <text x="44" y="399" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Check: did range and volume truly tighten before expansion?</text>
 </svg>

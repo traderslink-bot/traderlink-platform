@@ -7,8 +7,8 @@
   <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">The quote, spread, liquidity, and urgency all matter.</text>
   <rect x="70" y="128" width="350" height="286" rx="10" fill="#0a1322" stroke="#213858"/>
   <rect x="480" y="128" width="350" height="286" rx="10" fill="#0a1322" stroke="#213858"/>
-  <text x="96" y="162" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Market order context</text>
-  <text x="506" y="162" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Limit order context</text>
+  <text x="96" y="162" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Market order fill</text>
+  <text x="506" y="162" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Limit order price</text>
   <g font-family="Arial, sans-serif" font-size="14">
     <rect x="108" y="206" width="92" height="34" fill="#0f2f25" rx="6"/>
     <rect x="238" y="206" width="92" height="34" fill="#33171f" rx="6"/>

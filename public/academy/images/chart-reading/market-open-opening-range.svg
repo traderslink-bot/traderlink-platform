@@ -5,8 +5,8 @@
     .bg{fill:#0b1220}.panel{fill:#0f1a2b;stroke:#203651;stroke-width:1.5}.grid{stroke:#22364f;opacity:.65}.txt{fill:#d7e3f4;font-family:Arial,Helvetica,sans-serif}.small{font-size:12px}.label{font-size:13px;font-weight:700}.muted{fill:#8ea1bd}.zone{fill:rgba(56,189,248,.12);stroke:#38bdf8;stroke-width:1.5}.line{stroke:#38bdf8;stroke-width:1.5;stroke-dasharray:6 5}.green{fill:#22c55e;stroke:#22c55e}.red{fill:#ef4444;stroke:#ef4444}.wickG{stroke:#22c55e;stroke-width:2}.wickR{stroke:#ef4444;stroke-width:2}.volG{fill:#22c55e;opacity:.45}.volR{fill:#ef4444;opacity:.45}
   </style></defs>
   <rect class="bg" width="760" height="430"/><rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
-  <text class="txt label" x="34" y="42">Market Open: Let The First Range Become Contextable</text>
-  <text class="txt small muted" x="34" y="64">The opening range helps organize volatility. It does not make a move certain.</text>
+  <text class="txt label" x="34" y="42">Market Open: Let The First Range Form</text>
+  <text class="txt small muted" x="34" y="64">The opening range helps organize the first burst of volatility.</text>
   <g transform="translate(54 94)">
     <rect x="0" y="0" width="650" height="230" fill="#0c1626" stroke="#203651"/>
     <line class="grid" x1="0" y1="45" x2="650" y2="45"/><line class="grid" x1="0" y1="90" x2="650" y2="90"/><line class="grid" x1="0" y1="135" x2="650" y2="135"/><line class="grid" x1="0" y1="180" x2="650" y2="180"/>

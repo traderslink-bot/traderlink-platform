@@ -9,7 +9,7 @@
   <rect class="bg" width="760" height="430"/>
   <rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
   <text class="txt label" x="34" y="42">Trading Halt Timeline: Pause, Imbalance, Resume</text>
-  <text class="txt small muted" x="34" y="64">A halt interrupts trading. It does not tell the trader what will happen after resume.</text>
+  <text class="txt small muted" x="34" y="64">A halt interrupts trading; watch spread, volume, and first prints after resume.</text>
   <g transform="translate(54 94)">
     <rect x="0" y="0" width="650" height="230" fill="#0c1626" stroke="#203651"/>
     <line class="grid" x1="0" y1="46" x2="650" y2="46"/><line class="grid" x1="0" y1="92" x2="650" y2="92"/><line class="grid" x1="0" y1="138" x2="650" y2="138"/><line class="grid" x1="0" y1="184" x2="650" y2="184"/>

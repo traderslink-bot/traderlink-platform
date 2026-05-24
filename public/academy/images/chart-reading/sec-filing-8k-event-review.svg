@@ -3,7 +3,7 @@
   <desc id="desc">Dark trading dashboard showing a Form 8-K current-event filing beside realistic red and green candlesticks, volume bars, and filing notes.</desc>
   <rect width="960" height="560" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="904" height="504" rx="14" fill="#0b1628" stroke="#1d3557"/>
-  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Form 8-K Event Context</text>
+  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Form 8-K Event Review</text>
   <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">An 8-K reports a current event. The item and details matter more than the form name.</text>
   <rect x="52" y="122" width="278" height="368" rx="10" fill="#081323" stroke="#172a46"/>
   <text x="78" y="158" fill="#7bb4ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">SEC CURRENT REPORT</text>
@@ -13,7 +13,7 @@
     <text x="78" y="270" fill="#8fa7c8">Exhibit</text><text x="184" y="270" fill="#e6f0ff">Press release</text>
     <text x="78" y="306" fill="#8fa7c8">Terms</text><text x="184" y="306" fill="#f5c26b">Read details</text>
     <text x="78" y="342" fill="#8fa7c8">Risk</text><text x="184" y="342" fill="#f5c26b">Financing check</text>
-    <text x="78" y="378" fill="#8fa7c8">Context</text><text x="184" y="378" fill="#7bb4ff">Chart + volume</text>
+    <text x="78" y="378" fill="#8fa7c8">Reaction</text><text x="184" y="378" fill="#7bb4ff">Chart + volume</text>
   </g>
   <rect x="78" y="420" width="224" height="42" rx="8" fill="#0d213a" stroke="#2d8cff"/>
   <text x="190" y="446" fill="#d8eaff" font-family="Arial, sans-serif" font-size="13" text-anchor="middle">Do not stop at the headline</text>

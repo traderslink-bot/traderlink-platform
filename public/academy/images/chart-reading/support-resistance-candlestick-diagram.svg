@@ -9,7 +9,7 @@
   <rect width="1200" height="800" fill="url(#bg)"/>
   <rect x="40" y="40" width="1120" height="720" rx="20" fill="#0f1b2d" stroke="#1e3149" stroke-width="2" filter="url(#shadow)"/>
   <text x="70" y="86" fill="#f8fbff" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Support And Resistance</text>
-  <text x="70" y="116" fill="#9fb4c9" font-family="Arial, Helvetica, sans-serif" font-size="18">Example only: price can react around zones, break them, or ignore them.</text>
+  <text x="70" y="116" fill="#9fb4c9" font-family="Arial, Helvetica, sans-serif" font-size="18">Price can react around zones, break them, or ignore them.</text>
   <rect x="80" y="140" width="1040" height="420" fill="#0b1422" stroke="#22354e" stroke-width="2"/>
   <rect x="80" y="580" width="1040" height="120" fill="#0b1422" stroke="#22354e" stroke-width="2"/>
   <g stroke="#203247" stroke-width="1" opacity="0.75">

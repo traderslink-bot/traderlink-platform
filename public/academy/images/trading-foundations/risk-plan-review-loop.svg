@@ -33,7 +33,7 @@
     <text class="txt small muted" x="18" y="62">Setup criteria written</text>
     <text class="txt small muted" x="18" y="90">Risk area defined</text>
     <text class="txt small muted" x="18" y="118">Position size checked</text>
-    <text class="txt small muted" x="18" y="146">Session context noted</text>
+    <text class="txt small muted" x="18" y="146">Session notes added</text>
     <text class="txt small muted" x="18" y="174">Stop or invalidation chosen</text>
     <rect class="chart" x="18" y="196" width="170" height="28" rx="4"/>
     <rect class="cyan" x="30" y="207" width="36" height="6"/>
@@ -51,7 +51,7 @@
     <circle class="cyan" cx="48" cy="118" r="5"/>
     <circle class="amber" cx="108" cy="86" r="5"/>
     <circle class="red" cx="196" cy="96" r="5"/>
-    <text class="txt small muted" x="12" y="28">Chart context</text>
+    <text class="txt small muted" x="12" y="28">Chart notes</text>
   </g>
   <g transform="translate(532 98)">
     <rect class="box" x="0" y="0" width="180" height="244" rx="7"/>

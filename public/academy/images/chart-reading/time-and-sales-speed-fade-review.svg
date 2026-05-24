@@ -4,7 +4,7 @@
   <rect width="900" height="520" fill="#08111f"/>
   <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
   <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Tape speed can increase and fade</text>
-  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A fast tape is context; slowing prints after a burst can change the read.</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A fast tape can change when prints slow after a burst.</text>
   <line x1="72" y1="128" x2="520" y2="128" stroke="#182943"/>
   <line x1="72" y1="188" x2="520" y2="188" stroke="#182943"/>
   <line x1="72" y1="248" x2="520" y2="248" stroke="#182943"/>

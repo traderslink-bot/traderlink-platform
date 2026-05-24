@@ -38,5 +38,5 @@
     <text x="668" y="400" fill="#8fa7c8" font-size="13">exchange status</text>
   </g>
   <rect x="64" y="448" width="830" height="42" rx="9" fill="#0d213a" stroke="#2d8cff"/>
-  <text x="88" y="474" fill="#d8eaff" font-family="Arial, sans-serif" font-size="14">A filing type gives you the category. The actual filing details provide the context.</text>
+  <text x="88" y="474" fill="#d8eaff" font-family="Arial, sans-serif" font-size="14">A filing type gives you the category. The actual details fill in the risk picture.</text>
 </svg>

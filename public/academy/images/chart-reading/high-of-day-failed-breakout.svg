@@ -34,12 +34,12 @@
   <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
     <text x="270" y="104" fill="#bbf7d0">New HOD print</text><path d="M318 110 L314 132" stroke="#bbf7d0" stroke-width="2"/>
     <text x="388" y="138" fill="#fecaca">Fails below HOD</text><path d="M432 144 L420 190" stroke="#fecaca" stroke-width="2"/>
-    <text x="504" y="320" fill="#fecaca">Context chase risk</text>
+    <text x="504" y="320" fill="#fecaca">Late-entry risk</text>
   </g>
   <g>
     <rect x="70" y="326" width="14" height="18" fill="#21c784" opacity=".7"/><rect x="96" y="318" width="14" height="26" fill="#21c784" opacity=".8"/><rect x="122" y="330" width="14" height="14" fill="#ef4444" opacity=".65"/><rect x="148" y="308" width="14" height="36" fill="#21c784" opacity=".86"/><rect x="174" y="302" width="14" height="42" fill="#21c784" opacity=".9"/><rect x="200" y="294" width="14" height="50" fill="#21c784" opacity=".95"/><rect x="226" y="300" width="14" height="44" fill="#21c784" opacity=".9"/><rect x="252" y="312" width="14" height="32" fill="#ef4444" opacity=".72"/><rect x="278" y="286" width="14" height="58" fill="#21c784" opacity=".98"/><rect x="304" y="292" width="14" height="52" fill="#ef4444" opacity=".96"/><rect x="330" y="300" width="14" height="44" fill="#ef4444" opacity=".9"/><rect x="356" y="312" width="14" height="32" fill="#ef4444" opacity=".82"/><rect x="382" y="318" width="14" height="26" fill="#ef4444" opacity=".72"/>
   </g>
   <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: did the break hold above HOD, or did price fail back below?</text>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Check: did the break hold above HOD, or did price fail back below?</text>
   <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Failed HOD break: compare the break, rejection, and follow-through.</text>
 </svg>

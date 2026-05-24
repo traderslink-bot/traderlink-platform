@@ -40,7 +40,7 @@
     <path d="M326 112 L318 136" stroke="#bbf7d0" stroke-width="2"/>
     <text x="392" y="138" fill="#fecaca">Fails back below</text>
     <path d="M430 144 L420 186" stroke="#fecaca" stroke-width="2"/>
-    <text x="508" y="318" fill="#fecaca">Context response</text>
+    <text x="508" y="318" fill="#fecaca">Failure response</text>
   </g>
   <g>
     <rect x="58" y="326" width="14" height="18" fill="#21c784" opacity=".7"/>
@@ -64,6 +64,6 @@
     <rect x="526" y="318" width="14" height="26" fill="#ef4444" opacity=".72"/>
   </g>
   <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: did price hold above PDH, or did it fail back below the level?</text>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Check: did price hold above PDH, or did it fail back below the level?</text>
   <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Failed breakout: compare the break, rejection, and follow-through.</text>
 </svg>

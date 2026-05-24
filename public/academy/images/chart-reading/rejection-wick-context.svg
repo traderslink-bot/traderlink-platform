@@ -3,7 +3,7 @@
   <desc id="desc">Educational candlestick chart showing a long wick at a key level with follow-through context.</desc>
   <rect width="760" height="440" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554"/>
-  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Rejection Wick Needs Context</text>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Rejection Wick Needs Follow-Through</text>
   <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A wick matters more when it happens at a real level and has follow-through.</text>
   <g stroke="#18304e" stroke-width="1">
     <line x1="58" y1="118" x2="704" y2="118"/>
@@ -45,5 +45,5 @@
   <text x="300" y="112" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Long wick at level</text>
   <text x="354" y="304" fill="#c8d7ee" font-family="Arial, sans-serif" font-size="13">Follow-through matters</text>
   <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: was the wick at a known level, or just noise in the middle?</text>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Check: was the wick at a known level, or just noise in the middle?</text>
 </svg>

@@ -30,5 +30,5 @@
   <path d="M108 286 L162 200 L216 232 L270 200 L324 282 L378 200 L432 228 L486 202 L540 280 L594 202" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
   <g><rect x="90" y="340" width="14" height="26" fill="#21c784" opacity=".7"/><rect x="124" y="346" width="14" height="20" fill="#ef4444" opacity=".65"/><rect x="158" y="342" width="14" height="24" fill="#21c784" opacity=".68"/><rect x="192" y="348" width="14" height="18" fill="#ef4444" opacity=".6"/><rect x="226" y="350" width="14" height="16" fill="#21c784" opacity=".55"/><rect x="260" y="346" width="14" height="20" fill="#ef4444" opacity=".6"/></g>
   <rect x="28" y="376" width="704" height="36" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="399" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: was the entry near a range edge or in the middle?</text>
+  <text x="44" y="399" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Check: was the entry near a range edge or in the middle?</text>
 </svg>

@@ -62,6 +62,6 @@
     <rect x="598" y="322" width="14" height="22" fill="#21c784" opacity=".65"/>
   </g>
   <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: is current price above PDH, below PDL, or inside yesterday's range?</text>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Check: is current price above PDH, below PDL, or inside yesterday's range?</text>
   <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">These levels are objective session references.</text>
 </svg>

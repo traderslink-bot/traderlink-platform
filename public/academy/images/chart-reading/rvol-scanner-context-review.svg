@@ -3,10 +3,10 @@
   <desc id="desc">A dark trading dashboard style chart with candles, volume bars, and a scanner context panel for RVOL, catalyst, spread, and volume fade context.</desc>
   <rect width="900" height="520" fill="#08111f"/>
   <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
-  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">RVOL scanner result needs chart context</text>
-  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">The scanner points to unusual activity; the chart and execution context still matter.</text>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">RVOL scanner result needs chart review</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">The scanner points to unusual activity; chart and trade conditions still matter.</text>
   <rect x="610" y="116" width="214" height="238" rx="12" fill="#0a1322" stroke="#213858"/>
-  <text x="632" y="146" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Scanner context</text>
+  <text x="632" y="146" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Scanner details</text>
   <rect x="632" y="166" width="168" height="34" rx="8" fill="#12345a" stroke="#38bdf8"/>
   <text x="648" y="188" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="14">RVOL: unusually high</text>
   <rect x="632" y="214" width="168" height="34" rx="8" fill="#111827" stroke="#334155"/>

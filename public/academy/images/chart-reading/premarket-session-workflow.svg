@@ -8,7 +8,7 @@
   </defs>
   <rect class="bg" width="760" height="430"/>
   <rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
-  <text class="txt label" x="34" y="42">Premarket: Map The Context Before The Bell</text>
+  <text class="txt label" x="34" y="42">Premarket: Map The Levels Before The Bell</text>
   <text class="txt small muted" x="34" y="64">The goal is preparation: catalyst, liquidity, spread, and reference levels.</text>
   <g transform="translate(54 92)">
     <rect x="0" y="0" width="520" height="230" fill="#0c1626" stroke="#203651"/>
@@ -39,6 +39,6 @@
   <g>
     <rect class="note" x="602" y="102" width="118" height="60" rx="6"/><text class="txt small" x="616" y="126">Catalyst</text><text class="txt small muted" x="616" y="146">Read source</text>
     <rect class="note" x="602" y="180" width="118" height="60" rx="6"/><text class="txt small" x="616" y="204">Liquidity</text><text class="txt small muted" x="616" y="224">Check spread</text>
-    <rect class="note" x="602" y="258" width="118" height="60" rx="6"/><text class="txt small" x="616" y="282">Context</text><text class="txt small muted" x="616" y="302">Did plan hold?</text>
+    <rect class="note" x="602" y="258" width="118" height="60" rx="6"/><text class="txt small" x="616" y="282">Plan check</text><text class="txt small muted" x="616" y="302">Did plan hold?</text>
   </g>
 </svg>

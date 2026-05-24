@@ -3,7 +3,7 @@
   <desc id="desc">Educational candlestick chart showing a downtrend reclaiming a meaningful lower high and shifting into context with volume.</desc>
   <rect width="760" height="440" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554"/>
-  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Lower High Reclaim Context</text>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Lower High Reclaim Review</text>
   <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A reclaim above the lower-high area can change structure.</text>
   <g stroke="#18304e" stroke-width="1">
     <line x1="58" y1="116" x2="704" y2="116"/>
@@ -65,6 +65,6 @@
     <rect x="604" y="310" width="14" height="24" fill="#ef4444" opacity=".65"/>
   </g>
   <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: did price reclaim the lower-high zone and hold above it?</text>
-  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">A reclaim changes context; it does not confirm a reversal by itself.</text>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Check: did price reclaim the lower-high zone and hold above it?</text>
+  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">After a reclaim, watch whether price accepts above the zone.</text>
 </svg>

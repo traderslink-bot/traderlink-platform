@@ -69,6 +69,6 @@
   </g>
   <g transform="translate(74 366)">
     <line class="grid" x1="0" y1="0" x2="608" y2="0"/>
-    <text class="txt small muted" x="0" y="24">A quote is context for execution quality. It is not a prediction or instruction.</text>
+    <text class="txt small muted" x="0" y="24">Bid, ask, spread, depth, and order type shape the fill.</text>
   </g>
 </svg>

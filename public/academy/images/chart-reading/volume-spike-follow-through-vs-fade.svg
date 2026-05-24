@@ -4,7 +4,7 @@
   <rect width="900" height="520" fill="#08111f"/>
   <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
   <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Volume spike: follow-through or fade</text>
-  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">The first burst can continue or fade; neither outcome is guaranteed.</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Track whether the first burst gets follow-through or fades.</text>
   <rect x="70" y="116" width="350" height="332" rx="10" fill="#0a1322" stroke="#213858"/>
   <rect x="480" y="116" width="350" height="332" rx="10" fill="#0a1322" stroke="#213858"/>
   <text x="94" y="146" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Spike with follow-through</text>

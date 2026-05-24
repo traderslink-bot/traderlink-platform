@@ -44,7 +44,7 @@
   <text x="196" y="334" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Brief loss of support</text>
   <text x="378" y="154" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Reclaim and hold above zone</text>
   <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Volume context</text>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Volume check</text>
   <g fill="#1d4ed8" opacity=".8">
     <rect x="178" y="390" width="20" height="13"/>
     <rect x="218" y="376" width="20" height="27"/>

@@ -3,8 +3,8 @@
   <desc id="desc">Dark trading dashboard with red and green candlesticks showing a catalyst volume burst, failed hold, fading volume, bid ask spread, and context labels.</desc>
   <rect width="960" height="560" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="904" height="504" rx="14" fill="#0b1628" stroke="#1d3557"/>
-  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Catalyst Reaction And Fade Context</text>
-  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">Unusual volume needs follow-through, liquidity, and catalyst context after the first burst.</text>
+  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Catalyst Reaction And Fade Review</text>
+  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">Unusual volume needs follow-through, liquidity, and catalyst details after the first burst.</text>
 
   <rect x="52" y="118" width="642" height="282" rx="10" fill="#081323" stroke="#172a46"/>
   <g stroke="#172a46" stroke-width="1">

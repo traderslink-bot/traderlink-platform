@@ -3,7 +3,7 @@
   <desc id="desc">A dark trading dashboard style chart showing a low-priced stock with large share volume, modest dollar volume, wide spread, and thin depth.</desc>
   <rect width="900" height="520" fill="#08111f"/>
   <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
-  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Dollar volume adds liquidity context</text>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Dollar volume helps check liquidity</text>
   <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Large share volume on a low-priced stock can still have spread and depth risk.</text>
   <line x1="72" y1="128" x2="548" y2="128" stroke="#182943"/>
   <line x1="72" y1="188" x2="548" y2="188" stroke="#182943"/>
@@ -45,5 +45,5 @@
     <text x="616" y="398" fill="#8ea6c8">Size needs depth</text>
   </g>
   <path d="M370 344 C446 332, 526 302, 590 286" fill="none" stroke="#38bdf8" stroke-width="3"/>
-  <text x="96" y="474" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">High share volume does not automatically mean clean execution.</text>
+  <text x="96" y="474" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">High share volume still needs enough dollar volume and tight spreads.</text>
 </svg>

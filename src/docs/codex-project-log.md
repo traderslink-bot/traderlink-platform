@@ -14872,3 +14872,52 @@ Current best next step:
   visits, test after one fresh login on `https://traderslink.pro/academy/`, then
   inspect whether `tl_academy_session` is present for `.traderslink.pro` and
   whether `/api/me` returns `authenticated: true`.
+
+## 2026-05-23 - Academy SVG Learner-Language Audit
+
+Re-audited Academy course SVG copy after the live stock-trade mechanics graphic
+included system-style text: "A quote is context for execution quality. It is not
+a prediction or instruction."
+
+Findings and changes:
+
+- Replaced that line in
+  `public/academy/images/trading-foundations/stock-trade-mechanics.svg` with
+  the learner-facing sentence "Bid, ask, spread, depth, and order type shape the
+  fill."
+- Removed or rewrote visible SVG phrasing that used generic/system wording such
+  as context, prediction, instruction, guarantee, promise, automatic, example
+  only, context prompt, and execution quality.
+- Kept useful trader-facing terms such as plan, rules, decision, invalidation,
+  and fill quality where the text teaches a concrete lesson concept.
+
+Verification:
+
+- Regex audit found no remaining visible `<text>` nodes containing `context`.
+- Regex audit found no remaining SVG hits for the bad disclaimer/system terms:
+  prediction, predict, instruction, guarantee, promise, certain, example only,
+  automatic, automatically, not a, not an, does not, trade instructions, context
+  prompt, context-not phrasing, execution quality, level quality, or
+  contextable.
+- Parsed all `public/academy/images/**/*.svg` files as XML successfully.
+- `npm run validate:academy-registry` passed with the expected non-Academy-ready
+  markdown warnings.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build:webpack` passed with the existing support-resistance dynamic
+  dependency warning.
+- Deployed production from the clean
+  `traderslink-news-on-live-academy-20260523` worktree. Vercel deployment
+  `dpl_Bc9BwoUCAYiUMCWTCvoGJWwCDqUo` is Ready and aliased to
+  `https://traderslink.pro`.
+- Live direct-asset verification confirmed
+  `/academy/images/trading-foundations/stock-trade-mechanics.svg` returns the
+  replacement line and no longer returns the removed "A quote is context..."
+  sentence.
+- Live scan fetched all 89 changed Academy SVG assets from `traderslink.pro`
+  and found no remaining visible `context` text or bad disclaimer/system terms.
+
+Current best next step:
+
+- Continue the news article storage/deploy work from the clean
+  `traderslink-news-on-live-academy-20260523` worktree once the production
+  database details are available.

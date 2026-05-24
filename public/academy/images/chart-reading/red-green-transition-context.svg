@@ -7,7 +7,7 @@
   <line x1="82" y1="220" x2="878" y2="220" stroke="#9cc7ff" stroke-width="2" stroke-dasharray="8 7"/>
   <line x1="82" y1="188" x2="878" y2="188" stroke="#1f6feb" stroke-width="2" opacity=".8"/>
   <text x="92" y="211" fill="#d6e4ff" font-family="Arial" font-size="17">Prior close reference</text>
-  <text x="92" y="180" fill="#9cc7ff" font-family="Arial" font-size="17">VWAP context</text>
+  <text x="92" y="180" fill="#9cc7ff" font-family="Arial" font-size="17">VWAP area</text>
   <g stroke-width="3" stroke-linecap="round">
     <g stroke="#ef4444" fill="#ef4444"><line x1="140" y1="235" x2="140" y2="310"/><rect x="129" y="250" width="22" height="42" rx="2"/></g>
     <g stroke="#ef4444" fill="#ef4444"><line x1="190" y1="220" x2="190" y2="292"/><rect x="179" y="238" width="22" height="38" rx="2"/></g>
@@ -22,5 +22,5 @@
   <text x="560" y="312" fill="#d6e4ff" font-family="Arial" font-size="18">Green-to-red: reference lost</text>
   <rect x="48" y="414" width="864" height="82" rx="10" fill="#0b1626" stroke="#1b3558"/>
   <g><rect x="132" y="452" width="22" height="31" fill="#ef4444" opacity=".75"/><rect x="182" y="462" width="22" height="21" fill="#ef4444" opacity=".75"/><rect x="232" y="433" width="22" height="50" fill="#22c55e" opacity=".75"/><rect x="282" y="421" width="22" height="62" fill="#22c55e" opacity=".75"/><rect x="547" y="444" width="22" height="39" fill="#22c55e" opacity=".75"/><rect x="597" y="425" width="22" height="58" fill="#ef4444" opacity=".75"/><rect x="647" y="434" width="22" height="49" fill="#ef4444" opacity=".75"/></g>
-  <text x="330" y="464" fill="#d6e4ff" font-family="Arial" font-size="19">Color shift needs hold/fail context.</text>
+  <text x="330" y="464" fill="#d6e4ff" font-family="Arial" font-size="19">Color shift needs a hold/fail check.</text>
 </svg>

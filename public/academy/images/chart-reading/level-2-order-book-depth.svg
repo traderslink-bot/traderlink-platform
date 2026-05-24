@@ -4,7 +4,7 @@
   <rect width="900" height="520" fill="#08111f"/>
   <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
   <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Level 2 shows visible depth beyond best bid and ask</text>
-  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Displayed size helps show execution conditions, not predict certainty.</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Displayed size helps show current order-book conditions.</text>
   <line x1="74" y1="128" x2="508" y2="128" stroke="#182943"/>
   <line x1="74" y1="188" x2="508" y2="188" stroke="#182943"/>
   <line x1="74" y1="248" x2="508" y2="248" stroke="#182943"/>
@@ -39,6 +39,6 @@
     <rect x="714" y="264" width="104" height="24" fill="#33171f" rx="4"/><text x="726" y="281" fill="#fecdd3">2.53 x 10k</text>
     <line x1="572" y1="314" x2="800" y2="314" stroke="#2a3d5c"/>
     <text x="574" y="344" fill="#8ea6c8">Visible depth can guide order size.</text>
-    <text x="574" y="372" fill="#8ea6c8">It does not guarantee support.</text>
+    <text x="574" y="372" fill="#8ea6c8">Depth can disappear or shift.</text>
   </g>
 </svg>

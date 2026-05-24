@@ -4,7 +4,7 @@
   <rect width="760" height="440" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554"/>
   <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Level Reclaim Failure</text>
-  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Example only: a reclaim can fail if price cannot stay above the level.</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A reclaim can fail if price cannot stay above the level.</text>
   <g stroke="#18304e" stroke-width="1">
     <line x1="58" y1="118" x2="704" y2="118"/>
     <line x1="58" y1="170" x2="704" y2="170"/>
@@ -44,5 +44,5 @@
   <text x="336" y="166" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Brief reclaim</text>
   <text x="442" y="330" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Fails below zone</text>
   <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
-  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Context: did the reclaim hold, or was it only the first bounce?</text>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Check: did the reclaim hold, or was it only the first bounce?</text>
 </svg>

@@ -5,7 +5,7 @@
     .bg{fill:#0b1220}.panel{fill:#0f1a2b;stroke:#203651;stroke-width:1.5}.txt{fill:#d7e3f4;font-family:Arial,Helvetica,sans-serif}.small{font-size:12px}.label{font-size:13px;font-weight:700}.muted{fill:#8ea1bd}.grid{stroke:#22364f;opacity:.65}.zone{fill:rgba(56,189,248,.12);stroke:#38bdf8;stroke-width:1.5}.plan{fill:rgba(245,158,11,.13);stroke:#f59e0b;stroke-width:1.5}.green{fill:#22c55e;stroke:#22c55e}.red{fill:#ef4444;stroke:#ef4444}.wickG{stroke:#22c55e;stroke-width:2}.wickR{stroke:#ef4444;stroke-width:2}.volG{fill:#22c55e;opacity:.45}.volR{fill:#ef4444;opacity:.45}.note{fill:#12263f;stroke:#2f80ed;stroke-width:1}
   </style></defs>
   <rect class="bg" width="760" height="430"/><rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
-  <text class="txt label" x="34" y="42">Screenshot Context: Capture The Plan And The Actual Decision</text>
+  <text class="txt label" x="34" y="42">Setup Screenshot: Capture The Plan And The Actual Decision</text>
   <text class="txt small muted" x="34" y="64">A screenshot should make the decision clear without pretending the chart was obvious.</text>
   <g transform="translate(50 92)">
     <rect x="0" y="0" width="500" height="230" fill="#0c1626" stroke="#203651"/>

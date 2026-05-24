@@ -6,7 +6,7 @@
   </style></defs>
   <rect class="bg" width="760" height="430"/><rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
   <text class="txt label" x="34" y="42">Replay Review: Pause Before The Next Candle</text>
-  <text class="txt small muted" x="34" y="64">The point is decision practice under incomplete information, not hindsight certainty.</text>
+  <text class="txt small muted" x="34" y="64">Practice decisions with the information available at that moment.</text>
   <g transform="translate(50 92)">
     <rect x="0" y="0" width="560" height="230" fill="#0c1626" stroke="#203651"/>
     <line class="grid" x1="0" y1="46" x2="560" y2="46"/><line class="grid" x1="0" y1="92" x2="560" y2="92"/><line class="grid" x1="0" y1="138" x2="560" y2="138"/><line class="grid" x1="0" y1="184" x2="560" y2="184"/>

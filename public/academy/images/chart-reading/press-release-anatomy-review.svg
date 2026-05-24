@@ -4,7 +4,7 @@
   <rect width="960" height="560" rx="18" fill="#07111f"/>
   <rect x="28" y="28" width="904" height="504" rx="14" fill="#0b1628" stroke="#1d3557"/>
   <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Press Release Anatomy</text>
-  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">Context the release details before relying on the first chart reaction.</text>
+  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">Read the release details before relying on the first chart reaction.</text>
 
   <rect x="52" y="120" width="520" height="370" rx="10" fill="#081323" stroke="#172a46"/>
   <rect x="78" y="148" width="468" height="54" rx="8" fill="#10233c" stroke="#2d8cff"/>
@@ -20,12 +20,12 @@
     <text x="96" y="346" fill="#8fa7c8">Risk language</text>
     <text x="258" y="346" fill="#f5c26b">Forward-looking / financing</text>
     <text x="96" y="382" fill="#8fa7c8">Filing check</text>
-    <text x="258" y="382" fill="#7bb4ff">8-K or offering context</text>
+    <text x="258" y="382" fill="#7bb4ff">8-K or offering details</text>
     <text x="96" y="418" fill="#8fa7c8">Market reaction</text>
     <text x="258" y="418" fill="#e6f0ff">Volume, levels, spread</text>
   </g>
   <rect x="78" y="442" width="468" height="28" rx="6" fill="#0d213a" stroke="#1d3557"/>
-  <text x="96" y="461" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="12">Context what is missing, not only what is emphasized.</text>
+  <text x="96" y="461" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="12">Check what is missing, not only what is emphasized.</text>
 
   <rect x="604" y="120" width="304" height="254" rx="10" fill="#081323" stroke="#172a46"/>
   <g stroke="#172a46" stroke-width="1">

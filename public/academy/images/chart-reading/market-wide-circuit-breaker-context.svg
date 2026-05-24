@@ -5,7 +5,7 @@
     .bg{fill:#0b1220}.panel{fill:#0f1a2b;stroke:#203651;stroke-width:1.5}.txt{fill:#d7e3f4;font-family:Arial,Helvetica,sans-serif}.small{font-size:12px}.label{font-size:13px;font-weight:700}.muted{fill:#8ea1bd}.grid{stroke:#22364f;opacity:.65}.band1{stroke:#f59e0b;stroke-width:2;stroke-dasharray:6 5}.band2{stroke:#fb7185;stroke-width:2;stroke-dasharray:6 5}.band3{stroke:#ef4444;stroke-width:2;stroke-dasharray:6 5}.red{fill:#ef4444;stroke:#ef4444}.green{fill:#22c55e;stroke:#22c55e}.line{fill:none;stroke:#ef4444;stroke-width:3}.note{fill:#12263f;stroke:#2f80ed;stroke-width:1}
   </style></defs>
   <rect class="bg" width="760" height="430"/><rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
-  <text class="txt label" x="34" y="42">Market-Wide Circuit Breakers: Broad-Market Risk Context</text>
+  <text class="txt label" x="34" y="42">Market-Wide Circuit Breakers: Broad-Market Risk Review</text>
   <text class="txt small muted" x="34" y="64">Circuit breakers are market structure rules. Always confirm current exchange rules.</text>
   <g transform="translate(54 94)">
     <rect x="0" y="0" width="500" height="246" fill="#0c1626" stroke="#203651"/>
@@ -15,7 +15,7 @@
     <line class="band3" x1="0" y1="214" x2="500" y2="214"/><text class="txt small" x="402" y="208">Level 3 ref</text>
     <path class="line" d="M30 36 L80 48 L130 54 L180 72 L230 96 L280 118 L330 146 L380 170 L430 204 L470 222"/>
     <circle class="red" cx="230" cy="96" r="5"/><circle class="red" cx="330" cy="146" r="5"/><circle class="red" cx="430" cy="204" r="5"/>
-    <text class="txt small" x="26" y="270">Index decline path shown for education, not prediction.</text>
+    <text class="txt small" x="26" y="270">Index decline path shows where market-wide pauses can trigger.</text>
   </g>
   <g transform="translate(590 102)">
     <rect class="note" x="0" y="0" width="120" height="60" rx="6"/><text class="txt small" x="16" y="24">Level 1</text><text class="txt small muted" x="16" y="44">Broad pause</text>
