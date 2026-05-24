@@ -14972,3 +14972,21 @@ Current best next step:
 - Replace the temp-directory SQLite fallback with a durable Trader Intelligence
   database adapter/configuration while keeping the current workspace app URLs
   stable.
+
+## 2026-05-24 - Academy Secondary Button Hover Contrast
+
+Fixed the Academy course listing secondary button hover contrast.
+
+Changes:
+
+- Updated the shared Academy button transition to include border and text color.
+- Added an explicit `.academy-button-secondary:hover` and focus-visible color
+  rule so the "Academy Home" secondary button switches to the theme's
+  `--academy-on-primary` text color when the hover background becomes primary.
+- This makes light mode use white text on the blue hover background while dark
+  mode keeps the theme-correct dark text on its light-blue hover background.
+
+Verification:
+
+- `npm run build:webpack` passed with the existing support-resistance dynamic
+  dependency warning.

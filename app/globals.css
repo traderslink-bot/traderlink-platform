@@ -652,6 +652,8 @@ body {
   box-shadow: var(--academy-shadow-1);
   transition:
     background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
     box-shadow 160ms ease,
     transform 160ms ease;
 }
@@ -1250,6 +1252,13 @@ body {
   background: var(--academy-surface);
   color: var(--academy-primary-strong);
   box-shadow: var(--academy-shadow-1);
+}
+
+.academy-shell .academy-button-secondary:hover,
+.academy-shell .academy-button-secondary:focus-visible {
+  border-color: rgba(var(--academy-primary-rgb), 0.46);
+  background: var(--academy-primary-strong);
+  color: var(--academy-on-primary);
 }
 
 .academy-grid-sidebar {
