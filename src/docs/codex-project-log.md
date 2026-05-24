@@ -14921,3 +14921,54 @@ Current best next step:
 - Continue the news article storage/deploy work from the clean
   `traderslink-news-on-live-academy-20260523` worktree once the production
   database details are available.
+
+## 2026-05-24 - Shared Site Shell And Workspace Route Uptime
+
+Reconciled the shared website top navigation onto the current live-source
+worktree without changing the workspace app URL structure.
+
+Changes:
+
+- Added `src/components/site/site-shell.tsx` as the shared client shell for
+  top-nav, theme, auth status, social links, and mobile menu behavior.
+- Kept `app/site-shell.tsx` as a compatibility export for routes or future
+  work that still expects the app-level shell module.
+- Reduced `app/academy/academy-shell.tsx` to a thin Academy wrapper around the
+  shared shell, and moved News pages to import `SiteShell` directly.
+- Kept the existing Academy CSS class contract so the live Academy topbar visual
+  system is not forked or recreated.
+- Kept the current workspace app URLs as-is: `/workspace`, `/analytics`,
+  `/review`, `/trades`, `/imports`, `/coach`, and related nested pages.
+- Fixed the Vercel-only workspace crash by changing the default SQLite fallback
+  path from `process.cwd()/data/trader-intelligence.sqlite` to the writable OS
+  temp directory when running on Vercel or production without an explicit
+  `TRADER_INTELLIGENCE_DB_PATH`.
+
+Important storage note:
+
+- The temp-directory SQLite fallback is an uptime fix for the current Vercel
+  deployment, not durable production user storage. Trader Intelligence still
+  needs a real durable database adapter/configuration for saved workspace data.
+
+Verification:
+
+- `npm run validate:academy-registry` passed with the expected non-Academy-ready
+  markdown warnings.
+- Focused lint for touched shell/news/storage files passed.
+- `npx tsc --noEmit --pretty false` passed.
+- Focused Vitest suite for SQLite import commit, saved import API routes, and
+  Academy Discord auth passed: 5 files, 33 tests.
+- `npm run build:webpack` passed with the existing support-resistance dynamic
+  dependency warning.
+- Production deploy from this clean worktree completed, and live route smoke
+  returned 200 for `/`, `/academy`,
+  `/academy/what-is-a-stock-and-how-does-a-trade-work`, `/news/FJET`,
+  `/workspace`, `/upload-csv`, `/imports`, `/review`, `/analytics`, `/coach`,
+  `/progress`, `/trades`, `/account`, and `/platform-readiness`.
+- A post-smoke Vercel 500-log query found no new 500 logs.
+
+Current best next step:
+
+- Replace the temp-directory SQLite fallback with a durable Trader Intelligence
+  database adapter/configuration while keeping the current workspace app URLs
+  stable.

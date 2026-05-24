@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { AcademyShell } from "@/app/academy/academy-shell";
+import { SiteShell } from "@/src/components/site/site-shell";
 import { listNewsArticlesByTicker } from "@/src/lib/news/news-article-store";
 
 type PageProps = {
@@ -47,7 +47,7 @@ export default async function TickerNewsPage({ params }: PageProps) {
   const articles = await listNewsArticlesByTicker(normalizedTicker);
 
   return (
-    <AcademyShell>
+    <SiteShell>
       <main className="academy-container news-ticker-page">
         <section className="academy-hero">
           <div className="academy-hero-copy">
@@ -106,6 +106,6 @@ export default async function TickerNewsPage({ params }: PageProps) {
           )}
         </section>
       </main>
-    </AcademyShell>
+    </SiteShell>
   );
 }

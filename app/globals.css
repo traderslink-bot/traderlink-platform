@@ -455,12 +455,12 @@ body {
   display: flex;
   position: relative;
   width: 100%;
-  max-width: 80rem;
+  max-width: 96rem;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   margin: 0 auto;
-  padding: 0.8rem 1.25rem;
+  padding: 0.8rem 1rem;
 }
 
 .academy-brand {
@@ -1832,6 +1832,20 @@ body {
 
   .academy-title-sm {
     font-size: 3rem;
+  }
+}
+
+@media (min-width: 760px) {
+  .academy-topbar-inner {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
+@media (min-width: 1080px) {
+  .academy-topbar-inner {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 }
 

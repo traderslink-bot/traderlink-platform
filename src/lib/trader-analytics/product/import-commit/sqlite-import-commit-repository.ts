@@ -1,4 +1,5 @@
 import { mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 import Database from "better-sqlite3";
 import { buildTraderAnalyticsReport } from "../../build-trader-analytics-report";
@@ -26,10 +27,8 @@ import type {
   ImportCommitDecisionReviewJobRecord,
   ImportCommitExecutionFeedbackSummaryRecord,
   ImportCommitExecutionRecord,
-  ImportCommitIssueRecord,
   ImportCommitPlanResult,
   ImportCommitRepairItemRecord,
-  ImportCommitRowRecord,
   ImportCommitSavedTradeExecutionLinkRecord,
   ImportCommitSavedTradeRecord,
   ImportCommitTradeGroupingDiagnosticRecord,
@@ -129,6 +128,10 @@ function databasePath(): string {
     return isAbsolute(configured)
       ? configured
       : join(/* turbopackIgnore: true */ process.cwd(), configured);
+  }
+
+  if (process.env.VERCEL === "1" || process.env.NODE_ENV === "production") {
+    return join(tmpdir(), "trader-intelligence.sqlite");
   }
 
   return join(process.cwd(), "data", "trader-intelligence.sqlite");

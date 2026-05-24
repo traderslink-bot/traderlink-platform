@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { AcademyShell } from "@/app/academy/academy-shell";
+import { SiteShell } from "@/src/components/site/site-shell";
 import { getCurrentAcademySession } from "@/app/academy/academy-server-session";
 import {
   getAcademyCoursePage,
@@ -300,7 +300,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
     : new Set<string>();
 
   return (
-    <AcademyShell>
+    <SiteShell>
       <article className="academy-container news-article-page">
         <div className="news-article-stack">
           <header className="news-surface-card news-article-header-card">
@@ -473,7 +473,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
           </div>
         </div>
       </article>
-    </AcademyShell>
+    </SiteShell>
   );
 }
 
