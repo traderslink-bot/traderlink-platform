@@ -15046,10 +15046,26 @@ Current best next step:
   adapter work separately.
 # 2026-05-25 whole-site source-of-truth audit
 
-- Verified the live Vercel production deployment for `vercel-landing` is `dpl_5kdq544VSxoobgEsy1ftv52VVYfD` and points at commit `81e175909c6f0ad68481fbfc800259c32485251d` (`Move Trader Intelligence under intelligence namespace`).
-- Verified `C:\Users\jerac\Documents\TraderLink` is only a parent workspace; the live-aligned website worktree is `deploy-candidates/traderslink-news-on-live-academy-20260523` on `codex/news-on-live-academy`.
+- Verified the pre-audit Vercel production deployment for `vercel-landing` was `dpl_5kdq544VSxoobgEsy1ftv52VVYfD` and pointed at commit `81e175909c6f0ad68481fbfc800259c32485251d` (`Move Trader Intelligence under intelligence namespace`).
+- Verified `C:\Users\jerac\Documents\TraderLink` is only a parent workspace; the live-aligned website worktree before permanent promotion was `deploy-candidates/traderslink-news-on-live-academy-20260523` on `codex/news-on-live-academy`.
 - Added source-of-truth docs in `docs/site-architecture.md`, `docs/routes.md`, `docs/deployment.md`, `docs/auth.md`, and `docs/codex-project-log.md`.
 - Added the missing `/news` index page under the shared site shell and added a recent News article listing API in `src/lib/news/news-article-store.ts`.
 - Replaced visible legacy "workspace" labels in the Intelligence app with "Intelligence" or "review hub" wording while preserving route compatibility and test ids.
 - Removed the empty local `app/workspace` directory.
-- Kept production undeployed because this audit changed files locally and the user asked not to deploy from an uncertain tree.
+- Initially kept production undeployed until the source tree was clean and verified; the follow-up deploy promoted commit `7e6c5a4e50ef8f988fdbc2c43d5f985047853ace`.
+
+# 2026-05-25 permanent website repo promotion
+
+- Promoted the clean production-aligned website into
+  `C:\Users\jerac\Documents\TraderLink\traderslink.pro`.
+- Cloned from `origin/codex/news-on-live-academy` and copied the Vercel project
+  link so CLI commands in the permanent repo target `vercel-landing`.
+- Verified the latest production deployment after the source-of-truth deploy is
+  `dpl_EKrvi1wn3BZvGt48xhr3xQFPDV2f`, created by Vercel CLI from commit
+  `7e6c5a4e50ef8f988fdbc2c43d5f985047853ace`.
+- Verified the current branch tracks `origin/codex/news-on-live-academy` and
+  the deployed commit exists on the remote.
+- Added warning README files for the parent workspace and stale sibling folders.
+- Best next operational step: decide whether to keep CLI production deploys from
+  `codex/news-on-live-academy` short term or merge/promote this branch to
+  `main` and configure Vercel production to track `main`.

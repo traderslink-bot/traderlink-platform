@@ -1,3 +1,30 @@
+# TradersLink Website Source Of Truth
+
+This is the permanent local source-of-truth repo for the full traderslink.pro
+website/app.
+
+Local path:
+
+`C:\Users\jerac\Documents\TraderLink\traderslink.pro`
+
+Current production-aligned branch:
+
+`codex/news-on-live-academy`
+
+Remote:
+
+`git@github.com:traderslink-bot/traderslink-trader-improvement-system.git`
+
+Vercel project:
+
+`vercel-landing` (`prj_TFzKcdj4dS6BHv2maWsy7M5AEv2a`)
+
+Do not deploy from sibling folders such as `website`, `trader-intelligence-v2`,
+`trader-intelligence-v2-svg-qa`, or `deploy-candidates/*` unless they are first
+reconciled against this repo and current Vercel production.
+
+---
+
 # Trader Improvement System
 
 Trader Improvement System is a layered trade-analysis project that turns raw

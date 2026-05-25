@@ -22,8 +22,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Whole Site Source Of Truth
 
-- Treat this repo/worktree as the full TradersLink website only when Git HEAD matches the intended production deployment. On 2026-05-25, production Vercel deployment `dpl_5kdq544VSxoobgEsy1ftv52VVYfD` points at commit `81e175909c6f0ad68481fbfc800259c32485251d` on `codex/news-on-live-academy`.
-- The Vercel project is `vercel-landing` (`prj_TFzKcdj4dS6BHv2maWsy7M5AEv2a`) with production aliases `traderslink.pro` and `www.traderslink.pro`.
+- The permanent local source-of-truth repo is `C:\Users\jerac\Documents\TraderLink\traderslink.pro`.
+- Do not deploy from the parent folder or stale siblings such as `website`, `trader-intelligence-v2`, `trader-intelligence-v2-svg-qa`, or `deploy-candidates/*` unless explicitly reconciled against this repo and production.
+- Current source branch: `codex/news-on-live-academy`, tracking `origin/codex/news-on-live-academy`.
+- Remote: `git@github.com:traderslink-bot/traderslink-trader-improvement-system.git`.
+- On 2026-05-25, production Vercel deployment `dpl_EKrvi1wn3BZvGt48xhr3xQFPDV2f` points at commit `7e6c5a4e50ef8f988fdbc2c43d5f985047853ace` on `codex/news-on-live-academy`.
+- The Vercel project is `vercel-landing` (`prj_TFzKcdj4dS6BHv2maWsy7M5AEv2a`, org/team `team_D1yNeyNl1qTvK0pAWMu5nTWY`) with production aliases `traderslink.pro` and `www.traderslink.pro`.
+- Production deploys are currently Vercel CLI deploys (`source: cli`), not verified Git-connected auto-deploys. Until a formal Git production branch is configured, deploy production only from a clean `traderslink.pro` checkout after pushing the intended commit.
 - The shared top navigation lives in `src/components/site/site-shell.tsx` and is re-exported by `app/site-shell.tsx`. Do not create separate Academy, News, or Intelligence topbars.
 - Canonical feature roots are `app/academy`, `app/news`, and `app/intelligence`. Former workspace routes should redirect in `next.config.ts`; do not recreate duplicate top-level app pages for them.
 - Read `docs/site-architecture.md`, `docs/routes.md`, `docs/deployment.md`, and `docs/auth.md` before structural, deployment, route, or auth changes.

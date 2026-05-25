@@ -2,13 +2,22 @@
 
 Last audited: 2026-05-25.
 
-This worktree is the live-aligned full TradersLink website when checked out at commit `81e175909c6f0ad68481fbfc800259c32485251d` on `codex/news-on-live-academy`. The current Vercel production deployment `dpl_5kdq544VSxoobgEsy1ftv52VVYfD` uses that commit.
+This repo is the permanent local source of truth for the full TradersLink
+website/app:
+
+`C:\Users\jerac\Documents\TraderLink\traderslink.pro`
+
+As of 2026-05-25, production Vercel deployment
+`dpl_EKrvi1wn3BZvGt48xhr3xQFPDV2f` uses commit
+`7e6c5a4e50ef8f988fdbc2c43d5f985047853ace` from
+`codex/news-on-live-academy`.
 
 ## Source Of Truth
 
 - Production project: Vercel `vercel-landing`.
 - Production aliases: `https://traderslink.pro` and `https://www.traderslink.pro`.
-- Local live-aligned worktree during this audit: `deploy-candidates/traderslink-news-on-live-academy-20260523`.
+- Local permanent repo: `C:\Users\jerac\Documents\TraderLink\traderslink.pro`.
+- Historical deploy candidate used before promotion: `deploy-candidates/traderslink-news-on-live-academy-20260523`.
 - Do not deploy from `C:\Users\jerac\Documents\TraderLink` directly; it is a parent workspace, not a Git repo.
 - Do not deploy from stale siblings such as `website`, `trader-intelligence-v2`, or detached QA worktrees unless they are explicitly reconciled with production first.
 
@@ -33,6 +42,6 @@ The site-wide navigation shell is `src/components/site/site-shell.tsx`, re-expor
 
 ## Risks
 
-- The parent folder contains multiple deploy candidates and worktrees. Always verify `.vercel/project.json`, `git status`, and Vercel's latest production deployment metadata before deployment.
+- The parent folder contains multiple historical candidates and worktrees. Always verify `.vercel/project.json`, `git status`, and Vercel's latest production deployment metadata before deployment.
 - Academy progress is production data; see `docs/academy-progress-preservation.md`.
 - News and Academy storage depend on database env vars in production; local SQLite fallback is for development only.
