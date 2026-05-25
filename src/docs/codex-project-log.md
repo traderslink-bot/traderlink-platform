@@ -15069,3 +15069,15 @@ Current best next step:
 - Best next operational step: decide whether to keep CLI production deploys from
   `codex/news-on-live-academy` short term or merge/promote this branch to
   `main` and configure Vercel production to track `main`.
+
+# 2026-05-25 site QA follow-up
+
+- Added a shared primary navigation row to `src/components/site/site-shell.tsx`
+  for Academy, News, Intelligence, Account, and Readiness.
+- Put `/account` and `/platform-readiness` inside the shared site shell so they
+  no longer sit outside the site-wide topbar.
+- Corrected News ticker/article shell context to `sectionHref="/news"` and
+  `sectionLabel="News"`.
+- Used `shellElement="div"` on News index/ticker pages to avoid nested `<main>`
+  landmarks.
+- Mirrored the primary site destinations in the homepage hero nav.

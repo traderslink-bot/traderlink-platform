@@ -176,6 +176,38 @@ export default function Home() {
               />
             </span>
           </Link>
+          <div className="hidden items-center gap-2 md:flex">
+            <Link
+              className="rounded-md border border-cyan-300/20 bg-slate-950/45 px-3 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/60 hover:bg-cyan-300/10"
+              href="/academy"
+            >
+              Academy
+            </Link>
+            <Link
+              className="rounded-md border border-cyan-300/20 bg-slate-950/45 px-3 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/60 hover:bg-cyan-300/10"
+              href="/news"
+            >
+              News
+            </Link>
+            <Link
+              className="rounded-md border border-cyan-300/20 bg-slate-950/45 px-3 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/60 hover:bg-cyan-300/10"
+              href="/intelligence"
+            >
+              Intelligence
+            </Link>
+            <Link
+              className="rounded-md border border-cyan-300/20 bg-slate-950/45 px-3 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/60 hover:bg-cyan-300/10"
+              href="/account"
+            >
+              Account
+            </Link>
+            <Link
+              className="rounded-md border border-cyan-300/20 bg-slate-950/45 px-3 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/60 hover:bg-cyan-300/10"
+              href="/platform-readiness"
+            >
+              Readiness
+            </Link>
+          </div>
         </nav>
 
         <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-10 px-5 pb-12 pt-12 sm:px-8 lg:grid-cols-[minmax(0,0.62fr)_minmax(320px,0.38fr)] lg:pb-16 lg:pt-20">

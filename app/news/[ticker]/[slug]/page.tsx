@@ -300,7 +300,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
     : new Set<string>();
 
   return (
-    <SiteShell>
+    <SiteShell sectionHref="/news" sectionLabel="News">
       <article className="academy-container news-article-page">
         <div className="news-article-stack">
           <header className="news-surface-card news-article-header-card">

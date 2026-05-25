@@ -40,3 +40,14 @@
 
 - Multiple sibling worktrees remain present. Do not deploy from stale siblings without reconciling with production and the permanent repo.
 - Vercel production deploys are currently verified as CLI deploys. Git-connected production branch behavior should be configured and verified before relying on automatic production deploys.
+
+## 2026-05-25 Site QA Follow-Up
+
+- Added primary site navigation to the shared `SiteShell` for Academy, News,
+  Intelligence, Account, and Readiness.
+- Added the shared shell to `/account` and `/platform-readiness`.
+- Fixed News ticker and article pages so their shell context says News instead
+  of falling back to Academy.
+- Set News index/ticker pages to use a wrapper `div` shell so their page-level
+  `<main>` landmarks are not nested inside another `<main>`.
+- Added homepage hero nav links to the same primary destinations.

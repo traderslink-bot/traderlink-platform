@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SiteShell } from "@/src/components/site/site-shell";
 import {
   buildTraderFunctionalProductReadinessViewModel,
   buildTraderIntelligenceModuleReadinessViewModel,
@@ -51,22 +52,27 @@ export default function PlatformReadinessPage() {
   const functional = buildTraderFunctionalProductReadinessViewModel();
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-5 py-8 text-zinc-100 sm:px-8">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <header className="border-b border-zinc-800 pb-6">
-          <Link className="text-sm text-sky-300 hover:text-sky-200" href="/intelligence">
-            Back to Intelligence
-          </Link>
-          <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-emerald-400">
-            Platform-Ready Feature Module
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold text-zinc-50">
-            Trader Intelligence Readiness
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm text-zinc-500">
-            {readiness.summary}
-          </p>
-        </header>
+    <SiteShell
+      sectionHref="/platform-readiness"
+      sectionLabel="Platform Readiness"
+      shellElement="div"
+    >
+      <main className="min-h-screen bg-zinc-950 px-5 py-8 text-zinc-100 sm:px-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+          <header className="border-b border-zinc-800 pb-6">
+            <Link className="text-sm text-sky-300 hover:text-sky-200" href="/intelligence">
+              Back to Intelligence
+            </Link>
+            <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-emerald-400">
+              Platform-Ready Feature Module
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold text-zinc-50">
+              Trader Intelligence Readiness
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm text-zinc-500">
+              {readiness.summary}
+            </p>
+          </header>
 
         <section className="grid gap-4 md:grid-cols-4">
           <div className="border border-zinc-800 bg-zinc-950 p-4">
@@ -348,7 +354,8 @@ export default function PlatformReadinessPage() {
             </div>
           </div>
         </section>
-      </div>
-    </main>
+        </div>
+      </main>
+    </SiteShell>
   );
 }

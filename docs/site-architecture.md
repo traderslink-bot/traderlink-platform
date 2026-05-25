@@ -33,11 +33,13 @@ As of 2026-05-25, production Vercel deployment
 
 ## Shared Shell
 
-The site-wide navigation shell is `src/components/site/site-shell.tsx`, re-exported by `app/site-shell.tsx`.
+The site-wide navigation shell is `src/components/site/site-shell.tsx`, re-exported by `app/site-shell.tsx`. It owns the shared TradersLink topbar, primary section links, auth status, mobile menu, active section state, and light/dark theme toggle.
 
 - Academy uses `app/academy/academy-shell.tsx` only as a compatibility wrapper around `SiteShell`.
 - Intelligence uses `app/intelligence/layout.tsx` and `SiteShell`.
 - News pages import `SiteShell` directly.
+- Account and Platform Readiness use `SiteShell` directly.
+- The homepage keeps its immersive hero navigation, but it should mirror the same primary destinations.
 - Future nav changes belong in `src/components/site/site-shell.tsx` and shared CSS, not feature-specific shells.
 
 ## Risks

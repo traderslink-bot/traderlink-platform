@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 
 import {
@@ -19,6 +20,13 @@ const signedOutAuthSnapshot: SiteAuthSnapshot = {
   authenticated: false,
   displayName: null,
 };
+const siteNavItems = [
+  { href: "/academy", label: "Academy" },
+  { href: "/news", label: "News" },
+  { href: "/intelligence", label: "Intelligence" },
+  { href: "/account", label: "Account" },
+  { href: "/platform-readiness", label: "Readiness" },
+] as const;
 
 export function SiteShell({
   children,
@@ -34,6 +42,7 @@ export function SiteShell({
   const [theme, setTheme] = useState<SiteTheme>("light");
   const [auth, setAuth] = useState<SiteAuthSnapshot>(signedOutAuthSnapshot);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname() ?? "/";
   const ShellElement = shellElement;
   const logoSrc =
     theme === "light"
@@ -127,6 +136,8 @@ export function SiteShell({
             </Link>
           </div>
 
+          <SiteSectionNav pathname={pathname} />
+
           <div className="academy-topbar-actions">
             <SiteTopbarControls
               auth={auth}
@@ -153,6 +164,11 @@ export function SiteShell({
             className="academy-mobile-menu"
             data-open={isMenuOpen}
           >
+            <SiteSectionNav
+              isMobile
+              onNavigate={() => setIsMenuOpen(false)}
+              pathname={pathname}
+            />
             <SiteTopbarControls
               auth={auth}
               onSelectTheme={(nextTheme) => {
@@ -166,6 +182,41 @@ export function SiteShell({
       </header>
       {children}
     </ShellElement>
+  );
+}
+
+function SiteSectionNav({
+  isMobile = false,
+  onNavigate,
+  pathname,
+}: {
+  isMobile?: boolean;
+  onNavigate?: () => void;
+  pathname: string;
+}) {
+  return (
+    <nav
+      aria-label="Primary site navigation"
+      className={`academy-site-nav${isMobile ? " academy-site-nav-mobile" : ""}`}
+    >
+      {siteNavItems.map((item) => {
+        const active = isActiveSiteNavItem(pathname, item.href);
+
+        return (
+          <Link
+            aria-current={active ? "page" : undefined}
+            className={`academy-topbar-link${
+              active ? " academy-topbar-link-active" : ""
+            }`}
+            href={item.href}
+            key={item.href}
+            onClick={onNavigate}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -273,6 +324,10 @@ function SocialIconLink({
       {children}
     </a>
   );
+}
+
+function isActiveSiteNavItem(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 function getThemeSnapshot(): SiteTheme {

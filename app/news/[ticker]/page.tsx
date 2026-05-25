@@ -47,7 +47,7 @@ export default async function TickerNewsPage({ params }: PageProps) {
   const articles = await listNewsArticlesByTicker(normalizedTicker);
 
   return (
-    <SiteShell>
+    <SiteShell sectionHref="/news" sectionLabel="News" shellElement="div">
       <main className="academy-container news-ticker-page">
         <section className="academy-hero">
           <div className="academy-hero-copy">

@@ -34,7 +34,7 @@ export default async function NewsIndexPage() {
   const tickers = Array.from(new Set(articles.map((article) => article.ticker)));
 
   return (
-    <SiteShell sectionHref="/news" sectionLabel="News">
+    <SiteShell sectionHref="/news" sectionLabel="News" shellElement="div">
       <main className="academy-container news-ticker-page">
         <section className="academy-hero">
           <div className="academy-hero-copy">

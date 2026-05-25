@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SiteShell } from "@/src/components/site/site-shell";
 import { buildProductWorkflowShellViewModel } from "../../src/lib/trader-analytics";
 
 export const metadata: Metadata = {
@@ -12,20 +13,21 @@ export default function AccountPage() {
   const storage = shell.storageBoundary;
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-5 py-8 text-zinc-100 sm:px-8">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <header className="border-b border-zinc-800 pb-6">
-          <Link className="text-sm text-sky-300 hover:text-sky-200" href="/intelligence">
-            Back to Intelligence
-          </Link>
-          <h1 className="mt-3 text-3xl font-semibold text-zinc-50">
-            Account And Plan
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm text-zinc-500">
-            Product limits, storage boundary, and persistence readiness for the
-            end-user app.
-          </p>
-        </header>
+    <SiteShell sectionHref="/account" sectionLabel="Account" shellElement="div">
+      <main className="min-h-screen bg-zinc-950 px-5 py-8 text-zinc-100 sm:px-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+          <header className="border-b border-zinc-800 pb-6">
+            <Link className="text-sm text-sky-300 hover:text-sky-200" href="/intelligence">
+              Back to Intelligence
+            </Link>
+            <h1 className="mt-3 text-3xl font-semibold text-zinc-50">
+              Account And Plan
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm text-zinc-500">
+              Product limits, storage boundary, and persistence readiness for the
+              end-user app.
+            </p>
+          </header>
 
         <section className="grid gap-4 md:grid-cols-4">
           <div className="border border-zinc-800 bg-zinc-950 p-4">
@@ -104,7 +106,8 @@ export default function AccountPage() {
             ))}
           </div>
         </section>
-      </div>
-    </main>
+        </div>
+      </main>
+    </SiteShell>
   );
 }
