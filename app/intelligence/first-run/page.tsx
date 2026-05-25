@@ -9,7 +9,7 @@ const readinessItems = [
   {
     label: "Saved trades",
     status: "not_started",
-    detail: "No execution imports have been saved in this workspace.",
+    detail: "No execution imports have been saved in Intelligence yet.",
   },
   {
     label: "Analytics report",
@@ -68,7 +68,7 @@ export default function FirstRunPage() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <header className="border-b border-zinc-800 pb-6">
           <Link className="text-sm text-sky-300 hover:text-sky-200" href="/intelligence">
-            Back to workspace
+            Back to Intelligence
           </Link>
           <p className="mt-6 text-xs font-semibold uppercase tracking-wide text-emerald-300">
             First User State
@@ -144,7 +144,7 @@ export default function FirstRunPage() {
             </h2>
             <div className="mt-4 grid gap-3">
               {[
-                "No multi-user account isolation is enabled in this local beta workspace.",
+                "No multi-user account isolation is enabled in this local beta environment.",
                 "No broker account is connected from this app.",
                 "No billing or plan enforcement is active here.",
                 "No export or download workflow is offered to end users.",

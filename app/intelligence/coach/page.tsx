@@ -1275,7 +1275,7 @@ function EmptyCoachPage() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <header className="ti-panel p-6">
           <Link className="text-sm text-sky-300 hover:text-sky-200" href="/intelligence">
-            Back to workspace
+            Back to Intelligence
           </Link>
           <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-emerald-400">
             Coach
@@ -1559,7 +1559,7 @@ export default async function CoachPage(props: {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <Link className="text-sm text-sky-300 hover:text-sky-200" href="/intelligence">
-                Back to workspace
+                Back to Intelligence
               </Link>
               <p className={`${isCoachOverview ? "mt-4" : "mt-3"} text-xs font-semibold uppercase tracking-wide text-emerald-400`}>
                 Coach

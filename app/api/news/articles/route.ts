@@ -58,6 +58,7 @@ export async function POST(request: Request): Promise<Response> {
 
     revalidatePath(articlePath);
     revalidatePath(`/news/${article.ticker}`);
+    revalidatePath("/news");
 
     return Response.json({
       ok: true,

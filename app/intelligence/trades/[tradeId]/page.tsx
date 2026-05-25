@@ -1012,7 +1012,7 @@ export default async function TradeReviewPage({
                 summary: "Optional score details, evidence, and comparisons.",
               },
             ]}
-            summary="Use the trade page as a review workspace."
+            summary="Use the trade page as a review hub."
           />
           <div className="grid min-w-0 gap-6">
             <div id="summary">
@@ -1035,7 +1035,7 @@ export default async function TradeReviewPage({
                 eyebrow={
                   cameFromCoach
                     ? "Coach evidence trade"
-                    : "Trade review workspace"
+                    : "Trade review hub"
                 }
                 testId="trade-review-workspace"
                 title={
@@ -2849,7 +2849,7 @@ export default async function TradeReviewPage({
                                 quality {similar.qualityScore ?? "n/a"}
                               </span>
                               <span className="text-sky-300">
-                                Open review workspace
+                                Open review hub
                               </span>
                             </div>
                           </Link>

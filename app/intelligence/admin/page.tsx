@@ -46,7 +46,7 @@ export default function WorkspaceAdminPage() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <header className="border-b border-zinc-800 pb-6">
           <Link className="text-sm text-sky-300 hover:text-sky-200" href="/intelligence">
-            Back to workspace
+            Back to Intelligence
           </Link>
           <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-amber-300">
             Internal Tools
@@ -56,7 +56,7 @@ export default function WorkspaceAdminPage() {
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">
             Backend, webmaster, calibration, and QA surfaces live here so the
-            trader-facing workspace can stay focused on import, review, coaching,
+            trader-facing Intelligence area can stay focused on import, review, coaching,
             and progress.
           </p>
         </header>
@@ -95,7 +95,7 @@ export default function WorkspaceAdminPage() {
           <p className="mt-2 text-sm leading-6 text-zinc-400">
             These pages can remain available during local development and QA, but
             they should not be the default closed-beta user experience. The
-            end-user app should earn trust through the workspace, import flow,
+            end-user app should earn trust through the Intelligence area, import flow,
             saved trades, coach, review, analytics, and progress pages.
           </p>
         </section>

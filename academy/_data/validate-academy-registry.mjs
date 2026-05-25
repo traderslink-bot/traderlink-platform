@@ -153,15 +153,15 @@ for (const course of courses) {
 }
 
 const moduleOrderByCourse = new Map();
-for (const module of modules) {
-  if (!courseById.has(module.course_id)) {
-    fail(`Module ${module.module_id} points to missing course ${module.course_id}.`);
+for (const courseModule of modules) {
+  if (!courseById.has(courseModule.course_id)) {
+    fail(`Module ${courseModule.module_id} points to missing course ${courseModule.course_id}.`);
   }
-  const orderKey = `${module.course_id}:${module.module_order}`;
+  const orderKey = `${courseModule.course_id}:${courseModule.module_order}`;
   if (moduleOrderByCourse.has(orderKey)) {
-    fail(`Duplicate module_order ${module.module_order} inside ${module.course_id}.`);
+    fail(`Duplicate module_order ${courseModule.module_order} inside ${courseModule.course_id}.`);
   }
-  moduleOrderByCourse.set(orderKey, module);
+  moduleOrderByCourse.set(orderKey, courseModule);
 }
 
 const allRegisteredSlugs = new Set();

@@ -2914,7 +2914,7 @@ export function AnalyticsClient({
             className="text-sm text-sky-300 hover:text-sky-200"
             href="/intelligence"
           >
-            Back to workspace
+            Back to Intelligence
           </Link>
           <p className={`${isOverviewSection ? "mt-4" : "mt-3"} text-xs font-semibold uppercase text-sky-300`}>
             Trader Intelligence

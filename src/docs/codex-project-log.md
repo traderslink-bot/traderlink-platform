@@ -15044,3 +15044,12 @@ Current best next step:
 - Deploy the `/intelligence` route namespace migration, smoke-test new routes
   and old redirects live, then continue the durable Trader Intelligence database
   adapter work separately.
+# 2026-05-25 whole-site source-of-truth audit
+
+- Verified the live Vercel production deployment for `vercel-landing` is `dpl_5kdq544VSxoobgEsy1ftv52VVYfD` and points at commit `81e175909c6f0ad68481fbfc800259c32485251d` (`Move Trader Intelligence under intelligence namespace`).
+- Verified `C:\Users\jerac\Documents\TraderLink` is only a parent workspace; the live-aligned website worktree is `deploy-candidates/traderslink-news-on-live-academy-20260523` on `codex/news-on-live-academy`.
+- Added source-of-truth docs in `docs/site-architecture.md`, `docs/routes.md`, `docs/deployment.md`, `docs/auth.md`, and `docs/codex-project-log.md`.
+- Added the missing `/news` index page under the shared site shell and added a recent News article listing API in `src/lib/news/news-article-store.ts`.
+- Replaced visible legacy "workspace" labels in the Intelligence app with "Intelligence" or "review hub" wording while preserving route compatibility and test ids.
+- Removed the empty local `app/workspace` directory.
+- Kept production undeployed because this audit changed files locally and the user asked not to deploy from an uncertain tree.

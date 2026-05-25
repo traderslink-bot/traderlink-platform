@@ -14,11 +14,11 @@ export default function UploadCsvPage() {
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-5xl flex-col">
         <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <Link
-            aria-label="Back to workspace"
+            aria-label="Back to Intelligence"
             className="inline-flex w-fit items-center rounded-md border border-sky-900/80 bg-sky-950/25 px-3 py-2 text-sm font-medium text-sky-200 transition hover:border-sky-500 hover:text-sky-100"
             href="/intelligence"
           >
-            Back to workspace
+            Back to Intelligence
           </Link>
           <Image
             alt="TradersLink"

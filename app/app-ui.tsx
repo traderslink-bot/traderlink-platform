@@ -231,7 +231,7 @@ export type DashboardSideNavItem = {
 export function DashboardSideNav({
   eyebrow = "Page Menu",
   items,
-  summary = "Jump to the part of this workspace you want to review.",
+  summary = "Jump to the Intelligence area you want to review.",
 }: {
   eyebrow?: string;
   items: DashboardSideNavItem[];
@@ -432,11 +432,11 @@ export function EquityCurveChart({
   subtitle?: string;
   title?: string;
 }) {
-  let running = 0;
-  const cumulative = rows.map((row) => {
-    running += row.pnl;
-    return running;
-  });
+  const cumulative = rows.reduce<number[]>((values, row) => {
+    const previous = values.at(-1) ?? 0;
+    return [...values, previous + row.pnl];
+  }, []);
+  const running = cumulative.at(-1) ?? 0;
   const points = buildSparklinePoints(cumulative, 360, 130);
   const positive = running >= 0;
 

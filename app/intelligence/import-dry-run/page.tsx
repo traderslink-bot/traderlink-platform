@@ -36,7 +36,7 @@ export default function ImportDryRunPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <Link className="text-sm text-sky-300 hover:text-sky-200" href="/intelligence">
-                Back to workspace
+                Back to Intelligence
               </Link>
               <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-amber-300">
                 Advanced import tools

@@ -19,3 +19,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Live Academy progress is keyed by lesson slug. Do not rename, delete, or move launch lesson slugs without updating `academy/_data/progress-slug-baseline.json` and adding an alias in `academy/_data/progress-slug-aliases.json`.
 - Run `npm run validate:academy-registry` before deploying Academy content or route changes; it is expected to fail if a protected live slug disappears without an alias.
 - See `docs/academy-progress-preservation.md` before changing Academy routing, lesson slugs, progress storage, or Vercel database environment variables.
+
+## Whole Site Source Of Truth
+
+- Treat this repo/worktree as the full TradersLink website only when Git HEAD matches the intended production deployment. On 2026-05-25, production Vercel deployment `dpl_5kdq544VSxoobgEsy1ftv52VVYfD` points at commit `81e175909c6f0ad68481fbfc800259c32485251d` on `codex/news-on-live-academy`.
+- The Vercel project is `vercel-landing` (`prj_TFzKcdj4dS6BHv2maWsy7M5AEv2a`) with production aliases `traderslink.pro` and `www.traderslink.pro`.
+- The shared top navigation lives in `src/components/site/site-shell.tsx` and is re-exported by `app/site-shell.tsx`. Do not create separate Academy, News, or Intelligence topbars.
+- Canonical feature roots are `app/academy`, `app/news`, and `app/intelligence`. Former workspace routes should redirect in `next.config.ts`; do not recreate duplicate top-level app pages for them.
+- Read `docs/site-architecture.md`, `docs/routes.md`, `docs/deployment.md`, and `docs/auth.md` before structural, deployment, route, or auth changes.

@@ -46,7 +46,7 @@ function EmptyAnalyticsPage() {
             className="text-sm text-sky-300 hover:text-sky-200"
             href="/intelligence"
           >
-            Back to workspace
+            Back to Intelligence
           </Link>
           <p className="mt-4 text-xs font-semibold uppercase text-sky-300">
             Analytics

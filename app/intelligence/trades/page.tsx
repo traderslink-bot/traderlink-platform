@@ -962,7 +962,7 @@ export default async function TradesPage({
       <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-8">
         <header className="ti-panel p-6">
           <Link className="text-sm text-sky-300 hover:text-sky-200" href="/intelligence">
-            Back to workspace
+            Back to Intelligence
           </Link>
           <h1 className="mt-3 text-3xl font-semibold text-zinc-50">
             {pageTitle}
@@ -1048,7 +1048,7 @@ export default async function TradesPage({
                   tone: "info",
                 },
                 {
-                  action: "Open workspace",
+                  action: "Open Intelligence",
                   body: "Use the trade detail page to replay executions, write the note, and save checklist progress.",
                   href: triageItem?.href ?? "#trade-list",
                   label: "3. Review",
@@ -2197,7 +2197,7 @@ export default async function TradesPage({
                         {sellStartingReviewLimitationCopy()}
                       </div>
                     ) : null}
-                    <div className="text-sky-300">Open review workspace</div>
+                    <div className="text-sky-300">Open review hub</div>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2 text-xs uppercase tracking-wide">
                     <PlainStateBadge

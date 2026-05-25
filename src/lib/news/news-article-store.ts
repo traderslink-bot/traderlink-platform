@@ -656,3 +656,38 @@ export async function listNewsArticlesByTicker(
     ? listNewsArticlesByTickerSqlite(ticker, limit)
     : listNewsArticlesByTickerNeon(ticker, limit);
 }
+
+async function listRecentNewsArticlesSqlite(limit = 50): Promise<NewsArticle[]> {
+  const db = await getSqliteDatabase();
+  const rows = db
+    .prepare(
+      `
+        SELECT * FROM news_articles
+        ORDER BY published_at DESC
+        LIMIT ?
+      `,
+    )
+    .all(Math.max(1, Math.min(100, limit)));
+
+  return rows.map((row) => rowToArticle(row as Record<string, unknown>));
+}
+
+async function listRecentNewsArticlesNeon(limit = 50): Promise<NewsArticle[]> {
+  await ensureNeonSchema();
+  const sql = getNeonSql();
+  const rows = (await sql`
+    SELECT * FROM news_articles
+    ORDER BY published_at DESC
+    LIMIT ${Math.max(1, Math.min(100, limit))}
+  `) as Array<Record<string, unknown>>;
+
+  return rows.map(rowToArticle);
+}
+
+export async function listRecentNewsArticles(
+  limit = 50,
+): Promise<NewsArticle[]> {
+  return shouldUseSqliteFallback()
+    ? listRecentNewsArticlesSqlite(limit)
+    : listRecentNewsArticlesNeon(limit);
+}

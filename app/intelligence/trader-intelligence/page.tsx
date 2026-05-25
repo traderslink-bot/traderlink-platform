@@ -66,7 +66,7 @@ export default async function TraderIntelligencePage({
               className="border border-cyan-400/40 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 transition hover:border-cyan-300"
               href="/intelligence"
             >
-              Open app workspace
+              Open Intelligence
             </Link>
           </div>
         </header>

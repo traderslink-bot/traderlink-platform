@@ -174,7 +174,7 @@ export default function ImportsPage() {
             className="text-sm text-sky-300 hover:text-sky-200"
             href="/intelligence"
           >
-            Back to workspace
+            Back to Intelligence
           </Link>
           <h1 className="mt-3 text-3xl font-semibold text-zinc-50">
             Import History
