@@ -16,6 +16,121 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/workspace",
+        destination: "/intelligence",
+        permanent: true,
+      },
+      {
+        source: "/workspace/admin",
+        destination: "/intelligence/admin",
+        permanent: true,
+      },
+      {
+        source: "/analytics/:path*",
+        destination: "/intelligence/analytics/:path*",
+        permanent: true,
+      },
+      {
+        source: "/trades/:path*",
+        destination: "/intelligence/trades/:path*",
+        permanent: true,
+      },
+      {
+        source: "/imports/:path*",
+        destination: "/intelligence/imports/:path*",
+        permanent: true,
+      },
+      {
+        source: "/coach/:path*",
+        destination: "/intelligence/coach/:path*",
+        permanent: true,
+      },
+      {
+        source: "/review",
+        destination: "/intelligence/review",
+        permanent: true,
+      },
+      {
+        source: "/progress",
+        destination: "/intelligence/progress",
+        permanent: true,
+      },
+      {
+        source: "/upload-csv",
+        destination: "/intelligence/upload-csv",
+        permanent: true,
+      },
+      {
+        source: "/trader-intelligence",
+        destination: "/intelligence/trader-intelligence",
+        permanent: true,
+      },
+      {
+        source: "/import-dry-run",
+        destination: "/intelligence/import-dry-run",
+        permanent: true,
+      },
+      {
+        source: "/import-health",
+        destination: "/intelligence/import-health",
+        permanent: true,
+      },
+      {
+        source: "/import-trials",
+        destination: "/intelligence/import-trials",
+        permanent: true,
+      },
+      {
+        source: "/repair-wizard",
+        destination: "/intelligence/repair-wizard",
+        permanent: true,
+      },
+      {
+        source: "/review-cockpit",
+        destination: "/intelligence/review-cockpit",
+        permanent: true,
+      },
+      {
+        source: "/session-recap",
+        destination: "/intelligence/session-recap",
+        permanent: true,
+      },
+      {
+        source: "/compare-trades",
+        destination: "/intelligence/compare-trades",
+        permanent: true,
+      },
+      {
+        source: "/calibration",
+        destination: "/intelligence/calibration",
+        permanent: true,
+      },
+      {
+        source: "/onboarding",
+        destination: "/intelligence/onboarding",
+        permanent: true,
+      },
+      {
+        source: "/first-run",
+        destination: "/intelligence/first-run",
+        permanent: true,
+      },
+      {
+        source: "/debug/:path*",
+        destination: "/intelligence/debug/:path*",
+        permanent: true,
+      },
+      {
+        source: "/admin/broker-mappings",
+        destination: "/intelligence/admin/broker-mappings",
+        permanent: true,
+      },
+      {
+        source: "/coaching",
+        destination: "/intelligence/coach",
+        permanent: true,
+      },
+      {
         source: "/academy/candlestick-deep-dive-lessons",
         destination: "/academy/candlestick-patterns",
         permanent: true,

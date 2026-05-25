@@ -14,7 +14,7 @@ import {
 
 const routeSourcePath = join(
   process.cwd(),
-  "app/import-dry-run/import-dry-run-client.tsx",
+  "app/intelligence/import-dry-run/import-dry-run-client.tsx",
 );
 
 describe("CSV dry-run automated QA harness", () => {
@@ -102,7 +102,7 @@ describe("CSV dry-run automated QA harness", () => {
     const contract = buildCsvDryRunRouteSmokeContract();
     const source = readFileSync(routeSourcePath, "utf8");
 
-    expect(contract.routePath).toBe("/import-dry-run");
+    expect(contract.routePath).toBe("/intelligence/import-dry-run");
     expect(contract.requiredPanelLabels.length).toBeGreaterThanOrEqual(12);
     for (const label of contract.requiredPanelLabels) {
       expect(source, `Missing route panel: ${label}`).toContain(label);
@@ -145,7 +145,7 @@ describe("CSV dry-run automated QA harness", () => {
       "mobile",
     ]);
     for (const target of visual.targets) {
-      expect(target.routePath).toBe("/import-dry-run");
+      expect(target.routePath).toBe("/intelligence/import-dry-run");
       expect(target.requiredPanelLabels).toEqual(routeContract.requiredPanelLabels);
       expect(target.width).toBeGreaterThan(0);
       expect(target.height).toBeGreaterThan(0);

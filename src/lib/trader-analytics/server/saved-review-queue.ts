@@ -125,7 +125,7 @@ function chartFindingsForSnapshot(
   snapshot: PersistedDecisionReviewSnapshot,
 ): UserFacingDecisionReviewInsight[] {
   return snapshot.review.insights
-    .map((insight) => mapDecisionReviewInsightForUser(insight, "/review"))
+    .map((insight) => mapDecisionReviewInsightForUser(insight, "/intelligence/review"))
     .filter(
       (insight) =>
         insight.canShowPrimary && insight.evidenceChannel !== "execution_only",
@@ -416,7 +416,7 @@ function buildQueueItem(args: {
     title: `${symbol} trade review`,
     detail: headline,
     nextAction: stateCopy.nextAction,
-    href: `/trades/${encodeURIComponent(args.job.savedTradeId)}?from=review-queue&queue=${lane}`,
+    href: `/intelligence/trades/${encodeURIComponent(args.job.savedTradeId)}?from=review-queue&queue=${lane}`,
     priorityScore: priority.score,
     priorityLabel: priorityLabel(priority.score),
     priorityReason: priority.reason,
@@ -536,7 +536,7 @@ export function buildSavedReviewQueueReadModel(args: {
           id,
           label: FILTER_LABELS[id],
           count: 0,
-          href: `/review?queue=${id}`,
+          href: `/intelligence/review?queue=${id}`,
         }),
       ),
       items: [],
@@ -602,7 +602,7 @@ export function buildSavedReviewQueueReadModel(args: {
       id,
       label: FILTER_LABELS[id],
       count: filterItems(allItems, id).length,
-      href: `/review?queue=${id}`,
+      href: `/intelligence/review?queue=${id}`,
     }),
   );
 

@@ -516,7 +516,7 @@ export function buildTraderActionPlan(args: {
 export function buildProductPermissionSummary(): ProductPermissionSummary {
   const policies: ProductRouteAccessPolicy[] = [
     {
-      route: "/analytics",
+      route: "/intelligence/analytics",
       audience: "end_user",
       requiresAuthenticatedUser: true,
       allowsRawJson: false,
@@ -524,7 +524,7 @@ export function buildProductPermissionSummary(): ProductPermissionSummary {
       label: "Production analytics dashboard",
     },
     {
-      route: "/trades/[tradeId]",
+      route: "/intelligence/trades/[tradeId]",
       audience: "end_user",
       requiresAuthenticatedUser: true,
       allowsRawJson: false,
@@ -532,7 +532,7 @@ export function buildProductPermissionSummary(): ProductPermissionSummary {
       label: "Production trade review",
     },
     {
-      route: "/debug/trade-analysis",
+      route: "/intelligence/debug/trade-analysis",
       audience: "admin_debug",
       requiresAuthenticatedUser: true,
       allowsRawJson: true,
@@ -540,7 +540,7 @@ export function buildProductPermissionSummary(): ProductPermissionSummary {
       label: "Internal trade-analysis debug",
     },
     {
-      route: "/debug/execution-feedback",
+      route: "/intelligence/debug/execution-feedback",
       audience: "admin_debug",
       requiresAuthenticatedUser: true,
       allowsRawJson: true,
@@ -548,7 +548,7 @@ export function buildProductPermissionSummary(): ProductPermissionSummary {
       label: "Internal execution-feedback debug",
     },
     {
-      route: "/debug/trader-analytics",
+      route: "/intelligence/debug/trader-analytics",
       audience: "admin_debug",
       requiresAuthenticatedUser: true,
       allowsRawJson: true,
@@ -634,28 +634,28 @@ export function buildProductVisualQaPlan(): ProductVisualQaPlan {
   const checks: ProductVisualQaCheck[] = [
     {
       id: "analytics-desktop",
-      route: "/analytics",
+      route: "/intelligence/analytics",
       viewport: "desktop" as const,
       label: "Analytics desktop layout has no export controls or raw panels.",
       status: "pending",
     },
     {
       id: "analytics-mobile",
-      route: "/analytics",
+      route: "/intelligence/analytics",
       viewport: "mobile" as const,
       label: "Analytics mobile layout preserves readable panels and controls.",
       status: "pending",
     },
     {
       id: "trade-detail-desktop",
-      route: "/trades/[tradeId]",
+      route: "/intelligence/trades/[tradeId]",
       viewport: "desktop" as const,
       label: "Trade review desktop layout shows notes and execution timeline.",
       status: "pending",
     },
     {
       id: "trade-detail-mobile",
-      route: "/trades/[tradeId]",
+      route: "/intelligence/trades/[tradeId]",
       viewport: "mobile" as const,
       label: "Trade review mobile layout keeps timeline text readable.",
       status: "pending",

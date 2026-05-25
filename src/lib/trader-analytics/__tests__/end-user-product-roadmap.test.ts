@@ -233,7 +233,7 @@ describe("end-user trader analytics product roadmap helpers", () => {
   it("audits production analytics surfaces for no-export guardrails", () => {
     expect(
       auditProductionAnalyticsSurface({
-        route: "/analytics",
+        route: "/intelligence/analytics",
         hasRawJsonPanel: false,
         hasExportControl: false,
         hasDebugCopy: false,
@@ -246,7 +246,7 @@ describe("end-user trader analytics product roadmap helpers", () => {
 
     expect(
       auditProductionAnalyticsSurface({
-        route: "/analytics",
+        route: "/intelligence/analytics",
         hasRawJsonPanel: true,
         hasExportControl: true,
         hasDebugCopy: true,

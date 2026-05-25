@@ -105,7 +105,7 @@ function mapCoachObservation(observation: TraderMistakeObservation) {
   return mapUserFacingBehavior({
     behaviorId: observation.taxonomyId,
     rawLabel: observation.label,
-    route: "/coach",
+    route: "/intelligence/coach",
   });
 }
 
@@ -629,7 +629,7 @@ export function buildCoachSessionPrepCard(args: {
     ? mapUserFacingBehavior({
         behaviorId: coach.biggestMistake.taxonomyId,
         rawLabel: coach.biggestMistake.label,
-        route: "/coach",
+        route: "/intelligence/coach",
       })
     : null;
   const rule = args.ruleSimulations[0] ?? null;
@@ -682,7 +682,7 @@ export function buildCoachHomeViewModel(args: {
           id: "empty-state-next-action",
           label: args.emptyState.title,
           detail: args.emptyState.nextAction,
-          href: "/imports",
+          href: "/intelligence/imports",
           priority: 1,
           relatedTradeIds: [],
         }
@@ -692,8 +692,8 @@ export function buildCoachHomeViewModel(args: {
             label: `Review ${topSeverity.label}`,
             detail: `Start with execution-only evidence: ${topSeverity.nextAction}`,
             href: topSeverity.relatedTradeIds[0]
-              ? `/trades/${topSeverity.relatedTradeIds[0]}`
-              : "/review",
+              ? `/intelligence/trades/${topSeverity.relatedTradeIds[0]}`
+              : "/intelligence/review",
             priority: 1,
             relatedTradeIds: topSeverity.relatedTradeIds,
           }
@@ -701,7 +701,7 @@ export function buildCoachHomeViewModel(args: {
             id: "start-guided-review",
             label: "Start guided review",
             detail: args.sessionPrepCard.checklist[0],
-            href: "/review",
+            href: "/intelligence/review",
             priority: 1,
             relatedTradeIds: args.sessionPrepCard.reviewTradeIds,
           };
@@ -714,7 +714,7 @@ export function buildCoachHomeViewModel(args: {
       id: "prep-next-session",
       label: "Prep next session",
       detail: `Execution-only rule focus: ${args.sessionPrepCard.ruleFocus}`,
-      href: "/coach",
+      href: "/intelligence/coach",
       priority: 2,
       relatedTradeIds: args.sessionPrepCard.reviewTradeIds,
     },
@@ -724,7 +724,7 @@ export function buildCoachHomeViewModel(args: {
       detail:
         args.ruleSimulations[0]?.limitation ??
         "Rule simulation is ready after a rule recommendation appears.",
-      href: "/review",
+      href: "/intelligence/review",
       priority: 3,
       relatedTradeIds: args.ruleSimulations[0]?.flaggedTradeIds ?? [],
     },
@@ -734,7 +734,7 @@ export function buildCoachHomeViewModel(args: {
       detail:
         args.reviewCompletionLoop.nextStep?.detail ??
         "Review loop is complete for this report.",
-      href: "/progress",
+      href: "/intelligence/progress",
       priority: 4,
       relatedTradeIds: args.reviewCompletionLoop.nextStep?.relatedTradeIds ?? [],
     },

@@ -162,10 +162,10 @@ describe("trader import trial and repair experience", () => {
 
     expect(experience.mobileQa.items.map((item) => item.route)).toEqual(
       expect.arrayContaining([
-        "/import-trials",
-        "/repair-wizard",
-        "/review-cockpit",
-        "/calibration",
+        "/intelligence/import-trials",
+        "/intelligence/repair-wizard",
+        "/intelligence/review-cockpit",
+        "/intelligence/calibration",
       ]),
     );
     expect(experience.mobileQa.noExportRouteCount).toBe(
@@ -190,10 +190,10 @@ describe("trader import trial and repair experience", () => {
 
     expect(routes.map((route) => route.standalonePath)).toEqual(
       expect.arrayContaining([
-        "/import-trials",
-        "/repair-wizard",
-        "/review-cockpit",
-        "/calibration",
+        "/intelligence/import-trials",
+        "/intelligence/repair-wizard",
+        "/intelligence/review-cockpit",
+        "/intelligence/calibration",
       ]),
     );
     expect(audit.passed).toBe(true);
@@ -211,13 +211,13 @@ describe("trader import trial and repair experience", () => {
     expect(contract.contractVersion).toBe("import_facing_route_contract_v1");
     expect(contract.routes.map((route) => route.path)).toEqual(
       expect.arrayContaining([
-        "/import-dry-run",
-        "/imports",
-        "/import-health",
-        "/import-trials",
-        "/repair-wizard",
-        "/review-cockpit",
-        "/calibration",
+        "/intelligence/import-dry-run",
+        "/intelligence/imports",
+        "/intelligence/import-health",
+        "/intelligence/import-trials",
+        "/intelligence/repair-wizard",
+        "/intelligence/review-cockpit",
+        "/intelligence/calibration",
       ]),
     );
     expect(

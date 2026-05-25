@@ -2050,7 +2050,7 @@ export interface TradeReplayVisualLaneContract {
 }
 
 export interface TradeReplayVisualUpgradeContract {
-  route: "/trades/[tradeId]";
+  route: "/intelligence/trades/[tradeId]";
   markers: TradeReplayVisualMarkerContract[];
   lanes: TradeReplayVisualLaneContract[];
   routeCopy: string;

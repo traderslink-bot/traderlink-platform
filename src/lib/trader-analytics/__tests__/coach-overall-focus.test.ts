@@ -187,6 +187,6 @@ describe("coach overall focus read model", () => {
 
     expect(summary.importedTradeCount).toBe(0);
     expect(summary.trendLabel).toBe("Save a broker CSV first");
-    expect(summary.nextActionHref).toBe("/import-dry-run");
+    expect(summary.nextActionHref).toBe("/intelligence/import-dry-run");
   });
 });

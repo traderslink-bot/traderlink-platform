@@ -152,7 +152,7 @@ export function buildProductTraderAnalyticsViewModel(args: {
   });
   const trades = args.repository.listTrades(args.userId);
   const surfaceAudit = auditProductionAnalyticsSurface({
-    route: "/analytics",
+    route: "/intelligence/analytics",
     hasRawJsonPanel: false,
     hasExportControl: false,
     hasDebugCopy: false,

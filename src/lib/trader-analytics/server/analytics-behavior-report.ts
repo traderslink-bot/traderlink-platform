@@ -259,7 +259,7 @@ function hrefForRoundTrip(
   roundTrip: SavedTradeThreadRoundTrip | undefined,
 ): string {
   if (!roundTrip) {
-    return "/trades/ticker-stories#ticker-stories";
+    return "/intelligence/trades/ticker-stories#ticker-stories";
   }
 
   return roundTrip.href.includes("#")

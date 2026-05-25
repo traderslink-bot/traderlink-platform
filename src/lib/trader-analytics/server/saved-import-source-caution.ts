@@ -38,7 +38,7 @@ function buildReadModel(args: {
     detail: repairedImport
       ? REPAIRED_DETAIL
       : "This saved import came from the original CSV preview.",
-    href: args.batch ? `/imports/${encodeURIComponent(args.batch.id)}` : null,
+    href: args.batch ? `/intelligence/imports/${encodeURIComponent(args.batch.id)}` : null,
     relatedTradeIds: args.relatedTradeIds,
   };
 }

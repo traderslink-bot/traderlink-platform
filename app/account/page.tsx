@@ -15,7 +15,7 @@ export default function AccountPage() {
     <main className="min-h-screen bg-zinc-950 px-5 py-8 text-zinc-100 sm:px-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <header className="border-b border-zinc-800 pb-6">
-          <Link className="text-sm text-sky-300 hover:text-sky-200" href="/workspace">
+          <Link className="text-sm text-sky-300 hover:text-sky-200" href="/intelligence">
             Back to workspace
           </Link>
           <h1 className="mt-3 text-3xl font-semibold text-zinc-50">

@@ -25,7 +25,7 @@ function roundTrip(args: {
     exitTime: "2026-04-01T13:45:00.000Z",
     grossRealizedPnl: args.pnl,
     heldOvernight: false,
-    href: `/trades/${args.id}#execution`,
+    href: `/intelligence/trades/${args.id}#execution`,
     id: `${args.id}:round-trip`,
     lifecycleStatus: "closed",
     minutesSincePreviousExit: null,
@@ -82,7 +82,7 @@ function thread(args: {
   });
 
   return {
-    href: `/trades?thread=${args.symbol}:2026-04-01`,
+    href: `/intelligence/trades?thread=${args.symbol}:2026-04-01`,
     marketContextFindings: args.findings,
     roundTrips: [trip],
     symbol: args.symbol,

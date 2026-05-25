@@ -71,7 +71,7 @@ export function SavedReviewQueueSummary({
           </div>
           <Link
             className="border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
-            href="/upload-csv"
+            href="/intelligence/upload-csv"
           >
             Upload CSV
           </Link>
@@ -90,13 +90,13 @@ export function SavedReviewQueueSummary({
       ? {
           label: "Chart Data Waiting",
           count: queuedChartDataCount,
-          href: "/review?queue=queued",
+          href: "/intelligence/review?queue=queued",
           toneClass: "text-violet-300",
         }
       : {
           label: "Chart Data Still Missing",
           count: marketGapCount,
-          href: "/review?queue=market_context_unavailable",
+          href: "/intelligence/review?queue=market_context_unavailable",
           toneClass: "text-violet-300",
         };
   const previewItems = (queue.items.length > 0 ? queue.items : queue.allItems).slice(
@@ -104,7 +104,7 @@ export function SavedReviewQueueSummary({
     3,
   );
   const primaryHref =
-    highestPriorityCount > 0 ? "/review?queue=highest_priority" : "/review";
+    highestPriorityCount > 0 ? "/intelligence/review?queue=highest_priority" : "/intelligence/review";
   const title =
     surface === "coach"
       ? "Highest-priority saved review work"
@@ -151,7 +151,7 @@ export function SavedReviewQueueSummary({
             </Link>
             <Link
               className="rounded-md border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-500"
-              href="/trades/review-needed"
+              href="/intelligence/trades/review-needed"
             >
               Review trades
             </Link>
@@ -222,7 +222,7 @@ export function SavedReviewQueueSummary({
             </Link>
             <Link
               className="border border-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-500"
-              href="/trades?reviewLane=highest_priority"
+              href="/intelligence/trades?reviewLane=highest_priority"
             >
               Filter trades
             </Link>

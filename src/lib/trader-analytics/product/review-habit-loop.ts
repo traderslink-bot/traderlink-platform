@@ -146,7 +146,7 @@ export function buildMistakeRuleConversionFlow(args: {
         behavior: mapUserFacingBehavior({
           behaviorId: observation.taxonomyId,
           rawLabel: observation.label,
-          route: "/progress",
+          route: "/intelligence/progress",
         }),
       }))
       .filter(({ behavior }) => behavior.canDrivePrimaryConclusion)
@@ -760,7 +760,7 @@ export function buildEndUserOnboardingPath(args: {
       label: "Import executions",
       status: importReady ? "complete" : "current",
       detail: args.productPolish.firstImportExperience.summary,
-      href: "/imports",
+      href: "/intelligence/imports",
       nextAction: args.productPolish.firstImportExperience.nextAction,
     },
     {
@@ -768,7 +768,7 @@ export function buildEndUserOnboardingPath(args: {
       label: "Repair data",
       status: !importReady ? "blocked" : repairClear ? "complete" : "current",
       detail: args.productPolish.tradeRepairInbox.nextAction,
-      href: "/imports",
+      href: "/intelligence/imports",
       nextAction: args.productPolish.tradeRepairInbox.nextAction,
     },
     {
@@ -776,7 +776,7 @@ export function buildEndUserOnboardingPath(args: {
       label: "Review first report",
       status: coachReady ? "complete" : "upcoming",
       detail: "Open analytics and identify the first coach queue item.",
-      href: "/analytics",
+      href: "/intelligence/analytics",
       nextAction: "Open the analytics dashboard.",
     },
     {
@@ -784,7 +784,7 @@ export function buildEndUserOnboardingPath(args: {
       label: "Open coach queue",
       status: coachReady ? "complete" : "upcoming",
       detail: args.productPolish.coachReviewQueue.primaryItem?.title ?? "Coach queue needs saved trades.",
-      href: "/coach",
+      href: "/intelligence/coach",
       nextAction:
         args.productPolish.coachReviewQueue.primaryItem?.nextAction ??
         "Review the coach queue.",
@@ -795,8 +795,8 @@ export function buildEndUserOnboardingPath(args: {
       status: tradeReady ? "complete" : "upcoming",
       detail: "Use the checklist and grade explanation on a trade review page.",
       href: tradeReady
-        ? `/trades/${args.productPolish.gradeExplainability[0].tradeId}`
-        : "/analytics",
+        ? `/intelligence/trades/${args.productPolish.gradeExplainability[0].tradeId}`
+        : "/intelligence/analytics",
       nextAction: "Open the first trade review.",
     },
     {
@@ -804,7 +804,7 @@ export function buildEndUserOnboardingPath(args: {
       label: "Draft first rule",
       status: ruleReady ? "complete" : "upcoming",
       detail: args.mistakeRuleConversion.nextAction,
-      href: "/coach",
+      href: "/intelligence/coach",
       nextAction: args.mistakeRuleConversion.nextAction,
     },
     {
@@ -812,7 +812,7 @@ export function buildEndUserOnboardingPath(args: {
       label: "Check progress",
       status: progressReady ? "complete" : "upcoming",
       detail: args.reviewHabitTracker.nextHabitAction,
-      href: "/progress",
+      href: "/intelligence/progress",
       nextAction: "Open progress after the first review pass.",
     },
   ];

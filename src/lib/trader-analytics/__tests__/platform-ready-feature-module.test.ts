@@ -33,7 +33,7 @@ function fixtureContentsByFile(): Record<string, string> {
 describe("platform-ready Trader Intelligence module", () => {
   it("builds a demo platform context without real auth or billing", () => {
     const context = buildDemoTraderIntelligencePlatformContext({
-      moduleMountPath: "/dashboard/trader-intelligence",
+      moduleMountPath: "/intelligence",
     });
 
     expect(context).toMatchObject({
@@ -45,7 +45,7 @@ describe("platform-ready Trader Intelligence module", () => {
       demoMode: true,
     });
     expect(context.entitlements.canImportCsv).toBe(true);
-    expect(context.moduleMountPath).toBe("/dashboard/trader-intelligence");
+    expect(context.moduleMountPath).toBe("/intelligence");
   });
 
   it("evaluates feature gates for plan limits and admin-only surfaces", () => {
@@ -99,7 +99,7 @@ describe("platform-ready Trader Intelligence module", () => {
 
   it("builds a platform-aware route registry and no-export audit", () => {
     const context = buildDemoTraderIntelligencePlatformContext({
-      moduleMountPath: "/dashboard/trader-intelligence",
+      moduleMountPath: "/intelligence",
     });
     const routes = buildTraderIntelligenceRouteRegistry(context);
     const audit = auditTraderIntelligenceNoExportPolicy({ routes });
@@ -109,8 +109,8 @@ describe("platform-ready Trader Intelligence module", () => {
       (route) => route.routeId === "broker_mapping_admin",
     );
 
-    expect(analytics?.platformPath).toBe("/dashboard/trader-intelligence");
-    expect(imports?.platformPath).toBe("/dashboard/trader-intelligence/imports");
+    expect(analytics?.platformPath).toBe("/intelligence/analytics");
+    expect(imports?.platformPath).toBe("/intelligence/imports");
     expect(admin).toMatchObject({
       requiresAdmin: true,
       audience: "admin",
@@ -204,9 +204,9 @@ describe("platform-ready Trader Intelligence module", () => {
     expect(readiness.routeSmokeTargets).toEqual(
       expect.arrayContaining([
         "/platform-readiness",
-        "/analytics",
-        "/imports",
-        "/trades/trade-rapid-fire",
+        "/intelligence/analytics",
+        "/intelligence/imports",
+        "/intelligence/trades/trade-rapid-fire",
       ]),
     );
     expect(readiness.workflow.analytics.latestReport.sampleData).toBe(true);

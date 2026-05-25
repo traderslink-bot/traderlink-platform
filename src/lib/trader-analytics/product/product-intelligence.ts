@@ -258,13 +258,13 @@ function rowMatchesTaxonomy(args: {
 
 function mapProductBehavior(args: {
   label: string;
-  route?: "/coach" | "/analytics" | "/review" | "/progress" | "/trades" | "/trades/[tradeId]";
+  route?: "/intelligence/coach" | "/intelligence/analytics" | "/intelligence/review" | "/intelligence/progress" | "/intelligence/trades" | "/intelligence/trades/[tradeId]";
   taxonomyId: string;
 }) {
   return mapUserFacingBehavior({
     behaviorId: args.taxonomyId,
     rawLabel: args.label,
-    route: args.route ?? "/coach",
+    route: args.route ?? "/intelligence/coach",
   });
 }
 

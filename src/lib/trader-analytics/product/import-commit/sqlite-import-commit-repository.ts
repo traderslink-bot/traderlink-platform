@@ -907,7 +907,7 @@ export class SqliteImportCommitRepository
             rowIndex: item.rowIndex,
             requestIndex: item.requestIndex,
             updatedAt: typed.updated_at,
-            href: `/imports/${encodeURIComponent(plan.batch.id)}`,
+            href: `/intelligence/imports/${encodeURIComponent(plan.batch.id)}`,
           }));
       });
   }

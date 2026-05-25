@@ -111,7 +111,7 @@ export function buildImportRecoveryReadModel(args: {
       symbol: trade.symbol,
       lifecycleStatus: trade.lifecycleStatus,
       openedAt: trade.openedAt,
-      href: `/trades/${encodeURIComponent(trade.id)}`,
+      href: `/intelligence/trades/${encodeURIComponent(trade.id)}`,
     }));
   const canDiscard =
     args.batch.status !== "committed" && args.batch.status !== "discarded";
@@ -140,7 +140,7 @@ export function buildImportRecoveryReadModel(args: {
       label: "Open CSV dry run",
       detail: "Upload the corrected broker file or paste a fresh export.",
       kind: "link",
-      href: "/import-dry-run",
+      href: "/intelligence/import-dry-run",
       tone: "primary",
     }),
   );
@@ -167,7 +167,7 @@ export function buildImportRecoveryReadModel(args: {
         duplicateFile: args.plan.readModel.duplicateFile,
         originalBatchId: originalBatch?.id ?? null,
         originalBatchHref: originalBatch
-          ? `/imports/${encodeURIComponent(originalBatch.id)}`
+          ? `/intelligence/imports/${encodeURIComponent(originalBatch.id)}`
           : null,
         duplicateTrades,
       },
@@ -176,7 +176,7 @@ export function buildImportRecoveryReadModel(args: {
         label: "Review saved trades",
         detail: "Open the saved trades created by this import.",
         kind: "link",
-        href: "/trades",
+        href: "/intelligence/trades",
         tone: "success",
       }),
       secondaryActions: uniqueActions([
@@ -185,7 +185,7 @@ export function buildImportRecoveryReadModel(args: {
           label: "Open analytics",
           detail: "Review performance updates from saved trades.",
           kind: "link",
-          href: "/analytics",
+          href: "/intelligence/analytics",
           tone: "primary",
         }),
       ]),
@@ -214,7 +214,7 @@ export function buildImportRecoveryReadModel(args: {
         duplicateFile: args.plan.readModel.duplicateFile,
         originalBatchId: originalBatch?.id ?? null,
         originalBatchHref: originalBatch
-          ? `/imports/${encodeURIComponent(originalBatch.id)}`
+          ? `/intelligence/imports/${encodeURIComponent(originalBatch.id)}`
           : null,
         duplicateTrades,
       },
@@ -223,7 +223,7 @@ export function buildImportRecoveryReadModel(args: {
         label: "Open CSV dry run",
         detail: "Start a clean import attempt with a new or corrected file.",
         kind: "link",
-        href: "/import-dry-run",
+        href: "/intelligence/import-dry-run",
         tone: "primary",
       }),
       secondaryActions: [],
@@ -252,7 +252,7 @@ export function buildImportRecoveryReadModel(args: {
         duplicateFile: args.plan.readModel.duplicateFile,
         originalBatchId: originalBatch?.id ?? null,
         originalBatchHref: originalBatch
-          ? `/imports/${encodeURIComponent(originalBatch.id)}`
+          ? `/intelligence/imports/${encodeURIComponent(originalBatch.id)}`
           : null,
         duplicateTrades,
       },
@@ -279,7 +279,7 @@ export function buildImportRecoveryReadModel(args: {
             label: "Open original import",
             detail: "Review the saved import that already used this file.",
             kind: "link",
-            href: `/imports/${encodeURIComponent(originalBatch.id)}`,
+            href: `/intelligence/imports/${encodeURIComponent(originalBatch.id)}`,
             tone: "primary",
           })
         : null,
@@ -316,7 +316,7 @@ export function buildImportRecoveryReadModel(args: {
         duplicateFile: args.plan.readModel.duplicateFile,
         originalBatchId: originalBatch?.id ?? null,
         originalBatchHref: originalBatch
-          ? `/imports/${encodeURIComponent(originalBatch.id)}`
+          ? `/intelligence/imports/${encodeURIComponent(originalBatch.id)}`
           : null,
         duplicateTrades,
       },
@@ -359,7 +359,7 @@ export function buildImportRecoveryReadModel(args: {
         duplicateFile: args.plan.readModel.duplicateFile,
         originalBatchId: originalBatch?.id ?? null,
         originalBatchHref: originalBatch
-          ? `/imports/${encodeURIComponent(originalBatch.id)}`
+          ? `/intelligence/imports/${encodeURIComponent(originalBatch.id)}`
           : null,
         duplicateTrades,
       },
@@ -397,7 +397,7 @@ export function buildImportRecoveryReadModel(args: {
         duplicateFile: args.plan.readModel.duplicateFile,
         originalBatchId: originalBatch?.id ?? null,
         originalBatchHref: originalBatch
-          ? `/imports/${encodeURIComponent(originalBatch.id)}`
+          ? `/intelligence/imports/${encodeURIComponent(originalBatch.id)}`
           : null,
         duplicateTrades,
       },
@@ -433,7 +433,7 @@ export function buildImportRecoveryReadModel(args: {
       duplicateFile: args.plan.readModel.duplicateFile,
       originalBatchId: originalBatch?.id ?? null,
       originalBatchHref: originalBatch
-        ? `/imports/${encodeURIComponent(originalBatch.id)}`
+        ? `/intelligence/imports/${encodeURIComponent(originalBatch.id)}`
         : null,
       duplicateTrades,
     },
@@ -442,7 +442,7 @@ export function buildImportRecoveryReadModel(args: {
       label: "Open CSV dry run",
       detail: "Try again with a corrected broker export.",
       kind: "link",
-      href: "/import-dry-run",
+      href: "/intelligence/import-dry-run",
       tone: "primary",
     }),
     secondaryActions: uniqueActions(secondaryActions),

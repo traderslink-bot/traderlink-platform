@@ -59,7 +59,7 @@ function mapImprovementBehavior(observation: TraderMistakeObservation) {
   return mapUserFacingBehavior({
     behaviorId: observation.taxonomyId,
     rawLabel: observation.label,
-    route: "/coach",
+    route: "/intelligence/coach",
   });
 }
 
@@ -77,7 +77,7 @@ function primaryTradeReviewPointLabel(
   const behavior = mapUserFacingBehavior({
     behaviorId: point.id,
     rawLabel: point.label,
-    route: "/trades/[tradeId]",
+    route: "/intelligence/trades/[tradeId]",
   });
 
   return behavior.canDrivePrimaryConclusion ? behavior.label : null;

@@ -354,7 +354,7 @@ describe("CSV dry-run import UI workflow", () => {
     const dryRun = routes.find((route) => route.routeId === "import_dry_run");
 
     expect(dryRun).toMatchObject({
-      standalonePath: "/import-dry-run",
+      standalonePath: "/intelligence/import-dry-run",
       audience: "end_user",
       allowsRawJson: false,
       allowsExport: false,

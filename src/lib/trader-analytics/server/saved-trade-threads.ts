@@ -578,7 +578,7 @@ function buildMarketContextFindings(
     snapshot.review.insights
       .map((insight) => ({
         insight,
-        mapped: mapDecisionReviewInsightForUser(insight, "/trades"),
+        mapped: mapDecisionReviewInsightForUser(insight, "/intelligence/trades"),
       }))
       .filter(
         ({ mapped }) =>
@@ -720,7 +720,7 @@ function buildReentryVolumeComparisonFindings(args: {
             : "Re-entry kept strong volume",
         tone: behaviorId === "reentry_volume_faded" ? "risk" : "strength",
       },
-      "/trades",
+      "/intelligence/trades",
     );
 
     if (!mapped.canShowPrimary || mapped.evidenceChannel === "execution_only") {
@@ -1697,8 +1697,8 @@ function buildSessionStory(args: {
     priorityThread,
     tickerSummaries,
     reviewEvidence: evidence,
-    daySessionHref: `/trades/day-session/${encodeURIComponent(args.sessionDate)}`,
-    href: priorityThread?.href ?? "/analytics",
+    daySessionHref: `/intelligence/trades/day-session/${encodeURIComponent(args.sessionDate)}`,
+    href: priorityThread?.href ?? "/intelligence/analytics",
   };
 }
 
@@ -1818,7 +1818,7 @@ export function buildSavedTradeThreadReadModel(args: {
         heldOvernight,
         crossedSessionDate,
         minutesSincePreviousExit: minutesBetween(previousExitTime, entryTime),
-        href: `/trades/${encodeURIComponent(trade.id)}#execution`,
+        href: `/intelligence/trades/${encodeURIComponent(trade.id)}#execution`,
       };
     });
     const roundTripsWithDeltas = roundTrips.map((roundTrip, index) => {
@@ -1983,7 +1983,7 @@ export function buildSavedTradeThreadReadModel(args: {
       volumeStrengthCount: strengthCount(volumeFindings),
       volumeReviewPromptCount: reviewPromptCount(volumeFindings),
       ...story,
-      href: `/trades/ticker-story/${encodeURIComponent(id)}`,
+      href: `/intelligence/trades/ticker-story/${encodeURIComponent(id)}`,
     } satisfies SavedTradeThread;
   });
 

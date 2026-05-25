@@ -287,8 +287,8 @@ export function BehaviorReportPanel({
               href={
                 group.evidence[0]?.href ??
                 (group.id === "volume-reentry"
-                  ? "/trades?storyFilter=volume#ticker-stories"
-                  : "/trades?storyFilter=levels#ticker-stories")
+                  ? "/intelligence/trades?storyFilter=volume#ticker-stories"
+                  : "/intelligence/trades?storyFilter=levels#ticker-stories")
               }
             >
               {isCoach ? "Open coaching evidence" : group.actionLabel}

@@ -272,32 +272,32 @@ export function buildCoachProgressFollowThroughSummary(args: {
   let trendDetail =
     "Progress starts after saved trades exist. Until then the coach can only show a preview.";
   let trendTone: CoachProgressFollowThroughTone = "warning";
-  let nextActionHref = "/import-dry-run";
+  let nextActionHref = "/intelligence/import-dry-run";
   let nextActionLabel = "Import trades";
 
   if (importedTradeCount > 0 && completedReviewCount === 0) {
     trendLabel = "Not enough completed reviews yet";
     trendDetail =
       "The app can see saved trade history, but progress is not measured until you finish reviews and save the lessons.";
-    nextActionHref = "/review?queue=highest_priority";
+    nextActionHref = "/intelligence/review?queue=highest_priority";
     nextActionLabel = "Finish first review";
   } else if (completedReviewCount > 0 && completedReviewCount < 3) {
     trendLabel = "Needs more reviewed trades";
     trendDetail = `You have started reviewing ${activeFocusLabel}. Finish a few more evidence trades before treating the trend as meaningful.`;
     trendTone = "info";
-    nextActionHref = "/review?queue=highest_priority";
+    nextActionHref = "/intelligence/review?queue=highest_priority";
     nextActionLabel = "Review next evidence trade";
   } else if (completedReviewCount >= 3 && reviewBacklogCount > completedReviewCount) {
     trendLabel = "Review backlog still high";
     trendDetail = `There is enough review history to start watching ${activeFocusLabel}, but the backlog is still larger than the completed review set.`;
     trendTone = "warning";
-    nextActionHref = "/review?queue=highest_priority";
+    nextActionHref = "/intelligence/review?queue=highest_priority";
     nextActionLabel = "Reduce review backlog";
   } else if (completedReviewCount >= 3) {
     trendLabel = "Ready to watch the focus";
     trendDetail = `There are enough completed reviews to start checking whether ${activeFocusLabel} repeats less often in newer saved trades.`;
     trendTone = "success";
-    nextActionHref = "/progress#quality";
+    nextActionHref = "/intelligence/progress#quality";
     nextActionLabel = "Check quality trend";
   }
 

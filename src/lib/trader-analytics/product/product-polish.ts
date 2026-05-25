@@ -105,7 +105,7 @@ function confidencePhrase(
 }
 
 function routeForTradeIds(tradeIds: SavedExecutionTradeId[]): string {
-  return tradeIds[0] ? `/trades/${tradeIds[0]}` : "/review";
+  return tradeIds[0] ? `/intelligence/trades/${tradeIds[0]}` : "/intelligence/review";
 }
 
 function lastSeenSessionDate(args: {
@@ -183,7 +183,7 @@ export function buildProductEvidenceCards(args: {
         behavior: mapUserFacingBehavior({
           behaviorId: observation.taxonomyId,
           rawLabel: observation.label,
-          route: "/coach",
+          route: "/intelligence/coach",
         }),
       }))
       .filter(({ behavior }) => behavior.canDrivePrimaryConclusion)
@@ -226,7 +226,7 @@ export function buildProductEvidenceCards(args: {
         }),
       ),
       relatedTradeIds: [grade.tradeId],
-      primaryRoute: `/trades/${grade.tradeId}`,
+      primaryRoute: `/intelligence/trades/${grade.tradeId}`,
       reviewAction: grade.nextReviewAction,
       marketContextUsedForConclusion: false,
     }));
@@ -252,7 +252,7 @@ export function buildProductEvidenceCards(args: {
           }),
         ),
         relatedTradeIds: recommendation.relatedTradeIds,
-        primaryRoute: "/coach",
+        primaryRoute: "/intelligence/coach",
         reviewAction: "Review flagged trades before saving this as a rule.",
         marketContextUsedForConclusion: false,
       }));
@@ -270,7 +270,7 @@ export function buildProductEvidenceCards(args: {
       confidence: item.errorCount > 0 ? "high" : "medium",
       confidenceCopy: confidenceCopy(item.errorCount > 0 ? "high" : "medium"),
       relatedTradeIds: [],
-      primaryRoute: "/imports",
+      primaryRoute: "/intelligence/imports",
       reviewAction: item.primaryAction,
       marketContextUsedForConclusion: false,
     }));
@@ -749,7 +749,7 @@ export function buildCoachReviewQueue(args: {
       priority: repair.priority + 20,
       title: repair.title,
       reason: repair.issueSummary,
-      href: "/imports",
+      href: "/intelligence/imports",
       relatedTradeIds: repair.relatedTradeIds,
       nextAction: repair.suggestedFix,
     });
@@ -788,7 +788,7 @@ export function buildCoachReviewQueue(args: {
       priority: rule.readiness === "ready_to_test" ? 80 : 68,
       title: `Rule to test: ${rule.suggestedRuleTitle}`,
       reason: rule.reason,
-      href: "/coach",
+      href: "/intelligence/coach",
       relatedTradeIds: rule.flaggedTradeIds,
       nextAction: "Review linked trade replays in the rule lab before saving this rule.",
     });
@@ -801,7 +801,7 @@ export function buildCoachReviewQueue(args: {
       priority: 72,
       title: `${weakestTrade.symbol} lowest quality trade`,
       reason: weakestTrade.summary,
-      href: `/trades/${weakestTrade.tradeId}`,
+      href: `/intelligence/trades/${weakestTrade.tradeId}`,
       relatedTradeIds: [weakestTrade.tradeId],
       nextAction: weakestTrade.nextReviewAction,
     });

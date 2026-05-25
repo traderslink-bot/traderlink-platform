@@ -14,19 +14,19 @@ function normalizeRoute(
   route: MapUserFacingBehaviorInput["route"],
 ): UserFacingBehaviorRoute | null {
   if (
-    route === "/coach" ||
-    route === "/analytics" ||
-    route === "/review" ||
-    route === "/progress" ||
-    route === "/trades" ||
-    route === "/trades/[tradeId]" ||
+    route === "/intelligence/coach" ||
+    route === "/intelligence/analytics" ||
+    route === "/intelligence/review" ||
+    route === "/intelligence/progress" ||
+    route === "/intelligence/trades" ||
+    route === "/intelligence/trades/[tradeId]" ||
     route === "advanced"
   ) {
     return route;
   }
 
-  if (typeof route === "string" && route.startsWith("/trades/")) {
-    return "/trades/[tradeId]";
+  if (typeof route === "string" && route.startsWith("/intelligence/trades/")) {
+    return "/intelligence/trades/[tradeId]";
   }
 
   return null;

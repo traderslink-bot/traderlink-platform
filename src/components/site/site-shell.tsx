@@ -24,14 +24,17 @@ export function SiteShell({
   children,
   sectionHref = "/academy/",
   sectionLabel = "Academy Courses",
+  shellElement = "main",
 }: {
   children: ReactNode;
   sectionHref?: string;
   sectionLabel?: string;
+  shellElement?: "div" | "main";
 }) {
   const [theme, setTheme] = useState<SiteTheme>("light");
   const [auth, setAuth] = useState<SiteAuthSnapshot>(signedOutAuthSnapshot);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const ShellElement = shellElement;
   const logoSrc =
     theme === "light"
       ? "/logo-horizontal-light.png"
@@ -102,7 +105,7 @@ export function SiteShell({
   }
 
   return (
-    <main className="academy-shell" data-academy-theme={theme}>
+    <ShellElement className="academy-shell" data-academy-theme={theme}>
       <header className="academy-topbar">
         <div className="academy-topbar-inner">
           <div className="academy-brand">
@@ -162,7 +165,7 @@ export function SiteShell({
         </div>
       </header>
       {children}
-    </main>
+    </ShellElement>
   );
 }
 

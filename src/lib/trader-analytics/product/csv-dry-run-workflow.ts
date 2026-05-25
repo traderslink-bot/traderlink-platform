@@ -100,7 +100,7 @@ function primaryExecutionFeedbackPreviewLabel(
   const behavior = mapUserFacingBehavior({
     behaviorId: point.id,
     rawLabel: point.label,
-    route: "/trades",
+    route: "/intelligence/trades",
   });
 
   return behavior.canDrivePrimaryConclusion ? behavior.label : null;
@@ -1581,7 +1581,7 @@ function buildMobileQaPanel(): CsvDryRunMobileQaPanel {
     totalCount: panels.length,
     items: panels.map((panel) => ({
       id: `mobile-qa:import-dry-run:${panel.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`,
-      route: "/import-dry-run",
+      route: "/intelligence/import-dry-run",
       viewport: "mobile" as const,
       status: "contract_ready" as const,
       checks: [

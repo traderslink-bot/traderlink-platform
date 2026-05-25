@@ -320,7 +320,7 @@ describe("mapUserFacingBehavior", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "added_after_failed_premise",
       rawLabel: "Added After Failed Premise",
-      route: "/coach",
+      route: "/intelligence/coach",
     });
 
     expect(behavior.contractFound).toBe(true);
@@ -339,7 +339,7 @@ describe("mapUserFacingBehavior", () => {
       const behavior = mapUserFacingBehavior({
         behaviorId,
         rawLabel,
-        route: "/analytics",
+        route: "/intelligence/analytics",
       });
       const copy = visibleCopy(behavior).toLowerCase();
 
@@ -357,7 +357,7 @@ describe("mapUserFacingBehavior", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "revenge_reentry_cluster",
       rawLabel: "Revenge-Like Re-Entry Cluster",
-      route: "/coach",
+      route: "/intelligence/coach",
     });
 
     expect(behavior.contractFound).toBe(true);
@@ -372,7 +372,7 @@ describe("mapUserFacingBehavior", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "chased_entry",
       rawLabel: "Chased Entry",
-      route: "/coach",
+      route: "/intelligence/coach",
     });
 
     expect(behavior.state).toBe("review_prompt");
@@ -386,7 +386,7 @@ describe("mapUserFacingBehavior", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "overtraded_same_ticker",
       rawLabel: "Repeated risky ABCD trades",
-      route: "/coach",
+      route: "/intelligence/coach",
     });
 
     expect(behavior.state).toBe("certified_detection");
@@ -399,7 +399,7 @@ describe("mapUserFacingBehavior", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "size_expansion_after_adverse_price",
       rawLabel: "Size Expansion After Adverse Price",
-      route: "/analytics",
+      route: "/intelligence/analytics",
     });
 
     expect(behavior.contractFound).toBe(true);
@@ -419,7 +419,7 @@ describe("mapUserFacingBehavior", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "adds_increased_risk_into_weakness",
       rawLabel: "Adds increased risk into weakness",
-      route: "/trades/[tradeId]",
+      route: "/intelligence/trades/[tradeId]",
     });
 
     expect(behavior.contractFound).toBe(true);
@@ -435,7 +435,7 @@ describe("mapUserFacingBehavior", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "profitable_reduction_sequence",
       rawLabel: "Profitable Reduction Sequence",
-      route: "/analytics",
+      route: "/intelligence/analytics",
     });
 
     expect(behavior.contractFound).toBe(true);
@@ -464,7 +464,7 @@ describe("mapUserFacingBehavior", () => {
       const behavior = mapUserFacingBehavior({
         behaviorId,
         rawLabel: behaviorId,
-        route: "/trades/[tradeId]",
+        route: "/intelligence/trades/[tradeId]",
       });
       const copy = visibleCopy(behavior).toLowerCase();
 
@@ -489,7 +489,7 @@ describe("mapUserFacingBehavior", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "trade_window_excursion_measured",
       rawLabel: "Trade-window movement was measured",
-      route: "/trades/[tradeId]",
+      route: "/intelligence/trades/[tradeId]",
     });
 
     expect(behavior.contractFound).toBe(true);
@@ -510,7 +510,7 @@ describe("mapUserFacingBehavior", () => {
         title: "Exit needs after-exit chart check",
         tone: "neutral",
       },
-      "/coach",
+      "/intelligence/coach",
     );
 
     expect(finding.canShowPrimary).toBe(true);
@@ -535,7 +535,7 @@ describe("mapUserFacingBehavior", () => {
         title: "Large after-exit move needs review",
         tone: "neutral",
       },
-      "/trades/[tradeId]",
+      "/intelligence/trades/[tradeId]",
     );
 
     expect(finding.canShowPrimary).toBe(true);
@@ -552,7 +552,7 @@ describe("mapUserFacingBehavior", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "short_entry_near_daily_4h_support",
       rawLabel: "Short entry was close to support",
-      route: "/trades/[tradeId]",
+      route: "/intelligence/trades/[tradeId]",
     });
 
     expect(behavior.contractFound).toBe(false);
@@ -571,7 +571,7 @@ describe("mapUserFacingBehavior", () => {
         title: "Open profit was not protected",
         tone: "risk",
       },
-      "/trades/[tradeId]",
+      "/intelligence/trades/[tradeId]",
     );
 
     expect(finding.canShowPrimary).toBe(true);
@@ -594,7 +594,7 @@ describe("mapUserFacingBehavior", () => {
         title: "Protected profit before the fade",
         tone: "strength",
       },
-      "/coach",
+      "/intelligence/coach",
     );
 
     expect(finding.canShowPrimary).toBe(true);
@@ -621,7 +621,7 @@ describe("mapUserFacingBehavior", () => {
         title: "Managed the full trade constructively",
         tone: "strength",
       },
-      "/analytics",
+      "/intelligence/analytics",
     );
     const copy =
       `${finding.label} ${finding.detail} ${finding.reviewAction}`.toLowerCase();
@@ -652,7 +652,7 @@ describe("mapUserFacingBehavior", () => {
         title: "Added into strength and exited constructively",
         tone: "strength",
       },
-      "/coach",
+      "/intelligence/coach",
     );
     const copy =
       `${finding.label} ${finding.detail} ${finding.reviewAction}`.toLowerCase();
@@ -679,7 +679,7 @@ describe("mapUserFacingBehavior", () => {
         title: "Trade-window movement was measured",
         tone: "neutral",
       },
-      "/analytics",
+      "/intelligence/analytics",
     );
 
     expect(finding.canShowPrimary).toBe(true);
@@ -699,7 +699,7 @@ describe("mapUserFacingBehavior", () => {
         title: "Short entry was close to support",
         tone: "risk",
       },
-      "/trades/[tradeId]",
+      "/intelligence/trades/[tradeId]",
     );
 
     expect(finding.canShowPrimary).toBe(false);
@@ -712,7 +712,7 @@ describe("mapUserFacingBehavior", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "rapid_fire_execution_cluster",
       rawLabel: "Rapid Fire Execution Cluster",
-      route: "/coach",
+      route: "/intelligence/coach",
     });
 
     expect(behavior.contractFound).toBe(true);
@@ -726,7 +726,7 @@ describe("mapUserFacingBehavior", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "dominant_internal_pattern_42",
       rawLabel: "Dominant Internal Pattern 42",
-      route: "/coach",
+      route: "/intelligence/coach",
     });
 
     expect(behavior.contractFound).toBe(false);
@@ -744,7 +744,7 @@ describe("mapUserFacingBehavior", () => {
     const behavior = mapUserFacingBehavior({
       behaviorId: "all_or_nothing_exit_after_many_adds",
       rawLabel: "All-Or-Nothing Exit After Many Adds",
-      route: "/progress",
+      route: "/intelligence/progress",
     });
 
     expect(behavior.contractFound).toBe(false);

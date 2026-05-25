@@ -617,7 +617,7 @@ function buildReviewSessionCockpit(args: {
           ? "Fix blocking import issues"
           : "Review import warnings",
       reason: args.repairWizard.nextAction,
-      href: "/repair-wizard",
+      href: "/intelligence/repair-wizard",
       relatedTradeIds: [],
       sourceIds: args.repairWizard.steps.slice(0, 3).map((step) => step.id),
       nextAction: "Open the repair wizard.",
@@ -628,7 +628,7 @@ function buildReviewSessionCockpit(args: {
       lane: "import",
       title: "Check broker fixture trial",
       reason: `${args.harness.passCount} of ${args.harness.totalCount} synthetic fixture trials pass without repair.`,
-      href: "/import-trials",
+      href: "/intelligence/import-trials",
       relatedTradeIds: [],
       sourceIds: args.harness.results.map((result) => result.fixtureId).slice(0, 4),
       nextAction: "Open import trial results.",
@@ -639,7 +639,7 @@ function buildReviewSessionCockpit(args: {
       lane: "review",
       title: "Run the guided review",
       reason: args.analytics.improvementIntelligence.dailyCoachReport.fixNextSession,
-      href: "/review",
+      href: "/intelligence/review",
       relatedTradeIds:
         args.analytics.improvementIntelligence.dailyCoachReport.relatedTradeIds,
       sourceIds: ["daily-coach-report"],
@@ -653,7 +653,7 @@ function buildReviewSessionCockpit(args: {
       reason:
         topRule?.reason ??
         "The app needs more reviewed trades before a rule is ready.",
-      href: "/review-cockpit",
+      href: "/intelligence/review-cockpit",
       relatedTradeIds: topRule?.affectedTradeIds ?? [],
       sourceIds: topRule ? [topRule.id] : [],
       nextAction: "Inspect rule lifecycle simulation.",
@@ -667,7 +667,7 @@ function buildReviewSessionCockpit(args: {
         topQueue?.reason ??
         coach.mistakeTimeline.items[0]?.detail ??
         "Use the replay to inspect execution sequence.",
-      href: topQueue?.href ?? "/trades/trade-rapid-fire",
+      href: topQueue?.href ?? "/intelligence/trades/trade-rapid-fire",
       relatedTradeIds: topQueue?.relatedTradeIds ?? [],
       sourceIds: topQueue ? [topQueue.id] : ["mistake-timeline"],
       nextAction: "Open the trade and inspect entry, adds, reductions, and exit.",
@@ -678,7 +678,7 @@ function buildReviewSessionCockpit(args: {
       lane: "progress",
       title: "Check progress trend",
       reason: args.analytics.productPolish.executionQualityTrendline.reportTrendSummary,
-      href: "/progress",
+      href: "/intelligence/progress",
       relatedTradeIds: [],
       sourceIds: ["execution-quality-trendline"],
       nextAction: "Review quality and rule effectiveness trends.",
@@ -743,7 +743,7 @@ function buildRuleLifecycleSimulation(
 
 function buildTradeReplayVisualUpgradeContract(): TradeReplayVisualUpgradeContract {
   return {
-    route: "/trades/[tradeId]",
+    route: "/intelligence/trades/[tradeId]",
     markers: [
       {
         role: "initial_entry",
@@ -982,19 +982,19 @@ function buildBrokerFixtureLibrary(
 
 function buildMobileProductQaPass(): MobileProductQaPass {
   const routes = [
-    "/analytics",
-    "/coach",
-    "/imports",
-    "/import-dry-run",
-    "/import-trials",
-    "/repair-wizard",
-    "/review-cockpit",
-    "/review",
-    "/progress",
-    "/trades/[tradeId]",
-    "/compare-trades",
-    "/onboarding",
-    "/calibration",
+    "/intelligence/analytics",
+    "/intelligence/coach",
+    "/intelligence/imports",
+    "/intelligence/import-dry-run",
+    "/intelligence/import-trials",
+    "/intelligence/repair-wizard",
+    "/intelligence/review-cockpit",
+    "/intelligence/review",
+    "/intelligence/progress",
+    "/intelligence/trades/[tradeId]",
+    "/intelligence/compare-trades",
+    "/intelligence/onboarding",
+    "/intelligence/calibration",
   ];
   const items = routes.map((route) => ({
     id: `mobile-qa:${route}`,

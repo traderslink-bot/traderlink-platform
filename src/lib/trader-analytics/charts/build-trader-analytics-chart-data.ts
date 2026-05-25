@@ -371,7 +371,7 @@ function buildBehaviorRiskRates(args: {
     const behavior = mapUserFacingBehavior({
       behaviorId: row.id,
       rawLabel: row.rawLabel,
-      route: "/analytics",
+      route: "/intelligence/analytics",
     });
     const tone: TraderAnalyticsChartTone =
       row.value > 0

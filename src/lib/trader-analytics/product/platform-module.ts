@@ -282,7 +282,7 @@ export function buildDemoTraderIntelligencePlatformContext(args?: {
     role,
     planTier,
     entitlements: buildTraderIntelligenceEntitlements(planTier),
-    moduleMountPath: args?.moduleMountPath ?? "/dashboard/trader-intelligence",
+    moduleMountPath: args?.moduleMountPath ?? "/intelligence",
     environment: args?.environment ?? "standalone_demo",
     demoMode: true,
     generatedAt: DEMO_GENERATED_AT,
@@ -410,7 +410,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "analytics",
     label: "Analytics",
-    standalonePath: "/analytics",
+    standalonePath: "/intelligence/analytics",
     navGroup: "core",
     audience: "end_user",
     featureKey: "analytics_dashboard",
@@ -422,7 +422,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "imports",
     label: "Import Review",
-    standalonePath: "/imports",
+    standalonePath: "/intelligence/imports",
     navGroup: "workflow",
     audience: "end_user",
     featureKey: "csv_imports",
@@ -434,7 +434,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "import_dry_run",
     label: "Import Trades",
-    standalonePath: "/import-dry-run",
+    standalonePath: "/intelligence/import-dry-run",
     navGroup: "workflow",
     audience: "end_user",
     featureKey: "csv_imports",
@@ -446,7 +446,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "import_trials",
     label: "Import Trials",
-    standalonePath: "/import-trials",
+    standalonePath: "/intelligence/import-trials",
     navGroup: "health",
     audience: "end_user",
     featureKey: "csv_imports",
@@ -458,7 +458,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "repair_wizard",
     label: "Repair Wizard",
-    standalonePath: "/repair-wizard",
+    standalonePath: "/intelligence/repair-wizard",
     navGroup: "workflow",
     audience: "end_user",
     featureKey: "csv_imports",
@@ -470,7 +470,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "review_cockpit",
     label: "Review Cockpit",
-    standalonePath: "/review-cockpit",
+    standalonePath: "/intelligence/review-cockpit",
     navGroup: "workflow",
     audience: "end_user",
     featureKey: "guided_review",
@@ -482,7 +482,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "review",
     label: "Guided Review",
-    standalonePath: "/review",
+    standalonePath: "/intelligence/review",
     navGroup: "workflow",
     audience: "end_user",
     featureKey: "guided_review",
@@ -494,7 +494,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "coach",
     label: "Coach",
-    standalonePath: "/coach",
+    standalonePath: "/intelligence/coach",
     navGroup: "core",
     audience: "end_user",
     featureKey: "guided_review",
@@ -506,7 +506,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "session_recap",
     label: "Session Recap",
-    standalonePath: "/session-recap",
+    standalonePath: "/intelligence/session-recap",
     navGroup: "workflow",
     audience: "end_user",
     featureKey: "guided_review",
@@ -518,7 +518,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "compare_trades",
     label: "Compare Trades",
-    standalonePath: "/compare-trades",
+    standalonePath: "/intelligence/compare-trades",
     navGroup: "workflow",
     audience: "end_user",
     featureKey: "guided_review",
@@ -530,7 +530,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "onboarding",
     label: "Onboarding",
-    standalonePath: "/onboarding",
+    standalonePath: "/intelligence/onboarding",
     navGroup: "workflow",
     audience: "end_user",
     featureKey: "analytics_dashboard",
@@ -542,7 +542,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "progress",
     label: "Progress",
-    standalonePath: "/progress",
+    standalonePath: "/intelligence/progress",
     navGroup: "core",
     audience: "end_user",
     featureKey: "progress",
@@ -554,7 +554,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "import_health",
     label: "Import Health",
-    standalonePath: "/import-health",
+    standalonePath: "/intelligence/import-health",
     navGroup: "health",
     audience: "end_user",
     featureKey: "import_health",
@@ -566,7 +566,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "broker_mapping_admin",
     label: "Broker Mapping Admin",
-    standalonePath: "/admin/broker-mappings",
+    standalonePath: "/intelligence/admin/broker-mappings",
     navGroup: "admin",
     audience: "admin",
     featureKey: "broker_mapping_admin",
@@ -590,7 +590,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "trade_replay",
     label: "Trade Replay",
-    standalonePath: "/trades/[tradeId]",
+    standalonePath: "/intelligence/trades/[tradeId]",
     navGroup: "workflow",
     audience: "end_user",
     featureKey: "trade_replay",
@@ -602,7 +602,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "calibration",
     label: "Calibration",
-    standalonePath: "/calibration",
+    standalonePath: "/intelligence/calibration",
     navGroup: "health",
     audience: "end_user",
     featureKey: "analytics_dashboard",
@@ -614,7 +614,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "debug_trade_analysis",
     label: "Trade Analysis Debug",
-    standalonePath: "/debug/trade-analysis",
+    standalonePath: "/intelligence/debug/trade-analysis",
     navGroup: "debug",
     audience: "debug",
     featureKey: "debug_routes",
@@ -626,7 +626,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "debug_execution_feedback",
     label: "Execution Feedback Debug",
-    standalonePath: "/debug/execution-feedback",
+    standalonePath: "/intelligence/debug/execution-feedback",
     navGroup: "debug",
     audience: "debug",
     featureKey: "debug_routes",
@@ -638,7 +638,7 @@ const ROUTES: Omit<TraderIntelligenceRouteDefinition, "platformPath">[] = [
   {
     routeId: "debug_trader_analytics",
     label: "Trader Analytics Debug",
-    standalonePath: "/debug/trader-analytics",
+    standalonePath: "/intelligence/debug/trader-analytics",
     navGroup: "debug",
     audience: "debug",
     featureKey: "debug_routes",
@@ -656,9 +656,22 @@ function platformPathFor(
   const normalizedMount = mountPath.endsWith("/")
     ? mountPath.slice(0, -1)
     : mountPath;
+  const standaloneBasePath = "/intelligence";
 
-  if (standalonePath === "/analytics") {
+  if (standalonePath === "/account") {
+    return standalonePath;
+  }
+
+  if (standalonePath === standaloneBasePath) {
     return normalizedMount;
+  }
+
+  if (normalizedMount === standaloneBasePath) {
+    return standalonePath;
+  }
+
+  if (standalonePath.startsWith(`${standaloneBasePath}/`)) {
+    return `${normalizedMount}${standalonePath.slice(standaloneBasePath.length)}`;
   }
 
   return `${normalizedMount}${standalonePath}`;
@@ -701,19 +714,19 @@ export function auditTraderIntelligenceNoExportPolicy(args: {
   implementedStandalonePaths?: string[];
 }): TraderIntelligenceNoExportAudit {
   const implementedStandalonePaths = args.implementedStandalonePaths ?? [
-    "/analytics",
-    "/imports",
-    "/import-dry-run",
-    "/import-trials",
-    "/repair-wizard",
-    "/review-cockpit",
-    "/review",
-    "/progress",
-    "/calibration",
-    "/import-health",
-    "/admin/broker-mappings",
+    "/intelligence/analytics",
+    "/intelligence/imports",
+    "/intelligence/import-dry-run",
+    "/intelligence/import-trials",
+    "/intelligence/repair-wizard",
+    "/intelligence/review-cockpit",
+    "/intelligence/review",
+    "/intelligence/progress",
+    "/intelligence/calibration",
+    "/intelligence/import-health",
+    "/intelligence/admin/broker-mappings",
     "/account",
-    "/trades/[tradeId]",
+    "/intelligence/trades/[tradeId]",
   ];
   const routePaths = new Set(args.routes.map((route) => route.standalonePath));
 
@@ -952,10 +965,10 @@ export function buildTraderIntelligenceModuleReadinessViewModel(args?: {
         (route) =>
           route.implemented &&
           route.audience !== "debug" &&
-          route.standalonePath !== "/trades/[tradeId]",
+          route.standalonePath !== "/intelligence/trades/[tradeId]",
       )
       .map((route) => route.standalonePath),
-    "/trades/trade-rapid-fire",
+    "/intelligence/trades/trade-rapid-fire",
   ];
 
   return {

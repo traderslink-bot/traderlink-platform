@@ -453,7 +453,7 @@ describe("saved import API routes", () => {
     expect(review.source).toBe("saved_sqlite");
     expect(review.savedImportSourceCaution).toMatchObject({
       repairedImport: true,
-      href: `/imports/${encodeURIComponent(previewBody.plan.batch.id)}`,
+      href: `/intelligence/imports/${encodeURIComponent(previewBody.plan.batch.id)}`,
     });
     expect(review.savedReviewQueue.allItems).toEqual(
       expect.arrayContaining([

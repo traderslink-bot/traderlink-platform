@@ -21,12 +21,12 @@ export type UserFacingBehaviorEvidenceChannel =
   | "combined";
 
 export type UserFacingBehaviorRoute =
-  | "/coach"
-  | "/analytics"
-  | "/review"
-  | "/progress"
-  | "/trades"
-  | "/trades/[tradeId]"
+  | "/intelligence/coach"
+  | "/intelligence/analytics"
+  | "/intelligence/review"
+  | "/intelligence/progress"
+  | "/intelligence/trades"
+  | "/intelligence/trades/[tradeId]"
   | "advanced";
 
 export interface UserFacingBehaviorContract {

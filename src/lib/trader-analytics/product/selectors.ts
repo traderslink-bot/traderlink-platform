@@ -62,7 +62,7 @@ function pointDigest(point: ExecutionFeedbackPoint): TraderAnalyticsPointDigest 
   const behavior = mapUserFacingBehavior({
     behaviorId: point.id,
     rawLabel: point.label,
-    route: "/trades/[tradeId]",
+    route: "/intelligence/trades/[tradeId]",
   });
 
   return {

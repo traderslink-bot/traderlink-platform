@@ -16,19 +16,19 @@ const IMPORT_WORKFLOW_STEPS: Array<{
   {
     id: "upload",
     label: "Upload CSV",
-    href: "/upload-csv",
+    href: "/intelligence/upload-csv",
     detail: "Choose a broker CSV and let the app check and save it.",
   },
   {
     id: "recover",
     label: "Save or repair import",
-    href: "/imports",
+    href: "/intelligence/imports",
     detail: "Save clean files or fix only the rows that need attention.",
   },
   {
     id: "review",
     label: "Review saved trades",
-    href: "/trades",
+    href: "/intelligence/trades",
     detail: "Open trades, review queues, analytics, and the coach.",
   },
 ];
@@ -59,7 +59,7 @@ export function ImportWorkflowStrip({
         </div>
         <Link
           className="text-sm text-sky-300 hover:text-sky-200"
-          href={currentStep === "review" ? "/review?queue=highest_priority" : "/imports"}
+          href={currentStep === "review" ? "/intelligence/review?queue=highest_priority" : "/intelligence/imports"}
         >
           {currentStep === "review" ? "Open review queue" : "Open import history"}
         </Link>

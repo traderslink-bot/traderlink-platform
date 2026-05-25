@@ -201,7 +201,7 @@ describe("saved trade thread read model", () => {
     expect(model.threads[0]?.peakCumulativePnl).toBe(100);
     expect(model.threads[0]?.givebackFromPeak).toBe(40);
     expect(model.threads[0]?.roundTrips).toHaveLength(2);
-    expect(model.threads[0]?.href).toContain("/trades/ticker-story/");
+    expect(model.threads[0]?.href).toContain("/intelligence/trades/ticker-story/");
     expect(decodeURIComponent(model.threads[0]?.href ?? "")).toContain(
       "CYCN:2026-04-01",
     );
@@ -1292,13 +1292,13 @@ describe("saved trade thread read model", () => {
     expect(story?.reviewEvidence.map((item) => item.id)).toContain(
       "session-green-to-red",
     );
-    expect(story?.daySessionHref).toBe("/trades/day-session/2026-04-01");
+    expect(story?.daySessionHref).toBe("/intelligence/trades/day-session/2026-04-01");
     expect(story?.tickerSummaries.map((item) => item.symbol)).toEqual([
       "BBGI",
       "AVEX",
     ]);
     expect(story?.tickerSummaries[0]?.href).toContain(
-      "/trades/ticker-story/",
+      "/intelligence/trades/ticker-story/",
     );
     expect(story?.tickerSummaries[0]?.roundTripCount).toBe(1);
     expect(story?.fixFirstAction).toContain("changed the day");

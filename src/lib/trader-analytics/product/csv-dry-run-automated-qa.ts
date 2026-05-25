@@ -110,15 +110,15 @@ export interface CsvDryRunEndToEndWorkflowSimulation {
 }
 
 export interface CsvDryRunRouteSmokeContract {
-  routePath: "/import-dry-run";
-  sourcePath: "app/import-dry-run/import-dry-run-client.tsx";
+  routePath: "/intelligence/import-dry-run";
+  sourcePath: "app/intelligence/import-dry-run/import-dry-run-client.tsx";
   requiredPanelLabels: string[];
   bannedSurfacePhrases: string[];
 }
 
 export interface CsvDryRunVisualRegressionTarget {
   id: string;
-  routePath: "/import-dry-run";
+  routePath: "/intelligence/import-dry-run";
   viewport: "desktop" | "tablet" | "mobile";
   width: number;
   height: number;
@@ -127,7 +127,7 @@ export interface CsvDryRunVisualRegressionTarget {
 }
 
 export interface CsvDryRunVisualRegressionContract {
-  routePath: "/import-dry-run";
+  routePath: "/intelligence/import-dry-run";
   screenshotDependency: "playwright_chromium";
   targets: CsvDryRunVisualRegressionTarget[];
   bannedSurfacePhrases: string[];
@@ -678,8 +678,8 @@ export function runCsvDryRunEndToEndWorkflowSimulation(): CsvDryRunEndToEndWorkf
 
 export function buildCsvDryRunRouteSmokeContract(): CsvDryRunRouteSmokeContract {
   return {
-    routePath: "/import-dry-run",
-    sourcePath: "app/import-dry-run/import-dry-run-client.tsx",
+    routePath: "/intelligence/import-dry-run",
+    sourcePath: "app/intelligence/import-dry-run/import-dry-run-client.tsx",
     requiredPanelLabels: [
       "Import Session Summary",
       "Prototype Analysis",
@@ -715,13 +715,13 @@ export function buildCsvDryRunVisualRegressionContract(): CsvDryRunVisualRegress
   const requiredPanelLabels = routeContract.requiredPanelLabels;
 
   return {
-    routePath: "/import-dry-run",
+    routePath: "/intelligence/import-dry-run",
     screenshotDependency: "playwright_chromium",
     bannedSurfacePhrases: routeContract.bannedSurfacePhrases,
     targets: [
       {
         id: "visual:import-dry-run:desktop",
-        routePath: "/import-dry-run",
+        routePath: "/intelligence/import-dry-run",
         viewport: "desktop",
         width: 1440,
         height: 1200,
@@ -731,7 +731,7 @@ export function buildCsvDryRunVisualRegressionContract(): CsvDryRunVisualRegress
       },
       {
         id: "visual:import-dry-run:tablet",
-        routePath: "/import-dry-run",
+        routePath: "/intelligence/import-dry-run",
         viewport: "tablet",
         width: 900,
         height: 1200,
@@ -741,7 +741,7 @@ export function buildCsvDryRunVisualRegressionContract(): CsvDryRunVisualRegress
       },
       {
         id: "visual:import-dry-run:mobile",
-        routePath: "/import-dry-run",
+        routePath: "/intelligence/import-dry-run",
         viewport: "mobile",
         width: 390,
         height: 1200,

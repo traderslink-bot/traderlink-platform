@@ -14990,3 +14990,57 @@ Verification:
 
 - `npm run build:webpack` passed with the existing support-resistance dynamic
   dependency warning.
+
+## 2026-05-25 - Trader Intelligence Route Namespace
+
+Moved the Trader Journal / Trader Intelligence product into a single
+professional website namespace under `/intelligence`.
+
+Changes:
+
+- Moved the former top-level product routes under `app/intelligence`, including
+  the workspace dashboard, upload/import flow, review queue, analytics, coach,
+  progress, trades, import health/trials, review cockpit, calibration,
+  onboarding, session recap, compare trades, debug pages, and broker mapping
+  admin.
+- `/intelligence` is now the product home that replaces the old `/workspace`
+  page.
+- Added `app/intelligence/layout.tsx` so Intelligence uses the shared website
+  `SiteShell` while keeping `src/components/site/site-shell.tsx` as the
+  website-owned nav component.
+- Added a `SiteShell` wrapper element option so app/product pages can keep their
+  own `<main>` landmarks without nesting them inside another `<main>`.
+- Rewrote app/product links and Trader Intelligence route contracts to point at
+  `/intelligence/...`.
+- Kept API routes stable under `/api/...`; this pass changed user-facing page
+  routes, not API contracts.
+- Added Next redirects for the old public routes:
+  `/workspace`, `/analytics`, `/trades`, `/review`, `/imports`, `/coach`,
+  `/progress`, `/upload-csv`, `/trader-intelligence`, import diagnostics,
+  debug routes, and related workflow pages now redirect into `/intelligence`.
+
+Verification:
+
+- `npm run validate:academy-registry` passed with the expected non-Academy-ready
+  markdown warnings.
+- `npx tsc --noEmit --pretty false` passed after clearing stale generated
+  `.next` route type files.
+- Focused route/product tests passed:
+  `platform-ready-feature-module`, `map-user-facing-behavior`,
+  `saved-import-api-routes`, and `saved-trade-threads` passed 116 tests.
+- `npm run build:webpack` passed and the route table now shows the Intelligence
+  product under `/intelligence/...`, with the existing support-resistance
+  dynamic dependency warning.
+
+Known non-routing test caveat:
+
+- The broader `trader-import-automated-qa-harness` suite still has CSV fixture
+  expectation failures around missing-symbol/missing-price/open-leftover
+  handling and generic short grouping. Those failures are unrelated to the route
+  namespace migration and were not changed in this structural pass.
+
+Current best next step:
+
+- Deploy the `/intelligence` route namespace migration, smoke-test new routes
+  and old redirects live, then continue the durable Trader Intelligence database
+  adapter work separately.

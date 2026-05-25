@@ -118,7 +118,7 @@ function toPointDigest(point: ExecutionFeedbackPoint): TraderAnalyticsPointDiges
   const behavior = mapUserFacingBehavior({
     behaviorId: point.id,
     rawLabel: point.label,
-    route: "/analytics",
+    route: "/intelligence/analytics",
   });
 
   return {

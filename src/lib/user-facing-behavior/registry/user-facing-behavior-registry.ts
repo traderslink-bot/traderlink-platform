@@ -4,19 +4,19 @@ import type {
 } from "../types/user-facing-behavior-contract";
 
 const CORE_ROUTES: UserFacingBehaviorRoute[] = [
-  "/coach",
-  "/analytics",
-  "/review",
-  "/progress",
-  "/trades",
-  "/trades/[tradeId]",
+  "/intelligence/coach",
+  "/intelligence/analytics",
+  "/intelligence/review",
+  "/intelligence/progress",
+  "/intelligence/trades",
+  "/intelligence/trades/[tradeId]",
 ];
 
 const TRADE_REVIEW_ROUTES: UserFacingBehaviorRoute[] = [
-  "/coach",
-  "/analytics",
-  "/review",
-  "/trades/[tradeId]",
+  "/intelligence/coach",
+  "/intelligence/analytics",
+  "/intelligence/review",
+  "/intelligence/trades/[tradeId]",
 ];
 
 export const USER_FACING_BEHAVIOR_REGISTRY = [
@@ -2278,7 +2278,7 @@ export const USER_FACING_BEHAVIOR_REGISTRY = [
       "Review the repeated rule breaks and decide whether the threshold should change.",
     advancedHowDetected:
       "Mapped from repeated_rule_violation from saved rule evaluation output.",
-    routesAllowed: ["/coach", "/review", "/progress"],
+    routesAllowed: ["/intelligence/coach", "/intelligence/review", "/intelligence/progress"],
     copySafetyNotes: ["Keep this as rule review, not a trading instruction."],
     testCases: ["rule violation stays prompt-only"],
   },

@@ -13,7 +13,7 @@ function readRepoFile(path: string): string {
 describe("CSV dry-run decision-review boundary", () => {
   it("keeps the import dry-run client out of server market-analysis modules", () => {
     const clientSource = readRepoFile(
-      "app/import-dry-run/import-dry-run-client.tsx",
+      "app/intelligence/import-dry-run/import-dry-run-client.tsx",
     );
 
     expect(clientSource).not.toContain("levels-system-phase1");
