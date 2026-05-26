@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { SiteShell } from "@/src/components/site/site-shell";
+import smokeysLessonsImage from "@/app/news/images/smokeys-lessons/smokeys-lessons-blue-news.png";
 import { getCurrentAcademySession } from "@/app/academy/academy-server-session";
 import {
   getAcademyCoursePage,
@@ -469,6 +471,19 @@ export default async function NewsArticlePage({ params }: PageProps) {
                   </div>
                 </SectionCard>
               ) : null}
+
+              <section
+                aria-label="Learn Market Structure with Smokey"
+                className="news-surface-card news-smokeys-lessons-card"
+              >
+                <Image
+                  alt="Learn Market Structure with Smokey. 12 live lessons, 1 lesson per week, saved after each session."
+                  className="news-smokeys-lessons-image"
+                  placeholder="blur"
+                  sizes="(min-width: 1080px) 22rem, calc(100vw - 2rem)"
+                  src={smokeysLessonsImage}
+                />
+              </section>
             </aside>
           </div>
         </div>
