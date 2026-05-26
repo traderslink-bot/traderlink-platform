@@ -76,7 +76,7 @@ describe("runBatchTradeAnalysis", () => {
           summary: {
             candleSource: "levels_system_trade_window",
             supportResistance: {
-              supportCount: 6,
+              supportCount: 7,
               resistanceCount: 3,
             },
             marketStructure: {

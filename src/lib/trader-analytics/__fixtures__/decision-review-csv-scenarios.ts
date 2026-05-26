@@ -181,7 +181,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
   },
   {
     id: "short_completed_trade_smoke",
-    label: "Sell-starting trade stays out of long coaching",
+    label: "Sell-starting trade uses limited sell-side review",
     broker: "generic_execution_csv",
     csvText: [
       "Date,Time,Symbol,Side,Quantity,Price",
@@ -189,9 +189,9 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
       "2024-04-12,09:39:10,ABCD,Buy,100,1.2500",
     ].join("\n"),
     levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
-    expectedCompletedReviewCount: 0,
-    expectedInsightIds: [],
-    expectedMarketContextSource: null,
+    expectedCompletedReviewCount: 1,
+    expectedInsightIds: ["short_entry_had_room_to_support"],
+    expectedMarketContextSource: "levels_system_daily_4h",
   },
   {
     id: "open_position_skipped",

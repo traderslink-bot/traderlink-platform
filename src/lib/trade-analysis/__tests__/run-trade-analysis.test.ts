@@ -101,7 +101,7 @@ describe("runTradeAnalysis", () => {
       result.detectedPatterns.detectedPatterns.map(
         (pattern) => pattern.patternId,
       ),
-    ).toContain("entry_far_from_support_structure");
+    ).toContain("entry_near_support_structure");
     expect(
       "experimentalMarketStructure" in
         result.patternInput.supportResistanceContext,

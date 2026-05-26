@@ -2629,6 +2629,8 @@ function dryRunTradeGroupingRulesForBroker(
   }
 
   return {
+    allowSellStartingTrades:
+      broker === "generic_execution_csv" || broker === "auto",
     maxGapMinutes: 240,
     splitAtSessionBoundary: true,
   };

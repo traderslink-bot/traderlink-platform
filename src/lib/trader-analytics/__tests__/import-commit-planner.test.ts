@@ -157,7 +157,7 @@ describe("import commit planner", () => {
     expect(acknowledged.duplicateTradeFingerprints).toEqual([fingerprint]);
   });
 
-  it("blocks sell-starting uploads instead of saving unsupported short-side trades", () => {
+  it("plans sell-starting uploads as limited sell-side trades", () => {
     const csv = [
       "Date,Time,Symbol,Side,Quantity,Price,Commission,Fees,Amount,Currency",
       "2026-05-01,09:30:00,SHRT,Sell,100,10.00,1.00,0.10,998.90,USD",
@@ -169,11 +169,15 @@ describe("import commit planner", () => {
       },
     });
 
-    expect(plan.status).toBe("blocked");
-    expect(plan.savedTrades).toEqual([]);
-    expect(plan.blockingReasons.map((item) => item.id)).toContain(
-      "blocked:no-reconstructed-trades",
-    );
+    expect(plan.status).toBe("ready_to_commit");
+    expect(plan.savedTrades).toMatchObject([
+      {
+        symbol: "SHRT",
+        tradeDirection: "short",
+        lifecycleStatus: "closed",
+      },
+    ]);
+    expect(plan.blockingReasons).toEqual([]);
   });
 
   it("review-gates over-reduction splits and execution anomalies until acknowledged", () => {
@@ -201,11 +205,16 @@ describe("import commit planner", () => {
       "acknowledge_execution_anomaly",
     );
     expect(acknowledged.status).toBe("ready_to_commit");
-    expect(acknowledged.savedTrades).toHaveLength(1);
-    expect(acknowledged.savedTrades[0]).toMatchObject({
-      symbol: "OVER",
-      tradeDirection: "long",
-    });
+    expect(acknowledged.savedTrades).toMatchObject([
+      {
+        symbol: "OVER",
+        tradeDirection: "long",
+      },
+      {
+        symbol: "OVER",
+        tradeDirection: "short",
+      },
+    ]);
   });
 
   it("keeps share-size jump notes from blocking an otherwise clean save", () => {

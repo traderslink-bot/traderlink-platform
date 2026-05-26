@@ -126,7 +126,7 @@ describe("CSV dry-run import UI workflow", () => {
     );
   });
 
-  it("covers richer generic fixture shapes for unsupported sell starts, partial exits, and extended hours", () => {
+  it("covers richer generic fixture shapes for sell starts, partial exits, and extended hours", () => {
     const presets = Object.fromEntries(
       getCsvDryRunSamplePresets().map((preset) => [preset.id, preset]),
     );
@@ -143,10 +143,15 @@ describe("CSV dry-run import UI workflow", () => {
       broker: presets["preset:generic-extended-hours"].broker,
     });
 
-    expect(shortCover.tradeGroupingReview.totalCount).toBe(0);
+    expect(shortCover.tradeGroupingReview.items[0]).toMatchObject({
+      symbol: "IWM",
+      tradeDirection: "short",
+      lifecycleStatus: "closed",
+      finalPositionShares: 0,
+    });
     expect(
       shortCover.preview.importResult.issues.map((item) => item.code),
-    ).toContain("sell_starting_trade_skipped");
+    ).not.toContain("sell_starting_trade_skipped");
 
     expect(partialExits.tradeGroupingReview.items[0]).toMatchObject({
       symbol: "MSFT",

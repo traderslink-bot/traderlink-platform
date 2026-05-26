@@ -701,7 +701,7 @@ describe("saved import API routes", () => {
     );
   });
 
-  it("sets unsupported short-side imports aside instead of creating coaching claims", async () => {
+  it("keeps sell-side imports limited without creating short-coaching claims", async () => {
     const payload = {
       csvText: defensiveShortCsv,
       broker: "generic_execution_csv",
@@ -713,31 +713,29 @@ describe("saved import API routes", () => {
     };
     const previewBody = await (await previewImportBatch(jsonRequest(payload))).json();
 
-    expect(previewBody.plan.canCommitNow).toBe(false);
-    expect(previewBody.plan.savedTrades).toEqual([]);
-    expect(previewBody.plan.blockingReasons).toEqual(
+    expect(previewBody.plan.canCommitNow).toBe(true);
+    expect(previewBody.plan.savedTrades).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: "blocked:no-reconstructed-trades",
+          symbol: "DSCP",
+          tradeDirection: "short",
+          lifecycleStatus: "closed",
         }),
       ]),
     );
-    expect(previewBody.plan.issues).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          issueCode: "sell_starting_trade_skipped",
-        }),
-      ]),
-    );
+    expect(previewBody.plan.blockingReasons).toEqual([]);
+    expect(
+      previewBody.plan.issues.map((issue: { issueCode: string }) => issue.issueCode),
+    ).not.toContain("sell_starting_trade_skipped");
 
     const combinedSavedReadModels = JSON.stringify({
+      preview: previewBody,
       trades: await (await listTrades()).json(),
       analytics: await (await latestAnalytics()).json(),
       coach: await (await latestCoach()).json(),
       review: await (await latestReview()).json(),
     }).toLowerCase();
 
-    expect(combinedSavedReadModels).not.toContain("dscp");
     for (const forbidden of [
       "short-seller coaching",
       "short seller coaching",

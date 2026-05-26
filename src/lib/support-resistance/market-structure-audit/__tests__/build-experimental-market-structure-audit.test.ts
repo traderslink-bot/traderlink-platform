@@ -20,7 +20,7 @@ describe("buildExperimentalMarketStructureAudit", () => {
       failedTrades: 0,
       missingMarketStructureCount: 0,
       patternInputLeakCount: 0,
-      totalSupportLevels: 6,
+      totalSupportLevels: 7,
       totalResistanceLevels: 3,
     });
     expect(audit.totals.stateCounts.base_building).toBe(1);
@@ -39,7 +39,7 @@ describe("buildExperimentalMarketStructureAudit", () => {
       supportResistanceMode: "levels_system",
       patternInputContainsExperimentalMarketStructure: false,
       levelCounts: {
-        support: 6,
+        support: 7,
         resistance: 3,
       },
     });
@@ -121,7 +121,7 @@ describe("buildExperimentalMarketStructureAudit", () => {
       failedTrades: 0,
       missingMarketStructureCount: 0,
       patternInputLeakCount: 0,
-      totalSupportLevels: 6,
+      totalSupportLevels: 7,
       totalResistanceLevels: 3,
     });
     expect(audit.records[0]).toMatchObject({

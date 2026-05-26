@@ -32,7 +32,7 @@ describe("buildTradeAnalysisSummary", () => {
       candleSource: "levels_system_trade_window",
       supportResistanceMode: "levels_system",
       supportResistance: {
-        supportCount: 6,
+        supportCount: 7,
         resistanceCount: 3,
       },
       marketStructure: {
