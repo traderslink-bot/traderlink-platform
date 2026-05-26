@@ -6,8 +6,9 @@
 - Confirmed permanent local repo is
   `C:\Users\jerac\Documents\TraderLink\traderslink.pro`.
 - Confirmed local branch is now `main` tracking `origin/main`.
-- Confirmed source-of-truth commit is
-  `48f0fb8178ff513e229a16eb7ebd7d446aa40a6a`.
+- Confirmed PR #10 source-of-truth alignment merge commit is
+  `48f0fb8178ff513e229a16eb7ebd7d446aa40a6a`; later docs-only merge commits
+  may exist on `main`.
 - Deployed production from clean `main` with `npx vercel deploy --prod --yes`.
 - Current production deployment is `dpl_H1tehMKTuB3uSxCHHkVk73WabBD8`.
 - Confirmed production aliases `traderslink.pro` and `www.traderslink.pro`.

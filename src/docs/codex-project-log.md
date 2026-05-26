@@ -114,7 +114,9 @@ The active website repo is now:
 - `C:\Users\jerac\Documents\TraderLink\traderslink.pro`
 - branch: `main`
 - upstream: `origin/main`
-- source-of-truth commit: `48f0fb8178ff513e229a16eb7ebd7d446aa40a6a`
+- source-of-truth alignment merge commit:
+  `48f0fb8178ff513e229a16eb7ebd7d446aa40a6a`; later docs-only merge commits
+  may exist on `main`
 - production deployment: `dpl_H1tehMKTuB3uSxCHHkVk73WabBD8`
 
 Do not use stale sibling folders or deploy-candidate folders as website source

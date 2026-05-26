@@ -8,8 +8,9 @@ Last audited: 2026-05-26.
 - Git remote: `git@github.com:traderslink-bot/traderslink-trader-improvement-system.git`
 - Current source branch: `main`
 - Upstream tracking branch: `origin/main`
-- Current production/source-of-truth commit at audit time: `48f0fb8178ff513e229a16eb7ebd7d446aa40a6a`
-- Remote verification: that commit exists on `origin/main`.
+- Production app deployment commit at audit time: `48f0fb8178ff513e229a16eb7ebd7d446aa40a6a`
+- Remote verification: that commit exists in `origin/main`. `main` may include
+  later docs-only merge commits after the production app deployment.
 
 Do not deploy from `C:\Users\jerac\Documents\TraderLink` directly. It is a
 parent workspace. Sibling folders such as `website`, `trader-intelligence-v2`,
