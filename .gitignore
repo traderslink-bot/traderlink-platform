@@ -18,6 +18,7 @@ node_modules/
 # local app persistence
 /data/trader-intelligence.sqlite*
 /data/db-backups/
+/tools/big-time-pennies/bigtime-data/
 
 # next.js
 /.next/
