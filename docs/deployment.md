@@ -35,6 +35,18 @@ The local `.vercel/project.json` link contains:
 - `projectName`: `vercel-landing`
 - `settings.rootDirectory`: `null`
 
+## Feature Handoffs
+
+Feature work may be drafted in sibling folders or Codex worktrees, but those
+folders are not production deploy sources. When a feature agent says a page is
+ready to make live, use the central handoff note at:
+
+`C:\Users\jerac\Documents\TraderLink\WEBSITE_DEPLOY_HANDOFF.md`
+
+The website manager should port only the intended files into this repo, preserve
+unrelated dirty work, follow the branch/PR policy, and deploy only from a clean
+`main` checkout.
+
 ## Deployment Mode
 
 The latest production deployment was created from a clean `main` checkout by the Vercel CLI:
@@ -62,7 +74,8 @@ Branch and repository policy:
 - GitHub CI runs on PRs and `main` pushes. Do not merge or deploy unless CI is
   green.
 - Production deploys should be made only from a clean local `main` checkout
-  until Git-connected Vercel production deploys from `main` are confirmed.
+  after the intended commit exists on `origin/main`, until Git-connected Vercel
+  production deploys from `main` are confirmed.
 
 ## Build
 

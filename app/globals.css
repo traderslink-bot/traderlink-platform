@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  color-scheme: light;
   --tl-bg: #050a14;
   --tl-surface: #0b1626;
   --tl-surface-elevated: #10213a;
@@ -28,13 +29,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
@@ -361,6 +355,7 @@ body {
 }
 
 .academy-shell {
+  color-scheme: light;
   --academy-bg: #f6f8fc;
   --academy-bg-strong: #e9eef8;
   --academy-surface: #ffffff;
@@ -401,6 +396,7 @@ body {
 }
 
 .academy-shell[data-academy-theme="dark"] {
+  color-scheme: dark;
   --academy-bg: #0c111c;
   --academy-bg-strong: #111827;
   --academy-surface: #171f2d;

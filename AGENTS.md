@@ -28,8 +28,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Remote: `git@github.com:traderslink-bot/traderslink-trader-improvement-system.git`.
 - On 2026-05-26, production Vercel deployment `dpl_H1tehMKTuB3uSxCHHkVk73WabBD8` was deployed from clean `main` at commit `48f0fb8178ff513e229a16eb7ebd7d446aa40a6a`.
 - The Vercel project is `vercel-landing` (`prj_TFzKcdj4dS6BHv2maWsy7M5AEv2a`, org/team `team_D1yNeyNl1qTvK0pAWMu5nTWY`) with production aliases `traderslink.pro` and `www.traderslink.pro`.
-- Production deploys are currently Vercel CLI deploys (`source: cli`), not verified Git-connected auto-deploys. Until a formal Git production branch is configured, deploy production only from a clean `traderslink.pro` checkout on `main` after pushing the intended commit.
+- Production deploys are currently Vercel CLI deploys (`source: cli`), not verified Git-connected auto-deploys. Until a formal Git production branch is configured, deploy production only from a clean `traderslink.pro` checkout on `main` after the intended commit exists on `origin/main`.
 - GitHub ruleset `Protect main` requires PRs and blocks deletion/non-fast-forward updates. The required approving review count is `0` because this repo currently has only the `traderslink-bot` maintainer account; CI must still be green before merge/deploy.
+- Feature work completed in sibling folders should be handed off through `C:\Users\jerac\Documents\TraderLink\WEBSITE_DEPLOY_HANDOFF.md` or equivalent chat notes. Do not deploy sibling-folder work directly; port only the intended files into this repo and follow the branch/PR policy before deploying.
 - The shared top navigation lives in `src/components/site/site-shell.tsx` and is re-exported by `app/site-shell.tsx`. Do not create separate Academy, News, or Intelligence topbars.
 - Canonical feature roots are `app/academy`, `app/news`, and `app/intelligence`. Former workspace routes should redirect in `next.config.ts`; do not recreate duplicate top-level app pages for them.
 - Read `docs/site-architecture.md`, `docs/routes.md`, `docs/deployment.md`, and `docs/auth.md` before structural, deployment, route, or auth changes.

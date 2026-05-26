@@ -550,22 +550,6 @@ export default async function BigTimePennyArticlePage({ params }: PageProps) {
             </div>
 
             <aside className="news-sidebar-stack">
-              <SectionCard kicker="Source" title={article.sourceName}>
-                <p className="news-muted catalyst-source-attribution">
-                  {article.sourceAttribution || "Based on the linked source article."}
-                </p>
-                {article.sourceUrl ? (
-                  <a
-                    className="news-secondary-action"
-                    href={article.sourceUrl}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    View original article
-                  </a>
-                ) : null}
-              </SectionCard>
-
               {availableCourses.length > 0 ? (
                 <SectionCard kicker="Available Now" title="Begin The Academy Path">
                   <div className="academy-module-list news-academy-course-list">

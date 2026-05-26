@@ -274,9 +274,7 @@ function SocialIconLink({
 }
 
 function getThemeSnapshot(): SiteTheme {
-  const savedTheme =
-    window.localStorage.getItem(themeStorageKey) ??
-    window.localStorage.getItem(legacyThemeStorageKey);
+  const savedTheme = window.localStorage.getItem(themeStorageKey);
 
   return savedTheme === "dark" || savedTheme === "light" ? savedTheme : "light";
 }
