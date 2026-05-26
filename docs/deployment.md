@@ -1,15 +1,15 @@
 # TradersLink Deployment
 
-Last audited: 2026-05-25.
+Last audited: 2026-05-26.
 
 ## Source Repo
 
 - Permanent local repo: `C:\Users\jerac\Documents\TraderLink\traderslink.pro`
 - Git remote: `git@github.com:traderslink-bot/traderslink-trader-improvement-system.git`
-- Current branch: `codex/news-on-live-academy`
-- Upstream tracking branch: `origin/codex/news-on-live-academy`
-- Current production commit at audit time: `7e6c5a4e50ef8f988fdbc2c43d5f985047853ace`
-- Remote verification: that commit exists on `origin/codex/news-on-live-academy`.
+- Current source branch: `main`
+- Upstream tracking branch: `origin/main`
+- Current production/source-of-truth commit at audit time: `48f0fb8178ff513e229a16eb7ebd7d446aa40a6a`
+- Remote verification: that commit exists on `origin/main`.
 
 Do not deploy from `C:\Users\jerac\Documents\TraderLink` directly. It is a
 parent workspace. Sibling folders such as `website`, `trader-intelligence-v2`,
@@ -25,7 +25,7 @@ they have been reconciled against the permanent repo and current production.
 - Node version: `24.x`
 - Root directory: project root (`.`). In `.vercel/project.json`, `settings.rootDirectory` is `null`, which maps to the repo root.
 - Production aliases: `traderslink.pro`, `www.traderslink.pro`
-- Current production deployment at audit time: `dpl_EKrvi1wn3BZvGt48xhr3xQFPDV2f`
+- Current production deployment at audit time: `dpl_H1tehMKTuB3uSxCHHkVk73WabBD8`
 
 The local `.vercel/project.json` link contains:
 
@@ -36,27 +36,32 @@ The local `.vercel/project.json` link contains:
 
 ## Deployment Mode
 
-The latest production deployment was created by the Vercel CLI:
+The latest production deployment was created from a clean `main` checkout by the Vercel CLI:
 
 - Deployment source: `cli`
 - Deployment command used: `npx vercel deploy --prod --yes`
 - Deployment commit metadata:
-  - ref: `codex/news-on-live-academy`
-  - sha: `7e6c5a4e50ef8f988fdbc2c43d5f985047853ace`
-  - message: `Establish TradersLink site source of truth`
+  - local branch: `main`
+  - sha: `48f0fb8178ff513e229a16eb7ebd7d446aa40a6a`
+  - message: `Align main with live TradersLink website`
 
-The Vercel project API reports Git deployment creation as enabled, but no
-production branch or Git repository binding was confirmed from the project
-metadata. Treat production deploys as CLI-controlled until the Vercel dashboard
-is explicitly configured and verified for Git-connected deploys.
+Vercel did not create a new production deployment automatically when PR #10
+merged into `main`. Treat production deploys as CLI-controlled until the Vercel
+dashboard is explicitly configured and verified for Git-connected deploys from
+`main`.
 
-Recommended branch policy:
+Branch and repository policy:
 
-- Short term: keep production deploys on `codex/news-on-live-academy` because
-  that is the verified branch currently backing production.
-- Longer term: promote this branch to `main` or merge it into `main`, configure
-  Vercel production to track `main`, then update this document after one clean
-  Git-connected production deployment is verified.
+- `main` is the source-of-truth branch.
+- GitHub ruleset `Protect main` requires pull requests, blocks deletion, and
+  blocks non-fast-forward updates.
+- The ruleset approval count is `0` because the repo currently has only the
+  `traderslink-bot` maintainer account; a one-review rule made `main`
+  unmergeable.
+- GitHub CI runs on PRs and `main` pushes. Do not merge or deploy unless CI is
+  green.
+- Production deploys should be made only from a clean local `main` checkout
+  until Git-connected Vercel production deploys from `main` are confirmed.
 
 ## Build
 

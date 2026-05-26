@@ -1,5 +1,28 @@
 # TradersLink Codex Project Log
 
+## 2026-05-26 Main Source-Of-Truth Alignment
+
+- Merged PR #10, `Align main with live TradersLink website`, into `main`.
+- Confirmed permanent local repo is
+  `C:\Users\jerac\Documents\TraderLink\traderslink.pro`.
+- Confirmed local branch is now `main` tracking `origin/main`.
+- Confirmed source-of-truth commit is
+  `48f0fb8178ff513e229a16eb7ebd7d446aa40a6a`.
+- Deployed production from clean `main` with `npx vercel deploy --prod --yes`.
+- Current production deployment is `dpl_H1tehMKTuB3uSxCHHkVk73WabBD8`.
+- Confirmed production aliases `traderslink.pro` and `www.traderslink.pro`.
+- Confirmed live BigTime week-ahead route:
+  `/small-cap-stocks/week-ahead/potential-catalysts-for-may-26-29`.
+- Fixed CI blockers before merging `main`:
+  - generic CSV sell-starting trades now group as limited sell-side review
+  - levels-system deterministic support/resistance fixture expectations were
+    updated to the current 7-support-level sample
+  - levels-system runtime test no longer assumes CI has the local IBKR candle
+    warehouse
+- GitHub ruleset `Protect main` still requires PRs and blocks destructive
+  branch updates, but its approving-review count was changed from `1` to `0`
+  because the repo currently has only the `traderslink-bot` maintainer account.
+
 ## 2026-05-25 Whole Site Audit
 
 - Confirmed `C:\Users\jerac\Documents\TraderLink` is a parent workspace, not the website Git repo.
