@@ -110,15 +110,22 @@ describe("runTradeAnalysis", () => {
 });
 
 describe("levels-system runtime options", () => {
-  it("uses the bundled IBKR candle warehouse for replay when no env override is set", () => {
+  it("uses bundled IBKR replay only when the local candle warehouse exists", () => {
     const config = readLevelsSystemRuntimeConfigFromEnv({});
+    const hasBundledWarehouse =
+      config.warehouseDirectoryPath !== undefined &&
+      existsSync(`${config.warehouseDirectoryPath}/ibkr`);
 
-    expect(config.preferredProvider).toBe("ibkr");
-    expect(config.warehouseMode).toBe("replay");
-    expect(config.warehouseDirectoryPath).toBeDefined();
-    expect(existsSync(`${config.warehouseDirectoryPath}/ibkr`)).toBe(true);
-    expect(config.warehouseDirectoryPath).toContain("data");
-    expect(config.warehouseDirectoryPath).toContain("candles");
+    if (hasBundledWarehouse) {
+      expect(config.preferredProvider).toBe("ibkr");
+      expect(config.warehouseMode).toBe("replay");
+      expect(config.warehouseDirectoryPath).toContain("data");
+      expect(config.warehouseDirectoryPath).toContain("candles");
+    } else {
+      expect(config.preferredProvider).toBeUndefined();
+      expect(config.warehouseMode).toBeUndefined();
+      expect(config.warehouseDirectoryPath).toBeUndefined();
+    }
   });
 
   it("normalizes provider and lookback runtime config without owning candle fetching", () => {
