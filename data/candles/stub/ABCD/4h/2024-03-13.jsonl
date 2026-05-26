@@ -1,0 +1,4 @@
+{"timestamp":1710351210000,"open":4.6,"high":4.7398,"low":4.4769,"close":4.5701,"volume":714762,"symbol":"ABCD","provider":"stub","timeframe":"4h","sourceFetchedAt":1777996547409,"adjustmentMode":"raw"}
+{"timestamp":1710355450000,"open":4.6,"high":4.7398,"low":4.4769,"close":4.5701,"volume":714762,"symbol":"ABCD","provider":"stub","timeframe":"4h","sourceFetchedAt":1777996545208,"adjustmentMode":"raw"}
+{"timestamp":1710365610000,"open":4.5494,"high":4.5975,"low":4.5033,"close":4.5353,"volume":505625,"symbol":"ABCD","provider":"stub","timeframe":"4h","sourceFetchedAt":1777996547409,"adjustmentMode":"raw"}
+{"timestamp":1710369850000,"open":4.5494,"high":4.5975,"low":4.5033,"close":4.5353,"volume":505625,"symbol":"ABCD","provider":"stub","timeframe":"4h","sourceFetchedAt":1777996545208,"adjustmentMode":"raw"}

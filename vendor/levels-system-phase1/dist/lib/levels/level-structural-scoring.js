@@ -1,0 +1,259 @@
+// 2026-04-17 09:54 PM America/Toronto
+// Compute structural level strength from timeframe quality, reactions, cleanliness, and defense history.
+import { LEVEL_SCORE_CONFIG } from "./level-score-config.js";
+import { clamp, getZoneWidthPct, safeDivide } from "./level-zone-utils.js";
+function timeframeBaseScore(timeframe) {
+    switch (timeframe) {
+        case "daily":
+            return 20;
+        case "4h":
+            return 16;
+        case "1h":
+            return 12;
+        case "15m":
+            return 8;
+        case "5m":
+        default:
+            return 5;
+    }
+}
+function computeTimeframeScore(level) {
+    const strongest = level.sourceTimeframes.reduce((best, timeframe) => Math.max(best, timeframeBaseScore(timeframe)), 0);
+    const confluenceBonus = clamp((new Set(level.sourceTimeframes).size - 1) * 1.5, 0, 4);
+    return clamp(strongest + confluenceBonus, 0, 20);
+}
+function computeTouchScore(meaningfulTouchCount) {
+    if (meaningfulTouchCount >= 5) {
+        return 15;
+    }
+    if (meaningfulTouchCount === 4) {
+        return 13;
+    }
+    if (meaningfulTouchCount === 3) {
+        return 11;
+    }
+    if (meaningfulTouchCount === 2) {
+        return 8;
+    }
+    if (meaningfulTouchCount === 1) {
+        return 4;
+    }
+    return 0;
+}
+function computeReactionQualityScore(level) {
+    if (level.touches.length === 0) {
+        return 0;
+    }
+    const positiveReactionTouches = level.touches.filter((touch) => touch.reactionType !== "tap" &&
+        touch.reactionType !== "clean_break" &&
+        (touch.closedAwayFromLevel ||
+            touch.wickRejectStrength >= 0.4 ||
+            touch.bodyRejectStrength >= 0.4 ||
+            touch.reactionType === "failed_break" ||
+            touch.reactionType === "reclaim"));
+    if (positiveReactionTouches.length === 0) {
+        return 0;
+    }
+    const closeAwayRate = positiveReactionTouches.filter((touch) => touch.closedAwayFromLevel).length /
+        positiveReactionTouches.length;
+    const averageWickStrength = positiveReactionTouches.reduce((sum, touch) => sum + touch.wickRejectStrength, 0) /
+        positiveReactionTouches.length;
+    const averageBodyStrength = positiveReactionTouches.reduce((sum, touch) => sum + touch.bodyRejectStrength, 0) /
+        positiveReactionTouches.length;
+    const breakDominance = clamp(safeDivide(level.cleanBreakCount - level.reclaimCount, Math.max(level.touchCount, 1), 0), 0, 1);
+    const defenseSignal = clamp(safeDivide(level.failedBreakCount * 1.1 + level.reclaimCount * 1.35, Math.max(level.touchCount, 1), 0), 0, 1);
+    const latestMeaningfulTouch = [...level.touches]
+        .reverse()
+        .find((touch) => touch.reactionType !== "tap");
+    const latestBreakPenalty = latestMeaningfulTouch?.reactionType === "clean_break" ? 2.5 : 0;
+    return clamp((closeAwayRate * 0.35 +
+        averageWickStrength * 0.25 +
+        averageBodyStrength * 0.2 +
+        defenseSignal * 0.2) *
+        15 -
+        breakDominance * 3 -
+        latestBreakPenalty, 0, 15);
+}
+function computeReactionMagnitudeScore(level, config) {
+    const averageComponent = clamp(safeDivide(level.averageReactionMovePct, config.touchThresholds.minReactionMovePct * 3, 0), 0, 1);
+    const strongestComponent = clamp(safeDivide(level.strongestReactionMovePct, config.touchThresholds.minReactionMovePct * 5, 0), 0, 1);
+    return clamp((averageComponent * 0.6 + strongestComponent * 0.4) * 10, 0, 10);
+}
+function computeVolumeScore(level) {
+    const averageComponent = clamp((level.averageVolumeRatio - 1) / 1.1, 0, 1);
+    const strongestComponent = clamp((level.bestVolumeRatio - 1) / 1.8, 0, 1);
+    return clamp((averageComponent * 0.55 + strongestComponent * 0.45) * 10, 0, 10);
+}
+function computeCleanlinessScore(level) {
+    const targetStdDev = getZoneWidthPct(level.price) * 0.8;
+    const penaltyRatio = clamp(safeDivide(level.cleanlinessStdDevPct, Math.max(targetStdDev, 0.0002), 1), 0, 1.2);
+    return clamp((1 - Math.min(penaltyRatio, 1)) * 10, 0, 10);
+}
+function computeRoleFlipScore(roleFlipCount) {
+    if (roleFlipCount >= 3) {
+        return 8;
+    }
+    if (roleFlipCount === 2) {
+        return 6;
+    }
+    if (roleFlipCount === 1) {
+        return 4;
+    }
+    return 0;
+}
+function computeDefenseScore(level) {
+    const defenseEvidence = level.failedBreakCount * 1.15 + level.reclaimCount * 1.5 + level.rejectionCount * 0.45;
+    const baseScore = clamp((Math.min(defenseEvidence, 4) / 4) * 8, 0, 8);
+    const breakDominance = clamp(safeDivide(level.cleanBreakCount - level.reclaimCount, Math.max(level.cleanBreakCount, 1), 0), 0, 1);
+    return clamp(baseScore * (1 - breakDominance * 0.65), 0, 8);
+}
+function computeRecencyScore(barsSinceLastReaction, config) {
+    if (barsSinceLastReaction <= config.recencyBars.fresh) {
+        return 8;
+    }
+    if (barsSinceLastReaction <= config.recencyBars.recent) {
+        return 6.5;
+    }
+    if (barsSinceLastReaction <= config.recencyBars.warm) {
+        return 5;
+    }
+    if (barsSinceLastReaction <= config.recencyBars.aging) {
+        return 3;
+    }
+    return 1;
+}
+function durabilityLabelForScore(score) {
+    if (score >= 8) {
+        return "reinforced";
+    }
+    if (score >= 6) {
+        return "durable";
+    }
+    if (score >= 4) {
+        return "tested";
+    }
+    return "fragile";
+}
+function computeDurabilityProfile(level, config) {
+    const latestMeaningfulTouch = [...level.touches]
+        .reverse()
+        .find((touch) => touch.reactionType !== "tap");
+    const recentMeaningfulReactions = level.touches
+        .filter((touch) => touch.reactionMovePct > 0)
+        .map((touch) => touch.reactionMovePct)
+        .slice(-3);
+    const shrinkingReactions = recentMeaningfulReactions.length >= 3 &&
+        recentMeaningfulReactions[2] <= recentMeaningfulReactions[1] &&
+        recentMeaningfulReactions[1] <= recentMeaningfulReactions[0] * 1.05;
+    const defenseEvidence = clamp(safeDivide(level.failedBreakCount * 1.1 + level.reclaimCount * 1.35 + level.rejectionCount * 0.45, Math.max(level.touchCount, 1), 0), 0, 1.2);
+    const reactionStrength = clamp(safeDivide(level.averageReactionMovePct * 0.55 + level.strongestReactionMovePct * 0.45, config.touchThresholds.minReactionMovePct * 3.8, 0), 0, 1);
+    const recencyFactor = level.barsSinceLastReaction <= config.recencyBars.recent
+        ? 1
+        : level.barsSinceLastReaction <= config.recencyBars.aging
+            ? 0.6
+            : 0.25;
+    const fatigueBase = clamp(safeDivide(Math.max(level.touchCount - 4, 0), 4, 0), 0, 1);
+    const qualityShield = clamp(defenseEvidence * 0.65 + reactionStrength * 0.35, 0, 1);
+    const fatiguePenalty = fatigueBase * (1 - qualityShield * 0.7);
+    const breakDamage = clamp(safeDivide(level.cleanBreakCount - level.reclaimCount, Math.max(level.touchCount, 1), 0), 0, 1);
+    const latestBreakPenalty = latestMeaningfulTouch?.reactionType === "clean_break" ? 0.18 : 0;
+    const latestReclaimBonus = latestMeaningfulTouch?.reactionType === "reclaim" ? 0.08 : 0;
+    const stabilityFactor = shrinkingReactions ? 0.45 : 1;
+    const durabilityScore = clamp((defenseEvidence * 0.38 +
+        reactionStrength * 0.24 +
+        recencyFactor * 0.14 +
+        stabilityFactor * 0.12 +
+        latestReclaimBonus -
+        fatiguePenalty * 0.18 -
+        breakDamage * 0.24 -
+        latestBreakPenalty) *
+        10, 0, 10);
+    const durabilityLabel = durabilityLabelForScore(durabilityScore);
+    const durabilityAdjustment = durabilityLabel === "reinforced"
+        ? 4
+        : durabilityLabel === "durable"
+            ? 2
+            : durabilityLabel === "tested"
+                ? 0
+                : -4;
+    return {
+        durabilityScore,
+        durabilityAdjustment,
+        durabilityLabel,
+    };
+}
+function computeOvertestPenalty(level) {
+    if (level.touchCount <= 4) {
+        return 0;
+    }
+    const excessTouches = level.touchCount - 4;
+    const qualityFactor = clamp(safeDivide(level.averageReactionMovePct + level.strongestReactionMovePct, 0.12, 0) * 0.6 +
+        safeDivide(level.rejectionCount + level.failedBreakCount + level.reclaimCount, Math.max(level.touchCount, 1), 0) *
+            0.4, 0, 1);
+    const weaknessFactor = 1 - qualityFactor;
+    return -clamp(excessTouches * (1.45 + weaknessFactor * 1.75), 0, 10);
+}
+function computeBreakDamagePenalty(level) {
+    if (level.cleanBreakCount <= level.reclaimCount) {
+        return 0;
+    }
+    const breakDominance = clamp(safeDivide(level.cleanBreakCount - level.reclaimCount, Math.max(level.cleanBreakCount, 1), 0), 0, 1);
+    const weakReactionFactor = 1 - clamp(safeDivide(level.averageReactionMovePct + level.strongestReactionMovePct, 0.09, 0), 0, 1);
+    return -clamp(6 + breakDominance * 2.5 + weakReactionFactor * 1.5, 0, 10);
+}
+export function computeStructuralStrengthScore(level, config = LEVEL_SCORE_CONFIG) {
+    const timeframeScore = computeTimeframeScore(level);
+    const touchScore = computeTouchScore(level.meaningfulTouchCount);
+    const reactionQualityScore = computeReactionQualityScore(level);
+    const reactionMagnitudeScore = computeReactionMagnitudeScore(level, config);
+    const volumeScore = computeVolumeScore(level);
+    const cleanlinessScore = computeCleanlinessScore(level);
+    const roleFlipScore = computeRoleFlipScore(level.roleFlipCount);
+    const defenseScore = computeDefenseScore(level);
+    const recencyScore = computeRecencyScore(level.barsSinceLastReaction, config);
+    const durabilityProfile = computeDurabilityProfile(level, config);
+    const breakDamagePenalty = computeBreakDamagePenalty(level);
+    const overtestPenalty = computeOvertestPenalty(level);
+    const clusterPenalty = clamp(level.clusterPenalty ?? 0, -config.penalties.clusterMax, 0);
+    const structuralStrengthScore = clamp(timeframeScore +
+        touchScore +
+        reactionQualityScore +
+        reactionMagnitudeScore +
+        volumeScore +
+        cleanlinessScore +
+        roleFlipScore +
+        defenseScore +
+        recencyScore +
+        durabilityProfile.durabilityAdjustment +
+        breakDamagePenalty +
+        overtestPenalty +
+        clusterPenalty, 0, 100);
+    return {
+        structuralStrengthScore,
+        scoreBreakdown: {
+            timeframeScore,
+            touchScore,
+            reactionQualityScore,
+            reactionMagnitudeScore,
+            volumeScore,
+            cleanlinessScore,
+            roleFlipScore,
+            defenseScore,
+            recencyScore,
+            durabilityScore: durabilityProfile.durabilityScore,
+            durabilityAdjustment: durabilityProfile.durabilityAdjustment,
+            breakDamagePenalty,
+            overtestPenalty,
+            clusterPenalty,
+            structuralStrengthScore,
+            distanceToPriceScore: 0,
+            freshReactionScore: 0,
+            intradayPressureScore: 0,
+            recentVolumeActivityScore: 0,
+            currentInteractionScore: 0,
+            activeRelevanceScore: 0,
+            finalLevelScore: 0,
+        },
+        durabilityLabel: durabilityProfile.durabilityLabel,
+    };
+}

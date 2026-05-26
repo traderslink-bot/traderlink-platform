@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Candlestick anatomy basics</title>
+  <desc id="desc">Two large candlesticks showing body, upper wick, lower wick, high, low, open, and close.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="40" y="42" width="880" height="456" rx="14" fill="#0b1626" stroke="#1b3558" stroke-width="2"/>
+  <g stroke="#19304d" stroke-width="1.5">
+    <line x1="80" y1="110" x2="880" y2="110"/>
+    <line x1="80" y1="200" x2="880" y2="200"/>
+    <line x1="80" y1="290" x2="880" y2="290"/>
+    <line x1="80" y1="380" x2="880" y2="380"/>
+  </g>
+
+  <text x="172" y="90" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Green candle</text>
+  <text x="612" y="90" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Red candle</text>
+
+  <g>
+    <line x1="260" y1="110" x2="260" y2="430" stroke="#e8f1ff" stroke-width="8" stroke-linecap="square"/>
+    <rect x="210" y="170" width="100" height="190" fill="#22c55e"/>
+    <line x1="168" y1="110" x2="352" y2="110" stroke="#7dd3fc" stroke-width="3"/>
+    <line x1="168" y1="430" x2="352" y2="430" stroke="#7dd3fc" stroke-width="3"/>
+    <text x="96" y="116" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="22">High</text>
+    <text x="104" y="438" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="22">Low</text>
+    <text x="356" y="176" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="22">Close</text>
+    <text x="356" y="366" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="22">Open</text>
+    <text x="214" y="270" fill="#07111f" font-family="Arial, sans-serif" font-size="23" font-weight="700">Body</text>
+    <text x="300" y="142" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="20">Upper wick</text>
+    <text x="300" y="410" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="20">Lower wick</text>
+  </g>
+
+  <g>
+    <line x1="700" y1="110" x2="700" y2="430" stroke="#e8f1ff" stroke-width="8" stroke-linecap="square"/>
+    <rect x="650" y="170" width="100" height="190" fill="#ef4444"/>
+    <line x1="608" y1="110" x2="792" y2="110" stroke="#7dd3fc" stroke-width="3"/>
+    <line x1="608" y1="430" x2="792" y2="430" stroke="#7dd3fc" stroke-width="3"/>
+    <text x="798" y="116" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="22">High</text>
+    <text x="806" y="438" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="22">Low</text>
+    <text x="526" y="176" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="22">Open</text>
+    <text x="526" y="366" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="22">Close</text>
+    <text x="654" y="270" fill="#07111f" font-family="Arial, sans-serif" font-size="23" font-weight="700">Body</text>
+    <text x="740" y="142" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="20">Upper wick</text>
+    <text x="740" y="410" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="20">Lower wick</text>
+  </g>
+</svg>

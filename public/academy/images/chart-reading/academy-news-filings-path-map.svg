@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Academy News And Filings Path Map</title>
+  <desc id="desc">Dark dashboard path map showing catalyst news, SEC filing cards, a realistic candlestick reaction, volume bars, and review steps for learning news and filings.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="34" y="34" width="892" height="472" rx="14" fill="#0d1828" stroke="#18314f"/>
+  <text x="58" y="70" fill="#e6edf7" font-family="Arial, sans-serif" font-size="24" font-weight="700">News And Filings Path</text>
+  <text x="58" y="96" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="14">Headline -> source -> filing type -> price reaction -> review</text>
+  <rect x="64" y="128" width="270" height="280" rx="10" fill="#0a1422" stroke="#152b46"/>
+  <text x="84" y="160" fill="#dcefff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Source Details</text>
+  <rect x="84" y="182" width="220" height="36" rx="6" fill="#102743" stroke="#2f86d1"/><text x="100" y="205" fill="#cfe9ff" font-family="Arial, sans-serif" font-size="13">Press release details</text>
+  <rect x="84" y="230" width="220" height="36" rx="6" fill="#102743" stroke="#204d73"/><text x="100" y="253" fill="#cfe9ff" font-family="Arial, sans-serif" font-size="13">SEC filing type</text>
+  <rect x="84" y="278" width="220" height="36" rx="6" fill="#102743" stroke="#204d73"/><text x="100" y="301" fill="#cfe9ff" font-family="Arial, sans-serif" font-size="13">Offering / dilution check</text>
+  <rect x="84" y="326" width="220" height="36" rx="6" fill="#102743" stroke="#204d73"/><text x="100" y="349" fill="#cfe9ff" font-family="Arial, sans-serif" font-size="13">Catalyst quality</text>
+  <rect x="382" y="128" width="360" height="210" fill="#0a1422" stroke="#152b46"/>
+  <g stroke="#162943"><line x1="382" y1="178" x2="742" y2="178"/><line x1="382" y1="228" x2="742" y2="228"/><line x1="382" y1="278" x2="742" y2="278"/></g>
+  <rect x="382" y="258" width="360" height="26" fill="#0f5f86" opacity=".35"/>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="426" y1="270" x2="426" y2="318"/><rect x="416" y="284" width="20" height="20" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="486" y1="198" x2="486" y2="294"/><rect x="476" y="218" width="20" height="54" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="546" y1="164" x2="546" y2="250"/><rect x="536" y="184" width="20" height="42" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="606" y1="190" x2="606" y2="272"/><rect x="596" y="208" width="20" height="44" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="666" y1="182" x2="666" y2="262"/><rect x="656" y="202" width="20" height="34" rx="2"/></g>
+  </g>
+  <text x="400" y="154" fill="#9fd0ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Chart reaction and volume review</text>
+  <rect x="382" y="360" width="360" height="56" fill="#0a1422" stroke="#152b46"/>
+  <rect x="416" y="394" width="20" height="14" fill="#e25f5f" opacity=".65"/><rect x="476" y="372" width="20" height="36" fill="#33b07a" opacity=".8"/><rect x="536" y="380" width="20" height="28" fill="#33b07a" opacity=".7"/><rect x="596" y="390" width="20" height="18" fill="#e25f5f" opacity=".65"/><rect x="656" y="384" width="20" height="24" fill="#33b07a" opacity=".7"/>
+  <g font-family="Arial, sans-serif" font-size="14">
+    <rect x="778" y="142" width="112" height="44" rx="8" fill="#0b2035" stroke="#2f86d1"/><text x="796" y="170" fill="#dcefff">Catalysts</text>
+    <rect x="778" y="202" width="112" height="44" rx="8" fill="#0b2035" stroke="#204d73"/><text x="796" y="230" fill="#dcefff">Filings</text>
+    <rect x="778" y="262" width="112" height="44" rx="8" fill="#0b2035" stroke="#204d73"/><text x="796" y="290" fill="#dcefff">Dilution</text>
+    <rect x="778" y="322" width="112" height="44" rx="8" fill="#0b2035" stroke="#204d73"/><text x="796" y="350" fill="#dcefff">Compare</text>
+  </g>
+</svg>

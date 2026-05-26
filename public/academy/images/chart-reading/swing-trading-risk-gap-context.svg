@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Swing Trading Gap Risk Context</title>
+  <desc id="desc">Dark trading dashboard showing a multi-session daily candlestick chart with an overnight gap below a planned invalidation zone, volume bars, and context labels for gap and event risk.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="34" y="34" width="892" height="472" rx="14" fill="#0d1828" stroke="#18314f"/>
+  <text x="58" y="70" fill="#e6edf7" font-family="Arial, sans-serif" font-size="24" font-weight="700">Swing Risk: Gap And Invalidation Plan</text>
+  <text x="58" y="96" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="14">Overnight exposure can open beyond the planned chart level</text>
+
+  <rect x="70" y="130" width="720" height="250" fill="#0a1422" stroke="#152b46"/>
+  <g stroke="#162943" stroke-width="1">
+    <line x1="70" y1="180" x2="790" y2="180"/>
+    <line x1="70" y1="230" x2="790" y2="230"/>
+    <line x1="70" y1="280" x2="790" y2="280"/>
+    <line x1="70" y1="330" x2="790" y2="330"/>
+  </g>
+  <rect x="70" y="282" width="720" height="34" fill="#0f5f86" opacity="0.42"/>
+  <text x="86" y="304" fill="#9fd0ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Planned invalidation zone</text>
+
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#33b07a" fill="#33b07a"><line x1="116" y1="260" x2="116" y2="332"/><rect x="106" y="278" width="20" height="38" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="190" y1="228" x2="190" y2="306"/><rect x="180" y="246" width="20" height="42" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="264" y1="222" x2="264" y2="306"/><rect x="254" y="236" width="20" height="54" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="338" y1="198" x2="338" y2="288"/><rect x="328" y="218" width="20" height="50" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="412" y1="214" x2="412" y2="300"/><rect x="402" y="232" width="20" height="48" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="486" y1="252" x2="486" y2="330"/><rect x="476" y="266" width="20" height="46" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="560" y1="338" x2="560" y2="390"/><rect x="550" y="350" width="20" height="28" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="634" y1="326" x2="634" y2="372"/><rect x="624" y="344" width="20" height="18" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="708" y1="336" x2="708" y2="386"/><rect x="698" y="350" width="20" height="22" rx="2"/></g>
+  </g>
+
+  <path d="M510 315 C530 335, 540 348, 558 352" stroke="#2f86d1" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2f86d1"/>
+    </marker>
+  </defs>
+  <text x="520" y="266" fill="#8fc7ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Overnight gap below plan</text>
+  <text x="520" y="286" fill="#a7b6c8" font-family="Arial, sans-serif" font-size="12">Size, event risk, and thesis change</text>
+
+  <g>
+    <rect x="70" y="410" width="720" height="58" fill="#0a1422" stroke="#152b46"/>
+    <rect x="106" y="438" width="20" height="20" fill="#33b07a" opacity="0.65"/>
+    <rect x="180" y="429" width="20" height="29" fill="#33b07a" opacity="0.65"/>
+    <rect x="254" y="435" width="20" height="23" fill="#e25f5f" opacity="0.65"/>
+    <rect x="328" y="421" width="20" height="37" fill="#33b07a" opacity="0.65"/>
+    <rect x="402" y="432" width="20" height="26" fill="#e25f5f" opacity="0.65"/>
+    <rect x="476" y="440" width="20" height="18" fill="#e25f5f" opacity="0.65"/>
+    <rect x="550" y="414" width="20" height="44" fill="#e25f5f" opacity="0.75"/>
+    <rect x="624" y="438" width="20" height="20" fill="#33b07a" opacity="0.65"/>
+    <rect x="698" y="441" width="20" height="17" fill="#e25f5f" opacity="0.65"/>
+    <text x="86" y="431" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="12">Volume bars</text>
+  </g>
+
+  <g font-family="Arial, sans-serif" font-size="14">
+    <rect x="812" y="132" width="88" height="220" rx="10" fill="#0b2035" stroke="#204d73"/>
+    <text x="830" y="162" fill="#e6edf7" font-weight="700">Check</text>
+    <text x="830" y="195" fill="#a7b6c8">Event?</text>
+    <text x="830" y="225" fill="#a7b6c8">Size?</text>
+    <text x="830" y="255" fill="#a7b6c8">Gap?</text>
+    <text x="830" y="285" fill="#a7b6c8">Level?</text>
+    <text x="830" y="315" fill="#a7b6c8">Thesis?</text>
+  </g>
+</svg>

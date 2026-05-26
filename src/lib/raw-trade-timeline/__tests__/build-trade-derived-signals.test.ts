@@ -224,6 +224,45 @@ describe("buildTradeDerivedSignals", () => {
     expect(result.tradeDurationSeconds).toBe(360);
   });
 
+  it("falls back to execution prices when no trade candles are available", () => {
+    const executions = normalizeExecutions([
+      {
+        symbol: "ABCD",
+        timestamp: "2024-04-12T13:33:30.000Z",
+        side: "buy",
+        shares: 100,
+        price: 1,
+      },
+      {
+        symbol: "ABCD",
+        timestamp: "2024-04-12T13:35:30.000Z",
+        side: "buy",
+        shares: 100,
+        price: 1.1,
+      },
+      {
+        symbol: "ABCD",
+        timestamp: "2024-04-12T13:39:30.000Z",
+        side: "sell",
+        shares: 200,
+        price: 0.95,
+      },
+    ]);
+
+    const result = buildTradeDerivedSignals({
+      symbol: "ABCD",
+      tradeDirection: "long",
+      executions,
+      tradeCandles: [],
+    });
+
+    expect(result.peakPriceDuringTrade).toBe(1.1);
+    expect(result.worstPriceDuringTrade).toBe(0.95);
+    expect(result.tradeMfePct).toBe(0.1);
+    expect(result.tradeMaePct).toBe(0.05);
+    expect(result.tradeCandleCount).toBe(0);
+  });
+
   it("throws when trade-level derived signals are requested without executions", () => {
     const tradeCandles = normalizeCandles([
       {

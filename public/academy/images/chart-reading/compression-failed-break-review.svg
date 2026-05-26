@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Compression Failed Break Context</title>
+  <desc id="desc">Educational candlestick chart showing a compression breakout attempt that fails back inside the range.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Compression Failed Break Review</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A tight range can break and still fail back inside.</text>
+  <g stroke="#18304e" stroke-width="1"><line x1="58" y1="116" x2="704" y2="116"/><line x1="58" y1="166" x2="704" y2="166"/><line x1="58" y1="216" x2="704" y2="216"/><line x1="58" y1="266" x2="704" y2="266"/></g>
+  <rect x="104" y="158" width="430" height="76" fill="#1d4ed8" opacity=".12"/>
+  <line x1="104" y1="158" x2="534" y2="158" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="104" y1="234" x2="534" y2="234" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="114" y="150" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Compression range</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="116" y1="226" x2="116" y2="286"/><rect x="106" y="244" width="20" height="26"/>
+      <line x1="170" y1="204" x2="170" y2="270"/><rect x="160" y="224" width="20" height="28"/>
+      <line x1="224" y1="188" x2="224" y2="252"/><rect x="214" y="206" width="20" height="28"/>
+      <line x1="278" y1="178" x2="278" y2="238"/><rect x="268" y="196" width="20" height="24"/>
+      <line x1="386" y1="166" x2="386" y2="222"/><rect x="376" y="182" width="20" height="24"/>
+      <line x1="440" y1="132" x2="440" y2="198"/><rect x="430" y="150" width="20" height="30"/>
+    </g>
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="332" y1="162" x2="332" y2="226"/><rect x="322" y="180" width="20" height="28"/>
+      <line x1="494" y1="148" x2="494" y2="240"/><rect x="484" y="174" width="20" height="46"/>
+      <line x1="548" y1="196" x2="548" y2="270"/><rect x="538" y="216" width="20" height="34"/>
+      <line x1="602" y1="212" x2="602" y2="286"/><rect x="592" y="232" width="20" height="34"/>
+    </g>
+  </g>
+  <path d="M116 270 L170 238 L224 220 L278 208 L332 208 L386 194 L440 166 L494 220 L548 250 L602 266" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
+  <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
+    <text x="416" y="122" fill="#bbf7d0">Break attempt</text>
+    <text x="500" y="294" fill="#fecaca">Fails back inside</text>
+  </g>
+  <g><rect x="82" y="340" width="14" height="26" fill="#21c784" opacity=".65"/><rect x="116" y="346" width="14" height="20" fill="#21c784" opacity=".6"/><rect x="150" y="350" width="14" height="16" fill="#ef4444" opacity=".55"/><rect x="184" y="352" width="14" height="14" fill="#21c784" opacity=".5"/><rect x="218" y="318" width="14" height="48" fill="#21c784" opacity=".95"/><rect x="252" y="326" width="14" height="40" fill="#ef4444" opacity=".85"/></g>
+  <rect x="28" y="376" width="704" height="36" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="399" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Check: did expansion hold, or did price return inside the range?</text>
+</svg>

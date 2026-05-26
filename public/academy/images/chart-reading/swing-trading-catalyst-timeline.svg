@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Swing Trading Catalyst Timeline</title>
+  <desc id="desc">Dark trading dashboard showing a catalyst-driven swing trade timeline with realistic red and green daily candlestick candles, volume expansion, catalyst marker, pullback context, and follow-through context.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="34" y="34" width="892" height="472" rx="14" fill="#0d1828" stroke="#18314f"/>
+  <text x="58" y="70" fill="#e6edf7" font-family="Arial, sans-serif" font-size="24" font-weight="700">Catalyst Swing Reaction Timeline</text>
+  <text x="58" y="96" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="14">Headline, filing, volume, key level, and follow-through</text>
+
+  <rect x="72" y="130" width="700" height="250" fill="#0a1422" stroke="#152b46"/>
+  <g stroke="#162943" stroke-width="1">
+    <line x1="72" y1="180" x2="772" y2="180"/>
+    <line x1="72" y1="230" x2="772" y2="230"/>
+    <line x1="72" y1="280" x2="772" y2="280"/>
+    <line x1="72" y1="330" x2="772" y2="330"/>
+  </g>
+  <rect x="72" y="260" width="700" height="28" fill="#0f5f86" opacity="0.38"/>
+  <text x="88" y="280" fill="#9fd0ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Prior resistance / reaction level</text>
+
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="114" y1="292" x2="114" y2="342"/><rect x="104" y="306" width="20" height="24" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="184" y1="280" x2="184" y2="332"/><rect x="174" y="296" width="20" height="22" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="254" y1="286" x2="254" y2="338"/><rect x="244" y="300" width="20" height="26" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="324" y1="188" x2="324" y2="304"/><rect x="314" y="212" width="20" height="72" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="394" y1="164" x2="394" y2="256"/><rect x="384" y="182" width="20" height="52" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="464" y1="198" x2="464" y2="286"/><rect x="454" y="214" width="20" height="52" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="534" y1="188" x2="534" y2="278"/><rect x="524" y="210" width="20" height="44" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="604" y1="198" x2="604" y2="286"/><rect x="594" y="214" width="20" height="48" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="674" y1="174" x2="674" y2="260"/><rect x="664" y="194" width="20" height="44" rx="2"/></g>
+  </g>
+
+  <line x1="324" y1="120" x2="324" y2="382" stroke="#2f86d1" stroke-dasharray="6 6" stroke-width="2"/>
+  <rect x="264" y="118" width="120" height="28" rx="8" fill="#123253" stroke="#2f86d1"/>
+  <text x="281" y="137" fill="#cfe9ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Catalyst date</text>
+
+  <path d="M426 248 C450 278, 494 278, 526 248" stroke="#8fc7ff" stroke-width="2" fill="none"/>
+  <text x="438" y="309" fill="#a7b6c8" font-family="Arial, sans-serif" font-size="12">Pullback and hold</text>
+  <text x="616" y="182" fill="#a7b6c8" font-family="Arial, sans-serif" font-size="12">Follow-through check</text>
+
+  <g>
+    <rect x="72" y="410" width="700" height="58" fill="#0a1422" stroke="#152b46"/>
+    <rect x="104" y="444" width="20" height="14" fill="#e25f5f" opacity="0.65"/>
+    <rect x="174" y="441" width="20" height="17" fill="#33b07a" opacity="0.65"/>
+    <rect x="244" y="445" width="20" height="13" fill="#e25f5f" opacity="0.65"/>
+    <rect x="314" y="414" width="20" height="44" fill="#33b07a" opacity="0.8"/>
+    <rect x="384" y="421" width="20" height="37" fill="#33b07a" opacity="0.7"/>
+    <rect x="454" y="436" width="20" height="22" fill="#e25f5f" opacity="0.65"/>
+    <rect x="524" y="428" width="20" height="30" fill="#33b07a" opacity="0.65"/>
+    <rect x="594" y="438" width="20" height="20" fill="#e25f5f" opacity="0.65"/>
+    <rect x="664" y="424" width="20" height="34" fill="#33b07a" opacity="0.7"/>
+    <text x="88" y="431" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="12">Volume expansion and follow-through</text>
+  </g>
+
+  <g font-family="Arial, sans-serif" font-size="14">
+    <rect x="800" y="132" width="102" height="226" rx="10" fill="#0b2035" stroke="#204d73"/>
+    <text x="818" y="162" fill="#e6edf7" font-weight="700">Plan</text>
+    <text x="818" y="195" fill="#a7b6c8">Source?</text>
+    <text x="818" y="225" fill="#a7b6c8">Details?</text>
+    <text x="818" y="255" fill="#a7b6c8">Filings?</text>
+    <text x="818" y="285" fill="#a7b6c8">Volume?</text>
+    <text x="818" y="315" fill="#a7b6c8">Levels?</text>
+  </g>
+</svg>

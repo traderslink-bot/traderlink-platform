@@ -1,0 +1,166 @@
+{
+  "version": 1,
+  "generated_from": "docs/content/traderslink-academy-content-registry-draft.md",
+  "visual_overrides": [
+    {
+      "course_id": "trading-foundations",
+      "current_status": "ready",
+      "future_visual_need": "Four beginner trading-foundation SVGs added for launch polish.",
+      "primary_visual_asset": "/academy/images/trading-foundations/trading-foundations-course-map.svg",
+      "module_visual_assets": [
+        {
+          "module_id": "trade-mechanics",
+          "asset_path": "/academy/images/trading-foundations/stock-trade-mechanics.svg"
+        },
+        {
+          "module_id": "trading-terms",
+          "asset_path": "/academy/images/trading-foundations/trading-foundations-course-map.svg"
+        },
+        {
+          "module_id": "sessions-and-orders",
+          "asset_path": "/academy/images/trading-foundations/session-liquidity-map.svg"
+        },
+        {
+          "module_id": "trading-styles",
+          "asset_path": "/academy/images/trading-foundations/session-liquidity-map.svg"
+        },
+        {
+          "module_id": "planning-and-rules",
+          "asset_path": "/academy/images/trading-foundations/risk-plan-review-loop.svg"
+        },
+        {
+          "module_id": "risk-and-review",
+          "asset_path": "/academy/images/trading-foundations/risk-plan-review-loop.svg"
+        }
+      ],
+      "launch_polish_needed": false,
+      "hard_asset_reference_ready": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "current_status": "ready",
+      "future_visual_need": "Existing scoped chart/candle/pattern SVGs verified.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": false,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "volume-liquidity-order-flow",
+      "current_status": "ready",
+      "future_visual_need": "Existing execution and volume visuals verified.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": false,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "risk-management-trade-planning",
+      "current_status": "launch-polish needed",
+      "future_visual_need": "Six-SVG risk visual batch recommended.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": true,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "technical-indicators-tools",
+      "current_status": "launch-polish needed",
+      "future_visual_need": "Seven-SVG indicator visual batch recommended.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": true,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "trading-styles-playbooks",
+      "current_status": "launch-polish needed",
+      "future_visual_need": "Eight-SVG style/playbook visual batch recommended.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": true,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "day-trading-workflow",
+      "current_status": "ready",
+      "future_visual_need": "Optional watchlist/session-review visuals later.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": false,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "swing-trading-workflow",
+      "current_status": "ready",
+      "future_visual_need": "Optional hold-decision/thesis-change/small-cap swing dashboard visuals later.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": false,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "current_status": "launch-polish needed",
+      "future_visual_need": "Eight-SVG filing/news visual batch recommended.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": true,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "small-cap-float-dilution",
+      "current_status": "launch-polish needed",
+      "future_visual_need": "Eight-SVG supply/dilution visual batch recommended.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": true,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "halts-high-volatility",
+      "current_status": "ready",
+      "future_visual_need": "Existing halt/event-risk visuals verified.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": false,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "trading-psychology-discipline",
+      "current_status": "launch-polish needed",
+      "future_visual_need": "Seven-SVG behavior-loop visual batch recommended.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": true,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "trade-review-improvement",
+      "current_status": "launch-polish needed",
+      "future_visual_need": "Seven-SVG review-dashboard visual batch recommended.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": true,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "practice-improvement",
+      "current_status": "ready",
+      "future_visual_need": "Existing practice-loop visuals verified.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": false,
+      "hard_asset_reference_ready": false
+    },
+    {
+      "course_id": "academy-navigation-path-hubs",
+      "current_status": "ready",
+      "future_visual_need": "Existing path-map SVGs verified.",
+      "primary_visual_asset": null,
+      "module_visual_assets": [],
+      "launch_polish_needed": false,
+      "hard_asset_reference_ready": false
+    }
+  ]
+}

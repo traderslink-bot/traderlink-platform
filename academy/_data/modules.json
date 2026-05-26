@@ -1,0 +1,951 @@
+{
+  "version": 1,
+  "generated_from": "docs/content/traderslink-academy-content-registry-draft.md",
+  "modules": [
+    {
+      "course_id": "trading-foundations",
+      "module_id": "trade-mechanics",
+      "module_title": "Trade Mechanics",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-foundations",
+      "module_id": "trading-terms",
+      "module_title": "Trading Terms",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-foundations",
+      "module_id": "sessions-and-orders",
+      "module_title": "Sessions And Orders",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-foundations",
+      "module_id": "trading-styles",
+      "module_title": "Trading Styles",
+      "module_order": 4,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-foundations",
+      "module_id": "planning-and-rules",
+      "module_title": "Planning And Rules",
+      "module_order": 5,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-foundations",
+      "module_id": "risk-and-review",
+      "module_title": "Risk And Review",
+      "module_order": 6,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "core-levels",
+      "module_title": "Chart Reading Basics And Core Levels",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "breaks-and-reclaims",
+      "module_title": "Rejection, Breaks And Reclaims",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "swing-structure",
+      "module_title": "Swing Structure",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "intraday-reference-levels",
+      "module_title": "Intraday Reference Levels",
+      "module_order": 4,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "ranges-and-compression",
+      "module_title": "Ranges, Compression And Pattern Basics",
+      "module_order": 5,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "gaps",
+      "module_title": "Gaps",
+      "module_order": 6,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "bullish-candle-patterns",
+      "module_title": "Bullish Candle Patterns",
+      "module_order": 7,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "bearish-candle-patterns",
+      "module_title": "Bearish Candle Patterns",
+      "module_order": 8,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "indecision-neutral-candles",
+      "module_title": "Indecision And Neutral Candles",
+      "module_order": 9,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "momentum-continuation-candles",
+      "module_title": "Momentum And Continuation Candles",
+      "module_order": 10,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "session-gap-behavior",
+      "module_title": "Session And Gap Behavior",
+      "module_order": 11,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "chart-reading-market-structure",
+      "module_id": "chart-patterns-context",
+      "module_title": "Chart Patterns In Context",
+      "module_order": 12,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "volume-liquidity-order-flow",
+      "module_id": "volume-foundation",
+      "module_title": "Volume Foundation",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "volume-liquidity-order-flow",
+      "module_id": "liquidity-foundation",
+      "module_title": "Liquidity Foundation",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "volume-liquidity-order-flow",
+      "module_id": "quotes-and-execution",
+      "module_title": "Quotes And Execution",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "volume-liquidity-order-flow",
+      "module_id": "order-flow-tools",
+      "module_title": "Order Flow Tools",
+      "module_order": 4,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "volume-liquidity-order-flow",
+      "module_id": "volume-at-price",
+      "module_title": "Volume At Price",
+      "module_order": 5,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "volume-liquidity-order-flow",
+      "module_id": "scanner-context",
+      "module_title": "Scanner Context",
+      "module_order": 6,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "risk-management-trade-planning",
+      "module_id": "planning",
+      "module_title": "Planning",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "risk-management-trade-planning",
+      "module_id": "risk-basics",
+      "module_title": "Risk Basics",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "risk-management-trade-planning",
+      "module_id": "account-protection",
+      "module_title": "Account Protection",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "risk-management-trade-planning",
+      "module_id": "trade-management",
+      "module_title": "Trade Management",
+      "module_order": 4,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "risk-management-trade-planning",
+      "module_id": "event-risk",
+      "module_title": "Event Risk",
+      "module_order": 5,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "technical-indicators-tools",
+      "module_id": "indicator-foundation",
+      "module_title": "Indicator Foundation",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "technical-indicators-tools",
+      "module_id": "trend-tools",
+      "module_title": "Trend Tools",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "technical-indicators-tools",
+      "module_id": "momentum-tools",
+      "module_title": "Momentum Tools",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "technical-indicators-tools",
+      "module_id": "volatility-tools",
+      "module_title": "Volatility Tools",
+      "module_order": 4,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "technical-indicators-tools",
+      "module_id": "volume-tools",
+      "module_title": "Volume Tools",
+      "module_order": 5,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "technical-indicators-tools",
+      "module_id": "setup-tool-context",
+      "module_title": "Setup Tool Context",
+      "module_order": 6,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-styles-playbooks",
+      "module_id": "style-selector",
+      "module_title": "Style Selector",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-styles-playbooks",
+      "module_id": "setup-types",
+      "module_title": "Setup Types",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-styles-playbooks",
+      "module_id": "multi-day-context",
+      "module_title": "Multi-Day Context",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-styles-playbooks",
+      "module_id": "risk-context",
+      "module_title": "Risk Context",
+      "module_order": 4,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "day-trading-workflow",
+      "module_id": "session-framework",
+      "module_title": "Session Framework",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "timeline",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "day-trading-workflow",
+      "module_id": "preparation",
+      "module_title": "Preparation",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "timeline",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "day-trading-workflow",
+      "module_id": "market-open",
+      "module_title": "Market Open",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "timeline",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "day-trading-workflow",
+      "module_id": "midday-filtering",
+      "module_title": "Midday Filtering",
+      "module_order": 4,
+      "module_type": "standard",
+      "display_behavior": "timeline",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "day-trading-workflow",
+      "module_id": "late-session",
+      "module_title": "Late Session",
+      "module_order": 5,
+      "module_type": "standard",
+      "display_behavior": "timeline",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "day-trading-workflow",
+      "module_id": "extended-hours",
+      "module_title": "Extended Hours",
+      "module_order": 6,
+      "module_type": "standard",
+      "display_behavior": "timeline",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "day-trading-workflow",
+      "module_id": "review",
+      "module_title": "Review",
+      "module_order": 7,
+      "module_type": "capstone",
+      "display_behavior": "timeline",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "swing-trading-workflow",
+      "module_id": "swing-trading-foundation",
+      "module_title": "Swing Trading Foundation",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "swing-trading-workflow",
+      "module_id": "risk-and-invalidation",
+      "module_title": "Risk And Invalidation",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "swing-trading-workflow",
+      "module_id": "levels-and-chart-planning",
+      "module_title": "Levels And Chart Planning",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "swing-trading-workflow",
+      "module_id": "participation-and-follow-through",
+      "module_title": "Participation And Follow-Through",
+      "module_order": 4,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "swing-trading-workflow",
+      "module_id": "catalyst-context",
+      "module_title": "Catalyst Context",
+      "module_order": 5,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "swing-trading-workflow",
+      "module_id": "event-risk",
+      "module_title": "Event Risk",
+      "module_order": 6,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "swing-trading-workflow",
+      "module_id": "small-cap-swing-context",
+      "module_title": "Small-Cap Swing Context",
+      "module_order": 7,
+      "module_type": "capstone",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "catalyst-foundation",
+      "module_title": "Catalyst Foundation",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "press-releases",
+      "module_title": "Press Releases",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "sec-filing-foundation",
+      "module_title": "SEC Filing Foundation",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "company-reports",
+      "module_title": "Company Reports",
+      "module_order": 4,
+      "module_type": "library",
+      "display_behavior": "accordion",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "registration-statements",
+      "module_title": "Registration Statements",
+      "module_order": 5,
+      "module_type": "library",
+      "display_behavior": "accordion",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "transaction-registration",
+      "module_title": "Transaction Registration",
+      "module_order": 6,
+      "module_type": "library",
+      "display_behavior": "accordion",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "prospectus-supplements",
+      "module_title": "Prospectus Supplements",
+      "module_order": 7,
+      "module_type": "library",
+      "display_behavior": "accordion",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "registration-effectiveness",
+      "module_title": "Registration Effectiveness",
+      "module_order": 8,
+      "module_type": "library",
+      "display_behavior": "accordion",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "insider-ownership",
+      "module_title": "Insider Ownership",
+      "module_order": 9,
+      "module_type": "library",
+      "display_behavior": "accordion",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "beneficial-ownership",
+      "module_title": "Beneficial Ownership",
+      "module_order": 10,
+      "module_type": "library",
+      "display_behavior": "accordion",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "proxy-statements",
+      "module_title": "Proxy Statements",
+      "module_order": 11,
+      "module_type": "library",
+      "display_behavior": "accordion",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "late-filing-notices",
+      "module_title": "Late Filing Notices",
+      "module_order": 12,
+      "module_type": "library",
+      "display_behavior": "accordion",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "exchange-and-listing-events",
+      "module_title": "Exchange And Listing Events",
+      "module_order": 13,
+      "module_type": "library",
+      "display_behavior": "accordion",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "news-categories",
+      "module_title": "News Categories",
+      "module_order": 14,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "news-catalysts-sec-filings",
+      "module_id": "news-review",
+      "module_title": "News Review",
+      "module_order": 15,
+      "module_type": "capstone",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "small-cap-float-dilution",
+      "module_id": "small-cap-foundation",
+      "module_title": "Small-Cap Foundation",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "small-cap-float-dilution",
+      "module_id": "float-foundation",
+      "module_title": "Float Foundation",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "small-cap-float-dilution",
+      "module_id": "share-structure",
+      "module_title": "Share Structure",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "small-cap-float-dilution",
+      "module_id": "valuation-context",
+      "module_title": "Valuation Context",
+      "module_order": 4,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "small-cap-float-dilution",
+      "module_id": "dilution-foundation",
+      "module_title": "Dilution Foundation",
+      "module_order": 5,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "small-cap-float-dilution",
+      "module_id": "offerings",
+      "module_title": "Offerings",
+      "module_order": 6,
+      "module_type": "library",
+      "display_behavior": "accordion",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "small-cap-float-dilution",
+      "module_id": "securities",
+      "module_title": "Securities",
+      "module_order": 7,
+      "module_type": "library",
+      "display_behavior": "accordion",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "small-cap-float-dilution",
+      "module_id": "corporate-actions",
+      "module_title": "Corporate Actions",
+      "module_order": 8,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "small-cap-float-dilution",
+      "module_id": "risk-context",
+      "module_title": "Risk Context",
+      "module_order": 9,
+      "module_type": "capstone",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "halts-high-volatility",
+      "module_id": "halt-foundation",
+      "module_title": "Halt Foundation",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "halts-high-volatility",
+      "module_id": "single-stock-halts",
+      "module_title": "Single-Stock Halts",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "halts-high-volatility",
+      "module_id": "market-wide-events",
+      "module_title": "Market-Wide Events",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "halts-high-volatility",
+      "module_id": "execution-risk",
+      "module_title": "Execution Risk",
+      "module_order": 4,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "halts-high-volatility",
+      "module_id": "small-cap-volatility",
+      "module_title": "Small-Cap Volatility",
+      "module_order": 5,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "halts-high-volatility",
+      "module_id": "event-review",
+      "module_title": "Event Review",
+      "module_order": 6,
+      "module_type": "capstone",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-psychology-discipline",
+      "module_id": "discipline-foundation",
+      "module_title": "Discipline Foundation",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-psychology-discipline",
+      "module_id": "impulse-patterns",
+      "module_title": "Impulse Patterns",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-psychology-discipline",
+      "module_id": "trade-management-errors",
+      "module_title": "Trade Management Errors",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trading-psychology-discipline",
+      "module_id": "position-behavior",
+      "module_title": "Position Behavior",
+      "module_order": 4,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trade-review-improvement",
+      "module_id": "review-foundation",
+      "module_title": "Review Foundation",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trade-review-improvement",
+      "module_id": "review-process",
+      "module_title": "Review Process",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trade-review-improvement",
+      "module_id": "specialized-review",
+      "module_title": "Specialized Review",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "trade-review-improvement",
+      "module_id": "product-bridge",
+      "module_title": "Product Bridge",
+      "module_order": 4,
+      "module_type": "capstone",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "practice-improvement",
+      "module_id": "practice-foundation",
+      "module_title": "Practice Foundation",
+      "module_order": 1,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "practice-improvement",
+      "module_id": "simulation-basics",
+      "module_title": "Simulation Basics",
+      "module_order": 2,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "practice-improvement",
+      "module_id": "replay-practice",
+      "module_title": "Replay Practice",
+      "module_order": 3,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "practice-improvement",
+      "module_id": "preparation-review",
+      "module_title": "Preparation Review",
+      "module_order": 4,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "practice-improvement",
+      "module_id": "visual-review",
+      "module_title": "Visual Review",
+      "module_order": 5,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "practice-improvement",
+      "module_id": "process-scoring",
+      "module_title": "Process Scoring",
+      "module_order": 6,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "practice-improvement",
+      "module_id": "focused-drills",
+      "module_title": "Focused Drills",
+      "module_order": 7,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "practice-improvement",
+      "module_id": "sample-building",
+      "module_title": "Sample Building",
+      "module_order": 8,
+      "module_type": "standard",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "practice-improvement",
+      "module_id": "improvement-planning",
+      "module_title": "Improvement Planning",
+      "module_order": 9,
+      "module_type": "capstone",
+      "display_behavior": "expanded",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "academy-navigation-path-hubs",
+      "module_id": "academy-path-hubs",
+      "module_title": "Academy Path Hubs",
+      "module_order": 1,
+      "module_type": "path_steps",
+      "display_behavior": "map",
+      "progress_enabled": true
+    },
+    {
+      "course_id": "day-trading-workflow",
+      "module_id": "supporting-lessons",
+      "module_title": "Supporting Lessons",
+      "module_order": 8,
+      "module_type": "supporting",
+      "display_behavior": "rail",
+      "progress_enabled": false
+    },
+    {
+      "course_id": "swing-trading-workflow",
+      "module_id": "supporting-lessons",
+      "module_title": "Supporting Lessons",
+      "module_order": 8,
+      "module_type": "supporting",
+      "display_behavior": "rail",
+      "progress_enabled": false
+    },
+    {
+      "course_id": "halts-high-volatility",
+      "module_id": "supporting-lessons",
+      "module_title": "Supporting Lessons",
+      "module_order": 7,
+      "module_type": "supporting",
+      "display_behavior": "rail",
+      "progress_enabled": false
+    },
+    {
+      "course_id": "practice-improvement",
+      "module_id": "supporting-lessons",
+      "module_title": "Supporting Lessons",
+      "module_order": 10,
+      "module_type": "supporting",
+      "display_behavior": "rail",
+      "progress_enabled": false
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430" role="img" aria-labelledby="title desc">
+  <title id="title">Setup Screenshot Context</title>
+  <desc id="desc">Dark trading dashboard screenshot-style chart with realistic candles, support and resistance zones, a planned decision area, actual decision note, and post-session review checklist.</desc>
+  <defs><style>
+    .bg{fill:#0b1220}.panel{fill:#0f1a2b;stroke:#203651;stroke-width:1.5}.txt{fill:#d7e3f4;font-family:Arial,Helvetica,sans-serif}.small{font-size:12px}.label{font-size:13px;font-weight:700}.muted{fill:#8ea1bd}.grid{stroke:#22364f;opacity:.65}.zone{fill:rgba(56,189,248,.12);stroke:#38bdf8;stroke-width:1.5}.plan{fill:rgba(245,158,11,.13);stroke:#f59e0b;stroke-width:1.5}.green{fill:#22c55e;stroke:#22c55e}.red{fill:#ef4444;stroke:#ef4444}.wickG{stroke:#22c55e;stroke-width:2}.wickR{stroke:#ef4444;stroke-width:2}.volG{fill:#22c55e;opacity:.45}.volR{fill:#ef4444;opacity:.45}.note{fill:#12263f;stroke:#2f80ed;stroke-width:1}
+  </style></defs>
+  <rect class="bg" width="760" height="430"/><rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
+  <text class="txt label" x="34" y="42">Setup Screenshot: Capture The Plan And The Actual Decision</text>
+  <text class="txt small muted" x="34" y="64">A screenshot should make the decision clear without pretending the chart was obvious.</text>
+  <g transform="translate(50 92)">
+    <rect x="0" y="0" width="500" height="230" fill="#0c1626" stroke="#203651"/>
+    <line class="grid" x1="0" y1="46" x2="500" y2="46"/><line class="grid" x1="0" y1="92" x2="500" y2="92"/><line class="grid" x1="0" y1="138" x2="500" y2="138"/><line class="grid" x1="0" y1="184" x2="500" y2="184"/>
+    <rect class="zone" x="38" y="58" width="398" height="18"/><text class="txt small" x="46" y="72">Resistance zone marked before decision</text>
+    <rect class="zone" x="38" y="154" width="398" height="18"/><text class="txt small" x="46" y="168">Support zone marked before decision</text>
+    <rect class="plan" x="294" y="70" width="78" height="84"/><text class="txt small" x="302" y="88">Decision</text><text class="txt small" x="302" y="104">area</text>
+    <line class="wickG" x1="38" y1="154" x2="38" y2="180"/><rect class="green" x="31" y="162" width="14" height="10"/>
+    <line class="wickG" x1="70" y1="132" x2="70" y2="172"/><rect class="green" x="63" y="146" width="14" height="16"/>
+    <line class="wickR" x1="102" y1="118" x2="102" y2="170"/><rect class="red" x="95" y="132" width="14" height="24"/>
+    <line class="wickG" x1="134" y1="98" x2="134" y2="156"/><rect class="green" x="127" y="118" width="14" height="26"/>
+    <line class="wickR" x1="166" y1="84" x2="166" y2="160"/><rect class="red" x="159" y="102" width="14" height="38"/>
+    <line class="wickG" x1="198" y1="96" x2="198" y2="148"/><rect class="green" x="191" y="112" width="14" height="22"/>
+    <line class="wickG" x1="230" y1="78" x2="230" y2="136"/><rect class="green" x="223" y="98" width="14" height="24"/>
+    <line class="wickR" x1="262" y1="68" x2="262" y2="146"/><rect class="red" x="255" y="86" width="14" height="42"/>
+    <line class="wickG" x1="310" y1="76" x2="310" y2="136"/><rect class="green" x="303" y="96" width="14" height="24"/>
+    <line class="wickR" x1="342" y1="66" x2="342" y2="152"/><rect class="red" x="335" y="88" width="14" height="42"/>
+    <line class="wickR" x1="374" y1="114" x2="374" y2="176"/><rect class="red" x="367" y="132" width="14" height="28"/>
+    <line class="wickG" x1="406" y1="120" x2="406" y2="166"/><rect class="green" x="399" y="136" width="14" height="12"/>
+    <g transform="translate(0 246)">
+      <rect class="volG" x="31" y="32" width="14" height="16"/><rect class="volG" x="63" y="26" width="14" height="22"/><rect class="volR" x="95" y="23" width="14" height="25"/><rect class="volG" x="127" y="16" width="14" height="32"/><rect class="volR" x="159" y="12" width="14" height="36"/><rect class="volG" x="191" y="22" width="14" height="26"/><rect class="volG" x="223" y="14" width="14" height="34"/><rect class="volR" x="255" y="10" width="14" height="38"/><rect class="volG" x="303" y="18" width="14" height="30"/><rect class="volR" x="335" y="12" width="14" height="36"/><rect class="volR" x="367" y="24" width="14" height="24"/><rect class="volG" x="399" y="34" width="14" height="14"/>
+    </g>
+  </g>
+  <g>
+    <rect class="note" x="584" y="100" width="128" height="62" rx="6"/><text class="txt small" x="600" y="124">Before</text><text class="txt small muted" x="600" y="144">What was planned?</text>
+    <rect class="note" x="584" y="184" width="128" height="62" rx="6"/><text class="txt small" x="600" y="208">During</text><text class="txt small muted" x="600" y="228">What changed?</text>
+    <rect class="note" x="584" y="268" width="128" height="62" rx="6"/><text class="txt small" x="600" y="292">After</text><text class="txt small muted" x="600" y="312">What repeats?</text>
+  </g>
+</svg>

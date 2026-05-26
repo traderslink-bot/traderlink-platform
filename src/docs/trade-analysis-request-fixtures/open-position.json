@@ -1,0 +1,33 @@
+{
+  "symbol": "ABCD",
+  "tradeDirection": "long",
+  "sessionContext": {
+    "sessionDate": "2026-05-01",
+    "sessionBucket": "market_close"
+  },
+  "provider": {
+    "preferredProvider": "stub",
+    "asOfTimestamp": "2026-05-01T19:55:00.000Z"
+  },
+  "tradeWindow": {
+    "timeframe": "1m",
+    "preTradeMinutes": 60,
+    "postTradeMinutes": 15
+  },
+  "executions": [
+    {
+      "symbol": "ABCD",
+      "timestamp": "2026-05-01T18:45:00.000Z",
+      "side": "buy",
+      "shares": 100,
+      "price": 10.1
+    },
+    {
+      "symbol": "ABCD",
+      "timestamp": "2026-05-01T19:20:00.000Z",
+      "side": "sell",
+      "shares": 40,
+      "price": 10.36
+    }
+  ]
+}

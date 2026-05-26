@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" aria-hidden="true">
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="64" y="54" width="832" height="432" rx="12" fill="#0b1626" stroke="#1b3558" stroke-width="2"/>
+  <g stroke="#18304d" stroke-width="1.5" opacity=".8">
+    <path d="M104 142H856M104 230H856M104 318H856M104 406H856"/>
+    <path d="M200 82V458M320 82V458M440 82V458M560 82V458M680 82V458M800 82V458"/>
+  </g>
+  <polygon points="164,166 734,282 164,392" fill="#38bdf8" fill-opacity="0.08" stroke="#38bdf8" stroke-width="5" stroke-linejoin="round" opacity=".95"/>
+  <path d="M164 166L734 282" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" opacity="0.95"/>
+  <path d="M164 392L734 282" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" opacity="0.95"/>
+  <g opacity="1"><line x1="185" y1="168" x2="185" y2="326" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="168" y="204" width="34" height="56" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="275" y1="260" x2="275" y2="396" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="258" y="310" width="34" height="50" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="365" y1="192" x2="365" y2="340" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="348" y="226" width="34" height="50" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="455" y1="246" x2="455" y2="356" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="438" y="286" width="34" height="48" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="545" y1="218" x2="545" y2="330" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="528" y="248" width="34" height="46" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="635" y1="244" x2="635" y2="334" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="618" y="272" width="34" height="42" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="725" y1="226" x2="725" y2="322" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="708" y="252" width="34" height="40" fill="#22c55e"/></g>
+</svg>

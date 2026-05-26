@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Swing Highs And Swing Lows Map</title>
+  <desc id="desc">Educational candlestick chart showing clear swing highs and swing lows on a realistic price move.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Swing Highs And Swing Lows</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Mark the major turns that define structure, not every candle.</text>
+  <g stroke="#18304e" stroke-width="1">
+    <line x1="58" y1="118" x2="704" y2="118"/>
+    <line x1="58" y1="170" x2="704" y2="170"/>
+    <line x1="58" y1="222" x2="704" y2="222"/>
+    <line x1="58" y1="274" x2="704" y2="274"/>
+  </g>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="96" y1="266" x2="96" y2="318"/><rect x="86" y="282" width="20" height="22"/>
+      <line x1="162" y1="216" x2="162" y2="286"/><rect x="152" y="236" width="20" height="32"/>
+      <line x1="228" y1="232" x2="228" y2="302"/><rect x="218" y="250" width="20" height="32"/>
+      <line x1="294" y1="162" x2="294" y2="246"/><rect x="284" y="184" width="20" height="42"/>
+      <line x1="360" y1="198" x2="360" y2="268"/><rect x="350" y="216" width="20" height="32"/>
+      <line x1="426" y1="132" x2="426" y2="224"/><rect x="416" y="154" width="20" height="48"/>
+      <line x1="558" y1="142" x2="558" y2="228"/><rect x="548" y="162" width="20" height="42"/>
+    </g>
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="492" y1="130" x2="492" y2="246"/><rect x="482" y="158" width="20" height="62"/>
+      <line x1="624" y1="170" x2="624" y2="266"/><rect x="614" y="192" width="20" height="50"/>
+    </g>
+  </g>
+  <path d="M96 302 L162 252 L228 280 L294 205 L360 244 L426 178 L492 220 L558 186 L624 242" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".55"/>
+  <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
+    <text x="132" y="205" fill="#fecaca">Swing high</text>
+    <path d="M166 212 L166 230" stroke="#fecaca" stroke-width="2"/>
+    <text x="202" y="320" fill="#bbf7d0">Swing low</text>
+    <path d="M232 306 L232 286" stroke="#bbf7d0" stroke-width="2"/>
+    <text x="390" y="122" fill="#fecaca">Swing high</text>
+    <path d="M430 130 L430 150" stroke="#fecaca" stroke-width="2"/>
+    <text x="330" y="292" fill="#bbf7d0">Swing low</text>
+    <path d="M364 276 L364 254" stroke="#bbf7d0" stroke-width="2"/>
+  </g>
+  <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Which swing point defined the trade, and did price respect it?</text>
+</svg>

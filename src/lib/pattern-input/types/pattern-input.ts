@@ -1,78 +1,61 @@
 // =========================
-// 2026-04-12 05:36 PM America/Toronto
+// 2026-04-16 01:05 PM America/Toronto
 // PATTERN INPUT CONTRACT
 // file name: pattern-input.ts
 // =========================
 //
 // PURPOSE:
-// Defines the pattern input contract.
-// This is the clean, normalized structure that pattern detection will consume.
-// It aggregates raw derived signals into a simplified, structured format.
-// No interpretation, labeling, or scoring is done here.
+// Defines the PatternInput contract consumed by Layer 2 pattern detection.
+//
+// CURRENT SHAPE:
+// - nested context groups are the only supported PatternInput contract
+// - Layer 2 consumers must read grouped context data directly
 //
 // CRITICAL CONTRACT:
-// This type is the ONLY input allowed for pattern detection.
-// Pattern detection must NOT access raw timeline or derived signals directly.
-// All future logic must depend ONLY on PatternInput.
-//
+// Pattern detection must consume PatternInput only.
+// No Layer 2 code should reach back into the raw timeline result directly.
 
 import type { TradeDirection } from "../../raw-trade-timeline/types/trade-timeline-input";
 import type { ReferenceLevelLabel } from "../../raw-trade-timeline/types/reference-level-label";
 import type { SessionBucket } from "../../raw-trade-timeline/types/session-context";
+import type {
+  StructuralLevelReactionStrength,
+  StructuralLevelStrengthBucket,
+  StructuralLevelSourceStrengthLabel,
+} from "../../raw-trade-timeline/types/structural-level";
 
-export interface PatternInput {
-  symbol: string;
-  tradeDirection: TradeDirection;
-  sessionBucket: SessionBucket;
-
-  // ===== EXECUTION STRUCTURE =====
+export interface PatternInputTradeStructureContext {
   executionCount: number;
   executionTimestamps: string[];
-
   firstExecutionTimestamp: string;
   lastExecutionTimestamp: string;
-
-  // ===== TRADE STRUCTURE =====
   tradeDurationSeconds: number;
   tradeDurationMinutes: number;
   tradeCandleCount: number;
-
-  // ===== POSITION BEHAVIOR =====
   totalPositionIncreaseCount: number;
   totalPositionDecreaseCount: number;
   totalPositionUnchangedCount: number;
-
   openedFromFlat: boolean;
   closedToFlat: boolean;
-
   hadMultipleIncreases: boolean;
   hadMultipleDecreases: boolean;
-
   maxPositionSize: number;
   finalPositionSize: number;
-
-  // ===== PRICE PERFORMANCE =====
   entryPrice: number;
   exitPrice: number;
-
   tradeMfe: number | null;
   tradeMae: number | null;
-
   tradeMfePct: number | null;
   tradeMaePct: number | null;
-
   peakPriceDuringTrade: number | null;
   worstPriceDuringTrade: number | null;
+  maxExecutionMfePct: number | null;
+  maxExecutionMaePct: number | null;
+  averageExecutionMfePct: number | null;
+  averageExecutionMaePct: number | null;
+}
 
-  // ===== ENTRY CONTEXT =====
-  // 2026-04-12 05:36 PM America/Toronto
-  // These fields describe where the FIRST entry occurred relative to the
-  // eventual full trade range and how much opportunity or pain remained after
-  // that first entry.
-  //
-  // IMPORTANT:
-  // These are still purely structural and factual.
-  // They do NOT label the entry as good, bad, early, late, or chase.
+export interface PatternInputEntryContext {
   firstEntryPricePositionInTradeRangePct: number | null;
   firstEntryDistanceFromTradeLowPct: number | null;
   firstEntryDistanceFromTradeHighPct: number | null;
@@ -90,12 +73,9 @@ export interface PatternInput {
   firstEntryDistanceFromOpeningRangeReferenceLevelPct: number | null;
   firstEntryOccurredBeyondPreEntryRangeInTradeDirection: boolean;
   firstEntryDistanceBeyondPreEntryRangePct: number | null;
-
   firstEntryToPeakMovePct: number | null;
   firstEntryToWorstMovePct: number | null;
-
   firstEntryCapturedPercentOfTradeMfe: number | null;
-
   firstEntryWasNearTradeLow: boolean;
   firstEntryWasNearTradeHigh: boolean;
   firstEntryRecentRunUpPctBeforeEntry: number | null;
@@ -109,9 +89,79 @@ export interface PatternInput {
   firstEntryDistanceFromRecentReferenceLevelPct: number | null;
   firstEntryBullishCandlesBeforeEntryCount: number;
   firstEntryBearishCandlesBeforeEntryCount: number;
+}
+
+export interface PatternInputExitContext {
+  realizedReturnPct: number | null;
+  realizedCapturePercentOfTradeMfe: number | null;
+  favorableExcursionLeftOnTablePct: number | null;
+  exitPricePositionInTradeRangePct: number | null;
+  finalExitToPeakDistancePct: number | null;
+  exitWasNearTradeHigh: boolean;
+  exitWasNearTradeLow: boolean;
+  postExitCandleCount: number;
+  maxFavorableMovePctAfterExit: number | null;
+  maxAdverseMovePctAfterExit: number | null;
+  netMovePctAtEndOfPostExitWindow: number | null;
+  partialExitCount: number;
+  hadPartialExit: boolean;
+  maxFavorableMoveAfterPartialExitPct: number | null;
+  maxAdverseMoveAfterPartialExitPct: number | null;
+  reductionAbovePreviousAverageEntryCount: number;
+  reductionBelowPreviousAverageEntryCount: number;
+  averageReductionPriceVsPreviousAverageEntryPct: number | null;
+  averageReductionPricePositionInRecentRangePct: number | null;
+  reductionsNearRecentHighCount: number;
+  reductionsNearRecentLowCount: number;
+  averageReductionRecentRunUpPctBeforeExecution: number | null;
+  averageReductionRecentDropPctBeforeExecution: number | null;
+  reductionsWithRecentRunUpCount: number;
+  reductionsWithRecentDropCount: number;
+}
+
+export interface PatternInputScalingContext {
+  readdAfterReductionCount: number;
+  hadReaddAfterReduction: boolean;
+  averageReaddPriceChangeFromPriorReductionPct: number | null;
+  averageFavorableMovePctAfterPartialExitBeforeReadd: number | null;
+  averageAdverseMovePctAfterPartialExitBeforeReadd: number | null;
+  averageFavorableMovePctAfterReaddBeforeNextExecution: number | null;
+  averageAdverseMovePctAfterReaddBeforeNextExecution: number | null;
+  readdsWithStrongerFavorableFollowthroughCount: number;
+  readdsWithStrongerAdverseFollowthroughCount: number;
+  readdsAfterRecentRunUpCount: number;
+  readdsAfterRecentDropCount: number;
+  addCountAfterInitialEntry: number;
+  addAbovePreviousAverageEntryCount: number;
+  addBelowPreviousAverageEntryCount: number;
+  averageAddPriceVsPreviousAverageEntryPct: number | null;
+  averageAddPricePositionInRecentRangePct: number | null;
+  averageAddRecentRunUpPctBeforeExecution: number | null;
+  averageAddRecentDropPctBeforeExecution: number | null;
+  addsWithRecentRunUpCount: number;
+  addsWithRecentDropCount: number;
+}
+
+export interface PatternInputTimingContext {
+  averageTimeBetweenExecutionsSeconds: number | null;
+  minTimeBetweenExecutionsSeconds: number | null;
+  maxTimeBetweenExecutionsSeconds: number | null;
+  averageCandlesBetweenExecutions: number | null;
+  executionsPerMinute: number | null;
+}
+
+export interface PatternInputSupportResistanceContext {
   firstEntryNearestSupportBelowPrice: number | null;
   firstEntryNearestResistanceBelowPrice: number | null;
   firstEntryNearestResistanceAbovePrice: number | null;
+  firstEntryNearestSupportStrengthBucket?: StructuralLevelStrengthBucket | null;
+  firstEntryNearestResistanceStrengthBucket?: StructuralLevelStrengthBucket | null;
+  firstEntryNearestSupportSourceStrengthLabel?: StructuralLevelSourceStrengthLabel | null;
+  firstEntryNearestResistanceSourceStrengthLabel?: StructuralLevelSourceStrengthLabel | null;
+  firstEntryNearestSupportReactionStrength?: StructuralLevelReactionStrength | null;
+  firstEntryNearestResistanceReactionStrength?: StructuralLevelReactionStrength | null;
+  firstEntryNearestSupportScore?: number | null;
+  firstEntryNearestResistanceScore?: number | null;
   firstEntryDistanceToNearestSupportPct: number | null;
   firstEntryDistanceAboveNearestResistanceBelowPct: number | null;
   firstEntryDistanceToNearestResistancePct: number | null;
@@ -131,67 +181,6 @@ export interface PatternInput {
   firstEntryDistanceBetweenNearestSupportAndResistancePct: number | null;
   firstEntryResistanceLevelsAboveWithinClusterCount: number;
   firstEntryHasStackedResistanceAbove: boolean;
-
-  // ===== EXIT CONTEXT =====
-  // 2026-04-12 05:36 PM America/Toronto
-  // These fields describe where the FINAL exit occurred relative to the
-  // eventual trade range and how much favorable excursion was actually
-  // converted into realized result.
-  //
-  // IMPORTANT:
-  // These are still purely structural and factual.
-  // They do NOT label the exit as good, bad, disciplined, weak, early, or late.
-  realizedReturnPct: number | null;
-
-  realizedCapturePercentOfTradeMfe: number | null;
-  favorableExcursionLeftOnTablePct: number | null;
-
-  exitPricePositionInTradeRangePct: number | null;
-
-  finalExitToPeakDistancePct: number | null;
-
-  exitWasNearTradeHigh: boolean;
-  exitWasNearTradeLow: boolean;
-  postExitCandleCount: number;
-  maxFavorableMovePctAfterExit: number | null;
-  maxAdverseMovePctAfterExit: number | null;
-  netMovePctAtEndOfPostExitWindow: number | null;
-  maxGivebackFromPeakOpenProfitPct: number | null;
-  partialExitCount: number;
-  hadPartialExit: boolean;
-  maxFavorableMoveAfterPartialExitPct: number | null;
-  maxAdverseMoveAfterPartialExitPct: number | null;
-  reductionAbovePreviousAverageEntryCount: number;
-  reductionBelowPreviousAverageEntryCount: number;
-  averageReductionPriceVsPreviousAverageEntryPct: number | null;
-  averageReductionPricePositionInRecentRangePct: number | null;
-  reductionsNearRecentHighCount: number;
-  reductionsNearRecentLowCount: number;
-  averageReductionRecentRunUpPctBeforeExecution: number | null;
-  averageReductionRecentDropPctBeforeExecution: number | null;
-  reductionsWithRecentRunUpCount: number;
-  reductionsWithRecentDropCount: number;
-  readdAfterReductionCount: number;
-  hadReaddAfterReduction: boolean;
-  averageReaddPriceChangeFromPriorReductionPct: number | null;
-  averageFavorableMovePctAfterPartialExitBeforeReadd: number | null;
-  averageAdverseMovePctAfterPartialExitBeforeReadd: number | null;
-  averageFavorableMovePctAfterReaddBeforeNextExecution: number | null;
-  averageAdverseMovePctAfterReaddBeforeNextExecution: number | null;
-  readdsWithStrongerFavorableFollowthroughCount: number;
-  readdsWithStrongerAdverseFollowthroughCount: number;
-  readdsAfterRecentRunUpCount: number;
-  readdsAfterRecentDropCount: number;
-  peakOpenProfitPctOfBasis: number | null;
-  worstDrawdownPctOfBasis: number | null;
-  hadOpenLossBeforePeakOpenProfit: boolean;
-  secondsFromFirstOpenLossToPeakOpenProfit: number | null;
-  hadPeakOpenProfitBeforeWorstDrawdown: boolean;
-  drawdownFromPeakOpenProfitPctOfBasis: number | null;
-  hadReductionAfterPeakOpenProfitBeforeWorstDrawdown: boolean;
-  reductionCountAfterPeakOpenProfitBeforeWorstDrawdown: number;
-  secondsFromPeakOpenProfitToWorstDrawdown: number | null;
-  secondsFromPeakOpenProfitToFirstReduction: number | null;
   finalExitDistanceToNearestSupportPct: number | null;
   finalExitDistanceToNearestResistancePct: number | null;
   finalExitOccurredNearSupport: boolean;
@@ -210,31 +199,36 @@ export interface PatternInput {
   averageAddRoomToNextResistancePct: number | null;
   hadInsufficientCandleDataForStructuralContext: boolean;
   hadSupportResistanceContextAvailable: boolean;
-
-  // ===== EXECUTION QUALITY AGGREGATES =====
-  maxExecutionMfePct: number | null;
-  maxExecutionMaePct: number | null;
-
-  averageExecutionMfePct: number | null;
-  averageExecutionMaePct: number | null;
-
-  // ===== TIMING =====
-  averageTimeBetweenExecutionsSeconds: number | null;
-  minTimeBetweenExecutionsSeconds: number | null;
-  maxTimeBetweenExecutionsSeconds: number | null;
-
-  averageCandlesBetweenExecutions: number | null;
-
-  executionsPerMinute: number | null;
-
-  // ===== ADD / SCALING CONTEXT =====
-  addCountAfterInitialEntry: number;
-  addAbovePreviousAverageEntryCount: number;
-  addBelowPreviousAverageEntryCount: number;
-  averageAddPriceVsPreviousAverageEntryPct: number | null;
-  averageAddPricePositionInRecentRangePct: number | null;
-  averageAddRecentRunUpPctBeforeExecution: number | null;
-  averageAddRecentDropPctBeforeExecution: number | null;
-  addsWithRecentRunUpCount: number;
-  addsWithRecentDropCount: number;
 }
+
+export interface PatternInputRecoveryContext {
+  maxGivebackFromPeakOpenProfitPct: number | null;
+  peakOpenProfitPctOfBasis: number | null;
+  worstDrawdownPctOfBasis: number | null;
+  hadOpenLossBeforePeakOpenProfit: boolean;
+  secondsFromFirstOpenLossToPeakOpenProfit: number | null;
+  hadPeakOpenProfitBeforeWorstDrawdown: boolean;
+  drawdownFromPeakOpenProfitPctOfBasis: number | null;
+  hadReductionAfterPeakOpenProfitBeforeWorstDrawdown: boolean;
+  reductionCountAfterPeakOpenProfitBeforeWorstDrawdown: number;
+  secondsFromPeakOpenProfitToWorstDrawdown: number | null;
+  secondsFromPeakOpenProfitToFirstReduction: number | null;
+}
+
+export interface PatternInputIdentity {
+  symbol: string;
+  tradeDirection: TradeDirection;
+  sessionBucket: SessionBucket;
+}
+
+export interface PatternInputCore extends PatternInputIdentity {
+  tradeStructure: PatternInputTradeStructureContext;
+  entryContext: PatternInputEntryContext;
+  exitContext: PatternInputExitContext;
+  scalingContext: PatternInputScalingContext;
+  timingContext: PatternInputTimingContext;
+  supportResistanceContext: PatternInputSupportResistanceContext;
+  recoveryContext: PatternInputRecoveryContext;
+}
+
+export type PatternInput = PatternInputCore;

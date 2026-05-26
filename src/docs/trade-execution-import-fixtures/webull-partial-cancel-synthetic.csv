@@ -1,0 +1,5 @@
+Symbol,Side,Filled Qty,Avg Price,Filled Time,Status,Order ID
+RBLX,Buy,40,39.50,2026-05-01 09:42:00,Partially Filled,WB-PF-1
+RBLX,Buy,60,39.75,2026-05-01 09:43:30,Filled,WB-PF-1
+RBLX,Sell,100,40.20,2026-05-01 10:22:00,Filled,WB-PF-2
+RBLX,Sell,25,40.50,2026-05-01 10:25:00,Cancelled,WB-PF-3

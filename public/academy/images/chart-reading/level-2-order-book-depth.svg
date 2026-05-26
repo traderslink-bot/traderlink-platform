@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">Level 2 order book depth</title>
+  <desc id="desc">A dark trading dashboard showing price candles and a Level 2 order book with stacked bids and asks at multiple price levels.</desc>
+  <rect width="900" height="520" fill="#08111f"/>
+  <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Level 2 shows visible depth beyond best bid and ask</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Displayed size helps show current order-book conditions.</text>
+  <line x1="74" y1="128" x2="508" y2="128" stroke="#182943"/>
+  <line x1="74" y1="188" x2="508" y2="188" stroke="#182943"/>
+  <line x1="74" y1="248" x2="508" y2="248" stroke="#182943"/>
+  <line x1="74" y1="308" x2="508" y2="308" stroke="#182943"/>
+  <g stroke-width="3" stroke-linecap="round">
+    <line x1="112" y1="294" x2="112" y2="250" stroke="#22c55e"/><rect x="101" y="266" width="22" height="20" fill="#22c55e" rx="3"/>
+    <line x1="154" y1="270" x2="154" y2="220" stroke="#22c55e"/><rect x="143" y="238" width="22" height="22" fill="#22c55e" rx="3"/>
+    <line x1="196" y1="250" x2="196" y2="196" stroke="#ef4444"/><rect x="185" y="216" width="22" height="24" fill="#ef4444" rx="3"/>
+    <line x1="238" y1="258" x2="238" y2="204" stroke="#22c55e"/><rect x="227" y="224" width="22" height="22" fill="#22c55e" rx="3"/>
+    <line x1="280" y1="234" x2="280" y2="176" stroke="#22c55e"/><rect x="269" y="196" width="22" height="26" fill="#22c55e" rx="3"/>
+    <line x1="322" y1="220" x2="322" y2="164" stroke="#ef4444"/><rect x="311" y="184" width="22" height="24" fill="#ef4444" rx="3"/>
+  </g>
+  <line x1="74" y1="340" x2="508" y2="340" stroke="#2a3d5c"/>
+  <g>
+    <rect x="101" y="418" width="22" height="40" fill="#22c55e" opacity="0.58"/>
+    <rect x="143" y="386" width="22" height="72" fill="#22c55e" opacity="0.72"/>
+    <rect x="185" y="406" width="22" height="52" fill="#ef4444" opacity="0.6"/>
+    <rect x="227" y="390" width="22" height="68" fill="#22c55e" opacity="0.68"/>
+    <rect x="269" y="360" width="22" height="98" fill="#22c55e" opacity="0.84"/>
+    <rect x="311" y="412" width="22" height="46" fill="#ef4444" opacity="0.56"/>
+  </g>
+  <rect x="548" y="122" width="276" height="318" rx="12" fill="#0a1322" stroke="#213858"/>
+  <text x="572" y="154" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Level 2 depth</text>
+  <g font-family="Arial, sans-serif" font-size="13">
+    <text x="574" y="188" fill="#bbf7d0">Bids</text>
+    <text x="714" y="188" fill="#fecdd3">Asks</text>
+    <rect x="574" y="204" width="112" height="24" fill="#0f2f25" rx="4"/><text x="586" y="221" fill="#bbf7d0">2.48 x 12k</text>
+    <rect x="574" y="234" width="92" height="24" fill="#0f2f25" rx="4"/><text x="586" y="251" fill="#bbf7d0">2.47 x 8k</text>
+    <rect x="574" y="264" width="132" height="24" fill="#0f2f25" rx="4"/><text x="586" y="281" fill="#bbf7d0">2.46 x 18k</text>
+    <rect x="714" y="204" width="88" height="24" fill="#33171f" rx="4"/><text x="726" y="221" fill="#fecdd3">2.51 x 7k</text>
+    <rect x="714" y="234" width="132" height="24" fill="#33171f" rx="4"/><text x="726" y="251" fill="#fecdd3">2.52 x 16k</text>
+    <rect x="714" y="264" width="104" height="24" fill="#33171f" rx="4"/><text x="726" y="281" fill="#fecdd3">2.53 x 10k</text>
+    <line x1="572" y1="314" x2="800" y2="314" stroke="#2a3d5c"/>
+    <text x="574" y="344" fill="#8ea6c8">Visible depth can guide order size.</text>
+    <text x="574" y="372" fill="#8ea6c8">Depth can disappear or shift.</text>
+  </g>
+</svg>

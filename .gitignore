@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,6 +13,12 @@
 
 # testing
 /coverage
+/artifacts
+
+# local app persistence
+/data/trader-intelligence.sqlite*
+/data/db-backups/
+/tools/big-time-pennies/bigtime-data/
 
 # next.js
 /.next/
@@ -29,6 +36,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+.codex-dev-server/
 
 # env files (can opt-in for committing if needed)
 .env*

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Spinning top candle shape</title>
+  <desc id="desc">Clean candle diagram showing one spinning top candle with a small body and wicks on both sides.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="48" y="40" width="864" height="420" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <g stroke="#19304d" stroke-width="1">
+    <path d="M88 130H872M88 220H872M88 310H872M88 400H872"/>
+  </g>
+  <text x="64" y="88" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Spinning top candle shape</text>
+  <text x="64" y="120" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="15">Small real body with upper and lower wicks on both sides.</text>
+
+  <g transform="translate(480 155)">
+    <line x1="0" y1="12" x2="0" y2="258" stroke="#d6e4ff" stroke-width="10" stroke-linecap="round"/>
+    <rect x="-58" y="104" width="116" height="74" rx="7" fill="#22c55e"/>
+  </g>
+
+  <g font-family="Arial, sans-serif" font-size="15" fill="#8ea6c8">
+    <text x="244" y="214">Upper wick</text>
+    <path d="M330 208L474 174" stroke="#38bdf8" stroke-width="2" fill="none"/>
+    <circle cx="474" cy="174" r="4" fill="#38bdf8"/>
+    <text x="632" y="288">Small body</text>
+    <path d="M628 282L538 298" stroke="#38bdf8" stroke-width="2" fill="none"/>
+    <circle cx="538" cy="298" r="4" fill="#38bdf8"/>
+    <text x="244" y="392">Lower wick</text>
+    <path d="M330 386L474 404" stroke="#38bdf8" stroke-width="2" fill="none"/>
+    <circle cx="474" cy="404" r="4" fill="#38bdf8"/>
+  </g>
+</svg>

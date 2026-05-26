@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430" role="img" aria-labelledby="title desc">
+  <title id="title">Market Open And Opening Range Context</title>
+  <desc id="desc">Realistic candlestick chart showing the market open, a first range, opening range high and low zones, volume expansion, and failed extension context labels.</desc>
+  <defs><style>
+    .bg{fill:#0b1220}.panel{fill:#0f1a2b;stroke:#203651;stroke-width:1.5}.grid{stroke:#22364f;opacity:.65}.txt{fill:#d7e3f4;font-family:Arial,Helvetica,sans-serif}.small{font-size:12px}.label{font-size:13px;font-weight:700}.muted{fill:#8ea1bd}.zone{fill:rgba(56,189,248,.12);stroke:#38bdf8;stroke-width:1.5}.line{stroke:#38bdf8;stroke-width:1.5;stroke-dasharray:6 5}.green{fill:#22c55e;stroke:#22c55e}.red{fill:#ef4444;stroke:#ef4444}.wickG{stroke:#22c55e;stroke-width:2}.wickR{stroke:#ef4444;stroke-width:2}.volG{fill:#22c55e;opacity:.45}.volR{fill:#ef4444;opacity:.45}
+  </style></defs>
+  <rect class="bg" width="760" height="430"/><rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
+  <text class="txt label" x="34" y="42">Market Open: Let The First Range Form</text>
+  <text class="txt small muted" x="34" y="64">The opening range helps organize the first burst of volatility.</text>
+  <g transform="translate(54 94)">
+    <rect x="0" y="0" width="650" height="230" fill="#0c1626" stroke="#203651"/>
+    <line class="grid" x1="0" y1="45" x2="650" y2="45"/><line class="grid" x1="0" y1="90" x2="650" y2="90"/><line class="grid" x1="0" y1="135" x2="650" y2="135"/><line class="grid" x1="0" y1="180" x2="650" y2="180"/>
+    <line class="line" x1="50" y1="0" x2="50" y2="230"/><text class="txt small" x="28" y="18">9:30</text>
+    <rect class="zone" x="52" y="58" width="214" height="15"/><text class="txt small" x="272" y="70">Opening range high</text>
+    <rect class="zone" x="52" y="148" width="214" height="15"/><text class="txt small" x="272" y="161">Opening range low</text>
+    <line class="wickG" x1="28" y1="128" x2="28" y2="164"/><rect class="green" x="20" y="140" width="16" height="14"/>
+    <line class="wickG" x1="62" y1="56" x2="62" y2="170"/><rect class="green" x="52" y="96" width="20" height="46"/>
+    <line class="wickR" x1="98" y1="62" x2="98" y2="166"/><rect class="red" x="88" y="80" width="20" height="62"/>
+    <line class="wickG" x1="134" y1="86" x2="134" y2="156"/><rect class="green" x="124" y="112" width="20" height="24"/>
+    <line class="wickR" x1="170" y1="100" x2="170" y2="168"/><rect class="red" x="160" y="120" width="20" height="30"/>
+    <line class="wickG" x1="206" y1="76" x2="206" y2="150"/><rect class="green" x="196" y="104" width="20" height="28"/>
+    <line class="wickG" x1="242" y1="62" x2="242" y2="134"/><rect class="green" x="232" y="90" width="20" height="26"/>
+    <line class="wickR" x1="290" y1="48" x2="290" y2="138"/><rect class="red" x="281" y="66" width="18" height="52"/>
+    <line class="wickR" x1="324" y1="88" x2="324" y2="158"/><rect class="red" x="315" y="106" width="18" height="34"/>
+    <line class="wickG" x1="358" y1="92" x2="358" y2="148"/><rect class="green" x="349" y="112" width="18" height="20"/>
+    <line class="wickR" x1="392" y1="98" x2="392" y2="154"/><rect class="red" x="383" y="116" width="18" height="20"/>
+    <line class="wickG" x1="426" y1="84" x2="426" y2="144"/><rect class="green" x="417" y="104" width="18" height="26"/>
+    <line class="wickG" x1="460" y1="68" x2="460" y2="132"/><rect class="green" x="451" y="90" width="18" height="28"/>
+    <line class="wickR" x1="494" y1="58" x2="494" y2="146"/><rect class="red" x="485" y="82" width="18" height="42"/>
+    <line class="wickR" x1="528" y1="106" x2="528" y2="168"/><rect class="red" x="519" y="122" width="18" height="30"/>
+    <text class="txt small" x="500" y="46">Failed extension</text>
+    <g transform="translate(0 246)">
+      <rect class="volG" x="20" y="28" width="16" height="20"/><rect class="volG" x="52" y="0" width="20" height="48"/><rect class="volR" x="88" y="4" width="20" height="44"/><rect class="volG" x="124" y="12" width="20" height="36"/><rect class="volR" x="160" y="16" width="20" height="32"/><rect class="volG" x="196" y="18" width="20" height="30"/><rect class="volG" x="232" y="22" width="20" height="26"/>
+      <rect class="volR" x="281" y="12" width="18" height="36"/><rect class="volR" x="315" y="18" width="18" height="30"/><rect class="volG" x="349" y="28" width="18" height="20"/><rect class="volR" x="383" y="31" width="18" height="17"/><rect class="volG" x="417" y="26" width="18" height="22"/><rect class="volG" x="451" y="20" width="18" height="28"/><rect class="volR" x="485" y="18" width="18" height="30"/><rect class="volR" x="519" y="24" width="18" height="24"/>
+    </g>
+  </g>
+</svg>

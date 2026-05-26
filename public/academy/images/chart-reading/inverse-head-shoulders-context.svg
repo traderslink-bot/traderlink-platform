@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" aria-hidden="true">
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="64" y="54" width="832" height="432" rx="12" fill="#0b1626" stroke="#1b3558" stroke-width="2"/>
+  <g stroke="#18304d" stroke-width="1.5" opacity=".8">
+    <path d="M104 142H856M104 230H856M104 318H856M104 406H856"/>
+    <path d="M200 82V458M320 82V458M440 82V458M560 82V458M680 82V458M800 82V458"/>
+  </g>
+  <path d="M172 220L748 200" fill="none" stroke="#8aa4c8" stroke-width="5" stroke-linecap="round" opacity="0.8" stroke-dasharray="12 12"/>
+  <path d="M170 220C220 328 280 330 330 222C372 428 450 436 500 222C550 324 620 330 676 214" fill="none" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+  <ellipse cx="270" cy="326" rx="62" ry="72" fill="none" stroke="#38bdf8" stroke-width="5" opacity="0.95"/>
+  <ellipse cx="435" cy="410" rx="72" ry="96" fill="none" stroke="#38bdf8" stroke-width="5" opacity="0.95"/>
+  <ellipse cx="612" cy="324" rx="62" ry="72" fill="none" stroke="#38bdf8" stroke-width="5" opacity="0.95"/>
+  <g opacity="1"><line x1="185" y1="170" x2="185" y2="286" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="168" y="200" width="34" height="56" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="270" y1="258" x2="270" y2="388" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="249" y="294" width="42" height="60" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="350" y1="174" x2="350" y2="288" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="333" y="202" width="34" height="54" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="435" y1="318" x2="435" y2="466" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="411" y="358" width="48" height="80" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="520" y1="170" x2="520" y2="286" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="503" y="200" width="34" height="52" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="612" y1="258" x2="612" y2="386" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="591" y="292" width="42" height="58" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="705" y1="96" x2="705" y2="236" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="688" y="130" width="34" height="70" fill="#22c55e"/></g>
+</svg>

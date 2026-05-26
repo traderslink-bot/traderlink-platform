@@ -1,6 +1,6 @@
 # Trader Feedback Capabilities
 
-This file summarizes what the current Layer 1 to Layer 3 system can already
+This file summarizes what the current Layer 1 to Layer 4 system can already
 support for trader-facing feedback.
 
 It is not a coaching document.
@@ -34,6 +34,20 @@ It is weaker at named setup taxonomy such as:
 1. reclaim
 2. opening-drive / session-aware setup labels
 3. explicit mean-reversion setup labels
+
+It also now has the first deterministic downstream scoring -> behavior ->
+coaching bridge for a limited but real behavior set.
+
+Current short-trade scope:
+
+- The engine has some direction-aware short execution math and defensive
+  short-import support.
+- A small amount of short market-context wording exists so defensive short
+  imports do not accidentally receive long-biased support/resistance language.
+- The current beta should not be represented as a short-trader coaching product.
+- Short-specific coaching, short-vs-long analytics, borrow/locate review,
+  squeeze-risk feedback, and short-seller product positioning are deferred until
+  a dedicated future plan.
 
 ---
 
@@ -178,6 +192,178 @@ The system is not yet strong enough to claim a full named setup taxonomy.
 
 That means the app can already say a lot about how the trader traded,
 but it still says structure better than it says playbook names.
+
+## Current Trade Decision Review Output
+
+The trade-analysis summary now includes a deterministic
+`trade_decision_review_v1` object.
+
+This review layer is downstream of the factual engine. It uses:
+
+- normalized patterns
+- pattern scoring
+- behavior analysis
+- coaching templates
+- daily/4h support/resistance context from `levels-system`
+- 1m/5m trade-window movement facts
+
+It does not use VWAP/EMA for trader feedback.
+
+Daily/4h support/resistance levels now preserve the exact grade supplied by
+`levels-system`. The review layer can distinguish weak, moderate, strong, and
+major nearby levels in its wording and evidence. For example, it can now
+support:
+
+- entry was close to major daily/4h resistance
+- entry was close to strong daily/4h resistance
+- entry had nearby weak/moderate/strong daily/4h support
+- entry had limited room into a graded higher-timeframe resistance level
+- nearest level evidence included level strength, score, and reaction strength
+- near-support and far-from-support claims are mutually exclusive for the same
+  first entry
+- level-distance evidence is formatted as actual percent distance to the level
+- combined review headlines can connect major resistance, limited clean room,
+  and late adds after much of the move was already used
+- stale constructive add headlines are suppressed when stronger add-risk facts
+  are the surviving review evidence
+- short-trade level wording is direction-aware: support below is treated as
+  potential downside room or an obstacle for the short, not as bullish
+  "cushion underneath"; long-only "room above" wording is suppressed for short
+  reviews
+
+Short-scope caveat:
+
+- These short-aware checks are defensive safety rails, not full short-trader
+  coaching coverage. For current beta planning, treat short reviews as limited
+  import/math support and keep user-facing coaching focused on the long-side
+  trade-management workflow.
+
+The current review can produce:
+
+- a trade-level score and score band
+- a fix-first behavior such as chasing, averaging down, premature exit,
+  overtrading, poor profit protection, or structured execution
+- a coaching headline
+- the core issue
+- what went wrong or right
+- what to change next time
+- concrete decision insights grouped by:
+  - entry
+  - scaling
+  - exit
+  - market context
+  - trade-window movement
+
+Example supported review shape:
+
+- entry was not close to daily/4h support
+- entry had chase or late-extension risk
+- adds aligned with strength
+- adds came after much of the move was already used
+- some adds cleared resistance with room
+- short entry had room to daily/4h support
+- short adds happened near daily/4h support
+- trade-window MFE/MAE was measured from bounded historical candles
+
+Example combined market/scaling headline now supported:
+
+- entry was close to major daily/4h resistance, the trade had limited clean
+  room, and later adds increased size after much of the move was already used
+
+This is the first working bridge from "patterns were detected" to "the app can
+coach the trader on what mattered."
+
+## Current Import Dry-Run Surface
+
+`/import-dry-run` now has a `Prototype Analysis` panel.
+
+What it can show immediately:
+
+- whether the import is blocked, needs review, or can generate a prototype
+  analysis
+- generated trade and feedback-summary counts
+- post-import review queue count
+- execution-autopsy findings such as first mistake, worst add, best reduction,
+  and position-size escalation
+- parsed fee and commission visibility
+- broker net amount presence
+- parsed currency state and mixed-currency review warnings
+- explicit production safety: no production database write and no export
+
+What it is prepared to show next:
+
+- precomputed `TradeAnalysisSummary.decisionReview` facts from the server-side
+  trade-analysis path
+- daily/4h support/resistance decision-review signals, such as entry near
+  resistance, limited clean room, and adds after the trade had already used
+  much of its favorable move
+
+What is now wired:
+
+- `/api/import-dry-run/decision-review` can run the server-only bridge for
+  completed grouped dry-run trades
+- `/import-dry-run` has a `Run Review` action that requests those snapshots
+- returned snapshots attach to the existing `Prototype Analysis` panel
+- deterministic CSV scenarios now test imported trades producing
+  decision-review facts
+- deterministic scenarios also cover failed entry near major resistance,
+  realistic IBKR activity statement import, partial exits, completed
+  short-trade smoke, and open-position skip diagnostics
+- `src/lib/trader-analytics/server/build-decision-review-quality-dashboard.ts`
+  can run deterministic review scenarios and report expected vs actual
+  insights, required grade evidence, and forbidden VWAP/EMA wording
+- `npm run calibrate:decision-review` prints the deterministic quality
+  dashboard without starting a dev server or watcher
+- the calibration runner writes
+  `artifacts/decision-review-quality/latest.md` by default and can also inspect
+  safe real CSV files with `--csv` / `--broker`
+- attached decision reviews in `/import-dry-run` now render as per-trade cards
+  with grouped market-context, entry, add/scaling, exit, and trade-window
+  evidence, plus server diagnostics when a trade is skipped or capped
+
+Boundary:
+
+- the browser dry-run route does not compute support/resistance, VWAP, EMA, or
+  market structure
+- VWAP/EMA trader feedback remains disabled
+- lower-timeframe support/resistance coaching remains deferred
+- market-context review must arrive as precomputed daily/4h facts from the
+  server-side analysis flow
+- fees, commissions, and broker net amount are import-review context only
+- IBKR `Comm/Fee` is parsed as cost visibility; plain IBKR `Proceeds` is not
+  treated as broker net P/L because it is gross proceeds in activity
+  statements
+- execution feedback remains gross-only until a separate net-P/L scoring plan
+  deliberately changes that contract
+
+## New Behavior/Coaching Capabilities
+
+The repo can now also support a first deterministic behavior/coaching layer for
+the behaviors currently represented in the behavior registry.
+
+What is now possible:
+
+- prioritize one primary behavior instead of treating all detected behavior
+  signals as equally important
+- suppress weaker or contradicted behaviors from the main coaching focus
+- identify whether the most important behavior acted more like:
+  - a destructive mistake
+  - a costly mistake
+  - an improving behavior
+  - an edge
+- emit one primary coaching directive through `fixFirst`
+- keep behavior/coaching claims tied to scored trace evidence instead of
+  generic advice
+- aggregate many trade-feedback outputs into a trader-level behavior profile
+- identify top recurring mistakes and emerging strengths
+- classify first-pass trader identities like chase-prone or weak-profit-protector
+- show which session segment produces the most consistent weakness or strength
+- show whether a behavior is improving or deteriorating over time
+
+Honest current limit:
+
+- this new layer is real, but its coverage is only as broad as the current
+  implemented behavior registry
 
 ---
 

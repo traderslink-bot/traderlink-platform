@@ -21,13 +21,14 @@ export const FULLY_CLOSED_TRADE: PatternDefinition = {
   name: "Fully Closed Trade",
   family: PATTERN_FAMILIES.TRADE_CLOSURE,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
     return {
-      matched: input.closedToFlat === true,
+      matched: input.tradeStructure.closedToFlat === true,
       evidence: {
-        closedToFlat: input.closedToFlat,
-        finalPositionSize: input.finalPositionSize,
+        closedToFlat: input.tradeStructure.closedToFlat,
+        finalPositionSize: input.tradeStructure.finalPositionSize,
       },
       thresholdsUsed: {},
     };
@@ -39,16 +40,17 @@ export const PARTIAL_POSITION_LEFT: PatternDefinition = {
   name: "Partial Position Left",
   family: PATTERN_FAMILIES.TRADE_CLOSURE,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
     const threshold =
       THRESHOLDS.TRADE_CLOSURE.MIN_REMAINING_POSITION_FOR_PARTIAL;
 
     return {
-      matched: input.finalPositionSize >= threshold,
+      matched: input.tradeStructure.finalPositionSize >= threshold,
       evidence: {
-        finalPositionSize: input.finalPositionSize,
-        closedToFlat: input.closedToFlat,
+        finalPositionSize: input.tradeStructure.finalPositionSize,
+        closedToFlat: input.tradeStructure.closedToFlat,
       },
       thresholdsUsed: {
         minRemainingPosition: threshold,
@@ -61,3 +63,5 @@ export const TRADE_CLOSURE_PATTERNS: PatternDefinition[] = [
   FULLY_CLOSED_TRADE,
   PARTIAL_POSITION_LEFT,
 ];
+
+

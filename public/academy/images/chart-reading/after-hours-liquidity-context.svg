@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430" role="img" aria-labelledby="title desc">
+  <title id="title">After-Hours Liquidity And Headline Reaction Context</title>
+  <desc id="desc">Dark trading dashboard chart showing regular session close, sparse after-hours candles, wider spread context, headline reaction, and lower volume context labels.</desc>
+  <defs><style>
+    .bg{fill:#0b1220}.panel{fill:#0f1a2b;stroke:#203651;stroke-width:1.5}.grid{stroke:#22364f;opacity:.65}.txt{fill:#d7e3f4;font-family:Arial,Helvetica,sans-serif}.small{font-size:12px}.label{font-size:13px;font-weight:700}.muted{fill:#8ea1bd}.zone{fill:rgba(56,189,248,.12);stroke:#38bdf8;stroke-width:1.5}.line{stroke:#38bdf8;stroke-width:1.5;stroke-dasharray:6 5}.green{fill:#22c55e;stroke:#22c55e}.red{fill:#ef4444;stroke:#ef4444}.wickG{stroke:#22c55e;stroke-width:2}.wickR{stroke:#ef4444;stroke-width:2}.volG{fill:#22c55e;opacity:.45}.volR{fill:#ef4444;opacity:.45}.note{fill:#12263f;stroke:#2f80ed;stroke-width:1}
+  </style></defs>
+  <rect class="bg" width="760" height="430"/><rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
+  <text class="txt label" x="34" y="42">After-Hours: Headline Reaction And Liquidity Review</text>
+  <text class="txt small muted" x="34" y="64">Extended hours can move on fewer shares. Check source, spread, and exits.</text>
+  <g transform="translate(54 94)">
+    <rect x="0" y="0" width="530" height="230" fill="#0c1626" stroke="#203651"/>
+    <line class="grid" x1="0" y1="45" x2="530" y2="45"/><line class="grid" x1="0" y1="90" x2="530" y2="90"/><line class="grid" x1="0" y1="135" x2="530" y2="135"/><line class="grid" x1="0" y1="180" x2="530" y2="180"/>
+    <line class="line" x1="270" y1="0" x2="270" y2="230"/><text class="txt small" x="248" y="18">Close</text>
+    <rect class="zone" x="286" y="54" width="192" height="20"/><text class="txt small" x="302" y="68">Headline reaction area</text>
+    <line class="wickG" x1="38" y1="134" x2="38" y2="168"/><rect class="green" x="30" y="146" width="16" height="12"/>
+    <line class="wickR" x1="72" y1="124" x2="72" y2="164"/><rect class="red" x="64" y="136" width="16" height="16"/>
+    <line class="wickG" x1="106" y1="106" x2="106" y2="154"/><rect class="green" x="98" y="122" width="16" height="20"/>
+    <line class="wickR" x1="140" y1="100" x2="140" y2="156"/><rect class="red" x="132" y="118" width="16" height="22"/>
+    <line class="wickG" x1="174" y1="92" x2="174" y2="144"/><rect class="green" x="166" y="112" width="16" height="20"/>
+    <line class="wickR" x1="208" y1="102" x2="208" y2="154"/><rect class="red" x="200" y="118" width="16" height="22"/>
+    <line class="wickG" x1="242" y1="90" x2="242" y2="138"/><rect class="green" x="234" y="108" width="16" height="18"/>
+    <line class="wickG" x1="304" y1="52" x2="304" y2="136"/><rect class="green" x="294" y="78" width="20" height="40"/>
+    <line class="wickR" x1="350" y1="58" x2="350" y2="156"/><rect class="red" x="340" y="88" width="20" height="48"/>
+    <line class="wickR" x1="402" y1="106" x2="402" y2="174"/><rect class="red" x="392" y="126" width="20" height="28"/>
+    <line class="wickG" x1="456" y1="112" x2="456" y2="162"/><rect class="green" x="446" y="130" width="20" height="12"/>
+    <text class="txt small" x="316" y="190">Fewer prints can distort the chart</text>
+    <g transform="translate(0 246)">
+      <rect class="volG" x="30" y="22" width="16" height="26"/><rect class="volR" x="64" y="24" width="16" height="24"/><rect class="volG" x="98" y="18" width="16" height="30"/><rect class="volR" x="132" y="20" width="16" height="28"/><rect class="volG" x="166" y="18" width="16" height="30"/><rect class="volR" x="200" y="24" width="16" height="24"/><rect class="volG" x="234" y="20" width="16" height="28"/>
+      <rect class="volG" x="294" y="12" width="20" height="36"/><rect class="volR" x="340" y="20" width="20" height="28"/><rect class="volR" x="392" y="32" width="20" height="16"/><rect class="volG" x="446" y="38" width="20" height="10"/>
+    </g>
+  </g>
+  <rect class="note" x="616" y="114" width="104" height="56" rx="6"/><text class="txt small" x="630" y="138">Source check</text><text class="txt small muted" x="630" y="156">Filing/news</text>
+  <rect class="note" x="616" y="190" width="104" height="56" rx="6"/><text class="txt small" x="630" y="214">Spread check</text><text class="txt small muted" x="630" y="232">Fill quality</text>
+  <rect class="note" x="616" y="266" width="104" height="56" rx="6"/><text class="txt small" x="630" y="290">Plan check</text><text class="txt small muted" x="630" y="308">Overnight risk</text>
+</svg>

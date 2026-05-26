@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Clean Key-Level Map Around Current Price</title>
+  <desc id="desc">Educational candlestick chart showing nearest support, nearest resistance, and a higher timeframe level around current price.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Clean Key-Level Map</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Mark levels that affect the current plan.</text>
+  <g stroke="#18304e" stroke-width="1">
+    <line x1="58" y1="116" x2="704" y2="116"/>
+    <line x1="58" y1="168" x2="704" y2="168"/>
+    <line x1="58" y1="220" x2="704" y2="220"/>
+    <line x1="58" y1="272" x2="704" y2="272"/>
+  </g>
+  <rect x="64" y="118" width="626" height="36" fill="#1d4ed8" opacity=".18"/>
+  <line x1="64" y1="118" x2="690" y2="118" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="64" y1="154" x2="690" y2="154" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="500" y="111" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Higher timeframe level</text>
+  <rect x="64" y="184" width="626" height="38" fill="#ef4444" opacity=".13"/>
+  <line x1="64" y1="184" x2="690" y2="184" stroke="#ef4444" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="64" y1="222" x2="690" y2="222" stroke="#ef4444" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="514" y="178" fill="#fecaca" font-family="Arial, sans-serif" font-size="14" font-weight="700">Nearest resistance</text>
+  <rect x="64" y="278" width="626" height="38" fill="#22c55e" opacity=".13"/>
+  <line x1="64" y1="278" x2="690" y2="278" stroke="#22c55e" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="64" y1="316" x2="690" y2="316" stroke="#22c55e" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="534" y="272" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="14" font-weight="700">Nearest support</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="96" y1="278" x2="96" y2="330"/>
+      <rect x="86" y="292" width="20" height="24"/>
+      <line x1="162" y1="244" x2="162" y2="306"/>
+      <rect x="152" y="260" width="20" height="30"/>
+      <line x1="228" y1="214" x2="228" y2="282"/>
+      <rect x="218" y="232" width="20" height="32"/>
+      <line x1="294" y1="198" x2="294" y2="260"/>
+      <rect x="284" y="214" width="20" height="28"/>
+      <line x1="426" y1="206" x2="426" y2="270"/>
+      <rect x="416" y="222" width="20" height="32"/>
+      <line x1="558" y1="198" x2="558" y2="264"/>
+      <rect x="548" y="214" width="20" height="32"/>
+    </g>
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="360" y1="178" x2="360" y2="254"/>
+      <rect x="350" y="198" width="20" height="36"/>
+      <line x1="492" y1="178" x2="492" y2="266"/>
+      <rect x="482" y="200" width="20" height="44"/>
+      <line x1="624" y1="184" x2="624" y2="280"/>
+      <rect x="614" y="206" width="20" height="48"/>
+    </g>
+  </g>
+  <path d="M96 314 C155 279 196 255 229 248 C269 238 317 209 360 226 C408 246 449 225 492 242 C535 259 579 222 625 254" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".55"/>
+  <circle cx="626" cy="254" r="7" fill="#e8f1ff"/>
+  <text x="590" y="336" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="13">Current price area</text>
+  <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Clean map: nearest support, nearest resistance, one nearby higher timeframe level</text>
+</svg>

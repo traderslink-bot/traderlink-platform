@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">VWAP reclaim context with candles and volume</title>
+  <desc id="desc">Dark trading dashboard style candlestick chart showing price below VWAP, a reclaim attempt, a retest area, and a failed reclaim example with volume context.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="38" y="38" width="884" height="356" rx="10" fill="#0b1626" stroke="#1b3558"/>
+  <rect x="38" y="414" width="884" height="86" rx="10" fill="#0b1626" stroke="#1b3558"/>
+
+  <g stroke="#19304d" stroke-width="1">
+    <path d="M82 88H884M82 148H884M82 208H884M82 268H884M82 328H884"/>
+    <path d="M120 66V366M200 66V366M280 66V366M360 66V366M440 66V366M520 66V366M600 66V366M680 66V366M760 66V366M840 66V366"/>
+  </g>
+
+  <text x="60" y="28" fill="#d8ecff" font-family="Arial" font-size="22" font-weight="700">VWAP Reclaim Context</text>
+  <text x="704" y="28" fill="#8ca9c7" font-family="Arial" font-size="14">Educational chart example</text>
+
+  <path d="M80 234 L160 229 L240 222 L320 214 L400 207 L480 199 L560 192 L640 185 L720 178 L800 171 L884 164" fill="none" stroke="#38bdf8" stroke-width="4"/>
+  <text x="725" y="157" fill="#9bdcff" font-family="Arial" font-size="17" font-weight="700">VWAP reference</text>
+
+  <rect x="76" y="202" width="812" height="44" fill="#1f6feb" opacity=".14"/>
+  <text x="90" y="198" fill="#9cc7ff" font-family="Arial" font-size="16">Reclaim and retest area</text>
+
+  <g stroke-width="3" stroke-linecap="round">
+    <g stroke="#ef4444" fill="#ef4444"><line x1="116" y1="224" x2="116" y2="302"/><rect x="104" y="245" width="24" height="42" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="156" y1="238" x2="156" y2="320"/><rect x="144" y="258" width="24" height="48" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="196" y1="252" x2="196" y2="324"/><rect x="184" y="274" width="24" height="34" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="236" y1="242" x2="236" y2="330"/><rect x="224" y="263" width="24" height="52" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="276" y1="236" x2="276" y2="314"/><rect x="264" y="257" width="24" height="38" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="316" y1="198" x2="316" y2="294"/><rect x="304" y="224" width="24" height="52" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="356" y1="178" x2="356" y2="258"/><rect x="344" y="198" width="24" height="42" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="396" y1="190" x2="396" y2="254"/><rect x="384" y="205" width="24" height="32" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="436" y1="184" x2="436" y2="246"/><rect x="424" y="202" width="24" height="28" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="476" y1="154" x2="476" y2="228"/><rect x="464" y="176" width="24" height="36" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="516" y1="134" x2="516" y2="208"/><rect x="504" y="154" width="24" height="38" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="556" y1="144" x2="556" y2="224"/><rect x="544" y="162" width="24" height="44" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="596" y1="128" x2="596" y2="206"/><rect x="584" y="148" width="24" height="40" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="636" y1="146" x2="636" y2="232"/><rect x="624" y="164" width="24" height="50" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="676" y1="174" x2="676" y2="254"/><rect x="664" y="192" width="24" height="42" rx="2"/></g>
+    <g stroke="#22c55e" fill="#22c55e"><line x1="716" y1="168" x2="716" y2="238"/><rect x="704" y="188" width="24" height="32" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="756" y1="184" x2="756" y2="266"/><rect x="744" y="205" width="24" height="42" rx="2"/></g>
+    <g stroke="#ef4444" fill="#ef4444"><line x1="796" y1="206" x2="796" y2="292"/><rect x="784" y="226" width="24" height="48" rx="2"/></g>
+  </g>
+
+  <g fill="#d8ecff" font-family="Arial" font-size="15" font-weight="700">
+    <text x="258" y="112">Below VWAP first</text>
+    <text x="430" y="116">Reclaim attempt</text>
+    <text x="604" y="304">Failed hold example</text>
+  </g>
+  <g stroke="#8ca9c7" stroke-width="2" fill="none" marker-end="url(#arrow)">
+    <path d="M296 120 L290 238"/>
+    <path d="M472 124 L472 184"/>
+    <path d="M660 292 L644 230"/>
+  </g>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L7,3 z" fill="#8ca9c7"/>
+    </marker>
+  </defs>
+
+  <g>
+    <text x="60" y="440" fill="#8ca9c7" font-family="Arial" font-size="14">Volume context</text>
+    <rect x="106" y="462" width="22" height="20" fill="#ef4444" opacity=".55"/>
+    <rect x="146" y="452" width="22" height="30" fill="#ef4444" opacity=".6"/>
+    <rect x="186" y="466" width="22" height="16" fill="#22c55e" opacity=".55"/>
+    <rect x="226" y="446" width="22" height="36" fill="#ef4444" opacity=".65"/>
+    <rect x="266" y="458" width="22" height="24" fill="#22c55e" opacity=".6"/>
+    <rect x="306" y="430" width="22" height="52" fill="#22c55e" opacity=".82"/>
+    <rect x="346" y="438" width="22" height="44" fill="#22c55e" opacity=".75"/>
+    <rect x="386" y="460" width="22" height="22" fill="#ef4444" opacity=".55"/>
+    <rect x="426" y="455" width="22" height="27" fill="#22c55e" opacity=".58"/>
+    <rect x="466" y="432" width="22" height="50" fill="#22c55e" opacity=".8"/>
+    <rect x="506" y="438" width="22" height="44" fill="#22c55e" opacity=".72"/>
+    <rect x="546" y="448" width="22" height="34" fill="#ef4444" opacity=".68"/>
+    <rect x="586" y="452" width="22" height="30" fill="#22c55e" opacity=".62"/>
+    <rect x="626" y="434" width="22" height="48" fill="#ef4444" opacity=".78"/>
+    <rect x="666" y="430" width="22" height="52" fill="#ef4444" opacity=".85"/>
+    <rect x="706" y="456" width="22" height="26" fill="#22c55e" opacity=".6"/>
+    <rect x="746" y="442" width="22" height="40" fill="#ef4444" opacity=".72"/>
+    <rect x="786" y="436" width="22" height="46" fill="#ef4444" opacity=".78"/>
+  </g>
+
+  <text x="60" y="520" fill="#8ca9c7" font-family="Arial" font-size="14">Read VWAP with levels, volume, timing, and failure behavior. The line is only one part of the picture.</text>
+</svg>

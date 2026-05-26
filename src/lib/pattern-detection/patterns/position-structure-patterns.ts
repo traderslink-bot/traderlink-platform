@@ -30,6 +30,7 @@ export const AGGRESSIVE_SCALE_IN: PatternDefinition = {
   name: "Aggressive Scale In",
   family: PATTERN_FAMILIES.POSITION_STRUCTURE,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const minIncreaseEvents =
@@ -37,18 +38,18 @@ export const AGGRESSIVE_SCALE_IN: PatternDefinition = {
     const minExecutionsPerMinute =
       THRESHOLDS.EXECUTION_FREQUENCY.HIGH_MIN_EXECUTIONS_PER_MINUTE;
 
-    const executionsPerMinute = input.executionsPerMinute ?? 0;
+    const executionsPerMinute = input.timingContext.executionsPerMinute ?? 0;
 
     const matched =
-      input.totalPositionIncreaseCount >= minIncreaseEvents &&
+      input.tradeStructure.totalPositionIncreaseCount >= minIncreaseEvents &&
       executionsPerMinute >= minExecutionsPerMinute;
 
     return {
       matched,
       evidence: {
-        totalPositionIncreaseCount: input.totalPositionIncreaseCount,
+        totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
         executionsPerMinute,
-        hadMultipleIncreases: input.hadMultipleIncreases,
+        hadMultipleIncreases: input.tradeStructure.hadMultipleIncreases,
       },
       thresholdsUsed: {
         minIncreaseEvents,
@@ -63,6 +64,7 @@ export const PASSIVE_SCALE_IN: PatternDefinition = {
   name: "Passive Scale In",
   family: PATTERN_FAMILIES.POSITION_STRUCTURE,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const minIncreaseEvents =
@@ -70,18 +72,18 @@ export const PASSIVE_SCALE_IN: PatternDefinition = {
     const maxExecutionsPerMinute =
       THRESHOLDS.EXECUTION_FREQUENCY.LOW_MAX_EXECUTIONS_PER_MINUTE;
 
-    const executionsPerMinute = input.executionsPerMinute ?? 0;
+    const executionsPerMinute = input.timingContext.executionsPerMinute ?? 0;
 
     const matched =
-      input.totalPositionIncreaseCount >= minIncreaseEvents &&
+      input.tradeStructure.totalPositionIncreaseCount >= minIncreaseEvents &&
       executionsPerMinute <= maxExecutionsPerMinute;
 
     return {
       matched,
       evidence: {
-        totalPositionIncreaseCount: input.totalPositionIncreaseCount,
+        totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
         executionsPerMinute,
-        hadMultipleIncreases: input.hadMultipleIncreases,
+        hadMultipleIncreases: input.tradeStructure.hadMultipleIncreases,
       },
       thresholdsUsed: {
         minIncreaseEvents,
@@ -96,19 +98,20 @@ export const SINGLE_BUILD_FULL_EXIT: PatternDefinition = {
   name: "Single Build Full Exit",
   family: PATTERN_FAMILIES.POSITION_STRUCTURE,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const matched =
-      input.totalPositionIncreaseCount === 1 &&
-      input.closedToFlat === true &&
-      input.finalPositionSize === 0;
+      input.tradeStructure.totalPositionIncreaseCount === 1 &&
+      input.tradeStructure.closedToFlat === true &&
+      input.tradeStructure.finalPositionSize === 0;
 
     return {
       matched,
       evidence: {
-        totalPositionIncreaseCount: input.totalPositionIncreaseCount,
-        closedToFlat: input.closedToFlat,
-        finalPositionSize: input.finalPositionSize,
+        totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
+        closedToFlat: input.tradeStructure.closedToFlat,
+        finalPositionSize: input.tradeStructure.finalPositionSize,
       },
       thresholdsUsed: {
         requiredIncreaseEvents: 1,
@@ -122,22 +125,23 @@ export const MULTI_BUILD_FULL_EXIT: PatternDefinition = {
   name: "Multi Build Full Exit",
   family: PATTERN_FAMILIES.POSITION_STRUCTURE,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const minIncreaseEvents =
       THRESHOLDS.POSITION_BUILDING.MULTI_INCREASE_MIN_EVENTS;
 
     const matched =
-      input.totalPositionIncreaseCount >= minIncreaseEvents &&
-      input.closedToFlat === true &&
-      input.finalPositionSize === 0;
+      input.tradeStructure.totalPositionIncreaseCount >= minIncreaseEvents &&
+      input.tradeStructure.closedToFlat === true &&
+      input.tradeStructure.finalPositionSize === 0;
 
     return {
       matched,
       evidence: {
-        totalPositionIncreaseCount: input.totalPositionIncreaseCount,
-        closedToFlat: input.closedToFlat,
-        finalPositionSize: input.finalPositionSize,
+        totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
+        closedToFlat: input.tradeStructure.closedToFlat,
+        finalPositionSize: input.tradeStructure.finalPositionSize,
       },
       thresholdsUsed: {
         minIncreaseEvents,
@@ -151,6 +155,7 @@ export const MULTI_BUILD_PARTIAL_EXIT: PatternDefinition = {
   name: "Multi Build Partial Exit",
   family: PATTERN_FAMILIES.POSITION_STRUCTURE,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const minIncreaseEvents =
@@ -159,15 +164,15 @@ export const MULTI_BUILD_PARTIAL_EXIT: PatternDefinition = {
       THRESHOLDS.TRADE_CLOSURE.MIN_REMAINING_POSITION_FOR_PARTIAL;
 
     const matched =
-      input.totalPositionIncreaseCount >= minIncreaseEvents &&
-      input.finalPositionSize >= minRemainingPosition;
+      input.tradeStructure.totalPositionIncreaseCount >= minIncreaseEvents &&
+      input.tradeStructure.finalPositionSize >= minRemainingPosition;
 
     return {
       matched,
       evidence: {
-        totalPositionIncreaseCount: input.totalPositionIncreaseCount,
-        finalPositionSize: input.finalPositionSize,
-        closedToFlat: input.closedToFlat,
+        totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
+        finalPositionSize: input.tradeStructure.finalPositionSize,
+        closedToFlat: input.tradeStructure.closedToFlat,
       },
       thresholdsUsed: {
         minIncreaseEvents,
@@ -182,6 +187,7 @@ export const SCALE_IN_THEN_REDUCE: PatternDefinition = {
   name: "Scale In Then Reduce",
   family: PATTERN_FAMILIES.POSITION_STRUCTURE,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const minIncreaseEvents =
@@ -190,14 +196,14 @@ export const SCALE_IN_THEN_REDUCE: PatternDefinition = {
       THRESHOLDS.POSITION_REDUCTION.MULTI_DECREASE_MIN_EVENTS;
 
     const matched =
-      input.totalPositionIncreaseCount >= minIncreaseEvents &&
-      input.totalPositionDecreaseCount >= minDecreaseEvents;
+      input.tradeStructure.totalPositionIncreaseCount >= minIncreaseEvents &&
+      input.tradeStructure.totalPositionDecreaseCount >= minDecreaseEvents;
 
     return {
       matched,
       evidence: {
-        totalPositionIncreaseCount: input.totalPositionIncreaseCount,
-        totalPositionDecreaseCount: input.totalPositionDecreaseCount,
+        totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
+        totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
       },
       thresholdsUsed: {
         minIncreaseEvents,
@@ -212,21 +218,22 @@ export const ONE_AND_DONE_ROUND_TRIP: PatternDefinition = {
   name: "One And Done Round Trip",
   family: PATTERN_FAMILIES.POSITION_STRUCTURE,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const matched =
-      input.totalPositionIncreaseCount === 1 &&
-      input.totalPositionDecreaseCount === 1 &&
-      input.closedToFlat === true &&
-      input.finalPositionSize === 0;
+      input.tradeStructure.totalPositionIncreaseCount === 1 &&
+      input.tradeStructure.totalPositionDecreaseCount === 1 &&
+      input.tradeStructure.closedToFlat === true &&
+      input.tradeStructure.finalPositionSize === 0;
 
     return {
       matched,
       evidence: {
-        totalPositionIncreaseCount: input.totalPositionIncreaseCount,
-        totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-        closedToFlat: input.closedToFlat,
-        finalPositionSize: input.finalPositionSize,
+        totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
+        totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+        closedToFlat: input.tradeStructure.closedToFlat,
+        finalPositionSize: input.tradeStructure.finalPositionSize,
       },
       thresholdsUsed: {
         requiredIncreaseEvents: 1,
@@ -245,3 +252,5 @@ export const POSITION_STRUCTURE_PATTERNS: PatternDefinition[] = [
   SCALE_IN_THEN_REDUCE,
   ONE_AND_DONE_ROUND_TRIP,
 ];
+
+

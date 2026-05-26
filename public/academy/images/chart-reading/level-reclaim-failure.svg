@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Level Reclaim Failure Example</title>
+  <desc id="desc">Educational candlestick chart showing price reclaiming a level briefly and then failing back below the zone.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="332" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Level Reclaim Failure</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A reclaim can fail if price cannot stay above the level.</text>
+  <g stroke="#18304e" stroke-width="1">
+    <line x1="58" y1="118" x2="704" y2="118"/>
+    <line x1="58" y1="170" x2="704" y2="170"/>
+    <line x1="58" y1="222" x2="704" y2="222"/>
+    <line x1="58" y1="274" x2="704" y2="274"/>
+  </g>
+  <rect x="64" y="200" width="626" height="40" fill="#1d4ed8" opacity=".2"/>
+  <line x1="64" y1="200" x2="690" y2="200" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="64" y1="240" x2="690" y2="240" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="510" y="194" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Reclaim zone</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="96" y1="176" x2="96" y2="246"/>
+      <rect x="86" y="196" width="20" height="32"/>
+      <line x1="294" y1="230" x2="294" y2="312"/>
+      <rect x="284" y="252" width="20" height="36"/>
+      <line x1="360" y1="186" x2="360" y2="264"/>
+      <rect x="350" y="206" width="20" height="36"/>
+    </g>
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="162" y1="180" x2="162" y2="268"/>
+      <rect x="152" y="200" width="20" height="46"/>
+      <line x1="228" y1="240" x2="228" y2="324"/>
+      <rect x="218" y="260" width="20" height="40"/>
+      <line x1="426" y1="168" x2="426" y2="280"/>
+      <rect x="416" y="196" width="20" height="58"/>
+      <line x1="492" y1="224" x2="492" y2="310"/>
+      <rect x="482" y="244" width="20" height="42"/>
+      <line x1="558" y1="236" x2="558" y2="318"/>
+      <rect x="548" y="254" width="20" height="38"/>
+      <line x1="624" y1="250" x2="624" y2="326"/>
+      <rect x="614" y="268" width="20" height="34"/>
+    </g>
+  </g>
+  <path d="M96 226 C147 208 185 225 228 299 C259 354 313 270 361 226 C396 194 424 226 493 286 C533 320 580 294 625 302" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".55"/>
+  <text x="148" y="330" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Level lost</text>
+  <text x="336" y="166" fill="#bbf7d0" font-family="Arial, sans-serif" font-size="13">Brief reclaim</text>
+  <text x="442" y="330" fill="#fecaca" font-family="Arial, sans-serif" font-size="13">Fails below zone</text>
+  <rect x="28" y="374" width="704" height="38" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="398" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Check: did the reclaim hold, or was it only the first bounce?</text>
+</svg>

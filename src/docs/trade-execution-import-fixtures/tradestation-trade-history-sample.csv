@@ -1,0 +1,3 @@
+Date,Time,Symbol,Action,Quantity,Price,Commission,Fees,Amount,Currency
+2026-05-01,09:45:00,NVDA,Buy,10,875.50,0.00,0.00,-8755.00,USD
+2026-05-01,10:15:00,NVDA,Sell,10,889.10,0.00,0.00,8891.00,USD

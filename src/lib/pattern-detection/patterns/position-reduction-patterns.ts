@@ -21,16 +21,17 @@ export const SCALED_OUT_OF_POSITION: PatternDefinition = {
   name: "Scaled Out of Position",
   family: PATTERN_FAMILIES.POSITION_REDUCTION,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
     const threshold =
       THRESHOLDS.POSITION_REDUCTION.MULTI_DECREASE_MIN_EVENTS;
 
     return {
-      matched: input.totalPositionDecreaseCount >= threshold,
+      matched: input.tradeStructure.totalPositionDecreaseCount >= threshold,
       evidence: {
-        totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-        hadMultipleDecreases: input.hadMultipleDecreases,
+        totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+        hadMultipleDecreases: input.tradeStructure.hadMultipleDecreases,
       },
       thresholdsUsed: {
         minDecreaseEvents: threshold,
@@ -44,12 +45,13 @@ export const REDUCTION_INTO_STRENGTH: PatternDefinition = {
   name: "Reduction Into Strength",
   family: PATTERN_FAMILIES.POSITION_REDUCTION,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const reductionCount = input.totalPositionDecreaseCount;
-    const nearHighCount = input.reductionsNearRecentHighCount;
+    const reductionCount = input.tradeStructure.totalPositionDecreaseCount;
+    const nearHighCount = input.exitContext.reductionsNearRecentHighCount;
     const averageReductionVsBasis =
-      input.averageReductionPriceVsPreviousAverageEntryPct;
+      input.exitContext.averageReductionPriceVsPreviousAverageEntryPct;
 
     const minRangePosition =
       THRESHOLDS.POSITION_REDUCTION.INTO_STRENGTH_MIN_RANGE_POSITION;
@@ -83,12 +85,13 @@ export const REDUCTION_INTO_WEAKNESS: PatternDefinition = {
   name: "Reduction Into Weakness",
   family: PATTERN_FAMILIES.POSITION_REDUCTION,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const reductionCount = input.totalPositionDecreaseCount;
-    const nearLowCount = input.reductionsNearRecentLowCount;
+    const reductionCount = input.tradeStructure.totalPositionDecreaseCount;
+    const nearLowCount = input.exitContext.reductionsNearRecentLowCount;
     const averageReductionVsBasis =
-      input.averageReductionPriceVsPreviousAverageEntryPct;
+      input.exitContext.averageReductionPriceVsPreviousAverageEntryPct;
 
     const maxRangePosition =
       THRESHOLDS.POSITION_REDUCTION.INTO_WEAKNESS_MAX_RANGE_POSITION;
@@ -122,11 +125,12 @@ export const PROFIT_PROTECTION_PRESENT: PatternDefinition = {
   name: "Profit Protection Present",
   family: PATTERN_FAMILIES.POSITION_REDUCTION,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const reductionCount = input.totalPositionDecreaseCount;
-    const peakOpenProfitPctOfBasis = input.peakOpenProfitPctOfBasis;
-    const maxGivebackPct = input.maxGivebackFromPeakOpenProfitPct;
+    const reductionCount = input.tradeStructure.totalPositionDecreaseCount;
+    const peakOpenProfitPctOfBasis = input.recoveryContext.peakOpenProfitPctOfBasis;
+    const maxGivebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
 
     const maxGivebackPctThreshold =
       THRESHOLDS.POSITION_REDUCTION.PROFIT_PROTECTION_MAX_GIVEBACK_PCT;
@@ -157,11 +161,12 @@ export const FAILED_PROFIT_PROTECTION_STRUCTURE: PatternDefinition = {
   name: "Failed Profit Protection Structure",
   family: PATTERN_FAMILIES.POSITION_REDUCTION,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const reductionCount = input.totalPositionDecreaseCount;
-    const peakOpenProfitPctOfBasis = input.peakOpenProfitPctOfBasis;
-    const maxGivebackPct = input.maxGivebackFromPeakOpenProfitPct;
+    const reductionCount = input.tradeStructure.totalPositionDecreaseCount;
+    const peakOpenProfitPctOfBasis = input.recoveryContext.peakOpenProfitPctOfBasis;
+    const maxGivebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
 
     const minGivebackPct =
       THRESHOLDS.POSITION_REDUCTION.FAILED_PROFIT_PROTECTION_MIN_GIVEBACK_PCT;
@@ -196,13 +201,14 @@ export const REDUCTION_AFTER_RECENT_RUN_UP: PatternDefinition = {
   name: "Reduction After Recent Run-Up",
   family: PATTERN_FAMILIES.POSITION_REDUCTION,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
-    const reductionCount = input.totalPositionDecreaseCount;
+    const reductionCount = input.tradeStructure.totalPositionDecreaseCount;
     const reductionsWithRecentRunUpCount =
-      input.reductionsWithRecentRunUpCount;
+      input.exitContext.reductionsWithRecentRunUpCount;
     const averageRunUp =
-      input.averageReductionRecentRunUpPctBeforeExecution;
+      input.exitContext.averageReductionRecentRunUpPctBeforeExecution;
 
     const minRunUp =
       THRESHOLDS.POSITION_REDUCTION.REDUCTION_AFTER_RECENT_RUN_UP_MIN_PCT;
@@ -232,13 +238,14 @@ export const REDUCTION_AFTER_RECENT_DROP: PatternDefinition = {
   name: "Reduction After Recent Drop",
   family: PATTERN_FAMILIES.POSITION_REDUCTION,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
-    const reductionCount = input.totalPositionDecreaseCount;
+    const reductionCount = input.tradeStructure.totalPositionDecreaseCount;
     const reductionsWithRecentDropCount =
-      input.reductionsWithRecentDropCount;
+      input.exitContext.reductionsWithRecentDropCount;
     const averageDrop =
-      input.averageReductionRecentDropPctBeforeExecution;
+      input.exitContext.averageReductionRecentDropPctBeforeExecution;
 
     const minDrop =
       THRESHOLDS.POSITION_REDUCTION.REDUCTION_AFTER_RECENT_DROP_MIN_PCT;
@@ -268,6 +275,7 @@ export const HELD_THROUGH_DANGER_AFTER_PEAK_PROFIT: PatternDefinition = {
   name: "Held Through Danger After Peak Profit",
   family: PATTERN_FAMILIES.POSITION_REDUCTION,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const minDrawdownFromPeakPctOfBasis =
@@ -275,21 +283,21 @@ export const HELD_THROUGH_DANGER_AFTER_PEAK_PROFIT: PatternDefinition = {
         .HELD_THROUGH_DANGER_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
     const matched =
-      input.hadPeakOpenProfitBeforeWorstDrawdown &&
-      input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-      input.drawdownFromPeakOpenProfitPctOfBasis >=
+      input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+      input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+      input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
         minDrawdownFromPeakPctOfBasis &&
-      !input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown;
+      !input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown;
 
     return {
       matched,
       evidence: {
         hadPeakOpenProfitBeforeWorstDrawdown:
-          input.hadPeakOpenProfitBeforeWorstDrawdown,
+          input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
         drawdownFromPeakOpenProfitPctOfBasis:
-          input.drawdownFromPeakOpenProfitPctOfBasis,
+          input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
         hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-          input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+          input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
       },
       thresholdsUsed: {
         minDrawdownFromPeakPctOfBasis,
@@ -303,6 +311,7 @@ export const DELAYED_RISK_RESPONSE_AFTER_PEAK_PROFIT: PatternDefinition = {
   name: "Delayed Risk Response After Peak Profit",
   family: PATTERN_FAMILIES.POSITION_REDUCTION,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const minDrawdownFromPeakPctOfBasis =
@@ -313,26 +322,26 @@ export const DELAYED_RISK_RESPONSE_AFTER_PEAK_PROFIT: PatternDefinition = {
         .DELAYED_RISK_RESPONSE_MIN_SECONDS_TO_FIRST_REDUCTION;
 
     const matched =
-      input.hadPeakOpenProfitBeforeWorstDrawdown &&
-      input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-      input.drawdownFromPeakOpenProfitPctOfBasis >=
+      input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+      input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+      input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
         minDrawdownFromPeakPctOfBasis &&
-      input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-      input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-      input.secondsFromPeakOpenProfitToFirstReduction >=
+      input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+      input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+      input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction >=
         minSecondsToFirstReduction;
 
     return {
       matched,
       evidence: {
         hadPeakOpenProfitBeforeWorstDrawdown:
-          input.hadPeakOpenProfitBeforeWorstDrawdown,
+          input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
         drawdownFromPeakOpenProfitPctOfBasis:
-          input.drawdownFromPeakOpenProfitPctOfBasis,
+          input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
         hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-          input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+          input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
         secondsFromPeakOpenProfitToFirstReduction:
-          input.secondsFromPeakOpenProfitToFirstReduction,
+          input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
       },
       thresholdsUsed: {
         minDrawdownFromPeakPctOfBasis,
@@ -347,6 +356,7 @@ export const TIMELY_RISK_RESPONSE_AFTER_PEAK_PROFIT: PatternDefinition = {
   name: "Timely Risk Response After Peak Profit",
   family: PATTERN_FAMILIES.POSITION_REDUCTION,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const minDrawdownFromPeakPctOfBasis =
@@ -357,26 +367,26 @@ export const TIMELY_RISK_RESPONSE_AFTER_PEAK_PROFIT: PatternDefinition = {
         .TIMELY_RISK_RESPONSE_MAX_SECONDS_TO_FIRST_REDUCTION;
 
     const matched =
-      input.hadPeakOpenProfitBeforeWorstDrawdown &&
-      input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-      input.drawdownFromPeakOpenProfitPctOfBasis >=
+      input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+      input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+      input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
         minDrawdownFromPeakPctOfBasis &&
-      input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-      input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-      input.secondsFromPeakOpenProfitToFirstReduction <
+      input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+      input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+      input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <
         maxSecondsToFirstReduction;
 
     return {
       matched,
       evidence: {
         hadPeakOpenProfitBeforeWorstDrawdown:
-          input.hadPeakOpenProfitBeforeWorstDrawdown,
+          input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
         drawdownFromPeakOpenProfitPctOfBasis:
-          input.drawdownFromPeakOpenProfitPctOfBasis,
+          input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
         hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-          input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+          input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
         secondsFromPeakOpenProfitToFirstReduction:
-          input.secondsFromPeakOpenProfitToFirstReduction,
+          input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
       },
       thresholdsUsed: {
         minDrawdownFromPeakPctOfBasis,
@@ -391,6 +401,7 @@ export const TIMELY_RISK_RESPONSE_WITH_PROFIT_PROTECTION: PatternDefinition = {
   name: "Timely Risk Response With Profit Protection",
   family: PATTERN_FAMILIES.POSITION_REDUCTION,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const minDrawdownFromPeakPctOfBasis =
@@ -403,30 +414,30 @@ export const TIMELY_RISK_RESPONSE_WITH_PROFIT_PROTECTION: PatternDefinition = {
       THRESHOLDS.POSITION_REDUCTION.PROFIT_PROTECTION_MAX_GIVEBACK_PCT;
 
     const matched =
-      input.hadPeakOpenProfitBeforeWorstDrawdown &&
-      input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-      input.drawdownFromPeakOpenProfitPctOfBasis >=
+      input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+      input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+      input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
         minDrawdownFromPeakPctOfBasis &&
-      input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-      input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-      input.secondsFromPeakOpenProfitToFirstReduction <
+      input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+      input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+      input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <
         maxSecondsToFirstReduction &&
-      input.maxGivebackFromPeakOpenProfitPct !== null &&
-      input.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct;
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+      input.recoveryContext.maxGivebackFromPeakOpenProfitPct <= maxGivebackPct;
 
     return {
       matched,
       evidence: {
         hadPeakOpenProfitBeforeWorstDrawdown:
-          input.hadPeakOpenProfitBeforeWorstDrawdown,
+          input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
         drawdownFromPeakOpenProfitPctOfBasis:
-          input.drawdownFromPeakOpenProfitPctOfBasis,
+          input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
         hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-          input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+          input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
         secondsFromPeakOpenProfitToFirstReduction:
-          input.secondsFromPeakOpenProfitToFirstReduction,
+          input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
         maxGivebackFromPeakOpenProfitPct:
-          input.maxGivebackFromPeakOpenProfitPct,
+          input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
       },
       thresholdsUsed: {
         minDrawdownFromPeakPctOfBasis,
@@ -443,6 +454,7 @@ export const DELAYED_RISK_RESPONSE_WITH_FAILED_PROFIT_PROTECTION: PatternDefinit
     name: "Delayed Risk Response With Failed Profit Protection",
     family: PATTERN_FAMILIES.POSITION_REDUCTION,
     patternType: "composite",
+    structuralLevel: "structural_composite",
 
     evaluate: (input) => {
       const minDrawdownFromPeakPctOfBasis =
@@ -456,30 +468,30 @@ export const DELAYED_RISK_RESPONSE_WITH_FAILED_PROFIT_PROTECTION: PatternDefinit
           .DELAYED_RISK_RESPONSE_FAILED_PROTECTION_MIN_GIVEBACK_PCT;
 
       const matched =
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minDrawdownFromPeakPctOfBasis &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction >=
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction >=
           minSecondsToFirstReduction &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct;
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct;
 
       return {
         matched,
         evidence: {
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
         },
         thresholdsUsed: {
           minDrawdownFromPeakPctOfBasis,
@@ -504,3 +516,5 @@ export const POSITION_REDUCTION_PATTERNS: PatternDefinition[] = [
   TIMELY_RISK_RESPONSE_WITH_PROFIT_PROTECTION,
   DELAYED_RISK_RESPONSE_WITH_FAILED_PROFIT_PROTECTION,
 ];
+
+

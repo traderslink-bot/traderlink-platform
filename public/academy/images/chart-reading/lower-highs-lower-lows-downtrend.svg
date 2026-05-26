@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Lower Highs And Lower Lows Downtrend Structure</title>
+  <desc id="desc">Educational candlestick chart showing lower highs and lower lows forming a weakening market structure with volume context.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Lower Highs And Lower Lows</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Weak bounces and broken swing lows define the structure.</text>
+  <g stroke="#18304e" stroke-width="1">
+    <line x1="58" y1="116" x2="704" y2="116"/>
+    <line x1="58" y1="166" x2="704" y2="166"/>
+    <line x1="58" y1="216" x2="704" y2="216"/>
+    <line x1="58" y1="266" x2="704" y2="266"/>
+  </g>
+  <rect x="198" y="172" width="136" height="34" fill="#1d4ed8" opacity=".18"/>
+  <rect x="392" y="216" width="140" height="34" fill="#1d4ed8" opacity=".18"/>
+  <text x="204" y="164" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="12" font-weight="700">Lower high zone</text>
+  <text x="398" y="208" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="12" font-weight="700">Lower high zone</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="94" y1="118" x2="94" y2="198"/><rect x="84" y="138" width="20" height="40"/>
+      <line x1="148" y1="154" x2="148" y2="238"/><rect x="138" y="176" width="20" height="42"/>
+      <line x1="202" y1="198" x2="202" y2="278"/><rect x="192" y="218" width="20" height="40"/>
+      <line x1="256" y1="166" x2="256" y2="236"/><rect x="246" y="184" width="20" height="34"/>
+      <line x1="310" y1="226" x2="310" y2="308"/><rect x="300" y="246" width="20" height="42"/>
+      <line x1="364" y1="196" x2="364" y2="266"/><rect x="354" y="214" width="20" height="34"/>
+      <line x1="418" y1="250" x2="418" y2="326"/><rect x="408" y="270" width="20" height="36"/>
+      <line x1="526" y1="258" x2="526" y2="336"/><rect x="516" y="278" width="20" height="38"/>
+      <line x1="634" y1="270" x2="634" y2="340"/><rect x="624" y="288" width="20" height="34"/>
+    </g>
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="472" y1="220" x2="472" y2="292"/><rect x="462" y="240" width="20" height="34"/>
+      <line x1="580" y1="234" x2="580" y2="304"/><rect x="570" y="252" width="20" height="32"/>
+      <line x1="688" y1="248" x2="688" y2="318"/><rect x="678" y="266" width="20" height="32"/>
+    </g>
+  </g>
+  <path d="M94 158 L148 218 L202 258 L256 204 L310 288 L364 232 L418 306 L472 258 L526 316 L580 284 L634 322 L688 282" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
+  <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
+    <text x="78" y="110" fill="#fecaca">Swing high</text>
+    <text x="190" y="300" fill="#fecaca">LL</text>
+    <text x="270" y="145" fill="#fecaca">Lower high</text>
+    <text x="402" y="340" fill="#fecaca">Lower low</text>
+    <text x="560" y="226" fill="#fecaca">Weak bounce</text>
+  </g>
+  <g>
+    <rect x="58" y="312" width="14" height="22" fill="#ef4444" opacity=".75"/>
+    <rect x="84" y="306" width="14" height="28" fill="#ef4444" opacity=".8"/>
+    <rect x="110" y="318" width="14" height="16" fill="#21c784" opacity=".65"/>
+    <rect x="136" y="298" width="14" height="36" fill="#ef4444" opacity=".85"/>
+    <rect x="162" y="314" width="14" height="20" fill="#21c784" opacity=".65"/>
+    <rect x="188" y="294" width="14" height="40" fill="#ef4444" opacity=".9"/>
+    <rect x="214" y="318" width="14" height="16" fill="#21c784" opacity=".65"/>
+    <rect x="240" y="306" width="14" height="28" fill="#ef4444" opacity=".75"/>
+    <rect x="266" y="316" width="14" height="18" fill="#21c784" opacity=".65"/>
+    <rect x="292" y="286" width="14" height="48" fill="#ef4444" opacity=".95"/>
+    <rect x="318" y="304" width="14" height="30" fill="#ef4444" opacity=".8"/>
+    <rect x="344" y="316" width="14" height="18" fill="#21c784" opacity=".65"/>
+    <rect x="370" y="292" width="14" height="42" fill="#ef4444" opacity=".9"/>
+    <rect x="396" y="284" width="14" height="50" fill="#ef4444" opacity=".95"/>
+    <rect x="422" y="310" width="14" height="24" fill="#21c784" opacity=".7"/>
+    <rect x="448" y="318" width="14" height="16" fill="#21c784" opacity=".65"/>
+    <rect x="474" y="300" width="14" height="34" fill="#ef4444" opacity=".8"/>
+    <rect x="500" y="288" width="14" height="46" fill="#ef4444" opacity=".92"/>
+    <rect x="526" y="316" width="14" height="18" fill="#21c784" opacity=".65"/>
+    <rect x="552" y="306" width="14" height="28" fill="#ef4444" opacity=".75"/>
+    <rect x="578" y="318" width="14" height="16" fill="#21c784" opacity=".65"/>
+    <rect x="604" y="300" width="14" height="34" fill="#ef4444" opacity=".8"/>
+  </g>
+  <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Check: were lower highs forming before support failed?</text>
+  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Review lower highs and lower lows in order.</text>
+</svg>

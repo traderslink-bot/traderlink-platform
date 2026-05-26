@@ -26,11 +26,12 @@ export const HIGH_FREQUENCY_EXECUTION: PatternDefinition = {
   name: "High Frequency Execution",
   family: PATTERN_FAMILIES.EXECUTION_FREQUENCY,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
     const threshold =
       THRESHOLDS.EXECUTION_FREQUENCY.HIGH_MIN_EXECUTIONS_PER_MINUTE;
-    const value = input.executionsPerMinute ?? 0;
+    const value = input.timingContext.executionsPerMinute ?? 0;
 
     return {
       matched: value >= threshold,
@@ -49,11 +50,12 @@ export const LOW_FREQUENCY_EXECUTION: PatternDefinition = {
   name: "Low Frequency Execution",
   family: PATTERN_FAMILIES.EXECUTION_FREQUENCY,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
     const threshold =
       THRESHOLDS.EXECUTION_FREQUENCY.LOW_MAX_EXECUTIONS_PER_MINUTE;
-    const value = input.executionsPerMinute ?? 0;
+    const value = input.timingContext.executionsPerMinute ?? 0;
 
     return {
       matched: value <= threshold,
@@ -71,3 +73,5 @@ export const EXECUTION_FREQUENCY_PATTERNS: PatternDefinition[] = [
   HIGH_FREQUENCY_EXECUTION,
   LOW_FREQUENCY_EXECUTION,
 ];
+
+

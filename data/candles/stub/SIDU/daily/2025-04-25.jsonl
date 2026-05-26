@@ -1,0 +1,4 @@
+{"timestamp":1745585015000,"open":4.8348,"high":4.9791,"low":4.7397,"close":4.8364,"volume":465483,"symbol":"SIDU","provider":"stub","timeframe":"daily","sourceFetchedAt":1778012895821,"adjustmentMode":"raw"}
+{"timestamp":1745591590000,"open":4.8132,"high":4.9943,"low":4.7297,"close":4.869,"volume":565558,"symbol":"SIDU","provider":"stub","timeframe":"daily","sourceFetchedAt":1778012895827,"adjustmentMode":"raw"}
+{"timestamp":1745595490000,"open":4.8132,"high":4.9943,"low":4.7297,"close":4.869,"volume":565558,"symbol":"SIDU","provider":"stub","timeframe":"daily","sourceFetchedAt":1778012890604,"adjustmentMode":"raw"}
+{"timestamp":1745604057000,"open":4.9312,"high":5.0296,"low":4.7915,"close":4.8571,"volume":738569,"symbol":"SIDU","provider":"stub","timeframe":"daily","sourceFetchedAt":1778012895792,"adjustmentMode":"raw"}

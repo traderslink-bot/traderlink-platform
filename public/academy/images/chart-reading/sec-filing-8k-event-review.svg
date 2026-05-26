@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
+  <title id="title">Form 8-K current event review</title>
+  <desc id="desc">Dark trading dashboard showing a Form 8-K current-event filing beside realistic red and green candlesticks, volume bars, and filing notes.</desc>
+  <rect width="960" height="560" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="904" height="504" rx="14" fill="#0b1628" stroke="#1d3557"/>
+  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Form 8-K Event Review</text>
+  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">An 8-K reports a current event. The item and details matter more than the form name.</text>
+  <rect x="52" y="122" width="278" height="368" rx="10" fill="#081323" stroke="#172a46"/>
+  <text x="78" y="158" fill="#7bb4ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">SEC CURRENT REPORT</text>
+  <text x="78" y="190" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Form 8-K</text>
+  <g font-family="Arial, sans-serif" font-size="13">
+    <text x="78" y="234" fill="#8fa7c8">Event</text><text x="184" y="234" fill="#e6f0ff">Material agreement</text>
+    <text x="78" y="270" fill="#8fa7c8">Exhibit</text><text x="184" y="270" fill="#e6f0ff">Press release</text>
+    <text x="78" y="306" fill="#8fa7c8">Terms</text><text x="184" y="306" fill="#f5c26b">Read details</text>
+    <text x="78" y="342" fill="#8fa7c8">Risk</text><text x="184" y="342" fill="#f5c26b">Financing check</text>
+    <text x="78" y="378" fill="#8fa7c8">Reaction</text><text x="184" y="378" fill="#7bb4ff">Chart + volume</text>
+  </g>
+  <rect x="78" y="420" width="224" height="42" rx="8" fill="#0d213a" stroke="#2d8cff"/>
+  <text x="190" y="446" fill="#d8eaff" font-family="Arial, sans-serif" font-size="13" text-anchor="middle">Do not stop at the headline</text>
+  <rect x="360" y="122" width="548" height="260" rx="10" fill="#081323" stroke="#172a46"/>
+  <g stroke="#172a46" stroke-width="1">
+    <line x1="384" y1="164" x2="884" y2="164"/>
+    <line x1="384" y1="206" x2="884" y2="206"/>
+    <line x1="384" y1="248" x2="884" y2="248"/>
+    <line x1="384" y1="290" x2="884" y2="290"/>
+    <line x1="384" y1="332" x2="884" y2="332"/>
+  </g>
+  <g stroke-linecap="round" stroke-width="3">
+    <line x1="408" y1="306" x2="408" y2="340" stroke="#26c281"/><rect x="398" y="318" width="20" height="14" rx="2" fill="#26c281"/>
+    <line x1="444" y1="292" x2="444" y2="330" stroke="#26c281"/><rect x="434" y="306" width="20" height="16" rx="2" fill="#26c281"/>
+    <line x1="480" y1="250" x2="480" y2="316" stroke="#26c281"/><rect x="470" y="270" width="20" height="32" rx="2" fill="#26c281"/>
+    <line x1="516" y1="210" x2="516" y2="294" stroke="#ef5350"/><rect x="506" y="232" width="20" height="46" rx="2" fill="#ef5350"/>
+    <line x1="552" y1="224" x2="552" y2="306" stroke="#26c281"/><rect x="542" y="246" width="20" height="42" rx="2" fill="#26c281"/>
+    <line x1="588" y1="246" x2="588" y2="324" stroke="#ef5350"/><rect x="578" y="264" width="20" height="42" rx="2" fill="#ef5350"/>
+    <line x1="624" y1="270" x2="624" y2="338" stroke="#ef5350"/><rect x="614" y="286" width="20" height="34" rx="2" fill="#ef5350"/>
+    <line x1="660" y1="278" x2="660" y2="342" stroke="#26c281"/><rect x="650" y="294" width="20" height="26" rx="2" fill="#26c281"/>
+    <line x1="696" y1="286" x2="696" y2="350" stroke="#ef5350"/><rect x="686" y="300" width="20" height="30" rx="2" fill="#ef5350"/>
+  </g>
+  <rect x="360" y="398" width="548" height="92" rx="10" fill="#081323" stroke="#172a46"/>
+  <text x="384" y="424" fill="#6f86a7" font-family="Arial, sans-serif" font-size="12">Volume response after filing</text>
+  <g>
+    <rect x="398" y="466" width="20" height="10" fill="#26c281" opacity=".55"/>
+    <rect x="434" y="462" width="20" height="14" fill="#26c281" opacity=".6"/>
+    <rect x="470" y="438" width="20" height="38" fill="#26c281" opacity=".85"/>
+    <rect x="506" y="412" width="20" height="64" fill="#ef5350"/>
+    <rect x="542" y="426" width="20" height="50" fill="#26c281" opacity=".82"/>
+    <rect x="578" y="444" width="20" height="32" fill="#ef5350" opacity=".7"/>
+    <rect x="614" y="456" width="20" height="20" fill="#ef5350" opacity=".62"/>
+  </g>
+</svg>

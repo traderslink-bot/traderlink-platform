@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" aria-hidden="true">
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="64" y="54" width="832" height="432" rx="12" fill="#0b1626" stroke="#1b3558" stroke-width="2"/>
+  <g stroke="#18304d" stroke-width="1.5" opacity=".8">
+    <path d="M104 142H856M104 230H856M104 318H856M104 406H856"/>
+    <path d="M200 82V458M320 82V458M440 82V458M560 82V458M680 82V458M800 82V458"/>
+  </g>
+  <polygon points="160,154 720,294 720,392 160,276" fill="#38bdf8" fill-opacity="0.08" stroke="#38bdf8" stroke-width="5" stroke-linejoin="round" opacity=".95"/>
+  <path d="M160 154L720 294" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" opacity="0.95"/>
+  <path d="M160 276L720 392" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" opacity="0.95"/>
+  <g opacity="1"><line x1="180" y1="124" x2="180" y2="246" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="163" y="154" width="34" height="58" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="265" y1="202" x2="265" y2="336" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="248" y="242" width="34" height="54" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="350" y1="166" x2="350" y2="292" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="333" y="198" width="34" height="54" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="435" y1="244" x2="435" y2="370" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="418" y="282" width="34" height="54" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="520" y1="218" x2="520" y2="342" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="503" y="248" width="34" height="54" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="605" y1="286" x2="605" y2="402" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="588" y="318" width="34" height="50" fill="#22c55e"/></g>
+  <g opacity="1"><line x1="690" y1="266" x2="690" y2="372" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="673" y="292" width="34" height="48" fill="#ef4444"/></g>
+  <g opacity="1"><line x1="770" y1="176" x2="770" y2="308" stroke="#d6e4ff" stroke-width="5" stroke-linecap="round"/><rect x="749" y="210" width="42" height="66" fill="#22c55e"/></g>
+</svg>

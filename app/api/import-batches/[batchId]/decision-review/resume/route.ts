@@ -1,0 +1,176 @@
+import { readLevelsSystemRuntimeConfigFromEnv } from "../../../../../../src/lib/support-resistance/levels-system-runtime-options";
+import { SqliteImportCommitRepository } from "../../../../../../src/lib/trader-analytics/product/import-commit/sqlite-import-commit-repository";
+import { importCommitErrorResponse } from "../../../../../../src/lib/trader-analytics/server/import-commit-service";
+import {
+  runPersistedDecisionReviewJobs,
+  type PersistedDecisionReviewRunResult,
+} from "../../../../../../src/lib/trader-analytics/server/saved-decision-review-service";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const DEFAULT_MAX_TRADES = 1;
+const MAX_TRADES_LIMIT = 10;
+
+type ResumeMode = "queued" | "refresh_missing_replay_candles";
+
+function maxTradesFromBody(body: unknown): number {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return DEFAULT_MAX_TRADES;
+  }
+
+  const value =
+    "maxTrades" in body ? Number(body.maxTrades) : DEFAULT_MAX_TRADES;
+
+  if (!Number.isFinite(value)) {
+    return DEFAULT_MAX_TRADES;
+  }
+
+  return Math.max(1, Math.min(MAX_TRADES_LIMIT, Math.floor(value)));
+}
+
+function savedTradeIdFromBody(body: unknown): string | undefined {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return undefined;
+  }
+
+  const value = "savedTradeId" in body ? body.savedTradeId : undefined;
+
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+async function readRequestBody(request: Request): Promise<unknown> {
+  try {
+    return await request.json();
+  } catch {
+    return {};
+  }
+}
+
+async function runDecisionReview(args: {
+  importBatchId: string;
+  generatedAt: string;
+  maxTrades: number;
+  refreshMissingReplayCandleWindows?: boolean;
+  savedTradeId?: string;
+}): Promise<PersistedDecisionReviewRunResult> {
+  return runPersistedDecisionReviewJobs({
+    repository: new SqliteImportCommitRepository(),
+    importBatchId: args.importBatchId,
+    levelsSystem: readLevelsSystemRuntimeConfigFromEnv(),
+    generatedAt: args.generatedAt,
+    maxTrades: args.maxTrades,
+    deferRemaining: true,
+    refreshMissingReplayCandleWindows: args.refreshMissingReplayCandleWindows,
+    savedTradeIds: args.savedTradeId ? [args.savedTradeId] : undefined,
+  });
+}
+
+export async function POST(
+  request: Request,
+  context: { params: Promise<{ batchId: string }> },
+): Promise<Response> {
+  const routeParams = await context.params;
+  const batchId = decodeURIComponent(routeParams.batchId);
+  const repository = new SqliteImportCommitRepository();
+  const plan = repository.getPreviewPlan(batchId);
+  const batch = repository.getImportBatch(batchId);
+
+  if (!plan || !batch) {
+    return importCommitErrorResponse(
+      404,
+      "not_found",
+      `Import batch ${batchId} was not found.`,
+    );
+  }
+
+  if (batch.status !== "committed") {
+    return importCommitErrorResponse(
+      409,
+      "commit_rejected",
+      "Save the import before resuming chart data review.",
+    );
+  }
+
+  const body = await readRequestBody(request);
+  const maxTrades = maxTradesFromBody(body);
+  const savedTradeId = savedTradeIdFromBody(body);
+  const queuedJobs = repository
+    .listDecisionReviewJobs(batchId)
+    .filter(
+      (job) =>
+        job.status === "queued" &&
+        (!savedTradeId || job.savedTradeId === savedTradeId),
+    );
+  const snapshotsByTradeId = new Map(
+    repository
+      .listDecisionReviewSnapshotsForBatch(batchId)
+      .map((snapshot) => [snapshot.savedTradeId, snapshot]),
+  );
+  const refreshableJobs = repository
+    .listDecisionReviewJobs(batchId)
+    .filter((job) => {
+      if (savedTradeId && job.savedTradeId !== savedTradeId) {
+        return false;
+      }
+
+      if (job.status !== "completed") {
+        return false;
+      }
+
+      const snapshot = snapshotsByTradeId.get(job.savedTradeId);
+
+      return (
+        !snapshot ||
+        (snapshot.review.tradeWindowEvidenceSource ===
+          "levels_system_trade_window" &&
+          !snapshot.review.replayCandleWindow)
+      );
+    });
+
+  if (queuedJobs.length === 0 && refreshableJobs.length === 0) {
+    return Response.json({
+      contractVersion: "persisted_decision_review_resume_result_v1",
+      importBatchId: batchId,
+      queuedBefore: 0,
+      refreshableBefore: 0,
+      selectedJobCount: 0,
+      maxTrades,
+      mode: "queued" satisfies ResumeMode,
+      message:
+        "No queued chart data review jobs or candle replay refreshes are waiting for this import.",
+      run: null,
+    });
+  }
+
+  const generatedAt = new Date().toISOString();
+  const refreshMissingReplayCandleWindows = queuedJobs.length === 0;
+  const run = await runDecisionReview({
+    importBatchId: batchId,
+    generatedAt,
+    maxTrades,
+    refreshMissingReplayCandleWindows,
+    savedTradeId,
+  });
+
+  return Response.json({
+    contractVersion: "persisted_decision_review_resume_result_v1",
+    importBatchId: batchId,
+    queuedBefore: queuedJobs.length,
+    refreshableBefore: refreshableJobs.length,
+    selectedJobCount: Math.min(
+      refreshMissingReplayCandleWindows
+        ? refreshableJobs.length
+        : queuedJobs.length,
+      maxTrades,
+    ),
+    maxTrades,
+    mode: refreshMissingReplayCandleWindows
+      ? ("refresh_missing_replay_candles" satisfies ResumeMode)
+      : ("queued" satisfies ResumeMode),
+    message: refreshMissingReplayCandleWindows
+      ? "Saved chart review refreshed so candle replay data can appear on trade pages."
+      : "Chart data review resumed. You can keep reviewing trades while chart evidence updates.",
+    run,
+  });
+}

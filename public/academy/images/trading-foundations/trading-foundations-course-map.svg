@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430" role="img" aria-labelledby="title desc">
+  <title id="title">Trading Foundations Course Map</title>
+  <desc id="desc">Educational dashboard map showing the Trading Foundations course path from trade mechanics and trading terms through sessions, orders, styles, planning, rules, risk, and review.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#08111f"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <style>
+      .panel{fill:url(#bg);stroke:#24405f;stroke-width:1.5}
+      .card{fill:#0f1b2d;stroke:#2d4464;stroke-width:1.4}
+      .active{fill:#103045;stroke:#38bdf8;stroke-width:1.6}
+      .line{stroke:#38bdf8;stroke-width:2;stroke-linecap:round;opacity:.75}
+      .mutedLine{stroke:#475569;stroke-width:1.2;stroke-dasharray:4 5}
+      .txt{fill:#dbeafe;font-family:Arial,Helvetica,sans-serif}
+      .title{font-size:18px;font-weight:700}
+      .label{font-size:14px;font-weight:700}
+      .small{font-size:12px}
+      .muted{fill:#93a4ba}
+      .green{fill:#22c55e}
+      .cyan{fill:#38bdf8}
+      .amber{fill:#f59e0b}
+    </style>
+  </defs>
+  <rect class="panel" x="14" y="14" width="732" height="402" rx="8"/>
+  <text class="txt title" x="34" y="46">Trading Foundations: guided beginner path</text>
+  <text class="txt small muted" x="34" y="68">Learn trade mechanics, core terms, sessions, orders, styles, planning, risk, and review before chart structure.</text>
+  <g transform="translate(48 100)">
+    <rect class="card" x="0" y="0" width="162" height="92" rx="7"/>
+    <text class="txt label" x="18" y="28">1. Trade Mechanics</text>
+    <text class="txt small muted" x="18" y="52">Stocks and trades</text>
+    <text class="txt small muted" x="18" y="70">How fills work</text>
+    <line class="line" x1="162" y1="46" x2="214" y2="46"/>
+    <rect class="active" x="214" y="0" width="162" height="92" rx="7"/>
+    <text class="txt label" x="232" y="28">2. Trading Terms</text>
+    <text class="txt small muted" x="232" y="52">Positions and P&amp;L</text>
+    <text class="txt small muted" x="232" y="70">Core vocabulary</text>
+    <line class="line" x1="376" y1="46" x2="428" y2="46"/>
+    <rect class="card" x="428" y="0" width="162" height="92" rx="7"/>
+    <text class="txt label" x="446" y="28">3. Sessions And Orders</text>
+    <text class="txt small muted" x="446" y="52">Quotes and orders</text>
+    <text class="txt small muted" x="446" y="70">Liquidity basics</text>
+    <line class="line" x1="509" y1="92" x2="509" y2="132"/>
+    <rect class="card" x="428" y="132" width="162" height="92" rx="7"/>
+    <text class="txt label" x="446" y="160">4. Trading Styles</text>
+    <text class="txt small muted" x="446" y="184">Day vs swing</text>
+    <text class="txt small muted" x="446" y="202">Timeframe fit</text>
+    <line class="line" x1="428" y1="178" x2="376" y2="178"/>
+    <rect class="active" x="214" y="132" width="162" height="92" rx="7"/>
+    <text class="txt label" x="232" y="160">5. Planning And Rules</text>
+    <text class="txt small muted" x="232" y="184">Process</text>
+    <text class="txt small muted" x="232" y="202">Boundaries</text>
+    <line class="line" x1="214" y1="178" x2="162" y2="178"/>
+    <rect class="card" x="0" y="132" width="162" height="92" rx="7"/>
+    <text class="txt label" x="18" y="160">6. Risk And Review</text>
+    <text class="txt small muted" x="18" y="184">Sizing, stops</text>
+    <text class="txt small muted" x="18" y="202">Review</text>
+  </g>
+  <g transform="translate(80 354)">
+    <line class="mutedLine" x1="0" y1="0" x2="600" y2="0"/>
+    <circle class="cyan" cx="0" cy="0" r="5"/>
+    <circle class="green" cx="200" cy="0" r="5"/>
+    <circle class="amber" cx="400" cy="0" r="5"/>
+    <circle class="cyan" cx="600" cy="0" r="5"/>
+    <text class="txt small muted" x="-18" y="24">Learn</text>
+    <text class="txt small muted" x="180" y="24">Plan</text>
+    <text class="txt small muted" x="378" y="24">Trade carefully</text>
+    <text class="txt small muted" x="580" y="24">Review</text>
+  </g>
+</svg>

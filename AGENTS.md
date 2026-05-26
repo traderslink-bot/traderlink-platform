@@ -12,3 +12,23 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Use `src/docs/behavior-coverage-audit.md` and `src/docs/layer2-pattern-detection/layer2-implemented-pattern-catalog.md` as the main calibration docs for deciding what to build next.
 - Only pause for user confirmation when a choice would materially affect architecture, contracts, safety, or destructive filesystem or git actions.
 - When resuming cold, first read `src/docs/codex-project-log.md`, then consult the behavior audit and pattern catalog before making new roadmap decisions.
+
+## Academy Progress Preservation
+
+- Academy progress is production user data. Do not reset, truncate, recreate, or switch the production progress database unless the user explicitly asks for a migration.
+- Live Academy progress is keyed by lesson slug. Do not rename, delete, or move launch lesson slugs without updating `academy/_data/progress-slug-baseline.json` and adding an alias in `academy/_data/progress-slug-aliases.json`.
+- Run `npm run validate:academy-registry` before deploying Academy content or route changes; it is expected to fail if a protected live slug disappears without an alias.
+- See `docs/academy-progress-preservation.md` before changing Academy routing, lesson slugs, progress storage, or Vercel database environment variables.
+
+## Whole Site Source Of Truth
+
+- The permanent local source-of-truth repo is `C:\Users\jerac\Documents\TraderLink\traderslink.pro`.
+- Do not deploy from the parent folder or stale siblings such as `website`, `trader-intelligence-v2`, `trader-intelligence-v2-svg-qa`, or `deploy-candidates/*` unless explicitly reconciled against this repo and production.
+- Current source branch: `codex/news-on-live-academy`, tracking `origin/codex/news-on-live-academy`.
+- Remote: `git@github.com:traderslink-bot/traderslink-trader-improvement-system.git`.
+- On 2026-05-25, production Vercel deployment `dpl_EKrvi1wn3BZvGt48xhr3xQFPDV2f` points at commit `7e6c5a4e50ef8f988fdbc2c43d5f985047853ace` on `codex/news-on-live-academy`.
+- The Vercel project is `vercel-landing` (`prj_TFzKcdj4dS6BHv2maWsy7M5AEv2a`, org/team `team_D1yNeyNl1qTvK0pAWMu5nTWY`) with production aliases `traderslink.pro` and `www.traderslink.pro`.
+- Production deploys are currently Vercel CLI deploys (`source: cli`), not verified Git-connected auto-deploys. Until a formal Git production branch is configured, deploy production only from a clean `traderslink.pro` checkout after pushing the intended commit.
+- The shared top navigation lives in `src/components/site/site-shell.tsx` and is re-exported by `app/site-shell.tsx`. Do not create separate Academy, News, or Intelligence topbars.
+- Canonical feature roots are `app/academy`, `app/news`, and `app/intelligence`. Former workspace routes should redirect in `next.config.ts`; do not recreate duplicate top-level app pages for them.
+- Read `docs/site-architecture.md`, `docs/routes.md`, `docs/deployment.md`, and `docs/auth.md` before structural, deployment, route, or auth changes.

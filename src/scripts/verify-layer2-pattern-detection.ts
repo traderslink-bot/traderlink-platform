@@ -102,9 +102,7 @@ function resolveSampleFilePath(): string {
 
 function readPatternInputFromJson(filePath: string): PatternInput {
   const raw = fs.readFileSync(filePath, "utf8");
-  const parsed = JSON.parse(raw) as PatternInput;
-
-  return parsed;
+  return JSON.parse(raw) as PatternInput;
 }
 
 function sortStrings(values: string[]): string[] {

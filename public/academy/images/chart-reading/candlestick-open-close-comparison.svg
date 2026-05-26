@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Green and red candle open close comparison</title>
+  <desc id="desc">A green candle closes above its open and a red candle closes below its open.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="58" y="64" width="844" height="400" rx="14" fill="#0b1626" stroke="#1b3558" stroke-width="2"/>
+
+  <g stroke="#19304d" stroke-width="1.5">
+    <line x1="98" y1="140" x2="862" y2="140"/>
+    <line x1="98" y1="220" x2="862" y2="220"/>
+    <line x1="98" y1="300" x2="862" y2="300"/>
+    <line x1="98" y1="380" x2="862" y2="380"/>
+  </g>
+
+  <g>
+    <text x="154" y="120" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Close above open</text>
+    <line x1="300" y1="120" x2="300" y2="410" stroke="#e8f1ff" stroke-width="8" stroke-linecap="square"/>
+    <rect x="242" y="170" width="116" height="170" fill="#22c55e"/>
+    <text x="116" y="177" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="24">Close</text>
+    <text x="128" y="348" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="24">Open</text>
+    <text x="220" y="444" fill="#22c55e" font-family="Arial, sans-serif" font-size="25" font-weight="700">Green candle</text>
+  </g>
+
+  <g>
+    <text x="590" y="120" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Close below open</text>
+    <line x1="660" y1="120" x2="660" y2="410" stroke="#e8f1ff" stroke-width="8" stroke-linecap="square"/>
+    <rect x="602" y="170" width="116" height="170" fill="#ef4444"/>
+    <text x="776" y="177" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="24">Open</text>
+    <text x="776" y="348" fill="#d6e4ff" font-family="Arial, sans-serif" font-size="24">Close</text>
+    <text x="582" y="444" fill="#ef4444" font-family="Arial, sans-serif" font-size="25" font-weight="700">Red candle</text>
+  </g>
+</svg>

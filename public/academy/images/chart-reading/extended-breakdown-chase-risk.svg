@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" role="img" aria-labelledby="title desc">
+  <title id="title">Extended Breakdown Chase Risk</title>
+  <desc id="desc">Educational candlestick chart showing a breakdown far below support with chase-risk context labels.</desc>
+  <rect width="760" height="440" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="704" height="318" rx="14" fill="#0b1626" stroke="#1f3554"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Extended Breakdown Chase Risk</text>
+  <text x="44" y="82" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">A breakdown can be real and still be difficult to manage if entered late.</text>
+  <g stroke="#18304e" stroke-width="1">
+    <line x1="58" y1="116" x2="704" y2="116"/><line x1="58" y1="166" x2="704" y2="166"/><line x1="58" y1="216" x2="704" y2="216"/><line x1="58" y1="266" x2="704" y2="266"/>
+  </g>
+  <rect x="80" y="190" width="230" height="34" fill="#1d4ed8" opacity=".18"/>
+  <line x1="80" y1="190" x2="310" y2="190" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <line x1="80" y1="224" x2="310" y2="224" stroke="#60a5fa" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="88" y="184" fill="#9cc8ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Original support zone</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#ef4444" fill="#ef4444">
+      <line x1="96" y1="122" x2="96" y2="202"/><rect x="86" y="142" width="20" height="40"/>
+      <line x1="150" y1="166" x2="150" y2="246"/><rect x="140" y="186" width="20" height="40"/>
+      <line x1="204" y1="198" x2="204" y2="280"/><rect x="194" y="220" width="20" height="40"/>
+      <line x1="258" y1="230" x2="258" y2="312"/><rect x="248" y="252" width="20" height="40"/>
+      <line x1="312" y1="250" x2="312" y2="332"/><rect x="302" y="272" width="20" height="40"/>
+      <line x1="366" y1="262" x2="366" y2="338"/><rect x="356" y="282" width="20" height="36"/>
+      <line x1="474" y1="250" x2="474" y2="328"/><rect x="464" y="270" width="20" height="38"/>
+    </g>
+    <g stroke="#21c784" fill="#21c784">
+      <line x1="420" y1="240" x2="420" y2="310"/><rect x="410" y="258" width="20" height="32"/>
+      <line x1="528" y1="232" x2="528" y2="304"/><rect x="518" y="250" width="20" height="34"/>
+    </g>
+  </g>
+  <path d="M96 162 L150 226 L204 260 L258 292 L312 312 L366 318 L420 290 L474 308 L528 284" fill="none" stroke="#60a5fa" stroke-width="3" opacity=".5"/>
+  <path d="M270 204 C350 232 440 270 530 296" fill="none" stroke="#fecaca" stroke-width="3" stroke-dasharray="7 7"/>
+  <g font-family="Arial, sans-serif" font-size="13" font-weight="700">
+    <text x="286" y="184" fill="#fecaca">Entry far below level</text>
+    <text x="412" y="232" fill="#bbf7d0">Support nearby</text>
+    <text x="500" y="338" fill="#fecaca">Risk harder to define</text>
+  </g>
+  <g>
+    <rect x="70" y="326" width="14" height="18" fill="#ef4444" opacity=".7"/><rect x="96" y="314" width="14" height="30" fill="#ef4444" opacity=".85"/><rect x="122" y="306" width="14" height="38" fill="#ef4444" opacity=".9"/><rect x="148" y="296" width="14" height="48" fill="#ef4444" opacity=".95"/><rect x="174" y="288" width="14" height="56" fill="#ef4444" opacity=".98"/><rect x="200" y="318" width="14" height="26" fill="#21c784" opacity=".66"/><rect x="226" y="302" width="14" height="42" fill="#ef4444" opacity=".88"/><rect x="252" y="314" width="14" height="30" fill="#21c784" opacity=".7"/>
+  </g>
+  <rect x="28" y="362" width="704" height="50" rx="10" fill="#091827" stroke="#1f3554"/>
+  <text x="44" y="385" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Check: was the entry near the broken level, or late after several red candles?</text>
+  <text x="44" y="404" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Weakness can still be poor trade location when price is extended.</text>
+</svg>

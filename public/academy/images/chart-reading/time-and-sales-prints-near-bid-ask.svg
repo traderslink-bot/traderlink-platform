@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">Time and sales prints near bid and ask</title>
+  <desc id="desc">A dark trading dashboard showing time and sales prints near bid and ask quotes beside price candles and volume.</desc>
+  <rect width="900" height="520" fill="#08111f"/>
+  <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Time and sales shows actual prints</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Level 2 shows displayed interest; the tape shows completed trades.</text>
+  <line x1="72" y1="128" x2="508" y2="128" stroke="#182943"/>
+  <line x1="72" y1="188" x2="508" y2="188" stroke="#182943"/>
+  <line x1="72" y1="248" x2="508" y2="248" stroke="#182943"/>
+  <line x1="72" y1="308" x2="508" y2="308" stroke="#182943"/>
+  <g stroke-width="3" stroke-linecap="round">
+    <line x1="112" y1="292" x2="112" y2="250" stroke="#22c55e"/><rect x="101" y="266" width="22" height="18" fill="#22c55e" rx="3"/>
+    <line x1="154" y1="270" x2="154" y2="220" stroke="#22c55e"/><rect x="143" y="238" width="22" height="22" fill="#22c55e" rx="3"/>
+    <line x1="196" y1="248" x2="196" y2="196" stroke="#ef4444"/><rect x="185" y="216" width="22" height="24" fill="#ef4444" rx="3"/>
+    <line x1="238" y1="258" x2="238" y2="204" stroke="#22c55e"/><rect x="227" y="224" width="22" height="22" fill="#22c55e" rx="3"/>
+    <line x1="280" y1="232" x2="280" y2="176" stroke="#22c55e"/><rect x="269" y="196" width="22" height="24" fill="#22c55e" rx="3"/>
+    <line x1="322" y1="220" x2="322" y2="164" stroke="#22c55e"/><rect x="311" y="184" width="22" height="24" fill="#22c55e" rx="3"/>
+  </g>
+  <line x1="72" y1="340" x2="508" y2="340" stroke="#2a3d5c"/>
+  <g>
+    <rect x="101" y="418" width="22" height="40" fill="#22c55e" opacity="0.58"/>
+    <rect x="143" y="384" width="22" height="74" fill="#22c55e" opacity="0.74"/>
+    <rect x="185" y="404" width="22" height="54" fill="#ef4444" opacity="0.6"/>
+    <rect x="227" y="388" width="22" height="70" fill="#22c55e" opacity="0.7"/>
+    <rect x="269" y="356" width="22" height="102" fill="#22c55e" opacity="0.86"/>
+    <rect x="311" y="346" width="22" height="112" fill="#22c55e" opacity="0.9"/>
+  </g>
+  <rect x="548" y="122" width="276" height="318" rx="12" fill="#0a1322" stroke="#213858"/>
+  <text x="572" y="154" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Time and sales</text>
+  <g font-family="Arial, sans-serif" font-size="13">
+    <text x="574" y="186" fill="#8ea6c8">Time</text><text x="650" y="186" fill="#8ea6c8">Price</text><text x="724" y="186" fill="#8ea6c8">Shares</text>
+    <rect x="570" y="200" width="226" height="24" fill="#0f2f25" rx="4"/><text x="580" y="217" fill="#bbf7d0">10:14:21</text><text x="650" y="217" fill="#bbf7d0">3.01 ask</text><text x="734" y="217" fill="#bbf7d0">5,000</text>
+    <rect x="570" y="230" width="226" height="24" fill="#0f2f25" rx="4"/><text x="580" y="247" fill="#bbf7d0">10:14:22</text><text x="650" y="247" fill="#bbf7d0">3.01 ask</text><text x="734" y="247" fill="#bbf7d0">7,200</text>
+    <rect x="570" y="260" width="226" height="24" fill="#33171f" rx="4"/><text x="580" y="277" fill="#fecdd3">10:14:23</text><text x="650" y="277" fill="#fecdd3">2.99 bid</text><text x="734" y="277" fill="#fecdd3">3,400</text>
+    <rect x="570" y="290" width="226" height="24" fill="#0f2f25" rx="4"/><text x="580" y="307" fill="#bbf7d0">10:14:24</text><text x="650" y="307" fill="#bbf7d0">3.02 ask</text><text x="734" y="307" fill="#bbf7d0">9,100</text>
+    <line x1="570" y1="338" x2="796" y2="338" stroke="#2a3d5c"/>
+    <text x="574" y="370" fill="#8ea6c8">Prints show completed trades.</text>
+  </g>
+</svg>

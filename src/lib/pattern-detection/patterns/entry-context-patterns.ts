@@ -33,9 +33,10 @@ export const LOW_RANGE_ENTRY: PatternDefinition = {
   name: "Low Range Entry",
   family: PATTERN_FAMILIES.ENTRY_CONTEXT,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
-    const value = input.firstEntryPricePositionInTradeRangePct;
+    const value = input.entryContext.firstEntryPricePositionInTradeRangePct;
     const threshold =
       THRESHOLDS.ENTRY_CONTEXT.LOW_RANGE_ENTRY_MAX_POSITION;
 
@@ -62,9 +63,10 @@ export const HIGH_RANGE_ENTRY: PatternDefinition = {
   name: "High Range Entry",
   family: PATTERN_FAMILIES.ENTRY_CONTEXT,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
-    const value = input.firstEntryPricePositionInTradeRangePct;
+    const value = input.entryContext.firstEntryPricePositionInTradeRangePct;
     const threshold =
       THRESHOLDS.ENTRY_CONTEXT.HIGH_RANGE_ENTRY_MIN_POSITION;
 
@@ -91,12 +93,13 @@ export const ENTRY_NEAR_TRADE_LOW: PatternDefinition = {
   name: "Entry Near Trade Low",
   family: PATTERN_FAMILIES.ENTRY_CONTEXT,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
     return {
-      matched: input.firstEntryWasNearTradeLow,
+      matched: input.entryContext.firstEntryWasNearTradeLow,
       evidence: {
-        firstEntryWasNearTradeLow: input.firstEntryWasNearTradeLow,
+        firstEntryWasNearTradeLow: input.entryContext.firstEntryWasNearTradeLow,
       },
       thresholdsUsed: {
         nearLowThreshold:
@@ -115,12 +118,13 @@ export const ENTRY_NEAR_TRADE_HIGH: PatternDefinition = {
   name: "Entry Near Trade High",
   family: PATTERN_FAMILIES.ENTRY_CONTEXT,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
     return {
-      matched: input.firstEntryWasNearTradeHigh,
+      matched: input.entryContext.firstEntryWasNearTradeHigh,
       evidence: {
-        firstEntryWasNearTradeHigh: input.firstEntryWasNearTradeHigh,
+        firstEntryWasNearTradeHigh: input.entryContext.firstEntryWasNearTradeHigh,
       },
       thresholdsUsed: {
         nearHighThreshold:
@@ -139,9 +143,10 @@ export const ENTRY_WITH_FAVORABLE_REMAINING_UPSIDE: PatternDefinition = {
   name: "Entry With Favorable Remaining Upside",
   family: PATTERN_FAMILIES.ENTRY_CONTEXT,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
-    const value = input.firstEntryCapturedPercentOfTradeMfe;
+    const value = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
     const threshold =
       THRESHOLDS.ENTRY_CONTEXT.FAVORABLE_REMAINING_UPSIDE_MIN_CAPTURED_MFE;
 
@@ -168,9 +173,10 @@ export const ENTRY_WITH_LIMITED_REMAINING_UPSIDE: PatternDefinition = {
   name: "Entry With Limited Remaining Upside",
   family: PATTERN_FAMILIES.ENTRY_CONTEXT,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
-    const value = input.firstEntryCapturedPercentOfTradeMfe;
+    const value = input.entryContext.firstEntryCapturedPercentOfTradeMfe;
     const threshold =
       THRESHOLDS.ENTRY_CONTEXT.LIMITED_REMAINING_UPSIDE_MAX_CAPTURED_MFE;
 
@@ -197,11 +203,12 @@ export const ENTRY_AFTER_RECENT_RUN_UP: PatternDefinition = {
   name: "Entry After Recent Run-Up",
   family: PATTERN_FAMILIES.ENTRY_CONTEXT,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
-    const runUp = input.firstEntryRecentRunUpPctBeforeEntry;
-    const bullishCount = input.firstEntryBullishCandlesBeforeEntryCount;
-    const bearishCount = input.firstEntryBearishCandlesBeforeEntryCount;
+    const runUp = input.entryContext.firstEntryRecentRunUpPctBeforeEntry;
+    const bullishCount = input.entryContext.firstEntryBullishCandlesBeforeEntryCount;
+    const bearishCount = input.entryContext.firstEntryBearishCandlesBeforeEntryCount;
 
     const minRunUp = THRESHOLDS.ENTRY_CONTEXT.RECENT_RUN_UP_MIN_PCT;
     const directionalCandleEdge =
@@ -236,11 +243,12 @@ export const ENTRY_AFTER_RECENT_DROP: PatternDefinition = {
   name: "Entry After Recent Drop",
   family: PATTERN_FAMILIES.ENTRY_CONTEXT,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
-    const drop = input.firstEntryRecentDropPctBeforeEntry;
-    const bullishCount = input.firstEntryBullishCandlesBeforeEntryCount;
-    const bearishCount = input.firstEntryBearishCandlesBeforeEntryCount;
+    const drop = input.entryContext.firstEntryRecentDropPctBeforeEntry;
+    const bullishCount = input.entryContext.firstEntryBullishCandlesBeforeEntryCount;
+    const bearishCount = input.entryContext.firstEntryBearishCandlesBeforeEntryCount;
 
     const minDrop = THRESHOLDS.ENTRY_CONTEXT.RECENT_DROP_MIN_PCT;
     const directionalCandleEdge =
@@ -280,3 +288,5 @@ export const ENTRY_CONTEXT_PATTERNS: PatternDefinition[] = [
   ENTRY_AFTER_RECENT_RUN_UP,
   ENTRY_AFTER_RECENT_DROP,
 ];
+
+

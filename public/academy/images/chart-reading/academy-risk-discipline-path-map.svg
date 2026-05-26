@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Academy Risk Discipline Path Map</title>
+  <desc id="desc">Dark dashboard path map showing risk planning, position sizing, loss limits, discipline behaviors, realistic red and green candlesticks, and a review loop.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="34" y="34" width="892" height="472" rx="14" fill="#0d1828" stroke="#18314f"/>
+  <text x="58" y="70" fill="#e6edf7" font-family="Arial, sans-serif" font-size="24" font-weight="700">Risk Discipline Path</text>
+  <text x="58" y="96" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="14">Plan -> size -> limits -> behavior review -> practice</text>
+  <rect x="64" y="130" width="396" height="210" fill="#0a1422" stroke="#152b46"/>
+  <rect x="64" y="278" width="396" height="28" fill="#0f5f86" opacity=".35"/>
+  <text x="82" y="298" fill="#9fd0ff" font-family="Arial, sans-serif" font-size="12" font-weight="700">Defined risk area</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#33b07a" fill="#33b07a"><line x1="112" y1="250" x2="112" y2="314"/><rect x="102" y="268" width="20" height="28" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="172" y1="236" x2="172" y2="310"/><rect x="162" y="254" width="20" height="38" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="232" y1="206" x2="232" y2="292"/><rect x="222" y="226" width="20" height="46" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="292" y1="246" x2="292" y2="326"/><rect x="282" y="264" width="20" height="44" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="352" y1="282" x2="352" y2="344"/><rect x="342" y="296" width="20" height="28" rx="2"/></g>
+  </g>
+  <rect x="64" y="370" width="396" height="52" fill="#0a1422" stroke="#152b46"/>
+  <rect x="102" y="404" width="20" height="12" fill="#33b07a" opacity=".7"/><rect x="162" y="400" width="20" height="16" fill="#e25f5f" opacity=".65"/><rect x="222" y="390" width="20" height="26" fill="#33b07a" opacity=".7"/><rect x="282" y="398" width="20" height="18" fill="#e25f5f" opacity=".65"/><rect x="342" y="386" width="20" height="30" fill="#e25f5f" opacity=".7"/>
+  <g font-family="Arial, sans-serif" font-size="14">
+    <rect x="520" y="126" width="300" height="42" rx="8" fill="#0b2035" stroke="#2f86d1"/><text x="540" y="153" fill="#dcefff">1. Trading plan and rules</text>
+    <rect x="520" y="180" width="300" height="42" rx="8" fill="#0b2035" stroke="#204d73"/><text x="540" y="207" fill="#dcefff">2. Position size and risk</text>
+    <rect x="520" y="234" width="300" height="42" rx="8" fill="#0b2035" stroke="#204d73"/><text x="540" y="261" fill="#dcefff">3. Stops and loss limits</text>
+    <rect x="520" y="288" width="300" height="42" rx="8" fill="#0b2035" stroke="#204d73"/><text x="540" y="315" fill="#dcefff">4. Discipline behaviors</text>
+    <rect x="520" y="342" width="300" height="42" rx="8" fill="#0b2035" stroke="#204d73"/><text x="540" y="369" fill="#dcefff">5. Review and practice rule</text>
+  </g>
+  <g font-family="Arial, sans-serif" font-size="12" fill="#a7b6c8">
+    <text x="842" y="157">FOMO</text>
+    <text x="842" y="211">Revenge</text>
+    <text x="842" y="265">Overtrade</text>
+    <text x="842" y="319">Hold loser</text>
+    <text x="842" y="373">Cut winner</text>
+  </g>
+</svg>

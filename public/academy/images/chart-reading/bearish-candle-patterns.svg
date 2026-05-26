@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" fill="none">
+  <rect width="900" height="520" rx="28" fill="#08111F"/>
+  <g stroke="#263447" stroke-width="1">
+    <line x1="56" y1="105" x2="844" y2="105"/>
+    <line x1="56" y1="175" x2="844" y2="175"/>
+    <line x1="56" y1="245" x2="844" y2="245"/>
+    <line x1="56" y1="335" x2="844" y2="335"/>
+    <line x1="56" y1="405" x2="844" y2="405"/>
+  </g>
+  <g fill="#101B2B" stroke="#2E4058" stroke-width="2">
+    <rect x="36" y="34" width="184" height="210" rx="14"/>
+    <rect x="250" y="34" width="184" height="210" rx="14"/>
+    <rect x="464" y="34" width="184" height="210" rx="14"/>
+    <rect x="678" y="34" width="184" height="210" rx="14"/>
+    <rect x="94" y="276" width="210" height="210" rx="14"/>
+    <rect x="345" y="276" width="210" height="210" rx="14"/>
+    <rect x="596" y="276" width="210" height="210" rx="14"/>
+  </g>
+  <g stroke-linecap="round" stroke-width="7">
+    <line x1="128" y1="70" x2="128" y2="202" stroke="#F8FAFC"/>
+    <rect x="106" y="132" width="44" height="62" fill="#EF4444"/>
+
+  </g>
+  <g stroke-linecap="round" stroke-width="7">
+    <line x1="342" y1="70" x2="342" y2="138" stroke="#F8FAFC"/>
+    <line x1="342" y1="186" x2="342" y2="203" stroke="#F8FAFC"/>
+    <rect x="318" y="138" width="48" height="48" fill="#EF4444"/>
+
+  </g>
+  <g stroke-linecap="round" stroke-width="7">
+    <line x1="556" y1="74" x2="556" y2="89" stroke="#F8FAFC"/>
+    <line x1="556" y1="137" x2="556" y2="210" stroke="#F8FAFC"/>
+    <rect x="532" y="89" width="48" height="48" fill="#EF4444"/>
+
+  </g>
+  <g stroke-linecap="round" stroke-width="7">
+    <line x1="745" y1="78" x2="745" y2="190" stroke="#F8FAFC"/>
+    <rect x="724" y="103" width="42" height="66" fill="#22C55E"/>
+    <line x1="796" y1="63" x2="796" y2="205" stroke="#F8FAFC"/>
+    <rect x="772" y="82" width="48" height="104" fill="#EF4444"/>
+
+  </g>
+  <g stroke-linecap="round" stroke-width="7">
+    <line x1="167" y1="319" x2="167" y2="449" stroke="#F8FAFC"/>
+    <rect x="145" y="352" width="44" height="88" fill="#22C55E"/>
+    <line x1="232" y1="318" x2="232" y2="445" stroke="#F8FAFC"/>
+    <rect x="208" y="338" width="48" height="48" fill="#EF4444"/>
+
+  </g>
+  <g stroke-linecap="round" stroke-width="7">
+    <line x1="412" y1="316" x2="412" y2="454" stroke="#F8FAFC"/>
+    <rect x="390" y="346" width="44" height="96" fill="#22C55E"/>
+    <line x1="452" y1="340" x2="452" y2="393" stroke="#F8FAFC"/>
+    <rect x="433" y="360" width="38" height="22" fill="#F8FAFC"/>
+    <line x1="497" y1="318" x2="497" y2="456" stroke="#F8FAFC"/>
+    <rect x="473" y="346" width="48" height="72" fill="#EF4444"/>
+
+  </g>
+  <g stroke-linecap="round" stroke-width="7">
+    <line x1="661" y1="319" x2="661" y2="419" stroke="#F8FAFC"/>
+    <rect x="640" y="335" width="42" height="56" fill="#EF4444"/>
+    <line x1="703" y1="341" x2="703" y2="443" stroke="#F8FAFC"/>
+    <rect x="682" y="362" width="42" height="56" fill="#EF4444"/>
+    <line x1="745" y1="362" x2="745" y2="464" stroke="#F8FAFC"/>
+    <rect x="724" y="388" width="42" height="56" fill="#EF4444"/>
+  </g>
+</svg>

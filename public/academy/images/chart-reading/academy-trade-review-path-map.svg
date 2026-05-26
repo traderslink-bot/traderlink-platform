@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Academy Trade Review Path Map</title>
+  <desc id="desc">Dark dashboard path map showing a completed trade review workflow with realistic candlesticks, risk review, execution review, mistake pattern review, and improvement loop.</desc>
+  <rect width="960" height="540" fill="#07111f"/>
+  <rect x="34" y="34" width="892" height="472" rx="14" fill="#0d1828" stroke="#18314f"/>
+  <text x="58" y="70" fill="#e6edf7" font-family="Arial, sans-serif" font-size="24" font-weight="700">Trade Review Path</text>
+  <text x="58" y="96" fill="#8fa3bd" font-family="Arial, sans-serif" font-size="14">Plan -> risk -> execution -> mistake pattern -> practice loop</text>
+  <rect x="70" y="130" width="420" height="220" fill="#0a1422" stroke="#152b46"/>
+  <rect x="70" y="266" width="420" height="28" fill="#0f5f86" opacity=".35"/>
+  <text x="88" y="286" fill="#9fd0ff" font-family="Arial, sans-serif" font-size="12" font-weight="700">Planned risk / review level</text>
+  <g stroke-linecap="round" stroke-width="3">
+    <g stroke="#33b07a" fill="#33b07a"><line x1="116" y1="254" x2="116" y2="312"/><rect x="106" y="270" width="20" height="24" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="176" y1="224" x2="176" y2="292"/><rect x="166" y="242" width="20" height="34" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="236" y1="234" x2="236" y2="306"/><rect x="226" y="252" width="20" height="36" rx="2"/></g>
+    <g stroke="#33b07a" fill="#33b07a"><line x1="296" y1="198" x2="296" y2="282"/><rect x="286" y="216" width="20" height="44" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="356" y1="210" x2="356" y2="304"/><rect x="346" y="230" width="20" height="50" rx="2"/></g>
+    <g stroke="#e25f5f" fill="#e25f5f"><line x1="416" y1="260" x2="416" y2="330"/><rect x="406" y="276" width="20" height="38" rx="2"/></g>
+  </g>
+  <rect x="70" y="378" width="420" height="52" fill="#0a1422" stroke="#152b46"/>
+  <rect x="106" y="410" width="20" height="14" fill="#33b07a" opacity=".7"/><rect x="166" y="402" width="20" height="22" fill="#33b07a" opacity=".7"/><rect x="226" y="408" width="20" height="16" fill="#e25f5f" opacity=".65"/><rect x="286" y="394" width="20" height="30" fill="#33b07a" opacity=".7"/><rect x="346" y="406" width="20" height="18" fill="#e25f5f" opacity=".65"/><rect x="406" y="398" width="20" height="26" fill="#e25f5f" opacity=".7"/>
+  <g font-family="Arial, sans-serif" font-size="14">
+    <rect x="540" y="128" width="292" height="44" rx="8" fill="#0b2035" stroke="#2f86d1"/><text x="560" y="156" fill="#dcefff">1. Compare plan vs actual</text>
+    <rect x="540" y="186" width="292" height="44" rx="8" fill="#0b2035" stroke="#204d73"/><text x="560" y="214" fill="#dcefff">2. Review risk and size</text>
+    <rect x="540" y="244" width="292" height="44" rx="8" fill="#0b2035" stroke="#204d73"/><text x="560" y="272" fill="#dcefff">3. Review execution decisions</text>
+    <rect x="540" y="302" width="292" height="44" rx="8" fill="#0b2035" stroke="#204d73"/><text x="560" y="330" fill="#dcefff">4. Identify repeated patterns</text>
+    <rect x="540" y="360" width="292" height="44" rx="8" fill="#0b2035" stroke="#204d73"/><text x="560" y="388" fill="#dcefff">5. Choose one practice focus</text>
+  </g>
+  <path d="M686 416 C760 462, 832 426, 816 360" stroke="#2f86d1" stroke-width="3" fill="none"/>
+  <text x="650" y="456" fill="#8fc7ff" font-family="Arial, sans-serif" font-size="13" font-weight="700">Improvement loop</text>
+</svg>

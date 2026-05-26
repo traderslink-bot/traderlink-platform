@@ -32,6 +32,12 @@ function calculateDistanceFromLevelPct(
   return round(Math.abs(price - level) / price);
 }
 
+function levelsSystemPctToPatternRatio(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value)
+    ? round(Math.abs(value) / 100)
+    : null;
+}
+
 function getSecondsBetweenTimestamps(
   earlierTimestamp: string | null,
   laterTimestamp: string | null,
@@ -351,6 +357,12 @@ export function buildPatternInput(
 
   const executions = timeline.executions;
   const firstExecutionLevelRelation = result.executionLevelRelations?.[0] ?? null;
+  const firstEntryNearestSupport =
+    firstExecutionLevelRelation?.nearestSupportBelow ?? null;
+  const firstEntryNearestResistance =
+    firstExecutionLevelRelation?.nearestResistanceAbove ??
+    firstExecutionLevelRelation?.nearestResistanceBelow ??
+    null;
   const finalExecutionLevelRelation =
     result.executionLevelRelations?.[result.executionLevelRelations.length - 1] ??
     null;
@@ -819,8 +831,37 @@ export function buildPatternInput(
   // ===== ENTRY CONTEXT =====
   const firstEntryPrice = tradeDerivedSignals.firstExecutionPrice;
   const finalExitPrice = tradeDerivedSignals.lastExecutionPrice;
-  const peakPriceDuringTrade = tradeDerivedSignals.peakPriceDuringTrade;
-  const worstPriceDuringTrade = tradeDerivedSignals.worstPriceDuringTrade;
+  const levelsSystemTradeWindowFacts = result.levelsSystemTradeWindowFacts;
+  const levelsSystemFavorablePriceDuringTrade =
+    timeline.tradeDirection === "short"
+      ? levelsSystemTradeWindowFacts?.lowestLowDuringTrade?.price
+      : levelsSystemTradeWindowFacts?.highestHighDuringTrade?.price;
+  const levelsSystemAdversePriceDuringTrade =
+    timeline.tradeDirection === "short"
+      ? levelsSystemTradeWindowFacts?.highestHighDuringTrade?.price
+      : levelsSystemTradeWindowFacts?.lowestLowDuringTrade?.price;
+  const peakPriceDuringTrade =
+    levelsSystemFavorablePriceDuringTrade ??
+    tradeDerivedSignals.peakPriceDuringTrade;
+  const worstPriceDuringTrade =
+    levelsSystemAdversePriceDuringTrade ??
+    tradeDerivedSignals.worstPriceDuringTrade;
+  const tradeMfePct =
+    levelsSystemPctToPatternRatio(
+      levelsSystemTradeWindowFacts?.maxFavorableMovePct,
+    ) ?? tradeDerivedSignals.tradeMfePct;
+  const tradeMaePct =
+    levelsSystemPctToPatternRatio(
+      levelsSystemTradeWindowFacts?.maxAdverseMovePct,
+    ) ?? tradeDerivedSignals.tradeMaePct;
+  const tradeMfe =
+    peakPriceDuringTrade !== null
+      ? round(Math.abs(peakPriceDuringTrade - firstEntryPrice))
+      : tradeDerivedSignals.tradeMfe;
+  const tradeMae =
+    worstPriceDuringTrade !== null
+      ? round(Math.abs(worstPriceDuringTrade - firstEntryPrice))
+      : tradeDerivedSignals.tradeMae;
 
   const firstEntryPricePositionInTradeRangePct =
     calculatePricePositionInTradeRangePct({
@@ -862,9 +903,9 @@ export function buildPatternInput(
 
   const firstEntryCapturedPercentOfTradeMfe =
     firstEntryToPeakMovePct !== null &&
-    tradeDerivedSignals.tradeMfePct !== null &&
-    tradeDerivedSignals.tradeMfePct > 0
-      ? round(firstEntryToPeakMovePct / tradeDerivedSignals.tradeMfePct)
+    tradeMfePct !== null &&
+    tradeMfePct > 0
+      ? round(firstEntryToPeakMovePct / tradeMfePct)
       : null;
 
   const firstEntryWasNearTradeLow =
@@ -884,16 +925,16 @@ export function buildPatternInput(
 
   const realizedCapturePercentOfTradeMfe =
     realizedReturnPct !== null &&
-    tradeDerivedSignals.tradeMfePct !== null &&
-    tradeDerivedSignals.tradeMfePct > 0
-      ? round(realizedReturnPct / tradeDerivedSignals.tradeMfePct)
+    tradeMfePct !== null &&
+    tradeMfePct > 0
+      ? round(realizedReturnPct / tradeMfePct)
       : null;
 
   const favorableExcursionLeftOnTablePct =
-    tradeDerivedSignals.tradeMfePct !== null &&
+    tradeMfePct !== null &&
     realizedReturnPct !== null &&
-    tradeDerivedSignals.tradeMfePct > 0
-      ? round(tradeDerivedSignals.tradeMfePct - realizedReturnPct)
+    tradeMfePct > 0
+      ? round(tradeMfePct - realizedReturnPct)
       : null;
 
   const exitPricePositionInTradeRangePct =
@@ -937,282 +978,274 @@ export function buildPatternInput(
     symbol: timeline.symbol,
     tradeDirection: timeline.tradeDirection,
     sessionBucket: timeline.sessionContext.sessionBucket,
-
-    executionCount: executions.length,
-    executionTimestamps: executions.map((e) => e.timestamp),
-
-    firstExecutionTimestamp: executions[0].timestamp,
-    lastExecutionTimestamp: executions[executions.length - 1].timestamp,
-
-    tradeDurationSeconds: tradeDerivedSignals.tradeDurationSeconds,
-    tradeDurationMinutes: round(
-      tradeDerivedSignals.tradeDurationSeconds / 60,
-    ),
-    tradeCandleCount: tradeDerivedSignals.tradeCandleCount,
-
-    totalPositionIncreaseCount,
-    totalPositionDecreaseCount,
-    totalPositionUnchangedCount,
-
-    openedFromFlat,
-    closedToFlat,
-
-    hadMultipleIncreases,
-    hadMultipleDecreases,
-
-    maxPositionSize,
-    finalPositionSize,
-
-    entryPrice: firstEntryPrice,
-    exitPrice: finalExitPrice,
-
-    tradeMfe: tradeDerivedSignals.tradeMfe,
-    tradeMae: tradeDerivedSignals.tradeMae,
-
-    tradeMfePct: tradeDerivedSignals.tradeMfePct,
-    tradeMaePct: tradeDerivedSignals.tradeMaePct,
-
-    peakPriceDuringTrade,
-    worstPriceDuringTrade,
-
-    firstEntryPricePositionInTradeRangePct,
-    firstEntryDistanceFromTradeLowPct,
-    firstEntryDistanceFromTradeHighPct,
-    firstEntryOccurredDuringMarketOpenSession:
-      entryContextDerivedSignals?.entryOccurredDuringMarketOpenSession ?? false,
-    firstEntryOpeningRangeCandlesCountBeforeEntry:
-      entryContextDerivedSignals?.openingRangeCandlesCountBeforeEntry ?? 0,
-    firstEntryOpeningRangeHighBeforeEntry:
-      entryContextDerivedSignals?.openingRangeHighBeforeEntry ?? null,
-    firstEntryOpeningRangeLowBeforeEntry:
-      entryContextDerivedSignals?.openingRangeLowBeforeEntry ?? null,
-    firstEntryOccurredBeyondOpeningRangeInTradeDirection:
-      entryContextDerivedSignals?.entryOccurredBeyondOpeningRangeInTradeDirection ??
-      false,
-    firstEntryDistanceBeyondOpeningRangePct:
-      entryContextDerivedSignals?.entryDistanceBeyondOpeningRangePct ?? null,
-    firstEntryOpeningRangeReferenceLevelBeforeEntry:
-      entryContextDerivedSignals?.openingRangeReferenceLevelBeforeEntry ?? null,
-    firstEntryOpeningRangeReferenceBreakDepthPctBeforeEntry:
-      entryContextDerivedSignals?.openingRangeReferenceBreakDepthPctBeforeEntry ??
-      null,
-    firstEntryHadOpeningRangeReclaimBeforeEntry:
-      entryContextDerivedSignals?.hadOpeningRangeReclaimBeforeEntry ?? false,
-    firstEntryOpeningRangeReclaimHeldIntoEntry:
-      entryContextDerivedSignals?.openingRangeReclaimHeldIntoEntry ?? false,
-    firstEntryOpeningRangeConfirmationCandlesCount:
-      entryContextDerivedSignals?.openingRangeConfirmationCandlesCount ?? 0,
-    firstEntryDistanceFromOpeningRangeReferenceLevelPct:
-      entryContextDerivedSignals?.entryDistanceFromOpeningRangeReferenceLevelPct ??
-      null,
-    firstEntryOccurredBeyondPreEntryRangeInTradeDirection:
-      entryContextDerivedSignals?.entryOccurredBeyondPreEntryRangeInTradeDirection ??
-      false,
-    firstEntryDistanceBeyondPreEntryRangePct:
-      entryContextDerivedSignals?.entryDistanceBeyondPreEntryRangePct ?? null,
-
-    firstEntryToPeakMovePct,
-    firstEntryToWorstMovePct,
-
-    firstEntryCapturedPercentOfTradeMfe,
-
-    firstEntryWasNearTradeLow,
-    firstEntryWasNearTradeHigh,
-    firstEntryRecentRunUpPctBeforeEntry:
-      entryContextDerivedSignals?.recentRunUpPctBeforeEntry ?? null,
-    firstEntryRecentDropPctBeforeEntry:
-      entryContextDerivedSignals?.recentDropPctBeforeEntry ?? null,
-    firstEntryRecentNetMovePctBeforeEntry:
-      entryContextDerivedSignals?.recentNetMovePctBeforeEntry ?? null,
-    firstEntryRecentReferenceLevelBeforeEntry:
-      entryContextDerivedSignals?.recentReferenceLevelBeforeEntry ?? null,
-    firstEntryRecentReferenceBreakDepthPctBeforeEntry:
-      entryContextDerivedSignals?.recentReferenceBreakDepthPctBeforeEntry ??
-      null,
-    firstEntryHadRecentReferenceReclaimBeforeEntry:
-      entryContextDerivedSignals?.hadRecentReferenceReclaimBeforeEntry ??
-      false,
-    firstEntryRecentReferenceReclaimHeldIntoEntry:
-      entryContextDerivedSignals?.recentReferenceReclaimHeldIntoEntry ?? false,
-    firstEntryRecentReferenceConfirmationCandlesCount:
-      entryContextDerivedSignals?.recentReferenceConfirmationCandlesCount ?? 0,
-    firstEntryDistanceFromRecentReferenceLevelPct:
-      entryContextDerivedSignals?.entryDistanceFromRecentReferenceLevelPct ??
-      null,
-    firstEntryBullishCandlesBeforeEntryCount:
-      entryContextDerivedSignals?.bullishCandlesBeforeEntryCount ?? 0,
-    firstEntryBearishCandlesBeforeEntryCount:
-      entryContextDerivedSignals?.bearishCandlesBeforeEntryCount ?? 0,
-    firstEntryNearestSupportBelowPrice:
-      firstExecutionLevelRelation?.nearestSupportBelow?.price ?? null,
-    firstEntryNearestResistanceBelowPrice:
-      firstExecutionLevelRelation?.nearestResistanceBelow?.price ?? null,
-    firstEntryNearestResistanceAbovePrice:
-      firstExecutionLevelRelation?.nearestResistanceAbove?.price ?? null,
-    firstEntryDistanceToNearestSupportPct:
-      firstExecutionLevelRelation?.distanceToNearestSupportPct ?? null,
-    firstEntryDistanceAboveNearestResistanceBelowPct:
-      firstExecutionLevelRelation?.distanceAboveNearestResistanceBelowPct ?? null,
-    firstEntryDistanceToNearestResistancePct:
-      firstExecutionLevelRelation?.distanceToNearestResistancePct ?? null,
-    firstEntryOccurredNearSupport:
-      firstExecutionLevelRelation?.isNearSupport ?? false,
-    firstEntryOccurredNearResistance:
-      firstExecutionLevelRelation?.isNearResistance ?? false,
-    firstEntryClearedNearestResistanceBelow:
-      firstExecutionLevelRelation?.clearedNearestResistanceBelow ?? false,
-    firstEntryHadRoomAboveAfterClearingResistance:
-      firstExecutionLevelRelation?.hasRoomAboveAfterClearingResistance ?? false,
-    firstEntryOccurredBelowNearestSupport:
-      firstExecutionLevelRelation?.occurredBelowNearestSupport ?? false,
-    firstEntryOccurredInOpenAir:
-      firstExecutionLevelRelation?.occurredInOpenAir ?? false,
-    firstEntryNearestReferenceLevelLabel:
-      firstExecutionLevelRelation?.nearestReferenceLevelLabel ?? null,
-    firstEntryWasAboveVwap:
-      result.dynamicLevels?.vwap !== null &&
-      result.dynamicLevels?.vwap !== undefined &&
-      firstEntryPrice > result.dynamicLevels.vwap,
-    firstEntryWasBelowVwap:
-      result.dynamicLevels?.vwap !== null &&
-      result.dynamicLevels?.vwap !== undefined &&
-      firstEntryPrice < result.dynamicLevels.vwap,
-    firstEntryDistanceFromVwapPct: calculateDistanceFromLevelPct(
-      firstEntryPrice,
-      result.dynamicLevels?.vwap,
-    ),
-    firstEntryDistanceFromEma9Pct: calculateDistanceFromLevelPct(
-      firstEntryPrice,
-      result.dynamicLevels?.ema9,
-    ),
-    firstEntryDistanceFromEma20Pct: calculateDistanceFromLevelPct(
-      firstEntryPrice,
-      result.dynamicLevels?.ema20,
-    ),
-    firstEntryHasNearbyStructureOnBothSides:
-      firstExecutionLevelRelation?.hasNearbyStructureOnBothSides ?? false,
-    firstEntryDistanceBetweenNearestSupportAndResistancePct:
-      firstExecutionLevelRelation?.distanceBetweenNearestSupportAndResistancePct ??
-      null,
-    firstEntryResistanceLevelsAboveWithinClusterCount:
-      firstExecutionLevelRelation?.resistanceLevelsAboveWithinClusterCount ?? 0,
-    firstEntryHasStackedResistanceAbove:
-      firstExecutionLevelRelation?.hasStackedResistanceAbove ?? false,
-
-    realizedReturnPct,
-    realizedCapturePercentOfTradeMfe,
-    favorableExcursionLeftOnTablePct,
-    exitPricePositionInTradeRangePct,
-    finalExitToPeakDistancePct,
-    exitWasNearTradeHigh,
-    exitWasNearTradeLow,
-    postExitCandleCount: postExitDerivedSignals?.postExitCandleCount ?? 0,
-    maxFavorableMovePctAfterExit:
-      postExitDerivedSignals?.maxFavorableMovePctAfterExit ?? null,
-    maxAdverseMovePctAfterExit:
-      postExitDerivedSignals?.maxAdverseMovePctAfterExit ?? null,
-    netMovePctAtEndOfPostExitWindow:
-      postExitDerivedSignals?.netMovePctAtEndOfPostExitWindow ?? null,
-    maxGivebackFromPeakOpenProfitPct,
-    partialExitCount,
-    hadPartialExit,
-    maxFavorableMoveAfterPartialExitPct,
-    maxAdverseMoveAfterPartialExitPct,
-    reductionAbovePreviousAverageEntryCount,
-    reductionBelowPreviousAverageEntryCount,
-    averageReductionPriceVsPreviousAverageEntryPct,
-    averageReductionPricePositionInRecentRangePct,
-    reductionsNearRecentHighCount,
-    reductionsNearRecentLowCount,
-    averageReductionRecentRunUpPctBeforeExecution,
-    averageReductionRecentDropPctBeforeExecution,
-    reductionsWithRecentRunUpCount,
-    reductionsWithRecentDropCount,
-    readdAfterReductionCount,
-    hadReaddAfterReduction,
-    averageReaddPriceChangeFromPriorReductionPct,
-    averageFavorableMovePctAfterPartialExitBeforeReadd,
-    averageAdverseMovePctAfterPartialExitBeforeReadd,
-    averageFavorableMovePctAfterReaddBeforeNextExecution,
-    averageAdverseMovePctAfterReaddBeforeNextExecution,
-    readdsWithStrongerFavorableFollowthroughCount,
-    readdsWithStrongerAdverseFollowthroughCount,
-    readdsAfterRecentRunUpCount,
-    readdsAfterRecentDropCount,
-    peakOpenProfitPctOfBasis:
-      tradeLifecycleMilestoneSignals?.peakOpenProfitPctOfBasis ?? null,
-    worstDrawdownPctOfBasis:
-      tradeLifecycleMilestoneSignals?.worstDrawdownPctOfBasis ?? null,
-    hadOpenLossBeforePeakOpenProfit,
-    secondsFromFirstOpenLossToPeakOpenProfit,
-    hadPeakOpenProfitBeforeWorstDrawdown:
-      dangerWindowDerivedSignals?.hadPeakOpenProfitBeforeWorstDrawdown ?? false,
-    drawdownFromPeakOpenProfitPctOfBasis:
-      dangerWindowDerivedSignals?.drawdownFromPeakOpenProfitPctOfBasis ?? null,
-    hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-      dangerWindowDerivedSignals?.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown ??
-      false,
-    reductionCountAfterPeakOpenProfitBeforeWorstDrawdown:
-      dangerWindowDerivedSignals?.reductionCountAfterPeakOpenProfitBeforeWorstDrawdown ??
-      0,
-    secondsFromPeakOpenProfitToWorstDrawdown:
-      dangerWindowDerivedSignals?.secondsFromPeakOpenProfitToWorstDrawdown ??
-      null,
-    secondsFromPeakOpenProfitToFirstReduction:
-      dangerWindowDerivedSignals?.secondsFromPeakOpenProfitToFirstReduction ??
-      null,
-    finalExitDistanceToNearestSupportPct:
-      finalExecutionLevelRelation?.distanceToNearestSupportPct ?? null,
-    finalExitDistanceToNearestResistancePct:
-      finalExecutionLevelRelation?.distanceToNearestResistancePct ?? null,
-    finalExitOccurredNearSupport:
-      finalExecutionLevelRelation?.isNearSupport ?? false,
-    finalExitOccurredNearResistance:
-      finalExecutionLevelRelation?.isNearResistance ?? false,
-    finalExitSupportLevelsBelowWithinClusterCount:
-      finalExecutionLevelRelation?.supportLevelsBelowWithinClusterCount ?? 0,
-    finalExitHasStackedSupportBelow:
-      finalExecutionLevelRelation?.hasStackedSupportBelow ?? false,
-    reductionsNearSupportCount,
-    reductionsNearResistanceCount,
-    addsNearSupportCount,
-    addsNearResistanceCount,
-    addsAboveResistanceCount,
-    addsAboveResistanceWithRoomCount,
-    addsBelowSupportCount,
-    averageAddDistanceToNearestSupportPct,
-    averageAddDistanceToNearestResistancePct,
-    averageAddRoomToNextResistancePct,
-    hadInsufficientCandleDataForStructuralContext:
-      result.hadInsufficientCandleDataForStructure ?? true,
-    hadSupportResistanceContextAvailable:
-      result.structuralContextWindow !== undefined &&
-      result.executionLevelRelations !== undefined,
-
-    maxExecutionMfePct,
-    maxExecutionMaePct,
-
-    averageExecutionMfePct,
-    averageExecutionMaePct,
-
-    averageTimeBetweenExecutionsSeconds,
-    minTimeBetweenExecutionsSeconds,
-    maxTimeBetweenExecutionsSeconds,
-
-    averageCandlesBetweenExecutions:
-      timelineRelationshipSignals?.averageCandlesBetweenExecutions ?? null,
-
-    executionsPerMinute:
-      timelineRelationshipSignals?.executionsPerMinute ?? null,
-
-    addCountAfterInitialEntry,
-    addAbovePreviousAverageEntryCount,
-    addBelowPreviousAverageEntryCount,
-    averageAddPriceVsPreviousAverageEntryPct,
-    averageAddPricePositionInRecentRangePct,
-    averageAddRecentRunUpPctBeforeExecution,
-    averageAddRecentDropPctBeforeExecution,
-    addsWithRecentRunUpCount,
-    addsWithRecentDropCount,
+    tradeStructure: {
+      executionCount: executions.length,
+      executionTimestamps: executions.map((e) => e.timestamp),
+      firstExecutionTimestamp: executions[0].timestamp,
+      lastExecutionTimestamp: executions[executions.length - 1].timestamp,
+      tradeDurationSeconds: tradeDerivedSignals.tradeDurationSeconds,
+      tradeDurationMinutes: round(tradeDerivedSignals.tradeDurationSeconds / 60),
+      tradeCandleCount: tradeDerivedSignals.tradeCandleCount,
+      totalPositionIncreaseCount,
+      totalPositionDecreaseCount,
+      totalPositionUnchangedCount,
+      openedFromFlat,
+      closedToFlat,
+      hadMultipleIncreases,
+      hadMultipleDecreases,
+      maxPositionSize,
+      finalPositionSize,
+      entryPrice: firstEntryPrice,
+      exitPrice: finalExitPrice,
+      tradeMfe,
+      tradeMae,
+      tradeMfePct,
+      tradeMaePct,
+      peakPriceDuringTrade,
+      worstPriceDuringTrade,
+      maxExecutionMfePct,
+      maxExecutionMaePct,
+      averageExecutionMfePct,
+      averageExecutionMaePct,
+    },
+    entryContext: {
+      firstEntryPricePositionInTradeRangePct,
+      firstEntryDistanceFromTradeLowPct,
+      firstEntryDistanceFromTradeHighPct,
+      firstEntryOccurredDuringMarketOpenSession:
+        entryContextDerivedSignals?.entryOccurredDuringMarketOpenSession ?? false,
+      firstEntryOpeningRangeCandlesCountBeforeEntry:
+        entryContextDerivedSignals?.openingRangeCandlesCountBeforeEntry ?? 0,
+      firstEntryOpeningRangeHighBeforeEntry:
+        entryContextDerivedSignals?.openingRangeHighBeforeEntry ?? null,
+      firstEntryOpeningRangeLowBeforeEntry:
+        entryContextDerivedSignals?.openingRangeLowBeforeEntry ?? null,
+      firstEntryOccurredBeyondOpeningRangeInTradeDirection:
+        entryContextDerivedSignals?.entryOccurredBeyondOpeningRangeInTradeDirection ??
+        false,
+      firstEntryDistanceBeyondOpeningRangePct:
+        entryContextDerivedSignals?.entryDistanceBeyondOpeningRangePct ?? null,
+      firstEntryOpeningRangeReferenceLevelBeforeEntry:
+        entryContextDerivedSignals?.openingRangeReferenceLevelBeforeEntry ?? null,
+      firstEntryOpeningRangeReferenceBreakDepthPctBeforeEntry:
+        entryContextDerivedSignals?.openingRangeReferenceBreakDepthPctBeforeEntry ??
+        null,
+      firstEntryHadOpeningRangeReclaimBeforeEntry:
+        entryContextDerivedSignals?.hadOpeningRangeReclaimBeforeEntry ?? false,
+      firstEntryOpeningRangeReclaimHeldIntoEntry:
+        entryContextDerivedSignals?.openingRangeReclaimHeldIntoEntry ?? false,
+      firstEntryOpeningRangeConfirmationCandlesCount:
+        entryContextDerivedSignals?.openingRangeConfirmationCandlesCount ?? 0,
+      firstEntryDistanceFromOpeningRangeReferenceLevelPct:
+        entryContextDerivedSignals?.entryDistanceFromOpeningRangeReferenceLevelPct ??
+        null,
+      firstEntryOccurredBeyondPreEntryRangeInTradeDirection:
+        entryContextDerivedSignals?.entryOccurredBeyondPreEntryRangeInTradeDirection ??
+        false,
+      firstEntryDistanceBeyondPreEntryRangePct:
+        entryContextDerivedSignals?.entryDistanceBeyondPreEntryRangePct ?? null,
+      firstEntryToPeakMovePct,
+      firstEntryToWorstMovePct,
+      firstEntryCapturedPercentOfTradeMfe,
+      firstEntryWasNearTradeLow,
+      firstEntryWasNearTradeHigh,
+      firstEntryRecentRunUpPctBeforeEntry:
+        entryContextDerivedSignals?.recentRunUpPctBeforeEntry ?? null,
+      firstEntryRecentDropPctBeforeEntry:
+        entryContextDerivedSignals?.recentDropPctBeforeEntry ?? null,
+      firstEntryRecentNetMovePctBeforeEntry:
+        entryContextDerivedSignals?.recentNetMovePctBeforeEntry ?? null,
+      firstEntryRecentReferenceLevelBeforeEntry:
+        entryContextDerivedSignals?.recentReferenceLevelBeforeEntry ?? null,
+      firstEntryRecentReferenceBreakDepthPctBeforeEntry:
+        entryContextDerivedSignals?.recentReferenceBreakDepthPctBeforeEntry ??
+        null,
+      firstEntryHadRecentReferenceReclaimBeforeEntry:
+        entryContextDerivedSignals?.hadRecentReferenceReclaimBeforeEntry ??
+        false,
+      firstEntryRecentReferenceReclaimHeldIntoEntry:
+        entryContextDerivedSignals?.recentReferenceReclaimHeldIntoEntry ?? false,
+      firstEntryRecentReferenceConfirmationCandlesCount:
+        entryContextDerivedSignals?.recentReferenceConfirmationCandlesCount ?? 0,
+      firstEntryDistanceFromRecentReferenceLevelPct:
+        entryContextDerivedSignals?.entryDistanceFromRecentReferenceLevelPct ??
+        null,
+      firstEntryBullishCandlesBeforeEntryCount:
+        entryContextDerivedSignals?.bullishCandlesBeforeEntryCount ?? 0,
+      firstEntryBearishCandlesBeforeEntryCount:
+        entryContextDerivedSignals?.bearishCandlesBeforeEntryCount ?? 0,
+    },
+    exitContext: {
+      realizedReturnPct,
+      realizedCapturePercentOfTradeMfe,
+      favorableExcursionLeftOnTablePct,
+      exitPricePositionInTradeRangePct,
+      finalExitToPeakDistancePct,
+      exitWasNearTradeHigh,
+      exitWasNearTradeLow,
+      postExitCandleCount: postExitDerivedSignals?.postExitCandleCount ?? 0,
+      maxFavorableMovePctAfterExit:
+        postExitDerivedSignals?.maxFavorableMovePctAfterExit ?? null,
+      maxAdverseMovePctAfterExit:
+        postExitDerivedSignals?.maxAdverseMovePctAfterExit ?? null,
+      netMovePctAtEndOfPostExitWindow:
+        postExitDerivedSignals?.netMovePctAtEndOfPostExitWindow ?? null,
+      partialExitCount,
+      hadPartialExit,
+      maxFavorableMoveAfterPartialExitPct,
+      maxAdverseMoveAfterPartialExitPct,
+      reductionAbovePreviousAverageEntryCount,
+      reductionBelowPreviousAverageEntryCount,
+      averageReductionPriceVsPreviousAverageEntryPct,
+      averageReductionPricePositionInRecentRangePct,
+      reductionsNearRecentHighCount,
+      reductionsNearRecentLowCount,
+      averageReductionRecentRunUpPctBeforeExecution,
+      averageReductionRecentDropPctBeforeExecution,
+      reductionsWithRecentRunUpCount,
+      reductionsWithRecentDropCount,
+    },
+    scalingContext: {
+      readdAfterReductionCount,
+      hadReaddAfterReduction,
+      averageReaddPriceChangeFromPriorReductionPct,
+      averageFavorableMovePctAfterPartialExitBeforeReadd,
+      averageAdverseMovePctAfterPartialExitBeforeReadd,
+      averageFavorableMovePctAfterReaddBeforeNextExecution,
+      averageAdverseMovePctAfterReaddBeforeNextExecution,
+      readdsWithStrongerFavorableFollowthroughCount,
+      readdsWithStrongerAdverseFollowthroughCount,
+      readdsAfterRecentRunUpCount,
+      readdsAfterRecentDropCount,
+      addCountAfterInitialEntry,
+      addAbovePreviousAverageEntryCount,
+      addBelowPreviousAverageEntryCount,
+      averageAddPriceVsPreviousAverageEntryPct,
+      averageAddPricePositionInRecentRangePct,
+      averageAddRecentRunUpPctBeforeExecution,
+      averageAddRecentDropPctBeforeExecution,
+      addsWithRecentRunUpCount,
+      addsWithRecentDropCount,
+    },
+    timingContext: {
+      averageTimeBetweenExecutionsSeconds,
+      minTimeBetweenExecutionsSeconds,
+      maxTimeBetweenExecutionsSeconds,
+      averageCandlesBetweenExecutions:
+        timelineRelationshipSignals?.averageCandlesBetweenExecutions ?? null,
+      executionsPerMinute:
+        timelineRelationshipSignals?.executionsPerMinute ?? null,
+    },
+    supportResistanceContext: {
+      firstEntryNearestSupportBelowPrice:
+        firstEntryNearestSupport?.price ?? null,
+      firstEntryNearestResistanceBelowPrice:
+        firstExecutionLevelRelation?.nearestResistanceBelow?.price ?? null,
+      firstEntryNearestResistanceAbovePrice:
+        firstExecutionLevelRelation?.nearestResistanceAbove?.price ?? null,
+      firstEntryNearestSupportStrengthBucket:
+        firstEntryNearestSupport?.strengthBucket ?? null,
+      firstEntryNearestResistanceStrengthBucket:
+        firstEntryNearestResistance?.strengthBucket ?? null,
+      firstEntryNearestSupportSourceStrengthLabel:
+        firstEntryNearestSupport?.sourceStrengthLabel ?? null,
+      firstEntryNearestResistanceSourceStrengthLabel:
+        firstEntryNearestResistance?.sourceStrengthLabel ?? null,
+      firstEntryNearestSupportReactionStrength:
+        firstEntryNearestSupport?.reactionStrength ?? null,
+      firstEntryNearestResistanceReactionStrength:
+        firstEntryNearestResistance?.reactionStrength ?? null,
+      firstEntryNearestSupportScore:
+        firstEntryNearestSupport?.score ?? null,
+      firstEntryNearestResistanceScore:
+        firstEntryNearestResistance?.score ?? null,
+      firstEntryDistanceToNearestSupportPct:
+        firstExecutionLevelRelation?.distanceToNearestSupportPct ?? null,
+      firstEntryDistanceAboveNearestResistanceBelowPct:
+        firstExecutionLevelRelation?.distanceAboveNearestResistanceBelowPct ??
+        null,
+      firstEntryDistanceToNearestResistancePct:
+        firstExecutionLevelRelation?.distanceToNearestResistancePct ?? null,
+      firstEntryOccurredNearSupport:
+        firstExecutionLevelRelation?.isNearSupport ?? false,
+      firstEntryOccurredNearResistance:
+        firstExecutionLevelRelation?.isNearResistance ?? false,
+      firstEntryClearedNearestResistanceBelow:
+        firstExecutionLevelRelation?.clearedNearestResistanceBelow ?? false,
+      firstEntryHadRoomAboveAfterClearingResistance:
+        firstExecutionLevelRelation?.hasRoomAboveAfterClearingResistance ?? false,
+      firstEntryOccurredBelowNearestSupport:
+        firstExecutionLevelRelation?.occurredBelowNearestSupport ?? false,
+      firstEntryOccurredInOpenAir:
+        firstExecutionLevelRelation?.occurredInOpenAir ?? false,
+      firstEntryNearestReferenceLevelLabel:
+        firstExecutionLevelRelation?.nearestReferenceLevelLabel ?? null,
+      firstEntryWasAboveVwap: false,
+      firstEntryWasBelowVwap: false,
+      firstEntryDistanceFromVwapPct: null,
+      firstEntryDistanceFromEma9Pct: null,
+      firstEntryDistanceFromEma20Pct: null,
+      firstEntryHasNearbyStructureOnBothSides:
+        firstExecutionLevelRelation?.hasNearbyStructureOnBothSides ?? false,
+      firstEntryDistanceBetweenNearestSupportAndResistancePct:
+        firstExecutionLevelRelation?.distanceBetweenNearestSupportAndResistancePct ??
+        null,
+      firstEntryResistanceLevelsAboveWithinClusterCount:
+        firstExecutionLevelRelation?.resistanceLevelsAboveWithinClusterCount ?? 0,
+      firstEntryHasStackedResistanceAbove:
+        firstExecutionLevelRelation?.hasStackedResistanceAbove ?? false,
+      finalExitDistanceToNearestSupportPct:
+        finalExecutionLevelRelation?.distanceToNearestSupportPct ?? null,
+      finalExitDistanceToNearestResistancePct:
+        finalExecutionLevelRelation?.distanceToNearestResistancePct ?? null,
+      finalExitOccurredNearSupport:
+        finalExecutionLevelRelation?.isNearSupport ?? false,
+      finalExitOccurredNearResistance:
+        finalExecutionLevelRelation?.isNearResistance ?? false,
+      finalExitSupportLevelsBelowWithinClusterCount:
+        finalExecutionLevelRelation?.supportLevelsBelowWithinClusterCount ?? 0,
+      finalExitHasStackedSupportBelow:
+        finalExecutionLevelRelation?.hasStackedSupportBelow ?? false,
+      reductionsNearSupportCount,
+      reductionsNearResistanceCount,
+      addsNearSupportCount,
+      addsNearResistanceCount,
+      addsAboveResistanceCount,
+      addsAboveResistanceWithRoomCount,
+      addsBelowSupportCount,
+      averageAddDistanceToNearestSupportPct,
+      averageAddDistanceToNearestResistancePct,
+      averageAddRoomToNextResistancePct,
+      hadInsufficientCandleDataForStructuralContext:
+        result.hadInsufficientCandleDataForStructure ?? true,
+      hadSupportResistanceContextAvailable:
+        result.structuralContextWindow !== undefined &&
+        result.executionLevelRelations !== undefined,
+    },
+    recoveryContext: {
+      maxGivebackFromPeakOpenProfitPct,
+      peakOpenProfitPctOfBasis:
+        tradeLifecycleMilestoneSignals?.peakOpenProfitPctOfBasis ?? null,
+      worstDrawdownPctOfBasis:
+        tradeLifecycleMilestoneSignals?.worstDrawdownPctOfBasis ?? null,
+      hadOpenLossBeforePeakOpenProfit,
+      secondsFromFirstOpenLossToPeakOpenProfit,
+      hadPeakOpenProfitBeforeWorstDrawdown:
+        dangerWindowDerivedSignals?.hadPeakOpenProfitBeforeWorstDrawdown ?? false,
+      drawdownFromPeakOpenProfitPctOfBasis:
+        dangerWindowDerivedSignals?.drawdownFromPeakOpenProfitPctOfBasis ?? null,
+      hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
+        dangerWindowDerivedSignals?.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown ??
+        false,
+      reductionCountAfterPeakOpenProfitBeforeWorstDrawdown:
+        dangerWindowDerivedSignals?.reductionCountAfterPeakOpenProfitBeforeWorstDrawdown ??
+        0,
+      secondsFromPeakOpenProfitToWorstDrawdown:
+        dangerWindowDerivedSignals?.secondsFromPeakOpenProfitToWorstDrawdown ??
+        null,
+      secondsFromPeakOpenProfitToFirstReduction:
+        dangerWindowDerivedSignals?.secondsFromPeakOpenProfitToFirstReduction ??
+        null,
+    },
   };
 }

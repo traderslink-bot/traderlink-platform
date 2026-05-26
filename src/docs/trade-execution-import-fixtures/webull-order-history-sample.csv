@@ -1,0 +1,4 @@
+Symbol,Side,Filled Qty,Avg Price,Filled Time,Status,Order ID
+TSLA,Buy,10,175.25,2026-05-01 09:45:00,Filled,WB-1
+TSLA,Sell,10,176.50,2026-05-01 10:15:00,Filled,WB-2
+TSLA,Buy,5,177.00,2026-05-01 10:30:00,Cancelled,WB-3

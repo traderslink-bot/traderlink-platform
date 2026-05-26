@@ -41,10 +41,11 @@ export const HIGH_CAPTURE_EXIT_STRUCTURE: PatternDefinition = {
   name: "High Capture Exit Structure",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const realizedCapture = input.realizedCapturePercentOfTradeMfe;
-    const exitRangePosition = input.exitPricePositionInTradeRangePct;
+    const realizedCapture = input.exitContext.realizedCapturePercentOfTradeMfe;
+    const exitRangePosition = input.exitContext.exitPricePositionInTradeRangePct;
 
     const minRealizedCapture =
       THRESHOLDS.EXIT_QUALITY.HIGH_CAPTURE_MIN_REALIZED_CAPTURE;
@@ -83,9 +84,10 @@ export const MODERATE_CAPTURE_EXIT_STRUCTURE: PatternDefinition = {
   name: "Moderate Capture Exit Structure",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const realizedCapture = input.realizedCapturePercentOfTradeMfe;
+    const realizedCapture = input.exitContext.realizedCapturePercentOfTradeMfe;
 
     const minRealizedCapture =
       THRESHOLDS.EXIT_QUALITY.MODERATE_CAPTURE_MIN_REALIZED_CAPTURE;
@@ -122,9 +124,10 @@ export const LOW_CAPTURE_EXIT_STRUCTURE: PatternDefinition = {
   name: "Low Capture Exit Structure",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const realizedCapture = input.realizedCapturePercentOfTradeMfe;
+    const realizedCapture = input.exitContext.realizedCapturePercentOfTradeMfe;
 
     const maxRealizedCapture =
       THRESHOLDS.EXIT_QUALITY.LOW_CAPTURE_MAX_REALIZED_CAPTURE;
@@ -157,9 +160,10 @@ export const EXIT_WITH_LIMITED_GIVEBACK: PatternDefinition = {
   name: "Exit With Limited Giveback",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const leftOnTable = input.favorableExcursionLeftOnTablePct;
+    const leftOnTable = input.exitContext.favorableExcursionLeftOnTablePct;
 
     const maxLeftOnTable =
       THRESHOLDS.EXIT_QUALITY.LIMITED_GIVEBACK_MAX_LEFT_ON_TABLE;
@@ -192,9 +196,10 @@ export const EXIT_WITH_MEANINGFUL_GIVEBACK: PatternDefinition = {
   name: "Exit With Meaningful Giveback",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const leftOnTable = input.favorableExcursionLeftOnTablePct;
+    const leftOnTable = input.exitContext.favorableExcursionLeftOnTablePct;
 
     const minLeftOnTable =
       THRESHOLDS.EXIT_QUALITY.MEANINGFUL_GIVEBACK_MIN_LEFT_ON_TABLE;
@@ -227,9 +232,10 @@ export const EXIT_NEAR_FAVORABLE_EXTREME: PatternDefinition = {
   name: "Exit Near Favorable Extreme",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const exitWasNearTradeHigh = input.exitWasNearTradeHigh;
+    const exitWasNearTradeHigh = input.exitContext.exitWasNearTradeHigh;
 
     return {
       matched: exitWasNearTradeHigh,
@@ -253,10 +259,11 @@ export const PEAK_PROFIT_GIVEBACK_STRUCTURE: PatternDefinition = {
   name: "Peak Profit Giveback Structure",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
-    const peakOpenProfitPctOfBasis = input.peakOpenProfitPctOfBasis;
+    const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
+    const peakOpenProfitPctOfBasis = input.recoveryContext.peakOpenProfitPctOfBasis;
 
     const minGivebackPct =
       THRESHOLDS.EXIT_QUALITY.PEAK_PROFIT_GIVEBACK_MIN_PCT;
@@ -292,10 +299,11 @@ export const PARTIAL_EXIT_WITH_ADVERSE_FOLLOWTHROUGH: PatternDefinition = {
   name: "Partial Exit With Adverse Followthrough",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const hadPartialExit = input.hadPartialExit;
-    const adversePct = input.maxAdverseMoveAfterPartialExitPct;
+    const hadPartialExit = input.exitContext.hadPartialExit;
+    const adversePct = input.exitContext.maxAdverseMoveAfterPartialExitPct;
 
     const minAdversePct =
       THRESHOLDS.EXIT_QUALITY.PARTIAL_EXIT_ADVERSE_FOLLOWTHROUGH_MIN_PCT;
@@ -327,12 +335,13 @@ export const MISSED_POST_EXIT_CONTINUATION: PatternDefinition = {
   name: "Missed Post-Exit Continuation",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const postExitCandleCount = input.postExitCandleCount;
-    const favorablePct = input.maxFavorableMovePctAfterExit;
-    const adversePct = input.maxAdverseMovePctAfterExit;
-    const netEndPct = input.netMovePctAtEndOfPostExitWindow;
+    const postExitCandleCount = input.exitContext.postExitCandleCount;
+    const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+    const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+    const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
 
     const minFavorablePct =
       THRESHOLDS.EXIT_QUALITY.MISSED_POST_EXIT_CONTINUATION_MIN_FAVORABLE_PCT;
@@ -340,7 +349,7 @@ export const MISSED_POST_EXIT_CONTINUATION: PatternDefinition = {
       THRESHOLDS.EXIT_QUALITY.MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
     const matched =
-      input.closedToFlat &&
+      input.tradeStructure.closedToFlat &&
       postExitCandleCount > 0 &&
       favorablePct !== null &&
       favorablePct >= minFavorablePct &&
@@ -352,7 +361,7 @@ export const MISSED_POST_EXIT_CONTINUATION: PatternDefinition = {
     return {
       matched,
       evidence: {
-        closedToFlat: input.closedToFlat,
+        closedToFlat: input.tradeStructure.closedToFlat,
         postExitCandleCount,
         maxFavorableMovePctAfterExit: favorablePct,
         maxAdverseMovePctAfterExit: adversePct,
@@ -375,12 +384,13 @@ export const EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH: PatternDefinition = {
   name: "Exit Avoided Adverse Followthrough",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const postExitCandleCount = input.postExitCandleCount;
-    const favorablePct = input.maxFavorableMovePctAfterExit;
-    const adversePct = input.maxAdverseMovePctAfterExit;
-    const netEndPct = input.netMovePctAtEndOfPostExitWindow;
+    const postExitCandleCount = input.exitContext.postExitCandleCount;
+    const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+    const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+    const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
 
     const minAdversePct =
       THRESHOLDS.EXIT_QUALITY
@@ -390,7 +400,7 @@ export const EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH: PatternDefinition = {
         .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
     const matched =
-      input.closedToFlat &&
+      input.tradeStructure.closedToFlat &&
       postExitCandleCount > 0 &&
       adversePct !== null &&
       adversePct >= minAdversePct &&
@@ -402,7 +412,7 @@ export const EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH: PatternDefinition = {
     return {
       matched,
       evidence: {
-        closedToFlat: input.closedToFlat,
+        closedToFlat: input.tradeStructure.closedToFlat,
         postExitCandleCount,
         maxFavorableMovePctAfterExit: favorablePct,
         maxAdverseMovePctAfterExit: adversePct,
@@ -425,13 +435,14 @@ export const DEFENSIVE_EXIT_AFTER_DETERIORATION: PatternDefinition = {
   name: "Defensive Exit After Deterioration",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const postExitCandleCount = input.postExitCandleCount;
-    const favorablePct = input.maxFavorableMovePctAfterExit;
-    const adversePct = input.maxAdverseMovePctAfterExit;
-    const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-    const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
+    const postExitCandleCount = input.exitContext.postExitCandleCount;
+    const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+    const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+    const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+    const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
 
     const minAdversePct =
       THRESHOLDS.EXIT_QUALITY
@@ -444,7 +455,7 @@ export const DEFENSIVE_EXIT_AFTER_DETERIORATION: PatternDefinition = {
         .DEFENSIVE_EXIT_AFTER_DETERIORATION_MIN_GIVEBACK_PCT;
 
     const matched =
-      input.closedToFlat &&
+      input.tradeStructure.closedToFlat &&
       postExitCandleCount > 0 &&
       adversePct !== null &&
       adversePct >= minAdversePct &&
@@ -458,7 +469,7 @@ export const DEFENSIVE_EXIT_AFTER_DETERIORATION: PatternDefinition = {
     return {
       matched,
       evidence: {
-        closedToFlat: input.closedToFlat,
+        closedToFlat: input.tradeStructure.closedToFlat,
         postExitCandleCount,
         maxAdverseMovePctAfterExit: adversePct,
         maxFavorableMovePctAfterExit: favorablePct,
@@ -484,13 +495,14 @@ export const PREMATURE_FINAL_EXIT_AFTER_CONSTRUCTIVE_MANAGEMENT: PatternDefiniti
     name: "Premature Final Exit After Constructive Management",
     family: PATTERN_FAMILIES.EXIT_QUALITY,
     patternType: "composite",
+    structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-      const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+      const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
 
       const minFavorablePct =
         THRESHOLDS.EXIT_QUALITY
@@ -502,9 +514,9 @@ export const PREMATURE_FINAL_EXIT_AFTER_CONSTRUCTIVE_MANAGEMENT: PatternDefiniti
         THRESHOLDS.EXIT_QUALITY.PREMATURE_FINAL_EXIT_MAX_GIVEBACK_PCT;
 
       const matched =
-        input.closedToFlat &&
+        input.tradeStructure.closedToFlat &&
         postExitCandleCount > 0 &&
-        input.totalPositionDecreaseCount > 0 &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
         favorablePct !== null &&
         favorablePct >= minFavorablePct &&
         netEndPct !== null &&
@@ -517,8 +529,8 @@ export const PREMATURE_FINAL_EXIT_AFTER_CONSTRUCTIVE_MANAGEMENT: PatternDefiniti
       return {
         matched,
         evidence: {
-          closedToFlat: input.closedToFlat,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
           postExitCandleCount,
           maxFavorableMovePctAfterExit: favorablePct,
           maxAdverseMovePctAfterExit: adversePct,
@@ -543,13 +555,14 @@ export const FEARFUL_EXIT_AFTER_WEAKENING: PatternDefinition = {
   name: "Fearful Exit After Weakening",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "storyline_composite",
 
   evaluate: (input) => {
-    const postExitCandleCount = input.postExitCandleCount;
-    const favorablePct = input.maxFavorableMovePctAfterExit;
-    const adversePct = input.maxAdverseMovePctAfterExit;
-    const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-    const realizedCapture = input.realizedCapturePercentOfTradeMfe;
+    const postExitCandleCount = input.exitContext.postExitCandleCount;
+    const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+    const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+    const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+    const realizedCapture = input.exitContext.realizedCapturePercentOfTradeMfe;
 
     const minFavorablePct =
       THRESHOLDS.EXIT_QUALITY.MISSED_POST_EXIT_CONTINUATION_MIN_FAVORABLE_PCT;
@@ -559,9 +572,9 @@ export const FEARFUL_EXIT_AFTER_WEAKENING: PatternDefinition = {
       THRESHOLDS.EXIT_QUALITY.FEARFUL_EXIT_AFTER_WEAKENING_MAX_REALIZED_CAPTURE;
 
     const matched =
-      input.closedToFlat &&
+      input.tradeStructure.closedToFlat &&
       postExitCandleCount > 0 &&
-      input.exitWasNearTradeLow &&
+      input.exitContext.exitWasNearTradeLow &&
       realizedCapture !== null &&
       realizedCapture <= maxRealizedCapture &&
       favorablePct !== null &&
@@ -574,8 +587,8 @@ export const FEARFUL_EXIT_AFTER_WEAKENING: PatternDefinition = {
     return {
       matched,
       evidence: {
-        closedToFlat: input.closedToFlat,
-        exitWasNearTradeLow: input.exitWasNearTradeLow,
+        closedToFlat: input.tradeStructure.closedToFlat,
+        exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
         realizedCapturePercentOfTradeMfe: realizedCapture,
         postExitCandleCount,
         maxFavorableMovePctAfterExit: favorablePct,
@@ -596,20 +609,21 @@ export const EXIT_INTO_SUPPORT_STRUCTURE: PatternDefinition = {
   name: "Exit Into Support Structure",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const matched =
-      input.hadSupportResistanceContextAvailable &&
-      input.finalExitOccurredNearSupport;
+      input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+      input.supportResistanceContext.finalExitOccurredNearSupport;
 
     return {
       matched,
       evidence: {
         hadSupportResistanceContextAvailable:
-          input.hadSupportResistanceContextAvailable,
-        finalExitOccurredNearSupport: input.finalExitOccurredNearSupport,
+          input.supportResistanceContext.hadSupportResistanceContextAvailable,
+        finalExitOccurredNearSupport: input.supportResistanceContext.finalExitOccurredNearSupport,
         finalExitDistanceToNearestSupportPct:
-          input.finalExitDistanceToNearestSupportPct,
+          input.supportResistanceContext.finalExitDistanceToNearestSupportPct,
       },
       thresholdsUsed: {},
     };
@@ -621,27 +635,28 @@ export const EXIT_INTO_SUPPORT_WITH_RELIEF_AFTER_EXIT: PatternDefinition = {
   name: "Exit Into Support With Relief After Exit",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const matched =
-      input.hadSupportResistanceContextAvailable &&
-      input.finalExitOccurredNearSupport &&
-      input.maxFavorableMovePctAfterExit !== null &&
-      input.maxFavorableMovePctAfterExit >= 0.02 &&
-      input.netMovePctAtEndOfPostExitWindow !== null &&
-      input.netMovePctAtEndOfPostExitWindow >= 0;
+      input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+      input.supportResistanceContext.finalExitOccurredNearSupport &&
+      input.exitContext.maxFavorableMovePctAfterExit !== null &&
+      input.exitContext.maxFavorableMovePctAfterExit >= 0.02 &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow >= 0;
 
     return {
       matched,
       evidence: {
         hadSupportResistanceContextAvailable:
-          input.hadSupportResistanceContextAvailable,
-        finalExitOccurredNearSupport: input.finalExitOccurredNearSupport,
+          input.supportResistanceContext.hadSupportResistanceContextAvailable,
+        finalExitOccurredNearSupport: input.supportResistanceContext.finalExitOccurredNearSupport,
         finalExitDistanceToNearestSupportPct:
-          input.finalExitDistanceToNearestSupportPct,
-        maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+          input.supportResistanceContext.finalExitDistanceToNearestSupportPct,
+        maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
         netMovePctAtEndOfPostExitWindow:
-          input.netMovePctAtEndOfPostExitWindow,
+          input.exitContext.netMovePctAtEndOfPostExitWindow,
       },
       thresholdsUsed: {
         minMaxFavorableMovePctAfterExit: 0.02,
@@ -656,31 +671,32 @@ export const EXIT_INTO_SUPPORT_BEFORE_BREAKDOWN: PatternDefinition = {
   name: "Exit Into Support Before Breakdown",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const matched =
-      input.hadSupportResistanceContextAvailable &&
-      input.finalExitOccurredNearSupport &&
-      input.maxAdverseMovePctAfterExit !== null &&
-      input.maxAdverseMovePctAfterExit >= 0.02 &&
-      input.netMovePctAtEndOfPostExitWindow !== null &&
-      input.netMovePctAtEndOfPostExitWindow < 0;
+      input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+      input.supportResistanceContext.finalExitOccurredNearSupport &&
+      input.exitContext.maxAdverseMovePctAfterExit !== null &&
+      input.exitContext.maxAdverseMovePctAfterExit >= 0.02 &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow < 0;
 
     return {
       matched,
       evidence: {
         hadSupportResistanceContextAvailable:
-          input.hadSupportResistanceContextAvailable,
-        finalExitOccurredNearSupport: input.finalExitOccurredNearSupport,
+          input.supportResistanceContext.hadSupportResistanceContextAvailable,
+        finalExitOccurredNearSupport: input.supportResistanceContext.finalExitOccurredNearSupport,
         finalExitDistanceToNearestSupportPct:
-          input.finalExitDistanceToNearestSupportPct,
+          input.supportResistanceContext.finalExitDistanceToNearestSupportPct,
         finalExitSupportLevelsBelowWithinClusterCount:
-          input.finalExitSupportLevelsBelowWithinClusterCount,
+          input.supportResistanceContext.finalExitSupportLevelsBelowWithinClusterCount,
         finalExitHasStackedSupportBelow:
-          input.finalExitHasStackedSupportBelow,
-        maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+          input.supportResistanceContext.finalExitHasStackedSupportBelow,
+        maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
         netMovePctAtEndOfPostExitWindow:
-          input.netMovePctAtEndOfPostExitWindow,
+          input.exitContext.netMovePctAtEndOfPostExitWindow,
       },
       thresholdsUsed: {
         minMaxAdverseMovePctAfterExit: 0.02,
@@ -696,32 +712,33 @@ export const EXIT_INTO_STACKED_SUPPORT_WITH_RELIEF_AFTER_EXIT: PatternDefinition
     name: "Exit Into Stacked Support With Relief After Exit",
     family: PATTERN_FAMILIES.EXIT_QUALITY,
     patternType: "composite",
+    structuralLevel: "structural_composite",
 
     evaluate: (input) => {
       const matched =
-        input.hadSupportResistanceContextAvailable &&
-        input.finalExitOccurredNearSupport &&
-        input.finalExitHasStackedSupportBelow &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= 0.02 &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= 0;
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.finalExitOccurredNearSupport &&
+        input.supportResistanceContext.finalExitHasStackedSupportBelow &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= 0.02 &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= 0;
 
       return {
         matched,
         evidence: {
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          finalExitOccurredNearSupport: input.finalExitOccurredNearSupport,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          finalExitOccurredNearSupport: input.supportResistanceContext.finalExitOccurredNearSupport,
           finalExitDistanceToNearestSupportPct:
-            input.finalExitDistanceToNearestSupportPct,
+            input.supportResistanceContext.finalExitDistanceToNearestSupportPct,
           finalExitSupportLevelsBelowWithinClusterCount:
-            input.finalExitSupportLevelsBelowWithinClusterCount,
+            input.supportResistanceContext.finalExitSupportLevelsBelowWithinClusterCount,
           finalExitHasStackedSupportBelow:
-            input.finalExitHasStackedSupportBelow,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.supportResistanceContext.finalExitHasStackedSupportBelow,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minMaxFavorableMovePctAfterExit: 0.02,
@@ -736,32 +753,33 @@ export const EXIT_INTO_THIN_SUPPORT_BEFORE_BREAKDOWN: PatternDefinition = {
   name: "Exit Into Thin Support Before Breakdown",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
     const matched =
-      input.hadSupportResistanceContextAvailable &&
-      input.finalExitOccurredNearSupport &&
-      !input.finalExitHasStackedSupportBelow &&
-      input.maxAdverseMovePctAfterExit !== null &&
-      input.maxAdverseMovePctAfterExit >= 0.02 &&
-      input.netMovePctAtEndOfPostExitWindow !== null &&
-      input.netMovePctAtEndOfPostExitWindow < 0;
+      input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+      input.supportResistanceContext.finalExitOccurredNearSupport &&
+      !input.supportResistanceContext.finalExitHasStackedSupportBelow &&
+      input.exitContext.maxAdverseMovePctAfterExit !== null &&
+      input.exitContext.maxAdverseMovePctAfterExit >= 0.02 &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow < 0;
 
     return {
       matched,
       evidence: {
         hadSupportResistanceContextAvailable:
-          input.hadSupportResistanceContextAvailable,
-        finalExitOccurredNearSupport: input.finalExitOccurredNearSupport,
+          input.supportResistanceContext.hadSupportResistanceContextAvailable,
+        finalExitOccurredNearSupport: input.supportResistanceContext.finalExitOccurredNearSupport,
         finalExitDistanceToNearestSupportPct:
-          input.finalExitDistanceToNearestSupportPct,
+          input.supportResistanceContext.finalExitDistanceToNearestSupportPct,
         finalExitSupportLevelsBelowWithinClusterCount:
-          input.finalExitSupportLevelsBelowWithinClusterCount,
+          input.supportResistanceContext.finalExitSupportLevelsBelowWithinClusterCount,
         finalExitHasStackedSupportBelow:
-          input.finalExitHasStackedSupportBelow,
-        maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+          input.supportResistanceContext.finalExitHasStackedSupportBelow,
+        maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
         netMovePctAtEndOfPostExitWindow:
-          input.netMovePctAtEndOfPostExitWindow,
+          input.exitContext.netMovePctAtEndOfPostExitWindow,
       },
       thresholdsUsed: {
         minMaxAdverseMovePctAfterExit: 0.02,
@@ -777,13 +795,14 @@ export const STABILIZED_RECOVERY_WITH_EXIT_INTO_STACKED_SUPPORT_AND_RELIEF: Patt
     name: "Stabilized Recovery With Exit Into Stacked Support And Relief",
     family: PATTERN_FAMILIES.EXIT_QUALITY,
     patternType: "composite",
+    structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-      const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+      const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
 
       const minPeakOpenProfitPctOfBasis =
         THRESHOLDS.SCALING_QUALITY
@@ -797,20 +816,20 @@ export const STABILIZED_RECOVERY_WITH_EXIT_INTO_STACKED_SUPPORT_AND_RELIEF: Patt
       const minNetEndPct = 0;
 
       const matched =
-        input.closedToFlat &&
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
         givebackPct !== null &&
         givebackPct <= maxGivebackPct &&
-        input.hadSupportResistanceContextAvailable &&
-        input.finalExitOccurredNearSupport &&
-        input.finalExitHasStackedSupportBelow &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.finalExitOccurredNearSupport &&
+        input.supportResistanceContext.finalExitHasStackedSupportBelow &&
         postExitCandleCount > 0 &&
         favorablePct !== null &&
         favorablePct >= minFavorablePct &&
@@ -821,24 +840,24 @@ export const STABILIZED_RECOVERY_WITH_EXIT_INTO_STACKED_SUPPORT_AND_RELIEF: Patt
       return {
         matched,
         evidence: {
-          closedToFlat: input.closedToFlat,
+          closedToFlat: input.tradeStructure.closedToFlat,
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct: givebackPct,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          finalExitOccurredNearSupport: input.finalExitOccurredNearSupport,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          finalExitOccurredNearSupport: input.supportResistanceContext.finalExitOccurredNearSupport,
           finalExitSupportLevelsBelowWithinClusterCount:
-            input.finalExitSupportLevelsBelowWithinClusterCount,
+            input.supportResistanceContext.finalExitSupportLevelsBelowWithinClusterCount,
           finalExitHasStackedSupportBelow:
-            input.finalExitHasStackedSupportBelow,
+            input.supportResistanceContext.finalExitHasStackedSupportBelow,
           postExitCandleCount,
           maxFavorableMovePctAfterExit: favorablePct,
           maxAdverseMovePctAfterExit: adversePct,
@@ -861,13 +880,14 @@ export const STABILIZED_RECOVERY_WITH_EXIT_INTO_THIN_SUPPORT_BEFORE_BREAKDOWN: P
     name: "Stabilized Recovery With Exit Into Thin Support Before Breakdown",
     family: PATTERN_FAMILIES.EXIT_QUALITY,
     patternType: "composite",
+    structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-      const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+      const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
 
       const minPeakOpenProfitPctOfBasis =
         THRESHOLDS.SCALING_QUALITY
@@ -881,20 +901,20 @@ export const STABILIZED_RECOVERY_WITH_EXIT_INTO_THIN_SUPPORT_BEFORE_BREAKDOWN: P
       const maxNetEndPct = 0;
 
       const matched =
-        input.closedToFlat &&
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
         givebackPct !== null &&
         givebackPct <= maxGivebackPct &&
-        input.hadSupportResistanceContextAvailable &&
-        input.finalExitOccurredNearSupport &&
-        !input.finalExitHasStackedSupportBelow &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.finalExitOccurredNearSupport &&
+        !input.supportResistanceContext.finalExitHasStackedSupportBelow &&
         postExitCandleCount > 0 &&
         adversePct !== null &&
         adversePct >= minAdversePct &&
@@ -905,24 +925,24 @@ export const STABILIZED_RECOVERY_WITH_EXIT_INTO_THIN_SUPPORT_BEFORE_BREAKDOWN: P
       return {
         matched,
         evidence: {
-          closedToFlat: input.closedToFlat,
+          closedToFlat: input.tradeStructure.closedToFlat,
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct: givebackPct,
           hadSupportResistanceContextAvailable:
-            input.hadSupportResistanceContextAvailable,
-          finalExitOccurredNearSupport: input.finalExitOccurredNearSupport,
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          finalExitOccurredNearSupport: input.supportResistanceContext.finalExitOccurredNearSupport,
           finalExitSupportLevelsBelowWithinClusterCount:
-            input.finalExitSupportLevelsBelowWithinClusterCount,
+            input.supportResistanceContext.finalExitSupportLevelsBelowWithinClusterCount,
           finalExitHasStackedSupportBelow:
-            input.finalExitHasStackedSupportBelow,
+            input.supportResistanceContext.finalExitHasStackedSupportBelow,
           postExitCandleCount,
           maxFavorableMovePctAfterExit: favorablePct,
           maxAdverseMovePctAfterExit: adversePct,
@@ -939,6 +959,253 @@ export const STABILIZED_RECOVERY_WITH_EXIT_INTO_THIN_SUPPORT_BEFORE_BREAKDOWN: P
     },
   };
 
+export const EXIT_INTO_RESISTANCE_WITH_REVERSAL_AFTER_EXIT: PatternDefinition =
+  {
+    id: "exit_into_resistance_with_reversal_after_exit",
+    name: "Exit Into Resistance With Reversal After Exit",
+    family: PATTERN_FAMILIES.EXIT_QUALITY,
+    patternType: "composite",
+    structuralLevel: "structural_composite",
+
+    evaluate: (input) => {
+      const matched =
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.finalExitOccurredNearResistance &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= 0.02 &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= 0 &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+
+      return {
+        matched,
+        evidence: {
+          hadSupportResistanceContextAvailable:
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          finalExitOccurredNearResistance:
+            input.supportResistanceContext.finalExitOccurredNearResistance,
+          finalExitDistanceToNearestResistancePct:
+            input.supportResistanceContext.finalExitDistanceToNearestResistancePct,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          netMovePctAtEndOfPostExitWindow:
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
+        },
+        thresholdsUsed: {
+          minMaxAdverseMovePctAfterExit: 0.02,
+          maxNetMovePctAtEndOfPostExitWindow: 0,
+        },
+      };
+    },
+  };
+
+export const EXIT_INTO_RESISTANCE_BEFORE_BREAKOUT: PatternDefinition = {
+  id: "exit_into_resistance_before_breakout",
+  name: "Exit Into Resistance Before Breakout",
+  family: PATTERN_FAMILIES.EXIT_QUALITY,
+  patternType: "composite",
+  structuralLevel: "structural_composite",
+
+  evaluate: (input) => {
+    const matched =
+      input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+      input.supportResistanceContext.finalExitOccurredNearResistance &&
+      input.exitContext.maxFavorableMovePctAfterExit !== null &&
+      input.exitContext.maxFavorableMovePctAfterExit >= 0.02 &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+      input.exitContext.netMovePctAtEndOfPostExitWindow >= 0 &&
+      input.exitContext.maxFavorableMovePctAfterExit >
+        (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+
+    return {
+      matched,
+      evidence: {
+        hadSupportResistanceContextAvailable:
+          input.supportResistanceContext.hadSupportResistanceContextAvailable,
+        finalExitOccurredNearResistance:
+          input.supportResistanceContext.finalExitOccurredNearResistance,
+        finalExitDistanceToNearestResistancePct:
+          input.supportResistanceContext.finalExitDistanceToNearestResistancePct,
+        maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+        maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+        netMovePctAtEndOfPostExitWindow:
+          input.exitContext.netMovePctAtEndOfPostExitWindow,
+      },
+      thresholdsUsed: {
+        minMaxFavorableMovePctAfterExit: 0.02,
+        minNetMovePctAtEndOfPostExitWindow: 0,
+      },
+    };
+  },
+};
+
+export const STABILIZED_RECOVERY_WITH_EXIT_INTO_RESISTANCE_AND_REVERSAL: PatternDefinition =
+  {
+    id: "stabilized_recovery_with_exit_into_resistance_and_reversal",
+    name: "Stabilized Recovery With Exit Into Resistance And Reversal",
+    family: PATTERN_FAMILIES.EXIT_QUALITY,
+    patternType: "composite",
+    structuralLevel: "storyline_composite",
+
+    evaluate: (input) => {
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+      const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
+
+      const minPeakOpenProfitPctOfBasis =
+        THRESHOLDS.SCALING_QUALITY
+          .CONSTRUCTIVE_RECOVERY_MIN_PEAK_OPEN_PROFIT_PCT_OF_BASIS;
+      const maxGivebackPct =
+        THRESHOLDS.SCALING_QUALITY.CONSTRUCTIVE_RECOVERY_MAX_GIVEBACK_PCT;
+      const maxSecondsToFirstReduction =
+        THRESHOLDS.POSITION_REDUCTION
+          .TIMELY_RISK_RESPONSE_MAX_SECONDS_TO_FIRST_REDUCTION;
+      const minAdversePct = 0.02;
+      const maxNetEndPct = 0;
+
+      const matched =
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
+          maxSecondsToFirstReduction &&
+        givebackPct !== null &&
+        givebackPct <= maxGivebackPct &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.finalExitOccurredNearResistance &&
+        postExitCandleCount > 0 &&
+        adversePct !== null &&
+        adversePct >= minAdversePct &&
+        netEndPct !== null &&
+        netEndPct <= maxNetEndPct &&
+        adversePct > (favorablePct ?? Number.NEGATIVE_INFINITY);
+
+      return {
+        matched,
+        evidence: {
+          closedToFlat: input.tradeStructure.closedToFlat,
+          hadOpenLossBeforePeakOpenProfit:
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          hadPeakOpenProfitBeforeWorstDrawdown:
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+          secondsFromPeakOpenProfitToFirstReduction:
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          maxGivebackFromPeakOpenProfitPct: givebackPct,
+          hadSupportResistanceContextAvailable:
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          finalExitOccurredNearResistance:
+            input.supportResistanceContext.finalExitOccurredNearResistance,
+          finalExitDistanceToNearestResistancePct:
+            input.supportResistanceContext.finalExitDistanceToNearestResistancePct,
+          postExitCandleCount,
+          maxFavorableMovePctAfterExit: favorablePct,
+          maxAdverseMovePctAfterExit: adversePct,
+          netMovePctAtEndOfPostExitWindow: netEndPct,
+        },
+        thresholdsUsed: {
+          minPeakOpenProfitPctOfBasis,
+          maxGivebackPct,
+          maxSecondsToFirstReduction,
+          minAdversePct,
+          maxNetEndPct,
+        },
+      };
+    },
+  };
+
+export const STABILIZED_RECOVERY_WITH_EXIT_INTO_RESISTANCE_BEFORE_BREAKOUT: PatternDefinition =
+  {
+    id: "stabilized_recovery_with_exit_into_resistance_before_breakout",
+    name: "Stabilized Recovery With Exit Into Resistance Before Breakout",
+    family: PATTERN_FAMILIES.EXIT_QUALITY,
+    patternType: "composite",
+    structuralLevel: "storyline_composite",
+
+    evaluate: (input) => {
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+      const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
+
+      const minPeakOpenProfitPctOfBasis =
+        THRESHOLDS.SCALING_QUALITY
+          .CONSTRUCTIVE_RECOVERY_MIN_PEAK_OPEN_PROFIT_PCT_OF_BASIS;
+      const maxGivebackPct =
+        THRESHOLDS.SCALING_QUALITY.CONSTRUCTIVE_RECOVERY_MAX_GIVEBACK_PCT;
+      const maxSecondsToFirstReduction =
+        THRESHOLDS.POSITION_REDUCTION
+          .TIMELY_RISK_RESPONSE_MAX_SECONDS_TO_FIRST_REDUCTION;
+      const minFavorablePct = 0.02;
+      const minNetEndPct = 0;
+
+      const matched =
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
+          maxSecondsToFirstReduction &&
+        givebackPct !== null &&
+        givebackPct <= maxGivebackPct &&
+        input.supportResistanceContext.hadSupportResistanceContextAvailable &&
+        input.supportResistanceContext.finalExitOccurredNearResistance &&
+        postExitCandleCount > 0 &&
+        favorablePct !== null &&
+        favorablePct >= minFavorablePct &&
+        netEndPct !== null &&
+        netEndPct >= minNetEndPct &&
+        favorablePct > (adversePct ?? Number.NEGATIVE_INFINITY);
+
+      return {
+        matched,
+        evidence: {
+          closedToFlat: input.tradeStructure.closedToFlat,
+          hadOpenLossBeforePeakOpenProfit:
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
+          hadPeakOpenProfitBeforeWorstDrawdown:
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
+          hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+          secondsFromPeakOpenProfitToFirstReduction:
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          maxGivebackFromPeakOpenProfitPct: givebackPct,
+          hadSupportResistanceContextAvailable:
+            input.supportResistanceContext.hadSupportResistanceContextAvailable,
+          finalExitOccurredNearResistance:
+            input.supportResistanceContext.finalExitOccurredNearResistance,
+          finalExitDistanceToNearestResistancePct:
+            input.supportResistanceContext.finalExitDistanceToNearestResistancePct,
+          postExitCandleCount,
+          maxFavorableMovePctAfterExit: favorablePct,
+          maxAdverseMovePctAfterExit: adversePct,
+          netMovePctAtEndOfPostExitWindow: netEndPct,
+        },
+        thresholdsUsed: {
+          minPeakOpenProfitPctOfBasis,
+          maxGivebackPct,
+          maxSecondsToFirstReduction,
+          minFavorablePct,
+          minNetEndPct,
+        },
+      };
+    },
+  };
+
 // =========================
 // DISCIPLINED DEFENSIVE EXIT
 // =========================
@@ -948,13 +1215,14 @@ export const DISCIPLINED_DEFENSIVE_EXIT: PatternDefinition = {
   name: "Disciplined Defensive Exit",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const postExitCandleCount = input.postExitCandleCount;
-    const favorablePct = input.maxFavorableMovePctAfterExit;
-    const adversePct = input.maxAdverseMovePctAfterExit;
-    const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-    const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
+    const postExitCandleCount = input.exitContext.postExitCandleCount;
+    const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+    const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+    const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+    const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
 
     const minAdversePct =
       THRESHOLDS.EXIT_QUALITY
@@ -966,8 +1234,8 @@ export const DISCIPLINED_DEFENSIVE_EXIT: PatternDefinition = {
       THRESHOLDS.EXIT_QUALITY.DISCIPLINED_DEFENSIVE_EXIT_MAX_GIVEBACK_PCT;
 
     const matched =
-      input.closedToFlat &&
-      input.totalPositionDecreaseCount > 0 &&
+      input.tradeStructure.closedToFlat &&
+      input.tradeStructure.totalPositionDecreaseCount > 0 &&
       postExitCandleCount > 0 &&
       adversePct !== null &&
       adversePct >= minAdversePct &&
@@ -981,8 +1249,8 @@ export const DISCIPLINED_DEFENSIVE_EXIT: PatternDefinition = {
     return {
       matched,
       evidence: {
-        closedToFlat: input.closedToFlat,
-        totalPositionDecreaseCount: input.totalPositionDecreaseCount,
+        closedToFlat: input.tradeStructure.closedToFlat,
+        totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
         postExitCandleCount,
         maxAdverseMovePctAfterExit: adversePct,
         maxFavorableMovePctAfterExit: favorablePct,
@@ -1007,15 +1275,16 @@ export const STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: PatternDefinition = {
   name: "Stop-Like Forced Exit After Breakdown",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const postExitCandleCount = input.postExitCandleCount;
-    const favorablePct = input.maxFavorableMovePctAfterExit;
-    const adversePct = input.maxAdverseMovePctAfterExit;
-    const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-    const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
-    const realizedCapture = input.realizedCapturePercentOfTradeMfe;
-    const drawdownFromPeakPct = input.drawdownFromPeakOpenProfitPctOfBasis;
+    const postExitCandleCount = input.exitContext.postExitCandleCount;
+    const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+    const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+    const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+    const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
+    const realizedCapture = input.exitContext.realizedCapturePercentOfTradeMfe;
+    const drawdownFromPeakPct = input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis;
 
     const minAdversePct =
       THRESHOLDS.EXIT_QUALITY
@@ -1033,9 +1302,9 @@ export const STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: PatternDefinition = {
         .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
     const matched =
-      input.closedToFlat &&
-      input.totalPositionDecreaseCount > 0 &&
-      input.exitWasNearTradeLow &&
+      input.tradeStructure.closedToFlat &&
+      input.tradeStructure.totalPositionDecreaseCount > 0 &&
+      input.exitContext.exitWasNearTradeLow &&
       postExitCandleCount > 0 &&
       realizedCapture !== null &&
       realizedCapture <= maxRealizedCapture &&
@@ -1052,9 +1321,9 @@ export const STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: PatternDefinition = {
     return {
       matched,
       evidence: {
-        closedToFlat: input.closedToFlat,
-        totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-        exitWasNearTradeLow: input.exitWasNearTradeLow,
+        closedToFlat: input.tradeStructure.closedToFlat,
+        totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+        exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
         realizedCapturePercentOfTradeMfe: realizedCapture,
         maxGivebackFromPeakOpenProfitPct: givebackPct,
         drawdownFromPeakOpenProfitPctOfBasis: drawdownFromPeakPct,
@@ -1083,15 +1352,16 @@ export const STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: PatternDefinition = {
   name: "Stop-Like Forced Exit Before Rebound",
   family: PATTERN_FAMILIES.EXIT_QUALITY,
   patternType: "composite",
+  structuralLevel: "structural_composite",
 
   evaluate: (input) => {
-    const postExitCandleCount = input.postExitCandleCount;
-    const favorablePct = input.maxFavorableMovePctAfterExit;
-    const adversePct = input.maxAdverseMovePctAfterExit;
-    const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-    const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
-    const realizedCapture = input.realizedCapturePercentOfTradeMfe;
-    const drawdownFromPeakPct = input.drawdownFromPeakOpenProfitPctOfBasis;
+    const postExitCandleCount = input.exitContext.postExitCandleCount;
+    const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+    const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+    const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+    const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
+    const realizedCapture = input.exitContext.realizedCapturePercentOfTradeMfe;
+    const drawdownFromPeakPct = input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis;
 
     const minFavorablePct =
       THRESHOLDS.EXIT_QUALITY.MISSED_POST_EXIT_CONTINUATION_MIN_FAVORABLE_PCT;
@@ -1107,9 +1377,9 @@ export const STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: PatternDefinition = {
         .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
     const matched =
-      input.closedToFlat &&
-      input.totalPositionDecreaseCount > 0 &&
-      input.exitWasNearTradeLow &&
+      input.tradeStructure.closedToFlat &&
+      input.tradeStructure.totalPositionDecreaseCount > 0 &&
+      input.exitContext.exitWasNearTradeLow &&
       postExitCandleCount > 0 &&
       realizedCapture !== null &&
       realizedCapture <= maxRealizedCapture &&
@@ -1126,9 +1396,9 @@ export const STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: PatternDefinition = {
     return {
       matched,
       evidence: {
-        closedToFlat: input.closedToFlat,
-        totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-        exitWasNearTradeLow: input.exitWasNearTradeLow,
+        closedToFlat: input.tradeStructure.closedToFlat,
+        totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+        exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
         realizedCapturePercentOfTradeMfe: realizedCapture,
         maxGivebackFromPeakOpenProfitPct: givebackPct,
         drawdownFromPeakOpenProfitPctOfBasis: drawdownFromPeakPct,
@@ -1154,6 +1424,7 @@ export const HELD_THROUGH_DANGER_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: Pat
     name: "Held Through Danger With Stop-Like Forced Exit After Breakdown",
     family: PATTERN_FAMILIES.EXIT_QUALITY,
     patternType: "composite",
+    structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
       const minAdversePct =
@@ -1172,47 +1443,47 @@ export const HELD_THROUGH_DANGER_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: Pat
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minDrawdownFromPeakPct &&
-        !input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        !input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
-          closedToFlat: input.closedToFlat,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minAdversePct,
@@ -1231,6 +1502,7 @@ export const HELD_THROUGH_DANGER_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: Patt
     name: "Held Through Danger With Stop-Like Forced Exit Before Rebound",
     family: PATTERN_FAMILIES.EXIT_QUALITY,
     patternType: "composite",
+    structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
       const minFavorablePct =
@@ -1249,47 +1521,47 @@ export const HELD_THROUGH_DANGER_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: Patt
           .STOP_LIKE_FORCED_EXIT_MIN_DRAWDOWN_FROM_PEAK_PCT_OF_BASIS;
 
       const matched =
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minDrawdownFromPeakPct &&
-        !input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        !input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
-          closedToFlat: input.closedToFlat,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minFavorablePct,
@@ -1308,6 +1580,7 @@ export const DELAYED_RISK_RESPONSE_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: P
     name: "Delayed Risk Response With Stop-Like Forced Exit After Breakdown",
     family: PATTERN_FAMILIES.EXIT_QUALITY,
     patternType: "composite",
+    structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
       const minAdversePct =
@@ -1329,52 +1602,52 @@ export const DELAYED_RISK_RESPONSE_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: P
           .DELAYED_RISK_RESPONSE_MIN_SECONDS_TO_FIRST_REDUCTION;
 
       const matched =
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minDrawdownFromPeakPct &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction >=
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction >=
           minSecondsToFirstReduction &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.maxAdverseMovePctAfterExit !== null &&
-        input.maxAdverseMovePctAfterExit >= minAdversePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
-        input.maxAdverseMovePctAfterExit >
-          (input.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.exitContext.maxAdverseMovePctAfterExit !== null &&
+        input.exitContext.maxAdverseMovePctAfterExit >= minAdversePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow <= maxNetEndPct &&
+        input.exitContext.maxAdverseMovePctAfterExit >
+          (input.exitContext.maxFavorableMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
-          closedToFlat: input.closedToFlat,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minAdversePct,
@@ -1394,6 +1667,7 @@ export const DELAYED_RISK_RESPONSE_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: Pa
     name: "Delayed Risk Response With Stop-Like Forced Exit Before Rebound",
     family: PATTERN_FAMILIES.EXIT_QUALITY,
     patternType: "composite",
+    structuralLevel: "storyline_composite",
 
     evaluate: (input) => {
       const minFavorablePct =
@@ -1415,52 +1689,52 @@ export const DELAYED_RISK_RESPONSE_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: Pa
           .DELAYED_RISK_RESPONSE_MIN_SECONDS_TO_FIRST_REDUCTION;
 
       const matched =
-        input.closedToFlat &&
-        input.totalPositionDecreaseCount > 0 &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.drawdownFromPeakOpenProfitPctOfBasis !== null &&
-        input.drawdownFromPeakOpenProfitPctOfBasis >=
+        input.tradeStructure.closedToFlat &&
+        input.tradeStructure.totalPositionDecreaseCount > 0 &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis >=
           minDrawdownFromPeakPct &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction >=
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction >=
           minSecondsToFirstReduction &&
-        input.exitWasNearTradeLow &&
-        input.postExitCandleCount > 0 &&
-        input.realizedCapturePercentOfTradeMfe !== null &&
-        input.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
-        input.maxGivebackFromPeakOpenProfitPct !== null &&
-        input.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
-        input.maxFavorableMovePctAfterExit !== null &&
-        input.maxFavorableMovePctAfterExit >= minFavorablePct &&
-        input.netMovePctAtEndOfPostExitWindow !== null &&
-        input.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
-        input.maxFavorableMovePctAfterExit >
-          (input.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
+        input.exitContext.exitWasNearTradeLow &&
+        input.exitContext.postExitCandleCount > 0 &&
+        input.exitContext.realizedCapturePercentOfTradeMfe !== null &&
+        input.exitContext.realizedCapturePercentOfTradeMfe <= maxRealizedCapture &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct !== null &&
+        input.recoveryContext.maxGivebackFromPeakOpenProfitPct >= minGivebackPct &&
+        input.exitContext.maxFavorableMovePctAfterExit !== null &&
+        input.exitContext.maxFavorableMovePctAfterExit >= minFavorablePct &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow !== null &&
+        input.exitContext.netMovePctAtEndOfPostExitWindow >= minNetEndPct &&
+        input.exitContext.maxFavorableMovePctAfterExit >
+          (input.exitContext.maxAdverseMovePctAfterExit ?? Number.NEGATIVE_INFINITY);
 
       return {
         matched,
         evidence: {
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           drawdownFromPeakOpenProfitPctOfBasis:
-            input.drawdownFromPeakOpenProfitPctOfBasis,
+            input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
-          closedToFlat: input.closedToFlat,
-          totalPositionDecreaseCount: input.totalPositionDecreaseCount,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
+          closedToFlat: input.tradeStructure.closedToFlat,
+          totalPositionDecreaseCount: input.tradeStructure.totalPositionDecreaseCount,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe:
-            input.realizedCapturePercentOfTradeMfe,
+            input.exitContext.realizedCapturePercentOfTradeMfe,
           maxGivebackFromPeakOpenProfitPct:
-            input.maxGivebackFromPeakOpenProfitPct,
-          postExitCandleCount: input.postExitCandleCount,
-          maxFavorableMovePctAfterExit: input.maxFavorableMovePctAfterExit,
-          maxAdverseMovePctAfterExit: input.maxAdverseMovePctAfterExit,
+            input.recoveryContext.maxGivebackFromPeakOpenProfitPct,
+          postExitCandleCount: input.exitContext.postExitCandleCount,
+          maxFavorableMovePctAfterExit: input.exitContext.maxFavorableMovePctAfterExit,
+          maxAdverseMovePctAfterExit: input.exitContext.maxAdverseMovePctAfterExit,
           netMovePctAtEndOfPostExitWindow:
-            input.netMovePctAtEndOfPostExitWindow,
+            input.exitContext.netMovePctAtEndOfPostExitWindow,
         },
         thresholdsUsed: {
           minFavorablePct,
@@ -1484,13 +1758,14 @@ export const STABILIZED_RECOVERY_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternDefinition
     name: "Stabilized Recovery With Constructive Final Exit",
     family: PATTERN_FAMILIES.EXIT_QUALITY,
     patternType: "composite",
+    structuralLevel: "structural_composite",
 
     evaluate: (input) => {
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-      const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+      const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
 
       const minPeakOpenProfitPctOfBasis =
         THRESHOLDS.SCALING_QUALITY
@@ -1508,14 +1783,14 @@ export const STABILIZED_RECOVERY_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternDefinition
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.closedToFlat &&
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
         givebackPct !== null &&
         givebackPct <= maxGivebackPct &&
@@ -1530,16 +1805,16 @@ export const STABILIZED_RECOVERY_WITH_CONSTRUCTIVE_FINAL_EXIT: PatternDefinition
       return {
         matched,
         evidence: {
-          closedToFlat: input.closedToFlat,
+          closedToFlat: input.tradeStructure.closedToFlat,
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct: givebackPct,
           postExitCandleCount,
           maxAdverseMovePctAfterExit: adversePct,
@@ -1567,13 +1842,14 @@ export const STABILIZED_RECOVERY_WITH_PREMATURE_FINAL_EXIT: PatternDefinition =
     name: "Stabilized Recovery With Premature Final Exit",
     family: PATTERN_FAMILIES.EXIT_QUALITY,
     patternType: "composite",
+    structuralLevel: "structural_composite",
 
     evaluate: (input) => {
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-      const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+      const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
 
       const minPeakOpenProfitPctOfBasis =
         THRESHOLDS.SCALING_QUALITY
@@ -1591,14 +1867,14 @@ export const STABILIZED_RECOVERY_WITH_PREMATURE_FINAL_EXIT: PatternDefinition =
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.closedToFlat &&
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
         givebackPct !== null &&
         givebackPct <= maxGivebackPct &&
@@ -1613,16 +1889,16 @@ export const STABILIZED_RECOVERY_WITH_PREMATURE_FINAL_EXIT: PatternDefinition =
       return {
         matched,
         evidence: {
-          closedToFlat: input.closedToFlat,
+          closedToFlat: input.tradeStructure.closedToFlat,
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           maxGivebackFromPeakOpenProfitPct: givebackPct,
           postExitCandleCount,
           maxFavorableMovePctAfterExit: favorablePct,
@@ -1646,15 +1922,16 @@ export const STABILIZED_RECOVERY_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: Pat
     name: "Stabilized Recovery With Stop-Like Forced Exit After Breakdown",
     family: PATTERN_FAMILIES.EXIT_QUALITY,
     patternType: "composite",
+    structuralLevel: "structural_composite",
 
     evaluate: (input) => {
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-      const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
-      const drawdownFromPeakPct = input.drawdownFromPeakOpenProfitPctOfBasis;
-      const realizedCapture = input.realizedCapturePercentOfTradeMfe;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+      const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
+      const drawdownFromPeakPct = input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis;
+      const realizedCapture = input.exitContext.realizedCapturePercentOfTradeMfe;
 
       const minPeakOpenProfitPctOfBasis =
         THRESHOLDS.SCALING_QUALITY
@@ -1678,20 +1955,20 @@ export const STABILIZED_RECOVERY_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: Pat
           .EXIT_AVOIDED_ADVERSE_FOLLOWTHROUGH_MAX_NET_END_PCT;
 
       const matched =
-        input.closedToFlat &&
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
         drawdownFromPeakPct !== null &&
         drawdownFromPeakPct >= minDrawdownFromPeakPct &&
         givebackPct !== null &&
         givebackPct >= minGivebackPct &&
-        input.exitWasNearTradeLow &&
+        input.exitContext.exitWasNearTradeLow &&
         realizedCapture !== null &&
         realizedCapture <= maxRealizedCapture &&
         postExitCandleCount > 0 &&
@@ -1705,19 +1982,19 @@ export const STABILIZED_RECOVERY_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN: Pat
       return {
         matched,
         evidence: {
-          closedToFlat: input.closedToFlat,
+          closedToFlat: input.tradeStructure.closedToFlat,
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           drawdownFromPeakOpenProfitPctOfBasis: drawdownFromPeakPct,
           maxGivebackFromPeakOpenProfitPct: givebackPct,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe: realizedCapture,
           postExitCandleCount,
           maxAdverseMovePctAfterExit: adversePct,
@@ -1743,15 +2020,16 @@ export const STABILIZED_RECOVERY_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: Patt
     name: "Stabilized Recovery With Stop-Like Forced Exit Before Rebound",
     family: PATTERN_FAMILIES.EXIT_QUALITY,
     patternType: "composite",
+    structuralLevel: "structural_composite",
 
     evaluate: (input) => {
-      const postExitCandleCount = input.postExitCandleCount;
-      const favorablePct = input.maxFavorableMovePctAfterExit;
-      const adversePct = input.maxAdverseMovePctAfterExit;
-      const netEndPct = input.netMovePctAtEndOfPostExitWindow;
-      const givebackPct = input.maxGivebackFromPeakOpenProfitPct;
-      const drawdownFromPeakPct = input.drawdownFromPeakOpenProfitPctOfBasis;
-      const realizedCapture = input.realizedCapturePercentOfTradeMfe;
+      const postExitCandleCount = input.exitContext.postExitCandleCount;
+      const favorablePct = input.exitContext.maxFavorableMovePctAfterExit;
+      const adversePct = input.exitContext.maxAdverseMovePctAfterExit;
+      const netEndPct = input.exitContext.netMovePctAtEndOfPostExitWindow;
+      const givebackPct = input.recoveryContext.maxGivebackFromPeakOpenProfitPct;
+      const drawdownFromPeakPct = input.recoveryContext.drawdownFromPeakOpenProfitPctOfBasis;
+      const realizedCapture = input.exitContext.realizedCapturePercentOfTradeMfe;
 
       const minPeakOpenProfitPctOfBasis =
         THRESHOLDS.SCALING_QUALITY
@@ -1775,20 +2053,20 @@ export const STABILIZED_RECOVERY_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: Patt
           .MISSED_POST_EXIT_CONTINUATION_MIN_NET_END_PCT;
 
       const matched =
-        input.closedToFlat &&
-        input.hadOpenLossBeforePeakOpenProfit &&
-        input.peakOpenProfitPctOfBasis !== null &&
-        input.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
-        input.hadPeakOpenProfitBeforeWorstDrawdown &&
-        input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
-        input.secondsFromPeakOpenProfitToFirstReduction !== null &&
-        input.secondsFromPeakOpenProfitToFirstReduction <=
+        input.tradeStructure.closedToFlat &&
+        input.recoveryContext.hadOpenLossBeforePeakOpenProfit &&
+        input.recoveryContext.peakOpenProfitPctOfBasis !== null &&
+        input.recoveryContext.peakOpenProfitPctOfBasis >= minPeakOpenProfitPctOfBasis &&
+        input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction !== null &&
+        input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction <=
           maxSecondsToFirstReduction &&
         drawdownFromPeakPct !== null &&
         drawdownFromPeakPct >= minDrawdownFromPeakPct &&
         givebackPct !== null &&
         givebackPct >= minGivebackPct &&
-        input.exitWasNearTradeLow &&
+        input.exitContext.exitWasNearTradeLow &&
         realizedCapture !== null &&
         realizedCapture <= maxRealizedCapture &&
         postExitCandleCount > 0 &&
@@ -1802,19 +2080,19 @@ export const STABILIZED_RECOVERY_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND: Patt
       return {
         matched,
         evidence: {
-          closedToFlat: input.closedToFlat,
+          closedToFlat: input.tradeStructure.closedToFlat,
           hadOpenLossBeforePeakOpenProfit:
-            input.hadOpenLossBeforePeakOpenProfit,
-          peakOpenProfitPctOfBasis: input.peakOpenProfitPctOfBasis,
+            input.recoveryContext.hadOpenLossBeforePeakOpenProfit,
+          peakOpenProfitPctOfBasis: input.recoveryContext.peakOpenProfitPctOfBasis,
           hadPeakOpenProfitBeforeWorstDrawdown:
-            input.hadPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadPeakOpenProfitBeforeWorstDrawdown,
           hadReductionAfterPeakOpenProfitBeforeWorstDrawdown:
-            input.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
+            input.recoveryContext.hadReductionAfterPeakOpenProfitBeforeWorstDrawdown,
           secondsFromPeakOpenProfitToFirstReduction:
-            input.secondsFromPeakOpenProfitToFirstReduction,
+            input.recoveryContext.secondsFromPeakOpenProfitToFirstReduction,
           drawdownFromPeakOpenProfitPctOfBasis: drawdownFromPeakPct,
           maxGivebackFromPeakOpenProfitPct: givebackPct,
-          exitWasNearTradeLow: input.exitWasNearTradeLow,
+          exitWasNearTradeLow: input.exitContext.exitWasNearTradeLow,
           realizedCapturePercentOfTradeMfe: realizedCapture,
           postExitCandleCount,
           maxFavorableMovePctAfterExit: favorablePct,
@@ -1853,6 +2131,8 @@ export const EXIT_QUALITY_PATTERNS: PatternDefinition[] = [
   EXIT_INTO_SUPPORT_BEFORE_BREAKDOWN,
   EXIT_INTO_STACKED_SUPPORT_WITH_RELIEF_AFTER_EXIT,
   EXIT_INTO_THIN_SUPPORT_BEFORE_BREAKDOWN,
+  EXIT_INTO_RESISTANCE_WITH_REVERSAL_AFTER_EXIT,
+  EXIT_INTO_RESISTANCE_BEFORE_BREAKOUT,
   DISCIPLINED_DEFENSIVE_EXIT,
   STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN,
   STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND,
@@ -1863,7 +2143,11 @@ export const EXIT_QUALITY_PATTERNS: PatternDefinition[] = [
   STABILIZED_RECOVERY_WITH_CONSTRUCTIVE_FINAL_EXIT,
   STABILIZED_RECOVERY_WITH_EXIT_INTO_STACKED_SUPPORT_AND_RELIEF,
   STABILIZED_RECOVERY_WITH_EXIT_INTO_THIN_SUPPORT_BEFORE_BREAKDOWN,
+  STABILIZED_RECOVERY_WITH_EXIT_INTO_RESISTANCE_AND_REVERSAL,
+  STABILIZED_RECOVERY_WITH_EXIT_INTO_RESISTANCE_BEFORE_BREAKOUT,
   STABILIZED_RECOVERY_WITH_PREMATURE_FINAL_EXIT,
   STABILIZED_RECOVERY_WITH_STOP_LIKE_FORCED_EXIT_AFTER_BREAKDOWN,
   STABILIZED_RECOVERY_WITH_STOP_LIKE_FORCED_EXIT_BEFORE_REBOUND,
 ];
+
+

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
+  <title id="title">SEC filing map for traders</title>
+  <desc id="desc">Dark dashboard showing common SEC filing categories for traders, including current reports, registration statements, offering documents, ownership filings, and financial reports.</desc>
+  <rect width="960" height="560" rx="18" fill="#07111f"/>
+  <rect x="28" y="28" width="904" height="504" rx="14" fill="#0b1628" stroke="#1d3557"/>
+  <text x="52" y="66" fill="#e6f0ff" font-family="Arial, sans-serif" font-size="24" font-weight="700">SEC Filing Map For Traders</text>
+  <text x="52" y="92" fill="#8fa7c8" font-family="Arial, sans-serif" font-size="14">Start by identifying the filing category, then read the actual details.</text>
+  <g font-family="Arial, sans-serif">
+    <rect x="64" y="132" width="250" height="118" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="88" y="166" fill="#7bb4ff" font-size="13" font-weight="700">CURRENT EVENTS</text>
+    <text x="88" y="194" fill="#e6f0ff" font-size="18" font-weight="700">Form 8-K</text>
+    <text x="88" y="220" fill="#8fa7c8" font-size="13">Contracts, financing, mergers,</text>
+    <text x="88" y="238" fill="#8fa7c8" font-size="13">leadership, press release exhibits</text>
+    <rect x="354" y="132" width="250" height="118" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="378" y="166" fill="#7bb4ff" font-size="13" font-weight="700">REGISTRATION</text>
+    <text x="378" y="194" fill="#e6f0ff" font-size="18" font-weight="700">S-1 / S-3</text>
+    <text x="378" y="220" fill="#8fa7c8" font-size="13">New shares, resale shares,</text>
+    <text x="378" y="238" fill="#8fa7c8" font-size="13">shelf registrations</text>
+    <rect x="644" y="132" width="250" height="118" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="668" y="166" fill="#7bb4ff" font-size="13" font-weight="700">OFFERING TERMS</text>
+    <text x="668" y="194" fill="#e6f0ff" font-size="18" font-weight="700">424B5</text>
+    <text x="668" y="220" fill="#8fa7c8" font-size="13">Price, size, warrants,</text>
+    <text x="668" y="238" fill="#8fa7c8" font-size="13">prospectus details</text>
+    <rect x="64" y="294" width="250" height="118" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="88" y="328" fill="#7bb4ff" font-size="13" font-weight="700">FINANCIAL REPORTS</text>
+    <text x="88" y="356" fill="#e6f0ff" font-size="18" font-weight="700">10-Q / 10-K</text>
+    <text x="88" y="382" fill="#8fa7c8" font-size="13">Cash, revenue, losses,</text>
+    <text x="88" y="400" fill="#8fa7c8" font-size="13">risk factors</text>
+    <rect x="354" y="294" width="250" height="118" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="378" y="328" fill="#7bb4ff" font-size="13" font-weight="700">OWNERSHIP</text>
+    <text x="378" y="356" fill="#e6f0ff" font-size="18" font-weight="700">Form 4 / 13D / 13G</text>
+    <text x="378" y="382" fill="#8fa7c8" font-size="13">Insider transactions and</text>
+    <text x="378" y="400" fill="#8fa7c8" font-size="13">large-holder updates</text>
+    <rect x="644" y="294" width="250" height="118" rx="10" fill="#081323" stroke="#2d8cff"/>
+    <text x="668" y="328" fill="#7bb4ff" font-size="13" font-weight="700">VOTES / COMPLIANCE</text>
+    <text x="668" y="356" fill="#e6f0ff" font-size="18" font-weight="700">Proxy / NT / 25</text>
+    <text x="668" y="382" fill="#8fa7c8" font-size="13">Votes, late filings,</text>
+    <text x="668" y="400" fill="#8fa7c8" font-size="13">exchange status</text>
+  </g>
+  <rect x="64" y="448" width="830" height="42" rx="9" fill="#0d213a" stroke="#2d8cff"/>
+  <text x="88" y="474" fill="#d8eaff" font-family="Arial, sans-serif" font-size="14">A filing type gives you the category. The actual details fill in the risk picture.</text>
+</svg>

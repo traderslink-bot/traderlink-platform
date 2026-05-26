@@ -31,6 +31,14 @@ function getMinLow(candles: Candle[]): number | null {
   return Math.min(...candles.map((candle) => candle.low));
 }
 
+function getMaxExecutionPrice(executions: Execution[]): number {
+  return Math.max(...executions.map((execution) => execution.price));
+}
+
+function getMinExecutionPrice(executions: Execution[]): number {
+  return Math.min(...executions.map((execution) => execution.price));
+}
+
 function getTradeDurationMs(
   firstExecutionTimestamp: string,
   lastExecutionTimestamp: string,
@@ -85,8 +93,8 @@ export function buildTradeDerivedSignals(
   const firstExecutionPrice = firstExecution.price;
   const lastExecutionPrice = lastExecution.price;
 
-  const maxHigh = getMaxHigh(tradeCandles);
-  const minLow = getMinLow(tradeCandles);
+  const maxHigh = getMaxHigh(tradeCandles) ?? getMaxExecutionPrice(executions);
+  const minLow = getMinLow(tradeCandles) ?? getMinExecutionPrice(executions);
 
   let peakPriceDuringTrade: number | null = null;
   let worstPriceDuringTrade: number | null = null;

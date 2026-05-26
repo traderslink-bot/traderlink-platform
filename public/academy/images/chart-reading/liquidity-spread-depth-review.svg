@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">Liquidity spread and depth review</title>
+  <desc id="desc">A dark trading dashboard style chart showing bid ask spread, market depth, candles, and volume as liquidity context.</desc>
+  <rect width="900" height="520" fill="#08111f"/>
+  <rect x="24" y="24" width="852" height="472" rx="18" fill="#0d1728" stroke="#1e3557" stroke-width="2"/>
+  <text x="44" y="58" fill="#e8f1ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Check liquidity before trusting the chart</text>
+  <text x="44" y="84" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="14">Spread and depth can change the real entry, exit, and risk.</text>
+  <line x1="72" y1="128" x2="548" y2="128" stroke="#182943"/>
+  <line x1="72" y1="188" x2="548" y2="188" stroke="#182943"/>
+  <line x1="72" y1="248" x2="548" y2="248" stroke="#182943"/>
+  <line x1="72" y1="308" x2="548" y2="308" stroke="#182943"/>
+  <rect x="72" y="210" width="476" height="30" fill="#2563eb" opacity="0.16"/>
+  <line x1="72" y1="225" x2="548" y2="225" stroke="#38bdf8" stroke-width="2" stroke-dasharray="8 8"/>
+  <text x="402" y="206" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="14">planned area</text>
+  <g stroke-width="3" stroke-linecap="round">
+    <line x1="108" y1="292" x2="108" y2="248" stroke="#22c55e"/><rect x="97" y="264" width="22" height="20" fill="#22c55e" rx="3"/>
+    <line x1="150" y1="266" x2="150" y2="218" stroke="#22c55e"/><rect x="139" y="234" width="22" height="24" fill="#22c55e" rx="3"/>
+    <line x1="192" y1="248" x2="192" y2="194" stroke="#ef4444"/><rect x="181" y="214" width="22" height="24" fill="#ef4444" rx="3"/>
+    <line x1="234" y1="260" x2="234" y2="204" stroke="#22c55e"/><rect x="223" y="224" width="22" height="24" fill="#22c55e" rx="3"/>
+    <line x1="276" y1="232" x2="276" y2="174" stroke="#22c55e"/><rect x="265" y="194" width="22" height="26" fill="#22c55e" rx="3"/>
+    <line x1="318" y1="214" x2="318" y2="154" stroke="#ef4444"/><rect x="307" y="176" width="22" height="26" fill="#ef4444" rx="3"/>
+    <line x1="360" y1="230" x2="360" y2="170" stroke="#ef4444"/><rect x="349" y="192" width="22" height="24" fill="#ef4444" rx="3"/>
+    <line x1="402" y1="246" x2="402" y2="190" stroke="#22c55e"/><rect x="391" y="210" width="22" height="24" fill="#22c55e" rx="3"/>
+  </g>
+  <line x1="72" y1="340" x2="548" y2="340" stroke="#2a3d5c"/>
+  <g>
+    <rect x="97" y="416" width="22" height="42" fill="#22c55e" opacity="0.6"/>
+    <rect x="139" y="380" width="22" height="78" fill="#22c55e" opacity="0.74"/>
+    <rect x="181" y="398" width="22" height="60" fill="#ef4444" opacity="0.62"/>
+    <rect x="223" y="386" width="22" height="72" fill="#22c55e" opacity="0.7"/>
+    <rect x="265" y="356" width="22" height="102" fill="#22c55e" opacity="0.88"/>
+    <rect x="307" y="410" width="22" height="48" fill="#ef4444" opacity="0.58"/>
+    <rect x="349" y="424" width="22" height="34" fill="#ef4444" opacity="0.5"/>
+    <rect x="391" y="392" width="22" height="66" fill="#22c55e" opacity="0.66"/>
+  </g>
+  <rect x="594" y="122" width="230" height="314" rx="12" fill="#0a1322" stroke="#213858"/>
+  <text x="618" y="154" fill="#bcd7ff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Depth and spread check</text>
+  <g font-family="Arial, sans-serif" font-size="14">
+    <text x="622" y="190" fill="#bbf7d0">Bid</text>
+    <text x="714" y="190" fill="#fecdd3">Ask</text>
+    <rect x="618" y="204" width="82" height="28" fill="#0f2f25" rx="5"/>
+    <rect x="714" y="204" width="82" height="28" fill="#33171f" rx="5"/>
+    <text x="632" y="224" fill="#bbf7d0">$1.96</text>
+    <text x="728" y="224" fill="#fecdd3">$2.04</text>
+    <rect x="618" y="246" width="56" height="20" fill="#22c55e" opacity="0.55" rx="4"/>
+    <rect x="714" y="246" width="38" height="20" fill="#ef4444" opacity="0.55" rx="4"/>
+    <text x="622" y="282" fill="#8ea6c8">thin size near price</text>
+    <text x="622" y="314" fill="#8ea6c8">spread affects entry</text>
+    <text x="622" y="346" fill="#8ea6c8">exit may be harder</text>
+    <text x="622" y="378" fill="#8ea6c8">size must match depth</text>
+  </g>
+  <path d="M548 225 C582 218, 592 214, 618 218" fill="none" stroke="#38bdf8" stroke-width="3"/>
+  <text x="610" y="460" fill="#8ea6c8" font-family="Arial, sans-serif" font-size="13">Last price is not the same as clean execution.</text>
+</svg>

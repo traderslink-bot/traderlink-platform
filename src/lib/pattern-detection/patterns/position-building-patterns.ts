@@ -22,16 +22,17 @@ export const SCALED_INTO_POSITION: PatternDefinition = {
   name: "Scaled Into Position",
   family: PATTERN_FAMILIES.POSITION_BUILDING,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
     const threshold =
       THRESHOLDS.POSITION_BUILDING.MULTI_INCREASE_MIN_EVENTS;
 
     return {
-      matched: input.totalPositionIncreaseCount >= threshold,
+      matched: input.tradeStructure.totalPositionIncreaseCount >= threshold,
       evidence: {
-        totalPositionIncreaseCount: input.totalPositionIncreaseCount,
-        hadMultipleIncreases: input.hadMultipleIncreases,
+        totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
+        hadMultipleIncreases: input.tradeStructure.hadMultipleIncreases,
       },
       thresholdsUsed: {
         minIncreaseEvents: threshold,
@@ -45,20 +46,21 @@ export const SINGLE_BUILD_POSITION: PatternDefinition = {
   name: "Single Build Position",
   family: PATTERN_FAMILIES.POSITION_BUILDING,
   patternType: "atomic",
+  structuralLevel: "atomic",
 
   evaluate: (input) => {
     const threshold =
       THRESHOLDS.POSITION_BUILDING.SINGLE_BUILD_MAX_INCREASE_EVENTS;
 
     const matched =
-      input.totalPositionIncreaseCount === threshold &&
-      input.hadMultipleIncreases === false;
+      input.tradeStructure.totalPositionIncreaseCount === threshold &&
+      input.tradeStructure.hadMultipleIncreases === false;
 
     return {
       matched,
       evidence: {
-        totalPositionIncreaseCount: input.totalPositionIncreaseCount,
-        hadMultipleIncreases: input.hadMultipleIncreases,
+        totalPositionIncreaseCount: input.tradeStructure.totalPositionIncreaseCount,
+        hadMultipleIncreases: input.tradeStructure.hadMultipleIncreases,
       },
       thresholdsUsed: {
         maxIncreaseEvents: threshold,
@@ -71,3 +73,5 @@ export const POSITION_BUILDING_PATTERNS: PatternDefinition[] = [
   SCALED_INTO_POSITION,
   SINGLE_BUILD_POSITION,
 ];
+
+
