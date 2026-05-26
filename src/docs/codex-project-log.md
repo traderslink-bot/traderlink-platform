@@ -107,6 +107,35 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-05-26 TradersLink Website Source Of Truth
+
+The active website repo is now:
+
+- `C:\Users\jerac\Documents\TraderLink\traderslink.pro`
+- branch: `main`
+- upstream: `origin/main`
+- source-of-truth commit: `48f0fb8178ff513e229a16eb7ebd7d446aa40a6a`
+- production deployment: `dpl_H1tehMKTuB3uSxCHHkVk73WabBD8`
+
+Do not use stale sibling folders or deploy-candidate folders as website source
+of truth.
+
+Production is currently deployed by Vercel CLI from a clean local `main`
+checkout. Git-connected Vercel production deploys from `main` have not been
+verified.
+
+Main branch alignment notes:
+
+- PR #10 merged the live website branch into `main`.
+- GitHub CI passed on the PR and on the resulting `main` push.
+- GitHub ruleset `Protect main` still requires PRs and blocks destructive
+  branch updates. Its approving-review count is `0` because the repo currently
+  has only the `traderslink-bot` maintainer account.
+- The BigTime week-ahead route is live at
+  `/small-cap-stocks/week-ahead/potential-catalysts-for-may-26-29`.
+- The current shared top nav remains the site shell topbar with only the
+  approved `Academy Courses` link after the logo/spacer.
+
 ### 2026-05-20 TradersLink Academy Live Product, SEO, And Analytics Pass
 
 The active website/Academy worktree for the current launch pass is:
