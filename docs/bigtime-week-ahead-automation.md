@@ -18,6 +18,7 @@ Production tooling in this repo:
 - Polling runner: `tools/big-time-pennies/run-weekly-scrape-until-new.js`
 - Windows scheduled runner: `tools/big-time-pennies/run-weekly-local.ps1`
 - Scheduled task installer: `tools/big-time-pennies/install-local-weekly-task.ps1`
+- Last-run status viewer: `tools/big-time-pennies/show-local-weekly-status.ps1`
 - Public content file: `src/content/big-time-pennies/articles.json`
 
 The Playwright scratch folder can still be used for local experiments, but the scheduled automation should run from the website repo after this work is merged into the deploy branch.
@@ -27,7 +28,7 @@ The Playwright scratch folder can still be used for local experiments, but the s
 The Windows Scheduled Task is:
 
 - Name: `TradersLink BigTime Week-Ahead Scraper`
-- Time: Sunday at 8:00 PM local computer time
+- Time: Sunday at 5:00 PM local computer time
 - Runner: `tools/big-time-pennies/run-weekly-local.ps1`
 
 Install or update it with:
@@ -49,10 +50,46 @@ The local runner:
 - keeps polling for up to 72 attempts, which is about 6 hours
 - retries temporary scrape/index failures up to 3 times
 - retries OpenAI rewrite calls up to 3 times
-- when a new article appears, scrapes it, sends it to OpenAI, writes structured TradersLink JSON, commits `src/content/big-time-pennies/articles.json`, and pushes the current branch
+- when a new article appears, scrapes it, sends it to OpenAI, writes structured TradersLink JSON, commits `src/content/big-time-pennies/articles.json`, and tries to push the current branch
+- if GitHub blocks direct `main` pushes because the repo requires pull requests, it pushes a PR branch, creates a GitHub pull request, waits for checks, merges the PR, and pulls clean `main`
+- after the content is on clean `main`, it runs a production Vercel deploy from the website repo
 - keeps only the newest 8 published weekly articles in `articles.json` by default
 
-After the push, the normal Vercel/GitHub integration should deploy the updated live page.
+After the production deploy finishes, the generated live URL should return the new page.
+
+## How To Check The Last Run
+
+The local runner writes a human-readable status file after every run:
+
+```text
+%LOCALAPPDATA%\TradersLink\bigtime-week-ahead\last-run-status.txt
+```
+
+It also writes machine-readable JSON:
+
+```text
+%LOCALAPPDATA%\TradersLink\bigtime-week-ahead\last-run-status.json
+```
+
+From the website repo, print the status with:
+
+```powershell
+npm run bigtime:local:status
+```
+
+The status includes:
+
+- whether the run is `running`, `success`, `failed`, or `no_content_change`
+- the generated live URL, such as `https://traderslink.pro/small-cap-stocks/week-ahead/...`
+- the public path added to `articles.json`
+- the article title
+- the generated commit hash
+- whether the commit was pushed
+- the publish branch and pull request URL, if GitHub required a PR
+- the Vercel deployment URL, if production was deployed
+- the timestamped log file path
+
+If the status is `production_deployed`, the URL shown in the status file is the public TradersLink URL for the new page. If the status is `pull_request_created` or `pull_request_merged`, the URL may not be live yet.
 
 ## Output Guardrails
 
@@ -67,11 +104,12 @@ Before the JSON is saved, the scraper normalizes OpenAI output:
 
 ## Requirements
 
-- The computer must be awake, online, and logged in at Sunday 8:00 PM.
+- The computer must be awake, online, and logged in at Sunday 5:00 PM.
 - Git must be authenticated and able to push to the deploy branch.
+- GitHub CLI must be authenticated if the repo requires pull requests.
+- Vercel CLI must be authenticated for production deployment.
 - The website repo should be on the deploy branch, usually `main`.
 - The env file must contain `OPENAI_API_KEY`.
-- Vercel should be connected to the GitHub repo so the pushed content commit triggers a deploy.
 - Optional: set `BIGTIME_MAX_PUBLISHED_ARTICLES` to change the rolling archive size. Default is `8`.
 
 Do not deploy from `playwright/big-time-pennies`.
