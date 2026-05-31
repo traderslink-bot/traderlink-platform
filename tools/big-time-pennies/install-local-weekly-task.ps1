@@ -23,7 +23,7 @@ $quotedEnvFile = '"' + $EnvFile + '"'
 $arguments = "-NoProfile -ExecutionPolicy Bypass -File $quotedRunner -RepoRoot $quotedRepoRoot -EnvFile $quotedEnvFile -Branch $Branch"
 
 $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $arguments
-$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 8:00PM
+$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 5:00PM
 $settings = New-ScheduledTaskSettingsSet `
   -StartWhenAvailable `
   -AllowStartIfOnBatteries `
@@ -42,7 +42,7 @@ Register-ScheduledTask `
   -Force | Out-Null
 
 Write-Host "Installed scheduled task: $TaskName"
-Write-Host "Schedule: Sundays at 8:00 PM local computer time"
+Write-Host "Schedule: Sundays at 5:00 PM local computer time"
 Write-Host "Runner: $runner"
 Write-Host "Repo: $RepoRoot"
 Write-Host "Env file: $EnvFile"
