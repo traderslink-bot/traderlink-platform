@@ -345,6 +345,16 @@ function getDisplayTitle(article: BigTimePennyArticle): string {
   return getPublicCatalystArticleTitle(article);
 }
 
+function getMetadataDescription(article: BigTimePennyArticle): string {
+  const dateRange = article.structuredContent?.dateRange
+    ?.replace(/,\s*\d{4}\b/g, "")
+    .replace(/\s+\d{4}\b/g, "")
+    .trim();
+  const dateCopy = dateRange ? ` for ${dateRange}` : "";
+
+  return `Small-cap stock catalyst watchlist${dateCopy}: key conference appearances, company events, dates, and ticker symbols traders may want on their radar.`;
+}
+
 function SectionCard({
   children,
   className,
@@ -473,20 +483,25 @@ export async function generateMetadata({
     };
   }
 
+  const description = getMetadataDescription(article);
+
   return {
     alternates: {
       canonical: article.publicPath,
     },
-    description:
-      "Trader-focused small-cap catalyst calendar and risk notes from TradersLink.",
+    description,
     openGraph: {
-      description:
-        "Trader-focused small-cap catalyst calendar and risk notes from TradersLink.",
+      description,
       publishedTime: article.aiProcessedAt || article.scrapedAt,
       title: getDisplayTitle(article),
       type: "article",
     },
     title: `${getDisplayTitle(article)} | TradersLink News`,
+    twitter: {
+      card: "summary_large_image",
+      description,
+      title: getDisplayTitle(article),
+    },
   };
 }
 
