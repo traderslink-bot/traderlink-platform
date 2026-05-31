@@ -16,6 +16,7 @@ const levelAnalysisModules = [
   "src/lib/level-analysis/level-analysis-snapshot-adapter.ts",
   "src/lib/level-analysis/level-analysis-snapshot-attachment.ts",
   "src/lib/level-analysis/level-analysis-snapshot-storage.ts",
+  "src/lib/level-analysis/execution-level-context-input.ts",
 ];
 
 const prohibitedExportFieldNames = new Set([
