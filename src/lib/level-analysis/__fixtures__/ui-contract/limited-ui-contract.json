@@ -1,0 +1,540 @@
+{
+  "contractVersion": "execution_level_context_ui_contract_v1",
+  "factualOnly": true,
+  "status": "limited",
+  "statusReason": null,
+  "source": {
+    "attachmentKey": "level-analysis-snapshot-v1:trade-123:SNAP:1777645200000",
+    "snapshotStorageKey": "level-analysis-snapshot-v1:accepted:trade-123:SNAP:1777645200000",
+    "schemaVersion": "level-analysis-snapshot/v1",
+    "producer": "levels-system"
+  },
+  "identity": {
+    "symbol": "SNAP",
+    "asOfTimestamp": 1777645200000,
+    "referencePrice": 10
+  },
+  "sections": [
+    {
+      "id": "overview",
+      "title": "Level context overview",
+      "detail": "Factual snapshot identity and availability.",
+      "status": "limited",
+      "rows": [
+        {
+          "id": "symbol",
+          "label": "Symbol",
+          "value": {
+            "kind": "text",
+            "value": "SNAP"
+          },
+          "tone": "info"
+        },
+        {
+          "id": "asOfTimestamp",
+          "label": "As-of timestamp",
+          "value": {
+            "kind": "timestamp",
+            "value": 1777645200000
+          },
+          "tone": "info"
+        },
+        {
+          "id": "referencePrice",
+          "label": "Reference price",
+          "value": {
+            "kind": "number",
+            "value": 10
+          },
+          "tone": "info"
+        },
+        {
+          "id": "readModelStatus",
+          "label": "Read model status",
+          "value": {
+            "kind": "text",
+            "value": "limited"
+          },
+          "tone": "notice"
+        }
+      ],
+      "badges": [
+        {
+          "id": "status",
+          "label": "limited",
+          "tone": "notice"
+        },
+        {
+          "id": "factualOnly",
+          "label": "factual only",
+          "tone": "neutral"
+        }
+      ]
+    },
+    {
+      "id": "nearestLevels",
+      "title": "Nearest levels",
+      "detail": "Nearest factual support and resistance context.",
+      "status": "limited",
+      "rows": [
+        {
+          "id": "support.present",
+          "label": "Support present",
+          "value": {
+            "kind": "boolean",
+            "value": false
+          },
+          "tone": "notice"
+        },
+        {
+          "id": "support.representativePrice",
+          "label": "Support price",
+          "value": {
+            "kind": "empty",
+            "value": null
+          },
+          "tone": "muted"
+        },
+        {
+          "id": "support.distanceFromReferencePct",
+          "label": "Support distance",
+          "value": {
+            "kind": "empty",
+            "value": null,
+            "unit": "pct"
+          },
+          "detail": "Distance from snapshot reference price.",
+          "tone": "muted"
+        },
+        {
+          "id": "support.bucket",
+          "label": "Support bucket",
+          "value": {
+            "kind": "empty",
+            "value": null
+          },
+          "tone": "muted"
+        },
+        {
+          "id": "resistance.present",
+          "label": "Resistance present",
+          "value": {
+            "kind": "boolean",
+            "value": true
+          },
+          "tone": "info"
+        },
+        {
+          "id": "resistance.representativePrice",
+          "label": "Resistance price",
+          "value": {
+            "kind": "number",
+            "value": 10.4
+          },
+          "tone": "info"
+        },
+        {
+          "id": "resistance.distanceFromReferencePct",
+          "label": "Resistance distance",
+          "value": {
+            "kind": "number",
+            "value": 0.04,
+            "unit": "pct"
+          },
+          "detail": "Distance from snapshot reference price.",
+          "tone": "info"
+        },
+        {
+          "id": "resistance.bucket",
+          "label": "Resistance bucket",
+          "value": {
+            "kind": "text",
+            "value": "intradayResistance"
+          },
+          "tone": "info"
+        }
+      ],
+      "badges": []
+    },
+    {
+      "id": "extensions",
+      "title": "Extension coverage",
+      "detail": "Counts for extension levels in the factual level map.",
+      "status": "limited",
+      "rows": [
+        {
+          "id": "supportExtensions",
+          "label": "Support extensions",
+          "value": {
+            "kind": "number",
+            "value": 0
+          },
+          "tone": "info"
+        },
+        {
+          "id": "resistanceExtensions",
+          "label": "Resistance extensions",
+          "value": {
+            "kind": "number",
+            "value": 1
+          },
+          "tone": "info"
+        },
+        {
+          "id": "totalExtensions",
+          "label": "Total extensions",
+          "value": {
+            "kind": "number",
+            "value": 1
+          },
+          "tone": "info"
+        }
+      ],
+      "badges": []
+    },
+    {
+      "id": "syntheticContinuationMap",
+      "title": "Synthetic continuation-map",
+      "detail": "Synthetic forward-planning context only.",
+      "status": "limited",
+      "rows": [
+        {
+          "id": "synthetic.count",
+          "label": "Synthetic count",
+          "value": {
+            "kind": "number",
+            "value": 1
+          },
+          "tone": "notice"
+        },
+        {
+          "id": "synthetic.supportCount",
+          "label": "Synthetic support count",
+          "value": {
+            "kind": "number",
+            "value": 0
+          },
+          "tone": "notice"
+        },
+        {
+          "id": "synthetic.resistanceCount",
+          "label": "Synthetic resistance count",
+          "value": {
+            "kind": "number",
+            "value": 1
+          },
+          "tone": "notice"
+        },
+        {
+          "id": "synthetic.marked",
+          "label": "Synthetic rows marked",
+          "value": {
+            "kind": "boolean",
+            "value": true
+          },
+          "tone": "info"
+        },
+        {
+          "id": "synthetic.historicalEvidence",
+          "label": "Historical evidence",
+          "value": {
+            "kind": "boolean",
+            "value": false
+          },
+          "detail": "Synthetic continuation-map rows are not historical level evidence.",
+          "tone": "coverage"
+        },
+        {
+          "id": "synthetic.limitations",
+          "label": "Synthetic limitations",
+          "value": {
+            "kind": "list",
+            "value": [
+              "no_real_extension_candidate_available",
+              "not_historical_support_resistance",
+              "no_touch_or_rejection_history",
+              "no_historical_confluence"
+            ]
+          },
+          "tone": "coverage"
+        }
+      ],
+      "badges": [
+        {
+          "id": "contextType",
+          "label": "synthetic_forward_planning",
+          "tone": "notice"
+        },
+        {
+          "id": "historicalEvidence",
+          "label": "not historical evidence",
+          "tone": "coverage"
+        }
+      ]
+    },
+    {
+      "id": "quality",
+      "title": "Quality context",
+      "detail": "LevelQualityAudit context for coverage review.",
+      "status": "limited",
+      "rows": [
+        {
+          "id": "quality.warningCount",
+          "label": "Quality note count",
+          "value": {
+            "kind": "number",
+            "value": 1
+          },
+          "tone": "coverage"
+        },
+        {
+          "id": "quality.warnings",
+          "label": "Quality notes",
+          "value": {
+            "kind": "list",
+            "value": [
+              "no_support_extension_coverage"
+            ]
+          },
+          "tone": "coverage"
+        },
+        {
+          "id": "quality.hasLevelQualityAudit",
+          "label": "LevelQualityAudit present",
+          "value": {
+            "kind": "boolean",
+            "value": true
+          },
+          "tone": "info"
+        }
+      ],
+      "badges": []
+    },
+    {
+      "id": "diagnostics",
+      "title": "Diagnostics",
+      "detail": "Snapshot and quality diagnostics.",
+      "status": "limited",
+      "rows": [
+        {
+          "id": "diagnostics.count",
+          "label": "Diagnostic count",
+          "value": {
+            "kind": "number",
+            "value": 3
+          },
+          "tone": "notice"
+        },
+        {
+          "id": "diagnostics.snapshot",
+          "label": "Snapshot diagnostics",
+          "value": {
+            "kind": "list",
+            "value": [
+              "candle_close_as_of_filter_applied"
+            ]
+          },
+          "tone": "notice"
+        },
+        {
+          "id": "diagnostics.quality",
+          "label": "Quality diagnostics",
+          "value": {
+            "kind": "list",
+            "value": [
+              "no_support_extension_coverage",
+              "unenriched_levels_present"
+            ]
+          },
+          "tone": "notice"
+        }
+      ],
+      "badges": []
+    },
+    {
+      "id": "limitations",
+      "title": "Limitations",
+      "detail": "Known factual context limitations.",
+      "status": "limited",
+      "rows": [
+        {
+          "id": "limitations.count",
+          "label": "Limitation count",
+          "value": {
+            "kind": "number",
+            "value": 4
+          },
+          "tone": "notice"
+        },
+        {
+          "id": "limitations.messages",
+          "label": "Limitation notes",
+          "value": {
+            "kind": "list",
+            "value": [
+              "Nearest support is unavailable in this as-of snapshot.",
+              "No volume shelves are available in this snapshot.",
+              "Market context is absent.",
+              "Market context facts bundle is absent."
+            ]
+          },
+          "tone": "notice"
+        }
+      ],
+      "badges": []
+    },
+    {
+      "id": "safety",
+      "title": "Safety",
+      "detail": "Replay and factual-context safety flags.",
+      "status": "limited",
+      "rows": [
+        {
+          "id": "safety.noLookaheadApplied",
+          "label": "No-lookahead applied",
+          "value": {
+            "kind": "boolean",
+            "value": true
+          },
+          "tone": "info"
+        },
+        {
+          "id": "safety.syntheticExtensionsClearlyMarked",
+          "label": "Synthetic rows clearly marked",
+          "value": {
+            "kind": "boolean",
+            "value": true
+          },
+          "tone": "info"
+        },
+        {
+          "id": "safety.factualContextOnly",
+          "label": "Factual context only",
+          "value": {
+            "kind": "boolean",
+            "value": true
+          },
+          "tone": "info"
+        }
+      ],
+      "badges": []
+    },
+    {
+      "id": "dataCompleteness",
+      "title": "Data completeness",
+      "detail": "Presence of supporting factual sections.",
+      "status": "limited",
+      "rows": [
+        {
+          "id": "sessionFacts",
+          "label": "Session facts",
+          "value": {
+            "kind": "boolean",
+            "value": true
+          },
+          "tone": "info"
+        },
+        {
+          "id": "volumeFacts",
+          "label": "Volume facts",
+          "value": {
+            "kind": "boolean",
+            "value": true
+          },
+          "tone": "info"
+        },
+        {
+          "id": "volumeShelves",
+          "label": "Volume shelf count",
+          "value": {
+            "kind": "number",
+            "value": 0
+          },
+          "tone": "coverage"
+        },
+        {
+          "id": "marketContext",
+          "label": "Market context",
+          "value": {
+            "kind": "boolean",
+            "value": false
+          },
+          "tone": "coverage"
+        },
+        {
+          "id": "factsBundle",
+          "label": "Facts bundle",
+          "value": {
+            "kind": "boolean",
+            "value": false
+          },
+          "tone": "coverage"
+        }
+      ],
+      "badges": []
+    },
+    {
+      "id": "source",
+      "title": "Source",
+      "detail": "Source identifiers for audit and traceability.",
+      "status": "limited",
+      "rows": [
+        {
+          "id": "source.attachmentKey",
+          "label": "Snapshot attachment key",
+          "value": {
+            "kind": "text",
+            "value": "level-analysis-snapshot-v1:trade-123:SNAP:1777645200000"
+          },
+          "tone": "info"
+        },
+        {
+          "id": "source.snapshotStorageKey",
+          "label": "Snapshot storage key",
+          "value": {
+            "kind": "text",
+            "value": "level-analysis-snapshot-v1:accepted:trade-123:SNAP:1777645200000"
+          },
+          "tone": "info"
+        },
+        {
+          "id": "source.readModelStorageKey",
+          "label": "Read model storage key",
+          "value": {
+            "kind": "empty",
+            "value": null
+          },
+          "tone": "muted"
+        },
+        {
+          "id": "source.schemaVersion",
+          "label": "Schema version",
+          "value": {
+            "kind": "text",
+            "value": "level-analysis-snapshot/v1"
+          },
+          "tone": "info"
+        },
+        {
+          "id": "source.producer",
+          "label": "Producer",
+          "value": {
+            "kind": "text",
+            "value": "levels-system"
+          },
+          "tone": "info"
+        }
+      ],
+      "badges": []
+    }
+  ],
+  "summary": {
+    "status": "limited",
+    "sectionCount": 10,
+    "diagnosticCount": 3,
+    "limitationCount": 4,
+    "qualityNoteCount": 1,
+    "syntheticContinuationMapCount": 1,
+    "replaySafe": true
+  }
+}
