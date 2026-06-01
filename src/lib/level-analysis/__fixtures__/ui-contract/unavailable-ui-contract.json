@@ -1,0 +1,88 @@
+{
+  "contractVersion": "execution_level_context_ui_contract_v1",
+  "factualOnly": true,
+  "status": "unavailable",
+  "statusReason": "missing_context",
+  "source": {},
+  "identity": {
+    "symbol": null,
+    "asOfTimestamp": null,
+    "referencePrice": null
+  },
+  "sections": [
+    {
+      "id": "overview",
+      "title": "Level context overview",
+      "detail": "Factual level context is unavailable.",
+      "status": "unavailable",
+      "rows": [
+        {
+          "id": "reason",
+          "label": "Unavailable reason",
+          "value": {
+            "kind": "text",
+            "value": "missing_context"
+          },
+          "tone": "notice"
+        }
+      ],
+      "badges": [
+        {
+          "id": "status",
+          "label": "unavailable",
+          "tone": "notice"
+        },
+        {
+          "id": "factualOnly",
+          "label": "factual only",
+          "tone": "neutral"
+        }
+      ]
+    },
+    {
+      "id": "safety",
+      "title": "Safety",
+      "detail": "Safety state for unavailable context.",
+      "status": "unavailable",
+      "rows": [
+        {
+          "id": "safety.noLookaheadApplied",
+          "label": "No-lookahead applied",
+          "value": {
+            "kind": "boolean",
+            "value": false
+          },
+          "tone": "safety"
+        }
+      ],
+      "badges": []
+    },
+    {
+      "id": "source",
+      "title": "Source",
+      "detail": "Source identifiers are not available.",
+      "status": "unavailable",
+      "rows": [
+        {
+          "id": "source.available",
+          "label": "Source available",
+          "value": {
+            "kind": "boolean",
+            "value": false
+          },
+          "tone": "muted"
+        }
+      ],
+      "badges": []
+    }
+  ],
+  "summary": {
+    "status": "unavailable",
+    "sectionCount": 3,
+    "diagnosticCount": 0,
+    "limitationCount": 0,
+    "qualityNoteCount": 0,
+    "syntheticContinuationMapCount": 0,
+    "replaySafe": false
+  }
+}
