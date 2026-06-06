@@ -1,0 +1,61 @@
+{
+  "gate": "journal_level_analysis_delivery_persistence_or_api_design",
+  "recommendedPath": "persist_normalized_compact_summary_plus_raw_source_payload",
+  "status": "design_only",
+  "sourceSystem": "levels-system",
+  "supportedSourceKinds": [
+    "single_snapshot_v1",
+    "packaged_review_delivery"
+  ],
+  "record": {
+    "name": "JournalLevelAnalysisDeliveryRecord",
+    "validationStatuses": [
+      "accepted",
+      "quarantined"
+    ],
+    "mustPreserveRawPayload": true,
+    "mustStoreCompactSummary": true,
+    "mustStorePerSymbolSummary": true,
+    "dedupeKey": "rawPayloadHash"
+  },
+  "apiRoutes": [
+    {
+      "method": "POST",
+      "path": "/api/level-analysis/deliveries/validate",
+      "purpose": "Validate and derive compact summaries without persistence"
+    },
+    {
+      "method": "POST",
+      "path": "/api/level-analysis/deliveries",
+      "purpose": "Validate, persist accepted records, or persist quarantine records"
+    },
+    {
+      "method": "GET",
+      "path": "/api/level-analysis/deliveries/latest",
+      "purpose": "Read the latest accepted package-level compact summary"
+    },
+    {
+      "method": "GET",
+      "path": "/api/level-analysis/deliveries/latest/symbols/[symbol]",
+      "purpose": "Read the latest accepted symbol-level factual summary"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/level-analysis/deliveries/[deliveryId]/raw",
+      "purpose": "Admin/debug-only raw source payload retrieval"
+    }
+  ],
+  "safetyBoundaries": [
+    "preserve_old_LevelAnalysisSnapshot_v1_ingestion",
+    "preserve_raw_source_payload",
+    "tolerate_additive_unknown_source_fields",
+    "quarantine_malformed_or_unsafe_payloads",
+    "treat_15m_as_context_only",
+    "do_not_add_recommendations",
+    "do_not_add_buy_sell_hold_language",
+    "do_not_add_coaching_grading_pnl_giveback_or_behavior_scoring",
+    "do_not_infer_user_execution_quality",
+    "do_not_wire_production_ui_until_contract_is_locked"
+  ],
+  "nextGate": "journal_level_analysis_delivery_persistence_contract"
+}
