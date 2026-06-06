@@ -1,0 +1,61 @@
+{
+  "gate": "journal_level_analysis_delivery_persistence_to_journal_linking_design",
+  "recommendedPath": "explicit_trade_to_delivery_link_records",
+  "dependsOn": [
+    "journal_level_analysis_delivery_ingestion",
+    "journal_level_analysis_delivery_persistence_contract",
+    "journal_level_analysis_delivery_persistence_implementation"
+  ],
+  "record": {
+    "name": "JournalLevelAnalysisTradeLinkRecord",
+    "contractVersion": "journal_level_analysis_trade_link_v1",
+    "requiredFields": [
+      "id",
+      "createdAt",
+      "updatedAt",
+      "workspaceId",
+      "accountId",
+      "userId",
+      "savedTradeId",
+      "symbol",
+      "provider",
+      "linkStatus",
+      "deliveryId",
+      "rawPayloadHash",
+      "sourceKind",
+      "symbolSummaryAsOfTimestamp",
+      "matchPolicy",
+      "matchResult",
+      "linkedSymbolSummary",
+      "limitations",
+      "safetyFlags",
+      "auditTrail"
+    ]
+  },
+  "matchPolicy": {
+    "policyVersion": "journal_level_analysis_trade_link_match_policy_v1",
+    "symbolMatch": "exact_uppercase",
+    "providerMatch": "account_allowed_provider",
+    "asOfPolicy": "latest_before_or_equal_trade_end",
+    "allowFutureAsOfForHistoricalTrade": false,
+    "requireAcceptedDelivery": true,
+    "requireContextOnly15m": true
+  },
+  "apiSketch": [
+    "POST /api/level-analysis/trade-links/resolve",
+    "POST /api/level-analysis/trade-links",
+    "GET /api/trades/[tradeId]/level-analysis",
+    "DELETE /api/level-analysis/trade-links/[linkId]",
+    "GET /api/admin/level-analysis/trade-links/[linkId]"
+  ],
+  "safety": [
+    "facts_only",
+    "accepted_delivery_only",
+    "raw_payload_admin_only",
+    "no_recommendations",
+    "no_buy_sell_hold",
+    "no_coaching_grading_pnl_giveback_behavior_scoring",
+    "fifteen_minute_context_only"
+  ],
+  "recommendedNextGate": "journal_level_analysis_delivery_journal_linking_contract"
+}
