@@ -107,6 +107,48 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Journal Linking Contract
+
+Gate `journal_level_analysis_delivery_journal_linking_contract` locks the
+contract for attaching persisted levels-system delivery symbol facts to saved
+journal trades.
+
+Added:
+
+- trade-link contract types and pure helpers at
+  `src/lib/level-analysis/level-analysis-journal-delivery-trade-link-contract.ts`
+- compact trade-link fixtures under
+  `src/lib/level-analysis/__fixtures__/trade-link-contract`
+- focused contract tests at
+  `src/lib/level-analysis/__tests__/level-analysis-journal-delivery-trade-link-contract.test.ts`
+- contract doc at
+  `docs/level-analysis-journal-delivery-journal-linking-contract.md`
+
+Contract shape:
+
+- linked records attach one saved trade to one accepted delivery symbol summary
+- blocked/unlinked records cannot include trusted linked facts
+- link records preserve `rawPayloadHash` but never copy `rawPayload`
+- default policy requires exact uppercase symbol matching, accepted delivery
+  status, account-allowed provider, no future as-of attachment, and context-only
+  15m facts for packaged deliveries
+- old `LevelAnalysisSnapshot` v1 summaries remain linkable with
+  `not_supplied` 15m status
+
+Boundaries remain:
+
+- no durable link storage, migrations, route handlers, production UI wiring,
+  LevelEngine changes, or levels-system changes
+- no recommendations, coaching, grading, P/L, giveback, behavior scoring, or
+  buy/sell/hold decisions added
+
+Current best next step:
+
+- continue with
+  `journal_level_analysis_delivery_journal_linking_persistence_implementation`
+  to implement durable trade-link storage and feature-gated APIs against the
+  locked contract.
+
 ### 2026-06-06 Level Analysis Delivery Journal Linking Design
 
 Gate `journal_level_analysis_delivery_persistence_to_journal_linking_design`

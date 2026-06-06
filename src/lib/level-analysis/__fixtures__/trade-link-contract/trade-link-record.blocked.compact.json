@@ -1,0 +1,56 @@
+{
+  "contractVersion": "journal_level_analysis_trade_link_v1",
+  "id": "jlatl_trade_DEVS_2026_06_01_early_blocked_asof",
+  "createdAt": "2026-06-06T19:15:00.000Z",
+  "updatedAt": "2026-06-06T19:15:00.000Z",
+  "workspaceId": "local-demo-workspace",
+  "accountId": "local-demo-account",
+  "userId": "local-demo-user",
+  "savedTradeId": "trade_DEVS_2026_06_01_early",
+  "importBatchId": "import_batch_2026_06_01_001",
+  "symbol": "DEVS",
+  "provider": "ibkr",
+  "linkStatus": "blocked",
+  "linkSource": "resolver",
+  "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+  "rawPayloadHash": "sha256:aca8402b2221abb1a787b460ea0f73be82a3f914bc69f847caa78ee598f21669",
+  "sourceKind": "packaged_review_delivery",
+  "deliveryGeneratedAt": "2026-06-06T13:10:00.000Z",
+  "symbolSummaryAsOfTimestamp": 1780329600000,
+  "symbolSummaryAsOfIso": "2026-06-01T16:00:00.000Z",
+  "matchPolicy": {
+    "policyVersion": "journal_level_analysis_trade_link_match_policy_v1",
+    "symbolMatch": "exact_uppercase",
+    "providerMatch": "account_allowed_provider",
+    "asOfPolicy": "latest_before_or_equal_trade_end",
+    "allowSameDayAfterTradeEnd": false,
+    "allowFutureAsOfForHistoricalTrade": false,
+    "requireAcceptedDelivery": true,
+    "requireContextOnly15m": true
+  },
+  "matchResult": {
+    "status": "blocked",
+    "reason": "as_of_after_allowed_boundary",
+    "candidateDeliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "candidateSummaryAsOfTimestamp": 1780329600000,
+    "checkedAt": "2026-06-06T19:15:00.000Z"
+  },
+  "linkedSymbolSummary": null,
+  "limitations": [
+    {
+      "code": "as_of_after_allowed_boundary",
+      "field": "symbolSummaryAsOfTimestamp",
+      "message": "Candidate symbol facts are after the selected trade boundary."
+    }
+  ],
+  "safetyFlags": {
+    "trustedFactsAttached": false
+  },
+  "auditTrail": [
+    {
+      "event": "blocked",
+      "at": "2026-06-06T19:15:00.000Z",
+      "message": "Level analysis facts were not attached because the as-of policy blocked the candidate."
+    }
+  ]
+}

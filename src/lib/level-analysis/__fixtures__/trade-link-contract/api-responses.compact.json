@@ -1,0 +1,116 @@
+{
+  "resolveTradeLinkMatched": {
+    "contractVersion": "journal_level_analysis_trade_link_resolution_api_v1",
+    "status": "matched",
+    "savedTradeId": "trade_DEVS_2026_06_01_001",
+    "symbol": "DEVS",
+    "provider": "ibkr",
+    "matchPolicy": {
+      "policyVersion": "journal_level_analysis_trade_link_match_policy_v1",
+      "symbolMatch": "exact_uppercase",
+      "providerMatch": "account_allowed_provider",
+      "asOfPolicy": "latest_before_or_equal_trade_end",
+      "allowSameDayAfterTradeEnd": false,
+      "allowFutureAsOfForHistoricalTrade": false,
+      "requireAcceptedDelivery": true,
+      "requireContextOnly15m": true
+    },
+    "matchResult": {
+      "status": "matched",
+      "reason": "symbol_provider_asof_match",
+      "candidateDeliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+      "candidateSummaryAsOfTimestamp": 1780329600000,
+      "checkedAt": "2026-06-06T19:10:00.000Z"
+    },
+    "candidate": {
+      "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+      "rawPayloadHash": "sha256:aca8402b2221abb1a787b460ea0f73be82a3f914bc69f847caa78ee598f21669",
+      "sourceKind": "packaged_review_delivery",
+      "asOfTimestamp": 1780329600000,
+      "asOfIso": "2026-06-01T16:00:00.000Z",
+      "fifteenMinuteContextOnlyStatus": "context_only"
+    },
+    "limitations": []
+  },
+  "resolveTradeLinkBlocked": {
+    "contractVersion": "journal_level_analysis_trade_link_resolution_api_v1",
+    "status": "blocked",
+    "savedTradeId": "trade_DEVS_2026_06_01_early",
+    "symbol": "DEVS",
+    "provider": "ibkr",
+    "matchPolicy": {
+      "policyVersion": "journal_level_analysis_trade_link_match_policy_v1",
+      "symbolMatch": "exact_uppercase",
+      "providerMatch": "account_allowed_provider",
+      "asOfPolicy": "latest_before_or_equal_trade_end",
+      "allowSameDayAfterTradeEnd": false,
+      "allowFutureAsOfForHistoricalTrade": false,
+      "requireAcceptedDelivery": true,
+      "requireContextOnly15m": true
+    },
+    "matchResult": {
+      "status": "blocked",
+      "reason": "as_of_after_allowed_boundary",
+      "candidateDeliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+      "candidateSummaryAsOfTimestamp": 1780329600000,
+      "checkedAt": "2026-06-06T19:15:00.000Z"
+    },
+    "limitations": [
+      {
+        "code": "as_of_after_allowed_boundary",
+        "field": "symbolSummaryAsOfTimestamp",
+        "message": "Candidate symbol facts are after the selected trade boundary."
+      }
+    ]
+  },
+  "persistTradeLinkSuccess": {
+    "contractVersion": "journal_level_analysis_trade_link_api_v1",
+    "status": "linked",
+    "linkId": "jlatl_trade_DEVS_2026_06_01_001_lad_contract_DEVS",
+    "savedTradeId": "trade_DEVS_2026_06_01_001",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "symbol": "DEVS",
+    "provider": "ibkr",
+    "matchResult": {
+      "status": "matched",
+      "reason": "symbol_provider_asof_match",
+      "candidateDeliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+      "candidateSummaryAsOfTimestamp": 1780329600000,
+      "checkedAt": "2026-06-06T19:10:00.000Z"
+    }
+  },
+  "duplicateTradeLinkIdempotentMatch": {
+    "contractVersion": "journal_level_analysis_trade_link_api_v1",
+    "status": "linked",
+    "linkId": "jlatl_trade_DEVS_2026_06_01_001_lad_contract_DEVS",
+    "savedTradeId": "trade_DEVS_2026_06_01_001",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "symbol": "DEVS",
+    "provider": "ibkr",
+    "matchResult": {
+      "status": "matched",
+      "reason": "symbol_provider_asof_match",
+      "candidateDeliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+      "candidateSummaryAsOfTimestamp": 1780329600000,
+      "checkedAt": "2026-06-06T19:10:00.000Z"
+    }
+  },
+  "tradeLevelAnalysisFound": {
+    "contractVersion": "journal_trade_level_analysis_api_v1",
+    "status": "found",
+    "savedTradeId": "trade_DEVS_2026_06_01_001",
+    "linkId": "jlatl_trade_DEVS_2026_06_01_001_lad_contract_DEVS",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "symbol": "DEVS",
+    "provider": "ibkr",
+    "fifteenMinuteContextOnlyStatus": "context_only"
+  },
+  "adminDebugTradeLinkFound": {
+    "contractVersion": "journal_level_analysis_trade_link_api_v1",
+    "status": "linked",
+    "linkId": "jlatl_trade_DEVS_2026_06_01_001_lad_contract_DEVS",
+    "savedTradeId": "trade_DEVS_2026_06_01_001",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "rawPayloadHash": "sha256:aca8402b2221abb1a787b460ea0f73be82a3f914bc69f847caa78ee598f21669"
+  }
+}
