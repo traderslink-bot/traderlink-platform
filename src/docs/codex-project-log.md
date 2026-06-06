@@ -107,6 +107,55 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Persistence Implementation
+
+Gate `journal_level_analysis_delivery_persistence_implementation` implements
+durable journal-side storage and feature-gated API endpoints for validated
+levels-system delivery payloads.
+
+Added:
+
+- SQLite repository and migrations at
+  `src/lib/level-analysis/level-analysis-journal-delivery-persistence-storage.ts`
+- API service at
+  `src/lib/level-analysis/level-analysis-journal-delivery-api-service.ts`
+- feature-gated route handlers for validate, ingest, latest delivery, latest
+  symbol, and admin/debug raw payload retrieval under `app/api`
+- focused persistence and API route tests under
+  `src/lib/level-analysis/__tests__`
+- implementation doc at
+  `docs/level-analysis-journal-delivery-persistence-implementation.md`
+
+Implemented behavior:
+
+- stores source-preserved `JournalLevelAnalysisDeliveryRecord` rows with
+  `rawPayloadHash`, raw payload JSON, compact summary, safety flags,
+  limitations, and quarantine reasons
+- stores accepted per-symbol summaries separately for latest symbol lookup
+- treats duplicate `rawPayloadHash` ingests as idempotent
+- persists quarantined payloads for audit/debug without trusted symbol summaries
+- keeps the old `LevelAnalysisSnapshot` v1 ingestion path persistable through
+  the same repository/API boundary
+
+Boundaries remain:
+
+- no levels-system repo changes
+- no LevelEngine behavior changes
+- no production UI wiring
+- API routes are disabled unless
+  `LEVEL_ANALYSIS_JOURNAL_DELIVERY_API_ENABLED=1`
+- admin raw payload reads additionally require
+  `LEVEL_ANALYSIS_JOURNAL_DELIVERY_RAW_DEBUG_ENABLED=1`
+- no recommendations, coaching, grading, P/L, giveback, behavior scoring, or
+  buy/sell/hold decisions added
+
+Current best next step:
+
+- continue with
+  `journal_level_analysis_delivery_persistence_to_journal_linking_design` to
+  decide how accepted symbol summaries should link to journal entries, trades,
+  accounts, or workspaces without wiring UI prematurely.
+
 ### 2026-06-06 Level Analysis Delivery Persistence Contract
 
 Gate `journal_level_analysis_delivery_persistence_contract` locks the
