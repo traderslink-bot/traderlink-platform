@@ -107,6 +107,52 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Journal Linking Persistence Implementation
+
+Gate
+`journal_level_analysis_delivery_journal_linking_persistence_implementation`
+implements durable storage and feature-gated APIs for attaching accepted
+levels-system delivery symbol facts to saved journal trades.
+
+Added:
+
+- SQLite trade-link repository and migration at
+  `src/lib/level-analysis/level-analysis-journal-delivery-trade-link-storage.ts`
+- trade-link resolver/API service at
+  `src/lib/level-analysis/level-analysis-journal-delivery-trade-link-api-service.ts`
+- feature-gated route handlers for resolve, persist, trade read, and
+  admin/debug link read under `app/api`
+- focused storage and route tests under
+  `src/lib/level-analysis/__tests__`
+- implementation doc at
+  `docs/level-analysis-journal-delivery-journal-linking-persistence-implementation.md`
+
+Implemented behavior:
+
+- links attach saved trades to accepted delivery symbol summaries
+- resolver uses explicit as-of matching and blocks future facts for historical
+  trade boundaries
+- duplicate link intents are idempotent by saved trade, delivery, provider, and
+  symbol
+- blocked attempts can be persisted without trusted linked facts
+- old `LevelAnalysisSnapshot` v1 links remain supported
+- raw source payloads remain delivery-record-only and are not copied into
+  trade-link records or trade-level API responses
+
+Boundaries remain:
+
+- no production UI wiring
+- no levels-system repo changes
+- no LevelEngine behavior changes
+- no recommendations, coaching, grading, P/L, giveback, behavior scoring, or
+  buy/sell/hold decisions added
+
+Current best next step:
+
+- continue with `journal_level_analysis_delivery_review_queue_linking_design`
+  to decide how factual link availability should appear in review queues or
+  trade detail workflows without coupling it to scoring or advice.
+
 ### 2026-06-06 Level Analysis Delivery Journal Linking Contract
 
 Gate `journal_level_analysis_delivery_journal_linking_contract` locks the

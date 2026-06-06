@@ -31,6 +31,11 @@ export interface GetLatestSymbolSummaryQuery {
   provider?: string;
 }
 
+export interface GetLatestSymbolSummaryAtOrBeforeQuery
+  extends GetLatestSymbolSummaryQuery {
+  asOfTimestamp: number;
+}
+
 export interface JournalLevelAnalysisDeliveryRepository {
   saveDeliveryRecord(
     record: JournalLevelAnalysisDeliveryRecord,
@@ -44,6 +49,9 @@ export interface JournalLevelAnalysisDeliveryRepository {
   ): JournalLevelAnalysisDeliveryRecord | null;
   getLatestAcceptedSymbolSummary(
     query: GetLatestSymbolSummaryQuery,
+  ): JournalLevelAnalysisDeliverySymbolSummary | null;
+  getLatestAcceptedSymbolSummaryAtOrBefore(
+    query: GetLatestSymbolSummaryAtOrBeforeQuery,
   ): JournalLevelAnalysisDeliverySymbolSummary | null;
 }
 
@@ -237,6 +245,38 @@ export class SqliteJournalLevelAnalysisDeliveryRepository
              LIMIT 1`,
           )
           .get(symbol);
+
+    return row ? parseJson<JournalLevelAnalysisDeliverySymbolSummary>((row as { summary_json: string }).summary_json) : null;
+  }
+
+  getLatestAcceptedSymbolSummaryAtOrBefore(
+    query: GetLatestSymbolSummaryAtOrBeforeQuery,
+  ): JournalLevelAnalysisDeliverySymbolSummary | null {
+    const symbol = query.symbol.toUpperCase();
+    const row = query.provider
+      ? this.db
+          .prepare(
+            `SELECT summary_json
+             FROM level_analysis_delivery_symbol_summaries
+             WHERE validation_status = 'accepted'
+               AND symbol = ?
+               AND provider = ?
+               AND as_of_timestamp <= ?
+             ORDER BY as_of_timestamp DESC, delivery_id DESC
+             LIMIT 1`,
+          )
+          .get(symbol, query.provider, query.asOfTimestamp)
+      : this.db
+          .prepare(
+            `SELECT summary_json
+             FROM level_analysis_delivery_symbol_summaries
+             WHERE validation_status = 'accepted'
+               AND symbol = ?
+               AND as_of_timestamp <= ?
+             ORDER BY as_of_timestamp DESC, delivery_id DESC
+             LIMIT 1`,
+          )
+          .get(symbol, query.asOfTimestamp);
 
     return row ? parseJson<JournalLevelAnalysisDeliverySymbolSummary>((row as { summary_json: string }).summary_json) : null;
   }
