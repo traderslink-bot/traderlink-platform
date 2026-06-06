@@ -1,0 +1,267 @@
+{
+  "validateDeliveryPackageSuccess": {
+    "contractVersion": "level_analysis_delivery_validate_api_v1",
+    "status": "accepted",
+    "sourceKind": "packaged_review_delivery",
+    "compactSummary": {
+      "sourceKind": "packaged_review_delivery",
+      "provider": "ibkr",
+      "generatedAt": "2026-06-06T13:10:00.000Z",
+      "symbolCount": 2,
+      "mismatchCount": 0,
+      "prohibitedLanguageHitCount": 0,
+      "allFifteenMinuteContextOnly": true,
+      "limitationCount": 2,
+      "safetySummary": {
+        "readOnlyCacheReview": true,
+        "fifteenMinuteFedIntoLevelEngine": false
+      }
+    },
+    "perSymbolSummary": [
+      {
+        "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+        "symbol": "DEVS",
+        "provider": "ibkr",
+        "asOfTimestamp": 1780329600000,
+        "asOfIso": "2026-06-01T16:00:00.000Z",
+        "referencePrice": 0.2705,
+        "previousClose": 0.25,
+        "nearestSupport": {
+          "levelId": "DEVS-support-zone-15",
+          "bucket": "intermediateSupport",
+          "price": 0.27
+        },
+        "nearestResistance": {
+          "levelId": "DEVS-resistance-zone-12",
+          "bucket": "intradayResistance",
+          "price": 0.2772
+        },
+        "bucketCounts": {
+          "extensionSupport": 3,
+          "extensionResistance": 0,
+          "total": 16
+        },
+        "extensionCounts": {
+          "support": 3,
+          "resistance": 0,
+          "total": 3
+        },
+        "syntheticContinuationMapSummary": {
+          "count": 0,
+          "clearlyMarkedCount": 0
+        },
+        "diagnostics": ["clustered_level_areas_present"],
+        "densityMetricSummary": {
+          "present": true,
+          "classification": "dense_clustered"
+        },
+        "candidateInventoryGapSummary": {
+          "overall": "no_gap"
+        },
+        "volumeSessionContextSummary": {
+          "outcome": "surfaced_has_more_session_volume_context",
+          "contextCount": 1
+        },
+        "fifteenMinuteContextOnlyStatus": "context_only",
+        "missingFacts": [],
+        "limitations": [],
+        "safetyFlags": {
+          "noLookaheadApplied": true,
+          "levelOutputUnchanged": true
+        }
+      }
+    ]
+  },
+  "ingestDeliveryPackageSuccess": {
+    "contractVersion": "level_analysis_delivery_ingest_api_v1",
+    "status": "accepted",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "duplicate": false,
+    "rawPayloadHash": "sha256:aca8402b2221abb1a787b460ea0f73be82a3f914bc69f847caa78ee598f21669",
+    "compactSummary": {
+      "sourceKind": "packaged_review_delivery",
+      "provider": "ibkr",
+      "generatedAt": "2026-06-06T13:10:00.000Z",
+      "symbolCount": 2,
+      "mismatchCount": 0,
+      "prohibitedLanguageHitCount": 0,
+      "allFifteenMinuteContextOnly": true,
+      "limitationCount": 2,
+      "safetySummary": {
+        "readOnlyCacheReview": true,
+        "fifteenMinuteFedIntoLevelEngine": false
+      }
+    },
+    "perSymbolSummary": []
+  },
+  "duplicateIngestIdempotentRawPayloadHashMatch": {
+    "contractVersion": "level_analysis_delivery_ingest_api_v1",
+    "status": "accepted",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "duplicate": true,
+    "rawPayloadHash": "sha256:aca8402b2221abb1a787b460ea0f73be82a3f914bc69f847caa78ee598f21669",
+    "idempotency": {
+      "matched": true,
+      "dedupeKey": "rawPayloadHash",
+      "existingDeliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z"
+    },
+    "compactSummary": {
+      "sourceKind": "packaged_review_delivery",
+      "provider": "ibkr",
+      "generatedAt": "2026-06-06T13:10:00.000Z",
+      "symbolCount": 2,
+      "mismatchCount": 0,
+      "prohibitedLanguageHitCount": 0,
+      "allFifteenMinuteContextOnly": true,
+      "limitationCount": 2,
+      "safetySummary": {
+        "readOnlyCacheReview": true,
+        "fifteenMinuteFedIntoLevelEngine": false
+      }
+    },
+    "perSymbolSummary": []
+  },
+  "malformedPayloadQuarantine": {
+    "contractVersion": "level_analysis_delivery_ingest_api_v1",
+    "status": "quarantined",
+    "deliveryId": "laq_contract_missing_entries_2026_06_06T132000Z",
+    "rawPayloadHash": "sha256:6bc176f4899eefcde7ffa787a34c3660704fa1f26c649909be01cfb2afd4dcd1",
+    "errors": [
+      {
+        "code": "missing_entries",
+        "field": "entries",
+        "message": "Packaged review delivery requires a non-empty entries array."
+      }
+    ]
+  },
+  "latestDeliverySummaryResponse": {
+    "contractVersion": "level_analysis_delivery_latest_api_v1",
+    "status": "found",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "sourceKind": "packaged_review_delivery",
+    "compactSummary": {
+      "sourceKind": "packaged_review_delivery",
+      "provider": "ibkr",
+      "generatedAt": "2026-06-06T13:10:00.000Z",
+      "symbolCount": 2,
+      "mismatchCount": 0,
+      "prohibitedLanguageHitCount": 0,
+      "allFifteenMinuteContextOnly": true,
+      "limitationCount": 2,
+      "safetySummary": {
+        "readOnlyCacheReview": true,
+        "fifteenMinuteFedIntoLevelEngine": false
+      }
+    },
+    "symbols": ["DEVS", "QUBT"]
+  },
+  "symbolLevelLatestSummaryResponse": {
+    "contractVersion": "level_analysis_delivery_symbol_latest_api_v1",
+    "status": "found",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "symbol": "QUBT",
+    "summary": {
+      "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+      "symbol": "QUBT",
+      "provider": "ibkr",
+      "asOfTimestamp": 1780329600000,
+      "asOfIso": "2026-06-01T16:00:00.000Z",
+      "referencePrice": 12.799,
+      "previousClose": 12.89,
+      "nearestSupport": {
+        "levelId": "QUBT-support-zone-38",
+        "bucket": "intradaySupport",
+        "price": 12.42
+      },
+      "nearestResistance": {
+        "levelId": "QUBT-resistance-zone-33",
+        "bucket": "intradayResistance",
+        "price": 12.9727
+      },
+      "bucketCounts": {
+        "extensionSupport": 3,
+        "extensionResistance": 1,
+        "total": 19
+      },
+      "extensionCounts": {
+        "support": 3,
+        "resistance": 1,
+        "total": 4
+      },
+      "syntheticContinuationMapSummary": {
+        "count": 0,
+        "clearlyMarkedCount": 0
+      },
+      "diagnostics": ["unenriched_extension_levels_present"],
+      "densityMetricSummary": {
+        "present": true,
+        "classification": "balanced"
+      },
+      "candidateInventoryGapSummary": {
+        "overall": "closer_unsurfaced_candidate"
+      },
+      "volumeSessionContextSummary": {
+        "outcome": "candidate_identifier_unavailable",
+        "contextCount": 2
+      },
+      "fifteenMinuteContextOnlyStatus": "context_only",
+      "missingFacts": [],
+      "limitations": [],
+      "safetyFlags": {
+        "noLookaheadApplied": true,
+        "levelOutputUnchanged": true
+      }
+    }
+  },
+  "adminDebugRawPayloadResponse": {
+    "contractVersion": "level_analysis_delivery_raw_admin_api_v1",
+    "status": "found",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "rawPayloadHash": "sha256:aca8402b2221abb1a787b460ea0f73be82a3f914bc69f847caa78ee598f21669",
+    "sourceKind": "packaged_review_delivery",
+    "validationStatus": "accepted",
+    "rawPayload": {
+      "fixtureMetadata": {
+        "sourceRepository": "levels-system",
+        "sourceCommit": "f57e8efe9954388ba44adea8bffde180cf6e4c73",
+        "sourceArtifactPath": "docs/examples/level-analysis-snapshot/level-candidate-inventory-visibility/volume-session-context/latest-level-candidate-inventory-volume-session-context-review-wiring.json",
+        "compacted": true
+      },
+      "schemaVersion": "level-quality-review-process/v1",
+      "generatedAt": "2026-06-06T13:10:00.000Z",
+      "provider": "ibkr",
+      "reviewedSymbols": ["DEVS", "QUBT"],
+      "supplied15mSymbols": ["DEVS", "QUBT"],
+      "summary": {
+        "totalSymbols": 2,
+        "cacheFingerprintCount": 8,
+        "cacheFingerprintFifteenMinuteContextOnlyCount": 2,
+        "densityMetricPresentCount": 2,
+        "candidateInventoryPresentCount": 2,
+        "candidateVolumeSessionContextPresentCount": 2,
+        "mismatchCount": 0,
+        "prohibitedLanguageHitCount": 0
+      },
+      "entries": [
+        {
+          "symbol": "DEVS",
+          "asOfTimestamp": 1780329600000,
+          "asOfIso": "2026-06-01T16:00:00.000Z",
+          "referencePrice": 0.2705
+        },
+        {
+          "symbol": "QUBT",
+          "asOfTimestamp": 1780329600000,
+          "asOfIso": "2026-06-01T16:00:00.000Z",
+          "referencePrice": 12.799
+        }
+      ],
+      "safety": {
+        "readOnlyCacheReview": true,
+        "providerCallsMade": false,
+        "cacheFilesWritten": false,
+        "fifteenMinuteFedIntoLevelEngine": false
+      }
+    }
+  }
+}
