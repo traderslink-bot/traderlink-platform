@@ -1,0 +1,29 @@
+Gate: journal_level_analysis_delivery_persistence_to_journal_linking_design
+
+Recommendation:
+Use explicit JournalLevelAnalysisTradeLinkRecord records that attach accepted
+delivery symbol summaries to saved trades. Do not rely on latest-symbol lookup
+alone for historical journal review.
+
+Default match policy:
+- exact uppercase symbol match
+- account/workspace allowed provider
+- latest accepted symbol summary at or before trade end
+- no future as-of attachment for historical trades
+- accepted delivery only
+- 15m context-only required
+
+Future API sketch:
+- POST /api/level-analysis/trade-links/resolve
+- POST /api/level-analysis/trade-links
+- GET /api/trades/[tradeId]/level-analysis
+- DELETE /api/level-analysis/trade-links/[linkId]
+- GET /api/admin/level-analysis/trade-links/[linkId]
+
+Safety:
+Keep linked facts observational. Do not add recommendations, buy/sell/hold
+decisions, coaching, grading, P/L, giveback, or behavior scoring. Raw payloads
+remain preserved on delivery records and are admin/debug only.
+
+Next gate:
+journal_level_analysis_delivery_journal_linking_contract

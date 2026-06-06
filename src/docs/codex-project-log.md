@@ -107,6 +107,48 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Journal Linking Design
+
+Gate `journal_level_analysis_delivery_persistence_to_journal_linking_design`
+defines how persisted levels-system delivery facts should attach to saved
+journal trades after durable delivery storage.
+
+Added docs-only design artifacts:
+
+- main design doc at
+  `docs/level-analysis-journal-delivery-persistence-to-journal-linking-design.md`
+- compact JSON artifact at
+  `docs/examples/level-analysis-journal-delivery-persistence-to-journal-linking-design.json`
+- compact text handoff at
+  `docs/examples/level-analysis-journal-delivery-persistence-to-journal-linking-design.txt`
+
+Recommended path:
+
+- add explicit `JournalLevelAnalysisTradeLinkRecord` records in a later gate
+  rather than relying on latest-symbol lookup at read time
+- resolve links by exact symbol, allowed provider, accepted delivery status,
+  15m context-only status, and an explicit as-of policy
+- default as-of policy should be latest accepted symbol summary at or before
+  trade end when trade end is known
+- preserve compact linked symbol facts on the link record while keeping raw
+  source payloads only on the delivery record
+
+Boundaries remain:
+
+- no code, migrations, route handlers, or production UI wiring added in this
+  design gate
+- no levels-system repo changes
+- no LevelEngine behavior changes
+- old `LevelAnalysisSnapshot` v1 remains part of the future link model
+- no recommendations, coaching, grading, P/L, giveback, behavior scoring, or
+  buy/sell/hold decisions added
+
+Current best next step:
+
+- continue with `journal_level_analysis_delivery_journal_linking_contract` to
+  lock link record, resolver, API response, and safety fixtures before adding
+  link persistence or review-queue integration.
+
 ### 2026-06-06 Level Analysis Delivery Persistence Implementation
 
 Gate `journal_level_analysis_delivery_persistence_implementation` implements
