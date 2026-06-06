@@ -1,0 +1,329 @@
+{
+  "contractVersion": "journal_level_analysis_delivery_persistence_contract_v1",
+  "id": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+  "rawPayloadHash": "sha256:aca8402b2221abb1a787b460ea0f73be82a3f914bc69f847caa78ee598f21669",
+  "sourceSystem": "levels-system",
+  "sourceKind": "packaged_review_delivery",
+  "sourceSchemaVersion": "level-quality-review-process/v1",
+  "sourceArtifactPath": "docs/examples/level-analysis-snapshot/level-candidate-inventory-visibility/volume-session-context/latest-level-candidate-inventory-volume-session-context-review-wiring.json",
+  "sourceArtifactCommit": "f57e8efe9954388ba44adea8bffde180cf6e4c73",
+  "sourceCommit": "f57e8efe9954388ba44adea8bffde180cf6e4c73",
+  "provider": "ibkr",
+  "generatedAt": "2026-06-06T13:10:00.000Z",
+  "createdAt": "2026-06-06T18:20:00.000Z",
+  "reviewedSymbols": ["DEVS", "QUBT"],
+  "baselineMismatchCount": 0,
+  "validationStatus": "accepted",
+  "prohibitedLanguageStatus": "clear",
+  "rawPayload": {
+    "fixtureMetadata": {
+      "sourceRepository": "levels-system",
+      "sourceCommit": "f57e8efe9954388ba44adea8bffde180cf6e4c73",
+      "sourceArtifactPath": "docs/examples/level-analysis-snapshot/level-candidate-inventory-visibility/volume-session-context/latest-level-candidate-inventory-volume-session-context-review-wiring.json",
+      "compacted": true
+    },
+    "schemaVersion": "level-quality-review-process/v1",
+    "generatedAt": "2026-06-06T13:10:00.000Z",
+    "provider": "ibkr",
+    "reviewedSymbols": ["DEVS", "QUBT"],
+    "supplied15mSymbols": ["DEVS", "QUBT"],
+    "summary": {
+      "totalSymbols": 2,
+      "cacheFingerprintCount": 8,
+      "cacheFingerprintFifteenMinuteContextOnlyCount": 2,
+      "densityMetricPresentCount": 2,
+      "candidateInventoryPresentCount": 2,
+      "candidateVolumeSessionContextPresentCount": 2,
+      "mismatchCount": 0,
+      "prohibitedLanguageHitCount": 0
+    },
+    "entries": [
+      {
+        "symbol": "DEVS",
+        "asOfTimestamp": 1780329600000,
+        "asOfIso": "2026-06-01T16:00:00.000Z",
+        "referencePrice": 0.2705
+      },
+      {
+        "symbol": "QUBT",
+        "asOfTimestamp": 1780329600000,
+        "asOfIso": "2026-06-01T16:00:00.000Z",
+        "referencePrice": 12.799
+      }
+    ],
+    "safety": {
+      "readOnlyCacheReview": true,
+      "providerCallsMade": false,
+      "cacheFilesWritten": false,
+      "fifteenMinuteFedIntoLevelEngine": false
+    }
+  },
+  "compactSummary": {
+    "sourceKind": "packaged_review_delivery",
+    "provider": "ibkr",
+    "generatedAt": "2026-06-06T13:10:00.000Z",
+    "symbolCount": 2,
+    "cacheFingerprintSummary": {
+      "totalFingerprints": 8,
+      "symbolCount": 2,
+      "fifteenMinuteContextOnlyCount": 2,
+      "validationIssueCount": 9
+    },
+    "cacheFingerprintCounts": {
+      "totalFingerprints": 8,
+      "levelEngineInputCount": 6,
+      "contextOnlyCount": 2,
+      "fifteenMinuteContextOnlyCount": 2,
+      "validationIssueCount": 9
+    },
+    "mismatchCount": 0,
+    "prohibitedLanguageHitCount": 0,
+    "allFifteenMinuteContextOnly": true,
+    "limitationCount": 2,
+    "safetySummary": {
+      "readOnlyCacheReview": true,
+      "providerCallsMade": false,
+      "cacheFilesWritten": false,
+      "fifteenMinuteFedIntoLevelEngine": false
+    }
+  },
+  "perSymbolSummary": [
+    {
+      "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+      "symbol": "DEVS",
+      "provider": "ibkr",
+      "asOfTimestamp": 1780329600000,
+      "asOfIso": "2026-06-01T16:00:00.000Z",
+      "referencePrice": 0.2705,
+      "previousClose": 0.25,
+      "nearestSupport": {
+        "levelId": "DEVS-support-zone-15",
+        "bucket": "intermediateSupport",
+        "price": 0.27,
+        "distancePct": 0.1848,
+        "isExtension": false
+      },
+      "nearestResistance": {
+        "levelId": "DEVS-resistance-zone-12",
+        "bucket": "intradayResistance",
+        "price": 0.2772,
+        "distancePct": 2.4769,
+        "isExtension": false
+      },
+      "bucketCounts": {
+        "majorSupport": 2,
+        "majorResistance": 0,
+        "intermediateSupport": 5,
+        "intermediateResistance": 2,
+        "intradaySupport": 1,
+        "intradayResistance": 3,
+        "extensionSupport": 3,
+        "extensionResistance": 0,
+        "total": 16
+      },
+      "extensionCounts": {
+        "support": 3,
+        "resistance": 0,
+        "total": 3
+      },
+      "extensionCoverage": {
+        "support": 3,
+        "resistance": 0,
+        "warnings": ["limited_downside_extension_coverage", "no_resistance_extension_coverage"]
+      },
+      "syntheticContinuationMapSummary": {
+        "count": 0,
+        "clearlyMarkedCount": 0
+      },
+      "diagnostics": ["clustered_level_areas_present", "limited_downside_extension_coverage"],
+      "diagnosticSemantics": {
+        "allFactualOnly": true,
+        "categories": {
+          "density": 1,
+          "coverage": 2
+        }
+      },
+      "densityMetricSummary": {
+        "present": true,
+        "classification": "dense_clustered",
+        "sideBias": "mixed",
+        "auditWindowPct": 30
+      },
+      "candidateInventoryGapSummary": {
+        "support": "no_gap",
+        "resistance": "no_gap",
+        "overall": "no_gap"
+      },
+      "volumeSessionContextSummary": {
+        "outcome": "surfaced_has_more_session_volume_context",
+        "support": "surfaced_has_more_session_volume_context",
+        "resistance": "no_nearby_session_volume_context",
+        "contextCount": 1
+      },
+      "sourceFiles": {
+        "5m": "ibkr/DEVS/5m/100-1780314300000.json",
+        "15m": "ibkr/DEVS/15m/100-1780329600000.json",
+        "4h": "ibkr/DEVS/4h/180-1780300800000.json",
+        "daily": "ibkr/DEVS/daily/520-1780272000000.json"
+      },
+      "cacheFingerprintSourceIntegrity": {
+        "cacheFingerprintCounts": {
+          "totalFingerprints": 8,
+          "levelEngineInputCount": 6,
+          "contextOnlyCount": 2,
+          "fifteenMinuteContextOnlyCount": 2,
+          "validationIssueCount": 9
+        },
+        "fifteenMinuteCacheFingerprintsContextOnly": true,
+        "mismatchCount": 0,
+        "prohibitedLanguageHitCount": 0
+      },
+      "fifteenMinuteContextOnlyStatus": "context_only",
+      "missingFacts": [],
+      "limitations": [
+        {
+          "code": "extension_coverage_warning",
+          "field": "DEVS.extensionCoverage.warnings",
+          "message": "limited_downside_extension_coverage"
+        }
+      ],
+      "safetyFlags": {
+        "noLookaheadApplied": true,
+        "levelOutputUnchanged": true,
+        "noRuntimeBehaviorChange": true,
+        "syntheticExtensionsClearlyMarked": true
+      }
+    },
+    {
+      "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+      "symbol": "QUBT",
+      "provider": "ibkr",
+      "asOfTimestamp": 1780329600000,
+      "asOfIso": "2026-06-01T16:00:00.000Z",
+      "referencePrice": 12.799,
+      "previousClose": 12.89,
+      "nearestSupport": {
+        "levelId": "QUBT-support-zone-38",
+        "bucket": "intradaySupport",
+        "price": 12.42,
+        "distancePct": 2.9612,
+        "isExtension": false
+      },
+      "nearestResistance": {
+        "levelId": "QUBT-resistance-zone-33",
+        "bucket": "intradayResistance",
+        "price": 12.9727,
+        "distancePct": 1.3571,
+        "isExtension": false
+      },
+      "bucketCounts": {
+        "majorSupport": 4,
+        "majorResistance": 4,
+        "intermediateSupport": 4,
+        "intermediateResistance": 0,
+        "intradaySupport": 1,
+        "intradayResistance": 2,
+        "extensionSupport": 3,
+        "extensionResistance": 1,
+        "total": 19
+      },
+      "extensionCounts": {
+        "support": 3,
+        "resistance": 1,
+        "total": 4
+      },
+      "extensionCoverage": {
+        "support": 3,
+        "resistance": 1,
+        "warnings": []
+      },
+      "syntheticContinuationMapSummary": {
+        "count": 0,
+        "clearlyMarkedCount": 0
+      },
+      "diagnostics": ["unenriched_extension_levels_present", "unenriched_historical_levels_present"],
+      "diagnosticSemantics": {
+        "allFactualOnly": true,
+        "categories": {
+          "enrichment": 3
+        }
+      },
+      "densityMetricSummary": {
+        "present": true,
+        "classification": "balanced",
+        "sideBias": "mixed",
+        "auditWindowPct": 30
+      },
+      "candidateInventoryGapSummary": {
+        "support": "closer_unsurfaced_candidate",
+        "resistance": "no_gap",
+        "overall": "closer_unsurfaced_candidate"
+      },
+      "volumeSessionContextSummary": {
+        "outcome": "candidate_identifier_unavailable",
+        "support": "candidate_identifier_unavailable",
+        "resistance": "surfaced_has_more_session_volume_context",
+        "contextCount": 2
+      },
+      "sourceFiles": {
+        "5m": "ibkr/QUBT/5m/100-1778595300000.json",
+        "15m": "ibkr/QUBT/15m/100-1780329600000.json",
+        "4h": "ibkr/QUBT/4h/180-1778587200000.json",
+        "daily": "ibkr/QUBT/daily/520-1778544000000.json"
+      },
+      "cacheFingerprintSourceIntegrity": {
+        "cacheFingerprintCounts": {
+          "totalFingerprints": 8,
+          "levelEngineInputCount": 6,
+          "contextOnlyCount": 2,
+          "fifteenMinuteContextOnlyCount": 2,
+          "validationIssueCount": 9
+        },
+        "fifteenMinuteCacheFingerprintsContextOnly": true,
+        "mismatchCount": 0,
+        "prohibitedLanguageHitCount": 0
+      },
+      "fifteenMinuteContextOnlyStatus": "context_only",
+      "missingFacts": [],
+      "limitations": [
+        {
+          "code": "candidate_identifier_unavailable",
+          "field": "QUBT.candidateVolumeSessionContext.comparisonSummary.outcome",
+          "message": "Candidate identifiers are unavailable for at least one compared row."
+        }
+      ],
+      "safetyFlags": {
+        "noLookaheadApplied": true,
+        "levelOutputUnchanged": true,
+        "noRuntimeBehaviorChange": true,
+        "syntheticExtensionsClearlyMarked": true
+      }
+    }
+  ],
+  "safetyFlags": {
+    "readOnlyCacheReview": true,
+    "providerCallsMade": false,
+    "cacheFilesWritten": false,
+    "fifteenMinuteFedIntoLevelEngine": false
+  },
+  "limitations": [
+    {
+      "code": "extension_coverage_warning",
+      "field": "DEVS.extensionCoverage.warnings",
+      "message": "limited_downside_extension_coverage"
+    },
+    {
+      "code": "candidate_identifier_unavailable",
+      "field": "QUBT.candidateVolumeSessionContext.comparisonSummary.outcome",
+      "message": "Candidate identifiers are unavailable for at least one compared row."
+    }
+  ],
+  "quarantineReasons": [],
+  "auditTrail": [
+    {
+      "event": "created",
+      "at": "2026-06-06T18:20:00.000Z",
+      "message": "Level analysis delivery persistence contract record created."
+    }
+  ]
+}

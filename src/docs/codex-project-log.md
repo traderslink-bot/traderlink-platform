@@ -107,6 +107,49 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Persistence Contract
+
+Gate `journal_level_analysis_delivery_persistence_contract` locks the
+journal-side persisted record and API response contract for validated
+levels-system delivery payloads.
+
+Added:
+
+- type and helper contract at
+  `src/lib/level-analysis/level-analysis-journal-delivery-persistence-contract.ts`
+- compact fixtures under
+  `src/lib/level-analysis/__fixtures__/persistence-contract/`
+- focused tests at
+  `src/lib/level-analysis/__tests__/level-analysis-journal-delivery-persistence-contract.test.ts`
+- contract doc at
+  `docs/level-analysis-journal-delivery-persistence-contract.md`
+
+Contract direction:
+
+- persist a `JournalLevelAnalysisDeliveryRecord` with `rawPayloadHash`,
+  source metadata, validation status, preserved `rawPayload`, compact summary,
+  per-symbol summaries, safety flags, limitations, and quarantine reasons
+- lock API response shapes for validate, ingest, duplicate ingest, quarantine,
+  latest delivery, latest symbol, and admin/debug raw payload responses
+- keep idempotency keyed by deterministic raw-payload hash
+
+Boundaries remain:
+
+- old `LevelAnalysisSnapshot` v1 ingestion remains supported
+- raw source payload preservation remains required
+- no levels-system repo changes
+- no LevelEngine behavior changes
+- no production UI wiring
+- no durable persistence implementation yet
+- no recommendations, coaching, grading, P/L, giveback, behavior scoring, or
+  buy/sell/hold decisions added
+
+Current best next step:
+
+- continue with `journal_level_analysis_delivery_persistence_implementation`
+  to implement durable storage and feature-gated API endpoints against the
+  locked contract.
+
 ### 2026-06-06 Level Analysis Delivery Persistence/API Design
 
 Gate `journal_level_analysis_delivery_persistence_or_api_design` documents the

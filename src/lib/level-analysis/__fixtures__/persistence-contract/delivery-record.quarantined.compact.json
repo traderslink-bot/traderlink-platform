@@ -1,0 +1,62 @@
+{
+  "contractVersion": "journal_level_analysis_delivery_persistence_contract_v1",
+  "id": "laq_contract_missing_entries_2026_06_06T132000Z",
+  "rawPayloadHash": "sha256:6bc176f4899eefcde7ffa787a34c3660704fa1f26c649909be01cfb2afd4dcd1",
+  "sourceSystem": "levels-system",
+  "sourceKind": "packaged_review_delivery",
+  "sourceSchemaVersion": "level-quality-review-process/v1",
+  "sourceArtifactPath": "docs/examples/level-analysis-snapshot/level-candidate-inventory-visibility/volume-session-context/latest-level-candidate-inventory-volume-session-context-review-wiring.json",
+  "sourceArtifactCommit": "f57e8efe9954388ba44adea8bffde180cf6e4c73",
+  "sourceCommit": "f57e8efe9954388ba44adea8bffde180cf6e4c73",
+  "provider": "ibkr",
+  "generatedAt": "2026-06-06T13:20:00.000Z",
+  "createdAt": "2026-06-06T18:22:00.000Z",
+  "reviewedSymbols": ["DEVS"],
+  "baselineMismatchCount": 1,
+  "validationStatus": "quarantined",
+  "prohibitedLanguageStatus": "clear",
+  "rawPayload": {
+    "schemaVersion": "level-quality-review-process/v1",
+    "generatedAt": "2026-06-06T13:20:00.000Z",
+    "provider": "ibkr",
+    "reviewedSymbols": ["DEVS"],
+    "summary": {
+      "mismatchCount": 1,
+      "prohibitedLanguageHitCount": 0
+    },
+    "safety": {
+      "readOnlyCacheReview": true,
+      "providerCallsMade": false,
+      "cacheFilesWritten": false,
+      "fifteenMinuteFedIntoLevelEngine": false
+    }
+  },
+  "compactSummary": null,
+  "perSymbolSummary": [],
+  "safetyFlags": {
+    "readOnlyCacheReview": true,
+    "providerCallsMade": false,
+    "cacheFilesWritten": false,
+    "fifteenMinuteFedIntoLevelEngine": false
+  },
+  "limitations": [],
+  "quarantineReasons": [
+    {
+      "code": "missing_entries",
+      "field": "entries",
+      "message": "Packaged review delivery requires a non-empty entries array."
+    },
+    {
+      "code": "nonzero_mismatch_count",
+      "field": "summary.mismatchCount",
+      "message": "Packaged review delivery requires summary.mismatchCount to be 0."
+    }
+  ],
+  "auditTrail": [
+    {
+      "event": "quarantined",
+      "at": "2026-06-06T18:22:00.000Z",
+      "message": "Level analysis delivery payload quarantined by contract validation."
+    }
+  ]
+}
