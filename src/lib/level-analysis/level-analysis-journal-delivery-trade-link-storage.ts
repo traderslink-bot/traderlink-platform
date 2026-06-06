@@ -1,0 +1,263 @@
+import type Database from "better-sqlite3";
+import { getTraderIntelligenceDatabase } from "../trader-analytics/product/import-commit/sqlite-import-commit-repository";
+import {
+  runJournalLevelAnalysisDeliveryMigrations,
+} from "./level-analysis-journal-delivery-persistence-storage";
+import {
+  isJournalLevelAnalysisTradeLinkDuplicate,
+  validateJournalLevelAnalysisTradeLinkRecord,
+  type JournalLevelAnalysisTradeLinkRecord,
+} from "./level-analysis-journal-delivery-trade-link-contract";
+
+type SqliteDatabase = Database.Database;
+
+export const LEVEL_ANALYSIS_TRADE_LINK_API_FEATURE_FLAG =
+  "LEVEL_ANALYSIS_JOURNAL_TRADE_LINK_API_ENABLED";
+
+export const LEVEL_ANALYSIS_TRADE_LINK_ADMIN_DEBUG_FEATURE_FLAG =
+  "LEVEL_ANALYSIS_JOURNAL_TRADE_LINK_ADMIN_DEBUG_ENABLED";
+
+export interface SaveJournalLevelAnalysisTradeLinkRecordResult {
+  status: "stored" | "duplicate";
+  record: JournalLevelAnalysisTradeLinkRecord;
+}
+
+export interface TradeLinkIdempotencyQuery {
+  savedTradeId: string;
+  deliveryId: string;
+  symbol: string;
+  provider: string;
+}
+
+export interface JournalLevelAnalysisTradeLinkRepository {
+  saveTradeLinkRecord(
+    record: JournalLevelAnalysisTradeLinkRecord,
+  ): SaveJournalLevelAnalysisTradeLinkRecordResult;
+  getTradeLinkRecord(id: string): JournalLevelAnalysisTradeLinkRecord | null;
+  getTradeLinkByIdempotency(
+    query: TradeLinkIdempotencyQuery,
+  ): JournalLevelAnalysisTradeLinkRecord | null;
+  getLatestTradeLinkForSavedTrade(
+    savedTradeId: string,
+  ): JournalLevelAnalysisTradeLinkRecord | null;
+}
+
+function envEnabled(value: string | undefined): boolean {
+  return value === "1" || value?.toLowerCase() === "true";
+}
+
+export function isLevelAnalysisTradeLinkApiEnabled(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return envEnabled(env[LEVEL_ANALYSIS_TRADE_LINK_API_FEATURE_FLAG]);
+}
+
+export function isLevelAnalysisTradeLinkAdminDebugEnabled(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return envEnabled(env[LEVEL_ANALYSIS_TRADE_LINK_ADMIN_DEBUG_FEATURE_FLAG]);
+}
+
+function json<T>(value: T): string {
+  return JSON.stringify(value);
+}
+
+function parseJson<T>(value: string): T {
+  return JSON.parse(value) as T;
+}
+
+function rowJson<T>(row: unknown): T {
+  return parseJson<T>((row as { record_json: string }).record_json);
+}
+
+function normalizeSymbol(symbol: string): string {
+  return symbol.trim().toUpperCase();
+}
+
+export function runJournalLevelAnalysisTradeLinkMigrations(
+  db: SqliteDatabase,
+): void {
+  runJournalLevelAnalysisDeliveryMigrations(db);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS journal_level_analysis_trade_links (
+      id TEXT PRIMARY KEY,
+      workspace_id TEXT NOT NULL,
+      account_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      saved_trade_id TEXT NOT NULL,
+      import_batch_id TEXT,
+      symbol TEXT NOT NULL,
+      provider TEXT NOT NULL,
+      link_status TEXT NOT NULL,
+      link_source TEXT NOT NULL,
+      delivery_id TEXT NOT NULL,
+      raw_payload_hash TEXT NOT NULL,
+      source_kind TEXT NOT NULL,
+      delivery_generated_at TEXT,
+      symbol_summary_as_of_timestamp INTEGER,
+      symbol_summary_as_of_iso TEXT,
+      match_policy_json TEXT NOT NULL,
+      match_result_json TEXT NOT NULL,
+      linked_symbol_summary_json TEXT NOT NULL,
+      limitations_json TEXT NOT NULL,
+      safety_flags_json TEXT NOT NULL,
+      audit_trail_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      record_json TEXT NOT NULL
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS journal_level_analysis_trade_links_idempotency
+      ON journal_level_analysis_trade_links(saved_trade_id, delivery_id, provider, symbol);
+
+    CREATE INDEX IF NOT EXISTS journal_level_analysis_trade_links_trade_latest
+      ON journal_level_analysis_trade_links(saved_trade_id, updated_at DESC, id DESC);
+
+    CREATE INDEX IF NOT EXISTS journal_level_analysis_trade_links_delivery
+      ON journal_level_analysis_trade_links(delivery_id);
+
+    CREATE INDEX IF NOT EXISTS journal_level_analysis_trade_links_active
+      ON journal_level_analysis_trade_links(saved_trade_id, provider, symbol, updated_at DESC)
+      WHERE link_status = 'linked';
+  `);
+
+  db.prepare(
+    "INSERT OR IGNORE INTO schema_migrations (id, applied_at) VALUES (?, ?)",
+  ).run("005_level_analysis_trade_link_persistence", new Date().toISOString());
+}
+
+export class SqliteJournalLevelAnalysisTradeLinkRepository
+  implements JournalLevelAnalysisTradeLinkRepository
+{
+  constructor(private readonly db: SqliteDatabase = getTraderIntelligenceDatabase()) {
+    runJournalLevelAnalysisTradeLinkMigrations(this.db);
+  }
+
+  saveTradeLinkRecord(
+    record: JournalLevelAnalysisTradeLinkRecord,
+  ): SaveJournalLevelAnalysisTradeLinkRecordResult {
+    const validation = validateJournalLevelAnalysisTradeLinkRecord(record);
+    if (validation.status === "invalid") {
+      throw new Error(
+        `Invalid journal level analysis trade link record: ${validation.issues
+          .map((issue) => `${issue.field}:${issue.code}`)
+          .join(", ")}`,
+      );
+    }
+
+    const existing = this.getTradeLinkByIdempotency({
+      savedTradeId: record.savedTradeId,
+      deliveryId: record.deliveryId,
+      symbol: record.symbol,
+      provider: record.provider,
+    });
+
+    if (
+      existing &&
+      isJournalLevelAnalysisTradeLinkDuplicate({
+        existing,
+        incoming: record,
+      })
+    ) {
+      return { status: "duplicate", record: existing };
+    }
+
+    this.insertRecord(record);
+    return { status: "stored", record };
+  }
+
+  getTradeLinkRecord(id: string): JournalLevelAnalysisTradeLinkRecord | null {
+    const row = this.db
+      .prepare("SELECT record_json FROM journal_level_analysis_trade_links WHERE id = ?")
+      .get(id);
+
+    return row ? rowJson<JournalLevelAnalysisTradeLinkRecord>(row) : null;
+  }
+
+  getTradeLinkByIdempotency(
+    query: TradeLinkIdempotencyQuery,
+  ): JournalLevelAnalysisTradeLinkRecord | null {
+    const row = this.db
+      .prepare(
+        `SELECT record_json
+         FROM journal_level_analysis_trade_links
+         WHERE saved_trade_id = ?
+           AND delivery_id = ?
+           AND provider = ?
+           AND symbol = ?
+         LIMIT 1`,
+      )
+      .get(
+        query.savedTradeId,
+        query.deliveryId,
+        query.provider,
+        normalizeSymbol(query.symbol),
+      );
+
+    return row ? rowJson<JournalLevelAnalysisTradeLinkRecord>(row) : null;
+  }
+
+  getLatestTradeLinkForSavedTrade(
+    savedTradeId: string,
+  ): JournalLevelAnalysisTradeLinkRecord | null {
+    const row = this.db
+      .prepare(
+        `SELECT record_json
+         FROM journal_level_analysis_trade_links
+         WHERE saved_trade_id = ?
+         ORDER BY updated_at DESC, id DESC
+         LIMIT 1`,
+      )
+      .get(savedTradeId);
+
+    return row ? rowJson<JournalLevelAnalysisTradeLinkRecord>(row) : null;
+  }
+
+  private insertRecord(record: JournalLevelAnalysisTradeLinkRecord): void {
+    this.db
+      .prepare(
+        `INSERT INTO journal_level_analysis_trade_links (
+          id, workspace_id, account_id, user_id, saved_trade_id, import_batch_id,
+          symbol, provider, link_status, link_source, delivery_id, raw_payload_hash,
+          source_kind, delivery_generated_at, symbol_summary_as_of_timestamp,
+          symbol_summary_as_of_iso, match_policy_json, match_result_json,
+          linked_symbol_summary_json, limitations_json, safety_flags_json,
+          audit_trail_json, created_at, updated_at, record_json
+        ) VALUES (
+          @id, @workspaceId, @accountId, @userId, @savedTradeId, @importBatchId,
+          @symbol, @provider, @linkStatus, @linkSource, @deliveryId, @rawPayloadHash,
+          @sourceKind, @deliveryGeneratedAt, @symbolSummaryAsOfTimestamp,
+          @symbolSummaryAsOfIso, @matchPolicyJson, @matchResultJson,
+          @linkedSymbolSummaryJson, @limitationsJson, @safetyFlagsJson,
+          @auditTrailJson, @createdAt, @updatedAt, @recordJson
+        )`,
+      )
+      .run({
+        id: record.id,
+        workspaceId: record.workspaceId,
+        accountId: record.accountId,
+        userId: record.userId,
+        savedTradeId: record.savedTradeId,
+        importBatchId: record.importBatchId ?? null,
+        symbol: normalizeSymbol(record.symbol),
+        provider: record.provider,
+        linkStatus: record.linkStatus,
+        linkSource: record.linkSource,
+        deliveryId: record.deliveryId,
+        rawPayloadHash: record.rawPayloadHash,
+        sourceKind: record.sourceKind,
+        deliveryGeneratedAt: record.deliveryGeneratedAt ?? null,
+        symbolSummaryAsOfTimestamp: record.symbolSummaryAsOfTimestamp,
+        symbolSummaryAsOfIso: record.symbolSummaryAsOfIso ?? null,
+        matchPolicyJson: json(record.matchPolicy),
+        matchResultJson: json(record.matchResult),
+        linkedSymbolSummaryJson: json(record.linkedSymbolSummary),
+        limitationsJson: json(record.limitations),
+        safetyFlagsJson: json(record.safetyFlags),
+        auditTrailJson: json(record.auditTrail),
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+        recordJson: json(record),
+      });
+  }
+}
