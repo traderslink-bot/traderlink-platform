@@ -1,0 +1,1085 @@
+{
+  "fixtureMetadata": {
+    "sourceRepository": "levels-system",
+    "sourceCommit": "f57e8efe9954388ba44adea8bffde180cf6e4c73",
+    "sourceArtifactPath": "docs/examples/level-analysis-snapshot/level-candidate-inventory-visibility/volume-session-context/latest-level-candidate-inventory-volume-session-context-review-wiring.json",
+    "compacted": true,
+    "includedSymbols": ["DEVS", "QUBT"],
+    "omits": ["raw candles", "full snapshots", "raw cache wrapper payloads", "provider responses"]
+  },
+  "schemaVersion": "level-quality-review-process/v1",
+  "generatedAt": "2026-06-06T13:10:00.000Z",
+  "provider": "ibkr",
+  "baselinePath": "docs/examples/level-analysis-snapshot/level-candidate-inventory-visibility/volume-session-context/latest-level-candidate-inventory-volume-session-context-review-wiring.json",
+  "baselineGeneratedAt": "2026-06-06T13:10:00.000Z",
+  "reviewedSymbols": ["DEVS", "QUBT"],
+  "supplied15mSymbols": ["DEVS", "QUBT"],
+  "summary": {
+    "totalSymbols": 2,
+    "nearestSupportParityCount": 2,
+    "nearestResistanceParityCount": 2,
+    "bucketCountParityCount": 2,
+    "extensionCountParityCount": 2,
+    "syntheticCountParityCount": 2,
+    "syntheticMarkingParityCount": 2,
+    "diagnosticsParityCount": 2,
+    "diagnosticSemanticsParityCount": 2,
+    "enrichmentBreakdownParityCount": 2,
+    "extensionCoverageWarningParityCount": 2,
+    "clusteredDensityDiagnosticParityCount": 2,
+    "fifteenMinuteContextOnlyCount": 2,
+    "densityMetricPresentCount": 2,
+    "candidateInventoryPresentCount": 2,
+    "candidateInventoryValidCount": 2,
+    "candidateInventoryCloserUnsurfacedCount": 1,
+    "candidateInventorySupportCloserUnsurfacedCount": 1,
+    "candidateInventoryResistanceCloserUnsurfacedCount": 0,
+    "candidateInventoryTruthfulMarketContextCount": 0,
+    "candidateInventorySupportTruthfulMarketContextCount": 0,
+    "candidateInventoryResistanceTruthfulMarketContextCount": 0,
+    "candidateInventoryMissingCount": 0,
+    "candidateVolumeSessionContextPresentCount": 2,
+    "candidateVolumeSessionContextValidCount": 2,
+    "candidateVolumeSessionContextMissingCount": 0,
+    "sessionFactsPresentCount": 2,
+    "volumeFactsPresentCount": 2,
+    "volumeShelfContextPresentCount": 2,
+    "candidateVolumeSessionComparisonOutcomeCounts": {
+      "surfaced_has_more_session_volume_context": 1,
+      "candidate_identifier_unavailable": 1
+    },
+    "candidateVolumeSessionMissingFactsCount": 0,
+    "cacheFingerprintCount": 8,
+    "cacheFingerprintSymbolCount": 2,
+    "cacheFingerprintLevelEngineInputCount": 6,
+    "cacheFingerprintContextOnlyCount": 2,
+    "cacheFingerprintFifteenMinuteContextOnlyCount": 2,
+    "cacheFingerprintValidationIssueCount": 9,
+    "mismatchCount": 0,
+    "prohibitedLanguageHitCount": 0
+  },
+  "cacheFingerprintSet": {
+    "schemaVersion": "level-quality-review-cache-fingerprint-set/v1",
+    "generatedAt": "2026-06-06T13:10:00.000Z",
+    "provider": "ibkr",
+    "fingerprints": [
+      {
+        "schemaVersion": "level-quality-review-cache-fingerprint/v1",
+        "relativePath": "ibkr/DEVS/5m/100-1780314300000.json",
+        "provider": "ibkr",
+        "symbol": "DEVS",
+        "timeframe": "5m",
+        "sha256": "d04fac1be5c3af2448b787f5075f679b9af1ec5ed22e21009f913acfe79bff51",
+        "wrapperCandleCount": 46,
+        "requestLookbackBars": 100,
+        "requestEndTimestamp": 1780314600000,
+        "actualBarsReturned": 46,
+        "validationIssueCount": 1,
+        "firstCandleTimestamp": 1780300800000,
+        "lastCandleTimestamp": 1780314300000,
+        "asOfTimestamp": 1780329600000,
+        "includedInLevelEngine": true,
+        "contextOnly": false,
+        "safety": {
+          "rawCandlesIncluded": false,
+          "rawCacheWrapperPayloadsIncluded": false,
+          "fullSnapshotsIncluded": false,
+          "providerCallsMade": false,
+          "cacheFilesWritten": false,
+          "fifteenMinuteFedIntoLevelEngine": false
+        }
+      },
+      {
+        "schemaVersion": "level-quality-review-cache-fingerprint/v1",
+        "relativePath": "ibkr/DEVS/4h/180-1780300800000.json",
+        "provider": "ibkr",
+        "symbol": "DEVS",
+        "timeframe": "4h",
+        "sha256": "b6f7c4825975729b58baa0a57de5e17508a0db2730d5121d5f78898949224e1a",
+        "wrapperCandleCount": 113,
+        "requestLookbackBars": 180,
+        "requestEndTimestamp": 1780300800000,
+        "actualBarsReturned": 113,
+        "validationIssueCount": 2,
+        "firstCandleTimestamp": 1776758400000,
+        "lastCandleTimestamp": 1780300800000,
+        "asOfTimestamp": 1780329600000,
+        "includedInLevelEngine": true,
+        "contextOnly": false,
+        "safety": {
+          "rawCandlesIncluded": false,
+          "rawCacheWrapperPayloadsIncluded": false,
+          "fullSnapshotsIncluded": false,
+          "providerCallsMade": false,
+          "cacheFilesWritten": false,
+          "fifteenMinuteFedIntoLevelEngine": false
+        }
+      },
+      {
+        "schemaVersion": "level-quality-review-cache-fingerprint/v1",
+        "relativePath": "ibkr/DEVS/daily/520-1780272000000.json",
+        "provider": "ibkr",
+        "symbol": "DEVS",
+        "timeframe": "daily",
+        "sha256": "c04e65e3628fde93eebd6c7c3295362363347db2ed807a7759cfb549550b7153",
+        "wrapperCandleCount": 455,
+        "requestLookbackBars": 520,
+        "requestEndTimestamp": 1780272000000,
+        "actualBarsReturned": 455,
+        "validationIssueCount": 1,
+        "firstCandleTimestamp": 1717646400000,
+        "lastCandleTimestamp": 1780286400000,
+        "asOfTimestamp": 1780329600000,
+        "includedInLevelEngine": true,
+        "contextOnly": false,
+        "safety": {
+          "rawCandlesIncluded": false,
+          "rawCacheWrapperPayloadsIncluded": false,
+          "fullSnapshotsIncluded": false,
+          "providerCallsMade": false,
+          "cacheFilesWritten": false,
+          "fifteenMinuteFedIntoLevelEngine": false
+        }
+      },
+      {
+        "schemaVersion": "level-quality-review-cache-fingerprint/v1",
+        "relativePath": "ibkr/DEVS/15m/100-1780329600000.json",
+        "provider": "ibkr",
+        "symbol": "DEVS",
+        "timeframe": "15m",
+        "sha256": "ea6f37759133a5c09dfe568edc92501df928eff90bf5623f0811c6ab986ede08",
+        "wrapperCandleCount": 96,
+        "requestLookbackBars": 100,
+        "requestEndTimestamp": 1780329600000,
+        "actualBarsReturned": 96,
+        "validationIssueCount": 0,
+        "firstCandleTimestamp": 1780041600000,
+        "lastCandleTimestamp": 1780328700000,
+        "asOfTimestamp": 1780329600000,
+        "includedInLevelEngine": false,
+        "contextOnly": true,
+        "safety": {
+          "rawCandlesIncluded": false,
+          "rawCacheWrapperPayloadsIncluded": false,
+          "fullSnapshotsIncluded": false,
+          "providerCallsMade": false,
+          "cacheFilesWritten": false,
+          "fifteenMinuteFedIntoLevelEngine": false
+        }
+      },
+      {
+        "schemaVersion": "level-quality-review-cache-fingerprint/v1",
+        "relativePath": "ibkr/QUBT/5m/100-1778595300000.json",
+        "provider": "ibkr",
+        "symbol": "QUBT",
+        "timeframe": "5m",
+        "sha256": "537855c61a0265e66c325e2d3bae151a098d5ca88e13260c064e9230e4f618a7",
+        "wrapperCandleCount": 76,
+        "requestLookbackBars": 100,
+        "requestEndTimestamp": 1778595600000,
+        "actualBarsReturned": 76,
+        "validationIssueCount": 1,
+        "firstCandleTimestamp": 1778572800000,
+        "lastCandleTimestamp": 1778595300000,
+        "asOfTimestamp": 1780329600000,
+        "includedInLevelEngine": true,
+        "contextOnly": false,
+        "safety": {
+          "rawCandlesIncluded": false,
+          "rawCacheWrapperPayloadsIncluded": false,
+          "fullSnapshotsIncluded": false,
+          "providerCallsMade": false,
+          "cacheFilesWritten": false,
+          "fifteenMinuteFedIntoLevelEngine": false
+        }
+      },
+      {
+        "schemaVersion": "level-quality-review-cache-fingerprint/v1",
+        "relativePath": "ibkr/QUBT/4h/180-1778587200000.json",
+        "provider": "ibkr",
+        "symbol": "QUBT",
+        "timeframe": "4h",
+        "sha256": "6eec0a68684343e2de5b28034d0afa4e476f7cbdf4b07a414da28e1961c1af71",
+        "wrapperCandleCount": 114,
+        "requestLookbackBars": 180,
+        "requestEndTimestamp": 1778587200000,
+        "actualBarsReturned": 114,
+        "validationIssueCount": 2,
+        "firstCandleTimestamp": 1775030400000,
+        "lastCandleTimestamp": 1778587200000,
+        "asOfTimestamp": 1780329600000,
+        "includedInLevelEngine": true,
+        "contextOnly": false,
+        "safety": {
+          "rawCandlesIncluded": false,
+          "rawCacheWrapperPayloadsIncluded": false,
+          "fullSnapshotsIncluded": false,
+          "providerCallsMade": false,
+          "cacheFilesWritten": false,
+          "fifteenMinuteFedIntoLevelEngine": false
+        }
+      },
+      {
+        "schemaVersion": "level-quality-review-cache-fingerprint/v1",
+        "relativePath": "ibkr/QUBT/daily/520-1778544000000.json",
+        "provider": "ibkr",
+        "symbol": "QUBT",
+        "timeframe": "daily",
+        "sha256": "78d6ef2517d0809e347de07d4e16ce6278e31738cb06d20cc13ac7ad6df4eb8c",
+        "wrapperCandleCount": 501,
+        "requestLookbackBars": 520,
+        "requestEndTimestamp": 1778544000000,
+        "actualBarsReturned": 501,
+        "validationIssueCount": 2,
+        "firstCandleTimestamp": 1715572800000,
+        "lastCandleTimestamp": 1778558400000,
+        "asOfTimestamp": 1780329600000,
+        "includedInLevelEngine": true,
+        "contextOnly": false,
+        "safety": {
+          "rawCandlesIncluded": false,
+          "rawCacheWrapperPayloadsIncluded": false,
+          "fullSnapshotsIncluded": false,
+          "providerCallsMade": false,
+          "cacheFilesWritten": false,
+          "fifteenMinuteFedIntoLevelEngine": false
+        }
+      },
+      {
+        "schemaVersion": "level-quality-review-cache-fingerprint/v1",
+        "relativePath": "ibkr/QUBT/15m/100-1780329600000.json",
+        "provider": "ibkr",
+        "symbol": "QUBT",
+        "timeframe": "15m",
+        "sha256": "63e325bd9bd76e6044291f5f5d722d449e2cb1abe3b694aea543df7f2a8fe78e",
+        "wrapperCandleCount": 96,
+        "requestLookbackBars": 100,
+        "requestEndTimestamp": 1780329600000,
+        "actualBarsReturned": 96,
+        "validationIssueCount": 0,
+        "firstCandleTimestamp": 1780041600000,
+        "lastCandleTimestamp": 1780328700000,
+        "asOfTimestamp": 1780329600000,
+        "includedInLevelEngine": false,
+        "contextOnly": true,
+        "safety": {
+          "rawCandlesIncluded": false,
+          "rawCacheWrapperPayloadsIncluded": false,
+          "fullSnapshotsIncluded": false,
+          "providerCallsMade": false,
+          "cacheFilesWritten": false,
+          "fifteenMinuteFedIntoLevelEngine": false
+        }
+      }
+    ]
+  },
+  "cacheFingerprintSummary": {
+    "totalFingerprints": 8,
+    "symbolCount": 2,
+    "symbols": ["DEVS", "QUBT"],
+    "providerCounts": {
+      "ibkr": 8
+    },
+    "timeframeCounts": {
+      "15m": 2,
+      "4h": 2,
+      "5m": 2,
+      "daily": 2
+    },
+    "levelEngineInputCount": 6,
+    "contextOnlyCount": 2,
+    "fifteenMinuteContextOnlyCount": 2,
+    "validationIssueCount": 9,
+    "wrapperCandleCount": 1397,
+    "actualBarsReturned": 1397,
+    "hasValidationIssues": true,
+    "firstCandleTimestamp": 1715572800000,
+    "lastCandleTimestamp": 1780328700000
+  },
+  "entries": [
+    {
+      "symbol": "DEVS",
+      "provider": "ibkr",
+      "asOfTimestamp": 1780329600000,
+      "asOfIso": "2026-06-01T16:00:00.000Z",
+      "referencePrice": 0.2705,
+      "previousClose": 0.25,
+      "hasSupplied15m": true,
+      "sourceFiles": {
+        "5m": "ibkr/DEVS/5m/100-1780314300000.json",
+        "15m": "ibkr/DEVS/15m/100-1780329600000.json",
+        "4h": "ibkr/DEVS/4h/180-1780300800000.json",
+        "daily": "ibkr/DEVS/daily/520-1780272000000.json"
+      },
+      "nearestLevels": {
+        "support": {
+          "levelId": "DEVS-support-zone-15",
+          "bucket": "intermediateSupport",
+          "price": 0.27,
+          "distancePct": 0.1848,
+          "isExtension": false
+        },
+        "resistance": {
+          "levelId": "DEVS-resistance-zone-12",
+          "bucket": "intradayResistance",
+          "price": 0.2772,
+          "distancePct": 2.4769,
+          "isExtension": false
+        }
+      },
+      "bucketCounts": {
+        "majorSupport": 2,
+        "majorResistance": 0,
+        "intermediateSupport": 5,
+        "intermediateResistance": 2,
+        "intradaySupport": 1,
+        "intradayResistance": 3,
+        "extensionSupport": 3,
+        "extensionResistance": 0,
+        "total": 16
+      },
+      "extensionCoverage": {
+        "support": 3,
+        "resistance": 0,
+        "lowestSupportExtension": 0.2402,
+        "downsideCoveragePct": 11.2015,
+        "warnings": ["limited_downside_extension_coverage", "no_resistance_extension_coverage"]
+      },
+      "syntheticContinuationMap": {
+        "count": 0,
+        "clearlyMarkedCount": 0,
+        "entries": []
+      },
+      "qualityAudit": {
+        "diagnostics": [
+          "clustered_level_areas_present",
+          "limited_downside_extension_coverage",
+          "no_resistance_extension_coverage",
+          "unenriched_levels_present"
+        ],
+        "diagnosticSemantics": [
+          {
+            "code": "clustered_level_areas_present",
+            "category": "density",
+            "severity": "watch",
+            "factualOnly": true
+          }
+        ],
+        "summary": {
+          "totalLevels": 16,
+          "supportCount": 11,
+          "resistanceCount": 5,
+          "extensionCount": 3
+        },
+        "extensionCoverage": {
+          "supportExtensions": 3,
+          "resistanceExtensions": 0,
+          "lowestSupportExtension": 0.2402,
+          "downsideCoveragePct": 11.2015,
+          "warnings": ["no_resistance_extension_coverage", "limited_downside_extension_coverage"]
+        },
+        "densityMetric": {
+          "present": true,
+          "schemaVersion": "level-quality-density-metric/v1",
+          "classification": "dense_clustered",
+          "sideBias": "mixed",
+          "auditWindowPct": 30,
+          "referencePrice": 0.2705,
+          "totalRows": 16,
+          "rowsInsideAuditWindow": 11,
+          "counts": {
+            "support": 6,
+            "resistance": 5,
+            "historical": 8,
+            "extension": 3,
+            "synthetic": 0
+          },
+          "bucketCounts": {
+            "majorSupport": 1,
+            "majorResistance": 0,
+            "intermediateSupport": 1,
+            "intermediateResistance": 2,
+            "intradaySupport": 1,
+            "intradayResistance": 3,
+            "extensionSupport": 3,
+            "extensionResistance": 0
+          },
+          "densityBuckets": {
+            "historical": 8,
+            "extension": 3,
+            "synthetic": 0
+          },
+          "flags": {
+            "clusteredAreasPresent": true,
+            "denseButSeparated": false,
+            "extensionHeavy": false,
+            "syntheticPresent": false
+          },
+          "thresholds": {
+            "auditWindowPct": 30,
+            "sparseBelowCount": 6,
+            "denseAtOrAboveCount": 10,
+            "sideHeavyShare": 0.65,
+            "extensionHeavyShare": 0.35
+          },
+          "diagnostics": ["density_classification:dense_clustered", "density_side_bias:mixed"],
+          "safety": {
+            "auditOnly": true,
+            "generatedLevelsUnchanged": true,
+            "rankingUnchanged": true,
+            "clusteringUnchanged": true,
+            "surfacedLevelsUnchanged": true,
+            "extensionGenerationUnchanged": true
+          }
+        },
+        "clusteredAreaCount": 1,
+        "possibleClutterLevelCount": 2
+      },
+      "diagnosticSemantics": {
+        "present": true,
+        "codesMatchDiagnostics": true,
+        "allFactualOnly": true,
+        "categories": {
+          "density": 1,
+          "coverage": 2,
+          "enrichment": 1
+        },
+        "severities": {
+          "watch": 3,
+          "review": 1
+        },
+        "prohibitedLanguageHits": []
+      },
+      "fifteenMinuteContext": {
+        "inputProvided": true,
+        "filteredCandleCount": 96,
+        "factsPresent": true,
+        "providerMetadataHas15m": false,
+        "stillContextOnly": true
+      },
+      "candidateInventoryVisibility": {
+        "present": true,
+        "visibility": {
+          "schemaVersion": "level-candidate-inventory-visibility/v1",
+          "symbol": "DEVS",
+          "provider": "ibkr",
+          "asOfTimestamp": 1780329600000,
+          "asOfIso": "2026-06-01T16:00:00.000Z",
+          "referencePrice": 0.2705,
+          "sourceFiles": {
+            "5m": "ibkr/DEVS/5m/100-1780314300000.json",
+            "4h": "ibkr/DEVS/4h/180-1780300800000.json",
+            "daily": "ibkr/DEVS/daily/520-1780272000000.json"
+          },
+          "stageCounts": {
+            "surfaced": {
+              "stage": "surfaced",
+              "support": 8,
+              "resistance": 5,
+              "total": 13
+            }
+          },
+          "nearest": {
+            "surfaced": {
+              "support": {
+                "stage": "surfaced",
+                "side": "support",
+                "price": 0.27,
+                "distancePct": 0.1848,
+                "surfaced": true
+              },
+              "resistance": {
+                "stage": "surfaced",
+                "side": "resistance",
+                "price": 0.2772,
+                "distancePct": 2.4769,
+                "surfaced": true
+              }
+            }
+          },
+          "unsurfacedCloser": {
+            "support": {
+              "side": "support",
+              "present": false,
+              "count": 0,
+              "reasonAvailability": "not_needed",
+              "reasons": [],
+              "limitations": []
+            },
+            "resistance": {
+              "side": "resistance",
+              "present": false,
+              "count": 0,
+              "reasonAvailability": "not_needed",
+              "reasons": [],
+              "limitations": []
+            }
+          },
+          "gapClassification": {
+            "support": "no_gap",
+            "resistance": "no_gap",
+            "overall": "no_gap"
+          },
+          "diagnostics": ["candidate_inventory_visibility_adapter"],
+          "limitations": [],
+          "safety": {
+            "readOnly": true,
+            "auditOnly": true,
+            "providerCallsMade": false,
+            "cacheFilesWritten": false,
+            "rawCandlesIncluded": false,
+            "fullSnapshotsIncluded": false,
+            "supportResistanceDetectionChanged": false,
+            "levelEngineScoringRankingClusteringChanged": false,
+            "surfacedLevelsChanged": false,
+            "extensionGenerationChanged": false,
+            "fifteenMinuteFedIntoLevelEngine": false
+          }
+        },
+        "gapSummary": {
+          "support": "no_gap",
+          "resistance": "no_gap",
+          "overall": "no_gap"
+        }
+      },
+      "candidateVolumeSessionContext": {
+        "schemaVersion": "level-candidate-volume-session-context/v1",
+        "symbol": "DEVS",
+        "provider": "ibkr",
+        "asOfTimestamp": 1780329600000,
+        "asOfIso": "2026-06-01T16:00:00.000Z",
+        "referencePrice": 0.2705,
+        "contexts": [
+          {
+            "rowId": "surfaced-support-nearest",
+            "side": "support",
+            "stage": "surfaced",
+            "price": 0.27,
+            "session": {
+              "nearbyFacts": [
+                {
+                  "fact": "vwap",
+                  "price": 0.2653,
+                  "distancePct": 1.7407,
+                  "relation": "outside_threshold",
+                  "factsOnly": true
+                }
+              ],
+              "diagnostics": ["no_regular_session_candles"]
+            },
+            "volume": {
+              "diagnostics": [],
+              "relativeVolume": 1.7165,
+              "dollarVolume": 1502764.91,
+              "volumeState": "elevated",
+              "liquidityQuality": "good",
+              "accelerationState": "building"
+            },
+            "shelves": {
+              "nearbyShelfIds": ["DEVS-volume-shelf-0.26-0.27"],
+              "overlaps": [
+                {
+                  "shelfId": "DEVS-volume-shelf-0.26-0.27",
+                  "zoneLow": 0.26,
+                  "zoneHigh": 0.27,
+                  "factsOnly": true
+                }
+              ],
+              "diagnostics": []
+            },
+            "diagnostics": ["surfaced_vwap_shelf_overlap_context_present"],
+            "safety": {
+              "factsOnly": true,
+              "noLevelSelectionChange": true,
+              "noRankingChange": true,
+              "noRuntimeBehaviorChange": true,
+              "vwapFactsOnly": true,
+              "shelvesAreFactsOnly": true
+            },
+            "levelId": "DEVS-support-zone-15",
+            "zoneLow": 0.27,
+            "zoneHigh": 0.27,
+            "distanceFromReferencePct": 0.1848
+          }
+        ],
+        "comparisonSummary": {
+          "outcome": "surfaced_has_more_session_volume_context",
+          "comparedRowIds": ["surfaced-support-nearest"],
+          "surfacedRowIds": ["surfaced-support-nearest"],
+          "unsurfacedRowIds": [],
+          "diagnostics": ["surfaced_vwap_shelf_overlap_context_present"],
+          "support": "surfaced_has_more_session_volume_context",
+          "resistance": "no_nearby_session_volume_context"
+        },
+        "diagnostics": [
+          "no_nearby_session_fact",
+          "no_regular_session_candles",
+          "surfaced_vwap_shelf_overlap_context_present"
+        ],
+        "safety": {
+          "factsOnly": true,
+          "noLevelSelectionChange": true,
+          "noRankingChange": true,
+          "noRuntimeBehaviorChange": true,
+          "vwapFactsOnly": true,
+          "shelvesAreFactsOnly": true,
+          "fifteenMinuteFedIntoLevelEngine": false,
+          "volumeSessionFactsUsedForScoringOrSurfacedSelection": false,
+          "supportResistanceDetectionChanged": false,
+          "levelEngineScoringRankingClusteringChanged": false,
+          "surfacedLevelsChanged": false,
+          "extensionGenerationChanged": false,
+          "providerCallsMade": false,
+          "cacheFilesWritten": false,
+          "rawCandlesIncluded": false,
+          "fullSnapshotsIncluded": false
+        }
+      },
+      "parity": {
+        "nearestSupport": true,
+        "nearestResistance": true,
+        "bucketCounts": true,
+        "extensionCounts": true,
+        "syntheticContinuationMapCount": true,
+        "syntheticContinuationMapMarking": true,
+        "diagnosticsUnchanged": true,
+        "diagnosticSemanticsUnchanged": true,
+        "enrichmentBreakdown": true,
+        "extensionCoverageWarnings": true,
+        "clusteredDensityDiagnostics": true,
+        "fifteenMinuteStillContextOnly": true
+      },
+      "mismatches": [],
+      "safety": {
+        "noLookaheadApplied": true,
+        "levelOutputUnchanged": true,
+        "noRuntimeBehaviorChange": true,
+        "syntheticExtensionsClearlyMarked": true
+      }
+    },
+    {
+      "symbol": "QUBT",
+      "provider": "ibkr",
+      "asOfTimestamp": 1780329600000,
+      "asOfIso": "2026-06-01T16:00:00.000Z",
+      "referencePrice": 12.799,
+      "previousClose": 12.89,
+      "hasSupplied15m": true,
+      "sourceFiles": {
+        "5m": "ibkr/QUBT/5m/100-1778595300000.json",
+        "15m": "ibkr/QUBT/15m/100-1780329600000.json",
+        "4h": "ibkr/QUBT/4h/180-1778587200000.json",
+        "daily": "ibkr/QUBT/daily/520-1778544000000.json"
+      },
+      "nearestLevels": {
+        "support": {
+          "levelId": "QUBT-support-zone-38",
+          "bucket": "intradaySupport",
+          "price": 12.42,
+          "distancePct": 2.9612,
+          "isExtension": false
+        },
+        "resistance": {
+          "levelId": "QUBT-resistance-zone-33",
+          "bucket": "intradayResistance",
+          "price": 12.9727,
+          "distancePct": 1.3571,
+          "isExtension": false
+        }
+      },
+      "bucketCounts": {
+        "majorSupport": 4,
+        "majorResistance": 4,
+        "intermediateSupport": 4,
+        "intermediateResistance": 0,
+        "intradaySupport": 1,
+        "intradayResistance": 2,
+        "extensionSupport": 3,
+        "extensionResistance": 1,
+        "total": 19
+      },
+      "extensionCoverage": {
+        "support": 3,
+        "resistance": 1,
+        "lowestSupportExtension": 6.23,
+        "highestResistanceExtension": 16.9305,
+        "downsideCoveragePct": 51.3243,
+        "upsideCoveragePct": 32.2799,
+        "warnings": []
+      },
+      "syntheticContinuationMap": {
+        "count": 0,
+        "clearlyMarkedCount": 0,
+        "entries": []
+      },
+      "qualityAudit": {
+        "diagnostics": [
+          "unenriched_extension_levels_present",
+          "unenriched_historical_levels_present",
+          "unenriched_levels_present"
+        ],
+        "diagnosticSemantics": [
+          {
+            "code": "unenriched_levels_present",
+            "category": "enrichment",
+            "severity": "watch",
+            "factualOnly": true
+          }
+        ],
+        "summary": {
+          "totalLevels": 19,
+          "supportCount": 12,
+          "resistanceCount": 7,
+          "extensionCount": 4
+        },
+        "extensionCoverage": {
+          "supportExtensions": 3,
+          "resistanceExtensions": 1,
+          "lowestSupportExtension": 6.23,
+          "highestResistanceExtension": 16.9305,
+          "warnings": []
+        },
+        "densityMetric": {
+          "present": true,
+          "schemaVersion": "level-quality-density-metric/v1",
+          "classification": "balanced",
+          "sideBias": "mixed",
+          "auditWindowPct": 30,
+          "referencePrice": 12.799,
+          "totalRows": 19,
+          "rowsInsideAuditWindow": 9,
+          "counts": {
+            "support": 4,
+            "resistance": 5,
+            "historical": 9,
+            "extension": 0,
+            "synthetic": 0
+          },
+          "bucketCounts": {
+            "majorSupport": 3,
+            "majorResistance": 3,
+            "intermediateSupport": 0,
+            "intermediateResistance": 0,
+            "intradaySupport": 1,
+            "intradayResistance": 2,
+            "extensionSupport": 0,
+            "extensionResistance": 0
+          },
+          "densityBuckets": {
+            "historical": 9,
+            "extension": 0,
+            "synthetic": 0
+          },
+          "flags": {
+            "clusteredAreasPresent": false,
+            "denseButSeparated": false,
+            "extensionHeavy": false,
+            "syntheticPresent": false
+          },
+          "thresholds": {
+            "auditWindowPct": 30,
+            "sparseBelowCount": 6,
+            "denseAtOrAboveCount": 10,
+            "sideHeavyShare": 0.65,
+            "extensionHeavyShare": 0.35
+          },
+          "diagnostics": ["density_classification:balanced", "density_side_bias:mixed"],
+          "safety": {
+            "auditOnly": true,
+            "generatedLevelsUnchanged": true,
+            "rankingUnchanged": true,
+            "clusteringUnchanged": true,
+            "surfacedLevelsUnchanged": true,
+            "extensionGenerationUnchanged": true
+          }
+        },
+        "clusteredAreaCount": 0,
+        "possibleClutterLevelCount": 0
+      },
+      "diagnosticSemantics": {
+        "present": true,
+        "codesMatchDiagnostics": true,
+        "allFactualOnly": true,
+        "categories": {
+          "enrichment": 3
+        },
+        "severities": {
+          "watch": 3
+        },
+        "prohibitedLanguageHits": []
+      },
+      "fifteenMinuteContext": {
+        "inputProvided": true,
+        "filteredCandleCount": 96,
+        "factsPresent": true,
+        "providerMetadataHas15m": false,
+        "stillContextOnly": true
+      },
+      "candidateInventoryVisibility": {
+        "present": true,
+        "visibility": {
+          "schemaVersion": "level-candidate-inventory-visibility/v1",
+          "symbol": "QUBT",
+          "provider": "ibkr",
+          "asOfTimestamp": 1780329600000,
+          "asOfIso": "2026-06-01T16:00:00.000Z",
+          "referencePrice": 12.799,
+          "sourceFiles": {
+            "5m": "ibkr/QUBT/5m/100-1778595300000.json",
+            "4h": "ibkr/QUBT/4h/180-1778587200000.json",
+            "daily": "ibkr/QUBT/daily/520-1778544000000.json"
+          },
+          "stageCounts": {
+            "surfaced": {
+              "stage": "surfaced",
+              "support": 9,
+              "resistance": 6,
+              "total": 15
+            },
+            "scored": {
+              "stage": "scored",
+              "support": 70,
+              "resistance": 67,
+              "total": 137
+            }
+          },
+          "nearest": {
+            "surfaced": {
+              "support": {
+                "stage": "surfaced",
+                "side": "support",
+                "price": 12.42,
+                "distancePct": 2.9612,
+                "surfaced": true
+              }
+            },
+            "scored": {
+              "support": {
+                "stage": "scored",
+                "side": "support",
+                "price": 12.74,
+                "distancePct": 0.461,
+                "surfaced": false
+              }
+            }
+          },
+          "unsurfacedCloser": {
+            "support": {
+              "side": "support",
+              "present": true,
+              "count": 2,
+              "nearest": {
+                "stage": "scored",
+                "side": "support",
+                "price": 12.74,
+                "distancePct": 0.461,
+                "sourceTypes": ["opening_range_low", "premarket_low", "swing_low"],
+                "surfaced": false
+              },
+              "reasonAvailability": "not_available",
+              "reasons": [],
+              "limitations": ["surfaced_selection_reason_not_serialized"]
+            },
+            "resistance": {
+              "side": "resistance",
+              "present": false,
+              "count": 0,
+              "reasonAvailability": "not_needed",
+              "reasons": [],
+              "limitations": []
+            }
+          },
+          "gapClassification": {
+            "support": "closer_unsurfaced_candidate",
+            "resistance": "no_gap",
+            "overall": "closer_unsurfaced_candidate"
+          },
+          "diagnostics": ["closer_unsurfaced_support_present"],
+          "limitations": ["surfaced_selection_reason_not_serialized"],
+          "safety": {
+            "readOnly": true,
+            "auditOnly": true,
+            "providerCallsMade": false,
+            "cacheFilesWritten": false,
+            "rawCandlesIncluded": false,
+            "fullSnapshotsIncluded": false,
+            "supportResistanceDetectionChanged": false,
+            "levelEngineScoringRankingClusteringChanged": false,
+            "surfacedLevelsChanged": false,
+            "extensionGenerationChanged": false,
+            "fifteenMinuteFedIntoLevelEngine": false
+          }
+        },
+        "gapSummary": {
+          "support": "closer_unsurfaced_candidate",
+          "resistance": "no_gap",
+          "overall": "closer_unsurfaced_candidate"
+        }
+      },
+      "candidateVolumeSessionContext": {
+        "schemaVersion": "level-candidate-volume-session-context/v1",
+        "symbol": "QUBT",
+        "provider": "ibkr",
+        "asOfTimestamp": 1780329600000,
+        "asOfIso": "2026-06-01T16:00:00.000Z",
+        "referencePrice": 12.799,
+        "contexts": [
+          {
+            "rowId": "surfaced-support-nearest",
+            "side": "support",
+            "stage": "surfaced",
+            "price": 12.42,
+            "session": {
+              "nearbyFacts": [
+                {
+                  "fact": "previous_close",
+                  "price": 12.89,
+                  "distancePct": 3.7842,
+                  "relation": "outside_threshold",
+                  "factsOnly": true
+                }
+              ],
+              "diagnostics": ["no_closed_session_candles", "vwap_unavailable"]
+            },
+            "volume": {
+              "diagnostics": [],
+              "relativeVolume": 0.5253,
+              "dollarVolume": 869092173.67,
+              "volumeState": "low",
+              "liquidityQuality": "strong",
+              "accelerationState": "decelerating"
+            },
+            "shelves": {
+              "nearbyShelfIds": [],
+              "overlaps": [],
+              "diagnostics": ["no_nearby_volume_shelf"]
+            },
+            "diagnostics": ["candidate_identifier_unavailable", "no_nearby_session_volume_context"],
+            "safety": {
+              "factsOnly": true,
+              "noLevelSelectionChange": true,
+              "noRankingChange": true,
+              "noRuntimeBehaviorChange": true,
+              "vwapFactsOnly": true,
+              "shelvesAreFactsOnly": true
+            },
+            "levelId": "QUBT-support-zone-38",
+            "zoneLow": 12.27,
+            "zoneHigh": 12.49,
+            "distanceFromReferencePct": 2.9612
+          },
+          {
+            "rowId": "unsurfaced-support-scored-nearest",
+            "side": "support",
+            "stage": "scored",
+            "price": 12.74,
+            "session": {
+              "nearbyFacts": [
+                {
+                  "fact": "previous_close",
+                  "price": 12.89,
+                  "distancePct": 1.1774,
+                  "relation": "outside_threshold",
+                  "factsOnly": true
+                }
+              ],
+              "diagnostics": ["no_closed_session_candles", "vwap_unavailable"]
+            },
+            "volume": {
+              "diagnostics": [],
+              "relativeVolume": 0.5253,
+              "dollarVolume": 869092173.67,
+              "volumeState": "low",
+              "liquidityQuality": "strong",
+              "accelerationState": "decelerating"
+            },
+            "shelves": {
+              "nearbyShelfIds": [],
+              "overlaps": [],
+              "diagnostics": ["no_nearby_volume_shelf"]
+            },
+            "diagnostics": ["candidate_id_unavailable", "candidate_identifier_unavailable"],
+            "safety": {
+              "factsOnly": true,
+              "noLevelSelectionChange": true,
+              "noRankingChange": true,
+              "noRuntimeBehaviorChange": true,
+              "vwapFactsOnly": true,
+              "shelvesAreFactsOnly": true
+            },
+            "distanceFromReferencePct": 0.461
+          }
+        ],
+        "comparisonSummary": {
+          "outcome": "candidate_identifier_unavailable",
+          "comparedRowIds": ["surfaced-support-nearest", "unsurfaced-support-scored-nearest"],
+          "surfacedRowIds": ["surfaced-support-nearest"],
+          "unsurfacedRowIds": ["unsurfaced-support-scored-nearest"],
+          "diagnostics": ["candidate_identifier_unavailable", "surfaced_session_volume_context_present"],
+          "support": "candidate_identifier_unavailable",
+          "resistance": "surfaced_has_more_session_volume_context"
+        },
+        "diagnostics": [
+          "candidate_id_unavailable",
+          "candidate_identifier_unavailable",
+          "no_closed_session_candles",
+          "no_nearby_volume_shelf",
+          "surfaced_selection_reason_not_serialized",
+          "vwap_unavailable"
+        ],
+        "safety": {
+          "factsOnly": true,
+          "noLevelSelectionChange": true,
+          "noRankingChange": true,
+          "noRuntimeBehaviorChange": true,
+          "vwapFactsOnly": true,
+          "shelvesAreFactsOnly": true,
+          "fifteenMinuteFedIntoLevelEngine": false,
+          "volumeSessionFactsUsedForScoringOrSurfacedSelection": false,
+          "supportResistanceDetectionChanged": false,
+          "levelEngineScoringRankingClusteringChanged": false,
+          "surfacedLevelsChanged": false,
+          "extensionGenerationChanged": false,
+          "providerCallsMade": false,
+          "cacheFilesWritten": false,
+          "rawCandlesIncluded": false,
+          "fullSnapshotsIncluded": false
+        }
+      },
+      "parity": {
+        "nearestSupport": true,
+        "nearestResistance": true,
+        "bucketCounts": true,
+        "extensionCounts": true,
+        "syntheticContinuationMapCount": true,
+        "syntheticContinuationMapMarking": true,
+        "diagnosticsUnchanged": true,
+        "diagnosticSemanticsUnchanged": true,
+        "enrichmentBreakdown": true,
+        "extensionCoverageWarnings": true,
+        "clusteredDensityDiagnostics": true,
+        "fifteenMinuteStillContextOnly": true
+      },
+      "mismatches": [],
+      "safety": {
+        "noLookaheadApplied": true,
+        "levelOutputUnchanged": true,
+        "noRuntimeBehaviorChange": true,
+        "syntheticExtensionsClearlyMarked": true
+      }
+    }
+  ],
+  "prohibitedLanguageHits": [],
+  "safety": {
+    "readOnlyCacheReview": true,
+    "rawCandlesWritten": false,
+    "fullSnapshotsWritten": false,
+    "cacheFilesWritten": false,
+    "providerCallsMade": false,
+    "supportResistanceDetectionChanged": false,
+    "levelEngineScoringRankingClusteringChanged": false,
+    "surfacedLevelsChanged": false,
+    "extensionGenerationChanged": false,
+    "fifteenMinuteFedIntoLevelEngine": false
+  }
+}

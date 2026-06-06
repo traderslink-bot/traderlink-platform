@@ -1,18 +1,30 @@
 # LevelAnalysisSnapshot Fixtures
 
-This directory contains app-side fixtures for consuming the locked `LevelAnalysisSnapshot` v1 contract from `levels-system`.
+This directory contains app-side fixtures for consuming locked and current
+levels-system journal delivery contracts.
 
-## Fixture
+## Fixtures
 
 - `journal-connector-level-analysis-snapshot-v1.json`
+- `level-analysis-journal-delivery-package-v1.compact.json`
 
-The fixture is copied from:
+The old single-snapshot fixture is copied from:
 
 ```text
 levels-system/docs/examples/level-analysis-snapshot/journal-connector-contract/journal-connector-level-analysis-snapshot-v1.json
 ```
 
-It is compact, deterministic, and intended for TraderLink Intelligence / journal adapter tests.
+The new packaged delivery fixture is a compact two-symbol derivative of:
+
+```text
+levels-system/docs/examples/level-analysis-snapshot/level-candidate-inventory-visibility/volume-session-context/latest-level-candidate-inventory-volume-session-context-review-wiring.json
+```
+
+It records the source commit and source artifact path in `fixtureMetadata`.
+The compact fixture keeps the current package shape, `entries[]`, cache
+fingerprints, density metric, candidate inventory visibility, and
+volume/session context, but omits raw candles, full snapshots, raw cache wrapper
+payloads, and provider responses.
 
 ## Boundaries
 
