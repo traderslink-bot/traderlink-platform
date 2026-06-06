@@ -107,6 +107,43 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Journal Delivery Ingestion
+
+Gate `journal_level_analysis_delivery_ingestion` adds an app-side ingestion
+adapter for both levels-system delivery shapes:
+
+- existing single `LevelAnalysisSnapshot` v1 payloads continue through the
+  existing validator/parser path
+- new packaged `level-quality-review-process/v1` delivery payloads with
+  `entries[]` now validate and derive one compact factual chart-context view per
+  entry
+
+Added:
+
+- compact two-symbol packaged delivery fixture at
+  `src/lib/level-analysis/__fixtures__/level-analysis-journal-delivery-package-v1.compact.json`
+- additive source-preserving adapter at
+  `src/lib/level-analysis/level-analysis-journal-delivery-adapter.ts`
+- focused ingestion/quarantine/source-preservation tests at
+  `src/lib/level-analysis/__tests__/level-analysis-journal-delivery-adapter.test.ts`
+- journal-side contract doc at
+  `src/docs/level-analysis-journal-delivery-ingestion.md`
+
+Boundaries preserved:
+
+- no levels-system repo changes
+- no LevelEngine behavior changes
+- no support/resistance tuning
+- no production UI/API/persistence wiring for the new package
+- no recommendations, coaching, grading, P/L, giveback, behavior scoring, or
+  buy/sell/hold decisions in derived views
+
+Current best next step:
+
+- continue with `journal_level_analysis_delivery_persistence_or_api_design` to
+  decide how validated source packages should be stored, fetched, or linked to
+  journal records.
+
 ### 2026-05-26 TradersLink Website Source Of Truth
 
 The active website repo is now:
