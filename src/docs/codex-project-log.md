@@ -107,6 +107,44 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Persistence/API Design
+
+Gate `journal_level_analysis_delivery_persistence_or_api_design` documents the
+journal-side persistence and API direction for validated levels-system delivery
+payloads.
+
+Added docs-only design artifacts:
+
+- main design doc at
+  `docs/level-analysis-journal-delivery-persistence-or-api-design.md`
+- compact JSON artifact at
+  `docs/examples/level-analysis-journal-delivery-persistence-or-api-design.json`
+- compact text handoff at
+  `docs/examples/level-analysis-journal-delivery-persistence-or-api-design.txt`
+
+Recommended path:
+
+- persist normalized compact delivery and per-symbol summaries plus the raw
+  source payload
+- use raw payload hashing for idempotency
+- expose validate, ingest, latest delivery, latest symbol, and admin/debug raw
+  retrieval API contracts only after the persistence contract is locked
+- keep the old `LevelAnalysisSnapshot` v1 ingestion path intact
+
+Boundaries remain:
+
+- no levels-system repo changes
+- no LevelEngine behavior changes
+- no production UI wiring
+- no recommendations, coaching, grading, P/L, giveback, behavior scoring, or
+  buy/sell/hold decisions added to level-analysis delivery handling
+
+Current best next step:
+
+- continue with `journal_level_analysis_delivery_persistence_contract` to lock
+  deterministic persisted-record and API response fixtures before durable
+  storage or production API wiring.
+
 ### 2026-06-06 Level Analysis Journal Delivery Ingestion
 
 Gate `journal_level_analysis_delivery_ingestion` adds an app-side ingestion

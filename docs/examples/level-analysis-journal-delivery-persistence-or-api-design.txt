@@ -1,0 +1,35 @@
+Gate: journal_level_analysis_delivery_persistence_or_api_design
+
+Recommended path:
+Persist a normalized compact delivery summary plus the raw source payload.
+
+Why:
+The journal app needs stable queryable facts for future API/UI workflows, while
+the original levels-system payload must remain available for audit, replay,
+deduplication, and future schema compatibility.
+
+Source kinds:
+- single_snapshot_v1
+- packaged_review_delivery
+
+Proposed contract:
+JournalLevelAnalysisDeliveryRecord stores source metadata, validation status,
+rawPayloadHash, rawPayload, compactSummary, perSymbolSummary, safety flags,
+limitations, quarantine reasons, and audit trail.
+
+Proposed routes:
+- POST /api/level-analysis/deliveries/validate
+- POST /api/level-analysis/deliveries
+- GET /api/level-analysis/deliveries/latest
+- GET /api/level-analysis/deliveries/latest/symbols/[symbol]
+- GET /api/admin/level-analysis/deliveries/[deliveryId]/raw
+
+Safety:
+Keep the payload facts-only. Preserve old LevelAnalysisSnapshot v1 ingestion.
+Preserve raw source payloads. Quarantine malformed or unsafe payloads. Treat
+15m as context-only. Do not add recommendations, buy/sell/hold wording,
+coaching, grading, P/L, giveback analysis, behavior scoring, or execution
+quality inference.
+
+Next gate:
+journal_level_analysis_delivery_persistence_contract
