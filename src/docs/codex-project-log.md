@@ -107,6 +107,47 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Review Queue Linking Design
+
+Gate `journal_level_analysis_delivery_review_queue_linking_design` defines how
+persisted level-analysis trade links should surface in saved review queues and
+trade-detail workflows.
+
+Added docs-only artifacts:
+
+- main design doc at
+  `docs/level-analysis-journal-delivery-review-queue-linking-design.md`
+- compact JSON artifact at
+  `docs/examples/level-analysis-journal-delivery-review-queue-linking-design.json`
+- compact text handoff at
+  `docs/examples/level-analysis-journal-delivery-review-queue-linking-design.txt`
+
+Recommended path:
+
+- add a dedicated review queue level-facts read model that batches saved trade
+  IDs and joins to persisted `JournalLevelAnalysisTradeLinkRecord` rows
+- expose compact availability state on each queue item, such as attached,
+  blocked by as-of policy, unavailable, quarantined/unsafe, not checked, or
+  feature disabled
+- show level facts as evidence availability only, not as queue priority,
+  scoring, coaching, grading, P/L, giveback, behavior scoring, or trade advice
+- avoid auto-attaching links during normal queue reads
+- keep raw source payloads on delivery records only
+
+Boundaries remain:
+
+- no code, migrations, route handlers, production UI wiring, levels-system
+  changes, or LevelEngine behavior changes
+- old `LevelAnalysisSnapshot` v1 compatibility remains part of the design
+- current packaged review delivery compatibility remains part of the design
+
+Current best next step:
+
+- continue with
+  `journal_level_analysis_delivery_review_queue_linking_contract` to lock the
+  queue/trade-detail level-facts availability read model and fixtures before
+  wiring review queue or trade-detail UI.
+
 ### 2026-06-06 Level Analysis Delivery Journal Linking Persistence Implementation
 
 Gate

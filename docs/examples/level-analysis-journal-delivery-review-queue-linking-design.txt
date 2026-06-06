@@ -1,0 +1,30 @@
+Gate: journal_level_analysis_delivery_review_queue_linking_design
+
+Purpose:
+Design how persisted level-analysis trade links appear in saved review queues
+and trade-detail workflows as factual availability metadata.
+
+Recommendation:
+Add a dedicated review queue level-facts read model. Batch saved trade IDs,
+join to persisted JournalLevelAnalysisTradeLinkRecord rows, and expose compact
+availability state on each queue item.
+
+Availability states:
+- attached
+- available_to_attach
+- blocked_by_as_of_policy
+- unavailable_for_symbol_provider
+- quarantined_or_unsafe
+- not_checked
+- feature_disabled
+
+Rules:
+- Do not auto-attach links during queue reads.
+- Do not change queue priority scores in the first integration.
+- Do not expose raw payloads in user-facing queue or trade-detail responses.
+- Keep 15m context-only.
+- Keep all copy factual and availability-oriented.
+- Do not add recommendation, coaching, grading, P/L, giveback, trade-advice, or behavior-scoring behavior.
+
+Next gate:
+journal_level_analysis_delivery_review_queue_linking_contract
