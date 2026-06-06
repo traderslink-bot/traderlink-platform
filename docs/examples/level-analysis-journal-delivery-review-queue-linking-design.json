@@ -1,0 +1,42 @@
+{
+  "gate": "journal_level_analysis_delivery_review_queue_linking_design",
+  "purpose": "Design how persisted level-analysis trade links surface as factual availability in saved review queues and trade-detail workflows.",
+  "recommendedPath": "Dedicated review queue level-facts read model",
+  "noProductionUiThisGate": true,
+  "availabilityStates": [
+    "attached",
+    "available_to_attach",
+    "blocked_by_as_of_policy",
+    "unavailable_for_symbol_provider",
+    "quarantined_or_unsafe",
+    "not_checked",
+    "feature_disabled"
+  ],
+  "queueItemAddition": {
+    "field": "levelFacts",
+    "shape": {
+      "availability": "attached",
+      "label": "Level facts attached",
+      "detail": "Accepted level facts are linked for this saved trade.",
+      "scopeLabel": "level facts",
+      "nextAction": "Open the trade detail to inspect factual level context.",
+      "linkId": "jlatl_trade_DEVS_2026_06_01_001_lad_contract_DEVS",
+      "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+      "rawPayloadHash": "sha256:aca8402b2221abb1a787b460ea0f73be82a3f914bc69f847caa78ee598f21669",
+      "sourceKind": "packaged_review_delivery",
+      "provider": "ibkr",
+      "symbol": "DEVS",
+      "asOfIso": "2026-06-01T16:00:00.000Z",
+      "fifteenMinuteContextOnlyStatus": "context_only",
+      "limitationCount": 1
+    }
+  },
+  "integrationRules": [
+    "Do not auto-attach links during review queue reads.",
+    "Do not let level-facts availability change priorityScore initially.",
+    "Do not expose raw payloads in user-facing queue or trade-detail routes.",
+    "Treat 15m as context-only.",
+    "Keep labels factual and availability-oriented."
+  ],
+  "recommendedNextGate": "journal_level_analysis_delivery_review_queue_linking_contract"
+}
