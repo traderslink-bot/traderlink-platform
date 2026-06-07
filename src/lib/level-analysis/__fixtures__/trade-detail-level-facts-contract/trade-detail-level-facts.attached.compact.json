@@ -1,0 +1,151 @@
+{
+  "contractVersion": "trade_detail_level_facts_read_model_v1",
+  "savedTradeId": "trade_DEVS_2026_06_01_001",
+  "featureEnabled": true,
+  "availability": {
+    "contractVersion": "journal_level_analysis_review_queue_linking_v1",
+    "availability": "attached",
+    "label": "Level facts attached",
+    "detail": "DEVS level facts from ibkr are attached at 2026-06-01T16:00:00.000Z.",
+    "scopeLabel": "level facts",
+    "nextAction": "Open the trade detail to inspect factual level context.",
+    "linkId": "jlatl_trade_DEVS_2026_06_01_001_lad_contract_DEVS",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "rawPayloadHash": "sha256:aca8402b2221abb1a787b460ea0f73be82a3f914bc69f847caa78ee598f21669",
+    "sourceKind": "packaged_review_delivery",
+    "provider": "ibkr",
+    "symbol": "DEVS",
+    "asOfIso": "2026-06-01T16:00:00.000Z",
+    "asOfTimestamp": 1780329600000,
+    "fifteenMinuteContextOnlyStatus": "context_only",
+    "limitationCount": 1,
+    "limitations": [
+      {
+        "code": "extension_coverage_warning",
+        "field": "DEVS.extensionCoverage.warnings",
+        "message": "limited_downside_extension_coverage"
+      }
+    ]
+  },
+  "display": {
+    "shouldShowFactsPanel": true,
+    "sectionLabel": "level facts",
+    "evidenceBoundaryLabel": "Level facts are available as supporting evidence."
+  },
+  "attachedFacts": {
+    "linkId": "jlatl_trade_DEVS_2026_06_01_001_lad_contract_DEVS",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "rawPayloadHash": "sha256:aca8402b2221abb1a787b460ea0f73be82a3f914bc69f847caa78ee598f21669",
+    "sourceKind": "packaged_review_delivery",
+    "provider": "ibkr",
+    "symbol": "DEVS",
+    "asOfIso": "2026-06-01T16:00:00.000Z",
+    "asOfTimestamp": 1780329600000,
+    "referencePrice": 0.2705,
+    "previousClose": 0.25,
+    "nearestSupport": {
+      "levelId": "DEVS-support-zone-15",
+      "bucket": "intermediateSupport",
+      "price": 0.27,
+      "distancePct": 0.1848,
+      "isExtension": false
+    },
+    "nearestResistance": {
+      "levelId": "DEVS-resistance-zone-12",
+      "bucket": "intradayResistance",
+      "price": 0.2772,
+      "distancePct": 2.4769,
+      "isExtension": false
+    },
+    "bucketCounts": {
+      "majorSupport": 2,
+      "majorResistance": 0,
+      "intermediateSupport": 5,
+      "intermediateResistance": 2,
+      "intradaySupport": 1,
+      "intradayResistance": 3,
+      "extensionSupport": 3,
+      "extensionResistance": 0,
+      "total": 16
+    },
+    "extensionCounts": {
+      "support": 3,
+      "resistance": 0,
+      "total": 3
+    },
+    "extensionCoverage": {
+      "support": 3,
+      "resistance": 0,
+      "warnings": ["limited_downside_extension_coverage", "no_resistance_extension_coverage"]
+    },
+    "syntheticContinuationMapSummary": {
+      "count": 0,
+      "clearlyMarkedCount": 0
+    },
+    "diagnostics": ["clustered_level_areas_present", "limited_downside_extension_coverage"],
+    "diagnosticSemantics": {
+      "allFactualOnly": true,
+      "categories": {
+        "density": 1,
+        "coverage": 2
+      }
+    },
+    "densityMetricSummary": {
+      "present": true,
+      "classification": "dense_clustered",
+      "sideBias": "mixed",
+      "auditWindowPct": 30
+    },
+    "candidateInventoryGapSummary": {
+      "support": "no_gap",
+      "resistance": "no_gap",
+      "overall": "no_gap"
+    },
+    "volumeSessionContextSummary": {
+      "outcome": "surfaced_has_more_session_volume_context",
+      "support": "surfaced_has_more_session_volume_context",
+      "resistance": "no_nearby_session_volume_context",
+      "contextCount": 1
+    },
+    "sourceFiles": {
+      "5m": "ibkr/DEVS/5m/100-1780314300000.json",
+      "15m": "ibkr/DEVS/15m/100-1780329600000.json",
+      "4h": "ibkr/DEVS/4h/180-1780300800000.json",
+      "daily": "ibkr/DEVS/daily/520-1780272000000.json"
+    },
+    "cacheFingerprintSourceIntegrity": {
+      "cacheFingerprintCounts": {
+        "totalFingerprints": 8,
+        "levelEngineInputCount": 6,
+        "contextOnlyCount": 2,
+        "fifteenMinuteContextOnlyCount": 2,
+        "validationIssueCount": 9
+      },
+      "fifteenMinuteCacheFingerprintsContextOnly": true,
+      "mismatchCount": 0,
+      "prohibitedLanguageHitCount": 0
+    },
+    "fifteenMinuteContextOnlyStatus": "context_only",
+    "missingFacts": [],
+    "limitations": [
+      {
+        "code": "extension_coverage_warning",
+        "field": "DEVS.extensionCoverage.warnings",
+        "message": "limited_downside_extension_coverage"
+      }
+    ],
+    "safetyFlags": {
+      "noLookaheadApplied": true,
+      "levelOutputUnchanged": true,
+      "noRuntimeBehaviorChange": true,
+      "syntheticExtensionsClearlyMarked": true
+    }
+  },
+  "limitations": [
+    {
+      "code": "extension_coverage_warning",
+      "field": "DEVS.extensionCoverage.warnings",
+      "message": "limited_downside_extension_coverage"
+    }
+  ]
+}

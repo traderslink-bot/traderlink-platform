@@ -107,6 +107,49 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts Read Model Contract
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_read_model_contract`
+locks the facts-only trade-detail read-model contract for persisted
+level-analysis trade links.
+
+Added:
+
+- pure contract/helper module at
+  `src/lib/level-analysis/level-analysis-trade-detail-level-facts-contract.ts`
+- compact fixtures under
+  `src/lib/level-analysis/__fixtures__/trade-detail-level-facts-contract`
+- focused contract tests at
+  `src/lib/level-analysis/__tests__/level-analysis-trade-detail-level-facts-contract.test.ts`
+- contract doc at
+  `docs/level-analysis-journal-delivery-trade-detail-level-facts-read-model-contract.md`
+
+Contract behavior:
+
+- derives trade-detail availability from the existing saved review queue
+  level-facts state
+- surfaces compact attached facts only for trusted linked records
+- surfaces blocked facts without trusted linked summaries for blocked states
+- preserves old `LevelAnalysisSnapshot` v1 compatibility
+- enforces context-only 15m status for attached packaged delivery facts
+- keeps raw source payloads, route state, audit internals, and journal-owned
+  evaluation fields out of trade-detail level-facts state
+
+Boundaries remain:
+
+- no production UI wiring, route handlers, storage migrations, resolver
+  behavior, levels-system changes, or LevelEngine behavior changes
+- no recommendations, buy/sell/hold language, coaching, grading, P/L,
+  giveback, behavior scoring, review-priority changes, or execution-quality
+  inference
+
+Current best next step:
+
+- continue with
+  `journal_level_analysis_delivery_trade_detail_level_facts_route_implementation`
+  to add a feature-gated `/api/trades/[tradeId]/level-analysis/facts` route and
+  server read helper against the locked contract.
+
 ### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts Read Model Design
 
 Gate `journal_level_analysis_delivery_trade_detail_level_facts_read_model_design`

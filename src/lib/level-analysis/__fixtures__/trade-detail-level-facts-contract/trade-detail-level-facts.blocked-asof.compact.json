@@ -1,0 +1,53 @@
+{
+  "contractVersion": "trade_detail_level_facts_read_model_v1",
+  "savedTradeId": "trade_DEVS_2026_06_01_early",
+  "featureEnabled": true,
+  "availability": {
+    "contractVersion": "journal_level_analysis_review_queue_linking_v1",
+    "availability": "blocked_by_as_of_policy",
+    "label": "Level facts blocked by as-of policy",
+    "detail": "DEVS level facts were not attached because the selected as-of policy blocked the candidate.",
+    "scopeLabel": "level facts blocked",
+    "nextAction": "Keep the existing review queue state unless an explicit policy is selected.",
+    "linkId": "jlatl_trade_DEVS_2026_06_01_early_blocked_asof",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "rawPayloadHash": "sha256:aca8402b2221abb1a787b460ea0f73be82a3f914bc69f847caa78ee598f21669",
+    "sourceKind": "packaged_review_delivery",
+    "provider": "ibkr",
+    "symbol": "DEVS",
+    "asOfIso": "2026-06-01T16:00:00.000Z",
+    "asOfTimestamp": 1780329600000,
+    "limitationCount": 1,
+    "limitations": [
+      {
+        "code": "as_of_after_allowed_boundary",
+        "field": "symbolSummaryAsOfTimestamp",
+        "message": "Candidate symbol facts are after the selected trade boundary."
+      }
+    ]
+  },
+  "display": {
+    "shouldShowFactsPanel": false,
+    "sectionLabel": "level facts",
+    "evidenceBoundaryLabel": "Level facts are not attached to this trade detail."
+  },
+  "blockedFacts": {
+    "linkId": "jlatl_trade_DEVS_2026_06_01_early_blocked_asof",
+    "deliveryId": "lad_contract_DEVS_QUBT_2026_06_06T131000Z",
+    "rawPayloadHash": "sha256:aca8402b2221abb1a787b460ea0f73be82a3f914bc69f847caa78ee598f21669",
+    "sourceKind": "packaged_review_delivery",
+    "provider": "ibkr",
+    "symbol": "DEVS",
+    "asOfIso": "2026-06-01T16:00:00.000Z",
+    "asOfTimestamp": 1780329600000,
+    "matchReason": "as_of_after_allowed_boundary",
+    "checkedAt": "2026-06-06T19:15:00.000Z"
+  },
+  "limitations": [
+    {
+      "code": "as_of_after_allowed_boundary",
+      "field": "symbolSummaryAsOfTimestamp",
+      "message": "Candidate symbol facts are after the selected trade boundary."
+    }
+  ]
+}

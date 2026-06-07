@@ -1,0 +1,21 @@
+{
+  "contractVersion": "trade_detail_level_facts_read_model_v1",
+  "savedTradeId": "trade_DEVS_2026_06_01_001",
+  "featureEnabled": false,
+  "availability": {
+    "contractVersion": "journal_level_analysis_review_queue_linking_v1",
+    "availability": "feature_disabled",
+    "label": "Level facts not shown",
+    "detail": "Level facts are available only when the journal level-analysis queue feature is enabled.",
+    "scopeLabel": "execution and chart review only",
+    "nextAction": "Use the existing review queue.",
+    "limitationCount": 0,
+    "limitations": []
+  },
+  "display": {
+    "shouldShowFactsPanel": false,
+    "sectionLabel": "level facts",
+    "evidenceBoundaryLabel": "Level facts are not attached to this trade detail."
+  },
+  "limitations": []
+}
