@@ -1,0 +1,132 @@
+{
+  "contractVersion": "trade_detail_level_facts_ui_contract_v1",
+  "sourceReadModelContractVersion": "trade_detail_level_facts_read_model_v1",
+  "factualOnly": true,
+  "savedTradeId": "trade_SNAP_2026_05_01_001",
+  "featureEnabled": true,
+  "status": "attached",
+  "placement": {
+    "availabilityTargetTestId": "trade-feedback-scope",
+    "factsTargetTestId": "trade-supporting-details",
+    "availabilityPosition": "below_scope_detail_before_next_action",
+    "factsPosition": "supporting_evidence_before_product_evidence_cards"
+  },
+  "availabilityLine": {
+    "targetTestId": "trade-feedback-scope",
+    "position": "below_scope_detail_before_next_action",
+    "shouldRender": true,
+    "label": "Level facts attached",
+    "detail": "SNAP level facts from fixture are attached at 2026-05-01T14:20:00.000Z.",
+    "tone": "success"
+  },
+  "factsPanel": {
+    "targetTestId": "trade-supporting-details",
+    "position": "supporting_evidence_before_product_evidence_cards",
+    "shouldRender": true,
+    "title": "Level Facts",
+    "sections": [
+      {
+        "id": "header",
+        "title": "Level facts",
+        "detail": "Source and as-of metadata for attached level facts.",
+        "rows": [
+          {
+            "id": "header.symbol",
+            "label": "Symbol",
+            "value": { "kind": "text", "value": "SNAP" },
+            "tone": "info"
+          },
+          {
+            "id": "header.referencePrice",
+            "label": "Reference price",
+            "value": { "kind": "number", "value": 10 },
+            "tone": "neutral"
+          }
+        ],
+        "badges": [
+          { "id": "sourceKind", "label": "single snapshot v1", "tone": "info" },
+          { "id": "contextOnly15m", "label": "not_supplied", "tone": "safety" }
+        ]
+      },
+      {
+        "id": "nearest_levels",
+        "title": "Nearest levels",
+        "detail": "Closest support and resistance facts in the attached summary.",
+        "rows": [
+          {
+            "id": "nearest_levels.support.price",
+            "label": "Nearest support",
+            "value": { "kind": "number", "value": 9.75 },
+            "detail": "intradaySupport",
+            "tone": "info"
+          },
+          {
+            "id": "nearest_levels.resistance.price",
+            "label": "Nearest resistance",
+            "value": { "kind": "number", "value": 10.4 },
+            "detail": "intradayResistance",
+            "tone": "info"
+          }
+        ],
+        "badges": []
+      },
+      {
+        "id": "context_summaries",
+        "title": "Context summaries",
+        "detail": "Density, inventory, and volume/session summaries when supplied.",
+        "rows": [
+          {
+            "id": "density.present",
+            "label": "density present",
+            "value": { "kind": "boolean", "value": false },
+            "tone": "muted"
+          },
+          {
+            "id": "candidateInventory.present",
+            "label": "candidateInventory present",
+            "value": { "kind": "boolean", "value": false },
+            "tone": "muted"
+          },
+          {
+            "id": "volumeSession.volumeShelfCount",
+            "label": "volumeShelfCount",
+            "value": { "kind": "number", "value": 1 },
+            "tone": "info"
+          }
+        ],
+        "badges": []
+      },
+      {
+        "id": "limitations",
+        "title": "Limitations",
+        "detail": "Missing facts, limitations, and safety flags for this attachment.",
+        "rows": [
+          {
+            "id": "missingFacts",
+            "label": "Missing facts",
+            "value": {
+              "kind": "list",
+              "value": [
+                "density_metric",
+                "candidate_inventory_gap_summary",
+                "cache_fingerprint_summary"
+              ]
+            },
+            "tone": "notice"
+          }
+        ],
+        "badges": []
+      }
+    ]
+  },
+  "summary": {
+    "shouldShowFactsPanel": true,
+    "sectionCount": 4,
+    "limitationCount": 0,
+    "missingFactCount": 3,
+    "diagnosticCount": 2,
+    "sourceFileCount": 0,
+    "contextOnly15m": false
+  },
+  "limitations": []
+}

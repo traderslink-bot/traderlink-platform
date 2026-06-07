@@ -107,6 +107,48 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts UI Contract
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_ui_contract`
+locks the pure UI-facing contract for rendering trade-detail level facts after
+the facts route returns `trade_detail_level_facts_read_model_v1`.
+
+Added:
+
+- `src/lib/level-analysis/level-analysis-trade-detail-level-facts-ui-contract.ts`
+- compact fixtures under
+  `src/lib/level-analysis/__fixtures__/trade-detail-level-facts-ui-contract/`
+- focused tests at
+  `src/lib/level-analysis/__tests__/level-analysis-trade-detail-level-facts-ui-contract.test.ts`
+- docs at
+  `docs/level-analysis-journal-delivery-trade-detail-level-facts-ui-contract.md`
+- compact artifacts:
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-ui-contract.json`
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-ui-contract.txt`
+
+Behavior:
+
+- maps the facts read model to existing trade detail placement targets:
+  `trade-feedback-scope` and `trade-supporting-details`
+- renders attached packaged delivery and old single-snapshot facts as compact
+  sections
+- keeps blocked, not-checked, quarantined/unavailable, and disabled states from
+  rendering attached facts
+- excludes raw payloads and raw payload hashes from the UI contract
+- rejects prohibited fields, sections, and wording
+
+Boundaries:
+
+- no production UI wiring
+- no route handler changes
+- no storage migration
+- no levels-system or LevelEngine changes
+- no recommendations, trade advice, coaching, grading, P/L, giveback, behavior
+  scoring, or execution-quality inference
+
+Recommended next gate:
+`journal_level_analysis_delivery_trade_detail_level_facts_ui_implementation`.
+
 ### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts UI Design
 
 Gate `journal_level_analysis_delivery_trade_detail_level_facts_ui_design`
