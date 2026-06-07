@@ -107,6 +107,49 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts E2E Seeded Flow
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_e2e_seeded_flow`
+adds an offline seeded browser proof for the feature-gated trade detail level
+facts UI.
+
+Added:
+
+- focused Playwright config at `playwright.level-analysis.config.ts`
+- seeded browser spec at
+  `tests/e2e/level-analysis-trade-detail-seeded-flow.spec.ts`
+- npm script `test:e2e:level-analysis`
+- docs at
+  `docs/level-analysis-journal-delivery-trade-detail-level-facts-e2e-seeded-flow.md`
+- compact artifacts:
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-e2e-seeded-flow.json`
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-e2e-seeded-flow.txt`
+
+Behavior:
+
+- seeds an isolated SQLite DB under `artifacts/level-analysis-e2e`
+- saves a `DEVS` trade through the existing import dry-run UI
+- ingests the compact packaged level-analysis delivery fixture through the
+  delivery API
+- persists a trade link through the trade-link API
+- verifies the trade-detail facts API read model
+- opens the saved trade detail page and asserts the availability line and facts
+  panel render
+- checks the facts panel for raw payload terms and prohibited advice/scoring
+  language
+
+Boundaries:
+
+- no live IBKR login or candle fetch is required
+- no levels-system or LevelEngine changes
+- no storage schema or route behavior changes
+- no raw payload or raw payload hash display
+- no recommendations, trade advice, coaching, grading, P/L, giveback, behavior
+  scoring, or execution-quality inference
+
+Recommended next gate:
+`journal_level_analysis_delivery_trade_detail_level_facts_ci_hardening`.
+
 ### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts UI Implementation
 
 Gate `journal_level_analysis_delivery_trade_detail_level_facts_ui_implementation`

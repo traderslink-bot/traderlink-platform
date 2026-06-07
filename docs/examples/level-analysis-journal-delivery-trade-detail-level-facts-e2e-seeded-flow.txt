@@ -1,0 +1,44 @@
+Gate: journal_level_analysis_delivery_trade_detail_level_facts_e2e_seeded_flow
+
+Mode:
+Offline seeded browser flow.
+
+Live IBKR required:
+No.
+
+Command:
+npm run test:e2e:level-analysis
+
+Config:
+playwright.level-analysis.config.ts
+
+Spec:
+tests/e2e/level-analysis-trade-detail-seeded-flow.spec.ts
+
+Seed:
+1. Save a DEVS trade through the existing import dry-run UI.
+2. Ingest the compact packaged delivery fixture through the delivery API.
+3. Persist a trade link through the trade-link API.
+4. Verify the trade-detail facts API read model.
+5. Open the saved trade detail page.
+6. Assert the attached level facts availability line and facts panel render.
+
+Fixture:
+src/lib/level-analysis/__fixtures__/level-analysis-journal-delivery-package-v1.compact.json
+
+Feature flags:
+LEVEL_ANALYSIS_JOURNAL_DELIVERY_API_ENABLED
+LEVEL_ANALYSIS_JOURNAL_TRADE_LINK_API_ENABLED
+LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_ENABLED
+LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_UI_ENABLED
+
+Safety:
+No levels-system changes.
+No LevelEngine changes.
+No live candle fetch.
+No raw source payload or rawPayloadHash display.
+No recommendation, trade advice, coaching, grading, P/L, giveback,
+behavior-scoring, or buy/sell/hold wording in the facts panel.
+
+Recommended next gate:
+journal_level_analysis_delivery_trade_detail_level_facts_ci_hardening
