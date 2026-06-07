@@ -117,9 +117,10 @@ PR:
 - opened PR #54:
   `https://github.com/traderslink-bot/traderslink-trader-improvement-system/pull/54`
 - base: `main` at `384cfed125fb9456f45151bb71f06acddb6588cf`
-- head:
+- implementation branch:
   `codex/journal-level-analysis-delivery-trade-detail-level-facts-ci-hardening`
-  at `4e7276eab617b58cf37c8bcd70cfe612f594d59e`
+- implementation commit observed:
+  `4e7276eab617b58cf37c8bcd70cfe612f594d59e`
 
 GitHub checks:
 
@@ -128,6 +129,8 @@ GitHub checks:
   `https://github.com/traderslink-bot/traderslink-trader-improvement-system/actions/runs/27080992070`
 - `CI / test-and-verify` passed on pull_request run
   `https://github.com/traderslink-bot/traderslink-trader-improvement-system/actions/runs/27080992067`
+- after the first project-log update was pushed, both checks re-ran and passed
+  again on the doc-only branch head
 
 Result:
 
