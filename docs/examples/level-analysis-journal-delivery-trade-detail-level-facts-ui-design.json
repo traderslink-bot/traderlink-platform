@@ -1,0 +1,88 @@
+{
+  "gate": "journal_level_analysis_delivery_trade_detail_level_facts_ui_design",
+  "status": "design_only",
+  "sourceRoute": "GET /api/trades/[tradeId]/level-analysis/facts",
+  "sourceContractVersion": "trade_detail_level_facts_read_model_v1",
+  "featureFlags": {
+    "route": "LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_ENABLED",
+    "optionalUiRollout": "LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_UI_ENABLED"
+  },
+  "tradeDetailPlacement": {
+    "availability": {
+      "section": "What This Review Can Use",
+      "testId": "trade-feedback-scope",
+      "position": "below decisionReviewStatus.detail and above the existing Next line"
+    },
+    "attachedFacts": {
+      "section": "Supporting Evidence",
+      "testId": "trade-supporting-details",
+      "position": "inside the existing Supporting Evidence panel before product evidence cards"
+    }
+  },
+  "visibleStates": {
+    "attached": {
+      "availabilityLine": "Level facts attached",
+      "showFactsPanel": true
+    },
+    "not_checked": {
+      "availabilityLine": "Level facts not checked",
+      "showFactsPanel": false
+    },
+    "feature_disabled": {
+      "availabilityLine": "hidden by default",
+      "showFactsPanel": false
+    },
+    "blocked_by_as_of_policy": {
+      "availabilityLine": "Level facts blocked by as-of policy",
+      "showFactsPanel": false
+    },
+    "quarantined_or_unsafe": {
+      "availabilityLine": "Level facts quarantined",
+      "showFactsPanel": false
+    }
+  },
+  "attachedFactsSections": [
+    "header",
+    "nearest_levels",
+    "context_summaries",
+    "coverage_and_diagnostics",
+    "source_integrity",
+    "limitations"
+  ],
+  "allowedFacts": [
+    "symbol",
+    "provider",
+    "asOfIso",
+    "sourceKind",
+    "nearestSupport",
+    "nearestResistance",
+    "bucketCounts",
+    "extensionCoverage",
+    "diagnostics",
+    "densityMetricSummary",
+    "candidateInventoryGapSummary",
+    "volumeSessionContextSummary",
+    "sourceFiles",
+    "cacheFingerprintSourceIntegrity",
+    "fifteenMinuteContextOnlyStatus",
+    "missingFacts",
+    "limitations",
+    "safetyFlags"
+  ],
+  "nonGoals": [
+    "production_ui_wiring",
+    "raw_payload_exposure",
+    "auto_resolve_on_read",
+    "storage_migration",
+    "level_engine_change",
+    "levels_system_change",
+    "recommendations",
+    "trade_advice",
+    "coaching",
+    "grading",
+    "p_l",
+    "giveback",
+    "behavior_scoring"
+  ],
+  "recommendedNextGate": "journal_level_analysis_delivery_trade_detail_level_facts_ui_contract"
+}

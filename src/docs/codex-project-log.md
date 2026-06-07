@@ -107,6 +107,42 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts UI Design
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_ui_design`
+defines how the saved trade detail page should display persisted level-analysis
+facts after a trusted trade link exists.
+
+Added:
+
+- UI design doc at
+  `docs/level-analysis-journal-delivery-trade-detail-level-facts-ui-design.md`
+- compact artifacts:
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-ui-design.json`
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-ui-design.txt`
+
+Design decision:
+
+- consume only `GET /api/trades/[tradeId]/level-analysis/facts`
+- surface availability inside the existing `What This Review Can Use` boundary
+- render attached compact facts inside existing `Supporting Evidence`
+- keep blocked, unavailable, not-checked, and disabled states as compact status
+  rows without attached facts
+- keep source payloads, resolver behavior, persistence internals, scoring, and
+  coaching out of the UI boundary
+
+Boundaries:
+
+- design-only; no production UI wiring
+- no route handler changes
+- no storage migration
+- no levels-system or LevelEngine changes
+- no recommendations, trade advice, coaching, grading, P/L, giveback, behavior
+  scoring, or execution-quality inference
+
+Recommended next gate:
+`journal_level_analysis_delivery_trade_detail_level_facts_ui_contract`.
+
 ### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts Route Implementation
 
 Gate `journal_level_analysis_delivery_trade_detail_level_facts_route_implementation`

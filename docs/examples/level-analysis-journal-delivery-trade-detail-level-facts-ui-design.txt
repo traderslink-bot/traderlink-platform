@@ -1,0 +1,38 @@
+Gate: journal_level_analysis_delivery_trade_detail_level_facts_ui_design
+
+Decision:
+Use the existing trade detail evidence boundary. Surface level-facts
+availability in "What This Review Can Use" and render attached compact facts in
+"Supporting Evidence" only when the facts route says an attached panel should
+show.
+
+Source route:
+GET /api/trades/[tradeId]/level-analysis/facts
+
+Source contract:
+trade_detail_level_facts_read_model_v1
+
+Feature flags:
+LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_ENABLED
+Optional UI rollout flag:
+LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_UI_ENABLED
+
+Attached facts panel sections:
+header, nearest levels, context summaries, coverage and diagnostics, source
+integrity, limitations.
+
+Display states:
+attached -> show availability line and compact facts panel
+not_checked -> no attached facts
+feature_disabled -> hide by default
+blocked_by_as_of_policy -> compact status only
+quarantined_or_unsafe -> compact status only
+
+Hard boundaries:
+No raw payload exposure. No auto-resolve on read. No production UI in this
+design gate. No storage migration. No levels-system or LevelEngine changes. No
+recommendations, buy/sell/hold language, coaching, grading, P/L, giveback,
+behavior scoring, trade advice, or execution-quality inference.
+
+Recommended next gate:
+journal_level_analysis_delivery_trade_detail_level_facts_ui_contract
