@@ -107,6 +107,47 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts UI Implementation
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_ui_implementation`
+adds feature-gated trade detail UI rendering for persisted level-analysis facts.
+
+Added:
+
+- `app/intelligence/trades/[tradeId]/trade-detail-level-facts.tsx`
+- trade detail page wiring in
+  `app/intelligence/trades/[tradeId]/page.tsx`
+- UI feature flag
+  `LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_UI_ENABLED`
+- focused render tests at
+  `src/lib/level-analysis/__tests__/level-analysis-trade-detail-level-facts-ui-implementation.test.ts`
+- docs at
+  `docs/level-analysis-journal-delivery-trade-detail-level-facts-ui-implementation.md`
+- compact artifacts:
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-ui-implementation.json`
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-ui-implementation.txt`
+
+Behavior:
+
+- renders only when saved mode is active and both level-facts flags are enabled
+- availability line renders in `trade-feedback-scope`
+- attached facts panel renders in `trade-supporting-details`
+- old `LevelAnalysisSnapshot` v1 attached facts remain renderable
+- blocked, disabled, and missing-contract states do not render attached facts
+- rendered output excludes raw payload and raw payload hash wording
+
+Boundaries:
+
+- no route handler changes
+- no storage migration
+- no levels-system or LevelEngine changes
+- no auto-resolve on read
+- no recommendations, trade advice, coaching, grading, P/L, giveback, behavior
+  scoring, or execution-quality inference
+
+Recommended next gate:
+`journal_level_analysis_delivery_trade_detail_level_facts_e2e_seeded_flow`.
+
 ### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts UI Contract
 
 Gate `journal_level_analysis_delivery_trade_detail_level_facts_ui_contract`

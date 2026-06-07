@@ -17,6 +17,12 @@ import {
 import { buildSavedOrSampleTraderAnalyticsViewModel } from "@/src/lib/trader-analytics/server/saved-trader-analytics-data";
 import { buildTradeImportSourceCautionReadModel } from "@/src/lib/trader-analytics/server/saved-import-source-caution";
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
+import { getTradeDetailLevelFactsForApi } from "@/src/lib/level-analysis/level-analysis-journal-delivery-trade-link-api-service";
+import {
+  isLevelAnalysisTradeDetailLevelFactsEnabled,
+  isLevelAnalysisTradeDetailLevelFactsUiEnabled,
+} from "@/src/lib/level-analysis/level-analysis-journal-delivery-trade-link-storage";
+import { buildTradeDetailLevelFactsUiContract } from "@/src/lib/level-analysis/level-analysis-trade-detail-level-facts-ui-contract";
 import type { TradeReviewChecklist } from "@/src/lib/trader-analytics/product/types";
 import { mapDecisionReviewInsightForUser } from "@/src/lib/user-facing-behavior";
 import {
@@ -31,6 +37,10 @@ import {
 } from "@/app/app-ui";
 import { SavedImportSourceCaution } from "@/app/saved-import-source-caution";
 import { TradeReviewActions } from "./trade-review-actions";
+import {
+  TradeDetailLevelFactsAvailabilityLine,
+  TradeDetailLevelFactsPanel,
+} from "./trade-detail-level-facts";
 
 export const metadata: Metadata = {
   title: "Trade Review | Trader Intelligence",
@@ -910,6 +920,17 @@ export default async function TradeReviewPage({
           finalReplayPnl,
         )}.`
       : "This replay shows position movement now. Exact realized P/L progression is waiting until a reduction or closing execution is available.";
+  const levelFactsUiContract =
+    data.mode === "saved" &&
+    isLevelAnalysisTradeDetailLevelFactsEnabled() &&
+    isLevelAnalysisTradeDetailLevelFactsUiEnabled()
+      ? buildTradeDetailLevelFactsUiContract(
+          getTradeDetailLevelFactsForApi({
+            savedTradeId: trade.id,
+            featureEnabled: true,
+          }),
+        ).contract
+      : null;
 
   return (
     <main
@@ -1790,6 +1811,9 @@ export default async function TradeReviewPage({
                   <div className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
                     {decisionReviewStatus.detail}
                   </div>
+                  <TradeDetailLevelFactsAvailabilityLine
+                    contract={levelFactsUiContract}
+                  />
                   <div className="mt-2 text-sm text-sky-300">
                     Next: {decisionReviewStatus.nextAction}
                   </div>
@@ -2732,6 +2756,7 @@ export default async function TradeReviewPage({
                       Supporting Evidence
                     </h2>
                     <div className="mt-4 grid gap-3">
+                      <TradeDetailLevelFactsPanel contract={levelFactsUiContract} />
                       {evidenceCards.length === 0 ? (
                         <div className="text-sm text-zinc-500">
                           No product evidence cards are linked to this trade

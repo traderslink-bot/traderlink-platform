@@ -1,0 +1,40 @@
+{
+  "gate": "journal_level_analysis_delivery_trade_detail_level_facts_ui_implementation",
+  "status": "feature_gated_ui_wiring",
+  "routePage": "app/intelligence/trades/[tradeId]/page.tsx",
+  "component": "app/intelligence/trades/[tradeId]/trade-detail-level-facts.tsx",
+  "sourceReadModel": "trade_detail_level_facts_read_model_v1",
+  "sourceUiContract": "trade_detail_level_facts_ui_contract_v1",
+  "featureFlags": {
+    "factsRoute": "LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_ENABLED",
+    "factsUi": "LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_UI_ENABLED"
+  },
+  "placement": {
+    "availabilityLine": "trade-feedback-scope",
+    "factsPanel": "trade-supporting-details"
+  },
+  "renderedStates": {
+    "attached_packaged_delivery": "availability_line_and_facts_panel",
+    "attached_old_snapshot": "availability_line_and_facts_panel",
+    "blocked": "availability_line_only",
+    "feature_disabled": "hidden",
+    "missing_contract": "hidden"
+  },
+  "nonGoals": [
+    "route_handler_changes",
+    "storage_migration",
+    "auto_resolve_on_read",
+    "raw_payload_display",
+    "raw_payload_hash_display",
+    "level_engine_change",
+    "levels_system_change",
+    "recommendations",
+    "trade_advice",
+    "coaching",
+    "grading",
+    "p_l",
+    "giveback",
+    "behavior_scoring"
+  ],
+  "recommendedNextGate": "journal_level_analysis_delivery_trade_detail_level_facts_e2e_seeded_flow"
+}

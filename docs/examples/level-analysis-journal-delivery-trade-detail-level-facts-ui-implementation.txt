@@ -1,0 +1,34 @@
+Gate: journal_level_analysis_delivery_trade_detail_level_facts_ui_implementation
+
+Implementation:
+Feature-gated saved trade detail UI wiring for persisted level-analysis facts.
+
+Component:
+app/intelligence/trades/[tradeId]/trade-detail-level-facts.tsx
+
+Page wiring:
+app/intelligence/trades/[tradeId]/page.tsx
+
+Flags required:
+LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_ENABLED
+LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_UI_ENABLED
+
+Placement:
+Availability line renders in trade-feedback-scope.
+Facts panel renders in trade-supporting-details.
+
+Rendered states:
+attached packaged delivery -> availability line and facts panel
+attached old snapshot -> availability line and facts panel
+blocked -> availability line only
+feature disabled -> hidden
+missing contract -> hidden
+
+Boundaries:
+No route changes. No storage migration. No auto-resolve on read. No raw payload
+or raw payload hash display. No levels-system or LevelEngine changes. No
+recommendations, buy/sell/hold language, coaching, grading, P/L, giveback,
+behavior scoring, trade advice, or execution-quality inference.
+
+Recommended next gate:
+journal_level_analysis_delivery_trade_detail_level_facts_e2e_seeded_flow

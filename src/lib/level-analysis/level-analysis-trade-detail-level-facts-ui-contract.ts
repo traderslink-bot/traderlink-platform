@@ -560,7 +560,7 @@ function rowsFromAttachedFacts(
     section({
       id: "source_integrity",
       title: "Source integrity",
-      detail: "Cache and source metadata surfaced without raw payload access.",
+      detail: "Cache and source metadata surfaced as compact facts.",
       rows: [
         row({
           id: "sourceIntegrity.mismatchCount",
