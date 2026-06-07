@@ -1,0 +1,116 @@
+{
+  "contractVersion": "trade_detail_level_facts_read_model_v1",
+  "savedTradeId": "trade_SNAP_2026_05_01_001",
+  "featureEnabled": true,
+  "availability": {
+    "contractVersion": "journal_level_analysis_review_queue_linking_v1",
+    "availability": "attached",
+    "label": "Level facts attached",
+    "detail": "SNAP level facts from fixture are attached at 2026-05-01T14:20:00.000Z.",
+    "scopeLabel": "level facts",
+    "nextAction": "Open the trade detail to inspect factual level context.",
+    "linkId": "jlatl_trade_SNAP_2026_05_01_001_lad_contract_SNAP_v1",
+    "deliveryId": "lad_contract_SNAP_v1_2026_06_06T182500Z",
+    "rawPayloadHash": "sha256:c8d05f7ad8f9657182f253dfa2fb55b5e0586b5be7618c624484b6405cee341d",
+    "sourceKind": "single_snapshot_v1",
+    "provider": "fixture",
+    "symbol": "SNAP",
+    "asOfIso": "2026-05-01T14:20:00.000Z",
+    "asOfTimestamp": 1777645200000,
+    "fifteenMinuteContextOnlyStatus": "not_supplied",
+    "limitationCount": 0,
+    "limitations": []
+  },
+  "display": {
+    "shouldShowFactsPanel": true,
+    "sectionLabel": "level facts",
+    "evidenceBoundaryLabel": "Level facts are available as supporting evidence."
+  },
+  "attachedFacts": {
+    "linkId": "jlatl_trade_SNAP_2026_05_01_001_lad_contract_SNAP_v1",
+    "deliveryId": "lad_contract_SNAP_v1_2026_06_06T182500Z",
+    "rawPayloadHash": "sha256:c8d05f7ad8f9657182f253dfa2fb55b5e0586b5be7618c624484b6405cee341d",
+    "sourceKind": "single_snapshot_v1",
+    "provider": "fixture",
+    "symbol": "SNAP",
+    "asOfIso": "2026-05-01T14:20:00.000Z",
+    "asOfTimestamp": 1777645200000,
+    "referencePrice": 10,
+    "nearestSupport": {
+      "levelId": "SNAP-support-real-9p75",
+      "kind": "support",
+      "bucket": "intradaySupport",
+      "price": 9.75,
+      "representativePrice": 9.75,
+      "zoneLow": 9.7,
+      "zoneHigh": 9.8,
+      "strengthScore": 64,
+      "strengthLabel": "strong",
+      "distanceFromReferencePct": 0.025,
+      "isExtension": false
+    },
+    "nearestResistance": {
+      "levelId": "SNAP-resistance-real-10p40",
+      "kind": "resistance",
+      "bucket": "intradayResistance",
+      "price": 10.4,
+      "representativePrice": 10.4,
+      "zoneLow": 10.35,
+      "zoneHigh": 10.45,
+      "strengthScore": 68,
+      "strengthLabel": "strong",
+      "distanceFromReferencePct": 0.04,
+      "isExtension": false
+    },
+    "bucketCounts": {
+      "majorSupport": 0,
+      "majorResistance": 0,
+      "intermediateSupport": 0,
+      "intermediateResistance": 0,
+      "intradaySupport": 1,
+      "intradayResistance": 1,
+      "extensionSupport": 0,
+      "extensionResistance": 1,
+      "total": 3
+    },
+    "extensionCounts": {
+      "support": 0,
+      "resistance": 1,
+      "total": 1
+    },
+    "extensionCoverage": {
+      "supportExtensions": 0,
+      "resistanceExtensions": 1,
+      "highestResistanceExtension": 13,
+      "upsideCoveragePct": 30,
+      "warnings": ["no_support_extension_coverage"]
+    },
+    "syntheticContinuationMapSummary": {
+      "count": 1,
+      "supportCount": 0,
+      "resistanceCount": 1
+    },
+    "diagnostics": ["no_support_extension_coverage", "unenriched_levels_present"],
+    "volumeSessionContextSummary": {
+      "hasSessionFacts": true,
+      "hasVolumeFacts": true,
+      "volumeShelfCount": 1
+    },
+    "fifteenMinuteContextOnlyStatus": "not_supplied",
+    "missingFacts": [
+      "density_metric",
+      "candidate_inventory_gap_summary",
+      "cache_fingerprint_summary"
+    ],
+    "limitations": [],
+    "safetyFlags": {
+      "noLookaheadApplied": true,
+      "levelOutputUnchanged": true,
+      "factsOnlyVWAP": true,
+      "shelvesAreFactsOnly": true,
+      "syntheticExtensionsClearlyMarked": true,
+      "noRuntimeBehaviorChange": true
+    }
+  },
+  "limitations": []
+}

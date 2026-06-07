@@ -1,0 +1,21 @@
+{
+  "contractVersion": "trade_detail_level_facts_read_model_v1",
+  "savedTradeId": "trade_MISSING_2026_06_01_001",
+  "featureEnabled": true,
+  "availability": {
+    "contractVersion": "journal_level_analysis_review_queue_linking_v1",
+    "availability": "not_checked",
+    "label": "Level facts not checked",
+    "detail": "No level-facts link has been checked for this saved trade.",
+    "scopeLabel": "level facts not checked",
+    "nextAction": "Use the existing review queue.",
+    "limitationCount": 0,
+    "limitations": []
+  },
+  "display": {
+    "shouldShowFactsPanel": false,
+    "sectionLabel": "level facts",
+    "evidenceBoundaryLabel": "Level facts are not attached to this trade detail."
+  },
+  "limitations": []
+}
