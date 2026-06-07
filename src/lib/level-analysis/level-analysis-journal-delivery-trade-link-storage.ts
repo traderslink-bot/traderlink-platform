@@ -20,6 +20,9 @@ export const LEVEL_ANALYSIS_TRADE_LINK_ADMIN_DEBUG_FEATURE_FLAG =
 export const LEVEL_ANALYSIS_TRADE_DETAIL_LEVEL_FACTS_FEATURE_FLAG =
   "LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_ENABLED";
 
+export const LEVEL_ANALYSIS_TRADE_DETAIL_LEVEL_FACTS_UI_FEATURE_FLAG =
+  "LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_UI_ENABLED";
+
 export interface SaveJournalLevelAnalysisTradeLinkRecordResult {
   status: "stored" | "duplicate";
   record: JournalLevelAnalysisTradeLinkRecord;
@@ -68,6 +71,12 @@ export function isLevelAnalysisTradeDetailLevelFactsEnabled(
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
   return envEnabled(env[LEVEL_ANALYSIS_TRADE_DETAIL_LEVEL_FACTS_FEATURE_FLAG]);
+}
+
+export function isLevelAnalysisTradeDetailLevelFactsUiEnabled(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return envEnabled(env[LEVEL_ANALYSIS_TRADE_DETAIL_LEVEL_FACTS_UI_FEATURE_FLAG]);
 }
 
 function json<T>(value: T): string {
