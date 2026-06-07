@@ -107,6 +107,43 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-07 Level Analysis Delivery Trade Detail Level Facts CI Hardening PR Status
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_ci_hardening`
+is CI-green and in PR observation/merge-decision state.
+
+PR:
+
+- PR #54, "Harden level analysis trade detail CI":
+  `https://github.com/traderslink-bot/traderslink-trader-improvement-system/pull/54`
+- state: open, not draft, clean / mergeable
+- base: `main`
+- branch:
+  `codex/journal-level-analysis-delivery-trade-detail-level-facts-ci-hardening`
+- CI-green head SHA observed before this log-only resume update:
+  `2fa900feb9af80c97aea9a2850df350e0d7750ba`
+
+GitHub checks observed on that head:
+
+- `CI / test-and-verify` passed
+- `Level Analysis Trade Detail Facts / Seeded trade detail level facts flow`
+  passed
+
+Status:
+
+- PR observation for this gate is complete; the branch is not merged yet
+- this entry is documentation-only and creates no product, storage, route, or
+  ingestion behavior change
+- no CI/test reliability fixes are currently needed
+- no journal ingestion rerun was performed
+- no levels-system, LevelEngine, storage schema, route behavior, trade
+  recommendation/advice/coaching/grading/P/L/giveback/behavior scoring, or raw
+  payload UI exposure changes are needed
+
+Current best next step:
+
+- merge PR #54 when ready, or continue only after the merge decision is made.
+
 ### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts CI Observation
 
 Gate `journal_level_analysis_delivery_trade_detail_level_facts_ci_observation`
