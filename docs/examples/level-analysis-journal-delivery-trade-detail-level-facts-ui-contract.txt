@@ -1,0 +1,37 @@
+Gate: journal_level_analysis_delivery_trade_detail_level_facts_ui_contract
+
+Contract:
+trade_detail_level_facts_ui_contract_v1
+
+Source:
+trade_detail_level_facts_read_model_v1 from
+GET /api/trades/[tradeId]/level-analysis/facts
+
+Module:
+src/lib/level-analysis/level-analysis-trade-detail-level-facts-ui-contract.ts
+
+Placement:
+Availability line -> trade-feedback-scope, below scope detail before next
+action.
+Facts panel -> trade-supporting-details, before product evidence cards.
+
+Panel sections:
+header, nearest_levels, context_summaries, coverage_and_diagnostics,
+source_integrity, limitations.
+
+States:
+attached renders an availability line and facts panel.
+not_checked renders an availability line and no facts panel.
+feature_disabled hides both by default.
+blocked_by_as_of_policy renders an availability line and no facts panel.
+quarantined_or_unsafe renders an availability line and no facts panel.
+
+Boundaries:
+No live UI wiring. No route changes. No storage migration. No raw payload or
+raw payload hash display. No auto-resolve on read. No levels-system or
+LevelEngine changes. No recommendations, buy/sell/hold language, coaching,
+grading, P/L, giveback, behavior scoring, trade advice, or execution-quality
+inference.
+
+Recommended next gate:
+journal_level_analysis_delivery_trade_detail_level_facts_ui_implementation

@@ -1,0 +1,39 @@
+{
+  "contractVersion": "trade_detail_level_facts_ui_contract_v1",
+  "sourceReadModelContractVersion": "trade_detail_level_facts_read_model_v1",
+  "factualOnly": true,
+  "savedTradeId": "trade_DEVS_2026_06_01_001",
+  "featureEnabled": false,
+  "status": "feature_disabled",
+  "placement": {
+    "availabilityTargetTestId": "trade-feedback-scope",
+    "factsTargetTestId": "trade-supporting-details",
+    "availabilityPosition": "below_scope_detail_before_next_action",
+    "factsPosition": "supporting_evidence_before_product_evidence_cards"
+  },
+  "availabilityLine": {
+    "targetTestId": "trade-feedback-scope",
+    "position": "below_scope_detail_before_next_action",
+    "shouldRender": false,
+    "label": "Level facts disabled",
+    "detail": "Level facts are hidden.",
+    "tone": "muted"
+  },
+  "factsPanel": {
+    "targetTestId": "trade-supporting-details",
+    "position": "supporting_evidence_before_product_evidence_cards",
+    "shouldRender": false,
+    "title": "Level Facts",
+    "sections": []
+  },
+  "summary": {
+    "shouldShowFactsPanel": false,
+    "sectionCount": 0,
+    "limitationCount": 0,
+    "missingFactCount": 0,
+    "diagnosticCount": 0,
+    "sourceFileCount": 0,
+    "contextOnly15m": false
+  },
+  "limitations": []
+}

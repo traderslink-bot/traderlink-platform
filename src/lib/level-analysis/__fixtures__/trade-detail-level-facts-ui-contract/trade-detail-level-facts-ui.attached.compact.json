@@ -1,0 +1,204 @@
+{
+  "contractVersion": "trade_detail_level_facts_ui_contract_v1",
+  "sourceReadModelContractVersion": "trade_detail_level_facts_read_model_v1",
+  "factualOnly": true,
+  "savedTradeId": "trade_DEVS_2026_06_01_001",
+  "featureEnabled": true,
+  "status": "attached",
+  "placement": {
+    "availabilityTargetTestId": "trade-feedback-scope",
+    "factsTargetTestId": "trade-supporting-details",
+    "availabilityPosition": "below_scope_detail_before_next_action",
+    "factsPosition": "supporting_evidence_before_product_evidence_cards"
+  },
+  "availabilityLine": {
+    "targetTestId": "trade-feedback-scope",
+    "position": "below_scope_detail_before_next_action",
+    "shouldRender": true,
+    "label": "Level facts attached",
+    "detail": "DEVS level facts from ibkr are attached at 2026-06-01T16:00:00.000Z.",
+    "tone": "success"
+  },
+  "factsPanel": {
+    "targetTestId": "trade-supporting-details",
+    "position": "supporting_evidence_before_product_evidence_cards",
+    "shouldRender": true,
+    "title": "Level Facts",
+    "sections": [
+      {
+        "id": "header",
+        "title": "Level facts",
+        "detail": "Source and as-of metadata for attached level facts.",
+        "rows": [
+          {
+            "id": "header.symbol",
+            "label": "Symbol",
+            "value": { "kind": "text", "value": "DEVS" },
+            "tone": "info"
+          },
+          {
+            "id": "header.provider",
+            "label": "Provider",
+            "value": { "kind": "text", "value": "ibkr" },
+            "tone": "info"
+          },
+          {
+            "id": "header.referencePrice",
+            "label": "Reference price",
+            "value": { "kind": "number", "value": 0.2705 },
+            "tone": "neutral"
+          }
+        ],
+        "badges": [
+          { "id": "sourceKind", "label": "packaged review delivery", "tone": "info" },
+          { "id": "contextOnly15m", "label": "context_only", "tone": "safety" }
+        ]
+      },
+      {
+        "id": "nearest_levels",
+        "title": "Nearest levels",
+        "detail": "Closest support and resistance facts in the attached summary.",
+        "rows": [
+          {
+            "id": "nearest_levels.support.price",
+            "label": "Nearest support",
+            "value": { "kind": "number", "value": 0.27 },
+            "detail": "intermediateSupport",
+            "tone": "info"
+          },
+          {
+            "id": "nearest_levels.resistance.price",
+            "label": "Nearest resistance",
+            "value": { "kind": "number", "value": 0.2772 },
+            "detail": "intradayResistance",
+            "tone": "info"
+          }
+        ],
+        "badges": []
+      },
+      {
+        "id": "context_summaries",
+        "title": "Context summaries",
+        "detail": "Density, inventory, and volume/session summaries when supplied.",
+        "rows": [
+          {
+            "id": "density.classification",
+            "label": "classification",
+            "value": { "kind": "text", "value": "dense_clustered" },
+            "tone": "info"
+          },
+          {
+            "id": "candidateInventory.overall",
+            "label": "overall",
+            "value": { "kind": "text", "value": "no_gap" },
+            "tone": "info"
+          },
+          {
+            "id": "volumeSession.outcome",
+            "label": "outcome",
+            "value": {
+              "kind": "text",
+              "value": "surfaced_has_more_session_volume_context"
+            },
+            "tone": "info"
+          }
+        ],
+        "badges": []
+      },
+      {
+        "id": "coverage_and_diagnostics",
+        "title": "Coverage and diagnostics",
+        "detail": "Bucket counts, extension coverage, synthetic markers, and diagnostics.",
+        "rows": [
+          {
+            "id": "bucketCounts.total",
+            "label": "Bucket total",
+            "value": { "kind": "number", "value": 16 },
+            "tone": "neutral"
+          },
+          {
+            "id": "diagnostics",
+            "label": "Diagnostics",
+            "value": {
+              "kind": "list",
+              "value": [
+                "clustered_level_areas_present",
+                "limited_downside_extension_coverage"
+              ]
+            },
+            "tone": "notice"
+          }
+        ],
+        "badges": []
+      },
+      {
+        "id": "source_integrity",
+        "title": "Source integrity",
+        "detail": "Cache and source metadata surfaced without raw payload access.",
+        "rows": [
+          {
+            "id": "sourceIntegrity.mismatchCount",
+            "label": "Cache mismatch count",
+            "value": { "kind": "number", "value": 0 },
+            "tone": "safety"
+          },
+          {
+            "id": "sourceIntegrity.fifteenMinuteContextOnly",
+            "label": "15m context-only",
+            "value": { "kind": "boolean", "value": true },
+            "tone": "safety"
+          },
+          {
+            "id": "source_integrity.sourceFile.15m",
+            "label": "15m source path",
+            "value": {
+              "kind": "text",
+              "value": "ibkr/DEVS/15m/100-1780329600000.json"
+            },
+            "tone": "safety"
+          }
+        ],
+        "badges": []
+      },
+      {
+        "id": "limitations",
+        "title": "Limitations",
+        "detail": "Missing facts, limitations, and safety flags for this attachment.",
+        "rows": [
+          {
+            "id": "missingFacts",
+            "label": "Missing facts",
+            "value": { "kind": "empty", "value": null },
+            "tone": "muted"
+          },
+          {
+            "id": "limitations",
+            "label": "Limitations",
+            "value": {
+              "kind": "list",
+              "value": ["limited_downside_extension_coverage"]
+            },
+            "tone": "notice"
+          }
+        ],
+        "badges": []
+      }
+    ]
+  },
+  "summary": {
+    "shouldShowFactsPanel": true,
+    "sectionCount": 6,
+    "limitationCount": 1,
+    "missingFactCount": 0,
+    "diagnosticCount": 2,
+    "sourceFileCount": 4,
+    "contextOnly15m": true
+  },
+  "limitations": [
+    {
+      "code": "extension_coverage_warning",
+      "field": "DEVS.extensionCoverage.warnings",
+      "message": "limited_downside_extension_coverage"
+    }
+  ]
+}

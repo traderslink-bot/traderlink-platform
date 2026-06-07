@@ -1,0 +1,69 @@
+{
+  "gate": "journal_level_analysis_delivery_trade_detail_level_facts_ui_contract",
+  "status": "contract_and_fixture_gate",
+  "contractVersion": "trade_detail_level_facts_ui_contract_v1",
+  "sourceReadModelContractVersion": "trade_detail_level_facts_read_model_v1",
+  "module": "src/lib/level-analysis/level-analysis-trade-detail-level-facts-ui-contract.ts",
+  "sourceRoute": "GET /api/trades/[tradeId]/level-analysis/facts",
+  "placement": {
+    "availabilityTargetTestId": "trade-feedback-scope",
+    "availabilityPosition": "below_scope_detail_before_next_action",
+    "factsTargetTestId": "trade-supporting-details",
+    "factsPosition": "supporting_evidence_before_product_evidence_cards"
+  },
+  "states": {
+    "attached": {
+      "availabilityLine": true,
+      "factsPanel": true
+    },
+    "not_checked": {
+      "availabilityLine": true,
+      "factsPanel": false
+    },
+    "feature_disabled": {
+      "availabilityLine": false,
+      "factsPanel": false
+    },
+    "blocked_by_as_of_policy": {
+      "availabilityLine": true,
+      "factsPanel": false
+    },
+    "quarantined_or_unsafe": {
+      "availabilityLine": true,
+      "factsPanel": false
+    }
+  },
+  "factsPanelSections": [
+    "header",
+    "nearest_levels",
+    "context_summaries",
+    "coverage_and_diagnostics",
+    "source_integrity",
+    "limitations"
+  ],
+  "fixtures": [
+    "trade-detail-level-facts-ui.attached.compact.json",
+    "trade-detail-level-facts-ui.old-snapshot-attached.compact.json",
+    "trade-detail-level-facts-ui.blocked-asof.compact.json",
+    "trade-detail-level-facts-ui.not-checked.compact.json",
+    "trade-detail-level-facts-ui.feature-disabled.compact.json"
+  ],
+  "nonGoals": [
+    "production_ui_wiring",
+    "route_handler_changes",
+    "storage_migration",
+    "raw_payload_exposure",
+    "raw_payload_hash_display",
+    "auto_resolve_on_read",
+    "level_engine_change",
+    "levels_system_change",
+    "recommendations",
+    "trade_advice",
+    "coaching",
+    "grading",
+    "p_l",
+    "giveback",
+    "behavior_scoring"
+  ],
+  "recommendedNextGate": "journal_level_analysis_delivery_trade_detail_level_facts_ui_implementation"
+}

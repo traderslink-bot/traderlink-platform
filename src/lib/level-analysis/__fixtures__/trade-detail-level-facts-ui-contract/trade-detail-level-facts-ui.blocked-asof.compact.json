@@ -1,0 +1,45 @@
+{
+  "contractVersion": "trade_detail_level_facts_ui_contract_v1",
+  "sourceReadModelContractVersion": "trade_detail_level_facts_read_model_v1",
+  "factualOnly": true,
+  "savedTradeId": "trade_DEVS_2026_06_01_early",
+  "featureEnabled": true,
+  "status": "blocked_by_as_of_policy",
+  "placement": {
+    "availabilityTargetTestId": "trade-feedback-scope",
+    "factsTargetTestId": "trade-supporting-details",
+    "availabilityPosition": "below_scope_detail_before_next_action",
+    "factsPosition": "supporting_evidence_before_product_evidence_cards"
+  },
+  "availabilityLine": {
+    "targetTestId": "trade-feedback-scope",
+    "position": "below_scope_detail_before_next_action",
+    "shouldRender": true,
+    "label": "Level facts blocked by as-of policy",
+    "detail": "DEVS level facts were not attached because the selected as-of policy blocked the candidate.",
+    "tone": "warning"
+  },
+  "factsPanel": {
+    "targetTestId": "trade-supporting-details",
+    "position": "supporting_evidence_before_product_evidence_cards",
+    "shouldRender": false,
+    "title": "Level Facts",
+    "sections": []
+  },
+  "summary": {
+    "shouldShowFactsPanel": false,
+    "sectionCount": 0,
+    "limitationCount": 1,
+    "missingFactCount": 0,
+    "diagnosticCount": 0,
+    "sourceFileCount": 0,
+    "contextOnly15m": false
+  },
+  "limitations": [
+    {
+      "code": "as_of_after_allowed_boundary",
+      "field": "symbolSummaryAsOfTimestamp",
+      "message": "Candidate symbol facts are after the selected trade boundary."
+    }
+  ]
+}
