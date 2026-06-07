@@ -15,6 +15,16 @@ import type { SavedExecutionTrade } from "../product/types";
 import { getLatestSavedTraderAnalyticsReport } from "../product/selectors";
 import { mapDecisionReviewInsightForUser } from "../../user-facing-behavior";
 import type { UserFacingDecisionReviewInsight } from "../../user-facing-behavior";
+import {
+  buildSavedReviewQueueLevelFactsReadModelFromRepository,
+} from "../../level-analysis/level-analysis-review-queue-linking-read-model";
+import type {
+  SavedReviewQueueLevelFactsReadModel,
+  SavedReviewQueueLevelFactsState,
+} from "../../level-analysis/level-analysis-review-queue-linking-contract";
+import type {
+  JournalLevelAnalysisTradeLinkRepository,
+} from "../../level-analysis/level-analysis-journal-delivery-trade-link-storage";
 
 export type SavedReviewQueueFilter =
   | "all"
@@ -69,6 +79,7 @@ export interface SavedReviewQueueItem {
   hasSnapshot: boolean;
   hasDiagnostics: boolean;
   generatedAt: string | null;
+  levelFacts: SavedReviewQueueLevelFactsState;
 }
 
 export interface SavedReviewQueueReadModel {
@@ -79,6 +90,7 @@ export interface SavedReviewQueueReadModel {
   tabs: SavedReviewQueueTab[];
   items: SavedReviewQueueItem[];
   allItems: SavedReviewQueueItem[];
+  levelFacts: SavedReviewQueueLevelFactsReadModel;
   emptyState: {
     kind: "no_saved_import" | "no_saved_review_jobs" | "filter_empty" | "ready";
     title: string;
@@ -368,6 +380,7 @@ function buildQueueItem(args: {
   snapshot: PersistedDecisionReviewSnapshot | undefined;
   diagnostic: PersistedDecisionReviewDiagnostic | undefined;
   repository: SqliteImportCommitRepository;
+  levelFactsByTradeId: Record<string, SavedReviewQueueLevelFactsState>;
 }): SavedReviewQueueItem {
   const lane = laneForStatus(args.job.status);
   const snapshotScore = args.snapshot ? snapshotPriority(args.snapshot) : null;
@@ -402,6 +415,7 @@ function buildQueueItem(args: {
   const headline = chartPrimary
     ? `${chartPrimary.label}. ${chartPrimary.detail}`
     : (args.snapshot?.review.coachingHeadline ?? stateCopy.stateDetail);
+  const levelFacts = args.levelFactsByTradeId[args.job.savedTradeId];
 
   return {
     id: args.job.id,
@@ -440,6 +454,7 @@ function buildQueueItem(args: {
     hasDiagnostics: Boolean(args.diagnostic),
     generatedAt:
       args.snapshot?.generatedAt ?? args.diagnostic?.generatedAt ?? null,
+    levelFacts,
   };
 }
 
@@ -519,6 +534,8 @@ export function buildSavedReviewQueueReadModel(args: {
   accountId?: string;
   userId?: string;
   activeFilter?: string | null;
+  levelFactsFeatureEnabled?: boolean;
+  levelFactsTradeLinkRepository?: JournalLevelAnalysisTradeLinkRepository;
 }): SavedReviewQueueReadModel {
   const accountId = args.accountId ?? DEMO_ACCOUNT_ID;
   const userId = args.userId ?? DEMO_USER_ID;
@@ -526,6 +543,12 @@ export function buildSavedReviewQueueReadModel(args: {
   const batch = args.repository.getLatestCommittedBatch(accountId);
 
   if (!batch) {
+    const levelFacts = buildSavedReviewQueueLevelFactsReadModelFromRepository({
+      tradeIds: [],
+      featureEnabled: args.levelFactsFeatureEnabled,
+      tradeLinkRepository: args.levelFactsTradeLinkRepository,
+    });
+
     return {
       contractVersion: "saved_review_queue_read_model_v1",
       source: "saved_sqlite",
@@ -541,6 +564,7 @@ export function buildSavedReviewQueueReadModel(args: {
       ),
       items: [],
       allItems: [],
+      levelFacts,
       emptyState: emptyState({
         importBatchId: null,
         allCount: 0,
@@ -550,6 +574,12 @@ export function buildSavedReviewQueueReadModel(args: {
   }
 
   const jobs = args.repository.listDecisionReviewJobs(batch.id);
+  const levelFacts =
+    buildSavedReviewQueueLevelFactsReadModelFromRepository({
+      tradeIds: jobs.map((job) => job.savedTradeId),
+      featureEnabled: args.levelFactsFeatureEnabled,
+      tradeLinkRepository: args.levelFactsTradeLinkRepository,
+    });
   const savedTrades = new Map(
     args.repository
       .listSavedTrades(accountId)
@@ -588,6 +618,7 @@ export function buildSavedReviewQueueReadModel(args: {
         snapshot: snapshots.get(job.savedTradeId),
         diagnostic: diagnosticsByTrade.get(job.savedTradeId),
         repository: args.repository,
+        levelFactsByTradeId: levelFacts.statesByTradeId,
       }),
     )
     .sort(
@@ -614,6 +645,7 @@ export function buildSavedReviewQueueReadModel(args: {
     tabs,
     items: filtered,
     allItems,
+    levelFacts,
     emptyState: emptyState({
       importBatchId: batch.id,
       allCount: allItems.length,

@@ -40,6 +40,9 @@ export interface JournalLevelAnalysisTradeLinkRepository {
   getLatestTradeLinkForSavedTrade(
     savedTradeId: string,
   ): JournalLevelAnalysisTradeLinkRecord | null;
+  getLatestTradeLinksForSavedTrades(
+    savedTradeIds: string[],
+  ): Record<string, JournalLevelAnalysisTradeLinkRecord>;
 }
 
 function envEnabled(value: string | undefined): boolean {
@@ -211,6 +214,44 @@ export class SqliteJournalLevelAnalysisTradeLinkRepository
       .get(savedTradeId);
 
     return row ? rowJson<JournalLevelAnalysisTradeLinkRecord>(row) : null;
+  }
+
+  getLatestTradeLinksForSavedTrades(
+    savedTradeIds: string[],
+  ): Record<string, JournalLevelAnalysisTradeLinkRecord> {
+    const uniqueTradeIds = [...new Set(savedTradeIds.filter(Boolean))];
+    const latestByTradeId: Record<string, JournalLevelAnalysisTradeLinkRecord> = {};
+
+    if (uniqueTradeIds.length === 0) {
+      return latestByTradeId;
+    }
+
+    for (let index = 0; index < uniqueTradeIds.length; index += 500) {
+      const chunk = uniqueTradeIds.slice(index, index + 500);
+      const placeholders = chunk.map(() => "?").join(", ");
+      const rows = this.db
+        .prepare(
+          `SELECT saved_trade_id, record_json
+           FROM journal_level_analysis_trade_links
+           WHERE saved_trade_id IN (${placeholders})
+           ORDER BY saved_trade_id ASC, updated_at DESC, id DESC`,
+        )
+        .all(...chunk) as Array<{
+        saved_trade_id: string;
+        record_json: string;
+      }>;
+
+      for (const row of rows) {
+        if (latestByTradeId[row.saved_trade_id]) {
+          continue;
+        }
+
+        latestByTradeId[row.saved_trade_id] =
+          parseJson<JournalLevelAnalysisTradeLinkRecord>(row.record_json);
+      }
+    }
+
+    return latestByTradeId;
   }
 
   private insertRecord(record: JournalLevelAnalysisTradeLinkRecord): void {

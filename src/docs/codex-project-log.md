@@ -107,6 +107,47 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Review Queue Linking Read Model Implementation
+
+Gate `journal_level_analysis_delivery_review_queue_linking_read_model_implementation`
+implements the server-side saved review queue join for persisted level-analysis
+trade links.
+
+Added:
+
+- display/read-model feature flag helper:
+  `LEVEL_ANALYSIS_JOURNAL_REVIEW_QUEUE_LEVEL_FACTS_ENABLED`
+- repository batch method:
+  `SqliteJournalLevelAnalysisTradeLinkRepository.getLatestTradeLinksForSavedTrades`
+- repository-backed level-facts read-model helper at
+  `src/lib/level-analysis/level-analysis-review-queue-linking-read-model.ts`
+- `levelFacts` on `SavedReviewQueueReadModel` and each `SavedReviewQueueItem`
+- focused read-model tests at
+  `src/lib/level-analysis/__tests__/level-analysis-review-queue-linking-read-model.test.ts`
+- implementation doc at
+  `docs/level-analysis-journal-delivery-review-queue-linking-read-model-implementation.md`
+
+Behavior:
+
+- when the display flag is off, queue items receive `feature_disabled` states
+  and the trade-link repository is not read
+- when the flag is on, the queue batches saved trade IDs and joins to latest
+  persisted trade links
+- old `LevelAnalysisSnapshot` v1 links and packaged review delivery links both
+  remain supported
+- level-facts availability does not change queue priority, filters, lanes, or
+  ordering
+- raw source payloads stay out of queue state
+- no production UI, route handler, auto-resolve, storage migration,
+  levels-system, or LevelEngine behavior changed
+
+Current best next step:
+
+- continue with
+  `journal_level_analysis_delivery_trade_detail_level_facts_read_model_design`
+  to design how trade-detail pages should surface attached compact level facts
+  inside the existing evidence boundary.
+
 ### 2026-06-06 Level Analysis Delivery Review Queue Linking Contract
 
 Gate `journal_level_analysis_delivery_review_queue_linking_contract` locks the
