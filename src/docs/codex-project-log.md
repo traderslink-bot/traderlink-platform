@@ -107,6 +107,48 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts Read Model Design
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_read_model_design`
+defines how trade detail should read and present persisted level-analysis facts
+after a trade link exists.
+
+Added docs-only artifacts:
+
+- main design doc at
+  `docs/level-analysis-journal-delivery-trade-detail-level-facts-read-model-design.md`
+- compact JSON artifact at
+  `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-read-model-design.json`
+- compact text handoff at
+  `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-read-model-design.txt`
+
+Recommended path:
+
+- add a dedicated `TradeDetailLevelFactsReadModel`
+- derive the same factual availability state used by saved review queues
+- include compact attached facts only for trusted linked records
+- keep blocked/unavailable states factual and compact
+- prefer a display route such as
+  `GET /api/trades/[tradeId]/level-analysis/facts`
+- keep the existing `GET /api/trades/[tradeId]/level-analysis` route as the
+  compatibility trade-link route
+- gate trade-detail display behind
+  `LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_ENABLED=1`
+
+Boundaries remain:
+
+- no production UI wiring, route handlers, storage migrations, resolver
+  behavior, levels-system changes, or LevelEngine behavior changes
+- no raw payload exposure, auto-resolve-on-read, recommendations, buy/sell/hold
+  language, coaching, grading, P/L, giveback, behavior scoring, or
+  execution-quality inference
+
+Current best next step:
+
+- continue with
+  `journal_level_analysis_delivery_trade_detail_level_facts_read_model_contract`
+  to lock the trade-detail read-model contract and compact fixtures.
+
 ### 2026-06-06 Level Analysis Delivery Review Queue Linking Read Model Implementation
 
 Gate `journal_level_analysis_delivery_review_queue_linking_read_model_implementation`

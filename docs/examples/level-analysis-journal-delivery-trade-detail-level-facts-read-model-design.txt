@@ -1,0 +1,40 @@
+Gate: journal_level_analysis_delivery_trade_detail_level_facts_read_model_design
+
+Decision:
+Add a dedicated trade-detail level-facts read model instead of rendering the
+persisted trade-link record directly.
+
+Preferred source:
+Read the latest persisted JournalLevelAnalysisTradeLinkRecord by savedTradeId,
+derive the same availability state used by saved review queues, and expose only
+compact attached facts when the link is trusted.
+
+Display route recommendation:
+GET /api/trades/[tradeId]/level-analysis/facts
+
+Compatibility route:
+Keep GET /api/trades/[tradeId]/level-analysis for existing trade-link reads.
+
+Feature flag:
+LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_ENABLED=1
+
+Trade detail placement:
+Surface availability in "What This Review Can Use". Surface attached compact
+facts in "Supporting Evidence" only when the flag is enabled and facts are
+attached.
+
+Facts to surface:
+symbol, provider, as-of timestamp, nearest support/resistance, bucket counts,
+extension coverage, synthetic continuation summary, diagnostics, density,
+candidate inventory gaps, volume/session context, source files, cache/source
+integrity, missing facts, limitations, safety flags, and 15m context-only
+status.
+
+Hard boundaries:
+No raw payload exposure. No auto-resolve on read. No production UI in this
+design gate. No levels-system or LevelEngine changes. No recommendations,
+buy/sell/hold language, coaching, grading, P/L, giveback, behavior scoring, or
+execution-quality inference.
+
+Recommended next gate:
+journal_level_analysis_delivery_trade_detail_level_facts_read_model_contract
