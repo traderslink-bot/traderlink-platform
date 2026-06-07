@@ -1,0 +1,41 @@
+{
+  "gate": "journal_level_analysis_delivery_trade_detail_level_facts_e2e_seeded_flow",
+  "mode": "offline_seeded_browser_flow",
+  "requiresLiveIbkr": false,
+  "playwrightConfig": "playwright.level-analysis.config.ts",
+  "spec": "tests/e2e/level-analysis-trade-detail-seeded-flow.spec.ts",
+  "command": "npm run test:e2e:level-analysis",
+  "databasePath": "artifacts/level-analysis-e2e/trade-detail-level-facts.sqlite",
+  "featureFlags": [
+    "LEVEL_ANALYSIS_JOURNAL_DELIVERY_API_ENABLED",
+    "LEVEL_ANALYSIS_JOURNAL_TRADE_LINK_API_ENABLED",
+    "LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_ENABLED",
+    "LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_UI_ENABLED"
+  ],
+  "seedSteps": [
+    "save DEVS trade through import dry-run UI",
+    "ingest compact packaged delivery through delivery API",
+    "persist trade link through trade-link API",
+    "verify facts API read model",
+    "render saved trade detail page",
+    "assert attached level facts panel"
+  ],
+  "levelAnalysisFixture": "src/lib/level-analysis/__fixtures__/level-analysis-journal-delivery-package-v1.compact.json",
+  "assertions": [
+    "availability line renders",
+    "facts panel renders",
+    "density metric surfaces",
+    "candidate inventory gap summary surfaces",
+    "15m context-only status surfaces",
+    "raw payload and rawPayloadHash are not displayed",
+    "recommendation, advice, coaching, grading, P/L, giveback, behavior-scoring, buy/sell/hold wording is not displayed in the facts panel"
+  ],
+  "boundaries": [
+    "no levels-system changes",
+    "no LevelEngine changes",
+    "no live candle fetch",
+    "no production UI beyond existing feature-gated UI",
+    "old LevelAnalysisSnapshot v1 remains covered by existing unit/API tests"
+  ],
+  "recommendedNextGate": "journal_level_analysis_delivery_trade_detail_level_facts_ci_hardening"
+}

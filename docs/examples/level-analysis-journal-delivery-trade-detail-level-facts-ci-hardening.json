@@ -1,0 +1,46 @@
+{
+  "gate": "journal_level_analysis_delivery_trade_detail_level_facts_ci_hardening",
+  "mode": "path_scoped_ci_enforcement",
+  "workflow": ".github/workflows/level-analysis-trade-detail-facts.yml",
+  "command": "npm run test:e2e:level-analysis",
+  "runsOn": [
+    "pull_request",
+    "push to main"
+  ],
+  "pathScope": [
+    "app/api/level-analysis/**",
+    "app/api/trades/**",
+    "app/intelligence/trades/**",
+    "src/lib/level-analysis/**",
+    "tests/e2e/level-analysis-trade-detail-seeded-flow.spec.ts",
+    "playwright.level-analysis.config.ts",
+    "package.json",
+    "package-lock.json",
+    ".github/workflows/level-analysis-trade-detail-facts.yml"
+  ],
+  "playwrightHardening": [
+    "isolated per-run SQLite artifact path",
+    "LEVEL_ANALYSIS_E2E_DB_PATH override support",
+    "GitHub reporter in CI",
+    "single worker",
+    "one CI retry",
+    "failure artifact upload"
+  ],
+  "featureFlags": [
+    "LEVEL_ANALYSIS_JOURNAL_DELIVERY_API_ENABLED",
+    "LEVEL_ANALYSIS_JOURNAL_TRADE_LINK_API_ENABLED",
+    "LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_ENABLED",
+    "LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_UI_ENABLED"
+  ],
+  "preservedBoundaries": [
+    "no levels-system changes",
+    "no LevelEngine changes",
+    "no route behavior changes",
+    "no storage schema changes",
+    "no live candle or broker fetches",
+    "preserve old LevelAnalysisSnapshot v1 support",
+    "preserve raw payload storage without UI exposure",
+    "no recommendations, advice, coaching, grading, P/L, giveback, behavior scoring, buy/sell/hold, or execution-quality inference"
+  ],
+  "recommendedNextStep": "open the PR and confirm the path-scoped workflow result on GitHub"
+}

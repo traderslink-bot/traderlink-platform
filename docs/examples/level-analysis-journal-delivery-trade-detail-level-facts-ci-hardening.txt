@@ -1,0 +1,35 @@
+Gate: journal_level_analysis_delivery_trade_detail_level_facts_ci_hardening
+
+Mode:
+Path-scoped CI enforcement.
+
+Workflow:
+.github/workflows/level-analysis-trade-detail-facts.yml
+
+Command:
+npm run test:e2e:level-analysis
+
+Trigger:
+Pull requests and pushes to main when level-analysis delivery, trade-linking,
+trade detail UI/API, focused E2E, package manifest, or workflow files change.
+
+Hardening:
+- Isolated per-run SQLite artifact path.
+- LEVEL_ANALYSIS_E2E_DB_PATH override support.
+- GitHub reporter in CI.
+- Single Playwright worker.
+- One CI retry.
+- Failure artifact upload for Playwright output and the isolated SQLite DB.
+
+Safety:
+No levels-system changes.
+No LevelEngine changes.
+No route behavior or storage schema changes.
+No live candle or broker fetch.
+Old LevelAnalysisSnapshot v1 support remains preserved by existing tests.
+Raw payloads remain preserved on delivery records but are not exposed in UI.
+No recommendation, trade advice, coaching, grading, P/L, giveback,
+behavior-scoring, buy/sell/hold, or execution-quality inference.
+
+Next step:
+Open the PR and confirm the path-scoped GitHub workflow result.
