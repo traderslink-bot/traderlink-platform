@@ -1,0 +1,79 @@
+{
+  "gate": "journal_level_analysis_delivery_trade_detail_level_facts_read_model_design",
+  "status": "design_only",
+  "recommendedPath": "dedicated_trade_detail_level_facts_read_model",
+  "sourceInputs": {
+    "tradeLinkRead": "latest JournalLevelAnalysisTradeLinkRecord by savedTradeId",
+    "queueAvailabilityContract": "SavedReviewQueueLevelFactsState",
+    "rawPayload": "preserved on delivery records only"
+  },
+  "featureFlags": {
+    "tradeLinkApi": "LEVEL_ANALYSIS_JOURNAL_TRADE_LINK_API_ENABLED",
+    "tradeDetailDisplay": "LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_ENABLED"
+  },
+  "proposedReadModel": {
+    "contractVersion": "trade_detail_level_facts_read_model_v1",
+    "savedTradeId": "trade_DEVS_2026_06_01_001",
+    "featureEnabled": true,
+    "availability": {
+      "availability": "attached",
+      "label": "Level facts attached",
+      "sourceKind": "packaged_review_delivery",
+      "fifteenMinuteContextOnlyStatus": "context_only"
+    },
+    "attachedFacts": {
+      "symbol": "DEVS",
+      "provider": "ibkr",
+      "asOfIso": "2026-06-01T16:00:00.000Z",
+      "referencePrice": 0.2705,
+      "nearestSupport": {
+        "levelId": "DEVS-support-zone-15",
+        "bucket": "intermediateSupport",
+        "price": 0.27,
+        "isExtension": false
+      },
+      "nearestResistance": {
+        "levelId": "DEVS-resistance-zone-12",
+        "bucket": "intradayResistance",
+        "price": 0.2772,
+        "isExtension": false
+      },
+      "densityMetricSummary": {
+        "present": true,
+        "classification": "dense_clustered"
+      },
+      "candidateInventoryGapSummary": {
+        "overall": "no_gap"
+      },
+      "volumeSessionContextSummary": {
+        "contextCount": 1
+      },
+      "fifteenMinuteContextOnlyStatus": "context_only",
+      "missingFacts": [],
+      "limitations": [
+        {
+          "code": "extension_coverage_warning",
+          "field": "DEVS.extensionCoverage.warnings",
+          "message": "limited_downside_extension_coverage"
+        }
+      ]
+    }
+  },
+  "routeRecommendation": {
+    "displayRoute": "GET /api/trades/[tradeId]/level-analysis/facts",
+    "existingCompatibilityRoute": "GET /api/trades/[tradeId]/level-analysis"
+  },
+  "nonGoals": [
+    "raw_payload_exposure",
+    "auto_resolve_on_read",
+    "production_ui_wiring",
+    "level_engine_changes",
+    "trade_advice",
+    "coaching",
+    "grading",
+    "p_l",
+    "giveback",
+    "behavior_scoring"
+  ],
+  "recommendedNextGate": "journal_level_analysis_delivery_trade_detail_level_facts_read_model_contract"
+}
