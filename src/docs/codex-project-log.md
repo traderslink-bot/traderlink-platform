@@ -107,33 +107,38 @@ Important project rule:
 
 ## Current Resume Point
 
-### 2026-06-07 Level Analysis Delivery Trade Detail Level Facts CI Hardening PR Status
+### 2026-06-07 Level Analysis Delivery Trade Detail Level Facts CI Hardening Merged
 
 Gate `journal_level_analysis_delivery_trade_detail_level_facts_ci_hardening`
-is CI-green and in PR observation/merge-decision state.
+is complete on `main`.
 
 PR:
 
 - PR #54, "Harden level analysis trade detail CI":
   `https://github.com/traderslink-bot/traderslink-trader-improvement-system/pull/54`
-- state: open, not draft, clean / mergeable
+- state: merged
+- merged at: `2026-06-07T12:33:29Z`
 - base: `main`
 - branch:
   `codex/journal-level-analysis-delivery-trade-detail-level-facts-ci-hardening`
-- CI-green head SHA observed before this log-only resume update:
-  `2fa900feb9af80c97aea9a2850df350e0d7750ba`
+- final PR head SHA:
+  `3c07442d047548d22586b5f8980170d13965264b`
+- merge commit on `main`:
+  `94bc2184a47ac6f8065daf4cd61a2167df52e585`
 
-GitHub checks observed on that head:
+Post-merge `main` checks:
 
-- `CI / test-and-verify` passed
+- `CI / test-and-verify` passed on run
+  `https://github.com/traderslink-bot/traderslink-trader-improvement-system/actions/runs/27092688012`
 - `Level Analysis Trade Detail Facts / Seeded trade detail level facts flow`
-  passed
+  passed on run
+  `https://github.com/traderslink-bot/traderslink-trader-improvement-system/actions/runs/27092688018`
 
 Status:
 
-- PR observation for this gate is complete; the branch is not merged yet
-- this entry is documentation-only and creates no product, storage, route, or
-  ingestion behavior change
+- PR observation and merge are complete
+- this gate added CI hardening only; it did not create product, storage, route,
+  or ingestion behavior changes
 - no CI/test reliability fixes are currently needed
 - no journal ingestion rerun was performed
 - no levels-system, LevelEngine, storage schema, route behavior, trade
@@ -142,7 +147,11 @@ Status:
 
 Current best next step:
 
-- merge PR #54 when ready, or continue only after the merge decision is made.
+- do not add more work to the merged CI-hardening branch
+- if continuing inside this journal repo, start a new narrow branch only after
+  choosing the next factual LevelAnalysis delivery gate
+- if following the prior level-context UI fixture recommendation, the next
+  source-quality gate belongs in `levels-system`, not this repo.
 
 ### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts CI Observation
 
