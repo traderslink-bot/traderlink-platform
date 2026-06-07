@@ -1,0 +1,19 @@
+{
+  "contractVersion": "journal_level_analysis_review_queue_linking_v1",
+  "availability": "attached",
+  "label": "Level facts attached",
+  "detail": "SNAP level facts from fixture are attached at 2026-05-01T14:20:00.000Z.",
+  "scopeLabel": "level facts",
+  "nextAction": "Open the trade detail to inspect factual level context.",
+  "linkId": "jlatl_trade_SNAP_2026_05_01_001_lad_contract_SNAP_v1",
+  "deliveryId": "lad_contract_SNAP_v1_2026_06_06T182500Z",
+  "rawPayloadHash": "sha256:c8d05f7ad8f9657182f253dfa2fb55b5e0586b5be7618c624484b6405cee341d",
+  "sourceKind": "single_snapshot_v1",
+  "provider": "fixture",
+  "symbol": "SNAP",
+  "asOfIso": "2026-05-01T14:20:00.000Z",
+  "asOfTimestamp": 1777645200000,
+  "fifteenMinuteContextOnlyStatus": "not_supplied",
+  "limitationCount": 0,
+  "limitations": []
+}

@@ -1,0 +1,10 @@
+{
+  "contractVersion": "journal_level_analysis_review_queue_linking_v1",
+  "availability": "feature_disabled",
+  "label": "Level facts not shown",
+  "detail": "Level facts are available only when the journal level-analysis queue feature is enabled.",
+  "scopeLabel": "execution and chart review only",
+  "nextAction": "Use the existing review queue.",
+  "limitationCount": 0,
+  "limitations": []
+}

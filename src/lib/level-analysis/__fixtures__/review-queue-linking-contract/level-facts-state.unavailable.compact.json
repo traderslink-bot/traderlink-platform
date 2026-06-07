@@ -1,0 +1,10 @@
+{
+  "contractVersion": "journal_level_analysis_review_queue_linking_v1",
+  "availability": "unavailable_for_symbol_provider",
+  "label": "Level facts unavailable",
+  "detail": "No accepted level-facts link is available for this symbol and provider.",
+  "scopeLabel": "level facts unavailable",
+  "nextAction": "Use the existing review evidence.",
+  "limitationCount": 0,
+  "limitations": []
+}

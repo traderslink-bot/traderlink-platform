@@ -107,6 +107,46 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Review Queue Linking Contract
+
+Gate `journal_level_analysis_delivery_review_queue_linking_contract` locks the
+facts-only availability contract for showing persisted level-analysis trade
+links in saved review queues and trade-detail workflows.
+
+Added:
+
+- review queue level-facts contract and pure helpers at
+  `src/lib/level-analysis/level-analysis-review-queue-linking-contract.ts`
+- compact fixtures under
+  `src/lib/level-analysis/__fixtures__/review-queue-linking-contract`
+- focused contract tests at
+  `src/lib/level-analysis/__tests__/level-analysis-review-queue-linking-contract.test.ts`
+- contract doc at
+  `docs/level-analysis-journal-delivery-review-queue-linking-contract.md`
+
+Contract behavior:
+
+- classifies links as attached, available to attach, blocked by as-of policy,
+  unavailable for symbol/provider, quarantined/unsafe, not checked, or feature
+  disabled
+- builds deterministic batch read-model state by saved trade ID
+- keeps raw source payloads out of queue/trade-detail availability state
+- preserves old `LevelAnalysisSnapshot` v1 link compatibility
+- enforces context-only 15m status for attached packaged delivery facts
+- does not expose or alter review priority, scoring, coaching, grading, P/L,
+  giveback, behavior scoring, or trade advice
+
+Boundaries remain:
+
+- no production UI wiring, route handlers, storage migrations, resolver
+  changes, levels-system changes, or LevelEngine behavior changes
+
+Current best next step:
+
+- continue with
+  `journal_level_analysis_delivery_review_queue_linking_read_model_implementation`
+  to implement the server-side batch read model behind a display feature flag.
+
 ### 2026-06-06 Level Analysis Delivery Review Queue Linking Design
 
 Gate `journal_level_analysis_delivery_review_queue_linking_design` defines how
