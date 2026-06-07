@@ -107,6 +107,54 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts CI Hardening
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_ci_hardening`
+makes the seeded trade-detail level facts browser proof enforceable in CI
+without adding product behavior.
+
+Added:
+
+- path-scoped GitHub Actions workflow at
+  `.github/workflows/level-analysis-trade-detail-facts.yml`
+- CI hardening doc at
+  `docs/level-analysis-journal-delivery-trade-detail-level-facts-ci-hardening.md`
+- compact artifacts:
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-ci-hardening.json`
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-ci-hardening.txt`
+
+Updated:
+
+- `playwright.level-analysis.config.ts` now uses an isolated per-run SQLite
+  artifact path, supports `LEVEL_ANALYSIS_E2E_DB_PATH`, emits GitHub reporter
+  output in CI, pins the seeded proof to one worker, and uploads failure
+  artifacts through the workflow
+
+Behavior:
+
+- the focused `npm run test:e2e:level-analysis` browser proof now runs on pull
+  requests and `main` pushes when relevant level-analysis, trade-detail,
+  focused E2E, package, or workflow files change
+- the workflow installs Playwright Chromium and uploads the focused Playwright
+  output plus isolated SQLite artifact only on failure
+- the seeded proof remains offline and feature-flag scoped
+
+Boundaries:
+
+- no levels-system or LevelEngine changes
+- no storage schema or route behavior changes
+- no live candle or broker fetches
+- old `LevelAnalysisSnapshot` v1 support remains preserved by existing tests
+- raw payloads remain preserved on delivery records but are not exposed in UI
+- no recommendations, trade advice, coaching, grading, P/L, giveback, behavior
+  scoring, buy/sell/hold decisions, or execution-quality inference
+
+Current best next step:
+
+- open the PR and confirm the new path-scoped workflow result on GitHub; keep
+  any follow-up limited to CI/test hardening unless the run exposes an actual
+  trade-detail level facts regression.
+
 ### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts E2E Seeded Flow
 
 Gate `journal_level_analysis_delivery_trade_detail_level_facts_e2e_seeded_flow`

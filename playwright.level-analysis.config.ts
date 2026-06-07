@@ -1,11 +1,17 @@
-import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { defineConfig } from "@playwright/test";
 
-const databaseDir = join(process.cwd(), "artifacts", "level-analysis-e2e");
-const databasePath = join(databaseDir, "trade-detail-level-facts.sqlite");
-
-rmSync(databaseDir, { recursive: true, force: true });
+const githubRunId = [process.env.GITHUB_RUN_ID, process.env.GITHUB_RUN_ATTEMPT]
+  .filter(Boolean)
+  .join("-");
+const runId =
+  process.env.LEVEL_ANALYSIS_E2E_RUN_ID ??
+  (githubRunId.length > 0 ? githubRunId : `${Date.now()}-${process.pid}`);
+const safeRunId = runId.replace(/[^A-Za-z0-9_.-]/g, "-") || "local";
+const databaseDir = join(process.cwd(), "artifacts", "level-analysis-e2e", safeRunId);
+const databasePath =
+  process.env.LEVEL_ANALYSIS_E2E_DB_PATH ??
+  join(databaseDir, "trade-detail-level-facts.sqlite");
 
 export default defineConfig({
   expect: {
@@ -14,7 +20,8 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   fullyParallel: false,
   outputDir: "artifacts/playwright-results/level-analysis",
-  reporter: [["list"]],
+  reporter: process.env.CI ? [["github"], ["list"]] : [["list"]],
+  retries: process.env.CI ? 1 : 0,
   testDir: "./tests/e2e",
   testMatch: /.*level-analysis-trade-detail-seeded-flow\.spec\.ts/,
   timeout: 90_000,
@@ -35,6 +42,7 @@ export default defineConfig({
       },
     },
   ],
+  workers: 1,
   webServer: {
     command: "npm run start -- --hostname 127.0.0.1 --port 3101",
     env: {
