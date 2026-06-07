@@ -107,6 +107,41 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts CI Observation
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_ci_observation`
+confirmed the CI hardening branch on GitHub without requiring code changes.
+
+PR:
+
+- opened PR #54:
+  `https://github.com/traderslink-bot/traderslink-trader-improvement-system/pull/54`
+- base: `main` at `384cfed125fb9456f45151bb71f06acddb6588cf`
+- head:
+  `codex/journal-level-analysis-delivery-trade-detail-level-facts-ci-hardening`
+  at `4e7276eab617b58cf37c8bcd70cfe612f594d59e`
+
+GitHub checks:
+
+- `Level Analysis Trade Detail Facts / Seeded trade detail level facts flow`
+  passed on pull_request run
+  `https://github.com/traderslink-bot/traderslink-trader-improvement-system/actions/runs/27080992070`
+- `CI / test-and-verify` passed on pull_request run
+  `https://github.com/traderslink-bot/traderslink-trader-improvement-system/actions/runs/27080992067`
+
+Result:
+
+- the new path-scoped workflow triggered for the PR and completed successfully
+- no CI/test reliability fixes were needed
+- no levels-system, LevelEngine, storage schema, route behavior, trade
+  recommendation/advice/coaching/grading/P/L/giveback/behavior scoring, or raw
+  payload UI exposure changes were made
+
+Current best next step:
+
+- proceed with normal PR review/merge for PR #54, or continue the next
+  journal-level analysis roadmap branch after this CI gate is accepted.
+
 ### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts CI Hardening
 
 Gate `journal_level_analysis_delivery_trade_detail_level_facts_ci_hardening`
@@ -151,9 +186,8 @@ Boundaries:
 
 Current best next step:
 
-- open the PR and confirm the new path-scoped workflow result on GitHub; keep
-  any follow-up limited to CI/test hardening unless the run exposes an actual
-  trade-detail level facts regression.
+- completed by
+  `journal_level_analysis_delivery_trade_detail_level_facts_ci_observation`.
 
 ### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts E2E Seeded Flow
 
