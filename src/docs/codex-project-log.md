@@ -107,6 +107,44 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts Route Implementation
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_route_implementation`
+adds a display-oriented, feature-gated route for the locked trade-detail
+level-facts read model.
+
+Added:
+
+- `GET /api/trades/[tradeId]/level-analysis/facts`
+- display feature flag
+  `LEVEL_ANALYSIS_JOURNAL_TRADE_DETAIL_LEVEL_FACTS_ENABLED`
+- API helper `getTradeDetailLevelFactsForApi`
+- route tests for packaged delivery facts, old `LevelAnalysisSnapshot` v1
+  facts, no-link state, feature-disabled state, raw-payload exclusion, and
+  prohibited advice/evaluation wording
+- docs at
+  `docs/level-analysis-journal-delivery-trade-detail-level-facts-route-implementation.md`
+
+Behavior:
+
+- the route reads the latest persisted trade link and returns
+  `trade_detail_level_facts_read_model_v1`
+- the route does not resolve candidates, persist links, expose raw payloads, or
+  inspect LevelEngine internals
+- packaged review delivery facts keep 15m context as context-only
+- old single-snapshot `LevelAnalysisSnapshot` v1 links remain supported
+
+Boundaries:
+
+- no production UI wiring
+- no storage migration
+- no levels-system changes
+- no recommendations, coaching, grading, P/L, giveback, behavior scoring, or
+  buy/sell/hold/trade-advice behavior
+
+Recommended next gate:
+`journal_level_analysis_delivery_trade_detail_level_facts_ui_design`.
+
 ### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts Read Model Contract
 
 Gate `journal_level_analysis_delivery_trade_detail_level_facts_read_model_contract`

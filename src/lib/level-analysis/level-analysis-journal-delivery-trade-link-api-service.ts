@@ -25,6 +25,10 @@ import {
   type JournalTradeLevelAnalysisApiResponse,
 } from "./level-analysis-journal-delivery-trade-link-contract";
 import {
+  buildTradeDetailLevelFactsReadModel,
+  type TradeDetailLevelFactsReadModel,
+} from "./level-analysis-trade-detail-level-facts-contract";
+import {
   SqliteJournalLevelAnalysisTradeLinkRepository,
   type JournalLevelAnalysisTradeLinkRepository,
 } from "./level-analysis-journal-delivery-trade-link-storage";
@@ -499,6 +503,27 @@ export function getJournalLevelAnalysisForTradeApi(
     savedTradeId: args.savedTradeId,
     link,
   };
+}
+
+export function getTradeDetailLevelFactsForApi(
+  args: {
+    savedTradeId: string;
+    featureEnabled?: boolean;
+  },
+  options: JournalLevelAnalysisTradeLinkServiceOptions = {},
+): TradeDetailLevelFactsReadModel {
+  const featureEnabled = args.featureEnabled ?? true;
+  const link = featureEnabled
+    ? tradeLinkRepositoryFromOptions(options).getLatestTradeLinkForSavedTrade(
+        args.savedTradeId,
+      )
+    : null;
+
+  return buildTradeDetailLevelFactsReadModel({
+    savedTradeId: args.savedTradeId,
+    featureEnabled,
+    link,
+  });
 }
 
 export function getJournalLevelAnalysisTradeLinkForAdminApi(
