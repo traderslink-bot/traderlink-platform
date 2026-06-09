@@ -16403,3 +16403,40 @@ Best next step:
 - Continue remaining product-pass inventory only for isolated behavior that can
   be adapted to `/intelligence` without direct-merging stale top-level routes or
   removing journal-level-analysis.
+
+# 2026-06-09 chart review retry and diagnostic cleanup port
+
+- Ported the isolated decision-review retry behavior from product-pass without
+  the larger background `after()` scheduling route rewrite.
+- `provider_timeout` now maps to `market_context_unavailable` instead of a hard
+  analysis failure, so user-facing copy remains "market data missing/retry"
+  rather than implying chart analysis is complete or trusted.
+- `runPersistedDecisionReviewJobs(...)` now accepts
+  `retryFailedChartDataReview` and can explicitly retry
+  `analysis_failed`/`market_context_unavailable` jobs.
+- Successful retry now deletes stale decision-review diagnostics for the saved
+  trade before saving the completed snapshot.
+- The import-batch decision-review resume route now detects retryable failed
+  jobs and reports `mode: "retry_failed_chart_data"` when those jobs are the
+  selected work pool.
+- Added a regression covering:
+  - initial provider timeout,
+  - persisted market-context diagnostic,
+  - explicit retry after market data is available,
+  - completed snapshot persistence,
+  - stale diagnostic cleanup.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused repository/API Vitest passed: 2 files, 27 tests.
+- Focused trader/API/coach/level Vitest passed: 10 files, 160 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue product-pass inventory only for narrow server/read-model behavior.
+  Leave the larger background resume scheduling and top-level route rewrites for
+  a separate deliberate pass.

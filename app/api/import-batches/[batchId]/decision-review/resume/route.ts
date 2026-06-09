@@ -13,6 +13,7 @@ const DEFAULT_MAX_TRADES = 1;
 const MAX_TRADES_LIMIT = 10;
 
 type ResumeMode = "queued" | "refresh_missing_replay_candles";
+type ResumeModeWithRetry = ResumeMode | "retry_failed_chart_data";
 
 function maxTradesFromBody(body: unknown): number {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
@@ -52,6 +53,7 @@ async function runDecisionReview(args: {
   generatedAt: string;
   maxTrades: number;
   refreshMissingReplayCandleWindows?: boolean;
+  retryFailedChartDataReview?: boolean;
   savedTradeId?: string;
 }): Promise<PersistedDecisionReviewRunResult> {
   return runPersistedDecisionReviewJobs({
@@ -62,6 +64,7 @@ async function runDecisionReview(args: {
     maxTrades: args.maxTrades,
     deferRemaining: true,
     refreshMissingReplayCandleWindows: args.refreshMissingReplayCandleWindows,
+    retryFailedChartDataReview: args.retryFailedChartDataReview,
     savedTradeIds: args.savedTradeId ? [args.savedTradeId] : undefined,
   });
 }
@@ -127,29 +130,59 @@ export async function POST(
           !snapshot.review.replayCandleWindow)
       );
     });
+  const retryableFailedJobs = repository
+    .listDecisionReviewJobs(batchId)
+    .filter(
+      (job) =>
+        (!savedTradeId || job.savedTradeId === savedTradeId) &&
+        (job.status === "analysis_failed" ||
+          job.status === "market_context_unavailable"),
+    );
 
-  if (queuedJobs.length === 0 && refreshableJobs.length === 0) {
+  if (
+    queuedJobs.length === 0 &&
+    refreshableJobs.length === 0 &&
+    retryableFailedJobs.length === 0
+  ) {
     return Response.json({
       contractVersion: "persisted_decision_review_resume_result_v1",
       importBatchId: batchId,
       queuedBefore: 0,
       refreshableBefore: 0,
+      retryableFailedBefore: 0,
       selectedJobCount: 0,
       maxTrades,
-      mode: "queued" satisfies ResumeMode,
+      mode: "queued" satisfies ResumeModeWithRetry,
       message:
-        "No queued chart data review jobs or candle replay refreshes are waiting for this import.",
+        "No queued chart data review jobs, failed chart-data retries, or candle replay refreshes are waiting for this import.",
       run: null,
     });
   }
 
   const generatedAt = new Date().toISOString();
   const refreshMissingReplayCandleWindows = queuedJobs.length === 0;
+  const retryFailedChartDataReview =
+    queuedJobs.length === 0 &&
+    refreshableJobs.length === 0 &&
+    retryableFailedJobs.length > 0;
+  const selectedPoolSize = retryFailedChartDataReview
+    ? retryableFailedJobs.length
+    : refreshMissingReplayCandleWindows
+      ? refreshableJobs.length
+      : queuedJobs.length;
+  const selectedJobCount = Math.min(selectedPoolSize, maxTrades);
+  const mode = retryFailedChartDataReview
+    ? ("retry_failed_chart_data" satisfies ResumeModeWithRetry)
+    : refreshMissingReplayCandleWindows
+      ? ("refresh_missing_replay_candles" satisfies ResumeModeWithRetry)
+      : ("queued" satisfies ResumeModeWithRetry);
   const run = await runDecisionReview({
     importBatchId: batchId,
     generatedAt,
     maxTrades,
-    refreshMissingReplayCandleWindows,
+    refreshMissingReplayCandleWindows:
+      refreshMissingReplayCandleWindows && !retryFailedChartDataReview,
+    retryFailedChartDataReview,
     savedTradeId,
   });
 
@@ -158,17 +191,13 @@ export async function POST(
     importBatchId: batchId,
     queuedBefore: queuedJobs.length,
     refreshableBefore: refreshableJobs.length,
-    selectedJobCount: Math.min(
-      refreshMissingReplayCandleWindows
-        ? refreshableJobs.length
-        : queuedJobs.length,
-      maxTrades,
-    ),
+    retryableFailedBefore: retryableFailedJobs.length,
+    selectedJobCount,
     maxTrades,
-    mode: refreshMissingReplayCandleWindows
-      ? ("refresh_missing_replay_candles" satisfies ResumeMode)
-      : ("queued" satisfies ResumeMode),
-    message: refreshMissingReplayCandleWindows
+    mode,
+    message: retryFailedChartDataReview
+      ? "Chart data review retried. If market data is connected, chart evidence will attach to saved trades."
+      : refreshMissingReplayCandleWindows
       ? "Saved chart review refreshed so candle replay data can appear on trade pages."
       : "Chart data review resumed. You can keep reviewing trades while chart evidence updates.",
     run,

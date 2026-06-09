@@ -698,6 +698,12 @@ export class SqliteImportCommitRepository
       .map((row) => rowJson<PersistedDecisionReviewDiagnostic>(row));
   }
 
+  deleteDecisionReviewDiagnosticsForTrade(tradeId: string): void {
+    this.db
+      .prepare("DELETE FROM decision_review_diagnostics WHERE saved_trade_id = ?")
+      .run(tradeId);
+  }
+
   getLatestCommittedBatch(accountId: string): ImportCommitBatchRecord | null {
     const row = this.db
       .prepare(

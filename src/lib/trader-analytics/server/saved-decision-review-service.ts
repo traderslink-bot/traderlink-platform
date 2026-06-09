@@ -77,7 +77,8 @@ function isMarketContextUnavailableFailure(code: string | undefined): boolean {
   return (
     code === "insufficient_market_context" ||
     code === "insufficient_trade_window" ||
-    code === "no_candles_found"
+    code === "no_candles_found" ||
+    code === "provider_timeout"
   );
 }
 
@@ -129,6 +130,7 @@ export async function runPersistedDecisionReviewJobs(args: {
   maxTrades?: number;
   deferRemaining?: boolean;
   refreshMissingReplayCandleWindows?: boolean;
+  retryFailedChartDataReview?: boolean;
   savedTradeIds?: string[];
   runBatch?: typeof runBatchTradeAnalysis;
 }): Promise<PersistedDecisionReviewRunResult> {
@@ -180,6 +182,14 @@ export async function runPersistedDecisionReviewJobs(args: {
       job.status === "completed" &&
       args.refreshMissingReplayCandleWindows &&
       snapshotNeedsReplayCandleRefresh(snapshotsByTradeId.get(job.savedTradeId))
+    ) {
+      return true;
+    }
+
+    if (
+      args.retryFailedChartDataReview &&
+      (job.status === "analysis_failed" ||
+        job.status === "market_context_unavailable")
     ) {
       return true;
     }
@@ -349,6 +359,7 @@ export async function runPersistedDecisionReviewJobs(args: {
       reason: "Decision review completed and persisted.",
     };
 
+    args.repository.deleteDecisionReviewDiagnosticsForTrade(trade.id);
     args.repository.saveDecisionReviewSnapshot(snapshot);
     args.repository.updateDecisionReviewJob(updated);
     increment(statusCounts, updated.status);

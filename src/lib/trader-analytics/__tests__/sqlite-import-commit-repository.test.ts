@@ -399,6 +399,105 @@ describe("SqliteImportCommitRepository", () => {
     ]);
   });
 
+  it("retries provider-timeout chart review jobs and clears stale diagnostics after success", async () => {
+    const csv = [
+      "Date,Time,Symbol,Side,Quantity,Price",
+      "2026-05-01,09:30:00,RETRY,Buy,100,10.00",
+      "2026-05-01,10:00:00,RETRY,Sell,100,10.50",
+    ].join("\n");
+    const { repository, plan } = planFor(csv);
+    const timeoutBatch: BatchTradeAnalysisResult = {
+      contractVersion: "batch_trade_analysis_v1",
+      source: "test",
+      generatedAt: "2026-05-07T12:00:00.000Z",
+      validateOnly: false,
+      totals: {
+        requests: 1,
+        validated: 1,
+        completed: 0,
+        failed: 1,
+        warnings: 0,
+      },
+      failureCounts: { provider_timeout: 1 },
+      marketStructureCounts: { observed: 0, missing: 0, scoringUses: 0 },
+      patternCounts: {
+        detectedTotal: 0,
+        normalizedTotal: 0,
+        topAnchorPatternIds: {},
+      },
+      items: [
+        {
+          requestIndex: 0,
+          status: "failed",
+          symbol: "RETRY",
+          validation: { valid: true, issues: [] },
+          failure: {
+            code: "provider_timeout",
+            source: "provider",
+            title: "Provider timeout",
+            message: "Market data provider timed out.",
+            retryable: true,
+            userAction: "Retry chart data review after market data reconnects.",
+            rawMessage: "Market data provider timed out.",
+          },
+          summary: null,
+        },
+      ],
+    };
+
+    repository.commitImportPlan(plan);
+    const firstRun = await runPersistedDecisionReviewJobs({
+      repository,
+      importBatchId: plan.batch.id,
+      generatedAt: "2026-05-07T12:00:00.000Z",
+      runBatch: async () => timeoutBatch,
+    });
+
+    expect(firstRun.statusCounts).toMatchObject({
+      market_context_unavailable: 1,
+    });
+    expect(repository.listDecisionReviewJobs(plan.batch.id)).toMatchObject([
+      { status: "market_context_unavailable", symbol: "RETRY" },
+    ]);
+    expect(
+      repository.listDecisionReviewDiagnosticsForBatch(plan.batch.id),
+    ).toMatchObject([
+      {
+        status: "market_context_unavailable",
+        code: "market_context_unavailable",
+        symbol: "RETRY",
+      },
+    ]);
+
+    const retryRun = await runPersistedDecisionReviewJobs({
+      repository,
+      importBatchId: plan.batch.id,
+      generatedAt: "2026-05-07T12:05:00.000Z",
+      levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
+      retryFailedChartDataReview: true,
+    });
+
+    expect(retryRun.completedSnapshotCount).toBe(1);
+    expect(retryRun.diagnosticCount).toBe(0);
+    expect(repository.listDecisionReviewJobs(plan.batch.id)).toMatchObject([
+      { status: "completed", symbol: "RETRY" },
+    ]);
+    expect(
+      repository.listDecisionReviewDiagnosticsForBatch(plan.batch.id),
+    ).toEqual([]);
+    expect(
+      repository.listDecisionReviewSnapshotsForBatch(plan.batch.id),
+    ).toMatchObject([
+      {
+        symbol: "RETRY",
+        status: "completed",
+        review: {
+          marketContextSource: "levels_system_daily_4h",
+        },
+      },
+    ]);
+  });
+
   it("builds a saved review queue with priority filters and trade links", async () => {
     const csv = [
       "Date,Time,Symbol,Side,Quantity,Price",
