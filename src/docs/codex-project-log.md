@@ -16012,3 +16012,39 @@ Best next step:
 - Continue the deliberate saved-trades/detail port with smaller UI polish from
   product-pass only after checking it does not delete journal-level-analysis or
   reintroduce top-level route assumptions.
+
+# 2026-06-09 trade-detail candle-basis diagnostics port
+
+- Continued the deliberate `codex/trader-ui-product-pass` port without a direct
+  merge.
+- Kept main's `/intelligence/trades/[tradeId]` route shape and preserved the
+  journal-level-analysis trade-detail facts panel.
+- Ported the trade-detail candle basis/provider warning copy into
+  `app/intelligence/trades/[tradeId]/page.tsx`:
+  - completed decision-review snapshots still unlock paid chart context,
+  - free/execution-only or no-snapshot trades stay fill-only,
+  - snapshots with candle price-basis warnings now say to use broker execution
+    P/L for movement conclusions until the basis is reconciled,
+  - saved chart/level context can still be shown as supporting context, but the
+    page avoids treating candle movement as settled evidence when basis is
+    unsafe.
+- Aligned the trade-detail chart-tier inference with analytics/saved-trades:
+  sample mode or at least one persisted completed saved decision-review snapshot
+  enables chart-context tier UI, while the current trade still requires its own
+  completed snapshot before chart/support-resistance claims render.
+- Did not restore or import old levels-system v1/phase1; levels work remains on
+  `levels-system-v2/support-resistance-engine`.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader/level Vitest passed: 5 files, 109 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue the product-pass inventory with another small, route-safe slice.
+  Candidate: compare review/coach route UI deltas, port shared behavior only,
+  and avoid any top-level route rollback or journal-level-analysis deletion.
