@@ -15976,3 +15976,39 @@ Best next step:
 - Continue with the saved-trade detail page diff, carefully preserving
   `app/intelligence/trades/[tradeId]/trade-detail-level-facts.tsx` and the
   journal-level-analysis panels while porting only route-safe UI improvements.
+
+# 2026-06-09 trade-detail chart-evidence gate port
+
+- Continued the saved-trade detail product-pass port manually in
+  `app/intelligence/trades/[tradeId]/page.tsx`.
+- Preserved main's journal-level-analysis work:
+  `trade-detail-level-facts.tsx`, its imports, availability line, and supporting
+  detail panel remain intact.
+- Changed trade-detail ticker/session story context to use this trade's own
+  completed decision-review snapshot before rendering chart/support-resistance
+  claims. If the trade has no completed snapshot, the page keeps the review
+  execution-only and filters chart evidence cards, priority market-context
+  findings, support/resistance metrics, volume metrics, add-quality chart
+  metrics, and after-exit/protected-profit chart metrics out of the main trade
+  detail context.
+- Kept queued/failed chart review diagnostics visible as chart-data-needs-review
+  style copy, but with explicit execution-replay-only scope until evidence is
+  attached.
+- Tightened replay/status copy so saved fills are the source of truth unless
+  this trade has saved chart evidence.
+- Did not port the product-pass rewrite that removes level-facts or rolls links
+  back to top-level `/trades`.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused trade-detail/review Vitest passed: 3 files, 52 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Continue the deliberate saved-trades/detail port with smaller UI polish from
+  product-pass only after checking it does not delete journal-level-analysis or
+  reintroduce top-level route assumptions.
