@@ -15736,6 +15736,21 @@ Current best next step:
 - Deploy the `/intelligence` route namespace migration, smoke-test new routes
   and old redirects live, then continue the durable Trader Intelligence database
   adapter work separately.
+
+# 2026-06-08 Trader Intelligence v2 candle/coaching handoff package
+
+- Added `src/docs/trader-intelligence-v2-candle-coach-analytics-handoff-2026-06-08.md`
+  to `main` as the handoff package for the completed local Trader Intelligence
+  v2 candle/levels/coaching/analytics QA work.
+- The app implementation package remains committed on
+  `codex/trader-ui-product-pass` through `8641300e`.
+- A direct local merge into `main` was attempted in a clean temporary worktree,
+  but was aborted because `main` has the newer `/intelligence` route namespace
+  and journal-level-analysis UI work; resolving that safely requires a
+  deliberate port/merge pass rather than accepting one side wholesale.
+- The next chat should run a fresh isolated IBKR statement-period calibration
+  using a different/smaller statement and the handoff prompt in the new doc.
+
 # 2026-05-25 whole-site source-of-truth audit
 
 - Verified the pre-audit Vercel production deployment for `vercel-landing` was `dpl_5kdq544VSxoobgEsy1ftv52VVYfD` and pointed at commit `81e175909c6f0ad68481fbfc800259c32485251d` (`Move Trader Intelligence under intelligence namespace`).
