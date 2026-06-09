@@ -15872,3 +15872,41 @@ Best next step:
   from `codex/trader-ui-product-pass` in small pieces: shared behavior first,
   UI components second, always adapted to main's `/intelligence` routes and
   without restoring old levels-system v1/phase1.
+
+# 2026-06-09 analytics chart-tier gate port
+
+- Continued the deliberate port from `codex/trader-ui-product-pass` by taking
+  only a route-safe analytics behavior improvement and adapting it to main's
+  `/intelligence` namespace.
+- Added a chart-tier/evidence gate to
+  `app/intelligence/analytics/analytics-client.tsx`:
+  chart-evidence counts, support/resistance handoff links, the chart-evidence
+  report section, and market-context review panel now render only when
+  `chartTierEnabled` is true.
+- Kept execution-only analytics available for the free tier: results, timing,
+  behavior, ticker/session story execution summaries, review planning, trade
+  explorer, and details remain reachable without chart evidence.
+- Added an execution-only fallback panel for
+  `/intelligence/analytics/chart-evidence` so the page explains that candle,
+  support, and resistance summaries require saved chart context instead of
+  making unsupported claims.
+- Derived `chartTierEnabled` in `app/intelligence/analytics/page.tsx` from
+  demo/sample mode or at least one persisted completed decision-review snapshot.
+  Queued/failed hydration does not count as paid chart evidence.
+- Did not port product-pass route rollbacks to top-level `/analytics` or
+  `/trades`; all links remain under `/intelligence`.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused analytics/product Vitest passed: 4 files, 40 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Continue the product-pass inventory one surface at a time, starting with
+  saved-trades or coach UI deltas, and port only changes that preserve
+  `/intelligence`, journal-level-analysis, and levels-system-v2-only evidence
+  rules.

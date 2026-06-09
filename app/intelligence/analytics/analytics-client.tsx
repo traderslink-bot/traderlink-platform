@@ -322,8 +322,10 @@ function TimeOfDayPanel({
 }
 
 function TickerStoryAnalyticsPanel({
+  chartTierEnabled,
   summary,
 }: {
+  chartTierEnabled: boolean;
   summary: AnalyticsTickerStorySummary;
 }) {
   const handoffs = [
@@ -370,7 +372,7 @@ function TickerStoryAnalyticsPanel({
             ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
             : "border-sky-500/30 bg-sky-500/10 text-sky-100",
     },
-  ].filter((handoff) => handoff.count > 0);
+  ].filter((handoff) => chartTierEnabled && handoff.count > 0);
   const certifiedRiskCount = summary.marketContextRiskCount;
   const certifiedStrengthCount = summary.marketContextStrengthCount;
   const reviewPromptCount = summary.marketContextReviewPromptCount;
@@ -443,122 +445,126 @@ function TickerStoryAnalyticsPanel({
             written.
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <MetricCard
-            label="Chart Risks"
-            value={String(certifiedRiskCount)}
-            detail="Certified risks to inspect before writing a rule"
-            tone={certifiedRiskCount > 0 ? "warning" : "default"}
-          />
-          <MetricCard
-            label="Chart Strengths"
-            value={String(certifiedStrengthCount)}
-            detail="Certified strengths worth repeating"
-            tone={certifiedStrengthCount > 0 ? "success" : "default"}
-          />
-          <MetricCard
-            label="Needs Review"
-            value={String(reviewPromptCount)}
-            detail="Chart prompts waiting for enough context"
-            tone={reviewPromptCount > 0 ? "info" : "default"}
-          />
-        </div>
-      </div>
-      <div className="mt-3" id="analytics-chart-evidence">
-        <AdvancedDisclosure
-          summary="Show chart evidence counts"
-          testId="analytics-ticker-story-evidence-counts"
-        >
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <MetricCard
-              label="Chart Findings"
-              value={String(summary.marketContextFindingCount)}
-              detail={`${summary.marketContextReviewPromptCount} prompt${summary.marketContextReviewPromptCount === 1 ? "" : "s"}, ${summary.levelFindingCount} level check${summary.levelFindingCount === 1 ? "" : "s"}`}
-              tone={summary.marketContextFindingCount > 0 ? "info" : "default"}
-            />
-            <MetricCard
-              label="Add Quality"
-              value={String(summary.addQualityFindingCount)}
-              detail={`${summary.addQualityRiskCount} risk, ${summary.addQualityStrengthCount} strength, ${summary.addQualityReviewPromptCount} prompt`}
-              tone={
-                summary.addQualityRiskCount > 0
-                  ? "warning"
-                  : summary.addQualityStrengthCount > 0
-                    ? "success"
-                    : summary.addQualityFindingCount > 0
-                      ? "info"
-                      : "default"
-              }
-            />
+        {chartTierEnabled ? (
+          <div className="grid gap-3 sm:grid-cols-3">
             <MetricCard
               label="Chart Risks"
-              value={String(summary.marketContextRiskCount)}
-              detail="Level, add, exit, or profit-protection risks"
-              tone={summary.marketContextRiskCount > 0 ? "warning" : "default"}
+              value={String(certifiedRiskCount)}
+              detail="Certified risks to inspect before writing a rule"
+              tone={certifiedRiskCount > 0 ? "warning" : "default"}
             />
             <MetricCard
               label="Chart Strengths"
-              value={String(summary.marketContextStrengthCount)}
-              detail="Chart evidence strengths worth repeating"
-              tone={
-                summary.marketContextStrengthCount > 0 ? "success" : "default"
-              }
+              value={String(certifiedStrengthCount)}
+              detail="Certified strengths worth repeating"
+              tone={certifiedStrengthCount > 0 ? "success" : "default"}
             />
             <MetricCard
-              label="After-Exit Review"
-              value={String(summary.postExitFindingCount)}
-              detail={`${summary.postExitRiskCount} risk, ${summary.postExitStrengthCount} strength, ${summary.postExitReviewPromptCount} prompt`}
-              tone={
-                summary.postExitRiskCount > 0
-                  ? "warning"
-                  : summary.postExitStrengthCount > 0
-                    ? "success"
-                    : summary.postExitFindingThreadCount > 0
-                      ? "info"
-                      : "default"
-              }
-            />
-            <MetricCard
-              label="Protected Profit"
-              value={String(summary.protectedProfitBeforeFadeFindingCount)}
-              detail={`${summary.protectedProfitBeforeFadeThreadCount} ticker stor${summary.protectedProfitBeforeFadeThreadCount === 1 ? "y" : "ies"}`}
-              tone={
-                summary.protectedProfitBeforeFadeFindingCount > 0
-                  ? "success"
-                  : "default"
-              }
-            />
-            <MetricCard
-              label="Support/Resistance Exits"
-              value={String(summary.exitLevelFindingCount)}
-              detail={`${summary.exitLevelRiskCount} risk, ${summary.exitLevelStrengthCount} strength, ${summary.exitLevelReviewPromptCount} prompt`}
-              tone={
-                summary.exitLevelRiskCount > 0
-                  ? "warning"
-                  : summary.exitLevelStrengthCount > 0
-                    ? "success"
-                    : summary.exitLevelFindingCount > 0
-                      ? "info"
-                      : "default"
-              }
-            />
-            <MetricCard
-              label="Volume Evidence"
-              value={String(summary.volumeFindingCount)}
-              detail={`${summary.volumeRiskCount} risk, ${summary.volumeStrengthCount} strength, ${summary.volumeReviewPromptCount} prompt`}
-              tone={
-                summary.volumeRiskCount > 0
-                  ? "warning"
-                  : summary.volumeStrengthCount > 0
-                    ? "success"
-                    : summary.volumeFindingCount > 0
-                      ? "info"
-                      : "default"
-              }
+              label="Needs Review"
+              value={String(reviewPromptCount)}
+              detail="Chart prompts waiting for enough context"
+              tone={reviewPromptCount > 0 ? "info" : "default"}
             />
           </div>
-        </AdvancedDisclosure>
+        ) : null}
       </div>
+      {chartTierEnabled ? (
+        <div className="mt-3" id="analytics-chart-evidence">
+          <AdvancedDisclosure
+            summary="Show chart evidence counts"
+            testId="analytics-ticker-story-evidence-counts"
+          >
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <MetricCard
+                label="Chart Findings"
+                value={String(summary.marketContextFindingCount)}
+                detail={`${summary.marketContextReviewPromptCount} prompt${summary.marketContextReviewPromptCount === 1 ? "" : "s"}, ${summary.levelFindingCount} level check${summary.levelFindingCount === 1 ? "" : "s"}`}
+                tone={summary.marketContextFindingCount > 0 ? "info" : "default"}
+              />
+              <MetricCard
+                label="Add Quality"
+                value={String(summary.addQualityFindingCount)}
+                detail={`${summary.addQualityRiskCount} risk, ${summary.addQualityStrengthCount} strength, ${summary.addQualityReviewPromptCount} prompt`}
+                tone={
+                  summary.addQualityRiskCount > 0
+                    ? "warning"
+                    : summary.addQualityStrengthCount > 0
+                      ? "success"
+                      : summary.addQualityFindingCount > 0
+                        ? "info"
+                        : "default"
+                }
+              />
+              <MetricCard
+                label="Chart Risks"
+                value={String(summary.marketContextRiskCount)}
+                detail="Level, add, exit, or profit-protection risks"
+                tone={summary.marketContextRiskCount > 0 ? "warning" : "default"}
+              />
+              <MetricCard
+                label="Chart Strengths"
+                value={String(summary.marketContextStrengthCount)}
+                detail="Chart evidence strengths worth repeating"
+                tone={
+                  summary.marketContextStrengthCount > 0 ? "success" : "default"
+                }
+              />
+              <MetricCard
+                label="After-Exit Review"
+                value={String(summary.postExitFindingCount)}
+                detail={`${summary.postExitRiskCount} risk, ${summary.postExitStrengthCount} strength, ${summary.postExitReviewPromptCount} prompt`}
+                tone={
+                  summary.postExitRiskCount > 0
+                    ? "warning"
+                    : summary.postExitStrengthCount > 0
+                      ? "success"
+                      : summary.postExitFindingThreadCount > 0
+                        ? "info"
+                        : "default"
+                }
+              />
+              <MetricCard
+                label="Protected Profit"
+                value={String(summary.protectedProfitBeforeFadeFindingCount)}
+                detail={`${summary.protectedProfitBeforeFadeThreadCount} ticker stor${summary.protectedProfitBeforeFadeThreadCount === 1 ? "y" : "ies"}`}
+                tone={
+                  summary.protectedProfitBeforeFadeFindingCount > 0
+                    ? "success"
+                    : "default"
+                }
+              />
+              <MetricCard
+                label="Support/Resistance Exits"
+                value={String(summary.exitLevelFindingCount)}
+                detail={`${summary.exitLevelRiskCount} risk, ${summary.exitLevelStrengthCount} strength, ${summary.exitLevelReviewPromptCount} prompt`}
+                tone={
+                  summary.exitLevelRiskCount > 0
+                    ? "warning"
+                    : summary.exitLevelStrengthCount > 0
+                      ? "success"
+                      : summary.exitLevelFindingCount > 0
+                        ? "info"
+                        : "default"
+                }
+              />
+              <MetricCard
+                label="Volume Evidence"
+                value={String(summary.volumeFindingCount)}
+                detail={`${summary.volumeRiskCount} risk, ${summary.volumeStrengthCount} strength, ${summary.volumeReviewPromptCount} prompt`}
+                tone={
+                  summary.volumeRiskCount > 0
+                    ? "warning"
+                    : summary.volumeStrengthCount > 0
+                      ? "success"
+                      : summary.volumeFindingCount > 0
+                        ? "info"
+                        : "default"
+                }
+              />
+            </div>
+          </AdvancedDisclosure>
+        </div>
+      ) : null}
       {handoffs.length > 0 ? (
         <div className="mt-4 grid gap-3 lg:grid-cols-3">
           {handoffs.map((handoff) => (
@@ -840,6 +846,42 @@ function ChartEvidenceAnalyticsPanel({
             </div>
           </Link>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function ChartEvidenceTierGatePanel() {
+  return (
+    <section
+      className="ti-panel p-5"
+      data-testid="analytics-chart-evidence-tier-gate"
+      id="analytics-chart-evidence"
+    >
+      <div className="max-w-3xl">
+        <h2 className="text-sm font-semibold text-zinc-100">
+          Chart Evidence
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-zinc-400">
+          This view needs saved chart context. Execution analytics still show
+          saved trades, P/L, timing, and behavior, but candle, support, and
+          resistance summaries stay out of the report until real chart evidence
+          exists.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link
+            className="border border-sky-800 bg-sky-950/40 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+            href="/intelligence/analytics/results"
+          >
+            Open execution analytics
+          </Link>
+          <Link
+            className="border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm font-medium text-zinc-200 transition hover:border-zinc-500"
+            href="/intelligence/analytics/behavior"
+          >
+            Open behavior report
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -2792,10 +2834,16 @@ const ANALYTICS_CATEGORY_ACCESS: Array<{
 ];
 
 function AnalyticsCategoryAccessPanel({
+  chartTierEnabled,
   isSamplePreview,
 }: {
+  chartTierEnabled: boolean;
   isSamplePreview: boolean;
 }) {
+  const categories = ANALYTICS_CATEGORY_ACCESS.filter(
+    (item) => chartTierEnabled || item.section !== "chart_evidence",
+  );
+
   return (
     <section className="ti-panel p-5" data-testid="analytics-category-access">
       <div className="flex flex-col gap-2">
@@ -2807,7 +2855,7 @@ function AnalyticsCategoryAccessPanel({
         </h2>
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {ANALYTICS_CATEGORY_ACCESS.map((item) => (
+        {categories.map((item) => (
           <Link
             className="rounded-md border border-zinc-800/60 bg-slate-950/30 px-4 py-3 text-left transition hover:border-sky-600 hover:bg-sky-950/20"
             href={analyticsSectionHref(item.section, isSamplePreview)}
@@ -2828,15 +2876,21 @@ function AnalyticsCategoryAccessPanel({
 
 function AnalyticsDashboardNav({
   activeSection,
+  chartTierEnabled,
   isSamplePreview,
 }: {
   activeSection: AnalyticsDashboardSection;
+  chartTierEnabled: boolean;
   isSamplePreview: boolean;
 }) {
+  const sections = ANALYTICS_DASHBOARD_SECTIONS.filter(
+    (section) => chartTierEnabled || section.id !== "chart_evidence",
+  );
+
   return (
     <DashboardSideNav
       eyebrow="Analytics Menu"
-      items={ANALYTICS_DASHBOARD_SECTIONS.map((section) => ({
+      items={sections.map((section) => ({
         active: section.id === activeSection,
         href: analyticsSectionHref(section.id, isSamplePreview),
         label: section.label,
@@ -2859,6 +2913,7 @@ function analyticsSectionHref(
 }
 
 export function AnalyticsClient({
+  chartTierEnabled = false,
   initialSection = "overview",
   initialViewModel,
   savedReviewQueue,
@@ -2868,6 +2923,7 @@ export function AnalyticsClient({
   tickerStorySummary,
   sessionStorySummary,
 }: {
+  chartTierEnabled?: boolean;
   initialSection?: AnalyticsDashboardSection;
   initialViewModel: ProductTraderAnalyticsViewModel;
   savedReviewQueue?: SavedReviewQueueReadModel | null;
@@ -2961,12 +3017,16 @@ export function AnalyticsClient({
         />
 
         {activeSection === "overview" ? (
-          <AnalyticsCategoryAccessPanel isSamplePreview={isSamplePreview} />
+          <AnalyticsCategoryAccessPanel
+            chartTierEnabled={chartTierEnabled}
+            isSamplePreview={isSamplePreview}
+          />
         ) : null}
 
         <section className="grid min-w-0 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
           <AnalyticsDashboardNav
             activeSection={activeSection}
+            chartTierEnabled={chartTierEnabled}
             isSamplePreview={isSamplePreview}
           />
           <div className="min-w-0">
@@ -3014,7 +3074,11 @@ export function AnalyticsClient({
                     value={formatPercent(
                       report.executionBehavior.adversePriceAddRate,
                     )}
-                    detail={`${report.executionBehavior.adversePriceAddTradeCount} trades where chart data decides whether the add repaired or added exposure`}
+                    detail={
+                      chartTierEnabled
+                        ? `${report.executionBehavior.adversePriceAddTradeCount} trades where chart data decides whether the add repaired or added exposure`
+                        : `${report.executionBehavior.adversePriceAddTradeCount} trades added after price moved against the position`
+                    }
                     tone="warning"
                   />
                   <MetricCard
@@ -3055,15 +3119,22 @@ export function AnalyticsClient({
             ) : null}
 
             {activeSection === "ticker_stories" ? (
-              <TickerStoryAnalyticsPanel summary={tickerStorySummary} />
+              <TickerStoryAnalyticsPanel
+                chartTierEnabled={chartTierEnabled}
+                summary={tickerStorySummary}
+              />
             ) : null}
 
             {activeSection === "session_stories" ? (
               <SessionStoryAnalyticsPanel summary={sessionStorySummary} />
             ) : null}
 
-            {activeSection === "chart_evidence" ? (
+            {chartTierEnabled && activeSection === "chart_evidence" ? (
               <ChartEvidenceAnalyticsPanel summary={tickerStorySummary} />
+            ) : null}
+
+            {!chartTierEnabled && activeSection === "chart_evidence" ? (
+              <ChartEvidenceTierGatePanel />
             ) : null}
 
             {activeSection === "review" ? (
@@ -3072,9 +3143,11 @@ export function AnalyticsClient({
                   <WeeklyReviewPanel
                     weeklyReview={initialViewModel.weeklyReview}
                   />
-                  <MarketContextPanel
-                    status={initialViewModel.marketContextAddOn}
-                  />
+                  {chartTierEnabled ? (
+                    <MarketContextPanel
+                      status={initialViewModel.marketContextAddOn}
+                    />
+                  ) : null}
                 </section>
 
                 <ImprovementIntelligencePanel

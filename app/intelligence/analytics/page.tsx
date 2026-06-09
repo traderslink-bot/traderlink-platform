@@ -121,6 +121,8 @@ export default async function AnalyticsPage(props: {
           analyticsData.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
       : [];
+  const chartTierEnabled =
+    analyticsData.mode === "sample" || decisionReviewSnapshots.length > 0;
   const tradeThreadModel = buildSavedTradeThreadReadModel({
     decisionReviewSnapshots,
     report: analyticsData.viewModel.latestReport,
@@ -247,6 +249,7 @@ export default async function AnalyticsPage(props: {
 
   return (
     <AnalyticsClient
+      chartTierEnabled={chartTierEnabled}
       initialSection={activeSection}
       initialViewModel={analyticsData.viewModel}
       savedReviewQueue={savedReviewQueue}
