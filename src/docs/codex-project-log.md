@@ -16104,3 +16104,35 @@ Best next step:
 
 - Continue the coach product-pass inventory only after isolating route-safe
   helper/scoring changes from stale `/coach` and `/trades` href changes.
+
+# 2026-06-09 coach evidence-status copy gate
+
+- Continued the coach product-pass inventory with a small route-safe copy gate
+  in `app/intelligence/coach/page.tsx`.
+- The coach route menu now says the behavior sequence is chart-supported only
+  when completed decision-review snapshots exist. When chart jobs are queued,
+  missing, or failed, it says the path is execution-supported while chart data
+  needs review.
+- The coach header status badge now says:
+  - "chart evidence checked" when completed chart snapshots exist,
+  - "chart data needs review" when pending/problem chart data exists,
+  - "execution evidence checked" when no chart evidence is available.
+- Added a calm link to `/intelligence/review?queue=candle_basis_warning` when
+  the saved review queue has candle-basis warning items.
+- Did not port the larger product-pass coach scoring/UI rewrite because it
+  depends on queue story-link fields that need a separate route-safe contract
+  port and the product-pass file still contains stale top-level hrefs.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused coach/repository Vitest passed: 2 files, 21 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- If continuing the coach product-pass port, next isolate the saved-review queue
+  ticker-story linkage fields (`tickerStoryKey`, story review count, lead item)
+  while preserving level-facts and `/intelligence` routes. That unlocks the
+  smarter coach ticker-story focus selection without direct-merging product-pass.

@@ -1409,6 +1409,8 @@ export default async function CoachPage(props: {
           analyticsData.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
       : [];
+  const completedChartEvidenceCount = decisionReviewSnapshots.length;
+  const hasCompletedChartEvidence = completedChartEvidenceCount > 0;
   const tradeThreadModel = buildSavedTradeThreadReadModel({
     decisionReviewSnapshots,
     report: analytics.latestReport,
@@ -1434,6 +1436,20 @@ export default async function CoachPage(props: {
   const archetype = coach.archetypeProfile.primary;
   const primaryReviewItem =
     savedReviewQueue?.items[0] ?? savedReviewQueue?.allItems[0] ?? null;
+  const chartDataNeedsReviewCount =
+    savedReviewQueue?.tabs.find((tab) => tab.id === "analysis_failed")?.count ??
+    0;
+  const chartDataMissingCount =
+    savedReviewQueue?.tabs.find(
+      (tab) => tab.id === "market_context_unavailable",
+    )?.count ?? 0;
+  const chartDataWaitingCount =
+    savedReviewQueue?.tabs.find((tab) => tab.id === "queued")?.count ?? 0;
+  const candleBasisWarningCount =
+    savedReviewQueue?.tabs.find((tab) => tab.id === "candle_basis_warning")
+      ?.count ?? 0;
+  const chartDataNeedsAttentionCount =
+    chartDataNeedsReviewCount + chartDataMissingCount + chartDataWaitingCount;
   const dataLabel =
     analyticsData.mode === "saved"
       ? plainStateLabel("saved_sqlite")
@@ -1524,7 +1540,11 @@ export default async function CoachPage(props: {
       countLabel: `${behaviorReport.groups.length} groups`,
       href: "/intelligence/coach/behavior-sequence",
       label: "Behavior Sequence",
-      summary: "One chart-backed path for what to fix, repeat, or review.",
+      summary: hasCompletedChartEvidence
+        ? "One chart-supported path for what to fix, repeat, or review."
+        : chartDataNeedsAttentionCount > 0
+          ? "One execution-supported path while chart data needs review."
+          : "One execution-supported path for what to fix, repeat, or review.",
     },
     {
       active: activeCoachView === "review_backlog",
@@ -1608,8 +1628,21 @@ export default async function CoachPage(props: {
               {dataLabel}
             </span>
             <span className="rounded-md border border-emerald-900 bg-emerald-950/20 px-2 py-1 text-emerald-300">
-              chart claims gated
+              {hasCompletedChartEvidence
+                ? "chart evidence checked"
+                : chartDataNeedsAttentionCount > 0
+                  ? "chart data needs review"
+                  : "execution evidence checked"}
             </span>
+            {candleBasisWarningCount > 0 ? (
+              <Link
+                className="rounded-md border border-amber-900 bg-amber-950/20 px-2 py-1 text-amber-200 transition hover:border-amber-500"
+                href="/intelligence/review?queue=candle_basis_warning"
+              >
+                {candleBasisWarningCount} candle basis check
+                {candleBasisWarningCount === 1 ? "" : "s"}
+              </Link>
+            ) : null}
             <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-1 text-zinc-400">
               evidence-backed review
             </span>
