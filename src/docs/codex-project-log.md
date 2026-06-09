@@ -16440,3 +16440,28 @@ Best next step:
 - Continue product-pass inventory only for narrow server/read-model behavior.
   Leave the larger background resume scheduling and top-level route rewrites for
   a separate deliberate pass.
+
+# 2026-06-09 chart review status route port
+
+- Ported the isolated decision-review status API from product-pass into the
+  current import-batch API namespace:
+  `/api/import-batches/[batchId]/decision-review/status`.
+- The route reports saved-trade count, execution count, job status counts,
+  snapshot/diagnostic counts, retryable failed count, pending work count, and a
+  calm next action.
+- The status read model aligns with the retry semantics from the prior slice:
+  queued jobs and retryable failed chart-data jobs count as pending work, and
+  completed chart snapshots are reported separately.
+- Added a saved-import API regression proving a newly committed import exposes
+  queued chart-review status and `canResume: true`.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import API route Vitest passed: 1 file, 13 tests.
+
+Best next step:
+
+- Continue product-pass inventory only for narrow behavior/read-model slices.
+  Avoid the stale top-level import page rewrites unless intentionally adapting
+  them into `/intelligence`.

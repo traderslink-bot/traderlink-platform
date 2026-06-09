@@ -6,6 +6,7 @@ import { POST as previewImportBatch } from "../../../../app/api/import-batches/p
 import { GET as listImportBatches } from "../../../../app/api/import-batches/route";
 import { POST as commitImportBatch } from "../../../../app/api/import-batches/[batchId]/commit/route";
 import { GET as getImportBatch } from "../../../../app/api/import-batches/[batchId]/route";
+import { GET as getDecisionReviewStatus } from "../../../../app/api/import-batches/[batchId]/decision-review/status/route";
 import { POST as setImportRepairStatus } from "../../../../app/api/import-batches/[batchId]/repair-items/[repairItemId]/route";
 import { GET as listTrades } from "../../../../app/api/trades/route";
 import { GET as getTrade } from "../../../../app/api/trades/[tradeId]/route";
@@ -129,6 +130,29 @@ describe("saved import API routes", () => {
       contractVersion: "persisted_decision_review_run_scheduled_v1",
       requestedJobCount: 1,
       queuedJobCount: 1,
+    });
+
+    const decisionReviewStatus = await (
+      await getDecisionReviewStatus(
+        new Request(
+          `http://localhost/api/import-batches/${encodeURIComponent(
+            batchId,
+          )}/decision-review/status`,
+        ),
+        { params: Promise.resolve({ batchId }) },
+      )
+    ).json();
+    expect(decisionReviewStatus).toMatchObject({
+      contractVersion: "persisted_decision_review_status_v1",
+      importBatchId: batchId,
+      batchStatus: "committed",
+      totalJobCount: 1,
+      queuedCount: 1,
+      completedCount: 0,
+      retryableCount: 0,
+      pendingWorkCount: 1,
+      canResume: true,
+      nextAction: "Continue chart data review for queued saved trades.",
     });
 
     const trades = await (await listTrades()).json();
