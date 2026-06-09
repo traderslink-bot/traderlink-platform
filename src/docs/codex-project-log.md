@@ -15788,3 +15788,49 @@ Current best next step:
 - Used `shellElement="div"` on News index/ticker pages to avoid nested `<main>`
   landmarks.
 - Mirrored the primary site destinations in the homepage hero nav.
+
+# 2026-06-09 v2 levels/candle shared-behavior port to main worktree
+
+- Continued the deliberate port on
+  `C:\Users\jerac\Documents\TraderLink\trader-intelligence-v2-main-merge`
+  branch `codex/port-v2-candle-analytics-main`; this is not a direct merge from
+  `codex/trader-ui-product-pass`.
+- Preserved main's `/intelligence` route namespace and journal-level-analysis
+  work; no files under `app/intelligence`, `src/lib/level-analysis`, or the
+  level-analysis API routes were changed in this shared-behavior pass.
+- Ported the v2-only levels integration to active shared libraries:
+  `levels-system-v2/support-resistance-engine` is the package dependency and
+  `serverExternalPackages` entry, while the old tracked
+  `vendor/levels-system-phase1` tree is removed.
+- Added the warehouse/IBKR-aware v2 support-resistance path that uses stored
+  daily/4h candles when present and treats missing 5m/trade-window data as
+  fetch-required rather than paid evidence.
+- Carried v2 level quality metadata through PatternInput and decision-review
+  market context: importance, freshness, extension flags, synthetic-extension
+  flags, zone width, source strength, reaction strength, and score are preserved
+  only when a real v2 level exists.
+- Updated levels/summary/audit tests so support/resistance evidence can be
+  present without claiming formal market structure; market-structure calibration
+  now blocks promotion when the v2 adapter has no market-structure read.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader analytics/coach/review Vitest passed: 5 files, 54 tests.
+- `npm run build:webpack` passed and confirmed the `/intelligence/...` route
+  table and level-analysis APIs remain present.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop` ran against the built app but failed 12 tests
+  because that spec still hard-codes the pre-main `/workspace`, `/coach`,
+  `/trades`, and `/analytics` route contracts and href expectations. Four tests
+  passed. The next UI-port step should update the E2E spec and product-pass UI
+  route assumptions to main's `/intelligence` namespace rather than changing app
+  routes backward.
+
+Best next step:
+
+- Commit this shared v2 candle/levels behavior port if the route-namespace
+  Playwright caveat is accepted, then do a second deliberate UI/test port that
+  adapts product-pass pages and Playwright expectations to `/intelligence` while
+  preserving journal-level-analysis.

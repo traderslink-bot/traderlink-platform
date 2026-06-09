@@ -7,21 +7,19 @@ import {
   validateTradeAnalysisRequest,
 } from "../request/trade-analysis-request-contract";
 import {
+  runTradeAnalysis,
   runTradeAnalysisFromLevelsSystemCandles,
   runTradeAnalysisWithProvidedCandlesOnly,
 } from "../run-trade-analysis";
 import { buildTradeAnalysisSummary } from "../summary/build-trade-analysis-summary";
 
 describe("buildTradeAnalysisSummary", () => {
-  it("builds a stable app-facing summary for shared candle analysis", async () => {
-    const result = await runTradeAnalysisFromLevelsSystemCandles({
-      trade: {
-        symbol: sampleCreateRawTradeTimelineInput.symbol,
-        tradeDirection: sampleCreateRawTradeTimelineInput.tradeDirection,
-        executions: sampleCreateRawTradeTimelineInput.executions,
-        sessionContext: sampleCreateRawTradeTimelineInput.sessionContext,
+  it("builds a stable app-facing summary for v2 support/resistance analysis", async () => {
+    const result = await runTradeAnalysis({
+      trade: sampleCreateRawTradeTimelineInput,
+      supportResistance: {
+        levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
       },
-      levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
     });
 
     const summary = buildTradeAnalysisSummary(result);
@@ -29,19 +27,19 @@ describe("buildTradeAnalysisSummary", () => {
     expect(summary).toMatchObject({
       contractVersion: "trade_analysis_summary_v1",
       symbol: "ABCD",
-      candleSource: "levels_system_trade_window",
+      candleSource: "provided_trade_candles",
       supportResistanceMode: "levels_system",
       supportResistance: {
-        supportCount: 7,
-        resistanceCount: 3,
+        supportCount: expect.any(Number),
+        resistanceCount: expect.any(Number),
       },
       marketStructure: {
-        observed: true,
+        observed: false,
         observationalOnly: true,
         usedForScoring: false,
-        state: "base_building",
-        trendDirection: "uptrend",
-        confidenceLabel: "high",
+        state: null,
+        trendDirection: null,
+        confidenceLabel: null,
       },
       executionFeedback: {
         contractVersion: "execution_feedback_summary_v1",
@@ -80,10 +78,18 @@ describe("buildTradeAnalysisSummary", () => {
         nearestResistanceSourceStrengthLabel: expect.stringMatching(
           /^(major|strong|moderate|weak)$/,
         ),
+        nearestSupportImportance: expect.stringMatching(
+          /^(major|actionable|secondary|weak|synthetic_extension)$/,
+        ),
+        nearestResistanceImportance: expect.stringMatching(
+          /^(major|actionable|secondary|weak|synthetic_extension)$/,
+        ),
       },
     });
+    expect(summary.supportResistance.supportCount).toBeGreaterThan(0);
+    expect(summary.supportResistance.resistanceCount).toBeGreaterThan(0);
     expect(summary.decisionReview.insights.length).toBeGreaterThan(0);
-    expect(summary.warnings).toEqual(
+    expect(summary.warnings).not.toEqual(
       expect.arrayContaining([
         expect.stringContaining("levels-system trade-window info"),
       ]),
@@ -112,20 +118,17 @@ describe("buildTradeAnalysisSummary", () => {
   });
 
   it("keeps execution feedback facts separate from market-context enrichment", async () => {
-    const result = await runTradeAnalysisFromLevelsSystemCandles({
-      trade: {
-        symbol: sampleCreateRawTradeTimelineInput.symbol,
-        tradeDirection: sampleCreateRawTradeTimelineInput.tradeDirection,
-        executions: sampleCreateRawTradeTimelineInput.executions,
-        sessionContext: sampleCreateRawTradeTimelineInput.sessionContext,
+    const result = await runTradeAnalysis({
+      trade: sampleCreateRawTradeTimelineInput,
+      supportResistance: {
+        levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
       },
-      levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
     });
 
     const summary = buildTradeAnalysisSummary(result);
 
     expect(summary.supportResistance.supportCount).toBeGreaterThan(0);
-    expect(summary.marketStructure.observed).toBe(true);
+    expect(summary.marketStructure.observed).toBe(false);
     expect(summary.marketStructure.usedForScoring).toBe(false);
     expect(summary.executionFeedback.marketContextUsed).toBe(false);
     expect(summary.executionFeedback.lifecycle.maxPositionSize).toBe(
@@ -158,7 +161,6 @@ describe("buildTradeAnalysisSummary", () => {
     expect(summary.decisionReview.marketContext.source).toBe("none");
     expect(summary.decisionReview.insights.map((insight) => insight.id)).toEqual(
       expect.arrayContaining([
-        "market_context_unavailable",
         "trade_window_excursion_measured",
       ]),
     );

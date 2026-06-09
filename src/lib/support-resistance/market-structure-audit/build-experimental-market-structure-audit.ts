@@ -1,4 +1,4 @@
-import type { CandleMarketStructureContext } from "levels-system-phase1/support-resistance-engine";
+import type { CandleMarketStructureContext } from "levels-system-v2/support-resistance-engine";
 import {
   runTradeAnalysis,
   runTradeAnalysisFromLevelsSystemCandles,

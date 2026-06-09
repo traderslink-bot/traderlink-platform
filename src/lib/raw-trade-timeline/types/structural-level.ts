@@ -17,6 +17,13 @@ export type StructuralLevelReactionStrength =
   | "weak"
   | "moderate"
   | "strong";
+export type StructuralLevelImportance =
+  | "major"
+  | "actionable"
+  | "secondary"
+  | "weak"
+  | "synthetic_extension";
+export type StructuralLevelFreshness = "fresh" | "aging" | "stale";
 export type StructuralLevelPivotSource =
   | "tight_pivot"
   | "strict_pivot"
@@ -29,6 +36,15 @@ export interface StructuralLevel {
   score: number;
   strengthBucket: StructuralLevelStrengthBucket;
   sourceStrengthLabel?: StructuralLevelSourceStrengthLabel | null;
+  importance: StructuralLevelImportance;
+  timeframeBias?: string | null;
+  zoneLow?: number | null;
+  zoneHigh?: number | null;
+  zoneWidthPct?: number | null;
+  isExtension?: boolean;
+  extensionSource?: string | null;
+  isSyntheticExtension?: boolean;
+  freshness?: StructuralLevelFreshness | null;
   timeframeSources: string[];
   pivotSources: StructuralLevelPivotSource[];
   touchCount: number;

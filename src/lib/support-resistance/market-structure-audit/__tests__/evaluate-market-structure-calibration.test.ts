@@ -97,7 +97,7 @@ function buildAudit(
 }
 
 describe("evaluateMarketStructureCalibration", () => {
-  it("returns a machine-readable PASS evaluation for a clean sample audit", async () => {
+  it("returns BLOCKER when v2 support/resistance evidence has no market-structure read", async () => {
     const audit =
       await buildExperimentalMarketStructureAuditFromLevelsSystemCandles({
         trades: [
@@ -113,12 +113,17 @@ describe("evaluateMarketStructureCalibration", () => {
 
     const evaluation = evaluateMarketStructureCalibration(audit);
 
-    expect(evaluation.overallStatus).toBe("PASS");
+    expect(evaluation.overallStatus).toBe("BLOCKER");
     expect(evaluation.recommendation.action).toBe(
-      "continue_observational_validation",
+      "resolve_failed_or_missing_context",
     );
     expect(evaluation.gates).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          id: "market_structure_presence",
+          status: "BLOCKER",
+          tradeIndexes: [0],
+        }),
         expect.objectContaining({
           id: "provider_engine_warnings",
           status: "PASS",

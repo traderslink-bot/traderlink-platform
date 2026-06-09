@@ -20,11 +20,7 @@ describe("analyzeTradeWithLevelsSystem integration", () => {
 
     expect(result.rawTradeTimeline.supportLevels?.length).toBeGreaterThan(0);
     expect(result.rawTradeTimeline.resistanceLevels?.length).toBeGreaterThan(0);
-    expect(result.rawTradeTimeline.experimentalMarketStructure).toMatchObject({
-      symbol: "ABCD",
-      timeframe: "5m",
-      state: expect.any(String),
-    });
+    expect(result.rawTradeTimeline.experimentalMarketStructure).toBeUndefined();
     expect(
       result.patternInput.supportResistanceContext
         .hadSupportResistanceContextAvailable,

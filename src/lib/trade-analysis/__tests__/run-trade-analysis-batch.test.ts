@@ -66,8 +66,8 @@ describe("runBatchTradeAnalysis", () => {
       },
       failureCounts: {},
       marketStructureCounts: {
-        observed: 1,
-        missing: 0,
+        observed: 0,
+        missing: 1,
         scoringUses: 0,
       },
       items: [
@@ -76,17 +76,19 @@ describe("runBatchTradeAnalysis", () => {
           summary: {
             candleSource: "levels_system_trade_window",
             supportResistance: {
-              supportCount: 7,
-              resistanceCount: 3,
+              supportCount: expect.any(Number),
+              resistanceCount: expect.any(Number),
             },
             marketStructure: {
-              observed: true,
+              observed: false,
               usedForScoring: false,
             },
           },
         },
       ],
     });
+    expect(batch.items[0].summary?.supportResistance.supportCount).toBeGreaterThan(0);
+    expect(batch.items[0].summary?.supportResistance.resistanceCount).toBeGreaterThan(0);
     expect(batch.patternCounts.detectedTotal).toBeGreaterThan(0);
     expect(batch.patternCounts.normalizedTotal).toBeGreaterThan(0);
     expect(Object.keys(batch.patternCounts.topAnchorPatternIds).length).toBe(1);

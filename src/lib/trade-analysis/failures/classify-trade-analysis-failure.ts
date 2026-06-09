@@ -8,6 +8,7 @@ export type TradeAnalysisFailureCode =
   | "unsupported_provider"
   | "provider_auth_failed"
   | "provider_rate_limited"
+  | "provider_timeout"
   | "invalid_symbol"
   | "no_candles_found"
   | "insufficient_market_context"
@@ -63,6 +64,14 @@ const FAILURE_DEFINITIONS: Record<
     title: "Provider rate limit",
     retryable: true,
     userAction: "Wait and retry with fewer symbols or a smaller batch.",
+  },
+  provider_timeout: {
+    code: "provider_timeout",
+    source: "provider",
+    title: "Provider timeout",
+    retryable: true,
+    userAction:
+      "Use execution/P&L-only review now; retry chart data after the provider connection can supply the missing candles.",
   },
   invalid_symbol: {
     code: "invalid_symbol",
@@ -195,6 +204,15 @@ export function classifyTradeAnalysisFailure(
   }
 
   if (
+    (message.includes("timed out") || message.includes("timeout")) &&
+    (message.includes("ibkr") ||
+      message.includes("historical data") ||
+      message.includes("candle hydration"))
+  ) {
+    return buildFailure("provider_timeout", rawMessage);
+  }
+
+  if (
     message.includes("invalid symbol") ||
     message.includes("unknown symbol") ||
     message.includes("contract not found") ||
@@ -205,6 +223,8 @@ export function classifyTradeAnalysisFailure(
 
   if (
     message.includes("daily and 4h candles are required") ||
+    (message.includes("durable candle warehouse miss") &&
+      (message.includes(" daily") || message.includes(" 4h"))) ||
     message.includes("requires daily candles to build support/resistance context") ||
     message.includes("requires 4h candles to build support/resistance context")
   ) {

@@ -3,7 +3,7 @@ import {
   CandleFetchService,
   type HistoricalCandleProvider,
   type HistoricalFetchRequest,
-} from "levels-system-phase1/support-resistance-engine";
+} from "levels-system-v2/support-resistance-engine";
 import {
   SampleTradeAlignedHistoricalCandleProvider,
   buildSampleLevelsSystemSupportResistanceOptions,

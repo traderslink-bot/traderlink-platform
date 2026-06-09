@@ -1,4 +1,4 @@
-import type { TradeAnalysisCandleWindowOptions } from "levels-system-phase1/support-resistance-engine";
+import type { TradeAnalysisCandleWindowOptions } from "levels-system-v2/support-resistance-engine";
 import type { ProviderExecution } from "../../execution-sources/types/provider-execution";
 import type { NormalizeExecutionInput } from "../../raw-trade-timeline/normalizers/normalize-execution";
 import { normalizeRequiredSessionBucketValue } from "../../raw-trade-timeline/session/normalize-session-bucket";

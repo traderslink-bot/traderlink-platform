@@ -18,14 +18,14 @@ describe("buildExperimentalMarketStructureAudit", () => {
       totalTrades: 1,
       successfulTrades: 1,
       failedTrades: 0,
-      missingMarketStructureCount: 0,
+      missingMarketStructureCount: 1,
       patternInputLeakCount: 0,
-      totalSupportLevels: 7,
-      totalResistanceLevels: 3,
+      totalSupportLevels: 3,
+      totalResistanceLevels: 2,
     });
-    expect(audit.totals.stateCounts.base_building).toBe(1);
-    expect(audit.totals.trendDirectionCounts.uptrend).toBe(1);
-    expect(audit.totals.confidenceCounts.high).toBe(1);
+    expect(audit.totals.stateCounts).toEqual({});
+    expect(audit.totals.trendDirectionCounts).toEqual({});
+    expect(audit.totals.confidenceCounts).toEqual({});
 
     const record = audit.records[0];
 
@@ -39,23 +39,10 @@ describe("buildExperimentalMarketStructureAudit", () => {
       supportResistanceMode: "levels_system",
       patternInputContainsExperimentalMarketStructure: false,
       levelCounts: {
-        support: 7,
-        resistance: 3,
+        support: 3,
+        resistance: 2,
       },
-    });
-    expect(record.marketStructure).toMatchObject({
-      symbol: "ABCD",
-      timeframe: "5m",
-      state: "base_building",
-      trendDirection: "uptrend",
-      confidence: {
-        label: "high",
-      },
-      pivotCounts: {
-        confirmedHighs: expect.any(Number),
-        confirmedLows: expect.any(Number),
-      },
-      traderLine: expect.stringContaining("5m structure"),
+      marketStructure: null,
     });
     expect(record.detectedPatternIds).toContain(
       "entry_far_from_support_structure",
@@ -81,7 +68,7 @@ describe("buildExperimentalMarketStructureAudit", () => {
       totalTrades: 2,
       successfulTrades: 1,
       failedTrades: 1,
-      missingMarketStructureCount: 1,
+      missingMarketStructureCount: 2,
       patternInputLeakCount: 0,
     });
     expect(audit.records[1]).toMatchObject({
@@ -119,22 +106,19 @@ describe("buildExperimentalMarketStructureAudit", () => {
       totalTrades: 1,
       successfulTrades: 1,
       failedTrades: 0,
-      missingMarketStructureCount: 0,
+      missingMarketStructureCount: 1,
       patternInputLeakCount: 0,
-      totalSupportLevels: 7,
+      totalSupportLevels: 5,
       totalResistanceLevels: 3,
     });
     expect(audit.records[0]).toMatchObject({
       candleSource: "levels_system_trade_window",
       analysisStatus: "ok",
-      marketStructure: {
-        state: "base_building",
-        trendDirection: "uptrend",
-      },
+      marketStructure: null,
     });
     expect(audit.records[0].warnings).toEqual(
       expect.arrayContaining([
-        expect.stringContaining("levels-system trade-window info"),
+        expect.stringContaining("Trade-window candle basis status"),
       ]),
     );
   });

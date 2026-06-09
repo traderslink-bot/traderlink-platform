@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["levels-system-phase1"],
+  serverExternalPackages: ["levels-system-v2"],
   async redirects() {
     return [
       {

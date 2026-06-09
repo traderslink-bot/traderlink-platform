@@ -20,6 +20,8 @@ import type { ReferenceLevelLabel } from "../../raw-trade-timeline/types/referen
 import type { SessionBucket } from "../../raw-trade-timeline/types/session-context";
 import type {
   StructuralLevelReactionStrength,
+  StructuralLevelFreshness,
+  StructuralLevelImportance,
   StructuralLevelStrengthBucket,
   StructuralLevelSourceStrengthLabel,
 } from "../../raw-trade-timeline/types/structural-level";
@@ -158,6 +160,16 @@ export interface PatternInputSupportResistanceContext {
   firstEntryNearestResistanceStrengthBucket?: StructuralLevelStrengthBucket | null;
   firstEntryNearestSupportSourceStrengthLabel?: StructuralLevelSourceStrengthLabel | null;
   firstEntryNearestResistanceSourceStrengthLabel?: StructuralLevelSourceStrengthLabel | null;
+  firstEntryNearestSupportImportance?: StructuralLevelImportance | null;
+  firstEntryNearestResistanceImportance?: StructuralLevelImportance | null;
+  firstEntryNearestSupportFreshness?: StructuralLevelFreshness | null;
+  firstEntryNearestResistanceFreshness?: StructuralLevelFreshness | null;
+  firstEntryNearestSupportIsExtension?: boolean;
+  firstEntryNearestResistanceIsExtension?: boolean;
+  firstEntryNearestSupportIsSyntheticExtension?: boolean;
+  firstEntryNearestResistanceIsSyntheticExtension?: boolean;
+  firstEntryNearestSupportZoneWidthPct?: number | null;
+  firstEntryNearestResistanceZoneWidthPct?: number | null;
   firstEntryNearestSupportReactionStrength?: StructuralLevelReactionStrength | null;
   firstEntryNearestResistanceReactionStrength?: StructuralLevelReactionStrength | null;
   firstEntryNearestSupportScore?: number | null;

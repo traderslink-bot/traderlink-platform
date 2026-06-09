@@ -67,7 +67,7 @@ describe("trade analysis debug dashboard", () => {
           summary: {
             candleSource: "levels_system_trade_window",
             marketStructure: {
-              observed: true,
+              observed: false,
               usedForScoring: false,
             },
           },

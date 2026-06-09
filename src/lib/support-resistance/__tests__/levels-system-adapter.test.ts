@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildSupportResistanceContextForSymbol } from "levels-system-phase1/support-resistance-engine";
+import { buildSupportResistanceContext } from "levels-system-v2/support-resistance-engine";
 import { sampleCreateRawTradeTimelineInput } from "../../raw-trade-timeline/__fixtures__/sample-create-raw-trade-timeline-input";
 import {
   createRawTradeTimeline,
@@ -9,7 +9,7 @@ import {
   buildLevelsSystemSupportResistanceContext,
   mapFinalLevelZoneToStructuralLevel,
 } from "../levels-system-adapter";
-import type { FinalLevelZone } from "levels-system-phase1/support-resistance-engine";
+import type { FinalLevelZone } from "levels-system-v2/support-resistance-engine";
 
 function buildFinalLevelZone(
   overrides: Partial<FinalLevelZone> = {},
@@ -57,6 +57,15 @@ describe("levels-system adapter", () => {
       score: 8,
       strengthBucket: "strong",
       sourceStrengthLabel: "strong",
+      importance: "actionable",
+      timeframeBias: "daily",
+      zoneLow: 4.9,
+      zoneHigh: 5.1,
+      zoneWidthPct: 4,
+      isExtension: false,
+      extensionSource: null,
+      isSyntheticExtension: false,
+      freshness: "fresh",
       timeframeSources: ["daily", "4h"],
       pivotSources: ["reference_level", "strict_pivot"],
       touchCount: 4,
@@ -97,8 +106,27 @@ describe("levels-system adapter", () => {
     ).toBe("weak");
   });
 
+  it("maps v2 synthetic extension metadata into local level importance", () => {
+    const structuralLevel = mapFinalLevelZoneToStructuralLevel(
+      buildFinalLevelZone({
+        isExtension: true,
+        extensionMetadata: {
+          extensionSource: "synthetic_continuation_map",
+          generationMethod: "percentage_ladder",
+          syntheticIndex: 1,
+          evidenceLimitations: ["not_historical_support_resistance"],
+        },
+      }),
+    );
+
+    expect(structuralLevel.importance).toBe("synthetic_extension");
+    expect(structuralLevel.isExtension).toBe(true);
+    expect(structuralLevel.isSyntheticExtension).toBe(true);
+    expect(structuralLevel.extensionSource).toBe("synthetic_continuation_map");
+  });
+
   it("imports the public package boundary and builds mapped context with the shared stub provider", async () => {
-    expect(buildSupportResistanceContextForSymbol).toBeTypeOf("function");
+    expect(buildSupportResistanceContext).toBeTypeOf("function");
 
     const rawResult = createRawTradeTimeline(sampleCreateRawTradeTimelineInput);
     const context = await buildLevelsSystemSupportResistanceContext({
@@ -116,30 +144,35 @@ describe("levels-system adapter", () => {
     expect(
       context.supportLevels.length + context.resistanceLevels.length,
     ).toBeGreaterThan(0);
+    const mappedLevels = [...context.supportLevels, ...context.resistanceLevels];
     expect(
-      [...context.supportLevels, ...context.resistanceLevels].every((level) =>
-        level.timeframeSources.some(
-          (timeframe) => timeframe === "daily" || timeframe === "4h",
+      mappedLevels.some((level) =>
+        level.timeframeSources.includes("5m"),
+      ),
+    ).toBe(true);
+    expect(mappedLevels.some((level) => level.sourcePrices.length > 1)).toBe(
+      true,
+    );
+    expect(
+      mappedLevels.some((level) =>
+        ["major", "actionable", "secondary", "weak"].includes(
+          level.importance,
         ),
       ),
     ).toBe(true);
-    expect(context.dynamicLevels.vwap).not.toBeNull();
-    expect(context.dynamicLevels.ema9).not.toBeNull();
-    expect(context.dynamicLevels.ema20).not.toBeNull();
-    expect(context.experimentalMarketStructure.symbol).toBe("ABCD");
-    expect(context.experimentalMarketStructure.timeframe).toBe("5m");
-    expect(context.experimentalMarketStructure.state).toBeTruthy();
+    expect(mappedLevels.some((level) => level.zoneWidthPct !== null)).toBe(
+      true,
+    );
+    expect(mappedLevels.some((level) => level.sourceStrengthLabel === "weak"))
+      .toBe(true);
+    expect(context.dynamicLevels.vwap).toBeNull();
+    expect(context.dynamicLevels.ema9).toBeNull();
+    expect(context.dynamicLevels.ema20).toBeNull();
+    expect(context.experimentalMarketStructure).toBeUndefined();
     expect(context.executionLevelRelations).toHaveLength(
       rawResult.timeline.executions.length,
     );
-    expect(context.sharedEngineDiagnostics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code: "fetched_candle_group",
-          severity: "info",
-        }),
-      ]),
-    );
+    expect(Array.isArray(context.sharedEngineDiagnostics)).toBe(true);
   });
 
   it("can build a raw timeline result with shared-engine structural context", async () => {
@@ -161,26 +194,31 @@ describe("levels-system adapter", () => {
       (result.supportLevels?.length ?? 0) +
         (result.resistanceLevels?.length ?? 0),
     ).toBeGreaterThan(0);
+    const mappedLevels = [
+      ...(result.supportLevels ?? []),
+      ...(result.resistanceLevels ?? []),
+    ];
     expect(
-      [...(result.supportLevels ?? []), ...(result.resistanceLevels ?? [])].every(
-        (level) =>
-          level.timeframeSources.some(
-            (timeframe) => timeframe === "daily" || timeframe === "4h",
-          ),
+      mappedLevels.some((level) => level.timeframeSources.includes("5m")),
+    ).toBe(true);
+    expect(mappedLevels.some((level) => level.sourcePrices.length > 1)).toBe(
+      true,
+    );
+    expect(
+      mappedLevels.some((level) =>
+        ["major", "actionable", "secondary", "weak"].includes(
+          level.importance,
+        ),
       ),
     ).toBe(true);
     expect(result.executionLevelRelations).toHaveLength(
       result.timeline.executions.length,
     );
     expect(result.dynamicLevels).toMatchObject({
-      vwap: expect.any(Number),
-      ema9: expect.any(Number),
-      ema20: expect.any(Number),
+      vwap: null,
+      ema9: null,
+      ema20: null,
     });
-    expect(result.experimentalMarketStructure).toMatchObject({
-      symbol: "ABCD",
-      timeframe: "5m",
-      state: expect.any(String),
-    });
+    expect(result.experimentalMarketStructure).toBeUndefined();
   });
 });

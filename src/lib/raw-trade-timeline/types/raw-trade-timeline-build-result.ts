@@ -56,7 +56,7 @@ import type {
   CandleMarketStructureContext,
   TradeAnalysisCandleContext,
   TradeAnalysisExecutionRelationFact,
-} from "levels-system-phase1/support-resistance-engine";
+} from "levels-system-v2/support-resistance-engine";
 
 export interface RawTradeTimelineBuildResult {
   input: TradeTimelineInput;
