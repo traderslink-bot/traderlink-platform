@@ -15910,3 +15910,35 @@ Best next step:
   saved-trades or coach UI deltas, and port only changes that preserve
   `/intelligence`, journal-level-analysis, and levels-system-v2-only evidence
   rules.
+
+# 2026-06-09 saved-trades coach ticker-story handoff port
+
+- Continued the saved-trades product-pass inventory without direct-merging
+  `codex/trader-ui-product-pass`.
+- Ported the route-safe ticker-story coach handoff behavior into main's current
+  `/intelligence` route shape:
+  - `app/intelligence/coach/page.tsx` now builds ticker-story links with
+    `from=coach` and an optional focus label while keeping
+    `/intelligence/trades/ticker-story/...` URLs.
+  - `app/intelligence/trades/ticker-story/[threadId]/page.tsx` now accepts
+    coach handoff query params and shows a focused coach handoff panel when
+    opened from coach.
+- Preserved main's existing hold-continuation ticker-story section and did not
+  delete or replace `trade-detail-level-facts.tsx`.
+- Kept the paid/free evidence rule in the handoff panel: chart context is shown
+  only as saved findings when present; otherwise the page says execution replay
+  only and explicitly avoids support/resistance claims.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-thread/coach Vitest passed: 3 files, 49 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Continue saved-trades porting with `app/intelligence/trades/page.tsx`, taking
+  only route-safe UI/product improvements from product-pass and avoiding any
+  top-level `/trades` route rollback or journal-level-analysis deletion.

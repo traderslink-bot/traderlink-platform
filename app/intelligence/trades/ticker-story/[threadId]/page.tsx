@@ -17,6 +17,7 @@ type TickerStoryPageProps = {
   params: Promise<{
     threadId: string;
   }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 type SavedTradeThreadModel = ReturnType<typeof buildSavedTradeThreadReadModel>;
@@ -37,6 +38,16 @@ function decodeThreadId(value: string): string {
   } catch {
     return value;
   }
+}
+
+function searchParamString(
+  value: string | string[] | undefined,
+): string | null {
+  if (Array.isArray(value)) {
+    return value[0] ?? null;
+  }
+
+  return value ?? null;
 }
 
 function timeLabelEt(value: string | null): string {
@@ -220,7 +231,9 @@ export async function generateMetadata({
   const { threadId } = await params;
   const decodedThreadId = decodeThreadId(threadId);
   const model = buildTickerStoryModel();
-  const thread = model.threads.find((candidate) => candidate.id === decodedThreadId);
+  const thread = model.threads.find(
+    (candidate) => candidate.id === decodedThreadId,
+  );
   const symbol = userFacingTradeSymbol(thread?.symbol, "Ticker story");
 
   return {
@@ -230,8 +243,10 @@ export async function generateMetadata({
 
 export default async function TickerStoryPage({
   params,
+  searchParams,
 }: TickerStoryPageProps) {
   const { threadId } = await params;
+  const query = searchParams ? await searchParams : {};
   const decodedThreadId = decodeThreadId(threadId);
   const model = buildTickerStoryModel();
   const thread =
@@ -245,13 +260,20 @@ export default async function TickerStoryPage({
     model.sessionStories.find(
       (candidate) => candidate.sessionDate === thread.sessionDate,
     ) ?? null;
-  const symbol = userFacingTradeSymbol(thread.symbol);
+  const symbol = userFacingTradeSymbol(thread.symbol, "Ticker story");
   const daySessionHref = `/intelligence/trades/day-session/${encodeURIComponent(
     thread.sessionDate,
   )}`;
   const firstRoundTrip = thread.roundTrips[0] ?? null;
   const priorityRoundTrip =
     thread.worstRoundTrip ?? thread.bestRoundTrip ?? firstRoundTrip;
+  const priorityRoundTripLabel =
+    priorityRoundTrip && thread.worstRoundTrip?.id === priorityRoundTrip.id
+      ? "weakest round trip"
+      : "priority round trip";
+  const source = searchParamString(query.from);
+  const focusLabel = searchParamString(query.focus);
+  const openedFromCoach = source === "coach";
   const continuationRoundTrips = thread.roundTrips.filter(
     (roundTrip) =>
       roundTrip.lifecycleStatus === "open" ||
@@ -369,6 +391,95 @@ export default async function TickerStoryPage({
                 }
               />
             </div>
+
+            {openedFromCoach ? (
+              <section
+                className="ti-panel p-5"
+                data-testid="ticker-story-coach-handoff"
+              >
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-sky-300">
+                      Coach Handoff
+                    </p>
+                    <h2 className="mt-2 text-xl font-semibold text-zinc-50">
+                      The coach chose this ticker story to compare repeated
+                      decisions.
+                    </h2>
+                    <p className="mt-2 max-w-4xl text-sm leading-6 text-zinc-400">
+                      {focusLabel ? `Current focus: ${focusLabel}. ` : ""}
+                      Start with the {priorityRoundTripLabel}, then compare it
+                      with the first push and the best round trip before writing
+                      a rule. This keeps the lesson tied to repeated executions
+                      instead of one isolated fill sequence.
+                    </p>
+                  </div>
+                  <div className="grid gap-2 text-sm lg:min-w-[220px]">
+                    <Link
+                      className="inline-flex justify-center border border-sky-800 bg-sky-950/30 px-4 py-3 font-medium text-sky-100 transition hover:border-sky-400"
+                      href={priorityRoundTrip?.href ?? "#round-trips"}
+                    >
+                      Open priority round trip
+                    </Link>
+                    <Link
+                      className="inline-flex justify-center border border-zinc-800 px-4 py-3 font-medium text-zinc-300 transition hover:border-zinc-600 hover:text-zinc-100"
+                      href="/intelligence/coach"
+                    >
+                      Back to coach
+                    </Link>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  <div className="border border-zinc-800 bg-zinc-950/40 p-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                      Story result
+                    </div>
+                    <div
+                      className={`mt-2 font-mono text-lg font-semibold ${pnlToneClass(
+                        thread.totalGrossRealizedPnl,
+                      )}`}
+                    >
+                      {signed(thread.totalGrossRealizedPnl)}
+                    </div>
+                    <div className="mt-1 text-xs text-zinc-500">
+                      {thread.storyLabel}
+                    </div>
+                  </div>
+                  <div className="border border-zinc-800 bg-zinc-950/40 p-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                      Round trip to start
+                    </div>
+                    <div className="mt-2 text-sm font-semibold text-zinc-100">
+                      {priorityRoundTrip
+                        ? `Round Trip ${priorityRoundTrip.sequence}`
+                        : "Choose a round trip"}
+                    </div>
+                    <div className="mt-1 text-xs text-zinc-500">
+                      {priorityRoundTrip?.roleLabel ??
+                        "Replay the saved records"}
+                      {priorityRoundTrip
+                        ? ` / ${signed(priorityRoundTrip.grossRealizedPnl)}`
+                        : ""}
+                    </div>
+                  </div>
+                  <div className="border border-zinc-800 bg-zinc-950/40 p-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                      Chart context
+                    </div>
+                    <div className="mt-2 text-sm font-semibold text-zinc-100">
+                      {thread.marketContextFindingCount > 0
+                        ? `${thread.marketContextFindingCount} findings`
+                        : "Execution replay only"}
+                    </div>
+                    <div className="mt-1 text-xs text-zinc-500">
+                      {thread.marketContextFindingCount > 0
+                        ? "Use chart evidence as prompts, then confirm in the replay."
+                        : "Do not make support/resistance claims without chart context."}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
 
             <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <MetricCard

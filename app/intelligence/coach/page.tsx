@@ -168,6 +168,19 @@ function coachEvidenceCardHref(
   return withPageAnchor(`${path}?${params.toString()}`, "evidence");
 }
 
+function coachTickerStoryHref(
+  thread: SavedTradeThread,
+  focusLabel?: string | null,
+): string {
+  const [path] = thread.href.split("?");
+  const params = new URLSearchParams({ from: "coach" });
+  if (focusLabel) {
+    params.set("focus", focusLabel);
+  }
+
+  return `${path}?${params.toString()}`;
+}
+
 function chooseReviewPreviewItems(args: {
   behavior: CoachOverallFocusBehavior | null;
   primary: SavedReviewQueueItem | null;
@@ -318,13 +331,17 @@ function CoachSectionHeader({
 }
 
 function TickerStoryCoachPanel({
+  focusLabel,
   thread,
   threadCount,
 }: {
+  focusLabel?: string | null;
   thread: SavedTradeThread | null;
   threadCount: number;
 }) {
-  const storyHref = thread?.href ?? "/intelligence/trades/ticker-stories#ticker-stories";
+  const storyHref = thread
+    ? coachTickerStoryHref(thread, focusLabel)
+    : "/intelligence/trades/ticker-stories#ticker-stories";
 
   return (
     <section className="ti-panel p-5" data-testid="coach-ticker-story-panel">
@@ -1922,6 +1939,7 @@ export default async function CoachPage(props: {
         {activeCoachView === "ticker_stories" ? (
         <div id="ticker-story-coach">
           <TickerStoryCoachPanel
+            focusLabel={sessionBehavior?.label}
             thread={priorityTickerStory}
             threadCount={tradeThreadModel.multiRoundTripThreadCount}
           />
