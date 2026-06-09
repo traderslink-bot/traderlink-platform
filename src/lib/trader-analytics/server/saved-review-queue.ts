@@ -32,6 +32,7 @@ export type SavedReviewQueueFilter =
   | "market_context_unavailable"
   | "blocked_open_trade"
   | "analysis_failed"
+  | "candle_basis_warning"
   | "highest_priority"
   | "queued"
   | "unresolved";
@@ -71,6 +72,7 @@ export interface SavedReviewQueueItem {
   chartRiskCount: number;
   chartStrengthCount: number;
   chartReviewPromptCount: number;
+  candleBasisStatus: "aligned" | "warning" | "unknown";
   primaryChartFindingLabel: string | null;
   primaryChartFindingAction: string | null;
   grossRealizedPnl: number | null;
@@ -104,6 +106,7 @@ const FILTER_LABELS: Record<SavedReviewQueueFilter, string> = {
   market_context_unavailable: "Chart data still missing",
   blocked_open_trade: "Open Trades",
   analysis_failed: "Needs Technical Follow-Up",
+  candle_basis_warning: "Candle Basis Check",
   highest_priority: "Highest Priority",
   queued: "Chart Data Waiting",
   unresolved: "Needs Review",
@@ -142,6 +145,32 @@ function chartFindingsForSnapshot(
       (insight) =>
         insight.canShowPrimary && insight.evidenceChannel !== "execution_only",
     );
+}
+
+function snapshotCandleBasisStatus(
+  snapshot: PersistedDecisionReviewSnapshot | undefined,
+): SavedReviewQueueItem["candleBasisStatus"] {
+  const notes = snapshot?.review.candleQualityNotes ?? [];
+
+  if (
+    notes.some((note) => {
+      const normalized = note.toLowerCase();
+
+      return (
+        normalized.includes("basis_adjustment_multiple_likely") ||
+        normalized.includes("price-basis") ||
+        normalized.includes("basis is proven aligned: false")
+      );
+    })
+  ) {
+    return "warning";
+  }
+
+  if (notes.some((note) => note.toLowerCase().includes("basis_aligned"))) {
+    return "aligned";
+  }
+
+  return "unknown";
 }
 
 function primaryChartFinding(
@@ -442,6 +471,7 @@ function buildQueueItem(args: {
     chartRiskCount,
     chartStrengthCount,
     chartReviewPromptCount,
+    candleBasisStatus: snapshotCandleBasisStatus(args.snapshot),
     primaryChartFindingLabel: chartPrimary?.label ?? null,
     primaryChartFindingAction: chartPrimary?.reviewAction ?? null,
     grossRealizedPnl: reportPnl({
@@ -479,6 +509,10 @@ function filterItems(
         (a, b) =>
           b.priorityScore - a.priorityScore || a.symbol.localeCompare(b.symbol),
       );
+  }
+
+  if (filter === "candle_basis_warning") {
+    return items.filter((item) => item.candleBasisStatus === "warning");
   }
 
   if (filter === "unresolved") {

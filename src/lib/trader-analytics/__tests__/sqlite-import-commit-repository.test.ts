@@ -492,6 +492,80 @@ describe("SqliteImportCommitRepository", () => {
     expect(openOnly.items).toMatchObject([{ symbol: "OPENQ" }]);
   });
 
+  it("separates completed chart reviews with unsafe candle basis warnings", () => {
+    const csv = [
+      "Date,Time,Symbol,Side,Quantity,Price",
+      "2026-05-01,09:30:00,BASIS,Buy,100,10.00",
+      "2026-05-01,10:00:00,BASIS,Sell,100,10.50",
+    ].join("\n");
+    const { repository, plan } = planFor(csv);
+
+    repository.commitImportPlan(plan);
+    const job = repository.listDecisionReviewJobs(plan.batch.id)[0];
+    expect(job).toBeTruthy();
+
+    repository.updateDecisionReviewJob({
+      ...job!,
+      status: "completed",
+      reason: "Decision review completed and persisted.",
+    });
+    repository.saveDecisionReviewSnapshot({
+      id: `${job!.savedTradeId}:decision-review-snapshot`,
+      accountId: DEMO_ACCOUNT_ID,
+      userId: DEMO_USER_ID,
+      savedTradeId: job!.savedTradeId,
+      importBatchId: plan.batch.id,
+      requestIndex: 0,
+      symbol: "BASIS",
+      generatedAt: "2026-05-07T12:00:00.000Z",
+      status: "completed",
+      review: {
+        coachingHeadline: "Chart context is attached with a basis warning.",
+        fixFirstBehaviorId: null,
+        marketContextSource: "levels_system_daily_4h",
+        tradeWindowEvidenceSource: "execution_only_fallback",
+        candleQualityNotes: [
+          "Trade-window candle basis status: basis_adjustment_multiple_likely near 38:1. Keep these candles unavailable for Trader Intelligence movement review unless raw IBKR candle basis is proven aligned to broker execution prices.",
+        ],
+        insights: [
+          {
+            id: "basis_warning_review",
+            tone: "neutral",
+            category: "trade_window",
+            title: "Candle basis needs review",
+            summary:
+              "Use broker execution P/L for movement conclusions until candle basis is reconciled.",
+          },
+        ],
+      },
+    });
+
+    const queue = buildSavedReviewQueueReadModel({ repository });
+    const warningQueue = buildSavedReviewQueueReadModel({
+      repository,
+      activeFilter: "candle_basis_warning",
+    });
+
+    expect(queue.allItems).toMatchObject([
+      {
+        symbol: "BASIS",
+        hasSnapshot: true,
+        candleBasisStatus: "warning",
+      },
+    ]);
+    expect(queue.tabs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "candle_basis_warning", count: 1 }),
+      ]),
+    );
+    expect(warningQueue.items).toMatchObject([
+      {
+        symbol: "BASIS",
+        candleBasisStatus: "warning",
+      },
+    ]);
+  });
+
   it("keeps sanitized insufficient-history cases as market-context diagnostics", async () => {
     const csv = [
       "Date,Time,Symbol,Side,Quantity,Price",

@@ -16048,3 +16048,35 @@ Best next step:
 - Continue the product-pass inventory with another small, route-safe slice.
   Candidate: compare review/coach route UI deltas, port shared behavior only,
   and avoid any top-level route rollback or journal-level-analysis deletion.
+
+# 2026-06-09 review queue candle-basis warning port
+
+- Continued the review/coach product-pass inventory and manually ported only the
+  route-safe review queue behavior.
+- Preserved main's `/intelligence/review` namespace and preserved
+  journal-level-analysis review queue level-facts fields/read model.
+- Added `candleBasisStatus` to saved review queue items and a
+  `candle_basis_warning` queue filter/tab when a completed decision-review
+  snapshot carries unsafe candle basis notes.
+- Updated `/intelligence/review` evidence copy so completed chart reviews with
+  basis warnings say "Basis check needed" and keep movement conclusions anchored
+  to broker execution P/L until candle basis is reconciled.
+- Added a SQLite saved-review queue regression that persists a completed
+  snapshot with an unsafe basis note and confirms the warning lane/filter.
+- Did not port product-pass changes that remove level-facts, roll hrefs back to
+  top-level `/review`, or add a separate tier-config module.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused repository/review queue Vitest passed: 2 files, 17 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader/level Vitest passed: 7 files, 126 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue with coach page product-pass deltas next, porting only behavior that
+  preserves `/intelligence` routes and the paid/free evidence gate. Skip any
+  route rollback or journal-level-analysis deletion.

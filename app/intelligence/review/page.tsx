@@ -44,7 +44,9 @@ function savedReviewStateTone(lane: string): string {
     ? "text-emerald-300"
     : lane === "blocked_open_trade"
       ? "text-sky-300"
-      : lane === "market_context_unavailable" || lane === "analysis_failed"
+      : lane === "market_context_unavailable" ||
+          lane === "analysis_failed" ||
+          lane === "candle_basis_warning"
         ? "text-amber-300"
         : "text-zinc-300";
 }
@@ -131,6 +133,14 @@ function reviewQueueEvidenceCopy(item: SavedReviewQueueItem): {
   tone: AppTone;
 } {
   if (item.hasSnapshot) {
+    if (item.candleBasisStatus === "warning") {
+      return {
+        body: "Chart context is attached, but candle prices need a basis check against broker executions. Use execution replay and broker P/L for movement conclusions.",
+        label: "Basis check needed",
+        tone: "warning",
+      };
+    }
+
     if (item.primaryChartFindingLabel) {
       return {
         body:
@@ -155,7 +165,7 @@ function reviewQueueEvidenceCopy(item: SavedReviewQueueItem): {
 
   if (item.hasDiagnostics) {
     return {
-      body: "Execution data is saved. Chart data needs technical follow-up.",
+      body: "Execution data is saved. Chart data needs another check before chart conclusions are used.",
       label: "Execution review now",
       tone: "warning",
     };
@@ -244,6 +254,8 @@ export default async function GuidedReviewPage({
     savedReviewQueue?.tabs.find((tab) => tab.id === "queued")?.count ?? 0;
   const openBlockCount =
     savedReviewQueue?.tabs.find((tab) => tab.id === "blocked_open_trade")?.count ?? 0;
+  const candleBasisWarningCount =
+    savedReviewQueue?.tabs.find((tab) => tab.id === "candle_basis_warning")?.count ?? 0;
   const chartDataFollowUp =
     queuedChartDataCount > 0
       ? {
@@ -356,9 +368,18 @@ export default async function GuidedReviewPage({
                   tone: "warning" as const,
                 },
                 {
-                  label: chartDataFollowUp.label,
-                  count: chartDataFollowUp.count,
-                  href: chartDataFollowUp.href,
+                  label:
+                    candleBasisWarningCount > 0
+                      ? "Candle basis check"
+                      : chartDataFollowUp.label,
+                  count:
+                    candleBasisWarningCount > 0
+                      ? candleBasisWarningCount
+                      : chartDataFollowUp.count,
+                  href:
+                    candleBasisWarningCount > 0
+                      ? "/intelligence/review?queue=candle_basis_warning"
+                      : chartDataFollowUp.href,
                   tone: "warning" as const,
                 },
                 {
