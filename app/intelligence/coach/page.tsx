@@ -117,6 +117,10 @@ function coachLaneLabel(lane: string): string {
     return "Needs technical follow-up";
   }
 
+  if (lane === "candle_basis_warning") {
+    return "Candle basis check";
+  }
+
   if (lane === "completed") {
     return "Reviewed";
   }

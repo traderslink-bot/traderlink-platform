@@ -16080,3 +16080,27 @@ Best next step:
 - Continue with coach page product-pass deltas next, porting only behavior that
   preserves `/intelligence` routes and the paid/free evidence gate. Skip any
   route rollback or journal-level-analysis deletion.
+
+# 2026-06-09 coach review-summary basis lane label
+
+- Added the route-safe coach follow-up for the new review queue
+  `candle_basis_warning` lane.
+- `app/intelligence/coach/page.tsx` now labels that lane as "Candle basis
+  check" instead of relying on generic fallback casing.
+- `app/saved-review-queue-summary.tsx` now prefers a "Candle Basis Check" card
+  linking to `/intelligence/review?queue=candle_basis_warning` when that queue
+  has items.
+- Preserved all `/intelligence` routes and did not port the larger product-pass
+  coach rewrite because it includes stale top-level route assumptions.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused coach/repository Vitest passed: 2 files, 21 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue the coach product-pass inventory only after isolating route-safe
+  helper/scoring changes from stale `/coach` and `/trades` href changes.

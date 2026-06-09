@@ -23,6 +23,8 @@ function laneLabel(value: string): string {
       return "Open trade";
     case "analysis_failed":
       return "Needs technical follow-up";
+    case "candle_basis_warning":
+      return "Candle basis check";
     case "highest_priority":
       return "Highest priority";
     case "unresolved":
@@ -83,10 +85,18 @@ export function SavedReviewQueueSummary({
   const unresolvedCount = tabCount(queue, "unresolved");
   const marketGapCount = tabCount(queue, "market_context_unavailable");
   const queuedChartDataCount = tabCount(queue, "queued");
+  const candleBasisWarningCount = tabCount(queue, "candle_basis_warning");
   const openBlockCount = tabCount(queue, "blocked_open_trade");
   const highestPriorityCount = tabCount(queue, "highest_priority");
   const chartDataCard =
-    queuedChartDataCount > 0
+    candleBasisWarningCount > 0
+      ? {
+          label: "Candle Basis Check",
+          count: candleBasisWarningCount,
+          href: "/intelligence/review?queue=candle_basis_warning",
+          toneClass: "text-amber-300",
+        }
+      : queuedChartDataCount > 0
       ? {
           label: "Chart Data Waiting",
           count: queuedChartDataCount,
