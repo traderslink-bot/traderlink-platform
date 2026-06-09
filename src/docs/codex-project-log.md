@@ -16136,3 +16136,37 @@ Best next step:
   ticker-story linkage fields (`tickerStoryKey`, story review count, lead item)
   while preserving level-facts and `/intelligence` routes. That unlocks the
   smarter coach ticker-story focus selection without direct-merging product-pass.
+
+# 2026-06-09 review queue ticker-story linkage contract
+
+- Ported the route-safe saved-review queue ticker-story linkage fields from the
+  product-pass branch without taking the stale route or level-facts deletions.
+- `SavedReviewQueueItem` now carries:
+  - `sessionDate`,
+  - `tickerStoryKey`,
+  - `tickerStoryHref` under `/intelligence/trades/ticker-story/...`,
+  - `tickerStoryReviewCount`,
+  - `tickerStoryLead`.
+- The highest-priority queue now collapses repeated same-symbol same-session
+  review items to the first lead item while `allItems` still preserves every
+  trade. This gives coach a clean story-level focus hook without hiding saved
+  trade detail data.
+- Preserved journal-level-analysis `levelFacts` on queue items and preserved the
+  `/intelligence/review` and `/intelligence/trades` route namespace.
+- Added a SQLite regression for two same-symbol same-day review jobs to verify
+  story metadata, story lead behavior, and highest-priority collapse.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused repository/level review queue Vitest passed: 2 files, 18 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader/level Vitest passed: 7 files, 127 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Use the new queue ticker-story fields to port the coach ticker-story focus
+  selection helpers from product-pass, keeping all generated hrefs under
+  `/intelligence` and preserving the paid/free evidence gate.

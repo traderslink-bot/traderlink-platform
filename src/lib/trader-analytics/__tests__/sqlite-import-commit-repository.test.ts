@@ -566,6 +566,84 @@ describe("SqliteImportCommitRepository", () => {
     ]);
   });
 
+  it("adds ticker-story metadata and collapses repeated story leads in the priority lane", async () => {
+    const csv = [
+      "Date,Time,Symbol,Side,Quantity,Price",
+      "2026-05-01,09:30:00,STORY,Buy,100,10.00",
+      "2026-05-01,10:00:00,STORY,Sell,100,10.50",
+      "2026-05-01,10:30:00,STORY,Buy,100,10.20",
+      "2026-05-01,11:00:00,STORY,Sell,100,9.90",
+    ].join("\n");
+    const { repository, plan } = planFor(csv);
+    const fakeBatch: BatchTradeAnalysisResult = {
+      contractVersion: "batch_trade_analysis_v1",
+      source: "test",
+      generatedAt: "2026-05-07T12:00:00.000Z",
+      validateOnly: false,
+      totals: {
+        requests: 2,
+        validated: 2,
+        completed: 0,
+        failed: 2,
+        warnings: 0,
+      },
+      failureCounts: { insufficient_market_context: 2 },
+      marketStructureCounts: { observed: 0, missing: 0, scoringUses: 0 },
+      patternCounts: {
+        detectedTotal: 0,
+        normalizedTotal: 0,
+        topAnchorPatternIds: {},
+      },
+      items: [0, 1].map((requestIndex) => ({
+        requestIndex,
+        status: "failed",
+        symbol: "STORY",
+        validation: { valid: true, issues: [] },
+        failure: {
+          code: "insufficient_market_context",
+          source: "levels_system",
+          title: "Insufficient market context",
+          message: "Daily/4h context is unavailable.",
+          retryable: false,
+          userAction: "Backfill market context before decision review.",
+          rawMessage: "Daily/4h context is unavailable.",
+        },
+        summary: null,
+      })),
+    };
+
+    repository.commitImportPlan(plan);
+    await runPersistedDecisionReviewJobs({
+      repository,
+      importBatchId: plan.batch.id,
+      generatedAt: "2026-05-07T12:00:00.000Z",
+      runBatch: async () => fakeBatch,
+    });
+
+    const queue = buildSavedReviewQueueReadModel({ repository });
+
+    expect(queue.allItems).toHaveLength(2);
+    expect(queue.items).toHaveLength(1);
+    expect(queue.allItems.map((item) => item.tickerStoryKey)).toEqual([
+      "STORY:2026-05-01",
+      "STORY:2026-05-01",
+    ]);
+    expect(queue.allItems.map((item) => item.tickerStoryReviewCount)).toEqual([
+      2,
+      2,
+    ]);
+    expect(queue.allItems.filter((item) => item.tickerStoryLead)).toHaveLength(
+      1,
+    );
+    expect(queue.items[0]).toMatchObject({
+      symbol: "STORY",
+      tickerStoryHref:
+        "/intelligence/trades/ticker-story/STORY%3A2026-05-01",
+      tickerStoryLead: true,
+      tickerStoryReviewCount: 2,
+    });
+  });
+
   it("keeps sanitized insufficient-history cases as market-context diagnostics", async () => {
     const csv = [
       "Date,Time,Symbol,Side,Quantity,Price",

@@ -49,6 +49,7 @@ export interface SavedReviewQueueItem {
   savedTradeId: string;
   importBatchId: string;
   symbol: string;
+  sessionDate: string;
   status: ImportCommitDecisionReviewJobRecord["status"];
   lane:
     | "completed"
@@ -64,6 +65,10 @@ export interface SavedReviewQueueItem {
   detail: string;
   nextAction: string;
   href: string;
+  tickerStoryKey: string | null;
+  tickerStoryHref: string | null;
+  tickerStoryReviewCount: number;
+  tickerStoryLead: boolean;
   priorityScore: number;
   priorityLabel: "urgent" | "high" | "medium" | "low";
   priorityReason: string;
@@ -423,6 +428,9 @@ function buildQueueItem(args: {
     };
   const symbol =
     args.trade?.symbol ?? args.savedTrade?.symbol ?? args.job.symbol;
+  const sessionDate =
+    args.trade?.sessionDate ?? args.savedTrade?.sessionDate ?? "";
+  const tickerStoryKey = sessionDate ? `${symbol}:${sessionDate}` : null;
   const stateCopy = queueStateCopy(lane);
   const chartFindings = args.snapshot
     ? chartFindingsForSnapshot(args.snapshot)
@@ -451,6 +459,7 @@ function buildQueueItem(args: {
     savedTradeId: args.job.savedTradeId,
     importBatchId: args.job.importBatchId,
     symbol,
+    sessionDate,
     status: args.job.status,
     lane,
     stateLabel: stateCopy.stateLabel,
@@ -460,6 +469,12 @@ function buildQueueItem(args: {
     detail: headline,
     nextAction: stateCopy.nextAction,
     href: `/intelligence/trades/${encodeURIComponent(args.job.savedTradeId)}?from=review-queue&queue=${lane}`,
+    tickerStoryKey,
+    tickerStoryHref: tickerStoryKey
+      ? `/intelligence/trades/ticker-story/${encodeURIComponent(tickerStoryKey)}`
+      : null,
+    tickerStoryReviewCount: 1,
+    tickerStoryLead: true,
     priorityScore: priority.score,
     priorityLabel: priorityLabel(priority.score),
     priorityReason: priority.reason,
@@ -488,6 +503,55 @@ function buildQueueItem(args: {
   };
 }
 
+function enrichTickerStoryQueueItems(
+  items: SavedReviewQueueItem[],
+): SavedReviewQueueItem[] {
+  const groups = new Map<string, SavedReviewQueueItem[]>();
+
+  for (const item of items) {
+    if (!item.tickerStoryKey) {
+      continue;
+    }
+
+    const current = groups.get(item.tickerStoryKey) ?? [];
+    current.push(item);
+    groups.set(item.tickerStoryKey, current);
+  }
+
+  return items.map((item) => {
+    if (!item.tickerStoryKey) {
+      return item;
+    }
+
+    const group = groups.get(item.tickerStoryKey) ?? [item];
+
+    return {
+      ...item,
+      tickerStoryReviewCount: group.length,
+      tickerStoryLead: group[0]?.id === item.id,
+    };
+  });
+}
+
+function collapseTickerStoryRepeats(
+  items: SavedReviewQueueItem[],
+): SavedReviewQueueItem[] {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    if (!item.tickerStoryKey || item.tickerStoryReviewCount <= 1) {
+      return true;
+    }
+
+    if (seen.has(item.tickerStoryKey)) {
+      return false;
+    }
+
+    seen.add(item.tickerStoryKey);
+    return true;
+  });
+}
+
 function filterItems(
   items: SavedReviewQueueItem[],
   filter: SavedReviewQueueFilter,
@@ -497,7 +561,7 @@ function filterItems(
   }
 
   if (filter === "highest_priority") {
-    return items
+    return collapseTickerStoryRepeats(items
       .filter(
         (item) =>
           item.priorityScore >= 75 &&
@@ -508,7 +572,7 @@ function filterItems(
       .sort(
         (a, b) =>
           b.priorityScore - a.priorityScore || a.symbol.localeCompare(b.symbol),
-      );
+      ));
   }
 
   if (filter === "candle_basis_warning") {
@@ -643,24 +707,26 @@ export function buildSavedReviewQueueReadModel(args: {
     }
   }
 
-  const allItems = jobs
-    .map((job) =>
-      buildQueueItem({
-        job,
-        savedTrade: savedTrades.get(job.savedTradeId),
-        trade: trades.get(job.savedTradeId),
-        snapshot: snapshots.get(job.savedTradeId),
-        diagnostic: diagnosticsByTrade.get(job.savedTradeId),
-        repository: args.repository,
-        levelFactsByTradeId: levelFacts.statesByTradeId,
-      }),
-    )
-    .sort(
-      (a, b) =>
-        b.priorityScore - a.priorityScore ||
-        (b.generatedAt ?? "").localeCompare(a.generatedAt ?? "") ||
-        a.symbol.localeCompare(b.symbol),
-    );
+  const allItems = enrichTickerStoryQueueItems(
+    jobs
+      .map((job) =>
+        buildQueueItem({
+          job,
+          savedTrade: savedTrades.get(job.savedTradeId),
+          trade: trades.get(job.savedTradeId),
+          snapshot: snapshots.get(job.savedTradeId),
+          diagnostic: diagnosticsByTrade.get(job.savedTradeId),
+          repository: args.repository,
+          levelFactsByTradeId: levelFacts.statesByTradeId,
+        }),
+      )
+      .sort(
+        (a, b) =>
+          b.priorityScore - a.priorityScore ||
+          (b.generatedAt ?? "").localeCompare(a.generatedAt ?? "") ||
+          a.symbol.localeCompare(b.symbol),
+      ),
+  );
   const filtered = filterItems(allItems, activeFilter);
   const tabs = (Object.keys(FILTER_LABELS) as SavedReviewQueueFilter[]).map(
     (id) => ({
