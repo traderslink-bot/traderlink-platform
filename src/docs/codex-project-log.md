@@ -16250,3 +16250,28 @@ Best next step:
 - Continue manual coach UI inventory. Candidate: review-session page copy can
   acknowledge the focused ticker story, but only if links remain under
   `/intelligence` and the single-trade replay path remains available.
+
+# 2026-06-09 coach review-session ticker-story link
+
+- Added a small route-safe review-session handoff inside
+  `app/intelligence/coach/page.tsx`.
+- The existing `Featured Evidence Trade` panel now shows a related ticker-story
+  link when the coach has selected a focused ticker story.
+- Preserved the single-trade replay path and the tested
+  `coach-featured-trade-session` copy contract.
+- Kept the ticker-story link under `/intelligence/trades/ticker-story/...` and
+  did not change chart-evidence gates, level-analysis behavior, or
+  levels-system-v2 usage.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused coach/repository Vitest passed: 2 files, 22 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue the remaining product-pass inventory only if the next UI delta can be
+  isolated from stale top-level route assumptions. Otherwise move to final
+  branch-level verification and prepare the port branch for review.

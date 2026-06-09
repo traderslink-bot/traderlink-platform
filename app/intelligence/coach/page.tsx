@@ -2061,6 +2061,24 @@ export default async function CoachPage(props: {
             <p className="mt-2 text-sm leading-6 text-zinc-400">
               {sessionTradeDetail}
             </p>
+            {coachTickerStoryFocus && tickerStoryFocusHref ? (
+              <div className="mt-4 border border-zinc-900 bg-zinc-950/60 p-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  Related ticker story
+                </div>
+                <div className="mt-2 text-sm leading-6 text-zinc-300">
+                  Compare{" "}
+                  {userFacingTradeSymbol(coachTickerStoryFocus.thread.symbol)}{" "}
+                  round trips before turning this focus into a rule.
+                </div>
+                <Link
+                  className="mt-3 inline-flex text-sm font-medium text-sky-300 hover:text-sky-200"
+                  href={tickerStoryFocusHref}
+                >
+                  Open ticker story
+                </Link>
+              </div>
+            ) : null}
             <div id="main-behavior" className="mt-5 border-t border-zinc-900 pt-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Main behavior
