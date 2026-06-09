@@ -16170,3 +16170,31 @@ Best next step:
 - Use the new queue ticker-story fields to port the coach ticker-story focus
   selection helpers from product-pass, keeping all generated hrefs under
   `/intelligence` and preserving the paid/free evidence gate.
+
+# 2026-06-09 coach ticker-story focus selection
+
+- Used the new saved-review queue ticker-story linkage fields to port the
+  route-safe coach ticker-story focus selector into
+  `app/intelligence/coach/page.tsx`.
+- The coach now prefers a multi-round-trip ticker story tied to the current
+  coaching behavior or highest-priority review queue story before falling back
+  to the generic priority ticker story.
+- Kept the existing `/intelligence/coach/ticker-stories` panel and
+  `/intelligence/trades/ticker-story/...` links; did not port the larger
+  product-pass overview/review-session layout rewrite.
+- Preserved the paid/free evidence gate: the selector can prioritize saved
+  execution stories and chart-risk counts already present in the thread model,
+  but chart claims still depend on completed decision-review snapshots.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused coach/repository Vitest passed: 2 files, 22 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue reviewing the remaining coach product-pass UI deltas, but port only
+  isolated route-safe pieces. Avoid the stale top-level `/coach`, `/review`, and
+  `/trades` hrefs unless adapting them to `/intelligence`.

@@ -243,6 +243,98 @@ function choosePriorityTickerStory(threads: SavedTradeThread[]): SavedTradeThrea
   );
 }
 
+function tickerStoryKindPriority(thread: SavedTradeThread): number {
+  switch (thread.storyKind) {
+    case "repeated_losing_attempts":
+      return 35;
+    case "profit_giveback":
+      return 28;
+    case "swing_transition":
+    case "extended_same_day_hold":
+    case "open_reentry":
+      return 18;
+    case "reentry_added_profit":
+      return 8;
+    default:
+      return 0;
+  }
+}
+
+function chooseCoachTickerStoryFocus(args: {
+  behavior: CoachOverallFocusBehavior | null;
+  queue: SavedReviewQueueItem[];
+  threads: SavedTradeThread[];
+}): {
+  queueItem: SavedReviewQueueItem | null;
+  relatedTradeCount: number;
+  score: number;
+  thread: SavedTradeThread;
+} | null {
+  const relatedIds = new Set(args.behavior?.relatedTradeIds ?? []);
+  const queueByStory = new Map(
+    args.queue
+      .filter((item) => item.tickerStoryKey && item.tickerStoryReviewCount > 1)
+      .map((item) => [item.tickerStoryKey, item]),
+  );
+
+  return (
+    args.threads
+      .filter((thread) => thread.roundTripCount > 1)
+      .map((thread) => {
+        const relatedTradeCount = thread.roundTrips.filter((roundTrip) =>
+          relatedIds.has(roundTrip.tradeId),
+        ).length;
+        const queueItem = queueByStory.get(thread.id) ?? null;
+        const lossScore =
+          thread.totalGrossRealizedPnl < 0
+            ? Math.min(Math.abs(thread.totalGrossRealizedPnl), 220) / 4
+            : 0;
+        const chartRiskScore =
+          Math.min(thread.marketContextRiskCount, 14) * 3 +
+          Math.min(thread.addQualityRiskCount, 8) * 6;
+        const queueScore = queueItem
+          ? 80 + Math.min(queueItem.priorityScore, 99) / 3
+          : 0;
+        const score =
+          relatedTradeCount * 42 +
+          queueScore +
+          lossScore +
+          chartRiskScore +
+          Math.min(thread.roundTripCount, 6) * 8 +
+          tickerStoryKindPriority(thread);
+
+        return {
+          queueItem,
+          relatedTradeCount,
+          score,
+          thread,
+        };
+      })
+      .filter((item) => {
+        const isBehaviorExample =
+          relatedIds.size === 0 || item.relatedTradeCount >= 2;
+        const isHighPriorityStory = Boolean(item.queueItem);
+        const hasEnoughEvidence =
+          item.thread.marketContextRiskCount + item.thread.addQualityRiskCount >=
+            6 || item.thread.totalGrossRealizedPnl < 0;
+
+        return (
+          hasEnoughEvidence &&
+          (isBehaviorExample || isHighPriorityStory) &&
+          (item.relatedTradeCount > 0 || isHighPriorityStory)
+        );
+      })
+      .sort(
+        (left, right) =>
+          right.score - left.score ||
+          right.relatedTradeCount - left.relatedTradeCount ||
+          (left.thread.totalGrossRealizedPnl ?? 0) -
+            (right.thread.totalGrossRealizedPnl ?? 0) ||
+          left.thread.symbol.localeCompare(right.thread.symbol),
+      )[0] ?? null
+  );
+}
+
 function choosePrioritySessionStory(
   stories: SavedTradeSessionStory[],
 ): SavedTradeSessionStory | null {
@@ -1418,7 +1510,6 @@ export default async function CoachPage(props: {
     trades: savedTradesForProgress,
   });
   const behaviorReport = buildAnalyticsBehaviorReport(tradeThreadModel);
-  const priorityTickerStory = choosePriorityTickerStory(tradeThreadModel.threads);
   const prioritySessionStory = choosePrioritySessionStory(
     tradeThreadModel.sessionStories,
   );
@@ -1461,6 +1552,14 @@ export default async function CoachPage(props: {
     top: coach.mistakeSeverityLadder.topSeverity,
     tradeId: null,
   });
+  const coachTickerStoryFocus = chooseCoachTickerStoryFocus({
+    behavior: sessionBehavior,
+    queue: savedReviewQueue?.items ?? [],
+    threads: tradeThreadModel.threads,
+  });
+  const priorityTickerStory =
+    coachTickerStoryFocus?.thread ??
+    choosePriorityTickerStory(tradeThreadModel.threads);
   const primaryEvidenceItem = chooseCoachEvidenceQueueItem({
     behavior: sessionBehavior,
     fallback: primaryReviewItem,
