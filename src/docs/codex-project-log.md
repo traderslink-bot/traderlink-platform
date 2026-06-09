@@ -15942,3 +15942,37 @@ Best next step:
 - Continue saved-trades porting with `app/intelligence/trades/page.tsx`, taking
   only route-safe UI/product improvements from product-pass and avoiding any
   top-level `/trades` route rollback or journal-level-analysis deletion.
+
+# 2026-06-09 saved-trades chart-evidence gate port
+
+- Continued the saved-trades product-pass port in main's
+  `app/intelligence/trades/page.tsx` without importing the product-pass
+  top-level `/trades` route structure.
+- Added the same concrete chart evidence gate used by analytics: saved chart
+  context is enabled for sample preview or when at least one persisted completed
+  decision-review snapshot exists. Queued or failed hydration does not count.
+- When chart context is not enabled, the saved-trades page now:
+  - builds ticker/session story context without decision-review snapshots,
+  - hides chart-specific story filters,
+  - hides chart findings, add-quality, after-exit, protected-before-fade,
+    support/resistance, level, volume, and needs-chart-data counts,
+  - hides per-story chart/support/resistance/volume badges.
+- Execution-only browsing remains available for the free tier: round trips,
+  calendar, day sessions, ticker stories, open trades, and review navigation
+  still render.
+- Did not port product-pass swing-trade closure actions or route rollbacks; that
+  requires a separate deliberate pass.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-trade Vitest passed: 2 files, 40 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Continue with the saved-trade detail page diff, carefully preserving
+  `app/intelligence/trades/[tradeId]/trade-detail-level-facts.tsx` and the
+  journal-level-analysis panels while porting only route-safe UI improvements.

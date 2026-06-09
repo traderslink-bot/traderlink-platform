@@ -588,7 +588,7 @@ export default async function TradesPage({
         typeof latestReport.report.trades[number],
       ] => Boolean(entry)),
   );
-  const decisionReviewSnapshots =
+  const savedDecisionReviewSnapshots =
     data.mode === "saved"
       ? [
           ...new Set(
@@ -600,6 +600,11 @@ export default async function TradesPage({
           data.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
       : [];
+  const chartTierEnabled =
+    data.mode === "sample" || savedDecisionReviewSnapshots.length > 0;
+  const decisionReviewSnapshots = chartTierEnabled
+    ? savedDecisionReviewSnapshots
+    : [];
   const tradeThreadModel = buildSavedTradeThreadReadModel({
     decisionReviewSnapshots,
     report: latestReport,
@@ -737,6 +742,19 @@ export default async function TradesPage({
       count: tradeThreadModel.threads.filter((thread) => storyMatchesFilter(thread, "needs_context")).length,
     },
   ];
+  const chartStoryFilterIds = new Set<TradeStoryFilter>([
+    "chart_findings",
+    "add_quality",
+    "post_exit",
+    "protected_profit",
+    "exit_levels",
+    "levels",
+    "volume",
+    "needs_context",
+  ]);
+  const visibleStoryFilters = chartTierEnabled
+    ? storyFilters
+    : storyFilters.filter((filter) => !chartStoryFilterIds.has(filter.id));
   const highlightedThreads = [
     ...(activeThread ? [activeThread] : []),
     ...tradeThreadModel.threads.filter(
@@ -1073,38 +1091,44 @@ export default async function TradesPage({
             detail="Trades the queue recommends checking first."
             tone="warning"
           />
-          <MetricCard
-            label="Needs Chart Data"
-            value={marketGapCount}
-            detail="Execution review is available while chart data is still missing."
-            tone="warning"
-          />
+          {chartTierEnabled ? (
+            <MetricCard
+              label="Needs Chart Data"
+              value={marketGapCount}
+              detail="Execution review is available while chart data is still missing."
+              tone="warning"
+            />
+          ) : null}
           <MetricCard
             label="Open Trades"
             value={openBlockCount}
             detail="Trades waiting until the position is flat."
             tone="info"
           />
-          <MetricCard
-            label="Chart Findings"
-            value={tradeThreadModel.marketContextFindingCount}
-            detail="Certified chart findings and safe review prompts"
-            tone={tradeThreadModel.marketContextFindingCount > 0 ? "info" : "default"}
-          />
-          <MetricCard
-            label="Add Quality"
-            value={tradeThreadModel.addQualityFindingCount}
-            detail={`${tradeThreadModel.addQualityRiskCount} risk, ${tradeThreadModel.addQualityStrengthCount} strength, ${tradeThreadModel.addQualityReviewPromptCount} prompt`}
-            tone={
-              tradeThreadModel.addQualityRiskCount > 0
-                ? "warning"
-                : tradeThreadModel.addQualityStrengthCount > 0
-                  ? "success"
-                  : tradeThreadModel.addQualityFindingCount > 0
-                    ? "info"
-                    : "default"
-            }
-          />
+          {chartTierEnabled ? (
+            <>
+              <MetricCard
+                label="Chart Findings"
+                value={tradeThreadModel.marketContextFindingCount}
+                detail="Certified chart findings and safe review prompts"
+                tone={tradeThreadModel.marketContextFindingCount > 0 ? "info" : "default"}
+              />
+              <MetricCard
+                label="Add Quality"
+                value={tradeThreadModel.addQualityFindingCount}
+                detail={`${tradeThreadModel.addQualityRiskCount} risk, ${tradeThreadModel.addQualityStrengthCount} strength, ${tradeThreadModel.addQualityReviewPromptCount} prompt`}
+                tone={
+                  tradeThreadModel.addQualityRiskCount > 0
+                    ? "warning"
+                    : tradeThreadModel.addQualityStrengthCount > 0
+                      ? "success"
+                      : tradeThreadModel.addQualityFindingCount > 0
+                        ? "info"
+                        : "default"
+                }
+              />
+            </>
+          ) : null}
         </section>
 
         <section
@@ -1159,11 +1183,11 @@ export default async function TradesPage({
                 </div>
               </Link>
             ))}
-          </div>
-          <div className="mt-4 border-t border-zinc-900 pt-4 text-sm leading-6 text-zinc-400">
-            Round trips show each flat-to-flat trade. Ticker stories group same-symbol re-entries so you can review whether later attempts protected profit, gave back profit, stayed open, turned into swing exposure, or have certified chart findings attached.
-          </div>
-        </section>
+            </div>
+            <div className="mt-4 border-t border-zinc-900 pt-4 text-sm leading-6 text-zinc-400">
+            Round trips show each flat-to-flat trade. Ticker stories group same-symbol re-entries so you can review whether later attempts protected profit, gave back profit, stayed open, or turned into swing exposure.
+            </div>
+          </section>
               </>
             ) : null}
 
@@ -1403,86 +1427,90 @@ export default async function TradesPage({
                 </div>
                 <div>Re-entry stories</div>
               </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div className="text-lg font-semibold text-sky-300">
-                  {tradeThreadModel.marketContextFindingCount}
-                </div>
-                <div>Chart findings</div>
-              </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div className="text-lg font-semibold text-emerald-300">
-                  {tradeThreadModel.marketContextStrengthCount}
-                </div>
-                <div>Chart strengths</div>
-              </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div
-                  className={`text-lg font-semibold ${
-                    tradeThreadModel.addQualityRiskCount > 0
-                      ? "text-amber-300"
-                      : tradeThreadModel.addQualityStrengthCount > 0
-                        ? "text-emerald-300"
-                        : "text-zinc-100"
-                  }`}
-                >
-                  {tradeThreadModel.addQualityFindingCount}
-                </div>
-                <div>Add quality</div>
-              </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div
-                  className={`text-lg font-semibold ${
-                    tradeThreadModel.postExitRiskCount > 0
-                      ? "text-amber-300"
-                      : tradeThreadModel.postExitStrengthCount > 0
-                        ? "text-emerald-300"
-                        : "text-sky-300"
-                  }`}
-                >
-                  {tradeThreadModel.postExitFindingCount}
-                </div>
-                <div>After exit</div>
-              </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div
-                  className={`text-lg font-semibold ${
-                    tradeThreadModel.protectedProfitBeforeFadeFindingCount > 0
-                      ? "text-emerald-300"
-                      : "text-zinc-100"
-                  }`}
-                >
-                  {tradeThreadModel.protectedProfitBeforeFadeFindingCount}
-                </div>
-                <div>Protected before fade</div>
-              </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div
-                  className={`text-lg font-semibold ${
-                    tradeThreadModel.exitLevelRiskCount > 0
-                      ? "text-amber-300"
-                      : tradeThreadModel.exitLevelStrengthCount > 0
-                        ? "text-emerald-300"
-                        : "text-sky-300"
-                  }`}
-                >
-                  {tradeThreadModel.exitLevelFindingCount}
-                </div>
-                <div>Support/resistance exits</div>
-              </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div
-                  className={`text-lg font-semibold ${
-                    tradeThreadModel.volumeRiskCount > 0
-                      ? "text-amber-300"
-                      : tradeThreadModel.volumeStrengthCount > 0
-                        ? "text-emerald-300"
-                        : "text-sky-300"
-                  }`}
-                >
-                  {tradeThreadModel.volumeFindingCount}
-                </div>
-                <div>Volume evidence</div>
-              </div>
+              {chartTierEnabled ? (
+                <>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div className="text-lg font-semibold text-sky-300">
+                      {tradeThreadModel.marketContextFindingCount}
+                    </div>
+                    <div>Chart findings</div>
+                  </div>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div className="text-lg font-semibold text-emerald-300">
+                      {tradeThreadModel.marketContextStrengthCount}
+                    </div>
+                    <div>Chart strengths</div>
+                  </div>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div
+                      className={`text-lg font-semibold ${
+                        tradeThreadModel.addQualityRiskCount > 0
+                          ? "text-amber-300"
+                          : tradeThreadModel.addQualityStrengthCount > 0
+                            ? "text-emerald-300"
+                            : "text-zinc-100"
+                      }`}
+                    >
+                      {tradeThreadModel.addQualityFindingCount}
+                    </div>
+                    <div>Add quality</div>
+                  </div>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div
+                      className={`text-lg font-semibold ${
+                        tradeThreadModel.postExitRiskCount > 0
+                          ? "text-amber-300"
+                          : tradeThreadModel.postExitStrengthCount > 0
+                            ? "text-emerald-300"
+                            : "text-sky-300"
+                      }`}
+                    >
+                      {tradeThreadModel.postExitFindingCount}
+                    </div>
+                    <div>After exit</div>
+                  </div>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div
+                      className={`text-lg font-semibold ${
+                        tradeThreadModel.protectedProfitBeforeFadeFindingCount > 0
+                          ? "text-emerald-300"
+                          : "text-zinc-100"
+                      }`}
+                    >
+                      {tradeThreadModel.protectedProfitBeforeFadeFindingCount}
+                    </div>
+                    <div>Protected before fade</div>
+                  </div>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div
+                      className={`text-lg font-semibold ${
+                        tradeThreadModel.exitLevelRiskCount > 0
+                          ? "text-amber-300"
+                          : tradeThreadModel.exitLevelStrengthCount > 0
+                            ? "text-emerald-300"
+                            : "text-sky-300"
+                      }`}
+                    >
+                      {tradeThreadModel.exitLevelFindingCount}
+                    </div>
+                    <div>Support/resistance exits</div>
+                  </div>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div
+                      className={`text-lg font-semibold ${
+                        tradeThreadModel.volumeRiskCount > 0
+                          ? "text-amber-300"
+                          : tradeThreadModel.volumeStrengthCount > 0
+                            ? "text-emerald-300"
+                            : "text-sky-300"
+                      }`}
+                    >
+                      {tradeThreadModel.volumeFindingCount}
+                    </div>
+                    <div>Volume evidence</div>
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
 
@@ -1493,7 +1521,7 @@ export default async function TradesPage({
           ) : (
             <>
             <div className="mt-4 flex flex-wrap gap-2">
-              {storyFilters.map((filter) => (
+              {visibleStoryFilters.map((filter) => (
                 <Link
                   key={filter.id}
                   className={`border px-3 py-2 text-xs uppercase tracking-wide ${
@@ -1548,13 +1576,13 @@ export default async function TradesPage({
                     >
                       {thread.lifecycleLabel}
                     </div>
-                    {thread.marketContextFindingCount > 0 ? (
+                    {chartTierEnabled && thread.marketContextFindingCount > 0 ? (
                       <div className="inline-flex border border-sky-500/40 bg-sky-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-sky-200">
                         {thread.marketContextFindingCount} chart finding
                         {thread.marketContextFindingCount === 1 ? "" : "s"}
                       </div>
                     ) : null}
-                    {thread.addQualityFindingCount > 0 ? (
+                    {chartTierEnabled && thread.addQualityFindingCount > 0 ? (
                       <div
                         className={`inline-flex border px-3 py-1 text-xs font-medium uppercase tracking-wide ${
                           thread.addQualityRiskCount > 0
@@ -1568,7 +1596,7 @@ export default async function TradesPage({
                         {thread.addQualityFindingCount === 1 ? "" : "s"}
                       </div>
                     ) : null}
-                    {thread.postExitFindingCount > 0 ? (
+                    {chartTierEnabled && thread.postExitFindingCount > 0 ? (
                       <div
                         className={`inline-flex border px-3 py-1 text-xs font-medium uppercase tracking-wide ${
                           thread.postExitRiskCount > 0
@@ -1582,12 +1610,13 @@ export default async function TradesPage({
                         {thread.postExitFindingCount === 1 ? "" : "s"}
                       </div>
                     ) : null}
-                    {thread.protectedProfitBeforeFadeFindingCount > 0 ? (
+                    {chartTierEnabled &&
+                    thread.protectedProfitBeforeFadeFindingCount > 0 ? (
                       <div className="inline-flex border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-emerald-200">
                         {thread.protectedProfitBeforeFadeFindingCount} protected before fade
                       </div>
                     ) : null}
-                    {thread.exitLevelFindingCount > 0 ? (
+                    {chartTierEnabled && thread.exitLevelFindingCount > 0 ? (
                       <div
                         className={`inline-flex border px-3 py-1 text-xs font-medium uppercase tracking-wide ${
                           thread.exitLevelRiskCount > 0
@@ -1601,7 +1630,7 @@ export default async function TradesPage({
                         {thread.exitLevelFindingCount === 1 ? "" : "s"}
                       </div>
                     ) : null}
-                    {thread.volumeFindingCount > 0 ? (
+                    {chartTierEnabled && thread.volumeFindingCount > 0 ? (
                       <div
                         className={`inline-flex border px-3 py-1 text-xs font-medium uppercase tracking-wide ${
                           thread.volumeRiskCount > 0
