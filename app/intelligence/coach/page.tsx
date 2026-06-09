@@ -100,6 +100,30 @@ function compactCoachAction(value: string, fallback: string): string {
 
 const panelClass = "ti-panel p-4";
 
+function avoidRepeatedFocusLead(summary: string, label: string): string {
+  if (summary === label) {
+    return summary;
+  }
+
+  return summary.startsWith(label)
+    ? `This behavior${summary.slice(label.length)}`
+    : summary;
+}
+
+function countLabel(
+  count: number,
+  singular: string,
+  plural = `${singular}s`,
+): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function coachTradeReviewTitle(displayName: string): string {
+  return displayName.toLowerCase().endsWith("trade")
+    ? `${displayName} review`
+    : `${displayName} trade review`;
+}
+
 function coachLaneLabel(lane: string): string {
   if (lane === "highest_priority") {
     return "Review first";
@@ -1609,7 +1633,7 @@ export default async function CoachPage(props: {
   const primaryEvidenceDisplayName =
     userFacingTradeSymbol(primaryEvidenceItem?.symbol);
   const sessionTradeTitle = primaryEvidenceItem
-    ? `${primaryEvidenceDisplayName} evidence trade`
+    ? coachTradeReviewTitle(primaryEvidenceDisplayName)
     : "Import a broker CSV to start coaching";
   const sessionTradeDetail = primaryEvidenceItem
     ? `Use this trade to prove or reject the current focus. ${primaryEvidenceItem.stateDetail}`
@@ -1647,21 +1671,25 @@ export default async function CoachPage(props: {
     },
     {
       active: activeCoachView === "review_backlog",
-      countLabel: `${reviewPreviewItems.length} trades`,
+      countLabel: countLabel(reviewPreviewItems.length, "trade"),
       href: "/intelligence/coach/review-backlog",
       label: "Review Backlog",
       summary: "Trades that prove or challenge the coaching focus.",
     },
     {
       active: activeCoachView === "ticker_stories",
-      countLabel: `${tradeThreadModel.multiRoundTripThreadCount} stories`,
+      countLabel: countLabel(
+        tradeThreadModel.multiRoundTripThreadCount,
+        "story",
+        "stories",
+      ),
       href: "/intelligence/coach/ticker-stories",
       label: "Ticker Stories",
       summary: "Same-symbol re-entries, giveback, and hold transitions.",
     },
     {
       active: activeCoachView === "session_stories",
-      countLabel: `${tradeThreadModel.sessionStoryCount} sessions`,
+      countLabel: countLabel(tradeThreadModel.sessionStoryCount, "session"),
       href: "/intelligence/coach/session-stories",
       label: "Session Stories",
       summary: "Full-day review for green-to-red, activity, and hold exposure.",
@@ -1784,7 +1812,14 @@ export default async function CoachPage(props: {
                     ? sessionBehaviorLabel
                     : "Save one broker CSV to unlock coaching"
                 }
-                whyItMatters={sessionWhyItMatters}
+                whyItMatters={
+                  sessionWhyItMatters === sessionBehaviorLabel
+                    ? sessionBehaviorExplanation
+                    : avoidRepeatedFocusLead(
+                        sessionWhyItMatters,
+                        sessionBehaviorLabel,
+                      )
+                }
               />
             </div>
 

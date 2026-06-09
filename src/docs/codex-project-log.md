@@ -16198,3 +16198,29 @@ Best next step:
 - Continue reviewing the remaining coach product-pass UI deltas, but port only
   isolated route-safe pieces. Avoid the stale top-level `/coach`, `/review`, and
   `/trades` hrefs unless adapting them to `/intelligence`.
+
+# 2026-06-09 coach copy helper polish
+
+- Ported a small route-safe coach copy/helper polish slice from product-pass into
+  `app/intelligence/coach/page.tsx`.
+- Added helper copy functions for:
+  - singular/plural route count labels,
+  - avoiding repeated focus lead wording,
+  - cleaner trade review titles.
+- Updated coach route count labels to avoid text like "1 trades" and adjusted
+  the primary action copy so repeated focus labels do not read redundantly.
+- Preserved all `/intelligence` routes and did not change data contracts,
+  chart-evidence gates, or level-analysis behavior.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused coach/repository Vitest passed: 2 files, 22 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue remaining coach product-pass review manually. Larger layout changes
+  should only be ported if their hrefs are adapted to `/intelligence` and their
+  evidence claims stay gated by completed chart snapshots.
