@@ -16275,3 +16275,32 @@ Best next step:
 - Continue the remaining product-pass inventory only if the next UI delta can be
   isolated from stale top-level route assumptions. Otherwise move to final
   branch-level verification and prepare the port branch for review.
+
+# 2026-06-09 coach/product-pass port branch verification
+
+- Ran a branch-level verification pass after the route-safe coach/review queue
+  product-pass slices.
+- Current branch state keeps:
+  - `/intelligence` route namespace,
+  - journal-level-analysis trade detail and review queue level-facts,
+  - levels-system-v2-only support/resistance behavior,
+  - free/execution-only versus paid/completed-snapshot chart evidence gates.
+- Remaining direct diffs against `codex/trader-ui-product-pass` are still large
+  and should not be merged blindly. The largest remaining areas include coach
+  and review layout rewrites with stale top-level route assumptions, plus
+  product-pass queue changes that would remove or bypass main's level-facts
+  read model unless adapted manually.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader/coach/level Vitest passed: 8 files, 137 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Prepare this port branch for review or continue only with manually isolated
+  product-pass deltas. Do not direct-merge product-pass into main; keep adapting
+  individual changes to `/intelligence` and preserving journal-level-analysis.
