@@ -490,6 +490,23 @@ describe("SqliteImportCommitRepository", () => {
       activeFilter: "blocked_open_trade",
     });
     expect(openOnly.items).toMatchObject([{ symbol: "OPENQ" }]);
+
+    const executionOnlyTierQueue = buildSavedReviewQueueReadModel({
+      repository,
+      includeChartContext: false,
+    });
+    expect(executionOnlyTierQueue.allItems).toMatchObject([
+      {
+        symbol: "OPENQ",
+        lane: "blocked_open_trade",
+        hasSnapshot: false,
+      },
+    ]);
+    expect(
+      executionOnlyTierQueue.tabs.find(
+        (tab) => tab.id === "market_context_unavailable",
+      )?.count,
+    ).toBe(0);
   });
 
   it("separates completed chart reviews with unsafe candle basis warnings", () => {

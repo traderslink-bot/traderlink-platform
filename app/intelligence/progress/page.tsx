@@ -15,6 +15,10 @@ import {
 import { buildSavedReviewQueueReadModel } from "@/src/lib/trader-analytics/server/saved-review-queue";
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
 import { buildSavedOrSampleTraderAnalyticsViewModel } from "@/src/lib/trader-analytics/server/saved-trader-analytics-data";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
 
 type SavedTradeThread = ReturnType<typeof buildSavedTradeThreadReadModel>["threads"][number];
 type SavedTradeSessionStory = ReturnType<
@@ -107,10 +111,13 @@ function chooseProgressSessionStory(
 
 export default function ProgressPage() {
   const data = buildSavedOrSampleTraderAnalyticsViewModel();
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
   const savedTrades = data.repository.listTrades(data.userId);
   const savedReviewQueue =
     data.mode === "saved"
       ? buildSavedReviewQueueReadModel({
+          includeChartContext: chartContextAllowed,
           repository: data.repository,
           userId: data.userId,
         })
@@ -158,8 +165,11 @@ export default function ProgressPage() {
           data.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
       : [];
+  const chartContextSnapshots = chartContextAllowed
+    ? decisionReviewSnapshots
+    : [];
   const tradeThreadModel = buildSavedTradeThreadReadModel({
-    decisionReviewSnapshots,
+    decisionReviewSnapshots: chartContextSnapshots,
     report: data.viewModel.latestReport,
     source: data.mode === "saved" ? "saved_sqlite" : "sample",
     trades: savedTrades,

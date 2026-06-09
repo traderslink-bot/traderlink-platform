@@ -6,6 +6,10 @@ import { buildLatestSavedImportSourceCautionReadModel } from "@/src/lib/trader-a
 import { buildAnalyticsBehaviorReport } from "@/src/lib/trader-analytics/server/analytics-behavior-report";
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
 import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
+import {
   AnalyticsClient,
   type AnalyticsDashboardSection,
 } from "./analytics-client";
@@ -90,6 +94,8 @@ export default async function AnalyticsPage(props: {
   const analyticsData = buildSavedOrSampleTraderAnalyticsViewModel({
     preferSample: demoParam === "sample",
   });
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
 
   if (analyticsData.mode !== "saved" && demoParam !== "sample") {
     return <EmptyAnalyticsPage />;
@@ -99,6 +105,7 @@ export default async function AnalyticsPage(props: {
     analyticsData.mode === "saved"
       ? buildSavedReviewQueueReadModel({
           repository: analyticsData.repository,
+          includeChartContext: chartContextAllowed,
           userId: analyticsData.userId,
         })
       : null;
@@ -122,14 +129,20 @@ export default async function AnalyticsPage(props: {
         )
       : [];
   const chartTierEnabled =
-    analyticsData.mode === "sample" || decisionReviewSnapshots.length > 0;
+    chartContextAllowed &&
+    (analyticsData.mode === "sample" || decisionReviewSnapshots.length > 0);
+  const chartContextSnapshots = chartContextAllowed
+    ? decisionReviewSnapshots
+    : [];
   const tradeThreadModel = buildSavedTradeThreadReadModel({
-    decisionReviewSnapshots,
+    decisionReviewSnapshots: chartContextSnapshots,
     report: analyticsData.viewModel.latestReport,
     source: analyticsData.mode === "saved" ? "saved_sqlite" : "sample",
     trades: allTrades,
   });
-  const behaviorReport = buildAnalyticsBehaviorReport(tradeThreadModel);
+  const behaviorReport = buildAnalyticsBehaviorReport(tradeThreadModel, {
+    includeChartContext: chartContextAllowed,
+  });
   const tickerStoryPriority =
     tradeThreadModel.threads.find(
       (thread) => thread.storyKind === "profit_giveback",

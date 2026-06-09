@@ -16337,3 +16337,44 @@ Best next step:
   product-pass inventory only for isolated behavior that can be adapted to
   `/intelligence` without removing level-facts or weakening chart-evidence
   gates.
+
+# 2026-06-09 free-vs-chart tier gate port
+
+- Ported the product-pass Trader Intelligence tier contract into main:
+  - `free_execution` keeps execution analytics enabled and chart context off.
+  - `chart_context` keeps execution analytics plus candle/chart context on.
+  - AI remains a separate add-on flag and is not treated as a base tier.
+- Added server-level chart-context gates for:
+  - analytics behavior reports,
+  - saved review queue read models.
+- Wired the gate into the current `/intelligence` namespace instead of the
+  stale top-level product-pass routes:
+  - `/intelligence`,
+  - `/intelligence/analytics`,
+  - `/intelligence/coach`,
+  - `/intelligence/progress`,
+  - `/intelligence/review`,
+  - `/intelligence/trades`,
+  - `/intelligence/trades/[tradeId]`,
+  - `/api/review/latest`.
+- Free tier mode now keeps saved chart snapshots in storage but does not pass
+  them into chart-evidence behavior/thread/queue read models for those routes.
+- Trade-detail journal-level-analysis facts and review-queue level-facts now
+  stay hidden/feature-disabled when chart context is not allowed.
+- Preserved journal-level-analysis code paths for chart-context mode and
+  levels-system-v2-only support/resistance behavior.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused tier/queue/behavior Vitest passed: 4 files, 24 tests.
+- Focused trader/coach/level Vitest passed: 9 files, 146 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Add a small Playwright or route-handler regression that runs with
+  `TRADER_INTELLIGENCE_TIER=free_execution` and asserts chart-evidence panels
+  stay gated while execution-only analytics remain visible.

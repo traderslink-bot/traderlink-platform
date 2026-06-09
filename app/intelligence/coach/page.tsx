@@ -18,6 +18,10 @@ import { buildLatestSavedImportSourceCautionReadModel } from "@/src/lib/trader-a
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
 import { buildSavedOrSampleTraderAnalyticsViewModel } from "@/src/lib/trader-analytics/server/saved-trader-analytics-data";
 import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
+import {
   buildCoachOverallFocusSummary,
   buildCoachProgressFollowThroughSummary,
   chooseCoachEvidenceQueueItem,
@@ -1497,6 +1501,8 @@ export default async function CoachPage(props: {
   const analyticsData = buildSavedOrSampleTraderAnalyticsViewModel({
     preferSample: demoParam === "sample",
   });
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
 
   if (analyticsData.mode !== "saved" && demoParam !== "sample") {
     return <EmptyCoachPage />;
@@ -1510,6 +1516,7 @@ export default async function CoachPage(props: {
     analyticsData.mode === "saved"
       ? buildSavedReviewQueueReadModel({
           repository: analyticsData.repository,
+          includeChartContext: chartContextAllowed,
           userId: analyticsData.userId,
         })
       : null;
@@ -1525,15 +1532,20 @@ export default async function CoachPage(props: {
           analyticsData.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
       : [];
-  const completedChartEvidenceCount = decisionReviewSnapshots.length;
+  const chartContextSnapshots = chartContextAllowed
+    ? decisionReviewSnapshots
+    : [];
+  const completedChartEvidenceCount = chartContextSnapshots.length;
   const hasCompletedChartEvidence = completedChartEvidenceCount > 0;
   const tradeThreadModel = buildSavedTradeThreadReadModel({
-    decisionReviewSnapshots,
+    decisionReviewSnapshots: chartContextSnapshots,
     report: analytics.latestReport,
     source: analyticsData.mode === "saved" ? "saved_sqlite" : "sample",
     trades: savedTradesForProgress,
   });
-  const behaviorReport = buildAnalyticsBehaviorReport(tradeThreadModel);
+  const behaviorReport = buildAnalyticsBehaviorReport(tradeThreadModel, {
+    includeChartContext: chartContextAllowed,
+  });
   const prioritySessionStory = choosePrioritySessionStory(
     tradeThreadModel.sessionStories,
   );

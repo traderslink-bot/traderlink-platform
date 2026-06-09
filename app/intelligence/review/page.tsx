@@ -20,6 +20,10 @@ import {
 } from "@/src/lib/trader-analytics/server/saved-review-queue";
 import { buildLatestSavedImportSourceCautionReadModel } from "@/src/lib/trader-analytics/server/saved-import-source-caution";
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
 import { SavedReviewQueueActions } from "./saved-review-queue-actions";
 
 export const metadata: Metadata = {
@@ -185,13 +189,15 @@ export default async function GuidedReviewPage({
 }) {
   const query = await searchParams;
   const data = buildSavedOrSampleTraderAnalyticsViewModel();
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
   const analytics = data.viewModel;
   const review = buildGuidedReviewSession({ analytics });
   const coach = analytics.improvementIntelligence.dailyCoachReport;
   const polish = analytics.productPolish;
   const habit = analytics.reviewHabitLoop;
   const savedDecisionReview =
-    data.mode === "saved"
+    data.mode === "saved" && chartContextAllowed
       ? buildSavedDecisionReviewReadModel({ repository: data.repository })
       : null;
   const savedReviewQueue =
@@ -199,6 +205,7 @@ export default async function GuidedReviewPage({
       ? buildSavedReviewQueueReadModel({
           repository: data.repository,
           activeFilter: query?.queue,
+          includeChartContext: chartContextAllowed,
         })
       : null;
   const importSourceCaution =
@@ -220,8 +227,11 @@ export default async function GuidedReviewPage({
           data.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
       : [];
+  const chartContextSnapshots = chartContextAllowed
+    ? decisionReviewSnapshots
+    : [];
   const tradeThreadModel = buildSavedTradeThreadReadModel({
-    decisionReviewSnapshots,
+    decisionReviewSnapshots: chartContextSnapshots,
     report: analytics.latestReport,
     source: data.mode === "saved" ? "saved_sqlite" : "sample",
     trades: savedTrades,

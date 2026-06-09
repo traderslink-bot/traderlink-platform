@@ -678,11 +678,13 @@ export function buildSavedReviewQueueReadModel(args: {
   accountId?: string;
   userId?: string;
   activeFilter?: string | null;
+  includeChartContext?: boolean;
   levelFactsFeatureEnabled?: boolean;
   levelFactsTradeLinkRepository?: JournalLevelAnalysisTradeLinkRepository;
 }): SavedReviewQueueReadModel {
   const accountId = args.accountId ?? DEMO_ACCOUNT_ID;
   const userId = args.userId ?? DEMO_USER_ID;
+  const includeChartContext = args.includeChartContext ?? true;
   const activeFilter = normalizeFilter(args.activeFilter);
   const batch = args.repository.getLatestCommittedBatch(accountId);
 
@@ -717,11 +719,17 @@ export function buildSavedReviewQueueReadModel(args: {
     };
   }
 
-  const jobs = args.repository.listDecisionReviewJobs(batch.id);
+  const jobs = args.repository
+    .listDecisionReviewJobs(batch.id)
+    .filter((job) =>
+      includeChartContext ? true : job.status === "blocked_open_trade",
+    );
   const levelFacts =
     buildSavedReviewQueueLevelFactsReadModelFromRepository({
       tradeIds: jobs.map((job) => job.savedTradeId),
-      featureEnabled: args.levelFactsFeatureEnabled,
+      featureEnabled: includeChartContext
+        ? args.levelFactsFeatureEnabled
+        : false,
       tradeLinkRepository: args.levelFactsTradeLinkRepository,
     });
   const savedTrades = new Map(
@@ -733,9 +741,11 @@ export function buildSavedReviewQueueReadModel(args: {
     args.repository.listTrades(userId).map((trade) => [trade.id, trade]),
   );
   const snapshots = new Map(
-    args.repository
-      .listDecisionReviewSnapshotsForBatch(batch.id)
-      .map((snapshot) => [snapshot.savedTradeId, snapshot]),
+    includeChartContext
+      ? args.repository
+          .listDecisionReviewSnapshotsForBatch(batch.id)
+          .map((snapshot) => [snapshot.savedTradeId, snapshot])
+      : [],
   );
   const diagnosticsByTrade = new Map<
     string,

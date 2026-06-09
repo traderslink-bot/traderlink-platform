@@ -17,6 +17,10 @@ import {
 import { buildSavedOrSampleTraderAnalyticsViewModel } from "@/src/lib/trader-analytics/server/saved-trader-analytics-data";
 import { buildTradeImportSourceCautionReadModel } from "@/src/lib/trader-analytics/server/saved-import-source-caution";
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
 import { getTradeDetailLevelFactsForApi } from "@/src/lib/level-analysis/level-analysis-journal-delivery-trade-link-api-service";
 import {
   isLevelAnalysisTradeDetailLevelFactsEnabled,
@@ -821,6 +825,8 @@ export default async function TradeReviewPage({
   const data = buildSavedOrSampleTraderAnalyticsViewModel({
     preferSample: demoParam === "sample",
   });
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
   const trade = data.repository.getTrade(data.userId, tradeId);
   const allTrades = data.repository.listTrades(data.userId);
   const reports = data.repository.listReports(data.userId);
@@ -840,7 +846,8 @@ export default async function TradeReviewPage({
         )
       : [];
   const chartTierEnabled =
-    data.mode === "sample" || savedDecisionReviewSnapshots.length > 0;
+    chartContextAllowed &&
+    (data.mode === "sample" || savedDecisionReviewSnapshots.length > 0);
 
   if (!trade) {
     notFound();
@@ -1040,6 +1047,7 @@ export default async function TradeReviewPage({
       : "This replay shows position movement now. Exact realized P/L progression is waiting until a reduction or closing execution is available.";
   const levelFactsUiContract =
     data.mode === "saved" &&
+    chartContextAllowed &&
     isLevelAnalysisTradeDetailLevelFactsEnabled() &&
     isLevelAnalysisTradeDetailLevelFactsUiEnabled()
       ? buildTradeDetailLevelFactsUiContract(

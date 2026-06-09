@@ -189,4 +189,37 @@ describe("analytics behavior report", () => {
     expect(visibleCopy).not.toContain("trade calls");
     expect(visibleCopy).not.toContain("financial advice");
   });
+
+  it("keeps behavior chart evidence out when chart context is not included", () => {
+    const model = {
+      threads: [
+        thread({
+          findings: [
+            finding({
+              id: "entry_near_daily_4h_resistance",
+              label: "Entry started just below resistance",
+              opportunityType: "risk_to_reduce",
+              tradeId: "loss-1",
+            }),
+          ],
+          pnl: -42,
+          symbol: "CYCN",
+          tradeId: "loss-1",
+        }),
+      ],
+    } as unknown as SavedTradeThreadReadModel;
+
+    const report = buildAnalyticsBehaviorReport(model, {
+      includeChartContext: false,
+    });
+
+    expect(report).toEqual({
+      contractVersion: "analytics_behavior_report_v1",
+      groups: [],
+      reviewPromptCount: 0,
+      riskCount: 0,
+      strengthCount: 0,
+      totalFindingCount: 0,
+    });
+  });
 });

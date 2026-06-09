@@ -16,6 +16,10 @@ import {
 } from "@/src/lib/trader-analytics/server/saved-review-queue";
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
 import { sellStartingReviewLimitationCopy } from "@/src/lib/trader-analytics/product/trade-display-copy";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
 
 export const metadata: Metadata = {
   title: "Saved Trades | Trader Intelligence",
@@ -571,6 +575,8 @@ export default async function TradesPage({
     activeBrowseMode === "needs_review" ||
     activeBrowseMode === "open_swing";
   const data = buildSavedOrSampleTraderAnalyticsViewModel();
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
   const allTrades = data.repository.listTrades(data.userId);
   const latestReport = data.viewModel.latestReport;
   const reportRowsByTradeId = new Map(
@@ -601,7 +607,8 @@ export default async function TradesPage({
         )
       : [];
   const chartTierEnabled =
-    data.mode === "sample" || savedDecisionReviewSnapshots.length > 0;
+    chartContextAllowed &&
+    (data.mode === "sample" || savedDecisionReviewSnapshots.length > 0);
   const decisionReviewSnapshots = chartTierEnabled
     ? savedDecisionReviewSnapshots
     : [];
@@ -769,6 +776,7 @@ export default async function TradesPage({
           repository: data.repository,
           activeFilter:
             activeReviewLane === "none" ? "all" : activeReviewLane,
+          includeChartContext: chartContextAllowed,
         })
       : null;
   const queueByTradeId = new Map(

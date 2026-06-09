@@ -351,7 +351,19 @@ function evidenceDetail(args: {
 
 export function buildAnalyticsBehaviorReport(
   model: SavedTradeThreadReadModel,
+  options: { includeChartContext?: boolean } = {},
 ): AnalyticsBehaviorReport {
+  if (options.includeChartContext === false) {
+    return {
+      contractVersion: "analytics_behavior_report_v1",
+      groups: [],
+      reviewPromptCount: 0,
+      riskCount: 0,
+      strengthCount: 0,
+      totalFindingCount: 0,
+    };
+  }
+
   const roundTripsByTradeId = new Map<
     string,
     { roundTrip: SavedTradeThreadRoundTrip; thread: SavedTradeThread }

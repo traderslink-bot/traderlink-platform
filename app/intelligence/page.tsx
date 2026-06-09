@@ -20,6 +20,10 @@ import {
   importCountLabel,
   importStatusLabel,
 } from "@/src/lib/trader-analytics/product/import-user-copy";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
 
 export const metadata: Metadata = {
   title: "Trader Intelligence | TradersLink",
@@ -279,12 +283,15 @@ function RouteLink({
 
 export default function IntelligencePage() {
   const data = buildSavedOrSampleTraderAnalyticsViewModel();
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
   const hasSavedData = data.mode === "saved";
   const latestReport = data.viewModel.latestReport;
   const report = latestReport.report;
   const savedReviewQueue =
     hasSavedData
       ? buildSavedReviewQueueReadModel({
+          includeChartContext: chartContextAllowed,
           repository: data.repository,
           userId: data.userId,
         })
@@ -307,8 +314,11 @@ export default function IntelligencePage() {
           data.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
       : [];
+  const chartContextSnapshots = chartContextAllowed
+    ? decisionReviewSnapshots
+    : [];
   const tradeThreadModel = buildSavedTradeThreadReadModel({
-    decisionReviewSnapshots,
+    decisionReviewSnapshots: chartContextSnapshots,
     report: hasSavedData ? latestReport : null,
     source: hasSavedData ? "saved_sqlite" : "sample",
     trades: savedTrades,
