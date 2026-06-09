@@ -15834,3 +15834,41 @@ Best next step:
   Playwright caveat is accepted, then do a second deliberate UI/test port that
   adapts product-pass pages and Playwright expectations to `/intelligence` while
   preserving journal-level-analysis.
+
+# 2026-06-09 `/intelligence` feature-regression spec port
+
+- Continued the deliberate main port on
+  `C:\Users\jerac\Documents\TraderLink\trader-intelligence-v2-main-merge`
+  branch `codex/port-v2-candle-analytics-main`.
+- Updated `tests/e2e/app-feature-regression.spec.ts` to exercise main's current
+  `/intelligence` route namespace instead of the older top-level
+  `/workspace`, `/coach`, `/trades`, `/analytics`, `/imports`, and
+  `/import-dry-run` route assumptions.
+- Preserved the app route shape; this pass changes the QA contract, not product
+  routes. It keeps the journal-level-analysis work and `/intelligence`
+  namespace intact.
+- Aligned the spec with current main UI copy and fixture behavior:
+  `/intelligence/upload-csv` uses "Upload your broker CSV",
+  `/intelligence/imports` uses "Import History" and the import recovery queue,
+  `/intelligence/import-dry-run` uses "Advanced Import Check", coach overview
+  uses the current coaching-focus panel, analytics uses the report categories
+  panel, and ticker-story navigation is conditional when no same-day re-entry
+  story exists.
+- Kept market-context QA focused on the paid-tier rule: candle/level claims only
+  count when real chart evidence exists; execution-only paths remain
+  observational.
+
+Verification:
+
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader analytics/coach/review Vitest passed: 5 files, 54 tests.
+
+Best next step:
+
+- Commit this scoped E2E namespace port, then continue the deliberate UI port
+  from `codex/trader-ui-product-pass` in small pieces: shared behavior first,
+  UI components second, always adapted to main's `/intelligence` routes and
+  without restoring old levels-system v1/phase1.
