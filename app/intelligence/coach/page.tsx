@@ -1643,6 +1643,18 @@ export default async function CoachPage(props: {
   const evidenceLabel = primaryEvidenceItem
     ? `${primaryEvidenceDisplayName} / ${signed(primaryEvidenceItem.grossRealizedPnl)}`
     : "No saved trade yet";
+  const tickerStoryFocusHref = coachTickerStoryFocus
+    ? coachTickerStoryHref(coachTickerStoryFocus.thread, sessionBehavior?.label)
+    : null;
+  const tickerStoryFocusDetail = coachTickerStoryFocus
+    ? `${userFacingTradeSymbol(coachTickerStoryFocus.thread.symbol)} has ${
+        coachTickerStoryFocus.thread.roundTripCount
+      } round trips, ${signed(
+        coachTickerStoryFocus.thread.totalGrossRealizedPnl,
+      )} total P/L, and ${coachTickerStoryFocus.relatedTradeCount} round trip${
+        coachTickerStoryFocus.relatedTradeCount === 1 ? "" : "s"
+      } tied to the current focus. Use the ticker story to compare attempts before turning the focus into a rule.`
+    : null;
   const coachRouteItems = [
     {
       active: activeCoachView === "overview",
@@ -1822,6 +1834,45 @@ export default async function CoachPage(props: {
                 }
               />
             </div>
+
+            {coachTickerStoryFocus &&
+            tickerStoryFocusHref &&
+            tickerStoryFocusDetail ? (
+              <section
+                className="ti-panel p-4"
+                data-testid="coach-ticker-story-focus"
+              >
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-sky-300">
+                      Ticker Story Behind This Focus
+                    </p>
+                    <h2 className="mt-2 text-lg font-semibold text-zinc-100">
+                      Start with{" "}
+                      {userFacingTradeSymbol(coachTickerStoryFocus.thread.symbol)}{" "}
+                      before writing the rule.
+                    </h2>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+                      {tickerStoryFocusDetail}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      className="border border-sky-800 bg-sky-950/30 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+                      href={tickerStoryFocusHref}
+                    >
+                      Open ticker story
+                    </Link>
+                    <Link
+                      className="border border-zinc-800 px-4 py-3 text-sm font-medium text-zinc-200 transition hover:border-zinc-500"
+                      href="/intelligence/review?queue=highest_priority"
+                    >
+                      Open review queue
+                    </Link>
+                  </div>
+                </div>
+              </section>
+            ) : null}
 
             <WorkflowHandoffPanel
               body="The coach starts with the overall pattern, then uses trades as evidence. Work through this path when you want the page to feel like a coaching session instead of a dashboard."

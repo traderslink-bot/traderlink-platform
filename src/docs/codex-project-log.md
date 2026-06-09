@@ -16224,3 +16224,29 @@ Best next step:
 - Continue remaining coach product-pass review manually. Larger layout changes
   should only be ported if their hrefs are adapted to `/intelligence` and their
   evidence claims stay gated by completed chart snapshots.
+
+# 2026-06-09 coach ticker-story focus overview panel
+
+- Added a route-safe overview panel to `app/intelligence/coach/page.tsx` that
+  surfaces the focused ticker story selected by the coach ticker-story focus
+  helper.
+- The panel links to `/intelligence/trades/ticker-story/...` and
+  `/intelligence/review?queue=highest_priority`, preserving main's route
+  namespace.
+- Kept the primary coach action pointed at the evidence trade/review flow so
+  existing review-session behavior and Playwright expectations stay stable.
+- Did not change data contracts, chart-evidence gates, level-analysis behavior,
+  or levels-system-v2 usage.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused coach/repository Vitest passed: 2 files, 22 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue manual coach UI inventory. Candidate: review-session page copy can
+  acknowledge the focused ticker story, but only if links remain under
+  `/intelligence` and the single-trade replay path remains available.
