@@ -16304,3 +16304,36 @@ Best next step:
 - Prepare this port branch for review or continue only with manually isolated
   product-pass deltas. Do not direct-merge product-pass into main; keep adapting
   individual changes to `/intelligence` and preserving journal-level-analysis.
+
+# 2026-06-09 saved review queue loss-aware priority port
+
+- Ported the route-safe saved-review-queue loss-priority slice from
+  `codex/trader-ui-product-pass` into main's current read model.
+- Completed chart-risk review items now get a bounded priority bump when the
+  saved trade has a meaningful realized loss.
+- Queue sorting now uses realized loss as a tie-breaker after priority score so
+  larger losing chart-risk items surface first.
+- Improved saved-review queue P/L lookup to prefer the analytics report's
+  `sourceTradeIds` mapping before falling back to symbol/session/direction,
+  which keeps same-symbol same-session ticker-story items from inheriting the
+  wrong P/L row.
+- Preserved `/intelligence` routes, journal-level-analysis queue level-facts,
+  completed-snapshot chart evidence gates, and levels-system-v2-only behavior.
+- Added a regression covering two completed same-symbol chart-risk trades where
+  the losing trade becomes the collapsed ticker-story lead.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import repository Vitest passed: 1 file, 13 tests.
+- Focused trader/coach/level Vitest passed: 8 files, 142 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this scoped queue-priority slice, then continue remaining
+  product-pass inventory only for isolated behavior that can be adapted to
+  `/intelligence` without removing level-facts or weakening chart-evidence
+  gates.

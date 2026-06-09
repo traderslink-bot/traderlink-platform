@@ -197,12 +197,40 @@ function primaryChartFinding(
   );
 }
 
-function snapshotPriority(snapshot: PersistedDecisionReviewSnapshot): {
+function lossImpactPriorityBump(grossRealizedPnl: number | null): number {
+  if (grossRealizedPnl === null || grossRealizedPnl >= 0) {
+    return 0;
+  }
+
+  const loss = Math.abs(grossRealizedPnl);
+
+  if (loss >= 100) {
+    return 15;
+  }
+
+  if (loss >= 50) {
+    return 11;
+  }
+
+  if (loss >= 20) {
+    return 7;
+  }
+
+  return 0;
+}
+
+function snapshotPriority(
+  snapshot: PersistedDecisionReviewSnapshot,
+  grossRealizedPnl: number | null,
+): {
   score: number;
   reason: string;
 } {
   const findings = chartFindingsForSnapshot(snapshot);
   const primary = primaryChartFinding(findings);
+  const lossImpactBump = lossImpactPriorityBump(grossRealizedPnl);
+  const lossImpactReason =
+    lossImpactBump > 0 ? " Realized loss moved it up the queue." : "";
   const riskCount = findings.filter(
     (finding) =>
       finding.canDrivePrimaryConclusion &&
@@ -219,14 +247,14 @@ function snapshotPriority(snapshot: PersistedDecisionReviewSnapshot): {
 
   if (riskCount > 0) {
     return {
-      score: Math.min(85, 62 + riskCount * 7),
+      score: Math.min(99, 62 + riskCount * 7 + lossImpactBump),
       reason: primary
         ? `${riskCount} chart-backed risk${
             riskCount === 1 ? "" : "s"
-          } to review. Start with: ${primary.label}.`
+          } to review. Start with: ${primary.label}.${lossImpactReason}`
         : `${riskCount} chart-backed risk${
             riskCount === 1 ? "" : "s"
-          } need review.`,
+          } need review.${lossImpactReason}`,
     };
   }
 
@@ -395,12 +423,21 @@ function reportPnl(args: {
   const latest = getLatestSavedTraderAnalyticsReport(
     args.repository.listReports(args.trade.userId),
   );
-  const row = latest?.report.trades.find(
-    (candidate) =>
-      candidate.symbol === args.trade?.symbol &&
-      candidate.sessionDate === args.trade?.sessionDate &&
-      candidate.tradeDirection === args.trade?.tradeDirection,
-  );
+  const sourceIndex = latest?.sourceTradeIds.indexOf(args.trade.id) ?? -1;
+  const rowByTradeId =
+    sourceIndex >= 0
+      ? latest?.report.trades.find(
+          (candidate) => candidate.tradeIndex === sourceIndex + 1,
+        )
+      : undefined;
+  const row =
+    rowByTradeId ??
+    latest?.report.trades.find(
+      (candidate) =>
+        candidate.symbol === args.trade?.symbol &&
+        candidate.sessionDate === args.trade?.sessionDate &&
+        candidate.tradeDirection === args.trade?.tradeDirection,
+    );
 
   return typeof row?.grossRealizedPnl === "number"
     ? row.grossRealizedPnl
@@ -417,7 +454,13 @@ function buildQueueItem(args: {
   levelFactsByTradeId: Record<string, SavedReviewQueueLevelFactsState>;
 }): SavedReviewQueueItem {
   const lane = laneForStatus(args.job.status);
-  const snapshotScore = args.snapshot ? snapshotPriority(args.snapshot) : null;
+  const grossRealizedPnl = reportPnl({
+    trade: args.trade,
+    repository: args.repository,
+  });
+  const snapshotScore = args.snapshot
+    ? snapshotPriority(args.snapshot, grossRealizedPnl)
+    : null;
   const diagnosticScore = !args.snapshot
     ? diagnosticPriority(args.diagnostic ?? null, args.job.status)
     : null;
@@ -489,10 +532,7 @@ function buildQueueItem(args: {
     candleBasisStatus: snapshotCandleBasisStatus(args.snapshot),
     primaryChartFindingLabel: chartPrimary?.label ?? null,
     primaryChartFindingAction: chartPrimary?.reviewAction ?? null,
-    grossRealizedPnl: reportPnl({
-      trade: args.trade,
-      repository: args.repository,
-    }),
+    grossRealizedPnl,
     reviewStatus: args.trade?.reviewStatus ?? "new",
     notesCount: args.trade?.notes.length ?? 0,
     hasSnapshot: Boolean(args.snapshot),
@@ -501,6 +541,10 @@ function buildQueueItem(args: {
       args.snapshot?.generatedAt ?? args.diagnostic?.generatedAt ?? null,
     levelFacts,
   };
+}
+
+function reviewQueueLossSortValue(item: SavedReviewQueueItem): number {
+  return item.grossRealizedPnl === null ? 0 : item.grossRealizedPnl;
 }
 
 function enrichTickerStoryQueueItems(
@@ -571,7 +615,9 @@ function filterItems(
       )
       .sort(
         (a, b) =>
-          b.priorityScore - a.priorityScore || a.symbol.localeCompare(b.symbol),
+          b.priorityScore - a.priorityScore ||
+          reviewQueueLossSortValue(a) - reviewQueueLossSortValue(b) ||
+          a.symbol.localeCompare(b.symbol),
       ));
   }
 
@@ -723,6 +769,7 @@ export function buildSavedReviewQueueReadModel(args: {
       .sort(
         (a, b) =>
           b.priorityScore - a.priorityScore ||
+          reviewQueueLossSortValue(a) - reviewQueueLossSortValue(b) ||
           (b.generatedAt ?? "").localeCompare(a.generatedAt ?? "") ||
           a.symbol.localeCompare(b.symbol),
       ),

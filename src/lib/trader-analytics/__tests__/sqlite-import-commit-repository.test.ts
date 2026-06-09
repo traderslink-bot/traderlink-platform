@@ -644,6 +644,80 @@ describe("SqliteImportCommitRepository", () => {
     });
   });
 
+  it("prioritizes completed chart-risk losses without losing ticker-story grouping", () => {
+    const csv = [
+      "Date,Time,Symbol,Side,Quantity,Price",
+      "2026-05-01,09:30:00,LOSSQ,Buy,100,10.00",
+      "2026-05-01,10:00:00,LOSSQ,Sell,100,10.10",
+      "2026-05-01,10:30:00,LOSSQ,Buy,100,10.20",
+      "2026-05-01,11:00:00,LOSSQ,Sell,100,9.00",
+    ].join("\n");
+    const { repository, plan } = planFor(csv);
+
+    repository.commitImportPlan(plan);
+
+    const jobs = repository.listDecisionReviewJobs(plan.batch.id);
+    expect(jobs).toHaveLength(2);
+
+    for (const [requestIndex, job] of jobs.entries()) {
+      repository.updateDecisionReviewJob({
+        ...job,
+        status: "completed",
+        reason: "Decision review completed and persisted.",
+      });
+      repository.saveDecisionReviewSnapshot({
+        id: `${job.savedTradeId}:decision-review-snapshot`,
+        accountId: DEMO_ACCOUNT_ID,
+        userId: DEMO_USER_ID,
+        savedTradeId: job.savedTradeId,
+        importBatchId: plan.batch.id,
+        requestIndex,
+        symbol: "LOSSQ",
+        generatedAt: `2026-05-07T12:0${requestIndex}:00.000Z`,
+        status: "completed",
+        review: {
+          coachingHeadline: "Chart context found a profit-protection risk.",
+          fixFirstBehaviorId: "profit_protection_failed",
+          marketContextSource: "levels_system_daily_4h",
+          tradeWindowEvidenceSource: "levels_system_trade_window",
+          candleQualityNotes: ["basis_aligned"],
+          insights: [
+            {
+              id: "profit_protection_failed",
+              tone: "risk",
+              category: "exit",
+              title: "Open profit was not protected",
+              summary: "Open profit was not protected.",
+              evidence: ["realizedCapturePercentOfTradeMfe=18.0%"],
+            },
+          ],
+        },
+      });
+    }
+
+    const queue = buildSavedReviewQueueReadModel({ repository });
+
+    expect(queue.allItems).toHaveLength(2);
+    expect(queue.items).toHaveLength(1);
+    expect(queue.items[0]).toMatchObject({
+      symbol: "LOSSQ",
+      tickerStoryHref:
+        "/intelligence/trades/ticker-story/LOSSQ%3A2026-05-01",
+      tickerStoryLead: true,
+      tickerStoryReviewCount: 2,
+      chartRiskCount: 1,
+      priorityLabel: "high",
+    });
+    expect(queue.items[0]?.grossRealizedPnl).toBeLessThan(-100);
+    expect(queue.items[0]?.priorityReason).toContain(
+      "Realized loss moved it up the queue.",
+    );
+    expect(queue.allItems.map((item) => item.grossRealizedPnl).sort()).toEqual([
+      -120,
+      10,
+    ]);
+  });
+
   it("keeps sanitized insufficient-history cases as market-context diagnostics", async () => {
     const csv = [
       "Date,Time,Symbol,Side,Quantity,Price",
