@@ -15,10 +15,18 @@ import { POST as setReviewItemStatus } from "../../../../app/api/trades/[tradeId
 import { GET as latestAnalytics } from "../../../../app/api/analytics/latest/route";
 import { GET as latestCoach } from "../../../../app/api/coach/latest/route";
 import { GET as latestReview } from "../../../../app/api/review/latest/route";
-import { resetTraderIntelligenceDatabaseForTests } from "../product/import-commit/sqlite-import-commit-repository";
+import {
+  resetTraderIntelligenceDatabaseForTests,
+  SqliteImportCommitRepository,
+} from "../product/import-commit/sqlite-import-commit-repository";
+import { runPersistedDecisionReviewJobs } from "../server/saved-decision-review-service";
+import {
+  buildSampleLevelsSystemSupportResistanceOptions,
+} from "../../support-resistance/__fixtures__/sample-levels-system-fetch-service";
 
 let tempDir = "";
 let originalDbPath: string | undefined;
+let originalTier: string | undefined;
 
 const csvText = [
   "Date,Time,Symbol,Side,Quantity,Price",
@@ -71,6 +79,7 @@ function jsonRequest(body: unknown): Request {
 
 beforeEach(() => {
   originalDbPath = process.env.TRADER_INTELLIGENCE_DB_PATH;
+  originalTier = process.env.TRADER_INTELLIGENCE_TIER;
   tempDir = mkdtempSync(join(tmpdir(), "trader-intelligence-api-"));
   process.env.TRADER_INTELLIGENCE_DB_PATH = join(tempDir, "test.sqlite");
   resetTraderIntelligenceDatabaseForTests();
@@ -82,6 +91,11 @@ afterEach(() => {
     delete process.env.TRADER_INTELLIGENCE_DB_PATH;
   } else {
     process.env.TRADER_INTELLIGENCE_DB_PATH = originalDbPath;
+  }
+  if (originalTier === undefined) {
+    delete process.env.TRADER_INTELLIGENCE_TIER;
+  } else {
+    process.env.TRADER_INTELLIGENCE_TIER = originalTier;
   }
   rmSync(tempDir, { recursive: true, force: true });
 });
@@ -252,6 +266,68 @@ describe("saved import API routes", () => {
         }),
       ]),
     );
+  });
+
+  it("keeps latest review execution-only in the free tier even when chart snapshots exist", async () => {
+    const payload = {
+      csvText: csvText.replaceAll("APIX", "TIER"),
+      broker: "generic_execution_csv",
+      accountTimezone: "America/New_York",
+      acknowledgements: {
+        mappingReview: true,
+        pnlReview: true,
+      },
+    };
+    const previewBody = await (
+      await previewImportBatch(jsonRequest(payload))
+    ).json();
+
+    await commitImportBatch(jsonRequest(payload), {
+      params: Promise.resolve({ batchId: previewBody.plan.batch.id }),
+    });
+
+    const repository = new SqliteImportCommitRepository();
+    const reviewRun = await runPersistedDecisionReviewJobs({
+      repository,
+      importBatchId: previewBody.plan.batch.id,
+      generatedAt: "2026-05-07T12:00:00.000Z",
+      levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
+    });
+    expect(reviewRun.completedSnapshotCount).toBe(1);
+
+    process.env.TRADER_INTELLIGENCE_TIER = "chart_context";
+    const chartTierReview = await (await latestReview()).json();
+    expect(chartTierReview.source).toBe("saved_sqlite");
+    expect(chartTierReview.review).toMatchObject({
+      title: "Guided Review Session",
+    });
+    expect(chartTierReview.savedDecisionReview).toMatchObject({
+      completedCount: 1,
+      queuedCount: 0,
+    });
+    expect(chartTierReview.savedReviewQueue.allItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          symbol: "TIER",
+          lane: "completed",
+          hasSnapshot: true,
+        }),
+      ]),
+    );
+
+    process.env.TRADER_INTELLIGENCE_TIER = "free_execution";
+    const freeTierReview = await (await latestReview()).json();
+    expect(freeTierReview.source).toBe("saved_sqlite");
+    expect(freeTierReview.review).toMatchObject({
+      title: "Guided Review Session",
+    });
+    expect(freeTierReview.savedDecisionReview).toBeNull();
+    expect(freeTierReview.savedReviewQueue.allItems).toEqual([]);
+    expect(
+      freeTierReview.savedReviewQueue.tabs.find(
+        (tab: { id: string }) => tab.id === "completed",
+      )?.count,
+    ).toBe(0);
   });
 
   it("commits a ready stored preview from the batch recovery action path", async () => {

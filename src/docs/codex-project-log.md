@@ -16378,3 +16378,28 @@ Best next step:
 - Add a small Playwright or route-handler regression that runs with
   `TRADER_INTELLIGENCE_TIER=free_execution` and asserts chart-evidence panels
   stay gated while execution-only analytics remain visible.
+
+# 2026-06-09 free-tier latest review API regression
+
+- Added a route-handler regression for `/api/review/latest` using an isolated
+  saved-import SQLite database.
+- The test commits a closed trade, completes persisted chart review with
+  levels-system-v2 sample support/resistance context, and verifies:
+  - `chart_context` exposes the completed saved decision-review snapshot and
+    completed queue item,
+  - `free_execution` keeps the guided review payload available,
+  - `free_execution` returns `savedDecisionReview: null`,
+  - `free_execution` hides the completed chart-review queue item.
+- This proves the free tier remains execution-only even when paid-tier chart
+  snapshots exist in storage.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused tier/API/queue/behavior/level-facts Vitest passed: 5 files, 37 tests.
+
+Best next step:
+
+- Continue remaining product-pass inventory only for isolated behavior that can
+  be adapted to `/intelligence` without direct-merging stale top-level routes or
+  removing journal-level-analysis.
