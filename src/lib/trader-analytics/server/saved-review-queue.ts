@@ -110,7 +110,7 @@ const FILTER_LABELS: Record<SavedReviewQueueFilter, string> = {
   completed: "Reviewed With Chart Data",
   market_context_unavailable: "Chart data still missing",
   blocked_open_trade: "Open Trades",
-  analysis_failed: "Needs Technical Follow-Up",
+  analysis_failed: "Chart Data Needs Another Check",
   candle_basis_warning: "Candle Basis Check",
   highest_priority: "Highest Priority",
   queued: "Chart Data Waiting",
@@ -249,10 +249,10 @@ function snapshotPriority(
     return {
       score: Math.min(99, 62 + riskCount * 7 + lossImpactBump),
       reason: primary
-        ? `${riskCount} chart-backed risk${
+        ? `${riskCount} chart risk${
             riskCount === 1 ? "" : "s"
           } to review. Start with: ${primary.label}.${lossImpactReason}`
-        : `${riskCount} chart-backed risk${
+        : `${riskCount} chart risk${
             riskCount === 1 ? "" : "s"
           } need review.${lossImpactReason}`,
     };
@@ -262,8 +262,8 @@ function snapshotPriority(
     return {
       score: 48,
       reason: primary
-        ? `Chart-backed strength ready to repeat: ${primary.label}.`
-        : "Chart-backed strength is ready for normal review rotation.",
+        ? `Chart strength ready to repeat: ${primary.label}.`
+        : "Chart strength is ready for normal review rotation.",
     };
   }
 
@@ -289,7 +289,8 @@ function diagnosticPriority(
   if (status === "analysis_failed") {
     return {
       score: 96,
-      reason: "Technical follow-up is needed before chart feedback is trusted.",
+      reason:
+        "Chart data needs another check before chart feedback is trusted.",
     };
   }
 
@@ -297,7 +298,7 @@ function diagnosticPriority(
     return {
       score: 90,
       reason:
-        "Execution review is available now; chart, level, or volume evidence is still missing.",
+        "Execution review is available now; candle and level evidence is still missing.",
     };
   }
 
@@ -318,7 +319,7 @@ function diagnosticPriority(
   return {
     score: diagnostic ? 70 : 52,
     reason: diagnostic
-      ? "Technical follow-up is needed before chart feedback is trusted."
+      ? "Chart data needs another check before chart feedback is trusted."
       : "Queued trade is waiting for chart-data review.",
   };
 }
@@ -378,19 +379,19 @@ function queueStateCopy(lane: SavedReviewQueueItem["lane"]): {
       return {
         stateLabel: "Chart data still missing",
         stateDetail:
-          "Execution review is available, but chart, level, or volume evidence is still missing.",
-        reviewScopeLabel: "execution-only",
+          "Execution review is available, but candle and level evidence is still missing.",
+        reviewScopeLabel: "execution replay only",
         nextAction:
-          "Review entries, adds, reductions, exits, timing, and P/L now; add chart data later.",
+          "Review entries, adds, reductions, exits, timing, and trade result now; add chart data later.",
       };
     case "analysis_failed":
       return {
-        stateLabel: "Needs technical follow-up",
+        stateLabel: "Chart data needs review",
         stateDetail:
-          "Execution review is available, but chart analysis needs a technical follow-up before that feedback is trusted.",
-        reviewScopeLabel: "execution-only fallback",
+          "Execution review is available, but chart data needs another check before candle or level feedback is trusted.",
+        reviewScopeLabel: "execution replay only",
         nextAction:
-          "Use the execution replay now and keep chart evidence conclusions unavailable until the technical follow-up is resolved.",
+          "Use the execution replay now and leave chart evidence conclusions out until that chart-data check is resolved.",
       };
     case "skipped_limit":
       return {

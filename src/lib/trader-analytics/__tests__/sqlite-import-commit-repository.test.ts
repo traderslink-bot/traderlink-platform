@@ -581,6 +581,14 @@ describe("SqliteImportCommitRepository", () => {
       symbol: "GAPQ",
       priorityLabel: "urgent",
       marketContextSource: "market_context_unavailable",
+      stateLabel: "Chart data still missing",
+      stateDetail:
+        "Execution review is available, but candle and level evidence is still missing.",
+      reviewScopeLabel: "execution replay only",
+      nextAction:
+        "Review entries, adds, reductions, exits, timing, and trade result now; add chart data later.",
+      priorityReason:
+        "Execution review is available now; candle and level evidence is still missing.",
     });
     expect(queue.items[0]?.href).toContain("from=review-queue");
 

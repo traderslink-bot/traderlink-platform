@@ -16486,3 +16486,26 @@ Best next step:
 
 - Continue inventorying product-pass server/product diffs for behavior that
   improves chart evidence gating without changing route namespaces.
+
+# 2026-06-09 review queue chart-data wording port
+
+- Ported the low-risk saved-review-queue wording improvements from
+  product-pass while preserving main's `/intelligence` links and
+  journal-level-analysis level-facts read model.
+- Missing market context now says execution review is available but candle and
+  level evidence is still missing, with an execution-replay-only scope.
+- Analysis failures now say chart data needs another check before candle or
+  level feedback is trusted, instead of using vague technical-follow-up copy.
+- Pinned the market-context-unavailable queue item copy in the existing SQLite
+  saved review queue regression.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import/review queue Vitest passed: 2 files, 27 tests.
+
+Best next step:
+
+- Continue the product-pass inventory without stale route rewrites; prioritize
+  behavior/read-model slices that reinforce execution-only versus chart-evidence
+  boundaries.
