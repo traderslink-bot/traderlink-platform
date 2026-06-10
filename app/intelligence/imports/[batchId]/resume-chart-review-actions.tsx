@@ -16,7 +16,7 @@ export function ResumeChartReviewActions({
 
   async function resumeChartReview() {
     setIsPending(true);
-    setMessage("Resuming chart data review...");
+    setMessage("Starting background chart data review...");
 
     try {
       const response = await fetch(
@@ -24,12 +24,12 @@ export function ResumeChartReviewActions({
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ maxTrades: 1 }),
+          body: JSON.stringify({ maxTrades: 1, runInBackground: true }),
         },
       );
       const body = await response.json().catch(() => null);
 
-      if (!response.ok) {
+      if (!response.ok && response.status !== 202) {
         setMessage(
           body && typeof body.message === "string"
             ? body.message
@@ -39,7 +39,9 @@ export function ResumeChartReviewActions({
       }
 
       setMessage(
-        body && typeof body.selectedJobCount === "number"
+        body && typeof body.message === "string"
+          ? body.message
+          : body && typeof body.selectedJobCount === "number"
           ? `Chart data review resumed for ${body.selectedJobCount} trade${body.selectedJobCount === 1 ? "" : "s"}.`
           : "Chart data review resumed.",
       );
@@ -69,7 +71,7 @@ export function ResumeChartReviewActions({
         onClick={resumeChartReview}
         type="button"
       >
-        {isPending ? "Resuming..." : "Resume chart data review"}
+        {isPending ? "Starting..." : "Start background chart data review"}
       </button>
       <div
         className="mt-2 min-h-5 text-xs text-sky-100/70"

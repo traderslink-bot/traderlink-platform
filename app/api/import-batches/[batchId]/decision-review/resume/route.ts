@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { readLevelsSystemRuntimeConfigFromEnv } from "../../../../../../src/lib/support-resistance/levels-system-runtime-options";
 import { SqliteImportCommitRepository } from "../../../../../../src/lib/trader-analytics/product/import-commit/sqlite-import-commit-repository";
 import { importCommitErrorResponse } from "../../../../../../src/lib/trader-analytics/server/import-commit-service";
@@ -40,6 +41,14 @@ function savedTradeIdFromBody(body: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
+function runInBackgroundFromBody(body: unknown): boolean {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return false;
+  }
+
+  return "runInBackground" in body && body.runInBackground === true;
+}
+
 async function readRequestBody(request: Request): Promise<unknown> {
   try {
     return await request.json();
@@ -67,6 +76,38 @@ async function runDecisionReview(args: {
     retryFailedChartDataReview: args.retryFailedChartDataReview,
     savedTradeIds: args.savedTradeId ? [args.savedTradeId] : undefined,
   });
+}
+
+function scheduleDecisionReviewRun(args: {
+  importBatchId: string;
+  generatedAt: string;
+  maxTrades: number;
+  refreshMissingReplayCandleWindows?: boolean;
+  retryFailedChartDataReview?: boolean;
+  savedTradeId?: string;
+}): void {
+  const run = async () => {
+    try {
+      await runDecisionReview(args);
+    } catch (error) {
+      console.error("Saved chart data review background resume failed.", {
+        error: error instanceof Error ? error.message : String(error),
+        importBatchId: args.importBatchId,
+      });
+    }
+  };
+
+  try {
+    after(run);
+  } catch (error) {
+    if (process.env.NODE_ENV !== "test") {
+      void run();
+      console.warn("Scheduled chart data review without Next after().", {
+        error: error instanceof Error ? error.message : String(error),
+        importBatchId: args.importBatchId,
+      });
+    }
+  }
 }
 
 export async function POST(
@@ -98,6 +139,7 @@ export async function POST(
   const body = await readRequestBody(request);
   const maxTrades = maxTradesFromBody(body);
   const savedTradeId = savedTradeIdFromBody(body);
+  const runInBackground = runInBackgroundFromBody(body);
   const queuedJobs = repository
     .listDecisionReviewJobs(batchId)
     .filter(
@@ -176,6 +218,37 @@ export async function POST(
     : refreshMissingReplayCandleWindows
       ? ("refresh_missing_replay_candles" satisfies ResumeModeWithRetry)
       : ("queued" satisfies ResumeModeWithRetry);
+
+  if (runInBackground) {
+    scheduleDecisionReviewRun({
+      importBatchId: batchId,
+      generatedAt,
+      maxTrades,
+      refreshMissingReplayCandleWindows:
+        refreshMissingReplayCandleWindows && !retryFailedChartDataReview,
+      retryFailedChartDataReview,
+      savedTradeId,
+    });
+
+    return Response.json(
+      {
+        contractVersion: "persisted_decision_review_resume_result_v1",
+        importBatchId: batchId,
+        queuedBefore: queuedJobs.length,
+        refreshableBefore: refreshableJobs.length,
+        retryableFailedBefore: retryableFailedJobs.length,
+        selectedJobCount,
+        maxTrades,
+        mode,
+        background: true,
+        message:
+          "Chart data review is running in the background. Keep this page open to watch progress, or continue reviewing saved executions.",
+        run: null,
+      },
+      { status: 202 },
+    );
+  }
+
   const run = await runDecisionReview({
     importBatchId: batchId,
     generatedAt,
@@ -195,6 +268,7 @@ export async function POST(
     selectedJobCount,
     maxTrades,
     mode,
+    background: false,
     message: retryFailedChartDataReview
       ? "Chart data review retried. If market data is connected, chart evidence will attach to saved trades."
       : refreshMissingReplayCandleWindows

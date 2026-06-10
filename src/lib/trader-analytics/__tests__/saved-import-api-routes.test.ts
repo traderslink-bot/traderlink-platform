@@ -7,6 +7,7 @@ import { GET as listImportBatches } from "../../../../app/api/import-batches/rou
 import { POST as commitImportBatch } from "../../../../app/api/import-batches/[batchId]/commit/route";
 import { GET as getImportBatch } from "../../../../app/api/import-batches/[batchId]/route";
 import { GET as getDecisionReviewStatus } from "../../../../app/api/import-batches/[batchId]/decision-review/status/route";
+import { POST as resumeDecisionReview } from "../../../../app/api/import-batches/[batchId]/decision-review/resume/route";
 import { POST as setImportRepairStatus } from "../../../../app/api/import-batches/[batchId]/repair-items/[repairItemId]/route";
 import { GET as listTrades } from "../../../../app/api/trades/route";
 import { GET as getTrade } from "../../../../app/api/trades/[tradeId]/route";
@@ -153,6 +154,43 @@ describe("saved import API routes", () => {
       pendingWorkCount: 1,
       canResume: true,
       nextAction: "Continue chart data review for queued saved trades.",
+    });
+
+    const backgroundResume = await resumeDecisionReview(
+      jsonRequest({ maxTrades: 1, runInBackground: true }),
+      { params: Promise.resolve({ batchId }) },
+    );
+    const backgroundResumeBody = await backgroundResume.json();
+
+    expect(backgroundResume.status).toBe(202);
+    expect(backgroundResumeBody).toMatchObject({
+      contractVersion: "persisted_decision_review_resume_result_v1",
+      importBatchId: batchId,
+      queuedBefore: 1,
+      selectedJobCount: 1,
+      maxTrades: 1,
+      mode: "queued",
+      background: true,
+      run: null,
+    });
+    expect(backgroundResumeBody.message).toContain(
+      "Chart data review is running in the background",
+    );
+
+    const statusAfterBackgroundResume = await (
+      await getDecisionReviewStatus(
+        new Request(
+          `http://localhost/api/import-batches/${encodeURIComponent(
+            batchId,
+          )}/decision-review/status`,
+        ),
+        { params: Promise.resolve({ batchId }) },
+      )
+    ).json();
+    expect(statusAfterBackgroundResume).toMatchObject({
+      queuedCount: 1,
+      completedCount: 0,
+      canResume: true,
     });
 
     const trades = await (await listTrades()).json();

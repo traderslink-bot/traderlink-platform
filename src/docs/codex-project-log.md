@@ -16562,3 +16562,31 @@ Best next step:
 - If continuing the port, inspect remaining product-pass diffs one at a time and
   only port behavior that can be adapted to `/intelligence` without changing
   level-facts or execution-only versus chart-evidence gates.
+
+# 2026-06-09 background chart review resume port
+
+- Deliberately ported the background chart-review resume behavior into main's
+  current `/api/import-batches/[batchId]/decision-review/resume` route.
+- Used the existing guarded `next/server` `after(...)` scheduling pattern from
+  the import commit route, after checking the local Next docs for `after`.
+- The resume endpoint remains synchronous by default, but accepts
+  `runInBackground: true` to return `202` with `background: true` and `run:
+  null` while chart review continues after the response.
+- Updated the `/intelligence/imports/[batchId]` action to request background
+  resume and show the API's calm background message.
+- Added an API regression proving background resume does not immediately mark
+  chart evidence complete in test mode.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import API route Vitest passed: 1 file, 13 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue remaining product-pass inventory only for behavior that can be
+  adapted to `/intelligence`; do not port stale top-level routes or remove
+  journal-level-analysis level-facts.
