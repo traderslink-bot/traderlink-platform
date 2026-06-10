@@ -349,7 +349,7 @@ export default async function GuidedReviewPage({
                 summary: "Checklist and lesson draft.",
               },
             ]}
-            summary="Work this page like a review queue, with technical follow-up kept in the background."
+            summary="Work this page like a review queue while chart-data checks stay in the background."
           />
           <div className="grid min-w-0 gap-6">
             <div id="review-first">

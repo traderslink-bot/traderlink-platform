@@ -16623,3 +16623,84 @@ Best next step:
 - Commit this polling slice, then continue with a real May IBKR hydration pass
   against the isolated QA database to confirm the same progress behavior on the
   larger statement.
+
+# 2026-06-10 May IBKR isolated chart-evidence QA
+
+- Ran the May IBKR activity statement through the saved-import path in an
+  isolated local DB:
+  `artifacts/may-ibkr-ui-qa/may-ui-qa.sqlite`.
+- Source file:
+  `C:\Users\jerac\Documents\IBKR activity statments\U21845737_202605_202605.csv`.
+- Import result:
+  - 523 statement rows,
+  - 244 accepted executions,
+  - 93 saved trades,
+  - 93 decision-review jobs,
+  - 0 open positions.
+- Temporary QA server used `LEVELS_SYSTEM_PROVIDER=ibkr`,
+  `LEVELS_SYSTEM_ON_DEMAND_HYDRATION=true`, and
+  `LEVELS_SYSTEM_WAREHOUSE_DIRECTORY=C:\Users\jerac\Documents\TraderLink\levels-system-post-mtf-handoff-stability\.validation-cache\candles`.
+  This kept the run on levels-system-v2-backed candle storage and avoided old
+  levels-system v1/phase1 data.
+- The import detail polling hydrator progressed through background UI batches
+  first, then the remaining queue was completed through direct 5-trade resume
+  API batches after the UI loop stalled at 25 completed jobs.
+- Final chart-review status:
+  - 93 completed,
+  - 0 queued,
+  - 0 retryable,
+  - 0 diagnostics,
+  - 93 distinct snapshots,
+  - 0 duplicate snapshots.
+- Persisted snapshot evidence:
+  - 93/93 snapshots use `levels_system_daily_4h` market context,
+  - 83/93 snapshots use `levels_system_trade_window`,
+  - 10/93 snapshots are explicitly `execution_only_fallback` for trade-window
+    evidence rather than overclaiming missing intraday context,
+  - replay windows are present for every completed snapshot.
+- Representative trade-detail API checks:
+  - ISPC trade 0 has a completed snapshot, v2 daily/4h market context,
+    `levels_system_trade_window`, 56 replay candles, and 7 insights.
+  - GME trade 2 has a completed snapshot, v2 daily/4h market context,
+    `execution_only_fallback`, 192 replay candles, and 3 insights.
+  - Before full hydration, queued DXF trade 50 had no snapshot, no diagnostics,
+    no market-context source, and no trade-window evidence source.
+- Re-checked live `/intelligence` pages with the isolated May DB:
+  - import detail,
+  - completed trade detail pages for ISPC, GME, and ADTX,
+  - `/intelligence/review?queue=highest_priority`,
+  - `/intelligence/analytics/chart-evidence`,
+  - `/intelligence/analytics/behavior`,
+  - `/intelligence/coach`,
+  - `/intelligence/coach/review-session`.
+- The live route scrape confirmed the active pages no longer show
+  "technical follow-up" wording. Behavior analytics can show support/resistance
+  language after this run because completed saved chart-evidence snapshots exist.
+- Replaced remaining active user-facing "technical follow-up" labels with
+  calmer "chart data needs another check" / "chart-data checks" wording across
+  review, trade detail, import dry-run diagnostics, coach lane labels, saved
+  review summaries, app state labels, and the matching language QA matrix.
+- Stabilized the app-feature Playwright problem collector so blocked
+  Google Analytics / Tag Manager requests do not fail app-surface regression
+  checks; app request failures still fail the test.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader analytics/import/coach Vitest passed: 6 files, 55 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed after ignoring only
+  external GA/GTM request failures: 16 passed, 1 skipped.
+- `npx playwright test tests/e2e/import-dry-run.spec.ts
+  --project=chromium-desktop --reporter=dot` is not currently a reliable
+  verification target on this branch: 9 passed, 5 failed before the changed
+  diagnostic assertion because the spec still depends on older top-level routes
+  and stale visibility/copy assumptions.
+
+Best next step:
+
+- Commit the May QA/copy-stability slice, then either clean up the stale
+  `tests/e2e/import-dry-run.spec.ts` route assumptions or continue the
+  deliberate product-pass port one behavior/read-model slice at a time while
+  preserving `/intelligence`, journal-level-analysis, and levels-system-v2 only.

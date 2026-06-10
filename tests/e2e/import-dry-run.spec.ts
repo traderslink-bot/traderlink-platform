@@ -1174,7 +1174,7 @@ test.describe("CSV dry-run import route", () => {
       page.getByTestId("trade-repaired-import-caution"),
     ).toContainText("repaired CSV rows");
     await expect(page.getByTestId("trade-feedback-scope")).toContainText(
-      /Chart review needs technical follow-up|Chart data still missing/,
+      /Chart data needs another check|Chart data still missing/,
     );
     await expect(page.getByTestId("trade-feedback-scope")).toContainText(
       "Execution-only fallback",

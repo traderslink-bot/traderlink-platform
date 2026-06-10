@@ -281,12 +281,12 @@ function decisionReviewStatusCopy(args: {
 
   if (args.diagnosticStatus === "analysis_failed" || args.diagnosticCode) {
     return {
-      label: "Chart review needs technical follow-up",
+      label: "Chart data needs another check",
       detail:
-        "Execution review is available now, but chart review analysis needs a manual follow-up. Keep coaching conservative and do not treat chart conclusions as available.",
+        "Execution review is available now, but chart review needs another data check. Keep coaching conservative and do not treat chart conclusions as available.",
       scope: "Execution replay only",
       nextAction:
-        "Use the execution replay now and keep chart conclusions unavailable until the follow-up is resolved.",
+        "Use the execution replay now and keep chart conclusions unavailable until the data check is resolved.",
       tone: "text-amber-300",
     };
   }
@@ -342,7 +342,7 @@ function decisionReviewDiagnosticUserMessage(diagnostic: {
     return "This trade is waiting for a saved chart review run.";
   }
 
-  return "Chart data needs technical follow-up. Keep the review execution-only until that follow-up is resolved.";
+  return "Chart data needs another check. Keep the review execution-only until the data check is resolved.";
 }
 
 function hasUnsafeCandleBasis(notes: string[] | null | undefined): boolean {

@@ -177,12 +177,19 @@ function collectPageProblems(page: Page): () => void {
     problems.push(`[pageerror] ${error.message}`);
   });
   page.on("requestfailed", (request) => {
+    const url = request.url();
+    if (
+      url.includes("googletagmanager.com") ||
+      url.includes("google-analytics.com")
+    ) {
+      return;
+    }
     const failure = request.failure();
     if (failure?.errorText === "net::ERR_ABORTED") {
       return;
     }
     problems.push(
-      `[requestfailed] ${request.method()} ${request.url()} ${failure?.errorText ?? ""}`,
+      `[requestfailed] ${request.method()} ${url} ${failure?.errorText ?? ""}`,
     );
   });
   page.on("response", (response) => {

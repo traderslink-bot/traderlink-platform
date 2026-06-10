@@ -197,11 +197,11 @@ export function buildSavedImportCoachingLanguageQaMatrix(): SavedImportCoachingL
       texts: [
         textEntry(
           "analysis-failed:diagnostic",
-          "Execution-only replay is available now; keep market-context conclusions unavailable until technical follow-up is resolved.",
+          "Execution-only replay is available now; keep market-context conclusions unavailable until the chart-data check is resolved.",
           "analysis_failed",
         ),
       ],
-      requiredFragments: ["execution-only replay", "technical follow-up"],
+      requiredFragments: ["execution-only replay", "chart-data check"],
       forbiddenFragments: ["proves", "support held", "definitely"],
     },
     {

@@ -22,7 +22,7 @@ function laneLabel(value: string): string {
     case "blocked_open_trade":
       return "Open trade";
     case "analysis_failed":
-      return "Needs technical follow-up";
+      return "Chart data needs another check";
     case "candle_basis_warning":
       return "Candle basis check";
     case "highest_priority":

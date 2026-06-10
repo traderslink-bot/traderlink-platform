@@ -142,7 +142,7 @@ function coachLaneLabel(lane: string): string {
   }
 
   if (lane === "analysis_failed") {
-    return "Needs technical follow-up";
+    return "Chart data needs another check";
   }
 
   if (lane === "candle_basis_warning") {

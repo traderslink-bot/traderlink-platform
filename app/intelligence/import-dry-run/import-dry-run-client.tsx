@@ -733,9 +733,9 @@ function decisionReviewDiagnosticDisplay(diagnostic: DecisionReviewDiagnostic): 
       };
     case "analysis_failed":
       return {
-        label: "Needs technical follow-up",
+        label: "Chart data needs another check",
         summary:
-          "Chart analysis needs technical follow-up before it can support coaching.",
+          "Chart analysis needs another data check before it can support coaching.",
         detail:
           "Use execution review now and keep support, resistance, candle, and setup conclusions unavailable until this is resolved.",
         tone: "rose",
