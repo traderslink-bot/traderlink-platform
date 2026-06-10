@@ -76,7 +76,7 @@ const BEHAVIOR_REPORT_GROUPS: readonly BehaviorReportGroupDefinition[] = [
     description:
       "Entry started just below overhead resistance and the trade finished red. Review whether there was enough room before that level.",
     emptyState:
-      "No certified resistance-entry evidence yet. The app needs historical support/resistance context from the trade date before it can make this call.",
+      "No chart-confirmed resistance-entry example yet. The app needs historical support/resistance context from the trade date before it can make this call.",
     id: "entry-resistance",
     ids: [
       "entry_near_daily_4h_resistance",
@@ -91,7 +91,7 @@ const BEHAVIOR_REPORT_GROUPS: readonly BehaviorReportGroupDefinition[] = [
     description:
       "Entry started near support below and the trade later worked. Review whether support actually held and what made the entry repeatable.",
     emptyState:
-      "No certified support-entry strength yet. A profitable trade still needs historical support evidence before the app praises the location.",
+      "No chart-confirmed support-entry strength yet. A profitable trade still needs historical support evidence before the app praises the location.",
     id: "entry-support",
     ids: [
       "entry_near_daily_4h_support",
@@ -107,7 +107,7 @@ const BEHAVIOR_REPORT_GROUPS: readonly BehaviorReportGroupDefinition[] = [
     description:
       "This group looks for entries that came after a move was already extended, or breakout entries where follow-through did not hold.",
     emptyState:
-      "No certified chase or extension evidence yet. The app needs pre-entry candle context before it can call an entry extended.",
+      "No chart-confirmed chase or extension example yet. The app needs pre-entry candle context before it can call an entry extended.",
     id: "entry-extension",
     ids: ["entry_chase_or_late_extension", "entry_breakout_failed"],
     question: "Did the entry happen after the cleaner part of the move?",
@@ -118,7 +118,7 @@ const BEHAVIOR_REPORT_GROUPS: readonly BehaviorReportGroupDefinition[] = [
     description:
       "Dip buys and adds are only scored when chart evidence shows whether support held, price repaired, or the add increased risk into weakness.",
     emptyState:
-      "No certified dip-buy or add-quality evidence yet. Execution-only adverse adds stay as review prompts until chart evidence proves support, repair, or weakness.",
+      "No chart-confirmed dip-buy or add-quality example yet. Execution-replay adverse adds stay as review prompts until chart evidence shows support, repair, or weakness.",
     id: "dip-buy-adds",
     ids: [
       "adds_increased_risk_into_weakness",
@@ -136,7 +136,7 @@ const BEHAVIOR_REPORT_GROUPS: readonly BehaviorReportGroupDefinition[] = [
     description:
       "This group looks for open profit that was protected, or open profit that was available but not protected before the trade faded.",
     emptyState:
-      "No certified profit-protection evidence yet. The app needs open-profit path, realized capture, and exit context before judging giveback.",
+      "No chart-confirmed profit-protection example yet. The app needs open-profit path, realized capture, and exit context before judging giveback.",
     id: "profit-protection",
     ids: [
       "profit_protection_failed",
@@ -155,7 +155,7 @@ const BEHAVIOR_REPORT_GROUPS: readonly BehaviorReportGroupDefinition[] = [
     description:
       "This group looks for trades where active management, controlled giveback, final exit, and after-exit evidence line up as one constructive management story.",
     emptyState:
-      "No certified full-trade management strength yet. The app needs active-management evidence, controlled giveback, a flat exit, and after-exit candles before praising the whole trade.",
+      "No chart-confirmed full-trade management strength yet. The app needs active-management evidence, controlled giveback, a flat exit, and after-exit candles before praising the whole trade.",
     id: "full-trade-management",
     ids: [
       "balanced_management_with_constructive_exit",
@@ -170,7 +170,7 @@ const BEHAVIOR_REPORT_GROUPS: readonly BehaviorReportGroupDefinition[] = [
     description:
       "This group checks whether reductions and exits happened near meaningful support or resistance, then separates strong exits from review prompts.",
     emptyState:
-      "No certified support/resistance exit evidence yet. The app needs final-exit or reduction location plus historical levels from that session.",
+      "No chart-confirmed support/resistance exit example yet. The app needs final-exit or reduction location plus historical levels from that session.",
     id: "profit-taking-exits",
     ids: [
       "reductions_near_resistance",
@@ -302,7 +302,7 @@ function evidenceDetail(args: {
     }
 
     if (args.finding.opportunityType === "strength_to_repeat") {
-      return "Add evidence was constructive. Review what proof was present before size increased so it can become a repeatable rule.";
+      return "Add evidence was constructive. Review what confirmation was present before size increased so it can become a repeatable rule.";
     }
 
     return "This add needs context. Review whether support held, price reclaimed, or the add only increased exposure.";
@@ -399,7 +399,7 @@ export function buildAnalyticsBehaviorReport(
             reviewAction: finding.reviewAction,
             symbol: userFacingTradeSymbol(
               thread?.symbol ?? roundTrip?.symbol ?? null,
-              "Selected trade",
+              "Priority trade",
             ),
             tone: finding.tone,
             tradeId: finding.tradeId,

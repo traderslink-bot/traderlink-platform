@@ -16509,3 +16509,24 @@ Best next step:
 - Continue the product-pass inventory without stale route rewrites; prioritize
   behavior/read-model slices that reinforce execution-only versus chart-evidence
   boundaries.
+
+# 2026-06-09 analytics behavior chart-confirmed copy port
+
+- Ported the low-risk analytics behavior report wording from product-pass while
+  preserving main's `/intelligence/trades` fallback link.
+- Empty states now say "chart-confirmed" rather than "certified", keeping paid
+  chart evidence language closer to the actual requirement: completed candle and
+  support/resistance context must exist before the app makes those calls.
+- Add-quality copy now asks what confirmation was present before adding size.
+- Pinned the chart-confirmed empty-state language in the analytics behavior
+  report regression.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused analytics behavior Vitest passed: 1 file, 2 tests.
+
+Best next step:
+
+- Continue product-pass inventory for narrow behavior/copy/read-model slices
+  that can be adapted without stale route changes.

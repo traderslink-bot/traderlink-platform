@@ -167,6 +167,9 @@ describe("analytics behavior report", () => {
     expect(report.riskCount).toBe(2);
     expect(report.strengthCount).toBe(4);
     expect(resistance?.title).toBe("Entries Under Resistance");
+    expect(resistance?.emptyState).toContain(
+      "No chart-confirmed resistance-entry example yet",
+    );
     expect(support?.title).toBe("Support-Based Entries");
     expect(extension?.title).toBe("Chase And Extension Review");
     expect(resistance?.evidence[0]?.detail).toContain(
@@ -188,6 +191,7 @@ describe("analytics behavior report", () => {
     expect(visibleCopy).not.toContain("signals");
     expect(visibleCopy).not.toContain("trade calls");
     expect(visibleCopy).not.toContain("financial advice");
+    expect(visibleCopy).not.toContain("no certified");
   });
 
   it("keeps behavior chart evidence out when chart context is not included", () => {
