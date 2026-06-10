@@ -1322,7 +1322,11 @@ test.describe("app feature regression", () => {
     test.setTimeout(90_000);
     const assertNoProblems = collectPageProblems(page);
 
-    await visitAndAssertRoute(page, "/intelligence/review", shell.guidedReview.title);
+    await visitAndAssertRoute(
+      page,
+      "/intelligence/review?demo=sample",
+      shell.guidedReview.title,
+    );
     await expect(page.getByTestId("review-work-order")).toContainText(
       "Open Trade Review",
     );
@@ -1342,16 +1346,13 @@ test.describe("app feature regression", () => {
       page.getByTestId("review-session-story-handoff"),
     ).toContainText("strengths worth repeating");
     await expect(page.getByTestId("saved-review-queue")).toContainText(
-      "Why it is here",
+      "Work one trade at a time",
     );
-    await expect(page.getByTestId("saved-review-queue")).toContainText(
-      "Do this now",
+    await expect(page.getByTestId("saved-review-queue-tabs")).toContainText(
+      "Reviewed With Chart Data",
     );
-    await expect(page.getByTestId("saved-review-queue")).toContainText(
-      "Evidence status",
-    );
-    await expect(page.getByTestId("saved-review-queue")).toContainText(
-      "Evidence counts and technical limits",
+    await expect(page.getByTestId("saved-review-queue-tabs")).toContainText(
+      "Chart data still missing",
     );
     const reviewHref = await page
       .getByTestId("review-continuation-panel")

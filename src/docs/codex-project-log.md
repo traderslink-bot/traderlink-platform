@@ -16704,3 +16704,38 @@ Best next step:
   `tests/e2e/import-dry-run.spec.ts` route assumptions or continue the
   deliberate product-pass port one behavior/read-model slice at a time while
   preserving `/intelligence`, journal-level-analysis, and levels-system-v2 only.
+
+# 2026-06-10 import dry-run Playwright route cleanup
+
+- Cleaned up `tests/e2e/import-dry-run.spec.ts` so it targets the current
+  `/intelligence` route namespace instead of relying on top-level redirects.
+- Updated the Playwright webServer health URL to
+  `/intelligence/import-dry-run`.
+- Aligned import dry-run expectations with the current advanced import UI:
+  - the page heading is `Advanced Import Check`,
+  - the workflow strip is not part of this advanced page,
+  - local CSV uploads reset broker override to `auto`, so generic CSV tests
+    now reselect the broker after upload,
+  - open-position checks use the current readiness summary instead of an old
+    exact final-position sentence,
+  - saved review queue checks use completed chart-evidence lanes when the
+    background review completes,
+  - repaired-import trade detail expects `Chart evidence ready` when a saved
+    snapshot exists.
+- Isolated the guided review app-feature regression from stale per-item queue
+  wording by asserting the current queue shell and lane controls.
+
+Verification:
+
+- `npx playwright test tests/e2e/import-dry-run.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 14 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- Focused trader import Vitest passed: 2 files, 21 tests.
+- `npx tsc --noEmit --pretty false` passed.
+
+Best next step:
+
+- Continue the deliberate product-pass port one behavior/read-model slice at a
+  time, keeping `/intelligence`, journal-level-analysis, levels-system-v2 only,
+  and the free execution-only versus paid chart-evidence boundary intact.

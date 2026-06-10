@@ -63,6 +63,6 @@ export default defineConfig({
     command: "npm run start -- --hostname 127.0.0.1 --port 3100",
     reuseExistingServer: false,
     timeout: 120_000,
-    url: "http://127.0.0.1:3100/import-dry-run",
+    url: "http://127.0.0.1:3100/intelligence/import-dry-run",
   },
 });
