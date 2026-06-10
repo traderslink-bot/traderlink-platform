@@ -16530,3 +16530,35 @@ Best next step:
 
 - Continue product-pass inventory for narrow behavior/copy/read-model slices
   that can be adapted without stale route changes.
+
+# 2026-06-09 product-pass port verification checkpoint
+
+- Completed a broader verification pass after the latest manual port slices:
+  - chart review retry copy,
+  - review queue chart-data state copy,
+  - analytics behavior chart-confirmed copy.
+- Remaining product-pass diffs are intentionally not direct-merged because they
+  mostly rewrite current `/intelligence` paths back to stale top-level routes,
+  remove or bypass journal-level-analysis level-facts, add broad customer-data
+  filtering, or change unrelated import grouping behavior.
+- The branch is still preserving:
+  - levels-system-v2 only,
+  - free tier execution-only gating,
+  - paid chart-context behavior only when completed saved decision-review
+    snapshots exist,
+  - main's `/intelligence` namespace,
+  - journal-level-analysis work.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader analytics/import/coach/level Vitest passed: 5 files, 60 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- If continuing the port, inspect remaining product-pass diffs one at a time and
+  only port behavior that can be adapted to `/intelligence` without changing
+  level-facts or execution-only versus chart-evidence gates.
