@@ -16590,3 +16590,36 @@ Best next step:
 - Continue remaining product-pass inventory only for behavior that can be
   adapted to `/intelligence`; do not port stale top-level routes or remove
   journal-level-analysis level-facts.
+
+# 2026-06-10 import detail chart hydration polling
+
+- Expanded the `/intelligence/imports/[batchId]` chart review action from a
+  one-shot background start into a small status-polling hydration loop.
+- The client now starts background batches with `runInBackground: true`, polls
+  `/api/import-batches/[batchId]/decision-review/status`, waits for completed
+  or failed work to move before starting another batch, and exposes a stop
+  action after the current progress check.
+- The panel shows completed, waiting, retryable, and ready counts so users can
+  keep reviewing executions without assuming candle/level evidence is complete.
+- The import details page now shows the hydration action for retryable
+  chart-data failures as well as queued jobs, and uses "chart data needs another
+  check" copy instead of vague technical-follow-up language.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import API route Vitest passed: 1 file, 13 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- Browser check on a temporary local dev server at `127.0.0.1:3101` passed:
+  a committed import with one queued chart-review job showed the hydration
+  panel, progress counts, start/refresh controls, and transitioned to
+  `Hydrating...` after clicking start. The status endpoint then reported one
+  completed snapshot and no pending work.
+
+Best next step:
+
+- Commit this polling slice, then continue with a real May IBKR hydration pass
+  against the isolated QA database to confirm the same progress behavior on the
+  larger statement.

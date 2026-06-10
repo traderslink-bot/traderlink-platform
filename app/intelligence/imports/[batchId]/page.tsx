@@ -69,7 +69,7 @@ function readableDecisionReviewStatus(value: string): string {
   }
 
   if (value === "analysis_failed") {
-    return "Needs Technical Follow-Up";
+    return "Chart Data Needs Another Check";
   }
 
   if (value === "skipped_limit" || value === "limit_reached") {
@@ -92,7 +92,7 @@ function batchStateDetail(status: string): string {
 
 function diagnosticGuidance(status: string): string {
   if (status === "analysis_failed") {
-    return "Chart analysis needs technical follow-up, so this trade stays in the manual review queue with conservative execution-only coaching.";
+    return "Chart data needs another check before candle or level feedback is trusted, so this trade stays in the manual review queue with conservative execution-only coaching.";
   }
 
   if (status === "market_context_unavailable") {
@@ -126,7 +126,7 @@ function diagnosticUserMessage(status: string, code: string): string {
     return "The review pass reached its limit before this trade could receive chart review.";
   }
 
-  return "Chart analysis needs technical follow-up before it can support coaching.";
+  return "Chart data needs another check before it can support coaching.";
 }
 
 function isActionableRepairItem(item: {
@@ -164,6 +164,17 @@ export default async function ImportBatchPage({
     decisionReviewJobs.map((job) => job.status),
   );
   const decisionReviewQueuedCount = decisionReviewStatusCounts.queued ?? 0;
+  const decisionReviewCompletedCount =
+    decisionReviewStatusCounts.completed ?? 0;
+  const decisionReviewAnalysisFailedCount =
+    decisionReviewStatusCounts.analysis_failed ?? 0;
+  const decisionReviewMarketContextUnavailableCount =
+    decisionReviewStatusCounts.market_context_unavailable ?? 0;
+  const decisionReviewSkippedLimitCount =
+    decisionReviewStatusCounts.skipped_limit ?? 0;
+  const decisionReviewRetryableCount =
+    decisionReviewAnalysisFailedCount +
+    decisionReviewMarketContextUnavailableCount;
   const decisionReviewDiagnosticCodeCounts = countBy(
     decisionReviewDiagnostics.map((diagnostic) => diagnostic.code),
   );
@@ -620,10 +631,18 @@ export default async function ImportBatchPage({
                     ))
                 )}
               </div>
-              {decisionReviewQueuedCount > 0 ? (
+              {decisionReviewQueuedCount > 0 ||
+              decisionReviewRetryableCount > 0 ? (
                 <ResumeChartReviewActions
                   batchId={batch.id}
+                  totalCount={decisionReviewJobs.length}
                   queuedCount={decisionReviewQueuedCount}
+                  completedCount={decisionReviewCompletedCount}
+                  analysisFailedCount={decisionReviewAnalysisFailedCount}
+                  marketContextUnavailableCount={
+                    decisionReviewMarketContextUnavailableCount
+                  }
+                  skippedLimitCount={decisionReviewSkippedLimitCount}
                 />
               ) : null}
               {decisionReviewDiagnostics.length > 0 ? (
