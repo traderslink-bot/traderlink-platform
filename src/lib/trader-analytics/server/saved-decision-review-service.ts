@@ -455,7 +455,7 @@ export function buildSavedDecisionReviewReadModel(args: {
       queuedCount > 0
         ? "Run saved chart data review for queued closed trades."
         : analysisFailedCount > 0 || marketContextUnavailableCount > 0
-          ? "Execution review is available now; keep chart conclusions unavailable until technical follow-up is resolved."
+          ? "Execution review is available now. Retry chart data review after market data is connected; keep support/resistance conclusions hidden until it completes."
           : completedCount > 0
             ? "Use saved chart evidence snapshots in guided review."
             : "Chart data review has no completed saved snapshots yet.",

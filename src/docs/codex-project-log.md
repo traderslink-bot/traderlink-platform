@@ -16465,3 +16465,24 @@ Best next step:
 - Continue product-pass inventory only for narrow behavior/read-model slices.
   Avoid the stale top-level import page rewrites unless intentionally adapting
   them into `/intelligence`.
+
+# 2026-06-09 chart review retry copy port
+
+- Ported the remaining narrow saved-decision-review copy from product-pass while
+  preserving main's `/intelligence` routes and journal-level-analysis work.
+- The saved decision-review read model now tells the user to retry chart data
+  review after market data is connected and explicitly says support/resistance
+  conclusions stay hidden until that succeeds.
+- Left stale product-pass route rewrites (`/imports`, `/trades`,
+  `/analytics`) unported because main owns the newer `/intelligence`
+  namespace.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused repository Vitest passed: 1 file, 14 tests.
+
+Best next step:
+
+- Continue inventorying product-pass server/product diffs for behavior that
+  improves chart evidence gating without changing route namespaces.
