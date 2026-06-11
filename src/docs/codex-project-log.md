@@ -16903,3 +16903,38 @@ Best next step:
   product-pass diffs for another narrow behavior/read-model improvement that
   preserves `/intelligence`, journal-level-analysis, levels-system-v2-only, and
   the tier evidence boundary.
+
+# 2026-06-11 chart evidence analytics examples pass
+
+- Continued the deliberate product-pass port without taking stale top-level
+  route rewrites.
+- Kept `/intelligence`, journal-level-analysis, levels-system-v2-only, and the
+  free execution-only versus paid chart-evidence boundary intact.
+- Ported the chart-evidence example story cards into the current
+  `/intelligence/analytics` route.
+- The examples are built only from ticker stories with saved chart-context
+  findings and render only inside the existing chart-evidence panel, so free
+  execution-only mode still shows the tier gate instead of support/resistance
+  or candle claims.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused analytics/saved-import Vitest passed: 2 files, 15 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+
+Best next step:
+
+- Commit this analytics examples slice. Then continue comparing product-pass
+  route pages against current `/intelligence` pages for small UI/read-model
+  improvements, skipping route rewrites and anything that weakens the tier
+  evidence boundary.

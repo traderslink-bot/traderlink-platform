@@ -49,6 +49,19 @@ interface AnalyticsTickerStorySummary {
   addQualityRiskCount: number;
   addQualityReviewPromptCount: number;
   addQualityStrengthCount: number;
+  chartEvidenceExamples: Array<{
+    action: string;
+    detail: string;
+    href: string;
+    label: string;
+    levelFindingCount: number;
+    pnl: number;
+    promptCount: number;
+    riskCount: number;
+    roundTripCount: number;
+    strengthCount: number;
+    symbol: string;
+  }>;
   exitLevelFindingCount: number;
   exitLevelRiskCount: number;
   exitLevelReviewPromptCount: number;
@@ -814,6 +827,80 @@ function ChartEvidenceAnalyticsPanel({
           tone={summary.marketContextReviewPromptCount > 0 ? "info" : "default"}
         />
       </div>
+
+      {summary.chartEvidenceExamples.length > 0 ? (
+        <div
+          className="mt-5 rounded-md border border-zinc-800 bg-zinc-950/35 p-4"
+          data-testid="analytics-chart-evidence-examples"
+        >
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Example Stories
+              </div>
+              <h3 className="mt-2 text-base font-semibold text-zinc-100">
+                Open a ticker story before turning chart evidence into a rule.
+              </h3>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">
+                These are chart-backed review entry points from saved trades.
+                Use them to find the right story, then confirm the lesson in
+                the execution replay.
+              </p>
+            </div>
+            <div className="inline-flex w-fit border border-zinc-800 px-3 py-1 text-xs font-medium uppercase tracking-wide text-zinc-400">
+              {summary.chartEvidenceExamples.length} examples
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            {summary.chartEvidenceExamples.map((example) => (
+              <Link
+                className="block rounded-md border border-zinc-800 bg-zinc-950/45 p-4 transition hover:border-sky-500"
+                href={example.href}
+                key={`${example.symbol}-${example.href}`}
+              >
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-zinc-100">
+                      {example.label}
+                    </div>
+                    <div className="mt-1 text-xs leading-5 text-zinc-500">
+                      {example.roundTripCount} round trip
+                      {example.roundTripCount === 1 ? "" : "s"} /{" "}
+                      {example.levelFindingCount} level check
+                      {example.levelFindingCount === 1 ? "" : "s"}
+                    </div>
+                  </div>
+                  <div
+                    className={`font-mono text-sm ${
+                      example.pnl >= 0 ? "text-emerald-300" : "text-rose-300"
+                    }`}
+                  >
+                    {example.pnl >= 0 ? "+" : ""}
+                    {example.pnl.toFixed(2)}
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
+                  <div className="rounded border border-rose-900/60 bg-rose-950/20 px-2 py-1 text-rose-200">
+                    {example.riskCount} risk
+                  </div>
+                  <div className="rounded border border-emerald-900/60 bg-emerald-950/20 px-2 py-1 text-emerald-200">
+                    {example.strengthCount} strength
+                  </div>
+                  <div className="rounded border border-amber-900/60 bg-amber-950/20 px-2 py-1 text-amber-200">
+                    {example.promptCount} prompt
+                  </div>
+                </div>
+                <div className="mt-3 text-sm font-medium text-zinc-200">
+                  {example.detail}
+                </div>
+                <div className="mt-2 text-xs leading-5 text-sky-300">
+                  Replay check: {example.action}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
         {[

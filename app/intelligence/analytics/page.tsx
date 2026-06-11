@@ -161,7 +161,53 @@ export default async function AnalyticsPage(props: {
     ) ??
     tradeThreadModel.threads.find((thread) => thread.roundTripCount > 1) ??
     null;
+  const chartEvidenceExamples = [...tradeThreadModel.threads]
+    .filter((thread) => thread.marketContextFindingCount > 0)
+    .sort((left, right) => {
+      const leftPriority =
+        left.marketContextRiskCount * 100 +
+        left.marketContextReviewPromptCount * 25 +
+        left.levelFindingCount * 10 +
+        Math.abs(left.totalGrossRealizedPnl) +
+        left.roundTripCount;
+      const rightPriority =
+        right.marketContextRiskCount * 100 +
+        right.marketContextReviewPromptCount * 25 +
+        right.levelFindingCount * 10 +
+        Math.abs(right.totalGrossRealizedPnl) +
+        right.roundTripCount;
+
+      if (rightPriority !== leftPriority) {
+        return rightPriority - leftPriority;
+      }
+
+      return left.symbol.localeCompare(right.symbol);
+    })
+    .slice(0, 4)
+    .map((thread) => {
+      const finding =
+        thread.priorityMarketContextFindings[0] ??
+        thread.marketContextFindings[0] ??
+        null;
+
+      return {
+        action:
+          finding?.reviewAction ??
+          "Open the ticker story, then replay the executions before writing a rule.",
+        detail: finding?.label ?? thread.primaryReviewQuestion,
+        href: thread.href,
+        label: `${thread.symbol} / ${thread.storyLabel}`,
+        levelFindingCount: thread.levelFindingCount,
+        pnl: thread.totalGrossRealizedPnl,
+        promptCount: thread.marketContextReviewPromptCount,
+        riskCount: thread.marketContextRiskCount,
+        roundTripCount: thread.roundTripCount,
+        strengthCount: thread.marketContextStrengthCount,
+        symbol: thread.symbol,
+      };
+    });
   const tickerStorySummary = {
+    chartEvidenceExamples,
     givebackThreadCount: tradeThreadModel.threads.filter(
       (thread) => thread.storyKind === "profit_giveback",
     ).length,
