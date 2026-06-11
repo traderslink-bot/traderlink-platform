@@ -9,6 +9,7 @@ import {
   canUseChartContext,
   readTraderIntelligenceTierFromEnv,
 } from "@/src/lib/trader-analytics/product/tier-config";
+import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
 import {
   AnalyticsClient,
   type AnalyticsDashboardSection,
@@ -115,7 +116,9 @@ export default async function AnalyticsPage(props: {
           repository: analyticsData.repository,
         })
       : null;
-  const allTrades = analyticsData.repository.listTrades(analyticsData.userId);
+  const allTrades = filterCustomerSavedTrades(
+    analyticsData.repository.listTrades(analyticsData.userId),
+  );
   const decisionReviewSnapshots =
     analyticsData.mode === "saved"
       ? [

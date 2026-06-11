@@ -1061,6 +1061,7 @@ test.describe("app feature regression", () => {
     await expect(page.locator("body")).toContainText("review prompt");
     await expect(page.locator("body")).toContainText("Open saved example");
     await expect(page.locator("body")).toContainText("Execution-only");
+    await expect(page.locator("body")).not.toContainText(/E2E\d{6,}/);
 
     assertNoProblems();
   });

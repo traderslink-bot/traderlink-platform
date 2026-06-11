@@ -19,6 +19,10 @@ import {
   canUseChartContext,
   readTraderIntelligenceTierFromEnv,
 } from "@/src/lib/trader-analytics/product/tier-config";
+import {
+  filterCustomerSavedReports,
+  filterCustomerSavedTrades,
+} from "@/src/lib/trader-analytics/product/customer-data-filter";
 
 type SavedTradeThread = ReturnType<typeof buildSavedTradeThreadReadModel>["threads"][number];
 type SavedTradeSessionStory = ReturnType<
@@ -113,7 +117,9 @@ export default function ProgressPage() {
   const data = buildSavedOrSampleTraderAnalyticsViewModel();
   const activeTier = readTraderIntelligenceTierFromEnv();
   const chartContextAllowed = canUseChartContext(activeTier);
-  const savedTrades = data.repository.listTrades(data.userId);
+  const savedTrades = filterCustomerSavedTrades(
+    data.repository.listTrades(data.userId),
+  );
   const savedReviewQueue =
     data.mode === "saved"
       ? buildSavedReviewQueueReadModel({
@@ -124,7 +130,7 @@ export default function ProgressPage() {
       : null;
   const reports =
     data.mode === "saved"
-      ? data.repository.listReports(data.userId)
+      ? filterCustomerSavedReports(data.repository.listReports(data.userId))
       : [];
   const previousReport = reports.length > 1 ? reports[1] : null;
   const progress = buildTraderProgressViewModel({

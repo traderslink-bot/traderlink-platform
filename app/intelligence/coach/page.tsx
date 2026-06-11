@@ -21,6 +21,7 @@ import {
   canUseChartContext,
   readTraderIntelligenceTierFromEnv,
 } from "@/src/lib/trader-analytics/product/tier-config";
+import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
 import {
   buildCoachOverallFocusSummary,
   buildCoachProgressFollowThroughSummary,
@@ -1509,8 +1510,8 @@ export default async function CoachPage(props: {
   }
 
   const analytics = analyticsData.viewModel;
-  const savedTradesForProgress = analyticsData.repository.listTrades(
-    analyticsData.userId,
+  const savedTradesForProgress = filterCustomerSavedTrades(
+    analyticsData.repository.listTrades(analyticsData.userId),
   );
   const savedReviewQueue =
     analyticsData.mode === "saved"

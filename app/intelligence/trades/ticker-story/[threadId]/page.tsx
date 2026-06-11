@@ -9,6 +9,7 @@ import {
 } from "@/app/app-ui";
 import { buildSavedOrSampleTraderAnalyticsViewModel } from "@/src/lib/trader-analytics/server/saved-trader-analytics-data";
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
+import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
 import { userFacingTradeSymbol } from "@/src/lib/trader-analytics/product/trade-display-copy";
 
 export const dynamic = "force-dynamic";
@@ -203,7 +204,9 @@ function roundTripTiming(roundTrip: SavedTradeThreadRoundTrip): string {
 
 function buildTickerStoryModel(): SavedTradeThreadModel {
   const data = buildSavedOrSampleTraderAnalyticsViewModel();
-  const allTrades = data.repository.listTrades(data.userId);
+  const allTrades = filterCustomerSavedTrades(
+    data.repository.listTrades(data.userId),
+  );
   const decisionReviewSnapshots =
     data.mode === "saved"
       ? [

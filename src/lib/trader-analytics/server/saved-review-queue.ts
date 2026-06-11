@@ -12,6 +12,10 @@ import type {
   ImportCommitSavedTradeRecord,
 } from "../product/import-commit/import-commit-planner";
 import type { SavedExecutionTrade } from "../product/types";
+import {
+  filterCustomerSavedReports,
+  filterCustomerSavedTrades,
+} from "../product/customer-data-filter";
 import { getLatestSavedTraderAnalyticsReport } from "../product/selectors";
 import { mapDecisionReviewInsightForUser } from "../../user-facing-behavior";
 import type { UserFacingDecisionReviewInsight } from "../../user-facing-behavior";
@@ -437,7 +441,7 @@ function reportPnl(args: {
   }
 
   const latest = getLatestSavedTraderAnalyticsReport(
-    args.repository.listReports(args.trade.userId),
+    filterCustomerSavedReports(args.repository.listReports(args.trade.userId)),
   );
   const sourceIndex = latest?.sourceTradeIds.indexOf(args.trade.id) ?? -1;
   const rowByTradeId =
@@ -763,7 +767,10 @@ export function buildSavedReviewQueueReadModel(args: {
       .map((trade) => [trade.id, trade]),
   );
   const trades = new Map(
-    args.repository.listTrades(userId).map((trade) => [trade.id, trade]),
+    filterCustomerSavedTrades(args.repository.listTrades(userId)).map((trade) => [
+      trade.id,
+      trade,
+    ]),
   );
   const snapshots = new Map(
     includeChartContext
@@ -790,6 +797,7 @@ export function buildSavedReviewQueueReadModel(args: {
 
   const allItems = enrichTickerStoryQueueItems(
     jobs
+      .filter((job) => trades.has(job.savedTradeId))
       .map((job) =>
         buildQueueItem({
           job,

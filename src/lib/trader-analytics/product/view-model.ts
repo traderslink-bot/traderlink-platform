@@ -35,6 +35,10 @@ import { buildTraderProductPolishViewModel } from "./product-polish";
 import { buildTraderReviewHabitLoopViewModel } from "./review-habit-loop";
 import { buildTraderImportTrialExperienceViewModel } from "./import-trial-experience";
 import { previewSavedTradeImport } from "./import-preview";
+import {
+  filterCustomerSavedReports,
+  filterCustomerSavedTrades,
+} from "./customer-data-filter";
 import type {
   ProductTraderAnalyticsViewModel,
   SavedTraderAnalyticsReport,
@@ -120,7 +124,9 @@ export function buildProductTraderAnalyticsViewModel(args: {
   storageMode?: TraderAnalyticsStorageMode;
   importRequests?: UserTradeAnalysisRequest[];
 }): ProductTraderAnalyticsViewModel {
-  const reportHistory = args.repository.listReports(args.userId);
+  const reportHistory = filterCustomerSavedReports(
+    args.repository.listReports(args.userId),
+  );
   const latestReport = buildAllSavedTradesReport(reportHistory);
 
   if (!latestReport) {
@@ -150,7 +156,7 @@ export function buildProductTraderAnalyticsViewModel(args: {
     batchId: "sample-import-review",
     preview: importPreview,
   });
-  const trades = args.repository.listTrades(args.userId);
+  const trades = filterCustomerSavedTrades(args.repository.listTrades(args.userId));
   const surfaceAudit = auditProductionAnalyticsSurface({
     route: "/intelligence/analytics",
     hasRawJsonPanel: false,

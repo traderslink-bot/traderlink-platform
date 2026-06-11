@@ -20,6 +20,7 @@ import {
   canUseChartContext,
   readTraderIntelligenceTierFromEnv,
 } from "@/src/lib/trader-analytics/product/tier-config";
+import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
 
 export const metadata: Metadata = {
   title: "Saved Trades | Trader Intelligence",
@@ -577,7 +578,9 @@ export default async function TradesPage({
   const data = buildSavedOrSampleTraderAnalyticsViewModel();
   const activeTier = readTraderIntelligenceTierFromEnv();
   const chartContextAllowed = canUseChartContext(activeTier);
-  const allTrades = data.repository.listTrades(data.userId);
+  const allTrades = filterCustomerSavedTrades(
+    data.repository.listTrades(data.userId),
+  );
   const latestReport = data.viewModel.latestReport;
   const reportRowsByTradeId = new Map(
     latestReport.sourceTradeIds

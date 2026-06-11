@@ -21,6 +21,11 @@ import {
   canUseChartContext,
   readTraderIntelligenceTierFromEnv,
 } from "@/src/lib/trader-analytics/product/tier-config";
+import {
+  filterCustomerSavedReports,
+  filterCustomerSavedTrades,
+  isLocalSyntheticTrade,
+} from "@/src/lib/trader-analytics/product/customer-data-filter";
 import { getTradeDetailLevelFactsForApi } from "@/src/lib/level-analysis/level-analysis-journal-delivery-trade-link-api-service";
 import {
   isLevelAnalysisTradeDetailLevelFactsEnabled,
@@ -828,8 +833,16 @@ export default async function TradeReviewPage({
   const activeTier = readTraderIntelligenceTierFromEnv();
   const chartContextAllowed = canUseChartContext(activeTier);
   const trade = data.repository.getTrade(data.userId, tradeId);
-  const allTrades = data.repository.listTrades(data.userId);
-  const reports = data.repository.listReports(data.userId);
+  if (trade && isLocalSyntheticTrade(trade)) {
+    notFound();
+  }
+
+  const allTrades = filterCustomerSavedTrades(
+    data.repository.listTrades(data.userId),
+  );
+  const reports = filterCustomerSavedReports(
+    data.repository.listReports(data.userId),
+  );
   const containingReport =
     reports.find((report) => report.sourceTradeIds.includes(tradeId)) ??
     getLatestSavedTraderAnalyticsReport(reports);

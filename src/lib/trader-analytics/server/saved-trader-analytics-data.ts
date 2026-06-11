@@ -6,6 +6,7 @@ import {
   DEMO_USER_ID,
   SqliteImportCommitRepository,
 } from "../product/import-commit/sqlite-import-commit-repository";
+import { filterCustomerSavedReports } from "../product/customer-data-filter";
 
 export function getSavedTraderAnalyticsRepository(): SqliteImportCommitRepository {
   return new SqliteImportCommitRepository();
@@ -15,7 +16,7 @@ export function buildSavedOrSampleTraderAnalyticsViewModel(options?: {
   preferSample?: boolean;
 }) {
   const repository = getSavedTraderAnalyticsRepository();
-  const reports = repository.listReports(DEMO_USER_ID);
+  const reports = filterCustomerSavedReports(repository.listReports(DEMO_USER_ID));
 
   if (reports.length > 0 && !options?.preferSample) {
     return {

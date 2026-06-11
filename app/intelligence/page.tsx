@@ -24,6 +24,7 @@ import {
   canUseChartContext,
   readTraderIntelligenceTierFromEnv,
 } from "@/src/lib/trader-analytics/product/tier-config";
+import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
 
 export const metadata: Metadata = {
   title: "Trader Intelligence | TradersLink",
@@ -301,7 +302,9 @@ export default function IntelligencePage() {
       ? new SqliteImportCommitRepository().listImportBatchHistory(DEMO_ACCOUNT_ID)
       : [];
   const latestImport = importHistory[0] ?? null;
-  const savedTrades = hasSavedData ? data.repository.listTrades(data.userId) : [];
+  const savedTrades = hasSavedData
+    ? filterCustomerSavedTrades(data.repository.listTrades(data.userId))
+    : [];
   const decisionReviewSnapshots =
     hasSavedData
       ? [

@@ -24,6 +24,7 @@ import {
   canUseChartContext,
   readTraderIntelligenceTierFromEnv,
 } from "@/src/lib/trader-analytics/product/tier-config";
+import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
 import { SavedReviewQueueActions } from "./saved-review-queue-actions";
 
 export const metadata: Metadata = {
@@ -214,7 +215,9 @@ export default async function GuidedReviewPage({
           repository: data.repository,
         })
       : null;
-  const savedTrades = data.repository.listTrades(data.userId);
+  const savedTrades = filterCustomerSavedTrades(
+    data.repository.listTrades(data.userId),
+  );
   const decisionReviewSnapshots =
     data.mode === "saved"
       ? [

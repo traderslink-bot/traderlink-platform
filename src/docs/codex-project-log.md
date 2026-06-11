@@ -16785,3 +16785,43 @@ Best next step:
   product-pass port. After that, continue with another small read-model/UI slice
   only if it preserves `/intelligence`, journal-level-analysis, and
   levels-system-v2-only constraints.
+
+# 2026-06-11 customer-facing synthetic data filter port
+
+- Ported the non-route product-pass customer-data filter slice without taking
+  product-pass route rewrites.
+- Added `src/lib/trader-analytics/product/customer-data-filter.ts` to identify
+  local synthetic tickers matching `E2E...`.
+- Filtered local synthetic trades/reports before building customer-facing
+  analytics, coach, review, progress, trades, ticker-story, and intelligence
+  read models.
+- Filtered saved review queue jobs by customer-visible saved trades so local
+  synthetic E2E jobs do not appear as review backlog.
+- Hid direct synthetic trade detail routes with `notFound()`.
+- Added focused unit coverage for trade/report filtering and a Playwright
+  guard that coach details do not surface `E2E...` symbols.
+- Kept `/intelligence`, journal-level-analysis, and levels-system-v2-only
+  constraints intact.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused customer-data/saved-import Vitest passed: 3 files, 30 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Commit this customer-data filter slice. Then continue inspecting remaining
+  product-pass diffs for another narrow read-model or copy improvement; skip
+  route rewrites, academy/news deletions, and any changes that remove
+  journal-level-analysis.
