@@ -16938,3 +16938,36 @@ Best next step:
   route pages against current `/intelligence` pages for small UI/read-model
   improvements, skipping route rewrites and anything that weakens the tier
   evidence boundary.
+
+# 2026-06-11 review queue candle-basis visibility pass
+
+- Continued the deliberate product-pass comparison against the current
+  `/intelligence/review` route without taking stale top-level route rewrites.
+- Restored per-item candle-basis visibility in saved review queue technical
+  details for chart-evidence queue cards.
+- Kept the display conservative: chart findings can show `Candle basis`, with
+  `Needs review`, `Checked`, or `Not reported`; execution-only/free-tier paths
+  remain gated by the existing tier read model.
+- Added a Playwright regression assertion that the completed chart-data sample
+  review queue exposes the candle-basis field.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import/repository Vitest passed: 2 files, 27 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+
+Best next step:
+
+- Commit this candle-basis visibility slice. Then continue with another small
+  coach/review product-pass comparison only where it preserves `/intelligence`,
+  journal-level-analysis, levels-system-v2-only, and the tier evidence boundary.

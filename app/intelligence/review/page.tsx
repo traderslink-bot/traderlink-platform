@@ -841,6 +841,21 @@ export default async function GuidedReviewPage({
                               </div>
                             </>
                           ) : null}
+                          {item.chartFindingCount > 0 ||
+                          item.candleBasisStatus !== "unknown" ? (
+                            <div className="border border-zinc-900 p-2">
+                              <div className="uppercase tracking-wide text-zinc-600">
+                                Candle basis
+                              </div>
+                              <div className="mt-1 text-zinc-400">
+                                {item.candleBasisStatus === "warning"
+                                  ? "Needs review"
+                                  : item.candleBasisStatus === "aligned"
+                                    ? "Checked"
+                                    : "Not reported"}
+                              </div>
+                            </div>
+                          ) : null}
                           <div className="border border-zinc-900 p-2">
                             <div className="uppercase tracking-wide text-zinc-600">
                               Queue detail

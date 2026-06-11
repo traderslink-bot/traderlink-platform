@@ -1355,6 +1355,11 @@ test.describe("app feature regression", () => {
     await expect(page.getByTestId("saved-review-queue-tabs")).toContainText(
       "Chart data still missing",
     );
+    await page.goto("/intelligence/review?demo=sample&queue=completed");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("saved-review-queue")).toContainText(
+      "Candle basis",
+    );
     const reviewHref = await page
       .getByTestId("review-continuation-panel")
       .getByRole("link", { name: "Open Trade Review" })
