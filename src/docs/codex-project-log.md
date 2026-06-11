@@ -16971,3 +16971,35 @@ Best next step:
 - Commit this candle-basis visibility slice. Then continue with another small
   coach/review product-pass comparison only where it preserves `/intelligence`,
   journal-level-analysis, levels-system-v2-only, and the tier evidence boundary.
+
+# 2026-06-11 coach behavior sequence tier-copy pass
+
+- Continued the small product-pass comparison on shared coach behavior sequence
+  copy.
+- Tightened the coach review-path explanation so free execution-only mode does
+  not mention chart evidence.
+- Paid chart-context mode still keeps chart evidence in the review explanation
+  when chart evidence is allowed.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the tier evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused analytics/saved-import Vitest passed: 2 files, 15 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this coach tier-copy slice. Then continue with another narrow
+  product-pass comparison only if it does not weaken the free execution-only
+  versus paid chart-evidence boundary.

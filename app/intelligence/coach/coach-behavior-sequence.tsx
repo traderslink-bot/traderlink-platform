@@ -120,7 +120,9 @@ function focusWhy(
   }
 
   if (focusKind === "review") {
-    return "The evidence is useful, but it is not strong enough for a conclusion yet. Treat it as a review task until the replay, chart evidence, or written review proves what happened.";
+    return chartTierEnabled
+      ? "The evidence is useful, but it is not strong enough for a conclusion yet. Treat it as a review task until the replay, chart evidence, or written review proves what happened."
+      : "The evidence is useful, but it is not strong enough for a conclusion yet. Treat it as a review task until the replay or written review proves what happened.";
   }
 
   return group.description;
