@@ -74,6 +74,27 @@ test.describe("Trader Intelligence tier chart-evidence matrix", () => {
     await expect(page.locator("body")).toContainText("saved executions");
     await expect(page.locator("body")).not.toContainText("chart evidence");
 
+    await page.goto("/intelligence/trades/ticker-stories#ticker-stories");
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("body")).not.toContainText(
+      "Support/resistance exits",
+    );
+    await expect(page.locator("body")).not.toContainText("chart evidence");
+    const tickerStoryLink = page
+      .getByTestId("saved-trade-thread-stories")
+      .getByRole("link", { name: "Open ticker story" })
+      .first();
+    if ((await tickerStoryLink.count()) > 0) {
+      await tickerStoryLink.click();
+      await page.waitForLoadState("networkidle");
+      await expect(page.getByTestId("ticker-story-detail-page")).toBeVisible();
+      await expect(page.locator("body")).toContainText("Execution-only");
+      await expect(page.locator("body")).not.toContainText("chart evidence");
+      await expect(page.locator("body")).not.toContainText(
+        "support/resistance",
+      );
+    }
+
     for (const path of [
       "/intelligence/analytics/behavior?demo=sample",
       "/intelligence/coach?demo=sample",

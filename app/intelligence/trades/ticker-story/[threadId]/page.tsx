@@ -11,6 +11,10 @@ import { buildSavedOrSampleTraderAnalyticsViewModel } from "@/src/lib/trader-ana
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
 import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
 import { userFacingTradeSymbol } from "@/src/lib/trader-analytics/product/trade-display-copy";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
 
 export const dynamic = "force-dynamic";
 
@@ -204,11 +208,14 @@ function roundTripTiming(roundTrip: SavedTradeThreadRoundTrip): string {
 
 function buildTickerStoryModel(): SavedTradeThreadModel {
   const data = buildSavedOrSampleTraderAnalyticsViewModel();
+  const chartContextAllowed = canUseChartContext(
+    readTraderIntelligenceTierFromEnv(),
+  );
   const allTrades = filterCustomerSavedTrades(
     data.repository.listTrades(data.userId),
   );
   const decisionReviewSnapshots =
-    data.mode === "saved"
+    data.mode === "saved" && chartContextAllowed
       ? [
           ...new Set(
             allTrades
@@ -251,6 +258,9 @@ export default async function TickerStoryPage({
   const { threadId } = await params;
   const query = searchParams ? await searchParams : {};
   const decodedThreadId = decodeThreadId(threadId);
+  const chartContextAllowed = canUseChartContext(
+    readTraderIntelligenceTierFromEnv(),
+  );
   const model = buildTickerStoryModel();
   const thread =
     model.threads.find((candidate) => candidate.id === decodedThreadId) ?? null;
@@ -363,7 +373,9 @@ export default async function TickerStoryPage({
               {
                 href: "#story-evidence",
                 label: "Evidence",
-                summary: "Saved chart evidence and supporting prompts.",
+                summary: chartContextAllowed
+                  ? "Saved chart evidence and supporting prompts."
+                  : "Saved executions and review prompts.",
               },
             ]}
             summary="Use this page to drill from a trading day into one ticker."
@@ -467,17 +479,17 @@ export default async function TickerStoryPage({
                   </div>
                   <div className="border border-zinc-800 bg-zinc-950/40 p-3">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                      Chart context
+                      {chartContextAllowed ? "Chart context" : "Evidence basis"}
                     </div>
                     <div className="mt-2 text-sm font-semibold text-zinc-100">
-                      {thread.marketContextFindingCount > 0
+                      {chartContextAllowed && thread.marketContextFindingCount > 0
                         ? `${thread.marketContextFindingCount} findings`
                         : "Execution replay only"}
                     </div>
                     <div className="mt-1 text-xs text-zinc-500">
-                      {thread.marketContextFindingCount > 0
+                      {chartContextAllowed && thread.marketContextFindingCount > 0
                         ? "Use chart evidence as prompts, then confirm in the replay."
-                        : "Do not make support/resistance claims without chart context."}
+                        : "Use saved executions and written notes until chart context is available."}
                     </div>
                   </div>
                 </div>
@@ -529,12 +541,16 @@ export default async function TickerStoryPage({
                   >
                     {thread.lifecycleLabel}
                   </span>
-                  {thread.marketContextFindingCount > 0 ? (
+                  {chartContextAllowed && thread.marketContextFindingCount > 0 ? (
                     <span className="inline-flex border border-sky-500/40 bg-sky-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-sky-200">
                       {thread.marketContextFindingCount} chart evidence
                     </span>
-                  ) : (
+                  ) : chartContextAllowed ? (
                     <PlainStateBadge state="market_context_unavailable" tone="warning" />
+                  ) : (
+                    <span className="inline-flex border border-zinc-700 bg-zinc-900/40 px-3 py-1 text-xs font-medium uppercase tracking-wide text-zinc-300">
+                      Execution-only
+                    </span>
                   )}
                 </div>
               </div>

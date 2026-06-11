@@ -17038,3 +17038,37 @@ Best next step:
 
 - Commit this overview tier-copy slice. Then continue with another small
   evidence-wording or read-model pass only if it preserves the tier boundary.
+
+# 2026-06-11 ticker-story direct-route tier gate pass
+
+- Continued the end-user evidence-wording audit beyond the main dashboard.
+- Gated `/intelligence/trades/ticker-story/[threadId]` decision-review
+  snapshots by the active tier so direct ticker-story URLs do not expose
+  chart findings in free execution-only mode.
+- Updated ticker-story menu/summary badges and coach-handoff copy so free mode
+  says execution-only/evidence basis while paid chart-context mode keeps chart
+  evidence language.
+- Extended the tier Playwright matrix to visit ticker stories and, when a
+  story link exists, a direct ticker-story detail page.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-trade-thread/tier Vitest passed: 2 files, 31 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this ticker-story tier-gate slice. Then continue with another direct
+  route audit for chart/candle/support-resistance wording if needed.
