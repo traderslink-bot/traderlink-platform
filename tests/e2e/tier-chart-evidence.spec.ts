@@ -125,6 +125,17 @@ test.describe("Trader Intelligence tier chart-evidence matrix", () => {
     await expect(page.locator("body")).not.toContainText(
       "Support/Resistance Exits",
     );
+
+    await page.goto("/intelligence/progress");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("progress-ticker-stories")).toBeVisible();
+    await expect(page.getByTestId("progress-execution-only-evidence")).toBeVisible();
+    await expect(page.locator("body")).toContainText("Study the execution report");
+    await expect(page.locator("body")).not.toContainText("Study the chart set");
+    await expect(page.locator("body")).not.toContainText("Chart Findings");
+    await expect(page.locator("body")).not.toContainText(
+      "Support/Resistance Exits",
+    );
   });
 
   test("chart_context tier exposes chart evidence surfaces without tier gates", async ({
@@ -178,6 +189,17 @@ test.describe("Trader Intelligence tier chart-evidence matrix", () => {
       "Chart Findings",
     );
     await expect(page.getByTestId("coach-ticker-story-panel")).toContainText(
+      "Support/Resistance Exits",
+    );
+
+    await page.goto("/intelligence/progress");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("progress-ticker-stories")).toBeVisible();
+    await expect(page.locator("body")).toContainText("Study the chart set");
+    await expect(page.getByTestId("progress-ticker-stories")).toContainText(
+      "Chart Findings",
+    );
+    await expect(page.getByTestId("progress-ticker-stories")).toContainText(
       "Support/Resistance Exits",
     );
   });

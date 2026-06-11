@@ -17111,3 +17111,40 @@ Best next step:
   product-pass port with another small route audit for chart/candle/support-
   resistance wording while preserving `/intelligence`, journal-level-analysis,
   and levels-system-v2-only.
+
+# 2026-06-11 progress route tier gate pass
+
+- Continued the route-level tier audit on `/intelligence/progress`.
+- Kept the ticker-story progress execution metrics visible in both tiers.
+- Gated progress chart metric groups behind the effective paid chart-context
+  tier:
+  - free execution-only mode now shows an execution-only progress note and
+    "Study the execution report",
+  - paid chart-context mode keeps "Study the chart set" plus chart risks,
+    chart strengths, chart findings, support/resistance exits, and volume
+    evidence counts.
+- Extended the tier Playwright matrix to cover `/intelligence/progress` in both
+  free and paid modes.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused tier/behavior Vitest passed: 2 files, 5 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this progress tier-gate slice. Then continue the deliberate product-pass
+  port with another small direct-route audit for chart/candle/support-resistance
+  wording, or package the branch if the route audit is clean enough for handoff.

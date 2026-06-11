@@ -174,6 +174,8 @@ export default function ProgressPage() {
   const chartContextSnapshots = chartContextAllowed
     ? decisionReviewSnapshots
     : [];
+  const chartTierEnabled =
+    chartContextAllowed && (data.mode === "sample" || chartContextSnapshots.length > 0);
   const tradeThreadModel = buildSavedTradeThreadReadModel({
     decisionReviewSnapshots: chartContextSnapshots,
     report: data.viewModel.latestReport,
@@ -319,7 +321,9 @@ export default function ProgressPage() {
               body: "Check the report behind the behavior, session, or ticker story.",
               href: "/intelligence/analytics",
               label: "3. Report",
-              title: "Study the chart set",
+              title: chartTierEnabled
+                ? "Study the chart set"
+                : "Study the execution report",
               tone: "info",
             },
             {
@@ -478,123 +482,36 @@ export default function ProgressPage() {
               </div>
             ))}
           </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            {[
-              {
-                label: "Chart Risks",
-                value: tradeThreadModel.marketContextRiskCount,
-                detail: "Certified chart risks still needing follow-through",
-                tone:
-                  tradeThreadModel.marketContextRiskCount > 0
-                    ? "text-amber-300"
-                    : "text-zinc-100",
-              },
-              {
-                label: "Chart Strengths",
-                value: tradeThreadModel.marketContextStrengthCount,
-                detail: "Certified strengths worth repeating",
-                tone:
-                  tradeThreadModel.marketContextStrengthCount > 0
-                    ? "text-emerald-300"
-                    : "text-zinc-100",
-              },
-              {
-                label: "Needs Review",
-                value: tradeThreadModel.marketContextReviewPromptCount,
-                detail: "Chart prompts waiting for enough context",
-                tone:
-                  tradeThreadModel.marketContextReviewPromptCount > 0
-                    ? "text-sky-300"
-                    : "text-zinc-100",
-              },
-            ].map((item) => (
-              <div className="ti-panel-soft p-3" key={item.label}>
-                <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  {item.label}
-                </div>
-                <div className={`mt-2 text-xl font-semibold ${item.tone}`}>
-                  {item.value}
-                </div>
-                <div className="mt-2 text-xs leading-5 text-zinc-500">
-                  {item.detail}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3">
-            <AdvancedDisclosure
-              summary="Show chart evidence counts"
-              testId="progress-chart-evidence-counts"
-            >
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {chartTierEnabled ? (
+            <>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
                 {[
                   {
-                    label: "Chart Findings",
-                    value: tradeThreadModel.marketContextFindingCount,
-                    detail: "Certified chart prompts and level checks",
+                    label: "Chart Risks",
+                    value: tradeThreadModel.marketContextRiskCount,
+                    detail: "Certified chart risks still needing follow-through",
                     tone:
-                      tradeThreadModel.marketContextFindingCount > 0
-                        ? "text-sky-300"
+                      tradeThreadModel.marketContextRiskCount > 0
+                        ? "text-amber-300"
                         : "text-zinc-100",
                   },
                   {
-                    label: "Add Quality",
-                    value: tradeThreadModel.addQualityFindingCount,
-                    detail: `${tradeThreadModel.addQualityRiskCount} risk, ${tradeThreadModel.addQualityStrengthCount} strength`,
+                    label: "Chart Strengths",
+                    value: tradeThreadModel.marketContextStrengthCount,
+                    detail: "Certified strengths worth repeating",
                     tone:
-                      tradeThreadModel.addQualityRiskCount > 0
-                        ? "text-amber-300"
-                        : tradeThreadModel.addQualityStrengthCount > 0
-                          ? "text-emerald-300"
-                          : "text-zinc-100",
-                  },
-                  {
-                    label: "After-Exit Review",
-                    value: tradeThreadModel.postExitFindingCount,
-                    detail: `${tradeThreadModel.postExitRiskCount} risk, ${tradeThreadModel.postExitStrengthCount} strength`,
-                    tone:
-                      tradeThreadModel.postExitRiskCount > 0
-                        ? "text-amber-300"
-                        : tradeThreadModel.postExitStrengthCount > 0
-                          ? "text-emerald-300"
-                          : tradeThreadModel.threadWithPostExitFindingCount > 0
-                            ? "text-sky-300"
-                            : "text-zinc-100",
-                  },
-                  {
-                    label: "Protected Profit",
-                    value: tradeThreadModel.protectedProfitBeforeFadeFindingCount,
-                    detail: `${tradeThreadModel.threadWithProtectedProfitBeforeFadeFindingCount} ticker stor${tradeThreadModel.threadWithProtectedProfitBeforeFadeFindingCount === 1 ? "y" : "ies"}`,
-                    tone:
-                      tradeThreadModel.protectedProfitBeforeFadeFindingCount > 0
+                      tradeThreadModel.marketContextStrengthCount > 0
                         ? "text-emerald-300"
                         : "text-zinc-100",
                   },
                   {
-                    label: "Support/Resistance Exits",
-                    value: tradeThreadModel.exitLevelFindingCount,
-                    detail: `${tradeThreadModel.exitLevelRiskCount} risk, ${tradeThreadModel.exitLevelStrengthCount} strength`,
+                    label: "Needs Review",
+                    value: tradeThreadModel.marketContextReviewPromptCount,
+                    detail: "Chart prompts waiting for enough context",
                     tone:
-                      tradeThreadModel.exitLevelRiskCount > 0
-                        ? "text-amber-300"
-                        : tradeThreadModel.exitLevelStrengthCount > 0
-                          ? "text-emerald-300"
-                          : tradeThreadModel.exitLevelFindingCount > 0
-                            ? "text-sky-300"
-                            : "text-zinc-100",
-                  },
-                  {
-                    label: "Volume Evidence",
-                    value: tradeThreadModel.volumeFindingCount,
-                    detail: `${tradeThreadModel.volumeRiskCount} risk, ${tradeThreadModel.volumeStrengthCount} strength`,
-                    tone:
-                      tradeThreadModel.volumeRiskCount > 0
-                        ? "text-amber-300"
-                        : tradeThreadModel.volumeStrengthCount > 0
-                          ? "text-emerald-300"
-                          : tradeThreadModel.volumeFindingCount > 0
-                            ? "text-sky-300"
-                            : "text-zinc-100",
+                      tradeThreadModel.marketContextReviewPromptCount > 0
+                        ? "text-sky-300"
+                        : "text-zinc-100",
                   },
                 ].map((item) => (
                   <div className="ti-panel-soft p-3" key={item.label}>
@@ -610,8 +527,109 @@ export default function ProgressPage() {
                   </div>
                 ))}
               </div>
-            </AdvancedDisclosure>
-          </div>
+              <div className="mt-3">
+                <AdvancedDisclosure
+                  summary="Show chart evidence counts"
+                  testId="progress-chart-evidence-counts"
+                >
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {[
+                      {
+                        label: "Chart Findings",
+                        value: tradeThreadModel.marketContextFindingCount,
+                        detail: "Certified chart prompts and level checks",
+                        tone:
+                          tradeThreadModel.marketContextFindingCount > 0
+                            ? "text-sky-300"
+                            : "text-zinc-100",
+                      },
+                      {
+                        label: "Add Quality",
+                        value: tradeThreadModel.addQualityFindingCount,
+                        detail: `${tradeThreadModel.addQualityRiskCount} risk, ${tradeThreadModel.addQualityStrengthCount} strength`,
+                        tone:
+                          tradeThreadModel.addQualityRiskCount > 0
+                            ? "text-amber-300"
+                            : tradeThreadModel.addQualityStrengthCount > 0
+                              ? "text-emerald-300"
+                              : "text-zinc-100",
+                      },
+                      {
+                        label: "After-Exit Review",
+                        value: tradeThreadModel.postExitFindingCount,
+                        detail: `${tradeThreadModel.postExitRiskCount} risk, ${tradeThreadModel.postExitStrengthCount} strength`,
+                        tone:
+                          tradeThreadModel.postExitRiskCount > 0
+                            ? "text-amber-300"
+                            : tradeThreadModel.postExitStrengthCount > 0
+                              ? "text-emerald-300"
+                              : tradeThreadModel.threadWithPostExitFindingCount > 0
+                                ? "text-sky-300"
+                                : "text-zinc-100",
+                      },
+                      {
+                        label: "Protected Profit",
+                        value:
+                          tradeThreadModel.protectedProfitBeforeFadeFindingCount,
+                        detail: `${tradeThreadModel.threadWithProtectedProfitBeforeFadeFindingCount} ticker stor${tradeThreadModel.threadWithProtectedProfitBeforeFadeFindingCount === 1 ? "y" : "ies"}`,
+                        tone:
+                          tradeThreadModel.protectedProfitBeforeFadeFindingCount > 0
+                            ? "text-emerald-300"
+                            : "text-zinc-100",
+                      },
+                      {
+                        label: "Support/Resistance Exits",
+                        value: tradeThreadModel.exitLevelFindingCount,
+                        detail: `${tradeThreadModel.exitLevelRiskCount} risk, ${tradeThreadModel.exitLevelStrengthCount} strength`,
+                        tone:
+                          tradeThreadModel.exitLevelRiskCount > 0
+                            ? "text-amber-300"
+                            : tradeThreadModel.exitLevelStrengthCount > 0
+                              ? "text-emerald-300"
+                              : tradeThreadModel.exitLevelFindingCount > 0
+                                ? "text-sky-300"
+                                : "text-zinc-100",
+                      },
+                      {
+                        label: "Volume Evidence",
+                        value: tradeThreadModel.volumeFindingCount,
+                        detail: `${tradeThreadModel.volumeRiskCount} risk, ${tradeThreadModel.volumeStrengthCount} strength`,
+                        tone:
+                          tradeThreadModel.volumeRiskCount > 0
+                            ? "text-amber-300"
+                            : tradeThreadModel.volumeStrengthCount > 0
+                              ? "text-emerald-300"
+                              : tradeThreadModel.volumeFindingCount > 0
+                                ? "text-sky-300"
+                                : "text-zinc-100",
+                      },
+                    ].map((item) => (
+                      <div className="ti-panel-soft p-3" key={item.label}>
+                        <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                          {item.label}
+                        </div>
+                        <div className={`mt-2 text-xl font-semibold ${item.tone}`}>
+                          {item.value}
+                        </div>
+                        <div className="mt-2 text-xs leading-5 text-zinc-500">
+                          {item.detail}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </AdvancedDisclosure>
+              </div>
+            </>
+          ) : (
+            <div
+              className="mt-4 border border-zinc-900 bg-zinc-950/70 p-4 text-sm leading-6 text-zinc-400"
+              data-testid="progress-execution-only-evidence"
+            >
+              This progress view is execution-only in the current tier. It can
+              track saved trades, re-entries, holds, review completion, and
+              written notes without adding paid evidence claims.
+            </div>
+          )}
           {priorityTickerStory ? (
             <div className="mt-4 border-t border-zinc-900 pt-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
