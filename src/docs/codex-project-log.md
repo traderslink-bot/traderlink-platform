@@ -16857,9 +16857,49 @@ Verification:
 - `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
   tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
   --reporter=dot` passed: 1 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83
+  tests.
 
 Best next step:
 
 - Review and commit this open-or-swing lane copy pass. Then continue porting
   another narrow product-pass slice only where it preserves `/intelligence`,
   journal-level-analysis, levels-system-v2-only, and the tier evidence boundary.
+
+# 2026-06-11 open-or-swing mark-closed action pass
+
+- Continued the deliberate product-pass port without taking stale route rewrites.
+- Kept `/intelligence`, journal-level-analysis, levels-system-v2-only, and the
+  free execution-only versus paid chart-evidence boundary intact.
+- Added `POST /api/trades/[tradeId]/mark-closed` for saved open/swing trades.
+- Added an open/swing list action to mark a blocked carried position as closed
+  by the user without creating chart evidence or support/resistance claims.
+- Persisted the user lifecycle override on the saved trade, set the saved trade
+  review status to `ignored`, and moved blocked open/swing decision-review jobs
+  to `skipped_limit`.
+- Filtered ignored saved trades out of the saved review queue so the item is
+  removed after the user marks it closed.
+- Added focused API coverage for the mark-closed route, persisted trade detail,
+  and review queue removal.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import/repository Vitest passed: 2 files, 27 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+
+Best next step:
+
+- Commit this open/swing mark-closed slice. Then continue inspecting remaining
+  product-pass diffs for another narrow behavior/read-model improvement that
+  preserves `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the tier evidence boundary.

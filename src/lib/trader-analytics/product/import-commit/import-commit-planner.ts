@@ -179,6 +179,11 @@ export interface ImportCommitSavedTradeRecord {
   grossRealizedPnl: number | null;
   request: UserTradeAnalysisRequest;
   reviewStatus: SavedReviewStatus;
+  userLifecycleOverride?: {
+    reason: "marked_closed_by_user";
+    status: "closed";
+    updatedAt: string;
+  };
 }
 
 export interface ImportCommitSavedTradeExecutionLinkRecord {

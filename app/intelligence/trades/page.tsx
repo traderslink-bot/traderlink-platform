@@ -21,6 +21,7 @@ import {
   readTraderIntelligenceTierFromEnv,
 } from "@/src/lib/trader-analytics/product/tier-config";
 import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
+import { OpenSwingMarkClosedButton } from "./open-swing-mark-closed-button";
 
 export const metadata: Metadata = {
   title: "Saved Trades | Trader Intelligence",
@@ -800,9 +801,14 @@ export default async function TradesPage({
     ),
   );
   const openOrSwingTradeIds = new Set(
-    allTrades
-      .filter((trade) => rowLooksOpenOrSwing(reportRowsByTradeId.get(trade.id)))
-      .map((trade) => trade.id),
+    [
+      ...allTrades
+        .filter((trade) => rowLooksOpenOrSwing(reportRowsByTradeId.get(trade.id)))
+        .map((trade) => trade.id),
+      ...(savedReviewQueue?.allItems ?? [])
+        .filter((item) => item.lane === "blocked_open_trade")
+        .map((item) => item.savedTradeId),
+    ],
   );
   const needsReviewTradeIds = new Set(
     (savedReviewQueue?.allItems ?? [])
@@ -2159,102 +2165,111 @@ export default async function TradesPage({
               });
 
               return (
-                <Link
+                <article
                   key={trade.id}
-                  className="ti-panel-soft block p-4 transition hover:border-sky-500 hover:text-sky-200"
-                  data-testid={`saved-trade-link-${trade.id}`}
-                  href={`/intelligence/trades/${encodeURIComponent(trade.id)}#summary`}
+                  className="ti-panel-soft p-4 transition hover:border-sky-500"
+                  data-testid={`saved-trade-card-${trade.id}`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium text-zinc-100">
-                        {trade.symbol} / {directionLabel}
+                  <Link
+                    className="block hover:text-sky-200"
+                    data-testid={`saved-trade-link-${trade.id}`}
+                    href={`/intelligence/trades/${encodeURIComponent(trade.id)}#summary`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-medium text-zinc-100">
+                          {trade.symbol} / {directionLabel}
+                        </div>
+                        <div className="mt-1 text-xs text-zinc-500">
+                          {trade.sessionDate} / {trade.entryHourLabelEt ?? trade.sessionBucket}
+                        </div>
                       </div>
-                      <div className="mt-1 text-xs text-zinc-500">
-                        {trade.sessionDate} / {trade.entryHourLabelEt ?? trade.sessionBucket}
-                      </div>
-                    </div>
-                    <div
-                      className={`text-sm font-medium ${
-                        (reportRow?.grossRealizedPnl ?? 0) >= 0
-                          ? "text-emerald-300"
-                          : "text-rose-300"
-                      }`}
-                    >
-                      {signed(reportRow?.grossRealizedPnl)}
-                    </div>
-                  </div>
-                  <div className="mt-4 rounded-md border border-sky-900/50 bg-sky-950/20 p-3 text-sm text-zinc-300">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                      Why review this
-                    </div>
-                    <div
-                      className={`mt-2 leading-6 ${
-                        reviewReason.tone === "danger"
-                          ? "text-rose-300"
-                          : reviewReason.tone === "success"
+                      <div
+                        className={`text-sm font-medium ${
+                          (reportRow?.grossRealizedPnl ?? 0) >= 0
                             ? "text-emerald-300"
-                            : reviewReason.tone === "warning"
-                              ? "text-amber-300"
-                              : reviewReason.tone === "info"
-                                ? "text-sky-300"
-                                : "text-zinc-300"
-                      }`}
-                    >
-                      {reviewReason.label}
-                    </div>
-                    <div className="mt-1 text-xs leading-5 text-zinc-500">
-                      {reviewReason.action}
-                    </div>
-                    {queueItem ? (
-                      <div className="mt-1 text-xs text-amber-300">
-                        {queueItem.priorityLabel}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="mt-3 grid gap-1 border-t border-zinc-900 pt-3 text-xs text-zinc-500">
-                    <div>
-                      Round trip {reportTradeIndex > 0 ? reportTradeIndex : "open"}: {executionCount} execution
-                      {executionCount === 1 ? "" : "s"} from{" "}
-                      {firstExecution
-                        ? new Date(String(firstExecution.timestamp)).toLocaleTimeString("en-US", {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            timeZone: "America/New_York",
-                          })
-                        : "time n/a"}{" "}
-                      ET
-                      {lastExecution && reportRow?.closedToFlat
-                        ? ` to ${new Date(String(lastExecution.timestamp)).toLocaleTimeString("en-US", {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            timeZone: "America/New_York",
-                          })} ET`
-                        : " and still open"}
-                    </div>
-                    {trade.tradeDirection === "short" ? (
-                      <div className="text-amber-300">
-                        {sellStartingReviewLimitationCopy()}
-                      </div>
-                    ) : null}
-                    <div className="text-sky-300">Open review hub</div>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs uppercase tracking-wide">
-                    <PlainStateBadge
-                      state={trade.sampleData ? "sample_fallback" : "saved_sqlite"}
-                      tone={trade.sampleData ? "warning" : "success"}
-                    />
-                    {queueItem ? (
-                      <span
-                        className={`border border-zinc-800 px-2 py-1 ${laneToneClass(
-                          queueItem.lane,
-                        )}`}
+                            : "text-rose-300"
+                        }`}
                       >
-                        {queueItem.reviewScopeLabel}
-                      </span>
-                    ) : null}
-                  </div>
-                </Link>
+                        {signed(reportRow?.grossRealizedPnl)}
+                      </div>
+                    </div>
+                    <div className="mt-4 rounded-md border border-sky-900/50 bg-sky-950/20 p-3 text-sm text-zinc-300">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                        Why review this
+                      </div>
+                      <div
+                        className={`mt-2 leading-6 ${
+                          reviewReason.tone === "danger"
+                            ? "text-rose-300"
+                            : reviewReason.tone === "success"
+                              ? "text-emerald-300"
+                              : reviewReason.tone === "warning"
+                                ? "text-amber-300"
+                                : reviewReason.tone === "info"
+                                  ? "text-sky-300"
+                                  : "text-zinc-300"
+                        }`}
+                      >
+                        {reviewReason.label}
+                      </div>
+                      <div className="mt-1 text-xs leading-5 text-zinc-500">
+                        {reviewReason.action}
+                      </div>
+                      {queueItem ? (
+                        <div className="mt-1 text-xs text-amber-300">
+                          {queueItem.priorityLabel}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="mt-3 grid gap-1 border-t border-zinc-900 pt-3 text-xs text-zinc-500">
+                      <div>
+                        Round trip {reportTradeIndex > 0 ? reportTradeIndex : "open"}: {executionCount} execution
+                        {executionCount === 1 ? "" : "s"} from{" "}
+                        {firstExecution
+                          ? new Date(String(firstExecution.timestamp)).toLocaleTimeString("en-US", {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              timeZone: "America/New_York",
+                            })
+                          : "time n/a"}{" "}
+                        ET
+                        {lastExecution && reportRow?.closedToFlat
+                          ? ` to ${new Date(String(lastExecution.timestamp)).toLocaleTimeString("en-US", {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              timeZone: "America/New_York",
+                            })} ET`
+                          : " and still open"}
+                      </div>
+                      {trade.tradeDirection === "short" ? (
+                        <div className="text-amber-300">
+                          {sellStartingReviewLimitationCopy()}
+                        </div>
+                      ) : null}
+                      <div className="text-sky-300">Open review hub</div>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs uppercase tracking-wide">
+                      <PlainStateBadge
+                        state={trade.sampleData ? "sample_fallback" : "saved_sqlite"}
+                        tone={trade.sampleData ? "warning" : "success"}
+                      />
+                      {queueItem ? (
+                        <span
+                          className={`border border-zinc-800 px-2 py-1 ${laneToneClass(
+                            queueItem.lane,
+                          )}`}
+                        >
+                          {queueItem.reviewScopeLabel}
+                        </span>
+                      ) : null}
+                    </div>
+                  </Link>
+                  {activeBrowseMode === "open_swing" &&
+                  queueItem?.lane === "blocked_open_trade" ? (
+                    <OpenSwingMarkClosedButton tradeId={trade.id} />
+                  ) : null}
+                </article>
               );
             })}
           </div>

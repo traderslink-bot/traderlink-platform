@@ -798,7 +798,11 @@ export function buildSavedReviewQueueReadModel(args: {
 
   const allItems = enrichTickerStoryQueueItems(
     jobs
-      .filter((job) => trades.has(job.savedTradeId))
+      .filter(
+        (job) =>
+          trades.has(job.savedTradeId) &&
+          savedTrades.get(job.savedTradeId)?.reviewStatus !== "ignored",
+      )
       .map((job) =>
         buildQueueItem({
           job,

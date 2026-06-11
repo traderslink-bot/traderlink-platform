@@ -14,6 +14,7 @@ import { GET as getTrade } from "../../../../app/api/trades/[tradeId]/route";
 import { POST as addTradeNote } from "../../../../app/api/trades/[tradeId]/notes/route";
 import { POST as setReviewStatus } from "../../../../app/api/trades/[tradeId]/review-status/route";
 import { POST as setReviewItemStatus } from "../../../../app/api/trades/[tradeId]/review-items/[itemId]/route";
+import { POST as markTradeClosed } from "../../../../app/api/trades/[tradeId]/mark-closed/route";
 import { GET as latestAnalytics } from "../../../../app/api/analytics/latest/route";
 import { GET as latestCoach } from "../../../../app/api/coach/latest/route";
 import { GET as latestReview } from "../../../../app/api/review/latest/route";
@@ -840,6 +841,49 @@ describe("saved import API routes", () => {
         }),
       ]),
     );
+
+    const openTradeId = review.savedReviewQueue.allItems.find(
+      (item: { symbol: string }) => item.symbol === "OPNL",
+    )?.savedTradeId;
+    expect(openTradeId).toBeTruthy();
+
+    const markClosed = await markTradeClosed(
+      new Request(
+        `http://localhost/api/trades/${encodeURIComponent(openTradeId)}/mark-closed`,
+        { method: "POST" },
+      ),
+      { params: Promise.resolve({ tradeId: openTradeId }) },
+    );
+    const markClosedBody = await markClosed.json();
+    expect(markClosed.status).toBe(200);
+    expect(markClosedBody).toMatchObject({
+      contractVersion: "trade_mark_closed_v1",
+      trade: {
+        id: openTradeId,
+        reviewStatus: "ignored",
+        symbol: "OPNL",
+      },
+    });
+
+    const reviewAfterClose = await (await latestReview()).json();
+    expect(reviewAfterClose.savedReviewQueue.allItems).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          symbol: "OPNL",
+          lane: "blocked_open_trade",
+        }),
+      ]),
+    );
+
+    const repository = new SqliteImportCommitRepository();
+    expect(repository.getSavedTrade(openTradeId)).toMatchObject({
+      lifecycleStatus: "closed",
+      reviewStatus: "ignored",
+      userLifecycleOverride: {
+        reason: "marked_closed_by_user",
+        status: "closed",
+      },
+    });
   });
 
   it("keeps sell-side imports limited without creating short-coaching claims", async () => {
