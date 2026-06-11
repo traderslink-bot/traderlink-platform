@@ -20,9 +20,9 @@ function laneLabel(value: string): string {
     case "market_context_unavailable":
       return "Chart data still missing";
     case "blocked_open_trade":
-      return "Open trade";
+      return "Swing trade";
     case "analysis_failed":
-      return "Chart data needs another check";
+      return "Chart data needs review";
     case "candle_basis_warning":
       return "Candle basis check";
     case "highest_priority":
@@ -43,10 +43,12 @@ function laneLabel(value: string): string {
 }
 
 export function SavedReviewQueueSummary({
+  chartTierEnabled = false,
   compact = false,
   queue,
   surface,
 }: {
+  chartTierEnabled?: boolean;
   compact?: boolean;
   queue: SavedReviewQueueReadModel | null | undefined;
   surface: "analytics" | "coach";
@@ -84,25 +86,28 @@ export function SavedReviewQueueSummary({
 
   const unresolvedCount = tabCount(queue, "unresolved");
   const marketGapCount = tabCount(queue, "market_context_unavailable");
+  const chartDataNeedsReviewCount = tabCount(queue, "analysis_failed");
   const queuedChartDataCount = tabCount(queue, "queued");
   const candleBasisWarningCount = tabCount(queue, "candle_basis_warning");
   const openBlockCount = tabCount(queue, "blocked_open_trade");
   const highestPriorityCount = tabCount(queue, "highest_priority");
+  const completedReviewCount = tabCount(queue, "completed");
+  const baselineItemCount = queue.allItems.length;
   const chartDataCard =
-    candleBasisWarningCount > 0
-      ? {
-          label: "Candle Basis Check",
-          count: candleBasisWarningCount,
-          href: "/intelligence/review?queue=candle_basis_warning",
-          toneClass: "text-amber-300",
-        }
-      : queuedChartDataCount > 0
+    queuedChartDataCount > 0
       ? {
           label: "Chart Data Waiting",
           count: queuedChartDataCount,
           href: "/intelligence/review?queue=queued",
           toneClass: "text-violet-300",
         }
+      : chartDataNeedsReviewCount > 0
+        ? {
+            label: "Chart Data Needs Review",
+            count: chartDataNeedsReviewCount,
+            href: "/intelligence/review?queue=analysis_failed",
+            toneClass: "text-amber-300",
+          }
       : {
           label: "Chart Data Still Missing",
           count: marketGapCount,
@@ -113,14 +118,74 @@ export function SavedReviewQueueSummary({
     0,
     3,
   );
+  const visiblePreviewItems = chartTierEnabled
+    ? previewItems
+    : previewItems.filter((item) => item.lane === "blocked_open_trade");
   const primaryHref =
-    highestPriorityCount > 0 ? "/intelligence/review?queue=highest_priority" : "/intelligence/review";
+    chartTierEnabled && highestPriorityCount > 0
+      ? "/intelligence/review?queue=highest_priority"
+      : openBlockCount > 0
+        ? "/intelligence/review?queue=blocked_open_trade"
+        : "/intelligence/trades";
   const title =
-    surface === "coach"
-      ? "Highest-priority saved review work"
-      : "Saved review queue is ready";
+    chartTierEnabled
+      ? surface === "coach"
+        ? "Highest-priority saved review work"
+        : "Saved review queue is ready"
+      : "Historical trading baseline is ready";
 
   if (compact) {
+    if (!chartTierEnabled) {
+      return (
+        <section
+          className="ti-panel p-3"
+          data-testid="saved-review-summary-strip"
+        >
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-400">
+                Saved Trading Baseline
+              </p>
+              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-400">
+                <span>
+                  <span className="font-semibold text-sky-300">
+                    {baselineItemCount}
+                  </span>{" "}
+                  saved trade stories
+                </span>
+                <span>
+                  <span className="font-semibold text-amber-300">
+                    {openBlockCount}
+                  </span>{" "}
+                  open or carried
+                </span>
+                <span>
+                  <span className="font-semibold text-zinc-100">
+                    {completedReviewCount}
+                  </span>{" "}
+                  optional notes
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                className="rounded-md border border-sky-800 bg-sky-950/40 px-3 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+                href="/intelligence/analytics/results"
+              >
+                Open analytics
+              </Link>
+              <Link
+                className="rounded-md border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-500"
+                href="/intelligence/trades"
+              >
+                Trade history
+              </Link>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
     return (
       <section
         className="ti-panel p-3"
@@ -150,6 +215,14 @@ export function SavedReviewQueueSummary({
                 </span>{" "}
                 {chartDataCard.label.toLowerCase()}
               </span>
+              {candleBasisWarningCount > 0 ? (
+                <span>
+                  <span className="font-semibold text-amber-300">
+                    {candleBasisWarningCount}
+                  </span>{" "}
+                  candle basis checks
+                </span>
+              ) : null}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -179,41 +252,86 @@ export function SavedReviewQueueSummary({
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-400">
-            Saved Review Work
+            {chartTierEnabled ? "Saved Review Work" : "Saved Trading Baseline"}
           </p>
           <h2 className="mt-2 text-lg font-semibold text-zinc-100">{title}</h2>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-400">
-            Jump from {surface} into trades that still need your review,
-            chart-data processing, or open-position handling.
+            {chartTierEnabled
+              ? `Jump from ${surface} into trades that still need your review, chart-data processing, or swing-trade handling.`
+              : "Your historical CSV already powers analytics and coaching. Written reviews are optional study notes; only open or carried positions need follow-up."}
           </p>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div
+            className={`mt-4 grid gap-2 sm:grid-cols-2 ${
+              chartTierEnabled && candleBasisWarningCount > 0
+                ? "lg:grid-cols-5"
+                : chartTierEnabled
+                  ? "lg:grid-cols-4"
+                  : "lg:grid-cols-3"
+            }`}
+          >
+            {chartTierEnabled ? (
+              <>
+                <div className="ti-panel-soft px-3 py-2">
+                  <div className="text-xs uppercase tracking-wide text-zinc-500">
+                    Highest Priority
+                  </div>
+                  <div className="mt-1 text-xl font-semibold text-amber-300">
+                    {highestPriorityCount}
+                  </div>
+                </div>
+                <div className="ti-panel-soft px-3 py-2">
+                  <div className="text-xs uppercase tracking-wide text-zinc-500">
+                    Needs Your Review
+                  </div>
+                  <div className="mt-1 text-xl font-semibold text-sky-300">
+                    {unresolvedCount}
+                  </div>
+                </div>
+                <Link className="ti-panel-soft px-3 py-2 hover:border-sky-500" href={chartDataCard.href}>
+                  <div className="text-xs uppercase tracking-wide text-zinc-500">
+                    {chartDataCard.label}
+                  </div>
+                  <div className={`mt-1 text-xl font-semibold ${chartDataCard.toneClass}`}>
+                    {chartDataCard.count}
+                  </div>
+                </Link>
+              </>
+            ) : (
+              <>
+                <div className="ti-panel-soft px-3 py-2">
+                  <div className="text-xs uppercase tracking-wide text-zinc-500">
+                    Baseline Stories
+                  </div>
+                  <div className="mt-1 text-xl font-semibold text-sky-300">
+                    {baselineItemCount}
+                  </div>
+                </div>
+                <div className="ti-panel-soft px-3 py-2">
+                  <div className="text-xs uppercase tracking-wide text-zinc-500">
+                    Optional Notes
+                  </div>
+                  <div className="mt-1 text-xl font-semibold text-zinc-100">
+                    {completedReviewCount}
+                  </div>
+                </div>
+              </>
+            )}
+            {chartTierEnabled && candleBasisWarningCount > 0 ? (
+              <Link
+                className="ti-panel-soft px-3 py-2 hover:border-amber-500"
+                href="/intelligence/review?queue=candle_basis_warning"
+              >
+                <div className="text-xs uppercase tracking-wide text-zinc-500">
+                  Candle Basis Check
+                </div>
+                <div className="mt-1 text-xl font-semibold text-amber-300">
+                  {candleBasisWarningCount}
+                </div>
+              </Link>
+            ) : null}
             <div className="ti-panel-soft px-3 py-2">
               <div className="text-xs uppercase tracking-wide text-zinc-500">
-                Highest Priority
-              </div>
-              <div className="mt-1 text-xl font-semibold text-amber-300">
-                {highestPriorityCount}
-              </div>
-            </div>
-            <div className="ti-panel-soft px-3 py-2">
-              <div className="text-xs uppercase tracking-wide text-zinc-500">
-                Needs Your Review
-              </div>
-              <div className="mt-1 text-xl font-semibold text-sky-300">
-                {unresolvedCount}
-              </div>
-            </div>
-            <Link className="ti-panel-soft px-3 py-2 hover:border-sky-500" href={chartDataCard.href}>
-              <div className="text-xs uppercase tracking-wide text-zinc-500">
-                {chartDataCard.label}
-              </div>
-              <div className={`mt-1 text-xl font-semibold ${chartDataCard.toneClass}`}>
-                {chartDataCard.count}
-              </div>
-            </Link>
-            <div className="ti-panel-soft px-3 py-2">
-              <div className="text-xs uppercase tracking-wide text-zinc-500">
-                Open Trades
+                {chartTierEnabled ? "Swing Trades" : "Open Or Carried"}
               </div>
               <div className="mt-1 text-xl font-semibold text-rose-300">
                 {openBlockCount}
@@ -228,19 +346,27 @@ export function SavedReviewQueueSummary({
               className="border border-sky-800 bg-sky-950/40 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-400"
               href={primaryHref}
             >
-              Open highest-priority queue
+              {chartTierEnabled
+                ? "Open highest-priority queue"
+                : openBlockCount > 0
+                  ? "Open open positions"
+                  : "Open trade history"}
             </Link>
             <Link
               className="border border-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-500"
-              href="/intelligence/trades?reviewLane=highest_priority"
+              href={
+                chartTierEnabled
+                  ? "/intelligence/trades?reviewLane=highest_priority"
+                  : "/intelligence/analytics/results"
+              }
             >
-              Filter trades
+              {chartTierEnabled ? "Filter trades" : "Open analytics"}
             </Link>
           </div>
 
-          {previewItems.length > 0 ? (
+          {visiblePreviewItems.length > 0 ? (
             <div className="grid gap-2">
-              {previewItems.map((item) => (
+              {visiblePreviewItems.map((item) => (
                 <Link
                   className="ti-panel-soft block px-3 py-2 transition hover:border-sky-500"
                   href={item.href}
@@ -262,7 +388,9 @@ export function SavedReviewQueueSummary({
             </div>
           ) : (
             <div className="ti-panel-soft px-3 py-2 text-sm text-zinc-400">
-              {queue.emptyState.body}
+              {chartTierEnabled
+                ? queue.emptyState.body
+                : "No required review backlog. Browse analytics first, then study individual trades only when a pattern deserves a closer look."}
             </div>
           )}
         </div>

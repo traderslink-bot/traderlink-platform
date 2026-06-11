@@ -1059,7 +1059,7 @@ test.describe("app feature regression", () => {
     }
     await page.goto("/intelligence/coach/details?demo=sample");
     await expect(page.locator("body")).toContainText("review prompt");
-    await expect(page.locator("body")).toContainText("Open coaching evidence");
+    await expect(page.locator("body")).toContainText("Open saved example");
     await expect(page.locator("body")).toContainText("Execution-only");
 
     assertNoProblems();

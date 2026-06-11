@@ -16739,3 +16739,49 @@ Best next step:
 - Continue the deliberate product-pass port one behavior/read-model slice at a
   time, keeping `/intelligence`, journal-level-analysis, levels-system-v2 only,
   and the free execution-only versus paid chart-evidence boundary intact.
+
+# 2026-06-11 tier chart-evidence boundary port
+
+- Ported the useful tier-boundary behavior from `codex/trader-ui-product-pass`
+  without taking its route rewrites or journal-level-analysis removals.
+- Kept `/intelligence` links and the existing journal level-facts read model.
+- Made shared analytics/coach behavior panels tier-aware:
+  - chart-context/sample or completed-snapshot paths can say
+    chart-supported/chart evidence,
+  - free/no-chart paths say execution-supported/execution evidence.
+- Made saved review summary cards tier-aware:
+  - chart tier keeps chart-data queue cards,
+  - free tier shows a saved trading baseline/open-or-carried follow-up instead
+    of chart-review backlog claims.
+- Tightened `buildSavedReviewQueueReadModel()` so
+  `includeChartContext: false` no longer returns chart-only tabs such as
+  `completed`, `market_context_unavailable`, `analysis_failed`,
+  `candle_basis_warning`, or `queued`.
+- Added `tests/e2e/tier-chart-evidence.spec.ts` for the free execution-only vs
+  paid chart-context route matrix on `/intelligence` URLs.
+- Updated the app-feature regression for the calmer coach CTA copy
+  (`Open saved example`).
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed after edits. Existing Turbopack warnings remain about
+  broad dynamic file patterns in academy/news stores.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader tier/behavior/saved-import Vitest passed: 4 files, 32 tests.
+- Focused saved review queue/level-analysis Vitest passed: 3 files, 33 tests.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Review this tier-boundary slice, then commit it as the next deliberate
+  product-pass port. After that, continue with another small read-model/UI slice
+  only if it preserves `/intelligence`, journal-level-analysis, and
+  levels-system-v2-only constraints.

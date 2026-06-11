@@ -2950,6 +2950,10 @@ export function AnalyticsClient({
   const activeSectionMeta =
     ANALYTICS_DASHBOARD_SECTIONS.find((section) => section.id === activeSection) ??
     ANALYTICS_DASHBOARD_SECTIONS[0];
+  const activeSectionSummary =
+    !chartTierEnabled && activeSection === "chart_evidence"
+      ? "Execution analytics stay available; candle and level summaries stay out until real chart evidence exists."
+      : activeSectionMeta.summary;
   const isOverviewSection = activeSection === "overview";
 
   function updateFilter<K extends keyof TraderAnalyticsFilter>(
@@ -2985,7 +2989,7 @@ export function AnalyticsClient({
               <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
                 {isOverviewSection
                   ? "A trader-facing report view for results, behavior cost, and the next trade to review. This is analysis of saved executions, not trading advice."
-                  : activeSectionMeta.summary}
+                  : activeSectionSummary}
               </p>
             </div>
             <div className={`${isOverviewSection ? "grid" : "hidden lg:grid"} gap-2 text-sm`}>
@@ -3007,6 +3011,7 @@ export function AnalyticsClient({
         </header>
 
         <SavedReviewQueueSummary
+          chartTierEnabled={chartTierEnabled}
           compact={!isOverviewSection}
           queue={savedReviewQueue}
           surface="analytics"
@@ -3103,7 +3108,10 @@ export function AnalyticsClient({
 
             {activeSection === "behavior" ? (
               <div className="grid gap-6" id="analytics-behavior">
-                <BehaviorReportPanel report={behaviorReport} />
+                <BehaviorReportPanel
+                  chartTierEnabled={chartTierEnabled}
+                  report={behaviorReport}
+                />
                 <section className="grid gap-6 xl:grid-cols-[minmax(320px,0.8fr)_minmax(0,1.2fr)]">
                   <SimpleBarChart
                     chart={report.charts.behaviorRiskRates}

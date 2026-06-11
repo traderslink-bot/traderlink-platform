@@ -117,12 +117,27 @@ const FILTER_LABELS: Record<SavedReviewQueueFilter, string> = {
   unresolved: "Needs Review",
 };
 
+function reviewQueueFilterIds(
+  includeChartContext: boolean,
+): SavedReviewQueueFilter[] {
+  if (includeChartContext) {
+    return Object.keys(FILTER_LABELS) as SavedReviewQueueFilter[];
+  }
+
+  return ["all", "blocked_open_trade", "unresolved"];
+}
+
 function normalizeFilter(
   value: string | null | undefined,
+  allowedIds: readonly SavedReviewQueueFilter[] = Object.keys(
+    FILTER_LABELS,
+  ) as SavedReviewQueueFilter[],
 ): SavedReviewQueueFilter {
-  return value && value in FILTER_LABELS
+  return value && allowedIds.includes(value as SavedReviewQueueFilter)
     ? (value as SavedReviewQueueFilter)
-    : "highest_priority";
+    : allowedIds.includes("highest_priority")
+      ? "highest_priority"
+      : allowedIds[0] ?? "all";
 }
 
 function priorityLabel(score: number): SavedReviewQueueItem["priorityLabel"] {
@@ -642,6 +657,7 @@ function emptyState(args: {
   importBatchId: string | null;
   allCount: number;
   filteredCount: number;
+  includeChartContext: boolean;
 }): SavedReviewQueueReadModel["emptyState"] {
   if (!args.importBatchId) {
     return {
@@ -652,6 +668,14 @@ function emptyState(args: {
   }
 
   if (args.allCount === 0) {
+    if (!args.includeChartContext) {
+      return {
+        kind: "no_saved_review_jobs",
+        title: "No required execution-review backlog",
+        body: "Saved trades are available for execution replay and notes. Open trade history when you want to study individual trades.",
+      };
+    }
+
     return {
       kind: "no_saved_review_jobs",
       title: "No saved chart-review work",
@@ -686,7 +710,8 @@ export function buildSavedReviewQueueReadModel(args: {
   const accountId = args.accountId ?? DEMO_ACCOUNT_ID;
   const userId = args.userId ?? DEMO_USER_ID;
   const includeChartContext = args.includeChartContext ?? true;
-  const activeFilter = normalizeFilter(args.activeFilter);
+  const filterIds = reviewQueueFilterIds(includeChartContext);
+  const activeFilter = normalizeFilter(args.activeFilter, filterIds);
   const batch = args.repository.getLatestCommittedBatch(accountId);
 
   if (!batch) {
@@ -701,14 +726,12 @@ export function buildSavedReviewQueueReadModel(args: {
       source: "saved_sqlite",
       importBatchId: null,
       activeFilter,
-      tabs: (Object.keys(FILTER_LABELS) as SavedReviewQueueFilter[]).map(
-        (id) => ({
-          id,
-          label: FILTER_LABELS[id],
-          count: 0,
-          href: `/intelligence/review?queue=${id}`,
-        }),
-      ),
+      tabs: filterIds.map((id) => ({
+        id,
+        label: FILTER_LABELS[id],
+        count: 0,
+        href: `/intelligence/review?queue=${id}`,
+      })),
       items: [],
       allItems: [],
       levelFacts,
@@ -716,6 +739,7 @@ export function buildSavedReviewQueueReadModel(args: {
         importBatchId: null,
         allCount: 0,
         filteredCount: 0,
+        includeChartContext,
       }),
     };
   }
@@ -786,14 +810,12 @@ export function buildSavedReviewQueueReadModel(args: {
       ),
   );
   const filtered = filterItems(allItems, activeFilter);
-  const tabs = (Object.keys(FILTER_LABELS) as SavedReviewQueueFilter[]).map(
-    (id) => ({
-      id,
-      label: FILTER_LABELS[id],
-      count: filterItems(allItems, id).length,
-      href: `/intelligence/review?queue=${id}`,
-    }),
-  );
+  const tabs = filterIds.map((id) => ({
+    id,
+    label: FILTER_LABELS[id],
+    count: filterItems(allItems, id).length,
+    href: `/intelligence/review?queue=${id}`,
+  }));
 
   return {
     contractVersion: "saved_review_queue_read_model_v1",
@@ -808,6 +830,7 @@ export function buildSavedReviewQueueReadModel(args: {
       importBatchId: batch.id,
       allCount: allItems.length,
       filteredCount: filtered.length,
+      includeChartContext,
     }),
   };
 }

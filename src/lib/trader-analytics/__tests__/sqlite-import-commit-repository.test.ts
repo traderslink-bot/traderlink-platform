@@ -610,10 +610,15 @@ describe("SqliteImportCommitRepository", () => {
       },
     ]);
     expect(
-      executionOnlyTierQueue.tabs.find(
+      executionOnlyTierQueue.tabs.some(
         (tab) => tab.id === "market_context_unavailable",
+      ),
+    ).toBe(false);
+    expect(
+      executionOnlyTierQueue.tabs.find(
+        (tab) => tab.id === "blocked_open_trade",
       )?.count,
-    ).toBe(0);
+    ).toBe(1);
   });
 
   it("separates completed chart reviews with unsafe candle basis warnings", () => {

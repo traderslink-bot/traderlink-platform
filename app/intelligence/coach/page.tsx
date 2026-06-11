@@ -1537,6 +1537,9 @@ export default async function CoachPage(props: {
     : [];
   const completedChartEvidenceCount = chartContextSnapshots.length;
   const hasCompletedChartEvidence = completedChartEvidenceCount > 0;
+  const chartTierEnabled =
+    chartContextAllowed &&
+    (analyticsData.mode === "sample" || hasCompletedChartEvidence);
   const tradeThreadModel = buildSavedTradeThreadReadModel({
     decisionReviewSnapshots: chartContextSnapshots,
     report: analytics.latestReport,
@@ -1687,7 +1690,7 @@ export default async function CoachPage(props: {
       countLabel: `${behaviorReport.groups.length} groups`,
       href: "/intelligence/coach/behavior-sequence",
       label: "Behavior Sequence",
-      summary: hasCompletedChartEvidence
+      summary: chartTierEnabled
         ? "One chart-supported path for what to fix, repeat, or review."
         : chartDataNeedsAttentionCount > 0
           ? "One execution-supported path while chart data needs review."
@@ -1779,7 +1782,7 @@ export default async function CoachPage(props: {
               {dataLabel}
             </span>
             <span className="rounded-md border border-emerald-900 bg-emerald-950/20 px-2 py-1 text-emerald-300">
-              {hasCompletedChartEvidence
+              {chartTierEnabled
                 ? "chart evidence checked"
                 : chartDataNeedsAttentionCount > 0
                   ? "chart data needs review"
@@ -2175,7 +2178,10 @@ export default async function CoachPage(props: {
 
         {activeCoachView === "behavior_sequence" ? (
         <div id="behavior-map">
-          <CoachBehaviorSequence report={behaviorReport} />
+          <CoachBehaviorSequence
+            chartTierEnabled={chartTierEnabled}
+            report={behaviorReport}
+          />
         </div>
         ) : null}
 
@@ -2251,9 +2257,17 @@ export default async function CoachPage(props: {
           body="Use these as supporting details after the main coaching focus is clear. This page keeps the advanced material available without making it the default coach experience."
         />
 
-        <BehaviorReportPanel mode="coach" report={behaviorReport} />
+        <BehaviorReportPanel
+          chartTierEnabled={chartTierEnabled}
+          mode="coach"
+          report={behaviorReport}
+        />
 
-        <SavedReviewQueueSummary queue={savedReviewQueue} surface="coach" />
+        <SavedReviewQueueSummary
+          chartTierEnabled={chartTierEnabled}
+          queue={savedReviewQueue}
+          surface="coach"
+        />
 
         <CoachSectionHeader
           eyebrow="Coach Checks"

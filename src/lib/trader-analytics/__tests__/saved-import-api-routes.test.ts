@@ -386,10 +386,13 @@ describe("saved import API routes", () => {
     expect(freeTierReview.savedDecisionReview).toBeNull();
     expect(freeTierReview.savedReviewQueue.allItems).toEqual([]);
     expect(
-      freeTierReview.savedReviewQueue.tabs.find(
+      freeTierReview.savedReviewQueue.tabs.some(
         (tab: { id: string }) => tab.id === "completed",
-      )?.count,
-    ).toBe(0);
+      ),
+    ).toBe(false);
+    expect(
+      freeTierReview.savedReviewQueue.tabs.map((tab: { id: string }) => tab.id),
+    ).toEqual(["all", "blocked_open_trade", "unresolved"]);
   });
 
   it("commits a ready stored preview from the batch recovery action path", async () => {
