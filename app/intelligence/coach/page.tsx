@@ -139,7 +139,7 @@ function coachLaneLabel(lane: string): string {
   }
 
   if (lane === "blocked_open_trade") {
-    return "Open trade";
+    return "Open or swing";
   }
 
   if (lane === "analysis_failed") {

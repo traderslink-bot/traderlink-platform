@@ -20,7 +20,7 @@ function laneLabel(value: string): string {
     case "market_context_unavailable":
       return "Chart data still missing";
     case "blocked_open_trade":
-      return "Swing trade";
+      return "Open or swing trade";
     case "analysis_failed":
       return "Chart data needs review";
     case "candle_basis_warning":
@@ -331,7 +331,7 @@ export function SavedReviewQueueSummary({
             ) : null}
             <div className="ti-panel-soft px-3 py-2">
               <div className="text-xs uppercase tracking-wide text-zinc-500">
-                {chartTierEnabled ? "Swing Trades" : "Open Or Carried"}
+                {chartTierEnabled ? "Open Or Swing" : "Open Or Carried"}
               </div>
               <div className="mt-1 text-xl font-semibold text-rose-300">
                 {openBlockCount}
@@ -349,7 +349,7 @@ export function SavedReviewQueueSummary({
               {chartTierEnabled
                 ? "Open highest-priority queue"
                 : openBlockCount > 0
-                  ? "Open open positions"
+                  ? "Review open or carried trades"
                   : "Open trade history"}
             </Link>
             <Link

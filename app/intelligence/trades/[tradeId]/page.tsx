@@ -259,10 +259,10 @@ function decisionReviewStatusCopy(args: {
 
   if (args.diagnosticStatus === "blocked_open_trade") {
     return {
-      label: "Open trade",
+      label: "Open or swing trade",
       detail:
         "The import ended with shares still open, so completed-trade review waits until the position is flat.",
-      scope: "Open trade, execution-only",
+      scope: "Open or swing trade, execution-only",
       nextAction:
         "Wait until the position is flat before completed-trade coaching.",
       tone: "text-sky-300",

@@ -86,7 +86,7 @@ export function plainStateLabel(value: string | null | undefined): string {
     case "analysis_failed":
       return "Chart data needs another check";
     case "blocked_open_trade":
-      return "Open trade";
+      return "Open or swing trade";
     case "completed":
       return "Reviewed with chart data";
     case "queued":

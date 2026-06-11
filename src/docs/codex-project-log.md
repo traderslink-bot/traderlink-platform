@@ -16825,3 +16825,41 @@ Best next step:
   product-pass diffs for another narrow read-model or copy improvement; skip
   route rewrites, academy/news deletions, and any changes that remove
   journal-level-analysis.
+
+# 2026-06-11 open-or-swing review lane copy pass
+
+- Continued the deliberate product-pass inspection and skipped stale route
+  rewrites from `codex/trader-ui-product-pass`.
+- Kept `/intelligence`, journal-level-analysis, levels-system-v2-only, and the
+  free execution-only versus paid chart-evidence boundary intact.
+- Aligned blocked open-position review language across shared read models and
+  route pages:
+  - queue/tab status now says `Open or Swing Trades`,
+  - trade detail, import detail, review, coach, import dry-run diagnostics, and
+    saved review summary use `open or swing`/`open or carried` consistently,
+  - navigation actions such as `Open trade review` remain action labels, not
+    status claims.
+- Preserved the underlying behavior: open/carrying trades stay execution-only
+  and do not produce completed-trade coaching or chart evidence claims until the
+  position is flat and evidence exists.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import/review/coach language Vitest passed: 4 files, 42 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+
+Best next step:
+
+- Review and commit this open-or-swing lane copy pass. Then continue porting
+  another narrow product-pass slice only where it preserves `/intelligence`,
+  journal-level-analysis, levels-system-v2-only, and the tier evidence boundary.

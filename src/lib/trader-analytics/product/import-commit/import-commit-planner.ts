@@ -731,7 +731,7 @@ export function buildImportCommitPlan(
       reason:
         trade.lifecycleStatus === "closed"
           ? "Completed trade is eligible for server decision review."
-          : "Open trade is excluded from completed-trade decision review until flat.",
+          : "Open or swing trade is excluded from completed-trade decision review until flat.",
     }),
   );
   const requiredDecisions = [

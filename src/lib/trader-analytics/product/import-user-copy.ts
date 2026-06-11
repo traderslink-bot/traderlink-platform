@@ -3,7 +3,7 @@ const STATUS_LABELS: Record<string, string> = {
   aligned: "Aligned",
   blocked: "Needs repair",
   blocked_by_repairs: "Repair needed",
-  blocked_open_trade: "Open trade",
+  blocked_open_trade: "Open or swing trade",
   clear: "Clear",
   committed: "Saved import",
   committing: "Saving import",
@@ -36,7 +36,7 @@ const STATUS_LABELS: Record<string, string> = {
   resolved: "Resolved",
   skipped: "Skipped",
   skipped_limit: "Review limit reached",
-  trade_open: "Open trade",
+  trade_open: "Open or swing trade",
 };
 
 const STATUS_DETAILS: Record<string, string> = {

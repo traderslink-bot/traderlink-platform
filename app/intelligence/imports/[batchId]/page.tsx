@@ -61,7 +61,7 @@ function readableDecisionReviewStatus(value: string): string {
   }
 
   if (value === "blocked_open_trade" || value === "trade_open") {
-    return "Open Trade";
+    return "Open or Swing Trade";
   }
 
   if (value === "market_context_unavailable") {
@@ -100,7 +100,7 @@ function diagnosticGuidance(status: string): string {
   }
 
   if (status === "blocked_open_trade") {
-    return "The trade was saved while still open, so completed-trade coaching waits until the position is flat.";
+    return "The trade was saved while still open or carried, so completed-trade coaching waits until the position is flat.";
   }
 
   if (status === "skipped_limit") {
@@ -119,7 +119,7 @@ function diagnosticUserMessage(status: string, code: string): string {
   }
 
   if (status === "blocked_open_trade" || code === "trade_open") {
-    return "This trade was still open, so completed-trade coaching waits until the position is flat.";
+    return "This trade was still open or carried, so completed-trade coaching waits until the position is flat.";
   }
 
   if (status === "skipped_limit" || code === "limit_reached") {

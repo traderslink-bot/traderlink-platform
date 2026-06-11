@@ -396,7 +396,7 @@ export default async function GuidedReviewPage({
                   tone: "warning" as const,
                 },
                 {
-                  label: "Open Trades",
+                  label: "Open or Swing",
                   count: openBlockCount,
                   href: "/intelligence/review?queue=blocked_open_trade",
                   tone: "info" as const,
@@ -932,7 +932,7 @@ export default async function GuidedReviewPage({
                   </div>
                   <div className="border-t border-zinc-900 py-3">
                     <div className="text-xs uppercase tracking-wide text-zinc-500">
-                      Open Trades
+                      Open or Swing
                     </div>
                     <div className="mt-2 text-2xl font-semibold text-sky-300">
                       {savedDecisionReview.blockedOpenTradeCount}

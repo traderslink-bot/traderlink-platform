@@ -1111,7 +1111,7 @@ export default async function TradesPage({
             />
           ) : null}
           <MetricCard
-            label="Open Trades"
+            label="Open or Swing"
             value={openBlockCount}
             detail="Trades waiting until the position is flat."
             tone="info"

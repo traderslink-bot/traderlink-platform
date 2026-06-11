@@ -163,15 +163,15 @@ export function buildSavedImportCoachingLanguageQaMatrix(): SavedImportCoachingL
     },
     {
       id: "open_position_blocked",
-      label: "Open positions block completed-trade coaching",
+      label: "Open or swing positions block completed-trade coaching",
       texts: [
         textEntry(
           "open:blocked-coaching",
-          "Open trade is saved; wait until the position is flat before completed-trade coaching.",
+          "Open or swing trade is saved; wait until the position is flat before completed-trade coaching.",
           "open_trade",
         ),
       ],
-      requiredFragments: ["open trade", "position is flat", "completed-trade coaching"],
+      requiredFragments: ["open or swing trade", "position is flat", "completed-trade coaching"],
       forbiddenFragments: ["closed trade", "support held"],
     },
     {

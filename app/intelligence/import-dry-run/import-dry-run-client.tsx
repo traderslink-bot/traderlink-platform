@@ -742,11 +742,11 @@ function decisionReviewDiagnosticDisplay(diagnostic: DecisionReviewDiagnostic): 
       };
     case "trade_open":
       return {
-        label: "Open trade skipped",
+        label: "Open or swing trade",
         summary:
-          "This trade was still open, so completed-trade coaching waits until the position is flat.",
+          "This trade was still open or carried, so completed-trade coaching waits until the position is flat.",
         detail:
-          "Open positions stay out of completed-trade coaching until the position is flat.",
+          "Open or swing positions stay out of completed-trade coaching until the position is flat.",
         tone: "zinc",
       };
     case "limit_reached":

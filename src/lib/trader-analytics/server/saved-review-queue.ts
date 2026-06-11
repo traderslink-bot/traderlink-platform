@@ -113,7 +113,7 @@ const FILTER_LABELS: Record<SavedReviewQueueFilter, string> = {
   all: "All",
   completed: "Reviewed With Chart Data",
   market_context_unavailable: "Chart data still missing",
-  blocked_open_trade: "Open Trades",
+  blocked_open_trade: "Open or Swing Trades",
   analysis_failed: "Chart Data Needs Another Check",
   candle_basis_warning: "Candle Basis Check",
   highest_priority: "Highest Priority",
@@ -324,7 +324,8 @@ function diagnosticPriority(
   if (status === "blocked_open_trade") {
     return {
       score: 76,
-      reason: "Open trade is saved but blocked from completed-trade coaching.",
+      reason:
+        "Open or swing trade is saved, so completed-trade coaching waits until the position is flat.",
     };
   }
 
@@ -387,12 +388,12 @@ function queueStateCopy(lane: SavedReviewQueueItem["lane"]): {
       };
     case "blocked_open_trade":
       return {
-        stateLabel: "Open trade",
+        stateLabel: "Open or swing trade",
         stateDetail:
-          "The position was still open at the end of the import, so completed-trade review waits until the trade is flat.",
-        reviewScopeLabel: "open trade, execution-only",
+          "The position was still open at the end of the import, so completed-trade review waits until the position is flat.",
+        reviewScopeLabel: "open or swing trade, execution-only",
         nextAction:
-          "Keep the trade saved, then review the completed trade once the position is flat.",
+          "Keep the trade saved for execution review now, then review the completed trade once the position is flat.",
       };
     case "market_context_unavailable":
       return {

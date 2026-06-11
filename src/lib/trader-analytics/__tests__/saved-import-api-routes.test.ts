@@ -815,7 +815,7 @@ describe("saved import API routes", () => {
         expect.objectContaining({
           symbol: "OPNL",
           status: "blocked_open_trade",
-          reason: "Open trade is excluded from completed-trade decision review until flat.",
+          reason: "Open or swing trade is excluded from completed-trade decision review until flat.",
         }),
       ]),
     );
@@ -831,12 +831,12 @@ describe("saved import API routes", () => {
         expect.objectContaining({
           symbol: "OPNL",
           lane: "blocked_open_trade",
-          stateLabel: "Open trade",
-          reviewScopeLabel: "open trade, execution-only",
+          stateLabel: "Open or swing trade",
+          reviewScopeLabel: "open or swing trade, execution-only",
           stateDetail:
-            "The position was still open at the end of the import, so completed-trade review waits until the trade is flat.",
+            "The position was still open at the end of the import, so completed-trade review waits until the position is flat.",
           nextAction:
-            "Keep the trade saved, then review the completed trade once the position is flat.",
+            "Keep the trade saved for execution review now, then review the completed trade once the position is flat.",
         }),
       ]),
     );
