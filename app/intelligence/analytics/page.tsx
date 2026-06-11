@@ -42,7 +42,11 @@ function normalizeAnalyticsSection(
   }
 }
 
-function EmptyAnalyticsPage() {
+function EmptyAnalyticsPage({
+  chartContextAllowed,
+}: {
+  chartContextAllowed: boolean;
+}) {
   return (
     <main className="ti-dashboard-bg min-h-screen px-5 py-8 text-zinc-100 sm:px-8">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
@@ -62,7 +66,8 @@ function EmptyAnalyticsPage() {
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             Import your broker CSV first. Once trades are saved, this page will
             show your real results, timing, behavior, ticker stories, session
-            stories, and chart evidence.
+            stories, and{" "}
+            {chartContextAllowed ? "chart evidence" : "execution evidence"}.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link className="ti-button-primary" href="/intelligence/upload-csv">
@@ -99,7 +104,7 @@ export default async function AnalyticsPage(props: {
   const chartContextAllowed = canUseChartContext(activeTier);
 
   if (analyticsData.mode !== "saved" && demoParam !== "sample") {
-    return <EmptyAnalyticsPage />;
+    return <EmptyAnalyticsPage chartContextAllowed={chartContextAllowed} />;
   }
 
   const savedReviewQueue =

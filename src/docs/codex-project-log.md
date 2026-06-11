@@ -17003,3 +17003,38 @@ Best next step:
 - Commit this coach tier-copy slice. Then continue with another narrow
   product-pass comparison only if it does not weaken the free execution-only
   versus paid chart-evidence boundary.
+
+# 2026-06-11 Intelligence overview tier-copy pass
+
+- Continued the evidence-wording audit after the product-pass comparison.
+- Made the `/intelligence` overview tier-aware:
+  - free execution-only mode now uses review-follow-up/execution-evidence copy
+    in the primary metrics, workflow card, product-area cards, and attention
+    area,
+  - paid chart-context mode keeps chart-data/chart-evidence wording.
+- Made the `/intelligence/analytics` empty state tier-aware so free mode says
+  execution evidence instead of chart evidence.
+- Extended the tier Playwright matrix to cover `/intelligence` and
+  `/intelligence/analytics` entry points.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused tier/behavior Vitest passed: 2 files, 5 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this overview tier-copy slice. Then continue with another small
+  evidence-wording or read-model pass only if it preserves the tier boundary.

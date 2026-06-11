@@ -61,6 +61,19 @@ test.describe("Trader Intelligence tier chart-evidence matrix", () => {
     );
     await expect(page.locator("body")).not.toContainText("Volume Evidence");
 
+    await page.goto("/intelligence");
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("body")).toContainText("execution evidence");
+    await expect(page.locator("body")).not.toContainText("chart evidence");
+    await expect(page.locator("body")).not.toContainText(
+      "Chart data still missing",
+    );
+
+    await page.goto("/intelligence/analytics");
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("body")).toContainText("saved executions");
+    await expect(page.locator("body")).not.toContainText("chart evidence");
+
     for (const path of [
       "/intelligence/analytics/behavior?demo=sample",
       "/intelligence/coach?demo=sample",
@@ -116,6 +129,10 @@ test.describe("Trader Intelligence tier chart-evidence matrix", () => {
     await page.waitForLoadState("networkidle");
     await expect(page.locator("body")).toContainText(/chart evidence checked/i);
     await expect(page.locator("body")).toContainText("chart-supported");
+
+    await page.goto("/intelligence");
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("body")).toContainText("chart evidence");
 
     await page.goto("/intelligence/coach/details?demo=sample");
     await page.waitForLoadState("networkidle");
