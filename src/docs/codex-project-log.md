@@ -17148,3 +17148,42 @@ Best next step:
 - Commit this progress tier-gate slice. Then continue the deliberate product-pass
   port with another small direct-route audit for chart/candle/support-resistance
   wording, or package the branch if the route audit is clean enough for handoff.
+
+# 2026-06-11 trade detail tier-copy pass
+
+- Continued the direct-route tier audit on individual trade detail pages.
+- Made the trade detail decision-review status helper tier-aware:
+  - free execution-only mode now describes the page as saved executions, P/L,
+    notes, and checklist evidence,
+  - paid chart-context mode keeps chart-ready, chart-missing, and chart-data
+    diagnostic copy.
+- Made the trade detail workflow handoff tier-aware so free mode does not ask the
+  user to use chart evidence, while paid mode keeps the chart-evidence workflow
+  when allowed.
+- Updated the summary card so free mode reports unavailable paid evidence rather
+  than missing chart data.
+- Extended the tier Playwright matrix to open a direct trade detail page from the
+  saved-trades list when a trade link is present.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-thread/tier Vitest passed: 2 files, 31 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this trade-detail tier-copy slice. Then scan imports/import-dry-run and
+  analytics route copy for any remaining free-tier chart/candle/support-
+  resistance wording before packaging the branch for handoff.

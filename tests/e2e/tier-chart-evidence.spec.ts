@@ -95,6 +95,22 @@ test.describe("Trader Intelligence tier chart-evidence matrix", () => {
       );
     }
 
+    await page.goto("/intelligence/trades");
+    await page.waitForLoadState("networkidle");
+    const savedTradeLink = page.locator('[data-testid^="saved-trade-link-"]').first();
+    if ((await savedTradeLink.count()) > 0) {
+      await savedTradeLink.click();
+      await page.waitForLoadState("networkidle");
+      await expect(page.getByTestId("trade-detail-workflow-handoff")).toBeVisible();
+      await expect(page.getByTestId("trade-detail-workflow-handoff")).toContainText(
+        "execution-only",
+      );
+      await expect(page.getByTestId("trade-detail-workflow-handoff")).not.toContainText(
+        "use chart evidence only",
+      );
+      await expect(page.locator("body")).not.toContainText("Chart evidence ready");
+    }
+
     for (const path of [
       "/intelligence/analytics/behavior?demo=sample",
       "/intelligence/coach?demo=sample",
@@ -202,5 +218,17 @@ test.describe("Trader Intelligence tier chart-evidence matrix", () => {
     await expect(page.getByTestId("progress-ticker-stories")).toContainText(
       "Support/Resistance Exits",
     );
+
+    await page.goto("/intelligence/trades");
+    await page.waitForLoadState("networkidle");
+    const savedTradeLink = page.locator('[data-testid^="saved-trade-link-"]').first();
+    if ((await savedTradeLink.count()) > 0) {
+      await savedTradeLink.click();
+      await page.waitForLoadState("networkidle");
+      await expect(page.getByTestId("trade-detail-workflow-handoff")).toBeVisible();
+      await expect(page.getByTestId("trade-detail-workflow-handoff")).toContainText(
+        "use chart evidence only",
+      );
+    }
   });
 });

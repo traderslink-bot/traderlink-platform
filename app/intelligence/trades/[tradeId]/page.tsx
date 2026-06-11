@@ -223,6 +223,7 @@ function applyPersistedChecklistState(
 }
 
 function decisionReviewStatusCopy(args: {
+  chartTierEnabled: boolean;
   hasSnapshot: boolean;
   diagnosticStatus?: string;
   diagnosticCode?: string;
@@ -234,6 +235,18 @@ function decisionReviewStatusCopy(args: {
   nextAction: string;
   tone: string;
 } {
+  if (!args.chartTierEnabled) {
+    return {
+      label: "Execution-only review",
+      detail:
+        "This tier keeps the trade detail review focused on saved executions, P/L, notes, and checklist evidence.",
+      scope: "Execution-only",
+      nextAction:
+        "Review entries, adds, reductions, exits, timing, and P/L evidence.",
+      tone: "text-zinc-300",
+    };
+  }
+
   if (args.hasSnapshot) {
     if (hasUnsafeCandleBasis(args.candleQualityNotes)) {
       return {
@@ -950,6 +963,7 @@ export default async function TradeReviewPage({
     persistedReplayCandleWindow,
   );
   const decisionReviewStatus = decisionReviewStatusCopy({
+    chartTierEnabled,
     hasSnapshot: Boolean(decisionReviewSnapshot),
     diagnosticStatus: decisionReviewDiagnostics[0]?.status,
     diagnosticCode: decisionReviewDiagnostics[0]?.code,
@@ -1207,12 +1221,20 @@ export default async function TradeReviewPage({
 
             <WorkflowHandoffPanel
               body={
-                <>
-                  This page is the workbench for one saved trade. Replay the
-                  buys and sells first, use chart evidence only when it is
-                  saved, then write one practical lesson before moving to the
-                  next trade.
-                </>
+                chartTierEnabled ? (
+                  <>
+                    This page is the workbench for one saved trade. Replay the
+                    buys and sells first, use chart evidence only when it is
+                    saved, then write one practical lesson before moving to the
+                    next trade.
+                  </>
+                ) : (
+                  <>
+                    This page is the workbench for one saved trade. Replay the
+                    buys and sells first, keep the review execution-only, then
+                    write one practical lesson before moving to the next trade.
+                  </>
+                )
               }
               eyebrow="Trade Review Flow"
               items={[
@@ -1225,8 +1247,10 @@ export default async function TradeReviewPage({
                   tone: "info",
                 },
                 {
-                  action: "Use context",
-                  body: "Check ticker, session, chart, and volume handoffs only when the saved evidence exists.",
+                  action: chartTierEnabled ? "Use context" : "Decide lesson",
+                  body: chartTierEnabled
+                    ? "Check ticker, session, chart, and volume handoffs only when the saved evidence exists."
+                    : "Use ticker, session, execution sequence, P/L, and written notes to decide what this trade can prove.",
                   href: activeThread ? "#ticker-story" : "#summary",
                   label: "2. Decide",
                   title: "Decide what this trade can prove",
@@ -1509,7 +1533,9 @@ export default async function TradeReviewPage({
                       : hiddenDecisionReviewInsightCount > 0
                         ? "Some advanced notes"
                         : "Nothing major"
-                    : "Chart data"
+                    : chartTierEnabled
+                      ? "Chart data"
+                      : "Paid evidence"
                 }
                 detail={
                   decisionReviewSnapshot
