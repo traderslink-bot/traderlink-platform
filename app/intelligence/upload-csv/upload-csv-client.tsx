@@ -47,6 +47,10 @@ interface ChartReviewResumeResponse {
   message?: string;
 }
 
+interface UploadCsvClientProps {
+  chartTierEnabled: boolean;
+}
+
 function friendlyError(error: unknown): string {
   if (error instanceof Error && error.message.trim()) {
     return error.message;
@@ -112,7 +116,7 @@ function uploadReviewResult(plan: NonNullable<ImportPreviewPlanResponse["plan"]>
   };
 }
 
-export function UploadCsvClient() {
+export function UploadCsvClient({ chartTierEnabled }: UploadCsvClientProps) {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<UploadStatus>("idle");
   const [message, setMessage] = useState<string | null>(null);
@@ -230,12 +234,15 @@ export function UploadCsvClient() {
       setResult({
         tone: "success",
         title: "CSV uploaded and saved",
-        message:
-          "Your trades are saved. The app is starting chart data for the first saved trade, then the saved import can continue the rest.",
+        message: chartTierEnabled
+          ? "Your trades are saved. The app is starting chart data for the first saved trade, then the saved import can continue the rest."
+          : "Your trades are saved. Open the saved import or review queue to start execution-only review.",
         href: `/intelligence/imports/${encodeURIComponent(batchId)}`,
         actionLabel: "Open saved import",
       });
-      void startChartDataReview(batchId);
+      if (chartTierEnabled) {
+        void startChartDataReview(batchId);
+      }
     } catch (error) {
       setStatus("error");
       setMessage(friendlyError(error));

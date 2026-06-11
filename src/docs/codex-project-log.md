@@ -17187,3 +17187,45 @@ Best next step:
 - Commit this trade-detail tier-copy slice. Then scan imports/import-dry-run and
   analytics route copy for any remaining free-tier chart/candle/support-
   resistance wording before packaging the branch for handoff.
+
+# 2026-06-11 upload and import detail tier gate pass
+
+- Continued the import route tier audit.
+- Made `/intelligence/upload-csv` pass the active tier into the upload client.
+- Gated post-save chart-data auto-start:
+  - paid chart-context mode still starts the first chart-data review job after a
+    clean save,
+  - free execution-only mode saves the import and sends the user to saved import
+    or review queue without promising chart hydration.
+- Made saved import detail copy tier-aware:
+  - free mode describes saved trades with executions, notes, checklist state,
+    session timing, and P/L evidence,
+  - paid mode keeps chart evidence notes, chart review status, diagnostics, and
+    resume controls.
+- Added an execution-only advanced import status panel for free mode and kept
+  chart diagnostics hidden from the free import detail surface.
+- Extended the free-tier Playwright matrix to visit `/intelligence/upload-csv`
+  and assert the entry screen does not promise chart data/evidence.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused import/tier Vitest passed: 2 files, 17 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this upload/import tier-gate slice. Then run one final route-copy scan
+  for free-tier chart/candle/support-resistance wording and package the branch
+  for deliberate handoff/port review.

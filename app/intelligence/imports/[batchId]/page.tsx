@@ -15,6 +15,10 @@ import { ImportWorkflowStrip } from "@/app/import-workflow-strip";
 import { ImportRepairActions } from "./import-repair-actions";
 import { ImportRecoveryActions } from "./import-recovery-actions";
 import { ResumeChartReviewActions } from "./resume-chart-review-actions";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
 
 export const metadata: Metadata = {
   title: "Import Details | Trader Intelligence",
@@ -153,6 +157,7 @@ export default async function ImportBatchPage({
   const routeParams = await params;
   const batchId = decodeURIComponent(routeParams.batchId);
   const repository = new SqliteImportCommitRepository();
+  const chartTierEnabled = canUseChartContext(readTraderIntelligenceTierFromEnv());
   const plan = repository.getPreviewPlan(batchId);
   const batch = repository.getImportBatch(batchId);
   const decisionReviewJobs = repository.listDecisionReviewJobs(batchId);
@@ -300,7 +305,7 @@ export default async function ImportBatchPage({
                   You can review it in advanced import details.
                 </div>
               ) : null}
-              {isCommitted && decisionReviewQueuedCount > 0 ? (
+              {isCommitted && chartTierEnabled && decisionReviewQueuedCount > 0 ? (
                 <div className="mt-4 rounded-md border border-sky-900 bg-sky-950/20 px-3 py-2 text-xs leading-5 text-sky-100">
                   Chart evidence is still loading for{" "}
                   {importCountLabel(decisionReviewQueuedCount, "saved trade")}.
@@ -420,7 +425,9 @@ export default async function ImportBatchPage({
             </h2>
             <p className="mt-1 text-xs leading-5 text-zinc-500">
               {isCommitted
-                ? "Open a saved trade to review executions, notes, checklist state, session timing, and any chart evidence notes."
+                ? chartTierEnabled
+                  ? "Open a saved trade to review executions, notes, checklist state, session timing, and any chart evidence notes."
+                  : "Open a saved trade to review executions, notes, checklist state, session timing, and P/L evidence."
                 : "These trades were found in the CSV preview. Save the import before opening individual trade reviews."}
             </p>
             <div className="mt-4 grid gap-2">
@@ -565,130 +572,150 @@ export default async function ImportBatchPage({
                 </div>
                 <div className="border-t border-zinc-900 py-3">
                   <div className="text-xs uppercase tracking-wide text-zinc-500">
-                    Chart Review Snapshots
+                    {chartTierEnabled
+                      ? "Chart Review Snapshots"
+                      : "Saved Review Scope"}
                   </div>
                   <div className="mt-1 text-zinc-300">
-                    {importCountLabel(
-                      decisionReviewSnapshots.length,
-                      "snapshot",
-                    )}
+                    {chartTierEnabled
+                      ? importCountLabel(decisionReviewSnapshots.length, "snapshot")
+                      : importCountLabel(plan.savedTrades.length, "saved trade")}
                   </div>
                   <div className="mt-1 text-xs text-zinc-500">
-                    {importCountLabel(
-                      decisionReviewJobs.length,
-                      "chart review item",
-                    )}
-                    ,{" "}
-                    {importCountLabel(
-                      decisionReviewDiagnostics.length,
-                      "technical note",
-                    )}
+                    {chartTierEnabled
+                      ? `${importCountLabel(
+                          decisionReviewJobs.length,
+                          "chart review item",
+                        )}, ${importCountLabel(
+                          decisionReviewDiagnostics.length,
+                          "technical note",
+                        )}`
+                      : `${batch.acceptedExecutionCount} accepted executions`}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div
-              className="ti-panel p-4"
-              data-testid="decision-review-diagnostics"
-              id="chart-review-details"
-            >
-              <h2 className="text-sm font-semibold text-zinc-100">
-                Chart Data Review Status
-              </h2>
-              <p className="mt-1 text-xs leading-5 text-zinc-500">
-                These statuses explain whether saved trades received completed
-                chart data snapshots or stayed in conservative follow-up
-                lanes. These are evidence limits, not instructions.
-              </p>
-              <div className="mt-4 grid gap-2">
-                {decisionReviewJobs.length === 0 ? (
-                  <div className="text-sm text-zinc-500">
-                    No chart review items were created for this import.
-                  </div>
-                ) : (
-                  decisionReviewStatusOrder
-                    .filter((status) => decisionReviewStatusCounts[status] > 0)
-                    .map((status) => (
+            {chartTierEnabled ? (
+              <div
+                className="ti-panel p-4"
+                data-testid="decision-review-diagnostics"
+                id="chart-review-details"
+              >
+                <h2 className="text-sm font-semibold text-zinc-100">
+                  Chart Data Review Status
+                </h2>
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  These statuses explain whether saved trades received completed
+                  chart data snapshots or stayed in conservative follow-up
+                  lanes. These are evidence limits, not instructions.
+                </p>
+                <div className="mt-4 grid gap-2">
+                  {decisionReviewJobs.length === 0 ? (
+                    <div className="text-sm text-zinc-500">
+                      No chart review items were created for this import.
+                    </div>
+                  ) : (
+                    decisionReviewStatusOrder
+                      .filter((status) => decisionReviewStatusCounts[status] > 0)
+                      .map((status) => (
+                        <div
+                          key={status}
+                          className="border-t border-zinc-900 py-3"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span
+                              className={`text-sm ${decisionReviewToneClass(status)}`}
+                            >
+                              {readableDecisionReviewStatus(status)}
+                            </span>
+                            <span className="font-mono text-xs text-sky-300">
+                              {decisionReviewStatusCounts[status]}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-xs leading-5 text-zinc-500">
+                            {diagnosticGuidance(status)}
+                          </div>
+                        </div>
+                      ))
+                  )}
+                </div>
+                {decisionReviewQueuedCount > 0 ||
+                decisionReviewRetryableCount > 0 ? (
+                  <ResumeChartReviewActions
+                    batchId={batch.id}
+                    totalCount={decisionReviewJobs.length}
+                    queuedCount={decisionReviewQueuedCount}
+                    completedCount={decisionReviewCompletedCount}
+                    analysisFailedCount={decisionReviewAnalysisFailedCount}
+                    marketContextUnavailableCount={
+                      decisionReviewMarketContextUnavailableCount
+                    }
+                    skippedLimitCount={decisionReviewSkippedLimitCount}
+                  />
+                ) : null}
+                {decisionReviewDiagnostics.length > 0 ? (
+                  <div className="mt-5 grid gap-2">
+                    <div className="text-xs uppercase tracking-wide text-zinc-500">
+                      Technical Review Buckets
+                    </div>
+                    {Object.entries(decisionReviewDiagnosticCodeCounts).map(
+                      ([code, count]) => (
+                        <div key={code} className="border-t border-zinc-900 py-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className={decisionReviewToneClass(code)}>
+                              {readableDecisionReviewStatus(code)}
+                            </span>
+                            <span className="font-mono text-xs text-zinc-300">
+                              {count}
+                            </span>
+                          </div>
+                        </div>
+                      ),
+                    )}
+                    <div className="mt-4 text-xs uppercase tracking-wide text-zinc-500">
+                      Latest Technical Notes
+                    </div>
+                    {decisionReviewDiagnostics.slice(0, 5).map((diagnostic) => (
                       <div
-                        key={status}
+                        key={diagnostic.id}
                         className="border-t border-zinc-900 py-3"
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <span
-                            className={`text-sm ${decisionReviewToneClass(status)}`}
-                          >
-                            {readableDecisionReviewStatus(status)}
-                          </span>
-                          <span className="font-mono text-xs text-sky-300">
-                            {decisionReviewStatusCounts[status]}
-                          </span>
+                        <div
+                          className={decisionReviewToneClass(diagnostic.status)}
+                        >
+                          {diagnostic.symbol ?? "Import"} /{" "}
+                          {readableDecisionReviewStatus(diagnostic.code)}
                         </div>
-                        <div className="mt-1 text-xs leading-5 text-zinc-500">
-                          {diagnosticGuidance(status)}
+                        <div className="mt-1 text-xs text-zinc-500">
+                          {diagnosticUserMessage(
+                            diagnostic.status,
+                            diagnostic.code,
+                          )}
                         </div>
                       </div>
-                    ))
-                )}
+                    ))}
+                  </div>
+                ) : null}
               </div>
-              {decisionReviewQueuedCount > 0 ||
-              decisionReviewRetryableCount > 0 ? (
-                <ResumeChartReviewActions
-                  batchId={batch.id}
-                  totalCount={decisionReviewJobs.length}
-                  queuedCount={decisionReviewQueuedCount}
-                  completedCount={decisionReviewCompletedCount}
-                  analysisFailedCount={decisionReviewAnalysisFailedCount}
-                  marketContextUnavailableCount={
-                    decisionReviewMarketContextUnavailableCount
-                  }
-                  skippedLimitCount={decisionReviewSkippedLimitCount}
-                />
-              ) : null}
-              {decisionReviewDiagnostics.length > 0 ? (
-                <div className="mt-5 grid gap-2">
-                  <div className="text-xs uppercase tracking-wide text-zinc-500">
-                    Technical Review Buckets
-                  </div>
-                  {Object.entries(decisionReviewDiagnosticCodeCounts).map(
-                    ([code, count]) => (
-                      <div key={code} className="border-t border-zinc-900 py-2">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className={decisionReviewToneClass(code)}>
-                            {readableDecisionReviewStatus(code)}
-                          </span>
-                          <span className="font-mono text-xs text-zinc-300">
-                            {count}
-                          </span>
-                        </div>
-                      </div>
-                    ),
-                  )}
-                  <div className="mt-4 text-xs uppercase tracking-wide text-zinc-500">
-                    Latest Technical Notes
-                  </div>
-                  {decisionReviewDiagnostics.slice(0, 5).map((diagnostic) => (
-                    <div
-                      key={diagnostic.id}
-                      className="border-t border-zinc-900 py-3"
-                    >
-                      <div
-                        className={decisionReviewToneClass(diagnostic.status)}
-                      >
-                        {diagnostic.symbol ?? "Import"} /{" "}
-                        {readableDecisionReviewStatus(diagnostic.code)}
-                      </div>
-                      <div className="mt-1 text-xs text-zinc-500">
-                        {diagnosticUserMessage(
-                          diagnostic.status,
-                          diagnostic.code,
-                        )}
-                      </div>
-                    </div>
-                  ))}
+            ) : (
+              <div
+                className="ti-panel p-4"
+                data-testid="import-execution-only-review-status"
+              >
+                <h2 className="text-sm font-semibold text-zinc-100">
+                  Execution-Only Import Review
+                </h2>
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  This tier keeps saved imports focused on executions, P/L,
+                  notes, checklist state, and review queue progress.
+                </p>
+                <div className="mt-4 grid gap-2 text-sm text-zinc-400">
+                  <div>{importCountLabel(plan.savedTrades.length, "saved trade")}</div>
+                  <div>{batch.acceptedExecutionCount} accepted executions</div>
                 </div>
-              ) : null}
-            </div>
+              </div>
+            )}
           </section>
         </AdvancedDisclosure>
       </div>

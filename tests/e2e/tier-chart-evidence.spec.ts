@@ -152,6 +152,12 @@ test.describe("Trader Intelligence tier chart-evidence matrix", () => {
     await expect(page.locator("body")).not.toContainText(
       "Support/Resistance Exits",
     );
+
+    await page.goto("/intelligence/upload-csv");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("upload-csv-card")).toBeVisible();
+    await expect(page.locator("body")).not.toContainText("chart data");
+    await expect(page.locator("body")).not.toContainText("chart evidence");
   });
 
   test("chart_context tier exposes chart evidence surfaces without tier gates", async ({
