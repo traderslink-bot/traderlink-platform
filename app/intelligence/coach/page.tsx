@@ -456,10 +456,12 @@ function CoachSectionHeader({
 }
 
 function TickerStoryCoachPanel({
+  chartTierEnabled,
   focusLabel,
   thread,
   threadCount,
 }: {
+  chartTierEnabled: boolean;
   focusLabel?: string | null;
   thread: SavedTradeThread | null;
   threadCount: number;
@@ -481,7 +483,8 @@ function TickerStoryCoachPanel({
           <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
             Round trips stay separate for accounting. This coaching view groups
             same-symbol re-entries so the review can catch profit giveback,
-            open re-entries, and day trades that turned into swing exposure.
+            open re-entries, and day trades that turned into swing exposure
+            {chartTierEnabled ? " with chart evidence kept as a later check." : "."}
           </p>
         </div>
         <Link
@@ -529,92 +532,100 @@ function TickerStoryCoachPanel({
                 {thread.fixFirstAction}
               </div>
             </div>
-            <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-8">
-              <MetricCard
-                label="Chart Findings"
-                value={thread.marketContextFindingCount}
-                detail="Certified chart prompts and level checks"
-                tone={thread.marketContextFindingCount > 0 ? "info" : "default"}
-              />
-              <MetricCard
-                label="Add Quality"
-                value={thread.addQualityFindingCount}
-                detail={`${thread.addQualityRiskCount} risk, ${thread.addQualityStrengthCount} strength`}
-                tone={
-                  thread.addQualityRiskCount > 0
-                    ? "warning"
-                    : thread.addQualityStrengthCount > 0
+            {chartTierEnabled ? (
+              <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-8">
+                <MetricCard
+                  label="Chart Findings"
+                  value={thread.marketContextFindingCount}
+                  detail="Certified chart prompts and level checks"
+                  tone={thread.marketContextFindingCount > 0 ? "info" : "default"}
+                />
+                <MetricCard
+                  label="Add Quality"
+                  value={thread.addQualityFindingCount}
+                  detail={`${thread.addQualityRiskCount} risk, ${thread.addQualityStrengthCount} strength`}
+                  tone={
+                    thread.addQualityRiskCount > 0
+                      ? "warning"
+                      : thread.addQualityStrengthCount > 0
+                        ? "success"
+                        : thread.addQualityFindingCount > 0
+                          ? "info"
+                          : "default"
+                  }
+                />
+                <MetricCard
+                  label="Chart Risks"
+                  value={thread.marketContextRiskCount}
+                  detail="Level, add, exit, or profit-protection risk"
+                  tone={thread.marketContextRiskCount > 0 ? "warning" : "default"}
+                />
+                <MetricCard
+                  label="Chart Strengths"
+                  value={thread.marketContextStrengthCount}
+                  detail="Chart evidence strengths worth repeating"
+                  tone={thread.marketContextStrengthCount > 0 ? "success" : "default"}
+                />
+                <MetricCard
+                  label="After Exit"
+                  value={thread.postExitFindingCount}
+                  detail={`${thread.postExitRiskCount} risk, ${thread.postExitStrengthCount} strength`}
+                  tone={
+                    thread.postExitRiskCount > 0
+                      ? "warning"
+                      : thread.postExitStrengthCount > 0
+                        ? "success"
+                        : thread.postExitFindingCount > 0
+                          ? "info"
+                          : "default"
+                  }
+                />
+                <MetricCard
+                  label="Protected Profit"
+                  value={thread.protectedProfitBeforeFadeFindingCount}
+                  detail="Exit strength before a later fade"
+                  tone={
+                    thread.protectedProfitBeforeFadeFindingCount > 0
                       ? "success"
-                      : thread.addQualityFindingCount > 0
-                        ? "info"
-                        : "default"
-                }
-              />
-              <MetricCard
-                label="Chart Risks"
-                value={thread.marketContextRiskCount}
-                detail="Level, add, exit, or profit-protection risk"
-                tone={thread.marketContextRiskCount > 0 ? "warning" : "default"}
-              />
-              <MetricCard
-                label="Chart Strengths"
-                value={thread.marketContextStrengthCount}
-                detail="Chart evidence strengths worth repeating"
-                tone={thread.marketContextStrengthCount > 0 ? "success" : "default"}
-              />
-              <MetricCard
-                label="After Exit"
-                value={thread.postExitFindingCount}
-                detail={`${thread.postExitRiskCount} risk, ${thread.postExitStrengthCount} strength`}
-                tone={
-                  thread.postExitRiskCount > 0
-                    ? "warning"
-                    : thread.postExitStrengthCount > 0
-                      ? "success"
-                      : thread.postExitFindingCount > 0
-                        ? "info"
-                        : "default"
-                }
-              />
-              <MetricCard
-                label="Protected Profit"
-                value={thread.protectedProfitBeforeFadeFindingCount}
-                detail="Exit strength before a later fade"
-                tone={
-                  thread.protectedProfitBeforeFadeFindingCount > 0
-                    ? "success"
-                    : "default"
-                }
-              />
-              <MetricCard
-                label="Support/Resistance Exits"
-                value={thread.exitLevelFindingCount}
-                detail={`${thread.exitLevelRiskCount} risk, ${thread.exitLevelStrengthCount} strength`}
-                tone={
-                  thread.exitLevelRiskCount > 0
-                    ? "warning"
-                    : thread.exitLevelStrengthCount > 0
-                      ? "success"
-                      : thread.exitLevelFindingCount > 0
-                        ? "info"
-                        : "default"
-                }
-              />
-              <MetricCard
-                label="Volume Evidence"
-                value={thread.volumeFindingCount}
-                detail={`${thread.volumeRiskCount} risk, ${thread.volumeStrengthCount} strength`}
-                tone={
-                  thread.volumeRiskCount > 0
-                    ? "warning"
-                    : thread.volumeStrengthCount > 0
-                      ? "success"
-                      : thread.volumeFindingCount > 0
-                        ? "info"
-                        : "default"
-                }
-              />
-            </div>
+                      : "default"
+                  }
+                />
+                <MetricCard
+                  label="Support/Resistance Exits"
+                  value={thread.exitLevelFindingCount}
+                  detail={`${thread.exitLevelRiskCount} risk, ${thread.exitLevelStrengthCount} strength`}
+                  tone={
+                    thread.exitLevelRiskCount > 0
+                      ? "warning"
+                      : thread.exitLevelStrengthCount > 0
+                        ? "success"
+                        : thread.exitLevelFindingCount > 0
+                          ? "info"
+                          : "default"
+                  }
+                />
+                <MetricCard
+                  label="Volume Evidence"
+                  value={thread.volumeFindingCount}
+                  detail={`${thread.volumeRiskCount} risk, ${thread.volumeStrengthCount} strength`}
+                  tone={
+                    thread.volumeRiskCount > 0
+                      ? "warning"
+                      : thread.volumeStrengthCount > 0
+                        ? "success"
+                        : thread.volumeFindingCount > 0
+                          ? "info"
+                          : "default"
+                  }
+                />
+              </div>
+            ) : (
+              <div className="border border-zinc-900 bg-zinc-950/70 p-4 text-sm leading-6 text-zinc-400">
+                This view is execution-only in the current tier. Use the saved
+                round trips and written notes before turning the story into a
+                rule.
+              </div>
+            )}
             <div className="grid gap-2 md:grid-cols-3">
               {thread.reviewEvidence.slice(0, 3).map((item) => (
                 <div
@@ -2198,6 +2209,7 @@ export default async function CoachPage(props: {
         {activeCoachView === "ticker_stories" ? (
         <div id="ticker-story-coach">
           <TickerStoryCoachPanel
+            chartTierEnabled={chartTierEnabled}
             focusLabel={sessionBehavior?.label}
             thread={priorityTickerStory}
             threadCount={tradeThreadModel.multiRoundTripThreadCount}

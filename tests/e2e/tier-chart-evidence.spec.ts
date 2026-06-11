@@ -116,6 +116,15 @@ test.describe("Trader Intelligence tier chart-evidence matrix", () => {
     await page.goto("/intelligence/coach?demo=sample");
     await expect(page.locator("body")).toContainText(/execution evidence checked/i);
     await expect(page.locator("body")).toContainText("execution-supported");
+
+    await page.goto("/intelligence/coach/ticker-stories?demo=sample");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("coach-ticker-story-panel")).toBeVisible();
+    await expect(page.locator("body")).toContainText("execution-only");
+    await expect(page.locator("body")).not.toContainText("Chart Findings");
+    await expect(page.locator("body")).not.toContainText(
+      "Support/Resistance Exits",
+    );
   });
 
   test("chart_context tier exposes chart evidence surfaces without tier gates", async ({
@@ -160,6 +169,16 @@ test.describe("Trader Intelligence tier chart-evidence matrix", () => {
     await expect(page.getByTestId("coach-behavior-report")).toBeVisible();
     await expect(page.getByTestId("coach-behavior-report")).toContainText(
       "chart-supported",
+    );
+
+    await page.goto("/intelligence/coach/ticker-stories?demo=sample");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("coach-ticker-story-panel")).toBeVisible();
+    await expect(page.getByTestId("coach-ticker-story-panel")).toContainText(
+      "Chart Findings",
+    );
+    await expect(page.getByTestId("coach-ticker-story-panel")).toContainText(
+      "Support/Resistance Exits",
     );
   });
 });

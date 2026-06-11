@@ -17072,3 +17072,42 @@ Best next step:
 
 - Commit this ticker-story tier-gate slice. Then continue with another direct
   route audit for chart/candle/support-resistance wording if needed.
+
+# 2026-06-11 coach ticker-story panel tier gate pass
+
+- Continued the direct-route chart/candle wording audit on the coach ticker-story
+  view.
+- Gated the coach ticker-story chart metric cards behind the active paid
+  chart-context tier:
+  - free execution-only mode now shows an execution-only note instead of chart
+    findings, support/resistance exits, chart risks, chart strengths, or volume
+    evidence,
+  - paid chart-context mode still shows the chart metric cards when chart
+    evidence is allowed.
+- Extended the tier Playwright matrix to visit
+  `/intelligence/coach/ticker-stories?demo=sample` in both free and paid modes.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused tier/behavior Vitest passed: 2 files, 5 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Commit this coach ticker-story tier-gate slice. Then continue the deliberate
+  product-pass port with another small route audit for chart/candle/support-
+  resistance wording while preserving `/intelligence`, journal-level-analysis,
+  and levels-system-v2-only.
