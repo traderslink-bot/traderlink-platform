@@ -17548,3 +17548,19 @@ Best next step:
 - Review the final diff/commit stack, then prepare a PR/review summary for this
   deliberate port branch. Keep any future source-branch UI ideas as manual
   `/intelligence` ports only.
+
+# 2026-06-12 deliberate port PR packaging
+
+- Added
+  `src/docs/trader-intelligence-v2-deliberate-port-review-summary-2026-06-12.md`
+  as the PR/review package for `codex/port-v2-candle-analytics-main`.
+- The summary records accepted scope, rejected source-branch hunks, preserved
+  requirements, verification results, residual risks, and recommended review
+  focus.
+- Branch status before packaging was clean.
+
+Best next step:
+
+- Open a review/PR from `codex/port-v2-candle-analytics-main` after confirming
+  the intended target branch. Continue treating any remaining
+  `codex/trader-ui-product-pass` UI ideas as manual `/intelligence` ports only.
