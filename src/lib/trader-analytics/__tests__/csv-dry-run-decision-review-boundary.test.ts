@@ -16,7 +16,7 @@ describe("CSV dry-run decision-review boundary", () => {
       "app/intelligence/import-dry-run/import-dry-run-client.tsx",
     );
 
-    expect(clientSource).not.toContain("levels-system-phase1");
+    expect(clientSource).not.toContain("levels-system-v2");
     expect(clientSource).not.toContain("runTradeAnalysis");
     expect(clientSource).not.toContain("buildTradeAnalysisSummary");
     expect(clientSource).not.toContain("support-resistance");

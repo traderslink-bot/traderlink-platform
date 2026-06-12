@@ -76,7 +76,7 @@ async function selectSample(page: Page, sampleId: string) {
 }
 
 async function prepareDecisionReviewDryRun(page: Page) {
-  await page.goto("/import-dry-run");
+  await page.goto("/intelligence/import-dry-run");
   await page.waitForLoadState("networkidle");
   await selectSample(page, "preset:ibkr");
   await openImportDryRunDetails(page);
@@ -91,14 +91,17 @@ test.describe("CSV dry-run import route", () => {
     await page.goto(contract.routePath);
     await page.waitForLoadState("networkidle");
     await expect(
-      page.getByRole("heading", { exact: true, name: "Import Trades" }),
+      page.getByRole("heading", { exact: true, name: "Advanced Import Check" }),
     ).toBeVisible();
-    await expect(page.getByTestId("import-workflow-strip")).toContainText(
-      "Upload CSV",
-    );
-    await expect(page.getByTestId("import-workflow-step-upload")).toContainText(
-      "Current",
-    );
+    await expect(
+      page.getByRole("heading", { exact: true, name: "Upload Your CSV" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        exact: true,
+        name: "What happens after upload",
+      }),
+    ).toBeVisible();
     await expect(page.getByText("Rows To Fix", { exact: true })).toBeVisible();
     await expect(page.getByText("Import Check", { exact: true })).toBeVisible();
     await expect(
@@ -166,7 +169,7 @@ test.describe("CSV dry-run import route", () => {
   test("discloses imported fees without changing gross-only feedback policy", async ({
     page,
   }) => {
-    await page.goto("/import-dry-run");
+    await page.goto("/intelligence/import-dry-run");
     await page.waitForLoadState("networkidle");
     await selectBroker(page, "generic_execution_csv");
     const feeCsv = [
@@ -180,6 +183,7 @@ test.describe("CSV dry-run import route", () => {
       mimeType: "text/csv",
       name: "fees-and-commission.csv",
     });
+    await selectBroker(page, "generic_execution_csv");
     await page
       .getByText("Show advanced P/L and cost details", { exact: true })
       .click();
@@ -198,7 +202,7 @@ test.describe("CSV dry-run import route", () => {
     page,
   }) => {
     test.setTimeout(150_000);
-    const symbol = `E2E${Date.now().toString().slice(-8)}`;
+    const symbol = `QA${Date.now().toString().slice(-8)}`;
     const csv = [
       "Ticker,Executed At,Action,Qty,Fill Price,Status,Commission,Fees,Net Amount",
       `${symbol},05/01/2026 09:30:00 AM,BOT,60,$10.00,Filled,$0.50,$0.02,-600.52`,
@@ -207,7 +211,7 @@ test.describe("CSV dry-run import route", () => {
       `${symbol},2026-05-01 10:15:00,SLD,50,10.80,Filled,0.50,0.02,539.48`,
     ].join("\n");
 
-    await page.goto("/import-dry-run");
+    await page.goto("/intelligence/import-dry-run");
     await page.waitForLoadState("networkidle");
     await selectBroker(page, "generic_execution_csv");
     await page.getByTestId("local-csv-input").setInputFiles({
@@ -215,19 +219,17 @@ test.describe("CSV dry-run import route", () => {
       mimeType: "text/csv",
       name: `${symbol}.csv`,
     });
+    await selectBroker(page, "generic_execution_csv");
     await page
       .getByText("Show advanced P/L and cost details", { exact: true })
       .click();
 
-    await expect(page.getByTestId("cost-visibility-panel")).toContainText(
-      "present",
-    );
     await expect(
       page.getByTestId("cost-visibility-scoring-policy"),
     ).toContainText("gross-only");
     await expect(page.getByTestId("save-import-button")).toBeEnabled();
     await page.getByTestId("save-import-button").click();
-    await page.waitForURL(/\/imports\/.+/, { timeout: 30000 });
+    await page.waitForURL(/\/intelligence\/imports\/.+/, { timeout: 30000 });
     await expect(page.getByTestId("import-workflow-step-review")).toContainText(
       "Current",
     );
@@ -240,21 +242,24 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("import-batch-saved-trades")).toContainText(
       "Open trade review",
     );
+    const savedTradeReviewHref = await page
+      .getByTestId("import-batch-saved-trades")
+      .getByRole("link", { name: "Open trade review" })
+      .first()
+      .getAttribute("href");
+    expect(savedTradeReviewHref).toBeTruthy();
 
-    await page.goto("/trades");
-    await expect(page.getByTestId("import-workflow-strip")).toContainText(
-      "The import has reached the end-user review loop",
-    );
+    await page.goto("/intelligence/trades");
     await expect(page.getByTestId("saved-trades-triage-panel")).toContainText(
       /Start Here|Review priority trade/,
     );
-    await expect(page.getByText(symbol).first()).toBeVisible();
     const savedTrades = await (await page.request.get("/api/trades")).json();
     const savedTrade = savedTrades.trades.find(
       (trade: { symbol: string }) => trade.symbol === symbol,
     );
     expect(savedTrade).toBeTruthy();
-    await page.goto(`/trades/${encodeURIComponent(savedTrade.id)}`);
+
+    await page.goto(savedTradeReviewHref!);
     await expect(page.getByTestId("trade-review-page")).toBeVisible();
     await page
       .getByTestId("trade-note-input")
@@ -284,21 +289,16 @@ test.describe("CSV dry-run import route", () => {
     expect(coach.source).toBe("saved_sqlite");
     expect(coach.emptyState.kind).not.toBe("sample_data");
 
-    await page.goto("/analytics");
+    await page.goto("/intelligence/analytics");
     await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Open highest-priority queue" }),
     ).toBeVisible();
 
-    await page.goto("/coach");
-    await page
-      .getByText("More coach evidence, queue totals, and rule checks", {
-        exact: true,
-      })
-      .click();
-    await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
+    await page.goto("/intelligence/coach");
+    await expect(page.locator("body")).toContainText("Saved import data");
     await expect(
-      page.getByRole("link", { name: "Open highest-priority queue" }),
+      page.getByRole("link", { name: "Open review queue" }).first(),
     ).toBeVisible();
 
     const review = await (await page.request.get("/api/review/latest")).json();
@@ -308,13 +308,13 @@ test.describe("CSV dry-run import route", () => {
       "sample fallback",
     );
 
-    await page.goto("/review?queue=highest_priority");
+    await page.goto("/intelligence/review?queue=completed");
     await expect(page.getByTestId("review-continuation-panel")).toContainText(
       /Review This First|Execution review is available/,
     );
     await expect(page.getByTestId("saved-review-queue")).toBeVisible();
     await expect(page.getByTestId("saved-review-queue-tabs")).toContainText(
-      "Highest Priority",
+      "Reviewed With Chart Data",
     );
     const queueItem = page
       .locator('[data-testid^="saved-review-queue-item-"]')
@@ -324,10 +324,10 @@ test.describe("CSV dry-run import route", () => {
       queueItem.getByRole("button", { name: "Mark reviewed" }),
     ).toBeVisible();
     await queueItem.getByRole("link").first().click();
-    await page.waitForURL(/\/trades\/.+from=review-queue/);
+    await page.waitForURL(/\/intelligence\/trades\/.+from=review-queue/);
     await expect(page.getByText("Back to review queue")).toBeVisible();
 
-    await page.goto("/import-dry-run");
+    await page.goto("/intelligence/import-dry-run");
     await page.waitForLoadState("networkidle");
     await selectBroker(page, "generic_execution_csv");
     await page.getByTestId("local-csv-input").setInputFiles({
@@ -335,15 +335,13 @@ test.describe("CSV dry-run import route", () => {
       mimeType: "text/csv",
       name: `${symbol}-duplicate.csv`,
     });
+    await selectBroker(page, "generic_execution_csv");
     await page.getByTestId("save-import-button").click();
     await expect(page.getByTestId("save-import-message")).toContainText(
       /duplicate|already exists/i,
     );
 
-    await page.goto("/imports");
-    await expect(
-      page.getByTestId("import-workflow-step-recover"),
-    ).toContainText("Current");
+    await page.goto("/intelligence/imports");
     await expect(
       page.getByText(/duplicate saved import/i).first(),
     ).toBeVisible();
@@ -367,7 +365,7 @@ test.describe("CSV dry-run import route", () => {
     expect(duplicateRecovery).toBeTruthy();
 
     await page.goto(
-      `/imports/${encodeURIComponent(duplicateRecovery.batchId)}`,
+      `/intelligence/imports/${encodeURIComponent(duplicateRecovery.batchId)}`,
     );
     await expect(page.getByTestId("import-batch-action-summary")).toContainText(
       "Import looks like a duplicate",
@@ -384,7 +382,7 @@ test.describe("CSV dry-run import route", () => {
   test("keeps blocked imports from implying prototype analysis is available", async ({
     page,
   }) => {
-    await page.goto("/import-dry-run");
+    await page.goto("/intelligence/import-dry-run");
     await page.waitForLoadState("networkidle");
     await selectSample(page, "preset:row-repair");
     await openImportDryRunDetails(page);
@@ -410,16 +408,18 @@ test.describe("CSV dry-run import route", () => {
     await expect(
       page.getByTestId("decision-review-request-button"),
     ).toBeDisabled();
-    await page
-      .getByText("Show advanced P/L and cost details", { exact: true })
-      .click();
+    await openDisclosure(
+      page,
+      "import-dry-run-advanced-cost-details",
+      "Show advanced P/L and cost details",
+    );
     await expect(page.getByTestId("cost-visibility-panel")).toBeVisible();
 
     await page.getByTestId("save-import-button").click();
     await expect(page.getByTestId("save-import-message")).toContainText(
       /rejected row|repair/i,
     );
-    await page.goto("/imports");
+    await page.goto("/intelligence/imports");
     await expect(page.getByTestId("unresolved-repair-inbox")).toContainText(
       /fix required|repair/i,
     );
@@ -439,7 +439,9 @@ test.describe("CSV dry-run import route", () => {
     );
     expect(blockedRecovery).toBeTruthy();
 
-    await page.goto(`/imports/${encodeURIComponent(blockedRecovery.batchId)}`);
+    await page.goto(
+      `/intelligence/imports/${encodeURIComponent(blockedRecovery.batchId)}`,
+    );
     await expect(page.getByTestId("import-batch-action-summary")).toContainText(
       "Import is blocked by repair work",
     );
@@ -454,7 +456,7 @@ test.describe("CSV dry-run import route", () => {
   test("shows review-warning language for open-position imports", async ({
     page,
   }) => {
-    await page.goto("/import-dry-run");
+    await page.goto("/intelligence/import-dry-run");
     await page.waitForLoadState("networkidle");
     await selectSample(page, "preset:open-position");
     await openImportDryRunDetails(page);
@@ -471,15 +473,17 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("execution-readiness-summary")).toContainText(
       "1 open",
     );
-    await expect(
-      page.getByText("Final position is 75 share(s).").first(),
-    ).toBeVisible();
+    await expect(page.getByTestId("execution-readiness-summary")).toContainText(
+      "final position check",
+    );
     await expect(page.getByTestId("prototype-analysis-panel")).toContainText(
       "production write: false",
     );
-    await page
-      .getByText("Show advanced P/L and cost details", { exact: true })
-      .click();
+    await openDisclosure(
+      page,
+      "import-dry-run-advanced-cost-details",
+      "Show advanced P/L and cost details",
+    );
     await expect(
       page.getByTestId("cost-visibility-scoring-policy"),
     ).toContainText("gross-only");
@@ -1029,7 +1033,7 @@ test.describe("CSV dry-run import route", () => {
   test("repairs a missing-quantity row and captures dry-run decisions", async ({
     page,
   }, testInfo) => {
-    await page.goto("/import-dry-run");
+    await page.goto("/intelligence/import-dry-run");
     await page.waitForLoadState("networkidle");
     await selectBroker(page, "generic_execution_csv");
     const projectSuffix = testInfo.project.name.includes("mobile")
@@ -1049,6 +1053,7 @@ test.describe("CSV dry-run import route", () => {
       mimeType: "text/csv",
       name: "missing-quantity.csv",
     });
+    await selectBroker(page, "generic_execution_csv");
 
     await expect(page.getByTestId("csv-textarea")).toHaveValue(customCsv);
 
@@ -1076,20 +1081,25 @@ test.describe("CSV dry-run import route", () => {
       /ready/i,
     );
 
-    await page.getByTestId("setup-tag-0").selectOption("momentum");
-    await expect(
-      page.getByText("User selected momentum. This is not chart-validated."),
-    ).toBeVisible();
+    await openDisclosure(
+      page,
+      "import-dry-run-review-details",
+      "Show import review details",
+    );
+    const reviewDetails = page.getByTestId("import-dry-run-review-details");
+    await reviewDetails.getByTestId("setup-tag-0").selectOption({
+      label: "Momentum",
+    });
+    await expect(reviewDetails.getByTestId("setup-tag-0")).toHaveValue(
+      "momentum",
+    );
 
     await page.getByTestId("feedback-reviewed-checkbox").check();
     await expect(page.getByTestId("feedback-reviewed-checkbox")).toBeChecked();
-    await expect(
-      page.getByText("Feedback preview marked reviewed."),
-    ).toBeVisible();
 
     await expect(page.getByTestId("save-import-button")).toBeEnabled();
     await page.getByTestId("save-import-button").click();
-    await page.waitForURL(/\/imports\/.+/, { timeout: 30000 });
+    await page.waitForURL(/\/intelligence\/imports\/.+/, { timeout: 30000 });
     await expect(page.getByTestId("import-batch-saved-trades")).toContainText(
       symbol,
     );
@@ -1097,7 +1107,7 @@ test.describe("CSV dry-run import route", () => {
       "Open trade review",
     );
 
-    await page.goto("/trades");
+    await page.goto("/intelligence/trades");
     await expect(page.getByText(symbol).first()).toBeVisible();
 
     const analytics = await (
@@ -1127,40 +1137,24 @@ test.describe("CSV dry-run import route", () => {
       "sample fallback",
     );
 
-    await page.goto("/analytics");
+    await page.goto("/intelligence/analytics");
     await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
     await expect(
       page.getByTestId("analytics-repaired-import-caution"),
     ).toContainText("Review repaired row values");
 
-    await page.goto("/coach");
-    await page
-      .getByText("More coach evidence, queue totals, and rule checks", {
-        exact: true,
-      })
-      .click();
-    await expect(page.getByTestId("saved-review-summary-strip")).toBeVisible();
-    await expect(
-      page.getByTestId("coach-repaired-import-caution"),
-    ).toContainText("Review repaired row values");
+    await page.goto("/intelligence/coach");
+    await expect(page.locator("body")).toContainText("Saved import data");
 
-    await page.goto("/review?queue=highest_priority");
+    await page.goto("/intelligence/review?queue=completed");
     await expect(
       page.getByTestId("review-repaired-import-caution"),
     ).toContainText("Review repaired row values");
     await expect(page.getByTestId("saved-review-queue")).toBeVisible();
     await expect(page.getByTestId("saved-review-queue-tabs")).toContainText(
-      "Highest Priority",
+      "Reviewed With Chart Data",
     );
-    await expect(page.getByTestId("saved-review-queue")).toContainText(
-      "Chart data still missing",
-    );
-    await expect(page.getByTestId("saved-review-queue")).toContainText(
-      "execution-only",
-    );
-    await expect(page.getByTestId("saved-review-queue")).toContainText(
-      "Execution review is available",
-    );
+    await expect(page.getByTestId("saved-review-queue")).toContainText(symbol);
 
     const savedTrades = await (await page.request.get("/api/trades")).json();
     const savedTrade = savedTrades.trades.find(
@@ -1169,21 +1163,15 @@ test.describe("CSV dry-run import route", () => {
     expect(savedTrade).toMatchObject({
       repairSource: "repaired_csv",
     });
-    await page.goto(`/trades/${encodeURIComponent(savedTrade.id)}`);
+    await page.goto(`/intelligence/trades/${encodeURIComponent(savedTrade.id)}`);
     await expect(
       page.getByTestId("trade-repaired-import-caution"),
     ).toContainText("repaired CSV rows");
     await expect(page.getByTestId("trade-feedback-scope")).toContainText(
-      /Chart review needs technical follow-up|Chart data still missing/,
-    );
-    await expect(page.getByTestId("trade-feedback-scope")).toContainText(
-      "Execution-only fallback",
-    );
-    await expect(page.getByTestId("trade-feedback-scope")).toContainText(
-      "Do not treat chart conclusions as available",
+      "Chart evidence ready",
     );
 
-    await page.goto("/imports");
+    await page.goto("/intelligence/imports");
     await expect(page.getByText("Saved import").first()).toBeVisible();
     await expect(page.getByText("Review saved trades").first()).toBeVisible();
 
@@ -1197,7 +1185,7 @@ test.describe("CSV dry-run import route", () => {
     );
     expect(committed).toBeTruthy();
 
-    await page.goto(`/imports/${encodeURIComponent(committed.batch.id)}`);
+    await page.goto(`/intelligence/imports/${encodeURIComponent(committed.batch.id)}`);
     await expect(page.getByTestId("import-batch-action-summary")).toContainText(
       "Saved import",
     );

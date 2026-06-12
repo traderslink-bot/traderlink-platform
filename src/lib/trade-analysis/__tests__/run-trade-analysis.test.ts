@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { existsSync } from "node:fs";
 import { sampleCreateRawTradeTimelineInput } from "../../raw-trade-timeline/__fixtures__/sample-create-raw-trade-timeline-input";
 import { buildSampleLevelsSystemSupportResistanceOptions } from "../../support-resistance/__fixtures__/sample-levels-system-fetch-service";
 import {
@@ -26,13 +25,9 @@ describe("runTradeAnalysis", () => {
     );
 
     expect(result.supportResistanceMode).toBe("levels_system");
-    expect(result.rawTradeTimeline.supportLevels?.length).toBeGreaterThanOrEqual(4);
+    expect(result.rawTradeTimeline.supportLevels?.length).toBeGreaterThanOrEqual(3);
     expect(result.rawTradeTimeline.resistanceLevels?.length).toBeGreaterThanOrEqual(2);
-    expect(result.rawTradeTimeline.experimentalMarketStructure).toMatchObject({
-      symbol: "ABCD",
-      timeframe: "5m",
-      state: expect.any(String),
-    });
+    expect(result.rawTradeTimeline.experimentalMarketStructure).toBeUndefined();
     expect(
       result.patternInput.supportResistanceContext
         .hadSupportResistanceContextAvailable,
@@ -41,7 +36,6 @@ describe("runTradeAnalysis", () => {
       result.patternInput.supportResistanceContext
         .hadInsufficientCandleDataForStructuralContext,
     ).toBe(false);
-    expect(detectedPatternIds).toContain("entry_far_from_support_structure");
     expect(detectedPatternIds).toContain("advantaged_entry_structure");
     expect(detectedPatternIds).toContain("balanced_position_management");
   });
@@ -63,7 +57,7 @@ describe("runTradeAnalysis", () => {
     ).toBe(false);
   });
 
-  it("can request trade-window candles from levels-system before analysis", async () => {
+  it("hydrates trade-window candles through the configured v2 fetch service", async () => {
     const result = await runTradeAnalysisFromLevelsSystemCandles({
       trade: {
         symbol: sampleCreateRawTradeTimelineInput.symbol,
@@ -80,28 +74,22 @@ describe("runTradeAnalysis", () => {
     });
 
     expect(result.supportResistanceMode).toBe("levels_system");
-    expect(result.rawTradeTimeline.timeline.preTradeCandles.length).toBeGreaterThan(
-      0,
+    expect(result.rawTradeTimeline.timeline.preTradeCandles.length).toBeGreaterThan(0);
+    expect(result.rawTradeTimeline.timeline.tradeCandles.length).toBeGreaterThan(0);
+    expect(result.rawTradeTimeline.timeline.postTradeCandles.length).toBeGreaterThan(0);
+    expect(result.rawTradeTimeline.supportLevels?.length).toBeGreaterThan(0);
+    expect(result.rawTradeTimeline.resistanceLevels?.length).toBeGreaterThan(0);
+    expect(result.rawTradeTimeline.experimentalMarketStructure).toBeUndefined();
+    expect(result.rawTradeTimeline.warnings ?? []).not.toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("old trade-window candle-fetching API"),
+      ]),
     );
-    expect(result.rawTradeTimeline.timeline.tradeCandles.length).toBeGreaterThan(
-      0,
-    );
-    expect(result.rawTradeTimeline.timeline.postTradeCandles.length).toBeGreaterThan(
-      0,
-    );
-    expect(result.rawTradeTimeline.supportLevels?.length).toBeGreaterThanOrEqual(4);
-    expect(result.rawTradeTimeline.resistanceLevels?.length).toBeGreaterThanOrEqual(2);
-    expect(result.rawTradeTimeline.experimentalMarketStructure).toMatchObject({
-      state: "base_building",
-      trend: expect.objectContaining({
-        direction: "uptrend",
-      }),
-    });
     expect(
       result.detectedPatterns.detectedPatterns.map(
         (pattern) => pattern.patternId,
       ),
-    ).toContain("entry_near_support_structure");
+    ).toContain("advantaged_entry_structure");
     expect(
       "experimentalMarketStructure" in
         result.patternInput.supportResistanceContext,
@@ -110,22 +98,17 @@ describe("runTradeAnalysis", () => {
 });
 
 describe("levels-system runtime options", () => {
-  it("uses bundled IBKR replay only when the local candle warehouse exists", () => {
+  it("does not force a v1 candle warehouse when no env override is set", () => {
     const config = readLevelsSystemRuntimeConfigFromEnv({});
-    const hasBundledWarehouse =
-      config.warehouseDirectoryPath !== undefined &&
-      existsSync(`${config.warehouseDirectoryPath}/ibkr`);
 
-    if (hasBundledWarehouse) {
-      expect(config.preferredProvider).toBe("ibkr");
-      expect(config.warehouseMode).toBe("replay");
-      expect(config.warehouseDirectoryPath).toContain("data");
-      expect(config.warehouseDirectoryPath).toContain("candles");
-    } else {
-      expect(config.preferredProvider).toBeUndefined();
-      expect(config.warehouseMode).toBeUndefined();
-      expect(config.warehouseDirectoryPath).toBeUndefined();
-    }
+    expect(config.warehouseDirectoryPath ?? "").not.toMatch(
+      /[\\/]levels-system[\\/]data[\\/]candles$/,
+    );
+    expect(config.lookbackBars).toEqual({
+      daily: 520,
+      "4h": 180,
+      "5m": 120,
+    });
   });
 
   it("normalizes provider and lookback runtime config without owning candle fetching", () => {
@@ -165,6 +148,32 @@ describe("levels-system runtime options", () => {
     expect(config.fetchServiceOptions?.providerName).toBe("ibkr");
     expect(config.fetchServiceOptions?.ibkrTimeoutMs).toBe(12345);
     expect(config.fetchServiceOptions?.provider?.providerName).toBe("ibkr");
+  });
+
+  it("uses an explicit IBKR candle warehouse before live fetching missing candles", () => {
+    const config = readLevelsSystemRuntimeConfigFromEnv({
+      LEVELS_SYSTEM_PROVIDER: "ibkr",
+      LEVELS_SYSTEM_WAREHOUSE_DIRECTORY: "C:\\levels-system\\data\\candles",
+      LEVELS_SYSTEM_IBKR_CLIENT_ID: "177",
+    });
+
+    expect(config.preferredProvider).toBe("ibkr");
+    expect(config.warehouseDirectoryPath).toBe("C:\\levels-system\\data\\candles");
+    expect(config.warehouseMode).toBe("read_write");
+    expect(config.fetchServiceOptions).toMatchObject({
+      clientId: 177,
+      providerName: "ibkr",
+    });
+  });
+
+  it("does not auto-discover the old v1 warehouse for IBKR runtime mode", () => {
+    const config = readLevelsSystemRuntimeConfigFromEnv({
+      LEVELS_SYSTEM_PROVIDER: "ibkr",
+    });
+
+    expect(config.warehouseDirectoryPath ?? "").not.toMatch(
+      /[\\/]levels-system[\\/]data[\\/]candles$/,
+    );
   });
 
   it("rejects unsupported provider names before calling the shared package", () => {

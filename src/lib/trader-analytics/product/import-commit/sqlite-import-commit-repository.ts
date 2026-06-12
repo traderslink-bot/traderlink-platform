@@ -698,6 +698,12 @@ export class SqliteImportCommitRepository
       .map((row) => rowJson<PersistedDecisionReviewDiagnostic>(row));
   }
 
+  deleteDecisionReviewDiagnosticsForTrade(tradeId: string): void {
+    this.db
+      .prepare("DELETE FROM decision_review_diagnostics WHERE saved_trade_id = ?")
+      .run(tradeId);
+  }
+
   getLatestCommittedBatch(accountId: string): ImportCommitBatchRecord | null {
     const row = this.db
       .prepare(
@@ -1046,6 +1052,64 @@ export class SqliteImportCommitRepository
     this.db
       .prepare("UPDATE saved_trades SET json = ? WHERE id = ?")
       .run(json(updated), trade.id);
+
+    return savedTradeToAnalyticsTrade(updated, this.listTradeNotes(trade.id));
+  }
+
+  markTradeClosedByUser(args: {
+    userId: TraderAnalyticsUserId;
+    tradeId: SavedExecutionTradeId;
+    updatedAt?: string;
+  }): SavedExecutionTrade | null {
+    const trade = this.getSavedTrade(args.tradeId);
+    if (!trade || trade.userId !== args.userId) {
+      return null;
+    }
+
+    const updatedAt = args.updatedAt ?? new Date().toISOString();
+    const updated: ImportCommitSavedTradeRecord = {
+      ...trade,
+      closedAt: trade.closedAt ?? updatedAt,
+      lifecycleStatus: "closed",
+      reviewStatus: "ignored",
+      userLifecycleOverride: {
+        reason: "marked_closed_by_user",
+        status: "closed",
+        updatedAt,
+      },
+    };
+    const jobs = this.db
+      .prepare("SELECT json FROM decision_review_jobs WHERE saved_trade_id = ?")
+      .all(trade.id)
+      .map((row) => rowJson<ImportCommitDecisionReviewJobRecord>(row));
+    const blockedJobs = jobs.filter(
+      (job) => job.status === "blocked_open_trade",
+    );
+
+    const transaction = this.db.transaction(() => {
+      this.db
+        .prepare(
+          "UPDATE saved_trades SET lifecycle_status = ?, json = ? WHERE id = ?",
+        )
+        .run(updated.lifecycleStatus, json(updated), trade.id);
+
+      for (const job of blockedJobs) {
+        const updatedJob: ImportCommitDecisionReviewJobRecord = {
+          ...job,
+          reason:
+            "Trader marked the open or swing trade closed; this item is removed from open/swing review.",
+          status: "skipped_limit",
+        };
+
+        this.db
+          .prepare(
+            "UPDATE decision_review_jobs SET status = ?, json = ? WHERE id = ?",
+          )
+          .run(updatedJob.status, json(updatedJob), updatedJob.id);
+      }
+    });
+
+    transaction();
 
     return savedTradeToAnalyticsTrade(updated, this.listTradeNotes(trade.id));
   }

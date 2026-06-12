@@ -16,6 +16,12 @@ import {
 } from "@/src/lib/trader-analytics/server/saved-review-queue";
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
 import { sellStartingReviewLimitationCopy } from "@/src/lib/trader-analytics/product/trade-display-copy";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
+import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
+import { OpenSwingMarkClosedButton } from "./open-swing-mark-closed-button";
 
 export const metadata: Metadata = {
   title: "Saved Trades | Trader Intelligence",
@@ -571,7 +577,11 @@ export default async function TradesPage({
     activeBrowseMode === "needs_review" ||
     activeBrowseMode === "open_swing";
   const data = buildSavedOrSampleTraderAnalyticsViewModel();
-  const allTrades = data.repository.listTrades(data.userId);
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
+  const allTrades = filterCustomerSavedTrades(
+    data.repository.listTrades(data.userId),
+  );
   const latestReport = data.viewModel.latestReport;
   const reportRowsByTradeId = new Map(
     latestReport.sourceTradeIds
@@ -588,7 +598,7 @@ export default async function TradesPage({
         typeof latestReport.report.trades[number],
       ] => Boolean(entry)),
   );
-  const decisionReviewSnapshots =
+  const savedDecisionReviewSnapshots =
     data.mode === "saved"
       ? [
           ...new Set(
@@ -600,6 +610,12 @@ export default async function TradesPage({
           data.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
       : [];
+  const chartTierEnabled =
+    chartContextAllowed &&
+    (data.mode === "sample" || savedDecisionReviewSnapshots.length > 0);
+  const decisionReviewSnapshots = chartTierEnabled
+    ? savedDecisionReviewSnapshots
+    : [];
   const tradeThreadModel = buildSavedTradeThreadReadModel({
     decisionReviewSnapshots,
     report: latestReport,
@@ -737,6 +753,19 @@ export default async function TradesPage({
       count: tradeThreadModel.threads.filter((thread) => storyMatchesFilter(thread, "needs_context")).length,
     },
   ];
+  const chartStoryFilterIds = new Set<TradeStoryFilter>([
+    "chart_findings",
+    "add_quality",
+    "post_exit",
+    "protected_profit",
+    "exit_levels",
+    "levels",
+    "volume",
+    "needs_context",
+  ]);
+  const visibleStoryFilters = chartTierEnabled
+    ? storyFilters
+    : storyFilters.filter((filter) => !chartStoryFilterIds.has(filter.id));
   const highlightedThreads = [
     ...(activeThread ? [activeThread] : []),
     ...tradeThreadModel.threads.filter(
@@ -751,6 +780,7 @@ export default async function TradesPage({
           repository: data.repository,
           activeFilter:
             activeReviewLane === "none" ? "all" : activeReviewLane,
+          includeChartContext: chartContextAllowed,
         })
       : null;
   const queueByTradeId = new Map(
@@ -771,9 +801,14 @@ export default async function TradesPage({
     ),
   );
   const openOrSwingTradeIds = new Set(
-    allTrades
-      .filter((trade) => rowLooksOpenOrSwing(reportRowsByTradeId.get(trade.id)))
-      .map((trade) => trade.id),
+    [
+      ...allTrades
+        .filter((trade) => rowLooksOpenOrSwing(reportRowsByTradeId.get(trade.id)))
+        .map((trade) => trade.id),
+      ...(savedReviewQueue?.allItems ?? [])
+        .filter((item) => item.lane === "blocked_open_trade")
+        .map((item) => item.savedTradeId),
+    ],
   );
   const needsReviewTradeIds = new Set(
     (savedReviewQueue?.allItems ?? [])
@@ -1073,38 +1108,44 @@ export default async function TradesPage({
             detail="Trades the queue recommends checking first."
             tone="warning"
           />
+          {chartTierEnabled ? (
+            <MetricCard
+              label="Needs Chart Data"
+              value={marketGapCount}
+              detail="Execution review is available while chart data is still missing."
+              tone="warning"
+            />
+          ) : null}
           <MetricCard
-            label="Needs Chart Data"
-            value={marketGapCount}
-            detail="Execution review is available while chart data is still missing."
-            tone="warning"
-          />
-          <MetricCard
-            label="Open Trades"
+            label="Open or Swing"
             value={openBlockCount}
             detail="Trades waiting until the position is flat."
             tone="info"
           />
-          <MetricCard
-            label="Chart Findings"
-            value={tradeThreadModel.marketContextFindingCount}
-            detail="Certified chart findings and safe review prompts"
-            tone={tradeThreadModel.marketContextFindingCount > 0 ? "info" : "default"}
-          />
-          <MetricCard
-            label="Add Quality"
-            value={tradeThreadModel.addQualityFindingCount}
-            detail={`${tradeThreadModel.addQualityRiskCount} risk, ${tradeThreadModel.addQualityStrengthCount} strength, ${tradeThreadModel.addQualityReviewPromptCount} prompt`}
-            tone={
-              tradeThreadModel.addQualityRiskCount > 0
-                ? "warning"
-                : tradeThreadModel.addQualityStrengthCount > 0
-                  ? "success"
-                  : tradeThreadModel.addQualityFindingCount > 0
-                    ? "info"
-                    : "default"
-            }
-          />
+          {chartTierEnabled ? (
+            <>
+              <MetricCard
+                label="Chart Findings"
+                value={tradeThreadModel.marketContextFindingCount}
+                detail="Certified chart findings and safe review prompts"
+                tone={tradeThreadModel.marketContextFindingCount > 0 ? "info" : "default"}
+              />
+              <MetricCard
+                label="Add Quality"
+                value={tradeThreadModel.addQualityFindingCount}
+                detail={`${tradeThreadModel.addQualityRiskCount} risk, ${tradeThreadModel.addQualityStrengthCount} strength, ${tradeThreadModel.addQualityReviewPromptCount} prompt`}
+                tone={
+                  tradeThreadModel.addQualityRiskCount > 0
+                    ? "warning"
+                    : tradeThreadModel.addQualityStrengthCount > 0
+                      ? "success"
+                      : tradeThreadModel.addQualityFindingCount > 0
+                        ? "info"
+                        : "default"
+                }
+              />
+            </>
+          ) : null}
         </section>
 
         <section
@@ -1159,11 +1200,11 @@ export default async function TradesPage({
                 </div>
               </Link>
             ))}
-          </div>
-          <div className="mt-4 border-t border-zinc-900 pt-4 text-sm leading-6 text-zinc-400">
-            Round trips show each flat-to-flat trade. Ticker stories group same-symbol re-entries so you can review whether later attempts protected profit, gave back profit, stayed open, turned into swing exposure, or have certified chart findings attached.
-          </div>
-        </section>
+            </div>
+            <div className="mt-4 border-t border-zinc-900 pt-4 text-sm leading-6 text-zinc-400">
+            Round trips show each flat-to-flat trade. Ticker stories group same-symbol re-entries so you can review whether later attempts protected profit, gave back profit, stayed open, or turned into swing exposure.
+            </div>
+          </section>
               </>
             ) : null}
 
@@ -1403,86 +1444,90 @@ export default async function TradesPage({
                 </div>
                 <div>Re-entry stories</div>
               </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div className="text-lg font-semibold text-sky-300">
-                  {tradeThreadModel.marketContextFindingCount}
-                </div>
-                <div>Chart findings</div>
-              </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div className="text-lg font-semibold text-emerald-300">
-                  {tradeThreadModel.marketContextStrengthCount}
-                </div>
-                <div>Chart strengths</div>
-              </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div
-                  className={`text-lg font-semibold ${
-                    tradeThreadModel.addQualityRiskCount > 0
-                      ? "text-amber-300"
-                      : tradeThreadModel.addQualityStrengthCount > 0
-                        ? "text-emerald-300"
-                        : "text-zinc-100"
-                  }`}
-                >
-                  {tradeThreadModel.addQualityFindingCount}
-                </div>
-                <div>Add quality</div>
-              </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div
-                  className={`text-lg font-semibold ${
-                    tradeThreadModel.postExitRiskCount > 0
-                      ? "text-amber-300"
-                      : tradeThreadModel.postExitStrengthCount > 0
-                        ? "text-emerald-300"
-                        : "text-sky-300"
-                  }`}
-                >
-                  {tradeThreadModel.postExitFindingCount}
-                </div>
-                <div>After exit</div>
-              </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div
-                  className={`text-lg font-semibold ${
-                    tradeThreadModel.protectedProfitBeforeFadeFindingCount > 0
-                      ? "text-emerald-300"
-                      : "text-zinc-100"
-                  }`}
-                >
-                  {tradeThreadModel.protectedProfitBeforeFadeFindingCount}
-                </div>
-                <div>Protected before fade</div>
-              </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div
-                  className={`text-lg font-semibold ${
-                    tradeThreadModel.exitLevelRiskCount > 0
-                      ? "text-amber-300"
-                      : tradeThreadModel.exitLevelStrengthCount > 0
-                        ? "text-emerald-300"
-                        : "text-sky-300"
-                  }`}
-                >
-                  {tradeThreadModel.exitLevelFindingCount}
-                </div>
-                <div>Support/resistance exits</div>
-              </div>
-              <div className="ti-panel-soft px-3 py-2">
-                <div
-                  className={`text-lg font-semibold ${
-                    tradeThreadModel.volumeRiskCount > 0
-                      ? "text-amber-300"
-                      : tradeThreadModel.volumeStrengthCount > 0
-                        ? "text-emerald-300"
-                        : "text-sky-300"
-                  }`}
-                >
-                  {tradeThreadModel.volumeFindingCount}
-                </div>
-                <div>Volume evidence</div>
-              </div>
+              {chartTierEnabled ? (
+                <>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div className="text-lg font-semibold text-sky-300">
+                      {tradeThreadModel.marketContextFindingCount}
+                    </div>
+                    <div>Chart findings</div>
+                  </div>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div className="text-lg font-semibold text-emerald-300">
+                      {tradeThreadModel.marketContextStrengthCount}
+                    </div>
+                    <div>Chart strengths</div>
+                  </div>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div
+                      className={`text-lg font-semibold ${
+                        tradeThreadModel.addQualityRiskCount > 0
+                          ? "text-amber-300"
+                          : tradeThreadModel.addQualityStrengthCount > 0
+                            ? "text-emerald-300"
+                            : "text-zinc-100"
+                      }`}
+                    >
+                      {tradeThreadModel.addQualityFindingCount}
+                    </div>
+                    <div>Add quality</div>
+                  </div>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div
+                      className={`text-lg font-semibold ${
+                        tradeThreadModel.postExitRiskCount > 0
+                          ? "text-amber-300"
+                          : tradeThreadModel.postExitStrengthCount > 0
+                            ? "text-emerald-300"
+                            : "text-sky-300"
+                      }`}
+                    >
+                      {tradeThreadModel.postExitFindingCount}
+                    </div>
+                    <div>After exit</div>
+                  </div>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div
+                      className={`text-lg font-semibold ${
+                        tradeThreadModel.protectedProfitBeforeFadeFindingCount > 0
+                          ? "text-emerald-300"
+                          : "text-zinc-100"
+                      }`}
+                    >
+                      {tradeThreadModel.protectedProfitBeforeFadeFindingCount}
+                    </div>
+                    <div>Protected before fade</div>
+                  </div>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div
+                      className={`text-lg font-semibold ${
+                        tradeThreadModel.exitLevelRiskCount > 0
+                          ? "text-amber-300"
+                          : tradeThreadModel.exitLevelStrengthCount > 0
+                            ? "text-emerald-300"
+                            : "text-sky-300"
+                      }`}
+                    >
+                      {tradeThreadModel.exitLevelFindingCount}
+                    </div>
+                    <div>Support/resistance exits</div>
+                  </div>
+                  <div className="ti-panel-soft px-3 py-2">
+                    <div
+                      className={`text-lg font-semibold ${
+                        tradeThreadModel.volumeRiskCount > 0
+                          ? "text-amber-300"
+                          : tradeThreadModel.volumeStrengthCount > 0
+                            ? "text-emerald-300"
+                            : "text-sky-300"
+                      }`}
+                    >
+                      {tradeThreadModel.volumeFindingCount}
+                    </div>
+                    <div>Volume evidence</div>
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
 
@@ -1493,7 +1538,7 @@ export default async function TradesPage({
           ) : (
             <>
             <div className="mt-4 flex flex-wrap gap-2">
-              {storyFilters.map((filter) => (
+              {visibleStoryFilters.map((filter) => (
                 <Link
                   key={filter.id}
                   className={`border px-3 py-2 text-xs uppercase tracking-wide ${
@@ -1548,13 +1593,13 @@ export default async function TradesPage({
                     >
                       {thread.lifecycleLabel}
                     </div>
-                    {thread.marketContextFindingCount > 0 ? (
+                    {chartTierEnabled && thread.marketContextFindingCount > 0 ? (
                       <div className="inline-flex border border-sky-500/40 bg-sky-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-sky-200">
                         {thread.marketContextFindingCount} chart finding
                         {thread.marketContextFindingCount === 1 ? "" : "s"}
                       </div>
                     ) : null}
-                    {thread.addQualityFindingCount > 0 ? (
+                    {chartTierEnabled && thread.addQualityFindingCount > 0 ? (
                       <div
                         className={`inline-flex border px-3 py-1 text-xs font-medium uppercase tracking-wide ${
                           thread.addQualityRiskCount > 0
@@ -1568,7 +1613,7 @@ export default async function TradesPage({
                         {thread.addQualityFindingCount === 1 ? "" : "s"}
                       </div>
                     ) : null}
-                    {thread.postExitFindingCount > 0 ? (
+                    {chartTierEnabled && thread.postExitFindingCount > 0 ? (
                       <div
                         className={`inline-flex border px-3 py-1 text-xs font-medium uppercase tracking-wide ${
                           thread.postExitRiskCount > 0
@@ -1582,12 +1627,13 @@ export default async function TradesPage({
                         {thread.postExitFindingCount === 1 ? "" : "s"}
                       </div>
                     ) : null}
-                    {thread.protectedProfitBeforeFadeFindingCount > 0 ? (
+                    {chartTierEnabled &&
+                    thread.protectedProfitBeforeFadeFindingCount > 0 ? (
                       <div className="inline-flex border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-emerald-200">
                         {thread.protectedProfitBeforeFadeFindingCount} protected before fade
                       </div>
                     ) : null}
-                    {thread.exitLevelFindingCount > 0 ? (
+                    {chartTierEnabled && thread.exitLevelFindingCount > 0 ? (
                       <div
                         className={`inline-flex border px-3 py-1 text-xs font-medium uppercase tracking-wide ${
                           thread.exitLevelRiskCount > 0
@@ -1601,7 +1647,7 @@ export default async function TradesPage({
                         {thread.exitLevelFindingCount === 1 ? "" : "s"}
                       </div>
                     ) : null}
-                    {thread.volumeFindingCount > 0 ? (
+                    {chartTierEnabled && thread.volumeFindingCount > 0 ? (
                       <div
                         className={`inline-flex border px-3 py-1 text-xs font-medium uppercase tracking-wide ${
                           thread.volumeRiskCount > 0
@@ -2119,102 +2165,111 @@ export default async function TradesPage({
               });
 
               return (
-                <Link
+                <article
                   key={trade.id}
-                  className="ti-panel-soft block p-4 transition hover:border-sky-500 hover:text-sky-200"
-                  data-testid={`saved-trade-link-${trade.id}`}
-                  href={`/intelligence/trades/${encodeURIComponent(trade.id)}#summary`}
+                  className="ti-panel-soft p-4 transition hover:border-sky-500"
+                  data-testid={`saved-trade-card-${trade.id}`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium text-zinc-100">
-                        {trade.symbol} / {directionLabel}
+                  <Link
+                    className="block hover:text-sky-200"
+                    data-testid={`saved-trade-link-${trade.id}`}
+                    href={`/intelligence/trades/${encodeURIComponent(trade.id)}#summary`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-medium text-zinc-100">
+                          {trade.symbol} / {directionLabel}
+                        </div>
+                        <div className="mt-1 text-xs text-zinc-500">
+                          {trade.sessionDate} / {trade.entryHourLabelEt ?? trade.sessionBucket}
+                        </div>
                       </div>
-                      <div className="mt-1 text-xs text-zinc-500">
-                        {trade.sessionDate} / {trade.entryHourLabelEt ?? trade.sessionBucket}
-                      </div>
-                    </div>
-                    <div
-                      className={`text-sm font-medium ${
-                        (reportRow?.grossRealizedPnl ?? 0) >= 0
-                          ? "text-emerald-300"
-                          : "text-rose-300"
-                      }`}
-                    >
-                      {signed(reportRow?.grossRealizedPnl)}
-                    </div>
-                  </div>
-                  <div className="mt-4 rounded-md border border-sky-900/50 bg-sky-950/20 p-3 text-sm text-zinc-300">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                      Why review this
-                    </div>
-                    <div
-                      className={`mt-2 leading-6 ${
-                        reviewReason.tone === "danger"
-                          ? "text-rose-300"
-                          : reviewReason.tone === "success"
+                      <div
+                        className={`text-sm font-medium ${
+                          (reportRow?.grossRealizedPnl ?? 0) >= 0
                             ? "text-emerald-300"
-                            : reviewReason.tone === "warning"
-                              ? "text-amber-300"
-                              : reviewReason.tone === "info"
-                                ? "text-sky-300"
-                                : "text-zinc-300"
-                      }`}
-                    >
-                      {reviewReason.label}
-                    </div>
-                    <div className="mt-1 text-xs leading-5 text-zinc-500">
-                      {reviewReason.action}
-                    </div>
-                    {queueItem ? (
-                      <div className="mt-1 text-xs text-amber-300">
-                        {queueItem.priorityLabel}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="mt-3 grid gap-1 border-t border-zinc-900 pt-3 text-xs text-zinc-500">
-                    <div>
-                      Round trip {reportTradeIndex > 0 ? reportTradeIndex : "open"}: {executionCount} execution
-                      {executionCount === 1 ? "" : "s"} from{" "}
-                      {firstExecution
-                        ? new Date(String(firstExecution.timestamp)).toLocaleTimeString("en-US", {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            timeZone: "America/New_York",
-                          })
-                        : "time n/a"}{" "}
-                      ET
-                      {lastExecution && reportRow?.closedToFlat
-                        ? ` to ${new Date(String(lastExecution.timestamp)).toLocaleTimeString("en-US", {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            timeZone: "America/New_York",
-                          })} ET`
-                        : " and still open"}
-                    </div>
-                    {trade.tradeDirection === "short" ? (
-                      <div className="text-amber-300">
-                        {sellStartingReviewLimitationCopy()}
-                      </div>
-                    ) : null}
-                    <div className="text-sky-300">Open review hub</div>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs uppercase tracking-wide">
-                    <PlainStateBadge
-                      state={trade.sampleData ? "sample_fallback" : "saved_sqlite"}
-                      tone={trade.sampleData ? "warning" : "success"}
-                    />
-                    {queueItem ? (
-                      <span
-                        className={`border border-zinc-800 px-2 py-1 ${laneToneClass(
-                          queueItem.lane,
-                        )}`}
+                            : "text-rose-300"
+                        }`}
                       >
-                        {queueItem.reviewScopeLabel}
-                      </span>
-                    ) : null}
-                  </div>
-                </Link>
+                        {signed(reportRow?.grossRealizedPnl)}
+                      </div>
+                    </div>
+                    <div className="mt-4 rounded-md border border-sky-900/50 bg-sky-950/20 p-3 text-sm text-zinc-300">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                        Why review this
+                      </div>
+                      <div
+                        className={`mt-2 leading-6 ${
+                          reviewReason.tone === "danger"
+                            ? "text-rose-300"
+                            : reviewReason.tone === "success"
+                              ? "text-emerald-300"
+                              : reviewReason.tone === "warning"
+                                ? "text-amber-300"
+                                : reviewReason.tone === "info"
+                                  ? "text-sky-300"
+                                  : "text-zinc-300"
+                        }`}
+                      >
+                        {reviewReason.label}
+                      </div>
+                      <div className="mt-1 text-xs leading-5 text-zinc-500">
+                        {reviewReason.action}
+                      </div>
+                      {queueItem ? (
+                        <div className="mt-1 text-xs text-amber-300">
+                          {queueItem.priorityLabel}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="mt-3 grid gap-1 border-t border-zinc-900 pt-3 text-xs text-zinc-500">
+                      <div>
+                        Round trip {reportTradeIndex > 0 ? reportTradeIndex : "open"}: {executionCount} execution
+                        {executionCount === 1 ? "" : "s"} from{" "}
+                        {firstExecution
+                          ? new Date(String(firstExecution.timestamp)).toLocaleTimeString("en-US", {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              timeZone: "America/New_York",
+                            })
+                          : "time n/a"}{" "}
+                        ET
+                        {lastExecution && reportRow?.closedToFlat
+                          ? ` to ${new Date(String(lastExecution.timestamp)).toLocaleTimeString("en-US", {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              timeZone: "America/New_York",
+                            })} ET`
+                          : " and still open"}
+                      </div>
+                      {trade.tradeDirection === "short" ? (
+                        <div className="text-amber-300">
+                          {sellStartingReviewLimitationCopy()}
+                        </div>
+                      ) : null}
+                      <div className="text-sky-300">Open review hub</div>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs uppercase tracking-wide">
+                      <PlainStateBadge
+                        state={trade.sampleData ? "sample_fallback" : "saved_sqlite"}
+                        tone={trade.sampleData ? "warning" : "success"}
+                      />
+                      {queueItem ? (
+                        <span
+                          className={`border border-zinc-800 px-2 py-1 ${laneToneClass(
+                            queueItem.lane,
+                          )}`}
+                        >
+                          {queueItem.reviewScopeLabel}
+                        </span>
+                      ) : null}
+                    </div>
+                  </Link>
+                  {activeBrowseMode === "open_swing" &&
+                  queueItem?.lane === "blocked_open_trade" ? (
+                    <OpenSwingMarkClosedButton tradeId={trade.id} />
+                  ) : null}
+                </article>
               );
             })}
           </div>

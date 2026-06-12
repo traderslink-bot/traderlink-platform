@@ -1,0 +1,18 @@
+{
+  "name": "levels-system-v2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./support-resistance-engine": {
+      "types": "./dist/lib/support-resistance/index.d.ts",
+      "import": "./dist/lib/support-resistance/index.js",
+      "default": "./dist/lib/support-resistance/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@stoqey/ib": "^1.5.3",
+    "dotenv": "^17.4.2"
+  }
+}

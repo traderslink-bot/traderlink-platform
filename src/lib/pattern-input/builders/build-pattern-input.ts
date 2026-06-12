@@ -1151,6 +1151,26 @@ export function buildPatternInput(
         firstEntryNearestSupport?.sourceStrengthLabel ?? null,
       firstEntryNearestResistanceSourceStrengthLabel:
         firstEntryNearestResistance?.sourceStrengthLabel ?? null,
+      firstEntryNearestSupportImportance:
+        firstEntryNearestSupport?.importance ?? null,
+      firstEntryNearestResistanceImportance:
+        firstEntryNearestResistance?.importance ?? null,
+      firstEntryNearestSupportFreshness:
+        firstEntryNearestSupport?.freshness ?? null,
+      firstEntryNearestResistanceFreshness:
+        firstEntryNearestResistance?.freshness ?? null,
+      firstEntryNearestSupportIsExtension:
+        firstEntryNearestSupport?.isExtension ?? false,
+      firstEntryNearestResistanceIsExtension:
+        firstEntryNearestResistance?.isExtension ?? false,
+      firstEntryNearestSupportIsSyntheticExtension:
+        firstEntryNearestSupport?.isSyntheticExtension ?? false,
+      firstEntryNearestResistanceIsSyntheticExtension:
+        firstEntryNearestResistance?.isSyntheticExtension ?? false,
+      firstEntryNearestSupportZoneWidthPct:
+        firstEntryNearestSupport?.zoneWidthPct ?? null,
+      firstEntryNearestResistanceZoneWidthPct:
+        firstEntryNearestResistance?.zoneWidthPct ?? null,
       firstEntryNearestSupportReactionStrength:
         firstEntryNearestSupport?.reactionStrength ?? null,
       firstEntryNearestResistanceReactionStrength:

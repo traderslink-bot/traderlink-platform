@@ -55,6 +55,6 @@ export default defineConfig({
     },
     reuseExistingServer: false,
     timeout: 120_000,
-    url: "http://127.0.0.1:3101/import-dry-run",
+    url: "http://127.0.0.1:3101/intelligence/import-dry-run",
   },
 });

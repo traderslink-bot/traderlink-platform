@@ -1,0 +1,80 @@
+import type { Candle } from "../market-data/candle-types.js";
+import type { FinalLevelZone, LevelEngineOutput } from "../levels/level-types.js";
+export type ForwardReactionValidatorOptions = {
+    touchTolerancePct?: number;
+    touchToleranceAbsolute?: number;
+    reactionMovePct?: number;
+    partialReactionMovePct?: number;
+    resolutionLookaheadBars?: number;
+    nearBandDistancePct?: number;
+    intermediateBandDistancePct?: number;
+};
+export type ForwardReactionOutcome = "untouched" | "respected" | "partial_respect" | "broken" | "touched_no_resolution";
+export type ForwardReactionDistanceBand = "near" | "intermediate" | "far";
+export type SurfacedForwardBucket = "daily" | "4h" | "5m";
+export type ForwardReactionSummary = {
+    evaluated: number;
+    touched: number;
+    touchRate: number;
+    closestApproachPct: number;
+    usefulnessRate: number;
+    usefulWhenTouchedRate: number;
+    respectRate: number;
+    partialRespectRate: number;
+    breakRate: number;
+};
+export type ForwardReactionLevelResult = {
+    zoneId: string;
+    kind: "support" | "resistance";
+    source: "surfaced" | "extension";
+    surfacedBucket?: SurfacedForwardBucket;
+    timeframeBias: FinalLevelZone["timeframeBias"];
+    strengthLabel: FinalLevelZone["strengthLabel"];
+    representativePrice: number;
+    distanceBand: ForwardReactionDistanceBand;
+    outcome: ForwardReactionOutcome;
+    touched: boolean;
+    useful: boolean;
+    respected: boolean;
+    partialRespected: boolean;
+    broken: boolean;
+    brokeAfterPartial: boolean;
+    closestApproachPct: number;
+    firstTouchTimestamp?: number;
+    resolutionTimestamp?: number;
+    maxFavorableExcursionPct?: number;
+    maxAdverseExcursionPct?: number;
+};
+export type ForwardReactionValidationReport = {
+    totalLevelsEvaluated: number;
+    surfacedLevelsEvaluated: number;
+    extensionLevelsEvaluated: number;
+    surfacedTouchRate: number;
+    extensionTouchRate: number;
+    surfacedUsefulnessRate: number;
+    extensionUsefulnessRate: number;
+    surfacedUsefulWhenTouchedRate: number;
+    extensionUsefulWhenTouchedRate: number;
+    surfacedRespectRate: number;
+    extensionRespectRate: number;
+    surfacedPartialRespectRate: number;
+    extensionPartialRespectRate: number;
+    surfacedBreakRate: number;
+    extensionBreakRate: number;
+    byKindSource: {
+        surfacedSupport: ForwardReactionSummary;
+        surfacedResistance: ForwardReactionSummary;
+        extensionSupport: ForwardReactionSummary;
+        extensionResistance: ForwardReactionSummary;
+    };
+    bySurfacedSupportBucket: Record<SurfacedForwardBucket, ForwardReactionSummary>;
+    byDistanceBand: Record<ForwardReactionDistanceBand, ForwardReactionSummary>;
+    byStrengthLabel: Record<FinalLevelZone["strengthLabel"], ForwardReactionSummary>;
+    levelResults: ForwardReactionLevelResult[];
+};
+export declare function validateForwardReactions(params: {
+    output: LevelEngineOutput;
+    futureCandles: Candle[];
+}, options?: ForwardReactionValidatorOptions): ForwardReactionValidationReport;
+export declare function formatForwardReactionReport(report: ForwardReactionValidationReport): string[];
+//# sourceMappingURL=forward-reaction-validator.d.ts.map

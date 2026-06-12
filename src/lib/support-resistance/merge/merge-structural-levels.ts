@@ -5,6 +5,7 @@
 import { SUPPORT_RESISTANCE_CONFIG } from "../config/support-resistance-config";
 import type {
   StructuralLevel,
+  StructuralLevelImportance,
   StructuralLevelPivotSource,
 } from "../../raw-trade-timeline/types/structural-level";
 
@@ -17,6 +18,22 @@ function areCloseEnough(leftPrice: number, rightPrice: number): boolean {
 
 function unique<T>(values: T[]): T[] {
   return [...new Set(values)];
+}
+
+function highestImportance(
+  levels: StructuralLevel[],
+): StructuralLevelImportance {
+  const rank: Record<StructuralLevelImportance, number> = {
+    synthetic_extension: 0,
+    weak: 1,
+    secondary: 2,
+    actionable: 3,
+    major: 4,
+  };
+
+  return levels.reduce((best, level) => {
+    return rank[level.importance] > rank[best] ? level.importance : best;
+  }, levels[0].importance);
 }
 
 function mergeCluster(cluster: StructuralLevel[]): StructuralLevel {
@@ -42,6 +59,21 @@ function mergeCluster(cluster: StructuralLevel[]): StructuralLevel {
     side: anchor.side,
     score: Math.max(...cluster.map((level) => level.score)),
     strengthBucket: anchor.strengthBucket,
+    sourceStrengthLabel: anchor.sourceStrengthLabel ?? null,
+    importance: highestImportance(cluster),
+    timeframeBias: anchor.timeframeBias ?? null,
+    zoneLow: Math.min(
+      ...cluster.map((level) => level.zoneLow ?? level.price),
+    ),
+    zoneHigh: Math.max(
+      ...cluster.map((level) => level.zoneHigh ?? level.price),
+    ),
+    zoneWidthPct: anchor.zoneWidthPct ?? null,
+    isExtension: cluster.some((level) => level.isExtension),
+    extensionSource:
+      cluster.find((level) => level.extensionSource)?.extensionSource ?? null,
+    isSyntheticExtension: cluster.some((level) => level.isSyntheticExtension),
+    freshness: anchor.freshness ?? null,
     timeframeSources: unique(cluster.flatMap((level) => level.timeframeSources)),
     pivotSources: unique(
       cluster.flatMap((level) => level.pivotSources),

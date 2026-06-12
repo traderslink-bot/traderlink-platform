@@ -54,7 +54,7 @@ function firstGroupWith(
 
 function coachGroupAction(group: AnalyticsBehaviorReportGroup): string {
   if (group.riskCount > 0) {
-    return "Fix first";
+    return "Reduce first";
   }
 
   if (group.strengthCount > 0) {
@@ -65,10 +65,16 @@ function coachGroupAction(group: AnalyticsBehaviorReportGroup): string {
     return "Review before deciding";
   }
 
-  return "Collect evidence";
+  return "Collect more examples";
 }
 
-function CoachBehaviorSummary({ report }: { report: AnalyticsBehaviorReport }) {
+function CoachBehaviorSummary({
+  chartTierEnabled = true,
+  report,
+}: {
+  chartTierEnabled?: boolean;
+  report: AnalyticsBehaviorReport;
+}) {
   const riskGroup = firstGroupWith(report.groups, "riskCount");
   const strengthGroup = firstGroupWith(report.groups, "strengthCount");
   const reviewGroup = firstGroupWith(report.groups, "reviewPromptCount");
@@ -77,14 +83,19 @@ function CoachBehaviorSummary({ report }: { report: AnalyticsBehaviorReport }) {
     <div className="mt-5 grid gap-3 lg:grid-cols-3">
       <div className="ti-coach-brief-cell">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Fix first
+          Reduce first
         </div>
         <div className="mt-2 text-sm font-semibold leading-6 text-rose-700">
-          {riskGroup?.title ?? "No chart-confirmed risk yet"}
+          {riskGroup?.title ??
+            (chartTierEnabled
+              ? "No chart-confirmed risk yet"
+              : "No execution-confirmed risk yet")}
         </div>
         <div className="mt-2 text-xs leading-5 text-slate-500">
           {riskGroup?.description ??
-            "Keep collecting saved trades and chart data before the coach turns this into a risk rule."}
+            (chartTierEnabled
+              ? "Keep collecting saved trades and chart data before the coach turns this into a risk rule."
+              : "Keep saving and reviewing executions before the coach turns this into a risk rule.")}
         </div>
       </div>
       <div className="ti-coach-brief-cell">
@@ -92,7 +103,10 @@ function CoachBehaviorSummary({ report }: { report: AnalyticsBehaviorReport }) {
           Repeat first
         </div>
         <div className="mt-2 text-sm font-semibold leading-6 text-emerald-700">
-          {strengthGroup?.title ?? "No chart-confirmed strength yet"}
+          {strengthGroup?.title ??
+            (chartTierEnabled
+              ? "No chart-confirmed strength yet"
+              : "No execution-confirmed strength yet")}
         </div>
         <div className="mt-2 text-xs leading-5 text-slate-500">
           {strengthGroup?.description ??
@@ -104,7 +118,10 @@ function CoachBehaviorSummary({ report }: { report: AnalyticsBehaviorReport }) {
           Needs review
         </div>
         <div className="mt-2 text-sm font-semibold leading-6 text-amber-700">
-          {reviewGroup?.title ?? "No open chart prompt yet"}
+          {reviewGroup?.title ??
+            (chartTierEnabled
+              ? "No open chart prompt yet"
+              : "No open execution prompt yet")}
         </div>
         <div className="mt-2 text-xs leading-5 text-slate-500">
           {reviewGroup?.description ??
@@ -116,9 +133,11 @@ function CoachBehaviorSummary({ report }: { report: AnalyticsBehaviorReport }) {
 }
 
 export function BehaviorReportPanel({
+  chartTierEnabled = true,
   mode = "analytics",
   report,
 }: {
+  chartTierEnabled?: boolean;
   mode?: BehaviorReportPanelMode;
   report: AnalyticsBehaviorReport;
 }) {
@@ -129,11 +148,17 @@ export function BehaviorReportPanel({
   const sectionClass = isCoach ? "ti-coach-brief p-5 sm:p-6" : "ti-panel p-5";
   const eyebrow = isCoach ? "Behavior Coaching Map" : "Behavior Report";
   const title = isCoach
-    ? "Use chart-backed behavior groups to choose what to fix or repeat."
-    : "What should the trader study from the chart evidence?";
+    ? chartTierEnabled
+      ? "Use chart-supported behavior groups to choose what to reduce or repeat."
+      : "Use execution-supported behavior groups to choose what to reduce or repeat."
+    : "What should the trader study from the saved evidence?";
   const body = isCoach
-    ? "This uses the same certified evidence as analytics, but turns it into coaching order: reduce the clearest risk, repeat the strongest behavior, and keep uncertain chart behavior as a review prompt."
-    : "These groups translate saved executions, support/resistance levels, candle context, volume, and after-exit movement into review questions. Green means repeatable strength, red means risk to inspect, and amber means the evidence is a prompt rather than a conclusion.";
+    ? chartTierEnabled
+      ? "This uses saved trades and chart checks to set a coaching order: reduce the clearest risk, repeat the strongest behavior, and keep uncertain chart behavior as a review prompt."
+      : "This uses saved executions and written reviews to set a coaching order: reduce the clearest risk, repeat the strongest behavior, and keep uncertain behavior as a review prompt."
+    : chartTierEnabled
+      ? "These groups translate saved executions and any attached chart-context evidence into review questions. Green means repeatable strength, red means risk to inspect, and amber means the evidence is a prompt rather than a conclusion."
+      : "These groups translate saved executions and written reviews into behavior questions. Green means repeatable strength, red means risk to inspect, and amber means the evidence is a prompt rather than a conclusion.";
 
   return (
     <section className={sectionClass} data-testid={testId}>
@@ -191,7 +216,12 @@ export function BehaviorReportPanel({
         </div>
       </div>
 
-      {isCoach ? <CoachBehaviorSummary report={report} /> : null}
+      {isCoach ? (
+        <CoachBehaviorSummary
+          chartTierEnabled={chartTierEnabled}
+          report={report}
+        />
+      ) : null}
 
       <div className="mt-5 grid gap-4 xl:grid-cols-2">
         {report.groups.map((group) => (
@@ -291,7 +321,7 @@ export function BehaviorReportPanel({
                   : "/intelligence/trades?storyFilter=levels#ticker-stories")
               }
             >
-              {isCoach ? "Open coaching evidence" : group.actionLabel}
+              {isCoach ? "Open saved example" : group.actionLabel}
             </Link>
           </article>
         ))}

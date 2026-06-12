@@ -20,6 +20,11 @@ import {
 } from "@/src/lib/trader-analytics/server/saved-review-queue";
 import { buildLatestSavedImportSourceCautionReadModel } from "@/src/lib/trader-analytics/server/saved-import-source-caution";
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
+import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
 import { SavedReviewQueueActions } from "./saved-review-queue-actions";
 
 export const metadata: Metadata = {
@@ -44,7 +49,9 @@ function savedReviewStateTone(lane: string): string {
     ? "text-emerald-300"
     : lane === "blocked_open_trade"
       ? "text-sky-300"
-      : lane === "market_context_unavailable" || lane === "analysis_failed"
+      : lane === "market_context_unavailable" ||
+          lane === "analysis_failed" ||
+          lane === "candle_basis_warning"
         ? "text-amber-300"
         : "text-zinc-300";
 }
@@ -131,6 +138,14 @@ function reviewQueueEvidenceCopy(item: SavedReviewQueueItem): {
   tone: AppTone;
 } {
   if (item.hasSnapshot) {
+    if (item.candleBasisStatus === "warning") {
+      return {
+        body: "Chart context is attached, but candle prices need a basis check against broker executions. Use execution replay and broker P/L for movement conclusions.",
+        label: "Basis check needed",
+        tone: "warning",
+      };
+    }
+
     if (item.primaryChartFindingLabel) {
       return {
         body:
@@ -155,7 +170,7 @@ function reviewQueueEvidenceCopy(item: SavedReviewQueueItem): {
 
   if (item.hasDiagnostics) {
     return {
-      body: "Execution data is saved. Chart data needs technical follow-up.",
+      body: "Execution data is saved. Chart data needs another check before chart conclusions are used.",
       label: "Execution review now",
       tone: "warning",
     };
@@ -175,13 +190,15 @@ export default async function GuidedReviewPage({
 }) {
   const query = await searchParams;
   const data = buildSavedOrSampleTraderAnalyticsViewModel();
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
   const analytics = data.viewModel;
   const review = buildGuidedReviewSession({ analytics });
   const coach = analytics.improvementIntelligence.dailyCoachReport;
   const polish = analytics.productPolish;
   const habit = analytics.reviewHabitLoop;
   const savedDecisionReview =
-    data.mode === "saved"
+    data.mode === "saved" && chartContextAllowed
       ? buildSavedDecisionReviewReadModel({ repository: data.repository })
       : null;
   const savedReviewQueue =
@@ -189,6 +206,7 @@ export default async function GuidedReviewPage({
       ? buildSavedReviewQueueReadModel({
           repository: data.repository,
           activeFilter: query?.queue,
+          includeChartContext: chartContextAllowed,
         })
       : null;
   const importSourceCaution =
@@ -197,7 +215,9 @@ export default async function GuidedReviewPage({
           repository: data.repository,
         })
       : null;
-  const savedTrades = data.repository.listTrades(data.userId);
+  const savedTrades = filterCustomerSavedTrades(
+    data.repository.listTrades(data.userId),
+  );
   const decisionReviewSnapshots =
     data.mode === "saved"
       ? [
@@ -210,8 +230,11 @@ export default async function GuidedReviewPage({
           data.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
       : [];
+  const chartContextSnapshots = chartContextAllowed
+    ? decisionReviewSnapshots
+    : [];
   const tradeThreadModel = buildSavedTradeThreadReadModel({
-    decisionReviewSnapshots,
+    decisionReviewSnapshots: chartContextSnapshots,
     report: analytics.latestReport,
     source: data.mode === "saved" ? "saved_sqlite" : "sample",
     trades: savedTrades,
@@ -244,6 +267,8 @@ export default async function GuidedReviewPage({
     savedReviewQueue?.tabs.find((tab) => tab.id === "queued")?.count ?? 0;
   const openBlockCount =
     savedReviewQueue?.tabs.find((tab) => tab.id === "blocked_open_trade")?.count ?? 0;
+  const candleBasisWarningCount =
+    savedReviewQueue?.tabs.find((tab) => tab.id === "candle_basis_warning")?.count ?? 0;
   const chartDataFollowUp =
     queuedChartDataCount > 0
       ? {
@@ -327,7 +352,7 @@ export default async function GuidedReviewPage({
                 summary: "Checklist and lesson draft.",
               },
             ]}
-            summary="Work this page like a review queue, with technical follow-up kept in the background."
+            summary="Work this page like a review queue while chart-data checks stay in the background."
           />
           <div className="grid min-w-0 gap-6">
             <div id="review-first">
@@ -356,13 +381,22 @@ export default async function GuidedReviewPage({
                   tone: "warning" as const,
                 },
                 {
-                  label: chartDataFollowUp.label,
-                  count: chartDataFollowUp.count,
-                  href: chartDataFollowUp.href,
+                  label:
+                    candleBasisWarningCount > 0
+                      ? "Candle basis check"
+                      : chartDataFollowUp.label,
+                  count:
+                    candleBasisWarningCount > 0
+                      ? candleBasisWarningCount
+                      : chartDataFollowUp.count,
+                  href:
+                    candleBasisWarningCount > 0
+                      ? "/intelligence/review?queue=candle_basis_warning"
+                      : chartDataFollowUp.href,
                   tone: "warning" as const,
                 },
                 {
-                  label: "Open Trades",
+                  label: "Open or Swing",
                   count: openBlockCount,
                   href: "/intelligence/review?queue=blocked_open_trade",
                   tone: "info" as const,
@@ -807,6 +841,21 @@ export default async function GuidedReviewPage({
                               </div>
                             </>
                           ) : null}
+                          {item.chartFindingCount > 0 ||
+                          item.candleBasisStatus !== "unknown" ? (
+                            <div className="border border-zinc-900 p-2">
+                              <div className="uppercase tracking-wide text-zinc-600">
+                                Candle basis
+                              </div>
+                              <div className="mt-1 text-zinc-400">
+                                {item.candleBasisStatus === "warning"
+                                  ? "Needs review"
+                                  : item.candleBasisStatus === "aligned"
+                                    ? "Checked"
+                                    : "Not reported"}
+                              </div>
+                            </div>
+                          ) : null}
                           <div className="border border-zinc-900 p-2">
                             <div className="uppercase tracking-wide text-zinc-600">
                               Queue detail
@@ -898,7 +947,7 @@ export default async function GuidedReviewPage({
                   </div>
                   <div className="border-t border-zinc-900 py-3">
                     <div className="text-xs uppercase tracking-wide text-zinc-500">
-                      Open Trades
+                      Open or Swing
                     </div>
                     <div className="mt-2 text-2xl font-semibold text-sky-300">
                       {savedDecisionReview.blockedOpenTradeCount}

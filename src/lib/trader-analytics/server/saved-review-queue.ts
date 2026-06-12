@@ -12,6 +12,10 @@ import type {
   ImportCommitSavedTradeRecord,
 } from "../product/import-commit/import-commit-planner";
 import type { SavedExecutionTrade } from "../product/types";
+import {
+  filterCustomerSavedReports,
+  filterCustomerSavedTrades,
+} from "../product/customer-data-filter";
 import { getLatestSavedTraderAnalyticsReport } from "../product/selectors";
 import { mapDecisionReviewInsightForUser } from "../../user-facing-behavior";
 import type { UserFacingDecisionReviewInsight } from "../../user-facing-behavior";
@@ -32,6 +36,7 @@ export type SavedReviewQueueFilter =
   | "market_context_unavailable"
   | "blocked_open_trade"
   | "analysis_failed"
+  | "candle_basis_warning"
   | "highest_priority"
   | "queued"
   | "unresolved";
@@ -48,6 +53,7 @@ export interface SavedReviewQueueItem {
   savedTradeId: string;
   importBatchId: string;
   symbol: string;
+  sessionDate: string;
   status: ImportCommitDecisionReviewJobRecord["status"];
   lane:
     | "completed"
@@ -63,6 +69,10 @@ export interface SavedReviewQueueItem {
   detail: string;
   nextAction: string;
   href: string;
+  tickerStoryKey: string | null;
+  tickerStoryHref: string | null;
+  tickerStoryReviewCount: number;
+  tickerStoryLead: boolean;
   priorityScore: number;
   priorityLabel: "urgent" | "high" | "medium" | "low";
   priorityReason: string;
@@ -71,6 +81,7 @@ export interface SavedReviewQueueItem {
   chartRiskCount: number;
   chartStrengthCount: number;
   chartReviewPromptCount: number;
+  candleBasisStatus: "aligned" | "warning" | "unknown";
   primaryChartFindingLabel: string | null;
   primaryChartFindingAction: string | null;
   grossRealizedPnl: number | null;
@@ -102,19 +113,35 @@ const FILTER_LABELS: Record<SavedReviewQueueFilter, string> = {
   all: "All",
   completed: "Reviewed With Chart Data",
   market_context_unavailable: "Chart data still missing",
-  blocked_open_trade: "Open Trades",
-  analysis_failed: "Needs Technical Follow-Up",
+  blocked_open_trade: "Open or Swing Trades",
+  analysis_failed: "Chart Data Needs Another Check",
+  candle_basis_warning: "Candle Basis Check",
   highest_priority: "Highest Priority",
   queued: "Chart Data Waiting",
   unresolved: "Needs Review",
 };
 
+function reviewQueueFilterIds(
+  includeChartContext: boolean,
+): SavedReviewQueueFilter[] {
+  if (includeChartContext) {
+    return Object.keys(FILTER_LABELS) as SavedReviewQueueFilter[];
+  }
+
+  return ["all", "blocked_open_trade", "unresolved"];
+}
+
 function normalizeFilter(
   value: string | null | undefined,
+  allowedIds: readonly SavedReviewQueueFilter[] = Object.keys(
+    FILTER_LABELS,
+  ) as SavedReviewQueueFilter[],
 ): SavedReviewQueueFilter {
-  return value && value in FILTER_LABELS
+  return value && allowedIds.includes(value as SavedReviewQueueFilter)
     ? (value as SavedReviewQueueFilter)
-    : "highest_priority";
+    : allowedIds.includes("highest_priority")
+      ? "highest_priority"
+      : allowedIds[0] ?? "all";
 }
 
 function priorityLabel(score: number): SavedReviewQueueItem["priorityLabel"] {
@@ -144,6 +171,32 @@ function chartFindingsForSnapshot(
     );
 }
 
+function snapshotCandleBasisStatus(
+  snapshot: PersistedDecisionReviewSnapshot | undefined,
+): SavedReviewQueueItem["candleBasisStatus"] {
+  const notes = snapshot?.review.candleQualityNotes ?? [];
+
+  if (
+    notes.some((note) => {
+      const normalized = note.toLowerCase();
+
+      return (
+        normalized.includes("basis_adjustment_multiple_likely") ||
+        normalized.includes("price-basis") ||
+        normalized.includes("basis is proven aligned: false")
+      );
+    })
+  ) {
+    return "warning";
+  }
+
+  if (notes.some((note) => note.toLowerCase().includes("basis_aligned"))) {
+    return "aligned";
+  }
+
+  return "unknown";
+}
+
 function primaryChartFinding(
   findings: UserFacingDecisionReviewInsight[],
 ): UserFacingDecisionReviewInsight | null {
@@ -163,12 +216,40 @@ function primaryChartFinding(
   );
 }
 
-function snapshotPriority(snapshot: PersistedDecisionReviewSnapshot): {
+function lossImpactPriorityBump(grossRealizedPnl: number | null): number {
+  if (grossRealizedPnl === null || grossRealizedPnl >= 0) {
+    return 0;
+  }
+
+  const loss = Math.abs(grossRealizedPnl);
+
+  if (loss >= 100) {
+    return 15;
+  }
+
+  if (loss >= 50) {
+    return 11;
+  }
+
+  if (loss >= 20) {
+    return 7;
+  }
+
+  return 0;
+}
+
+function snapshotPriority(
+  snapshot: PersistedDecisionReviewSnapshot,
+  grossRealizedPnl: number | null,
+): {
   score: number;
   reason: string;
 } {
   const findings = chartFindingsForSnapshot(snapshot);
   const primary = primaryChartFinding(findings);
+  const lossImpactBump = lossImpactPriorityBump(grossRealizedPnl);
+  const lossImpactReason =
+    lossImpactBump > 0 ? " Realized loss moved it up the queue." : "";
   const riskCount = findings.filter(
     (finding) =>
       finding.canDrivePrimaryConclusion &&
@@ -185,14 +266,14 @@ function snapshotPriority(snapshot: PersistedDecisionReviewSnapshot): {
 
   if (riskCount > 0) {
     return {
-      score: Math.min(85, 62 + riskCount * 7),
+      score: Math.min(99, 62 + riskCount * 7 + lossImpactBump),
       reason: primary
-        ? `${riskCount} chart-backed risk${
+        ? `${riskCount} chart risk${
             riskCount === 1 ? "" : "s"
-          } to review. Start with: ${primary.label}.`
-        : `${riskCount} chart-backed risk${
+          } to review. Start with: ${primary.label}.${lossImpactReason}`
+        : `${riskCount} chart risk${
             riskCount === 1 ? "" : "s"
-          } need review.`,
+          } need review.${lossImpactReason}`,
     };
   }
 
@@ -200,8 +281,8 @@ function snapshotPriority(snapshot: PersistedDecisionReviewSnapshot): {
     return {
       score: 48,
       reason: primary
-        ? `Chart-backed strength ready to repeat: ${primary.label}.`
-        : "Chart-backed strength is ready for normal review rotation.",
+        ? `Chart strength ready to repeat: ${primary.label}.`
+        : "Chart strength is ready for normal review rotation.",
     };
   }
 
@@ -227,7 +308,8 @@ function diagnosticPriority(
   if (status === "analysis_failed") {
     return {
       score: 96,
-      reason: "Technical follow-up is needed before chart feedback is trusted.",
+      reason:
+        "Chart data needs another check before chart feedback is trusted.",
     };
   }
 
@@ -235,14 +317,15 @@ function diagnosticPriority(
     return {
       score: 90,
       reason:
-        "Execution review is available now; chart, level, or volume evidence is still missing.",
+        "Execution review is available now; candle and level evidence is still missing.",
     };
   }
 
   if (status === "blocked_open_trade") {
     return {
       score: 76,
-      reason: "Open trade is saved but blocked from completed-trade coaching.",
+      reason:
+        "Open or swing trade is saved, so completed-trade coaching waits until the position is flat.",
     };
   }
 
@@ -256,7 +339,7 @@ function diagnosticPriority(
   return {
     score: diagnostic ? 70 : 52,
     reason: diagnostic
-      ? "Technical follow-up is needed before chart feedback is trusted."
+      ? "Chart data needs another check before chart feedback is trusted."
       : "Queued trade is waiting for chart-data review.",
   };
 }
@@ -305,30 +388,30 @@ function queueStateCopy(lane: SavedReviewQueueItem["lane"]): {
       };
     case "blocked_open_trade":
       return {
-        stateLabel: "Open trade",
+        stateLabel: "Open or swing trade",
         stateDetail:
-          "The position was still open at the end of the import, so completed-trade review waits until the trade is flat.",
-        reviewScopeLabel: "open trade, execution-only",
+          "The position was still open at the end of the import, so completed-trade review waits until the position is flat.",
+        reviewScopeLabel: "open or swing trade, execution-only",
         nextAction:
-          "Keep the trade saved, then review the completed trade once the position is flat.",
+          "Keep the trade saved for execution review now, then review the completed trade once the position is flat.",
       };
     case "market_context_unavailable":
       return {
         stateLabel: "Chart data still missing",
         stateDetail:
-          "Execution review is available, but chart, level, or volume evidence is still missing.",
-        reviewScopeLabel: "execution-only",
+          "Execution review is available, but candle and level evidence is still missing.",
+        reviewScopeLabel: "execution replay only",
         nextAction:
-          "Review entries, adds, reductions, exits, timing, and P/L now; add chart data later.",
+          "Review entries, adds, reductions, exits, timing, and trade result now; add chart data later.",
       };
     case "analysis_failed":
       return {
-        stateLabel: "Needs technical follow-up",
+        stateLabel: "Chart data needs review",
         stateDetail:
-          "Execution review is available, but chart analysis needs a technical follow-up before that feedback is trusted.",
-        reviewScopeLabel: "execution-only fallback",
+          "Execution review is available, but chart data needs another check before candle or level feedback is trusted.",
+        reviewScopeLabel: "execution replay only",
         nextAction:
-          "Use the execution replay now and keep chart evidence conclusions unavailable until the technical follow-up is resolved.",
+          "Use the execution replay now and leave chart evidence conclusions out until that chart-data check is resolved.",
       };
     case "skipped_limit":
       return {
@@ -359,14 +442,23 @@ function reportPnl(args: {
   }
 
   const latest = getLatestSavedTraderAnalyticsReport(
-    args.repository.listReports(args.trade.userId),
+    filterCustomerSavedReports(args.repository.listReports(args.trade.userId)),
   );
-  const row = latest?.report.trades.find(
-    (candidate) =>
-      candidate.symbol === args.trade?.symbol &&
-      candidate.sessionDate === args.trade?.sessionDate &&
-      candidate.tradeDirection === args.trade?.tradeDirection,
-  );
+  const sourceIndex = latest?.sourceTradeIds.indexOf(args.trade.id) ?? -1;
+  const rowByTradeId =
+    sourceIndex >= 0
+      ? latest?.report.trades.find(
+          (candidate) => candidate.tradeIndex === sourceIndex + 1,
+        )
+      : undefined;
+  const row =
+    rowByTradeId ??
+    latest?.report.trades.find(
+      (candidate) =>
+        candidate.symbol === args.trade?.symbol &&
+        candidate.sessionDate === args.trade?.sessionDate &&
+        candidate.tradeDirection === args.trade?.tradeDirection,
+    );
 
   return typeof row?.grossRealizedPnl === "number"
     ? row.grossRealizedPnl
@@ -383,7 +475,13 @@ function buildQueueItem(args: {
   levelFactsByTradeId: Record<string, SavedReviewQueueLevelFactsState>;
 }): SavedReviewQueueItem {
   const lane = laneForStatus(args.job.status);
-  const snapshotScore = args.snapshot ? snapshotPriority(args.snapshot) : null;
+  const grossRealizedPnl = reportPnl({
+    trade: args.trade,
+    repository: args.repository,
+  });
+  const snapshotScore = args.snapshot
+    ? snapshotPriority(args.snapshot, grossRealizedPnl)
+    : null;
   const diagnosticScore = !args.snapshot
     ? diagnosticPriority(args.diagnostic ?? null, args.job.status)
     : null;
@@ -394,6 +492,9 @@ function buildQueueItem(args: {
     };
   const symbol =
     args.trade?.symbol ?? args.savedTrade?.symbol ?? args.job.symbol;
+  const sessionDate =
+    args.trade?.sessionDate ?? args.savedTrade?.sessionDate ?? "";
+  const tickerStoryKey = sessionDate ? `${symbol}:${sessionDate}` : null;
   const stateCopy = queueStateCopy(lane);
   const chartFindings = args.snapshot
     ? chartFindingsForSnapshot(args.snapshot)
@@ -422,6 +523,7 @@ function buildQueueItem(args: {
     savedTradeId: args.job.savedTradeId,
     importBatchId: args.job.importBatchId,
     symbol,
+    sessionDate,
     status: args.job.status,
     lane,
     stateLabel: stateCopy.stateLabel,
@@ -431,6 +533,12 @@ function buildQueueItem(args: {
     detail: headline,
     nextAction: stateCopy.nextAction,
     href: `/intelligence/trades/${encodeURIComponent(args.job.savedTradeId)}?from=review-queue&queue=${lane}`,
+    tickerStoryKey,
+    tickerStoryHref: tickerStoryKey
+      ? `/intelligence/trades/ticker-story/${encodeURIComponent(tickerStoryKey)}`
+      : null,
+    tickerStoryReviewCount: 1,
+    tickerStoryLead: true,
     priorityScore: priority.score,
     priorityLabel: priorityLabel(priority.score),
     priorityReason: priority.reason,
@@ -442,12 +550,10 @@ function buildQueueItem(args: {
     chartRiskCount,
     chartStrengthCount,
     chartReviewPromptCount,
+    candleBasisStatus: snapshotCandleBasisStatus(args.snapshot),
     primaryChartFindingLabel: chartPrimary?.label ?? null,
     primaryChartFindingAction: chartPrimary?.reviewAction ?? null,
-    grossRealizedPnl: reportPnl({
-      trade: args.trade,
-      repository: args.repository,
-    }),
+    grossRealizedPnl,
     reviewStatus: args.trade?.reviewStatus ?? "new",
     notesCount: args.trade?.notes.length ?? 0,
     hasSnapshot: Boolean(args.snapshot),
@@ -456,6 +562,59 @@ function buildQueueItem(args: {
       args.snapshot?.generatedAt ?? args.diagnostic?.generatedAt ?? null,
     levelFacts,
   };
+}
+
+function reviewQueueLossSortValue(item: SavedReviewQueueItem): number {
+  return item.grossRealizedPnl === null ? 0 : item.grossRealizedPnl;
+}
+
+function enrichTickerStoryQueueItems(
+  items: SavedReviewQueueItem[],
+): SavedReviewQueueItem[] {
+  const groups = new Map<string, SavedReviewQueueItem[]>();
+
+  for (const item of items) {
+    if (!item.tickerStoryKey) {
+      continue;
+    }
+
+    const current = groups.get(item.tickerStoryKey) ?? [];
+    current.push(item);
+    groups.set(item.tickerStoryKey, current);
+  }
+
+  return items.map((item) => {
+    if (!item.tickerStoryKey) {
+      return item;
+    }
+
+    const group = groups.get(item.tickerStoryKey) ?? [item];
+
+    return {
+      ...item,
+      tickerStoryReviewCount: group.length,
+      tickerStoryLead: group[0]?.id === item.id,
+    };
+  });
+}
+
+function collapseTickerStoryRepeats(
+  items: SavedReviewQueueItem[],
+): SavedReviewQueueItem[] {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    if (!item.tickerStoryKey || item.tickerStoryReviewCount <= 1) {
+      return true;
+    }
+
+    if (seen.has(item.tickerStoryKey)) {
+      return false;
+    }
+
+    seen.add(item.tickerStoryKey);
+    return true;
+  });
 }
 
 function filterItems(
@@ -467,18 +626,24 @@ function filterItems(
   }
 
   if (filter === "highest_priority") {
-    return items
+    return collapseTickerStoryRepeats(items
       .filter(
         (item) =>
-          item.priorityScore >= 75 &&
+          item.priorityScore >= 90 &&
           item.reviewStatus !== "resolved" &&
           item.reviewStatus !== "ignored" &&
           item.reviewStatus !== "reviewed",
       )
       .sort(
         (a, b) =>
-          b.priorityScore - a.priorityScore || a.symbol.localeCompare(b.symbol),
-      );
+          b.priorityScore - a.priorityScore ||
+          reviewQueueLossSortValue(a) - reviewQueueLossSortValue(b) ||
+          a.symbol.localeCompare(b.symbol),
+      ));
+  }
+
+  if (filter === "candle_basis_warning") {
+    return items.filter((item) => item.candleBasisStatus === "warning");
   }
 
   if (filter === "unresolved") {
@@ -497,6 +662,7 @@ function emptyState(args: {
   importBatchId: string | null;
   allCount: number;
   filteredCount: number;
+  includeChartContext: boolean;
 }): SavedReviewQueueReadModel["emptyState"] {
   if (!args.importBatchId) {
     return {
@@ -507,6 +673,14 @@ function emptyState(args: {
   }
 
   if (args.allCount === 0) {
+    if (!args.includeChartContext) {
+      return {
+        kind: "no_saved_review_jobs",
+        title: "No required execution-review backlog",
+        body: "Saved trades are available for execution replay and notes. Open trade history when you want to study individual trades.",
+      };
+    }
+
     return {
       kind: "no_saved_review_jobs",
       title: "No saved chart-review work",
@@ -534,12 +708,15 @@ export function buildSavedReviewQueueReadModel(args: {
   accountId?: string;
   userId?: string;
   activeFilter?: string | null;
+  includeChartContext?: boolean;
   levelFactsFeatureEnabled?: boolean;
   levelFactsTradeLinkRepository?: JournalLevelAnalysisTradeLinkRepository;
 }): SavedReviewQueueReadModel {
   const accountId = args.accountId ?? DEMO_ACCOUNT_ID;
   const userId = args.userId ?? DEMO_USER_ID;
-  const activeFilter = normalizeFilter(args.activeFilter);
+  const includeChartContext = args.includeChartContext ?? true;
+  const filterIds = reviewQueueFilterIds(includeChartContext);
+  const activeFilter = normalizeFilter(args.activeFilter, filterIds);
   const batch = args.repository.getLatestCommittedBatch(accountId);
 
   if (!batch) {
@@ -554,14 +731,12 @@ export function buildSavedReviewQueueReadModel(args: {
       source: "saved_sqlite",
       importBatchId: null,
       activeFilter,
-      tabs: (Object.keys(FILTER_LABELS) as SavedReviewQueueFilter[]).map(
-        (id) => ({
-          id,
-          label: FILTER_LABELS[id],
-          count: 0,
-          href: `/intelligence/review?queue=${id}`,
-        }),
-      ),
+      tabs: filterIds.map((id) => ({
+        id,
+        label: FILTER_LABELS[id],
+        count: 0,
+        href: `/intelligence/review?queue=${id}`,
+      })),
       items: [],
       allItems: [],
       levelFacts,
@@ -569,15 +744,22 @@ export function buildSavedReviewQueueReadModel(args: {
         importBatchId: null,
         allCount: 0,
         filteredCount: 0,
+        includeChartContext,
       }),
     };
   }
 
-  const jobs = args.repository.listDecisionReviewJobs(batch.id);
+  const jobs = args.repository
+    .listDecisionReviewJobs(batch.id)
+    .filter((job) =>
+      includeChartContext ? true : job.status === "blocked_open_trade",
+    );
   const levelFacts =
     buildSavedReviewQueueLevelFactsReadModelFromRepository({
       tradeIds: jobs.map((job) => job.savedTradeId),
-      featureEnabled: args.levelFactsFeatureEnabled,
+      featureEnabled: includeChartContext
+        ? args.levelFactsFeatureEnabled
+        : false,
       tradeLinkRepository: args.levelFactsTradeLinkRepository,
     });
   const savedTrades = new Map(
@@ -586,12 +768,17 @@ export function buildSavedReviewQueueReadModel(args: {
       .map((trade) => [trade.id, trade]),
   );
   const trades = new Map(
-    args.repository.listTrades(userId).map((trade) => [trade.id, trade]),
+    filterCustomerSavedTrades(args.repository.listTrades(userId)).map((trade) => [
+      trade.id,
+      trade,
+    ]),
   );
   const snapshots = new Map(
-    args.repository
-      .listDecisionReviewSnapshotsForBatch(batch.id)
-      .map((snapshot) => [snapshot.savedTradeId, snapshot]),
+    includeChartContext
+      ? args.repository
+          .listDecisionReviewSnapshotsForBatch(batch.id)
+          .map((snapshot) => [snapshot.savedTradeId, snapshot])
+      : [],
   );
   const diagnosticsByTrade = new Map<
     string,
@@ -609,33 +796,39 @@ export function buildSavedReviewQueueReadModel(args: {
     }
   }
 
-  const allItems = jobs
-    .map((job) =>
-      buildQueueItem({
-        job,
-        savedTrade: savedTrades.get(job.savedTradeId),
-        trade: trades.get(job.savedTradeId),
-        snapshot: snapshots.get(job.savedTradeId),
-        diagnostic: diagnosticsByTrade.get(job.savedTradeId),
-        repository: args.repository,
-        levelFactsByTradeId: levelFacts.statesByTradeId,
-      }),
-    )
-    .sort(
-      (a, b) =>
-        b.priorityScore - a.priorityScore ||
-        (b.generatedAt ?? "").localeCompare(a.generatedAt ?? "") ||
-        a.symbol.localeCompare(b.symbol),
-    );
-  const filtered = filterItems(allItems, activeFilter);
-  const tabs = (Object.keys(FILTER_LABELS) as SavedReviewQueueFilter[]).map(
-    (id) => ({
-      id,
-      label: FILTER_LABELS[id],
-      count: filterItems(allItems, id).length,
-      href: `/intelligence/review?queue=${id}`,
-    }),
+  const allItems = enrichTickerStoryQueueItems(
+    jobs
+      .filter(
+        (job) =>
+          trades.has(job.savedTradeId) &&
+          savedTrades.get(job.savedTradeId)?.reviewStatus !== "ignored",
+      )
+      .map((job) =>
+        buildQueueItem({
+          job,
+          savedTrade: savedTrades.get(job.savedTradeId),
+          trade: trades.get(job.savedTradeId),
+          snapshot: snapshots.get(job.savedTradeId),
+          diagnostic: diagnosticsByTrade.get(job.savedTradeId),
+          repository: args.repository,
+          levelFactsByTradeId: levelFacts.statesByTradeId,
+        }),
+      )
+      .sort(
+        (a, b) =>
+          b.priorityScore - a.priorityScore ||
+          reviewQueueLossSortValue(a) - reviewQueueLossSortValue(b) ||
+          (b.generatedAt ?? "").localeCompare(a.generatedAt ?? "") ||
+          a.symbol.localeCompare(b.symbol),
+      ),
   );
+  const filtered = filterItems(allItems, activeFilter);
+  const tabs = filterIds.map((id) => ({
+    id,
+    label: FILTER_LABELS[id],
+    count: filterItems(allItems, id).length,
+    href: `/intelligence/review?queue=${id}`,
+  }));
 
   return {
     contractVersion: "saved_review_queue_read_model_v1",
@@ -650,6 +843,7 @@ export function buildSavedReviewQueueReadModel(args: {
       importBatchId: batch.id,
       allCount: allItems.length,
       filteredCount: filtered.length,
+      includeChartContext,
     }),
   };
 }

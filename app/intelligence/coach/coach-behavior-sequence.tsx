@@ -61,7 +61,7 @@ function focusTone(focusKind: CoachBehaviorSequenceSelection["focusKind"]): Coac
 
 function focusLabel(focusKind: CoachBehaviorSequenceSelection["focusKind"]): string {
   if (focusKind === "risk") {
-    return "Fix first";
+    return "Reduce first";
   }
 
   if (focusKind === "strength") {
@@ -72,7 +72,7 @@ function focusLabel(focusKind: CoachBehaviorSequenceSelection["focusKind"]): str
     return "Review before deciding";
   }
 
-  return "Collect evidence";
+  return "Collect examples";
 }
 
 function focusAction(
@@ -101,13 +101,18 @@ function focusAction(
 function focusWhy(
   focusKind: CoachBehaviorSequenceSelection["focusKind"],
   group: AnalyticsBehaviorReportGroup | null,
+  chartTierEnabled: boolean,
 ): string {
   if (!group) {
-    return "The coach will only pick a confident path when saved trade evidence is strong enough. Until then, keep reviewing the next trade and collecting chart data.";
+    return chartTierEnabled
+      ? "The coach will only pick a confident path when saved trade and chart evidence is strong enough. Until then, keep reviewing the next trade and collecting examples."
+      : "The coach will only pick a confident path when saved execution evidence is strong enough. Until then, keep reviewing the next trade and collecting examples.";
   }
 
   if (focusKind === "risk") {
-    return "This is the clearest chart-backed risk in the saved evidence. The goal is not to read every report card first; it is to prove this behavior, write one rule, and review the next trade.";
+    return chartTierEnabled
+      ? "This is the clearest chart-supported risk in the saved evidence. The goal is not to read every report card first; it is to prove this behavior, write one rule, and review the next trade."
+      : "This is the clearest execution-supported risk in the saved evidence. The goal is not to read every report card first; it is to prove this behavior, write one rule, and review the next trade.";
   }
 
   if (focusKind === "strength") {
@@ -115,7 +120,9 @@ function focusWhy(
   }
 
   if (focusKind === "review") {
-    return "The evidence is useful, but it is not strong enough for a conclusion yet. Treat it as a review task until the replay, chart evidence, or written review proves what happened.";
+    return chartTierEnabled
+      ? "The evidence is useful, but it is not strong enough for a conclusion yet. Treat it as a review task until the replay, chart evidence, or written review proves what happened."
+      : "The evidence is useful, but it is not strong enough for a conclusion yet. Treat it as a review task until the replay or written review proves what happened.";
   }
 
   return group.description;
@@ -235,8 +242,10 @@ function MiniGroup({
 }
 
 export function CoachBehaviorSequence({
+  chartTierEnabled = true,
   report,
 }: {
+  chartTierEnabled?: boolean;
   report: AnalyticsBehaviorReport;
 }) {
   const selection = selectCoachBehaviorSequence(report);
@@ -282,7 +291,11 @@ export function CoachBehaviorSequence({
             Why this matters
           </div>
           <div className="mt-2 text-sm leading-6 text-slate-700">
-            {focusWhy(selection.focusKind, selection.focusGroup)}
+            {focusWhy(
+              selection.focusKind,
+              selection.focusGroup,
+              chartTierEnabled,
+            )}
           </div>
           <div className="mt-4 border-t border-slate-200 pt-4">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">

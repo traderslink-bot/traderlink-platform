@@ -57,8 +57,8 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     broker: "generic_execution_csv",
     csvText: [
       "Date,Time,Symbol,Side,Quantity,Price",
-      "2024-04-12,09:33:30,ABCD,Buy,100,1.2767",
-      "2024-04-12,09:39:10,ABCD,Sell,100,1.2950",
+      "2024-04-12,09:33:30,ABCD,Buy,100,1.3097",
+      "2024-04-12,09:39:10,ABCD,Sell,100,1.3150",
     ].join("\n"),
     levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
     expectedInsightIds: [
@@ -82,7 +82,7 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     broker: "generic_execution_csv",
     csvText: [
       "Date,Time,Symbol,Side,Quantity,Price",
-      "2024-04-12,09:33:30,ABCD,Buy,100,1.2767",
+      "2024-04-12,09:33:30,ABCD,Buy,100,1.3097",
       "2024-04-12,09:39:10,ABCD,Sell,100,1.2350",
     ].join("\n"),
     levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
@@ -107,9 +107,9 @@ export const decisionReviewCsvScenarios: DecisionReviewCsvScenario[] = [
     broker: "generic_execution_csv",
     csvText: [
       "Date,Time,Symbol,Side,Quantity,Price",
-      "2024-04-12,09:33:30,ABCD,Buy,100,1.2767",
-      "2024-04-12,09:36:15,ABCD,Buy,100,1.2950",
-      "2024-04-12,09:39:10,ABCD,Sell,200,1.3050",
+      "2024-04-12,09:33:30,ABCD,Buy,100,1.3097",
+      "2024-04-12,09:36:15,ABCD,Buy,100,1.3150",
+      "2024-04-12,09:39:10,ABCD,Sell,200,1.3250",
     ].join("\n"),
     levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
     expectedInsightIds: [

@@ -18,6 +18,11 @@ import { buildLatestSavedImportSourceCautionReadModel } from "@/src/lib/trader-a
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
 import { buildSavedOrSampleTraderAnalyticsViewModel } from "@/src/lib/trader-analytics/server/saved-trader-analytics-data";
 import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
+import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
+import {
   buildCoachOverallFocusSummary,
   buildCoachProgressFollowThroughSummary,
   chooseCoachEvidenceQueueItem,
@@ -100,6 +105,30 @@ function compactCoachAction(value: string, fallback: string): string {
 
 const panelClass = "ti-panel p-4";
 
+function avoidRepeatedFocusLead(summary: string, label: string): string {
+  if (summary === label) {
+    return summary;
+  }
+
+  return summary.startsWith(label)
+    ? `This behavior${summary.slice(label.length)}`
+    : summary;
+}
+
+function countLabel(
+  count: number,
+  singular: string,
+  plural = `${singular}s`,
+): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function coachTradeReviewTitle(displayName: string): string {
+  return displayName.toLowerCase().endsWith("trade")
+    ? `${displayName} review`
+    : `${displayName} trade review`;
+}
+
 function coachLaneLabel(lane: string): string {
   if (lane === "highest_priority") {
     return "Review first";
@@ -110,11 +139,15 @@ function coachLaneLabel(lane: string): string {
   }
 
   if (lane === "blocked_open_trade") {
-    return "Open trade";
+    return "Open or swing";
   }
 
   if (lane === "analysis_failed") {
-    return "Needs technical follow-up";
+    return "Chart data needs another check";
+  }
+
+  if (lane === "candle_basis_warning") {
+    return "Candle basis check";
   }
 
   if (lane === "completed") {
@@ -166,6 +199,19 @@ function coachEvidenceCardHref(
   }
 
   return withPageAnchor(`${path}?${params.toString()}`, "evidence");
+}
+
+function coachTickerStoryHref(
+  thread: SavedTradeThread,
+  focusLabel?: string | null,
+): string {
+  const [path] = thread.href.split("?");
+  const params = new URLSearchParams({ from: "coach" });
+  if (focusLabel) {
+    params.set("focus", focusLabel);
+  }
+
+  return `${path}?${params.toString()}`;
 }
 
 function chooseReviewPreviewItems(args: {
@@ -223,6 +269,98 @@ function choosePriorityTickerStory(threads: SavedTradeThread[]): SavedTradeThrea
     ) ??
     multiRoundTripStories[0] ??
     null
+  );
+}
+
+function tickerStoryKindPriority(thread: SavedTradeThread): number {
+  switch (thread.storyKind) {
+    case "repeated_losing_attempts":
+      return 35;
+    case "profit_giveback":
+      return 28;
+    case "swing_transition":
+    case "extended_same_day_hold":
+    case "open_reentry":
+      return 18;
+    case "reentry_added_profit":
+      return 8;
+    default:
+      return 0;
+  }
+}
+
+function chooseCoachTickerStoryFocus(args: {
+  behavior: CoachOverallFocusBehavior | null;
+  queue: SavedReviewQueueItem[];
+  threads: SavedTradeThread[];
+}): {
+  queueItem: SavedReviewQueueItem | null;
+  relatedTradeCount: number;
+  score: number;
+  thread: SavedTradeThread;
+} | null {
+  const relatedIds = new Set(args.behavior?.relatedTradeIds ?? []);
+  const queueByStory = new Map(
+    args.queue
+      .filter((item) => item.tickerStoryKey && item.tickerStoryReviewCount > 1)
+      .map((item) => [item.tickerStoryKey, item]),
+  );
+
+  return (
+    args.threads
+      .filter((thread) => thread.roundTripCount > 1)
+      .map((thread) => {
+        const relatedTradeCount = thread.roundTrips.filter((roundTrip) =>
+          relatedIds.has(roundTrip.tradeId),
+        ).length;
+        const queueItem = queueByStory.get(thread.id) ?? null;
+        const lossScore =
+          thread.totalGrossRealizedPnl < 0
+            ? Math.min(Math.abs(thread.totalGrossRealizedPnl), 220) / 4
+            : 0;
+        const chartRiskScore =
+          Math.min(thread.marketContextRiskCount, 14) * 3 +
+          Math.min(thread.addQualityRiskCount, 8) * 6;
+        const queueScore = queueItem
+          ? 80 + Math.min(queueItem.priorityScore, 99) / 3
+          : 0;
+        const score =
+          relatedTradeCount * 42 +
+          queueScore +
+          lossScore +
+          chartRiskScore +
+          Math.min(thread.roundTripCount, 6) * 8 +
+          tickerStoryKindPriority(thread);
+
+        return {
+          queueItem,
+          relatedTradeCount,
+          score,
+          thread,
+        };
+      })
+      .filter((item) => {
+        const isBehaviorExample =
+          relatedIds.size === 0 || item.relatedTradeCount >= 2;
+        const isHighPriorityStory = Boolean(item.queueItem);
+        const hasEnoughEvidence =
+          item.thread.marketContextRiskCount + item.thread.addQualityRiskCount >=
+            6 || item.thread.totalGrossRealizedPnl < 0;
+
+        return (
+          hasEnoughEvidence &&
+          (isBehaviorExample || isHighPriorityStory) &&
+          (item.relatedTradeCount > 0 || isHighPriorityStory)
+        );
+      })
+      .sort(
+        (left, right) =>
+          right.score - left.score ||
+          right.relatedTradeCount - left.relatedTradeCount ||
+          (left.thread.totalGrossRealizedPnl ?? 0) -
+            (right.thread.totalGrossRealizedPnl ?? 0) ||
+          left.thread.symbol.localeCompare(right.thread.symbol),
+      )[0] ?? null
   );
 }
 
@@ -318,13 +456,19 @@ function CoachSectionHeader({
 }
 
 function TickerStoryCoachPanel({
+  chartTierEnabled,
+  focusLabel,
   thread,
   threadCount,
 }: {
+  chartTierEnabled: boolean;
+  focusLabel?: string | null;
   thread: SavedTradeThread | null;
   threadCount: number;
 }) {
-  const storyHref = thread?.href ?? "/intelligence/trades/ticker-stories#ticker-stories";
+  const storyHref = thread
+    ? coachTickerStoryHref(thread, focusLabel)
+    : "/intelligence/trades/ticker-stories#ticker-stories";
 
   return (
     <section className="ti-panel p-5" data-testid="coach-ticker-story-panel">
@@ -339,7 +483,8 @@ function TickerStoryCoachPanel({
           <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
             Round trips stay separate for accounting. This coaching view groups
             same-symbol re-entries so the review can catch profit giveback,
-            open re-entries, and day trades that turned into swing exposure.
+            open re-entries, and day trades that turned into swing exposure
+            {chartTierEnabled ? " with chart evidence kept as a later check." : "."}
           </p>
         </div>
         <Link
@@ -387,92 +532,100 @@ function TickerStoryCoachPanel({
                 {thread.fixFirstAction}
               </div>
             </div>
-            <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-8">
-              <MetricCard
-                label="Chart Findings"
-                value={thread.marketContextFindingCount}
-                detail="Certified chart prompts and level checks"
-                tone={thread.marketContextFindingCount > 0 ? "info" : "default"}
-              />
-              <MetricCard
-                label="Add Quality"
-                value={thread.addQualityFindingCount}
-                detail={`${thread.addQualityRiskCount} risk, ${thread.addQualityStrengthCount} strength`}
-                tone={
-                  thread.addQualityRiskCount > 0
-                    ? "warning"
-                    : thread.addQualityStrengthCount > 0
+            {chartTierEnabled ? (
+              <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-8">
+                <MetricCard
+                  label="Chart Findings"
+                  value={thread.marketContextFindingCount}
+                  detail="Certified chart prompts and level checks"
+                  tone={thread.marketContextFindingCount > 0 ? "info" : "default"}
+                />
+                <MetricCard
+                  label="Add Quality"
+                  value={thread.addQualityFindingCount}
+                  detail={`${thread.addQualityRiskCount} risk, ${thread.addQualityStrengthCount} strength`}
+                  tone={
+                    thread.addQualityRiskCount > 0
+                      ? "warning"
+                      : thread.addQualityStrengthCount > 0
+                        ? "success"
+                        : thread.addQualityFindingCount > 0
+                          ? "info"
+                          : "default"
+                  }
+                />
+                <MetricCard
+                  label="Chart Risks"
+                  value={thread.marketContextRiskCount}
+                  detail="Level, add, exit, or profit-protection risk"
+                  tone={thread.marketContextRiskCount > 0 ? "warning" : "default"}
+                />
+                <MetricCard
+                  label="Chart Strengths"
+                  value={thread.marketContextStrengthCount}
+                  detail="Chart evidence strengths worth repeating"
+                  tone={thread.marketContextStrengthCount > 0 ? "success" : "default"}
+                />
+                <MetricCard
+                  label="After Exit"
+                  value={thread.postExitFindingCount}
+                  detail={`${thread.postExitRiskCount} risk, ${thread.postExitStrengthCount} strength`}
+                  tone={
+                    thread.postExitRiskCount > 0
+                      ? "warning"
+                      : thread.postExitStrengthCount > 0
+                        ? "success"
+                        : thread.postExitFindingCount > 0
+                          ? "info"
+                          : "default"
+                  }
+                />
+                <MetricCard
+                  label="Protected Profit"
+                  value={thread.protectedProfitBeforeFadeFindingCount}
+                  detail="Exit strength before a later fade"
+                  tone={
+                    thread.protectedProfitBeforeFadeFindingCount > 0
                       ? "success"
-                      : thread.addQualityFindingCount > 0
-                        ? "info"
-                        : "default"
-                }
-              />
-              <MetricCard
-                label="Chart Risks"
-                value={thread.marketContextRiskCount}
-                detail="Level, add, exit, or profit-protection risk"
-                tone={thread.marketContextRiskCount > 0 ? "warning" : "default"}
-              />
-              <MetricCard
-                label="Chart Strengths"
-                value={thread.marketContextStrengthCount}
-                detail="Chart evidence strengths worth repeating"
-                tone={thread.marketContextStrengthCount > 0 ? "success" : "default"}
-              />
-              <MetricCard
-                label="After Exit"
-                value={thread.postExitFindingCount}
-                detail={`${thread.postExitRiskCount} risk, ${thread.postExitStrengthCount} strength`}
-                tone={
-                  thread.postExitRiskCount > 0
-                    ? "warning"
-                    : thread.postExitStrengthCount > 0
-                      ? "success"
-                      : thread.postExitFindingCount > 0
-                        ? "info"
-                        : "default"
-                }
-              />
-              <MetricCard
-                label="Protected Profit"
-                value={thread.protectedProfitBeforeFadeFindingCount}
-                detail="Exit strength before a later fade"
-                tone={
-                  thread.protectedProfitBeforeFadeFindingCount > 0
-                    ? "success"
-                    : "default"
-                }
-              />
-              <MetricCard
-                label="Support/Resistance Exits"
-                value={thread.exitLevelFindingCount}
-                detail={`${thread.exitLevelRiskCount} risk, ${thread.exitLevelStrengthCount} strength`}
-                tone={
-                  thread.exitLevelRiskCount > 0
-                    ? "warning"
-                    : thread.exitLevelStrengthCount > 0
-                      ? "success"
-                      : thread.exitLevelFindingCount > 0
-                        ? "info"
-                        : "default"
-                }
-              />
-              <MetricCard
-                label="Volume Evidence"
-                value={thread.volumeFindingCount}
-                detail={`${thread.volumeRiskCount} risk, ${thread.volumeStrengthCount} strength`}
-                tone={
-                  thread.volumeRiskCount > 0
-                    ? "warning"
-                    : thread.volumeStrengthCount > 0
-                      ? "success"
-                      : thread.volumeFindingCount > 0
-                        ? "info"
-                        : "default"
-                }
-              />
-            </div>
+                      : "default"
+                  }
+                />
+                <MetricCard
+                  label="Support/Resistance Exits"
+                  value={thread.exitLevelFindingCount}
+                  detail={`${thread.exitLevelRiskCount} risk, ${thread.exitLevelStrengthCount} strength`}
+                  tone={
+                    thread.exitLevelRiskCount > 0
+                      ? "warning"
+                      : thread.exitLevelStrengthCount > 0
+                        ? "success"
+                        : thread.exitLevelFindingCount > 0
+                          ? "info"
+                          : "default"
+                  }
+                />
+                <MetricCard
+                  label="Volume Evidence"
+                  value={thread.volumeFindingCount}
+                  detail={`${thread.volumeRiskCount} risk, ${thread.volumeStrengthCount} strength`}
+                  tone={
+                    thread.volumeRiskCount > 0
+                      ? "warning"
+                      : thread.volumeStrengthCount > 0
+                        ? "success"
+                        : thread.volumeFindingCount > 0
+                          ? "info"
+                          : "default"
+                  }
+                />
+              </div>
+            ) : (
+              <div className="border border-zinc-900 bg-zinc-950/70 p-4 text-sm leading-6 text-zinc-400">
+                This view is execution-only in the current tier. Use the saved
+                round trips and written notes before turning the story into a
+                rule.
+              </div>
+            )}
             <div className="grid gap-2 md:grid-cols-3">
               {thread.reviewEvidence.slice(0, 3).map((item) => (
                 <div
@@ -1360,19 +1513,22 @@ export default async function CoachPage(props: {
   const analyticsData = buildSavedOrSampleTraderAnalyticsViewModel({
     preferSample: demoParam === "sample",
   });
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
 
   if (analyticsData.mode !== "saved" && demoParam !== "sample") {
     return <EmptyCoachPage />;
   }
 
   const analytics = analyticsData.viewModel;
-  const savedTradesForProgress = analyticsData.repository.listTrades(
-    analyticsData.userId,
+  const savedTradesForProgress = filterCustomerSavedTrades(
+    analyticsData.repository.listTrades(analyticsData.userId),
   );
   const savedReviewQueue =
     analyticsData.mode === "saved"
       ? buildSavedReviewQueueReadModel({
           repository: analyticsData.repository,
+          includeChartContext: chartContextAllowed,
           userId: analyticsData.userId,
         })
       : null;
@@ -1388,14 +1544,23 @@ export default async function CoachPage(props: {
           analyticsData.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
       : [];
+  const chartContextSnapshots = chartContextAllowed
+    ? decisionReviewSnapshots
+    : [];
+  const completedChartEvidenceCount = chartContextSnapshots.length;
+  const hasCompletedChartEvidence = completedChartEvidenceCount > 0;
+  const chartTierEnabled =
+    chartContextAllowed &&
+    (analyticsData.mode === "sample" || hasCompletedChartEvidence);
   const tradeThreadModel = buildSavedTradeThreadReadModel({
-    decisionReviewSnapshots,
+    decisionReviewSnapshots: chartContextSnapshots,
     report: analytics.latestReport,
     source: analyticsData.mode === "saved" ? "saved_sqlite" : "sample",
     trades: savedTradesForProgress,
   });
-  const behaviorReport = buildAnalyticsBehaviorReport(tradeThreadModel);
-  const priorityTickerStory = choosePriorityTickerStory(tradeThreadModel.threads);
+  const behaviorReport = buildAnalyticsBehaviorReport(tradeThreadModel, {
+    includeChartContext: chartContextAllowed,
+  });
   const prioritySessionStory = choosePrioritySessionStory(
     tradeThreadModel.sessionStories,
   );
@@ -1413,6 +1578,20 @@ export default async function CoachPage(props: {
   const archetype = coach.archetypeProfile.primary;
   const primaryReviewItem =
     savedReviewQueue?.items[0] ?? savedReviewQueue?.allItems[0] ?? null;
+  const chartDataNeedsReviewCount =
+    savedReviewQueue?.tabs.find((tab) => tab.id === "analysis_failed")?.count ??
+    0;
+  const chartDataMissingCount =
+    savedReviewQueue?.tabs.find(
+      (tab) => tab.id === "market_context_unavailable",
+    )?.count ?? 0;
+  const chartDataWaitingCount =
+    savedReviewQueue?.tabs.find((tab) => tab.id === "queued")?.count ?? 0;
+  const candleBasisWarningCount =
+    savedReviewQueue?.tabs.find((tab) => tab.id === "candle_basis_warning")
+      ?.count ?? 0;
+  const chartDataNeedsAttentionCount =
+    chartDataNeedsReviewCount + chartDataMissingCount + chartDataWaitingCount;
   const dataLabel =
     analyticsData.mode === "saved"
       ? plainStateLabel("saved_sqlite")
@@ -1424,6 +1603,14 @@ export default async function CoachPage(props: {
     top: coach.mistakeSeverityLadder.topSeverity,
     tradeId: null,
   });
+  const coachTickerStoryFocus = chooseCoachTickerStoryFocus({
+    behavior: sessionBehavior,
+    queue: savedReviewQueue?.items ?? [],
+    threads: tradeThreadModel.threads,
+  });
+  const priorityTickerStory =
+    coachTickerStoryFocus?.thread ??
+    choosePriorityTickerStory(tradeThreadModel.threads);
   const primaryEvidenceItem = chooseCoachEvidenceQueueItem({
     behavior: sessionBehavior,
     fallback: primaryReviewItem,
@@ -1473,7 +1660,7 @@ export default async function CoachPage(props: {
   const primaryEvidenceDisplayName =
     userFacingTradeSymbol(primaryEvidenceItem?.symbol);
   const sessionTradeTitle = primaryEvidenceItem
-    ? `${primaryEvidenceDisplayName} evidence trade`
+    ? coachTradeReviewTitle(primaryEvidenceDisplayName)
     : "Import a broker CSV to start coaching";
   const sessionTradeDetail = primaryEvidenceItem
     ? `Use this trade to prove or reject the current focus. ${primaryEvidenceItem.stateDetail}`
@@ -1483,6 +1670,18 @@ export default async function CoachPage(props: {
   const evidenceLabel = primaryEvidenceItem
     ? `${primaryEvidenceDisplayName} / ${signed(primaryEvidenceItem.grossRealizedPnl)}`
     : "No saved trade yet";
+  const tickerStoryFocusHref = coachTickerStoryFocus
+    ? coachTickerStoryHref(coachTickerStoryFocus.thread, sessionBehavior?.label)
+    : null;
+  const tickerStoryFocusDetail = coachTickerStoryFocus
+    ? `${userFacingTradeSymbol(coachTickerStoryFocus.thread.symbol)} has ${
+        coachTickerStoryFocus.thread.roundTripCount
+      } round trips, ${signed(
+        coachTickerStoryFocus.thread.totalGrossRealizedPnl,
+      )} total P/L, and ${coachTickerStoryFocus.relatedTradeCount} round trip${
+        coachTickerStoryFocus.relatedTradeCount === 1 ? "" : "s"
+      } tied to the current focus. Use the ticker story to compare attempts before turning the focus into a rule.`
+    : null;
   const coachRouteItems = [
     {
       active: activeCoachView === "overview",
@@ -1503,25 +1702,33 @@ export default async function CoachPage(props: {
       countLabel: `${behaviorReport.groups.length} groups`,
       href: "/intelligence/coach/behavior-sequence",
       label: "Behavior Sequence",
-      summary: "One chart-backed path for what to fix, repeat, or review.",
+      summary: chartTierEnabled
+        ? "One chart-supported path for what to fix, repeat, or review."
+        : chartDataNeedsAttentionCount > 0
+          ? "One execution-supported path while chart data needs review."
+          : "One execution-supported path for what to fix, repeat, or review.",
     },
     {
       active: activeCoachView === "review_backlog",
-      countLabel: `${reviewPreviewItems.length} trades`,
+      countLabel: countLabel(reviewPreviewItems.length, "trade"),
       href: "/intelligence/coach/review-backlog",
       label: "Review Backlog",
       summary: "Trades that prove or challenge the coaching focus.",
     },
     {
       active: activeCoachView === "ticker_stories",
-      countLabel: `${tradeThreadModel.multiRoundTripThreadCount} stories`,
+      countLabel: countLabel(
+        tradeThreadModel.multiRoundTripThreadCount,
+        "story",
+        "stories",
+      ),
       href: "/intelligence/coach/ticker-stories",
       label: "Ticker Stories",
       summary: "Same-symbol re-entries, giveback, and hold transitions.",
     },
     {
       active: activeCoachView === "session_stories",
-      countLabel: `${tradeThreadModel.sessionStoryCount} sessions`,
+      countLabel: countLabel(tradeThreadModel.sessionStoryCount, "session"),
       href: "/intelligence/coach/session-stories",
       label: "Session Stories",
       summary: "Full-day review for green-to-red, activity, and hold exposure.",
@@ -1587,8 +1794,21 @@ export default async function CoachPage(props: {
               {dataLabel}
             </span>
             <span className="rounded-md border border-emerald-900 bg-emerald-950/20 px-2 py-1 text-emerald-300">
-              chart claims gated
+              {chartTierEnabled
+                ? "chart evidence checked"
+                : chartDataNeedsAttentionCount > 0
+                  ? "chart data needs review"
+                  : "execution evidence checked"}
             </span>
+            {candleBasisWarningCount > 0 ? (
+              <Link
+                className="rounded-md border border-amber-900 bg-amber-950/20 px-2 py-1 text-amber-200 transition hover:border-amber-500"
+                href="/intelligence/review?queue=candle_basis_warning"
+              >
+                {candleBasisWarningCount} candle basis check
+                {candleBasisWarningCount === 1 ? "" : "s"}
+              </Link>
+            ) : null}
             <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-1 text-zinc-400">
               evidence-backed review
             </span>
@@ -1631,9 +1851,55 @@ export default async function CoachPage(props: {
                     ? sessionBehaviorLabel
                     : "Save one broker CSV to unlock coaching"
                 }
-                whyItMatters={sessionWhyItMatters}
+                whyItMatters={
+                  sessionWhyItMatters === sessionBehaviorLabel
+                    ? sessionBehaviorExplanation
+                    : avoidRepeatedFocusLead(
+                        sessionWhyItMatters,
+                        sessionBehaviorLabel,
+                      )
+                }
               />
             </div>
+
+            {coachTickerStoryFocus &&
+            tickerStoryFocusHref &&
+            tickerStoryFocusDetail ? (
+              <section
+                className="ti-panel p-4"
+                data-testid="coach-ticker-story-focus"
+              >
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-sky-300">
+                      Ticker Story Behind This Focus
+                    </p>
+                    <h2 className="mt-2 text-lg font-semibold text-zinc-100">
+                      Start with{" "}
+                      {userFacingTradeSymbol(coachTickerStoryFocus.thread.symbol)}{" "}
+                      before writing the rule.
+                    </h2>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+                      {tickerStoryFocusDetail}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      className="border border-sky-800 bg-sky-950/30 px-4 py-3 text-sm font-medium text-sky-100 transition hover:border-sky-400"
+                      href={tickerStoryFocusHref}
+                    >
+                      Open ticker story
+                    </Link>
+                    <Link
+                      className="border border-zinc-800 px-4 py-3 text-sm font-medium text-zinc-200 transition hover:border-zinc-500"
+                      href="/intelligence/review?queue=highest_priority"
+                    >
+                      Open review queue
+                    </Link>
+                  </div>
+                </div>
+              </section>
+            ) : null}
 
             <WorkflowHandoffPanel
               body="The coach starts with the overall pattern, then uses trades as evidence. Work through this path when you want the page to feel like a coaching session instead of a dashboard."
@@ -1822,6 +2088,24 @@ export default async function CoachPage(props: {
             <p className="mt-2 text-sm leading-6 text-zinc-400">
               {sessionTradeDetail}
             </p>
+            {coachTickerStoryFocus && tickerStoryFocusHref ? (
+              <div className="mt-4 border border-zinc-900 bg-zinc-950/60 p-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  Related ticker story
+                </div>
+                <div className="mt-2 text-sm leading-6 text-zinc-300">
+                  Compare{" "}
+                  {userFacingTradeSymbol(coachTickerStoryFocus.thread.symbol)}{" "}
+                  round trips before turning this focus into a rule.
+                </div>
+                <Link
+                  className="mt-3 inline-flex text-sm font-medium text-sky-300 hover:text-sky-200"
+                  href={tickerStoryFocusHref}
+                >
+                  Open ticker story
+                </Link>
+              </div>
+            ) : null}
             <div id="main-behavior" className="mt-5 border-t border-zinc-900 pt-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Main behavior
@@ -1906,7 +2190,10 @@ export default async function CoachPage(props: {
 
         {activeCoachView === "behavior_sequence" ? (
         <div id="behavior-map">
-          <CoachBehaviorSequence report={behaviorReport} />
+          <CoachBehaviorSequence
+            chartTierEnabled={chartTierEnabled}
+            report={behaviorReport}
+          />
         </div>
         ) : null}
 
@@ -1922,6 +2209,8 @@ export default async function CoachPage(props: {
         {activeCoachView === "ticker_stories" ? (
         <div id="ticker-story-coach">
           <TickerStoryCoachPanel
+            chartTierEnabled={chartTierEnabled}
+            focusLabel={sessionBehavior?.label}
             thread={priorityTickerStory}
             threadCount={tradeThreadModel.multiRoundTripThreadCount}
           />
@@ -1981,9 +2270,17 @@ export default async function CoachPage(props: {
           body="Use these as supporting details after the main coaching focus is clear. This page keeps the advanced material available without making it the default coach experience."
         />
 
-        <BehaviorReportPanel mode="coach" report={behaviorReport} />
+        <BehaviorReportPanel
+          chartTierEnabled={chartTierEnabled}
+          mode="coach"
+          report={behaviorReport}
+        />
 
-        <SavedReviewQueueSummary queue={savedReviewQueue} surface="coach" />
+        <SavedReviewQueueSummary
+          chartTierEnabled={chartTierEnabled}
+          queue={savedReviewQueue}
+          surface="coach"
+        />
 
         <CoachSectionHeader
           eyebrow="Coach Checks"

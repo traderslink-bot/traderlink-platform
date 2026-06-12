@@ -3,12 +3,20 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { UploadCsvClient } from "./upload-csv-client";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
 
 export const metadata: Metadata = {
   title: "Upload CSV | Trader Intelligence",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function UploadCsvPage() {
+  const chartTierEnabled = canUseChartContext(readTraderIntelligenceTierFromEnv());
+
   return (
     <main className="ti-dashboard-bg min-h-screen px-5 py-6 text-zinc-100 sm:px-8">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-5xl flex-col">
@@ -44,7 +52,7 @@ export default function UploadCsvPage() {
                 the next review step only if something needs your attention.
               </p>
             </div>
-            <UploadCsvClient />
+            <UploadCsvClient chartTierEnabled={chartTierEnabled} />
           </section>
         </div>
       </div>

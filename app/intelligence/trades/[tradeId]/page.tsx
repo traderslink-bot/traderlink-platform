@@ -17,6 +17,15 @@ import {
 import { buildSavedOrSampleTraderAnalyticsViewModel } from "@/src/lib/trader-analytics/server/saved-trader-analytics-data";
 import { buildTradeImportSourceCautionReadModel } from "@/src/lib/trader-analytics/server/saved-import-source-caution";
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
+import {
+  filterCustomerSavedReports,
+  filterCustomerSavedTrades,
+  isLocalSyntheticTrade,
+} from "@/src/lib/trader-analytics/product/customer-data-filter";
 import { getTradeDetailLevelFactsForApi } from "@/src/lib/level-analysis/level-analysis-journal-delivery-trade-link-api-service";
 import {
   isLevelAnalysisTradeDetailLevelFactsEnabled,
@@ -131,15 +140,11 @@ function plainEvidenceSourceLabel(value: string | null | undefined): string {
     return "Saved review evidence";
   }
 
-  const normalized = value.toLowerCase();
-
-  if (
-    normalized.includes("levels_system") ||
-    normalized.includes("daily_4h") ||
-    normalized.includes("market_context")
-  ) {
+  if (isChartEvidenceSource(value)) {
     return "Chart evidence";
   }
+
+  const normalized = value.toLowerCase();
 
   if (normalized.includes("execution")) {
     return "Execution replay";
@@ -157,6 +162,25 @@ function plainEvidenceSourceLabel(value: string | null | undefined): string {
   }
 
   return "Saved review evidence";
+}
+
+function isChartEvidenceSource(value: string | null | undefined): boolean {
+  if (!value) {
+    return false;
+  }
+
+  const normalized = value.toLowerCase();
+
+  return (
+    normalized.includes("levels_system") ||
+    normalized.includes("daily_4h") ||
+    normalized.includes("market_context") ||
+    normalized.includes("chart") ||
+    normalized.includes("support/resistance") ||
+    normalized.includes("support") ||
+    normalized.includes("resistance") ||
+    normalized.includes("level")
+  );
 }
 
 function applyPersistedChecklistState(
@@ -199,9 +223,11 @@ function applyPersistedChecklistState(
 }
 
 function decisionReviewStatusCopy(args: {
+  chartTierEnabled: boolean;
   hasSnapshot: boolean;
   diagnosticStatus?: string;
   diagnosticCode?: string;
+  candleQualityNotes?: string[] | null;
 }): {
   label: string;
   detail: string;
@@ -209,7 +235,31 @@ function decisionReviewStatusCopy(args: {
   nextAction: string;
   tone: string;
 } {
+  if (!args.chartTierEnabled) {
+    return {
+      label: "Execution-only review",
+      detail:
+        "This tier keeps the trade detail review focused on saved executions, P/L, notes, and checklist evidence.",
+      scope: "Execution-only",
+      nextAction:
+        "Review entries, adds, reductions, exits, timing, and P/L evidence.",
+      tone: "text-zinc-300",
+    };
+  }
+
   if (args.hasSnapshot) {
+    if (hasUnsafeCandleBasis(args.candleQualityNotes)) {
+      return {
+        label: "Chart basis needs review",
+        detail:
+          "Chart context is attached, but the trade-window candle prices may use a different basis than the broker executions. Use execution replay and broker P/L for movement conclusions until this is reconciled.",
+        scope: "Execution replay, chart context with basis warning",
+        nextAction:
+          "Write the trade lesson from executions first; keep candle-move conclusions out unless the price basis is reconciled.",
+        tone: "text-amber-300",
+      };
+    }
+
     return {
       label: "Chart evidence ready",
       detail:
@@ -222,10 +272,10 @@ function decisionReviewStatusCopy(args: {
 
   if (args.diagnosticStatus === "blocked_open_trade") {
     return {
-      label: "Open trade",
+      label: "Open or swing trade",
       detail:
         "The import ended with shares still open, so completed-trade review waits until the position is flat.",
-      scope: "Open trade, execution-only",
+      scope: "Open or swing trade, execution-only",
       nextAction:
         "Wait until the position is flat before completed-trade coaching.",
       tone: "text-sky-300",
@@ -239,8 +289,8 @@ function decisionReviewStatusCopy(args: {
     return {
       label: "Chart data still missing",
       detail:
-        "Execution review is available now, but chart, level, or volume evidence was not available. Do not treat chart conclusions as available until that evidence is added.",
-      scope: "Execution-only fallback",
+        "Execution review is available now, but candle and level evidence was not available. Do not treat chart conclusions as available until that evidence is added.",
+      scope: "Execution replay only",
       nextAction:
         "Review entries, adds, reductions, exits, timing, and P/L evidence now; add chart data later.",
       tone: "text-amber-300",
@@ -249,12 +299,12 @@ function decisionReviewStatusCopy(args: {
 
   if (args.diagnosticStatus === "analysis_failed" || args.diagnosticCode) {
     return {
-      label: "Chart review needs technical follow-up",
+      label: "Chart data needs another check",
       detail:
-        "Execution review is available now, but chart review analysis needs a manual follow-up. Keep coaching conservative and do not treat chart conclusions as available.",
-      scope: "Execution-only fallback",
+        "Execution review is available now, but chart review needs another data check. Keep coaching conservative and do not treat chart conclusions as available.",
+      scope: "Execution replay only",
       nextAction:
-        "Use the execution replay now and keep chart conclusions unavailable until the follow-up is resolved.",
+        "Use the execution replay now and keep chart conclusions unavailable until the data check is resolved.",
       tone: "text-amber-300",
     };
   }
@@ -299,7 +349,7 @@ function decisionReviewDiagnosticUserMessage(diagnostic: {
   const state = decisionReviewDiagnosticBadgeState(diagnostic);
 
   if (state === "market_context_unavailable") {
-    return "Chart, level, or volume evidence was not available for this trade yet. Use execution replay now and add chart data later.";
+    return "Candle and level evidence was not available for this trade yet. Use execution replay now and add chart data later.";
   }
 
   if (state === "blocked_open_trade") {
@@ -310,7 +360,60 @@ function decisionReviewDiagnosticUserMessage(diagnostic: {
     return "This trade is waiting for a saved chart review run.";
   }
 
-  return "Chart analysis needs technical follow-up. Keep the review execution-only until that follow-up is resolved.";
+  return "Chart data needs another check. Keep the review execution-only until the data check is resolved.";
+}
+
+function hasUnsafeCandleBasis(notes: string[] | null | undefined): boolean {
+  return (notes ?? []).some((note) => {
+    const normalized = note.toLowerCase();
+
+    return (
+      normalized.includes("basis_adjustment_multiple_likely") ||
+      normalized.includes("price-basis") ||
+      normalized.includes("basis is proven aligned: false")
+    );
+  });
+}
+
+function candleBasisUserMessage(
+  notes: string[] | null | undefined,
+): string | null {
+  if (!notes || notes.length === 0) {
+    return null;
+  }
+
+  if (hasUnsafeCandleBasis(notes)) {
+    return "Candle basis needs review. Candle prices may use a different adjusted basis than the broker executions, so use execution P/L for movement conclusions until this is reconciled.";
+  }
+
+  if (notes.some((note) => note.toLowerCase().includes("basis_aligned"))) {
+    return "Candle basis was checked against the broker executions.";
+  }
+
+  return "Chart data has a provider note. Use saved chart context as supporting evidence and keep the execution replay as the source of truth.";
+}
+
+function replayChartContextCopy(args: {
+  candleCount: number;
+  candleQualityNotes?: string[] | null;
+  chartEvidenceAvailable: boolean;
+  chartTierEnabled: boolean;
+}): string {
+  if (args.candleCount > 0) {
+    return hasUnsafeCandleBasis(args.candleQualityNotes)
+      ? "Saved chart candles are shown with your fills, but a candle-basis warning is present. Use execution P/L for movement conclusions until the basis is reconciled."
+      : "Saved chart candles from chart review are shown with your fills overlaid.";
+  }
+
+  if (args.chartEvidenceAvailable) {
+    return hasUnsafeCandleBasis(args.candleQualityNotes)
+      ? "This mini replay is fill-only. Chart review is attached, but candle-basis notes mean movement conclusions should stay anchored to execution P/L until reconciled."
+      : "This mini replay is fill-only. Saved chart review is attached below; use those chart prompts as supporting context after replaying the executions.";
+  }
+
+  return args.chartTierEnabled
+    ? "Saved fills only. Candle movement and market context can be layered in after chart data is attached."
+    : "Saved fills only. This tier keeps the trade detail review execution-only.";
 }
 
 function decisionReviewFindingToneClass(tone: string): string {
@@ -676,20 +779,22 @@ function buildExecutionReplayChartModel(
       bodyWidth: Number(candleBodyWidth.toFixed(2)),
     };
   });
-  const points = applyExecutionLabelVisibility(validSteps.map((step, index) => {
-    const x = xForTimedValue(
-      parsedStepTimes[index] ?? Number.NaN,
-      index,
-      validSteps.length,
-    );
-    const y = yForPrice(step.price);
+  const points = applyExecutionLabelVisibility(
+    validSteps.map((step, index) => {
+      const x = xForTimedValue(
+        parsedStepTimes[index] ?? Number.NaN,
+        index,
+        validSteps.length,
+      );
+      const y = yForPrice(step.price);
 
-    return {
-      step,
-      x: Number(x.toFixed(2)),
-      y: Number(y.toFixed(2)),
-    };
-  }));
+      return {
+        step,
+        x: Number(x.toFixed(2)),
+        y: Number(y.toFixed(2)),
+      };
+    }),
+  );
 
   return {
     points,
@@ -738,23 +843,23 @@ export default async function TradeReviewPage({
   const data = buildSavedOrSampleTraderAnalyticsViewModel({
     preferSample: demoParam === "sample",
   });
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
   const trade = data.repository.getTrade(data.userId, tradeId);
-  const allTrades = data.repository.listTrades(data.userId);
-  const reports = data.repository.listReports(data.userId);
-  const containingReport =
-    reports.find((report) => report.sourceTradeIds.includes(tradeId)) ??
-    getLatestSavedTraderAnalyticsReport(reports);
-
-  if (!trade) {
+  if (trade && isLocalSyntheticTrade(trade)) {
     notFound();
   }
 
-  const tradeDisplaySymbol = userFacingTradeSymbol(trade.symbol);
-  const view = buildSavedTradeReviewViewModel({
-    trade,
-    report: containingReport,
-  });
-  const decisionReviewSnapshots =
+  const allTrades = filterCustomerSavedTrades(
+    data.repository.listTrades(data.userId),
+  );
+  const reports = filterCustomerSavedReports(
+    data.repository.listReports(data.userId),
+  );
+  const containingReport =
+    reports.find((report) => report.sourceTradeIds.includes(tradeId)) ??
+    getLatestSavedTraderAnalyticsReport(reports);
+  const savedDecisionReviewSnapshots =
     data.mode === "saved"
       ? [
           ...new Set(
@@ -765,6 +870,32 @@ export default async function TradeReviewPage({
         ].flatMap((batchId) =>
           data.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
+      : [];
+  const chartTierEnabled =
+    chartContextAllowed &&
+    (data.mode === "sample" || savedDecisionReviewSnapshots.length > 0);
+
+  if (!trade) {
+    notFound();
+  }
+
+  const tradeDisplaySymbol = userFacingTradeSymbol(trade.symbol);
+  const view = buildSavedTradeReviewViewModel({
+    trade,
+    report: containingReport,
+  });
+  const decisionReviewSnapshot =
+    data.mode === "saved" && chartTierEnabled
+      ? data.repository.getDecisionReviewSnapshotForTrade(trade.id)
+      : null;
+  const decisionReviewDiagnostics =
+    data.mode === "saved" && chartTierEnabled
+      ? data.repository.listDecisionReviewDiagnosticsForTrade(trade.id)
+      : [];
+  const canShowTradeChartEvidence = Boolean(decisionReviewSnapshot);
+  const decisionReviewSnapshots =
+    canShowTradeChartEvidence && decisionReviewSnapshot
+      ? [decisionReviewSnapshot]
       : [];
   const tradeThreadModel = buildSavedTradeThreadReadModel({
     decisionReviewSnapshots,
@@ -819,29 +950,32 @@ export default async function TradeReviewPage({
     data.mode === "saved"
       ? data.repository.listTradeReviewItemStates(trade.id)
       : [];
-  const decisionReviewSnapshot =
-    data.mode === "saved"
-      ? data.repository.getDecisionReviewSnapshotForTrade(trade.id)
-      : null;
-  const decisionReviewDiagnostics =
-    data.mode === "saved"
-      ? data.repository.listDecisionReviewDiagnosticsForTrade(trade.id)
-      : [];
   const persistedReplayCandleWindow =
     decisionReviewSnapshot?.review.replayCandleWindow ?? null;
+  const candleBasisMessage = candleBasisUserMessage(
+    decisionReviewSnapshot?.review.candleQualityNotes,
+  );
+  const hasCandleBasisWarning = hasUnsafeCandleBasis(
+    decisionReviewSnapshot?.review.candleQualityNotes,
+  );
   const replayChart = buildExecutionReplayChartModel(
     replay.steps,
     persistedReplayCandleWindow,
   );
   const decisionReviewStatus = decisionReviewStatusCopy({
+    chartTierEnabled,
     hasSnapshot: Boolean(decisionReviewSnapshot),
     diagnosticStatus: decisionReviewDiagnostics[0]?.status,
     diagnosticCode: decisionReviewDiagnostics[0]?.code,
+    candleQualityNotes: decisionReviewSnapshot?.review.candleQualityNotes,
   });
   const decisionReviewInsightCards = decisionReviewSnapshot
     ? decisionReviewSnapshot.review.insights
         .map((insight) =>
-          mapDecisionReviewInsightForUser(insight, "/intelligence/trades/[tradeId]"),
+          mapDecisionReviewInsightForUser(
+            insight,
+            "/intelligence/trades/[tradeId]",
+          ),
         )
         .filter((insight) => insight.canShowPrimary)
         .slice(0, 6)
@@ -850,6 +984,24 @@ export default async function TradeReviewPage({
     ? decisionReviewSnapshot.review.insights.length -
       decisionReviewInsightCards.length
     : 0;
+  const activeSessionStoryEvidence = activeSessionStory
+    ? activeSessionStory.reviewEvidence.filter(
+        (item) =>
+          canShowTradeChartEvidence ||
+          !isChartEvidenceSource(item.evidenceSource),
+      )
+    : [];
+  const activeThreadReviewEvidence = activeThread
+    ? activeThread.reviewEvidence.filter(
+        (item) =>
+          canShowTradeChartEvidence ||
+          !isChartEvidenceSource(item.evidenceSource),
+      )
+    : [];
+  const activeThreadPriorityMarketContextFindings =
+    canShowTradeChartEvidence && activeThread
+      ? activeThread.priorityMarketContextFindings
+      : [];
   const primaryDecisionReviewInsight =
     decisionReviewInsightCards.find(
       (insight) => insight.opportunityType === "risk_to_reduce",
@@ -922,6 +1074,7 @@ export default async function TradeReviewPage({
       : "This replay shows position movement now. Exact realized P/L progression is waiting until a reduction or closing execution is available.";
   const levelFactsUiContract =
     data.mode === "saved" &&
+    chartContextAllowed &&
     isLevelAnalysisTradeDetailLevelFactsEnabled() &&
     isLevelAnalysisTradeDetailLevelFactsUiEnabled()
       ? buildTradeDetailLevelFactsUiContract(
@@ -1054,9 +1207,7 @@ export default async function TradeReviewPage({
                     : "Use the replay to understand the sequence before writing the lesson."
                 }`}
                 eyebrow={
-                  cameFromCoach
-                    ? "Coach evidence trade"
-                    : "Trade review hub"
+                  cameFromCoach ? "Coach evidence trade" : "Trade review hub"
                 }
                 testId="trade-review-workspace"
                 title={
@@ -1070,12 +1221,20 @@ export default async function TradeReviewPage({
 
             <WorkflowHandoffPanel
               body={
-                <>
-                  This page is the workbench for one saved trade. Replay the
-                  buys and sells first, use chart evidence only when it is
-                  saved, then write one practical lesson before moving to the
-                  next trade.
-                </>
+                chartTierEnabled ? (
+                  <>
+                    This page is the workbench for one saved trade. Replay the
+                    buys and sells first, use chart evidence only when it is
+                    saved, then write one practical lesson before moving to the
+                    next trade.
+                  </>
+                ) : (
+                  <>
+                    This page is the workbench for one saved trade. Replay the
+                    buys and sells first, keep the review execution-only, then
+                    write one practical lesson before moving to the next trade.
+                  </>
+                )
               }
               eyebrow="Trade Review Flow"
               items={[
@@ -1088,8 +1247,10 @@ export default async function TradeReviewPage({
                   tone: "info",
                 },
                 {
-                  action: "Use context",
-                  body: "Check ticker, session, chart, and volume handoffs only when the saved evidence exists.",
+                  action: chartTierEnabled ? "Use context" : "Decide lesson",
+                  body: chartTierEnabled
+                    ? "Check ticker, session, chart, and volume handoffs only when the saved evidence exists."
+                    : "Use ticker, session, execution sequence, P/L, and written notes to decide what this trade can prove.",
                   href: activeThread ? "#ticker-story" : "#summary",
                   label: "2. Decide",
                   title: "Decide what this trade can prove",
@@ -1288,7 +1449,7 @@ export default async function TradeReviewPage({
                   />
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  {activeSessionStory.reviewEvidence.slice(0, 4).map((item) => (
+                  {activeSessionStoryEvidence.slice(0, 4).map((item) => (
                     <div
                       className={`border p-4 ${sessionStoryToneClass(
                         activeSessionStory.storyKind,
@@ -1367,23 +1528,30 @@ export default async function TradeReviewPage({
                 label="What Is Unavailable"
                 value={
                   decisionReviewSnapshot
-                    ? hiddenDecisionReviewInsightCount > 0
-                      ? "Some advanced notes"
-                      : "Nothing major"
-                    : "Chart data"
+                    ? hasCandleBasisWarning
+                      ? "Candle movement"
+                      : hiddenDecisionReviewInsightCount > 0
+                        ? "Some advanced notes"
+                        : "Nothing major"
+                    : chartTierEnabled
+                      ? "Chart data"
+                      : "Paid evidence"
                 }
                 detail={
                   decisionReviewSnapshot
-                    ? hiddenDecisionReviewInsightCount > 0
-                      ? `${hiddenDecisionReviewInsightCount} chart evidence note${
-                          hiddenDecisionReviewInsightCount === 1 ? "" : "s"
-                        } stayed in advanced details because normal coaching needs a certified contract.`
-                      : "Context is attached."
+                    ? hasCandleBasisWarning
+                      ? "Broker execution P/L stays the source of truth until candle price basis is reconciled."
+                      : hiddenDecisionReviewInsightCount > 0
+                        ? `${hiddenDecisionReviewInsightCount} chart evidence note${
+                            hiddenDecisionReviewInsightCount === 1 ? "" : "s"
+                          } stayed in advanced details because normal coaching needs a certified contract.`
+                        : "Context is attached."
                     : "Use execution evidence now."
                 }
                 tone={
                   decisionReviewSnapshot &&
-                  hiddenDecisionReviewInsightCount === 0
+                  hiddenDecisionReviewInsightCount === 0 &&
+                  !hasCandleBasisWarning
                     ? "success"
                     : "warning"
                 }
@@ -1464,7 +1632,7 @@ export default async function TradeReviewPage({
 
             {activeThread &&
             activeThread.roundTripCount <= 1 &&
-            activeThread.priorityMarketContextFindings.length > 0 ? (
+            activeThreadPriorityMarketContextFindings.length > 0 ? (
               <section
                 id="chart-handoff"
                 className="ti-panel p-4"
@@ -1475,16 +1643,32 @@ export default async function TradeReviewPage({
                     Chart, Levels, And Volume Handoff
                   </div>
                   <h2 className="mt-2 text-lg font-semibold text-zinc-50">
-                    Use certified chart evidence while writing the trade lesson.
+                    {hasCandleBasisWarning
+                      ? "Use executions first; keep candle movement gated."
+                      : "Use saved chart evidence while writing the trade lesson."}
                   </h2>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">
-                    These findings come from saved chart evidence and should be
-                    checked against the execution replay before you write the
-                    final review note.
+                    {hasCandleBasisWarning
+                      ? "Levels and chart context can support the review, but trade-window candle movement should stay out of the final lesson until the candle price basis matches broker executions."
+                      : "These findings come from saved chart evidence and should be checked against the execution replay before you write the final review note."}
                   </p>
                 </div>
+                {candleBasisMessage ? (
+                  <div
+                    className={`mt-4 border p-3 text-sm leading-6 ${
+                      hasCandleBasisWarning
+                        ? "border-amber-900/70 bg-amber-950/20 text-amber-100"
+                        : "border-sky-900/70 bg-sky-950/20 text-sky-100"
+                    }`}
+                  >
+                    <div className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                      Chart Data Check
+                    </div>
+                    <div className="mt-1">{candleBasisMessage}</div>
+                  </div>
+                ) : null}
                 <div className="mt-4 grid gap-3 lg:grid-cols-3">
-                  {activeThread.priorityMarketContextFindings.map((finding) => (
+                  {activeThreadPriorityMarketContextFindings.map((finding) => (
                     <div
                       className={`border p-4 ${
                         finding.tone === "danger"
@@ -1573,7 +1757,7 @@ export default async function TradeReviewPage({
                   </div>
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  {activeThread.reviewEvidence.map((item) => (
+                  {activeThreadReviewEvidence.map((item) => (
                     <div
                       key={item.id}
                       className={`border px-3 py-3 ${
@@ -1601,13 +1785,13 @@ export default async function TradeReviewPage({
                     </div>
                   ))}
                 </div>
-                {activeThread.priorityMarketContextFindings.length > 0 ? (
+                {activeThreadPriorityMarketContextFindings.length > 0 ? (
                   <div
                     id="chart-handoff"
                     className="mt-4 grid gap-3 lg:grid-cols-3"
                     data-testid="trade-chart-volume-handoff"
                   >
-                    {activeThread.priorityMarketContextFindings.map(
+                    {activeThreadPriorityMarketContextFindings.map(
                       (finding) => (
                         <div
                           className={`border p-4 ${
@@ -1625,10 +1809,14 @@ export default async function TradeReviewPage({
                             Chart and volume handoff
                           </div>
                           <div className="mt-2 text-sm font-semibold text-zinc-100">
-                            {finding.label}
+                            {hasCandleBasisWarning
+                              ? "Use executions first; keep candle movement gated."
+                              : finding.label}
                           </div>
                           <div className="mt-2 text-xs leading-5 text-zinc-500">
-                            {finding.detail}
+                            {hasCandleBasisWarning
+                              ? "The ticker story has chart context, but this trade's candle price basis needs review. Keep movement conclusions anchored to broker executions until the basis is reconciled."
+                              : finding.detail}
                           </div>
                           <div className="mt-2 text-xs leading-5 text-sky-300">
                             {finding.reviewAction}
@@ -1680,72 +1868,78 @@ export default async function TradeReviewPage({
                       activeThread.givebackFromPeak > 0 ? "warning" : "success"
                     }
                   />
-                  <MetricCard
-                    label="Add Quality"
-                    value={activeThread.addQualityFindingCount}
-                    detail={`${activeThread.addQualityRiskCount} risk, ${activeThread.addQualityStrengthCount} strength, ${activeThread.addQualityReviewPromptCount} prompt`}
-                    tone={
-                      activeThread.addQualityRiskCount > 0
-                        ? "warning"
-                        : activeThread.addQualityStrengthCount > 0
-                          ? "success"
-                          : activeThread.addQualityFindingCount > 0
-                            ? "info"
+                  {canShowTradeChartEvidence ? (
+                    <>
+                      <MetricCard
+                        label="Add Quality"
+                        value={activeThread.addQualityFindingCount}
+                        detail={`${activeThread.addQualityRiskCount} risk, ${activeThread.addQualityStrengthCount} strength, ${activeThread.addQualityReviewPromptCount} prompt`}
+                        tone={
+                          activeThread.addQualityRiskCount > 0
+                            ? "warning"
+                            : activeThread.addQualityStrengthCount > 0
+                              ? "success"
+                              : activeThread.addQualityFindingCount > 0
+                                ? "info"
+                                : "default"
+                        }
+                      />
+                      <MetricCard
+                        label="After Exit Review"
+                        value={activeThread.postExitFindingCount}
+                        detail={`${activeThread.postExitRiskCount} risk to review, ${activeThread.postExitStrengthCount} strength to repeat, ${activeThread.postExitReviewPromptCount} prompt`}
+                        tone={
+                          activeThread.postExitRiskCount > 0
+                            ? "warning"
+                            : activeThread.postExitStrengthCount > 0
+                              ? "success"
+                              : activeThread.postExitFindingCount > 0
+                                ? "info"
+                                : "default"
+                        }
+                      />
+                      <MetricCard
+                        label="Protected Profit"
+                        value={
+                          activeThread.protectedProfitBeforeFadeFindingCount
+                        }
+                        detail="Repeatable exit strength from captured profit plus a measured later fade"
+                        tone={
+                          activeThread.protectedProfitBeforeFadeFindingCount > 0
+                            ? "success"
                             : "default"
-                    }
-                  />
-                  <MetricCard
-                    label="After Exit Review"
-                    value={activeThread.postExitFindingCount}
-                    detail={`${activeThread.postExitRiskCount} risk to review, ${activeThread.postExitStrengthCount} strength to repeat, ${activeThread.postExitReviewPromptCount} prompt`}
-                    tone={
-                      activeThread.postExitRiskCount > 0
-                        ? "warning"
-                        : activeThread.postExitStrengthCount > 0
-                          ? "success"
-                          : activeThread.postExitFindingCount > 0
-                            ? "info"
-                            : "default"
-                    }
-                  />
-                  <MetricCard
-                    label="Protected Profit"
-                    value={activeThread.protectedProfitBeforeFadeFindingCount}
-                    detail="Repeatable exit strength from captured profit plus a measured later fade"
-                    tone={
-                      activeThread.protectedProfitBeforeFadeFindingCount > 0
-                        ? "success"
-                        : "default"
-                    }
-                  />
-                  <MetricCard
-                    label="Support/Resistance Exits"
-                    value={activeThread.exitLevelFindingCount}
-                    detail={`${activeThread.exitLevelRiskCount} risk, ${activeThread.exitLevelStrengthCount} strength, ${activeThread.exitLevelReviewPromptCount} prompt`}
-                    tone={
-                      activeThread.exitLevelRiskCount > 0
-                        ? "warning"
-                        : activeThread.exitLevelStrengthCount > 0
-                          ? "success"
-                          : activeThread.exitLevelFindingCount > 0
-                            ? "info"
-                            : "default"
-                    }
-                  />
-                  <MetricCard
-                    label="Volume Evidence"
-                    value={activeThread.volumeFindingCount}
-                    detail={`${activeThread.volumeRiskCount} risk to review, ${activeThread.volumeStrengthCount} strength to repeat`}
-                    tone={
-                      activeThread.volumeRiskCount > 0
-                        ? "warning"
-                        : activeThread.volumeStrengthCount > 0
-                          ? "success"
-                          : activeThread.volumeFindingCount > 0
-                            ? "info"
-                            : "default"
-                    }
-                  />
+                        }
+                      />
+                      <MetricCard
+                        label="Support/Resistance Exits"
+                        value={activeThread.exitLevelFindingCount}
+                        detail={`${activeThread.exitLevelRiskCount} risk, ${activeThread.exitLevelStrengthCount} strength, ${activeThread.exitLevelReviewPromptCount} prompt`}
+                        tone={
+                          activeThread.exitLevelRiskCount > 0
+                            ? "warning"
+                            : activeThread.exitLevelStrengthCount > 0
+                              ? "success"
+                              : activeThread.exitLevelFindingCount > 0
+                                ? "info"
+                                : "default"
+                        }
+                      />
+                      <MetricCard
+                        label="Volume Evidence"
+                        value={activeThread.volumeFindingCount}
+                        detail={`${activeThread.volumeRiskCount} risk to review, ${activeThread.volumeStrengthCount} strength to repeat`}
+                        tone={
+                          activeThread.volumeRiskCount > 0
+                            ? "warning"
+                            : activeThread.volumeStrengthCount > 0
+                              ? "success"
+                              : activeThread.volumeFindingCount > 0
+                                ? "info"
+                                : "default"
+                        }
+                      />
+                    </>
+                  ) : null}
                 </div>
                 <div className="mt-4 grid gap-2">
                   {activeThread.roundTrips.map((roundTrip) => {
@@ -2050,9 +2244,9 @@ export default async function TradeReviewPage({
                       </div>
                     ) : (
                       <div className="mt-4 border-t border-zinc-900 pt-3 text-sm text-zinc-500">
-                        Chart evidence was saved, but no certified normal
-                        coaching finding is ready for this trade yet. Use the
-                        execution replay and checklist first.
+                        Chart evidence was saved, but no primary coaching
+                        finding is ready for this trade yet. Use the execution
+                        replay and checklist first.
                       </div>
                     )}
                     {hiddenDecisionReviewInsightCount > 0 ? (
@@ -2108,10 +2302,7 @@ export default async function TradeReviewPage({
               </section>
             ) : null}
 
-            <section
-              id="execution"
-              className="grid gap-6"
-            >
+            <section id="execution" className="grid gap-6">
               <div
                 className="ti-panel p-4"
                 data-testid="trade-execution-replay"
@@ -2198,9 +2389,13 @@ export default async function TradeReviewPage({
                           Execution Price Path
                         </h3>
                         <div className="mt-1 text-xs leading-5 text-zinc-500">
-                          {replayChart.candles.length > 0
-                            ? "Trusted candles from saved chart review with your fills overlaid."
-                            : "Saved fills only. Candle movement, support, and resistance can be layered in after chart data is attached."}
+                          {replayChartContextCopy({
+                            candleCount: replayChart.candles.length,
+                            candleQualityNotes:
+                              decisionReviewSnapshot?.review.candleQualityNotes,
+                            chartEvidenceAvailable: canShowTradeChartEvidence,
+                            chartTierEnabled,
+                          })}
                         </div>
                       </div>
                       <div className="text-xs font-mono text-sky-300">
@@ -2569,7 +2764,10 @@ export default async function TradeReviewPage({
                 </div>
               </div>
 
-              <details className="ti-advanced-panel p-4" data-testid="trade-review-points">
+              <details
+                className="ti-advanced-panel p-4"
+                data-testid="trade-review-points"
+              >
                 <summary className="cursor-pointer text-sm font-semibold text-zinc-300">
                   Risks And Strengths
                 </summary>
@@ -2756,7 +2954,9 @@ export default async function TradeReviewPage({
                       Supporting Evidence
                     </h2>
                     <div className="mt-4 grid gap-3">
-                      <TradeDetailLevelFactsPanel contract={levelFactsUiContract} />
+                      <TradeDetailLevelFactsPanel
+                        contract={levelFactsUiContract}
+                      />
                       {evidenceCards.length === 0 ? (
                         <div className="text-sm text-zinc-500">
                           No product evidence cards are linked to this trade

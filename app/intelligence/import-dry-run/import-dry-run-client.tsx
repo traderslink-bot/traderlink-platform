@@ -733,20 +733,20 @@ function decisionReviewDiagnosticDisplay(diagnostic: DecisionReviewDiagnostic): 
       };
     case "analysis_failed":
       return {
-        label: "Needs technical follow-up",
+        label: "Chart data needs another check",
         summary:
-          "Chart analysis needs technical follow-up before it can support coaching.",
+          "Chart analysis needs another data check before it can support coaching.",
         detail:
           "Use execution review now and keep support, resistance, candle, and setup conclusions unavailable until this is resolved.",
         tone: "rose",
       };
     case "trade_open":
       return {
-        label: "Open trade skipped",
+        label: "Open or swing trade",
         summary:
-          "This trade was still open, so completed-trade coaching waits until the position is flat.",
+          "This trade was still open or carried, so completed-trade coaching waits until the position is flat.",
         detail:
-          "Open positions stay out of completed-trade coaching until the position is flat.",
+          "Open or swing positions stay out of completed-trade coaching until the position is flat.",
         tone: "zinc",
       };
     case "limit_reached":
@@ -2213,6 +2213,7 @@ function FeedbackComparison({
 }
 
 function PrototypeAnalysisPanel({
+  chartTierEnabled,
   panel,
   decisionReviews,
   decisionReviewDiagnostics,
@@ -2221,6 +2222,7 @@ function PrototypeAnalysisPanel({
   canRequestDecisionReview,
   onRequestDecisionReview,
 }: {
+  chartTierEnabled: boolean;
   panel: CsvDryRunPrototypeAnalysisPanel;
   decisionReviews: DecisionReviewSnapshot[];
   decisionReviewDiagnostics: DecisionReviewDiagnostic[];
@@ -2271,25 +2273,29 @@ function PrototypeAnalysisPanel({
       <div className="mt-4 flex flex-col gap-3 border border-zinc-900 bg-zinc-950 p-3 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="text-xs uppercase tracking-wide text-zinc-500">
-            Chart Data Review
+            {chartTierEnabled ? "Chart Data Review" : "Execution-Only Review"}
           </div>
           <div
             className="mt-1 text-sm text-zinc-400"
             data-testid="decision-review-status"
           >
-            {decisionReviewMessage ??
-              "Run daily/4h chart data review for completed grouped trades."}
+            {chartTierEnabled
+              ? decisionReviewMessage ??
+                "Run daily/4h chart data review for completed grouped trades."
+              : "Dry-run review is limited to executions, grouping, P/L, repairs, and save readiness in the current tier."}
           </div>
         </div>
-        <button
-          className="border border-zinc-700 px-3 py-2 text-sm text-zinc-100 disabled:cursor-not-allowed disabled:border-zinc-900 disabled:text-zinc-600"
-          data-testid="decision-review-request-button"
-          disabled={!canRequestDecisionReview || decisionReviewStatus === "loading"}
-          type="button"
-          onClick={onRequestDecisionReview}
-        >
-          {decisionReviewStatus === "loading" ? "Running..." : "Run Review"}
-        </button>
+        {chartTierEnabled ? (
+          <button
+            className="border border-zinc-700 px-3 py-2 text-sm text-zinc-100 disabled:cursor-not-allowed disabled:border-zinc-900 disabled:text-zinc-600"
+            data-testid="decision-review-request-button"
+            disabled={!canRequestDecisionReview || decisionReviewStatus === "loading"}
+            type="button"
+            onClick={onRequestDecisionReview}
+          >
+            {decisionReviewStatus === "loading" ? "Running..." : "Run Review"}
+          </button>
+        ) : null}
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-4">
@@ -2305,25 +2311,45 @@ function PrototypeAnalysisPanel({
           detail="post-import preview items"
           tone={panel.reviewQueueItemCount > 0 ? "text-amber-300" : "text-emerald-300"}
         />
-        <Kpi
-          label="Chart Data Review"
-          value={panel.topDecisionReviewInsights.length > 0 ? "attached" : "pending"}
-          detail={panel.coachingHeadline ?? "daily/4h facts attach server-side"}
-          tone={panel.topDecisionReviewInsights.length > 0 ? "text-emerald-300" : "text-zinc-400"}
-        />
-        <Kpi
-          label="Chart Data"
-          value={panel.marketContextSource}
-          detail="support/resistance evidence only when available"
-          tone={panel.marketContextUsed ? "text-emerald-300" : "text-zinc-400"}
-        />
+        {chartTierEnabled ? (
+          <>
+            <Kpi
+              label="Chart Data Review"
+              value={
+                panel.topDecisionReviewInsights.length > 0
+                  ? "attached"
+                  : "pending"
+              }
+              detail={panel.coachingHeadline ?? "daily/4h facts attach server-side"}
+              tone={
+                panel.topDecisionReviewInsights.length > 0
+                  ? "text-emerald-300"
+                  : "text-zinc-400"
+              }
+            />
+            <Kpi
+              label="Chart Data"
+              value={panel.marketContextSource}
+              detail="support/resistance evidence only when available"
+              tone={panel.marketContextUsed ? "text-emerald-300" : "text-zinc-400"}
+            />
+          </>
+        ) : (
+          <Kpi
+            label="Evidence Scope"
+            value="execution-only"
+            detail="paid review evidence stays out of this tier"
+            tone="text-zinc-400"
+          />
+        )}
       </div>
 
-      {decisionReviews.length > 0 || decisionReviewDiagnostics.length > 0 ? (
+      {chartTierEnabled &&
+      (decisionReviews.length > 0 || decisionReviewDiagnostics.length > 0) ? (
         <DecisionReviewEvidenceGates summary={evidenceGates} />
       ) : null}
 
-      {decisionReviews.length > 0 ? (
+      {chartTierEnabled && decisionReviews.length > 0 ? (
         <DecisionReviewEvidenceAlignment summary={evidenceAlignment} />
       ) : null}
 
@@ -2347,12 +2373,13 @@ function PrototypeAnalysisPanel({
           className="mt-4 border border-zinc-900 bg-zinc-950 p-3 text-sm text-zinc-500"
           data-testid="prototype-analysis-coaching"
         >
-          Execution-only prototype preview. Daily/4h chart data facts can
-          attach after server-side chart data review runs with levels-system data.
+          {chartTierEnabled
+            ? "Execution-only prototype preview. Daily/4h chart data facts can attach after server-side chart data review runs with levels-system data."
+            : "Execution-only prototype preview. Save readiness, grouping, repairs, P/L, and review queue items are available in this tier."}
         </div>
       )}
 
-      {decisionReviews.length > 0 ? (
+      {chartTierEnabled && decisionReviews.length > 0 ? (
         <div
           className="mt-4 grid gap-4"
           data-testid="decision-review-details"
@@ -2568,7 +2595,7 @@ function PrototypeAnalysisPanel({
         </div>
       ) : null}
 
-      {decisionReviewDiagnostics.length > 0 ? (
+      {chartTierEnabled && decisionReviewDiagnostics.length > 0 ? (
         <div
           className="mt-4 border border-amber-900 bg-amber-950/10 p-3"
           data-testid="decision-review-diagnostics"
@@ -2623,38 +2650,45 @@ function PrototypeAnalysisPanel({
 
         <div>
           <div className="text-xs uppercase tracking-wide text-zinc-500">
-            Daily/4h Chart Data Review
+            {chartTierEnabled ? "Daily/4h Chart Data Review" : "Review Scope"}
           </div>
-          <div className="mt-2 grid gap-2">
-            {panel.topDecisionReviewInsights.length === 0 ? (
-              <div className="border-t border-zinc-900 py-3 text-sm text-zinc-500">
-                Entry-near-resistance, clean-room, and add-after-extension
-                review notes appear here after daily/4h context is attached.
-              </div>
-            ) : (
-              panel.topDecisionReviewInsights.map((finding) => (
-                <div key={finding.id} className="border-t border-zinc-900 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-zinc-300">{finding.title}</span>
-                    <span className={`text-xs uppercase tracking-wide ${insightTone(finding.tone)}`}>
-                      {finding.tone}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-xs uppercase tracking-wide text-zinc-600">
-                    {finding.category}
-                  </div>
-                  <div className="mt-1 text-xs text-zinc-500">
-                    {finding.summary}
-                  </div>
-                  {finding.evidence[0] ? (
-                    <div className="mt-2 text-xs text-sky-300">
-                      {decisionReviewEvidenceLabel(finding.evidence[0])}
-                    </div>
-                  ) : null}
+          {chartTierEnabled ? (
+            <div className="mt-2 grid gap-2">
+              {panel.topDecisionReviewInsights.length === 0 ? (
+                <div className="border-t border-zinc-900 py-3 text-sm text-zinc-500">
+                  Entry-near-resistance, clean-room, and add-after-extension
+                  review notes appear here after daily/4h context is attached.
                 </div>
-              ))
-            )}
-          </div>
+              ) : (
+                panel.topDecisionReviewInsights.map((finding) => (
+                  <div key={finding.id} className="border-t border-zinc-900 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-zinc-300">{finding.title}</span>
+                      <span className={`text-xs uppercase tracking-wide ${insightTone(finding.tone)}`}>
+                        {finding.tone}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs uppercase tracking-wide text-zinc-600">
+                      {finding.category}
+                    </div>
+                    <div className="mt-1 text-xs text-zinc-500">
+                      {finding.summary}
+                    </div>
+                    {finding.evidence[0] ? (
+                      <div className="mt-2 text-xs text-sky-300">
+                        {decisionReviewEvidenceLabel(finding.evidence[0])}
+                      </div>
+                    ) : null}
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            <div className="mt-2 border-t border-zinc-900 py-3 text-sm text-zinc-500">
+              This advanced preview checks import readiness and execution
+              review items only in the current tier.
+            </div>
+          )}
         </div>
       </div>
 
@@ -2674,14 +2708,27 @@ function PrototypeAnalysisPanel({
       ) : null}
 
       <div className="mt-4 grid gap-2 md:grid-cols-2">
-        {panel.limitations.slice(0, 4).map((limitation) => (
+        {(chartTierEnabled
+          ? panel.limitations
+          : panel.limitations.filter((limitation) => {
+              const normalized = limitation.toLowerCase();
+              return (
+                !normalized.includes("chart") &&
+                !normalized.includes("support") &&
+                !normalized.includes("resistance") &&
+                !normalized.includes("daily/4h")
+              );
+            })
+        )
+          .slice(0, 4)
+          .map((limitation) => (
           <div
             key={limitation}
             className="border-t border-zinc-900 py-2 text-xs text-zinc-500"
           >
             {limitation}
           </div>
-        ))}
+          ))}
       </div>
     </section>
   );
@@ -3101,9 +3148,11 @@ function PrivacyDecisionAndMobile({
 }
 
 export function ImportDryRunClient({
+  chartTierEnabled,
   presets,
   sampleMistakes,
 }: {
+  chartTierEnabled: boolean;
   presets: CsvDryRunSamplePreset[];
   sampleMistakes: CsvDryRunEvidenceRecord[];
 }) {
@@ -3186,6 +3235,7 @@ export function ImportDryRunClient({
     [currentDecisionReviewRequest.decisionReviews, experience],
   );
   const canRequestDecisionReview =
+    chartTierEnabled &&
     experience.confidenceGate.status !== "blocked" &&
     experience.preview.importResult.requestCount > 0;
   const hasCsvText = csvText.trim().length > 0;
@@ -3825,6 +3875,7 @@ export function ImportDryRunClient({
         </summary>
         <div className="mt-5 grid gap-6">
           <PrototypeAnalysisPanel
+            chartTierEnabled={chartTierEnabled}
             panel={prototypeAnalysisPanel}
             decisionReviews={currentDecisionReviewRequest.decisionReviews}
             decisionReviewDiagnostics={currentDecisionReviewRequest.diagnostics}

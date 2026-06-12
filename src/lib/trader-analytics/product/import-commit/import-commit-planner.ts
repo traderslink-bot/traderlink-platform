@@ -179,6 +179,11 @@ export interface ImportCommitSavedTradeRecord {
   grossRealizedPnl: number | null;
   request: UserTradeAnalysisRequest;
   reviewStatus: SavedReviewStatus;
+  userLifecycleOverride?: {
+    reason: "marked_closed_by_user";
+    status: "closed";
+    updatedAt: string;
+  };
 }
 
 export interface ImportCommitSavedTradeExecutionLinkRecord {
@@ -731,7 +736,7 @@ export function buildImportCommitPlan(
       reason:
         trade.lifecycleStatus === "closed"
           ? "Completed trade is eligible for server decision review."
-          : "Open trade is excluded from completed-trade decision review until flat.",
+          : "Open or swing trade is excluded from completed-trade decision review until flat.",
     }),
   );
   const requiredDecisions = [

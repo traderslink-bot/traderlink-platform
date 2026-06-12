@@ -19,17 +19,13 @@ describe("levels-system analysis comparison", () => {
 
     expect(comparison.levelCounts.sharedSupportLevels).toBeGreaterThan(0);
     expect(comparison.levelCounts.sharedResistanceLevels).toBeGreaterThan(0);
-    expect(comparison.dynamicLevels.shared).toMatchObject({
-      vwap: expect.any(Number),
-      ema9: expect.any(Number),
-      ema20: expect.any(Number),
+    expect(comparison.dynamicLevels.shared).toEqual({
+      vwap: null,
+      ema9: null,
+      ema20: null,
     });
     expect(comparison.experimentalMarketStructure.local).toBeUndefined();
-    expect(comparison.experimentalMarketStructure.shared).toMatchObject({
-      symbol: "ABCD",
-      timeframe: "5m",
-      state: expect.any(String),
-    });
+    expect(comparison.experimentalMarketStructure.shared).toBeUndefined();
     expect(changedFieldNames).toContain("firstEntryNearestSupportBelowPrice");
     expect(changedFieldNames).toContain("firstEntryNearestResistanceAbovePrice");
     expect(changedFieldNames).not.toContain("firstEntryDistanceFromVwapPct");

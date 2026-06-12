@@ -4,7 +4,7 @@ import {
   type CandleFetchTimeframe,
   type HistoricalCandleProvider,
   type HistoricalFetchRequest,
-} from "levels-system-phase1/support-resistance-engine";
+} from "levels-system-v2/support-resistance-engine";
 import type { BuildLevelsSystemSupportResistanceContextOptions } from "../build-support-resistance-context";
 
 export const SAMPLE_LEVELS_SYSTEM_SESSION_DATE = "2024-04-12";
@@ -21,6 +21,8 @@ function getTimeframeIntervalMs(timeframe: CandleFetchTimeframe): number {
       return 300_000;
     case "1m":
       return 60_000;
+    case "15m":
+      return 900_000;
   }
 }
 

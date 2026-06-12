@@ -101,7 +101,7 @@ export function plainCoachBehaviorExplanation(label: string): string {
   }
 
   if (value.includes("open")) {
-    return "Open-trade review means the import still had exposure left. Replay the execution history, but keep coaching conclusions limited until the position is flat.";
+    return "Open-or-swing review means the import still had exposure left. Replay the execution history, but keep coaching conclusions limited until the position is flat.";
   }
 
   return "Review the replay and name the behavior in your own words before creating a new rule. The coach should translate evidence, not bury you in engine labels.";

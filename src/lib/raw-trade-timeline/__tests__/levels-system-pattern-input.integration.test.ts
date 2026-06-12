@@ -5,7 +5,7 @@ import { sampleCreateRawTradeTimelineInput } from "../__fixtures__/sample-create
 import { createRawTradeTimelineWithLevelsSystem } from "../builders/create-raw-trade-timeline";
 
 describe("levels-system PatternInput integration", () => {
-  it("feeds shared higher-timeframe support/resistance facts into PatternInput without VWAP or EMA feedback", async () => {
+  it("feeds v2 supplied-candle support/resistance facts into PatternInput without VWAP or EMA feedback", async () => {
     const rawResult = await createRawTradeTimelineWithLevelsSystem(
       sampleCreateRawTradeTimelineInput,
       buildSampleLevelsSystemSupportResistanceOptions(),
@@ -19,25 +19,17 @@ describe("levels-system PatternInput integration", () => {
     expect(rawResult.executionLevelRelations).toHaveLength(
       rawResult.timeline.executions.length,
     );
+    const mappedLevels = [
+      ...(rawResult.supportLevels ?? []),
+      ...(rawResult.resistanceLevels ?? []),
+    ];
     expect(
-      rawResult.supportLevels?.every((level) =>
-        level.timeframeSources.some(
-          (timeframe) => timeframe === "daily" || timeframe === "4h",
-        ),
-      ),
+      mappedLevels.some((level) => level.timeframeSources.includes("5m")),
     ).toBe(true);
     expect(
-      rawResult.resistanceLevels?.every((level) =>
-        level.timeframeSources.some(
-          (timeframe) => timeframe === "daily" || timeframe === "4h",
-        ),
-      ),
+      mappedLevels.some((level) => level.sourcePrices.length > 1),
     ).toBe(true);
-    expect(rawResult.experimentalMarketStructure).toMatchObject({
-      symbol: "ABCD",
-      timeframe: "5m",
-      state: expect.any(String),
-    });
+    expect(rawResult.experimentalMarketStructure).toBeUndefined();
     expect(
       "experimentalMarketStructure" in patternInput.supportResistanceContext,
     ).toBe(false);
@@ -57,6 +49,28 @@ describe("levels-system PatternInput integration", () => {
     );
     expect(context.firstEntryNearestResistanceSourceStrengthLabel).toEqual(
       expect.stringMatching(/^(major|strong|moderate|weak)$/),
+    );
+    expect(context.firstEntryNearestSupportImportance).toEqual(
+      expect.stringMatching(
+        /^(major|actionable|secondary|weak|synthetic_extension)$/,
+      ),
+    );
+    expect(context.firstEntryNearestResistanceImportance).toEqual(
+      expect.stringMatching(
+        /^(major|actionable|secondary|weak|synthetic_extension)$/,
+      ),
+    );
+    expect(context.firstEntryNearestSupportFreshness).toEqual(
+      expect.stringMatching(/^(fresh|aging|stale)$/),
+    );
+    expect(context.firstEntryNearestResistanceFreshness).toEqual(
+      expect.stringMatching(/^(fresh|aging|stale)$/),
+    );
+    expect(context.firstEntryNearestSupportZoneWidthPct).toEqual(
+      expect.any(Number),
+    );
+    expect(context.firstEntryNearestResistanceZoneWidthPct).toEqual(
+      expect.any(Number),
     );
     expect(context.firstEntryNearestSupportScore).toEqual(expect.any(Number));
     expect(context.firstEntryNearestResistanceScore).toEqual(expect.any(Number));

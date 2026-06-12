@@ -6,6 +6,11 @@ import { buildLatestSavedImportSourceCautionReadModel } from "@/src/lib/trader-a
 import { buildAnalyticsBehaviorReport } from "@/src/lib/trader-analytics/server/analytics-behavior-report";
 import { buildSavedTradeThreadReadModel } from "@/src/lib/trader-analytics/server/saved-trade-threads";
 import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
+import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
+import {
   AnalyticsClient,
   type AnalyticsDashboardSection,
 } from "./analytics-client";
@@ -37,7 +42,11 @@ function normalizeAnalyticsSection(
   }
 }
 
-function EmptyAnalyticsPage() {
+function EmptyAnalyticsPage({
+  chartContextAllowed,
+}: {
+  chartContextAllowed: boolean;
+}) {
   return (
     <main className="ti-dashboard-bg min-h-screen px-5 py-8 text-zinc-100 sm:px-8">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
@@ -57,7 +66,8 @@ function EmptyAnalyticsPage() {
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
             Import your broker CSV first. Once trades are saved, this page will
             show your real results, timing, behavior, ticker stories, session
-            stories, and chart evidence.
+            stories, and{" "}
+            {chartContextAllowed ? "chart evidence" : "execution evidence"}.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link className="ti-button-primary" href="/intelligence/upload-csv">
@@ -90,15 +100,18 @@ export default async function AnalyticsPage(props: {
   const analyticsData = buildSavedOrSampleTraderAnalyticsViewModel({
     preferSample: demoParam === "sample",
   });
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
 
   if (analyticsData.mode !== "saved" && demoParam !== "sample") {
-    return <EmptyAnalyticsPage />;
+    return <EmptyAnalyticsPage chartContextAllowed={chartContextAllowed} />;
   }
 
   const savedReviewQueue =
     analyticsData.mode === "saved"
       ? buildSavedReviewQueueReadModel({
           repository: analyticsData.repository,
+          includeChartContext: chartContextAllowed,
           userId: analyticsData.userId,
         })
       : null;
@@ -108,7 +121,9 @@ export default async function AnalyticsPage(props: {
           repository: analyticsData.repository,
         })
       : null;
-  const allTrades = analyticsData.repository.listTrades(analyticsData.userId);
+  const allTrades = filterCustomerSavedTrades(
+    analyticsData.repository.listTrades(analyticsData.userId),
+  );
   const decisionReviewSnapshots =
     analyticsData.mode === "saved"
       ? [
@@ -121,13 +136,21 @@ export default async function AnalyticsPage(props: {
           analyticsData.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
       : [];
+  const chartTierEnabled =
+    chartContextAllowed &&
+    (analyticsData.mode === "sample" || decisionReviewSnapshots.length > 0);
+  const chartContextSnapshots = chartContextAllowed
+    ? decisionReviewSnapshots
+    : [];
   const tradeThreadModel = buildSavedTradeThreadReadModel({
-    decisionReviewSnapshots,
+    decisionReviewSnapshots: chartContextSnapshots,
     report: analyticsData.viewModel.latestReport,
     source: analyticsData.mode === "saved" ? "saved_sqlite" : "sample",
     trades: allTrades,
   });
-  const behaviorReport = buildAnalyticsBehaviorReport(tradeThreadModel);
+  const behaviorReport = buildAnalyticsBehaviorReport(tradeThreadModel, {
+    includeChartContext: chartContextAllowed,
+  });
   const tickerStoryPriority =
     tradeThreadModel.threads.find(
       (thread) => thread.storyKind === "profit_giveback",
@@ -143,7 +166,53 @@ export default async function AnalyticsPage(props: {
     ) ??
     tradeThreadModel.threads.find((thread) => thread.roundTripCount > 1) ??
     null;
+  const chartEvidenceExamples = [...tradeThreadModel.threads]
+    .filter((thread) => thread.marketContextFindingCount > 0)
+    .sort((left, right) => {
+      const leftPriority =
+        left.marketContextRiskCount * 100 +
+        left.marketContextReviewPromptCount * 25 +
+        left.levelFindingCount * 10 +
+        Math.abs(left.totalGrossRealizedPnl) +
+        left.roundTripCount;
+      const rightPriority =
+        right.marketContextRiskCount * 100 +
+        right.marketContextReviewPromptCount * 25 +
+        right.levelFindingCount * 10 +
+        Math.abs(right.totalGrossRealizedPnl) +
+        right.roundTripCount;
+
+      if (rightPriority !== leftPriority) {
+        return rightPriority - leftPriority;
+      }
+
+      return left.symbol.localeCompare(right.symbol);
+    })
+    .slice(0, 4)
+    .map((thread) => {
+      const finding =
+        thread.priorityMarketContextFindings[0] ??
+        thread.marketContextFindings[0] ??
+        null;
+
+      return {
+        action:
+          finding?.reviewAction ??
+          "Open the ticker story, then replay the executions before writing a rule.",
+        detail: finding?.label ?? thread.primaryReviewQuestion,
+        href: thread.href,
+        label: `${thread.symbol} / ${thread.storyLabel}`,
+        levelFindingCount: thread.levelFindingCount,
+        pnl: thread.totalGrossRealizedPnl,
+        promptCount: thread.marketContextReviewPromptCount,
+        riskCount: thread.marketContextRiskCount,
+        roundTripCount: thread.roundTripCount,
+        strengthCount: thread.marketContextStrengthCount,
+        symbol: thread.symbol,
+      };
+    });
   const tickerStorySummary = {
+    chartEvidenceExamples,
     givebackThreadCount: tradeThreadModel.threads.filter(
       (thread) => thread.storyKind === "profit_giveback",
     ).length,
@@ -247,6 +316,7 @@ export default async function AnalyticsPage(props: {
 
   return (
     <AnalyticsClient
+      chartTierEnabled={chartTierEnabled}
       initialSection={activeSection}
       initialViewModel={analyticsData.viewModel}
       savedReviewQueue={savedReviewQueue}

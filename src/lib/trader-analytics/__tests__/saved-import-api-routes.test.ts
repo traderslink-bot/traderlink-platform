@@ -6,19 +6,30 @@ import { POST as previewImportBatch } from "../../../../app/api/import-batches/p
 import { GET as listImportBatches } from "../../../../app/api/import-batches/route";
 import { POST as commitImportBatch } from "../../../../app/api/import-batches/[batchId]/commit/route";
 import { GET as getImportBatch } from "../../../../app/api/import-batches/[batchId]/route";
+import { GET as getDecisionReviewStatus } from "../../../../app/api/import-batches/[batchId]/decision-review/status/route";
+import { POST as resumeDecisionReview } from "../../../../app/api/import-batches/[batchId]/decision-review/resume/route";
 import { POST as setImportRepairStatus } from "../../../../app/api/import-batches/[batchId]/repair-items/[repairItemId]/route";
 import { GET as listTrades } from "../../../../app/api/trades/route";
 import { GET as getTrade } from "../../../../app/api/trades/[tradeId]/route";
 import { POST as addTradeNote } from "../../../../app/api/trades/[tradeId]/notes/route";
 import { POST as setReviewStatus } from "../../../../app/api/trades/[tradeId]/review-status/route";
 import { POST as setReviewItemStatus } from "../../../../app/api/trades/[tradeId]/review-items/[itemId]/route";
+import { POST as markTradeClosed } from "../../../../app/api/trades/[tradeId]/mark-closed/route";
 import { GET as latestAnalytics } from "../../../../app/api/analytics/latest/route";
 import { GET as latestCoach } from "../../../../app/api/coach/latest/route";
 import { GET as latestReview } from "../../../../app/api/review/latest/route";
-import { resetTraderIntelligenceDatabaseForTests } from "../product/import-commit/sqlite-import-commit-repository";
+import {
+  resetTraderIntelligenceDatabaseForTests,
+  SqliteImportCommitRepository,
+} from "../product/import-commit/sqlite-import-commit-repository";
+import { runPersistedDecisionReviewJobs } from "../server/saved-decision-review-service";
+import {
+  buildSampleLevelsSystemSupportResistanceOptions,
+} from "../../support-resistance/__fixtures__/sample-levels-system-fetch-service";
 
 let tempDir = "";
 let originalDbPath: string | undefined;
+let originalTier: string | undefined;
 
 const csvText = [
   "Date,Time,Symbol,Side,Quantity,Price",
@@ -71,6 +82,7 @@ function jsonRequest(body: unknown): Request {
 
 beforeEach(() => {
   originalDbPath = process.env.TRADER_INTELLIGENCE_DB_PATH;
+  originalTier = process.env.TRADER_INTELLIGENCE_TIER;
   tempDir = mkdtempSync(join(tmpdir(), "trader-intelligence-api-"));
   process.env.TRADER_INTELLIGENCE_DB_PATH = join(tempDir, "test.sqlite");
   resetTraderIntelligenceDatabaseForTests();
@@ -82,6 +94,11 @@ afterEach(() => {
     delete process.env.TRADER_INTELLIGENCE_DB_PATH;
   } else {
     process.env.TRADER_INTELLIGENCE_DB_PATH = originalDbPath;
+  }
+  if (originalTier === undefined) {
+    delete process.env.TRADER_INTELLIGENCE_TIER;
+  } else {
+    process.env.TRADER_INTELLIGENCE_TIER = originalTier;
   }
   rmSync(tempDir, { recursive: true, force: true });
 });
@@ -115,6 +132,66 @@ describe("saved import API routes", () => {
       contractVersion: "persisted_decision_review_run_scheduled_v1",
       requestedJobCount: 1,
       queuedJobCount: 1,
+    });
+
+    const decisionReviewStatus = await (
+      await getDecisionReviewStatus(
+        new Request(
+          `http://localhost/api/import-batches/${encodeURIComponent(
+            batchId,
+          )}/decision-review/status`,
+        ),
+        { params: Promise.resolve({ batchId }) },
+      )
+    ).json();
+    expect(decisionReviewStatus).toMatchObject({
+      contractVersion: "persisted_decision_review_status_v1",
+      importBatchId: batchId,
+      batchStatus: "committed",
+      totalJobCount: 1,
+      queuedCount: 1,
+      completedCount: 0,
+      retryableCount: 0,
+      pendingWorkCount: 1,
+      canResume: true,
+      nextAction: "Continue chart data review for queued saved trades.",
+    });
+
+    const backgroundResume = await resumeDecisionReview(
+      jsonRequest({ maxTrades: 1, runInBackground: true }),
+      { params: Promise.resolve({ batchId }) },
+    );
+    const backgroundResumeBody = await backgroundResume.json();
+
+    expect(backgroundResume.status).toBe(202);
+    expect(backgroundResumeBody).toMatchObject({
+      contractVersion: "persisted_decision_review_resume_result_v1",
+      importBatchId: batchId,
+      queuedBefore: 1,
+      selectedJobCount: 1,
+      maxTrades: 1,
+      mode: "queued",
+      background: true,
+      run: null,
+    });
+    expect(backgroundResumeBody.message).toContain(
+      "Chart data review is running in the background",
+    );
+
+    const statusAfterBackgroundResume = await (
+      await getDecisionReviewStatus(
+        new Request(
+          `http://localhost/api/import-batches/${encodeURIComponent(
+            batchId,
+          )}/decision-review/status`,
+        ),
+        { params: Promise.resolve({ batchId }) },
+      )
+    ).json();
+    expect(statusAfterBackgroundResume).toMatchObject({
+      queuedCount: 1,
+      completedCount: 0,
+      canResume: true,
     });
 
     const trades = await (await listTrades()).json();
@@ -252,6 +329,71 @@ describe("saved import API routes", () => {
         }),
       ]),
     );
+  });
+
+  it("keeps latest review execution-only in the free tier even when chart snapshots exist", async () => {
+    const payload = {
+      csvText: csvText.replaceAll("APIX", "TIER"),
+      broker: "generic_execution_csv",
+      accountTimezone: "America/New_York",
+      acknowledgements: {
+        mappingReview: true,
+        pnlReview: true,
+      },
+    };
+    const previewBody = await (
+      await previewImportBatch(jsonRequest(payload))
+    ).json();
+
+    await commitImportBatch(jsonRequest(payload), {
+      params: Promise.resolve({ batchId: previewBody.plan.batch.id }),
+    });
+
+    const repository = new SqliteImportCommitRepository();
+    const reviewRun = await runPersistedDecisionReviewJobs({
+      repository,
+      importBatchId: previewBody.plan.batch.id,
+      generatedAt: "2026-05-07T12:00:00.000Z",
+      levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
+    });
+    expect(reviewRun.completedSnapshotCount).toBe(1);
+
+    process.env.TRADER_INTELLIGENCE_TIER = "chart_context";
+    const chartTierReview = await (await latestReview()).json();
+    expect(chartTierReview.source).toBe("saved_sqlite");
+    expect(chartTierReview.review).toMatchObject({
+      title: "Guided Review Session",
+    });
+    expect(chartTierReview.savedDecisionReview).toMatchObject({
+      completedCount: 1,
+      queuedCount: 0,
+    });
+    expect(chartTierReview.savedReviewQueue.allItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          symbol: "TIER",
+          lane: "completed",
+          hasSnapshot: true,
+        }),
+      ]),
+    );
+
+    process.env.TRADER_INTELLIGENCE_TIER = "free_execution";
+    const freeTierReview = await (await latestReview()).json();
+    expect(freeTierReview.source).toBe("saved_sqlite");
+    expect(freeTierReview.review).toMatchObject({
+      title: "Guided Review Session",
+    });
+    expect(freeTierReview.savedDecisionReview).toBeNull();
+    expect(freeTierReview.savedReviewQueue.allItems).toEqual([]);
+    expect(
+      freeTierReview.savedReviewQueue.tabs.some(
+        (tab: { id: string }) => tab.id === "completed",
+      ),
+    ).toBe(false);
+    expect(
+      freeTierReview.savedReviewQueue.tabs.map((tab: { id: string }) => tab.id),
+    ).toEqual(["all", "blocked_open_trade", "unresolved"]);
   });
 
   it("commits a ready stored preview from the batch recovery action path", async () => {
@@ -674,7 +816,7 @@ describe("saved import API routes", () => {
         expect.objectContaining({
           symbol: "OPNL",
           status: "blocked_open_trade",
-          reason: "Open trade is excluded from completed-trade decision review until flat.",
+          reason: "Open or swing trade is excluded from completed-trade decision review until flat.",
         }),
       ]),
     );
@@ -690,15 +832,58 @@ describe("saved import API routes", () => {
         expect.objectContaining({
           symbol: "OPNL",
           lane: "blocked_open_trade",
-          stateLabel: "Open trade",
-          reviewScopeLabel: "open trade, execution-only",
+          stateLabel: "Open or swing trade",
+          reviewScopeLabel: "open or swing trade, execution-only",
           stateDetail:
-            "The position was still open at the end of the import, so completed-trade review waits until the trade is flat.",
+            "The position was still open at the end of the import, so completed-trade review waits until the position is flat.",
           nextAction:
-            "Keep the trade saved, then review the completed trade once the position is flat.",
+            "Keep the trade saved for execution review now, then review the completed trade once the position is flat.",
         }),
       ]),
     );
+
+    const openTradeId = review.savedReviewQueue.allItems.find(
+      (item: { symbol: string }) => item.symbol === "OPNL",
+    )?.savedTradeId;
+    expect(openTradeId).toBeTruthy();
+
+    const markClosed = await markTradeClosed(
+      new Request(
+        `http://localhost/api/trades/${encodeURIComponent(openTradeId)}/mark-closed`,
+        { method: "POST" },
+      ),
+      { params: Promise.resolve({ tradeId: openTradeId }) },
+    );
+    const markClosedBody = await markClosed.json();
+    expect(markClosed.status).toBe(200);
+    expect(markClosedBody).toMatchObject({
+      contractVersion: "trade_mark_closed_v1",
+      trade: {
+        id: openTradeId,
+        reviewStatus: "ignored",
+        symbol: "OPNL",
+      },
+    });
+
+    const reviewAfterClose = await (await latestReview()).json();
+    expect(reviewAfterClose.savedReviewQueue.allItems).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          symbol: "OPNL",
+          lane: "blocked_open_trade",
+        }),
+      ]),
+    );
+
+    const repository = new SqliteImportCommitRepository();
+    expect(repository.getSavedTrade(openTradeId)).toMatchObject({
+      lifecycleStatus: "closed",
+      reviewStatus: "ignored",
+      userLifecycleOverride: {
+        reason: "marked_closed_by_user",
+        status: "closed",
+      },
+    });
   });
 
   it("keeps sell-side imports limited without creating short-coaching claims", async () => {

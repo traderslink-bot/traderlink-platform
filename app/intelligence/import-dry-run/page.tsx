@@ -5,13 +5,20 @@ import {
   getCsvDryRunSamplePresets,
 } from "@/src/lib/trader-analytics";
 import { ImportDryRunClient } from "./import-dry-run-client";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
 
 export const metadata: Metadata = {
   title: "Advanced Import Check | Trader Intelligence",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function ImportDryRunPage() {
   const shell = buildProductWorkflowShellViewModel();
+  const chartTierEnabled = canUseChartContext(readTraderIntelligenceTierFromEnv());
   const sampleMistakes =
     shell.analytics.productIntelligence.mistakeTaxonomy.observations
       .slice(0, 3)
@@ -59,6 +66,7 @@ export default function ImportDryRunPage() {
         </header>
 
         <ImportDryRunClient
+          chartTierEnabled={chartTierEnabled}
           presets={getCsvDryRunSamplePresets()}
           sampleMistakes={sampleMistakes}
         />

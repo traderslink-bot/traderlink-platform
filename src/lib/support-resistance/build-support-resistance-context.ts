@@ -1,8 +1,8 @@
 // 2026-04-14
 // PURPOSE:
 // Legacy local support/resistance builder kept for old module tests and
-// comparison work only. App-facing analysis must get support/resistance, VWAP,
-// EMA, and candle-structure context from levels-system.
+// comparison work only. App-facing analysis must get support/resistance and
+// candle-structure context from levels-system v2.
 
 import { SUPPORT_RESISTANCE_CONFIG } from "./config/support-resistance-config";
 import { buildDynamicLevels } from "./dynamic-levels/build-dynamic-levels";

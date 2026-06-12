@@ -48,6 +48,18 @@ describe("classifyTradeAnalysisFailure", () => {
     });
   });
 
+  it("classifies IBKR historical-data timeouts as retryable provider gaps", () => {
+    expect(
+      classifyTradeAnalysisFailure(
+        new Error("Timed out after 30000ms while fetching IBKR historical data for PMAX."),
+      ),
+    ).toMatchObject({
+      code: "provider_timeout",
+      source: "provider",
+      retryable: true,
+    });
+  });
+
   it("classifies missing candles separately from generic shared failures", () => {
     expect(
       classifyTradeAnalysisFailure(

@@ -1,5 +1,4 @@
 import { existsSync } from "node:fs";
-import { createRequire } from "node:module";
 import { join } from "node:path";
 
 import type { BuildLevelsSystemSupportResistanceContextOptions } from "./build-support-resistance-context";
@@ -30,14 +29,6 @@ export interface LevelsSystemRuntimeConfig {
 
 export type LevelsSystemRuntimeEnv = Partial<Record<string, string | undefined>>;
 
-type LevelsSystemSupportResistanceEngineModule =
-  typeof import("levels-system-phase1/support-resistance-engine");
-
-type LevelsSystemOnDemandRuntime = Pick<
-  LevelsSystemSupportResistanceEngineModule,
-  "createIbkrOnDemandCandleFetchServiceOptions"
->;
-
 export const DEFAULT_LEVELS_SYSTEM_LOOKBACK_BARS = {
   daily: 520,
   "4h": 180,
@@ -64,24 +55,41 @@ const DEFAULT_IBKR_PORT = 7497;
 const DEFAULT_IBKR_CLIENT_ID = 101;
 const DEFAULT_IBKR_HISTORICAL_TIMEOUT_MS = 30_000;
 const DEFAULT_IBKR_CONNECTION_TIMEOUT_MS = 10_000;
-const requireFromRuntimeModule = createRequire(import.meta.url);
+const SHARED_IBKR_DISPOSE_GLOBAL_KEY =
+  "__traderIntelligenceDisposeLevelsSystemIbkrClients";
 
-function runtimeRequire(moduleName: string): unknown {
-  return requireFromRuntimeModule(moduleName);
-}
-
-function loadLevelsSystemOnDemandRuntime(): LevelsSystemOnDemandRuntime {
-  return runtimeRequire(
-    "levels-system-phase1/support-resistance-engine",
-  ) as LevelsSystemOnDemandRuntime;
-}
-
-function findBundledLevelsSystemWarehouseDirectory(): string | undefined {
-  const candidates = [
-    join(process.cwd(), "..", "levels-system", "data", "candles"),
-  ];
-
+function findExistingWarehouseDirectory(
+  candidates: string[],
+): string | undefined {
   return candidates.find((candidate) => existsSync(join(candidate, "ibkr")));
+}
+
+function findBundledLevelsSystemV2WarehouseDirectory(): string | undefined {
+  return findExistingWarehouseDirectory([
+    join(process.cwd(), "vendor", "levels-system-v2", "data", "candles"),
+  ]);
+}
+
+function findAutoDiscoveredLevelsSystemV2WarehouseDirectory():
+  | string
+  | undefined {
+  return findExistingWarehouseDirectory([
+    join(process.cwd(), "vendor", "levels-system-v2", "data", "candles"),
+    join(
+      process.cwd(),
+      "..",
+      "levels-system-post-mtf-handoff-stability",
+      "data",
+      "candles",
+    ),
+    join(
+      process.cwd(),
+      "..",
+      "levels-system-post-mtf-handoff-stability",
+      ".validation-cache",
+      "candles",
+    ),
+  ]);
 }
 
 function parseProviderName(
@@ -165,10 +173,19 @@ function optionalPositiveInteger(
 function buildOnDemandHydrationFetchServiceOptions(
   env: LevelsSystemRuntimeEnv,
 ): LevelsSystemRuntimeConfig["fetchServiceOptions"] {
-  const { createIbkrOnDemandCandleFetchServiceOptions } =
-    loadLevelsSystemOnDemandRuntime();
-
-  return createIbkrOnDemandCandleFetchServiceOptions({
+  return {
+    providerName: "ibkr",
+    provider: {
+      providerName: "ibkr",
+    },
+    ibkrTimeoutMs: optionalPositiveInteger(
+      env,
+      DEFAULT_IBKR_HISTORICAL_TIMEOUT_MS,
+      "LEVELS_SYSTEM_IBKR_TIMEOUT_MS",
+      "LEVELS_SYSTEM_IBKR_TIMEOUT_MS",
+      "LEVEL_BACKFILL_IBKR_TIMEOUT_MS",
+      "LEVEL_VALIDATION_IBKR_TIMEOUT_MS",
+    ),
     host:
       firstEnvText(
         env,
@@ -208,7 +225,7 @@ function buildOnDemandHydrationFetchServiceOptions(
       "LEVEL_BACKFILL_IBKR_CONNECTION_TIMEOUT_MS",
       "LEVEL_VALIDATION_IBKR_CONNECTION_TIMEOUT_MS",
     ),
-  });
+  };
 }
 
 export function readLevelsSystemRuntimeConfigFromEnv(
@@ -223,12 +240,22 @@ export function readLevelsSystemRuntimeConfigFromEnv(
     env.LEVELS_SYSTEM_WAREHOUSE_DIRECTORY?.trim() || undefined;
   const bundledWarehouseDirectory =
     configuredProvider === undefined && configuredWarehouseDirectory === undefined
-      ? findBundledLevelsSystemWarehouseDirectory()
+      ? findBundledLevelsSystemV2WarehouseDirectory()
+      : undefined;
+  const autoDiscoveredWarehouseDirectory =
+    configuredWarehouseDirectory === undefined &&
+    (configuredProvider === "ibkr" || enableOnDemandHydration)
+      ? findAutoDiscoveredLevelsSystemV2WarehouseDirectory()
       : undefined;
   const warehouseDirectoryPath =
-    configuredWarehouseDirectory ?? bundledWarehouseDirectory;
+    configuredWarehouseDirectory ??
+    autoDiscoveredWarehouseDirectory ??
+    bundledWarehouseDirectory;
   const shouldUseBundledReplay =
     !enableOnDemandHydration && bundledWarehouseDirectory !== undefined;
+  const shouldUseWarehouseBackedIbkr =
+    configuredProvider === "ibkr" &&
+    warehouseDirectoryPath !== undefined;
 
   return {
     preferredProvider: enableOnDemandHydration
@@ -239,8 +266,13 @@ export function readLevelsSystemRuntimeConfigFromEnv(
       ? warehouseMode === "refresh"
         ? "refresh"
         : "read_write"
-      : warehouseMode ?? (shouldUseBundledReplay ? "replay" : undefined),
-    fetchServiceOptions: enableOnDemandHydration
+      : warehouseMode ??
+        (shouldUseBundledReplay
+          ? "replay"
+          : shouldUseWarehouseBackedIbkr
+            ? "read_write"
+            : undefined),
+    fetchServiceOptions: enableOnDemandHydration || shouldUseWarehouseBackedIbkr
       ? buildOnDemandHydrationFetchServiceOptions(env)
       : undefined,
     lookbackBars: {
@@ -278,9 +310,15 @@ export function buildLevelsSystemSupportResistanceOptions(
 export function disposeLevelsSystemRuntimeConfig(
   config: LevelsSystemRuntimeConfig | undefined,
 ): void {
-  const ib = config?.fetchServiceOptions?.ib as
-    | { disconnect?: () => void }
-    | undefined;
+  if (config?.fetchServiceOptions?.providerName !== "ibkr") {
+    return;
+  }
 
-  ib?.disconnect?.();
+  const dispose = (globalThis as Record<string, unknown>)[
+    SHARED_IBKR_DISPOSE_GLOBAL_KEY
+  ];
+
+  if (typeof dispose === "function") {
+    dispose();
+  }
 }

@@ -55,6 +55,16 @@ export interface TradeDecisionReview {
     nearestResistanceStrengthBucket: string | null;
     nearestSupportSourceStrengthLabel: string | null;
     nearestResistanceSourceStrengthLabel: string | null;
+    nearestSupportImportance: string | null;
+    nearestResistanceImportance: string | null;
+    nearestSupportFreshness: string | null;
+    nearestResistanceFreshness: string | null;
+    nearestSupportIsExtension: boolean;
+    nearestResistanceIsExtension: boolean;
+    nearestSupportIsSyntheticExtension: boolean;
+    nearestResistanceIsSyntheticExtension: boolean;
+    nearestSupportZoneWidthPct: number | null;
+    nearestResistanceZoneWidthPct: number | null;
     nearestSupportScore: number | null;
     nearestResistanceScore: number | null;
     distanceToNearestSupportPct: number | null;
@@ -148,6 +158,11 @@ function levelStrengthEvidence(args: {
   prefix: string;
   bucket: string | null;
   sourceStrengthLabel?: string | null;
+  importance?: string | null;
+  freshness?: string | null;
+  isExtension?: boolean;
+  isSyntheticExtension?: boolean;
+  zoneWidthPct?: number | null;
   score: number | null;
   reactionStrength: string | null;
 }): string[] {
@@ -169,6 +184,26 @@ function levelStrengthEvidence(args: {
     evidence.push(`${args.prefix}Reaction=${args.reactionStrength}`);
   }
 
+  if (args.importance) {
+    evidence.push(`${args.prefix}Importance=${args.importance}`);
+  }
+
+  if (args.freshness) {
+    evidence.push(`${args.prefix}Freshness=${args.freshness}`);
+  }
+
+  if (args.isExtension) {
+    evidence.push(`${args.prefix}IsExtension=true`);
+  }
+
+  if (args.isSyntheticExtension) {
+    evidence.push(`${args.prefix}IsSyntheticExtension=true`);
+  }
+
+  if (args.zoneWidthPct !== null && args.zoneWidthPct !== undefined) {
+    evidence.push(`${args.prefix}ZoneWidthPct=${args.zoneWidthPct.toFixed(2)}`);
+  }
+
   return evidence;
 }
 
@@ -188,6 +223,22 @@ function buildMarketContextInsights(
   const context = input.supportResistanceContext;
   const insights: TradeDecisionReviewInsight[] = [];
   const isShort = input.tradeDirection === "short";
+  const supportLevelQualityEvidence = {
+    importance: context.firstEntryNearestSupportImportance ?? null,
+    freshness: context.firstEntryNearestSupportFreshness ?? null,
+    isExtension: context.firstEntryNearestSupportIsExtension ?? false,
+    isSyntheticExtension:
+      context.firstEntryNearestSupportIsSyntheticExtension ?? false,
+    zoneWidthPct: context.firstEntryNearestSupportZoneWidthPct ?? null,
+  };
+  const resistanceLevelQualityEvidence = {
+    importance: context.firstEntryNearestResistanceImportance ?? null,
+    freshness: context.firstEntryNearestResistanceFreshness ?? null,
+    isExtension: context.firstEntryNearestResistanceIsExtension ?? false,
+    isSyntheticExtension:
+      context.firstEntryNearestResistanceIsSyntheticExtension ?? false,
+    zoneWidthPct: context.firstEntryNearestResistanceZoneWidthPct ?? null,
+  };
 
   if (!context.hadSupportResistanceContextAvailable) {
     return [
@@ -225,6 +276,7 @@ function buildMarketContextInsights(
           bucket: context.firstEntryNearestResistanceStrengthBucket ?? null,
           sourceStrengthLabel:
             context.firstEntryNearestResistanceSourceStrengthLabel ?? null,
+          ...resistanceLevelQualityEvidence,
           score: context.firstEntryNearestResistanceScore ?? null,
           reactionStrength:
             context.firstEntryNearestResistanceReactionStrength ?? null,
@@ -256,6 +308,7 @@ function buildMarketContextInsights(
           bucket: context.firstEntryNearestResistanceStrengthBucket ?? null,
           sourceStrengthLabel:
             context.firstEntryNearestResistanceSourceStrengthLabel ?? null,
+          ...resistanceLevelQualityEvidence,
           score: context.firstEntryNearestResistanceScore ?? null,
           reactionStrength:
             context.firstEntryNearestResistanceReactionStrength ?? null,
@@ -285,6 +338,7 @@ function buildMarketContextInsights(
           bucket: context.firstEntryNearestResistanceStrengthBucket ?? null,
           sourceStrengthLabel:
             context.firstEntryNearestResistanceSourceStrengthLabel ?? null,
+          ...resistanceLevelQualityEvidence,
           score: context.firstEntryNearestResistanceScore ?? null,
           reactionStrength:
             context.firstEntryNearestResistanceReactionStrength ?? null,
@@ -318,6 +372,7 @@ function buildMarketContextInsights(
           bucket: context.firstEntryNearestSupportStrengthBucket ?? null,
           sourceStrengthLabel:
             context.firstEntryNearestSupportSourceStrengthLabel ?? null,
+          ...supportLevelQualityEvidence,
           score: context.firstEntryNearestSupportScore ?? null,
           reactionStrength:
             context.firstEntryNearestSupportReactionStrength ?? null,
@@ -347,6 +402,7 @@ function buildMarketContextInsights(
           bucket: context.firstEntryNearestSupportStrengthBucket ?? null,
           sourceStrengthLabel:
             context.firstEntryNearestSupportSourceStrengthLabel ?? null,
+          ...supportLevelQualityEvidence,
           score: context.firstEntryNearestSupportScore ?? null,
           reactionStrength:
             context.firstEntryNearestSupportReactionStrength ?? null,
@@ -378,6 +434,7 @@ function buildMarketContextInsights(
           bucket: context.firstEntryNearestSupportStrengthBucket ?? null,
           sourceStrengthLabel:
             context.firstEntryNearestSupportSourceStrengthLabel ?? null,
+          ...supportLevelQualityEvidence,
           score: context.firstEntryNearestSupportScore ?? null,
           reactionStrength:
             context.firstEntryNearestSupportReactionStrength ?? null,
@@ -410,6 +467,7 @@ function buildMarketContextInsights(
           bucket: context.firstEntryNearestSupportStrengthBucket ?? null,
           sourceStrengthLabel:
             context.firstEntryNearestSupportSourceStrengthLabel ?? null,
+          ...supportLevelQualityEvidence,
           score: context.firstEntryNearestSupportScore ?? null,
           reactionStrength:
             context.firstEntryNearestSupportReactionStrength ?? null,
@@ -1433,6 +1491,27 @@ export function buildTradeDecisionReview(
       nearestResistanceSourceStrengthLabel:
         supportResistance.firstEntryNearestResistanceSourceStrengthLabel ??
         null,
+      nearestSupportImportance:
+        supportResistance.firstEntryNearestSupportImportance ?? null,
+      nearestResistanceImportance:
+        supportResistance.firstEntryNearestResistanceImportance ?? null,
+      nearestSupportFreshness:
+        supportResistance.firstEntryNearestSupportFreshness ?? null,
+      nearestResistanceFreshness:
+        supportResistance.firstEntryNearestResistanceFreshness ?? null,
+      nearestSupportIsExtension:
+        supportResistance.firstEntryNearestSupportIsExtension ?? false,
+      nearestResistanceIsExtension:
+        supportResistance.firstEntryNearestResistanceIsExtension ?? false,
+      nearestSupportIsSyntheticExtension:
+        supportResistance.firstEntryNearestSupportIsSyntheticExtension ?? false,
+      nearestResistanceIsSyntheticExtension:
+        supportResistance.firstEntryNearestResistanceIsSyntheticExtension ??
+        false,
+      nearestSupportZoneWidthPct:
+        supportResistance.firstEntryNearestSupportZoneWidthPct ?? null,
+      nearestResistanceZoneWidthPct:
+        supportResistance.firstEntryNearestResistanceZoneWidthPct ?? null,
       nearestSupportScore:
         supportResistance.firstEntryNearestSupportScore ?? null,
       nearestResistanceScore:

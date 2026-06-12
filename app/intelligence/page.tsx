@@ -20,6 +20,11 @@ import {
   importCountLabel,
   importStatusLabel,
 } from "@/src/lib/trader-analytics/product/import-user-copy";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "@/src/lib/trader-analytics/product/tier-config";
+import { filterCustomerSavedTrades } from "@/src/lib/trader-analytics/product/customer-data-filter";
 
 export const metadata: Metadata = {
   title: "Trader Intelligence | TradersLink",
@@ -279,12 +284,15 @@ function RouteLink({
 
 export default function IntelligencePage() {
   const data = buildSavedOrSampleTraderAnalyticsViewModel();
+  const activeTier = readTraderIntelligenceTierFromEnv();
+  const chartContextAllowed = canUseChartContext(activeTier);
   const hasSavedData = data.mode === "saved";
   const latestReport = data.viewModel.latestReport;
   const report = latestReport.report;
   const savedReviewQueue =
     hasSavedData
       ? buildSavedReviewQueueReadModel({
+          includeChartContext: chartContextAllowed,
           repository: data.repository,
           userId: data.userId,
         })
@@ -294,7 +302,9 @@ export default function IntelligencePage() {
       ? new SqliteImportCommitRepository().listImportBatchHistory(DEMO_ACCOUNT_ID)
       : [];
   const latestImport = importHistory[0] ?? null;
-  const savedTrades = hasSavedData ? data.repository.listTrades(data.userId) : [];
+  const savedTrades = hasSavedData
+    ? filterCustomerSavedTrades(data.repository.listTrades(data.userId))
+    : [];
   const decisionReviewSnapshots =
     hasSavedData
       ? [
@@ -307,8 +317,11 @@ export default function IntelligencePage() {
           data.repository.listDecisionReviewSnapshotsForBatch(batchId),
         )
       : [];
+  const chartContextSnapshots = chartContextAllowed
+    ? decisionReviewSnapshots
+    : [];
   const tradeThreadModel = buildSavedTradeThreadReadModel({
-    decisionReviewSnapshots,
+    decisionReviewSnapshots: chartContextSnapshots,
     report: hasSavedData ? latestReport : null,
     source: hasSavedData ? "saved_sqlite" : "sample",
     trades: savedTrades,
@@ -318,6 +331,28 @@ export default function IntelligencePage() {
   const marketGapCount = getTabCount(savedReviewQueue, "market_context_unavailable");
   const openBlockCount = getTabCount(savedReviewQueue, "blocked_open_trade");
   const completedReviewCount = getTabCount(savedReviewQueue, "completed");
+  const followUpMetricLabel = chartContextAllowed
+    ? "Chart data still missing"
+    : "Review follow-up";
+  const followUpMetricValue = chartContextAllowed
+    ? marketGapCount
+    : unresolvedCount;
+  const followUpMetricHref = hasSavedData
+    ? chartContextAllowed
+      ? "/intelligence/review?queue=market_context_unavailable"
+      : "/intelligence/review?queue=unresolved"
+    : "/intelligence/upload-csv";
+  const followUpMetricDetail = chartContextAllowed
+    ? marketGapCount > 0
+      ? "These trades are saved but still waiting on chart data."
+      : hasSavedData
+        ? "No chart data gaps are blocking the main review queue."
+        : "Chart evidence checks run after a saved import."
+    : unresolvedCount > 0
+      ? "Saved trades still need written review, open-position handling, or a final decision."
+      : hasSavedData
+        ? "No execution-review follow-up is blocking the main queue."
+        : "Execution-review follow-up appears after a saved import.";
   const rawNextReviewHref =
     (savedReviewQueue?.items[0]?.href ?? null) || "/intelligence/review?queue=highest_priority";
   const nextReviewHref = rawNextReviewHref.startsWith("/intelligence/trades/")
@@ -479,12 +514,21 @@ export default function IntelligencePage() {
                             {highestPriorityCount}
                           </span>
                         </div>
-                        <div>
-                          Reviewed with chart data:{" "}
-                          <span className="font-semibold text-emerald-200">
-                            {completedReviewCount}
-                          </span>
-                        </div>
+                        {chartContextAllowed ? (
+                          <div>
+                            Reviewed with chart data:{" "}
+                            <span className="font-semibold text-emerald-200">
+                              {completedReviewCount}
+                            </span>
+                          </div>
+                        ) : (
+                          <div>
+                            Execution follow-up:{" "}
+                            <span className="font-semibold text-emerald-200">
+                              {unresolvedCount}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <p className="text-xs leading-5 text-zinc-400">
@@ -534,17 +578,11 @@ export default function IntelligencePage() {
                 value={signed(reportPnl)}
               />
               <DashboardMetric
-                detail={
-                  marketGapCount > 0
-                    ? "These trades are saved but still waiting on chart data."
-                    : hasSavedData
-                      ? "No chart data gaps are blocking the main review queue."
-                      : "Chart evidence checks run after a saved import."
-                }
-                href={hasSavedData ? "/intelligence/review?queue=market_context_unavailable" : "/intelligence/upload-csv"}
-                label="Chart data still missing"
-                tone={marketGapCount > 0 ? "warning" : "success"}
-                value={marketGapCount}
+                detail={followUpMetricDetail}
+                href={followUpMetricHref}
+                label={followUpMetricLabel}
+                tone={followUpMetricValue > 0 ? "warning" : "success"}
+                value={followUpMetricValue}
               />
             </section>
 
@@ -571,7 +609,9 @@ export default function IntelligencePage() {
                   },
                   {
                     action: "Open report",
-                    body: "Check timing, results, behavior, ticker stories, and chart evidence.",
+                    body: chartContextAllowed
+                      ? "Check timing, results, behavior, ticker stories, and chart evidence."
+                      : "Check timing, results, behavior, ticker stories, and execution evidence.",
                     href: "/intelligence/analytics/results",
                     label: "3. Analyze",
                     title: "Read analytics",
@@ -628,7 +668,11 @@ export default function IntelligencePage() {
                   />
                   <ProductAreaCard
                     action="Open review queue"
-                    detail="See the trades that most need a replay, chart evidence check, or lesson draft."
+                    detail={
+                      chartContextAllowed
+                        ? "See the trades that most need a replay, chart evidence check, or lesson draft."
+                        : "See the trades that most need a replay, written review, or final decision."
+                    }
                     href="/intelligence/review?queue=highest_priority"
                     kicker="Review queue"
                     metric={countLabel(unresolvedCount, "item")}
@@ -637,7 +681,11 @@ export default function IntelligencePage() {
                   />
                   <ProductAreaCard
                     action="Open analytics"
-                    detail="Get the bigger picture across results, timing, behavior, ticker stories, sessions, and chart evidence."
+                    detail={
+                      chartContextAllowed
+                        ? "Get the bigger picture across results, timing, behavior, ticker stories, sessions, and chart evidence."
+                        : "Get the bigger picture across results, timing, behavior, ticker stories, sessions, and execution evidence."
+                    }
                     href="/intelligence/analytics/results"
                     kicker="Analytics"
                     metric={formatPercent(winRate)}
@@ -796,8 +844,9 @@ export default function IntelligencePage() {
                       </span>
                     </div>
                     <p className="mt-2 text-xs leading-5 text-zinc-500">
-                      Trades still waiting for a written review, chart evidence
-                      check, or final decision.
+                      {chartContextAllowed
+                        ? "Trades still waiting for a written review, chart evidence check, or final decision."
+                        : "Trades still waiting for a written review, execution replay, or final decision."}
                     </p>
                   </Link>
                   <Link
@@ -819,19 +868,26 @@ export default function IntelligencePage() {
                   </Link>
                   <Link
                     className="rounded-md border border-zinc-800/80 bg-zinc-950/35 p-4 transition hover:border-sky-500"
-                    href="/intelligence/review?queue=market_context_unavailable"
+                    href={
+                      chartContextAllowed
+                        ? "/intelligence/review?queue=market_context_unavailable"
+                        : "/intelligence/review?queue=unresolved"
+                    }
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-sm font-semibold text-zinc-100">
-                        Chart data still missing
+                        {chartContextAllowed
+                          ? "Chart data still missing"
+                          : "Review follow-up"}
                       </span>
                       <span className="font-mono text-sm text-amber-300">
-                        {marketGapCount}
+                        {chartContextAllowed ? marketGapCount : unresolvedCount}
                       </span>
                     </div>
                     <p className="mt-2 text-xs leading-5 text-zinc-500">
-                      Availability state only. Chart evidence appears once the
-                      data and saved review snapshot are ready.
+                      {chartContextAllowed
+                        ? "Availability state only. Chart evidence appears once the data and saved review snapshot are ready."
+                        : "Execution-review status only. Open the queue when a saved trade still needs a note or final handling."}
                     </p>
                   </Link>
                 </div>

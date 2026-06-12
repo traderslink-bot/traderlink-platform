@@ -34,16 +34,20 @@ describe("formatMarketStructureCalibrationReport", () => {
     expect(markdown).toContain("- source: sample fixture");
     expect(markdown).toContain("- provider: stub");
     expect(markdown).toContain("- trades: 1");
-    expect(markdown).toContain("- base_building: 1");
-    expect(markdown).toContain("- uptrend: 1");
-    expect(markdown).toContain("- high: 1");
+    expect(markdown).toContain("- overall status: BLOCKER");
+    expect(markdown).toContain("- recommendation action: resolve_failed_or_missing_context");
+    expect(markdown).toContain("- missing market structure: 1");
+    expect(markdown).toContain("- none");
     expect(markdown).toContain("levels_system_trade_window");
     expect(markdown).toContain("PatternInput leaks: 0");
     expect(markdown).toContain("## Calibration Gates");
     expect(markdown).toContain("PatternInput isolation: PASS");
     expect(markdown).toContain("Analysis completion: PASS");
     expect(markdown).toContain(
-      "Market structure should still remain observational",
+      "Market-structure presence: BLOCKER - 1 missing read(s) (#0)",
+    );
+    expect(markdown).toContain(
+      "Resolve failed or missing shared-context cases",
     );
   });
 

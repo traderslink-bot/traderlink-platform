@@ -39,9 +39,10 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
+    "@stoqey/ib": "^1.5.6",
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.9.0",
-    "levels-system-phase1": "file:vendor/levels-system-phase1",
+    "levels-system-v2": "file:vendor/levels-system-v2",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"

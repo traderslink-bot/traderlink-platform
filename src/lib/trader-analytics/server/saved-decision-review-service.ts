@@ -77,7 +77,8 @@ function isMarketContextUnavailableFailure(code: string | undefined): boolean {
   return (
     code === "insufficient_market_context" ||
     code === "insufficient_trade_window" ||
-    code === "no_candles_found"
+    code === "no_candles_found" ||
+    code === "provider_timeout"
   );
 }
 
@@ -129,6 +130,7 @@ export async function runPersistedDecisionReviewJobs(args: {
   maxTrades?: number;
   deferRemaining?: boolean;
   refreshMissingReplayCandleWindows?: boolean;
+  retryFailedChartDataReview?: boolean;
   savedTradeIds?: string[];
   runBatch?: typeof runBatchTradeAnalysis;
 }): Promise<PersistedDecisionReviewRunResult> {
@@ -180,6 +182,14 @@ export async function runPersistedDecisionReviewJobs(args: {
       job.status === "completed" &&
       args.refreshMissingReplayCandleWindows &&
       snapshotNeedsReplayCandleRefresh(snapshotsByTradeId.get(job.savedTradeId))
+    ) {
+      return true;
+    }
+
+    if (
+      args.retryFailedChartDataReview &&
+      (job.status === "analysis_failed" ||
+        job.status === "market_context_unavailable")
     ) {
       return true;
     }
@@ -349,6 +359,7 @@ export async function runPersistedDecisionReviewJobs(args: {
       reason: "Decision review completed and persisted.",
     };
 
+    args.repository.deleteDecisionReviewDiagnosticsForTrade(trade.id);
     args.repository.saveDecisionReviewSnapshot(snapshot);
     args.repository.updateDecisionReviewJob(updated);
     increment(statusCounts, updated.status);
@@ -444,7 +455,7 @@ export function buildSavedDecisionReviewReadModel(args: {
       queuedCount > 0
         ? "Run saved chart data review for queued closed trades."
         : analysisFailedCount > 0 || marketContextUnavailableCount > 0
-          ? "Execution review is available now; keep chart conclusions unavailable until technical follow-up is resolved."
+          ? "Execution review is available now. Retry chart data review after market data is connected; keep support/resistance conclusions hidden until it completes."
           : completedCount > 0
             ? "Use saved chart evidence snapshots in guided review."
             : "Chart data review has no completed saved snapshots yet.",

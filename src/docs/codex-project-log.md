@@ -15910,6 +15910,21 @@ Current best next step:
 - Deploy the `/intelligence` route namespace migration, smoke-test new routes
   and old redirects live, then continue the durable Trader Intelligence database
   adapter work separately.
+
+# 2026-06-08 Trader Intelligence v2 candle/coaching handoff package
+
+- Added `src/docs/trader-intelligence-v2-candle-coach-analytics-handoff-2026-06-08.md`
+  to `main` as the handoff package for the completed local Trader Intelligence
+  v2 candle/levels/coaching/analytics QA work.
+- The app implementation package remains committed on
+  `codex/trader-ui-product-pass` through `8641300e`.
+- A direct local merge into `main` was attempted in a clean temporary worktree,
+  but was aborted because `main` has the newer `/intelligence` route namespace
+  and journal-level-analysis UI work; resolving that safely requires a
+  deliberate port/merge pass rather than accepting one side wholesale.
+- The next chat should run a fresh isolated IBKR statement-period calibration
+  using a different/smaller statement and the handoff prompt in the new doc.
+
 # 2026-05-25 whole-site source-of-truth audit
 
 - Verified the pre-audit Vercel production deployment for `vercel-landing` was `dpl_5kdq544VSxoobgEsy1ftv52VVYfD` and pointed at commit `81e175909c6f0ad68481fbfc800259c32485251d` (`Move Trader Intelligence under intelligence namespace`).
@@ -15947,3 +15962,1901 @@ Current best next step:
 - Used `shellElement="div"` on News index/ticker pages to avoid nested `<main>`
   landmarks.
 - Mirrored the primary site destinations in the homepage hero nav.
+
+# 2026-06-09 v2 levels/candle shared-behavior port to main worktree
+
+- Continued the deliberate port on
+  `C:\Users\jerac\Documents\TraderLink\trader-intelligence-v2-main-merge`
+  branch `codex/port-v2-candle-analytics-main`; this is not a direct merge from
+  `codex/trader-ui-product-pass`.
+- Preserved main's `/intelligence` route namespace and journal-level-analysis
+  work; no files under `app/intelligence`, `src/lib/level-analysis`, or the
+  level-analysis API routes were changed in this shared-behavior pass.
+- Ported the v2-only levels integration to active shared libraries:
+  `levels-system-v2/support-resistance-engine` is the package dependency and
+  `serverExternalPackages` entry, while the old tracked
+  `vendor/levels-system-phase1` tree is removed.
+- Added the warehouse/IBKR-aware v2 support-resistance path that uses stored
+  daily/4h candles when present and treats missing 5m/trade-window data as
+  fetch-required rather than paid evidence.
+- Carried v2 level quality metadata through PatternInput and decision-review
+  market context: importance, freshness, extension flags, synthetic-extension
+  flags, zone width, source strength, reaction strength, and score are preserved
+  only when a real v2 level exists.
+- Updated levels/summary/audit tests so support/resistance evidence can be
+  present without claiming formal market structure; market-structure calibration
+  now blocks promotion when the v2 adapter has no market-structure read.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 84 tests.
+- Focused trader analytics/coach/review Vitest passed: 5 files, 54 tests.
+- `npm run build:webpack` passed and confirmed the `/intelligence/...` route
+  table and level-analysis APIs remain present.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop` ran against the built app but failed 12 tests
+  because that spec still hard-codes the pre-main `/workspace`, `/coach`,
+  `/trades`, and `/analytics` route contracts and href expectations. Four tests
+  passed. The next UI-port step should update the E2E spec and product-pass UI
+  route assumptions to main's `/intelligence` namespace rather than changing app
+  routes backward.
+
+Best next step:
+
+- Commit this shared v2 candle/levels behavior port if the route-namespace
+  Playwright caveat is accepted, then do a second deliberate UI/test port that
+  adapts product-pass pages and Playwright expectations to `/intelligence` while
+  preserving journal-level-analysis.
+
+# 2026-06-09 `/intelligence` feature-regression spec port
+
+- Continued the deliberate main port on
+  `C:\Users\jerac\Documents\TraderLink\trader-intelligence-v2-main-merge`
+  branch `codex/port-v2-candle-analytics-main`.
+- Updated `tests/e2e/app-feature-regression.spec.ts` to exercise main's current
+  `/intelligence` route namespace instead of the older top-level
+  `/workspace`, `/coach`, `/trades`, `/analytics`, `/imports`, and
+  `/import-dry-run` route assumptions.
+- Preserved the app route shape; this pass changes the QA contract, not product
+  routes. It keeps the journal-level-analysis work and `/intelligence`
+  namespace intact.
+- Aligned the spec with current main UI copy and fixture behavior:
+  `/intelligence/upload-csv` uses "Upload your broker CSV",
+  `/intelligence/imports` uses "Import History" and the import recovery queue,
+  `/intelligence/import-dry-run` uses "Advanced Import Check", coach overview
+  uses the current coaching-focus panel, analytics uses the report categories
+  panel, and ticker-story navigation is conditional when no same-day re-entry
+  story exists.
+- Kept market-context QA focused on the paid-tier rule: candle/level claims only
+  count when real chart evidence exists; execution-only paths remain
+  observational.
+
+Verification:
+
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader analytics/coach/review Vitest passed: 5 files, 54 tests.
+
+Best next step:
+
+- Commit this scoped E2E namespace port, then continue the deliberate UI port
+  from `codex/trader-ui-product-pass` in small pieces: shared behavior first,
+  UI components second, always adapted to main's `/intelligence` routes and
+  without restoring old levels-system v1/phase1.
+
+# 2026-06-09 analytics chart-tier gate port
+
+- Continued the deliberate port from `codex/trader-ui-product-pass` by taking
+  only a route-safe analytics behavior improvement and adapting it to main's
+  `/intelligence` namespace.
+- Added a chart-tier/evidence gate to
+  `app/intelligence/analytics/analytics-client.tsx`:
+  chart-evidence counts, support/resistance handoff links, the chart-evidence
+  report section, and market-context review panel now render only when
+  `chartTierEnabled` is true.
+- Kept execution-only analytics available for the free tier: results, timing,
+  behavior, ticker/session story execution summaries, review planning, trade
+  explorer, and details remain reachable without chart evidence.
+- Added an execution-only fallback panel for
+  `/intelligence/analytics/chart-evidence` so the page explains that candle,
+  support, and resistance summaries require saved chart context instead of
+  making unsupported claims.
+- Derived `chartTierEnabled` in `app/intelligence/analytics/page.tsx` from
+  demo/sample mode or at least one persisted completed decision-review snapshot.
+  Queued/failed hydration does not count as paid chart evidence.
+- Did not port product-pass route rollbacks to top-level `/analytics` or
+  `/trades`; all links remain under `/intelligence`.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused analytics/product Vitest passed: 4 files, 40 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Continue the product-pass inventory one surface at a time, starting with
+  saved-trades or coach UI deltas, and port only changes that preserve
+  `/intelligence`, journal-level-analysis, and levels-system-v2-only evidence
+  rules.
+
+# 2026-06-09 saved-trades coach ticker-story handoff port
+
+- Continued the saved-trades product-pass inventory without direct-merging
+  `codex/trader-ui-product-pass`.
+- Ported the route-safe ticker-story coach handoff behavior into main's current
+  `/intelligence` route shape:
+  - `app/intelligence/coach/page.tsx` now builds ticker-story links with
+    `from=coach` and an optional focus label while keeping
+    `/intelligence/trades/ticker-story/...` URLs.
+  - `app/intelligence/trades/ticker-story/[threadId]/page.tsx` now accepts
+    coach handoff query params and shows a focused coach handoff panel when
+    opened from coach.
+- Preserved main's existing hold-continuation ticker-story section and did not
+  delete or replace `trade-detail-level-facts.tsx`.
+- Kept the paid/free evidence rule in the handoff panel: chart context is shown
+  only as saved findings when present; otherwise the page says execution replay
+  only and explicitly avoids support/resistance claims.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-thread/coach Vitest passed: 3 files, 49 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Continue saved-trades porting with `app/intelligence/trades/page.tsx`, taking
+  only route-safe UI/product improvements from product-pass and avoiding any
+  top-level `/trades` route rollback or journal-level-analysis deletion.
+
+# 2026-06-09 saved-trades chart-evidence gate port
+
+- Continued the saved-trades product-pass port in main's
+  `app/intelligence/trades/page.tsx` without importing the product-pass
+  top-level `/trades` route structure.
+- Added the same concrete chart evidence gate used by analytics: saved chart
+  context is enabled for sample preview or when at least one persisted completed
+  decision-review snapshot exists. Queued or failed hydration does not count.
+- When chart context is not enabled, the saved-trades page now:
+  - builds ticker/session story context without decision-review snapshots,
+  - hides chart-specific story filters,
+  - hides chart findings, add-quality, after-exit, protected-before-fade,
+    support/resistance, level, volume, and needs-chart-data counts,
+  - hides per-story chart/support/resistance/volume badges.
+- Execution-only browsing remains available for the free tier: round trips,
+  calendar, day sessions, ticker stories, open trades, and review navigation
+  still render.
+- Did not port product-pass swing-trade closure actions or route rollbacks; that
+  requires a separate deliberate pass.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-trade Vitest passed: 2 files, 40 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Continue with the saved-trade detail page diff, carefully preserving
+  `app/intelligence/trades/[tradeId]/trade-detail-level-facts.tsx` and the
+  journal-level-analysis panels while porting only route-safe UI improvements.
+
+# 2026-06-09 trade-detail chart-evidence gate port
+
+- Continued the saved-trade detail product-pass port manually in
+  `app/intelligence/trades/[tradeId]/page.tsx`.
+- Preserved main's journal-level-analysis work:
+  `trade-detail-level-facts.tsx`, its imports, availability line, and supporting
+  detail panel remain intact.
+- Changed trade-detail ticker/session story context to use this trade's own
+  completed decision-review snapshot before rendering chart/support-resistance
+  claims. If the trade has no completed snapshot, the page keeps the review
+  execution-only and filters chart evidence cards, priority market-context
+  findings, support/resistance metrics, volume metrics, add-quality chart
+  metrics, and after-exit/protected-profit chart metrics out of the main trade
+  detail context.
+- Kept queued/failed chart review diagnostics visible as chart-data-needs-review
+  style copy, but with explicit execution-replay-only scope until evidence is
+  attached.
+- Tightened replay/status copy so saved fills are the source of truth unless
+  this trade has saved chart evidence.
+- Did not port the product-pass rewrite that removes level-facts or rolls links
+  back to top-level `/trades`.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused trade-detail/review Vitest passed: 3 files, 52 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Continue the deliberate saved-trades/detail port with smaller UI polish from
+  product-pass only after checking it does not delete journal-level-analysis or
+  reintroduce top-level route assumptions.
+
+# 2026-06-09 trade-detail candle-basis diagnostics port
+
+- Continued the deliberate `codex/trader-ui-product-pass` port without a direct
+  merge.
+- Kept main's `/intelligence/trades/[tradeId]` route shape and preserved the
+  journal-level-analysis trade-detail facts panel.
+- Ported the trade-detail candle basis/provider warning copy into
+  `app/intelligence/trades/[tradeId]/page.tsx`:
+  - completed decision-review snapshots still unlock paid chart context,
+  - free/execution-only or no-snapshot trades stay fill-only,
+  - snapshots with candle price-basis warnings now say to use broker execution
+    P/L for movement conclusions until the basis is reconciled,
+  - saved chart/level context can still be shown as supporting context, but the
+    page avoids treating candle movement as settled evidence when basis is
+    unsafe.
+- Aligned the trade-detail chart-tier inference with analytics/saved-trades:
+  sample mode or at least one persisted completed saved decision-review snapshot
+  enables chart-context tier UI, while the current trade still requires its own
+  completed snapshot before chart/support-resistance claims render.
+- Did not restore or import old levels-system v1/phase1; levels work remains on
+  `levels-system-v2/support-resistance-engine`.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader/level Vitest passed: 5 files, 109 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue the product-pass inventory with another small, route-safe slice.
+  Candidate: compare review/coach route UI deltas, port shared behavior only,
+  and avoid any top-level route rollback or journal-level-analysis deletion.
+
+# 2026-06-09 review queue candle-basis warning port
+
+- Continued the review/coach product-pass inventory and manually ported only the
+  route-safe review queue behavior.
+- Preserved main's `/intelligence/review` namespace and preserved
+  journal-level-analysis review queue level-facts fields/read model.
+- Added `candleBasisStatus` to saved review queue items and a
+  `candle_basis_warning` queue filter/tab when a completed decision-review
+  snapshot carries unsafe candle basis notes.
+- Updated `/intelligence/review` evidence copy so completed chart reviews with
+  basis warnings say "Basis check needed" and keep movement conclusions anchored
+  to broker execution P/L until candle basis is reconciled.
+- Added a SQLite saved-review queue regression that persists a completed
+  snapshot with an unsafe basis note and confirms the warning lane/filter.
+- Did not port product-pass changes that remove level-facts, roll hrefs back to
+  top-level `/review`, or add a separate tier-config module.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused repository/review queue Vitest passed: 2 files, 17 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader/level Vitest passed: 7 files, 126 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue with coach page product-pass deltas next, porting only behavior that
+  preserves `/intelligence` routes and the paid/free evidence gate. Skip any
+  route rollback or journal-level-analysis deletion.
+
+# 2026-06-09 coach review-summary basis lane label
+
+- Added the route-safe coach follow-up for the new review queue
+  `candle_basis_warning` lane.
+- `app/intelligence/coach/page.tsx` now labels that lane as "Candle basis
+  check" instead of relying on generic fallback casing.
+- `app/saved-review-queue-summary.tsx` now prefers a "Candle Basis Check" card
+  linking to `/intelligence/review?queue=candle_basis_warning` when that queue
+  has items.
+- Preserved all `/intelligence` routes and did not port the larger product-pass
+  coach rewrite because it includes stale top-level route assumptions.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused coach/repository Vitest passed: 2 files, 21 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue the coach product-pass inventory only after isolating route-safe
+  helper/scoring changes from stale `/coach` and `/trades` href changes.
+
+# 2026-06-09 coach evidence-status copy gate
+
+- Continued the coach product-pass inventory with a small route-safe copy gate
+  in `app/intelligence/coach/page.tsx`.
+- The coach route menu now says the behavior sequence is chart-supported only
+  when completed decision-review snapshots exist. When chart jobs are queued,
+  missing, or failed, it says the path is execution-supported while chart data
+  needs review.
+- The coach header status badge now says:
+  - "chart evidence checked" when completed chart snapshots exist,
+  - "chart data needs review" when pending/problem chart data exists,
+  - "execution evidence checked" when no chart evidence is available.
+- Added a calm link to `/intelligence/review?queue=candle_basis_warning` when
+  the saved review queue has candle-basis warning items.
+- Did not port the larger product-pass coach scoring/UI rewrite because it
+  depends on queue story-link fields that need a separate route-safe contract
+  port and the product-pass file still contains stale top-level hrefs.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused coach/repository Vitest passed: 2 files, 21 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- If continuing the coach product-pass port, next isolate the saved-review queue
+  ticker-story linkage fields (`tickerStoryKey`, story review count, lead item)
+  while preserving level-facts and `/intelligence` routes. That unlocks the
+  smarter coach ticker-story focus selection without direct-merging product-pass.
+
+# 2026-06-09 review queue ticker-story linkage contract
+
+- Ported the route-safe saved-review queue ticker-story linkage fields from the
+  product-pass branch without taking the stale route or level-facts deletions.
+- `SavedReviewQueueItem` now carries:
+  - `sessionDate`,
+  - `tickerStoryKey`,
+  - `tickerStoryHref` under `/intelligence/trades/ticker-story/...`,
+  - `tickerStoryReviewCount`,
+  - `tickerStoryLead`.
+- The highest-priority queue now collapses repeated same-symbol same-session
+  review items to the first lead item while `allItems` still preserves every
+  trade. This gives coach a clean story-level focus hook without hiding saved
+  trade detail data.
+- Preserved journal-level-analysis `levelFacts` on queue items and preserved the
+  `/intelligence/review` and `/intelligence/trades` route namespace.
+- Added a SQLite regression for two same-symbol same-day review jobs to verify
+  story metadata, story lead behavior, and highest-priority collapse.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused repository/level review queue Vitest passed: 2 files, 18 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader/level Vitest passed: 7 files, 127 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Use the new queue ticker-story fields to port the coach ticker-story focus
+  selection helpers from product-pass, keeping all generated hrefs under
+  `/intelligence` and preserving the paid/free evidence gate.
+
+# 2026-06-09 coach ticker-story focus selection
+
+- Used the new saved-review queue ticker-story linkage fields to port the
+  route-safe coach ticker-story focus selector into
+  `app/intelligence/coach/page.tsx`.
+- The coach now prefers a multi-round-trip ticker story tied to the current
+  coaching behavior or highest-priority review queue story before falling back
+  to the generic priority ticker story.
+- Kept the existing `/intelligence/coach/ticker-stories` panel and
+  `/intelligence/trades/ticker-story/...` links; did not port the larger
+  product-pass overview/review-session layout rewrite.
+- Preserved the paid/free evidence gate: the selector can prioritize saved
+  execution stories and chart-risk counts already present in the thread model,
+  but chart claims still depend on completed decision-review snapshots.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused coach/repository Vitest passed: 2 files, 22 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue reviewing the remaining coach product-pass UI deltas, but port only
+  isolated route-safe pieces. Avoid the stale top-level `/coach`, `/review`, and
+  `/trades` hrefs unless adapting them to `/intelligence`.
+
+# 2026-06-09 coach copy helper polish
+
+- Ported a small route-safe coach copy/helper polish slice from product-pass into
+  `app/intelligence/coach/page.tsx`.
+- Added helper copy functions for:
+  - singular/plural route count labels,
+  - avoiding repeated focus lead wording,
+  - cleaner trade review titles.
+- Updated coach route count labels to avoid text like "1 trades" and adjusted
+  the primary action copy so repeated focus labels do not read redundantly.
+- Preserved all `/intelligence` routes and did not change data contracts,
+  chart-evidence gates, or level-analysis behavior.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused coach/repository Vitest passed: 2 files, 22 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue remaining coach product-pass review manually. Larger layout changes
+  should only be ported if their hrefs are adapted to `/intelligence` and their
+  evidence claims stay gated by completed chart snapshots.
+
+# 2026-06-09 coach ticker-story focus overview panel
+
+- Added a route-safe overview panel to `app/intelligence/coach/page.tsx` that
+  surfaces the focused ticker story selected by the coach ticker-story focus
+  helper.
+- The panel links to `/intelligence/trades/ticker-story/...` and
+  `/intelligence/review?queue=highest_priority`, preserving main's route
+  namespace.
+- Kept the primary coach action pointed at the evidence trade/review flow so
+  existing review-session behavior and Playwright expectations stay stable.
+- Did not change data contracts, chart-evidence gates, level-analysis behavior,
+  or levels-system-v2 usage.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused coach/repository Vitest passed: 2 files, 22 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue manual coach UI inventory. Candidate: review-session page copy can
+  acknowledge the focused ticker story, but only if links remain under
+  `/intelligence` and the single-trade replay path remains available.
+
+# 2026-06-09 coach review-session ticker-story link
+
+- Added a small route-safe review-session handoff inside
+  `app/intelligence/coach/page.tsx`.
+- The existing `Featured Evidence Trade` panel now shows a related ticker-story
+  link when the coach has selected a focused ticker story.
+- Preserved the single-trade replay path and the tested
+  `coach-featured-trade-session` copy contract.
+- Kept the ticker-story link under `/intelligence/trades/ticker-story/...` and
+  did not change chart-evidence gates, level-analysis behavior, or
+  levels-system-v2 usage.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused coach/repository Vitest passed: 2 files, 22 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue the remaining product-pass inventory only if the next UI delta can be
+  isolated from stale top-level route assumptions. Otherwise move to final
+  branch-level verification and prepare the port branch for review.
+
+# 2026-06-09 coach/product-pass port branch verification
+
+- Ran a branch-level verification pass after the route-safe coach/review queue
+  product-pass slices.
+- Current branch state keeps:
+  - `/intelligence` route namespace,
+  - journal-level-analysis trade detail and review queue level-facts,
+  - levels-system-v2-only support/resistance behavior,
+  - free/execution-only versus paid/completed-snapshot chart evidence gates.
+- Remaining direct diffs against `codex/trader-ui-product-pass` are still large
+  and should not be merged blindly. The largest remaining areas include coach
+  and review layout rewrites with stale top-level route assumptions, plus
+  product-pass queue changes that would remove or bypass main's level-facts
+  read model unless adapted manually.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader/coach/level Vitest passed: 8 files, 137 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Prepare this port branch for review or continue only with manually isolated
+  product-pass deltas. Do not direct-merge product-pass into main; keep adapting
+  individual changes to `/intelligence` and preserving journal-level-analysis.
+
+# 2026-06-09 saved review queue loss-aware priority port
+
+- Ported the route-safe saved-review-queue loss-priority slice from
+  `codex/trader-ui-product-pass` into main's current read model.
+- Completed chart-risk review items now get a bounded priority bump when the
+  saved trade has a meaningful realized loss.
+- Queue sorting now uses realized loss as a tie-breaker after priority score so
+  larger losing chart-risk items surface first.
+- Improved saved-review queue P/L lookup to prefer the analytics report's
+  `sourceTradeIds` mapping before falling back to symbol/session/direction,
+  which keeps same-symbol same-session ticker-story items from inheriting the
+  wrong P/L row.
+- Preserved `/intelligence` routes, journal-level-analysis queue level-facts,
+  completed-snapshot chart evidence gates, and levels-system-v2-only behavior.
+- Added a regression covering two completed same-symbol chart-risk trades where
+  the losing trade becomes the collapsed ticker-story lead.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import repository Vitest passed: 1 file, 13 tests.
+- Focused trader/coach/level Vitest passed: 8 files, 142 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this scoped queue-priority slice, then continue remaining
+  product-pass inventory only for isolated behavior that can be adapted to
+  `/intelligence` without removing level-facts or weakening chart-evidence
+  gates.
+
+# 2026-06-09 free-vs-chart tier gate port
+
+- Ported the product-pass Trader Intelligence tier contract into main:
+  - `free_execution` keeps execution analytics enabled and chart context off.
+  - `chart_context` keeps execution analytics plus candle/chart context on.
+  - AI remains a separate add-on flag and is not treated as a base tier.
+- Added server-level chart-context gates for:
+  - analytics behavior reports,
+  - saved review queue read models.
+- Wired the gate into the current `/intelligence` namespace instead of the
+  stale top-level product-pass routes:
+  - `/intelligence`,
+  - `/intelligence/analytics`,
+  - `/intelligence/coach`,
+  - `/intelligence/progress`,
+  - `/intelligence/review`,
+  - `/intelligence/trades`,
+  - `/intelligence/trades/[tradeId]`,
+  - `/api/review/latest`.
+- Free tier mode now keeps saved chart snapshots in storage but does not pass
+  them into chart-evidence behavior/thread/queue read models for those routes.
+- Trade-detail journal-level-analysis facts and review-queue level-facts now
+  stay hidden/feature-disabled when chart context is not allowed.
+- Preserved journal-level-analysis code paths for chart-context mode and
+  levels-system-v2-only support/resistance behavior.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused tier/queue/behavior Vitest passed: 4 files, 24 tests.
+- Focused trader/coach/level Vitest passed: 9 files, 146 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Add a small Playwright or route-handler regression that runs with
+  `TRADER_INTELLIGENCE_TIER=free_execution` and asserts chart-evidence panels
+  stay gated while execution-only analytics remain visible.
+
+# 2026-06-09 free-tier latest review API regression
+
+- Added a route-handler regression for `/api/review/latest` using an isolated
+  saved-import SQLite database.
+- The test commits a closed trade, completes persisted chart review with
+  levels-system-v2 sample support/resistance context, and verifies:
+  - `chart_context` exposes the completed saved decision-review snapshot and
+    completed queue item,
+  - `free_execution` keeps the guided review payload available,
+  - `free_execution` returns `savedDecisionReview: null`,
+  - `free_execution` hides the completed chart-review queue item.
+- This proves the free tier remains execution-only even when paid-tier chart
+  snapshots exist in storage.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused tier/API/queue/behavior/level-facts Vitest passed: 5 files, 37 tests.
+
+Best next step:
+
+- Continue remaining product-pass inventory only for isolated behavior that can
+  be adapted to `/intelligence` without direct-merging stale top-level routes or
+  removing journal-level-analysis.
+
+# 2026-06-09 chart review retry and diagnostic cleanup port
+
+- Ported the isolated decision-review retry behavior from product-pass without
+  the larger background `after()` scheduling route rewrite.
+- `provider_timeout` now maps to `market_context_unavailable` instead of a hard
+  analysis failure, so user-facing copy remains "market data missing/retry"
+  rather than implying chart analysis is complete or trusted.
+- `runPersistedDecisionReviewJobs(...)` now accepts
+  `retryFailedChartDataReview` and can explicitly retry
+  `analysis_failed`/`market_context_unavailable` jobs.
+- Successful retry now deletes stale decision-review diagnostics for the saved
+  trade before saving the completed snapshot.
+- The import-batch decision-review resume route now detects retryable failed
+  jobs and reports `mode: "retry_failed_chart_data"` when those jobs are the
+  selected work pool.
+- Added a regression covering:
+  - initial provider timeout,
+  - persisted market-context diagnostic,
+  - explicit retry after market data is available,
+  - completed snapshot persistence,
+  - stale diagnostic cleanup.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused repository/API Vitest passed: 2 files, 27 tests.
+- Focused trader/API/coach/level Vitest passed: 10 files, 160 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue product-pass inventory only for narrow server/read-model behavior.
+  Leave the larger background resume scheduling and top-level route rewrites for
+  a separate deliberate pass.
+
+# 2026-06-09 chart review status route port
+
+- Ported the isolated decision-review status API from product-pass into the
+  current import-batch API namespace:
+  `/api/import-batches/[batchId]/decision-review/status`.
+- The route reports saved-trade count, execution count, job status counts,
+  snapshot/diagnostic counts, retryable failed count, pending work count, and a
+  calm next action.
+- The status read model aligns with the retry semantics from the prior slice:
+  queued jobs and retryable failed chart-data jobs count as pending work, and
+  completed chart snapshots are reported separately.
+- Added a saved-import API regression proving a newly committed import exposes
+  queued chart-review status and `canResume: true`.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import API route Vitest passed: 1 file, 13 tests.
+
+Best next step:
+
+- Continue product-pass inventory only for narrow behavior/read-model slices.
+  Avoid the stale top-level import page rewrites unless intentionally adapting
+  them into `/intelligence`.
+
+# 2026-06-09 chart review retry copy port
+
+- Ported the remaining narrow saved-decision-review copy from product-pass while
+  preserving main's `/intelligence` routes and journal-level-analysis work.
+- The saved decision-review read model now tells the user to retry chart data
+  review after market data is connected and explicitly says support/resistance
+  conclusions stay hidden until that succeeds.
+- Left stale product-pass route rewrites (`/imports`, `/trades`,
+  `/analytics`) unported because main owns the newer `/intelligence`
+  namespace.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused repository Vitest passed: 1 file, 14 tests.
+
+Best next step:
+
+- Continue inventorying product-pass server/product diffs for behavior that
+  improves chart evidence gating without changing route namespaces.
+
+# 2026-06-09 review queue chart-data wording port
+
+- Ported the low-risk saved-review-queue wording improvements from
+  product-pass while preserving main's `/intelligence` links and
+  journal-level-analysis level-facts read model.
+- Missing market context now says execution review is available but candle and
+  level evidence is still missing, with an execution-replay-only scope.
+- Analysis failures now say chart data needs another check before candle or
+  level feedback is trusted, instead of using vague technical-follow-up copy.
+- Pinned the market-context-unavailable queue item copy in the existing SQLite
+  saved review queue regression.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import/review queue Vitest passed: 2 files, 27 tests.
+
+Best next step:
+
+- Continue the product-pass inventory without stale route rewrites; prioritize
+  behavior/read-model slices that reinforce execution-only versus chart-evidence
+  boundaries.
+
+# 2026-06-09 analytics behavior chart-confirmed copy port
+
+- Ported the low-risk analytics behavior report wording from product-pass while
+  preserving main's `/intelligence/trades` fallback link.
+- Empty states now say "chart-confirmed" rather than "certified", keeping paid
+  chart evidence language closer to the actual requirement: completed candle and
+  support/resistance context must exist before the app makes those calls.
+- Add-quality copy now asks what confirmation was present before adding size.
+- Pinned the chart-confirmed empty-state language in the analytics behavior
+  report regression.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused analytics behavior Vitest passed: 1 file, 2 tests.
+
+Best next step:
+
+- Continue product-pass inventory for narrow behavior/copy/read-model slices
+  that can be adapted without stale route changes.
+
+# 2026-06-09 product-pass port verification checkpoint
+
+- Completed a broader verification pass after the latest manual port slices:
+  - chart review retry copy,
+  - review queue chart-data state copy,
+  - analytics behavior chart-confirmed copy.
+- Remaining product-pass diffs are intentionally not direct-merged because they
+  mostly rewrite current `/intelligence` paths back to stale top-level routes,
+  remove or bypass journal-level-analysis level-facts, add broad customer-data
+  filtering, or change unrelated import grouping behavior.
+- The branch is still preserving:
+  - levels-system-v2 only,
+  - free tier execution-only gating,
+  - paid chart-context behavior only when completed saved decision-review
+    snapshots exist,
+  - main's `/intelligence` namespace,
+  - journal-level-analysis work.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader analytics/import/coach/level Vitest passed: 5 files, 60 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- If continuing the port, inspect remaining product-pass diffs one at a time and
+  only port behavior that can be adapted to `/intelligence` without changing
+  level-facts or execution-only versus chart-evidence gates.
+
+# 2026-06-09 background chart review resume port
+
+- Deliberately ported the background chart-review resume behavior into main's
+  current `/api/import-batches/[batchId]/decision-review/resume` route.
+- Used the existing guarded `next/server` `after(...)` scheduling pattern from
+  the import commit route, after checking the local Next docs for `after`.
+- The resume endpoint remains synchronous by default, but accepts
+  `runInBackground: true` to return `202` with `background: true` and `run:
+  null` while chart review continues after the response.
+- Updated the `/intelligence/imports/[batchId]` action to request background
+  resume and show the API's calm background message.
+- Added an API regression proving background resume does not immediately mark
+  chart evidence complete in test mode.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import API route Vitest passed: 1 file, 13 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Continue remaining product-pass inventory only for behavior that can be
+  adapted to `/intelligence`; do not port stale top-level routes or remove
+  journal-level-analysis level-facts.
+
+# 2026-06-10 import detail chart hydration polling
+
+- Expanded the `/intelligence/imports/[batchId]` chart review action from a
+  one-shot background start into a small status-polling hydration loop.
+- The client now starts background batches with `runInBackground: true`, polls
+  `/api/import-batches/[batchId]/decision-review/status`, waits for completed
+  or failed work to move before starting another batch, and exposes a stop
+  action after the current progress check.
+- The panel shows completed, waiting, retryable, and ready counts so users can
+  keep reviewing executions without assuming candle/level evidence is complete.
+- The import details page now shows the hydration action for retryable
+  chart-data failures as well as queued jobs, and uses "chart data needs another
+  check" copy instead of vague technical-follow-up language.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import API route Vitest passed: 1 file, 13 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- Browser check on a temporary local dev server at `127.0.0.1:3101` passed:
+  a committed import with one queued chart-review job showed the hydration
+  panel, progress counts, start/refresh controls, and transitioned to
+  `Hydrating...` after clicking start. The status endpoint then reported one
+  completed snapshot and no pending work.
+
+Best next step:
+
+- Commit this polling slice, then continue with a real May IBKR hydration pass
+  against the isolated QA database to confirm the same progress behavior on the
+  larger statement.
+
+# 2026-06-10 May IBKR isolated chart-evidence QA
+
+- Ran the May IBKR activity statement through the saved-import path in an
+  isolated local DB:
+  `artifacts/may-ibkr-ui-qa/may-ui-qa.sqlite`.
+- Source file:
+  `C:\Users\jerac\Documents\IBKR activity statments\U21845737_202605_202605.csv`.
+- Import result:
+  - 523 statement rows,
+  - 244 accepted executions,
+  - 93 saved trades,
+  - 93 decision-review jobs,
+  - 0 open positions.
+- Temporary QA server used `LEVELS_SYSTEM_PROVIDER=ibkr`,
+  `LEVELS_SYSTEM_ON_DEMAND_HYDRATION=true`, and
+  `LEVELS_SYSTEM_WAREHOUSE_DIRECTORY=C:\Users\jerac\Documents\TraderLink\levels-system-post-mtf-handoff-stability\.validation-cache\candles`.
+  This kept the run on levels-system-v2-backed candle storage and avoided old
+  levels-system v1/phase1 data.
+- The import detail polling hydrator progressed through background UI batches
+  first, then the remaining queue was completed through direct 5-trade resume
+  API batches after the UI loop stalled at 25 completed jobs.
+- Final chart-review status:
+  - 93 completed,
+  - 0 queued,
+  - 0 retryable,
+  - 0 diagnostics,
+  - 93 distinct snapshots,
+  - 0 duplicate snapshots.
+- Persisted snapshot evidence:
+  - 93/93 snapshots use `levels_system_daily_4h` market context,
+  - 83/93 snapshots use `levels_system_trade_window`,
+  - 10/93 snapshots are explicitly `execution_only_fallback` for trade-window
+    evidence rather than overclaiming missing intraday context,
+  - replay windows are present for every completed snapshot.
+- Representative trade-detail API checks:
+  - ISPC trade 0 has a completed snapshot, v2 daily/4h market context,
+    `levels_system_trade_window`, 56 replay candles, and 7 insights.
+  - GME trade 2 has a completed snapshot, v2 daily/4h market context,
+    `execution_only_fallback`, 192 replay candles, and 3 insights.
+  - Before full hydration, queued DXF trade 50 had no snapshot, no diagnostics,
+    no market-context source, and no trade-window evidence source.
+- Re-checked live `/intelligence` pages with the isolated May DB:
+  - import detail,
+  - completed trade detail pages for ISPC, GME, and ADTX,
+  - `/intelligence/review?queue=highest_priority`,
+  - `/intelligence/analytics/chart-evidence`,
+  - `/intelligence/analytics/behavior`,
+  - `/intelligence/coach`,
+  - `/intelligence/coach/review-session`.
+- The live route scrape confirmed the active pages no longer show
+  "technical follow-up" wording. Behavior analytics can show support/resistance
+  language after this run because completed saved chart-evidence snapshots exist.
+- Replaced remaining active user-facing "technical follow-up" labels with
+  calmer "chart data needs another check" / "chart-data checks" wording across
+  review, trade detail, import dry-run diagnostics, coach lane labels, saved
+  review summaries, app state labels, and the matching language QA matrix.
+- Stabilized the app-feature Playwright problem collector so blocked
+  Google Analytics / Tag Manager requests do not fail app-surface regression
+  checks; app request failures still fail the test.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader analytics/import/coach Vitest passed: 6 files, 55 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed after ignoring only
+  external GA/GTM request failures: 16 passed, 1 skipped.
+- `npx playwright test tests/e2e/import-dry-run.spec.ts
+  --project=chromium-desktop --reporter=dot` is not currently a reliable
+  verification target on this branch: 9 passed, 5 failed before the changed
+  diagnostic assertion because the spec still depends on older top-level routes
+  and stale visibility/copy assumptions.
+
+Best next step:
+
+- Commit the May QA/copy-stability slice, then either clean up the stale
+  `tests/e2e/import-dry-run.spec.ts` route assumptions or continue the
+  deliberate product-pass port one behavior/read-model slice at a time while
+  preserving `/intelligence`, journal-level-analysis, and levels-system-v2 only.
+
+# 2026-06-10 import dry-run Playwright route cleanup
+
+- Cleaned up `tests/e2e/import-dry-run.spec.ts` so it targets the current
+  `/intelligence` route namespace instead of relying on top-level redirects.
+- Updated the Playwright webServer health URL to
+  `/intelligence/import-dry-run`.
+- Aligned import dry-run expectations with the current advanced import UI:
+  - the page heading is `Advanced Import Check`,
+  - the workflow strip is not part of this advanced page,
+  - local CSV uploads reset broker override to `auto`, so generic CSV tests
+    now reselect the broker after upload,
+  - open-position checks use the current readiness summary instead of an old
+    exact final-position sentence,
+  - saved review queue checks use completed chart-evidence lanes when the
+    background review completes,
+  - repaired-import trade detail expects `Chart evidence ready` when a saved
+    snapshot exists.
+- Isolated the guided review app-feature regression from stale per-item queue
+  wording by asserting the current queue shell and lane controls.
+
+Verification:
+
+- `npx playwright test tests/e2e/import-dry-run.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 14 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- Focused trader import Vitest passed: 2 files, 21 tests.
+- `npx tsc --noEmit --pretty false` passed.
+
+Best next step:
+
+- Continue the deliberate product-pass port one behavior/read-model slice at a
+  time, keeping `/intelligence`, journal-level-analysis, levels-system-v2 only,
+  and the free execution-only versus paid chart-evidence boundary intact.
+
+# 2026-06-11 tier chart-evidence boundary port
+
+- Ported the useful tier-boundary behavior from `codex/trader-ui-product-pass`
+  without taking its route rewrites or journal-level-analysis removals.
+- Kept `/intelligence` links and the existing journal level-facts read model.
+- Made shared analytics/coach behavior panels tier-aware:
+  - chart-context/sample or completed-snapshot paths can say
+    chart-supported/chart evidence,
+  - free/no-chart paths say execution-supported/execution evidence.
+- Made saved review summary cards tier-aware:
+  - chart tier keeps chart-data queue cards,
+  - free tier shows a saved trading baseline/open-or-carried follow-up instead
+    of chart-review backlog claims.
+- Tightened `buildSavedReviewQueueReadModel()` so
+  `includeChartContext: false` no longer returns chart-only tabs such as
+  `completed`, `market_context_unavailable`, `analysis_failed`,
+  `candle_basis_warning`, or `queued`.
+- Added `tests/e2e/tier-chart-evidence.spec.ts` for the free execution-only vs
+  paid chart-context route matrix on `/intelligence` URLs.
+- Updated the app-feature regression for the calmer coach CTA copy
+  (`Open saved example`).
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed after edits. Existing Turbopack warnings remain about
+  broad dynamic file patterns in academy/news stores.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader tier/behavior/saved-import Vitest passed: 4 files, 32 tests.
+- Focused saved review queue/level-analysis Vitest passed: 3 files, 33 tests.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Review this tier-boundary slice, then commit it as the next deliberate
+  product-pass port. After that, continue with another small read-model/UI slice
+  only if it preserves `/intelligence`, journal-level-analysis, and
+  levels-system-v2-only constraints.
+
+# 2026-06-11 customer-facing synthetic data filter port
+
+- Ported the non-route product-pass customer-data filter slice without taking
+  product-pass route rewrites.
+- Added `src/lib/trader-analytics/product/customer-data-filter.ts` to identify
+  local synthetic tickers matching `E2E...`.
+- Filtered local synthetic trades/reports before building customer-facing
+  analytics, coach, review, progress, trades, ticker-story, and intelligence
+  read models.
+- Filtered saved review queue jobs by customer-visible saved trades so local
+  synthetic E2E jobs do not appear as review backlog.
+- Hid direct synthetic trade detail routes with `notFound()`.
+- Added focused unit coverage for trade/report filtering and a Playwright
+  guard that coach details do not surface `E2E...` symbols.
+- Kept `/intelligence`, journal-level-analysis, and levels-system-v2-only
+  constraints intact.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused customer-data/saved-import Vitest passed: 3 files, 30 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Commit this customer-data filter slice. Then continue inspecting remaining
+  product-pass diffs for another narrow read-model or copy improvement; skip
+  route rewrites, academy/news deletions, and any changes that remove
+  journal-level-analysis.
+
+# 2026-06-11 open-or-swing review lane copy pass
+
+- Continued the deliberate product-pass inspection and skipped stale route
+  rewrites from `codex/trader-ui-product-pass`.
+- Kept `/intelligence`, journal-level-analysis, levels-system-v2-only, and the
+  free execution-only versus paid chart-evidence boundary intact.
+- Aligned blocked open-position review language across shared read models and
+  route pages:
+  - queue/tab status now says `Open or Swing Trades`,
+  - trade detail, import detail, review, coach, import dry-run diagnostics, and
+    saved review summary use `open or swing`/`open or carried` consistently,
+  - navigation actions such as `Open trade review` remain action labels, not
+    status claims.
+- Preserved the underlying behavior: open/carrying trades stay execution-only
+  and do not produce completed-trade coaching or chart evidence claims until the
+  position is flat and evidence exists.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import/review/coach language Vitest passed: 4 files, 42 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83
+  tests.
+
+Best next step:
+
+- Review and commit this open-or-swing lane copy pass. Then continue porting
+  another narrow product-pass slice only where it preserves `/intelligence`,
+  journal-level-analysis, levels-system-v2-only, and the tier evidence boundary.
+
+# 2026-06-11 open-or-swing mark-closed action pass
+
+- Continued the deliberate product-pass port without taking stale route rewrites.
+- Kept `/intelligence`, journal-level-analysis, levels-system-v2-only, and the
+  free execution-only versus paid chart-evidence boundary intact.
+- Added `POST /api/trades/[tradeId]/mark-closed` for saved open/swing trades.
+- Added an open/swing list action to mark a blocked carried position as closed
+  by the user without creating chart evidence or support/resistance claims.
+- Persisted the user lifecycle override on the saved trade, set the saved trade
+  review status to `ignored`, and moved blocked open/swing decision-review jobs
+  to `skipped_limit`.
+- Filtered ignored saved trades out of the saved review queue so the item is
+  removed after the user marks it closed.
+- Added focused API coverage for the mark-closed route, persisted trade detail,
+  and review queue removal.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import/repository Vitest passed: 2 files, 27 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+
+Best next step:
+
+- Commit this open/swing mark-closed slice. Then continue inspecting remaining
+  product-pass diffs for another narrow behavior/read-model improvement that
+  preserves `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the tier evidence boundary.
+
+# 2026-06-11 chart evidence analytics examples pass
+
+- Continued the deliberate product-pass port without taking stale top-level
+  route rewrites.
+- Kept `/intelligence`, journal-level-analysis, levels-system-v2-only, and the
+  free execution-only versus paid chart-evidence boundary intact.
+- Ported the chart-evidence example story cards into the current
+  `/intelligence/analytics` route.
+- The examples are built only from ticker stories with saved chart-context
+  findings and render only inside the existing chart-evidence panel, so free
+  execution-only mode still shows the tier gate instead of support/resistance
+  or candle claims.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused analytics/saved-import Vitest passed: 2 files, 15 tests.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+
+Best next step:
+
+- Commit this analytics examples slice. Then continue comparing product-pass
+  route pages against current `/intelligence` pages for small UI/read-model
+  improvements, skipping route rewrites and anything that weakens the tier
+  evidence boundary.
+
+# 2026-06-11 review queue candle-basis visibility pass
+
+- Continued the deliberate product-pass comparison against the current
+  `/intelligence/review` route without taking stale top-level route rewrites.
+- Restored per-item candle-basis visibility in saved review queue technical
+  details for chart-evidence queue cards.
+- Kept the display conservative: chart findings can show `Candle basis`, with
+  `Needs review`, `Checked`, or `Not reported`; execution-only/free-tier paths
+  remain gated by the existing tier read model.
+- Added a Playwright regression assertion that the completed chart-data sample
+  review queue exposes the candle-basis field.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-import/repository Vitest passed: 2 files, 27 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+
+Best next step:
+
+- Commit this candle-basis visibility slice. Then continue with another small
+  coach/review product-pass comparison only where it preserves `/intelligence`,
+  journal-level-analysis, levels-system-v2-only, and the tier evidence boundary.
+
+# 2026-06-11 coach behavior sequence tier-copy pass
+
+- Continued the small product-pass comparison on shared coach behavior sequence
+  copy.
+- Tightened the coach review-path explanation so free execution-only mode does
+  not mention chart evidence.
+- Paid chart-context mode still keeps chart evidence in the review explanation
+  when chart evidence is allowed.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the tier evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused analytics/saved-import Vitest passed: 2 files, 15 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this coach tier-copy slice. Then continue with another narrow
+  product-pass comparison only if it does not weaken the free execution-only
+  versus paid chart-evidence boundary.
+
+# 2026-06-11 Intelligence overview tier-copy pass
+
+- Continued the evidence-wording audit after the product-pass comparison.
+- Made the `/intelligence` overview tier-aware:
+  - free execution-only mode now uses review-follow-up/execution-evidence copy
+    in the primary metrics, workflow card, product-area cards, and attention
+    area,
+  - paid chart-context mode keeps chart-data/chart-evidence wording.
+- Made the `/intelligence/analytics` empty state tier-aware so free mode says
+  execution evidence instead of chart evidence.
+- Extended the tier Playwright matrix to cover `/intelligence` and
+  `/intelligence/analytics` entry points.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused tier/behavior Vitest passed: 2 files, 5 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this overview tier-copy slice. Then continue with another small
+  evidence-wording or read-model pass only if it preserves the tier boundary.
+
+# 2026-06-11 ticker-story direct-route tier gate pass
+
+- Continued the end-user evidence-wording audit beyond the main dashboard.
+- Gated `/intelligence/trades/ticker-story/[threadId]` decision-review
+  snapshots by the active tier so direct ticker-story URLs do not expose
+  chart findings in free execution-only mode.
+- Updated ticker-story menu/summary badges and coach-handoff copy so free mode
+  says execution-only/evidence basis while paid chart-context mode keeps chart
+  evidence language.
+- Extended the tier Playwright matrix to visit ticker stories and, when a
+  story link exists, a direct ticker-story detail page.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-trade-thread/tier Vitest passed: 2 files, 31 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this ticker-story tier-gate slice. Then continue with another direct
+  route audit for chart/candle/support-resistance wording if needed.
+
+# 2026-06-11 coach ticker-story panel tier gate pass
+
+- Continued the direct-route chart/candle wording audit on the coach ticker-story
+  view.
+- Gated the coach ticker-story chart metric cards behind the active paid
+  chart-context tier:
+  - free execution-only mode now shows an execution-only note instead of chart
+    findings, support/resistance exits, chart risks, chart strengths, or volume
+    evidence,
+  - paid chart-context mode still shows the chart metric cards when chart
+    evidence is allowed.
+- Extended the tier Playwright matrix to visit
+  `/intelligence/coach/ticker-stories?demo=sample` in both free and paid modes.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused tier/behavior Vitest passed: 2 files, 5 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Commit this coach ticker-story tier-gate slice. Then continue the deliberate
+  product-pass port with another small route audit for chart/candle/support-
+  resistance wording while preserving `/intelligence`, journal-level-analysis,
+  and levels-system-v2-only.
+
+# 2026-06-11 progress route tier gate pass
+
+- Continued the route-level tier audit on `/intelligence/progress`.
+- Kept the ticker-story progress execution metrics visible in both tiers.
+- Gated progress chart metric groups behind the effective paid chart-context
+  tier:
+  - free execution-only mode now shows an execution-only progress note and
+    "Study the execution report",
+  - paid chart-context mode keeps "Study the chart set" plus chart risks,
+    chart strengths, chart findings, support/resistance exits, and volume
+    evidence counts.
+- Extended the tier Playwright matrix to cover `/intelligence/progress` in both
+  free and paid modes.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused tier/behavior Vitest passed: 2 files, 5 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this progress tier-gate slice. Then continue the deliberate product-pass
+  port with another small direct-route audit for chart/candle/support-resistance
+  wording, or package the branch if the route audit is clean enough for handoff.
+
+# 2026-06-11 trade detail tier-copy pass
+
+- Continued the direct-route tier audit on individual trade detail pages.
+- Made the trade detail decision-review status helper tier-aware:
+  - free execution-only mode now describes the page as saved executions, P/L,
+    notes, and checklist evidence,
+  - paid chart-context mode keeps chart-ready, chart-missing, and chart-data
+    diagnostic copy.
+- Made the trade detail workflow handoff tier-aware so free mode does not ask the
+  user to use chart evidence, while paid mode keeps the chart-evidence workflow
+  when allowed.
+- Updated the summary card so free mode reports unavailable paid evidence rather
+  than missing chart data.
+- Extended the tier Playwright matrix to open a direct trade detail page from the
+  saved-trades list when a trade link is present.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused saved-thread/tier Vitest passed: 2 files, 31 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this trade-detail tier-copy slice. Then scan imports/import-dry-run and
+  analytics route copy for any remaining free-tier chart/candle/support-
+  resistance wording before packaging the branch for handoff.
+
+# 2026-06-11 upload and import detail tier gate pass
+
+- Continued the import route tier audit.
+- Made `/intelligence/upload-csv` pass the active tier into the upload client.
+- Gated post-save chart-data auto-start:
+  - paid chart-context mode still starts the first chart-data review job after a
+    clean save,
+  - free execution-only mode saves the import and sends the user to saved import
+    or review queue without promising chart hydration.
+- Made saved import detail copy tier-aware:
+  - free mode describes saved trades with executions, notes, checklist state,
+    session timing, and P/L evidence,
+  - paid mode keeps chart evidence notes, chart review status, diagnostics, and
+    resume controls.
+- Added an execution-only advanced import status panel for free mode and kept
+  chart diagnostics hidden from the free import detail surface.
+- Extended the free-tier Playwright matrix to visit `/intelligence/upload-csv`
+  and assert the entry screen does not promise chart data/evidence.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused import/tier Vitest passed: 2 files, 17 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit this upload/import tier-gate slice. Then run one final route-copy scan
+  for free-tier chart/candle/support-resistance wording and package the branch
+  for deliberate handoff/port review.
+
+# 2026-06-11 import dry-run tier gate pass
+
+- Continued the final route-copy scan on `/intelligence/import-dry-run`.
+- Made `/intelligence/import-dry-run` dynamic so runtime tier configuration is
+  honored instead of using a build-time default.
+- Made `/intelligence/upload-csv` dynamic for the same reason; its post-save
+  chart-data auto-start depends on the active tier.
+- Passed the active tier into the advanced import dry-run client.
+- Gated the dry-run chart-data review request button, chart-data KPIs, evidence
+  gate summaries, detailed decision-review results, chart-data notes, and
+  chart-specific limitation copy behind the paid chart-context tier.
+- Free execution-only mode now shows import readiness, grouping, repairs, P/L,
+  save readiness, and review queue context without exposing chart/candle/support-
+  resistance controls.
+- Paid chart-context mode keeps the existing chart-data review controls and
+  diagnostics.
+- Extended the tier Playwright matrix to cover `/intelligence/import-dry-run` in
+  both free and paid modes.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused import/tier Vitest passed: 2 files, 17 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Known current failure:
+
+- `npx vitest run
+  src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-quality-dashboard.test.ts
+  --reporter=verbose` currently fails before/independent of this UI tier slice:
+  the deterministic dashboard reports `failCount: 3` where the test expects
+  `0`. This should be handled as a calibration follow-up, not as part of the
+  import dry-run route-copy gate.
+
+Best next step:
+
+- Commit this import dry-run tier-gate slice. Then package the branch for
+  deliberate handoff/port review, with the decision-review quality dashboard
+  failure called out as a separate calibration task.
+
+# 2026-06-11 port handoff package
+
+- Added `src/docs/trader-intelligence-v2-port-handoff-2026-06-11.md`.
+- The handoff captures the current branch, non-negotiable levels-system-v2-only
+  rule, recent tier-boundary commits, verification commands, known calibration
+  test failure, and deliberate port guidance.
+- It explicitly separates the free execution-only versus paid chart-context
+  boundary from the separate decision-review quality dashboard calibration
+  failure.
+
+Best next step:
+
+- Use the handoff doc to prepare the deliberate port/review package. Do not
+  blindly merge; preserve `/intelligence`, journal-level-analysis, and the
+  levels-system-v2-only path.
+
+# 2026-06-11 decision-review resistance calibration
+
+- Resolved the deterministic decision-review quality dashboard calibration
+  failure that previously reported `failCount: 3`.
+- Root cause: three synthetic `ABCD` resistance scenarios still used a first
+  entry at `1.2767`, but the current levels-system-v2 fixture produces the
+  nearest major overhead resistance at `1.3100`; the entry was 2.61% below that
+  level, so the UI correctly refused to claim "near resistance" or "limited
+  room" evidence.
+- Updated only the synthetic scenario CSV prices so those scenarios now place
+  the first fill at `1.3097`, which is about `0.02%` below the actual v2
+  `1.3100` major resistance level. No product logic was loosened.
+- The late-add scenario was adjusted to keep the intended "adds after much of
+  the move was already used" evidence while preserving the major-resistance
+  setup.
+- levels-system-v2-only remains intact; no levels-system v1 / phase1 path was
+  restored or imported.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-quality-dashboard.test.ts --reporter=verbose` passed: 1 file, 3 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-bridge.test.ts --reporter=dot` passed: 1 file, 16 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-bridge.test.ts src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-quality-dashboard.test.ts --reporter=dot` passed: 2 files, 19 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Commit this focused synthetic calibration fix, then continue the deliberate
+  port/review package with `/intelligence`, journal-level-analysis, tier
+  boundaries, and levels-system-v2-only constraints preserved.
+
+# 2026-06-11 calibration handoff refresh
+
+- Committed the focused synthetic resistance calibration as `a13de83e`.
+- Updated `src/docs/trader-intelligence-v2-port-handoff-2026-06-11.md` so it
+  no longer lists the decision-review quality dashboard as a current known
+  failure.
+- The handoff now calls out the resolved calibration separately from the
+  tier-boundary work.
+
+Best next step:
+
+- Prepare the review/PR package with three separate review threads: tier
+  boundary behavior, the resolved synthetic calibration follow-up, and the
+  broader levels-system-v2/vendor cleanup history.
+
+# 2026-06-11 trader-ui-product-pass port planning
+
+- Compared `codex/trader-ui-product-pass` against
+  `codex/port-v2-candle-analytics-main` without merging.
+- Confirmed a direct merge is unsafe because the source branch moves many
+  `/intelligence/*` routes to root-level `app/*` routes and deletes
+  journal-level-analysis files that must be preserved.
+- Added `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md`
+  with explicit source/target branches, direct-merge risks, port-first areas,
+  adapt-before-porting route families, do-not-port-wholesale areas, and
+  verification requirements.
+
+Best next step:
+
+- Start a read-only review of `src/lib/trader-analytics/*` differences from
+  `codex/trader-ui-product-pass`; port only product logic that still matches the
+  current tier/evidence model before touching route UI.
+
+# 2026-06-11 trader-analytics port review pass 1
+
+- Reviewed `src/lib/trader-analytics/*` differences from
+  `codex/trader-ui-product-pass` without merging or applying code.
+- Result: most remaining source hunks should not be ported as-is because they
+  rewrite `/intelligence/*` links to root-level routes, remove saved review
+  queue journal-level facts, remove open/swing trade handling, or remove
+  customer-data filtering.
+- Confirmed warehouse-backed candle hydration, saved import chart hydration
+  status, and tier config are already represented in the target branch.
+- Scanned for old `levels-system` v1 / phase1 imports; matches were prose
+  strings only, not v1 code imports.
+- Updated `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md`
+  with these review findings.
+
+Best next step:
+
+- Continue source-only function-level review for saved review priority wording
+  and ticker-story grouping, accepting only behavior that preserves
+  `/intelligence`, tier gates, journal-level-analysis, and open-swing handling.
+
+# 2026-06-11 saved review priority port slice
+
+- Accepted one small behavior slice from `codex/trader-ui-product-pass`:
+  the saved-review `highest_priority` lane now requires `priorityScore >= 90`
+  instead of `>= 75`.
+- Rationale: the default urgent lane should surface urgent chart-data gaps and
+  high-loss chart-risk reviews, while lower-priority open/swing reminders remain
+  available through their own lane.
+- Preserved target-branch `/intelligence` links, journal-level facts, tier-aware
+  filtering, customer-data filtering, and open/swing trade handling.
+- Added/updated focused tests for larger-loss priority ordering and urgent
+  ticker-story grouping.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts --reporter=dot` passed: 1 file, 15 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts --reporter=dot` passed: 1 file, 13 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/tier-config.test.ts src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts --reporter=dot` passed: 3 files, 31 tests.
+- `npx tsc --noEmit --pretty false` passed.
+
+Best next step:
+
+- Continue source-only function-level review, but skip root-route and
+  journal-level-analysis deletion hunks. The next useful candidates are
+  calm chart-basis diagnostics and saved-import source caution copy.
+
+# 2026-06-11 candle-basis port review
+
+- Reviewed `codex/trader-ui-product-pass` commits `28a6310d` and `6b4bc3c6`.
+- Result: no code port needed. The current branch already has the candle-basis
+  queue lane, review/trade detail copy, replay gating, stale-diagnostic cleanup,
+  and focused tests adapted to `/intelligence`.
+- Updated `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md`
+  to mark the candle-basis candidate as reviewed and closed.
+
+Best next step:
+
+- Continue function-level source review with saved-import source caution copy
+  and automated QA/product-readiness wording. Keep rejecting root-route rewrites
+  and journal-level-analysis deletions.
+
+# 2026-06-12 import/product readiness port review
+
+- Reviewed saved-import source caution, import user copy, CSV dry-run workflow,
+  automated QA, import trial, product intelligence, product polish,
+  productization, and platform-module diffs from `codex/trader-ui-product-pass`.
+- Result: no code port accepted.
+- The source diffs mainly rewrote `/intelligence/*` contracts and links to
+  root-level routes, downgraded "open or swing trade" wording to "open trade",
+  and removed generic/auto sell-starting trade grouping support.
+- Kept the target branch behavior because it preserves `/intelligence`, current
+  open/swing handling, short/opening-sell import support, tier gates, and
+  journal-level-analysis.
+- Updated `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md`
+  with this reviewed/rejected slice.
+
+Best next step:
+
+- Continue deliberate source review with shared levels-system-v2/support-
+  resistance diffs. Do not accept any v1/phase1 or route-namespace churn.
+
+# 2026-06-12 shared levels-system port review
+
+- Reviewed shared support/resistance, raw-trade-timeline, trade-analysis, and
+  pattern-input diffs from `codex/trader-ui-product-pass`.
+- Result: no code port accepted.
+- The source branch would restore
+  `levels-system-phase1/support-resistance-engine` in shared adapter/types and
+  strip v2 level-quality evidence fields including importance, freshness,
+  extension/synthetic-extension flags, and zone width fields.
+- Kept the target branch implementation because it preserves
+  `levels-system-v2/support-resistance-engine`, warehouse-backed candle
+  hydration/runtime options, and the paid chart-context evidence model.
+- Updated
+  `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md` with the
+  reviewed/rejected levels-system slice.
+
+Best next step:
+
+- Continue deliberate source review with user-facing behavior and route-local UI
+  changes, accepting only patches that can be adapted into `/intelligence`
+  without weakening tier gates, journal-level-analysis, or levels-system-v2
+  evidence.
+
+# 2026-06-12 user-facing behavior and route UI port review
+
+- Reviewed `src/lib/user-facing-behavior/*`, route-local Trader Intelligence
+  UI diffs, and focused Playwright spec diffs from
+  `codex/trader-ui-product-pass`.
+- Result: no code port accepted.
+- The user-facing behavior diff only rewrites route contracts from
+  `/intelligence/*` to root-level routes, which must be rejected for this
+  branch.
+- The route UI diff mostly renames or deletes `app/intelligence/*` files in
+  favor of root-level routes.
+- Feature-marker review confirmed the target route files already contain the
+  important current behavior under `/intelligence`: tier-aware chart evidence
+  gates, candle-basis warnings, ticker-story coach/review links, saved chart
+  hydration status, and execution-only free-tier copy.
+- Kept current trade detail level facts and open/swing mark-closed files because
+  the source branch deletes them and they preserve journal-level/open-swing
+  review behavior.
+- Updated
+  `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md` with the
+  reviewed/rejected user-facing behavior and route UI slice.
+
+Best next step:
+
+- Finish the deliberate port package by checking whether any remaining test-only
+  changes add coverage that can be adapted to `/intelligence`; otherwise run
+  targeted verification and leave the branch ready for review.
+
+# 2026-06-12 test-only port review
+
+- Reviewed remaining test-only diffs from `codex/trader-ui-product-pass`.
+- Result: no broad test port accepted.
+- The source branch deletes journal-level-analysis tests, follows rejected
+  root-route assumptions in several Playwright specs, and includes
+  levels-system test diffs tied to the rejected phase1 adapter changes.
+- Kept the target branch's existing tier/evidence Playwright checks and focused
+  unit tests as the review baseline.
+- Updated
+  `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md` with the
+  reviewed/rejected test-only slice.
+
+Best next step:
+
+- Run targeted verification for the final deliberate-port package:
+  `npx tsc --noEmit --pretty false`, `npm run verify:levels-system -- --reporter=dot`,
+  focused trader analytics/import/coach tests, and route Playwright checks when
+  a dev server is available.
+
+# 2026-06-12 final port verification pass
+
+- Ran the final deliberate-port verification package after rejecting the unsafe
+  source-branch route, levels-system, and journal-level-analysis hunks.
+- Fixed one Playwright fixture in `tests/e2e/import-dry-run.spec.ts`:
+  - changed the generated saved-import ticker from `E2E########` to
+    `QA########` because `E2E########` symbols are intentionally blocked from
+    customer-facing trade detail routes by the local synthetic-data filter,
+  - followed the import detail page's own "Open trade review" link instead of
+    reconstructing a trade-detail URL in the test.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader analytics/import/coach Vitest groups passed: 11 files, 101
+  tests.
+- `npm run build` passed. Existing Turbopack warnings remain for broad
+  academy/news file tracing.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop`
+  passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop`
+  passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop`
+  passed: 14 tests.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop`
+  passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Review the final diff/commit stack, then prepare a PR/review summary for this
+  deliberate port branch. Keep any future source-branch UI ideas as manual
+  `/intelligence` ports only.
+
+# 2026-06-12 deliberate port PR packaging
+
+- Added
+  `src/docs/trader-intelligence-v2-deliberate-port-review-summary-2026-06-12.md`
+  as the PR/review package for `codex/port-v2-candle-analytics-main`.
+- The summary records accepted scope, rejected source-branch hunks, preserved
+  requirements, verification results, residual risks, and recommended review
+  focus.
+- Branch status before packaging was clean.
+
+Best next step:
+
+- Open a review/PR from `codex/port-v2-candle-analytics-main` after confirming
+  the intended target branch. Continue treating any remaining
+  `codex/trader-ui-product-pass` UI ideas as manual `/intelligence` ports only.
+
+# 2026-06-12 origin main merge for PR readiness
+
+- Fetched `origin` and merged current `origin/main` into
+  `codex/port-v2-candle-analytics-main`.
+- The merge brought in journal-level-analysis CI hardening, the seeded
+  level-analysis trade-detail Playwright flow, week-ahead article updates, and
+  related docs/workflow files.
+- Preserved this branch's Trader Intelligence v2 route namespace,
+  levels-system-v2-only implementation, tier gates, warehouse-backed candle
+  hydration, and open/swing review files.
+- Confirmed no `levels-system-phase1` code matches remain and
+  `vendor/levels-system-phase1` is still absent.
+- Adapted the merged level-analysis Playwright config/spec from root routes to
+  `/intelligence` routes:
+  - `playwright.level-analysis.config.ts`,
+  - `tests/e2e/level-analysis-trade-detail-seeded-flow.spec.ts`.
+- Cleared an old local `node` process on port 3101 before rerunning the seeded
+  level-analysis browser check.
+
+Post-merge verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader analytics/import/coach Vitest groups passed: 11 files, 101
+  tests.
+- `npm run test:e2e:level-analysis` built successfully; Playwright initially
+  could not start because port 3101 was already in use.
+- `npx playwright test --config=playwright.level-analysis.config.ts` passed: 1
+  test.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop`
+  passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop`
+  passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop`
+  passed: 14 tests.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop`
+  passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit the `/intelligence` route adaptation for the merged level-analysis E2E
+  flow, then open the review/PR package from this branch if remote push/PR is
+  approved.
+
+# 2026-06-12 draft PR opened
+
+- Pushed `codex/port-v2-candle-analytics-main` to `origin`.
+- Opened draft PR #59:
+  https://github.com/traderslink-bot/traderslink-trader-improvement-system/pull/59
+- PR body uses
+  `src/docs/trader-intelligence-v2-deliberate-port-review-summary-2026-06-12.md`.
+- Branch was clean and `origin/main` was an ancestor before push.
+
+Best next step:
+
+- Watch PR #59 checks. If CI fails, fix on
+  `codex/port-v2-candle-analytics-main` while preserving `/intelligence`,
+  journal-level-analysis, and levels-system-v2-only constraints.
+
+# 2026-06-12 PR 59 CI install fix
+
+- PR #59 initial CI failed before tests during `npm ci`.
+- Root cause: the lockfile had `@rolldown/binding-wasm32-wasi` requiring exact
+  `@emnapi/core@1.9.2` and `@emnapi/runtime@1.9.2`, but the nested optional
+  package entries were missing for Linux npm 10 lock validation.
+- Added the missing nested optional lockfile entries under
+  `node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/*`.
+- Verified locally with CI's npm major:
+  `npx -p npm@10.9.8 npm ci` passed.
+- Re-ran `npx tsc --noEmit --pretty false`; passed.
+
+Best next step:
+
+- Push the lockfile fix and recheck PR #59 CI.
+
+# 2026-06-12 PR 59 vendored levels-system-v2 CI fix
+
+- PR #59 CI passed the npm lock validation after the first lockfile fix, then
+  failed during verification because `levels-system-v2` resolved to the local
+  sibling path `file:../levels-system-post-mtf-handoff-stability`, which is not
+  present in GitHub Actions.
+- Vendored the compiled v2 package into `vendor/levels-system-v2` and changed
+  the app dependency to `levels-system-v2: file:vendor/levels-system-v2`.
+- Kept the public import path as
+  `levels-system-v2/support-resistance-engine`; no old levels-system v1 /
+  phase1 dependency was restored.
+- Removed the runtime auto-discovery fallback to
+  `../levels-system/data/candles`.
+- Runtime candle warehouse discovery now uses explicit
+  `LEVELS_SYSTEM_WAREHOUSE_DIRECTORY` first, then v2-owned locations only:
+  the vendored v2 warehouse if present, or the local
+  `levels-system-post-mtf-handoff-stability` v2 data/cache folders for local
+  IBKR/backfill QA.
+- This preserves the intended paid-tier behavior: stored v2 daily/4h candle
+  data can be used when configured/available, and IBKR on-demand hydration can
+  fetch missing candles such as 5m without treating stub candles as paid chart
+  evidence.
+
+Verification:
+
+- `npx -p npm@10.9.8 npm ci` passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__ src/lib/coaching/__tests__ --reporter=dot`
+  passed: 42 files, 306 tests.
+- `npm run build` passed. Only the pre-existing academy/news Turbopack file
+  tracing warnings remain.
+- `npx playwright test --config=playwright.level-analysis.config.ts` passed: 1
+  test.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop --reporter=dot`
+  passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop --reporter=dot`
+  passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop --reporter=dot`
+  passed: 14 tests.
+
+Best next step:
+
+- Commit and push the vendored v2 package portability fix, then recheck PR #59
+  CI. If CI is green, continue PR review for the deliberate `/intelligence`
+  port rather than merging any source branch wholesale.
