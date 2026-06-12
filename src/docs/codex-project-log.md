@@ -17280,3 +17280,19 @@ Best next step:
 - Commit this import dry-run tier-gate slice. Then package the branch for
   deliberate handoff/port review, with the decision-review quality dashboard
   failure called out as a separate calibration task.
+
+# 2026-06-11 port handoff package
+
+- Added `src/docs/trader-intelligence-v2-port-handoff-2026-06-11.md`.
+- The handoff captures the current branch, non-negotiable levels-system-v2-only
+  rule, recent tier-boundary commits, verification commands, known calibration
+  test failure, and deliberate port guidance.
+- It explicitly separates the free execution-only versus paid chart-context
+  boundary from the separate decision-review quality dashboard calibration
+  failure.
+
+Best next step:
+
+- Use the handoff doc to prepare the deliberate port/review package. Do not
+  blindly merge; preserve `/intelligence`, journal-level-analysis, and the
+  levels-system-v2-only path.
