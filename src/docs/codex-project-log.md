@@ -17466,3 +17466,51 @@ Best next step:
   changes, accepting only patches that can be adapted into `/intelligence`
   without weakening tier gates, journal-level-analysis, or levels-system-v2
   evidence.
+
+# 2026-06-12 user-facing behavior and route UI port review
+
+- Reviewed `src/lib/user-facing-behavior/*`, route-local Trader Intelligence
+  UI diffs, and focused Playwright spec diffs from
+  `codex/trader-ui-product-pass`.
+- Result: no code port accepted.
+- The user-facing behavior diff only rewrites route contracts from
+  `/intelligence/*` to root-level routes, which must be rejected for this
+  branch.
+- The route UI diff mostly renames or deletes `app/intelligence/*` files in
+  favor of root-level routes.
+- Feature-marker review confirmed the target route files already contain the
+  important current behavior under `/intelligence`: tier-aware chart evidence
+  gates, candle-basis warnings, ticker-story coach/review links, saved chart
+  hydration status, and execution-only free-tier copy.
+- Kept current trade detail level facts and open/swing mark-closed files because
+  the source branch deletes them and they preserve journal-level/open-swing
+  review behavior.
+- Updated
+  `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md` with the
+  reviewed/rejected user-facing behavior and route UI slice.
+
+Best next step:
+
+- Finish the deliberate port package by checking whether any remaining test-only
+  changes add coverage that can be adapted to `/intelligence`; otherwise run
+  targeted verification and leave the branch ready for review.
+
+# 2026-06-12 test-only port review
+
+- Reviewed remaining test-only diffs from `codex/trader-ui-product-pass`.
+- Result: no broad test port accepted.
+- The source branch deletes journal-level-analysis tests, follows rejected
+  root-route assumptions in several Playwright specs, and includes
+  levels-system test diffs tied to the rejected phase1 adapter changes.
+- Kept the target branch's existing tier/evidence Playwright checks and focused
+  unit tests as the review baseline.
+- Updated
+  `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md` with the
+  reviewed/rejected test-only slice.
+
+Best next step:
+
+- Run targeted verification for the final deliberate-port package:
+  `npx tsc --noEmit --pretty false`, `npm run verify:levels-system -- --reporter=dot`,
+  focused trader analytics/import/coach tests, and route Playwright checks when
+  a dev server is available.

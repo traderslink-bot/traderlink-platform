@@ -187,3 +187,39 @@ Verification:
   fields that paid chart-context evidence depends on.
 - Kept the target implementation because it already has warehouse-backed candle
   hydration/runtime options while preserving levels-system-v2-only semantics.
+
+## Reviewed Candidate: User-Facing Behavior And Route UI
+
+- Reviewed `src/lib/user-facing-behavior/*` and route-local diffs for
+  analytics, coach, review, trade detail, imports, import dry run, upload CSV,
+  and the focused Playwright specs.
+- No code port accepted from this slice.
+- The user-facing behavior diff only rewrites allowed routes from
+  `/intelligence/*` to root-level routes such as `/coach`, `/review`,
+  `/analytics`, and `/trades/[tradeId]`; the target must keep
+  `/intelligence/*`.
+- The route UI diff mostly renames or deletes `app/intelligence/*` files in
+  favor of root-level routes. Keep the target route files and adapt individual
+  UI ideas only when they are proven missing.
+- Feature-marker review confirmed the target route files already include the
+  important current behavior: tier-aware chart evidence gates, candle-basis
+  warnings, ticker-story coach/review links, saved chart hydration status, and
+  execution-only free-tier copy under `/intelligence`.
+- Keep `app/intelligence/trades/[tradeId]/trade-detail-level-facts.tsx` and
+  `app/intelligence/trades/open-swing-mark-closed-button.tsx`; the source branch
+  deletes them, but they preserve current journal-level and open/swing review
+  behavior.
+
+## Reviewed Candidate: Test-Only Coverage
+
+- Reviewed remaining focused test diffs from `codex/trader-ui-product-pass`,
+  including Playwright route coverage and levels/trader-analytics unit tests.
+- No broad test port accepted from this slice.
+- The source branch deletes journal-level-analysis tests, which must be
+  preserved.
+- Several source test diffs follow the rejected root-route rewrite and should
+  only be reconsidered after being adapted to `/intelligence` route paths.
+- Several levels-system test diffs align with the rejected phase1 adapter
+  changes and should not be ported.
+- Keep the target branch's existing tier/evidence Playwright checks and focused
+  unit tests as the baseline for review.
