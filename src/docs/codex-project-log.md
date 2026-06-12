@@ -17408,3 +17408,18 @@ Best next step:
 - Continue source-only function-level review, but skip root-route and
   journal-level-analysis deletion hunks. The next useful candidates are
   calm chart-basis diagnostics and saved-import source caution copy.
+
+# 2026-06-11 candle-basis port review
+
+- Reviewed `codex/trader-ui-product-pass` commits `28a6310d` and `6b4bc3c6`.
+- Result: no code port needed. The current branch already has the candle-basis
+  queue lane, review/trade detail copy, replay gating, stale-diagnostic cleanup,
+  and focused tests adapted to `/intelligence`.
+- Updated `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md`
+  to mark the candle-basis candidate as reviewed and closed.
+
+Best next step:
+
+- Continue function-level source review with saved-import source caution copy
+  and automated QA/product-readiness wording. Keep rejecting root-route rewrites
+  and journal-level-analysis deletions.

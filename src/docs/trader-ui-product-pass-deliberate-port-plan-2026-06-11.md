@@ -134,3 +134,17 @@ Verification:
 - `npx vitest run src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts --reporter=dot` passed: 1 file, 13 tests.
 - `npx vitest run src/lib/trader-analytics/__tests__/tier-config.test.ts src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts --reporter=dot` passed: 3 files, 31 tests.
 - `npx tsc --noEmit --pretty false` passed.
+
+## Reviewed Candidate: Candle Basis Diagnostics
+
+- Reviewed source commits `28a6310d` and `6b4bc3c6`.
+- No code port needed. The target branch already contains the useful behavior,
+  adapted to `/intelligence`:
+  - saved review queue candle-basis lane and status,
+  - review page "Basis check needed" copy,
+  - trade detail candle-basis warning and execution-first guidance,
+  - replay chart copy that gates candle movement when basis is unsafe,
+  - saved snapshot persistence clearing stale diagnostics,
+  - focused repository and bridge tests.
+- Keep the target implementation because it preserves the current tier gates,
+  `/intelligence` namespace, and journal-level-analysis work.
