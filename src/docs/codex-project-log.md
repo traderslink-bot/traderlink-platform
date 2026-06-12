@@ -17514,3 +17514,37 @@ Best next step:
   `npx tsc --noEmit --pretty false`, `npm run verify:levels-system -- --reporter=dot`,
   focused trader analytics/import/coach tests, and route Playwright checks when
   a dev server is available.
+
+# 2026-06-12 final port verification pass
+
+- Ran the final deliberate-port verification package after rejecting the unsafe
+  source-branch route, levels-system, and journal-level-analysis hunks.
+- Fixed one Playwright fixture in `tests/e2e/import-dry-run.spec.ts`:
+  - changed the generated saved-import ticker from `E2E########` to
+    `QA########` because `E2E########` symbols are intentionally blocked from
+    customer-facing trade detail routes by the local synthetic-data filter,
+  - followed the import detail page's own "Open trade review" link instead of
+    reconstructing a trade-detail URL in the test.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader analytics/import/coach Vitest groups passed: 11 files, 101
+  tests.
+- `npm run build` passed. Existing Turbopack warnings remain for broad
+  academy/news file tracing.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop`
+  passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop`
+  passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop`
+  passed: 14 tests.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop`
+  passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Review the final diff/commit stack, then prepare a PR/review summary for this
+  deliberate port branch. Keep any future source-branch UI ideas as manual
+  `/intelligence` ports only.

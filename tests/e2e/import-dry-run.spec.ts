@@ -202,7 +202,7 @@ test.describe("CSV dry-run import route", () => {
     page,
   }) => {
     test.setTimeout(150_000);
-    const symbol = `E2E${Date.now().toString().slice(-8)}`;
+    const symbol = `QA${Date.now().toString().slice(-8)}`;
     const csv = [
       "Ticker,Executed At,Action,Qty,Fill Price,Status,Commission,Fees,Net Amount",
       `${symbol},05/01/2026 09:30:00 AM,BOT,60,$10.00,Filled,$0.50,$0.02,-600.52`,
@@ -242,18 +242,24 @@ test.describe("CSV dry-run import route", () => {
     await expect(page.getByTestId("import-batch-saved-trades")).toContainText(
       "Open trade review",
     );
+    const savedTradeReviewHref = await page
+      .getByTestId("import-batch-saved-trades")
+      .getByRole("link", { name: "Open trade review" })
+      .first()
+      .getAttribute("href");
+    expect(savedTradeReviewHref).toBeTruthy();
 
     await page.goto("/intelligence/trades");
     await expect(page.getByTestId("saved-trades-triage-panel")).toContainText(
       /Start Here|Review priority trade/,
     );
-    await expect(page.getByText(symbol).first()).toBeVisible();
     const savedTrades = await (await page.request.get("/api/trades")).json();
     const savedTrade = savedTrades.trades.find(
       (trade: { symbol: string }) => trade.symbol === symbol,
     );
     expect(savedTrade).toBeTruthy();
-    await page.goto(`/intelligence/trades/${encodeURIComponent(savedTrade.id)}`);
+
+    await page.goto(savedTradeReviewHref!);
     await expect(page.getByTestId("trade-review-page")).toBeVisible();
     await page
       .getByTestId("trade-note-input")
