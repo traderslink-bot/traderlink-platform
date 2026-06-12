@@ -629,7 +629,7 @@ function filterItems(
     return collapseTickerStoryRepeats(items
       .filter(
         (item) =>
-          item.priorityScore >= 75 &&
+          item.priorityScore >= 90 &&
           item.reviewStatus !== "resolved" &&
           item.reviewStatus !== "ignored" &&
           item.reviewStatus !== "reviewed",

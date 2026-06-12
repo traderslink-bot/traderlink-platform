@@ -575,7 +575,6 @@ describe("SqliteImportCommitRepository", () => {
     );
     expect(queue.items.map((item) => item.lane)).toEqual([
       "market_context_unavailable",
-      "blocked_open_trade",
     ]);
     expect(queue.items[0]).toMatchObject({
       symbol: "GAPQ",
@@ -619,6 +618,87 @@ describe("SqliteImportCommitRepository", () => {
         (tab) => tab.id === "blocked_open_trade",
       )?.count,
     ).toBe(1);
+  });
+
+  it("prioritizes larger realized losses when chart-risk evidence is comparable", async () => {
+    const csv = [
+      "Date,Time,Symbol,Side,Quantity,Price",
+      "2026-05-01,09:30:00,SMAL,Buy,100,10.00",
+      "2026-05-01,10:00:00,SMAL,Sell,100,9.90",
+      "2026-05-01,10:30:00,LARG,Buy,100,10.00",
+      "2026-05-01,11:00:00,LARG,Sell,100,7.00",
+    ].join("\n");
+    const { repository, plan } = planFor(csv);
+
+    repository.commitImportPlan(plan);
+    await runPersistedDecisionReviewJobs({
+      repository,
+      importBatchId: plan.batch.id,
+      levelsSystem: buildSampleLevelsSystemSupportResistanceOptions(),
+      generatedAt: "2026-05-07T12:00:00.000Z",
+    });
+
+    const snapshots = buildSavedDecisionReviewReadModel({
+      repository,
+    }).snapshots;
+    const sharedRiskInsights = [
+      {
+        category: "market_context",
+        evidence: ["Daily/4h support context was available."],
+        id: "entry_far_from_daily_4h_support",
+        summary: "First entry was not near clear daily/4h support.",
+        title: "Entry had little support underneath",
+        tone: "risk" as const,
+      },
+      {
+        category: "market_context",
+        evidence: ["Daily/4h resistance context was available."],
+        id: "entry_near_daily_4h_resistance",
+        summary: "First entry started just below resistance.",
+        title: "Entry started just below resistance",
+        tone: "risk" as const,
+      },
+      {
+        category: "market_context",
+        evidence: ["Daily/4h resistance room was limited."],
+        id: "entry_limited_clean_room_to_resistance",
+        summary: "Entry had limited room before overhead resistance.",
+        title: "Entry had limited room before overhead resistance",
+        tone: "risk" as const,
+      },
+    ];
+
+    for (const snapshot of snapshots) {
+      repository.saveDecisionReviewSnapshot({
+        ...snapshot,
+        review: {
+          ...snapshot.review,
+          insights: sharedRiskInsights,
+        },
+      });
+    }
+
+    const queue = buildSavedReviewQueueReadModel({
+      repository,
+      activeFilter: "highest_priority",
+    });
+    const allQueue = buildSavedReviewQueueReadModel({ repository });
+    const smallLossItem = allQueue.allItems.find(
+      (item) => item.symbol === "SMAL",
+    );
+
+    expect(queue.items.map((item) => item.symbol)).toEqual(["LARG"]);
+    expect(queue.items[0]).toMatchObject({
+      grossRealizedPnl: -300,
+      priorityReason: expect.stringContaining(
+        "Realized loss moved it up the queue.",
+      ),
+      symbol: "LARG",
+    });
+    expect(smallLossItem).toMatchObject({
+      priorityScore: 83,
+      symbol: "SMAL",
+    });
   });
 
   it("separates completed chart reviews with unsafe candle basis warnings", () => {
@@ -819,6 +899,14 @@ describe("SqliteImportCommitRepository", () => {
               summary: "Open profit was not protected.",
               evidence: ["realizedCapturePercentOfTradeMfe=18.0%"],
             },
+            {
+              id: "entry_near_daily_4h_resistance",
+              tone: "risk",
+              category: "market_context",
+              title: "Entry started just below resistance",
+              summary: "First entry started just below resistance.",
+              evidence: ["nearestResistanceStrength=major"],
+            },
           ],
         },
       });
@@ -834,8 +922,8 @@ describe("SqliteImportCommitRepository", () => {
         "/intelligence/trades/ticker-story/LOSSQ%3A2026-05-01",
       tickerStoryLead: true,
       tickerStoryReviewCount: 2,
-      chartRiskCount: 1,
-      priorityLabel: "high",
+      chartRiskCount: 2,
+      priorityLabel: "urgent",
     });
     expect(queue.items[0]?.grossRealizedPnl).toBeLessThan(-100);
     expect(queue.items[0]?.priorityReason).toContain(

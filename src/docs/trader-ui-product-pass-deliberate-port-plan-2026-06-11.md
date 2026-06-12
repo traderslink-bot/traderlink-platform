@@ -114,3 +114,23 @@ Next review slice:
   code. Start with saved review priority wording and ticker-story grouping, but
   keep target route paths, tier gates, journal-level facts, and open-swing
   behavior.
+
+## Accepted Port Slice 1
+
+- Ported the saved-review "highest priority" cutoff from `75` to `90` so the
+  default urgent lane does not mix lower-priority open/swing reminders with
+  urgent chart-data gaps or high-loss chart-risk items.
+- Kept `/intelligence` links, journal-level facts, customer-data filtering,
+  open/swing handling, and tier-aware review queue filtering from the target
+  branch.
+- Added/updated focused repository tests for:
+  - open/swing items staying available outside the default urgent lane,
+  - larger realized-loss chart-risk items outranking comparable smaller losses,
+  - ticker-story grouping still collapsing repeated urgent items.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts --reporter=dot` passed: 1 file, 15 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts --reporter=dot` passed: 1 file, 13 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/tier-config.test.ts src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts --reporter=dot` passed: 3 files, 31 tests.
+- `npx tsc --noEmit --pretty false` passed.

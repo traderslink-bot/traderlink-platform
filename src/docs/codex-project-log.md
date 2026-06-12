@@ -17382,3 +17382,29 @@ Best next step:
 - Continue source-only function-level review for saved review priority wording
   and ticker-story grouping, accepting only behavior that preserves
   `/intelligence`, tier gates, journal-level-analysis, and open-swing handling.
+
+# 2026-06-11 saved review priority port slice
+
+- Accepted one small behavior slice from `codex/trader-ui-product-pass`:
+  the saved-review `highest_priority` lane now requires `priorityScore >= 90`
+  instead of `>= 75`.
+- Rationale: the default urgent lane should surface urgent chart-data gaps and
+  high-loss chart-risk reviews, while lower-priority open/swing reminders remain
+  available through their own lane.
+- Preserved target-branch `/intelligence` links, journal-level facts, tier-aware
+  filtering, customer-data filtering, and open/swing trade handling.
+- Added/updated focused tests for larger-loss priority ordering and urgent
+  ticker-story grouping.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts --reporter=dot` passed: 1 file, 15 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts --reporter=dot` passed: 1 file, 13 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/tier-config.test.ts src/lib/trader-analytics/__tests__/sqlite-import-commit-repository.test.ts src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts --reporter=dot` passed: 3 files, 31 tests.
+- `npx tsc --noEmit --pretty false` passed.
+
+Best next step:
+
+- Continue source-only function-level review, but skip root-route and
+  journal-level-analysis deletion hunks. The next useful candidates are
+  calm chart-basis diagnostics and saved-import source caution copy.
