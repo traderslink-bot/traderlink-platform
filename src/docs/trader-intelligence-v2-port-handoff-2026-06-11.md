@@ -4,7 +4,7 @@
 
 - Working branch: `codex/port-v2-candle-analytics-main`
 - Repo: `C:\Users\jerac\Documents\TraderLink\trader-intelligence-v2-main-merge`
-- Status at handoff: clean worktree after the handoff documentation commit
+- Status at handoff: clean worktree after the calibration documentation commit
 
 ## Non-Negotiables
 
@@ -26,6 +26,7 @@
 - `86dadf8c` Make trade detail review copy tier aware
 - `7bae7e2d` Gate import chart review flows by tier
 - `eb4a244b` Gate import dry run chart review by tier
+- `a13de83e` Calibrate decision review resistance scenarios
 
 ## What This Branch Now Enforces
 
@@ -44,23 +45,22 @@
 - `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop --reporter=dot`
 - `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop --reporter=dot`
 - `npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop --reporter=dot`
+- `npx vitest run src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-quality-dashboard.test.ts --reporter=verbose`
+- `npx vitest run src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-bridge.test.ts src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-quality-dashboard.test.ts --reporter=dot`
+- `npm run verify:levels-system -- --reporter=dot`
 
 Known build warnings remain the existing Turbopack broad dynamic-file-pattern warnings in academy/news stores.
 
-## Known Separate Failure
+## Resolved Calibration Follow-Up
 
-The following focused calibration test currently fails and should be handled as a separate calibration task:
+The focused decision-review quality dashboard failure has been resolved by `a13de83e`.
 
-```text
-npx vitest run src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-quality-dashboard.test.ts --reporter=verbose
-```
-
-Observed result:
-
-- expected `failCount: 0`
-- actual `failCount: 3`
-
-This is separate from the UI tier-gating work. The tier route matrix, focused import/tier tests, build, and app regression passed.
+The prior `failCount: 3` was caused by stale synthetic CSV prices in the three
+major-resistance scenarios. The current levels-system-v2 fixture exposes major
+overhead resistance at `1.3100`; the scenario first entries now use `1.3097`,
+so the expected `distanceToResistance=0.02%` and
+`nearestResistanceStrength=major` claims are backed by the v2 relation facts.
+No product logic was loosened.
 
 ## Port Guidance
 
@@ -77,4 +77,6 @@ Port deliberately:
 
 ## Best Next Step
 
-Fix or formally triage the decision-review quality dashboard calibration failure, then prepare a review/PR that highlights the tier-boundary commits separately from the broader levels-system-v2 and vendor cleanup history.
+Prepare a review/PR that highlights the tier-boundary commits, the resolved
+synthetic calibration follow-up, and the broader levels-system-v2 and vendor
+cleanup history as separate review threads.

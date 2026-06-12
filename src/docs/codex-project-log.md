@@ -17328,3 +17328,18 @@ Best next step:
 - Commit this focused synthetic calibration fix, then continue the deliberate
   port/review package with `/intelligence`, journal-level-analysis, tier
   boundaries, and levels-system-v2-only constraints preserved.
+
+# 2026-06-11 calibration handoff refresh
+
+- Committed the focused synthetic resistance calibration as `a13de83e`.
+- Updated `src/docs/trader-intelligence-v2-port-handoff-2026-06-11.md` so it
+  no longer lists the decision-review quality dashboard as a current known
+  failure.
+- The handoff now calls out the resolved calibration separately from the
+  tier-boundary work.
+
+Best next step:
+
+- Prepare the review/PR package with three separate review threads: tier
+  boundary behavior, the resolved synthetic calibration follow-up, and the
+  broader levels-system-v2/vendor cleanup history.
