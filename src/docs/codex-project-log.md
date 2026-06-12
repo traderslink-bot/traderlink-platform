@@ -17782,3 +17782,18 @@ Best next step:
 - Commit the `/intelligence` route adaptation for the merged level-analysis E2E
   flow, then open the review/PR package from this branch if remote push/PR is
   approved.
+
+# 2026-06-12 draft PR opened
+
+- Pushed `codex/port-v2-candle-analytics-main` to `origin`.
+- Opened draft PR #59:
+  https://github.com/traderslink-bot/traderslink-trader-improvement-system/pull/59
+- PR body uses
+  `src/docs/trader-intelligence-v2-deliberate-port-review-summary-2026-06-12.md`.
+- Branch was clean and `origin/main` was an ancestor before push.
+
+Best next step:
+
+- Watch PR #59 checks. If CI fails, fix on
+  `codex/port-v2-candle-analytics-main` while preserving `/intelligence`,
+  journal-level-analysis, and levels-system-v2-only constraints.
