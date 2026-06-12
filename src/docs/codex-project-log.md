@@ -17343,3 +17343,21 @@ Best next step:
 - Prepare the review/PR package with three separate review threads: tier
   boundary behavior, the resolved synthetic calibration follow-up, and the
   broader levels-system-v2/vendor cleanup history.
+
+# 2026-06-11 trader-ui-product-pass port planning
+
+- Compared `codex/trader-ui-product-pass` against
+  `codex/port-v2-candle-analytics-main` without merging.
+- Confirmed a direct merge is unsafe because the source branch moves many
+  `/intelligence/*` routes to root-level `app/*` routes and deletes
+  journal-level-analysis files that must be preserved.
+- Added `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md`
+  with explicit source/target branches, direct-merge risks, port-first areas,
+  adapt-before-porting route families, do-not-port-wholesale areas, and
+  verification requirements.
+
+Best next step:
+
+- Start a read-only review of `src/lib/trader-analytics/*` differences from
+  `codex/trader-ui-product-pass`; port only product logic that still matches the
+  current tier/evidence model before touching route UI.
