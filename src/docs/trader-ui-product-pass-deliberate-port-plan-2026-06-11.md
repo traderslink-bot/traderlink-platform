@@ -148,3 +148,26 @@ Verification:
   - focused repository and bridge tests.
 - Keep the target implementation because it preserves the current tier gates,
   `/intelligence` namespace, and journal-level-analysis work.
+
+## Reviewed Candidate: Import/Product Readiness Copy
+
+- Reviewed source diffs in:
+  - `src/lib/trader-analytics/server/saved-import-source-caution.ts`,
+  - `src/lib/trader-analytics/product/import-user-copy.ts`,
+  - `src/lib/trader-analytics/product/csv-dry-run-workflow.ts`,
+  - `src/lib/trader-analytics/product/csv-dry-run-automated-qa.ts`,
+  - `src/lib/trader-analytics/product/import-trial-experience.ts`,
+  - `src/lib/trader-analytics/product/product-intelligence.ts`,
+  - `src/lib/trader-analytics/product/product-polish.ts`,
+  - `src/lib/trader-analytics/product/productization.ts`,
+  - `src/lib/trader-analytics/product/platform-module.ts`.
+- No code port accepted from this slice.
+- Reason: the useful-looking differences were route-path rewrites from
+  `/intelligence/*` to root-level routes, which this target branch must reject.
+- Kept target "open or swing trade" wording instead of source "open trade"
+  wording because the current app supports open/swing handling and manual
+  mark-closed flow.
+- Kept target generic/auto sell-starting trade grouping support; the source diff
+  would remove `allowSellStartingTrades` and weaken short/opening-sell import
+  handling.
+- Kept target QA/readiness contracts on `/intelligence/*`.

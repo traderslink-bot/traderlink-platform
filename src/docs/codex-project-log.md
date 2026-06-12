@@ -17423,3 +17423,23 @@ Best next step:
 - Continue function-level source review with saved-import source caution copy
   and automated QA/product-readiness wording. Keep rejecting root-route rewrites
   and journal-level-analysis deletions.
+
+# 2026-06-12 import/product readiness port review
+
+- Reviewed saved-import source caution, import user copy, CSV dry-run workflow,
+  automated QA, import trial, product intelligence, product polish,
+  productization, and platform-module diffs from `codex/trader-ui-product-pass`.
+- Result: no code port accepted.
+- The source diffs mainly rewrote `/intelligence/*` contracts and links to
+  root-level routes, downgraded "open or swing trade" wording to "open trade",
+  and removed generic/auto sell-starting trade grouping support.
+- Kept the target branch behavior because it preserves `/intelligence`, current
+  open/swing handling, short/opening-sell import support, tier gates, and
+  journal-level-analysis.
+- Updated `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md`
+  with this reviewed/rejected slice.
+
+Best next step:
+
+- Continue deliberate source review with shared levels-system-v2/support-
+  resistance diffs. Do not accept any v1/phase1 or route-namespace churn.
