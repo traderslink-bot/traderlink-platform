@@ -17296,3 +17296,35 @@ Best next step:
 - Use the handoff doc to prepare the deliberate port/review package. Do not
   blindly merge; preserve `/intelligence`, journal-level-analysis, and the
   levels-system-v2-only path.
+
+# 2026-06-11 decision-review resistance calibration
+
+- Resolved the deterministic decision-review quality dashboard calibration
+  failure that previously reported `failCount: 3`.
+- Root cause: three synthetic `ABCD` resistance scenarios still used a first
+  entry at `1.2767`, but the current levels-system-v2 fixture produces the
+  nearest major overhead resistance at `1.3100`; the entry was 2.61% below that
+  level, so the UI correctly refused to claim "near resistance" or "limited
+  room" evidence.
+- Updated only the synthetic scenario CSV prices so those scenarios now place
+  the first fill at `1.3097`, which is about `0.02%` below the actual v2
+  `1.3100` major resistance level. No product logic was loosened.
+- The late-add scenario was adjusted to keep the intended "adds after much of
+  the move was already used" evidence while preserving the major-resistance
+  setup.
+- levels-system-v2-only remains intact; no levels-system v1 / phase1 path was
+  restored or imported.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-quality-dashboard.test.ts --reporter=verbose` passed: 1 file, 3 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-bridge.test.ts --reporter=dot` passed: 1 file, 16 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-bridge.test.ts src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-quality-dashboard.test.ts --reporter=dot` passed: 2 files, 19 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+
+Best next step:
+
+- Commit this focused synthetic calibration fix, then continue the deliberate
+  port/review package with `/intelligence`, journal-level-analysis, tier
+  boundaries, and levels-system-v2-only constraints preserved.
