@@ -17361,3 +17361,24 @@ Best next step:
 - Start a read-only review of `src/lib/trader-analytics/*` differences from
   `codex/trader-ui-product-pass`; port only product logic that still matches the
   current tier/evidence model before touching route UI.
+
+# 2026-06-11 trader-analytics port review pass 1
+
+- Reviewed `src/lib/trader-analytics/*` differences from
+  `codex/trader-ui-product-pass` without merging or applying code.
+- Result: most remaining source hunks should not be ported as-is because they
+  rewrite `/intelligence/*` links to root-level routes, remove saved review
+  queue journal-level facts, remove open/swing trade handling, or remove
+  customer-data filtering.
+- Confirmed warehouse-backed candle hydration, saved import chart hydration
+  status, and tier config are already represented in the target branch.
+- Scanned for old `levels-system` v1 / phase1 imports; matches were prose
+  strings only, not v1 code imports.
+- Updated `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md`
+  with these review findings.
+
+Best next step:
+
+- Continue source-only function-level review for saved review priority wording
+  and ticker-story grouping, accepting only behavior that preserves
+  `/intelligence`, tier gates, journal-level-analysis, and open-swing handling.

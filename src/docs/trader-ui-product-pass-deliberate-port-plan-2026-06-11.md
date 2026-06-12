@@ -88,3 +88,29 @@ Start with a read-only review of `src/lib/trader-analytics/*` differences from
 `codex/trader-ui-product-pass`, then port only the product logic that still
 matches the current evidence model. Defer route UI until each useful change can
 be mapped into `/intelligence` without overwriting journal-level-analysis work.
+
+## Initial Trader Analytics Review Result
+
+- The source branch's trader-analytics diff is not a clean product-logic port.
+  Many hunks rewrite `/intelligence/*` links to root-level routes, which should
+  be rejected for this target branch.
+- The source branch removes journal-level facts from the saved review queue;
+  keep the target branch's journal-level-analysis read model and UI contract.
+- The source branch removes newer open/swing trade handling such as
+  `markTradeClosedByUser`; keep the target branch's open-swing flow.
+- The source branch removes customer-data filtering in saved analytics reads;
+  keep the target branch's synthetic/customer-data filtering.
+- Warehouse-backed candle hydration, saved import chart hydration status, and
+  tier config are already represented in the target branch through
+  `src/lib/support-resistance/levels-system-warehouse-fetch-service.ts`,
+  `/api/import-batches/[batchId]/decision-review/status`, and
+  `src/lib/trader-analytics/product/tier-config.ts`.
+- A scan for old `levels-system` v1 / phase1 imports found only prose strings,
+  not v1 code imports.
+
+Next review slice:
+
+- Review source-only behavior commits at the function level before taking any
+  code. Start with saved review priority wording and ticker-story grouping, but
+  keep target route paths, tier gates, journal-level facts, and open-swing
+  behavior.
