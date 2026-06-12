@@ -17860,3 +17860,27 @@ Best next step:
 - Commit and push the vendored v2 package portability fix, then recheck PR #59
   CI. If CI is green, continue PR review for the deliberate `/intelligence`
   port rather than merging any source branch wholesale.
+
+# 2026-06-12 PR 59 deliberate port merged to main
+
+- Marked PR #59 ready for review after both required checks passed.
+- Merged PR #59 into `main` with merge commit
+  `f31ba4d4b69ad2005fc3098e59aa2090202ee5f2`.
+- GitHub checks on the merged PR head were green before merge:
+  - `CI / test-and-verify`
+  - `Level Analysis Trade Detail Facts / Seeded trade detail level facts flow`
+- Fast-forwarded local `main` in the merge checkout to `origin/main`.
+- Confirmed the merged tree keeps `vendor/levels-system-v2`, does not contain
+  `vendor/levels-system-phase1`, and has no code references to
+  `levels-system-phase1`, `levels-system-v1`,
+  `levels-system/support-resistance-engine`, or the old
+  `../levels-system/data/candles` auto-discovery path.
+- No production deploy was run.
+
+Current best next step:
+
+- Continue Trader Intelligence work from updated `main`.
+- Treat any remaining `codex/trader-ui-product-pass` ideas as manual,
+  reviewable `/intelligence` ports only.
+- Keep the tier boundary intact: free tier is execution-only; paid chart-context
+  tier may use candle/level evidence only when real saved chart evidence exists.
