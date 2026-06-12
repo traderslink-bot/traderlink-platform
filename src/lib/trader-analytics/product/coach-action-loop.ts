@@ -117,7 +117,7 @@ export function buildCoachMistakeTimeline(args: {
   );
   const items: CoachMistakeTimelineItem[] = [];
 
-  for (const observation of args.improvement.mistakeObservations) {
+  args.improvement.mistakeObservations.forEach((observation, observationIndex) => {
     for (const tradeId of observation.tradeIds) {
       const autopsy = autopsyByTradeId.get(tradeId);
       const decision = autopsy ? pickDecisionForMistake(observation, autopsy) : null;
@@ -127,7 +127,7 @@ export function buildCoachMistakeTimeline(args: {
       }
 
       items.push({
-        id: `mistake-timeline:${tradeId}:${observation.taxonomyId}`,
+        id: `mistake-timeline:${tradeId}:${observation.taxonomyId}:${observationIndex}:${decision.executionIndex}`,
         tradeId,
         taxonomyId: observation.taxonomyId,
         label: mapCoachObservation(observation).label,
@@ -139,7 +139,7 @@ export function buildCoachMistakeTimeline(args: {
         suggestedReviewAction: observation.suggestedReviewAction,
       });
     }
-  }
+  });
 
   const sorted = items.sort((left, right) => {
     if (left.tradeId !== right.tradeId) {

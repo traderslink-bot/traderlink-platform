@@ -1,3 +1,6 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildPatternInput } from "../../pattern-input/builders/build-pattern-input";
 import { buildSampleLevelsSystemSupportResistanceOptions } from "../../support-resistance/__fixtures__/sample-levels-system-fetch-service";
@@ -13,6 +16,69 @@ function addMinutes(timestamp: string | Date, minutes: number): string {
     timestamp instanceof Date ? timestamp.getTime() : Date.parse(timestamp);
 
   return new Date(parsed + minutes * 60_000).toISOString();
+}
+
+function testCandle(timestamp: number, price: number) {
+  return {
+    close: price,
+    high: price + 0.05,
+    low: price - 0.05,
+    open: price,
+    timestamp,
+    volume: 100_000,
+  };
+}
+
+function writeValidationCacheEntry(args: {
+  candles: ReturnType<typeof testCandle>[];
+  endTimeMs: number;
+  root: string;
+  symbol: string;
+  timeframe: "daily" | "4h" | "5m";
+}) {
+  const directory = join(args.root, "ibkr", args.symbol, args.timeframe);
+  const filePath = join(
+    directory,
+    `${args.candles.length}-${args.endTimeMs}.json`,
+  );
+
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(
+    filePath,
+    `${JSON.stringify(
+      {
+        cachedAt: Date.now(),
+        request: {
+          endTimeMs: args.endTimeMs,
+          lookbackBars: args.candles.length,
+          provider: "ibkr",
+          symbol: args.symbol,
+          timeframe: args.timeframe,
+        },
+        response: {
+          actualBarsReturned: args.candles.length,
+          candles: args.candles,
+          completenessStatus: "complete",
+          fetchEndTimestamp: args.endTimeMs,
+          fetchStartTimestamp: args.candles[0]?.timestamp ?? args.endTimeMs,
+          provider: "ibkr",
+          requestedEndTimestamp: args.endTimeMs,
+          requestedLookbackBars: args.candles.length,
+          requestedStartTimestamp: args.candles[0]?.timestamp ?? args.endTimeMs,
+          sessionMetadataAvailable: args.timeframe === "5m",
+          sessionSummary: null,
+          stale: false,
+          symbol: args.symbol,
+          timeframe: args.timeframe,
+          validationIssues: [],
+        },
+        schemaVersion: 1,
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
 }
 
 describe("createRawTradeTimelineWithLevelsSystemCandles", () => {
@@ -166,6 +232,98 @@ describe("createRawTradeTimelineWithLevelsSystemCandles", () => {
     expect(
       patternInput.supportResistanceContext.firstEntryDistanceFromEma20Pct,
     ).toBeNull();
+  });
+
+  it("uses stored v2 validation-cache candles before opening an IBKR connection", async () => {
+    const warehouseRoot = mkdtempSync(
+      join(tmpdir(), "levels-system-validation-cache-"),
+    );
+    const symbol = sampleCreateRawTradeTimelineInput.symbol;
+    const asOfTimestamp = Date.parse("2024-04-12T13:50:00.000Z");
+
+    try {
+      writeValidationCacheEntry({
+        candles: [0, 1, 2].map((index) =>
+          testCandle(
+            Date.parse("2024-04-10T00:00:00.000Z") + index * 86_400_000,
+            1.1 + index * 0.05,
+          ),
+        ),
+        endTimeMs: Date.parse("2024-04-12T00:00:00.000Z"),
+        root: warehouseRoot,
+        symbol,
+        timeframe: "daily",
+      });
+      writeValidationCacheEntry({
+        candles: [0, 1, 2].map((index) =>
+          testCandle(
+            Date.parse("2024-04-12T04:00:00.000Z") + index * 14_400_000,
+            1.15 + index * 0.04,
+          ),
+        ),
+        endTimeMs: Date.parse("2024-04-12T12:00:00.000Z"),
+        root: warehouseRoot,
+        symbol,
+        timeframe: "4h",
+      });
+      writeValidationCacheEntry({
+        candles: Array.from({ length: 12 }, (_, index) =>
+          testCandle(
+            Date.parse("2024-04-12T12:55:00.000Z") + index * 300_000,
+            1.18 + index * 0.01,
+          ),
+        ),
+        endTimeMs: asOfTimestamp,
+        root: warehouseRoot,
+        symbol,
+        timeframe: "5m",
+      });
+
+      const result = await createRawTradeTimelineWithLevelsSystemCandles({
+        symbol,
+        tradeDirection: sampleCreateRawTradeTimelineInput.tradeDirection,
+        executions: sampleCreateRawTradeTimelineInput.executions,
+        sessionContext: sampleCreateRawTradeTimelineInput.sessionContext,
+        levelsSystem: {
+          asOfTimestamp: new Date(asOfTimestamp).toISOString(),
+          fetchServiceOptions: {
+            connectionTimeoutMs: 1,
+            port: 1,
+            providerName: "ibkr",
+          },
+          lookbackBars: {
+            "4h": 3,
+            "5m": 12,
+            daily: 3,
+          },
+          preferredProvider: "ibkr",
+          sessionDate:
+            sampleCreateRawTradeTimelineInput.sessionContext.sessionDate,
+          warehouseDirectoryPath: warehouseRoot,
+          warehouseMode: "read_write",
+        },
+        tradeWindow: {
+          lookbackBars: 12,
+          postTradeMinutes: 10,
+          preTradeMinutes: 10,
+          timeframe: "1m",
+        },
+        executionWindowCandlesBeforeCount: 2,
+        executionWindowCandlesAfterCount: 2,
+      });
+
+      expect(result.timeline.tradeCandles.length).toBeGreaterThan(0);
+      expect(
+        result.levelsSystemTradeAnalysisCandleContext.tradeWindow.fetch.provider,
+      ).toBe("ibkr");
+      expect(result.warnings ?? []).not.toEqual(
+        expect.arrayContaining([
+          expect.stringContaining("IBKR connection failed"),
+        ]),
+      );
+    } finally {
+      rmSync(warehouseRoot, { recursive: true, force: true });
+    }
   });
 
   it("keeps execution bounds and reports v2 no-candle diagnostics without fetching v1 candles", async () => {
