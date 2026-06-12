@@ -17797,3 +17797,19 @@ Best next step:
 - Watch PR #59 checks. If CI fails, fix on
   `codex/port-v2-candle-analytics-main` while preserving `/intelligence`,
   journal-level-analysis, and levels-system-v2-only constraints.
+
+# 2026-06-12 PR 59 CI install fix
+
+- PR #59 initial CI failed before tests during `npm ci`.
+- Root cause: the lockfile had `@rolldown/binding-wasm32-wasi` requiring exact
+  `@emnapi/core@1.9.2` and `@emnapi/runtime@1.9.2`, but the nested optional
+  package entries were missing for Linux npm 10 lock validation.
+- Added the missing nested optional lockfile entries under
+  `node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/*`.
+- Verified locally with CI's npm major:
+  `npx -p npm@10.9.8 npm ci` passed.
+- Re-ran `npx tsc --noEmit --pretty false`; passed.
+
+Best next step:
+
+- Push the lockfile fix and recheck PR #59 CI.
