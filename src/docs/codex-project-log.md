@@ -15990,7 +15990,7 @@ Current best next step:
 Verification:
 
 - `npx tsc --noEmit --pretty false` passed.
-- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 84 tests.
 - Focused trader analytics/coach/review Vitest passed: 5 files, 54 tests.
 - `npm run build:webpack` passed and confirmed the `/intelligence/...` route
   table and level-analysis APIs remain present.
@@ -17813,3 +17813,50 @@ Best next step:
 Best next step:
 
 - Push the lockfile fix and recheck PR #59 CI.
+
+# 2026-06-12 PR 59 vendored levels-system-v2 CI fix
+
+- PR #59 CI passed the npm lock validation after the first lockfile fix, then
+  failed during verification because `levels-system-v2` resolved to the local
+  sibling path `file:../levels-system-post-mtf-handoff-stability`, which is not
+  present in GitHub Actions.
+- Vendored the compiled v2 package into `vendor/levels-system-v2` and changed
+  the app dependency to `levels-system-v2: file:vendor/levels-system-v2`.
+- Kept the public import path as
+  `levels-system-v2/support-resistance-engine`; no old levels-system v1 /
+  phase1 dependency was restored.
+- Removed the runtime auto-discovery fallback to
+  `../levels-system/data/candles`.
+- Runtime candle warehouse discovery now uses explicit
+  `LEVELS_SYSTEM_WAREHOUSE_DIRECTORY` first, then v2-owned locations only:
+  the vendored v2 warehouse if present, or the local
+  `levels-system-post-mtf-handoff-stability` v2 data/cache folders for local
+  IBKR/backfill QA.
+- This preserves the intended paid-tier behavior: stored v2 daily/4h candle
+  data can be used when configured/available, and IBKR on-demand hydration can
+  fetch missing candles such as 5m without treating stub candles as paid chart
+  evidence.
+
+Verification:
+
+- `npx -p npm@10.9.8 npm ci` passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__ src/lib/coaching/__tests__ --reporter=dot`
+  passed: 42 files, 306 tests.
+- `npm run build` passed. Only the pre-existing academy/news Turbopack file
+  tracing warnings remain.
+- `npx playwright test --config=playwright.level-analysis.config.ts` passed: 1
+  test.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop --reporter=dot`
+  passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop --reporter=dot`
+  passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop --reporter=dot`
+  passed: 14 tests.
+
+Best next step:
+
+- Commit and push the vendored v2 package portability fix, then recheck PR #59
+  CI. If CI is green, continue PR review for the deliberate `/intelligence`
+  port rather than merging any source branch wholesale.

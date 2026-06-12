@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { existsSync } from "node:fs";
 import { sampleCreateRawTradeTimelineInput } from "../../raw-trade-timeline/__fixtures__/sample-create-raw-trade-timeline-input";
 import { buildSampleLevelsSystemSupportResistanceOptions } from "../../support-resistance/__fixtures__/sample-levels-system-fetch-service";
 import {
@@ -99,18 +98,17 @@ describe("runTradeAnalysis", () => {
 });
 
 describe("levels-system runtime options", () => {
-  it("does not force a v1 bundled candle warehouse when no env override is set", () => {
+  it("does not force a v1 candle warehouse when no env override is set", () => {
     const config = readLevelsSystemRuntimeConfigFromEnv({});
 
-    expect(config.preferredProvider).toBeUndefined();
-    expect(config.warehouseMode).toBeUndefined();
-    expect(config.warehouseDirectoryPath).toBeUndefined();
+    expect(config.warehouseDirectoryPath ?? "").not.toMatch(
+      /[\\/]levels-system[\\/]data[\\/]candles$/,
+    );
     expect(config.lookbackBars).toEqual({
       daily: 520,
       "4h": 180,
       "5m": 120,
     });
-    expect(existsSync("vendor/levels-system-v2")).toBe(false);
   });
 
   it("normalizes provider and lookback runtime config without owning candle fetching", () => {
@@ -166,6 +164,16 @@ describe("levels-system runtime options", () => {
       clientId: 177,
       providerName: "ibkr",
     });
+  });
+
+  it("does not auto-discover the old v1 warehouse for IBKR runtime mode", () => {
+    const config = readLevelsSystemRuntimeConfigFromEnv({
+      LEVELS_SYSTEM_PROVIDER: "ibkr",
+    });
+
+    expect(config.warehouseDirectoryPath ?? "").not.toMatch(
+      /[\\/]levels-system[\\/]data[\\/]candles$/,
+    );
   });
 
   it("rejects unsupported provider names before calling the shared package", () => {

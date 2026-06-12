@@ -58,8 +58,23 @@ const DEFAULT_IBKR_CONNECTION_TIMEOUT_MS = 10_000;
 const SHARED_IBKR_DISPOSE_GLOBAL_KEY =
   "__traderIntelligenceDisposeLevelsSystemIbkrClients";
 
-function findBundledLevelsSystemWarehouseDirectory(): string | undefined {
-  const candidates = [
+function findExistingWarehouseDirectory(
+  candidates: string[],
+): string | undefined {
+  return candidates.find((candidate) => existsSync(join(candidate, "ibkr")));
+}
+
+function findBundledLevelsSystemV2WarehouseDirectory(): string | undefined {
+  return findExistingWarehouseDirectory([
+    join(process.cwd(), "vendor", "levels-system-v2", "data", "candles"),
+  ]);
+}
+
+function findAutoDiscoveredLevelsSystemV2WarehouseDirectory():
+  | string
+  | undefined {
+  return findExistingWarehouseDirectory([
+    join(process.cwd(), "vendor", "levels-system-v2", "data", "candles"),
     join(
       process.cwd(),
       "..",
@@ -67,15 +82,14 @@ function findBundledLevelsSystemWarehouseDirectory(): string | undefined {
       "data",
       "candles",
     ),
-  ];
-
-  return candidates.find((candidate) => existsSync(join(candidate, "ibkr")));
-}
-
-function findSiblingLevelsSystemWarehouseDirectory(): string | undefined {
-  const candidate = join(process.cwd(), "..", "levels-system", "data", "candles");
-
-  return existsSync(join(candidate, "ibkr")) ? candidate : undefined;
+    join(
+      process.cwd(),
+      "..",
+      "levels-system-post-mtf-handoff-stability",
+      ".validation-cache",
+      "candles",
+    ),
+  ]);
 }
 
 function parseProviderName(
@@ -226,12 +240,12 @@ export function readLevelsSystemRuntimeConfigFromEnv(
     env.LEVELS_SYSTEM_WAREHOUSE_DIRECTORY?.trim() || undefined;
   const bundledWarehouseDirectory =
     configuredProvider === undefined && configuredWarehouseDirectory === undefined
-      ? findBundledLevelsSystemWarehouseDirectory()
+      ? findBundledLevelsSystemV2WarehouseDirectory()
       : undefined;
   const autoDiscoveredWarehouseDirectory =
     configuredWarehouseDirectory === undefined &&
-    configuredProvider === "ibkr"
-      ? findSiblingLevelsSystemWarehouseDirectory()
+    (configuredProvider === "ibkr" || enableOnDemandHydration)
+      ? findAutoDiscoveredLevelsSystemV2WarehouseDirectory()
       : undefined;
   const warehouseDirectoryPath =
     configuredWarehouseDirectory ??

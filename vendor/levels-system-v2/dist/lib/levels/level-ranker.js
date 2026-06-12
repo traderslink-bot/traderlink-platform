@@ -1,0 +1,182 @@
+// 2026-04-16 02:41 PM America/Toronto
+// Rank zones, enforce spacing-aware surfaced outputs, and preserve a cleaner ladder for extensions.
+import { buildLevelExtensions } from "./level-extension-engine.js";
+const SURFACED_FORWARD_PLANNING_RANGE_PCT = 0.5;
+function freshnessRank(zone) {
+    if (zone.freshness === "fresh") {
+        return 3;
+    }
+    if (zone.freshness === "aging") {
+        return 2;
+    }
+    return 1;
+}
+function preferredBucketRank(bucket) {
+    if (bucket === "daily") {
+        return 3;
+    }
+    if (bucket === "4h") {
+        return 2;
+    }
+    return 1;
+}
+function timeframeBiasRank(zone) {
+    if (zone.timeframeBias === "mixed") {
+        return 4;
+    }
+    if (zone.timeframeBias === "daily") {
+        return 3;
+    }
+    if (zone.timeframeBias === "4h") {
+        return 2;
+    }
+    return 1;
+}
+function preferredBucketForZone(zone) {
+    const timeframeOrder = ["daily", "4h", "5m"];
+    if (zone.timeframeBias !== "mixed" && zone.timeframeSources.includes(zone.timeframeBias)) {
+        return zone.timeframeBias;
+    }
+    for (const timeframe of timeframeOrder) {
+        if (zone.timeframeSources.includes(timeframe)) {
+            return timeframe;
+        }
+    }
+    return "5m";
+}
+function sortZones(zones) {
+    return [...zones].sort((a, b) => b.strengthScore - a.strengthScore ||
+        b.followThroughScore - a.followThroughScore ||
+        freshnessRank(b) - freshnessRank(a) ||
+        preferredBucketRank(preferredBucketForZone(b)) - preferredBucketRank(preferredBucketForZone(a)) ||
+        b.touchCount - a.touchCount ||
+        b.confluenceCount - a.confluenceCount);
+}
+function filterPracticalSurfacedResistanceZones(zones, referencePrice) {
+    if (!referencePrice || referencePrice <= 0) {
+        return zones;
+    }
+    const maxPracticalPrice = referencePrice * (1 + SURFACED_FORWARD_PLANNING_RANGE_PCT);
+    return zones.filter((zone) => zone.representativePrice > referencePrice &&
+        zone.representativePrice <= maxPracticalPrice);
+}
+function filterActionableSurfacedSupportZones(zones, referencePrice) {
+    if (!referencePrice || referencePrice <= 0) {
+        return zones;
+    }
+    return zones.filter((zone) => zone.representativePrice < referencePrice);
+}
+function byOwnedBucket(zones, bucket) {
+    return zones.filter((zone) => preferredBucketForZone(zone) === bucket);
+}
+function proximityPct(left, right) {
+    return (Math.abs(left.representativePrice - right.representativePrice) /
+        Math.max(Math.max(left.representativePrice, right.representativePrice), 0.0001));
+}
+function materiallyDominatesInBand(incumbent, challenger) {
+    const strengthLead = incumbent.strengthScore - challenger.strengthScore;
+    const strongerTimeframe = timeframeBiasRank(incumbent) > timeframeBiasRank(challenger);
+    const strongerConfluence = incumbent.confluenceCount > challenger.confluenceCount;
+    const strongerRejection = incumbent.rejectionScore >= challenger.rejectionScore + 0.08;
+    const strongerFollowThrough = incumbent.followThroughScore >= challenger.followThroughScore + 0.08;
+    if (strengthLead >= 6) {
+        return true;
+    }
+    if (strengthLead >= 3 && (strongerTimeframe || strongerConfluence)) {
+        return true;
+    }
+    if (strengthLead >= 3 && (strongerRejection || strongerFollowThrough)) {
+        return true;
+    }
+    if (strengthLead >= 1.25 && strongerConfluence && strongerRejection && strongerFollowThrough) {
+        return true;
+    }
+    return false;
+}
+function selectSpacedZones(params) {
+    const selected = [];
+    const spacingPct = params.config.surfacedSpacingPct[params.bucket];
+    const localBandPct = Math.max(params.config.maxMergedZoneWidthPct, Math.min(spacingPct * 8, 0.06));
+    for (const zone of sortZones(params.zones)) {
+        const tooCloseToSelected = selected.some((existing) => {
+            const distancePct = proximityPct(existing, zone);
+            const tightClose = distancePct <= spacingPct;
+            const localBandClose = distancePct <= localBandPct;
+            const strongerExisting = existing.strengthScore >= zone.strengthScore &&
+                existing.confluenceCount >= zone.confluenceCount;
+            const dominantBandIncumbent = materiallyDominatesInBand(existing, zone);
+            return (tightClose && strongerExisting) || (localBandClose && dominantBandIncumbent);
+        });
+        if (tooCloseToSelected) {
+            continue;
+        }
+        selected.push(zone);
+        if (selected.length >= params.maxCount) {
+            break;
+        }
+    }
+    return selected;
+}
+export function rankLevelZones(params) {
+    const { symbol, supportZones, resistanceZones, specialLevels, metadata, config } = params;
+    const actionableSupportZones = filterActionableSurfacedSupportZones(supportZones, metadata.referencePrice);
+    const surfacedResistanceZones = filterPracticalSurfacedResistanceZones(resistanceZones, metadata.referencePrice);
+    const dailySupport = selectSpacedZones({
+        zones: byOwnedBucket(actionableSupportZones, "daily"),
+        bucket: "daily",
+        maxCount: config.timeframeConfig.daily.maxOutputPerSide,
+        config,
+    });
+    const dailyResistance = selectSpacedZones({
+        zones: byOwnedBucket(surfacedResistanceZones, "daily"),
+        bucket: "daily",
+        maxCount: config.timeframeConfig.daily.maxOutputPerSide,
+        config,
+    });
+    const intermediateSupport = selectSpacedZones({
+        zones: byOwnedBucket(actionableSupportZones, "4h"),
+        bucket: "4h",
+        maxCount: config.timeframeConfig["4h"].maxOutputPerSide,
+        config,
+    });
+    const intermediateResistance = selectSpacedZones({
+        zones: byOwnedBucket(surfacedResistanceZones, "4h"),
+        bucket: "4h",
+        maxCount: config.timeframeConfig["4h"].maxOutputPerSide,
+        config,
+    });
+    const intradaySupport = selectSpacedZones({
+        zones: byOwnedBucket(actionableSupportZones, "5m"),
+        bucket: "5m",
+        maxCount: config.timeframeConfig["5m"].maxOutputPerSide,
+        config,
+    });
+    const intradayResistance = selectSpacedZones({
+        zones: byOwnedBucket(surfacedResistanceZones, "5m"),
+        bucket: "5m",
+        maxCount: config.timeframeConfig["5m"].maxOutputPerSide,
+        config,
+    });
+    const extensionLevels = buildLevelExtensions({
+        supportZones,
+        resistanceZones,
+        surfacedSupport: [...dailySupport, ...intermediateSupport, ...intradaySupport],
+        surfacedResistance: [...dailyResistance, ...intermediateResistance, ...intradayResistance],
+        spacingPct: config.extensionSpacingPct,
+        searchWindowPct: config.extensionSearchWindowPct,
+        referencePrice: metadata.referencePrice,
+    });
+    return {
+        symbol,
+        generatedAt: Date.now(),
+        metadata,
+        majorSupport: dailySupport,
+        majorResistance: dailyResistance,
+        intermediateSupport,
+        intermediateResistance,
+        intradaySupport,
+        intradayResistance,
+        extensionLevels,
+        specialLevels,
+    };
+}

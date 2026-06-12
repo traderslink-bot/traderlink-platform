@@ -1,0 +1,92 @@
+import { type LevelIntelligenceReport } from "../levels/level-intelligence-report.js";
+import { type LevelQualityAuditReport } from "../levels/level-quality-audit-runner.js";
+import type { FinalLevelZone, LevelEngineOutput } from "../levels/level-types.js";
+import type { Candle } from "../market-data/candle-types.js";
+import { type MarketContextFactsBundle, type MarketContextProfile } from "../market-context/index.js";
+import type { SessionMarketFacts } from "../session/index.js";
+import type { VolumeMarketFacts, VolumeShelf } from "../volume/index.js";
+import type { LevelAnalysisTimeframeFacts } from "./level-analysis-timeframe-facts.js";
+export declare const LEVEL_ANALYSIS_SNAPSHOT_SCHEMA_VERSION = "level-analysis-snapshot/v1";
+export declare const LEVEL_ANALYSIS_SNAPSHOT_PRODUCER = "levels-system";
+export type LevelAnalysisSnapshotCandleInputs = {
+    fiveMinute?: Candle[];
+    fifteenMinute?: Candle[];
+    fourHour?: Candle[];
+    daily?: Candle[];
+};
+export type LevelAnalysisSnapshotInputTimeframe = "5m" | "15m" | "4h" | "daily";
+export type LevelAnalysisSnapshotTimeframeInputSummary = {
+    provided: boolean;
+    candleCount: number;
+    filteredCandleCount: number;
+    excludedFutureCandleCount?: number;
+    excludedPartialCandleCount?: number;
+};
+export type LevelAnalysisSnapshotInputSummary = {
+    timeframesPresent: LevelAnalysisSnapshotInputTimeframe[];
+    candleCounts: Record<LevelAnalysisSnapshotInputTimeframe, number>;
+    filteredCandleCounts: Record<LevelAnalysisSnapshotInputTimeframe, number>;
+    excludedFutureCandleCounts: Record<LevelAnalysisSnapshotInputTimeframe, number>;
+    excludedPartialCandleCounts: Record<LevelAnalysisSnapshotInputTimeframe, number>;
+    timeframes: Record<LevelAnalysisSnapshotInputTimeframe, LevelAnalysisSnapshotTimeframeInputSummary>;
+    previousCloseProvided: boolean;
+};
+export type LevelAnalysisSnapshotLevelBucket = "majorSupport" | "majorResistance" | "intermediateSupport" | "intermediateResistance" | "intradaySupport" | "intradayResistance" | "extensionSupport" | "extensionResistance";
+export type LevelAnalysisSnapshotNearestLevel = {
+    levelId: string;
+    kind: FinalLevelZone["kind"];
+    bucket: LevelAnalysisSnapshotLevelBucket;
+    representativePrice: number;
+    zoneLow: number;
+    zoneHigh: number;
+    strengthScore: number;
+    strengthLabel: FinalLevelZone["strengthLabel"];
+    distanceFromReferencePct: number;
+    isExtension: boolean;
+    extensionSource?: NonNullable<FinalLevelZone["extensionMetadata"]>["extensionSource"];
+};
+export type LevelAnalysisSnapshotSafety = {
+    noLookaheadApplied: boolean;
+    levelOutputUnchanged: true;
+    factsOnlyVWAP: true;
+    shelvesAreFactsOnly: true;
+    syntheticExtensionsClearlyMarked: boolean;
+    noRuntimeBehaviorChange: true;
+};
+export type LevelAnalysisSnapshot = {
+    schemaVersion: typeof LEVEL_ANALYSIS_SNAPSHOT_SCHEMA_VERSION;
+    producer: typeof LEVEL_ANALYSIS_SNAPSHOT_PRODUCER;
+    symbol: string;
+    asOfTimestamp: number;
+    referencePrice?: number;
+    inputSummary: LevelAnalysisSnapshotInputSummary;
+    nearestSupport: LevelAnalysisSnapshotNearestLevel | null;
+    nearestResistance: LevelAnalysisSnapshotNearestLevel | null;
+    levelEngineOutput: LevelEngineOutput;
+    sessionFacts?: SessionMarketFacts;
+    volumeFacts?: VolumeMarketFacts;
+    volumeShelves?: VolumeShelf[];
+    marketContext?: MarketContextProfile;
+    factsBundle?: MarketContextFactsBundle;
+    timeframeFacts?: LevelAnalysisTimeframeFacts;
+    levelIntelligenceReport: LevelIntelligenceReport;
+    levelQualityAudit: LevelQualityAuditReport;
+    diagnostics: string[];
+    safety: LevelAnalysisSnapshotSafety;
+};
+export type BuildLevelAnalysisSnapshotRequest = {
+    symbol: string;
+    asOfTimestamp: number;
+    referencePrice?: number;
+    levelEngineOutput: LevelEngineOutput;
+    closedCandles?: LevelAnalysisSnapshotCandleInputs;
+    inputSummary?: LevelAnalysisSnapshotInputSummary;
+    sessionFacts?: SessionMarketFacts;
+    volumeFacts?: VolumeMarketFacts;
+    volumeShelves?: VolumeShelf[];
+    marketContext?: MarketContextProfile;
+    factsBundle?: MarketContextFactsBundle;
+    timeframeFacts?: LevelAnalysisTimeframeFacts;
+};
+export declare function buildLevelAnalysisSnapshot(request: BuildLevelAnalysisSnapshotRequest): LevelAnalysisSnapshot;
+//# sourceMappingURL=level-analysis-snapshot.d.ts.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"candle-quality.d.ts","sourceRoot":"","sources":["../../../src/lib/market-data/candle-quality.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,0BAA0B,EAAE,sBAAsB,EAAE,MAAM,mBAAmB,CAAC;AAI5F,wBAAgB,8BAA8B,CAC5C,QAAQ,EAAE,0BAA0B,GACnC,sBAAsB,CAaxB;AAED,wBAAgB,uBAAuB,CAAC,QAAQ,EAAE,sBAAsB,GAAG,MAAM,CA6BhF"}
