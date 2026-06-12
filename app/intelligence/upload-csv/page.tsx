@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   title: "Upload CSV | Trader Intelligence",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function UploadCsvPage() {
   const chartTierEnabled = canUseChartContext(readTraderIntelligenceTierFromEnv());
 

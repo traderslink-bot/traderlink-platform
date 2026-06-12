@@ -17229,3 +17229,54 @@ Best next step:
 - Commit this upload/import tier-gate slice. Then run one final route-copy scan
   for free-tier chart/candle/support-resistance wording and package the branch
   for deliberate handoff/port review.
+
+# 2026-06-11 import dry-run tier gate pass
+
+- Continued the final route-copy scan on `/intelligence/import-dry-run`.
+- Made `/intelligence/import-dry-run` dynamic so runtime tier configuration is
+  honored instead of using a build-time default.
+- Made `/intelligence/upload-csv` dynamic for the same reason; its post-save
+  chart-data auto-start depends on the active tier.
+- Passed the active tier into the advanced import dry-run client.
+- Gated the dry-run chart-data review request button, chart-data KPIs, evidence
+  gate summaries, detailed decision-review results, chart-data notes, and
+  chart-specific limitation copy behind the paid chart-context tier.
+- Free execution-only mode now shows import readiness, grouping, repairs, P/L,
+  save readiness, and review queue context without exposing chart/candle/support-
+  resistance controls.
+- Paid chart-context mode keeps the existing chart-data review controls and
+  diagnostics.
+- Extended the tier Playwright matrix to cover `/intelligence/import-dry-run` in
+  both free and paid modes.
+- Preserved `/intelligence`, journal-level-analysis, levels-system-v2-only, and
+  the free execution-only versus paid chart-evidence boundary.
+
+Verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- Focused import/tier Vitest passed: 2 files, 17 tests.
+- `npm run build` passed. Existing Turbopack warnings remain about broad
+  dynamic file patterns in academy/news stores.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test
+  tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop
+  --reporter=dot` passed: 1 passed, 1 skipped.
+- `npx playwright test tests/e2e/app-feature-regression.spec.ts
+  --project=chromium-desktop --reporter=dot` passed: 16 passed, 1 skipped.
+
+Known current failure:
+
+- `npx vitest run
+  src/lib/trader-analytics/__tests__/csv-dry-run-decision-review-quality-dashboard.test.ts
+  --reporter=verbose` currently fails before/independent of this UI tier slice:
+  the deterministic dashboard reports `failCount: 3` where the test expects
+  `0`. This should be handled as a calibration follow-up, not as part of the
+  import dry-run route-copy gate.
+
+Best next step:
+
+- Commit this import dry-run tier-gate slice. Then package the branch for
+  deliberate handoff/port review, with the decision-review quality dashboard
+  failure called out as a separate calibration task.

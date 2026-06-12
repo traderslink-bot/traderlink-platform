@@ -158,6 +158,21 @@ test.describe("Trader Intelligence tier chart-evidence matrix", () => {
     await expect(page.getByTestId("upload-csv-card")).toBeVisible();
     await expect(page.locator("body")).not.toContainText("chart data");
     await expect(page.locator("body")).not.toContainText("chart evidence");
+
+    await page.goto("/intelligence/import-dry-run");
+    await page.waitForLoadState("networkidle");
+    await page
+      .getByTestId("import-dry-run-technical-diagnostics")
+      .getByText("Show technical import diagnostics", { exact: true })
+      .click();
+    await expect(page.getByTestId("prototype-analysis-panel")).toBeVisible();
+    await expect(page.getByTestId("prototype-analysis-panel")).toContainText(
+      "Execution-Only Review",
+    );
+    await expect(page.getByTestId("prototype-analysis-panel")).not.toContainText(
+      "Chart Data Review",
+    );
+    await expect(page.getByTestId("decision-review-request-button")).toHaveCount(0);
   });
 
   test("chart_context tier exposes chart evidence surfaces without tier gates", async ({
@@ -236,5 +251,17 @@ test.describe("Trader Intelligence tier chart-evidence matrix", () => {
         "use chart evidence only",
       );
     }
+
+    await page.goto("/intelligence/import-dry-run");
+    await page.waitForLoadState("networkidle");
+    await page
+      .getByTestId("import-dry-run-technical-diagnostics")
+      .getByText("Show technical import diagnostics", { exact: true })
+      .click();
+    await expect(page.getByTestId("prototype-analysis-panel")).toBeVisible();
+    await expect(page.getByTestId("prototype-analysis-panel")).toContainText(
+      "Chart Data Review",
+    );
+    await expect(page.getByTestId("decision-review-request-button")).toBeVisible();
   });
 });
