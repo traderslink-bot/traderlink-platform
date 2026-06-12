@@ -171,3 +171,19 @@ Verification:
   would remove `allowSellStartingTrades` and weaken short/opening-sell import
   handling.
 - Kept target QA/readiness contracts on `/intelligence/*`.
+
+## Reviewed Candidate: Shared Levels-System Support/Resistance
+
+- Reviewed shared levels-system/support-resistance diffs from
+  `codex/trader-ui-product-pass` under `src/lib/support-resistance/*`,
+  `src/lib/raw-trade-timeline/*`, `src/lib/trade-analysis/*`, and
+  `src/lib/pattern-input/*`.
+- No code port accepted from this slice.
+- Reason: the source branch would reintroduce
+  `levels-system-phase1/support-resistance-engine` in shared adapter/types,
+  replacing the required `levels-system-v2/support-resistance-engine` import.
+- The source branch would also remove v2 level-quality evidence fields such as
+  importance, freshness, extension/synthetic-extension flags, and zone width
+  fields that paid chart-context evidence depends on.
+- Kept the target implementation because it already has warehouse-backed candle
+  hydration/runtime options while preserving levels-system-v2-only semantics.

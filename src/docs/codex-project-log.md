@@ -17443,3 +17443,26 @@ Best next step:
 
 - Continue deliberate source review with shared levels-system-v2/support-
   resistance diffs. Do not accept any v1/phase1 or route-namespace churn.
+
+# 2026-06-12 shared levels-system port review
+
+- Reviewed shared support/resistance, raw-trade-timeline, trade-analysis, and
+  pattern-input diffs from `codex/trader-ui-product-pass`.
+- Result: no code port accepted.
+- The source branch would restore
+  `levels-system-phase1/support-resistance-engine` in shared adapter/types and
+  strip v2 level-quality evidence fields including importance, freshness,
+  extension/synthetic-extension flags, and zone width fields.
+- Kept the target branch implementation because it preserves
+  `levels-system-v2/support-resistance-engine`, warehouse-backed candle
+  hydration/runtime options, and the paid chart-context evidence model.
+- Updated
+  `src/docs/trader-ui-product-pass-deliberate-port-plan-2026-06-11.md` with the
+  reviewed/rejected levels-system slice.
+
+Best next step:
+
+- Continue deliberate source review with user-facing behavior and route-local UI
+  changes, accepting only patches that can be adapted into `/intelligence`
+  without weakening tier gates, journal-level-analysis, or levels-system-v2
+  evidence.
