@@ -17738,3 +17738,47 @@ Best next step:
 - Open a review/PR from `codex/port-v2-candle-analytics-main` after confirming
   the intended target branch. Continue treating any remaining
   `codex/trader-ui-product-pass` UI ideas as manual `/intelligence` ports only.
+
+# 2026-06-12 origin main merge for PR readiness
+
+- Fetched `origin` and merged current `origin/main` into
+  `codex/port-v2-candle-analytics-main`.
+- The merge brought in journal-level-analysis CI hardening, the seeded
+  level-analysis trade-detail Playwright flow, week-ahead article updates, and
+  related docs/workflow files.
+- Preserved this branch's Trader Intelligence v2 route namespace,
+  levels-system-v2-only implementation, tier gates, warehouse-backed candle
+  hydration, and open/swing review files.
+- Confirmed no `levels-system-phase1` code matches remain and
+  `vendor/levels-system-phase1` is still absent.
+- Adapted the merged level-analysis Playwright config/spec from root routes to
+  `/intelligence` routes:
+  - `playwright.level-analysis.config.ts`,
+  - `tests/e2e/level-analysis-trade-detail-seeded-flow.spec.ts`.
+- Cleared an old local `node` process on port 3101 before rerunning the seeded
+  level-analysis browser check.
+
+Post-merge verification:
+
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 83 tests.
+- Focused trader analytics/import/coach Vitest groups passed: 11 files, 101
+  tests.
+- `npm run test:e2e:level-analysis` built successfully; Playwright initially
+  could not start because port 3101 was already in use.
+- `npx playwright test --config=playwright.level-analysis.config.ts` passed: 1
+  test.
+- `TRADER_INTELLIGENCE_TIER=free_execution npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop`
+  passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop`
+  passed: 1 passed, 1 skipped.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/import-dry-run.spec.ts --project=chromium-desktop`
+  passed: 14 tests.
+- `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop`
+  passed: 16 passed, 1 skipped.
+
+Best next step:
+
+- Commit the `/intelligence` route adaptation for the merged level-analysis E2E
+  flow, then open the review/PR package from this branch if remote push/PR is
+  approved.

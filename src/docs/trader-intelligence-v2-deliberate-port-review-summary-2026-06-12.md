@@ -4,6 +4,8 @@
 
 - Working branch: `codex/port-v2-candle-analytics-main`
 - Source branch reviewed: `codex/trader-ui-product-pass`
+- Current base: merged through `origin/main` at PR-readiness time on
+  2026-06-12.
 - Direct merge decision: rejected. Use manual porting only.
 
 ## Scope Accepted
@@ -19,6 +21,10 @@
   - test follows the import detail page's own "Open trade review" link.
 - Documentation added for the deliberate port plan, reviewed source slices, and
   final verification package.
+- Current `origin/main` journal-level-analysis CI hardening and seeded
+  trade-detail level-facts Playwright flow merged into the branch.
+- Merged level-analysis Playwright flow adapted from root routes to the current
+  `/intelligence` namespace.
 
 ## Scope Rejected
 
@@ -65,6 +71,14 @@
   passed: 14 tests.
 - `TRADER_INTELLIGENCE_TIER=chart_context npx playwright test tests/e2e/app-feature-regression.spec.ts --project=chromium-desktop`
   passed: 16 passed, 1 skipped.
+- After merging current `origin/main`, the post-merge verification also passed:
+  - `npx tsc --noEmit --pretty false`,
+  - `npm run verify:levels-system -- --reporter=dot`,
+  - focused trader analytics/import/coach Vitest groups,
+  - `npx playwright test --config=playwright.level-analysis.config.ts`,
+  - free and paid `tier-chart-evidence` Playwright checks,
+  - `import-dry-run` desktop Playwright,
+  - `app-feature-regression` desktop Playwright.
 
 ## Residual Risk
 
@@ -73,6 +87,9 @@
   target branch does not already contain the behavior.
 - The build still reports existing Turbopack broad-file-tracing warnings in
   academy/news stores; this is not new to the port package.
+- The first post-merge `npm run test:e2e:level-analysis` attempt built
+  successfully but could not start because an old local node process occupied
+  port 3101; after clearing that process, the Playwright portion passed.
 - This branch is not the production repo and must not be deployed directly.
 
 ## Recommended PR Notes

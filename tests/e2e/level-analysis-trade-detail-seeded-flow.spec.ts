@@ -48,7 +48,7 @@ async function saveSeedTrade(page: Page): Promise<{ id: string; symbol: string }
     `${symbol},2026-06-01 12:05:00,SLD,50,10.45,Filled,0.50,0.02,521.98`,
   ].join("\n");
 
-  await page.goto("/import-dry-run");
+  await page.goto("/intelligence/import-dry-run");
   await page.waitForLoadState("networkidle");
   await openDisclosure(
     page,
@@ -66,7 +66,7 @@ async function saveSeedTrade(page: Page): Promise<{ id: string; symbol: string }
   await expect(page.getByText("4 accepted").first()).toBeVisible();
   await expect(page.getByTestId("save-import-button")).toBeEnabled();
   await page.getByTestId("save-import-button").click();
-  await page.waitForURL(/\/imports\/.+/, { timeout: 30_000 });
+  await page.waitForURL(/\/intelligence\/imports\/.+/, { timeout: 30_000 });
 
   const savedTrades = await (await page.request.get("/api/trades")).json();
   const savedTrade = savedTrades.trades.find(
@@ -149,7 +149,7 @@ test.describe("level-analysis trade detail seeded flow", () => {
     const savedTrade = await saveSeedTrade(page);
     await seedAcceptedLevelFactsLink(page, savedTrade.id);
 
-    await page.goto(`/trades/${encodeURIComponent(savedTrade.id)}`);
+    await page.goto(`/intelligence/trades/${encodeURIComponent(savedTrade.id)}`);
     await expect(page.getByTestId("trade-review-page")).toBeVisible();
     await expect(
       page.getByTestId("trade-detail-level-facts-availability"),
