@@ -1,0 +1,66 @@
+name: Level Analysis Trade Detail Facts
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/level-analysis-trade-detail-facts.yml"
+      - "app/api/level-analysis/**"
+      - "app/api/trades/**"
+      - "app/intelligence/trades/**"
+      - "src/lib/level-analysis/**"
+      - "tests/e2e/level-analysis-trade-detail-seeded-flow.spec.ts"
+      - "playwright.level-analysis.config.ts"
+      - "package.json"
+      - "package-lock.json"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/level-analysis-trade-detail-facts.yml"
+      - "app/api/level-analysis/**"
+      - "app/api/trades/**"
+      - "app/intelligence/trades/**"
+      - "src/lib/level-analysis/**"
+      - "tests/e2e/level-analysis-trade-detail-seeded-flow.spec.ts"
+      - "playwright.level-analysis.config.ts"
+      - "package.json"
+      - "package-lock.json"
+
+jobs:
+  seeded-trade-detail-flow:
+    name: Seeded trade detail level facts flow
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run seeded level-analysis trade detail flow
+        run: npm run test:e2e:level-analysis
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: level-analysis-trade-detail-facts-artifacts
+          path: |
+            artifacts/playwright-results/level-analysis
+            artifacts/level-analysis-e2e
+          if-no-files-found: ignore
+          retention-days: 7

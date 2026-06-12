@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:e2e": "npm run build && playwright test",
     "test:e2e:headed": "npm run build && playwright test --headed",
+    "test:e2e:level-analysis": "npm run build && playwright test --config=playwright.level-analysis.config.ts",
     "test:watch": "vitest",
     "audit:market-structure": "tsx src/scripts/audit-experimental-market-structure.ts",
     "calibrate:market-structure": "tsx src/scripts/audit-experimental-market-structure.ts --out-dir artifacts/market-structure-calibration",

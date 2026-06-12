@@ -57,6 +57,15 @@ The local runner:
 
 After the production deploy finishes, the generated live URL should return the new page.
 
+## Completion Notification
+
+When the scheduled run finishes:
+
+- successful production deploys open the generated live article URL in the default browser
+- failures open the local status text file so the failure reason and log file are visible
+
+Use `-SkipNotification` only for manual test runs where no browser/status window should open.
+
 ## How To Check The Last Run
 
 The local runner writes a human-readable status file after every run:

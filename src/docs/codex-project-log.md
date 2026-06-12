@@ -107,6 +107,180 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-06-07 Level Analysis Delivery Trade Detail Level Facts CI Hardening Merged
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_ci_hardening`
+is complete on `main`.
+
+PR:
+
+- PR #54, "Harden level analysis trade detail CI":
+  `https://github.com/traderslink-bot/traderslink-trader-improvement-system/pull/54`
+- state: merged
+- merged at: `2026-06-07T12:33:29Z`
+- base: `main`
+- branch:
+  `codex/journal-level-analysis-delivery-trade-detail-level-facts-ci-hardening`
+- final PR head SHA:
+  `3c07442d047548d22586b5f8980170d13965264b`
+- merge commit on `main`:
+  `94bc2184a47ac6f8065daf4cd61a2167df52e585`
+
+Post-merge `main` checks:
+
+- `CI / test-and-verify` passed on run
+  `https://github.com/traderslink-bot/traderslink-trader-improvement-system/actions/runs/27092688012`
+- `Level Analysis Trade Detail Facts / Seeded trade detail level facts flow`
+  passed on run
+  `https://github.com/traderslink-bot/traderslink-trader-improvement-system/actions/runs/27092688018`
+
+Status:
+
+- PR observation and merge are complete
+- this gate added CI hardening only; it did not create product, storage, route,
+  or ingestion behavior changes
+- no CI/test reliability fixes are currently needed
+- no journal ingestion rerun was performed
+- no levels-system, LevelEngine, storage schema, route behavior, trade
+  recommendation/advice/coaching/grading/P/L/giveback/behavior scoring, or raw
+  payload UI exposure changes are needed
+
+Current best next step:
+
+- do not add more work to the merged CI-hardening branch
+- if continuing inside this journal repo, start a new narrow branch only after
+  choosing the next factual LevelAnalysis delivery gate
+- if following the prior level-context UI fixture recommendation, the next
+  source-quality gate belongs in `levels-system`, not this repo.
+
+### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts CI Observation
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_ci_observation`
+confirmed the CI hardening branch on GitHub without requiring code changes.
+
+PR:
+
+- opened PR #54:
+  `https://github.com/traderslink-bot/traderslink-trader-improvement-system/pull/54`
+- base: `main` at `384cfed125fb9456f45151bb71f06acddb6588cf`
+- implementation branch:
+  `codex/journal-level-analysis-delivery-trade-detail-level-facts-ci-hardening`
+- implementation commit observed:
+  `4e7276eab617b58cf37c8bcd70cfe612f594d59e`
+
+GitHub checks:
+
+- `Level Analysis Trade Detail Facts / Seeded trade detail level facts flow`
+  passed on pull_request run
+  `https://github.com/traderslink-bot/traderslink-trader-improvement-system/actions/runs/27080992070`
+- `CI / test-and-verify` passed on pull_request run
+  `https://github.com/traderslink-bot/traderslink-trader-improvement-system/actions/runs/27080992067`
+- after the first project-log update was pushed, both checks re-ran and passed
+  again on the doc-only branch head
+
+Result:
+
+- the new path-scoped workflow triggered for the PR and completed successfully
+- no CI/test reliability fixes were needed
+- no levels-system, LevelEngine, storage schema, route behavior, trade
+  recommendation/advice/coaching/grading/P/L/giveback/behavior scoring, or raw
+  payload UI exposure changes were made
+
+Current best next step:
+
+- proceed with normal PR review/merge for PR #54, or continue the next
+  journal-level analysis roadmap branch after this CI gate is accepted.
+
+### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts CI Hardening
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_ci_hardening`
+makes the seeded trade-detail level facts browser proof enforceable in CI
+without adding product behavior.
+
+Added:
+
+- path-scoped GitHub Actions workflow at
+  `.github/workflows/level-analysis-trade-detail-facts.yml`
+- CI hardening doc at
+  `docs/level-analysis-journal-delivery-trade-detail-level-facts-ci-hardening.md`
+- compact artifacts:
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-ci-hardening.json`
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-ci-hardening.txt`
+
+Updated:
+
+- `playwright.level-analysis.config.ts` now uses an isolated per-run SQLite
+  artifact path, supports `LEVEL_ANALYSIS_E2E_DB_PATH`, emits GitHub reporter
+  output in CI, pins the seeded proof to one worker, and uploads failure
+  artifacts through the workflow
+
+Behavior:
+
+- the focused `npm run test:e2e:level-analysis` browser proof now runs on pull
+  requests and `main` pushes when relevant level-analysis, trade-detail,
+  focused E2E, package, or workflow files change
+- the workflow installs Playwright Chromium and uploads the focused Playwright
+  output plus isolated SQLite artifact only on failure
+- the seeded proof remains offline and feature-flag scoped
+
+Boundaries:
+
+- no levels-system or LevelEngine changes
+- no storage schema or route behavior changes
+- no live candle or broker fetches
+- old `LevelAnalysisSnapshot` v1 support remains preserved by existing tests
+- raw payloads remain preserved on delivery records but are not exposed in UI
+- no recommendations, trade advice, coaching, grading, P/L, giveback, behavior
+  scoring, buy/sell/hold decisions, or execution-quality inference
+
+Current best next step:
+
+- completed by
+  `journal_level_analysis_delivery_trade_detail_level_facts_ci_observation`.
+
+### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts E2E Seeded Flow
+
+Gate `journal_level_analysis_delivery_trade_detail_level_facts_e2e_seeded_flow`
+adds an offline seeded browser proof for the feature-gated trade detail level
+facts UI.
+
+Added:
+
+- focused Playwright config at `playwright.level-analysis.config.ts`
+- seeded browser spec at
+  `tests/e2e/level-analysis-trade-detail-seeded-flow.spec.ts`
+- npm script `test:e2e:level-analysis`
+- docs at
+  `docs/level-analysis-journal-delivery-trade-detail-level-facts-e2e-seeded-flow.md`
+- compact artifacts:
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-e2e-seeded-flow.json`
+  - `docs/examples/level-analysis-journal-delivery-trade-detail-level-facts-e2e-seeded-flow.txt`
+
+Behavior:
+
+- seeds an isolated SQLite DB under `artifacts/level-analysis-e2e`
+- saves a `DEVS` trade through the existing import dry-run UI
+- ingests the compact packaged level-analysis delivery fixture through the
+  delivery API
+- persists a trade link through the trade-link API
+- verifies the trade-detail facts API read model
+- opens the saved trade detail page and asserts the availability line and facts
+  panel render
+- checks the facts panel for raw payload terms and prohibited advice/scoring
+  language
+
+Boundaries:
+
+- no live IBKR login or candle fetch is required
+- no levels-system or LevelEngine changes
+- no storage schema or route behavior changes
+- no raw payload or raw payload hash display
+- no recommendations, trade advice, coaching, grading, P/L, giveback, behavior
+  scoring, or execution-quality inference
+
+Recommended next gate:
+`journal_level_analysis_delivery_trade_detail_level_facts_ci_hardening`.
+
 ### 2026-06-06 Level Analysis Delivery Trade Detail Level Facts UI Implementation
 
 Gate `journal_level_analysis_delivery_trade_detail_level_facts_ui_implementation`
