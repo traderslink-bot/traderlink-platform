@@ -17884,3 +17884,134 @@ Current best next step:
   reviewable `/intelligence` ports only.
 - Keep the tier boundary intact: free tier is execution-only; paid chart-context
   tier may use candle/level evidence only when real saved chart evidence exists.
+
+# 2026-06-12 May IBKR v2 warehouse-cache hydration fix
+
+- Continued May IBKR QA on updated `main` with isolated DB
+  `.codex-dev-server/may-ibkr-main-qa-20260612/may-ibkr-main.sqlite` and May
+  statement
+  `C:\Users\jerac\Documents\IBKR activity statments\U21845737_202605_202605.csv`.
+- Root cause of the all-failed first May chart run: the Trader Intelligence v2
+  fetch-client resolver opened the IBKR socket before constructing the
+  warehouse-backed reader. With no listener on `127.0.0.1:7497`, jobs failed
+  before stored candles were checked.
+- Added a lazy levels-system-v2 delegate so configured warehouse/cache candles
+  are read before live IBKR is contacted.
+- Added support for the levels-system-v2 validation-cache layout
+  `ibkr/SYMBOL/timeframe/lookback-endTime.json`, while preserving the existing
+  date-keyed `.jsonl` write-through warehouse format for newly fetched candles.
+- Kept all support/resistance imports on
+  `levels-system-v2/support-resistance-engine`; no old levels-system v1 /
+  phase1 path was restored.
+- Retried the May import chart-review queue from the saved import API in small
+  batches. Final isolated DB status:
+  - 93 saved trades, 244 accepted executions.
+  - 65 completed chart snapshots.
+  - 8 `market_context_unavailable`.
+  - 20 `analysis_failed`.
+  - 65 persisted decision-review snapshots and 36 diagnostics.
+- Remaining retryable rows are not evidence claims. They still need live IBKR
+  connectivity for missing 5m windows or missing daily/4h symbols. This shell
+  had no listener on `7496`, `7497`, `4001`, or `4002` during QA.
+- UI post-fix smoke on `http://localhost:3027` loaded:
+  - saved import detail and import history,
+  - review highest-priority and completed queues,
+  - analytics chart-evidence and behavior,
+  - coach and coach review-session,
+  - completed ISPC trade detail,
+  - unavailable JTAI trade detail.
+- Completed ISPC correctly showed chart evidence. JTAI stayed execution replay
+  only. Aggregate support/resistance mentions were either chart-evidence pages
+  backed by completed snapshots or navigation/supporting-detail labels; failed
+  trade pages did not make support/resistance claims.
+
+Verification:
+
+- `npx vitest run src/lib/support-resistance/__tests__/levels-system-warehouse-fetch-service.test.ts src/lib/raw-trade-timeline/__tests__/levels-system-trade-candle-context.integration.test.ts --reporter=dot`
+  passed: 2 files, 9 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run verify:levels-system -- --reporter=dot` passed: 21 files, 85 tests.
+- `npx vitest run src/lib/trader-analytics/__tests__/saved-import-coaching-language-qa-matrix.test.ts src/lib/trader-analytics/__tests__/saved-import-api-routes.test.ts src/lib/trader-analytics/__tests__/saved-trade-threads.test.ts src/lib/trader-analytics/__tests__/trader-coach-action-loop.test.ts --reporter=dot`
+  passed: 4 files, 57 tests.
+- `npx eslint src/lib/raw-trade-timeline/builders/create-raw-trade-timeline-with-levels-system-candles.ts src/lib/support-resistance/levels-system-warehouse-fetch-service.ts src/lib/support-resistance/__tests__/levels-system-warehouse-fetch-service.test.ts src/lib/raw-trade-timeline/__tests__/levels-system-trade-candle-context.integration.test.ts`
+  passed.
+- `npx playwright test tests/e2e/tier-chart-evidence.spec.ts --project=chromium-desktop --reporter=dot`
+  passed: 1 passed, 1 skipped.
+
+Current best next step:
+
+- Commit the v2 warehouse-cache hydration fix.
+- Then retry the 28 remaining May chart jobs only after IBKR API is reachable on
+  the configured port or the runtime env is pointed at the actual API port.
+
+# 2026-06-12 May IBKR final connected retry
+
+- After IBKR API login, `7497` was listening locally and matched the current QA
+  server env.
+- Retried the remaining May chart-review jobs through the saved import API in
+  bounded batches.
+- Final isolated DB status:
+  - 93 saved trades.
+  - 244 accepted executions.
+  - 93 completed chart snapshots.
+  - 0 `analysis_failed`.
+  - 0 `market_context_unavailable`.
+  - 0 diagnostics.
+- Final route smoke on `http://localhost:3027` loaded:
+  - saved import detail,
+  - highest-priority review queue,
+  - completed review queue,
+  - analytics chart-evidence,
+  - analytics behavior,
+  - coach,
+  - coach review-session,
+  - first completed trade detail `ISPC`,
+  - last completed trade detail `ADTX`.
+- The analytics surfaces showed `0 chart data still missing`.
+- The sampled ISPC and ADTX trade detail pages both showed chart evidence.
+- Browser console checks were clean during the final smoke.
+
+Current best next step:
+
+- Push/open the local commit containing the v2 cache-before-IBKR hydration fix
+  if this `main` checkout is being used for a GitHub review branch.
+- Continue product QA on the completed May snapshot set: spot-check basis-check
+  trades, chart-evidence analytics counts, and coach wording against saved
+  snapshots.
+
+# 2026-06-12 PR 61 opened and May basis-check QA
+
+- Pushed branch `codex/v2-candle-cache-before-ibkr`.
+- Opened draft PR #61:
+  https://github.com/traderslink-bot/traderslink-trader-improvement-system/pull/61
+- PR #61 targets `main` and contains the v2 cache-before-IBKR hydration fix.
+- Identified the 6 May candle-basis-check trades:
+  - HAO trade 42.
+  - LNKS trade 46.
+  - HUBC trades 54, 55, 56, and 57.
+- Basis-check UI smoke loaded the basis review lane and sampled LNKS, HAO, and
+  HUBC trade details.
+- The basis lane and sampled trade pages showed calm basis-warning copy:
+  chart context is attached, candle movement is unavailable, and broker
+  execution P/L stays the movement source of truth until basis is reconciled.
+- The first basis-check smoke surfaced a React duplicate-key warning in the
+  trade-detail behavior timeline for repeated mistake observations.
+- Fixed `buildCoachMistakeTimeline` so item IDs include the observation index
+  and selected execution index.
+- Added a focused coach-action-loop assertion that mistake timeline IDs are
+  unique.
+- Reran the basis-check smoke after the key fix; no browser console warnings
+  remained.
+
+Verification:
+
+- `npx vitest run src/lib/trader-analytics/__tests__/trader-coach-action-loop.test.ts --reporter=dot`
+  passed: 1 file, 11 tests.
+- `npx tsc --noEmit --pretty false` passed.
+- `npx eslint src/lib/trader-analytics/product/coach-action-loop.ts src/lib/trader-analytics/__tests__/trader-coach-action-loop.test.ts`
+  passed.
+
+Current best next step:
+
+- Amend and push PR #61 with the duplicate-key fix and this QA log update.
+- Watch PR #61 CI. If green, mark ready for review or merge after final review.

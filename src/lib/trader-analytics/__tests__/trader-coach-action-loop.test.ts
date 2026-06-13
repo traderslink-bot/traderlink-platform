@@ -81,6 +81,9 @@ describe("trader coach action loop", () => {
           item.suggestedReviewAction.length > 0,
       ),
     ).toBe(true);
+    expect(new Set(timeline.items.map((item) => item.id)).size).toBe(
+      timeline.items.length,
+    );
   });
 
   it("simulates suggested rules by flagging related trades without alternate P/L claims", () => {

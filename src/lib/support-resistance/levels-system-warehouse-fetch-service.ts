@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
 import type {
@@ -24,6 +24,19 @@ type WarehouseRow = Candle & {
   sourceFetchedAt?: number;
   adjustmentMode?: string;
   sourceMetadata?: Record<string, unknown>;
+};
+
+type ValidationCacheEntry = {
+  cachedAt?: number;
+  request?: {
+    endTimeMs?: number;
+    lookbackBars?: number;
+    provider?: CandleProviderName;
+    symbol?: string;
+    timeframe?: CandleFetchTimeframe;
+  };
+  response?: CandleProviderResponse;
+  schemaVersion?: number;
 };
 
 export class LevelsSystemWarehouseBackedFetchService implements CandleFetchClient {
@@ -114,23 +127,33 @@ export class LevelsSystemWarehouseBackedFetchService implements CandleFetchClien
     const range = buildRequestedRange(args.request);
     const rows: WarehouseRow[] = [];
 
-    const rowsByDate = await Promise.all(
-      dateKeysBetween(range.startTimestamp, range.endTimestamp).map((key) =>
-        readJsonlRows(
-          warehouseFilePath({
-            provider: args.provider,
-            root: this.options.warehouseDirectoryPath,
-            symbol: args.request.symbol,
-            timeframe: args.request.timeframe,
-            dateKey: key,
-          }),
+    const [rowsByDate, validationCacheRows] = await Promise.all(
+      [
+        Promise.all(
+          dateKeysBetween(range.startTimestamp, range.endTimestamp).map((key) =>
+            readJsonlRows(
+              warehouseFilePath({
+                provider: args.provider,
+                root: this.options.warehouseDirectoryPath,
+                symbol: args.request.symbol,
+                timeframe: args.request.timeframe,
+                dateKey: key,
+              }),
+            ),
+          ),
         ),
-      ),
+        readValidationCacheRows({
+          provider: args.provider,
+          request: args.request,
+          root: this.options.warehouseDirectoryPath,
+        }),
+      ],
     );
 
     for (const dateRows of rowsByDate) {
       rows.push(...dateRows);
     }
+    rows.push(...validationCacheRows);
 
     return uniqueSortedRows(rows)
       .filter(
@@ -339,6 +362,8 @@ function metadataFromRows(
   }
 
   return {
+    cacheWrapper:
+      typeof source.cacheWrapper === "string" ? source.cacheWrapper : null,
     ibkrContractAliasUsed:
       typeof source.aliasUsed === "boolean" ? source.aliasUsed : null,
     ibkrHistoricalAliasReason:
@@ -394,6 +419,138 @@ async function readJsonlRows(path: string): Promise<WarehouseRow[]> {
   }
 }
 
+async function readValidationCacheRows(args: {
+  provider: CandleProviderName;
+  request: HistoricalFetchRequest;
+  root: string;
+}): Promise<WarehouseRow[]> {
+  const directoryPath = validationCacheDirectoryPath({
+    provider: args.provider,
+    root: args.root,
+    symbol: args.request.symbol,
+    timeframe: args.request.timeframe,
+  });
+  let filenames: string[];
+
+  try {
+    filenames = await readdir(directoryPath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return [];
+    }
+
+    throw error;
+  }
+
+  const candidateFilenames = filenames.filter((filename) =>
+    isValidationCacheCandidate(filename, args.request),
+  );
+  const entries = await Promise.all(
+    candidateFilenames.map((filename) =>
+      readValidationCacheEntry(join(directoryPath, filename)),
+    ),
+  );
+  const rows: WarehouseRow[] = [];
+
+  for (const entry of entries) {
+    rows.push(
+      ...validationCacheEntryRows({
+        entry,
+        provider: args.provider,
+        request: args.request,
+      }),
+    );
+  }
+
+  return rows;
+}
+
+async function readValidationCacheEntry(
+  path: string,
+): Promise<ValidationCacheEntry | null> {
+  try {
+    const parsed = JSON.parse(await readFile(path, "utf8")) as ValidationCacheEntry;
+
+    return parsed.schemaVersion === 1 ? parsed : null;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return null;
+    }
+
+    return null;
+  }
+}
+
+function validationCacheEntryRows(args: {
+  entry: ValidationCacheEntry | null;
+  provider: CandleProviderName;
+  request: HistoricalFetchRequest;
+}): WarehouseRow[] {
+  const response = args.entry?.response;
+
+  if (!response || response.timeframe !== args.request.timeframe) {
+    return [];
+  }
+
+  const responseSymbol = normalizeSymbol(response.symbol);
+  const requestSymbol = normalizeSymbol(args.request.symbol);
+
+  if (responseSymbol !== requestSymbol) {
+    return [];
+  }
+
+  const provider = response.provider ?? args.provider;
+
+  return response.candles.map((candle) => ({
+    ...candle,
+    adjustmentMode: "raw",
+    provider,
+    sourceFetchedAt: args.entry?.cachedAt,
+    sourceMetadata: {
+      ...response.providerMetadata,
+      actualBarsReturned: response.actualBarsReturned,
+      cacheSchemaVersion: args.entry?.schemaVersion,
+      cacheWrapper: "levels-system-v2-validation-cache",
+      cachedAt: args.entry?.cachedAt,
+      completenessStatus: response.completenessStatus,
+      requestedEndTimestamp: response.requestedEndTimestamp,
+      requestedLookbackBars: response.requestedLookbackBars,
+      requestedStartTimestamp: response.requestedStartTimestamp,
+      validationIssueCodes: (response.validationIssues ?? []).map(
+        (issue) => issue.code,
+      ),
+    },
+    symbol: responseSymbol,
+    timeframe: response.timeframe,
+  }));
+}
+
+function isValidationCacheCandidate(
+  filename: string,
+  request: HistoricalFetchRequest,
+): boolean {
+  if (!filename.endsWith(".json")) {
+    return false;
+  }
+
+  const separatorIndex = filename.indexOf("-");
+
+  if (separatorIndex <= 0) {
+    return false;
+  }
+
+  const lookbackBars = Number(filename.slice(0, separatorIndex));
+  const endTimeMs = Number(filename.slice(separatorIndex + 1, -".json".length));
+
+  if (!Number.isFinite(lookbackBars) || !Number.isFinite(endTimeMs)) {
+    return false;
+  }
+
+  const range = buildRequestedRange(request);
+
+  return endTimeMs >= range.startTimestamp;
+}
+
 function timeframeMs(timeframe: CandleFetchTimeframe): number {
   if (timeframe === "daily") {
     return 24 * 60 * 60_000;
@@ -442,5 +599,20 @@ function warehouseFilePath(args: {
     normalizeSymbol(args.symbol),
     args.timeframe,
     `${args.dateKey}.jsonl`,
+  );
+}
+
+function validationCacheDirectoryPath(args: {
+  provider: CandleProviderName;
+  root: string;
+  symbol: string;
+  timeframe: CandleFetchTimeframe;
+}): string {
+  return join(
+    /* turbopackIgnore: true */
+    args.root,
+    args.provider,
+    normalizeSymbol(args.symbol),
+    args.timeframe,
   );
 }

@@ -94,6 +94,50 @@ function writeWarehouseRows(args: {
   );
 }
 
+function writeValidationCacheEntry(args: {
+  candles: ReturnType<typeof candle>[];
+  endTimeMs: number;
+  lookbackBars: number;
+  symbol: string;
+  timeframe: string;
+}) {
+  const directory = join(tempDir, "ibkr", args.symbol, args.timeframe);
+  const filePath = join(
+    directory,
+    `${args.lookbackBars}-${args.endTimeMs}.json`,
+  );
+
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(
+    filePath,
+    `${JSON.stringify(
+      {
+        cachedAt: Date.now(),
+        request: {
+          endTimeMs: args.endTimeMs,
+          lookbackBars: args.lookbackBars,
+          provider: "ibkr",
+          symbol: args.symbol,
+          timeframe: args.timeframe,
+        },
+        response: response({
+          candles: args.candles,
+          request: {
+            endTimeMs: args.endTimeMs,
+            lookbackBars: args.lookbackBars,
+            symbol: args.symbol,
+            timeframe: args.timeframe as HistoricalFetchRequest["timeframe"],
+          },
+        }),
+        schemaVersion: 1,
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+}
+
 describe("LevelsSystemWarehouseBackedFetchService", () => {
   it("uses partial daily warehouse candles without calling IBKR", async () => {
     const endTimeMs = Date.parse("2026-05-08T00:00:00.000Z");
@@ -206,6 +250,49 @@ describe("LevelsSystemWarehouseBackedFetchService", () => {
 
     expect(delegateCalls).toBe(0);
     expect(result.providerMetadata?.durableWarehouse).toBe("partial_hit");
+    expect(result.candles).toHaveLength(3);
+  });
+
+  it("uses v2 validation-cache candles before calling IBKR", async () => {
+    const endTimeMs = Date.parse("2026-05-08T00:00:00.000Z");
+    const storedCandles = [
+      candle(Date.parse("2026-05-06T00:00:00.000Z"), 3),
+      candle(Date.parse("2026-05-07T00:00:00.000Z"), 4),
+      candle(endTimeMs, 5),
+    ];
+    let delegateCalls = 0;
+
+    writeValidationCacheEntry({
+      candles: storedCandles,
+      endTimeMs,
+      lookbackBars: 520,
+      symbol: "PMAX",
+      timeframe: "daily",
+    });
+
+    const service = new LevelsSystemWarehouseBackedFetchService({
+      delegate: {
+        async fetchCandles(request) {
+          delegateCalls += 1;
+          return response({ candles: [], request });
+        },
+        getProviderName: () => "ibkr",
+      },
+      mode: "read_write",
+      warehouseDirectoryPath: tempDir,
+    });
+    const result = await service.fetchCandles({
+      endTimeMs,
+      lookbackBars: 520,
+      symbol: "PMAX",
+      timeframe: "daily",
+    });
+
+    expect(delegateCalls).toBe(0);
+    expect(result.providerMetadata?.durableWarehouse).toBe("partial_hit");
+    expect(result.providerMetadata?.cacheWrapper).toBe(
+      "levels-system-v2-validation-cache",
+    );
     expect(result.candles).toHaveLength(3);
   });
 });

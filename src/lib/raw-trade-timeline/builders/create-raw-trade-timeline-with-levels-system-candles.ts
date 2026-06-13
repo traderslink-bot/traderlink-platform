@@ -455,37 +455,66 @@ async function resolveV2CandleFetchClient(
     return null;
   }
 
-  const { CandleFetchService } = await loadLevelsSystemV2Engine();
-  const fetchServiceOptions: Record<string, unknown> = {
-    providerName: levelsSystem.fetchServiceOptions.providerName,
-    ibkrTimeoutMs: levelsSystem.fetchServiceOptions.ibkrTimeoutMs,
-  };
+  const resolveDelegate =
+    async (): Promise<LevelsSystemV2CandleFetchClient | null> => {
+      const { CandleFetchService } = await loadLevelsSystemV2Engine();
+      const fetchServiceOptions: Record<string, unknown> = {
+        providerName: levelsSystem.fetchServiceOptions?.providerName,
+        ibkrTimeoutMs: levelsSystem.fetchServiceOptions?.ibkrTimeoutMs,
+      };
 
-  if (levelsSystem.fetchServiceOptions.providerName === "ibkr") {
-    fetchServiceOptions.ib = await getSharedIbkrClient({
-      clientId: levelsSystem.fetchServiceOptions.clientId ?? 101,
-      connectionTimeoutMs:
-        levelsSystem.fetchServiceOptions.connectionTimeoutMs ?? 10_000,
-      host: levelsSystem.fetchServiceOptions.host ?? "127.0.0.1",
-      port: levelsSystem.fetchServiceOptions.port ?? 7497,
-    });
-  }
+      if (levelsSystem.fetchServiceOptions?.providerName === "ibkr") {
+        fetchServiceOptions.ib = await getSharedIbkrClient({
+          clientId: levelsSystem.fetchServiceOptions.clientId ?? 101,
+          connectionTimeoutMs:
+            levelsSystem.fetchServiceOptions.connectionTimeoutMs ?? 10_000,
+          host: levelsSystem.fetchServiceOptions.host ?? "127.0.0.1",
+          port: levelsSystem.fetchServiceOptions.port ?? 7497,
+        });
+      }
 
-  const delegate = asCandleFetchClient(new CandleFetchService(fetchServiceOptions));
+      return asCandleFetchClient(new CandleFetchService(fetchServiceOptions));
+    };
 
-  if (!delegate) {
-    return null;
-  }
+  const providerName =
+    levelsSystem.fetchServiceOptions.providerName ??
+    levelsSystem.preferredProvider ??
+    "ibkr";
 
   if (levelsSystem.warehouseDirectoryPath) {
     return new LevelsSystemWarehouseBackedFetchService({
-      delegate,
+      delegate: createLazyLevelsSystemV2CandleFetchClient({
+        providerName,
+        resolveDelegate,
+      }),
       mode: levelsSystem.warehouseMode ?? "read_write",
       warehouseDirectoryPath: levelsSystem.warehouseDirectoryPath,
     });
   }
 
-  return delegate;
+  return resolveDelegate();
+}
+
+function createLazyLevelsSystemV2CandleFetchClient(args: {
+  providerName: CandleProviderResponse["provider"];
+  resolveDelegate: () => Promise<LevelsSystemV2CandleFetchClient | null>;
+}): LevelsSystemV2CandleFetchClient {
+  let delegatePromise: Promise<LevelsSystemV2CandleFetchClient | null> | null =
+    null;
+
+  return {
+    getProviderName: () => args.providerName,
+    async fetchCandles(request) {
+      delegatePromise ??= args.resolveDelegate();
+      const delegate = await delegatePromise;
+
+      if (!delegate) {
+        throw new Error("levels-system v2 candle fetch service is unavailable.");
+      }
+
+      return delegate.fetchCandles(request);
+    },
+  };
 }
 
 export function disposeSharedLevelsSystemIbkrClients(): void {
