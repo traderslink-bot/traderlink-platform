@@ -138,6 +138,38 @@ function Assert-CleanGitWorktree {
   }
 }
 
+function New-CleanDeployWorktree {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$CurrentBranch
+  )
+
+  $deployRoot = Join-Path $env:TEMP "traderslink-weekahead-deploy-$timestamp"
+
+  if (Test-Path -LiteralPath $deployRoot) {
+    Remove-Item -LiteralPath $deployRoot -Recurse -Force
+  }
+
+  & git fetch origin $CurrentBranch
+  if ($LASTEXITCODE -ne 0) {
+    throw "git fetch before clean deploy worktree failed."
+  }
+
+  & git worktree add --detach $deployRoot "origin/$CurrentBranch"
+  if ($LASTEXITCODE -ne 0) {
+    throw "Could not create clean deploy worktree."
+  }
+
+  $sourceProjectFile = Join-Path $RepoRoot ".vercel\project.json"
+  if (Test-Path -LiteralPath $sourceProjectFile) {
+    $targetVercelDir = Join-Path $deployRoot ".vercel"
+    New-Item -ItemType Directory -Force -Path $targetVercelDir | Out-Null
+    Copy-Item -LiteralPath $sourceProjectFile -Destination (Join-Path $targetVercelDir "project.json")
+  }
+
+  return $deployRoot
+}
+
 function Deploy-ProductionFromCleanMain {
   param(
     [Parameter(Mandatory = $true)]
@@ -152,19 +184,86 @@ function Deploy-ProductionFromCleanMain {
     throw "Vercel CLI was not found; production deploy cannot run."
   }
 
-  Assert-CleanGitWorktree
+  $deployRoot = $RepoRoot
+  $createdDeployWorktree = $false
+  $dirty = & git status --porcelain
+
+  if ($dirty) {
+    Write-Warning "Main checkout has unrelated local changes. Deploying from a clean temporary worktree."
+    $deployRoot = New-CleanDeployWorktree -CurrentBranch $CurrentBranch
+    $createdDeployWorktree = $true
+  } else {
+    Assert-CleanGitWorktree
+  }
 
   $deployArgs = @("deploy", "--prod", "--yes")
   if ($VercelScope) {
     $deployArgs += @("--scope", $VercelScope)
   }
 
-  $deployResult = Invoke-NativeCapture -FilePath "vercel" -Arguments $deployArgs
-  if ($deployResult.ExitCode -ne 0) {
-    throw "Vercel production deploy failed. $($deployResult.Output | Out-String)"
+  try {
+    Push-Location -LiteralPath $deployRoot
+    $deployResult = Invoke-NativeCapture -FilePath "vercel" -Arguments $deployArgs
+    if ($deployResult.ExitCode -ne 0) {
+      throw "Vercel production deploy failed. $($deployResult.Output | Out-String)"
+    }
+
+    return ($deployResult.Output | Select-Object -Last 1).ToString().Trim()
+  } finally {
+    Pop-Location
+
+    if ($createdDeployWorktree -and (Test-Path -LiteralPath $deployRoot)) {
+      & git worktree remove --force $deployRoot | Out-Null
+    }
+  }
+}
+
+function Wait-ForPullRequestChecks {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$PullRequestUrl
+  )
+
+  $maxAttempts = 80
+  $delaySeconds = 15
+
+  for ($attempt = 1; $attempt -le $maxAttempts; $attempt += 1) {
+    $checkResult = Invoke-NativeCapture -FilePath "gh" -Arguments @(
+      "pr",
+      "checks",
+      $PullRequestUrl,
+      "--json",
+      "bucket,name,state"
+    )
+
+    if ($checkResult.ExitCode -ne 0) {
+      Write-Warning "Could not read PR checks yet. Attempt $attempt/$maxAttempts."
+      Start-Sleep -Seconds $delaySeconds
+      continue
+    }
+
+    $checks = ($checkResult.Output | Out-String) | ConvertFrom-Json
+    $buckets = @($checks | ForEach-Object { $_.bucket })
+
+    if ($buckets.Count -eq 0) {
+      Write-Host "No PR checks reported yet. Attempt $attempt/$maxAttempts."
+      Start-Sleep -Seconds $delaySeconds
+      continue
+    }
+
+    if ($buckets -contains "fail" -or $buckets -contains "cancel") {
+      throw "Pull request checks failed or were cancelled."
+    }
+
+    if (!($buckets -contains "pending" -or $buckets -contains "skipping")) {
+      return
+    }
+
+    Write-Host "PR checks still pending. Attempt $attempt/$maxAttempts."
+    Start-Sleep -Seconds $delaySeconds
   }
 
-  return ($deployResult.Output | Select-Object -Last 1).ToString().Trim()
+  throw "Timed out waiting for pull request checks to pass."
 }
 
 function Merge-PullRequestAndPullMain {
@@ -183,10 +282,7 @@ function Merge-PullRequestAndPullMain {
     throw "GitHub CLI was not found; pull request cannot be merged automatically."
   }
 
-  & gh pr checks $PullRequestUrl --watch --fail-fast --interval 30
-  if ($LASTEXITCODE -ne 0) {
-    throw "Pull request checks did not pass."
-  }
+  Wait-ForPullRequestChecks -PullRequestUrl $PullRequestUrl
 
   & gh pr merge $PullRequestUrl --merge --delete-branch
   if ($LASTEXITCODE -ne 0) {
