@@ -51,8 +51,9 @@ The local runner:
 - retries temporary scrape/index failures up to 3 times
 - retries OpenAI rewrite calls up to 3 times
 - when a new article appears, scrapes it, sends it to OpenAI, writes structured TradersLink JSON, commits `src/content/big-time-pennies/articles.json`, and tries to push the current branch
-- if GitHub blocks direct `main` pushes because the repo requires pull requests, it pushes a PR branch, creates a GitHub pull request, waits for checks, merges the PR, and pulls clean `main`
-- after the content is on clean `main`, it runs a production Vercel deploy from the website repo
+- if GitHub blocks direct `main` pushes because the repo requires pull requests, it pushes a PR branch, creates a GitHub pull request, polls until checks pass, merges the PR, and pulls `main`
+- after the content is on `main`, it runs a production Vercel deploy
+- if the main checkout has unrelated dirty work, it deploys from a clean temporary worktree created from `origin/main` so unrelated local files are not uploaded
 - keeps only the newest 8 published weekly articles in `articles.json` by default
 
 After the production deploy finishes, the generated live URL should return the new page.
