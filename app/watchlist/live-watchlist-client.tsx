@@ -38,6 +38,11 @@ const watchlistReadTextStyle: CSSProperties = {
   lineHeight: 1.35,
 };
 
+const watchlistTimeCellStyle: CSSProperties = {
+  fontSize: "0.78rem",
+  lineHeight: 1.35,
+};
+
 function formatPrice(value: number | null): string {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return "n/a";
@@ -576,10 +581,18 @@ export function LiveWatchlistIndexClient({
                   {symbol.latestTraderReadHeadline ?? "Waiting for trader read"}
                 </span>
               </span>
-              <span className="watchlist-mobile-field" data-mobile-label="Updated">
+              <span
+                className="watchlist-mobile-field"
+                data-mobile-label="Updated"
+                style={watchlistTimeCellStyle}
+              >
                 {formatTime(symbol.updatedAt)}
               </span>
-              <span className="watchlist-mobile-field" data-mobile-label="Added">
+              <span
+                className="watchlist-mobile-field"
+                data-mobile-label="Added"
+                style={watchlistTimeCellStyle}
+              >
                 {formatDateTime(symbol.firstPostedAt)}
               </span>
               <em
