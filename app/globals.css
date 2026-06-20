@@ -2997,6 +2997,39 @@ main.bg-zinc-950 .text-zinc-500 {
   font-weight: 850;
 }
 
+.watchlist-structured-card-body {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--academy-border);
+  border-radius: 8px;
+  background: var(--academy-surface-soft);
+  color: var(--academy-text);
+  padding: 0.9rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.watchlist-structured-card-body p {
+  margin: 0;
+}
+
+.watchlist-structured-bullet {
+  display: flex;
+  gap: 0.4rem;
+  position: relative;
+}
+
+.watchlist-structured-bullet-marker {
+  flex: 0 0 auto;
+  color: var(--academy-muted);
+}
+
+.watchlist-structured-spacer {
+  min-height: 0.1rem;
+}
+
 .watchlist-news-list {
   display: grid;
   gap: 0.75rem;

@@ -181,6 +181,34 @@ function LiveTraderReadCard({ card }: { card: LiveWatchlistCardContent }) {
   );
 }
 
+function StructuredMarketStructureCard({ body }: { body: string }) {
+  const lines = body
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.trim());
+
+  return (
+    <div className="watchlist-trader-read watchlist-structured-card-body">
+      {lines.map((line, index) => {
+        if (!line) {
+          return <span key={`blank-${index}`} className="watchlist-structured-spacer" />;
+        }
+        if (line.startsWith("- ")) {
+          return (
+            <p key={`${line}-${index}`} className="watchlist-structured-bullet">
+              <span className="watchlist-structured-bullet-marker" aria-hidden="true">
+                -
+              </span>{" "}
+              <span>{line.slice(2).trim()}</span>
+            </p>
+          );
+        }
+        return <p key={`${line}-${index}`}>{line}</p>;
+      })}
+    </div>
+  );
+}
+
 function cleanClosestLevelsBody(
   card: LiveWatchlistCardContent,
   liveTraderRead?: LiveWatchlistCardContent,
@@ -399,7 +427,9 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
                 ) : label === "Live Trader Read" ? (
                   <LiveTraderReadCard card={card} />
                 ) : label === "Market Structure" ? (
-                  <pre>{cleanMarketStructureBody(card, symbol.cards.liveTraderRead)}</pre>
+                  <StructuredMarketStructureCard
+                    body={cleanMarketStructureBody(card, symbol.cards.liveTraderRead)}
+                  />
                 ) : label === "Company Info" ? (
                   <pre>{cleanCompanyInfoBody(card.body)}</pre>
                 ) : (
