@@ -592,7 +592,7 @@ export function LiveWatchlistIndexClient({
       <section className="academy-card watchlist-notice-card" aria-label="Watchlist notice">
         <h2>Watchlist Notice</h2>
         <p>
-          This watchlist is for <strong>day trading ideas only</strong>. Tickers
+          Currently this watchlist is for <strong>day trading ideas only</strong>. Tickers
           are based on momentum, volume, chart setups, news, and current market
           activity. They are <strong>not long-term investment picks</strong>,
           may not be suitable for holding overnight, and company fundamentals
