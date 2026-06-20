@@ -2699,6 +2699,23 @@ main.bg-zinc-950 .text-zinc-500 {
   justify-items: start;
 }
 
+.watchlist-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.watchlist-inline-link {
+  display: inline-flex;
+  width: fit-content;
+  color: var(--academy-primary);
+  font-size: 0.9rem;
+  font-weight: 760;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
 .watchlist-summary-panel {
   display: flex;
   flex-wrap: wrap;
@@ -2802,6 +2819,33 @@ main.bg-zinc-950 .text-zinc-500 {
   font-weight: 780;
 }
 
+.watchlist-archive-notice {
+  display: grid;
+  gap: 0.45rem;
+  max-width: 48rem;
+  padding: 1rem;
+  border-color: color-mix(in srgb, var(--academy-primary) 24%, var(--academy-border));
+  background: var(--academy-primary-tint);
+}
+
+.watchlist-archive-notice h2,
+.watchlist-archive-notice p {
+  margin: 0;
+}
+
+.watchlist-archive-notice h2 {
+  color: var(--academy-heading);
+  font-size: 1rem;
+  line-height: 1.25;
+  font-weight: 820;
+}
+
+.watchlist-archive-notice p {
+  color: var(--academy-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
 .watchlist-table-head,
 .watchlist-row {
   display: grid;
@@ -2818,6 +2862,11 @@ main.bg-zinc-950 .text-zinc-500 {
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.watchlist-archive-table-head,
+.watchlist-archive-row {
+  grid-template-columns: minmax(8rem, 0.7fr) minmax(10rem, 0.8fr) minmax(10rem, 0.8fr) minmax(18rem, 1.7fr);
 }
 
 .watchlist-row {

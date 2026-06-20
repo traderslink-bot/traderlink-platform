@@ -6,6 +6,7 @@ import type Database from "better-sqlite3";
 import type {
   LiveWatchlistCardContent,
   LiveWatchlistCardPatch,
+  LiveWatchlistArchiveSnapshot,
   LiveWatchlistHealthPatch,
   LiveWatchlistMarketDataStatus,
   LiveWatchlistStatePayload,
@@ -73,6 +74,18 @@ async function getSqliteDatabase(): Promise<SqliteDatabase> {
       market_data_status TEXT NOT NULL,
       market_data_updated_at INTEGER
     );
+
+    CREATE TABLE IF NOT EXISTS live_watchlist_archives (
+      archive_id TEXT PRIMARY KEY,
+      symbol TEXT NOT NULL,
+      archived_at INTEGER NOT NULL,
+      first_posted_at INTEGER,
+      last_active_updated_at INTEGER NOT NULL,
+      state_json TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS live_watchlist_archives_symbol_archived_at_idx
+      ON live_watchlist_archives (symbol, archived_at DESC);
   `);
   sharedSqliteDatabase = db;
   return db;
@@ -110,6 +123,24 @@ async function ensureNeonSchema(): Promise<void> {
         )
       `,
     )
+    .then(
+      () => sql`
+        CREATE TABLE IF NOT EXISTS live_watchlist_archives (
+          archive_id TEXT PRIMARY KEY,
+          symbol TEXT NOT NULL,
+          archived_at BIGINT NOT NULL,
+          first_posted_at BIGINT,
+          last_active_updated_at BIGINT NOT NULL,
+          state_json TEXT NOT NULL
+        )
+      `,
+    )
+    .then(
+      () => sql`
+        CREATE INDEX IF NOT EXISTS live_watchlist_archives_symbol_archived_at_idx
+          ON live_watchlist_archives (symbol, archived_at DESC)
+      `,
+    )
     .then(() => undefined);
   return sharedNeonSchemaPromise;
 }
@@ -142,6 +173,68 @@ function parseState(raw: string): LiveWatchlistSymbolState | null {
   } catch {
     return null;
   }
+}
+
+function parseArchiveRow(row: {
+  archive_id?: unknown;
+  symbol?: unknown;
+  archived_at?: unknown;
+  first_posted_at?: unknown;
+  last_active_updated_at?: unknown;
+  state_json?: unknown;
+}): LiveWatchlistArchiveSnapshot | null {
+  if (
+    typeof row.archive_id !== "string" ||
+    typeof row.symbol !== "string" ||
+    typeof row.state_json !== "string"
+  ) {
+    return null;
+  }
+  const archivedAt = normalizeNumericTimestamp(row.archived_at);
+  const firstPostedAt = normalizeNumericTimestamp(row.first_posted_at);
+  const lastActiveUpdatedAt = normalizeNumericTimestamp(row.last_active_updated_at);
+  const state = parseState(row.state_json);
+  if (!archivedAt || !lastActiveUpdatedAt || !state) {
+    return null;
+  }
+  return {
+    archiveId: row.archive_id,
+    symbol: row.symbol,
+    archivedAt,
+    firstPostedAt,
+    lastActiveUpdatedAt,
+    state,
+  };
+}
+
+function normalizeNumericTimestamp(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "bigint") {
+    return Number(value);
+  }
+  return null;
+}
+
+function archiveIdFor(symbol: string, archivedAt: number): string {
+  const date = new Date(archivedAt);
+  const pad = (value: number, length = 2) => String(value).padStart(length, "0");
+  return [
+    normalizeSymbol(symbol),
+    `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}`,
+    `${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}${pad(date.getUTCSeconds())}`,
+    pad(date.getUTCMilliseconds(), 3),
+  ].join("-");
+}
+
+function hasCoreArchiveCards(state: LiveWatchlistSymbolState): boolean {
+  return Boolean(
+    state.cards.nearestSupportResistance &&
+      state.cards.liveTraderRead &&
+      state.cards.companyInfo &&
+      state.cards.fullLadder,
+  );
 }
 
 function extractSection(body: string, startHeading: string, endHeadings: string[]): string | null {
@@ -348,6 +441,9 @@ export class LiveWatchlistStore {
           updated_at = EXCLUDED.updated_at,
           state_json = EXCLUDED.state_json
       `;
+      if (next.status === "deactivated") {
+        await this.createArchiveIfEligible(next);
+      }
       return next;
     }
 
@@ -362,6 +458,9 @@ export class LiveWatchlistStore {
           state_json = excluded.state_json
       `,
     ).run(symbol, next.status, next.updatedAt, JSON.stringify(next));
+    if (next.status === "deactivated") {
+      await this.createArchiveIfEligible(next);
+    }
     return next;
   }
 
@@ -453,6 +552,176 @@ export class LiveWatchlistStore {
       marketDataUpdatedAt: health.marketDataUpdatedAt,
       symbols,
     };
+  }
+
+  async listArchives(): Promise<LiveWatchlistArchiveSnapshot[]> {
+    if (!shouldUseSqliteFallback()) {
+      await ensureNeonSchema();
+      const rows = (await getNeonSql()`
+        SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
+        FROM live_watchlist_archives
+        ORDER BY archived_at DESC
+      `) as Array<{
+        archive_id?: unknown;
+        symbol?: unknown;
+        archived_at?: unknown;
+        first_posted_at?: unknown;
+        last_active_updated_at?: unknown;
+        state_json?: unknown;
+      }>;
+      return rows
+        .map((row) => parseArchiveRow(row))
+        .filter((archive): archive is LiveWatchlistArchiveSnapshot => Boolean(archive));
+    }
+
+    const db = await getSqliteDatabase();
+    const rows = db
+      .prepare(
+        `
+          SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
+          FROM live_watchlist_archives
+          ORDER BY archived_at DESC
+        `,
+      )
+      .all() as Array<{
+      archive_id?: unknown;
+      symbol?: unknown;
+      archived_at?: unknown;
+      first_posted_at?: unknown;
+      last_active_updated_at?: unknown;
+      state_json?: unknown;
+    }>;
+    return rows
+      .map((row) => parseArchiveRow(row))
+      .filter((archive): archive is LiveWatchlistArchiveSnapshot => Boolean(archive));
+  }
+
+  async getArchive(archiveId: string): Promise<LiveWatchlistArchiveSnapshot | null> {
+    const normalizedArchiveId = archiveId.trim().toUpperCase();
+    if (!normalizedArchiveId) {
+      return null;
+    }
+    if (!shouldUseSqliteFallback()) {
+      await ensureNeonSchema();
+      const rows = (await getNeonSql()`
+        SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
+        FROM live_watchlist_archives
+        WHERE archive_id = ${normalizedArchiveId}
+        LIMIT 1
+      `) as Array<{
+        archive_id?: unknown;
+        symbol?: unknown;
+        archived_at?: unknown;
+        first_posted_at?: unknown;
+        last_active_updated_at?: unknown;
+        state_json?: unknown;
+      }>;
+      return rows[0] ? parseArchiveRow(rows[0]) : null;
+    }
+
+    const db = await getSqliteDatabase();
+    const row = db
+      .prepare(
+        `
+          SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
+          FROM live_watchlist_archives
+          WHERE archive_id = ?
+          LIMIT 1
+        `,
+      )
+      .get(normalizedArchiveId) as
+      | {
+          archive_id?: unknown;
+          symbol?: unknown;
+          archived_at?: unknown;
+          first_posted_at?: unknown;
+          last_active_updated_at?: unknown;
+          state_json?: unknown;
+        }
+      | undefined;
+    return row ? parseArchiveRow(row) : null;
+  }
+
+  async getLatestArchiveForSymbol(symbolInput: string): Promise<LiveWatchlistArchiveSnapshot | null> {
+    const symbol = normalizeSymbol(symbolInput);
+    if (!shouldUseSqliteFallback()) {
+      await ensureNeonSchema();
+      const rows = (await getNeonSql()`
+        SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
+        FROM live_watchlist_archives
+        WHERE symbol = ${symbol}
+        ORDER BY archived_at DESC
+        LIMIT 1
+      `) as Array<{
+        archive_id?: unknown;
+        symbol?: unknown;
+        archived_at?: unknown;
+        first_posted_at?: unknown;
+        last_active_updated_at?: unknown;
+        state_json?: unknown;
+      }>;
+      return rows[0] ? parseArchiveRow(rows[0]) : null;
+    }
+
+    const db = await getSqliteDatabase();
+    const row = db
+      .prepare(
+        `
+          SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
+          FROM live_watchlist_archives
+          WHERE symbol = ?
+          ORDER BY archived_at DESC
+          LIMIT 1
+        `,
+      )
+      .get(symbol) as
+      | {
+          archive_id?: unknown;
+          symbol?: unknown;
+          archived_at?: unknown;
+          first_posted_at?: unknown;
+          last_active_updated_at?: unknown;
+          state_json?: unknown;
+        }
+      | undefined;
+    return row ? parseArchiveRow(row) : null;
+  }
+
+  private async createArchiveIfEligible(state: LiveWatchlistSymbolState): Promise<void> {
+    if (!hasCoreArchiveCards(state)) {
+      return;
+    }
+    const archiveId = archiveIdFor(state.symbol, state.updatedAt);
+    const stateJson = JSON.stringify(state);
+
+    if (!shouldUseSqliteFallback()) {
+      await ensureNeonSchema();
+      await getNeonSql()`
+        INSERT INTO live_watchlist_archives (
+          archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
+        )
+        VALUES (
+          ${archiveId},
+          ${state.symbol},
+          ${state.updatedAt},
+          ${state.firstPostedAt},
+          ${state.updatedAt},
+          ${stateJson}
+        )
+        ON CONFLICT (archive_id) DO NOTHING
+      `;
+      return;
+    }
+
+    const db = await getSqliteDatabase();
+    db.prepare(
+      `
+        INSERT OR IGNORE INTO live_watchlist_archives (
+          archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+      `,
+    ).run(archiveId, state.symbol, state.updatedAt, state.firstPostedAt, state.updatedAt, stateJson);
   }
 }
 

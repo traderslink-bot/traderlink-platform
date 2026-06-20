@@ -4,6 +4,50 @@ import {
   LiveWatchlistStore,
   resetLiveWatchlistStoreForTests,
 } from "../live-watchlist-store";
+import type { LiveWatchlistCardPatch } from "../live-watchlist-types";
+
+function buildCorePatch(symbol: string, updatedAt: number): LiveWatchlistCardPatch {
+  return {
+    symbol,
+    status: "live",
+    updatedAt,
+    cards: {
+      nearestSupportResistance: {
+        title: "Closest Levels to Watch",
+        body: "Closest levels to watch:\nResistance:\n1.25\n\nSupport:\n1.10",
+        updatedAt,
+        priceWhenPosted: 1.18,
+        source: "level_snapshot",
+        metadata: {
+          nearestSupport: 1.1,
+          nearestResistance: 1.25,
+        },
+      },
+      liveTraderRead: {
+        title: "Live Trader Read",
+        body: "Trade map:\nCurrent structure: ABCD is holding a range.",
+        updatedAt,
+        priceWhenPosted: 1.18,
+        source: "live_alert",
+      },
+      companyInfo: {
+        title: "Example Corp",
+        body: "Country: United States\nMarket cap: 12M",
+        updatedAt,
+        priceWhenPosted: 1.18,
+        source: "stock_context",
+        metadata: { company: "Example Corp" },
+      },
+      fullLadder: {
+        title: "Full Ladder",
+        body: "Resistance:\n1.25\n\nSupport:\n1.10",
+        updatedAt,
+        priceWhenPosted: 1.18,
+        source: "level_snapshot",
+      },
+    },
+  };
+}
 
 describe("LiveWatchlistStore", () => {
   const originalStorage = process.env.LIVE_WATCHLIST_STORAGE;
@@ -347,5 +391,118 @@ describe("LiveWatchlistStore", () => {
     const state = await store.listSymbols();
     expect(state.symbols.map((symbol) => symbol.symbol)).toEqual(["LIVE"]);
     expect(await store.getSymbol("GONE")).not.toBeNull();
+  });
+
+  it("creates an archive snapshot when a fully loaded ticker is deactivated", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    await store.upsertPatch(buildCorePatch("ABCD", 1000));
+    await store.upsertPatch({
+      symbol: "ABCD",
+      status: "deactivated",
+      updatedAt: 2000,
+      cards: {},
+    });
+
+    const archives = await store.listArchives();
+    expect(archives).toHaveLength(1);
+    expect(archives[0]?.archiveId).toBe("ABCD-19700101-000002-000");
+    expect(archives[0]?.symbol).toBe("ABCD");
+    expect(archives[0]?.archivedAt).toBe(2000);
+    expect(archives[0]?.firstPostedAt).toBe(1000);
+    expect(archives[0]?.lastActiveUpdatedAt).toBe(2000);
+    expect(archives[0]?.state.status).toBe("deactivated");
+    expect(archives[0]?.state.cards.fullLadder?.title).toBe("Full Ladder");
+    await expect(store.getLatestArchiveForSymbol("ABCD")).resolves.toEqual(archives[0]);
+    await expect(store.getArchive("ABCD-19700101-000002-000")).resolves.toEqual(archives[0]);
+  });
+
+  it("does not archive deactivated tickers until core cards are loaded", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    await store.upsertPatch({
+      symbol: "ABCD",
+      status: "live",
+      updatedAt: 1000,
+      cards: {
+        liveTraderRead: {
+          title: "Live Trader Read",
+          body: "Current structure: only a trader read exists.",
+          updatedAt: 1000,
+          priceWhenPosted: 1.18,
+          source: "live_alert",
+        },
+      },
+    });
+    await store.upsertPatch({
+      symbol: "ABCD",
+      status: "deactivated",
+      updatedAt: 2000,
+      cards: {},
+    });
+
+    await expect(store.listArchives()).resolves.toEqual([]);
+  });
+
+  it("does not duplicate archives when a deactivation patch is replayed", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    await store.upsertPatch(buildCorePatch("ABCD", 1000));
+    const deactivation = {
+      symbol: "ABCD",
+      status: "deactivated" as const,
+      updatedAt: 2000,
+      cards: {},
+    };
+    await store.upsertPatch(deactivation);
+    await store.upsertPatch(deactivation);
+
+    const archives = await store.listArchives();
+    expect(archives).toHaveLength(1);
+    expect(archives[0]?.archiveId).toBe("ABCD-19700101-000002-000");
+  });
+
+  it("keeps old archive snapshots immutable when the same symbol is reactivated", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    await store.upsertPatch(buildCorePatch("ABCD", 1000));
+    await store.upsertPatch({
+      symbol: "ABCD",
+      status: "deactivated",
+      updatedAt: 2000,
+      cards: {},
+    });
+    const firstArchive = await store.getLatestArchiveForSymbol("ABCD");
+
+    await store.upsertPatch({
+      symbol: "ABCD",
+      status: "live",
+      updatedAt: 3000,
+      cards: {
+        liveTraderRead: {
+          title: "Live Trader Read",
+          body: "Trade map:\nCurrent structure: ABCD is live again.",
+          updatedAt: 3000,
+          priceWhenPosted: 1.3,
+          source: "live_alert",
+        },
+      },
+    });
+
+    const liveState = await store.getSymbol("ABCD");
+    const archives = await store.listArchives();
+    expect(liveState?.status).toBe("live");
+    expect(liveState?.cards.liveTraderRead?.body).toContain("live again");
+    expect(archives).toHaveLength(1);
+    expect(archives[0]).toEqual(firstArchive);
+    expect(archives[0]?.state.cards.liveTraderRead?.body).toContain("holding a range");
   });
 });

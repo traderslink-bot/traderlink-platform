@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import type {
+  LiveWatchlistArchiveSnapshot,
   LiveWatchlistCardContent,
   LiveWatchlistMarketDataStatus,
   LiveWatchlistStatePayload,
@@ -332,6 +333,85 @@ function mergeSymbol(
   return [next, ...without].sort((left, right) => right.updatedAt - left.updatedAt);
 }
 
+function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) {
+  const derivedMarketStructureCard =
+    symbol.cards.marketStructure ??
+    (symbol.cards.liveTraderRead &&
+    extractCardSection(symbol.cards.liveTraderRead.body, "Market structure", [
+      "Trade map",
+      "Closest levels to watch",
+      "More support and resistance",
+    ])
+      ? {
+          ...symbol.cards.liveTraderRead,
+          title: "Market Structure",
+          source: "level_snapshot",
+        }
+      : null);
+  const cards = [
+    ["Closest Levels to Watch", symbol.cards.nearestSupportResistance, false],
+    ["Live Trader Read", symbol.cards.liveTraderRead, false],
+    ["Market Structure", derivedMarketStructureCard, false],
+    ["Company Info", symbol.cards.companyInfo, false],
+    ["Known Recent News / SEC Filings", symbol.cards.recentNewsFilings, true],
+    ["Full Ladder", symbol.cards.fullLadder, false],
+  ] as const;
+  const hasRecentNewsFilings = Boolean(symbol.cards.recentNewsFilings);
+
+  return (
+    <section
+      className="watchlist-card-grid"
+      data-has-recent-news={hasRecentNewsFilings ? "true" : "false"}
+    >
+      {cards
+        .filter(([, card, hideWhenEmpty]) => card || !hideWhenEmpty)
+        .map(([label, card]) => (
+          <article
+            key={label}
+            className="academy-card watchlist-content-card"
+            data-card-label={label}
+          >
+            <div className="academy-card-topline">
+              <p className="academy-kicker">{label}</p>
+            </div>
+            {card ? (
+              <>
+                {shouldShowCardTitle(label, card) ? (
+                  <h2 className="academy-card-title">{card.title}</h2>
+                ) : null}
+                {label === "Known Recent News / SEC Filings" ? (
+                  <RecentNewsFilingsCard card={card} />
+                ) : label === "Closest Levels to Watch" ? (
+                  <pre>{cleanClosestLevelsBody(card, symbol.cards.liveTraderRead)}</pre>
+                ) : label === "Live Trader Read" ? (
+                  <LiveTraderReadCard card={card} />
+                ) : label === "Market Structure" ? (
+                  <pre>{cleanMarketStructureBody(card, symbol.cards.liveTraderRead)}</pre>
+                ) : label === "Company Info" ? (
+                  <pre>{cleanCompanyInfoBody(card.body)}</pre>
+                ) : (
+                  <pre>{cleanGenericCardBody(card)}</pre>
+                )}
+                <p className="watchlist-card-meta">
+                  Updated {formatTime(card.updatedAt)} | Price when posted{" "}
+                  {formatPrice(card.priceWhenPosted)}
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="academy-card-title">Waiting for content</h2>
+                <p className="academy-card-text">
+                  This card will fill in when the runtime publishes the next
+                  matching update.
+                </p>
+              </>
+            )}
+          </article>
+        ))}
+    </section>
+  );
+}
+
 export function LiveWatchlistIndexClient({
   initialState,
 }: {
@@ -400,6 +480,9 @@ export function LiveWatchlistIndexClient({
             Click or tap any ticker to view deeper market data and the full
             ticker details.
           </p>
+          <Link href="/watchlist/archive" className="watchlist-inline-link">
+            View archived tickers
+          </Link>
         </div>
         <div className="watchlist-summary-panel" aria-label="Watchlist status">
           <span>{formatDate(Date.now())}</span>
@@ -561,30 +644,6 @@ export function LiveWatchlistDetailClient({
     );
   }
 
-  const derivedMarketStructureCard =
-    symbol.cards.marketStructure ??
-    (symbol.cards.liveTraderRead &&
-    extractCardSection(symbol.cards.liveTraderRead.body, "Market structure", [
-      "Trade map",
-      "Closest levels to watch",
-      "More support and resistance",
-    ])
-      ? {
-          ...symbol.cards.liveTraderRead,
-          title: "Market Structure",
-          source: "level_snapshot",
-        }
-      : null);
-  const cards = [
-    ["Closest Levels to Watch", symbol.cards.nearestSupportResistance, false],
-    ["Live Trader Read", symbol.cards.liveTraderRead, false],
-    ["Market Structure", derivedMarketStructureCard, false],
-    ["Company Info", symbol.cards.companyInfo, false],
-    ["Known Recent News / SEC Filings", symbol.cards.recentNewsFilings, true],
-    ["Full Ladder", symbol.cards.fullLadder, false],
-  ] as const;
-  const hasRecentNewsFilings = Boolean(symbol.cards.recentNewsFilings);
-
   return (
     <div className="watchlist-page">
       <section className="watchlist-detail-hero">
@@ -607,56 +666,111 @@ export function LiveWatchlistDetailClient({
         </div>
       </section>
 
-      <section
-        className="watchlist-card-grid"
-        data-has-recent-news={hasRecentNewsFilings ? "true" : "false"}
-      >
-        {cards
-          .filter(([, card, hideWhenEmpty]) => card || !hideWhenEmpty)
-          .map(([label, card]) => (
-          <article
-            key={label}
-            className="academy-card watchlist-content-card"
-            data-card-label={label}
-          >
-            <div className="academy-card-topline">
-              <p className="academy-kicker">{label}</p>
-            </div>
-            {card ? (
-              <>
-                {shouldShowCardTitle(label, card) ? (
-                  <h2 className="academy-card-title">{card.title}</h2>
-                ) : null}
-                {label === "Known Recent News / SEC Filings" ? (
-                  <RecentNewsFilingsCard card={card} />
-                ) : label === "Closest Levels to Watch" ? (
-                  <pre>{cleanClosestLevelsBody(card, symbol.cards.liveTraderRead)}</pre>
-                ) : label === "Live Trader Read" ? (
-                  <LiveTraderReadCard card={card} />
-                ) : label === "Market Structure" ? (
-                  <pre>{cleanMarketStructureBody(card, symbol.cards.liveTraderRead)}</pre>
-                ) : label === "Company Info" ? (
-                  <pre>{cleanCompanyInfoBody(card.body)}</pre>
-                ) : (
-                  <pre>{cleanGenericCardBody(card)}</pre>
-                )}
-                <p className="watchlist-card-meta">
-                  Updated {formatTime(card.updatedAt)} | Price when posted{" "}
-                  {formatPrice(card.priceWhenPosted)}
-                </p>
-              </>
-            ) : (
-              <>
-                <h2 className="academy-card-title">Waiting for content</h2>
-                <p className="academy-card-text">
-                  This card will fill in when the runtime publishes the next
-                  matching update.
-                </p>
-              </>
-            )}
-          </article>
-        ))}
+      <WatchlistDetailCards symbol={symbol} />
+    </div>
+  );
+}
+
+export function LiveWatchlistArchiveIndex({
+  archives,
+}: {
+  archives: LiveWatchlistArchiveSnapshot[];
+}) {
+  return (
+    <div className="watchlist-page">
+      <section className="watchlist-hero">
+        <div>
+          <p className="academy-eyebrow">Premium Watchlist</p>
+          <h1 className="academy-title">Archived Tickers</h1>
+          <p className="academy-lede">
+            Review tickers that were removed from the live watchlist. Archived
+            pages are frozen snapshots from when the ticker was last active.
+          </p>
+          <Link href="/watchlist" className="watchlist-inline-link">
+            Back to live watchlist
+          </Link>
+        </div>
+        <div className="watchlist-summary-panel" aria-label="Watchlist archive status">
+          <span>{archives.length} {archives.length === 1 ? "archive" : "archives"}</span>
+        </div>
       </section>
+
+      {archives.length === 0 ? (
+        <section className="academy-card watchlist-empty">
+          <h2>No tickers have been archived yet</h2>
+        </section>
+      ) : (
+        <section className="watchlist-table" aria-label="Archived watchlist tickers">
+          <div className="watchlist-table-head watchlist-archive-table-head">
+            <span>Ticker</span>
+            <span>Archived</span>
+            <span>Last active update</span>
+            <span>Latest read</span>
+          </div>
+          {archives.map((archive) => (
+            <Link
+              key={archive.archiveId}
+              href={`/watchlist/archive/${archive.archiveId}`}
+              className="watchlist-row watchlist-archive-row"
+            >
+              <span className="watchlist-symbol-cell">
+                <strong>{archive.symbol}</strong>
+              </span>
+              <span className="watchlist-mobile-field" data-mobile-label="Archived">
+                {formatDateTime(archive.archivedAt)}
+              </span>
+              <span className="watchlist-mobile-field" data-mobile-label="Last active update">
+                {formatDateTime(archive.lastActiveUpdatedAt)}
+              </span>
+              <span className="watchlist-read-cell">
+                {archive.state.latestTraderReadHeadline ?? "No trader read saved"}
+              </span>
+            </Link>
+          ))}
+        </section>
+      )}
+    </div>
+  );
+}
+
+export function LiveWatchlistArchiveDetailClient({
+  archive,
+}: {
+  archive: LiveWatchlistArchiveSnapshot;
+}) {
+  return (
+    <div className="watchlist-page">
+      <section className="watchlist-detail-hero">
+        <div className="watchlist-detail-heading">
+          <div>
+            <p className="academy-eyebrow">Archived Watchlist Snapshot</p>
+            <h1 className="academy-title">{archive.symbol}</h1>
+          </div>
+          <div className="watchlist-detail-actions">
+            <Link href="/watchlist/archive" className="academy-card-action watchlist-back-action">
+              Back to archive
+            </Link>
+            <Link href="/watchlist" className="watchlist-inline-link">
+              Live watchlist
+            </Link>
+          </div>
+        </div>
+        <div className="watchlist-summary-panel">
+          <span>Archived {formatDateTime(archive.archivedAt)}</span>
+          <span>Posted {formatDateTime(archive.firstPostedAt)}</span>
+          <span>Last active update {formatTime(archive.lastActiveUpdatedAt)}</span>
+        </div>
+      </section>
+
+      <section className="academy-card watchlist-archive-notice">
+        <h2>This ticker is no longer live</h2>
+        <p>
+          This page shows the last saved information from when {archive.symbol}
+          was active on the watchlist. It does not update with live market data.
+        </p>
+      </section>
+
+      <WatchlistDetailCards symbol={archive.state} />
     </div>
   );
 }

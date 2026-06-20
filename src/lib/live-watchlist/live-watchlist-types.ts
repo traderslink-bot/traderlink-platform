@@ -54,6 +54,15 @@ export type LiveWatchlistSymbolState = {
   cards: Partial<Record<LiveWatchlistCardKind, LiveWatchlistCardContent>>;
 };
 
+export type LiveWatchlistArchiveSnapshot = {
+  archiveId: string;
+  symbol: string;
+  archivedAt: number;
+  firstPostedAt: number | null;
+  lastActiveUpdatedAt: number;
+  state: LiveWatchlistSymbolState;
+};
+
 export type LiveWatchlistStatePayload = {
   generatedAt: number;
   marketDataStatus: LiveWatchlistMarketDataStatus;
