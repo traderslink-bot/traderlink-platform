@@ -45,6 +45,10 @@ function formatPrice(value: number | null): string {
   return value >= 1 ? value.toFixed(2) : value.toFixed(4);
 }
 
+function formatLevelCell(label: string | null | undefined, value: number | null): string {
+  return label?.trim() || formatPrice(value);
+}
+
 function formatTime(value: number): string {
   return watchlistTimeFormatter.format(new Date(value));
 }
@@ -532,10 +536,10 @@ export function LiveWatchlistIndexClient({
                 {formatPrice(symbol.latestPrice)}
               </span>
               <span className="watchlist-mobile-field" data-mobile-label="Nearest support">
-                {formatPrice(symbol.nearestSupport)}
+                {formatLevelCell(symbol.nearestSupportLabel, symbol.nearestSupport)}
               </span>
               <span className="watchlist-mobile-field" data-mobile-label="Nearest resistance">
-                {formatPrice(symbol.nearestResistance)}
+                {formatLevelCell(symbol.nearestResistanceLabel, symbol.nearestResistance)}
               </span>
               <span className="watchlist-read-cell">
                 <span className="watchlist-read-text" style={watchlistReadTextStyle}>
@@ -547,9 +551,9 @@ export function LiveWatchlistIndexClient({
               </span>
               <em
                 className="watchlist-ticker-status"
-                data-status={formatTickerStatusTone(symbol.status)}
+                data-status={formatTickerStatusTone(marketDataStatus)}
               >
-                {formatTickerStatusLabel(symbol.status)}
+                {formatTickerStatusLabel(marketDataStatus)}
               </em>
             </Link>
           ))}

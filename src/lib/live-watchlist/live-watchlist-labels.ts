@@ -16,23 +16,27 @@ export function formatMarketDataStatusLabel(status: LiveWatchlistMarketDataStatu
   }
 }
 
-export function formatTickerStatusLabel(status: LiveWatchlistStatus): string {
+export function formatTickerStatusLabel(status: LiveWatchlistStatus | LiveWatchlistMarketDataStatus): string {
   switch (status) {
     case "live":
-      return "Ticker Data: Live (slight delay)";
+      return "Live Ticker Data: On";
     case "stale":
+    case "offline":
+    case "starting":
     case "deactivated":
-      return "Ticker Data: off";
+      return "Live Ticker Data: Off";
     default:
-      return "Ticker Data: off";
+      return "Live Ticker Data: Off";
   }
 }
 
-export function formatTickerStatusTone(status: LiveWatchlistStatus): "live" | "off" {
+export function formatTickerStatusTone(status: LiveWatchlistStatus | LiveWatchlistMarketDataStatus): "live" | "off" {
   switch (status) {
     case "live":
       return "live";
     case "stale":
+    case "offline":
+    case "starting":
     case "deactivated":
       return "off";
     default:

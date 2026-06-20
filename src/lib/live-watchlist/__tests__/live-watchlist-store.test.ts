@@ -18,10 +18,12 @@ function buildCorePatch(symbol: string, updatedAt: number): LiveWatchlistCardPat
         updatedAt,
         priceWhenPosted: 1.18,
         source: "level_snapshot",
-        metadata: {
-          nearestSupport: 1.1,
-          nearestResistance: 1.25,
-        },
+          metadata: {
+            nearestSupport: 1.1,
+            nearestResistance: 1.25,
+            nearestSupportLabel: "1.10 (-6.8%, moderate, intraday)",
+            nearestResistanceLabel: "1.25 (+5.9%, moderate, intraday)",
+          },
       },
       liveTraderRead: {
         title: "Live Trader Read",
@@ -213,9 +215,97 @@ describe("LiveWatchlistStore", () => {
     expect(updated.latestPrice).toBe(1.18);
     expect(updated.nearestSupport).toBe(1.1);
     expect(updated.nearestResistance).toBe(1.25);
+    expect(updated.nearestSupportLabel).toBeNull();
+    expect(updated.nearestResistanceLabel).toBeNull();
     expect(updated.updatedAt).toBe(3000);
     expect(updated.latestTraderReadHeadline).toBe("ABCD testing support");
     expect(updated.cards.liveTraderRead?.body).toBe("Price is testing support.");
+  });
+
+  it("stores nearest support and resistance display labels for the index", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    await store.upsertPatch({
+      symbol: "ABCD",
+      status: "live",
+      updatedAt: 1000,
+      cards: {
+        nearestSupportResistance: {
+          title: "Closest Levels to Watch",
+          body: "Closest levels to watch",
+          updatedAt: 1000,
+          priceWhenPosted: 1.18,
+          source: "level_snapshot",
+          metadata: {
+            nearestSupport: 1.1,
+            nearestResistance: 1.25,
+            nearestSupportLabel: "1.10 (-6.8%, moderate, intraday)",
+            nearestResistanceLabel: "1.25 (+5.9%, moderate, intraday)",
+          },
+        },
+      },
+    });
+
+    let state = await store.listSymbols();
+    expect(state.symbols[0]?.nearestSupportLabel).toBe("1.10 (-6.8%, moderate, intraday)");
+    expect(state.symbols[0]?.nearestResistanceLabel).toBe("1.25 (+5.9%, moderate, intraday)");
+
+    await store.upsertTickerData({
+      type: "tickerData",
+      symbol: "ABCD",
+      status: "live",
+      updatedAt: 2000,
+      latestPrice: 1.2,
+      nearestSupport: 1.15,
+      nearestResistance: 1.3,
+      nearestSupportLabel: "1.15 (-4.2%, strong, intraday)",
+      nearestResistanceLabel: "1.30 (+8.3%, moderate, 4h structure)",
+    });
+
+    state = await store.listSymbols();
+    expect(state.symbols[0]?.nearestSupport).toBe(1.15);
+    expect(state.symbols[0]?.nearestResistance).toBe(1.3);
+    expect(state.symbols[0]?.nearestSupportLabel).toBe("1.15 (-4.2%, strong, intraday)");
+    expect(state.symbols[0]?.nearestResistanceLabel).toBe("1.30 (+8.3%, moderate, 4h structure)");
+  });
+
+  it("derives nearest level display labels from older closest-level card bodies", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    await store.upsertPatch({
+      symbol: "CAST",
+      status: "live",
+      updatedAt: 1000,
+      cards: {
+        nearestSupportResistance: {
+          title: "Closest Levels to Watch",
+          body: [
+            "Resistance:",
+            "7.45 (+2.8%, moderate, intraday)",
+            "7.58 (+4.6%, moderate, 4h structure)",
+            "",
+            "Support:",
+            "7.15 (-1.4%, moderate, intraday)",
+            "4.70 (-35.2%, moderate, daily structure)",
+          ].join("\n"),
+          updatedAt: 1000,
+          priceWhenPosted: 7.25,
+          source: "level_snapshot",
+          metadata: {
+            nearestSupport: 7.15,
+            nearestResistance: 7.45,
+          },
+        },
+      },
+    });
+
+    const state = await store.listSymbols();
+    expect(state.symbols[0]?.nearestSupportLabel).toBe("7.15 (-1.4%, moderate, intraday)");
+    expect(state.symbols[0]?.nearestResistanceLabel).toBe("7.45 (+2.8%, moderate, intraday)");
   });
 
   it("derives an index headline from generic live trader read cards", async () => {

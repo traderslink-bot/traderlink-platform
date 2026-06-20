@@ -65,6 +65,16 @@ function isTickerDataPatch(value: unknown): value is LiveWatchlistTickerDataPatc
     (
       (value as LiveWatchlistTickerDataPatch).nearestResistance === null ||
       typeof (value as LiveWatchlistTickerDataPatch).nearestResistance === "number"
+    ) &&
+    (
+      (value as LiveWatchlistTickerDataPatch).nearestSupportLabel === undefined ||
+      (value as LiveWatchlistTickerDataPatch).nearestSupportLabel === null ||
+      typeof (value as LiveWatchlistTickerDataPatch).nearestSupportLabel === "string"
+    ) &&
+    (
+      (value as LiveWatchlistTickerDataPatch).nearestResistanceLabel === undefined ||
+      (value as LiveWatchlistTickerDataPatch).nearestResistanceLabel === null ||
+      typeof (value as LiveWatchlistTickerDataPatch).nearestResistanceLabel === "string"
     )
   );
 }

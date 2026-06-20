@@ -39,6 +39,8 @@ export type LiveWatchlistTickerDataPatch = {
   latestPrice: number;
   nearestSupport: number | null;
   nearestResistance: number | null;
+  nearestSupportLabel?: string | null;
+  nearestResistanceLabel?: string | null;
 };
 
 export type LiveWatchlistSymbolState = {
@@ -50,6 +52,8 @@ export type LiveWatchlistSymbolState = {
   latestPrice: number | null;
   nearestSupport: number | null;
   nearestResistance: number | null;
+  nearestSupportLabel?: string | null;
+  nearestResistanceLabel?: string | null;
   latestTraderReadHeadline: string | null;
   cards: Partial<Record<LiveWatchlistCardKind, LiveWatchlistCardContent>>;
 };

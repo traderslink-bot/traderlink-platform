@@ -256,6 +256,46 @@ function extractSection(body: string, startHeading: string, endHeadings: string[
   return rest.slice(0, endIndex).trim() || null;
 }
 
+function formatStoredPrice(value: number): string {
+  return value >= 1 ? value.toFixed(2) : value.toFixed(4);
+}
+
+function deriveNearestLevelLabelFromCard(
+  card: LiveWatchlistCardContent | undefined,
+  side: "support" | "resistance",
+  price: number | null,
+): string | null {
+  if (!card) {
+    return null;
+  }
+  const sectionHeading = side === "support" ? "Support" : "Resistance";
+  const section = extractSection(card.body, sectionHeading, [
+    side === "support" ? "Resistance" : "Support",
+    "More support and resistance",
+  ]);
+  const lines = (section ?? card.body)
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) =>
+      line
+        .trim()
+        .replace(new RegExp(`^Nearest\\s+${side}:\\s*`, "i"), ""),
+    )
+    .filter((line) => /^\d+(?:\.\d+)?\b/.test(line))
+    .filter(Boolean);
+  if (lines.length === 0) {
+    return null;
+  }
+  if (typeof price === "number" && Number.isFinite(price)) {
+    const formatted = formatStoredPrice(price);
+    const matched = lines.find((line) => line.startsWith(formatted));
+    if (matched) {
+      return matched;
+    }
+  }
+  return null;
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -299,6 +339,16 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
   const nearest = state.cards.nearestSupportResistance;
   const liveTraderRead = state.cards.liveTraderRead;
   const nearestMetadata = nearest?.metadata ?? {};
+  const nearestSupport =
+    state.nearestSupport ??
+    (typeof nearestMetadata.nearestSupport === "number"
+      ? nearestMetadata.nearestSupport
+      : null);
+  const nearestResistance =
+    state.nearestResistance ??
+    (typeof nearestMetadata.nearestResistance === "number"
+      ? nearestMetadata.nearestResistance
+      : null);
   const cardTimes = Object.values(state.cards)
     .map((card) => card?.updatedAt)
     .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
@@ -319,16 +369,18 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
       nearest?.priceWhenPosted ??
       companyInfo?.priceWhenPosted ??
       null,
-    nearestSupport:
-      state.nearestSupport ??
-      (typeof nearestMetadata.nearestSupport === "number"
-        ? nearestMetadata.nearestSupport
-        : null),
-    nearestResistance:
-      state.nearestResistance ??
-      (typeof nearestMetadata.nearestResistance === "number"
-        ? nearestMetadata.nearestResistance
-        : null),
+    nearestSupport,
+    nearestResistance,
+    nearestSupportLabel:
+      state.nearestSupportLabel ??
+      (typeof nearestMetadata.nearestSupportLabel === "string"
+        ? nearestMetadata.nearestSupportLabel
+        : deriveNearestLevelLabelFromCard(nearest, "support", nearestSupport)),
+    nearestResistanceLabel:
+      state.nearestResistanceLabel ??
+      (typeof nearestMetadata.nearestResistanceLabel === "string"
+        ? nearestMetadata.nearestResistanceLabel
+        : deriveNearestLevelLabelFromCard(nearest, "resistance", nearestResistance)),
     latestTraderReadHeadline:
       deriveTraderReadHeadline(liveTraderRead, state.latestTraderReadHeadline ?? null),
   };
@@ -361,6 +413,8 @@ function applyPatch(
     latestPrice: patchesPriceCard ? null : existing?.latestPrice ?? null,
     nearestSupport: patchesNearestCard ? null : existing?.nearestSupport ?? null,
     nearestResistance: patchesNearestCard ? null : existing?.nearestResistance ?? null,
+    nearestSupportLabel: patchesNearestCard ? null : existing?.nearestSupportLabel ?? null,
+    nearestResistanceLabel: patchesNearestCard ? null : existing?.nearestResistanceLabel ?? null,
     latestTraderReadHeadline: existing?.latestTraderReadHeadline ?? null,
     cards: nextCards,
   });
@@ -476,6 +530,8 @@ export class LiveWatchlistStore {
       latestPrice: patch.latestPrice,
       nearestSupport: patch.nearestSupport,
       nearestResistance: patch.nearestResistance,
+      nearestSupportLabel: patch.nearestSupportLabel ?? null,
+      nearestResistanceLabel: patch.nearestResistanceLabel ?? null,
       latestTraderReadHeadline: existing?.latestTraderReadHeadline ?? null,
       cards: existing?.cards ?? {},
     });

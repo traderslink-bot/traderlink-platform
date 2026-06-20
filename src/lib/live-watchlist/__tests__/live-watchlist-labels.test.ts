@@ -15,11 +15,15 @@ describe("live watchlist labels", () => {
   });
 
   it("formats ticker status labels without exposing internal stream state", () => {
-    expect(formatTickerStatusLabel("live")).toBe("Ticker Data: Live (slight delay)");
-    expect(formatTickerStatusLabel("stale")).toBe("Ticker Data: off");
-    expect(formatTickerStatusLabel("deactivated")).toBe("Ticker Data: off");
+    expect(formatTickerStatusLabel("live")).toBe("Live Ticker Data: On");
+    expect(formatTickerStatusLabel("stale")).toBe("Live Ticker Data: Off");
+    expect(formatTickerStatusLabel("offline")).toBe("Live Ticker Data: Off");
+    expect(formatTickerStatusLabel("starting")).toBe("Live Ticker Data: Off");
+    expect(formatTickerStatusLabel("deactivated")).toBe("Live Ticker Data: Off");
     expect(formatTickerStatusTone("live")).toBe("live");
     expect(formatTickerStatusTone("stale")).toBe("off");
+    expect(formatTickerStatusTone("offline")).toBe("off");
+    expect(formatTickerStatusTone("starting")).toBe("off");
     expect(formatTickerStatusTone("deactivated")).toBe("off");
   });
 });
