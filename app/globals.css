@@ -2915,9 +2915,15 @@ main.bg-zinc-950 .text-zinc-500 {
 .watchlist-read-cell {
   min-width: 0;
   color: var(--academy-muted);
+}
+
+.watchlist-read-text {
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 0.84rem;
+  line-height: 1.35;
 }
 
 .watchlist-ticker-status {

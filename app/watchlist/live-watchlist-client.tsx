@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 
 import type {
   LiveWatchlistArchiveSnapshot,
@@ -28,6 +28,15 @@ const watchlistTimeFormatter = new Intl.DateTimeFormat("en-US", {
   second: "2-digit",
   timeZone: "America/Toronto",
 });
+
+const watchlistReadTextStyle: CSSProperties = {
+  display: "-webkit-box",
+  overflow: "hidden",
+  WebkitBoxOrient: "vertical",
+  WebkitLineClamp: 2,
+  fontSize: "0.84rem",
+  lineHeight: 1.35,
+};
 
 function formatPrice(value: number | null): string {
   if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -529,7 +538,9 @@ export function LiveWatchlistIndexClient({
                 {formatPrice(symbol.nearestResistance)}
               </span>
               <span className="watchlist-read-cell">
-                {symbol.latestTraderReadHeadline ?? "Waiting for trader read"}
+                <span className="watchlist-read-text" style={watchlistReadTextStyle}>
+                  {symbol.latestTraderReadHeadline ?? "Waiting for trader read"}
+                </span>
               </span>
               <span className="watchlist-mobile-field" data-mobile-label="Updated">
                 {formatTime(symbol.updatedAt)}
@@ -723,7 +734,9 @@ export function LiveWatchlistArchiveIndex({
                 {formatDateTime(archive.lastActiveUpdatedAt)}
               </span>
               <span className="watchlist-read-cell">
-                {archive.state.latestTraderReadHeadline ?? "No trader read saved"}
+                <span className="watchlist-read-text" style={watchlistReadTextStyle}>
+                  {archive.state.latestTraderReadHeadline ?? "No trader read saved"}
+                </span>
               </span>
             </Link>
           ))}
