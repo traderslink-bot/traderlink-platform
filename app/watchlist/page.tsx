@@ -60,14 +60,14 @@ function WatchlistAccessMessage({
     <AcademyShell>
       <div className="academy-container">
         <section className="academy-hero">
-          <div className="academy-hero-copy">
+          <div className="academy-card watchlist-access-card">
             <p className="academy-eyebrow">Premium Watchlist</p>
             <h1 className="academy-title">
               {kind === "login" ? "Log in to view the live watchlist" : "Premium access required"}
             </h1>
             <p className="academy-lede">
               {kind === "login"
-                ? "Use your TradersLink Discord account to continue."
+                ? "Log in with your TradersLink Discord account to view the live watchlist."
                 : "The live watchlist is available to Discord members with the premium role."}
             </p>
             {notice ? (

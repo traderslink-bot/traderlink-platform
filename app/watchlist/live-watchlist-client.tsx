@@ -480,7 +480,7 @@ export function LiveWatchlistIndexClient({
             Click or tap any ticker to view deeper market data and the full
             ticker details.
           </p>
-          <Link href="/watchlist/archive" className="watchlist-inline-link">
+          <Link href="/watchlist/archive" className="academy-card-action watchlist-hero-action">
             View archived tickers
           </Link>
         </div>
@@ -686,7 +686,7 @@ export function LiveWatchlistArchiveIndex({
             Review tickers that were removed from the live watchlist. Archived
             pages are frozen snapshots from when the ticker was last active.
           </p>
-          <Link href="/watchlist" className="watchlist-inline-link">
+          <Link href="/watchlist" className="academy-card-action watchlist-hero-action">
             Back to live watchlist
           </Link>
         </div>
@@ -750,7 +750,7 @@ export function LiveWatchlistArchiveDetailClient({
             <Link href="/watchlist/archive" className="academy-card-action watchlist-back-action">
               Back to archive
             </Link>
-            <Link href="/watchlist" className="watchlist-inline-link">
+            <Link href="/watchlist" className="academy-card-action watchlist-back-action">
               Live watchlist
             </Link>
           </div>

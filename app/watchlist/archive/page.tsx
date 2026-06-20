@@ -29,7 +29,7 @@ export default async function LiveWatchlistArchivePage() {
       <AcademyShell>
         <div className="academy-container">
           <section className="academy-hero">
-            <div className="academy-hero-copy">
+            <div className="academy-card watchlist-access-card">
               <p className="academy-eyebrow">Premium Watchlist</p>
               <h1 className="academy-title">
                 {session ? "Premium access required" : "Log in to view archived tickers"}
@@ -37,7 +37,7 @@ export default async function LiveWatchlistArchivePage() {
               <p className="academy-lede">
                 {session
                   ? "The watchlist archive is available to Discord members with the premium role."
-                  : "Use your TradersLink Discord account to continue."}
+                  : "Log in with your TradersLink Discord account to view archived tickers."}
               </p>
               <Link
                 href={

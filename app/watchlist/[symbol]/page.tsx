@@ -42,11 +42,11 @@ export default async function LiveWatchlistSymbolPage({
       <AcademyShell>
         <div className="academy-container">
           <section className="academy-hero">
-            <div className="academy-hero-copy">
+            <div className="academy-card watchlist-access-card">
               <p className="academy-eyebrow">Premium Watchlist</p>
               <h1 className="academy-title">Premium access required</h1>
               <p className="academy-lede">
-                Log in with a premium TradersLink Discord account to view ticker details.
+                Log in with your premium TradersLink Discord account to view ticker details.
               </p>
               <Link
                 href={
