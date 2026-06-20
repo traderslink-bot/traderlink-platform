@@ -528,7 +528,6 @@ export function LiveWatchlistIndexClient({
           </Link>
         </div>
         <div className="watchlist-summary-panel" aria-label="Watchlist status">
-          <span>{formatDate(Date.now())}</span>
           <span>{symbols.length} {symbols.length === 1 ? "ticker" : "tickers"}</span>
           <span
             data-market-data-status={marketDataStatus}
@@ -552,6 +551,7 @@ export function LiveWatchlistIndexClient({
             <span>Nearest resistance</span>
             <span>Latest read</span>
             <span>Updated</span>
+            <span>Added</span>
           </div>
           {symbols.map((symbol) => (
             <Link
@@ -578,6 +578,9 @@ export function LiveWatchlistIndexClient({
               </span>
               <span className="watchlist-mobile-field" data-mobile-label="Updated">
                 {formatTime(symbol.updatedAt)}
+              </span>
+              <span className="watchlist-mobile-field" data-mobile-label="Added">
+                {formatDateTime(symbol.firstPostedAt)}
               </span>
               <em
                 className="watchlist-ticker-status"

@@ -785,6 +785,10 @@ body {
   max-width: 80rem;
 }
 
+.academy-container.watchlist-container {
+  max-width: 94rem;
+}
+
 .academy-container-narrow {
   max-width: 66rem;
 }
@@ -2676,6 +2680,8 @@ main.bg-zinc-950 .text-zinc-500 {
 }
 
 .watchlist-page {
+  width: min(100%, 92rem);
+  margin: 0 auto;
   display: grid;
   gap: 1.25rem;
   padding: 2rem 0 3rem;
@@ -2861,7 +2867,7 @@ main.bg-zinc-950 .text-zinc-500 {
 .watchlist-table-head,
 .watchlist-row {
   display: grid;
-  grid-template-columns: 4.25rem 4.25rem minmax(13rem, 1fr) minmax(13rem, 1fr) minmax(14rem, 1.25fr) 6.5rem;
+  grid-template-columns: 4.25rem 4.25rem minmax(13rem, 1fr) minmax(13rem, 1fr) minmax(13rem, 1.1fr) 6.5rem 8.75rem;
   column-gap: 0.5rem;
   row-gap: 0.75rem;
   align-items: center;
@@ -3132,10 +3138,14 @@ main.bg-zinc-950 .text-zinc-500 {
   }
 
   .watchlist-ticker-status {
-    order: 6;
+    order: 7;
     grid-column: 1 / -1;
     grid-row: auto;
     margin-top: 0.1rem;
+  }
+
+  .watchlist-mobile-field[data-mobile-label="Added"] {
+    order: 6;
   }
 
   .watchlist-mobile-field,

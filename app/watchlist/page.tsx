@@ -39,7 +39,7 @@ export default async function LiveWatchlistPage({
   const state = await new LiveWatchlistStore().listSymbols();
   return (
     <AcademyShell>
-      <div className="academy-container">
+      <div className="academy-container watchlist-container">
         <LiveWatchlistIndexClient initialState={state} />
       </div>
     </AcademyShell>
