@@ -1,10 +1,13 @@
 export type LiveWatchlistCardKind =
   | "companyInfo"
+  | "levelMap"
   | "fullLadder"
   | "nearestSupportResistance"
   | "liveTraderRead"
   | "marketStructure"
-  | "recentNewsFilings";
+  | "technicalContext"
+  | "recentNewsFilings"
+  | "extendedQuote";
 
 export type LiveWatchlistStatus = "live" | "stale" | "deactivated";
 export type LiveWatchlistMarketDataStatus = "live" | "stale" | "offline" | "starting";
@@ -22,6 +25,8 @@ export type LiveWatchlistCardPatch = {
   symbol: string;
   status?: LiveWatchlistStatus;
   updatedAt: number;
+  firstPostedAt?: number | null;
+  levelMap?: LiveWatchlistLevelMap | null;
   cards: Partial<Record<LiveWatchlistCardKind, LiveWatchlistCardContent | null>>;
 };
 
@@ -41,6 +46,66 @@ export type LiveWatchlistTickerDataPatch = {
   nearestResistance: number | null;
   nearestSupportLabel?: string | null;
   nearestResistanceLabel?: string | null;
+  levelMap?: LiveWatchlistLevelMap | null;
+  volume?: number | null;
+  extendedQuote?: LiveWatchlistExtendedQuote | null;
+};
+
+export type LiveWatchlistExtendedQuote = {
+  source: "eodhd_live_v2";
+  symbol: string;
+  providerSymbol: string;
+  updatedAt: number;
+  fetchedAt: number;
+  name: string | null;
+  exchange: string | null;
+  currency: string | null;
+  open: number | null;
+  high: number | null;
+  low: number | null;
+  lastTradePrice: number | null;
+  lastTradeSize: number | null;
+  lastTradeTime: number | null;
+  bidPrice: number | null;
+  bidSize: number | null;
+  bidTime: number | null;
+  askPrice: number | null;
+  askSize: number | null;
+  askTime: number | null;
+  volume: number | null;
+  change: number | null;
+  changePercent: number | null;
+  previousClosePrice: number | null;
+  ethPrice: number | null;
+  ethVolume: number | null;
+  ethTime: number | null;
+  marketCap: number | null;
+  sharesOutstanding: number | null;
+  sharesFloat: number | null;
+  timestamp: number | null;
+};
+
+export type LiveWatchlistLevelMapRangeState = "tight" | "normal" | "wide";
+
+export type LiveWatchlistLevelMapLevel = {
+  side: "support" | "resistance";
+  price: number;
+  distancePct: number;
+  strengthLabel?: "weak" | "moderate" | "strong" | "major";
+  sourceLabel?: string | null;
+  roleFlipFromSide?: "support" | "resistance" | null;
+  label: string;
+};
+
+export type LiveWatchlistLevelMap = {
+  currentPrice: number;
+  rangeState: LiveWatchlistLevelMapRangeState;
+  nearestSupport: LiveWatchlistLevelMapLevel | null;
+  nearestResistance: LiveWatchlistLevelMapLevel | null;
+  nextStrongSupport: LiveWatchlistLevelMapLevel | null;
+  nextStrongResistance: LiveWatchlistLevelMapLevel | null;
+  supportLevels: LiveWatchlistLevelMapLevel[];
+  resistanceLevels: LiveWatchlistLevelMapLevel[];
 };
 
 export type LiveWatchlistSymbolState = {
@@ -54,6 +119,9 @@ export type LiveWatchlistSymbolState = {
   nearestResistance: number | null;
   nearestSupportLabel?: string | null;
   nearestResistanceLabel?: string | null;
+  levelMap?: LiveWatchlistLevelMap | null;
+  volume?: number | null;
+  extendedQuote?: LiveWatchlistExtendedQuote | null;
   latestTraderReadHeadline: string | null;
   cards: Partial<Record<LiveWatchlistCardKind, LiveWatchlistCardContent>>;
 };

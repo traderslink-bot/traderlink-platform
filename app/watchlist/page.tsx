@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { AcademyShell } from "@/app/academy/academy-shell";
 import { getCurrentAcademySession } from "@/app/academy/academy-server-session";
@@ -8,18 +10,15 @@ import {
   isLocalWatchlistAuthBypassEnabled,
 } from "@/src/lib/live-watchlist/live-watchlist-auth";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
+import {
+  buildWatchlistPreviewMetadata,
+  isWatchlistPreviewCrawlerUserAgent,
+} from "@/src/lib/live-watchlist/watchlist-preview";
 import { LiveWatchlistIndexClient } from "./live-watchlist-client";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Live Watchlist | TradersLink",
-  description: "Premium TradersLink live watchlist with ticker levels and trader reads.",
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
+export const metadata: Metadata = buildWatchlistPreviewMetadata("/watchlist");
 
 export default async function LiveWatchlistPage({
   searchParams,
@@ -27,9 +26,16 @@ export default async function LiveWatchlistPage({
   searchParams: Promise<{ auth?: string | string[] }>;
 }) {
   const authStatus = normalizeSearchParam((await searchParams).auth);
+  const requestHeaders = await headers();
+  const isPreviewCrawler = isWatchlistPreviewCrawlerUserAgent(
+    requestHeaders.get("user-agent"),
+  );
   const session = await getCurrentAcademySession();
   const authBypass = isLocalWatchlistAuthBypassEnabled();
   if (!session && !authBypass) {
+    if (!authStatus && !isPreviewCrawler) {
+      redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent("/watchlist")}`);
+    }
     return <WatchlistAccessMessage authStatus={authStatus} kind="login" returnTo="/watchlist" />;
   }
   if (session && !hasPremiumWatchlistAccess(session)) {

@@ -6,6 +6,8 @@ import { type CSSProperties, useEffect, useState } from "react";
 import type {
   LiveWatchlistArchiveSnapshot,
   LiveWatchlistCardContent,
+  LiveWatchlistLevelMap,
+  LiveWatchlistLevelMapLevel,
   LiveWatchlistMarketDataStatus,
   LiveWatchlistStatePayload,
   LiveWatchlistSymbolState,
@@ -43,6 +45,23 @@ const watchlistTimeCellStyle: CSSProperties = {
   lineHeight: 1.35,
 };
 
+const detailCardHelpText: Record<string, string> = {
+  "Closest Levels to Watch":
+    "These levels are not price targets. They are nearby support and resistance areas for context, usually mapped roughly 30% from the current price when enough levels are available.",
+  "Trader Read":
+    "This read is generated from live market data, levels, and market structure. It is a planning aid, not a prediction or advice. Small-cap stocks are volatile, and the system can be wrong, delayed, or miss context.",
+  "Full Ladder":
+    "This is the broader support and resistance ladder for the ticker. It gives extra context beyond the nearest levels, not automatic targets.",
+  "Technical Context":
+    "VWAP, EMA, and market-structure reads show where price is trading compared with intraday references and the current structure. They are planning context, not automatic entries.",
+  "Market Structure":
+    "This summarizes the current price structure, such as range, breakout, reclaim, or support-test behavior. It is context for planning, not a trade call.",
+  "Company Info":
+    "Basic company and risk context for the ticker. Use it to understand what the company is and whether there are higher-risk profile flags.",
+  "Known Recent News / SEC Filings":
+    "Recent company news and SEC filings that may explain attention or volatility. Always open the source before relying on the headline.",
+};
+
 function formatPrice(value: number | null): string {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return "n/a";
@@ -52,6 +71,63 @@ function formatPrice(value: number | null): string {
 
 function formatLevelCell(label: string | null | undefined, value: number | null): string {
   return label?.trim() || formatPrice(value);
+}
+
+function formatSignedPercent(value: number): string {
+  const sign = value >= 0 ? "+" : "";
+  return `${sign}${(value * 100).toFixed(1)}%`;
+}
+
+function formatCompactLevelTags(level: LiveWatchlistLevelMapLevel | null): string | null {
+  if (!level) {
+    return null;
+  }
+  return [level.strengthLabel, level.sourceLabel].filter(Boolean).join(" · ") || null;
+}
+
+function formatLevelMapLevel(level: LiveWatchlistLevelMapLevel | null, fallback: string): string {
+  if (!level) {
+    return fallback;
+  }
+  const side = level.side === "resistance" ? "R" : "S";
+  return `${side} ${formatPrice(level.price)} ${formatSignedPercent(level.distancePct)}`;
+}
+
+function selectIndexNextStrong(levelMap: LiveWatchlistLevelMap): LiveWatchlistLevelMapLevel | null {
+  return levelMap.nextStrongResistance ?? levelMap.nextStrongSupport;
+}
+
+function LevelMapIndexCell({ symbol }: { symbol: LiveWatchlistSymbolState }) {
+  const levelMap = symbol.levelMap ?? null;
+  if (!levelMap) {
+    return (
+      <span className="watchlist-level-map-cell">
+        <span>{formatLevelCell(symbol.nearestSupportLabel, symbol.nearestSupport)}</span>
+        <span>{formatLevelCell(symbol.nearestResistanceLabel, symbol.nearestResistance)}</span>
+      </span>
+    );
+  }
+
+  const nextStrong = selectIndexNextStrong(levelMap);
+  const secondaryText =
+    nextStrong
+      ? `Next stronger: ${formatLevelMapLevel(nextStrong, "n/a")}`
+      : "Next stronger: n/a";
+  return (
+    <span className="watchlist-level-map-cell">
+      <span className="watchlist-level-map-primary">
+        {levelMap.rangeState === "tight" && levelMap.nearestSupport && levelMap.nearestResistance
+          ? `Tight zone: S ${formatPrice(levelMap.nearestSupport.price)} / R ${formatPrice(levelMap.nearestResistance.price)}`
+          : `${formatLevelMapLevel(levelMap.nearestSupport, "S n/a")} / ${formatLevelMapLevel(levelMap.nearestResistance, "R n/a")}`}
+      </span>
+      <span className="watchlist-level-map-secondary">
+        {secondaryText}
+        {nextStrong ? (
+          <em>{formatCompactLevelTags(nextStrong)}</em>
+        ) : null}
+      </span>
+    </span>
+  );
 }
 
 function formatTime(value: number): string {
@@ -186,14 +262,14 @@ function LiveTraderReadCard({ card }: { card: LiveWatchlistCardContent }) {
   );
 }
 
-function StructuredMarketStructureCard({ body }: { body: string }) {
+function StructuredMarketStructureLines({ body }: { body: string }) {
   const lines = body
     .replace(/\r\n/g, "\n")
     .split("\n")
     .map((line) => line.trim());
 
   return (
-    <div className="watchlist-trader-read watchlist-structured-card-body">
+    <>
       {lines.map((line, index) => {
         if (!line) {
           return <span key={`blank-${index}`} className="watchlist-structured-spacer" />;
@@ -210,24 +286,49 @@ function StructuredMarketStructureCard({ body }: { body: string }) {
         }
         return <p key={`${line}-${index}`}>{line}</p>;
       })}
+    </>
+  );
+}
+
+function StructuredMarketStructureCard({ body }: { body: string }) {
+  return (
+    <div className="watchlist-trader-read watchlist-structured-card-body">
+      <StructuredMarketStructureLines body={body} />
     </div>
   );
 }
 
-function cleanClosestLevelsBody(
-  card: LiveWatchlistCardContent,
-  liveTraderRead?: LiveWatchlistCardContent,
-): string {
+function TechnicalContextLines({ card }: { card: LiveWatchlistCardContent }) {
+  const lines = cleanGenericCardBody(card)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
   return (
-    extractCardSection(card.body, "Closest levels to watch", [
-      "More support and resistance",
-    ]) ??
-    (liveTraderRead
-      ? extractCardSection(liveTraderRead.body, "Closest levels to watch", [
-          "More support and resistance",
-        ])
-      : null) ??
-    formatCardBody(card.body)
+    <div className="watchlist-technical-context-lines">
+      {lines.map((line, index) => {
+        const match = line.match(/^([^:]{2,40}):\s*(.*)$/);
+        if (!match) {
+          return <p key={`${line}-${index}`}>{line}</p>;
+        }
+        const label = match[1] ?? "";
+        const body = match[2] ?? "";
+        return (
+          <p key={`${line}-${index}`}>
+            <strong>{label}:</strong>{" "}
+            <span>{body}</span>
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function TechnicalContextCard({ card }: { card: LiveWatchlistCardContent }) {
+  return (
+    <div className="watchlist-trader-read watchlist-structured-card-body">
+      <TechnicalContextLines card={card} />
+    </div>
   );
 }
 
@@ -261,6 +362,15 @@ function cleanGenericCardBody(card: LiveWatchlistCardContent): string {
       : lines;
   return withoutTitle
     .filter((line) => !/^Price:\s*/i.test(line.trim()))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function cleanLevelMapCardBody(card: LiveWatchlistCardContent): string {
+  return cleanGenericCardBody(card)
+    .split("\n")
+    .filter((line) => !/^Current price:/i.test(line.trim()))
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -316,6 +426,21 @@ function formatArticleDate(value: string | null): string {
   return formatDate(timestamp);
 }
 
+function formatNewsChipLabel(value: string): string {
+  return value
+    .replace(/_/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => {
+      const upper = word.toUpperCase();
+      if (upper === "SEC") {
+        return "SEC";
+      }
+      return `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`;
+    })
+    .join(" ");
+}
+
 function RecentNewsFilingsCard({ card }: { card: LiveWatchlistCardContent }) {
   const articles = parseRecentNewsFilings(card);
   if (articles.length === 0) {
@@ -335,13 +460,51 @@ function RecentNewsFilingsCard({ card }: { card: LiveWatchlistCardContent }) {
           <span className="watchlist-news-title">{article.title}</span>
           <span className="watchlist-news-meta">
             <span>{formatArticleDate(article.publishedAt)}</span>
-            {article.filingType ? <em>{article.filingType}</em> : null}
-            {article.eventType ? <em>{article.eventType}</em> : null}
+            {article.filingType ? <em>{formatNewsChipLabel(article.filingType)}</em> : null}
+            {article.eventType ? <em>{formatNewsChipLabel(article.eventType)}</em> : null}
           </span>
         </a>
       ))}
     </div>
   );
+}
+
+function closestLevelsCardFromState(symbol: LiveWatchlistSymbolState): LiveWatchlistCardContent | null {
+  const levelMap = symbol.levelMap;
+  if (!levelMap) {
+    return null;
+  }
+
+  const lines = ["Resistance:"];
+  lines.push(
+    ...(levelMap.resistanceLevels.length
+      ? levelMap.resistanceLevels.map((level) => level.label)
+      : ["none"]),
+  );
+  lines.push("", "Support:");
+  lines.push(
+    ...(levelMap.supportLevels.length
+      ? levelMap.supportLevels.map((level) => level.label)
+      : ["none"]),
+  );
+
+  return {
+    title: "Closest Levels to Watch",
+    body: lines.join("\n"),
+    updatedAt: symbol.updatedAt,
+    priceWhenPosted: levelMap.currentPrice,
+    source: "live_level_map",
+    metadata: {
+      nearestSupport: levelMap.nearestSupport?.price ?? null,
+      nearestResistance: levelMap.nearestResistance?.price ?? null,
+      nearestSupportLabel: levelMap.nearestSupport?.label ?? null,
+      nearestResistanceLabel: levelMap.nearestResistance?.label ?? null,
+    },
+  };
+}
+
+function LevelMapDetailCard({ card }: { card: LiveWatchlistCardContent }) {
+  return <pre>{cleanLevelMapCardBody(card)}</pre>;
 }
 
 function normalizeCardTitle(value: string): string {
@@ -358,14 +521,58 @@ function shouldShowCardTitle(label: string, card: LiveWatchlistCardContent): boo
   }
   if (
     label === "Closest Levels to Watch" ||
-    label === "Live Trader Read" ||
+    label === "Trader Read" ||
     label === "Market Structure" ||
+    label === "Technical Context" ||
     label === "Company Info" ||
     label === "Full Ladder"
   ) {
     return false;
   }
   return normalizeCardTitle(label) !== normalizeCardTitle(card.title);
+}
+
+function shouldShowCardMeta(label: string): boolean {
+  return (
+    label !== "Company Info" &&
+    label !== "Known Recent News / SEC Filings"
+  );
+}
+
+function WatchlistCardKicker({ label }: { label: string }) {
+  const helpText = detailCardHelpText[label];
+
+  return (
+    <p className="academy-kicker watchlist-card-kicker">
+      <span>{label}</span>
+      {helpText ? (
+        <button
+          type="button"
+          className="watchlist-card-help"
+          aria-label={`${label} help`}
+          data-tooltip={helpText}
+          title={helpText}
+        >
+          ?
+        </button>
+      ) : null}
+    </p>
+  );
+}
+
+function symbolActivationSortTime(symbol: LiveWatchlistSymbolState): number {
+  return symbol.firstPostedAt ?? symbol.updatedAt;
+}
+
+function sortSymbolsByActivation(
+  left: LiveWatchlistSymbolState,
+  right: LiveWatchlistSymbolState,
+): number {
+  const timeDiff = symbolActivationSortTime(right) - symbolActivationSortTime(left);
+  if (timeDiff !== 0) {
+    return timeDiff;
+  }
+  return left.symbol.localeCompare(right.symbol);
 }
 
 function mergeSymbol(
@@ -376,7 +583,70 @@ function mergeSymbol(
   if (next.status === "deactivated") {
     return without;
   }
-  return [next, ...without].sort((left, right) => right.updatedAt - left.updatedAt);
+  return [next, ...without].sort(sortSymbolsByActivation);
+}
+
+function WatchlistDetailCardArticle({
+  label,
+  card,
+  symbol,
+}: {
+  label: string;
+  card: LiveWatchlistCardContent | null | undefined;
+  symbol: LiveWatchlistSymbolState;
+}) {
+  const hasContent = Boolean(card);
+
+  return (
+    <article
+      className="academy-card watchlist-content-card"
+      data-card-label={label}
+    >
+      <div className="academy-card-topline">
+        <WatchlistCardKicker label={label} />
+      </div>
+      {hasContent ? (
+        <>
+          {card && shouldShowCardTitle(label, card) ? (
+            <h2 className="academy-card-title">{card.title}</h2>
+          ) : null}
+          {label === "Known Recent News / SEC Filings" ? (
+            card ? <RecentNewsFilingsCard card={card} /> : null
+          ) : label === "Closest Levels to Watch" ? (
+            card ? <LevelMapDetailCard card={card} /> : null
+          ) : label === "Trader Read" ? (
+            card ? <LiveTraderReadCard card={card} /> : null
+          ) : label === "Market Structure" ? (
+            card ? (
+              <StructuredMarketStructureCard
+                body={cleanMarketStructureBody(card, symbol.cards.liveTraderRead)}
+              />
+            ) : null
+          ) : label === "Technical Context" ? (
+            card ? <TechnicalContextCard card={card} /> : null
+          ) : label === "Company Info" ? (
+            card ? <pre>{cleanCompanyInfoBody(card.body)}</pre> : null
+          ) : (
+            card ? <pre>{cleanGenericCardBody(card)}</pre> : null
+          )}
+          {card && shouldShowCardMeta(label) ? (
+            <p className="watchlist-card-meta">
+              Updated {formatTime(card.updatedAt)} | Price when posted{" "}
+              {formatPrice(card.priceWhenPosted)}
+            </p>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <h2 className="academy-card-title">Waiting for content</h2>
+          <p className="academy-card-text">
+            This card will fill in when the runtime publishes the next
+            matching update.
+          </p>
+        </>
+      )}
+    </article>
+  );
 }
 
 function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) {
@@ -394,67 +664,51 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
           source: "level_snapshot",
         }
       : null);
-  const cards = [
-    ["Closest Levels to Watch", symbol.cards.nearestSupportResistance, false],
-    ["Live Trader Read", symbol.cards.liveTraderRead, false],
-    ["Market Structure", derivedMarketStructureCard, false],
-    ["Company Info", symbol.cards.companyInfo, false],
-    ["Known Recent News / SEC Filings", symbol.cards.recentNewsFilings, true],
+  const liveClosestLevelsCard = closestLevelsCardFromState(symbol);
+  const closestLevelsCard = liveClosestLevelsCard ?? symbol.cards.nearestSupportResistance;
+  const technicalContextCard = symbol.cards.technicalContext;
+  const companyInfoCard = symbol.cards.companyInfo;
+  const detailCards = [
+    ["Trader Read", symbol.cards.liveTraderRead, false],
     ["Full Ladder", symbol.cards.fullLadder, false],
+    ["Known Recent News / SEC Filings", symbol.cards.recentNewsFilings, true],
+    ["Company Info", companyInfoCard, false],
   ] as const;
-  const hasRecentNewsFilings = Boolean(symbol.cards.recentNewsFilings);
 
   return (
-    <section
-      className="watchlist-card-grid"
-      data-has-recent-news={hasRecentNewsFilings ? "true" : "false"}
-    >
-      {cards
+    <section className="watchlist-card-grid">
+      <WatchlistDetailCardArticle
+        label="Closest Levels to Watch"
+        card={closestLevelsCard}
+        symbol={symbol}
+      />
+      {technicalContextCard || derivedMarketStructureCard ? (
+        <div className="watchlist-context-card-stack">
+          {technicalContextCard ? (
+            <WatchlistDetailCardArticle
+              label="Technical Context"
+              card={technicalContextCard}
+              symbol={symbol}
+            />
+          ) : null}
+          {derivedMarketStructureCard ? (
+            <WatchlistDetailCardArticle
+              label="Market Structure"
+              card={derivedMarketStructureCard}
+              symbol={symbol}
+            />
+          ) : null}
+        </div>
+      ) : null}
+      {detailCards
         .filter(([, card, hideWhenEmpty]) => card || !hideWhenEmpty)
         .map(([label, card]) => (
-          <article
+          <WatchlistDetailCardArticle
             key={label}
-            className="academy-card watchlist-content-card"
-            data-card-label={label}
-          >
-            <div className="academy-card-topline">
-              <p className="academy-kicker">{label}</p>
-            </div>
-            {card ? (
-              <>
-                {shouldShowCardTitle(label, card) ? (
-                  <h2 className="academy-card-title">{card.title}</h2>
-                ) : null}
-                {label === "Known Recent News / SEC Filings" ? (
-                  <RecentNewsFilingsCard card={card} />
-                ) : label === "Closest Levels to Watch" ? (
-                  <pre>{cleanClosestLevelsBody(card, symbol.cards.liveTraderRead)}</pre>
-                ) : label === "Live Trader Read" ? (
-                  <LiveTraderReadCard card={card} />
-                ) : label === "Market Structure" ? (
-                  <StructuredMarketStructureCard
-                    body={cleanMarketStructureBody(card, symbol.cards.liveTraderRead)}
-                  />
-                ) : label === "Company Info" ? (
-                  <pre>{cleanCompanyInfoBody(card.body)}</pre>
-                ) : (
-                  <pre>{cleanGenericCardBody(card)}</pre>
-                )}
-                <p className="watchlist-card-meta">
-                  Updated {formatTime(card.updatedAt)} | Price when posted{" "}
-                  {formatPrice(card.priceWhenPosted)}
-                </p>
-              </>
-            ) : (
-              <>
-                <h2 className="academy-card-title">Waiting for content</h2>
-                <p className="academy-card-text">
-                  This card will fill in when the runtime publishes the next
-                  matching update.
-                </p>
-              </>
-            )}
-          </article>
+            label={label}
+            card={card}
+            symbol={symbol}
+          />
         ))}
     </section>
   );
@@ -521,12 +775,18 @@ export function LiveWatchlistIndexClient({
     <div className="watchlist-page">
       <section className="watchlist-hero">
         <div>
-          <p className="academy-eyebrow">Premium Watchlist</p>
+          <p className="academy-eyebrow">Beta Testing</p>
           <h1 className="academy-title">Live Ticker Watchlist</h1>
           <p className="academy-lede">
-            Scan active tickers, nearest levels, and the latest trader read.
+            Scan active tickers, level maps, and the latest trader read.
             Click or tap any ticker to view deeper market data and the full
             ticker details.
+          </p>
+          <p className="watchlist-testing-note">
+            This watchlist is an experimental app. Ticker information is generated
+            from the app&apos;s code and may use real-time market data when connected.
+            During testing, live data may not always be active. When disconnected,
+            ticker details, including support and resistance levels, will not update.
           </p>
           <Link href="/watchlist/archive" className="academy-card-action watchlist-hero-action">
             View archived tickers
@@ -552,8 +812,7 @@ export function LiveWatchlistIndexClient({
           <div className="watchlist-table-head">
             <span>Ticker</span>
             <span>Price</span>
-            <span>Nearest support</span>
-            <span>Nearest resistance</span>
+            <span>Level Map</span>
             <span>Latest read</span>
             <span>Updated</span>
             <span>Added</span>
@@ -570,11 +829,8 @@ export function LiveWatchlistIndexClient({
               <span className="watchlist-mobile-field" data-mobile-label="Price">
                 {formatPrice(symbol.latestPrice)}
               </span>
-              <span className="watchlist-mobile-field" data-mobile-label="Nearest support">
-                {formatLevelCell(symbol.nearestSupportLabel, symbol.nearestSupport)}
-              </span>
-              <span className="watchlist-mobile-field" data-mobile-label="Nearest resistance">
-                {formatLevelCell(symbol.nearestResistanceLabel, symbol.nearestResistance)}
+              <span className="watchlist-mobile-field" data-mobile-label="Level Map">
+                <LevelMapIndexCell symbol={symbol} />
               </span>
               <span className="watchlist-read-cell">
                 <span className="watchlist-read-text" style={watchlistReadTextStyle}>

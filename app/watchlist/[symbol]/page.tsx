@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
 
 import { AcademyShell } from "@/app/academy/academy-shell";
 import { getCurrentAcademySession } from "@/app/academy/academy-server-session";
@@ -9,6 +10,10 @@ import {
   isLocalWatchlistAuthBypassEnabled,
 } from "@/src/lib/live-watchlist/live-watchlist-auth";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
+import {
+  buildWatchlistPreviewMetadata,
+  isWatchlistPreviewCrawlerUserAgent,
+} from "@/src/lib/live-watchlist/watchlist-preview";
 import { LiveWatchlistDetailClient } from "../live-watchlist-client";
 
 export const dynamic = "force-dynamic";
@@ -19,25 +24,29 @@ export async function generateMetadata({
   params: Promise<{ symbol: string }>;
 }): Promise<Metadata> {
   const { symbol } = await params;
-  return {
-    title: `${symbol.toUpperCase()} Live Watchlist | TradersLink`,
-    robots: {
-      index: false,
-      follow: false,
-    },
-  };
+  return buildWatchlistPreviewMetadata(`/watchlist/${symbol.toUpperCase()}`);
 }
 
 export default async function LiveWatchlistSymbolPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ symbol: string }>;
+  searchParams: Promise<{ auth?: string | string[] }>;
 }) {
   const { symbol } = await params;
+  const authStatus = normalizeSearchParam((await searchParams).auth);
+  const requestHeaders = await headers();
+  const isPreviewCrawler = isWatchlistPreviewCrawlerUserAgent(
+    requestHeaders.get("user-agent"),
+  );
   const session = await getCurrentAcademySession();
   const authBypass = isLocalWatchlistAuthBypassEnabled();
   if ((!session && !authBypass) || (session && !hasPremiumWatchlistAccess(session))) {
     const returnTo = `/watchlist/${encodeURIComponent(symbol.toUpperCase())}`;
+    if (!session && !authBypass && !authStatus && !isPreviewCrawler) {
+      redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}`);
+    }
     return (
       <AcademyShell>
         <div className="academy-container">
@@ -119,4 +128,8 @@ export default async function LiveWatchlistSymbolPage({
       </div>
     </AcademyShell>
   );
+}
+
+function normalizeSearchParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }

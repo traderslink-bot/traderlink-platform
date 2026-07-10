@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { AcademyShell } from "@/app/academy/academy-shell";
 import { getCurrentAcademySession } from "@/app/academy/academy-server-session";
@@ -30,14 +30,20 @@ export async function generateMetadata({
 
 export default async function LiveWatchlistArchiveDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ archiveId: string }>;
+  searchParams: Promise<{ auth?: string | string[] }>;
 }) {
   const { archiveId } = await params;
+  const authStatus = normalizeSearchParam((await searchParams).auth);
   const session = await getCurrentAcademySession();
   const authBypass = isLocalWatchlistAuthBypassEnabled();
   if ((!session && !authBypass) || (session && !hasPremiumWatchlistAccess(session))) {
     const returnTo = `/watchlist/archive/${encodeURIComponent(archiveId.toUpperCase())}`;
+    if (!session && !authBypass && !authStatus) {
+      redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}`);
+    }
     return (
       <AcademyShell>
         <div className="academy-container">
@@ -81,4 +87,8 @@ export default async function LiveWatchlistArchiveDetailPage({
       </div>
     </AcademyShell>
   );
+}
+
+function normalizeSearchParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }

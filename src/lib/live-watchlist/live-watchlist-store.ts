@@ -8,6 +8,7 @@ import type {
   LiveWatchlistCardPatch,
   LiveWatchlistArchiveSnapshot,
   LiveWatchlistHealthPatch,
+  LiveWatchlistLevelMap,
   LiveWatchlistMarketDataStatus,
   LiveWatchlistStatePayload,
   LiveWatchlistSymbolState,
@@ -175,6 +176,21 @@ function parseState(raw: string): LiveWatchlistSymbolState | null {
   }
 }
 
+function symbolActivationSortTime(symbol: LiveWatchlistSymbolState): number {
+  return symbol.firstPostedAt ?? symbol.updatedAt;
+}
+
+function sortSymbolsByActivation(
+  left: LiveWatchlistSymbolState,
+  right: LiveWatchlistSymbolState,
+): number {
+  const timeDiff = symbolActivationSortTime(right) - symbolActivationSortTime(left);
+  if (timeDiff !== 0) {
+    return timeDiff;
+  }
+  return left.symbol.localeCompare(right.symbol);
+}
+
 function parseArchiveRow(row: {
   archive_id?: unknown;
   symbol?: unknown;
@@ -190,9 +206,9 @@ function parseArchiveRow(row: {
   ) {
     return null;
   }
-  const archivedAt = normalizeNumericTimestamp(row.archived_at);
-  const firstPostedAt = normalizeNumericTimestamp(row.first_posted_at);
-  const lastActiveUpdatedAt = normalizeNumericTimestamp(row.last_active_updated_at);
+  const archivedAt = normalizeLiveWatchlistTimestamp(row.archived_at);
+  const firstPostedAt = normalizeLiveWatchlistTimestamp(row.first_posted_at);
+  const lastActiveUpdatedAt = normalizeLiveWatchlistTimestamp(row.last_active_updated_at);
   const state = parseState(row.state_json);
   if (!archivedAt || !lastActiveUpdatedAt || !state) {
     return null;
@@ -207,12 +223,16 @@ function parseArchiveRow(row: {
   };
 }
 
-function normalizeNumericTimestamp(value: unknown): number | null {
+export function normalizeLiveWatchlistTimestamp(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;
   }
   if (typeof value === "bigint") {
     return Number(value);
+  }
+  if (typeof value === "string" && /^\d+$/.test(value.trim())) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
 }
@@ -232,7 +252,6 @@ function hasCoreArchiveCards(state: LiveWatchlistSymbolState): boolean {
   return Boolean(
     state.cards.nearestSupportResistance &&
       state.cards.liveTraderRead &&
-      state.cards.companyInfo &&
       state.cards.fullLadder,
   );
 }
@@ -334,6 +353,12 @@ function deriveTraderReadHeadline(
   return firstLine ? normalizeHeadline(firstLine) : existingHeadline;
 }
 
+function normalizeVolume(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? value
+    : null;
+}
+
 function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbolState {
   const companyInfo = state.cards.companyInfo;
   const nearest = state.cards.nearestSupportResistance;
@@ -381,6 +406,9 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
       (typeof nearestMetadata.nearestResistanceLabel === "string"
         ? nearestMetadata.nearestResistanceLabel
         : deriveNearestLevelLabelFromCard(nearest, "resistance", nearestResistance)),
+    levelMap: state.levelMap ?? null,
+    volume: normalizeVolume(state.volume),
+    extendedQuote: state.extendedQuote ?? null,
     latestTraderReadHeadline:
       deriveTraderReadHeadline(liveTraderRead, state.latestTraderReadHeadline ?? null),
   };
@@ -391,11 +419,19 @@ function applyPatch(
   patch: LiveWatchlistCardPatch,
 ): LiveWatchlistSymbolState {
   const symbol = normalizeSymbol(patch.symbol);
-  const nextCards = { ...(existing?.cards ?? {}) };
+  const nextStatus = patch.status ?? existing?.status ?? "live";
+  const isReactivation = existing?.status === "deactivated" && nextStatus !== "deactivated";
+  const baseExisting = isReactivation ? null : existing;
+  const nextCards = { ...(baseExisting?.cards ?? {}) };
+  const patchesNearestCard = Object.prototype.hasOwnProperty.call(
+    patch.cards,
+    "nearestSupportResistance",
+  );
   const patchesPriceCard = Boolean(
     patch.cards.liveTraderRead || patch.cards.nearestSupportResistance || patch.cards.companyInfo,
   );
-  const patchesNearestCard = Boolean(patch.cards.nearestSupportResistance);
+  const patchesLevelMap = Object.prototype.hasOwnProperty.call(patch, "levelMap");
+  const patchesFirstPostedAt = Object.prototype.hasOwnProperty.call(patch, "firstPostedAt");
   for (const [kind, card] of Object.entries(patch.cards)) {
     if (card === null) {
       delete nextCards[kind as keyof typeof nextCards];
@@ -406,18 +442,27 @@ function applyPatch(
 
   return deriveStateFields({
     symbol,
-    status: patch.status ?? existing?.status ?? "live",
-    updatedAt: Math.max(patch.updatedAt, existing?.updatedAt ?? 0),
-    firstPostedAt: existing?.firstPostedAt ?? null,
-    companyName: existing?.companyName ?? null,
-    latestPrice: patchesPriceCard ? null : existing?.latestPrice ?? null,
-    nearestSupport: patchesNearestCard ? null : existing?.nearestSupport ?? null,
-    nearestResistance: patchesNearestCard ? null : existing?.nearestResistance ?? null,
-    nearestSupportLabel: patchesNearestCard ? null : existing?.nearestSupportLabel ?? null,
-    nearestResistanceLabel: patchesNearestCard ? null : existing?.nearestResistanceLabel ?? null,
-    latestTraderReadHeadline: existing?.latestTraderReadHeadline ?? null,
+    status: nextStatus,
+    updatedAt: Math.max(patch.updatedAt, baseExisting?.updatedAt ?? 0),
+    firstPostedAt: patchesFirstPostedAt
+      ? normalizeLiveWatchlistTimestamp(patch.firstPostedAt)
+      : baseExisting?.firstPostedAt ?? null,
+    companyName: baseExisting?.companyName ?? null,
+    latestPrice: patchesPriceCard ? null : baseExisting?.latestPrice ?? null,
+    nearestSupport: patchesNearestCard ? null : baseExisting?.nearestSupport ?? null,
+    nearestResistance: patchesNearestCard ? null : baseExisting?.nearestResistance ?? null,
+    nearestSupportLabel: patchesNearestCard ? null : baseExisting?.nearestSupportLabel ?? null,
+    nearestResistanceLabel: patchesNearestCard ? null : baseExisting?.nearestResistanceLabel ?? null,
+    levelMap: patchesLevelMap ? normalizeLevelMap(patch.levelMap) : baseExisting?.levelMap ?? null,
+    volume: baseExisting?.volume ?? null,
+    extendedQuote: baseExisting?.extendedQuote ?? null,
+    latestTraderReadHeadline: baseExisting?.latestTraderReadHeadline ?? null,
     cards: nextCards,
   });
+}
+
+function normalizeLevelMap(value: LiveWatchlistLevelMap | null | undefined): LiveWatchlistLevelMap | null {
+  return value ?? null;
 }
 
 export class LiveWatchlistStore {
@@ -524,7 +569,7 @@ export class LiveWatchlistStore {
     const next = deriveStateFields({
       symbol,
       status: patch.status ?? existing?.status ?? "live",
-      updatedAt: Math.max(patch.updatedAt, existing?.updatedAt ?? 0),
+      updatedAt: existing?.updatedAt ?? patch.updatedAt,
       firstPostedAt: existing?.firstPostedAt ?? null,
       companyName: existing?.companyName ?? null,
       latestPrice: patch.latestPrice,
@@ -532,6 +577,13 @@ export class LiveWatchlistStore {
       nearestResistance: patch.nearestResistance,
       nearestSupportLabel: patch.nearestSupportLabel ?? null,
       nearestResistanceLabel: patch.nearestResistanceLabel ?? null,
+      levelMap: normalizeLevelMap(patch.levelMap),
+      volume: Object.prototype.hasOwnProperty.call(patch, "volume")
+        ? normalizeVolume(patch.volume)
+        : existing?.volume ?? null,
+      extendedQuote: Object.prototype.hasOwnProperty.call(patch, "extendedQuote")
+        ? patch.extendedQuote ?? null
+        : existing?.extendedQuote ?? null,
       latestTraderReadHeadline: existing?.latestTraderReadHeadline ?? null,
       cards: existing?.cards ?? {},
     });
@@ -601,6 +653,7 @@ export class LiveWatchlistStore {
         .map((row) => (typeof row.state_json === "string" ? parseState(row.state_json) : null))
         .filter(isUserVisibleSymbol);
     }
+    symbols.sort(sortSymbolsByActivation);
 
     return {
       generatedAt: Date.now(),
@@ -741,6 +794,22 @@ export class LiveWatchlistStore {
         }
       | undefined;
     return row ? parseArchiveRow(row) : null;
+  }
+
+  async clearArchives(): Promise<number> {
+    if (!shouldUseSqliteFallback()) {
+      await ensureNeonSchema();
+      const rows = (await getNeonSql()`SELECT COUNT(*)::int AS count FROM live_watchlist_archives`) as Array<{
+        count?: unknown;
+      }>;
+      const count = typeof rows[0]?.count === "number" ? rows[0].count : 0;
+      await getNeonSql()`DELETE FROM live_watchlist_archives`;
+      return count;
+    }
+
+    const db = await getSqliteDatabase();
+    const result = db.prepare("DELETE FROM live_watchlist_archives").run();
+    return result.changes;
   }
 
   private async createArchiveIfEligible(state: LiveWatchlistSymbolState): Promise<void> {

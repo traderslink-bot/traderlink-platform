@@ -50,6 +50,57 @@ function isHealthPatch(value: unknown): value is LiveWatchlistHealthPatch {
   );
 }
 
+function isNullableNumber(value: unknown): boolean {
+  return value === null || (typeof value === "number" && Number.isFinite(value));
+}
+
+function isNullableString(value: unknown): boolean {
+  return value === null || typeof value === "string";
+}
+
+function isExtendedQuote(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const quote = value as Record<string, unknown>;
+  const nullableNumberFields = [
+    "open",
+    "high",
+    "low",
+    "lastTradePrice",
+    "lastTradeSize",
+    "lastTradeTime",
+    "bidPrice",
+    "bidSize",
+    "bidTime",
+    "askPrice",
+    "askSize",
+    "askTime",
+    "volume",
+    "change",
+    "changePercent",
+    "previousClosePrice",
+    "ethPrice",
+    "ethVolume",
+    "ethTime",
+    "marketCap",
+    "sharesOutstanding",
+    "sharesFloat",
+    "timestamp",
+  ];
+  return (
+    quote.source === "eodhd_live_v2" &&
+    typeof quote.symbol === "string" &&
+    typeof quote.providerSymbol === "string" &&
+    typeof quote.updatedAt === "number" &&
+    typeof quote.fetchedAt === "number" &&
+    isNullableString(quote.name) &&
+    isNullableString(quote.exchange) &&
+    isNullableString(quote.currency) &&
+    nullableNumberFields.every((field) => isNullableNumber(quote[field]))
+  );
+}
+
 function isTickerDataPatch(value: unknown): value is LiveWatchlistTickerDataPatch {
   return (
     typeof value === "object" &&
@@ -75,6 +126,15 @@ function isTickerDataPatch(value: unknown): value is LiveWatchlistTickerDataPatc
       (value as LiveWatchlistTickerDataPatch).nearestResistanceLabel === undefined ||
       (value as LiveWatchlistTickerDataPatch).nearestResistanceLabel === null ||
       typeof (value as LiveWatchlistTickerDataPatch).nearestResistanceLabel === "string"
+    ) &&
+    (
+      (value as LiveWatchlistTickerDataPatch).volume === undefined ||
+      isNullableNumber((value as LiveWatchlistTickerDataPatch).volume)
+    ) &&
+    (
+      (value as LiveWatchlistTickerDataPatch).extendedQuote === undefined ||
+      (value as LiveWatchlistTickerDataPatch).extendedQuote === null ||
+      isExtendedQuote((value as LiveWatchlistTickerDataPatch).extendedQuote)
     )
   );
 }
