@@ -23,6 +23,7 @@ export interface AcademyUser {
   globalName: string | null;
   avatar: string | null;
   guildId: string;
+  roleIds: string[];
   joinedAt: string | null;
   lastLoginAt: string;
 }
@@ -229,6 +230,31 @@ export function hashAcademySessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+function extractRoleIds(row: Record<string, unknown>): string[] {
+  const rawJson = row.json;
+  if (typeof rawJson !== "string") {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(rawJson) as { member?: { roles?: unknown } };
+    return Array.isArray(parsed.member?.roles)
+      ? parsed.member.roles.filter((role): role is string => typeof role === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function extractRoleIdsFromMember(rawMember: unknown): string[] {
+  if (typeof rawMember !== "object" || rawMember === null) {
+    return [];
+  }
+  const roles = (rawMember as { roles?: unknown }).roles;
+  return Array.isArray(roles)
+    ? roles.filter((role): role is string => typeof role === "string")
+    : [];
+}
+
 function rowToUser(row: Record<string, unknown>): AcademyUser {
   return {
     discordUserId: String(row.discord_user_id),
@@ -237,6 +263,7 @@ function rowToUser(row: Record<string, unknown>): AcademyUser {
       typeof row.global_name === "string" ? String(row.global_name) : null,
     avatar: typeof row.avatar === "string" ? String(row.avatar) : null,
     guildId: String(row.guild_id),
+    roleIds: extractRoleIds(row),
     joinedAt: typeof row.joined_at === "string" ? String(row.joined_at) : null,
     lastLoginAt: String(row.last_login_at),
   };
@@ -295,6 +322,7 @@ export class AcademyProgressStore {
         globalName: input.globalName ?? null,
         avatar: input.avatar ?? null,
         guildId: input.guildId,
+        roleIds: extractRoleIdsFromMember(input.rawMember),
         joinedAt: input.joinedAt ?? null,
         lastLoginAt: now,
       };
@@ -343,6 +371,7 @@ export class AcademyProgressStore {
       globalName: input.globalName ?? null,
       avatar: input.avatar ?? null,
       guildId: input.guildId,
+      roleIds: extractRoleIdsFromMember(input.rawMember),
       joinedAt: input.joinedAt ?? null,
       lastLoginAt: now,
     };
@@ -431,7 +460,8 @@ export class AcademyProgressStore {
           u.avatar,
           u.guild_id,
           u.joined_at,
-          u.last_login_at
+          u.last_login_at,
+          u.json
         FROM academy_sessions s
         JOIN academy_users u ON u.discord_user_id = s.discord_user_id
         WHERE s.token_hash = ${hashAcademySessionToken(token)}
@@ -456,7 +486,8 @@ export class AcademyProgressStore {
             u.avatar,
             u.guild_id,
             u.joined_at,
-            u.last_login_at
+            u.last_login_at,
+            u.json
           FROM academy_sessions s
           JOIN academy_users u ON u.discord_user_id = s.discord_user_id
           WHERE s.token_hash = ?
