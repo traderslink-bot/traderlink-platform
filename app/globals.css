@@ -2563,12 +2563,16 @@ main.bg-zinc-950 .text-zinc-500 {
 .news-company-info-row dt,
 .news-company-info-row dd {
   margin: 0;
+}
+
+.news-company-info-row dt {
   font-weight: 750;
 }
 
 .news-company-info-row dd,
 .news-company-info-row a {
   min-width: 0;
+  font-weight: 400;
   overflow-wrap: anywhere;
 }
 
