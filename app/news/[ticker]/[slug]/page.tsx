@@ -417,11 +417,22 @@ export async function NewsArticleView({
             <aside className="news-sidebar-stack">
               <SectionCard icon="check" title="Company Info">
                 {companyInfoRows.length > 0 ? (
-                  <div className="news-detail-grid news-detail-grid-compact">
+                  <dl className="news-company-info-list">
                     {companyInfoRows.map(({ href, label, value }) => (
-                      <DetailTile key={label} href={href} label={label} value={value} />
+                      <div className="news-company-info-row" key={label}>
+                        <dt>{label}:</dt>
+                        <dd>
+                          {href ? (
+                            <a href={href} rel="noopener noreferrer" target="_blank">
+                              {value}
+                            </a>
+                          ) : (
+                            value
+                          )}
+                        </dd>
+                      </div>
                     ))}
-                  </div>
+                  </dl>
                 ) : (
                   <p className="news-muted">
                     Company information is temporarily unavailable.

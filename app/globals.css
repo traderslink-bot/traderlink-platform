@@ -2544,6 +2544,34 @@ main.bg-zinc-950 .text-zinc-500 {
   word-break: break-word;
 }
 
+.news-company-info-list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1rem 0 0;
+}
+
+.news-company-info-row {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  color: var(--academy-heading);
+  line-height: 1.5;
+}
+
+.news-company-info-row dt,
+.news-company-info-row dd {
+  margin: 0;
+  font-weight: 750;
+}
+
+.news-company-info-row dd,
+.news-company-info-row a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .news-bullet-list {
   display: grid;
   gap: 0.75rem;
