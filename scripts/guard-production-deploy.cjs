@@ -181,9 +181,14 @@ function assertDirtyScope(allowedPaths) {
 }
 
 function runVercelDeploy(vercelArgs) {
-  const command = process.platform === "win32" ? "npm.cmd" : "npm";
+  const npmCli = process.env.npm_execpath;
+  if (!npmCli) {
+    fail("could not locate the npm CLI used to start the guarded deploy.", [
+      "run this through npm run deploy:prod",
+    ]);
+  }
   info(`running: npm exec --yes -- vercel ${vercelArgs.join(" ")}`);
-  const result = spawnSync(command, ["exec", "--yes", "--", "vercel", ...vercelArgs], {
+  const result = spawnSync(process.execPath, [npmCli, "exec", "--yes", "--", "vercel", ...vercelArgs], {
     cwd: process.cwd(),
     stdio: "inherit",
   });
