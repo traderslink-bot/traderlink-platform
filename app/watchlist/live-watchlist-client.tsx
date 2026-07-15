@@ -677,6 +677,14 @@ function WatchlistDetailCardArticle({
     >
       <div className="academy-card-topline">
         <WatchlistCardKicker label={label} />
+        {label === "Potential Path Levels" ? (
+          <Link
+            href="/watchlist/how-it-works"
+            className="watchlist-card-guide-link"
+          >
+            How it works
+          </Link>
+        ) : null}
       </div>
       {hasContent ? (
         <>
