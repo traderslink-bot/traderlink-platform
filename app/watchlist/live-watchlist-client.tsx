@@ -17,8 +17,6 @@ import {
 import { formatLevelMarketDataProvenance } from "@/src/lib/live-watchlist/live-watchlist-level-provenance";
 import {
   buildWatchlistV2LevelRows,
-  formatWatchlistV2EvidenceCount,
-  formatWatchlistV2EvidenceStatus,
   formatWatchlistV2LevelDistance,
   formatWatchlistV2LevelPrice,
   type WatchlistV2LevelRow,
@@ -81,69 +79,6 @@ function formatLevelMeta(level: WatchlistV2LevelRow): string {
   return [level.strengthLabel, level.sourceLabel].filter(Boolean).join(" / ") || "level";
 }
 
-function formatLevelEvidenceDateRange(level: WatchlistV2LevelRow): string | null {
-  const first = level.firstEvidenceAt;
-  const last = level.lastEvidenceAt;
-  if (!first && !last) {
-    return null;
-  }
-  if (!first || !last || formatDate(first) === formatDate(last)) {
-    return formatDate(first ?? last!);
-  }
-  return `${formatDate(first)}–${formatDate(last)}`;
-}
-
-function WatchlistV2LevelEvidence({ level }: { level: WatchlistV2LevelRow }) {
-  const evidenceCount = formatWatchlistV2EvidenceCount(level);
-  const evidenceDates = formatLevelEvidenceDateRange(level);
-  const timeframes = level.timeframes?.length ? level.timeframes.join(" / ") : null;
-  const hasDetails = Boolean(
-    level.isClustered ||
-      evidenceCount ||
-      evidenceDates ||
-      timeframes ||
-      level.evidenceStatus ||
-      level.roleFlipState === "confirmed",
-  );
-  if (!hasDetails) {
-    return null;
-  }
-
-  return (
-    <details className="watchlist-v2-level-evidence">
-      <summary>Zone evidence</summary>
-      <dl>
-        <div>
-          <dt>Status</dt>
-          <dd>{formatWatchlistV2EvidenceStatus(level)}</dd>
-        </div>
-        {evidenceCount ? (
-          <div>
-            <dt>Evidence</dt>
-            <dd>{evidenceCount}</dd>
-          </div>
-        ) : null}
-        {evidenceDates ? (
-          <div>
-            <dt>Date range</dt>
-            <dd>{evidenceDates}</dd>
-          </div>
-        ) : null}
-        {timeframes ? (
-          <div>
-            <dt>Timeframes</dt>
-            <dd>{timeframes}</dd>
-          </div>
-        ) : null}
-        <div>
-          <dt>Representative</dt>
-          <dd>{formatPrice(level.price)}</dd>
-        </div>
-      </dl>
-    </details>
-  );
-}
-
 function WatchlistV2LevelRowItem({ level }: { level: WatchlistV2LevelRow }) {
   const provenance = formatLevelMarketDataProvenance(level);
   return (
@@ -151,7 +86,6 @@ function WatchlistV2LevelRowItem({ level }: { level: WatchlistV2LevelRow }) {
       className="watchlist-v2-level-row"
       data-side={level.side}
       data-nearest={level.isNearest ? "true" : "false"}
-      data-zone={level.lowPrice !== level.highPrice ? "true" : "false"}
     >
       <span className="watchlist-v2-level-price">{formatWatchlistV2LevelPrice(level)}</span>
       <span className="watchlist-v2-level-distance">
@@ -163,7 +97,6 @@ function WatchlistV2LevelRowItem({ level }: { level: WatchlistV2LevelRow }) {
           <span className="watchlist-level-provenance">{provenance}</span>
         ) : null}
       </span>
-      <WatchlistV2LevelEvidence level={level} />
     </li>
   );
 }
