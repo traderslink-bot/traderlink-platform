@@ -22,40 +22,11 @@ function formatSignedPercent(value: number): string {
 }
 
 export function formatWatchlistV2LevelPrice(level: LiveWatchlistLevelMapLevel): string {
-  const lowPrice = level.lowPrice ?? level.price;
-  const highPrice = level.highPrice ?? level.price;
-  const low = formatLevelPrice(Math.min(lowPrice, level.price));
-  const high = formatLevelPrice(Math.max(highPrice, level.price));
-  return low === high ? formatLevelPrice(level.price) : `${low}–${high}`;
+  return formatLevelPrice(level.price);
 }
 
 export function formatWatchlistV2LevelDistance(level: LiveWatchlistLevelMapLevel): string {
-  const low = formatSignedPercent(level.lowDistancePct ?? level.distancePct);
-  const high = formatSignedPercent(level.highDistancePct ?? level.distancePct);
-  return low === high ? formatSignedPercent(level.distancePct) : `${low} to ${high}`;
-}
-
-export function formatWatchlistV2EvidenceStatus(level: LiveWatchlistLevelMapLevel): string {
-  if (level.roleFlipState === "confirmed") {
-    return "Confirmed role flip";
-  }
-  switch (level.evidenceStatus) {
-    case "synthetic_planning":
-      return "Synthetic planning level";
-    case "historically_tested":
-      return level.isClustered ? "Historically tested cluster" : "Historically tested";
-    case "detected_structure":
-      return level.isClustered ? "Clustered historical structure" : "Detected structure";
-    default:
-      return level.isClustered ? "Clustered historical evidence" : "Historical level";
-  }
-}
-
-export function formatWatchlistV2EvidenceCount(level: LiveWatchlistLevelMapLevel): string | null {
-  if (typeof level.evidenceCount !== "number" || level.evidenceCount <= 0) {
-    return null;
-  }
-  return `${level.evidenceCount} structural candidate${level.evidenceCount === 1 ? "" : "s"}`;
+  return formatSignedPercent(level.distancePct);
 }
 
 function isSameLevel(

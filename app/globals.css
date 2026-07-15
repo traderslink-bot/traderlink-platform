@@ -3251,51 +3251,6 @@ main.bg-zinc-950 .text-zinc-500 {
   line-height: 1.25;
 }
 
-.watchlist-v2-level-evidence {
-  grid-column: 1 / -1;
-  min-width: 0;
-  border-top: 1px solid color-mix(in srgb, var(--academy-border) 78%, transparent);
-  padding-top: 0.35rem;
-}
-
-.watchlist-v2-level-evidence summary {
-  width: fit-content;
-  cursor: pointer;
-  color: var(--academy-primary);
-  font-size: 0.72rem;
-  font-weight: 780;
-  line-height: 1.25;
-}
-
-.watchlist-v2-level-evidence dl {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.35rem 0.75rem;
-  margin: 0.5rem 0 0;
-}
-
-.watchlist-v2-level-evidence dl > div {
-  min-width: 0;
-}
-
-.watchlist-v2-level-evidence dt {
-  color: var(--academy-subtle);
-  font-size: 0.66rem;
-  font-weight: 780;
-  letter-spacing: 0.035em;
-  line-height: 1.2;
-  text-transform: uppercase;
-}
-
-.watchlist-v2-level-evidence dd {
-  margin: 0.12rem 0 0;
-  color: var(--academy-text);
-  font-size: 0.72rem;
-  font-weight: 650;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
 .watchlist-v2-level-empty,
 .watchlist-v2-fallback-levels p {
   margin: 0;

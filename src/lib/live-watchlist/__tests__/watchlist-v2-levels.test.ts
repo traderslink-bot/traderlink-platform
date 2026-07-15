@@ -3,8 +3,6 @@ import { describe, expect, it } from "vitest";
 import type { LiveWatchlistLevelMapLevel } from "../live-watchlist-types";
 import {
   buildWatchlistV2LevelRows,
-  formatWatchlistV2EvidenceCount,
-  formatWatchlistV2EvidenceStatus,
   formatWatchlistV2LevelDistance,
   formatWatchlistV2LevelPrice,
 } from "../watchlist-v2-levels";
@@ -85,7 +83,7 @@ describe("buildWatchlistV2LevelRows", () => {
     expect(rows.resistance[1]?.isNearest).toBe(false);
   });
 
-  it("formats clustered zones as ranges with factual evidence status", () => {
+  it("shows a clustered level as its single representative price", () => {
     const clustered: LiveWatchlistLevelMapLevel = {
       ...level("resistance", 2.4),
       lowPrice: 2.36,
@@ -97,21 +95,7 @@ describe("buildWatchlistV2LevelRows", () => {
       evidenceStatus: "historically_tested",
     };
 
-    expect(formatWatchlistV2LevelPrice(clustered)).toBe("2.36–2.42");
-    expect(formatWatchlistV2LevelDistance(clustered)).toBe("+7.3% to +10.0%");
-    expect(formatWatchlistV2EvidenceCount(clustered)).toBe("3 structural candidates");
-    expect(formatWatchlistV2EvidenceStatus(clustered)).toBe("Historically tested cluster");
-  });
-
-  it("reserves confirmed wording for a confirmed role flip", () => {
-    const detected: LiveWatchlistLevelMapLevel = {
-      ...level("support", 1.1),
-      isClustered: true,
-      evidenceStatus: "detected_structure",
-    };
-    const confirmed = { ...detected, roleFlipState: "confirmed" as const };
-
-    expect(formatWatchlistV2EvidenceStatus(detected)).toBe("Clustered historical structure");
-    expect(formatWatchlistV2EvidenceStatus(confirmed)).toBe("Confirmed role flip");
+    expect(formatWatchlistV2LevelPrice(clustered)).toBe("2.40");
+    expect(formatWatchlistV2LevelDistance(clustered)).toBe("+5.2%");
   });
 });
