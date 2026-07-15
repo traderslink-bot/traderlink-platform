@@ -87,6 +87,13 @@ export type LiveWatchlistExtendedQuote = {
 
 export type LiveWatchlistLevelMapRangeState = "tight" | "normal" | "wide";
 
+export type LiveWatchlistLevelMarketDataProvenance = {
+  formedAt: number;
+  sourceLastSeenAt: number;
+  lastTestedAt?: number;
+  lastConfirmedAt?: number;
+};
+
 export type LiveWatchlistLevelMapLevel = {
   side: "support" | "resistance";
   price: number;
@@ -96,6 +103,7 @@ export type LiveWatchlistLevelMapLevel = {
   strengthLabel?: "weak" | "moderate" | "strong" | "major";
   freshness?: "fresh" | "aging" | "stale";
   sourceLabel?: string | null;
+  marketDataProvenance?: LiveWatchlistLevelMarketDataProvenance;
   roleFlipFromSide?: "support" | "resistance" | null;
   roleFlipState?: "original" | "testing" | "confirmed";
   label: string;

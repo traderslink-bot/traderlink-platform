@@ -14,6 +14,7 @@ import type {
 import {
   formatMarketDataStatusLabel,
 } from "@/src/lib/live-watchlist/live-watchlist-labels";
+import { formatLevelMarketDataProvenance } from "@/src/lib/live-watchlist/live-watchlist-level-provenance";
 import {
   buildWatchlistV2LevelRows,
   type WatchlistV2LevelRow,
@@ -82,6 +83,7 @@ function formatLevelMeta(level: WatchlistV2LevelRow): string {
 }
 
 function WatchlistV2LevelRowItem({ level }: { level: WatchlistV2LevelRow }) {
+  const provenance = formatLevelMarketDataProvenance(level);
   return (
     <li
       className="watchlist-v2-level-row"
@@ -92,7 +94,12 @@ function WatchlistV2LevelRowItem({ level }: { level: WatchlistV2LevelRow }) {
       <span className="watchlist-v2-level-distance">
         {formatSignedPercent(level.distancePct)}
       </span>
-      <span className="watchlist-v2-level-meta">{formatLevelMeta(level)}</span>
+      <span className="watchlist-v2-level-meta">
+        <span>{formatLevelMeta(level)}</span>
+        {provenance ? (
+          <span className="watchlist-level-provenance">{provenance}</span>
+        ) : null}
+      </span>
     </li>
   );
 }

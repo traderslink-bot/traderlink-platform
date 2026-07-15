@@ -35,6 +35,12 @@ const exampleLevelMap = {
       distancePct: -0.0678,
       strengthLabel: "moderate" as const,
       sourceLabel: "intraday",
+      marketDataProvenance: {
+        formedAt: 1_780_000_000_000,
+        sourceLastSeenAt: 1_780_000_000_000,
+        lastTestedAt: 1_780_000_300_000,
+        lastConfirmedAt: 1_780_000_300_000,
+      },
       label: "1.10 (-6.8%, moderate, intraday)",
     },
   ],
@@ -831,6 +837,9 @@ describe("LiveWatchlistStore", () => {
     expect(archives[0]?.lastActiveUpdatedAt).toBe(2000);
     expect(archives[0]?.state.status).toBe("deactivated");
     expect(archives[0]?.state.levelMap?.rangeState).toBe("tight");
+    expect(
+      archives[0]?.state.levelMap?.supportLevels[0]?.marketDataProvenance?.lastConfirmedAt,
+    ).toBe(1_780_000_300_000);
     expect(archives[0]?.state.cards.levelMap?.title).toBe("Level Map");
     expect(archives[0]?.state.cards.fullLadder?.title).toBe("Full Ladder");
     await expect(store.getLatestArchiveForSymbol("ABCD")).resolves.toEqual(archives[0]);
