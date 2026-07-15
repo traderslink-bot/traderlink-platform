@@ -100,10 +100,18 @@ export type LiveWatchlistLevelMapLevel = {
   lowPrice?: number;
   highPrice?: number;
   distancePct: number;
+  lowDistancePct?: number;
+  highDistancePct?: number;
   strengthLabel?: "weak" | "moderate" | "strong" | "major";
   freshness?: "fresh" | "aging" | "stale";
   sourceLabel?: string | null;
   marketDataProvenance?: LiveWatchlistLevelMarketDataProvenance;
+  evidenceCount?: number;
+  firstEvidenceAt?: number;
+  lastEvidenceAt?: number;
+  timeframes?: Array<"daily" | "4h" | "5m">;
+  isClustered?: boolean;
+  evidenceStatus?: "detected_structure" | "historically_tested" | "synthetic_planning";
   roleFlipFromSide?: "support" | "resistance" | null;
   roleFlipState?: "original" | "testing" | "confirmed";
   label: string;
