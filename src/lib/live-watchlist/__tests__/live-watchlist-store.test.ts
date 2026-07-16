@@ -662,6 +662,104 @@ describe("LiveWatchlistStore", () => {
     expect(withContent.updatedAt).toBe(2000);
   });
 
+  it("tracks the best observed live move from the posted price through pullbacks", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    const posted = await store.upsertPatch({
+      symbol: "GAIN",
+      status: "live",
+      updatedAt: 1000,
+      firstPostedAt: 1000,
+      cards: {
+        liveTraderRead: {
+          title: "Live Trader Read",
+          body: "First published read.",
+          updatedAt: 1000,
+          priceWhenPosted: 1,
+          source: "live_alert",
+        },
+      },
+    });
+    expect(posted.potentialGain).toMatchObject({
+      postedAt: 1000,
+      startingPrice: 1,
+      highPrice: 1,
+      potentialGainPct: 0,
+    });
+
+    const firstHigh = await store.upsertTickerData({
+      type: "tickerData",
+      symbol: "GAIN",
+      updatedAt: 2000,
+      latestPrice: 1.4,
+      nearestSupport: null,
+      nearestResistance: null,
+    });
+    expect(firstHigh.potentialGain).toMatchObject({
+      highPrice: 1.4,
+      highPriceAt: 2000,
+    });
+    expect(firstHigh.potentialGain?.potentialGainPct).toBeCloseTo(40);
+
+    const pullback = await store.upsertTickerData({
+      type: "tickerData",
+      symbol: "GAIN",
+      updatedAt: 3000,
+      latestPrice: 1.2,
+      nearestSupport: null,
+      nearestResistance: null,
+    });
+    expect(pullback.potentialGain?.highPrice).toBe(1.4);
+    expect(pullback.potentialGain?.potentialGainPct).toBeCloseTo(40);
+
+    const newHigh = await store.upsertTickerData({
+      type: "tickerData",
+      symbol: "GAIN",
+      updatedAt: 4000,
+      latestPrice: 1.55,
+      nearestSupport: null,
+      nearestResistance: null,
+    });
+    expect(newHigh.potentialGain?.highPrice).toBe(1.55);
+    expect(newHigh.potentialGain?.potentialGainPct).toBeCloseTo(55);
+  });
+
+  it("preserves the Potential Gain card visibility across live ticker updates", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    const hidden = await store.upsertPatch({
+      symbol: "GAIN",
+      status: "live",
+      updatedAt: 1000,
+      potentialGainCardVisible: false,
+      cards: {},
+    });
+    expect(hidden.potentialGainCardVisible).toBe(false);
+
+    const preserved = await store.upsertTickerData({
+      type: "tickerData",
+      symbol: "GAIN",
+      updatedAt: 2000,
+      latestPrice: 1.2,
+      nearestSupport: null,
+      nearestResistance: null,
+    });
+    expect(preserved.potentialGainCardVisible).toBe(false);
+
+    const visible = await store.upsertPatch({
+      symbol: "GAIN",
+      status: "live",
+      updatedAt: 3000,
+      potentialGainCardVisible: true,
+      cards: {},
+    });
+    expect(visible.potentialGainCardVisible).toBe(true);
+  });
+
   it("allows a new activation patch to reset a stale first posted time", async () => {
     process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
     process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";

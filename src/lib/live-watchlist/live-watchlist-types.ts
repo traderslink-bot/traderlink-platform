@@ -26,6 +26,7 @@ export type LiveWatchlistCardPatch = {
   status?: LiveWatchlistStatus;
   updatedAt: number;
   firstPostedAt?: number | null;
+  potentialGainCardVisible?: boolean;
   levelMap?: LiveWatchlistLevelMap | null;
   cards: Partial<Record<LiveWatchlistCardKind, LiveWatchlistCardContent | null>>;
 };
@@ -41,6 +42,7 @@ export type LiveWatchlistTickerDataPatch = {
   symbol: string;
   status?: LiveWatchlistStatus;
   updatedAt: number;
+  potentialGainCardVisible?: boolean;
   latestPrice: number;
   nearestSupport: number | null;
   nearestResistance: number | null;
@@ -49,6 +51,15 @@ export type LiveWatchlistTickerDataPatch = {
   levelMap?: LiveWatchlistLevelMap | null;
   volume?: number | null;
   extendedQuote?: LiveWatchlistExtendedQuote | null;
+};
+
+export type LiveWatchlistPotentialGain = {
+  postedAt: number;
+  startingPrice: number;
+  startingPriceAt: number;
+  highPrice: number;
+  highPriceAt: number;
+  potentialGainPct: number;
 };
 
 export type LiveWatchlistExtendedQuote = {
@@ -159,6 +170,8 @@ export type LiveWatchlistSymbolState = {
   status: LiveWatchlistStatus;
   updatedAt: number;
   firstPostedAt: number | null;
+  potentialGainCardVisible?: boolean;
+  potentialGain?: LiveWatchlistPotentialGain | null;
   companyName: string | null;
   latestPrice: number | null;
   nearestSupport: number | null;
