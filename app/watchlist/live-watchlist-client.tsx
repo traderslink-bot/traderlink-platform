@@ -50,6 +50,8 @@ const watchlistTimeCellStyle: CSSProperties = {
 };
 
 const detailCardHelpText: Record<string, string> = {
+  "Potential Gain":
+    "Potential gain compares the ticker's price when tracking began with the highest live price observed afterward. It shows the best observed move, not what every trader captured.",
   "Potential Path Levels":
     "These levels are not price targets. They are filtered support and resistance map areas for context, usually mapped roughly 30% from the current price when enough useful levels are available.",
   "Trader Read":
@@ -73,6 +75,13 @@ function formatPrice(value: number | null): string {
     return "n/a";
   }
   return value >= 1 ? value.toFixed(2) : value.toFixed(4);
+}
+
+function formatPercentPoints(value: number): string {
+  if (!Number.isFinite(value)) {
+    return "n/a";
+  }
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
 function formatLevelMeta(level: WatchlistV2LevelRow): string {
@@ -732,6 +741,59 @@ function WatchlistDetailCardArticle({
   );
 }
 
+function PotentialGainCard({ symbol }: { symbol: LiveWatchlistSymbolState }) {
+  const gain = symbol.potentialGain;
+
+  return (
+    <article
+      className="academy-card watchlist-content-card watchlist-potential-gain-card"
+      data-card-label="Potential Gain"
+    >
+      <div className="academy-card-topline">
+        <WatchlistCardKicker label="Potential Gain" />
+      </div>
+      {gain ? (
+        <>
+          <div>
+            <p className="watchlist-potential-gain">
+              {formatPercentPoints(gain.potentialGainPct)}
+            </p>
+            <p className="watchlist-potential-gain-label">Best observed move</p>
+          </div>
+          <div className="watchlist-potential-gain-stats">
+            <div className="watchlist-potential-gain-stat">
+              <span>Starting price</span>
+              <strong>${formatPrice(gain.startingPrice)}</strong>
+            </div>
+            <div className="watchlist-potential-gain-stat">
+              <span>Highest after start</span>
+              <strong>${formatPrice(gain.highPrice)}</strong>
+            </div>
+            <div className="watchlist-potential-gain-stat">
+              <span>High observed</span>
+              <strong>{formatDateTime(gain.highPriceAt)}</strong>
+            </div>
+          </div>
+          <p className="watchlist-potential-gain-note">
+            {gain.startingPriceAt - gain.postedAt <= 5 * 60 * 1000
+              ? `Tracked from posting at ${formatDateTime(gain.postedAt)}.`
+              : `Tracking began at ${formatDateTime(gain.startingPriceAt)} after the ticker was posted at ${formatDateTime(gain.postedAt)}.`}{" "}
+            Based on observed live prices after tracking began.
+          </p>
+        </>
+      ) : (
+        <>
+          <h2 className="academy-card-title">Waiting for a starting price</h2>
+          <p className="academy-card-text">
+            Potential gain will begin tracking when the first live price is available after
+            this ticker is posted.
+          </p>
+        </>
+      )}
+    </article>
+  );
+}
+
 function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) {
   const liveClosestLevelsCard = closestLevelsCardFromState(symbol);
   const closestLevelsCard = liveClosestLevelsCard ?? symbol.cards.nearestSupportResistance;
@@ -746,6 +808,9 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
         card={closestLevelsCard}
         symbol={symbol}
       />
+      {symbol.potentialGainCardVisible !== false ? (
+        <PotentialGainCard symbol={symbol} />
+      ) : null}
       {traderReadCard ? (
         <WatchlistDetailCardArticle
           label="Trader Read"

@@ -368,6 +368,73 @@ function normalizeVolume(value: unknown): number | null {
     : null;
 }
 
+function validPotentialGainPrice(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+function normalizePotentialGain(
+  value: LiveWatchlistSymbolState["potentialGain"],
+): LiveWatchlistSymbolState["potentialGain"] {
+  if (
+    !value ||
+    !Number.isFinite(value.postedAt) ||
+    !validPotentialGainPrice(value.startingPrice) ||
+    !Number.isFinite(value.startingPriceAt) ||
+    !validPotentialGainPrice(value.highPrice) ||
+    !Number.isFinite(value.highPriceAt) ||
+    !Number.isFinite(value.potentialGainPct)
+  ) {
+    return null;
+  }
+  return value;
+}
+
+function potentialGainFromPrice(
+  existing: LiveWatchlistSymbolState["potentialGain"],
+  postedAt: number | null,
+  price: number | null,
+  observedAt: number,
+): LiveWatchlistSymbolState["potentialGain"] {
+  if (postedAt === null || !validPotentialGainPrice(price) || !Number.isFinite(observedAt)) {
+    return normalizePotentialGain(existing);
+  }
+
+  if (!existing || existing.postedAt !== postedAt) {
+    return {
+      postedAt,
+      startingPrice: price,
+      startingPriceAt: observedAt,
+      highPrice: price,
+      highPriceAt: observedAt,
+      potentialGainPct: 0,
+    };
+  }
+
+  if (price <= existing.highPrice) {
+    return normalizePotentialGain(existing);
+  }
+
+  return {
+    ...existing,
+    highPrice: price,
+    highPriceAt: observedAt,
+    potentialGainPct: ((price - existing.startingPrice) / existing.startingPrice) * 100,
+  };
+}
+
+function firstPublishedPrice(
+  cards: LiveWatchlistCardPatch["cards"],
+): { price: number; observedAt: number } | null {
+  const candidates = Object.values(cards)
+    .filter((card): card is LiveWatchlistCardContent => Boolean(card))
+    .filter((card) => validPotentialGainPrice(card.priceWhenPosted))
+    .sort((left, right) => left.updatedAt - right.updatedAt);
+  const first = candidates[0];
+  return first && validPotentialGainPrice(first.priceWhenPosted)
+    ? { price: first.priceWhenPosted, observedAt: first.updatedAt }
+    : null;
+}
+
 function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbolState {
   const companyInfo = state.cards.companyInfo;
   const nearest = state.cards.nearestSupportResistance;
@@ -389,6 +456,8 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
   const hasCards = cardTimes.length > 0;
   return {
     ...state,
+    potentialGainCardVisible: state.potentialGainCardVisible !== false,
+    potentialGain: normalizePotentialGain(state.potentialGain),
     firstPostedAt:
       state.firstPostedAt ?? (hasCards ? Math.min(...cardTimes) : null),
     companyName:
@@ -447,13 +516,35 @@ function applyPatch(
     }
   }
 
+  const cardTimes = Object.values(nextCards)
+    .map((card) => card?.updatedAt)
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  const nextFirstPostedAt = patchesFirstPostedAt
+    ? normalizeLiveWatchlistTimestamp(patch.firstPostedAt)
+    : baseExisting?.firstPostedAt ?? (cardTimes.length > 0 ? Math.min(...cardTimes) : null);
+  const firstPrice = firstPublishedPrice(patch.cards);
+  const resetPotentialGain = nextFirstPostedAt !== baseExisting?.firstPostedAt;
+  const nextPotentialGain = firstPrice
+    ? potentialGainFromPrice(
+        resetPotentialGain ? null : baseExisting?.potentialGain,
+        nextFirstPostedAt,
+        firstPrice.price,
+        firstPrice.observedAt,
+      )
+    : resetPotentialGain
+      ? null
+      : baseExisting?.potentialGain ?? null;
+
   return deriveStateFields({
     symbol,
     status: nextStatus,
     updatedAt: Math.max(patch.updatedAt, baseExisting?.updatedAt ?? 0),
-    firstPostedAt: patchesFirstPostedAt
-      ? normalizeLiveWatchlistTimestamp(patch.firstPostedAt)
-      : baseExisting?.firstPostedAt ?? null,
+    firstPostedAt: nextFirstPostedAt,
+    potentialGainCardVisible:
+      typeof patch.potentialGainCardVisible === "boolean"
+        ? patch.potentialGainCardVisible
+        : baseExisting?.potentialGainCardVisible !== false,
+    potentialGain: nextPotentialGain,
     companyName: baseExisting?.companyName ?? null,
     latestPrice: patchesPriceCard ? null : baseExisting?.latestPrice ?? null,
     nearestSupport: patchesNearestCard ? null : baseExisting?.nearestSupport ?? null,
@@ -477,6 +568,16 @@ function applyTickerDataPatch(
     status: patch.status ?? existing?.status ?? "live",
     updatedAt: existing?.updatedAt ?? patch.updatedAt,
     firstPostedAt: existing?.firstPostedAt ?? null,
+    potentialGainCardVisible:
+      typeof patch.potentialGainCardVisible === "boolean"
+        ? patch.potentialGainCardVisible
+        : existing?.potentialGainCardVisible !== false,
+    potentialGain: potentialGainFromPrice(
+      existing?.potentialGain,
+      existing?.firstPostedAt ?? null,
+      patch.latestPrice,
+      patch.updatedAt,
+    ),
     companyName: existing?.companyName ?? null,
     latestPrice: patch.latestPrice,
     nearestSupport: patch.nearestSupport,
