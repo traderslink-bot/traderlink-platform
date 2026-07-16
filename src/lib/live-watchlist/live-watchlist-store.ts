@@ -18,6 +18,8 @@ import type {
 type SqliteDatabase = Database.Database;
 type NeonSql = ReturnType<typeof neon>;
 
+const NEON_SYMBOL_WRITE_MAX_ATTEMPTS = 25;
+
 let sharedSqliteDatabase: SqliteDatabase | null = null;
 let sharedNeonSql: NeonSql | null = null;
 let sharedNeonSchemaPromise: Promise<void> | null = null;
@@ -112,9 +114,16 @@ async function ensureNeonSchema(): Promise<void> {
       symbol TEXT PRIMARY KEY,
       status TEXT NOT NULL,
       updated_at BIGINT NOT NULL,
-      state_json TEXT NOT NULL
+      state_json TEXT NOT NULL,
+      revision BIGINT NOT NULL DEFAULT 0
     )
   `
+    .then(
+      () => sql`
+        ALTER TABLE live_watchlist_symbols
+        ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 0
+      `,
+    )
     .then(
       () => sql`
         CREATE TABLE IF NOT EXISTS live_watchlist_health (
@@ -381,9 +390,7 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
   return {
     ...state,
     firstPostedAt:
-      hasCards
-        ? state.firstPostedAt ?? Math.min(...cardTimes)
-        : null,
+      state.firstPostedAt ?? (hasCards ? Math.min(...cardTimes) : null),
     companyName:
       typeof companyInfo?.metadata?.company === "string"
         ? companyInfo.metadata.company
@@ -461,6 +468,108 @@ function applyPatch(
   });
 }
 
+function applyTickerDataPatch(
+  existing: LiveWatchlistSymbolState | null,
+  patch: LiveWatchlistTickerDataPatch,
+): LiveWatchlistSymbolState {
+  return deriveStateFields({
+    symbol: normalizeSymbol(patch.symbol),
+    status: patch.status ?? existing?.status ?? "live",
+    updatedAt: existing?.updatedAt ?? patch.updatedAt,
+    firstPostedAt: existing?.firstPostedAt ?? null,
+    companyName: existing?.companyName ?? null,
+    latestPrice: patch.latestPrice,
+    nearestSupport: patch.nearestSupport,
+    nearestResistance: patch.nearestResistance,
+    nearestSupportLabel: patch.nearestSupportLabel ?? null,
+    nearestResistanceLabel: patch.nearestResistanceLabel ?? null,
+    levelMap: normalizeLevelMap(patch.levelMap),
+    volume: Object.prototype.hasOwnProperty.call(patch, "volume")
+      ? normalizeVolume(patch.volume)
+      : existing?.volume ?? null,
+    extendedQuote: Object.prototype.hasOwnProperty.call(patch, "extendedQuote")
+      ? patch.extendedQuote ?? null
+      : existing?.extendedQuote ?? null,
+    latestTraderReadHeadline: existing?.latestTraderReadHeadline ?? null,
+    cards: existing?.cards ?? {},
+  });
+}
+
+function normalizeRevision(value: unknown): number | null {
+  const revision =
+    typeof value === "bigint"
+      ? Number(value)
+      : typeof value === "string" && value.trim().length > 0
+        ? Number(value)
+        : value;
+  return typeof revision === "number" && Number.isSafeInteger(revision) && revision >= 0
+    ? revision
+    : null;
+}
+
+async function mutateNeonSymbolState(
+  symbol: string,
+  mutate: (existing: LiveWatchlistSymbolState | null) => LiveWatchlistSymbolState,
+): Promise<LiveWatchlistSymbolState> {
+  await ensureNeonSchema();
+  const sql = getNeonSql();
+
+  for (let attempt = 0; attempt < NEON_SYMBOL_WRITE_MAX_ATTEMPTS; attempt += 1) {
+    const rows = (await sql`
+      SELECT state_json, revision
+      FROM live_watchlist_symbols
+      WHERE symbol = ${symbol}
+      LIMIT 1
+    `) as Array<{ state_json?: unknown; revision?: unknown }>;
+    const row = rows[0];
+    const existingRaw = typeof row?.state_json === "string" ? row.state_json : null;
+    const existing = existingRaw ? parseState(existingRaw) : null;
+    if (existingRaw && !existing) {
+      throw new Error(`Live watchlist state for ${symbol} is invalid.`);
+    }
+
+    const next = mutate(existing);
+    const nextJson = JSON.stringify(next);
+    if (!row) {
+      const inserted = (await sql`
+        INSERT INTO live_watchlist_symbols (symbol, status, updated_at, state_json, revision)
+        VALUES (${symbol}, ${next.status}, ${next.updatedAt}, ${nextJson}, 1)
+        ON CONFLICT (symbol) DO NOTHING
+        RETURNING revision
+      `) as Array<{ revision?: unknown }>;
+      if (inserted.length > 0) {
+        return next;
+      }
+      continue;
+    }
+
+    const revision = normalizeRevision(row.revision);
+    if (revision === null) {
+      throw new Error(`Live watchlist revision for ${symbol} is invalid.`);
+    }
+    const updated = (await sql`
+      UPDATE live_watchlist_symbols
+      SET
+        status = ${next.status},
+        updated_at = ${next.updatedAt},
+        state_json = ${nextJson},
+        revision = revision + 1
+      WHERE
+        symbol = ${symbol}
+        AND revision = ${revision}
+        AND state_json = ${existingRaw}
+      RETURNING revision
+    `) as Array<{ revision?: unknown }>;
+    if (updated.length > 0) {
+      return next;
+    }
+  }
+
+  throw new Error(
+    `Live watchlist update for ${symbol} conflicted ${NEON_SYMBOL_WRITE_MAX_ATTEMPTS} times.`,
+  );
+}
+
 function normalizeLevelMap(value: LiveWatchlistLevelMap | null | undefined): LiveWatchlistLevelMap | null {
   return value ?? null;
 }
@@ -527,25 +636,19 @@ export class LiveWatchlistStore {
 
   async upsertPatch(patch: LiveWatchlistCardPatch): Promise<LiveWatchlistSymbolState> {
     const symbol = normalizeSymbol(patch.symbol);
-    const existing = await this.getSymbol(symbol);
-    const next = applyPatch(existing, { ...patch, symbol });
 
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
-      await getNeonSql()`
-        INSERT INTO live_watchlist_symbols (symbol, status, updated_at, state_json)
-        VALUES (${symbol}, ${next.status}, ${next.updatedAt}, ${JSON.stringify(next)})
-        ON CONFLICT (symbol) DO UPDATE SET
-          status = EXCLUDED.status,
-          updated_at = EXCLUDED.updated_at,
-          state_json = EXCLUDED.state_json
-      `;
+      const next = await mutateNeonSymbolState(symbol, (existing) =>
+        applyPatch(existing, { ...patch, symbol }),
+      );
       if (next.status === "deactivated") {
         await this.createArchiveIfEligible(next);
       }
       return next;
     }
 
+    const existing = await this.getSymbol(symbol);
+    const next = applyPatch(existing, { ...patch, symbol });
     const db = await getSqliteDatabase();
     db.prepare(
       `
@@ -565,42 +668,15 @@ export class LiveWatchlistStore {
 
   async upsertTickerData(patch: LiveWatchlistTickerDataPatch): Promise<LiveWatchlistSymbolState> {
     const symbol = normalizeSymbol(patch.symbol);
-    const existing = await this.getSymbol(symbol);
-    const next = deriveStateFields({
-      symbol,
-      status: patch.status ?? existing?.status ?? "live",
-      updatedAt: existing?.updatedAt ?? patch.updatedAt,
-      firstPostedAt: existing?.firstPostedAt ?? null,
-      companyName: existing?.companyName ?? null,
-      latestPrice: patch.latestPrice,
-      nearestSupport: patch.nearestSupport,
-      nearestResistance: patch.nearestResistance,
-      nearestSupportLabel: patch.nearestSupportLabel ?? null,
-      nearestResistanceLabel: patch.nearestResistanceLabel ?? null,
-      levelMap: normalizeLevelMap(patch.levelMap),
-      volume: Object.prototype.hasOwnProperty.call(patch, "volume")
-        ? normalizeVolume(patch.volume)
-        : existing?.volume ?? null,
-      extendedQuote: Object.prototype.hasOwnProperty.call(patch, "extendedQuote")
-        ? patch.extendedQuote ?? null
-        : existing?.extendedQuote ?? null,
-      latestTraderReadHeadline: existing?.latestTraderReadHeadline ?? null,
-      cards: existing?.cards ?? {},
-    });
 
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
-      await getNeonSql()`
-        INSERT INTO live_watchlist_symbols (symbol, status, updated_at, state_json)
-        VALUES (${symbol}, ${next.status}, ${next.updatedAt}, ${JSON.stringify(next)})
-        ON CONFLICT (symbol) DO UPDATE SET
-          status = EXCLUDED.status,
-          updated_at = EXCLUDED.updated_at,
-          state_json = EXCLUDED.state_json
-      `;
-      return next;
+      return mutateNeonSymbolState(symbol, (existing) =>
+        applyTickerDataPatch(existing, { ...patch, symbol }),
+      );
     }
 
+    const existing = await this.getSymbol(symbol);
+    const next = applyTickerDataPatch(existing, { ...patch, symbol });
     const db = await getSqliteDatabase();
     db.prepare(
       `
