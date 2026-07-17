@@ -25,6 +25,10 @@ import {
 } from "@/src/lib/live-watchlist/watchlist-v2-levels";
 import { getLiveWatchlistEntryGroup } from "@/src/lib/live-watchlist/live-watchlist-session-group";
 import {
+  isNewerLiveWatchlistSymbolState,
+  reconcileLiveWatchlistSnapshot,
+} from "@/src/lib/live-watchlist/live-watchlist-reconciliation";
+import {
   formatAiReadSession,
   parseTradersLinkAiRead,
 } from "@/src/lib/live-watchlist/traderslink-ai-read";
@@ -581,6 +585,10 @@ function TradersLinkAiReadCard({ card }: { card: LiveWatchlistCardContent }) {
                     ? "TradersLink press release / SEC database"
                     : "Supplemental web research"}
                 </span>
+                {source.evidence?.publishedAt ? (
+                  <span>Published {source.evidence.publishedAt.slice(0, 10)}</span>
+                ) : null}
+                {source.evidence?.filingType ? <span>{source.evidence.filingType}</span> : null}
               </li>
             ))}
           </ul>
@@ -932,10 +940,14 @@ function sortSymbolsByActivation(
   return left.symbol.localeCompare(right.symbol);
 }
 
-function mergeSymbol(
+export function mergeSymbol(
   symbols: LiveWatchlistSymbolState[],
   next: LiveWatchlistSymbolState,
 ): LiveWatchlistSymbolState[] {
+  const existing = symbols.find((item) => item.symbol === next.symbol);
+  if (existing && !isNewerLiveWatchlistSymbolState(existing, next)) {
+    return symbols;
+  }
   const without = symbols.filter((item) => item.symbol !== next.symbol);
   if (next.status === "deactivated") {
     return without;
@@ -1189,13 +1201,20 @@ export function LiveWatchlistIndexClient({
       }
       const payload = (await response.json()) as LiveWatchlistStatePayload;
       if (!cancelled) {
-        setSymbols(payload.symbols);
+        setSymbols((current) => reconcileLiveWatchlistSnapshot({
+          current,
+          incoming: payload.symbols,
+          generatedAt: payload.generatedAt,
+        }));
         setMarketDataStatus(payload.marketDataStatus);
         setMarketDataUpdatedAt(payload.marketDataUpdatedAt);
       }
     }
 
     const stream = new EventSource("/api/live-watchlist/stream");
+    stream.addEventListener("ready", () => {
+      void refresh();
+    });
     stream.addEventListener("symbol", (event) => {
       const next = JSON.parse(event.data) as LiveWatchlistSymbolState;
       setSymbols((current) => mergeSymbol(current, next));
@@ -1207,6 +1226,9 @@ export function LiveWatchlistIndexClient({
       };
       setMarketDataStatus(next.marketDataStatus);
       setMarketDataUpdatedAt(next.marketDataUpdatedAt);
+    });
+    stream.addEventListener("error", () => {
+      void refresh();
     });
 
     pollTimer = window.setInterval(() => {
@@ -1325,11 +1347,30 @@ export function LiveWatchlistDetailClient({
 
   useEffect(() => {
     let pollTimer: number | null = null;
+    let cancelled = false;
+    async function refresh() {
+      const response = await fetch(`/api/live-watchlist/symbols/${initialSymbol.symbol}`);
+      if (!response.ok) {
+        return;
+      }
+      const payload = (await response.json()) as { symbol: LiveWatchlistSymbolState };
+      if (!cancelled) {
+        setSymbol((current) => isNewerLiveWatchlistSymbolState(current, payload.symbol) ? payload.symbol : current);
+      }
+      const stateResponse = await fetch("/api/live-watchlist");
+      if (stateResponse.ok && !cancelled) {
+        const statePayload = (await stateResponse.json()) as LiveWatchlistStatePayload;
+        setMarketDataStatus(statePayload.marketDataStatus);
+      }
+    }
     const stream = new EventSource("/api/live-watchlist/stream");
+    stream.addEventListener("ready", () => {
+      void refresh();
+    });
     stream.addEventListener("symbol", (event) => {
       const next = JSON.parse(event.data) as LiveWatchlistSymbolState;
       if (next.symbol === initialSymbol.symbol) {
-        setSymbol(next);
+        setSymbol((current) => isNewerLiveWatchlistSymbolState(current, next) ? next : current);
       }
     });
     stream.addEventListener("health", (event) => {
@@ -1338,22 +1379,16 @@ export function LiveWatchlistDetailClient({
       };
       setMarketDataStatus(next.marketDataStatus);
     });
+    stream.addEventListener("error", () => {
+      void refresh();
+    });
 
-    pollTimer = window.setInterval(async () => {
-      const response = await fetch(`/api/live-watchlist/symbols/${initialSymbol.symbol}`);
-      if (!response.ok) {
-        return;
-      }
-      const payload = (await response.json()) as { symbol: LiveWatchlistSymbolState };
-      setSymbol(payload.symbol);
-      const stateResponse = await fetch("/api/live-watchlist");
-      if (stateResponse.ok) {
-        const statePayload = (await stateResponse.json()) as LiveWatchlistStatePayload;
-        setMarketDataStatus(statePayload.marketDataStatus);
-      }
+    pollTimer = window.setInterval(() => {
+      void refresh();
     }, 5000);
 
     return () => {
+      cancelled = true;
       stream.close();
       if (pollTimer !== null) {
         window.clearInterval(pollTimer);

@@ -371,7 +371,7 @@ describe("LiveWatchlistStore", () => {
     expect(updated.nearestSupportLabel).toBeNull();
     expect(updated.nearestResistanceLabel).toBeNull();
     expect(updated.levelMap).toBeNull();
-    expect(updated.updatedAt).toBe(1000);
+    expect(updated.updatedAt).toBe(3000);
     expect(updated.latestTraderReadHeadline).toBe("ABCD testing support");
     expect(updated.cards.liveTraderRead?.body).toBe("Price is testing support.");
 
@@ -849,6 +849,62 @@ describe("LiveWatchlistStore", () => {
     expect(visible.potentialGainCardVisible).toBe(true);
   });
 
+  it("rejects older and equal-revision ticker data while accepting a higher revision at the same observation time", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    await store.upsertTickerData({
+      type: "tickerData",
+      symbol: "ORDER",
+      updatedAt: 2_000,
+      marketDataObservedAt: 2_000,
+      marketDataRevision: 10,
+      latestPrice: 3,
+      nearestSupport: 2.8,
+      nearestResistance: 3.2,
+    });
+
+    const older = await store.upsertTickerData({
+      type: "tickerData",
+      symbol: "ORDER",
+      updatedAt: 1_000,
+      marketDataObservedAt: 1_000,
+      marketDataRevision: 99,
+      latestPrice: 2.5,
+      nearestSupport: 2.3,
+      nearestResistance: 2.7,
+    });
+    expect(older.latestPrice).toBe(3);
+    expect(older.nearestResistance).toBe(3.2);
+
+    const lowerRevision = await store.upsertTickerData({
+      type: "tickerData",
+      symbol: "ORDER",
+      updatedAt: 2_000,
+      marketDataObservedAt: 2_000,
+      marketDataRevision: 9,
+      latestPrice: 2.9,
+      nearestSupport: 2.7,
+      nearestResistance: 3.1,
+    });
+    expect(lowerRevision.latestPrice).toBe(3);
+
+    const higherRevision = await store.upsertTickerData({
+      type: "tickerData",
+      symbol: "ORDER",
+      updatedAt: 2_000,
+      marketDataObservedAt: 2_000,
+      marketDataRevision: 11,
+      latestPrice: 3.1,
+      nearestSupport: 2.9,
+      nearestResistance: 3.3,
+    });
+    expect(higherRevision.latestPrice).toBe(3.1);
+    expect(higherRevision.latestPriceObservedAt).toBe(2_000);
+    expect(higherRevision.marketDataRevision).toBe(11);
+  });
+
   it("stores the TradersLink AI Read separately and preserves its visibility across ticker updates", async () => {
     process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
     process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
@@ -959,7 +1015,7 @@ describe("LiveWatchlistStore", () => {
     const state = await store.listSymbols();
 
     expect(state.symbols.map((symbol) => symbol.symbol)).toEqual(["NEW", "OLD"]);
-    expect(state.symbols.find((symbol) => symbol.symbol === "OLD")?.updatedAt).toBe(1000);
+    expect(state.symbols.find((symbol) => symbol.symbol === "OLD")?.updatedAt).toBe(9000);
   });
 
   it("applies status-only patches without clearing ticker content", async () => {

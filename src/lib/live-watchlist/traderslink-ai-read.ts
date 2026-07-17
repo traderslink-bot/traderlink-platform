@@ -57,13 +57,30 @@ function isSafeHttpUrl(value: string): boolean {
   }
 }
 
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === "string";
+}
+
+function isSourceEvidence(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    isNullableString(value.publishedAt) &&
+    isNullableString(value.filingType) &&
+    isNullableString(value.retrievedAt) &&
+    isNullableString(value.supportingExcerpt) &&
+    (value.excerptKind === "article_summary" || value.excerptKind === "article_title" || value.excerptKind === "web_search_title") &&
+    (value.supersessionStatus === "latest_in_retrieved_window" || value.supersessionStatus === "not_checked")
+  );
+}
+
 function isSource(value: unknown): value is TradersLinkAiReadSource {
   return (
     isRecord(value) &&
     typeof value.title === "string" &&
     typeof value.url === "string" &&
     isSafeHttpUrl(value.url) &&
-    (value.sourceType === "press_release_sec_database" || value.sourceType === "web_search")
+    (value.sourceType === "press_release_sec_database" || value.sourceType === "web_search") &&
+    (value.evidence === undefined || isSourceEvidence(value.evidence))
   );
 }
 
