@@ -60,6 +60,14 @@ function validBody() {
       title: "Current report",
       url: "https://www.sec.gov/Archives/example",
       sourceType: "press_release_sec_database",
+      evidence: {
+        publishedAt: "2026-07-16T13:00:00.000Z",
+        filingType: "8-K",
+        retrievedAt: "2026-07-17T13:00:00.000Z",
+        supportingExcerpt: "The report describes the financing and merger consideration.",
+        excerptKind: "article_summary",
+        supersessionStatus: "latest_in_retrieved_window",
+      },
     }],
     model: "test-model",
     usedWebSearch: true,
@@ -93,6 +101,7 @@ describe("TradersLink AI Read parser", () => {
     expect(read?.listingStatus.immediacy).toBe("monitor");
     expect(read?.dilutionRisk.companyIssuance?.earliestDate).toBe("2026-07-18");
     expect(read?.usage?.webSearchCostUsd).toBe(0.01);
+    expect(read?.sources[0]?.evidence?.filingType).toBe("8-K");
     expect(formatAiReadSession(read!.marketSession)).toBe("Postmarket");
   });
 
@@ -101,6 +110,12 @@ describe("TradersLink AI Read parser", () => {
     const unsafe = JSON.parse(validBody()) as { sources: Array<{ url: string }> };
     unsafe.sources[0]!.url = "javascript:alert(1)";
     expect(parseTradersLinkAiRead(JSON.stringify(unsafe))).toBeNull();
+
+    const malformedEvidence = JSON.parse(validBody()) as {
+      sources: Array<{ evidence: { excerptKind: string } }>;
+    };
+    malformedEvidence.sources[0]!.evidence.excerptKind = "unsupported";
+    expect(parseTradersLinkAiRead(JSON.stringify(malformedEvidence))).toBeNull();
 
     const ungrounded = JSON.parse(validBody()) as {
       catalystRealityCheck: { sourceUrls: string[] };
