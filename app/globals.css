@@ -2823,11 +2823,16 @@ main.bg-zinc-950 .text-zinc-500 {
 }
 
 .watchlist-summary-panel span[data-market-data-status="offline"],
-.watchlist-summary-panel span[data-market-data-status="starting"],
 .watchlist-summary-panel span[data-market-data-status="off"] {
   border-color: color-mix(in srgb, var(--academy-negative) 34%, transparent);
   background: var(--academy-negative-soft);
   color: var(--academy-negative);
+}
+
+.watchlist-summary-panel span[data-market-data-status="starting"] {
+  border-color: color-mix(in srgb, var(--academy-warning) 38%, transparent);
+  background: var(--academy-warning-soft);
+  color: var(--academy-warning);
 }
 
 .watchlist-back-action {

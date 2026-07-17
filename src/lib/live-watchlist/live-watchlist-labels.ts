@@ -10,6 +10,7 @@ export function formatMarketDataStatusLabel(status: LiveWatchlistMarketDataStatu
     case "stale":
       return "Live Data: ON";
     case "starting":
+      return "Live Data: STARTING";
     case "offline":
       return "Live Data: OFF";
     default:
