@@ -76,7 +76,7 @@ const detailCardHelpText: Record<string, string> = {
   "Known Recent News / SEC Filings":
     "Recent company news and SEC filings that may explain attention or volatility. Always open the source before relying on the headline.",
   "TradersLink AI Read":
-    "An AI-assisted day-trade preparation read grounded first in TradersLink price, level, press-release, and SEC data, with web research used as supplemental context. Verify the levels against the live tape before acting.",
+    "An AI-assisted day-trade preparation read derived from full-session price action across premarket, regular hours, and after-hours. Optional catalyst, SEC, dilution, and web-research context appears only when that admin setting is enabled.",
 };
 
 function formatPrice(value: number | null): string {
@@ -490,44 +490,48 @@ function TradersLinkAiReadCard({ card }: { card: LiveWatchlistCardContent }) {
       ) : null}
 
       <div className="watchlist-ai-read-context-grid">
-        <section className="watchlist-ai-read-section">
-          <div className="watchlist-ai-read-section-heading">
-            <h3>Catalyst reality check</h3>
-            <span>{formatAiReadTag(read.catalystRealityCheck.status)}</span>
-          </div>
-          <p>{read.catalystRealityCheck.summary}</p>
-          <p className="watchlist-ai-read-relevance">
-            <strong>Day-trade impact:</strong> {read.catalystRealityCheck.dayTradeRelevance}
-          </p>
-        </section>
-        <section className="watchlist-ai-read-section">
-          <div className="watchlist-ai-read-section-heading">
-            <h3>Dilution risk</h3>
-            <span>{formatAiReadTag(read.dilutionRisk.level)}</span>
-          </div>
-          <p>{read.dilutionRisk.summary}</p>
-          {read.dilutionRisk.companyIssuance || read.dilutionRisk.publicResale ? (
-            <div className="watchlist-ai-read-dilution-timing">
-              <p className="watchlist-ai-read-dilution-today">
-                <strong>Can the company issue shares today?</strong>{" "}
-                {read.dilutionRisk.canCompanyIssueToday === true
-                  ? "Yes, based on the cited mechanism."
-                  : read.dilutionRisk.canCompanyIssueToday === false
-                    ? "No; a source-backed gate or future event remains."
-                    : "Not confirmed from the available sources."}
+        {read.externalResearchEnabled === true ? (
+          <>
+            <section className="watchlist-ai-read-section">
+              <div className="watchlist-ai-read-section-heading">
+                <h3>Catalyst reality check</h3>
+                <span>{formatAiReadTag(read.catalystRealityCheck.status)}</span>
+              </div>
+              <p>{read.catalystRealityCheck.summary}</p>
+              <p className="watchlist-ai-read-relevance">
+                <strong>Day-trade impact:</strong> {read.catalystRealityCheck.dayTradeRelevance}
               </p>
-              {read.dilutionRisk.companyIssuance ? (
-                <DilutionTimingRow label="Company issuance" lane={read.dilutionRisk.companyIssuance} />
+            </section>
+            <section className="watchlist-ai-read-section">
+              <div className="watchlist-ai-read-section-heading">
+                <h3>Dilution risk</h3>
+                <span>{formatAiReadTag(read.dilutionRisk.level)}</span>
+              </div>
+              <p>{read.dilutionRisk.summary}</p>
+              {read.dilutionRisk.companyIssuance || read.dilutionRisk.publicResale ? (
+                <div className="watchlist-ai-read-dilution-timing">
+                  <p className="watchlist-ai-read-dilution-today">
+                    <strong>Can the company issue shares today?</strong>{" "}
+                    {read.dilutionRisk.canCompanyIssueToday === true
+                      ? "Yes, based on the cited mechanism."
+                      : read.dilutionRisk.canCompanyIssueToday === false
+                        ? "No; a source-backed gate or future event remains."
+                        : "Not confirmed from the available sources."}
+                  </p>
+                  {read.dilutionRisk.companyIssuance ? (
+                    <DilutionTimingRow label="Company issuance" lane={read.dilutionRisk.companyIssuance} />
+                  ) : null}
+                  {read.dilutionRisk.publicResale ? (
+                    <DilutionTimingRow label="Public resale" lane={read.dilutionRisk.publicResale} />
+                  ) : null}
+                </div>
               ) : null}
-              {read.dilutionRisk.publicResale ? (
-                <DilutionTimingRow label="Public resale" lane={read.dilutionRisk.publicResale} />
-              ) : null}
-            </div>
-          ) : null}
-          <p className="watchlist-ai-read-relevance">
-            <strong>Day-trade impact:</strong> {read.dilutionRisk.dayTradeRelevance}
-          </p>
-        </section>
+              <p className="watchlist-ai-read-relevance">
+                <strong>Day-trade impact:</strong> {read.dilutionRisk.dayTradeRelevance}
+              </p>
+            </section>
+          </>
+        ) : null}
         {read.riskSummary.length > 0 ? (
           <section className="watchlist-ai-read-section">
             <h3>Intraday risk checks</h3>
@@ -540,7 +544,8 @@ function TradersLinkAiReadCard({ card }: { card: LiveWatchlistCardContent }) {
         ) : null}
       </div>
 
-      {read.listingStatus.status !== "none" &&
+      {read.externalResearchEnabled === true &&
+       read.listingStatus.status !== "none" &&
       read.listingStatus.status !== "unknown" &&
       (read.listingStatus.immediacy === "near_term" ||
         read.listingStatus.immediacy === "immediate") &&
@@ -562,7 +567,7 @@ function TradersLinkAiReadCard({ card }: { card: LiveWatchlistCardContent }) {
         </section>
       ) : null}
 
-      {read.sources.length > 0 ? (
+      {read.externalResearchEnabled === true && read.sources.length > 0 ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-sources">
           <h3>Sources checked</h3>
           <ul>

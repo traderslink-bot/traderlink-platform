@@ -209,6 +209,7 @@ export type TradersLinkAiReadPayload = {
   riskSummary: string[];
   sources: TradersLinkAiReadSource[];
   model: string;
+  externalResearchEnabled?: boolean;
   usedWebSearch: boolean;
   usage?: TradersLinkAiReadUsage;
 };

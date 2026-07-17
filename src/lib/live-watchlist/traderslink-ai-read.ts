@@ -263,6 +263,8 @@ export function parseTradersLinkAiRead(body: string): TradersLinkAiReadPayload |
     !Array.isArray(value.sources) ||
     !value.sources.every(isSource) ||
     typeof value.model !== "string" ||
+    (value.externalResearchEnabled !== undefined &&
+      typeof value.externalResearchEnabled !== "boolean") ||
     typeof value.usedWebSearch !== "boolean" ||
     (value.usage !== undefined && !isUsage(value.usage))
   ) {
