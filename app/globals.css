@@ -2867,6 +2867,53 @@ main.bg-zinc-950 .text-zinc-500 {
   box-shadow: var(--academy-shadow-2);
 }
 
+.watchlist-session-lists {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.watchlist-session-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.watchlist-session-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.watchlist-session-heading h2,
+.watchlist-session-heading p {
+  margin: 0;
+}
+
+.watchlist-session-heading h2 {
+  color: var(--academy-heading);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+}
+
+.watchlist-session-heading > span {
+  min-width: 2rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--academy-border);
+  border-radius: 999px;
+  background: var(--academy-surface-muted);
+  color: var(--academy-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.watchlist-session-empty {
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed var(--academy-border);
+  border-radius: 8px;
+  color: var(--academy-muted);
+}
+
 .watchlist-notice-card {
   display: grid;
   gap: 0.65rem;
@@ -3346,6 +3393,18 @@ main.bg-zinc-950 .text-zinc-500 {
 
 .watchlist-content-card[data-card-label="Potential Path Levels"] {
   grid-column: 1 / -1;
+}
+
+.watchlist-content-card[data-card-label="Potential Gain"] {
+  grid-column: 1;
+}
+
+.watchlist-content-card[data-card-label="Company Info"] {
+  grid-column: 2;
+}
+
+.watchlist-content-card[data-card-label="Trader Read"] {
+  grid-column: 1;
 }
 
 .watchlist-card-guide-link {

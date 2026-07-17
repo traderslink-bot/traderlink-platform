@@ -21,6 +21,7 @@ import {
   formatWatchlistV2LevelPrice,
   type WatchlistV2LevelRow,
 } from "@/src/lib/live-watchlist/watchlist-v2-levels";
+import { getLiveWatchlistEntryGroup } from "@/src/lib/live-watchlist/live-watchlist-session-group";
 
 const watchlistDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -84,6 +85,13 @@ function formatPercentPoints(value: number): string {
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
+function stripInternalAtrLevelWording(value: string): string {
+  return value.replace(
+    /[ \t]+(?:—|-)[ \t]+(?:inside normal 5m movement|meaningful room|meaningful separation)[ \t]+\(\d+(?:\.\d+)?[ \t]+ATR\)[ \t]*$/gim,
+    "",
+  );
+}
+
 function formatLevelMeta(level: WatchlistV2LevelRow): string {
   return [level.strengthLabel, level.sourceLabel].filter(Boolean).join(" / ") || "level";
 }
@@ -143,11 +151,19 @@ function WatchlistV2NearestLevels({ levelMap }: { levelMap: LiveWatchlistLevelMa
     <div className="watchlist-v2-nearest" aria-label="Nearest levels">
       <div className="watchlist-v2-nearest-item" data-side="support">
         <span>Nearest support</span>
-        <strong>{levelMap.nearestSupport?.label ?? "n/a"}</strong>
+        <strong>
+          {levelMap.nearestSupport
+            ? stripInternalAtrLevelWording(levelMap.nearestSupport.label)
+            : "n/a"}
+        </strong>
       </div>
       <div className="watchlist-v2-nearest-item" data-side="resistance">
         <span>Nearest resistance</span>
-        <strong>{levelMap.nearestResistance?.label ?? "n/a"}</strong>
+        <strong>
+          {levelMap.nearestResistance
+            ? stripInternalAtrLevelWording(levelMap.nearestResistance.label)
+            : "n/a"}
+        </strong>
       </div>
     </div>
   );
@@ -423,7 +439,7 @@ function cleanGenericCardBody(card: LiveWatchlistCardContent): string {
 }
 
 function cleanLevelMapCardBody(card: LiveWatchlistCardContent): string {
-  return cleanGenericCardBody(card)
+  return stripInternalAtrLevelWording(cleanGenericCardBody(card))
     .split("\n")
     .filter((line) => !/^Current price:/i.test(line.trim()))
     .join("\n")
@@ -561,13 +577,13 @@ function closestLevelsCardFromState(symbol: LiveWatchlistSymbolState): LiveWatch
   const lines = ["Resistance:"];
   lines.push(
     ...(levelMap.resistanceLevels.length
-      ? levelMap.resistanceLevels.map((level) => level.label)
+      ? levelMap.resistanceLevels.map((level) => stripInternalAtrLevelWording(level.label))
       : ["none"]),
   );
   lines.push("", "Support:");
   lines.push(
     ...(levelMap.supportLevels.length
-      ? levelMap.supportLevels.map((level) => level.label)
+      ? levelMap.supportLevels.map((level) => stripInternalAtrLevelWording(level.label))
       : ["none"]),
   );
 
@@ -663,6 +679,51 @@ function mergeSymbol(
     return without;
   }
   return [next, ...without].sort(sortSymbolsByActivation);
+}
+
+function isPostmarketAddition(symbol: LiveWatchlistSymbolState): boolean {
+  return getLiveWatchlistEntryGroup(symbol) === "postmarket";
+}
+
+function WatchlistTickerTable({
+  ariaLabel,
+  symbols,
+}: {
+  ariaLabel: string;
+  symbols: LiveWatchlistSymbolState[];
+}) {
+  return (
+    <section className="watchlist-table" aria-label={ariaLabel}>
+      <div className="watchlist-table-head">
+        <span>Ticker</span>
+        <span>Price</span>
+        <span>Added</span>
+        <span>Updated</span>
+        <span>Details</span>
+      </div>
+      {symbols.map((symbol) => (
+        <Link
+          key={symbol.symbol}
+          href={`/watchlist/${symbol.symbol}`}
+          className="watchlist-row"
+        >
+          <span className="watchlist-symbol-cell"><strong>{symbol.symbol}</strong></span>
+          <span className="watchlist-mobile-field" data-mobile-label="Price">
+            {formatPrice(symbol.latestPrice)}
+          </span>
+          <span className="watchlist-mobile-field" data-mobile-label="Added" style={watchlistTimeCellStyle}>
+            {formatDateTime(symbol.firstPostedAt)}
+          </span>
+          <span className="watchlist-mobile-field" data-mobile-label="Updated" style={watchlistTimeCellStyle}>
+            {formatTime(symbol.updatedAt)}
+          </span>
+          <span className="watchlist-mobile-field watchlist-details-cell" data-mobile-label="Details">
+            View details
+          </span>
+        </Link>
+      ))}
+    </section>
+  );
 }
 
 function WatchlistDetailCardArticle({
@@ -766,7 +827,7 @@ function PotentialGainCard({ symbol }: { symbol: LiveWatchlistSymbolState }) {
               <strong>${formatPrice(gain.startingPrice)}</strong>
             </div>
             <div className="watchlist-potential-gain-stat">
-              <span>Highest after start</span>
+              <span>Highest after added</span>
               <strong>${formatPrice(gain.highPrice)}</strong>
             </div>
             <div className="watchlist-potential-gain-stat">
@@ -808,15 +869,15 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
         card={closestLevelsCard}
         symbol={symbol}
       />
-      {symbol.potentialGainCardVisible !== false ? (
-        <PotentialGainCard symbol={symbol} />
-      ) : null}
-      {traderReadCard ? (
+      {recentNewsFilingsCard ? (
         <WatchlistDetailCardArticle
-          label="Trader Read"
-          card={traderReadCard}
+          label="Known Recent News / SEC Filings"
+          card={recentNewsFilingsCard}
           symbol={symbol}
         />
+      ) : null}
+      {symbol.potentialGainCardVisible !== false ? (
+        <PotentialGainCard symbol={symbol} />
       ) : null}
       {companyInfoCard ? (
         <WatchlistDetailCardArticle
@@ -825,10 +886,10 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
           symbol={symbol}
         />
       ) : null}
-      {recentNewsFilingsCard ? (
+      {traderReadCard ? (
         <WatchlistDetailCardArticle
-          label="Known Recent News / SEC Filings"
-          card={recentNewsFilingsCard}
+          label="Trader Read"
+          card={traderReadCard}
           symbol={symbol}
         />
       ) : null}
@@ -848,6 +909,8 @@ export function LiveWatchlistIndexClient({
   const [marketDataUpdatedAt, setMarketDataUpdatedAt] = useState<number | null>(
     initialState.marketDataUpdatedAt,
   );
+  const mainSessionSymbols = symbols.filter((symbol) => !isPostmarketAddition(symbol));
+  const postmarketSymbols = symbols.filter(isPostmarketAddition);
 
   useEffect(() => {
     let cancelled = false;
@@ -915,6 +978,7 @@ export function LiveWatchlistIndexClient({
         </div>
         <div className="watchlist-summary-panel" aria-label="Watchlist status">
           <span>{symbols.length} {symbols.length === 1 ? "ticker" : "tickers"}</span>
+          <span>{mainSessionSymbols.length} main / {postmarketSymbols.length} post-market</span>
           <span
             data-market-data-status={marketDataStatus}
             title={marketDataUpdatedAt ? `Updated ${formatDateTime(marketDataUpdatedAt)}` : undefined}
@@ -929,46 +993,32 @@ export function LiveWatchlistIndexClient({
           <h2>No tickers are currently in the watchlist</h2>
         </section>
       ) : (
-        <section className="watchlist-table" aria-label="Live watchlist tickers">
-          <div className="watchlist-table-head">
-            <span>Ticker</span>
-            <span>Price</span>
-            <span>Added</span>
-            <span>Updated</span>
-            <span>Details</span>
-          </div>
-          {symbols.map((symbol) => (
-            <Link
-              key={symbol.symbol}
-              href={`/watchlist/${symbol.symbol}`}
-              className="watchlist-row"
-            >
-              <span className="watchlist-symbol-cell">
-                <strong>{symbol.symbol}</strong>
-              </span>
-              <span className="watchlist-mobile-field" data-mobile-label="Price">
-                {formatPrice(symbol.latestPrice)}
-              </span>
-              <span
-                className="watchlist-mobile-field"
-                data-mobile-label="Added"
-                style={watchlistTimeCellStyle}
-              >
-                {formatDateTime(symbol.firstPostedAt)}
-              </span>
-              <span
-                className="watchlist-mobile-field"
-                data-mobile-label="Updated"
-                style={watchlistTimeCellStyle}
-              >
-                {formatTime(symbol.updatedAt)}
-              </span>
-              <span className="watchlist-mobile-field watchlist-details-cell" data-mobile-label="Details">
-                View details
-              </span>
-            </Link>
-          ))}
-        </section>
+        <div className="watchlist-session-lists">
+          <section className="watchlist-session-list" aria-labelledby="watchlist-main-session-heading">
+            <div className="watchlist-session-heading">
+              <div>
+                <p className="academy-eyebrow">Premarket + Regular Hours</p>
+                <h2 id="watchlist-main-session-heading">Main Session</h2>
+              </div>
+              <span>{mainSessionSymbols.length}</span>
+            </div>
+            {mainSessionSymbols.length > 0 ? (
+              <WatchlistTickerTable ariaLabel="Main-session watchlist tickers" symbols={mainSessionSymbols} />
+            ) : <p className="watchlist-session-empty">No main-session tickers are active.</p>}
+          </section>
+          <section className="watchlist-session-list" aria-labelledby="watchlist-postmarket-heading">
+            <div className="watchlist-session-heading">
+              <div>
+                <p className="academy-eyebrow">Added from 4:00-8:00 PM ET</p>
+                <h2 id="watchlist-postmarket-heading">Post-Market</h2>
+              </div>
+              <span>{postmarketSymbols.length}</span>
+            </div>
+            {postmarketSymbols.length > 0 ? (
+              <WatchlistTickerTable ariaLabel="Post-market watchlist tickers" symbols={postmarketSymbols} />
+            ) : <p className="watchlist-session-empty">No post-market tickers are active.</p>}
+          </section>
+        </div>
       )}
       <section className="academy-card watchlist-notice-card" aria-label="Watchlist notice">
         <h2>Watchlist Notice</h2>
