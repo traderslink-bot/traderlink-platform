@@ -13,7 +13,7 @@ describe("live watchlist labels", () => {
     expect(formatMarketDataStatusLabel("live")).toBe("Live Data: ON");
     expect(formatMarketDataStatusLabel("stale")).toBe("Live Data: ON");
     expect(formatMarketDataStatusLabel("offline")).toBe("Live Data: OFF");
-    expect(formatMarketDataStatusLabel("starting")).toBe("Live Data: OFF");
+    expect(formatMarketDataStatusLabel("starting")).toBe("Live Data: STARTING");
   });
 
   it("formats ticker status labels without exposing internal stream state", () => {
@@ -29,7 +29,7 @@ describe("live watchlist labels", () => {
     expect(formatTickerStatusTone("deactivated")).toBe("off");
   });
 
-  it("styles starting market data as an off state because the visible label says off", () => {
+  it("styles starting market data as a warning state instead of an off state", () => {
     const css = readFileSync(join(process.cwd(), "app", "globals.css"), "utf8");
     const positiveBlock = css.match(
       /\.watchlist-summary-panel span\[data-market-data-status="live"\][\s\S]*?color: var\(--academy-positive\);/,
@@ -37,8 +37,12 @@ describe("live watchlist labels", () => {
     const negativeBlock = css.match(
       /\.watchlist-summary-panel span\[data-market-data-status="offline"\][\s\S]*?color: var\(--academy-negative\);/,
     )?.[0] ?? "";
+    const warningBlock = css.match(
+      /\.watchlist-summary-panel span\[data-market-data-status="starting"\][\s\S]*?color: var\(--academy-warning\);/,
+    )?.[0] ?? "";
 
     expect(positiveBlock).not.toContain('data-market-data-status="starting"');
-    expect(negativeBlock).toContain('data-market-data-status="starting"');
+    expect(negativeBlock).not.toContain('data-market-data-status="starting"');
+    expect(warningBlock).toContain('data-market-data-status="starting"');
   });
 });
