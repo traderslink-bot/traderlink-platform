@@ -243,6 +243,64 @@ const SESSIONS = new Set<TradersLinkAiReadMarketSession>([
   "unknown",
 ]);
 
+export type TradersLinkAiPullbackPlanState =
+  | "watch"
+  | "testing"
+  | "reclaim_required";
+
+export type TradersLinkAiPullbackPlan = {
+  state: TradersLinkAiPullbackPlanState;
+  zoneLow: number;
+  zoneHigh: number;
+  reclaimPrice: number;
+  invalidationPrice: number;
+  firstBounceTarget: number | null;
+};
+
+/**
+ * Builds the optional pullback plan exclusively from independently grounded
+ * AI-read boundaries. It intentionally never promotes arbitrary nearby support
+ * into a dip-buy call.
+ */
+export function deriveTradersLinkAiPullbackPlan(
+  read: TradersLinkAiReadPayload,
+): TradersLinkAiPullbackPlan | null {
+  const zoneHigh = read.needsToHold.price;
+  const zoneLow = read.cautionBelow.price;
+  const invalidationPrice = read.momentumFailure.price;
+
+  if (
+    read.confidence === "low" ||
+    (read.bias !== "bullish" && read.bias !== "mixed") ||
+    zoneHigh === null ||
+    zoneLow === null ||
+    invalidationPrice === null ||
+    !(zoneHigh > zoneLow && zoneLow > invalidationPrice) ||
+    read.currentPrice < invalidationPrice
+  ) {
+    return null;
+  }
+
+  const state: TradersLinkAiPullbackPlanState = read.currentPrice >= zoneHigh
+    ? "watch"
+    : read.currentPrice >= zoneLow
+      ? "testing"
+      : "reclaim_required";
+  const firstBounceTarget =
+    read.mustClear.price !== null && read.mustClear.price > zoneHigh
+      ? read.mustClear.price
+      : null;
+
+  return {
+    state,
+    zoneLow,
+    zoneHigh,
+    reclaimPrice: zoneHigh,
+    invalidationPrice,
+    firstBounceTarget,
+  };
+}
+
 export function parseTradersLinkAiRead(body: string): TradersLinkAiReadPayload | null {
   let value: unknown;
   try {
