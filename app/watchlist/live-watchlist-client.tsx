@@ -10,6 +10,8 @@ import type {
   LiveWatchlistMarketDataStatus,
   LiveWatchlistStatePayload,
   LiveWatchlistSymbolState,
+  TradersLinkAiReadLevel,
+  TradersLinkAiReadPayload,
 } from "@/src/lib/live-watchlist/live-watchlist-types";
 import {
   formatMarketDataStatusLabel,
@@ -22,6 +24,10 @@ import {
   type WatchlistV2LevelRow,
 } from "@/src/lib/live-watchlist/watchlist-v2-levels";
 import { getLiveWatchlistEntryGroup } from "@/src/lib/live-watchlist/live-watchlist-session-group";
+import {
+  formatAiReadSession,
+  parseTradersLinkAiRead,
+} from "@/src/lib/live-watchlist/traderslink-ai-read";
 
 const watchlistDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -69,6 +75,8 @@ const detailCardHelpText: Record<string, string> = {
     "Basic company and risk context for the ticker. Use it to understand what the company is and whether there are higher-risk profile flags.",
   "Known Recent News / SEC Filings":
     "Recent company news and SEC filings that may explain attention or volatility. Always open the source before relying on the headline.",
+  "TradersLink AI Read":
+    "An AI-assisted day-trade preparation read grounded first in TradersLink price, level, press-release, and SEC data, with web research used as supplemental context. Verify the levels against the live tape before acting.",
 };
 
 function formatPrice(value: number | null): string {
@@ -330,6 +338,255 @@ function LiveTraderReadCard({ card }: { card: LiveWatchlistCardContent }) {
         <p key={`${line}-${index}`}>{line}</p>
       ))}
     </div>
+  );
+}
+
+function TradersLinkAiReadLevelBlock({
+  heading,
+  level,
+}: {
+  heading: string;
+  level: TradersLinkAiReadLevel;
+}) {
+  return (
+    <div className="watchlist-ai-read-level">
+      <span>{heading}</span>
+      <strong>{level.price === null ? level.label : `$${formatPrice(level.price)}`}</strong>
+      <p>{level.rationale}</p>
+    </div>
+  );
+}
+
+function formatAiReadTag(value: string): string {
+  return value
+    .split("_")
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+function formatDilutionDate(value: string | null): string {
+  if (!value) {
+    return "No source-backed date";
+  }
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T12:00:00.000Z`));
+}
+
+function DilutionTimingRow({
+  label,
+  lane,
+}: {
+  label: string;
+  lane: NonNullable<TradersLinkAiReadPayload["dilutionRisk"]["companyIssuance"]>;
+}) {
+  return (
+    <div className="watchlist-ai-read-dilution-row">
+      <div>
+        <strong>{label}</strong>
+        <span>{formatAiReadTag(lane.status)}</span>
+      </div>
+      <p>{lane.summary}</p>
+      <small>
+        Earliest: {formatDilutionDate(lane.earliestDate)} · Trigger: {formatAiReadTag(lane.trigger)}
+      </small>
+    </div>
+  );
+}
+
+function TradersLinkAiReadCard({ card }: { card: LiveWatchlistCardContent }) {
+  const read = parseTradersLinkAiRead(card.body);
+  if (!read) {
+    return (
+      <article
+        className="academy-card watchlist-content-card watchlist-ai-read-card"
+        data-card-label="TradersLink AI Read"
+      >
+        <div className="academy-card-topline">
+          <WatchlistCardKicker label="TradersLink AI Read" />
+        </div>
+        <h2 className="academy-card-title">Read unavailable</h2>
+        <p className="academy-card-text">
+          The latest AI Read could not be displayed. Use the admin refresh control to generate a
+          new one.
+        </p>
+      </article>
+    );
+  }
+  const downsideCheckpoints = read.downsideCheckpoints ?? [];
+
+  return (
+    <article
+      className="academy-card watchlist-content-card watchlist-ai-read-card"
+      data-card-label="TradersLink AI Read"
+    >
+      <div className="academy-card-topline">
+        <WatchlistCardKicker label="TradersLink AI Read" />
+      </div>
+      <div className="watchlist-ai-read-header">
+        <div>
+          <p className="watchlist-ai-read-eyebrow">
+            {formatAiReadSession(read.marketSession)} at ${formatPrice(read.currentPrice)}
+          </p>
+          <h2 className="academy-card-title">{read.symbol} trade preparation</h2>
+        </div>
+        <div className="watchlist-ai-read-badges">
+          <span className="watchlist-ai-read-badge" data-bias={read.bias}>
+            {read.bias} bias
+          </span>
+          <span className="watchlist-ai-read-badge">{read.confidence} confidence</span>
+        </div>
+      </div>
+
+      <p className="watchlist-ai-read-current">{read.currentRead}</p>
+
+      <div className="watchlist-ai-read-level-grid">
+        <TradersLinkAiReadLevelBlock heading="Needs to hold" level={read.needsToHold} />
+        <TradersLinkAiReadLevelBlock heading="Caution below" level={read.cautionBelow} />
+        <TradersLinkAiReadLevelBlock heading="Momentum failure" level={read.momentumFailure} />
+        <TradersLinkAiReadLevelBlock heading="Must clear" level={read.mustClear} />
+        <TradersLinkAiReadLevelBlock
+          heading="Breakout continuation"
+          level={read.breakoutContinuation}
+        />
+      </div>
+
+      {read.targets.length > 0 ? (
+        <section className="watchlist-ai-read-section">
+          <h3>Where the trade could go</h3>
+          <ol className="watchlist-ai-read-targets">
+            {read.targets.map((target, index) => (
+              <li key={`${target.label}-${target.price ?? index}`}>
+                <strong>
+                  {target.price === null ? target.label : `$${formatPrice(target.price)}`}
+                </strong>
+                <span>{target.condition}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+
+      {downsideCheckpoints.length > 0 ? (
+        <section className="watchlist-ai-read-section watchlist-ai-read-downside">
+          <h3>If momentum fails</h3>
+          <p>Lower structural areas exposed after the momentum-failure level gives way.</p>
+          <ol className="watchlist-ai-read-targets">
+            {downsideCheckpoints.map((checkpoint, index) => (
+              <li key={`${checkpoint.label}-${checkpoint.price ?? index}`}>
+                <strong>
+                  {checkpoint.price === null
+                    ? checkpoint.label
+                    : `$${formatPrice(checkpoint.price)}`}
+                </strong>
+                <span>{checkpoint.condition}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+
+      <div className="watchlist-ai-read-context-grid">
+        <section className="watchlist-ai-read-section">
+          <div className="watchlist-ai-read-section-heading">
+            <h3>Catalyst reality check</h3>
+            <span>{formatAiReadTag(read.catalystRealityCheck.status)}</span>
+          </div>
+          <p>{read.catalystRealityCheck.summary}</p>
+          <p className="watchlist-ai-read-relevance">
+            <strong>Day-trade impact:</strong> {read.catalystRealityCheck.dayTradeRelevance}
+          </p>
+        </section>
+        <section className="watchlist-ai-read-section">
+          <div className="watchlist-ai-read-section-heading">
+            <h3>Dilution risk</h3>
+            <span>{formatAiReadTag(read.dilutionRisk.level)}</span>
+          </div>
+          <p>{read.dilutionRisk.summary}</p>
+          {read.dilutionRisk.companyIssuance || read.dilutionRisk.publicResale ? (
+            <div className="watchlist-ai-read-dilution-timing">
+              <p className="watchlist-ai-read-dilution-today">
+                <strong>Can the company issue shares today?</strong>{" "}
+                {read.dilutionRisk.canCompanyIssueToday === true
+                  ? "Yes, based on the cited mechanism."
+                  : read.dilutionRisk.canCompanyIssueToday === false
+                    ? "No; a source-backed gate or future event remains."
+                    : "Not confirmed from the available sources."}
+              </p>
+              {read.dilutionRisk.companyIssuance ? (
+                <DilutionTimingRow label="Company issuance" lane={read.dilutionRisk.companyIssuance} />
+              ) : null}
+              {read.dilutionRisk.publicResale ? (
+                <DilutionTimingRow label="Public resale" lane={read.dilutionRisk.publicResale} />
+              ) : null}
+            </div>
+          ) : null}
+          <p className="watchlist-ai-read-relevance">
+            <strong>Day-trade impact:</strong> {read.dilutionRisk.dayTradeRelevance}
+          </p>
+        </section>
+        {read.riskSummary.length > 0 ? (
+          <section className="watchlist-ai-read-section">
+            <h3>Intraday risk checks</h3>
+            <ul>
+              {read.riskSummary.map((risk) => (
+                <li key={risk}>{risk}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+      </div>
+
+      {read.listingStatus.status !== "none" &&
+      read.listingStatus.status !== "unknown" &&
+      (read.listingStatus.immediacy === "near_term" ||
+        read.listingStatus.immediacy === "immediate") &&
+      read.listingStatus.sourceUrls.length > 0 ? (
+        <section
+          className="watchlist-ai-read-listing"
+          data-immediacy={read.listingStatus.immediacy}
+        >
+          <div>
+            <h3>Listing monitor</h3>
+            <span>
+              {formatAiReadTag(read.listingStatus.status)} · {formatAiReadTag(read.listingStatus.immediacy)}
+            </span>
+          </div>
+          <p>{read.listingStatus.summary}</p>
+          <p>
+            <strong>Day-trade impact:</strong> {read.listingStatus.dayTradeRelevance}
+          </p>
+        </section>
+      ) : null}
+
+      {read.sources.length > 0 ? (
+        <section className="watchlist-ai-read-section watchlist-ai-read-sources">
+          <h3>Sources checked</h3>
+          <ul>
+            {read.sources.map((source) => (
+              <li key={`${source.sourceType}-${source.url}`}>
+                <a href={source.url} target="_blank" rel="noreferrer">
+                  {source.title}
+                </a>
+                <span>
+                  {source.sourceType === "press_release_sec_database"
+                    ? "TradersLink press release / SEC database"
+                    : "Supplemental web research"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <p className="watchlist-ai-read-meta">
+        Market data as of {formatDateTime(read.dataAsOf)}. Generated {formatDateTime(read.generatedAt)}.
+        AI-assisted preparation only; live price action and risk controls remain decisive.
+      </p>
+    </article>
   );
 }
 
@@ -859,6 +1116,7 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
   const liveClosestLevelsCard = closestLevelsCardFromState(symbol);
   const closestLevelsCard = liveClosestLevelsCard ?? symbol.cards.nearestSupportResistance;
   const traderReadCard = symbol.cards.liveTraderRead;
+  const tradersLinkAiReadCard = symbol.cards.tradersLinkAiRead;
   const recentNewsFilingsCard = symbol.cards.recentNewsFilings;
   const companyInfoCard = symbol.cards.companyInfo;
 
@@ -869,6 +1127,9 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
         card={closestLevelsCard}
         symbol={symbol}
       />
+      {symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
+        <TradersLinkAiReadCard card={tradersLinkAiReadCard} />
+      ) : null}
       {recentNewsFilingsCard ? (
         <WatchlistDetailCardArticle
           label="Known Recent News / SEC Filings"

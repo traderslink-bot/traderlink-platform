@@ -439,6 +439,7 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
   const companyInfo = state.cards.companyInfo;
   const nearest = state.cards.nearestSupportResistance;
   const liveTraderRead = state.cards.liveTraderRead;
+  const tradersLinkAiRead = state.cards.tradersLinkAiRead;
   const nearestMetadata = nearest?.metadata ?? {};
   const nearestSupport =
     state.nearestSupport ??
@@ -457,6 +458,7 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
   return {
     ...state,
     potentialGainCardVisible: state.potentialGainCardVisible !== false,
+    tradersLinkAiReadCardVisible: state.tradersLinkAiReadCardVisible !== false,
     potentialGain: normalizePotentialGain(state.potentialGain),
     firstPostedAt:
       state.firstPostedAt ?? (hasCards ? Math.min(...cardTimes) : null),
@@ -466,6 +468,7 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
         : companyInfo?.title ?? state.companyName ?? null,
     latestPrice:
       state.latestPrice ??
+      tradersLinkAiRead?.priceWhenPosted ??
       liveTraderRead?.priceWhenPosted ??
       nearest?.priceWhenPosted ??
       companyInfo?.priceWhenPosted ??
@@ -504,7 +507,10 @@ function applyPatch(
     "nearestSupportResistance",
   );
   const patchesPriceCard = Boolean(
-    patch.cards.liveTraderRead || patch.cards.nearestSupportResistance || patch.cards.companyInfo,
+    patch.cards.tradersLinkAiRead ||
+      patch.cards.liveTraderRead ||
+      patch.cards.nearestSupportResistance ||
+      patch.cards.companyInfo,
   );
   const patchesLevelMap = Object.prototype.hasOwnProperty.call(patch, "levelMap");
   const patchesFirstPostedAt = Object.prototype.hasOwnProperty.call(patch, "firstPostedAt");
@@ -544,6 +550,10 @@ function applyPatch(
       typeof patch.potentialGainCardVisible === "boolean"
         ? patch.potentialGainCardVisible
         : baseExisting?.potentialGainCardVisible !== false,
+    tradersLinkAiReadCardVisible:
+      typeof patch.tradersLinkAiReadCardVisible === "boolean"
+        ? patch.tradersLinkAiReadCardVisible
+        : baseExisting?.tradersLinkAiReadCardVisible !== false,
     potentialGain: nextPotentialGain,
     companyName: baseExisting?.companyName ?? null,
     latestPrice: patchesPriceCard ? null : baseExisting?.latestPrice ?? null,
@@ -572,6 +582,10 @@ function applyTickerDataPatch(
       typeof patch.potentialGainCardVisible === "boolean"
         ? patch.potentialGainCardVisible
         : existing?.potentialGainCardVisible !== false,
+    tradersLinkAiReadCardVisible:
+      typeof patch.tradersLinkAiReadCardVisible === "boolean"
+        ? patch.tradersLinkAiReadCardVisible
+        : existing?.tradersLinkAiReadCardVisible !== false,
     potentialGain: potentialGainFromPrice(
       existing?.potentialGain,
       existing?.firstPostedAt ?? null,

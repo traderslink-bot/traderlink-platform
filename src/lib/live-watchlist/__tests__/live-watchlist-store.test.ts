@@ -760,6 +760,50 @@ describe("LiveWatchlistStore", () => {
     expect(visible.potentialGainCardVisible).toBe(true);
   });
 
+  it("stores the TradersLink AI Read separately and preserves its visibility across ticker updates", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    const published = await store.upsertPatch({
+      symbol: "TGHL",
+      status: "live",
+      updatedAt: 1000,
+      tradersLinkAiReadCardVisible: true,
+      cards: {
+        tradersLinkAiRead: {
+          title: "TradersLink AI Read",
+          body: JSON.stringify({ version: 1, symbol: "TGHL" }),
+          updatedAt: 1000,
+          priceWhenPosted: 1.36,
+          source: "OpenAI",
+        },
+      },
+    });
+    expect(published.cards.tradersLinkAiRead?.title).toBe("TradersLink AI Read");
+    expect(published.tradersLinkAiReadCardVisible).toBe(true);
+
+    const hidden = await store.upsertPatch({
+      symbol: "TGHL",
+      updatedAt: 1100,
+      tradersLinkAiReadCardVisible: false,
+      cards: {},
+    });
+    expect(hidden.tradersLinkAiReadCardVisible).toBe(false);
+    expect(hidden.cards.tradersLinkAiRead?.priceWhenPosted).toBe(1.36);
+
+    const preserved = await store.upsertTickerData({
+      type: "tickerData",
+      symbol: "TGHL",
+      updatedAt: 1200,
+      latestPrice: 1.4,
+      nearestSupport: 1.25,
+      nearestResistance: 1.5,
+    });
+    expect(preserved.tradersLinkAiReadCardVisible).toBe(false);
+    expect(preserved.cards.tradersLinkAiRead?.title).toBe("TradersLink AI Read");
+  });
+
   it("allows a new activation patch to reset a stale first posted time", async () => {
     process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
     process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";

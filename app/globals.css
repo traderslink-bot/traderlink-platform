@@ -3395,6 +3395,10 @@ main.bg-zinc-950 .text-zinc-500 {
   grid-column: 1 / -1;
 }
 
+.watchlist-content-card[data-card-label="TradersLink AI Read"] {
+  grid-column: 1 / -1;
+}
+
 .watchlist-content-card[data-card-label="Potential Gain"] {
   grid-column: 1;
 }
@@ -3945,6 +3949,310 @@ main.bg-zinc-950 .text-zinc-500 {
   font-weight: 850;
 }
 
+.watchlist-ai-read-card {
+  display: grid;
+  gap: 1rem;
+  border-color: color-mix(in srgb, var(--academy-primary) 24%, var(--academy-border));
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--academy-primary) 6%, transparent), transparent 48%),
+    var(--academy-surface);
+}
+
+.watchlist-ai-read-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.watchlist-ai-read-eyebrow {
+  margin: 0 0 0.3rem;
+  color: var(--academy-muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+}
+
+.watchlist-ai-read-header .academy-card-title {
+  margin: 0;
+}
+
+.watchlist-ai-read-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.watchlist-ai-read-badge {
+  border: 1px solid var(--academy-border);
+  border-radius: 999px;
+  background: var(--academy-surface-soft);
+  color: var(--academy-muted);
+  padding: 0.38rem 0.62rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: capitalize;
+}
+
+.watchlist-ai-read-badge[data-bias="bullish"] {
+  border-color: color-mix(in srgb, var(--academy-positive) 40%, var(--academy-border));
+  background: var(--academy-positive-soft);
+  color: var(--academy-positive);
+}
+
+.watchlist-ai-read-badge[data-bias="bearish"] {
+  border-color: color-mix(in srgb, var(--academy-negative) 40%, var(--academy-border));
+  background: var(--academy-negative-soft);
+  color: var(--academy-negative);
+}
+
+.watchlist-ai-read-badge[data-bias="mixed"],
+.watchlist-ai-read-badge[data-bias="neutral"] {
+  border-color: color-mix(in srgb, var(--academy-warning) 38%, var(--academy-border));
+  background: var(--academy-warning-soft);
+  color: var(--academy-warning);
+}
+
+.watchlist-ai-read-current {
+  margin: 0;
+  border-left: 4px solid var(--academy-primary);
+  border-radius: 0 8px 8px 0;
+  background: var(--academy-surface-soft);
+  color: var(--academy-text);
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.watchlist-ai-read-level-grid,
+.watchlist-ai-read-context-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.75rem;
+}
+
+.watchlist-ai-read-context-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.watchlist-ai-read-level,
+.watchlist-ai-read-section {
+  min-width: 0;
+  border: 1px solid var(--academy-border);
+  border-radius: 10px;
+  background: var(--academy-surface-soft);
+  padding: 0.85rem;
+}
+
+.watchlist-ai-read-level > span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--academy-subtle);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.watchlist-ai-read-level > strong {
+  display: block;
+  color: var(--academy-heading);
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.watchlist-ai-read-level p,
+.watchlist-ai-read-section p,
+.watchlist-ai-read-section ul,
+.watchlist-ai-read-section ol {
+  margin: 0.45rem 0 0;
+  color: var(--academy-text);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.watchlist-ai-read-section h3 {
+  margin: 0;
+  color: var(--academy-heading);
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.watchlist-ai-read-section-heading,
+.watchlist-ai-read-listing > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+}
+
+.watchlist-ai-read-section-heading > span,
+.watchlist-ai-read-listing > div > span {
+  border: 1px solid var(--academy-border);
+  border-radius: 999px;
+  background: var(--academy-surface);
+  color: var(--academy-muted);
+  padding: 0.24rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.watchlist-ai-read-section .watchlist-ai-read-relevance {
+  border-top: 1px solid var(--academy-border);
+  padding-top: 0.45rem;
+  color: var(--academy-muted);
+}
+
+.watchlist-ai-read-dilution-timing {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.watchlist-ai-read-section .watchlist-ai-read-dilution-today {
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--academy-warning) 38%, var(--academy-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--academy-warning) 8%, var(--academy-surface));
+  padding: 0.55rem 0.6rem;
+  color: var(--academy-text);
+}
+
+.watchlist-ai-read-dilution-row {
+  border-left: 3px solid color-mix(in srgb, var(--academy-primary) 55%, var(--academy-border));
+  border-radius: 4px;
+  background: var(--academy-surface);
+  padding: 0.5rem 0.55rem;
+}
+
+.watchlist-ai-read-dilution-row > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.watchlist-ai-read-dilution-row > div strong {
+  color: var(--academy-heading);
+  font-size: 0.76rem;
+}
+
+.watchlist-ai-read-dilution-row > div span,
+.watchlist-ai-read-dilution-row small {
+  color: var(--academy-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.watchlist-ai-read-section .watchlist-ai-read-dilution-row p {
+  margin-top: 0.25rem;
+  font-size: 0.76rem;
+}
+
+.watchlist-ai-read-dilution-row small {
+  display: block;
+  margin-top: 0.3rem;
+  line-height: 1.35;
+}
+
+.watchlist-ai-read-relevance strong,
+.watchlist-ai-read-listing strong {
+  color: var(--academy-heading);
+}
+
+.watchlist-ai-read-targets {
+  display: grid;
+  gap: 0.55rem;
+  padding-left: 1.25rem;
+}
+
+.watchlist-ai-read-targets li strong,
+.watchlist-ai-read-targets li span {
+  display: block;
+}
+
+.watchlist-ai-read-targets li span {
+  margin-top: 0.1rem;
+  color: var(--academy-muted);
+}
+
+.watchlist-ai-read-section ul {
+  display: grid;
+  gap: 0.35rem;
+  padding-left: 1.1rem;
+}
+
+.watchlist-ai-read-listing {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px dashed var(--academy-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--academy-surface-soft) 55%, transparent);
+  padding: 0.7rem 0.8rem;
+}
+
+.watchlist-ai-read-listing[data-immediacy="near_term"],
+.watchlist-ai-read-listing[data-immediacy="immediate"] {
+  border-color: color-mix(in srgb, var(--academy-warning) 45%, var(--academy-border));
+}
+
+.watchlist-ai-read-listing h3,
+.watchlist-ai-read-listing p {
+  margin: 0;
+}
+
+.watchlist-ai-read-listing h3 {
+  color: var(--academy-heading);
+  font-size: 0.78rem;
+  font-weight: 820;
+}
+
+.watchlist-ai-read-listing p {
+  color: var(--academy-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.watchlist-ai-read-sources ul {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 1rem;
+  padding-left: 1.1rem;
+}
+
+.watchlist-ai-read-sources li {
+  min-width: 0;
+}
+
+.watchlist-ai-read-sources a,
+.watchlist-ai-read-sources span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.watchlist-ai-read-sources a {
+  color: var(--academy-primary-strong);
+  font-weight: 750;
+}
+
+.watchlist-ai-read-sources span {
+  margin-top: 0.1rem;
+  color: var(--academy-subtle);
+  font-size: 0.72rem;
+}
+
+.watchlist-ai-read-meta {
+  margin: 0;
+  color: var(--academy-subtle);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
 .watchlist-structured-card-body {
   display: grid;
   gap: 0.75rem;
@@ -4138,6 +4446,7 @@ main.bg-zinc-950 .text-zinc-500 {
 
   .watchlist-context-card-stack,
   .watchlist-content-card[data-card-label="Potential Path Levels"],
+  .watchlist-content-card[data-card-label="TradersLink AI Read"],
   .watchlist-content-card[data-card-label="Technical Context"],
   .watchlist-content-card[data-card-label="Trader Read"],
   .watchlist-content-card[data-card-label="Full Ladder"],
@@ -4145,6 +4454,20 @@ main.bg-zinc-950 .text-zinc-500 {
   .watchlist-content-card[data-card-label="Known Recent News / SEC Filings"] {
     grid-column: auto;
     grid-row: auto;
+  }
+
+  .watchlist-ai-read-header {
+    flex-direction: column;
+  }
+
+  .watchlist-ai-read-badges {
+    justify-content: flex-start;
+  }
+
+  .watchlist-ai-read-level-grid,
+  .watchlist-ai-read-context-grid,
+  .watchlist-ai-read-sources ul {
+    grid-template-columns: 1fr;
   }
 }
 
