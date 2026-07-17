@@ -36,7 +36,7 @@ export type LiveWatchlistCardPatch = {
 export type LiveWatchlistHealthPatch = {
   type: "health";
   marketDataStatus: LiveWatchlistMarketDataStatus;
-  marketDataUpdatedAt: number;
+  marketDataUpdatedAt: number | null;
 };
 
 export type LiveWatchlistTickerDataPatch = {
@@ -44,6 +44,8 @@ export type LiveWatchlistTickerDataPatch = {
   symbol: string;
   status?: LiveWatchlistStatus;
   updatedAt: number;
+  marketDataObservedAt?: number;
+  marketDataRevision?: number;
   potentialGainCardVisible?: boolean;
   tradersLinkAiReadCardVisible?: boolean;
   latestPrice: number;
@@ -329,6 +331,7 @@ export type LiveWatchlistSymbolState = {
   latestPrice: number | null;
   latestPriceSource?: "ticker" | "card" | null;
   latestPriceObservedAt?: number | null;
+  marketDataRevision?: number | null;
   nearestSupport: number | null;
   nearestResistance: number | null;
   nearestSupportLabel?: string | null;

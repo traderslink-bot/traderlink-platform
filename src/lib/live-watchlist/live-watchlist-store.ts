@@ -580,6 +580,7 @@ export function applyPatch(
     latestPriceObservedAt: preservesTickerPrice || !recomputesCardPrice
       ? baseExisting?.latestPriceObservedAt ?? null
       : null,
+    marketDataRevision: baseExisting?.marketDataRevision ?? null,
     nearestSupport: patchesNearestCard ? null : baseExisting?.nearestSupport ?? null,
     nearestResistance: patchesNearestCard ? null : baseExisting?.nearestResistance ?? null,
     nearestSupportLabel: patchesNearestCard ? null : baseExisting?.nearestSupportLabel ?? null,
@@ -596,10 +597,25 @@ function applyTickerDataPatch(
   existing: LiveWatchlistSymbolState | null,
   patch: LiveWatchlistTickerDataPatch,
 ): LiveWatchlistSymbolState {
+  const observedAt = patch.marketDataObservedAt ?? patch.updatedAt;
+  const incomingRevision = normalizeRevision(patch.marketDataRevision) ?? 0;
+  const existingObservedAt = existing?.latestPriceSource === "ticker"
+    ? existing.latestPriceObservedAt ?? null
+    : null;
+  const existingRevision = normalizeRevision(existing?.marketDataRevision) ?? 0;
+  if (
+    existing &&
+    existingObservedAt !== null &&
+    (observedAt < existingObservedAt ||
+      (observedAt === existingObservedAt && incomingRevision <= existingRevision))
+  ) {
+    return existing;
+  }
+
   return deriveStateFields({
     symbol: normalizeSymbol(patch.symbol),
     status: patch.status ?? existing?.status ?? "live",
-    updatedAt: existing?.updatedAt ?? patch.updatedAt,
+    updatedAt: Math.max(existing?.updatedAt ?? 0, patch.updatedAt),
     firstPostedAt: existing?.firstPostedAt ?? null,
     potentialGainCardVisible:
       typeof patch.potentialGainCardVisible === "boolean"
@@ -613,12 +629,13 @@ function applyTickerDataPatch(
       existing?.potentialGain,
       existing?.firstPostedAt ?? null,
       patch.latestPrice,
-      patch.updatedAt,
+      observedAt,
     ),
     companyName: existing?.companyName ?? null,
     latestPrice: patch.latestPrice,
     latestPriceSource: "ticker",
-    latestPriceObservedAt: patch.updatedAt,
+    latestPriceObservedAt: observedAt,
+    marketDataRevision: incomingRevision,
     nearestSupport: patch.nearestSupport,
     nearestResistance: patch.nearestResistance,
     nearestSupportLabel: patch.nearestSupportLabel ?? null,

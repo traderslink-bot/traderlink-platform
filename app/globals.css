@@ -2815,8 +2815,7 @@ main.bg-zinc-950 .text-zinc-500 {
   box-shadow: var(--academy-shadow-1);
 }
 
-.watchlist-summary-panel span[data-market-data-status="live"],
-.watchlist-summary-panel span[data-market-data-status="stale"] {
+.watchlist-summary-panel span[data-market-data-status="live"] {
   border-color: rgba(19, 115, 51, 0.28);
   background: var(--academy-positive-soft);
   color: var(--academy-positive);
@@ -2829,7 +2828,8 @@ main.bg-zinc-950 .text-zinc-500 {
   color: var(--academy-negative);
 }
 
-.watchlist-summary-panel span[data-market-data-status="starting"] {
+.watchlist-summary-panel span[data-market-data-status="starting"],
+.watchlist-summary-panel span[data-market-data-status="stale"] {
   border-color: color-mix(in srgb, var(--academy-warning) 38%, transparent);
   background: var(--academy-warning-soft);
   color: var(--academy-warning);

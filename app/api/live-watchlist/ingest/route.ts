@@ -46,7 +46,7 @@ function isHealthPatch(value: unknown): value is LiveWatchlistHealthPatch {
       (value as LiveWatchlistHealthPatch).marketDataStatus === "offline" ||
       (value as LiveWatchlistHealthPatch).marketDataStatus === "starting"
     ) &&
-    typeof (value as LiveWatchlistHealthPatch).marketDataUpdatedAt === "number"
+    isNullableNumber((value as LiveWatchlistHealthPatch).marketDataUpdatedAt)
   );
 }
 
@@ -108,6 +108,18 @@ function isTickerDataPatch(value: unknown): value is LiveWatchlistTickerDataPatc
     (value as LiveWatchlistTickerDataPatch).type === "tickerData" &&
     typeof (value as LiveWatchlistTickerDataPatch).symbol === "string" &&
     typeof (value as LiveWatchlistTickerDataPatch).updatedAt === "number" &&
+    (
+      (value as LiveWatchlistTickerDataPatch).marketDataObservedAt === undefined ||
+      typeof (value as LiveWatchlistTickerDataPatch).marketDataObservedAt === "number"
+    ) &&
+    (
+      (value as LiveWatchlistTickerDataPatch).marketDataRevision === undefined ||
+      (
+        typeof (value as LiveWatchlistTickerDataPatch).marketDataRevision === "number" &&
+        Number.isSafeInteger((value as LiveWatchlistTickerDataPatch).marketDataRevision) &&
+        ((value as LiveWatchlistTickerDataPatch).marketDataRevision ?? -1) >= 0
+      )
+    ) &&
     typeof (value as LiveWatchlistTickerDataPatch).latestPrice === "number" &&
     (
       (value as LiveWatchlistTickerDataPatch).nearestSupport === null ||
