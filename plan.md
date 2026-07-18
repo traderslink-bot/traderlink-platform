@@ -148,6 +148,18 @@ implemented and fully verified at executable head
 documentation only. This remains a remediation candidate, not an acceptance
 decision.
 
+A later independent re-audit accepted the prior corrections except for one
+remaining correction/bust identity-scope defect. The binding final scope is
+`src/docs/trader-intelligence-v3-ga0-a2-final-correction-scope-2026-07-18.md`
+at documentation head `f3a69ac75979aec992f58c52ce1d652cf4251734`.
+Focused executable head `8b141633f19e10dfd503e4c1e83f5660e7e4e9b7`
+requires matching canonical owner, account, resolved stable instrument,
+currency, broker, and source system for stable execution/correction pairing
+and its candidate indexes. The owner directed that no local tests or
+verification be run for this correction, so it is an unverified candidate
+pending independent code review. GA0-A2 remains unaccepted and GA0-A3 has not
+begun.
+
 Feature provenance was reconciled against the separate dirty
 `trader-intelligence-v2` worktree. The deterministic import, saved-trade,
 analytics, coach, tier/chart-evidence, candle, basis-safety, and level-review
@@ -420,14 +432,14 @@ Maintain an exploration ledger so repeated slicing cannot be hidden.
 
 # 12. Current Next Action
 
-1. independently re-audit the complete GA0-A2 draft PR against A2-R1 through
-   A2-R7, the four ADRs, and the acceptance standard;
-2. replay the exact-decimal, canonicalization, identity, ordering, duplicate,
-   FIFO, independent-reference, fixed-seed property, SQLite, architecture,
-   privacy, legacy, build, and local E2E evidence where needed;
-3. keep the PR draft and unmerged until a separate acceptance decision is
-   recorded;
-4. do not mark GA0-A2 accepted and do not begin GA0-A3 from this handoff;
+1. independently inspect final focused executable head
+   `8b141633f19e10dfd503e4c1e83f5660e7e4e9b7` against the binding correction
+   scope and complete PR diff;
+2. treat the final correction as unverified because the owner explicitly
+   directed that no local test or verification command be run;
+3. keep PR #104 draft and unmerged, and leave independent review threads
+   unresolved until the independent auditor decides disposition;
+4. do not mark GA0-A2 accepted and do not begin GA0-A3;
 5. keep runtime work internal, loopback-only, model-free, and undeployed.
 
 ---

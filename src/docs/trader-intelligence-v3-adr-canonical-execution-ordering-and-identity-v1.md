@@ -165,3 +165,20 @@ and row, and a non-null matching source-document digest. Validation
 disagreement or missing document proof is conservative and never
 suppression-eligible. A test-only hash injection remains isolated to focused
 collision evidence; production content identity remains SHA-256 only.
+
+## Final correction/bust scope clarification - 2026-07-18
+
+Stable execution identity and correction-reference pair proof additionally
+require compatible ledger identity: equal canonical owner, canonical account,
+resolved non-null stable instrument, currency, broker, and source system.
+Matching execution-ID or correction-reference text outside that identity does
+not create a relationship. The `stable_execution_identity` and
+`correction_reference_identity` candidate indexes use the same ledger-scoped
+key. An unresolved/null stable instrument cannot establish stable correction
+pair identity; its intrinsic unresolved correction/bust state remains a block
+only for its own unresolved ledger group.
+
+This clarification is implemented at
+`8b141633f19e10dfd503e4c1e83f5660e7e4e9b7`. At the owner's direction, no
+local tests or verification were run for that final correction, so it remains
+an unverified candidate pending independent re-audit.

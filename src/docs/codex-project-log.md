@@ -107,6 +107,28 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-07-18 Trader Intelligence v3 GA0-A2 Final Focused Correction
+
+The latest independent re-audit left one correction/bust scoping defect after
+audited executable head `c1a1b50379165485d28f0e0a28a21c3917cac820`.
+The binding scope is
+`src/docs/trader-intelligence-v3-ga0-a2-final-correction-scope-2026-07-18.md`
+at documentation head `f3a69ac75979aec992f58c52ce1d652cf4251734`.
+
+Focused executable head `8b141633f19e10dfd503e4c1e83f5660e7e4e9b7`
+requires canonical owner, account, resolved stable instrument, currency,
+broker, and source-system compatibility for stable execution identity,
+correction-reference pairing, and both candidate indexes. Intrinsic unresolved
+correction/bust state remains limited to its own ledger group. No GA0-A3
+correction application or other later work was added.
+
+The owner explicitly prohibited all local tests and verification for this
+final correction. It is therefore an unverified implementation candidate, not
+accepted or regression-safe. Exact next action: independent code review of
+the focused executable head on draft PR #104. Keep the PR draft, open,
+unmerged, undeployed, with independent review threads unresolved; do not begin
+GA0-A3.
+
 ### 2026-07-18 Trader Intelligence v3 GA0-A2 Second Remediation Handoff
 
 The mandatory second re-audit findings at

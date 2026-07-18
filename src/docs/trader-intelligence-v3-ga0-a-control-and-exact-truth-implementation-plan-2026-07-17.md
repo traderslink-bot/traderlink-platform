@@ -338,6 +338,24 @@ Document at least:
 
 # 6. GA0-A2 — Canonical Execution and Exact Financial Truth
 
+## 6.0 Final focused correction status - 2026-07-18
+
+- Independent re-audit of `c1a1b50379165485d28f0e0a28a21c3917cac820`
+  left one required correction/bust scoping fix. The binding scope is
+  `src/docs/trader-intelligence-v3-ga0-a2-final-correction-scope-2026-07-18.md`.
+- Executable head `8b141633f19e10dfd503e4c1e83f5660e7e4e9b7`
+  requires compatible canonical owner, account, resolved stable instrument,
+  currency, broker, and source-system identity before stable execution IDs or
+  correction references can link a pair. Candidate indexes mirror that exact
+  scope.
+- Intrinsic unresolved correction/bust state still blocks only its own group.
+  No correction application or other GA0-A3 work was added.
+- The owner explicitly prohibited local tests and verification for this final
+  correction. It is an unverified implementation candidate pending independent
+  code review; it is not accepted or claimed regression-safe.
+- Keep draft PR #104 open, draft, unmerged, undeployed, and with independent
+  review threads unresolved.
+
 ## 6.0 Current second-remediation status - 2026-07-18
 
 - The independent re-audit of immutable implementation head

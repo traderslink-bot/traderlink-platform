@@ -17,7 +17,18 @@ Status: implementation candidate pending independent re-audit. GA0-A2 is not cla
 - Executable commit: `Remediate GA0-A2 post-second audit findings`
 - Executable commit scope: 17 files, 2,031 insertions, 214 deletions
 
-The executable head above is the exact implementation tested by the successful consolidated GA0-A2 verifier. No runtime, test, dependency, configuration, CI, or generated-contract file changed after that verifier. This handoff is a later Markdown-only change.
+The executable head above is the exact implementation tested by the successful consolidated GA0-A2 verifier. A later independent re-audit accepted the prior remediation except for one correction/bust scope defect. Executable head `8b141633f19e10dfd503e4c1e83f5660e7e4e9b7` changes two relationship authority files to address that defect. At the owner's explicit direction, the later executable head received no local testing or verification and must not inherit the results recorded below.
+
+## Final focused correction after this handoff
+
+- Binding scope: `src/docs/trader-intelligence-v3-ga0-a2-final-correction-scope-2026-07-18.md` at prior documentation head `f3a69ac75979aec992f58c52ce1d652cf4251734`.
+- Untested executable candidate: `8b141633f19e10dfd503e4c1e83f5660e7e4e9b7`.
+- `stableExecutionScopeEqual` and correction-reference pair proof now require matching canonical owner, account, resolved stable instrument, currency, broker, and source system.
+- The `stable_execution_identity` and `correction_reference_identity` candidate-index keys now contain the same ledger identity and omit unresolved/null stable instruments.
+- Intrinsic unresolved correction/bust state continues to block only its own group.
+- No exact-decimal, serialization, FIFO, starting-inventory, ordering-receipt, performance, route, UI, AI, analytics, migration, hosting, deployment, or GA0-A3 behavior changed.
+- No Vitest, `npm test`, property, differential, TypeScript, ESLint, architecture, privacy, Layer 2/3, build, Playwright, or GitHub Actions wait was run for the final correction, exactly as directed by the owner.
+- The final correction is an unverified implementation candidate pending independent code review. It is not claimed accepted or regression-safe.
 
 ## Findings implemented
 

@@ -1,5 +1,27 @@
 # Trader Intelligence v3 GA0-A2 last-run report
 
+## Final focused correction addendum - 2026-07-18
+
+The verification below remains historical evidence for its named executable
+heads. It does not apply to the later focused correction at
+`8b141633f19e10dfd503e4c1e83f5660e7e4e9b7`.
+
+That correction changes only
+`domain/execution/execution-relationship.ts` and
+`domain/execution/execution-relationship-resolution.ts`. Stable execution and
+correction-reference pairing, plus their candidate indexes, now require the
+same canonical owner, account, resolved stable instrument, currency, broker,
+and source system. Reused execution IDs or correction-reference text cannot
+link unrelated instrument or currency ledgers; intrinsic unresolved
+correction/bust state remains group-scoped.
+
+At the owner's explicit direction, no local test or verification command was
+run for the final correction. In particular, no Vitest, full test, property,
+differential, TypeScript, ESLint, architecture, privacy, Layer 2/3, build,
+Playwright, or GitHub Actions wait occurred. The new executable head is an
+unverified implementation candidate pending independent review, not an
+accepted or regression-safe result.
+
 ## Second remediation round - current report (2026-07-18)
 
 This section supersedes the older remediation record below. The older record

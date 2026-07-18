@@ -44,6 +44,31 @@ This log may record progress and accepted strengthening decisions. It may not si
 
 # Current Resume Point
 
+## 2026-07-18 - GA0-A2 Final Correction Implemented; Untested Re-audit Candidate
+
+- The latest independent re-audit of executable head
+  `c1a1b50379165485d28f0e0a28a21c3917cac820` accepted every prior remediation
+  except the correction/bust pair-scope defect recorded at documentation head
+  `f3a69ac75979aec992f58c52ce1d652cf4251734`.
+- The focused executable correction is
+  `8b141633f19e10dfd503e4c1e83f5660e7e4e9b7` on
+  `agent/trader-intelligence-v3-ga0-a2-exact-truth` and draft PR #104.
+- Stable execution identity and correction-reference pairing now require the
+  same canonical owner, account, resolved stable instrument, currency, broker,
+  and source system. The corresponding candidate-index keys use that same
+  ledger identity, so reused execution IDs or correction-reference text cannot
+  connect unrelated instruments or currencies.
+- Intrinsic unresolved correction/bust state remains scoped to its own ledger
+  group. GA0-A3 correction application and bitemporal persistence remain
+  deferred.
+- At the owner's explicit direction, no local test, TypeScript, ESLint,
+  architecture, privacy, Layer 2/3, build, Playwright, or GitHub Actions wait
+  was performed for this correction. This is an unverified implementation
+  candidate, not an accepted or regression-safe result.
+- Exact next resume point: independently review executable head
+  `8b141633f19e10dfd503e4c1e83f5660e7e4e9b7`, keep PR #104 draft and unmerged,
+  leave audit threads unresolved, do not deploy, and do not begin GA0-A3.
+
 ## 2026-07-18 - GA0-A2 Second Remediation Complete; Independent Re-audit Pending
 
 - Independent re-audit input implementation:
