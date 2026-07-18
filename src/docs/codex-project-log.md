@@ -107,25 +107,39 @@ Important project rule:
 
 ## Current Resume Point
 
-### 2026-07-18 Trader Intelligence v3 GA0-A2 Exact Truth Started
+### 2026-07-18 Trader Intelligence v3 GA0-A2 Exact Truth Audit Handoff
 
 GA0-A1 is independently accepted and complete. PR #102 merged into `main` as
 `4f9e440116258c9548a2d13f7ea057a9075101c6`. The active clean linked worktree
 is on `agent/trader-intelligence-v3-ga0-a2-exact-truth`, created from that
 latest `origin/main` after the ancestor check passed.
 
-The current task is GA0-A2 only: exact decimal/rational values, canonical
-serialization and SHA-256 identity, canonical execution facts,
-ordering/ambiguity, duplicate/correction/collision classification, exact FIFO
-analytical P/L, an independent BigInt reference, synthetic fixtures,
-fixed-seed differential/property tests, SQLite TEXT compatibility, and focused
-architecture/CI guards. GA0-A3 and every route, UI, migration, analytics,
-chart, AI, market-data, support/resistance, manual-entry, reflection, Real
-Coach/Whop, hosted, and deployment concern remain out of scope.
+GA0-A2 is implementation-complete as an unaccepted audit candidate. It adds
+isolated canonical decimal/rational authority, deterministic serialization and
+SHA-256 identity, canonical execution provenance, separate storage/economic
+ordering, explicit duplicate/correction/collision states, exact FIFO
+analytical P/L, an independent BigInt reference, 35 synthetic fixtures, eight
+fixed 1,000-run property suites, SQLite TEXT compatibility, and architecture
+and CI guards. Existing routes, saved data, schemas, and user-visible numbers
+remain unchanged and non-authoritative.
 
-Next resume action: finish the GA0-A2 ADRs and isolated domain contracts, run
-the complete required verification matrix, publish the dedicated branch as a
-draft PR, and stop for independent audit without merging or deploying.
+The required local matrix is green: 13 focused files/117 tests; 176 full-suite
+files/1,617 tests; 8,000 generated property cases; 4 production/reference
+differential tests; 2 SQLite round-trip tests; 141 GA0-A1 containment/number
+guard tests; 42 affected legacy tests; 369-file architecture scan; private
+final-tree/history scan; Layer 2; Layer 3; 127-page optimized build; and one
+local-only Chromium E2E. No live model, market-data, SEC, Nasdaq, FINRA, Whop,
+payment, Discord, Vercel, production database, or deployment call occurred.
+
+GA0-A3 and every route, UI, migration, analytics, chart, AI, market-data,
+support/resistance, manual-entry, reflection, Real Coach/Whop, hosted, and
+deployment concern remain out of scope. Exact policies, seeds, commands,
+results, limitations, and the 35-fixture inventory are recorded in
+`src/docs/trader-intelligence-v3-project-log.md`.
+
+Next resume action: independently audit the draft GA0-A2 PR, keep it draft and
+unmerged, record a separate acceptance decision if warranted, and do not begin
+GA0-A3 from this handoff.
 
 ### 2026-07-17 Trader Intelligence v3 GA0-A1 Independent-Audit Remediation
 

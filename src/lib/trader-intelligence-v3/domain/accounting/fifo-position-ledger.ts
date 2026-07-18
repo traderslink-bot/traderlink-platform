@@ -28,7 +28,6 @@ import {
   type FlatToFlatRoundTrip,
   type InventoryDirection,
   type ReconstructionBlockedCode,
-  type ReconstructionBlockedState,
   type ReversalEffect,
 } from "./reconstruction-result";
 

@@ -1,5 +1,4 @@
 import type {
-  CanonicalExecutionEnvelope,
   CanonicalExecutionOrderingResult,
 } from "../../domain/execution";
 import {

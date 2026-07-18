@@ -44,6 +44,183 @@ This log may record progress and accepted strengthening decisions. It may not si
 
 # Current Resume Point
 
+## 2026-07-18 — GA0-A2 Implementation Candidate Complete; Independent Audit Pending
+
+### Status and scope
+
+- Accepted ancestor: `4f9e440116258c9548a2d13f7ea057a9075101c6`.
+- Branch: `agent/trader-intelligence-v3-ga0-a2-exact-truth`.
+- GA0-A2 is implementation-complete as a review candidate, but it is not
+  accepted. The branch must remain a draft PR until independent audit.
+- The only operational product combination remains
+  `private_owner_alpha + local_only + local_sqlite`.
+- No route, UI, current saved data, database schema, owner prototype, hosted
+  mode, production system, model, market-data provider, or external financial
+  service was connected to the new authority.
+- GA0-A3 has not begun. Bitemporal correction application, append-only
+  correction persistence, manifests, eligibility, snapshots, evidence
+  references, query/filter work, and backup/restore remain deferred.
+
+### Exact-truth authority delivered
+
+- Exact domain contracts expose validated canonical decimal strings. The
+  isolated Decimal clone uses precision 128, `ROUND_HALF_EVEN`, and disabled
+  exponent output; ordinary values allow 48 significant and 24 fractional
+  digits, while execution price and quantity allow at most 12 fractional
+  digits. Signed zero is canonical `0`, ordinary validation returns stable
+  reason codes, and no implicit rounding or JavaScript-number conversion is
+  authoritative.
+- Exact ratios use reduced BigInt numerator/denominator values, a positive
+  denominator, canonical `0/1`, cross-multiplication comparison, 256-digit
+  input guards, and explicit versioned half-even decimal conversion only.
+- Canonical serialization is UTF-8 JSON with NFC strings, LF line endings,
+  Unicode-code-point key order, deterministic escaping, preserved array order,
+  explicit null/omitted behavior, and rejection of undefined, all JavaScript
+  numbers, non-finite values, BigInt values, and duplicate raw-JSON keys before
+  ordinary parsing can discard them.
+- Canonical timestamps are strict Gregorian UTC values with uppercase `Z` and
+  nine fractional digits. Source precision remains separate and contributes
+  an interval for meaningful-order analysis.
+- Identity is SHA-256 over canonical bytes with lowercase hexadecimal and
+  domain separation such as
+  `ti_v3:canonical_execution:v1:sha256:<64-lowercase-hex>`. Database IDs,
+  import IDs, storage clocks, display labels, mutable review state, and the
+  digest itself are excluded. Digest equality is byte-verified; unequal bytes
+  under an injected equal test hash produce a fail-closed collision state.
+- The canonical execution contract preserves source/evidence provenance,
+  stable non-account-number account identity, raw and resolved instrument
+  evidence, aggregation state, timestamp evidence, side/position-effect/short
+  evidence, exact quantity/price/charges/net cash, identifiers, correction
+  evidence, validation, and canonical content identity. Owner-reported and
+  hypothetical sources cannot be promoted to broker-confirmed evidence.
+- Stable storage ordering is separate from economically meaningful ordering.
+  Digest order is only a deterministic storage tie-break and cannot resolve
+  overlapping source-precision intervals or missing broker sequence evidence.
+  Results distinguish ordered, economically equivalent ties, ambiguous
+  meaningful order, and conflicting evidence with stable reason codes.
+- Relationship classification distinguishes exact same-source duplicates,
+  re-exports, corrections/busts, ambiguous possible duplicates, legitimate
+  repeated fills, collisions, manual review, and distinct executions. Only
+  byte-proven exact same-source duplicates are suppression-eligible.
+- Policy-v1 analytical reconstruction uses exact FIFO lots by owner, account,
+  instrument, and currency. Longs, shorts, partials, reversals, broker average
+  fills, charges, and negative rebates are exact. Charges are recognized at
+  their execution and are not silently allocated. Flat-to-flat FIFO net P/L is
+  checked independently against signed cash flow. Open inventory remains open;
+  prior inventory, unresolved corrections/order/instrument/basis, unsupported
+  security types, collisions, currency conflicts, and arithmetic overflow fail
+  closed. No FX conversion, tax P/L, broker authority, or unrealized P/L is
+  claimed.
+- The independent reference ledger uses its own BigInt coefficient/scale and
+  FIFO implementation. It imports neither `decimal.js` nor production exact
+  arithmetic or matching helpers.
+
+### Implementation and test inventory
+
+- Runtime authority: `src/lib/trader-intelligence-v3/domain/{exact,canonical,identity,execution,accounting}/`.
+- Independent reference and synthetic support:
+  `src/lib/trader-intelligence-v3/testing/{reference,fixtures}/` plus the
+  synthetic execution builder and collision hash.
+- Test families: 12 GA0-A2 files plus the expanded architecture-boundary guard.
+- Four binding ADRs cover exact decimals, canonical serialization/digests,
+  execution ordering/identity, and analytical P/L/reconstruction.
+- `decimal.js@10.6.0` is the only new runtime dependency;
+  `fast-check@4.9.0` is the only new development dependency.
+- `npm run verify:ti-v3:ga0-a2` is mandatory in normal CI and performs no live
+  model, market-data, SEC, Nasdaq, FINRA, Whop, payment, Discord, Vercel, or
+  production-database call.
+- The branch changes 60 files. They are limited to the four ADRs and continuity
+  docs, package/lock/CI wiring, isolated v3 exact-truth code/tests/guards, the
+  architecture verifier, and the safe legacy fingerprint type rename.
+
+The 35 synthetic fixture expectations cover: simple and multi-fill longs;
+simple and multi-fill shorts; both reversal directions; positive, zero, and
+negative charges; open long/short inventory; missing prior long/short
+inventory; legitimate repeated fills; exact duplicates; re-exports;
+corrections and busts; sequenced and ambiguous same-time fills; sub-dollar and
+fractional precision; large valid notional; precision and scale rejection;
+separate USD/CAD ledgers; broker average fills; unresolved instruments;
+corporate-action and symbol-continuity blocks; collision simulation;
+persistence-ID independence; and source/economic digest changes. All fixtures
+use synthetic account, source, execution, and instrument values.
+
+### Fixed property evidence
+
+Every suite runs 1,000 cases from BigInt coefficient-and-scale generators with
+`verbose: 2`, so failures report a reproducible seed and path:
+
+| Suite | Seed | Runs |
+|---|---:|---:|
+| Flat long | `2026071801` | 1,000 |
+| Flat short | `2026071802` | 1,000 |
+| Partial fills | `2026071803` | 1,000 |
+| Reversals | `2026071804` | 1,000 |
+| Duplicate classification | `2026071805` | 1,000 |
+| Canonical property order | `2026071806` | 1,000 |
+| Digest semantics | `2026071807` | 1,000 |
+| Ambiguous ordering | `2026071808` | 1,000 |
+
+### Verification record
+
+- `git diff --check`: passed.
+- `npm ci`: passed; 605 packages installed, 613 audited. npm reported 5
+  existing audit findings: 2 low, 1 moderate, and 2 high.
+- `npx tsc --noEmit --pretty false`: passed.
+- changed-path `npx eslint`: passed with 0 errors and 0 warnings.
+- `npm run verify:ti-v3:ga0-a2`: passed; 13 files and 117 tests, architecture
+  scan passed across 369 files/42 API routes/82 classified routes, and the
+  private-data guard passed across 23,651 records (23,586 final-tree records
+  and 65 pre-final-commit PR-history blobs).
+- explicit `npx vitest run` focused replay: 13 files and 117 tests passed.
+- `npm test`: 176 files and 1,617 tests passed.
+- `npm run verify:ti-v3:architecture`: passed with the same 369/42/82 counts.
+- `npm run verify:ti-v3:private-data`: passed against the final staged tree and
+  current branch history across 23,659 records: 23,594 final-tree records and
+  65 pre-final-commit PR-history blobs. The post-commit replay also passed
+  across 23,659 records: 23,586 final-tree records and 73 final branch-history
+  blobs.
+- `npm run verify:layer2`: passed with the canonical 13-pattern result.
+- `npm run verify:layer3`: passed with canonical regression `PASS`.
+- `npm run build`: passed; Academy registry validation passed and Next.js
+  generated 127 pages. The build retains 19 known Academy registry notices and
+  5 pre-existing Turbopack broad-file-tracing warnings.
+- `npm run test:e2e:level-analysis`: passed; the build passed and 1 Chromium
+  scenario passed against `127.0.0.1:3101`, a synthetic owner, and an isolated
+  external test SQLite database.
+- isolated SQLite TEXT round-trip: 1 file and 2 tests passed.
+- production/reference differential: 1 file and 4 tests passed.
+- all fixed-seed properties: 1 file and 8 tests passed, representing 8,000
+  generated cases.
+- GA0-A1 containment plus no-JavaScript-number-authority guard: 7 files and 141
+  tests passed.
+- affected legacy import/reconstruction regression: 3 files and 42 tests
+  passed.
+
+### Limitations and deferred boundary
+
+- This slice defines authority but intentionally has no adapter from legacy
+  imports, no current saved-data migration, no schema migration, and no route
+  consumer. Existing v2 financial behavior and 32-bit fingerprints remain
+  operational compatibility code and explicitly non-authoritative.
+- Correction/bust facts are classified but not applied bitemporally. Dataset
+  and coverage manifests, eligibility, snapshots, stable evidence references,
+  date/query filters, and backup/restore belong to GA0-A3.
+- No analytics, chart-ready series, charts, AI, prompts, embeddings, natural
+  language, support/resistance, market enrichment, SEC/halt/float integration,
+  setup classification, manual entry, period reflection, Real Coach/Whop,
+  public users, hosted persistence, or deployment entered the branch.
+- The existing npm audit findings and build tracing warnings are repository
+  risks outside this isolated slice; neither was weakened or hidden.
+
+### Exact next resume point
+
+Review the draft PR against this entry and the four ADRs. Independently verify
+the decimal grammar, canonical vectors, ordering ambiguity, suppression rules,
+FIFO/reference agreement, fixed seeds, privacy/history scan, and legacy/route
+isolation. Keep the PR draft and unmerged. If the audit accepts GA0-A2, record
+that decision in a new project-log entry before planning GA0-A3. Do not begin
+GA0-A3 from this implementation handoff.
+
 ## 2026-07-18 — GA0-A1 Accepted; GA0-A2 Is the Current Gate
 
 ### Accepted continuity decision

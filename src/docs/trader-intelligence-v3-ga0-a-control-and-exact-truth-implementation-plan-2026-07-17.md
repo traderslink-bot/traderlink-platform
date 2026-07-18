@@ -345,16 +345,78 @@ Document at least:
 - Active branch:
   `agent/trader-intelligence-v3-ga0-a2-exact-truth`, created from the latest
   `origin/main` after verifying the accepted GA0-A1 ancestor.
-- GA0-A2 implementation is in progress and is not yet accepted.
+- GA0-A2 implementation and the complete required local verification matrix
+  are complete as a review candidate. GA0-A2 is not yet accepted.
 - Only `private_owner_alpha + local_only + local_sqlite` remains operational.
 - No hosted mode, database migration, saved-data migration, route/UI change,
   analytics, chart, AI/model, market-data, support/resistance, manual-entry,
   reflection, Real Coach/Whop, or deployment work is authorized in this slice.
 - GA0-A3 bitemporal corrections, manifests, eligibility, evidence references,
   query filters, and backup/restore remain deferred and have not begun.
-- Completion requires the focused exact-truth verification, all repository
-  regression checks, a private-data/history audit, and a draft PR left open for
-  independent review.
+- The focused exact-truth verification, repository regressions, private-data
+  and history audit, build, and local E2E are green. The implementation must be
+  published as a draft PR and left open for independent review.
+
+### 6.0.1 Implemented authority
+
+- Four binding ADRs define exact decimals, canonical serialization and digest,
+  canonical execution/order/identity, and analytical P/L/reconstruction.
+- `domain/exact` owns the sole approved `decimal.js` import plus opaque exact
+  decimal and BigInt ratio values.
+- `domain/canonical` owns strict nine-digit UTC timestamps, precision
+  intervals, NFC/LF canonical JSON, deterministic code-point key ordering, and
+  duplicate-key-rejecting raw JSON parsing.
+- `domain/identity` owns domain-separated SHA-256 digests and byte equality.
+- `domain/execution` owns canonical provenance/evidence, content identity,
+  storage versus meaningful ordering, ambiguity/conflict evidence, and pure
+  duplicate/re-export/correction/collision classification.
+- `domain/accounting` owns policy-v1 exact FIFO inventory and analytical P/L.
+- `testing/reference` owns the independent BigInt coefficient/scale and FIFO
+  oracle; it shares no production arithmetic or matching helper.
+- Thirty-five exact synthetic fixture expectations and eight 1,000-run fixed
+  property suites cover the required long, short, partial, reversal, fee,
+  identity, ordering, currency, prior/open inventory, and fail-closed cases.
+- Architecture guards prohibit decimal imports outside the approved module,
+  JavaScript-number financial authority, direct legacy/route consumption, and
+  use of the isolated engine from current product surfaces.
+
+### 6.0.2 Recorded fixed seeds
+
+- `2026071801` — flat long, 1,000 runs.
+- `2026071802` — flat short, 1,000 runs.
+- `2026071803` — partial fills, 1,000 runs.
+- `2026071804` — reversals, 1,000 runs.
+- `2026071805` — duplicate classification, 1,000 runs.
+- `2026071806` — canonical property order, 1,000 runs.
+- `2026071807` — digest semantics, 1,000 runs.
+- `2026071808` — ambiguous ordering, 1,000 runs.
+
+### 6.0.3 Verification summary
+
+- Clean install, TypeScript, changed-path ESLint, and `git diff --check`: pass.
+- GA0-A2 focused gate and explicit replay: 13 files, 117 tests pass.
+- Full Vitest: 176 files, 1,617 tests pass.
+- Independent specialized replays: SQLite 2 tests; differential 4 tests;
+  fixed-seed properties 8 tests/8,000 generated cases; GA0-A1 containment and
+  number-authority guard 141 tests; affected legacy regressions 42 tests.
+- Architecture: 369 files, 42 API routes, and 82 classified routes pass.
+- Private-data scan: 23,659 records pass both against the final staged tree and
+  after the final commit; the post-commit scan covers 23,586 final-tree records
+  and 73 final branch-history blobs.
+- Layer 2 and Layer 3 verification: pass.
+- Optimized build: pass, 127 generated pages; existing Academy/Turbopack
+  notices remain.
+- Local-only level-analysis E2E: 1 Chromium scenario passes with synthetic
+  owner data and isolated SQLite.
+- No live model, financial provider, payment, Discord, Vercel, production
+  database, production deployment, or any deployment call occurred.
+
+### 6.0.4 Audit handoff
+
+GA0-A2 stops at a draft PR. Independent audit must validate exactness,
+canonical identity, ordering ambiguity, duplicate suppression, FIFO/reference
+agreement, fixed-seed reproducibility, privacy, and legacy isolation. No GA0-A3
+work may begin until a later explicit acceptance entry is recorded.
 
 ## 6.1 Exact decimal ADR and wrappers
 

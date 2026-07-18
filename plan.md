@@ -136,7 +136,9 @@ GA0-A2 must not include:
 GA0-A2 is active on
 `agent/trader-intelligence-v3-ga0-a2-exact-truth`. No hosted mode is
 operational. GA0-A3 has not begun. GA0-A2 remains unaccepted until independent
-review of its draft PR.
+review of its draft PR. The implementation and complete local verification
+matrix are green; this is an implementation candidate, not an acceptance
+decision.
 
 Feature provenance was reconciled against the separate dirty
 `trader-intelligence-v2` worktree. The deterministic import, saved-trade,
@@ -410,12 +412,14 @@ Maintain an exploration ledger so repeated slicing cannot be hidden.
 
 # 12. Current Next Action
 
-1. implement the complete GA0-A2 exact-truth slice on the dedicated branch;
-2. run exact-decimal, canonicalization, identity, ordering, duplicate, FIFO,
-   independent-reference, fixed-seed property, SQLite, architecture, privacy,
-   legacy, build, and local E2E verification;
-3. publish the implementation as a draft PR for independent review;
-4. do not mark GA0-A2 accepted and do not begin GA0-A3;
+1. independently audit the complete GA0-A2 draft PR against the four ADRs and
+   the acceptance standard;
+2. replay the exact-decimal, canonicalization, identity, ordering, duplicate,
+   FIFO, independent-reference, fixed-seed property, SQLite, architecture,
+   privacy, legacy, build, and local E2E evidence where needed;
+3. keep the PR draft and unmerged until a separate acceptance decision is
+   recorded;
+4. do not mark GA0-A2 accepted and do not begin GA0-A3 from this handoff;
 5. keep runtime work internal, loopback-only, model-free, and undeployed.
 
 ---
