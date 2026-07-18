@@ -1,7 +1,13 @@
 # Trader Intelligence v3 Legacy Hazard Register
 
-Date: 2026-07-17
-Gate: GA0-A1 containment and architecture boundaries
+Date: 2026-07-18
+Gate: GA0-A2 canonical execution and exact financial truth
+
+GA0-A1 is accepted and complete at
+`4f9e440116258c9548a2d13f7ea057a9075101c6`. GA0-A2 is active on
+`agent/trader-intelligence-v3-ga0-a2-exact-truth`. This slice addresses H-005
+and H-006 through a new isolated authority; legacy behavior remains preserved
+and non-authoritative until a separately accepted adapter/migration phase.
 
 ## Purpose
 

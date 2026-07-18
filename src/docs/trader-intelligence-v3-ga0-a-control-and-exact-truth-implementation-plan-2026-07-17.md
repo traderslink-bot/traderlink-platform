@@ -5,7 +5,7 @@
 **Architecture authority:** `src/docs/trader-intelligence-v3-controlling-architecture-specification-2026-07-17.md`  
 **Operating profile:** `private_owner_alpha`  
 **Only operational hosting mode:** `local_only`
-**Current slice:** GA0-A1 — containment and architecture boundaries  
+**Current slice:** GA0-A2 — canonical execution and exact financial truth
 **Runtime model calls:** forbidden  
 **Analytics tools:** forbidden in GA0-A  
 **Chart rendering:** forbidden in GA0-A  
@@ -337,6 +337,24 @@ Document at least:
 ---
 
 # 6. GA0-A2 — Canonical Execution and Exact Financial Truth
+
+## 6.0 Implementation status — 2026-07-18
+
+- GA0-A1 is independently accepted and complete. PR #102 merged as
+  `4f9e440116258c9548a2d13f7ea057a9075101c6`.
+- Active branch:
+  `agent/trader-intelligence-v3-ga0-a2-exact-truth`, created from the latest
+  `origin/main` after verifying the accepted GA0-A1 ancestor.
+- GA0-A2 implementation is in progress and is not yet accepted.
+- Only `private_owner_alpha + local_only + local_sqlite` remains operational.
+- No hosted mode, database migration, saved-data migration, route/UI change,
+  analytics, chart, AI/model, market-data, support/resistance, manual-entry,
+  reflection, Real Coach/Whop, or deployment work is authorized in this slice.
+- GA0-A3 bitemporal corrections, manifests, eligibility, evidence references,
+  query filters, and backup/restore remain deferred and have not begun.
+- Completion requires the focused exact-truth verification, all repository
+  regression checks, a private-data/history audit, and a draft PR left open for
+  independent review.
 
 ## 6.1 Exact decimal ADR and wrappers
 

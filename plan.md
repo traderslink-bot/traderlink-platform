@@ -1,12 +1,12 @@
 # Trader Intelligence Plan Entry Point
 
-**Last updated:** 2026-07-17 America/Toronto  
+**Last updated:** 2026-07-18 America/Toronto
 **Active architecture:** Trader Intelligence v3  
 **Operating profile:** `private_owner_alpha`  
 **Only operational hosting mode:** `local_only`
 **Primary domain:** U.S. listed small-cap and micro-cap active trading  
 **Product boundary:** retrospective educational trade review and self-improvement  
-**Current gate:** GA0-A1 — independent-audit remediation in progress
+**Current gate:** GA0-A2 — canonical execution and exact financial truth
 **Active implementation plan:** `src/docs/trader-intelligence-v3-ga0-a-control-and-exact-truth-implementation-plan-2026-07-17.md`
 
 Start here when resuming Trader Intelligence product, import, analytics, query, visualization, coaching, market context, external sources, persistence, AI, or QA work.
@@ -100,19 +100,22 @@ AI must not become the parser, calculator, database, unrestricted SQL author, ru
 
 ---
 
-# 4. Current Gate — GA0-A1
+# 4. Current Gate — GA0-A2
 
-Build first:
+GA0-A1 is independently accepted and complete. PR #102 merged into `main` at
+commit `4f9e440116258c9548a2d13f7ea057a9075101c6`.
 
-- preserve/adapt/legacy/retire inventory;
-- deployment and hosting-mode contracts;
-- owner-access containment contract;
-- minimal v3 module boundary;
-- architecture dependency guard;
-- private-data repository guard;
-- legacy hazard register.
+Build now:
 
-GA0-A1 must not include:
+- exact decimal domain values and exact rational values;
+- canonical serialization and SHA-256 content identity;
+- canonical execution provenance, validation, ordering, and ambiguity;
+- duplicate, re-export, correction, collision, and review states;
+- exact FIFO analytical P/L and inventory reconstruction;
+- an independent BigInt/rational reference implementation;
+- exact synthetic fixtures, differential/property tests, and architecture guards.
+
+GA0-A2 must not include:
 
 - AI/model calls;
 - natural-language query parsing;
@@ -130,7 +133,10 @@ GA0-A1 must not include:
 - vector storage;
 - production deployment.
 
-Independent audit remediation is active on draft PR #102. The audit fixes must remain marked in progress until every required command passes and the revised head receives independent re-review. GA0-A2 must not begin from this unaccepted branch.
+GA0-A2 is active on
+`agent/trader-intelligence-v3-ga0-a2-exact-truth`. No hosted mode is
+operational. GA0-A3 has not begun. GA0-A2 remains unaccepted until independent
+review of its draft PR.
 
 Feature provenance was reconciled against the separate dirty
 `trader-intelligence-v2` worktree. The deterministic import, saved-trade,
@@ -150,11 +156,11 @@ Post-audit feature preservation sequence, without widening GA0-A1:
 4. adapt Real Coach screens and entitlement behavior with a synthetic local-owner entitlement for app testing, while deferring real Whop, payment, and hosted identity calls to the hosted-support foundation;
 5. keep the committed Academy Discord login separate from future Trader Intelligence identity until an explicit product/auth decision connects or replaces it.
 
-These are preservation and sequencing commitments, not implementation authority on PR #102.
+These are preservation and sequencing commitments, not implementation authority on GA0-A2.
 
 Recommended implementation branch:
 
-`agent/trader-intelligence-v3-ga0-a1-containment`
+`agent/trader-intelligence-v3-ga0-a2-exact-truth`
 
 ---
 
@@ -404,10 +410,12 @@ Maintain an exploration ledger so repeated slicing cannot be hidden.
 
 # 12. Current Next Action
 
-1. complete every independent-audit remediation on the existing GA0-A1 branch;
-2. run the full required verification, including optimized local E2E verification and final-tree plus PR-history private-data scans;
-3. push the same branch, keep PR #102 draft, and request independent re-audit;
-4. do not merge or begin GA0-A2 until the owner accepts the re-audited result;
+1. implement the complete GA0-A2 exact-truth slice on the dedicated branch;
+2. run exact-decimal, canonicalization, identity, ordering, duplicate, FIFO,
+   independent-reference, fixed-seed property, SQLite, architecture, privacy,
+   legacy, build, and local E2E verification;
+3. publish the implementation as a draft PR for independent review;
+4. do not mark GA0-A2 accepted and do not begin GA0-A3;
 5. keep runtime work internal, loopback-only, model-free, and undeployed.
 
 ---

@@ -107,6 +107,26 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-07-18 Trader Intelligence v3 GA0-A2 Exact Truth Started
+
+GA0-A1 is independently accepted and complete. PR #102 merged into `main` as
+`4f9e440116258c9548a2d13f7ea057a9075101c6`. The active clean linked worktree
+is on `agent/trader-intelligence-v3-ga0-a2-exact-truth`, created from that
+latest `origin/main` after the ancestor check passed.
+
+The current task is GA0-A2 only: exact decimal/rational values, canonical
+serialization and SHA-256 identity, canonical execution facts,
+ordering/ambiguity, duplicate/correction/collision classification, exact FIFO
+analytical P/L, an independent BigInt reference, synthetic fixtures,
+fixed-seed differential/property tests, SQLite TEXT compatibility, and focused
+architecture/CI guards. GA0-A3 and every route, UI, migration, analytics,
+chart, AI, market-data, support/resistance, manual-entry, reflection, Real
+Coach/Whop, hosted, and deployment concern remain out of scope.
+
+Next resume action: finish the GA0-A2 ADRs and isolated domain contracts, run
+the complete required verification matrix, publish the dedicated branch as a
+draft PR, and stop for independent audit without merging or deploying.
+
 ### 2026-07-17 Trader Intelligence v3 GA0-A1 Independent-Audit Remediation
 
 The active branch is

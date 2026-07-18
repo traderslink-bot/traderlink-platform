@@ -1,8 +1,14 @@
 # Trader Intelligence v3 Current-System Inventory
 
-Date: 2026-07-17
-Gate: GA0-A1 containment and architecture boundaries
-Branch: `agent/trader-intelligence-v3-ga0-a1-containment`
+Date: 2026-07-18
+Gate: GA0-A2 canonical execution and exact financial truth
+Branch: `agent/trader-intelligence-v3-ga0-a2-exact-truth`
+
+GA0-A1 is accepted and complete at
+`4f9e440116258c9548a2d13f7ea057a9075101c6`. The historical inventory below is
+preserved. GA0-A2 adds an isolated exact-truth domain and testing boundary; it
+does not promote or rewire current routes, saved data, legacy calculations, or
+user-visible output.
 
 ## Scope and conclusion
 

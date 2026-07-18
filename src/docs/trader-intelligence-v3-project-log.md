@@ -44,6 +44,47 @@ This log may record progress and accepted strengthening decisions. It may not si
 
 # Current Resume Point
 
+## 2026-07-18 — GA0-A1 Accepted; GA0-A2 Is the Current Gate
+
+### Accepted continuity decision
+
+- GA0-A1 received independent acceptance and is complete.
+- PR #102 merged into `main` as commit
+  `4f9e440116258c9548a2d13f7ea057a9075101c6`.
+- The accepted commit is the current `origin/main` and the required ancestor of
+  this slice.
+- GA0-A2 — Canonical Execution and Exact Financial Truth — is the current
+  gate.
+- Implementation branch:
+  `agent/trader-intelligence-v3-ga0-a2-exact-truth`.
+- Only `private_owner_alpha + local_only + local_sqlite` is operational.
+- No hosted mode is operational, no deployment is authorized, and no GA0-A3
+  work has begun.
+- GA0-A2 will remain an implementation candidate until its draft PR receives
+  independent review; this entry does not claim GA0-A2 acceptance.
+
+### Current implementation boundary
+
+Implement only exact financial domain values, canonical serialization and
+content identity, canonical execution facts, ordering/ambiguity,
+duplicate/correction/collision classification, exact FIFO analytical P/L,
+independent BigInt/rational verification, synthetic fixtures, and the focused
+guards/CI needed to prove those contracts. Do not connect the new authority to
+current routes, current saved data, UI, analytics, charts, AI, market data,
+support/resistance, manual entry, reflections, Real Coach/Whop, hosted storage,
+or deployment.
+
+### Exact next resume point
+
+1. complete the four GA0-A2 ADRs and exact domain boundaries;
+2. implement execution identity/order/classification and FIFO reconstruction;
+3. prove the production implementation against the independent reference with
+   recorded fixed seeds and exact synthetic fixtures;
+4. run every required repository check and record exact results;
+5. publish a draft PR, leave it unmerged, and stop for independent audit.
+
+---
+
 ## 2026-07-17 — GA0-A1 Independent-Audit Remediation In Progress
 
 ### Binding owner decision
@@ -517,8 +558,8 @@ Audit:
 
 | Gate | Status | Notes |
 |---|---|---|
-| GA0-A1 Containment | Implementation complete; review pending | Focused draft PR is the current resume point |
-| GA0-A2 Exact truth | Not started | After A1 review |
+| GA0-A1 Containment | Accepted and complete | PR #102 merged as `4f9e440116258c9548a2d13f7ea057a9075101c6` |
+| GA0-A2 Exact truth | In implementation | Dedicated branch; independent review pending after completion |
 | GA0-A3 Temporal/manifests/query foundation | Not started | After A2 review |
 | GA0-B Deterministic tools/series | Not started | Weekday and daily-stop |
 | GA0-C Private calibration | Not started | Real-data verification outside Git |
