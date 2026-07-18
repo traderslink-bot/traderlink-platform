@@ -1,0 +1,30 @@
+export const TRADER_INTELLIGENCE_SYNTHETIC_FIXTURE_SHA256 = {
+  "src/docs/trade-execution-import-fixtures/etrade-transactions-sample.csv":
+    "1cda2d7bb27fcc70ffc1245a102949be1e60228d5e0afdedb99756b004571588",
+  "src/docs/trade-execution-import-fixtures/fidelity-account-history-sample.csv":
+    "71d4a4b7f209b77476cf25c47c365c86a701aff0a552d057cf94a57426330741",
+  "src/docs/trade-execution-import-fixtures/generic-execution-sample.csv":
+    "7c0eaa6872fe43b6873997e20773eb3d6dd3ce55eccd16731cb228359db09fd5",
+  "src/docs/trade-execution-import-fixtures/ibkr-activity-statement-sample.csv":
+    "74fd8c1a7cd6a616c674d1a882a636c025fd0f3336cbf58b23d77ce77863f238",
+  "src/docs/trade-execution-import-fixtures/moomoo-partial-fills-synthetic.csv":
+    "4a8f48f8784fdfa841f7d362182d4ca11c265ecac72b2697aa2629183702ed20",
+  "src/docs/trade-execution-import-fixtures/moomoo-trade-history-sample.csv":
+    "648d8dcd098f82b4af84107b439e2a659d4e0bbda353d880d21364bd05489b6b",
+  "src/docs/trade-execution-import-fixtures/robinhood-transaction-history-sample.csv":
+    "9f01d001e89efe2cae9fa3dfeb10283bfc992c9d343c5d8d2b535818a26f22da",
+  "src/docs/trade-execution-import-fixtures/schwab-mixed-activity-synthetic.csv":
+    "742554e4764b785e24e7bdc385891b5533f0f2d250c5a2fa535be114374cb899",
+  "src/docs/trade-execution-import-fixtures/schwab-transactions-sample.csv":
+    "e4d441381bb1dc326856e15f6b9d52179e9b3d4fa909bb10d0f80b041fff29ad",
+  "src/docs/trade-execution-import-fixtures/tastytrade-transactions-sample.csv":
+    "6427b277e2aae439cbdb9cf0ccc9758079299e750f422f0ce57aceae2cae2b9b",
+  "src/docs/trade-execution-import-fixtures/thinkorswim-account-statement-sample.csv":
+    "c1ccd887f2b77401d990bc96bc0b82fdb392d73ca5ee6b888dacd4509a5278b5",
+  "src/docs/trade-execution-import-fixtures/tradestation-trade-history-sample.csv":
+    "92f7b7fc322dad6b4f9ceb308c9623855a46ea9fa16ef4658f4ded00b5bce2aa",
+  "src/docs/trade-execution-import-fixtures/webull-order-history-sample.csv":
+    "9d82dada2f18eb67e2d8a986af9b1d185492378b965b6620487137ffe929bd07",
+  "src/docs/trade-execution-import-fixtures/webull-partial-cancel-synthetic.csv":
+    "26e116eba0a59c4f15d096581243ee2f6f03df1a971c3251d164ff9ab5321677",
+} as const satisfies Readonly<Record<string, string>>;
