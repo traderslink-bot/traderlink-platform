@@ -475,6 +475,7 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
     ...state,
     potentialGainCardVisible: state.potentialGainCardVisible !== false,
     tradersLinkAiReadCardVisible: state.tradersLinkAiReadCardVisible !== false,
+    tradersLinkAiReadDipBuyPlanVisible: state.tradersLinkAiReadDipBuyPlanVisible !== false,
     potentialGain: normalizePotentialGain(state.potentialGain),
     firstPostedAt:
       state.firstPostedAt ?? (hasCards ? Math.min(...cardTimes) : null),
@@ -573,6 +574,10 @@ export function applyPatch(
       typeof patch.tradersLinkAiReadCardVisible === "boolean"
         ? patch.tradersLinkAiReadCardVisible
         : baseExisting?.tradersLinkAiReadCardVisible !== false,
+    tradersLinkAiReadDipBuyPlanVisible:
+      typeof patch.tradersLinkAiReadDipBuyPlanVisible === "boolean"
+        ? patch.tradersLinkAiReadDipBuyPlanVisible
+        : baseExisting?.tradersLinkAiReadDipBuyPlanVisible !== false,
     potentialGain: nextPotentialGain,
     companyName: baseExisting?.companyName ?? null,
     latestPrice: recomputesCardPrice ? null : baseExisting?.latestPrice ?? null,
@@ -625,6 +630,10 @@ function applyTickerDataPatch(
       typeof patch.tradersLinkAiReadCardVisible === "boolean"
         ? patch.tradersLinkAiReadCardVisible
         : existing?.tradersLinkAiReadCardVisible !== false,
+    tradersLinkAiReadDipBuyPlanVisible:
+      typeof patch.tradersLinkAiReadDipBuyPlanVisible === "boolean"
+        ? patch.tradersLinkAiReadDipBuyPlanVisible
+        : existing?.tradersLinkAiReadDipBuyPlanVisible !== false,
     potentialGain: potentialGainFromPrice(
       existing?.potentialGain,
       existing?.firstPostedAt ?? null,

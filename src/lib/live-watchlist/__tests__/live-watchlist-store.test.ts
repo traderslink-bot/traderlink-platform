@@ -915,6 +915,7 @@ describe("LiveWatchlistStore", () => {
       status: "live",
       updatedAt: 1000,
       tradersLinkAiReadCardVisible: true,
+      tradersLinkAiReadDipBuyPlanVisible: true,
       cards: {
         tradersLinkAiRead: {
           title: "TradersLink AI Read",
@@ -927,14 +928,17 @@ describe("LiveWatchlistStore", () => {
     });
     expect(published.cards.tradersLinkAiRead?.title).toBe("TradersLink AI Read");
     expect(published.tradersLinkAiReadCardVisible).toBe(true);
+    expect(published.tradersLinkAiReadDipBuyPlanVisible).toBe(true);
 
     const hidden = await store.upsertPatch({
       symbol: "TGHL",
       updatedAt: 1100,
       tradersLinkAiReadCardVisible: false,
+      tradersLinkAiReadDipBuyPlanVisible: false,
       cards: {},
     });
     expect(hidden.tradersLinkAiReadCardVisible).toBe(false);
+    expect(hidden.tradersLinkAiReadDipBuyPlanVisible).toBe(false);
     expect(hidden.cards.tradersLinkAiRead?.priceWhenPosted).toBe(1.36);
 
     const preserved = await store.upsertTickerData({
@@ -946,6 +950,7 @@ describe("LiveWatchlistStore", () => {
       nearestResistance: 1.5,
     });
     expect(preserved.tradersLinkAiReadCardVisible).toBe(false);
+    expect(preserved.tradersLinkAiReadDipBuyPlanVisible).toBe(false);
     expect(preserved.cards.tradersLinkAiRead?.title).toBe("TradersLink AI Read");
   });
 
