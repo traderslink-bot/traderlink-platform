@@ -17,7 +17,6 @@ import {
 import type {
   CanonicalExecutionEnvelope,
   CanonicalExecutionOrderingResult,
-  ExecutionRelationshipClassification,
 } from "../execution";
 import type { CanonicalExecutionDigest } from "../identity";
 import {
@@ -25,6 +24,7 @@ import {
   type AnalyticalLedgerResult,
   type AnalyticalPnlReconstructionResult,
   type FifoOpenLot,
+  type ExecutionMatchedQuantity,
   type FlatToFlatRoundTrip,
   type InventoryDirection,
   type ReconstructionBlockedCode,
@@ -193,7 +193,6 @@ function finalizeRoundTrip(accumulator: RoundTripAccumulator): FlatToFlatRoundTr
 
 export interface FifoLedgerInput {
   ordering: CanonicalExecutionOrderingResult;
-  relationshipClassifications?: readonly ExecutionRelationshipClassification[];
 }
 
 export function runFifoPositionLedger(
@@ -206,18 +205,6 @@ export function runFifoPositionLedger(
   }
   if (input.ordering.state === "conflicting_order_evidence") {
     return blocked("ti_v3_reconstruction_order_conflicting", null, allDigests);
-  }
-  const collision = input.relationshipClassifications?.find(
-    (classification) => classification.state === "digest_collision_detected",
-  );
-  if (collision !== undefined) {
-    return blocked("ti_v3_reconstruction_digest_collision", null, allDigests);
-  }
-  const correction = input.relationshipClassifications?.find(
-    (classification) => classification.state === "broker_correction_or_bust",
-  );
-  if (correction !== undefined) {
-    return blocked("ti_v3_reconstruction_correction_unresolved", null, allDigests);
   }
   const executions = input.ordering.economicallyOrderedExecutions ?? [];
   if (executions.length === 0) {
@@ -243,6 +230,7 @@ export function runFifoPositionLedger(
     const lots: FifoOpenLot[] = [];
     const roundTrips: FlatToFlatRoundTrip[] = [];
     const reversalEffects: ReversalEffect[] = [];
+    const matchedQuantities: ExecutionMatchedQuantity[] = [];
     let currentRoundTrip: RoundTripAccumulator | null = null;
     let gross = exactMoney("0");
     let charges = exactMoney("0");
@@ -424,6 +412,11 @@ export function runFifoPositionLedger(
         );
       }
 
+      matchedQuantities.push({
+        executionDigest: execution.canonicalContentDigest,
+        matchedQuantity: closedQuantity,
+      });
+
       if (remaining !== "0") {
         const openedDirection: InventoryDirection =
           execution.content.side === "buy" ? "long" : "short";
@@ -495,6 +488,7 @@ export function runFifoPositionLedger(
       signedCashFlow: cashFlow,
       flatToFlatRoundTrips: roundTrips,
       reversalEffects,
+      matchedQuantities,
       limitations,
       inputExecutionDigests: allDigests,
     };

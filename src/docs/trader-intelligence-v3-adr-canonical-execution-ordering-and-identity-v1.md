@@ -7,7 +7,9 @@ Contract key: `ti_v3_canonical_execution_v1`
 ## Canonical execution boundary
 
 A canonical execution separates factual content from validation/envelope
-metadata. The SHA-256 digest covers only canonical factual content. The
+metadata. The public builder accepts `unknown` and returns stable structured
+failures for malformed shapes and values. The SHA-256 digest covers only
+canonical factual content. The
 envelope carries validation state/reason codes and the digest. Database IDs,
 import-batch IDs, review status, storage timestamps, UI labels, and the digest
 itself are excluded.
@@ -72,11 +74,15 @@ declared sequence fields, row locator, and finally canonical digest. It exists
 for stable persistence and output only.
 
 Meaningful order evaluates non-overlapping timestamp-precision intervals and
-declared broker/source sequence semantics. Evidence may include broker
-execution index, broker fill sequence, execution ID only when the adapter
-declares ordering semantics, order ID plus fill sequence, and original row
-order only when the source contract declares it preserved. Lexical execution
-ID order and padded timestamp precision are not automatically meaningful.
+declared broker/source sequence semantics. Broker execution indices require
+the same owner, account, broker, source system, and source identity, plus the
+same source document unless both facts declare `source_identity_global`
+scope. Fill sequence additionally requires the same order and source document.
+Execution-ID ordering requires `declared` semantics, a validated explicit
+ordering namespace shared by both facts, compatible declared scope, and the
+same broker-adapter scope. Original row order remains limited to one preserved
+source document. Lexical execution-ID order and padded timestamp precision are
+not automatically meaningful.
 
 Results are `ordered`, `tied_but_economically_equivalent`,
 `ambiguous_meaningful_order`, or `conflicting_order_evidence`, with stable
@@ -97,15 +103,26 @@ The pure relationship classifier returns one of:
 - `manual_review_required`;
 - `distinct_execution`.
 
-It also returns evidence, confidence, stable reason codes, and suppression
-eligibility. Only proven exact same-source duplicates are automatically
-suppression-eligible. Equal economic fields do not prove duplication.
+It also carries the left and right canonical execution digests and returns
+evidence, confidence, stable reason codes, and suppression eligibility. Only
+digest-equal, byte-equal facts with proven equal source identity/document/row
+location are automatically suppression-eligible. Equal economic fields do not
+prove duplication.
 Distinct stable execution IDs normally establish legitimate distinct fills.
 The same stable broker execution ID with equal economic content in another
 source document is a re-export; changed economic content is a correction or
 conflict. Correction/bust references are preserved. Ambiguous cases remain
 visible. GA0-A2 classifies correction state but does not apply bitemporal
 corrections; that remains GA0-A3.
+
+Before grouping or FIFO, a pair resolver verifies that both named digests are
+present, recomputes the classification, verifies owner/account/instrument/
+currency group scope, and applies the state only to that group. One proven
+duplicate relationship suppresses one occurrence. Re-exports, possible
+duplicates, manual review, correction/bust, and collisions block their
+affected group; legitimate repeated and distinct fills retain both facts.
+Unknown, cross-group, or forged classifications fail closed. No unscoped
+relationship list is passed to every ledger.
 
 ## Digest
 
@@ -117,6 +134,8 @@ ti_v3:canonical_execution:v1:sha256:<64-lowercase-hex>
 
 Canonical bytes are retained for verification at comparison boundaries. Equal
 digest with unequal canonical bytes is a collision and fails closed.
+The envelope returns the normalized canonical value produced by serialization,
+so reserializing `envelope.content` yields exactly `envelope.canonicalBytes`.
 
 ## Compatibility
 

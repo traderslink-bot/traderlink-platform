@@ -169,4 +169,20 @@ describe("Trader Intelligence v3 architecture boundary guard", () => {
       }),
     );
   });
+
+  it("rejects locale-sensitive comparison in canonical authority modules", () => {
+    expect(
+      scanTraderIntelligenceArchitectureBoundaries([
+        {
+          path: "src/lib/trader-intelligence-v3/domain/execution/bad.ts",
+          source: "const ordered = values.sort((left, right) => left.localeCompare(right));",
+        },
+      ]),
+    ).toContainEqual(
+      expect.objectContaining({
+        code: "ti_v3_arch_locale_sensitive_canonical_comparator",
+        dependency: "localeCompare",
+      }),
+    );
+  });
 });

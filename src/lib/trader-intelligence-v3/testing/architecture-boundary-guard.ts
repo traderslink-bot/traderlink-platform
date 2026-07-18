@@ -18,7 +18,8 @@ export type TraderIntelligenceArchitectureFindingCode =
   | "ti_v3_arch_route_domain_authority"
   | "ti_v3_arch_decimal_import_outside_boundary"
   | "ti_v3_arch_legacy_exact_truth_import"
-  | "ti_v3_arch_financial_number_authority";
+  | "ti_v3_arch_financial_number_authority"
+  | "ti_v3_arch_locale_sensitive_canonical_comparator";
 
 export interface TraderIntelligenceSourceRecord {
   path: string;
@@ -110,6 +111,29 @@ function financialNumberAuthorityFindings(path: string, source: string): readonl
   };
   visit(sourceFile);
   return [...findings].sort();
+}
+
+function hasLocaleSensitiveCanonicalComparator(path: string, source: string): boolean {
+  const isCanonicalAuthority =
+    path.startsWith("src/lib/trader-intelligence-v3/domain/canonical/") ||
+    path.startsWith("src/lib/trader-intelligence-v3/domain/identity/") ||
+    path.startsWith("src/lib/trader-intelligence-v3/domain/execution/") ||
+    path.startsWith("src/lib/trader-intelligence-v3/domain/accounting/");
+  if (!isCanonicalAuthority) return false;
+  const sourceFile = parseTraderIntelligenceTypeScript(path, source);
+  let found = false;
+  const visit = (node: ts.Node): void => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      node.expression.name.text === "localeCompare"
+    ) {
+      found = true;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return found;
 }
 
 export function scanTraderIntelligenceArchitectureBoundaries(
@@ -240,6 +264,14 @@ export function scanTraderIntelligenceArchitectureBoundaries(
         "ti_v3_arch_financial_number_authority",
         path,
         authority,
+      );
+    }
+    if (hasLocaleSensitiveCanonicalComparator(path, record.source)) {
+      pushFinding(
+        findings,
+        "ti_v3_arch_locale_sensitive_canonical_comparator",
+        path,
+        "localeCompare",
       );
     }
   }

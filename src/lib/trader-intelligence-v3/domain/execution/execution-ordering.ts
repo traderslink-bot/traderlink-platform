@@ -78,18 +78,75 @@ function economicEquivalent(
   left: CanonicalExecutionEnvelope,
   right: CanonicalExecutionEnvelope,
 ): boolean {
-  const leftCharges = left.content.charges.map((charge) => `${charge.kind}:${charge.amount}:${charge.currency}`).join("|");
-  const rightCharges = right.content.charges.map((charge) => `${charge.kind}:${charge.amount}:${charge.currency}`).join("|");
   return (
     left.content.canonicalOwnerKey === right.content.canonicalOwnerKey &&
     left.content.canonicalAccountKey === right.content.canonicalAccountKey &&
+    left.content.sourceAggregationState === right.content.sourceAggregationState &&
+    left.content.instrumentResolutionState === right.content.instrumentResolutionState &&
     left.content.stableInstrumentKey === right.content.stableInstrumentKey &&
+    left.content.rawBrokerSymbol === right.content.rawBrokerSymbol &&
+    left.content.securityType === right.content.securityType &&
+    left.content.basisContinuityState === right.content.basisContinuityState &&
     left.content.side === right.content.side &&
+    left.content.brokerPositionEffectEvidence ===
+      right.content.brokerPositionEffectEvidence &&
+    left.content.shortSaleIndicator === right.content.shortSaleIndicator &&
     left.content.quantity === right.content.quantity &&
     left.content.price === right.content.price &&
     left.content.currency === right.content.currency &&
-    leftCharges === rightCharges
+    left.content.brokerReportedNetCashAmount ===
+      right.content.brokerReportedNetCashAmount &&
+    left.content.correctionState === right.content.correctionState &&
+    left.content.correctionReference === right.content.correctionReference &&
+    left.validation.state === right.validation.state &&
+    left.validation.reasonCodes.length === right.validation.reasonCodes.length &&
+    left.validation.reasonCodes.every(
+      (reason, index) => reason === right.validation.reasonCodes[index],
+    ) &&
+    left.content.charges.length === right.content.charges.length &&
+    left.content.charges.every((charge, index) => {
+      const counterpart = right.content.charges[index];
+      return (
+        counterpart !== undefined &&
+        charge.kind === counterpart.kind &&
+        charge.amount === counterpart.amount &&
+        charge.currency === counterpart.currency
+      );
+    })
   );
+}
+
+function sameOrderingAdapterScope(
+  left: CanonicalExecutionEnvelope,
+  right: CanonicalExecutionEnvelope,
+): boolean {
+  return (
+    left.content.canonicalOwnerKey === right.content.canonicalOwnerKey &&
+    left.content.canonicalAccountKey === right.content.canonicalAccountKey &&
+    left.content.brokerCode === right.content.brokerCode &&
+    left.content.sourceSystem === right.content.sourceSystem &&
+    left.content.sourceIdentity === right.content.sourceIdentity
+  );
+}
+
+function sameSourceDocument(
+  left: CanonicalExecutionEnvelope,
+  right: CanonicalExecutionEnvelope,
+): boolean {
+  return (
+    left.content.sourceDocumentDigest !== null &&
+    left.content.sourceDocumentDigest === right.content.sourceDocumentDigest
+  );
+}
+
+function compatibleDeclaredScope(
+  leftScope: CanonicalExecutionEnvelope["content"]["executionIdOrderingScope"],
+  rightScope: CanonicalExecutionEnvelope["content"]["executionIdOrderingScope"],
+  left: CanonicalExecutionEnvelope,
+  right: CanonicalExecutionEnvelope,
+): boolean {
+  if (leftScope !== rightScope || leftScope === "not_declared") return false;
+  return leftScope === "source_identity_global" || sameSourceDocument(left, right);
 }
 
 function directionFromComparison(comparison: number): "left_before_right" | "right_before_left" | null {
@@ -120,28 +177,53 @@ export function compareMeaningfulExecutionOrder(
 
   const evidenceComparisons: readonly [string, number][] = [
     [
-      "broker_execution_index",
-      compareOptionalInteger(left.content.brokerExecutionIndex, right.content.brokerExecutionIndex),
+      "scoped_broker_execution_index",
+      sameOrderingAdapterScope(left, right) &&
+      compatibleDeclaredScope(
+        left.content.brokerExecutionIndexOrderingScope,
+        right.content.brokerExecutionIndexOrderingScope,
+        left,
+        right,
+      )
+        ? compareOptionalInteger(
+            left.content.brokerExecutionIndex,
+            right.content.brokerExecutionIndex,
+          )
+        : 0,
     ],
     [
-      "broker_fill_sequence",
-      left.content.orderId !== null && left.content.orderId === right.content.orderId
+      "scoped_broker_fill_sequence",
+      sameOrderingAdapterScope(left, right) &&
+      sameSourceDocument(left, right) &&
+      left.content.orderId !== null &&
+      left.content.orderId === right.content.orderId
         ? compareOptionalInteger(left.content.brokerFillSequence, right.content.brokerFillSequence)
         : 0,
     ],
     [
-      "declared_execution_id_order",
+      "scoped_declared_execution_id_order",
+      sameOrderingAdapterScope(left, right) &&
       left.content.executionIdOrderingSemantics === "declared" &&
       right.content.executionIdOrderingSemantics === "declared" &&
+      left.content.executionIdOrderingNamespace !== null &&
+      left.content.executionIdOrderingNamespace ===
+        right.content.executionIdOrderingNamespace &&
+      compatibleDeclaredScope(
+        left.content.executionIdOrderingScope,
+        right.content.executionIdOrderingScope,
+        left,
+        right,
+      ) &&
       left.content.executionId !== null &&
       right.content.executionId !== null
         ? compareString(left.content.executionId, right.content.executionId)
         : 0,
     ],
     [
-      "declared_source_row_order",
+      "scoped_declared_source_row_order",
+      sameOrderingAdapterScope(left, right) &&
       left.content.sourceIdentity === right.content.sourceIdentity &&
-      left.content.sourceDocumentDigest === right.content.sourceDocumentDigest &&
+      sameSourceDocument(left, right) &&
       left.content.originalSourceRowLocator.rowOrderPreserved &&
       right.content.originalSourceRowLocator.rowOrderPreserved &&
       left.content.originalSourceRowLocator.kind === "row_number" &&

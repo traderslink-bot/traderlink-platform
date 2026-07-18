@@ -19,8 +19,10 @@ conversion is implicit. Accepted execution quantity is positive; side controls
 inventory direction. Long inventory is positive internally and short inventory
 is negative.
 
-Only accepted, collision-free canonical executions in an accepted meaningful
-ordering state may enter the ledger. The ledger fails closed for order
+Only accepted, relationship-resolved, collision-free canonical executions in
+an accepted meaningful ordering state may enter the ledger. Pair-addressed
+relationship resolution occurs before ledger grouping and can suppress only
+a byte-proven duplicate occurrence. The ledger fails closed for order
 ambiguity that can affect inventory/P&L, unresolved or unsupported instrument
 identity, missing or changing ledger currency, unresolved correction/bust,
 digest collision, unsupported security type, unresolved corporate-action or
@@ -97,7 +99,8 @@ Display conversion is deferred.
 Structured results include policy version, ledger key, ending exact signed
 quantity, open FIFO lots, gross realized P/L by currency, signed charges by
 currency, net analytical P/L by currency, completed flat-to-flat round trips,
-reversal effects, blocked states, limitations, and input execution digests. No
+per-execution matched quantities, reversal effects, blocked states,
+limitations, and input execution digests. No
 cross-currency total is returned.
 
 ## Independent reference
@@ -106,8 +109,10 @@ Tests include a separate coefficient-and-scale BigInt/rational FIFO
 implementation. It imports no `decimal.js`, production exact helper, or
 production FIFO matcher. Production and reference code share only input/output
 type declarations, stable enum values, and synthetic fixture documents.
-Differential tests compare canonical exact outputs and expose diagnostic state
-on disagreement.
+Differential tests compare ending quantity, open lots with source identity,
+matched quantity per execution, gross P/L, charges, net P/L, signed cash flow,
+reversal effects, weighted entry/exit ratios, completed round trips, and
+blocked-state codes. They expose diagnostic state on disagreement.
 
 ## Deferred boundary
 

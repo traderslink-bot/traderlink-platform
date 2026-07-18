@@ -25,6 +25,11 @@ string escaping is deterministic. Arrays preserve declared semantic order.
 When a domain collection is order-insensitive, its domain builder explicitly
 sorts it before serialization; the generic serializer never guesses.
 
+The Unicode code-point comparator is an explicit shared implementation.
+Locale-sensitive comparison such as `localeCompare` is prohibited in
+canonical identity, execution, ordering, and accounting authorities and is
+enforced by the architecture guard.
+
 Enum values are lowercase contract literals. Canonical decimals follow
 `ti_v3_exact_decimal_v1`. Canonical execution timestamps follow the fixed UTC
 contract in the execution ADR.

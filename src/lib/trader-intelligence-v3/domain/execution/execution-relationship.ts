@@ -1,5 +1,9 @@
-import { canonicalBytesEqual } from "../identity";
-import type { CanonicalExecutionEnvelope } from "./canonical-execution";
+import { serializeCanonicalValue } from "../canonical";
+import { canonicalBytesEqual, type CanonicalExecutionDigest } from "../identity";
+import type {
+  CanonicalExecutionContent,
+  CanonicalExecutionEnvelope,
+} from "./canonical-execution";
 
 export type ExecutionRelationshipState =
   | "exact_duplicate_same_source"
@@ -18,6 +22,8 @@ export type ExecutionRelationshipConfidence =
   | "conflict";
 
 export interface ExecutionRelationshipClassification {
+  leftExecutionDigest: CanonicalExecutionDigest;
+  rightExecutionDigest: CanonicalExecutionDigest;
   state: ExecutionRelationshipState;
   confidence: ExecutionRelationshipConfidence;
   suppressionEligible: boolean;
@@ -31,50 +37,67 @@ function stableExecutionScopeEqual(
 ): boolean {
   return (
     left.content.brokerCode === right.content.brokerCode &&
+    left.content.sourceSystem === right.content.sourceSystem &&
     left.content.canonicalAccountKey === right.content.canonicalAccountKey &&
     left.content.executionId !== null &&
     left.content.executionId === right.content.executionId
   );
 }
 
-function economicContentEqual(
+function contentWithoutSourceLocation(
+  content: CanonicalExecutionContent,
+): Omit<
+  CanonicalExecutionContent,
+  "sourceDocumentDigest" | "originalSourceRowLocator"
+> {
+  return Object.fromEntries(
+    Object.entries(content).filter(
+      ([key]) =>
+        key !== "sourceDocumentDigest" && key !== "originalSourceRowLocator",
+    ),
+  ) as unknown as Omit<
+    CanonicalExecutionContent,
+    "sourceDocumentDigest" | "originalSourceRowLocator"
+  >;
+}
+
+function allNonLocationContentEqual(
   left: CanonicalExecutionEnvelope,
   right: CanonicalExecutionEnvelope,
 ): boolean {
+  const leftSerialized = serializeCanonicalValue(
+    contentWithoutSourceLocation(left.content),
+  );
+  const rightSerialized = serializeCanonicalValue(
+    contentWithoutSourceLocation(right.content),
+  );
   return (
-    left.content.canonicalOwnerKey === right.content.canonicalOwnerKey &&
-    left.content.canonicalAccountKey === right.content.canonicalAccountKey &&
-    left.content.stableInstrumentKey === right.content.stableInstrumentKey &&
-    left.content.rawBrokerSymbol === right.content.rawBrokerSymbol &&
-    left.content.executedAt === right.content.executedAt &&
-    left.content.timestampPrecision === right.content.timestampPrecision &&
-    left.content.side === right.content.side &&
-    left.content.quantity === right.content.quantity &&
-    left.content.price === right.content.price &&
-    left.content.currency === right.content.currency &&
-    left.content.charges.length === right.content.charges.length &&
-    left.content.charges.every((charge, index) => {
-      const counterpart = right.content.charges[index];
-      return (
-        counterpart !== undefined &&
-        charge.kind === counterpart.kind &&
-        charge.amount === counterpart.amount &&
-        charge.currency === counterpart.currency
-      );
-    })
+    leftSerialized.ok &&
+    rightSerialized.ok &&
+    canonicalBytesEqual(leftSerialized.value.utf8, rightSerialized.value.utf8) &&
+    left.validation.state === right.validation.state &&
+    left.validation.reasonCodes.length === right.validation.reasonCodes.length &&
+    left.validation.reasonCodes.every(
+      (reason, index) => reason === right.validation.reasonCodes[index],
+    )
   );
 }
 
 function result(
+  left: CanonicalExecutionEnvelope,
+  right: CanonicalExecutionEnvelope,
   state: ExecutionRelationshipState,
   confidence: ExecutionRelationshipConfidence,
   reasonCodes: readonly string[],
   evidence: readonly string[],
+  suppressionEligible = false,
 ): ExecutionRelationshipClassification {
   return {
+    leftExecutionDigest: left.canonicalContentDigest,
+    rightExecutionDigest: right.canonicalContentDigest,
     state,
     confidence,
-    suppressionEligible: state === "exact_duplicate_same_source",
+    suppressionEligible,
     reasonCodes,
     evidence,
   };
@@ -88,6 +111,8 @@ export function classifyExecutionRelationship(
   const bytesEqual = canonicalBytesEqual(left.canonicalBytes, right.canonicalBytes);
   if (digestEqual && !bytesEqual) {
     return result(
+      left,
+      right,
       "digest_collision_detected",
       "conflict",
       ["ti_v3_relationship_digest_equal_bytes_differ"],
@@ -98,14 +123,19 @@ export function classifyExecutionRelationship(
   const sameSourceLocation =
     left.content.sourceIdentity === right.content.sourceIdentity &&
     left.content.sourceDocumentDigest === right.content.sourceDocumentDigest &&
-    left.content.originalSourceRowLocator.kind === right.content.originalSourceRowLocator.kind &&
-    left.content.originalSourceRowLocator.value === right.content.originalSourceRowLocator.value;
-  if (bytesEqual && sameSourceLocation) {
+    left.content.originalSourceRowLocator.kind ===
+      right.content.originalSourceRowLocator.kind &&
+    left.content.originalSourceRowLocator.value ===
+      right.content.originalSourceRowLocator.value;
+  if (digestEqual && bytesEqual && sameSourceLocation) {
     return result(
+      left,
+      right,
       "exact_duplicate_same_source",
       "proven",
-      ["ti_v3_relationship_identical_content_same_source_location"],
-      ["canonical_bytes", "source_identity", "source_row_locator"],
+      ["ti_v3_relationship_digest_bytes_and_source_location_equal"],
+      ["canonical_digest", "canonical_bytes", "source_identity", "source_row_locator"],
+      true,
     );
   }
 
@@ -116,6 +146,8 @@ export function classifyExecutionRelationship(
     right.content.correctionReference !== null
   ) {
     return result(
+      left,
+      right,
       "broker_correction_or_bust",
       "strong",
       ["ti_v3_relationship_correction_or_bust_evidence"],
@@ -124,27 +156,40 @@ export function classifyExecutionRelationship(
   }
 
   if (stableExecutionScopeEqual(left, right)) {
-    if (economicContentEqual(left, right)) {
+    if (allNonLocationContentEqual(left, right)) {
       if (left.content.sourceDocumentDigest !== right.content.sourceDocumentDigest) {
         return result(
+          left,
+          right,
           "same_execution_reexported",
           "proven",
-          ["ti_v3_relationship_stable_execution_id_equal_economics_new_document"],
-          ["broker_code", "canonical_account", "execution_id", "source_document_digest"],
+          ["ti_v3_relationship_stable_execution_id_equal_content_new_document"],
+          [
+            "broker_code",
+            "source_system",
+            "canonical_account",
+            "execution_id",
+            "all_non_location_canonical_content",
+            "source_document_digest",
+          ],
         );
       }
       return result(
-        "exact_duplicate_same_source",
-        "proven",
-        ["ti_v3_relationship_stable_execution_id_equal_economics_same_document"],
-        ["broker_code", "canonical_account", "execution_id", "economic_content"],
+        left,
+        right,
+        "manual_review_required",
+        "ambiguous",
+        ["ti_v3_relationship_stable_execution_id_equal_content_location_changed"],
+        ["execution_id", "source_row_locator"],
       );
     }
     return result(
+      left,
+      right,
       "broker_correction_or_bust",
       "conflict",
-      ["ti_v3_relationship_stable_execution_id_changed_economics"],
-      ["broker_code", "canonical_account", "execution_id", "economic_content"],
+      ["ti_v3_relationship_stable_execution_id_changed_canonical_content"],
+      ["broker_code", "source_system", "canonical_account", "execution_id"],
     );
   }
 
@@ -154,6 +199,8 @@ export function classifyExecutionRelationship(
     left.content.executionId !== right.content.executionId
   ) {
     return result(
+      left,
+      right,
       "legitimate_repeated_fill",
       "proven",
       ["ti_v3_relationship_distinct_stable_execution_ids"],
@@ -163,30 +210,40 @@ export function classifyExecutionRelationship(
   if (
     left.content.brokerExecutionIndex !== null &&
     right.content.brokerExecutionIndex !== null &&
-    left.content.brokerExecutionIndex !== right.content.brokerExecutionIndex
+    left.content.brokerExecutionIndex !== right.content.brokerExecutionIndex &&
+    left.content.sourceDocumentDigest === right.content.sourceDocumentDigest
   ) {
     return result(
+      left,
+      right,
       "legitimate_repeated_fill",
       "strong",
-      ["ti_v3_relationship_distinct_broker_execution_indices"],
-      ["broker_execution_index"],
+      ["ti_v3_relationship_distinct_scoped_broker_execution_indices"],
+      ["source_document_digest", "broker_execution_index"],
     );
   }
-  if (economicContentEqual(left, right)) {
+  if (allNonLocationContentEqual(left, right)) {
     return result(
+      left,
+      right,
       "possible_duplicate_ambiguous",
       "ambiguous",
-      ["ti_v3_relationship_equal_economics_without_unique_identity"],
-      ["economic_content"],
+      ["ti_v3_relationship_equal_canonical_content_without_unique_identity"],
+      ["all_non_location_canonical_content"],
     );
   }
   if (
     left.content.executionId === null &&
     right.content.executionId === null &&
     left.content.sourceIdentity === right.content.sourceIdentity &&
-    left.content.originalSourceRowLocator.value === right.content.originalSourceRowLocator.value
+    left.content.originalSourceRowLocator.kind ===
+      right.content.originalSourceRowLocator.kind &&
+    left.content.originalSourceRowLocator.value ===
+      right.content.originalSourceRowLocator.value
   ) {
     return result(
+      left,
+      right,
       "manual_review_required",
       "ambiguous",
       ["ti_v3_relationship_source_locator_reused_with_different_content"],
@@ -194,6 +251,8 @@ export function classifyExecutionRelationship(
     );
   }
   return result(
+    left,
+    right,
     "distinct_execution",
     "strong",
     ["ti_v3_relationship_distinct_content_no_duplicate_evidence"],

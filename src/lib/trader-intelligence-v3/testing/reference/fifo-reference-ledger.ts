@@ -1,6 +1,4 @@
-import type {
-  CanonicalExecutionOrderingResult,
-} from "../../domain/execution";
+import type { CanonicalExecutionOrderingResult } from "../../domain/execution";
 import {
   addReferenceDecimals,
   compareReferenceDecimals,
@@ -10,11 +8,38 @@ import {
   subtractReferenceDecimals,
   type ReferenceDecimal,
 } from "./bigint-decimal-reference";
+import { divideReferenceDecimals, type ReferenceRatio } from "./rational-reference";
 
 interface ReferenceLot {
   direction: "long" | "short";
   quantity: ReferenceDecimal;
   price: ReferenceDecimal;
+  sourceExecutionDigest: string;
+}
+
+interface ReferenceRoundTripAccumulator {
+  direction: "long" | "short";
+  entryQuantity: ReferenceDecimal;
+  exitQuantity: ReferenceDecimal;
+  entryNotional: ReferenceDecimal;
+  exitNotional: ReferenceDecimal;
+  gross: ReferenceDecimal;
+  charges: ReferenceDecimal;
+  cashFlow: ReferenceDecimal;
+  executionDigests: string[];
+}
+
+export interface ReferenceRoundTrip {
+  direction: "long" | "short";
+  entryQuantity: string;
+  exitQuantity: string;
+  weightedAverageEntryPrice: ReferenceRatio;
+  weightedAverageExitPrice: ReferenceRatio;
+  grossRealizedPnl: string;
+  signedCharges: string;
+  netAnalyticalPnl: string;
+  signedCashFlowNetPnl: string;
+  executionDigests: readonly string[];
 }
 
 export interface ReferenceFifoLedgerResult {
@@ -25,9 +50,24 @@ export interface ReferenceFifoLedgerResult {
   signedCharges: string | null;
   netAnalyticalPnl: string | null;
   signedCashFlow: string | null;
-  openLots: readonly { direction: "long" | "short"; quantity: string; price: string }[];
-  matchedQuantityByExecution: readonly string[];
-  reversalEffects: readonly { closedQuantity: string; openedQuantity: string }[];
+  openLots: readonly {
+    direction: "long" | "short";
+    quantity: string;
+    price: string;
+    sourceExecutionDigest: string;
+  }[];
+  matchedQuantityByExecution: readonly {
+    executionDigest: string;
+    matchedQuantity: string;
+  }[];
+  reversalEffects: readonly {
+    sourceExecutionDigest: string;
+    closedDirection: "long" | "short";
+    closedQuantity: string;
+    openedDirection: "long" | "short";
+    openedQuantity: string;
+  }[];
+  flatToFlatRoundTrips: readonly ReferenceRoundTrip[];
 }
 
 function zero(): ReferenceDecimal {
@@ -46,11 +86,57 @@ function blocked(code: string): ReferenceFifoLedgerResult {
     openLots: [],
     matchedQuantityByExecution: [],
     reversalEffects: [],
+    flatToFlatRoundTrips: [],
   };
 }
 
 function minimum(left: ReferenceDecimal, right: ReferenceDecimal): ReferenceDecimal {
   return compareReferenceDecimals(left, right) <= 0 ? left : right;
+}
+
+function addDigest(accumulator: ReferenceRoundTripAccumulator, digest: string): void {
+  if (!accumulator.executionDigests.includes(digest)) {
+    accumulator.executionDigests.push(digest);
+  }
+}
+
+function newRoundTrip(direction: "long" | "short"): ReferenceRoundTripAccumulator {
+  return {
+    direction,
+    entryQuantity: zero(),
+    exitQuantity: zero(),
+    entryNotional: zero(),
+    exitNotional: zero(),
+    gross: zero(),
+    charges: zero(),
+    cashFlow: zero(),
+    executionDigests: [],
+  };
+}
+
+function finalizeRoundTrip(
+  accumulator: ReferenceRoundTripAccumulator,
+): ReferenceRoundTrip | null {
+  const net = subtractReferenceDecimals(accumulator.gross, accumulator.charges);
+  if (compareReferenceDecimals(net, accumulator.cashFlow) !== 0) return null;
+  return {
+    direction: accumulator.direction,
+    entryQuantity: formatReferenceDecimal(accumulator.entryQuantity),
+    exitQuantity: formatReferenceDecimal(accumulator.exitQuantity),
+    weightedAverageEntryPrice: divideReferenceDecimals(
+      accumulator.entryNotional,
+      accumulator.entryQuantity,
+    ),
+    weightedAverageExitPrice: divideReferenceDecimals(
+      accumulator.exitNotional,
+      accumulator.exitQuantity,
+    ),
+    grossRealizedPnl: formatReferenceDecimal(accumulator.gross),
+    signedCharges: formatReferenceDecimal(accumulator.charges),
+    netAnalyticalPnl: formatReferenceDecimal(net),
+    signedCashFlowNetPnl: formatReferenceDecimal(accumulator.cashFlow),
+    executionDigests: accumulator.executionDigests,
+  };
 }
 
 export function runReferenceFifoLedger(
@@ -75,15 +161,22 @@ export function runReferenceFifoLedger(
       openLots: [],
       matchedQuantityByExecution: [],
       reversalEffects: [],
+      flatToFlatRoundTrips: [],
     };
   }
+
   const first = executions[0];
   const lots: ReferenceLot[] = [];
+  const matchedQuantityByExecution: {
+    executionDigest: string;
+    matchedQuantity: string;
+  }[] = [];
+  const reversalEffects: ReferenceFifoLedgerResult["reversalEffects"][number][] = [];
+  const flatToFlatRoundTrips: ReferenceRoundTrip[] = [];
+  let currentRoundTrip: ReferenceRoundTripAccumulator | null = null;
   let gross = zero();
   let charges = zero();
   let cashFlow = zero();
-  const matchedByExecution: string[] = [];
-  const reversalEffects: { closedQuantity: string; openedQuantity: string }[] = [];
 
   for (const execution of executions) {
     if (execution.validation.state !== "accepted") {
@@ -92,7 +185,9 @@ export function runReferenceFifoLedger(
     if (
       execution.content.instrumentResolutionState !== "resolved" ||
       execution.content.stableInstrumentKey === null ||
-      execution.content.stableInstrumentKey !== first.content.stableInstrumentKey
+      execution.content.stableInstrumentKey !== first.content.stableInstrumentKey ||
+      execution.content.canonicalOwnerKey !== first.content.canonicalOwnerKey ||
+      execution.content.canonicalAccountKey !== first.content.canonicalAccountKey
     ) {
       return blocked("ti_v3_reconstruction_instrument_unresolved");
     }
@@ -118,21 +213,45 @@ export function runReferenceFifoLedger(
     const closesExisting =
       (execution.content.side === "sell" && existingDirection === "long") ||
       (execution.content.side === "buy" && existingDirection === "short");
-    if (execution.content.brokerPositionEffectEvidence === "close" && !closesExisting) {
+    if (
+      execution.content.brokerPositionEffectEvidence === "close" &&
+      !closesExisting
+    ) {
       return blocked("ti_v3_reconstruction_prior_inventory_required");
     }
-    if (execution.content.brokerPositionEffectEvidence === "open" && closesExisting) {
+    if (
+      execution.content.brokerPositionEffectEvidence === "open" &&
+      closesExisting
+    ) {
       return blocked("ti_v3_reconstruction_position_effect_conflict");
     }
 
+    let executionCharges = zero();
     for (const charge of execution.content.charges) {
-      const parsedCharge = parseReferenceDecimal(charge.amount);
-      charges = addReferenceDecimals(charges, parsedCharge);
-      cashFlow = subtractReferenceDecimals(cashFlow, parsedCharge);
+      executionCharges = addReferenceDecimals(
+        executionCharges,
+        parseReferenceDecimal(charge.amount),
+      );
+    }
+    charges = addReferenceDecimals(charges, executionCharges);
+    cashFlow = subtractReferenceDecimals(cashFlow, executionCharges);
+    let chargeAssigned = false;
+    if (currentRoundTrip !== null) {
+      currentRoundTrip.charges = addReferenceDecimals(
+        currentRoundTrip.charges,
+        executionCharges,
+      );
+      currentRoundTrip.cashFlow = subtractReferenceDecimals(
+        currentRoundTrip.cashFlow,
+        executionCharges,
+      );
+      addDigest(currentRoundTrip, execution.canonicalContentDigest);
+      chargeAssigned = true;
     }
 
     let remaining = quantity;
     let matchedTotal = zero();
+    const closedDirection = existingDirection;
     while (
       compareReferenceDecimals(remaining, zero()) > 0 &&
       lots.length > 0 &&
@@ -144,38 +263,104 @@ export function runReferenceFifoLedger(
         lot.direction === "long"
           ? subtractReferenceDecimals(price, lot.price)
           : subtractReferenceDecimals(lot.price, price);
-      gross = addReferenceDecimals(
-        gross,
-        multiplyReferenceDecimals(difference, matched),
-      );
-      const notional = multiplyReferenceDecimals(price, matched);
+      const realized = multiplyReferenceDecimals(difference, matched);
+      const exitNotional = multiplyReferenceDecimals(price, matched);
+      gross = addReferenceDecimals(gross, realized);
       cashFlow =
         execution.content.side === "sell"
-          ? addReferenceDecimals(cashFlow, notional)
-          : subtractReferenceDecimals(cashFlow, notional);
+          ? addReferenceDecimals(cashFlow, exitNotional)
+          : subtractReferenceDecimals(cashFlow, exitNotional);
+      if (currentRoundTrip === null) {
+        return blocked("ti_v3_reference_round_trip_missing");
+      }
+      currentRoundTrip.gross = addReferenceDecimals(
+        currentRoundTrip.gross,
+        realized,
+      );
+      currentRoundTrip.exitQuantity = addReferenceDecimals(
+        currentRoundTrip.exitQuantity,
+        matched,
+      );
+      currentRoundTrip.exitNotional = addReferenceDecimals(
+        currentRoundTrip.exitNotional,
+        exitNotional,
+      );
+      currentRoundTrip.cashFlow =
+        execution.content.side === "sell"
+          ? addReferenceDecimals(currentRoundTrip.cashFlow, exitNotional)
+          : subtractReferenceDecimals(currentRoundTrip.cashFlow, exitNotional);
+      addDigest(currentRoundTrip, execution.canonicalContentDigest);
       remaining = subtractReferenceDecimals(remaining, matched);
       matchedTotal = addReferenceDecimals(matchedTotal, matched);
       lot.quantity = subtractReferenceDecimals(lot.quantity, matched);
       if (compareReferenceDecimals(lot.quantity, zero()) === 0) lots.shift();
+      if (lots.length === 0) {
+        const finalized = finalizeRoundTrip(currentRoundTrip);
+        if (finalized === null) {
+          return blocked("ti_v3_reconstruction_cash_flow_invariant_failed");
+        }
+        flatToFlatRoundTrips.push(finalized);
+        currentRoundTrip = null;
+      }
     }
+
     if (
       execution.content.brokerPositionEffectEvidence === "close" &&
       compareReferenceDecimals(remaining, zero()) > 0
     ) {
       return blocked("ti_v3_reconstruction_prior_inventory_required");
     }
-    matchedByExecution.push(formatReferenceDecimal(matchedTotal));
+    matchedQuantityByExecution.push({
+      executionDigest: execution.canonicalContentDigest,
+      matchedQuantity: formatReferenceDecimal(matchedTotal),
+    });
+
     if (compareReferenceDecimals(remaining, zero()) > 0) {
       const openedDirection = execution.content.side === "buy" ? "long" : "short";
-      const notional = multiplyReferenceDecimals(price, remaining);
+      if (currentRoundTrip === null) currentRoundTrip = newRoundTrip(openedDirection);
+      if (!chargeAssigned) {
+        currentRoundTrip.charges = addReferenceDecimals(
+          currentRoundTrip.charges,
+          executionCharges,
+        );
+        currentRoundTrip.cashFlow = subtractReferenceDecimals(
+          currentRoundTrip.cashFlow,
+          executionCharges,
+        );
+      }
+      const entryNotional = multiplyReferenceDecimals(price, remaining);
+      currentRoundTrip.entryQuantity = addReferenceDecimals(
+        currentRoundTrip.entryQuantity,
+        remaining,
+      );
+      currentRoundTrip.entryNotional = addReferenceDecimals(
+        currentRoundTrip.entryNotional,
+        entryNotional,
+      );
+      currentRoundTrip.cashFlow =
+        execution.content.side === "sell"
+          ? addReferenceDecimals(currentRoundTrip.cashFlow, entryNotional)
+          : subtractReferenceDecimals(currentRoundTrip.cashFlow, entryNotional);
+      addDigest(currentRoundTrip, execution.canonicalContentDigest);
       cashFlow =
         execution.content.side === "sell"
-          ? addReferenceDecimals(cashFlow, notional)
-          : subtractReferenceDecimals(cashFlow, notional);
-      lots.push({ direction: openedDirection, quantity: remaining, price });
-      if (compareReferenceDecimals(matchedTotal, zero()) > 0) {
+          ? addReferenceDecimals(cashFlow, entryNotional)
+          : subtractReferenceDecimals(cashFlow, entryNotional);
+      lots.push({
+        direction: openedDirection,
+        quantity: remaining,
+        price,
+        sourceExecutionDigest: execution.canonicalContentDigest,
+      });
+      if (
+        compareReferenceDecimals(matchedTotal, zero()) > 0 &&
+        closedDirection !== null
+      ) {
         reversalEffects.push({
+          sourceExecutionDigest: execution.canonicalContentDigest,
+          closedDirection,
           closedQuantity: formatReferenceDecimal(matchedTotal),
+          openedDirection,
           openedQuantity: formatReferenceDecimal(remaining),
         });
       }
@@ -206,8 +391,10 @@ export function runReferenceFifoLedger(
       direction: lot.direction,
       quantity: formatReferenceDecimal(lot.quantity),
       price: formatReferenceDecimal(lot.price),
+      sourceExecutionDigest: lot.sourceExecutionDigest,
     })),
-    matchedQuantityByExecution: matchedByExecution,
+    matchedQuantityByExecution,
     reversalEffects,
+    flatToFlatRoundTrips,
   };
 }

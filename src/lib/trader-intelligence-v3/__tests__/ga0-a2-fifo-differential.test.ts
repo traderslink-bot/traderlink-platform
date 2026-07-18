@@ -98,5 +98,90 @@ describe("Trader Intelligence v3 production/reference FIFO differential", () => 
       netAnalyticalPnl: reference.netAnalyticalPnl,
       signedCashFlow: reference.signedCashFlow,
     });
+    expect(
+      ledger.openLots.map((lot) => ({
+        direction: lot.direction,
+        quantity: lot.remainingQuantity,
+        price: lot.price,
+        sourceExecutionDigest: lot.sourceExecutionDigest,
+      })),
+    ).toEqual(reference.openLots);
+    expect(ledger.matchedQuantities).toEqual(
+      reference.matchedQuantityByExecution,
+    );
+    expect(ledger.reversalEffects).toEqual(reference.reversalEffects);
+    expect(
+      ledger.flatToFlatRoundTrips.map((roundTrip) => ({
+        direction: roundTrip.direction,
+        entryQuantity: roundTrip.entryQuantity,
+        exitQuantity: roundTrip.exitQuantity,
+        weightedAverageEntryPrice: roundTrip.weightedAverageEntryPrice,
+        weightedAverageExitPrice: roundTrip.weightedAverageExitPrice,
+        grossRealizedPnl: roundTrip.grossRealizedPnl,
+        signedCharges: roundTrip.signedCharges,
+        netAnalyticalPnl: roundTrip.netAnalyticalPnl,
+        signedCashFlowNetPnl: roundTrip.signedCashFlowNetPnl,
+        executionDigests: roundTrip.executionDigests,
+      })),
+    ).toEqual(reference.flatToFlatRoundTrips);
+  });
+
+  it.each([
+    {
+      name: "prior inventory",
+      executions: [
+        build(0, {
+          side: "sell",
+          brokerPositionEffectEvidence: "close",
+        }),
+      ],
+      code: "ti_v3_reconstruction_prior_inventory_required",
+    },
+    {
+      name: "unresolved instrument",
+      executions: [
+        build(0, {
+          instrumentResolutionState: "unresolved",
+          stableInstrumentKey: null,
+        }),
+      ],
+      code: "ti_v3_reconstruction_instrument_unresolved",
+    },
+    {
+      name: "unsupported security",
+      executions: [build(0, { securityType: "preferred_stock" })],
+      code: "ti_v3_reconstruction_security_type_unsupported",
+    },
+    {
+      name: "corporate action",
+      executions: [
+        build(0, { basisContinuityState: "corporate_action_unresolved" }),
+      ],
+      code: "ti_v3_reconstruction_corporate_action_basis_unresolved",
+    },
+    {
+      name: "symbol continuity",
+      executions: [
+        build(0, { basisContinuityState: "symbol_change_unresolved" }),
+      ],
+      code: "ti_v3_reconstruction_symbol_continuity_unresolved",
+    },
+    {
+      name: "position effect conflict",
+      executions: [
+        build(0, { side: "buy" }),
+        build(1, { side: "sell", brokerPositionEffectEvidence: "open" }),
+      ],
+      code: "ti_v3_reconstruction_position_effect_conflict",
+    },
+  ])("matches independent blocked-state reference for $name", ({ executions, code }) => {
+    const ordering = orderCanonicalExecutions(executions);
+    const production = runFifoPositionLedger({ ordering });
+    const reference = runReferenceFifoLedger(ordering);
+    expect(production).toMatchObject({
+      status: "blocked",
+      blockedStates: [{ code }],
+    });
+    expect(reference).toMatchObject({ status: "blocked", blockedCode: code });
   });
 });

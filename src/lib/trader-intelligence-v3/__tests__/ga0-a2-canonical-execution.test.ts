@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCanonicalExecution } from "../domain";
+import { buildCanonicalExecution, serializeCanonicalValue } from "../domain";
 import {
   buildSyntheticCanonicalExecution,
   syntheticSourceDocumentDigest,
@@ -17,6 +17,52 @@ describe("Trader Intelligence v3 canonical execution v1", () => {
     expect(new TextDecoder().decode(execution.canonicalBytes)).not.toContain(
       execution.canonicalContentDigest,
     );
+  });
+
+  it("returns the normalized canonical content that exactly produced its bytes", () => {
+    const execution = buildSyntheticCanonicalExecution({
+      orderId: "SYNTH-Cafe\u0301",
+      executionId: "SYNTH-Exe\u0301cution",
+    });
+    const serialized = serializeCanonicalValue(execution.content);
+    expect(serialized.ok).toBe(true);
+    if (serialized.ok) {
+      expect(serialized.value.utf8).toEqual(execution.canonicalBytes);
+    }
+    expect(execution.content.orderId).toBe("SYNTH-Café");
+    expect(execution.content.executionId).toBe("SYNTH-Exécution");
+  });
+
+  it("gives composed and decomposed identifiers identical canonical content and identity", () => {
+    const composed = buildSyntheticCanonicalExecution({
+      orderId: "SYNTH-Café",
+      executionId: "SYNTH-Exécution",
+    });
+    const decomposed = buildSyntheticCanonicalExecution({
+      orderId: "SYNTH-Cafe\u0301",
+      executionId: "SYNTH-Exe\u0301cution",
+    });
+    expect(decomposed.content).toEqual(composed.content);
+    expect(decomposed.canonicalBytes).toEqual(composed.canonicalBytes);
+    expect(decomposed.canonicalContentDigest).toBe(
+      composed.canonicalContentDigest,
+    );
+  });
+
+  it("rejects CRLF in source identifiers instead of canonicalizing identity evidence", () => {
+    const base = buildSyntheticCanonicalExecution();
+    const result = buildCanonicalExecution({
+      ...base.content,
+      executionId: "SYNTH\r\nEXECUTION",
+      validation: base.validation,
+    });
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        code: "ti_v3_canonical_execution_invalid",
+        reasonCodes: ["ti_v3_execution_identifier_invalid"],
+      },
+    });
   });
 
   it("keeps persistence metadata outside content identity", () => {
@@ -94,6 +140,44 @@ describe("Trader Intelligence v3 canonical execution v1", () => {
         "ti_v3_execution_instrument_key_invalid",
         "ti_v3_execution_quantity_invalid",
       ]);
+    }
+  });
+
+  it.each([
+    ["null input", null, "ti_v3_execution_input_invalid"],
+    ["array input", [], "ti_v3_execution_input_invalid"],
+    ["missing input", undefined, "ti_v3_execution_input_invalid"],
+    ["non-array charges", { charges: null }, "ti_v3_execution_charge_invalid"],
+    ["non-object charge", { charges: [null] }, "ti_v3_execution_charge_invalid"],
+    ["null locator", { originalSourceRowLocator: null }, "ti_v3_execution_row_locator_invalid"],
+    ["null validation", { validation: null }, "ti_v3_execution_validation_state_invalid"],
+    [
+      "non-array validation reasons",
+      { validation: { state: "accepted", reasonCodes: null } },
+      "ti_v3_execution_validation_state_invalid",
+    ],
+    ["invalid source kind", { sourceKind: "csv" }, "ti_v3_execution_source_identity_invalid"],
+    [
+      "invalid ordering semantics",
+      { executionIdOrderingSemantics: "lexical" },
+      "ti_v3_execution_ordering_semantics_invalid",
+    ],
+    [
+      "invalid ordering scope",
+      { brokerExecutionIndexOrderingScope: "broker" },
+      "ti_v3_execution_ordering_scope_invalid",
+    ],
+  ])("returns a structured failure for %s", (_label, change, reasonCode) => {
+    const base = buildSyntheticCanonicalExecution();
+    const input =
+      change === null || Array.isArray(change) || change === undefined
+        ? change
+        : { ...base.content, validation: base.validation, ...change };
+    expect(() => buildCanonicalExecution(input)).not.toThrow();
+    const result = buildCanonicalExecution(input);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.reasonCodes).toContain(reasonCode);
     }
   });
 });

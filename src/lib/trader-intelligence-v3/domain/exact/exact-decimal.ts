@@ -4,6 +4,7 @@ export const EXACT_DECIMAL_POLICY_VERSION = "ti_v3_exact_decimal_v1" as const;
 
 export type ExactDecimalFailureCode =
   | "ti_v3_decimal_input_not_string"
+  | "ti_v3_decimal_raw_length_exceeded"
   | "ti_v3_decimal_empty"
   | "ti_v3_decimal_whitespace_forbidden"
   | "ti_v3_decimal_exponent_forbidden"
@@ -45,6 +46,8 @@ export const GENERAL_EXACT_DECIMAL_BOUNDS: ExactDecimalBounds = Object.freeze({
   allowZero: true,
 });
 
+export const MAXIMUM_EXACT_DECIMAL_RAW_CHARACTERS = 256;
+
 const ExactDecimalImplementation = Decimal.clone({
   precision: 128,
   rounding: Decimal.ROUND_HALF_EVEN,
@@ -62,6 +65,9 @@ function inputFailure(input: unknown): ExactDecimalFailureCode | null {
   }
   if (input.length === 0) {
     return "ti_v3_decimal_empty";
+  }
+  if (input.length > MAXIMUM_EXACT_DECIMAL_RAW_CHARACTERS) {
+    return "ti_v3_decimal_raw_length_exceeded";
   }
   if (/\s/.test(input)) {
     return "ti_v3_decimal_whitespace_forbidden";

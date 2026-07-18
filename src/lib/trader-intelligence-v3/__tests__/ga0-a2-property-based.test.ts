@@ -2,17 +2,23 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import {
+  buildCanonicalExecution,
   classifyExecutionRelationship,
   createCanonicalContentIdentity,
   orderCanonicalExecutions,
   reconstructAnalyticalPnl,
   runFifoPositionLedger,
   serializeCanonicalValue,
+  validateExactDecimal,
   type CanonicalExecutionDraft,
   type CanonicalExecutionEnvelope,
 } from "../domain";
 import {
   buildSyntheticCanonicalExecution,
+  addReferenceDecimals,
+  compareReferenceDecimals,
+  formatReferenceDecimal,
+  parseReferenceDecimal,
   runReferenceFifoLedger,
   syntheticSourceDocumentDigest,
 } from "../testing";
@@ -26,6 +32,13 @@ export const GA0_A2_PROPERTY_TEST_SEEDS = Object.freeze({
   canonicalPropertyOrder: 2026071806,
   digestSemantics: 2026071807,
   ambiguousOrdering: 2026071808,
+  shortToLongReversals: 2026071809,
+  priorInventory: 2026071810,
+  currencyIsolation: 2026071811,
+  relationshipResolution: 2026071812,
+  blockedStates: 2026071813,
+  scaleBoundaries: 2026071814,
+  precisionBoundaries: 2026071815,
 });
 
 const TIMESTAMPS = [
@@ -97,6 +110,38 @@ function assertProductionMatchesReference(
     netAnalyticalPnl: reference.netAnalyticalPnl,
     signedCashFlow: reference.signedCashFlow,
   });
+  expect(
+    ledger.openLots.map((lot) => ({
+      direction: lot.direction,
+      quantity: lot.remainingQuantity,
+      price: lot.price,
+      sourceExecutionDigest: lot.sourceExecutionDigest,
+    })),
+  ).toEqual(reference.openLots);
+  expect(ledger.matchedQuantities).toEqual(reference.matchedQuantityByExecution);
+  ledger.matchedQuantities.forEach((match, index) => {
+    expect(
+      compareReferenceDecimals(
+        parseReferenceDecimal(match.matchedQuantity),
+        parseReferenceDecimal(executions[index].content.quantity),
+      ),
+    ).toBeLessThanOrEqual(0);
+  });
+  expect(ledger.reversalEffects).toEqual(reference.reversalEffects);
+  expect(
+    ledger.flatToFlatRoundTrips.map((roundTrip) => ({
+      direction: roundTrip.direction,
+      entryQuantity: roundTrip.entryQuantity,
+      exitQuantity: roundTrip.exitQuantity,
+      weightedAverageEntryPrice: roundTrip.weightedAverageEntryPrice,
+      weightedAverageExitPrice: roundTrip.weightedAverageExitPrice,
+      grossRealizedPnl: roundTrip.grossRealizedPnl,
+      signedCharges: roundTrip.signedCharges,
+      netAnalyticalPnl: roundTrip.netAnalyticalPnl,
+      signedCashFlowNetPnl: roundTrip.signedCashFlowNetPnl,
+      executionDigests: roundTrip.executionDigests,
+    })),
+  ).toEqual(reference.flatToFlatRoundTrips);
   if (ledger.endingQuantity === "0") {
     expect(ledger.netAnalyticalPnl).toBe(ledger.signedCashFlow);
   }
@@ -228,7 +273,11 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
         ];
         assertProductionMatchesReference(executions);
         const reference = runReferenceFifoLedger(orderCanonicalExecutions(executions));
-        expect(reference.matchedQuantityByExecution).toEqual(["0", firstQuantity, secondQuantity]);
+        expect(reference.matchedQuantityByExecution.map((item) => item.matchedQuantity)).toEqual([
+          "0",
+          firstQuantity,
+          secondQuantity,
+        ]);
       }),
       { numRuns: 1000, seed: GA0_A2_PROPERTY_TEST_SEEDS.partialFills, verbose: 2 },
     );
@@ -270,9 +319,23 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
           openedQuantity: remainder,
         });
         expect(runReferenceFifoLedger(orderCanonicalExecutions(executions)).reversalEffects[0]).toEqual({
+          sourceExecutionDigest: executions[1].canonicalContentDigest,
+          closedDirection: "long",
           closedQuantity: closeQuantity,
+          openedDirection: "short",
           openedQuantity: remainder,
         });
+        const effect = runReferenceFifoLedger(
+          orderCanonicalExecutions(executions),
+        ).reversalEffects[0];
+        expect(
+          formatReferenceDecimal(
+            addReferenceDecimals(
+              parseReferenceDecimal(effect.closedQuantity),
+              parseReferenceDecimal(effect.openedQuantity),
+            ),
+          ),
+        ).toBe(reversalQuantity);
       }),
       { numRuns: 1000, seed: GA0_A2_PROPERTY_TEST_SEEDS.reversals, verbose: 2 },
     );
@@ -367,6 +430,296 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
         expect(reconstructAnalyticalPnl([left, right]).status).toBe("blocked");
       }),
       { numRuns: 1000, seed: GA0_A2_PROPERTY_TEST_SEEDS.ambiguousOrdering, verbose: 2 },
+    );
+  }, 120_000);
+
+  it("runs 1,000 generated short-to-long reversal sequences", () => {
+    fc.assert(
+      fc.property(financialCaseArbitrary, (sample) => {
+        const closeQuantity = coefficientToDecimal(
+          sample.firstQuantityCoefficient,
+          sample.quantityScale,
+        );
+        const remainder = coefficientToDecimal(
+          sample.secondQuantityCoefficient,
+          sample.quantityScale,
+        );
+        const reversalQuantity = coefficientToDecimal(
+          sample.firstQuantityCoefficient + sample.secondQuantityCoefficient,
+          sample.quantityScale,
+        );
+        const executions = [
+          propertyExecution(0, {
+            side: "sell",
+            quantity: closeQuantity,
+            price: coefficientToDecimal(
+              sample.firstPriceCoefficient,
+              sample.priceScale,
+            ),
+            charges: charge(
+              coefficientToDecimal(
+                sample.firstChargeCoefficient,
+                sample.chargeScale,
+              ),
+            ),
+          }),
+          propertyExecution(1, {
+            side: "buy",
+            quantity: reversalQuantity,
+            price: coefficientToDecimal(
+              sample.secondPriceCoefficient,
+              sample.priceScale,
+            ),
+            charges: charge(
+              coefficientToDecimal(
+                sample.secondChargeCoefficient,
+                sample.chargeScale,
+              ),
+            ),
+          }),
+          propertyExecution(2, {
+            side: "sell",
+            quantity: remainder,
+            price: coefficientToDecimal(
+              sample.exitPriceCoefficient,
+              sample.priceScale,
+            ),
+            charges: charge(
+              coefficientToDecimal(
+                sample.thirdChargeCoefficient,
+                sample.chargeScale,
+              ),
+            ),
+          }),
+        ];
+        assertProductionMatchesReference(executions);
+        const effect = runReferenceFifoLedger(
+          orderCanonicalExecutions(executions),
+        ).reversalEffects[0];
+        expect(effect).toMatchObject({
+          closedDirection: "short",
+          closedQuantity: closeQuantity,
+          openedDirection: "long",
+          openedQuantity: remainder,
+        });
+        expect(
+          formatReferenceDecimal(
+            addReferenceDecimals(
+              parseReferenceDecimal(effect.closedQuantity),
+              parseReferenceDecimal(effect.openedQuantity),
+            ),
+          ),
+        ).toBe(reversalQuantity);
+      }),
+      {
+        numRuns: 1000,
+        seed: GA0_A2_PROPERTY_TEST_SEEDS.shortToLongReversals,
+        verbose: 2,
+      },
+    );
+  }, 120_000);
+
+  it("runs 1,000 generated prior-inventory fail-closed cases", () => {
+    fc.assert(
+      fc.property(
+        positiveCoefficient,
+        positiveCoefficient,
+        scaleArbitrary,
+        fc.constantFrom("buy" as const, "sell" as const),
+        (quantityCoefficient, priceCoefficient, scale, side) => {
+          const execution = propertyExecution(0, {
+            side,
+            quantity: coefficientToDecimal(quantityCoefficient, scale),
+            price: coefficientToDecimal(priceCoefficient, scale),
+            brokerPositionEffectEvidence: "close",
+            charges: [],
+          });
+          const ordering = orderCanonicalExecutions([execution]);
+          const production = runFifoPositionLedger({ ordering });
+          const reference = runReferenceFifoLedger(ordering);
+          expect(production).toMatchObject({
+            status: "blocked",
+            blockedStates: [
+              { code: "ti_v3_reconstruction_prior_inventory_required" },
+            ],
+          });
+          expect(reference).toMatchObject({
+            status: "blocked",
+            blockedCode: "ti_v3_reconstruction_prior_inventory_required",
+          });
+        },
+      ),
+      {
+        numRuns: 1000,
+        seed: GA0_A2_PROPERTY_TEST_SEEDS.priorInventory,
+        verbose: 2,
+      },
+    );
+  }, 120_000);
+
+  it("runs 1,000 generated cross-currency isolation cases", () => {
+    fc.assert(
+      fc.property(positiveCoefficient, scaleArbitrary, (coefficient, scale) => {
+        const quantity = coefficientToDecimal(coefficient, scale);
+        const usd = propertyExecution(0, {
+          quantity,
+          currency: "USD",
+          charges: [],
+        });
+        const cad = propertyExecution(1, {
+          quantity,
+          currency: "CAD",
+          stableInstrumentKey: "instrument_synthetic_equity_cad",
+          rawBrokerSymbol: "SYNTHCAD",
+          charges: [],
+        });
+        const result = reconstructAnalyticalPnl([usd, cad]);
+        expect(result.status).toBe("completed");
+        expect(result.ledgers.map((ledger) => ledger.currency).sort()).toEqual([
+          "CAD",
+          "USD",
+        ]);
+        expect(result).not.toHaveProperty("netAnalyticalPnl");
+      }),
+      {
+        numRuns: 1000,
+        seed: GA0_A2_PROPERTY_TEST_SEEDS.currencyIsolation,
+        verbose: 2,
+      },
+    );
+  }, 120_000);
+
+  it("runs 1,000 generated pair-addressed relationship resolution cases", () => {
+    fc.assert(
+      fc.property(positiveCoefficient, (token) => {
+        const opening = buildSyntheticCanonicalExecution({
+          executionId: `SYNTH-REL-${token.toString()}`,
+          charges: [],
+        });
+        const close = propertyExecution(1, {
+          side: "sell",
+          quantity: opening.content.quantity,
+          price: opening.content.price,
+          executionId: `SYNTH-REL-CLOSE-${token.toString()}`,
+          charges: [],
+        });
+        const relationship = classifyExecutionRelationship(opening, opening);
+        expect(
+          reconstructAnalyticalPnl([opening, opening, close], [relationship]),
+        ).toMatchObject({ status: "completed", ledgers: [{ endingQuantity: "0" }] });
+        expect(reconstructAnalyticalPnl([opening, opening, close])).toMatchObject({
+          status: "blocked",
+          blockedStates: [
+            { code: "ti_v3_reconstruction_duplicate_relationship_missing" },
+          ],
+        });
+      }),
+      {
+        numRuns: 1000,
+        seed: GA0_A2_PROPERTY_TEST_SEEDS.relationshipResolution,
+        verbose: 2,
+      },
+    );
+  }, 120_000);
+
+  it("runs 1,000 generated production/reference blocked-state parity cases", () => {
+    const blockedCase = fc.constantFrom(
+      "unresolved_instrument" as const,
+      "unsupported_security" as const,
+      "corporate_action" as const,
+      "symbol_change" as const,
+    );
+    fc.assert(
+      fc.property(blockedCase, positiveCoefficient, (kind, token) => {
+        const common = { executionId: `SYNTH-BLOCK-${token.toString()}` };
+        const execution =
+          kind === "unresolved_instrument"
+            ? buildSyntheticCanonicalExecution({
+                ...common,
+                instrumentResolutionState: "unresolved",
+                stableInstrumentKey: null,
+              })
+            : kind === "unsupported_security"
+              ? buildSyntheticCanonicalExecution({
+                  ...common,
+                  securityType: "preferred_stock",
+                })
+              : kind === "corporate_action"
+                ? buildSyntheticCanonicalExecution({
+                    ...common,
+                    basisContinuityState: "corporate_action_unresolved",
+                  })
+                : buildSyntheticCanonicalExecution({
+                    ...common,
+                    basisContinuityState: "symbol_change_unresolved",
+                  });
+        const ordering = orderCanonicalExecutions([execution]);
+        const production = runFifoPositionLedger({ ordering });
+        const reference = runReferenceFifoLedger(ordering);
+        expect(production.status).toBe("blocked");
+        expect(reference.status).toBe("blocked");
+        expect(production.blockedStates[0].code).toBe(reference.blockedCode);
+      }),
+      {
+        numRuns: 1000,
+        seed: GA0_A2_PROPERTY_TEST_SEEDS.blockedStates,
+        verbose: 2,
+      },
+    );
+  }, 120_000);
+
+  it("runs 1,000 generated exact scale-boundary cases", () => {
+    fc.assert(
+      fc.property(
+        positiveCoefficient,
+        fc.integer({ min: 0, max: 13 }),
+        (coefficient, scale) => {
+          fc.pre(coefficient % BigInt(10) !== BigInt(0));
+          const value = coefficientToDecimal(coefficient, scale);
+          const result = buildCanonicalExecution({
+            ...buildSyntheticCanonicalExecution().content,
+            quantity: value,
+            price: value,
+            validation: { state: "accepted", reasonCodes: [] },
+          });
+          expect(result.ok).toBe(scale <= 12);
+          if (!result.ok) {
+            expect(result.error.reasonCodes).toEqual(
+              expect.arrayContaining([
+                "ti_v3_execution_price_invalid",
+                "ti_v3_execution_quantity_invalid",
+              ]),
+            );
+          }
+        },
+      ),
+      {
+        numRuns: 1000,
+        seed: GA0_A2_PROPERTY_TEST_SEEDS.scaleBoundaries,
+        verbose: 2,
+      },
+    );
+  }, 120_000);
+
+  it("runs 1,000 generated exact precision-boundary cases", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 47, max: 49 }),
+        fc.integer({ min: 1, max: 9 }),
+        (digits, leadingDigit) => {
+          const value = `${leadingDigit}${"7".repeat(digits - 1)}`;
+          const result = validateExactDecimal(value);
+          expect(result.ok).toBe(digits <= 48);
+          if (!result.ok) {
+            expect(result.error.code).toBe("ti_v3_decimal_precision_exceeded");
+          }
+        },
+      ),
+      {
+        numRuns: 1000,
+        seed: GA0_A2_PROPERTY_TEST_SEEDS.precisionBoundaries,
+        verbose: 2,
+      },
     );
   }, 120_000);
 });

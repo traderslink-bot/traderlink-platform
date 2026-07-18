@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   addExactDecimals,
   multiplyExactDecimals,
+  MAXIMUM_EXACT_DECIMAL_RAW_CHARACTERS,
   parseAcceptedExecutionQuantity,
   parseCurrencyCode,
   parseExactCharge,
@@ -55,6 +56,20 @@ describe("Trader Intelligence v3 exact decimal v1", () => {
     expect(validateExactDecimal(`0.${"0".repeat(24)}1`)).toEqual({
       ok: false,
       error: { code: "ti_v3_decimal_scale_exceeded" },
+    });
+  });
+
+  it("bounds raw input length before decimal parsing or canonicalization", () => {
+    const maximumLengthInput = `${"0".repeat(
+      MAXIMUM_EXACT_DECIMAL_RAW_CHARACTERS - 1,
+    )}1`;
+    expect(validateExactDecimal(maximumLengthInput)).toEqual({
+      ok: true,
+      value: "1",
+    });
+    expect(validateExactDecimal(`0${maximumLengthInput}`)).toEqual({
+      ok: false,
+      error: { code: "ti_v3_decimal_raw_length_exceeded" },
     });
   });
 

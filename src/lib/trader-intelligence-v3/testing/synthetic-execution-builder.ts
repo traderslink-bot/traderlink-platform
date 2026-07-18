@@ -48,13 +48,29 @@ export function buildSyntheticCanonicalExecution(
     orderId: "SYNTH-ORDER-0001",
     executionId: "SYNTH-EXEC-0001",
     brokerExecutionIndex: "1",
+    brokerExecutionIndexOrderingScope: "source_document",
     brokerFillSequence: "1",
     executionIdOrderingSemantics: "not_declared",
+    executionIdOrderingNamespace: null,
+    executionIdOrderingScope: "not_declared",
     correctionState: "none",
     correctionReference: null,
     validation: { state: "accepted", reasonCodes: [] },
     ...overrides,
   };
+  if (
+    overrides.brokerExecutionIndex === null &&
+    overrides.brokerExecutionIndexOrderingScope === undefined
+  ) {
+    draft.brokerExecutionIndexOrderingScope = "not_declared";
+  }
+  if (
+    overrides.executionIdOrderingSemantics === "declared" &&
+    overrides.executionIdOrderingNamespace === undefined
+  ) {
+    draft.executionIdOrderingNamespace = "ordering_synthetic_lexical";
+    draft.executionIdOrderingScope = "source_document";
+  }
   const result = buildCanonicalExecution(draft);
   if (!result.ok) {
     throw new Error(`ti_v3_synthetic_execution_invalid:${result.error.reasonCodes.join(",")}`);

@@ -32,7 +32,7 @@ export interface CanonicalSerialization {
   utf8: Uint8Array;
 }
 
-function normalizeString(value: string): string {
+export function normalizeCanonicalString(value: string): string {
   return value.replace(/\r\n?/g, "\n").normalize("NFC");
 }
 
@@ -52,7 +52,7 @@ function hasUnpairedSurrogate(value: string): boolean {
   return false;
 }
 
-function codePointCompare(left: string, right: string): number {
+export function compareUnicodeCodePoints(left: string, right: string): number {
   const leftPoints = Array.from(left);
   const rightPoints = Array.from(right);
   const length = leftPoints.length < rightPoints.length ? leftPoints.length : rightPoints.length;
@@ -84,7 +84,7 @@ function normalizeCanonicalValue(
     if (hasUnpairedSurrogate(input)) {
       return failure("ti_v3_canonical_unicode_invalid", path);
     }
-    return { ok: true, value: normalizeString(input) };
+    return { ok: true, value: normalizeCanonicalString(input) };
   }
   if (typeof input === "undefined") {
     return failure("ti_v3_canonical_undefined_forbidden", path);
@@ -118,7 +118,7 @@ function normalizeCanonicalValue(
     if (hasUnpairedSurrogate(key)) {
       return failure("ti_v3_canonical_unicode_invalid", path);
     }
-    const normalizedKey = normalizeString(key);
+    const normalizedKey = normalizeCanonicalString(key);
     if (normalizedEntries.has(normalizedKey)) {
       return failure("ti_v3_canonical_key_collision", path);
     }
@@ -129,7 +129,7 @@ function normalizeCanonicalValue(
     normalizedEntries.set(normalizedKey, normalizedValue.value);
   }
   const result: Record<string, CanonicalValue> = {};
-  for (const key of [...normalizedEntries.keys()].sort(codePointCompare)) {
+  for (const key of [...normalizedEntries.keys()].sort(compareUnicodeCodePoints)) {
     result[key] = normalizedEntries.get(key) as CanonicalValue;
   }
   return { ok: true, value: result };
@@ -297,7 +297,7 @@ class StrictJsonParser {
       if (!parsedKey.ok) {
         return parsedKey;
       }
-      const normalizedKey = normalizeString(parsedKey.value);
+      const normalizedKey = normalizeCanonicalString(parsedKey.value);
       if (keys.has(normalizedKey)) {
         return failure("ti_v3_canonical_duplicate_json_key", path);
       }

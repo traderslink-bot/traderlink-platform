@@ -7,6 +7,7 @@ import type {
   ExactSignedQuantity,
 } from "../exact";
 import type { CanonicalExecutionDigest } from "../identity";
+import type { ExecutionRelationshipResolutionBlockCode } from "../execution/execution-relationship-resolution";
 
 export const FIFO_ANALYTICAL_PNL_POLICY_VERSION =
   "ti_v3_fifo_analytical_pnl_v1" as const;
@@ -21,8 +22,7 @@ export type ReconstructionBlockedCode =
   | "ti_v3_reconstruction_currency_missing"
   | "ti_v3_reconstruction_currency_changed"
   | "ti_v3_reconstruction_prior_inventory_required"
-  | "ti_v3_reconstruction_correction_unresolved"
-  | "ti_v3_reconstruction_digest_collision"
+  | ExecutionRelationshipResolutionBlockCode
   | "ti_v3_reconstruction_security_type_unsupported"
   | "ti_v3_reconstruction_corporate_action_basis_unresolved"
   | "ti_v3_reconstruction_symbol_continuity_unresolved"
@@ -33,6 +33,7 @@ export type ReconstructionBlockedCode =
 export interface ReconstructionBlockedState {
   code: ReconstructionBlockedCode;
   executionDigest: CanonicalExecutionDigest | null;
+  relatedExecutionDigests?: readonly CanonicalExecutionDigest[];
 }
 
 export interface FifoOpenLot {
@@ -49,6 +50,11 @@ export interface ReversalEffect {
   closedQuantity: ExactQuantity;
   openedDirection: InventoryDirection;
   openedQuantity: ExactQuantity;
+}
+
+export interface ExecutionMatchedQuantity {
+  executionDigest: CanonicalExecutionDigest;
+  matchedQuantity: ExactQuantity;
 }
 
 export interface FlatToFlatRoundTrip {
@@ -79,6 +85,7 @@ export interface AnalyticalLedgerResult {
   signedCashFlow: ExactMoneyAmount;
   flatToFlatRoundTrips: readonly FlatToFlatRoundTrip[];
   reversalEffects: readonly ReversalEffect[];
+  matchedQuantities: readonly ExecutionMatchedQuantity[];
   limitations: readonly string[];
   inputExecutionDigests: readonly CanonicalExecutionDigest[];
 }

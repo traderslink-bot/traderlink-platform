@@ -43,6 +43,11 @@ overflow, excessive significant precision, and excessive scale. Ordinary
 invalid input returns a structured result with a stable `ti_v3_*` reason code;
 raw `decimal.js` parser errors do not escape.
 
+Raw input is limited to 256 characters before regular-expression work or
+`decimal.js` construction. This bound applies before redundant leading or
+trailing zeroes can be canonicalized and returns
+`ti_v3_decimal_raw_length_exceeded` without logging the rejected value.
+
 ## Bounds
 
 All accepted canonical decimals have at most 48 significant digits and at most
@@ -109,10 +114,14 @@ P/L, and digest values as `TEXT`. An isolated in-memory test proves byte-for-byt
 round-trip and verifies SQLite `typeof(...) = 'text'`. GA0-A2 does not migrate
 or rewrite the owner database and prohibits authoritative `REAL` columns.
 
-The future PostgreSQL target is `NUMERIC(48,24)` for general exact money and
-derived values, with narrower validated scale constraints for execution price
-and quantity. Canonical digests use validated lowercase text in v1; a future
-bytea adapter may be added only with an explicit reversible representation.
+The future PostgreSQL target is `NUMERIC(72,24)` for general exact values. The
+72-digit storage precision accommodates the full accepted combination of up
+to 48 integer digits and up to 24 fractional digits; application and database
+constraints must still enforce the domain's maximum 48 significant digits and
+the narrower price/quantity scale limits. `NUMERIC(48,24)` is rejected because
+it cannot store a valid 48-digit integer. Canonical digests use validated
+lowercase text in v1; a future bytea adapter may be added only with an explicit
+reversible representation.
 
 ## Serialization
 

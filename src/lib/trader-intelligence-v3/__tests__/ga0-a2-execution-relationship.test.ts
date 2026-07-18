@@ -39,6 +39,76 @@ describe("Trader Intelligence v3 execution relationship classification", () => {
     });
   });
 
+  it("never suppresses byte-unequal content at the same source location", () => {
+    const original = buildSyntheticCanonicalExecution();
+    const changed = buildSyntheticCanonicalExecution({ price: "1.2501" });
+    expect(classifyExecutionRelationship(original, changed)).toMatchObject({
+      state: "broker_correction_or_bust",
+      suppressionEligible: false,
+    });
+  });
+
+  it.each([
+    ["aggregation state", { sourceAggregationState: "broker_average_fill" }],
+    ["raw symbol", { rawBrokerSymbol: "SYNTH2" }],
+    ["security type", { securityType: "preferred_stock" }],
+    ["basis continuity", { basisContinuityState: "corporate_action_unresolved" }],
+    ["position effect", { brokerPositionEffectEvidence: "open" }],
+    ["short indicator", { shortSaleIndicator: "broker_marked_not_short" }],
+    ["broker net cash", { brokerReportedNetCashAmount: "-12.75" }],
+    ["order ID", { orderId: "SYNTH-ORDER-CHANGED" }],
+    ["broker execution index", { brokerExecutionIndex: "2" }],
+    ["fill sequence", { brokerFillSequence: "2" }],
+    [
+      "execution ID ordering semantics",
+      {
+        executionIdOrderingSemantics: "declared",
+        executionIdOrderingNamespace: "ordering_synthetic_lexical",
+        executionIdOrderingScope: "source_document",
+      },
+    ],
+    ["source timezone evidence", { sourceTimezoneEvidence: "UTC" }],
+    [
+      "validation",
+      {
+        validation: {
+          state: "quarantined",
+          reasonCodes: ["ti_v3_synthetic_quarantine"],
+        },
+      },
+    ],
+  ] as const)("does not call a re-export equal when %s changes", (_label, overrides) => {
+    const original = buildSyntheticCanonicalExecution();
+    const changed = buildSyntheticCanonicalExecution({
+      sourceDocumentDigest: syntheticSourceDocumentDigest("changed-document"),
+      originalSourceRowLocator: {
+        kind: "row_number",
+        value: "99",
+        rowOrderPreserved: true,
+      },
+      ...overrides,
+    });
+    expect(classifyExecutionRelationship(original, changed)).toMatchObject({
+      state: "broker_correction_or_bust",
+      suppressionEligible: false,
+    });
+  });
+
+  it("keeps a reused stable ID with a changed same-document row locator visible", () => {
+    const original = buildSyntheticCanonicalExecution();
+    const moved = buildSyntheticCanonicalExecution({
+      originalSourceRowLocator: {
+        kind: "row_number",
+        value: "99",
+        rowOrderPreserved: true,
+      },
+    });
+    expect(classifyExecutionRelationship(original, moved)).toMatchObject({
+      state: "manual_review_required",
+      suppressionEligible: false,
+    });
+  });
+
   it("preserves explicit broker bust evidence", () => {
     const original = buildSyntheticCanonicalExecution();
     const bust = buildSyntheticCanonicalExecution({
