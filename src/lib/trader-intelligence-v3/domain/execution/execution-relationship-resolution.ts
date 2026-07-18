@@ -253,31 +253,37 @@ function candidateIndexes(
   };
   occurrences.forEach(({ execution }, occurrenceIndex) => {
     const content = execution.content;
-    const brokerAccountScope = indexKey([
-      content.brokerCode,
-      content.sourceSystem,
-      content.canonicalAccountKey,
-    ]);
+    const relationshipIdentityScope =
+      content.stableInstrumentKey === null
+        ? null
+        : indexKey([
+            content.canonicalOwnerKey,
+            content.canonicalAccountKey,
+            content.stableInstrumentKey,
+            content.currency,
+            content.brokerCode,
+            content.sourceSystem,
+          ]);
     addIndexValue(ensure("canonical_digest"), execution.canonicalContentDigest, occurrenceIndex);
     addIndexValue(
       ensure("stable_execution_identity"),
-      content.executionId === null
+      relationshipIdentityScope === null || content.executionId === null
         ? null
-        : indexKey([brokerAccountScope, content.executionId]),
+        : indexKey([relationshipIdentityScope, content.executionId]),
       occurrenceIndex,
     );
     addIndexValue(
       ensure("correction_reference_identity"),
-      content.executionId === null
+      relationshipIdentityScope === null || content.executionId === null
         ? null
-        : indexKey([brokerAccountScope, content.executionId]),
+        : indexKey([relationshipIdentityScope, content.executionId]),
       occurrenceIndex,
     );
     addIndexValue(
       ensure("correction_reference_identity"),
-      content.correctionReference === null
+      relationshipIdentityScope === null || content.correctionReference === null
         ? null
-        : indexKey([brokerAccountScope, content.correctionReference]),
+        : indexKey([relationshipIdentityScope, content.correctionReference]),
       occurrenceIndex,
     );
     addIndexValue(

@@ -33,14 +33,27 @@ export interface ExecutionRelationshipClassification {
   evidence: readonly string[];
 }
 
+function compatibleLedgerIdentity(
+  left: CanonicalExecutionEnvelope,
+  right: CanonicalExecutionEnvelope,
+): boolean {
+  return (
+    left.content.canonicalOwnerKey === right.content.canonicalOwnerKey &&
+    left.content.canonicalAccountKey === right.content.canonicalAccountKey &&
+    left.content.stableInstrumentKey !== null &&
+    left.content.stableInstrumentKey === right.content.stableInstrumentKey &&
+    left.content.currency === right.content.currency &&
+    left.content.brokerCode === right.content.brokerCode &&
+    left.content.sourceSystem === right.content.sourceSystem
+  );
+}
+
 function stableExecutionScopeEqual(
   left: CanonicalExecutionEnvelope,
   right: CanonicalExecutionEnvelope,
 ): boolean {
   return (
-    left.content.brokerCode === right.content.brokerCode &&
-    left.content.sourceSystem === right.content.sourceSystem &&
-    left.content.canonicalAccountKey === right.content.canonicalAccountKey &&
+    compatibleLedgerIdentity(left, right) &&
     left.content.executionId !== null &&
     left.content.executionId === right.content.executionId
   );
@@ -58,11 +71,7 @@ function correctionPairLinked(
   ) {
     return false;
   }
-  const sameBrokerAccountScope =
-    left.content.brokerCode === right.content.brokerCode &&
-    left.content.sourceSystem === right.content.sourceSystem &&
-    left.content.canonicalAccountKey === right.content.canonicalAccountKey;
-  if (!sameBrokerAccountScope) return false;
+  if (!compatibleLedgerIdentity(left, right)) return false;
   if (stableExecutionScopeEqual(left, right)) return true;
   return (
     (left.content.correctionReference !== null &&
