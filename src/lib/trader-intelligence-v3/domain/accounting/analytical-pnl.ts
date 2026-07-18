@@ -1,9 +1,9 @@
 import {
   executionLedgerGroupKey,
+  isCompleteExecutionRelationshipResolution,
   orderCanonicalExecutions,
-  resolveExecutionRelationships,
   type CanonicalExecutionEnvelope,
-  type ExecutionRelationshipClassification,
+  type CompleteExecutionRelationshipResolution,
 } from "../execution";
 import {
   FIFO_ANALYTICAL_PNL_POLICY_VERSION,
@@ -11,13 +11,56 @@ import {
   type ReconstructionBlockedState,
 } from "./reconstruction-result";
 import { runFifoPositionLedger } from "./fifo-position-ledger";
+import {
+  isVerifiedStartingInventoryContract,
+  startingInventoryLedgerGroupKey,
+  type StartingInventoryContract,
+} from "./starting-inventory";
+
+export interface AnalyticalPnlReconstructionInput {
+  readonly relationshipResolution: CompleteExecutionRelationshipResolution;
+  readonly startingInventories: readonly StartingInventoryContract[];
+}
 
 export function reconstructAnalyticalPnl(
-  executions: readonly CanonicalExecutionEnvelope[],
-  relationships: readonly ExecutionRelationshipClassification[] = [],
+  input: AnalyticalPnlReconstructionInput,
 ): AnalyticalPnlReconstructionResult {
-  const allDigests = executions.map((execution) => execution.canonicalContentDigest);
-  const resolution = resolveExecutionRelationships(executions, relationships);
+  if (!isCompleteExecutionRelationshipResolution(input.relationshipResolution)) {
+    return {
+      status: "blocked",
+      policyVersion: FIFO_ANALYTICAL_PNL_POLICY_VERSION,
+      ledgers: [],
+      blockedStates: [
+        {
+          code: "ti_v3_reconstruction_relationship_coverage_incomplete",
+          executionDigest: null,
+        },
+      ],
+      limitations: ["ti_v3_reconstruction_relationship_coverage_incomplete"],
+      inputExecutionDigests: [],
+    };
+  }
+  const resolution = input.relationshipResolution;
+  const allDigests = resolution.coverageReceipt.inputExecutionDigests;
+  if (
+    resolution.coverageReceipt.state !== "complete" ||
+    resolution.coverageReceipt.classifiedPairCount !==
+      resolution.coverageReceipt.expectedPairCount
+  ) {
+    return {
+      status: "blocked",
+      policyVersion: FIFO_ANALYTICAL_PNL_POLICY_VERSION,
+      ledgers: [],
+      blockedStates: [
+        {
+          code: "ti_v3_reconstruction_relationship_coverage_incomplete",
+          executionDigest: null,
+        },
+      ],
+      limitations: ["ti_v3_reconstruction_relationship_coverage_incomplete"],
+      inputExecutionDigests: allDigests,
+    };
+  }
   if (resolution.globalBlocks.length > 0) {
     const blockedStates: ReconstructionBlockedState[] =
       resolution.globalBlocks.map((block) => ({
@@ -47,6 +90,14 @@ export function reconstructAnalyticalPnl(
     group.push(execution);
     groups.set(key, group);
   }
+  const startsByGroup = new Map<string, StartingInventoryContract[]>();
+  for (const startingInventory of input.startingInventories) {
+    if (!isVerifiedStartingInventoryContract(startingInventory)) continue;
+    const key = startingInventoryLedgerGroupKey(startingInventory.ledgerIdentity);
+    const starts = startsByGroup.get(key) ?? [];
+    starts.push(startingInventory);
+    startsByGroup.set(key, starts);
+  }
 
   const ledgers = [];
   const blockedStates: ReconstructionBlockedState[] = [];
@@ -65,8 +116,39 @@ export function reconstructAnalyticalPnl(
       }
       continue;
     }
-    const ordering = orderCanonicalExecutions(groups.get(key) ?? []);
-    const result = runFifoPositionLedger({ ordering });
+    const groupExecutions = groups.get(key) ?? [];
+    const unsafeInstrument = groupExecutions.find(
+      (execution) =>
+        execution.content.instrumentResolutionState !== "resolved" ||
+        execution.content.stableInstrumentKey === null,
+    );
+    if (unsafeInstrument !== undefined) {
+      blockedStates.push({
+        code: "ti_v3_reconstruction_instrument_unresolved",
+        executionDigest: unsafeInstrument.canonicalContentDigest,
+      });
+      limitations.add("ti_v3_reconstruction_instrument_unresolved");
+      continue;
+    }
+    const startingInventories = startsByGroup.get(key) ?? [];
+    if (
+      startingInventories.length !== 1 ||
+      startingInventories[0].state === "unknown"
+    ) {
+      blockedStates.push({
+        code: "ti_v3_reconstruction_prior_inventory_required",
+        executionDigest: groupExecutions[0]?.canonicalContentDigest ?? null,
+      });
+      limitations.add("ti_v3_reconstruction_prior_inventory_required");
+      continue;
+    }
+    const ordering = orderCanonicalExecutions(groupExecutions);
+    const result = runFifoPositionLedger({
+      relationshipResolution: resolution,
+      ledgerGroupKey: key,
+      ordering,
+      startingInventory: startingInventories[0],
+    });
     ledgers.push(...result.ledgers);
     blockedStates.push(...result.blockedStates);
     result.limitations.forEach((limitation) => limitations.add(limitation));

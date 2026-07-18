@@ -1,10 +1,16 @@
-import { canonicalBytesEqual, type CanonicalExecutionDigest } from "../identity";
-import type { CanonicalExecutionEnvelope } from "./canonical-execution";
+import type { CanonicalExecutionDigest } from "../identity";
+import {
+  verifyCanonicalExecutionEnvelope,
+  type CanonicalExecutionEnvelope,
+} from "./canonical-execution";
 import {
   classifyExecutionRelationship,
   type ExecutionRelationshipClassification,
   type ExecutionRelationshipState,
 } from "./execution-relationship";
+
+export const EXECUTION_RELATIONSHIP_COVERAGE_VERSION =
+  "ti_v3_execution_relationship_coverage_v1" as const;
 
 export type ExecutionRelationshipResolutionBlockCode =
   | "ti_v3_reconstruction_correction_unresolved"
@@ -12,25 +18,44 @@ export type ExecutionRelationshipResolutionBlockCode =
   | "ti_v3_reconstruction_reexport_unresolved"
   | "ti_v3_reconstruction_possible_duplicate_unresolved"
   | "ti_v3_reconstruction_manual_review_required"
-  | "ti_v3_reconstruction_relationship_unknown_execution"
   | "ti_v3_reconstruction_relationship_group_mismatch"
-  | "ti_v3_reconstruction_relationship_classification_mismatch"
-  | "ti_v3_reconstruction_duplicate_relationship_missing";
+  | "ti_v3_reconstruction_execution_envelope_integrity_invalid"
+  | "ti_v3_reconstruction_relationship_coverage_incomplete";
 
 export interface ExecutionRelationshipGroupBlock {
-  groupKey: string;
-  code: ExecutionRelationshipResolutionBlockCode;
-  executionDigests: readonly CanonicalExecutionDigest[];
+  readonly groupKey: string;
+  readonly code: ExecutionRelationshipResolutionBlockCode;
+  readonly executionDigests: readonly CanonicalExecutionDigest[];
 }
 
-export interface ExecutionRelationshipResolution {
-  retainedExecutions: readonly CanonicalExecutionEnvelope[];
-  groupBlocks: readonly ExecutionRelationshipGroupBlock[];
-  globalBlocks: readonly {
-    code: ExecutionRelationshipResolutionBlockCode;
-    executionDigests: readonly CanonicalExecutionDigest[];
-  }[];
+export interface ExecutionRelationshipPairReceipt {
+  readonly leftInputIndex: number;
+  readonly rightInputIndex: number;
+  readonly classification: ExecutionRelationshipClassification;
 }
+
+export interface ExecutionRelationshipCoverageReceipt {
+  readonly version: typeof EXECUTION_RELATIONSHIP_COVERAGE_VERSION;
+  readonly state: "complete" | "blocked_invalid_input";
+  readonly inputExecutionCount: number;
+  readonly expectedPairCount: number;
+  readonly classifiedPairCount: number;
+  readonly inputExecutionDigests: readonly CanonicalExecutionDigest[];
+  readonly pairs: readonly ExecutionRelationshipPairReceipt[];
+}
+
+export interface CompleteExecutionRelationshipResolution {
+  readonly retainedExecutions: readonly CanonicalExecutionEnvelope[];
+  readonly groupBlocks: readonly ExecutionRelationshipGroupBlock[];
+  readonly globalBlocks: readonly {
+    readonly code: ExecutionRelationshipResolutionBlockCode;
+    readonly executionDigests: readonly CanonicalExecutionDigest[];
+  }[];
+  readonly coverageReceipt: ExecutionRelationshipCoverageReceipt;
+}
+
+const completeRelationshipResolutions =
+  new WeakSet<CompleteExecutionRelationshipResolution>();
 
 export function executionLedgerGroupKey(
   execution: CanonicalExecutionEnvelope,
@@ -65,184 +90,170 @@ function stateBlockCode(
   }
 }
 
-function classificationMatches(
-  supplied: ExecutionRelationshipClassification,
-  computed: ExecutionRelationshipClassification,
-): boolean {
+function expectedPairCount(inputCount: number): number {
+  return (inputCount * (inputCount - 1)) / 2;
+}
+
+function freezeClassification(
+  classification: ExecutionRelationshipClassification,
+): ExecutionRelationshipClassification {
+  return Object.freeze({
+    ...classification,
+    reasonCodes: Object.freeze([...classification.reasonCodes]),
+    evidence: Object.freeze([...classification.evidence]),
+  });
+}
+
+function protectResolution(
+  input: CompleteExecutionRelationshipResolution,
+): CompleteExecutionRelationshipResolution {
+  const resolution = Object.freeze(input);
+  completeRelationshipResolutions.add(resolution);
+  return resolution;
+}
+
+export function isCompleteExecutionRelationshipResolution(
+  input: unknown,
+): input is CompleteExecutionRelationshipResolution {
   return (
-    supplied.leftExecutionDigest === computed.leftExecutionDigest &&
-    supplied.rightExecutionDigest === computed.rightExecutionDigest &&
-    supplied.state === computed.state &&
-    supplied.confidence === computed.confidence &&
-    supplied.suppressionEligible === computed.suppressionEligible
+    typeof input === "object" &&
+    input !== null &&
+    completeRelationshipResolutions.has(
+      input as CompleteExecutionRelationshipResolution,
+    )
   );
 }
 
 export function resolveExecutionRelationships(
   executions: readonly CanonicalExecutionEnvelope[],
-  relationships: readonly ExecutionRelationshipClassification[],
-): ExecutionRelationshipResolution {
-  const byDigest = new Map<string, CanonicalExecutionEnvelope[]>();
+): CompleteExecutionRelationshipResolution {
+  const verifiedExecutions: CanonicalExecutionEnvelope[] = [];
+  const inputDigests: CanonicalExecutionDigest[] = [];
   for (const execution of executions) {
-    const occurrences = byDigest.get(execution.canonicalContentDigest) ?? [];
-    occurrences.push(execution);
-    byDigest.set(execution.canonicalContentDigest, occurrences);
+    const verified = verifyCanonicalExecutionEnvelope(execution);
+    if (!verified.ok) {
+      const candidateDigest =
+        typeof execution?.canonicalContentDigest === "string"
+          ? [execution.canonicalContentDigest]
+          : [];
+      const globalBlock = Object.freeze({
+        code: "ti_v3_reconstruction_execution_envelope_integrity_invalid" as const,
+        executionDigests: Object.freeze(candidateDigest),
+      });
+      const receipt: ExecutionRelationshipCoverageReceipt = Object.freeze({
+        version: EXECUTION_RELATIONSHIP_COVERAGE_VERSION,
+        state: "blocked_invalid_input",
+        inputExecutionCount: executions.length,
+        expectedPairCount: expectedPairCount(executions.length),
+        classifiedPairCount: 0,
+        inputExecutionDigests: Object.freeze([...inputDigests, ...candidateDigest]),
+        pairs: Object.freeze([]),
+      });
+      return protectResolution({
+        retainedExecutions: Object.freeze([]),
+        groupBlocks: Object.freeze([]),
+        globalBlocks: Object.freeze([globalBlock]),
+        coverageReceipt: receipt,
+      });
+    }
+    verifiedExecutions.push(verified.value);
+    inputDigests.push(verified.value.canonicalContentDigest);
   }
 
   const groupBlocks = new Map<
     string,
-    {
-      code: ExecutionRelationshipResolutionBlockCode;
-      digests: Set<CanonicalExecutionDigest>;
-    }[]
+    Map<ExecutionRelationshipResolutionBlockCode, Set<CanonicalExecutionDigest>>
   >();
-  const globalBlocks: {
-    code: ExecutionRelationshipResolutionBlockCode;
-    executionDigests: readonly CanonicalExecutionDigest[];
-  }[] = [];
-  const exactDuplicateSuppressions = new Map<CanonicalExecutionDigest, number>();
+  const pairReceipts: ExecutionRelationshipPairReceipt[] = [];
+  const suppressedInputIndexes = new Set<number>();
 
   const addGroupBlock = (
     groupKey: string,
     code: ExecutionRelationshipResolutionBlockCode,
     digests: readonly CanonicalExecutionDigest[],
   ): void => {
-    const existing = groupBlocks.get(groupKey) ?? [];
-    const sameCode = existing.find((item) => item.code === code);
-    if (sameCode === undefined) {
-      existing.push({ code, digests: new Set(digests) });
-    } else {
-      digests.forEach((digest) => sameCode.digests.add(digest));
-    }
-    groupBlocks.set(groupKey, existing);
+    const blocks = groupBlocks.get(groupKey) ?? new Map();
+    const blockDigests = blocks.get(code) ?? new Set<CanonicalExecutionDigest>();
+    digests.forEach((digest) => blockDigests.add(digest));
+    blocks.set(code, blockDigests);
+    groupBlocks.set(groupKey, blocks);
   };
 
-  for (const occurrences of byDigest.values()) {
-    const first = occurrences[0];
-    for (const occurrence of occurrences.slice(1)) {
-      if (!canonicalBytesEqual(first.canonicalBytes, occurrence.canonicalBytes)) {
-        addGroupBlock(
-          executionLedgerGroupKey(first),
-          "ti_v3_reconstruction_digest_collision",
-          [first.canonicalContentDigest],
-        );
-        addGroupBlock(
-          executionLedgerGroupKey(occurrence),
-          "ti_v3_reconstruction_digest_collision",
-          [occurrence.canonicalContentDigest],
-        );
-      }
-    }
-  }
-
-  for (const relationship of relationships) {
-    const leftOccurrences = byDigest.get(relationship.leftExecutionDigest);
-    const rightOccurrences = byDigest.get(relationship.rightExecutionDigest);
-    if (leftOccurrences === undefined || rightOccurrences === undefined) {
-      globalBlocks.push({
-        code: "ti_v3_reconstruction_relationship_unknown_execution",
-        executionDigests: [
-          relationship.leftExecutionDigest,
-          relationship.rightExecutionDigest,
-        ],
-      });
-      continue;
-    }
-    const left = leftOccurrences[0];
-    const right = rightOccurrences[0];
-    const leftGroup = executionLedgerGroupKey(left);
-    const rightGroup = executionLedgerGroupKey(right);
-    if (leftGroup !== rightGroup) {
-      addGroupBlock(leftGroup, "ti_v3_reconstruction_relationship_group_mismatch", [
-        left.canonicalContentDigest,
-        right.canonicalContentDigest,
-      ]);
-      addGroupBlock(rightGroup, "ti_v3_reconstruction_relationship_group_mismatch", [
-        left.canonicalContentDigest,
-        right.canonicalContentDigest,
-      ]);
-      continue;
-    }
-    const computed = classifyExecutionRelationship(left, right);
-    if (!classificationMatches(relationship, computed)) {
-      addGroupBlock(
-        leftGroup,
-        "ti_v3_reconstruction_relationship_classification_mismatch",
-        [left.canonicalContentDigest, right.canonicalContentDigest],
-      );
-      continue;
-    }
-    if (
-      computed.state === "exact_duplicate_same_source" &&
-      computed.suppressionEligible &&
-      computed.leftExecutionDigest === computed.rightExecutionDigest
+  for (let leftIndex = 0; leftIndex < verifiedExecutions.length; leftIndex += 1) {
+    for (
+      let rightIndex = leftIndex + 1;
+      rightIndex < verifiedExecutions.length;
+      rightIndex += 1
     ) {
-      exactDuplicateSuppressions.set(
-        computed.leftExecutionDigest,
-        (exactDuplicateSuppressions.get(computed.leftExecutionDigest) ?? 0) + 1,
+      const left = verifiedExecutions[leftIndex];
+      const right = verifiedExecutions[rightIndex];
+      const classification = freezeClassification(
+        classifyExecutionRelationship(left, right),
       );
-      continue;
-    }
-    const blockCode = stateBlockCode(computed.state);
-    if (blockCode !== null) {
-      addGroupBlock(leftGroup, blockCode, [
-        left.canonicalContentDigest,
-        right.canonicalContentDigest,
-      ]);
-    }
-  }
-
-  for (const [digest, occurrences] of byDigest) {
-    if (
-      occurrences.length > 1 &&
-      (exactDuplicateSuppressions.get(digest as CanonicalExecutionDigest) ?? 0) <
-        occurrences.length - 1 &&
-      occurrences.every((occurrence) =>
-        canonicalBytesEqual(occurrences[0].canonicalBytes, occurrence.canonicalBytes),
-      )
-    ) {
-      addGroupBlock(
-        executionLedgerGroupKey(occurrences[0]),
-        "ti_v3_reconstruction_duplicate_relationship_missing",
-        [digest as CanonicalExecutionDigest],
+      pairReceipts.push(
+        Object.freeze({
+          leftInputIndex: leftIndex,
+          rightInputIndex: rightIndex,
+          classification,
+        }),
       );
-    }
-  }
-
-  const retainedExecutions: CanonicalExecutionEnvelope[] = [];
-  const retainedCounts = new Map<CanonicalExecutionDigest, number>();
-  for (const execution of executions) {
-    const occurrences = byDigest.get(execution.canonicalContentDigest)?.length ?? 1;
-    const suppressions = Math.min(
-      exactDuplicateSuppressions.get(execution.canonicalContentDigest) ?? 0,
-      occurrences - 1,
-    );
-    const retainLimit = occurrences - suppressions;
-    const retained = retainedCounts.get(execution.canonicalContentDigest) ?? 0;
-    if (suppressions > 0) {
-      if (retained >= retainLimit) {
+      if (
+        classification.state === "exact_duplicate_same_source" &&
+        classification.suppressionEligible
+      ) {
+        suppressedInputIndexes.add(rightIndex);
         continue;
       }
+      const blockCode = stateBlockCode(classification.state);
+      if (blockCode === null) continue;
+      const leftGroup = executionLedgerGroupKey(left);
+      const rightGroup = executionLedgerGroupKey(right);
+      const digests = [left.canonicalContentDigest, right.canonicalContentDigest];
+      if (leftGroup !== rightGroup) {
+        addGroupBlock(
+          leftGroup,
+          "ti_v3_reconstruction_relationship_group_mismatch",
+          digests,
+        );
+        addGroupBlock(
+          rightGroup,
+          "ti_v3_reconstruction_relationship_group_mismatch",
+          digests,
+        );
+      } else {
+        addGroupBlock(leftGroup, blockCode, digests);
+      }
     }
-    retainedCounts.set(execution.canonicalContentDigest, retained + 1);
-    retainedExecutions.push(execution);
   }
 
-  return {
-    retainedExecutions,
-    groupBlocks: [...groupBlocks.entries()]
-      .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
-      .flatMap(([groupKey, blocks]) =>
-        blocks
-          .sort((left, right) =>
-            left.code < right.code ? -1 : left.code > right.code ? 1 : 0,
-          )
-          .map((block) => ({
+  const frozenGroupBlocks = [...groupBlocks.entries()]
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .flatMap(([groupKey, blocks]) =>
+      [...blocks.entries()]
+        .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+        .map(([code, digests]) =>
+          Object.freeze({
             groupKey,
-            code: block.code,
-            executionDigests: [...block.digests].sort(),
-          })),
-      ),
-    globalBlocks,
-  };
+            code,
+            executionDigests: Object.freeze([...digests].sort()),
+          }),
+        ),
+    );
+  const receipt: ExecutionRelationshipCoverageReceipt = Object.freeze({
+    version: EXECUTION_RELATIONSHIP_COVERAGE_VERSION,
+    state: "complete",
+    inputExecutionCount: verifiedExecutions.length,
+    expectedPairCount: expectedPairCount(verifiedExecutions.length),
+    classifiedPairCount: pairReceipts.length,
+    inputExecutionDigests: Object.freeze([...inputDigests]),
+    pairs: Object.freeze(pairReceipts),
+  });
+  return protectResolution({
+    retainedExecutions: Object.freeze(
+      verifiedExecutions.filter((_, index) => !suppressedInputIndexes.has(index)),
+    ),
+    groupBlocks: Object.freeze(frozenGroupBlocks),
+    globalBlocks: Object.freeze([]),
+    coverageReceipt: receipt,
+  });
 }

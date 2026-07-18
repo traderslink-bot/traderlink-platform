@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCanonicalExecution, serializeCanonicalValue } from "../domain";
+import {
+  buildCanonicalExecution,
+  orderCanonicalExecutions,
+  serializeCanonicalValue,
+  verifyCanonicalExecutionEnvelope,
+  type CanonicalExecutionEnvelope,
+} from "../domain";
 import {
   buildSyntheticCanonicalExecution,
   syntheticSourceDocumentDigest,
@@ -32,6 +38,57 @@ describe("Trader Intelligence v3 canonical execution v1", () => {
     expect(execution.content.orderId).toBe("SYNTH-Café");
     expect(execution.content.executionId).toBe("SYNTH-Exécution");
   });
+
+  it("deep-freezes authoritative facts and validation while exposing defensive bytes", () => {
+    const execution = buildSyntheticCanonicalExecution({
+      charges: [{ kind: "commission", amount: "0.25", currency: "USD" }],
+    });
+    expect(Object.isFrozen(execution)).toBe(true);
+    expect(Object.isFrozen(execution.content)).toBe(true);
+    expect(Object.isFrozen(execution.content.originalSourceRowLocator)).toBe(true);
+    expect(Object.isFrozen(execution.content.charges)).toBe(true);
+    expect(Object.isFrozen(execution.content.charges[0])).toBe(true);
+    expect(Object.isFrozen(execution.validation)).toBe(true);
+    expect(Object.isFrozen(execution.validation.reasonCodes)).toBe(true);
+    expect(() => {
+      (execution.content as { price: string }).price = "999";
+    }).toThrow(TypeError);
+    const exposedBytes = execution.canonicalBytes;
+    exposedBytes[0] = 0;
+    expect(execution.canonicalBytes[0]).not.toBe(0);
+    expect(verifyCanonicalExecutionEnvelope(execution)).toEqual({
+      ok: true,
+      value: execution,
+    });
+  });
+
+  it.each(["content", "bytes", "digest"])(
+    "rejects a forged envelope with %s drift at integrity and ordering boundaries",
+    (drift) => {
+      const execution = buildSyntheticCanonicalExecution();
+      const forged = {
+        ...execution,
+        content:
+          drift === "content"
+            ? { ...execution.content, price: "999" }
+            : execution.content,
+        canonicalBytes:
+          drift === "bytes"
+            ? new TextEncoder().encode("{\"forged\":true}")
+            : execution.canonicalBytes,
+        canonicalContentDigest:
+          drift === "digest"
+            ? "ti_v3:canonical_execution:v1:sha256:0000000000000000000000000000000000000000000000000000000000000000"
+            : execution.canonicalContentDigest,
+      } as CanonicalExecutionEnvelope;
+      expect(verifyCanonicalExecutionEnvelope(forged).ok).toBe(false);
+      expect(orderCanonicalExecutions([forged])).toMatchObject({
+        state: "conflicting_order_evidence",
+        economicallyOrderedExecutions: null,
+        reasonCodes: ["ti_v3_order_execution_envelope_integrity_invalid"],
+      });
+    },
+  );
 
   it("gives composed and decomposed identifiers identical canonical content and identity", () => {
     const composed = buildSyntheticCanonicalExecution({
@@ -141,6 +198,42 @@ describe("Trader Intelligence v3 canonical execution v1", () => {
         "ti_v3_execution_quantity_invalid",
       ]);
     }
+  });
+
+  it.each(["-1", "01", "+1", "1.0", "row-seven", "9".repeat(39)])(
+    "rejects noncanonical row_number value %s without throwing",
+    (value) => {
+      const base = buildSyntheticCanonicalExecution();
+      const input = {
+        ...base.content,
+        originalSourceRowLocator: {
+          kind: "row_number",
+          value,
+          rowOrderPreserved: true,
+        },
+        validation: base.validation,
+      };
+      expect(() => buildCanonicalExecution(input)).not.toThrow();
+      expect(buildCanonicalExecution(input)).toEqual({
+        ok: false,
+        error: {
+          code: "ti_v3_canonical_execution_invalid",
+          reasonCodes: ["ti_v3_execution_row_locator_invalid"],
+        },
+      });
+    },
+  );
+
+  it("keeps arbitrary bounded source keys under record_key", () => {
+    expect(
+      buildSyntheticCanonicalExecution({
+        originalSourceRowLocator: {
+          kind: "record_key",
+          value: "synthetic-row-key/A-7",
+          rowOrderPreserved: false,
+        },
+      }).content.originalSourceRowLocator.value,
+    ).toBe("synthetic-row-key/A-7");
   });
 
   it.each([

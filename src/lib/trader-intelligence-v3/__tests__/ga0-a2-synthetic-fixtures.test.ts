@@ -11,7 +11,9 @@ import {
 import {
   GA0_A2_SYNTHETIC_FIXTURE_EXPECTATIONS,
   buildGa0A2ExecutableFixtures,
+  buildSyntheticAnalyticalPnlInput,
   buildSyntheticCanonicalExecution,
+  classifyCollisionWithTestHash,
   syntheticSourceDocumentDigest,
 } from "../testing";
 
@@ -77,10 +79,16 @@ describe("Trader Intelligence v3 GA0-A2 exact synthetic fixture catalog", () => 
       const relationship =
         fixture.relationshipPair === null
           ? null
-          : classifyExecutionRelationship(
-              fixture.executions[fixture.relationshipPair[0]],
-              fixture.executions[fixture.relationshipPair[1]],
-            );
+          : fixture.collisionTestHash === undefined
+            ? classifyExecutionRelationship(
+                fixture.executions[fixture.relationshipPair[0]],
+                fixture.executions[fixture.relationshipPair[1]],
+              )
+            : classifyCollisionWithTestHash(
+                fixture.executions[fixture.relationshipPair[0]],
+                fixture.executions[fixture.relationshipPair[1]],
+                fixture.collisionTestHash,
+              );
       if (relationship !== null) {
         expect(relationship.state).toBe(expected.expectedDuplicateState);
       }
@@ -98,9 +106,15 @@ describe("Trader Intelligence v3 GA0-A2 exact synthetic fixture catalog", () => 
         return;
       }
 
+      if (fixture.collisionTestHash !== undefined) {
+        expect(fixture.collisionTestHash(fixture.executions[0].canonicalBytes)).toBe(
+          expected.expectedCanonicalDigests[0]?.split(":").at(-1),
+        );
+        return;
+      }
+
       const result = reconstructAnalyticalPnl(
-        fixture.executions,
-        relationship === null ? [] : [relationship],
+        buildSyntheticAnalyticalPnlInput(fixture.executions),
       );
       if (
         expected.expectedBlockedOrLimitationState?.startsWith(

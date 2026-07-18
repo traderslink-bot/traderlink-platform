@@ -113,6 +113,63 @@ describe("Trader Intelligence v3 execution ordering", () => {
     );
   });
 
+  it("does not create timestamp order when either source precision is unknown", () => {
+    const unknown = buildSyntheticCanonicalExecution({
+      executedAt: "2026-07-18T13:45:00.000000000Z",
+      timestampPrecision: "unknown",
+      brokerExecutionIndex: null,
+      brokerFillSequence: null,
+      executionId: null,
+      originalSourceRowLocator: {
+        kind: "record_key",
+        value: "unknown",
+        rowOrderPreserved: false,
+      },
+    });
+    const later = buildSyntheticCanonicalExecution({
+      executedAt: "2026-07-18T14:45:00.000000000Z",
+      timestampPrecision: "second",
+      brokerExecutionIndex: null,
+      brokerFillSequence: null,
+      executionId: null,
+      price: "1.3",
+      originalSourceRowLocator: {
+        kind: "record_key",
+        value: "later",
+        rowOrderPreserved: false,
+      },
+    });
+    expect(compareMeaningfulExecutionOrder(unknown, later)).toMatchObject({
+      state: "ambiguous_meaningful_order",
+      direction: "none",
+    });
+    expect(orderCanonicalExecutions([later, unknown])).toMatchObject({
+      state: "ambiguous_meaningful_order",
+      economicallyOrderedExecutions: null,
+    });
+  });
+
+  it("allows scoped broker sequence to order unknown-precision executions", () => {
+    const first = buildSyntheticCanonicalExecution({
+      executedAt: "2026-07-18T13:45:00.000000000Z",
+      timestampPrecision: "unknown",
+      brokerExecutionIndex: "7",
+      brokerFillSequence: null,
+    });
+    const second = buildSyntheticCanonicalExecution({
+      executedAt: "2026-07-18T14:45:00.000000000Z",
+      timestampPrecision: "unknown",
+      brokerExecutionIndex: "8",
+      brokerFillSequence: null,
+      price: "1.3",
+    });
+    expect(compareMeaningfulExecutionOrder(first, second)).toMatchObject({
+      state: "ordered",
+      direction: "left_before_right",
+      evidenceUsed: ["scoped_broker_execution_index"],
+    });
+  });
+
   it("detects conflicting timestamp and broker sequence evidence", () => {
     const earlier = buildSyntheticCanonicalExecution({
       executedAt: "2026-07-18T13:45:12.000000000Z",

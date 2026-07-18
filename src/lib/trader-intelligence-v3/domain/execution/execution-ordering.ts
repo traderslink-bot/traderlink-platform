@@ -2,7 +2,10 @@ import {
   timestampPrecisionIntervalNanoseconds,
   type TimestampSourcePrecision,
 } from "../canonical";
-import type { CanonicalExecutionEnvelope } from "./canonical-execution";
+import {
+  verifyCanonicalExecutionEnvelope,
+  type CanonicalExecutionEnvelope,
+} from "./canonical-execution";
 
 export type EconomicOrderingState =
   | "ordered"
@@ -31,8 +34,14 @@ function compareString(left: string, right: string): -1 | 0 | 1 {
 
 function compareOptionalInteger(left: string | null, right: string | null): -1 | 0 | 1 {
   if (left === null || right === null) return 0;
-  const comparison = BigInt(left) - BigInt(right);
-  return comparison < BigInt(0) ? -1 : comparison > BigInt(0) ? 1 : 0;
+  if (!/^(?:0|[1-9][0-9]{0,37})$/.test(left) || !/^(?:0|[1-9][0-9]{0,37})$/.test(right)) {
+    return 0;
+  }
+  return left.length < right.length
+    ? -1
+    : left.length > right.length
+      ? 1
+      : compareString(left, right);
 }
 
 function precisionRank(precision: TimestampSourcePrecision): number {
@@ -41,7 +50,7 @@ function precisionRank(precision: TimestampSourcePrecision): number {
   );
 }
 
-export function compareCanonicalStorageOrder(
+function compareVerifiedCanonicalStorageOrder(
   left: CanonicalExecutionEnvelope,
   right: CanonicalExecutionEnvelope,
 ): number {
@@ -72,6 +81,16 @@ export function compareCanonicalStorageOrder(
     if (row !== 0) return row;
   }
   return compareString(left.canonicalContentDigest, right.canonicalContentDigest);
+}
+
+export function compareCanonicalStorageOrder(
+  left: CanonicalExecutionEnvelope,
+  right: CanonicalExecutionEnvelope,
+): number {
+  const verifiedLeft = verifyCanonicalExecutionEnvelope(left);
+  const verifiedRight = verifyCanonicalExecutionEnvelope(right);
+  if (!verifiedLeft.ok || !verifiedRight.ok) return 0;
+  return compareVerifiedCanonicalStorageOrder(verifiedLeft.value, verifiedRight.value);
 }
 
 function economicEquivalent(
@@ -153,26 +172,31 @@ function directionFromComparison(comparison: number): "left_before_right" | "rig
   return comparison < 0 ? "left_before_right" : comparison > 0 ? "right_before_left" : null;
 }
 
-export function compareMeaningfulExecutionOrder(
+function compareVerifiedMeaningfulExecutionOrder(
   left: CanonicalExecutionEnvelope,
   right: CanonicalExecutionEnvelope,
 ): ExecutionPairOrderingDecision {
   const directions = new Map<string, "left_before_right" | "right_before_left">();
-  const leftInterval = timestampPrecisionIntervalNanoseconds(
-    left.content.executedAt,
-    left.content.timestampPrecision,
-  );
-  const rightInterval = timestampPrecisionIntervalNanoseconds(
-    right.content.executedAt,
-    right.content.timestampPrecision,
-  );
-  if (leftInterval.endExclusive !== null && leftInterval.endExclusive <= rightInterval.start) {
-    directions.set("canonical_timestamp_interval", "left_before_right");
-  } else if (
-    rightInterval.endExclusive !== null &&
-    rightInterval.endExclusive <= leftInterval.start
+  if (
+    left.content.timestampPrecision !== "unknown" &&
+    right.content.timestampPrecision !== "unknown"
   ) {
-    directions.set("canonical_timestamp_interval", "right_before_left");
+    const leftInterval = timestampPrecisionIntervalNanoseconds(
+      left.content.executedAt,
+      left.content.timestampPrecision,
+    );
+    const rightInterval = timestampPrecisionIntervalNanoseconds(
+      right.content.executedAt,
+      right.content.timestampPrecision,
+    );
+    if (leftInterval.endExclusive !== null && leftInterval.endExclusive <= rightInterval.start) {
+      directions.set("canonical_timestamp_interval", "left_before_right");
+    } else if (
+      rightInterval.endExclusive !== null &&
+      rightInterval.endExclusive <= leftInterval.start
+    ) {
+      directions.set("canonical_timestamp_interval", "right_before_left");
+    }
   }
 
   const evidenceComparisons: readonly [string, number][] = [
@@ -277,10 +301,41 @@ export function compareMeaningfulExecutionOrder(
   };
 }
 
+export function compareMeaningfulExecutionOrder(
+  left: CanonicalExecutionEnvelope,
+  right: CanonicalExecutionEnvelope,
+): ExecutionPairOrderingDecision {
+  const verifiedLeft = verifyCanonicalExecutionEnvelope(left);
+  const verifiedRight = verifyCanonicalExecutionEnvelope(right);
+  if (!verifiedLeft.ok || !verifiedRight.ok) {
+    return {
+      state: "conflicting_order_evidence",
+      direction: "none",
+      reasonCodes: ["ti_v3_order_execution_envelope_integrity_invalid"],
+      evidenceUsed: ["canonical_execution_envelope_integrity"],
+    };
+  }
+  return compareVerifiedMeaningfulExecutionOrder(verifiedLeft.value, verifiedRight.value);
+}
+
 export function orderCanonicalExecutions(
   executions: readonly CanonicalExecutionEnvelope[],
 ): CanonicalExecutionOrderingResult {
-  const storage = [...executions].sort(compareCanonicalStorageOrder);
+  const verifiedExecutions: CanonicalExecutionEnvelope[] = [];
+  for (const execution of executions) {
+    const verified = verifyCanonicalExecutionEnvelope(execution);
+    if (!verified.ok) {
+      return {
+        state: "conflicting_order_evidence",
+        storageOrderedExecutions: [],
+        economicallyOrderedExecutions: null,
+        reasonCodes: ["ti_v3_order_execution_envelope_integrity_invalid"],
+        evidenceUsed: ["canonical_execution_envelope_integrity"],
+      };
+    }
+    verifiedExecutions.push(verified.value);
+  }
+  const storage = [...verifiedExecutions].sort(compareVerifiedCanonicalStorageOrder);
   const edges = new Map<CanonicalExecutionEnvelope, Set<CanonicalExecutionEnvelope>>();
   const incoming = new Map<CanonicalExecutionEnvelope, number>();
   const reasons = new Set<string>();
@@ -296,7 +351,7 @@ export function orderCanonicalExecutions(
     for (let rightIndex = leftIndex + 1; rightIndex < storage.length; rightIndex += 1) {
       const left = storage[leftIndex];
       const right = storage[rightIndex];
-      const decision = compareMeaningfulExecutionOrder(left, right);
+      const decision = compareVerifiedMeaningfulExecutionOrder(left, right);
       decision.reasonCodes.forEach((reason) => reasons.add(reason));
       decision.evidenceUsed.forEach((item) => evidence.add(item));
       if (decision.state === "conflicting_order_evidence") hasConflict = true;
@@ -333,7 +388,7 @@ export function orderCanonicalExecutions(
   const ready = storage.filter((execution) => incoming.get(execution) === 0);
   const ordered: CanonicalExecutionEnvelope[] = [];
   while (ready.length > 0) {
-    ready.sort(compareCanonicalStorageOrder);
+    ready.sort(compareVerifiedCanonicalStorageOrder);
     const next = ready.shift() as CanonicalExecutionEnvelope;
     ordered.push(next);
     for (const after of edges.get(next) ?? []) {

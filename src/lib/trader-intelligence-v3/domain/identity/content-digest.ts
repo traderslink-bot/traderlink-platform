@@ -35,14 +35,14 @@ export type ContentDigestFailure =
   | { code: "ti_v3_digest_identifier_invalid"; path: "$" };
 
 export interface CanonicalContentIdentity {
-  domain: ContentIdentityDomain;
-  version: `v${number}`;
-  algorithm: "sha256";
-  canonicalValue: CanonicalValue;
-  canonicalJson: string;
-  canonicalBytes: Uint8Array;
-  digestHex: string;
-  identifier: CanonicalContentDigest;
+  readonly domain: ContentIdentityDomain;
+  readonly version: `v${number}`;
+  readonly algorithm: "sha256";
+  readonly canonicalValue: CanonicalValue;
+  readonly canonicalJson: string;
+  readonly canonicalBytes: Uint8Array;
+  readonly digestHex: string;
+  readonly identifier: CanonicalContentDigest;
 }
 
 function sha256(bytes: Uint8Array): string {
@@ -73,18 +73,22 @@ export function createCanonicalContentIdentity(
     return serialized;
   }
   const digestHex = sha256(serialized.value.utf8);
+  const authoritativeBytes = serialized.value.utf8;
+  const identityValue: CanonicalContentIdentity = Object.freeze({
+    domain,
+    version,
+    algorithm: "sha256",
+    canonicalValue: serialized.value.value,
+    canonicalJson: serialized.value.json,
+    get canonicalBytes(): Uint8Array {
+      return authoritativeBytes.slice();
+    },
+    digestHex,
+    identifier: identifier(domain, version, digestHex),
+  });
   return {
     ok: true,
-    value: {
-      domain,
-      version,
-      algorithm: "sha256",
-      canonicalValue: serialized.value.value,
-      canonicalJson: serialized.value.json,
-      canonicalBytes: serialized.value.utf8,
-      digestHex,
-      identifier: identifier(domain, version, digestHex),
-    },
+    value: identityValue,
   };
 }
 

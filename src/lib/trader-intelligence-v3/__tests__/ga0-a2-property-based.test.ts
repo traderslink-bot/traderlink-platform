@@ -7,14 +7,18 @@ import {
   createCanonicalContentIdentity,
   orderCanonicalExecutions,
   reconstructAnalyticalPnl,
+  resolveExecutionRelationships,
   runFifoPositionLedger,
   serializeCanonicalValue,
   validateExactDecimal,
+  verifyCanonicalExecutionEnvelope,
   type CanonicalExecutionDraft,
   type CanonicalExecutionEnvelope,
 } from "../domain";
 import {
   buildSyntheticCanonicalExecution,
+  buildSyntheticAnalyticalPnlInput,
+  buildSyntheticFifoLedgerInput,
   addReferenceDecimals,
   compareReferenceDecimals,
   formatReferenceDecimal,
@@ -39,6 +43,10 @@ export const GA0_A2_PROPERTY_TEST_SEEDS = Object.freeze({
   blockedStates: 2026071813,
   scaleBoundaries: 2026071814,
   precisionBoundaries: 2026071815,
+  completeRelationshipCoverage: 2026071816,
+  deterministicDuplicateRetention: 2026071817,
+  startingInventoryTruth: 2026071818,
+  immutableEnvelopeIntegrity: 2026071819,
 });
 
 const TIMESTAMPS = [
@@ -92,8 +100,9 @@ function assertProductionMatchesReference(
   executions: readonly CanonicalExecutionEnvelope[],
 ): void {
   const ordering = orderCanonicalExecutions(executions);
-  const production = runFifoPositionLedger({ ordering });
-  const reference = runReferenceFifoLedger(ordering);
+  const fifoInput = buildSyntheticFifoLedgerInput(executions);
+  const production = runFifoPositionLedger(fifoInput);
+  const reference = runReferenceFifoLedger(ordering, fifoInput.startingInventory);
   expect(production.status).toBe("completed");
   expect(reference.status).toBe("completed");
   const ledger = production.ledgers[0];
@@ -145,8 +154,17 @@ function assertProductionMatchesReference(
   if (ledger.endingQuantity === "0") {
     expect(ledger.netAnalyticalPnl).toBe(ledger.signedCashFlow);
   }
-  const rerun = runFifoPositionLedger({ ordering: orderCanonicalExecutions(executions) });
+  const rerun = runFifoPositionLedger(buildSyntheticFifoLedgerInput(executions));
   expect(rerun).toEqual(production);
+}
+
+function runProductionFor(executions: readonly CanonicalExecutionEnvelope[]) {
+  return runFifoPositionLedger(buildSyntheticFifoLedgerInput(executions));
+}
+
+function runReferenceFor(executions: readonly CanonicalExecutionEnvelope[]) {
+  const input = buildSyntheticFifoLedgerInput(executions);
+  return runReferenceFifoLedger(orderCanonicalExecutions(executions), input.startingInventory);
 }
 
 const financialCaseArbitrary = fc.record({
@@ -200,7 +218,7 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
           }),
         ];
         assertProductionMatchesReference(executions);
-        expect(runReferenceFifoLedger(orderCanonicalExecutions(executions)).endingQuantity).toBe("0");
+        expect(runReferenceFor(executions).endingQuantity).toBe("0");
       }),
       { numRuns: 1000, seed: GA0_A2_PROPERTY_TEST_SEEDS.flatLong, verbose: 2 },
     );
@@ -236,7 +254,7 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
           }),
         ];
         assertProductionMatchesReference(executions);
-        expect(runReferenceFifoLedger(orderCanonicalExecutions(executions)).endingQuantity).toBe("0");
+        expect(runReferenceFor(executions).endingQuantity).toBe("0");
       }),
       { numRuns: 1000, seed: GA0_A2_PROPERTY_TEST_SEEDS.flatShort, verbose: 2 },
     );
@@ -272,7 +290,7 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
           }),
         ];
         assertProductionMatchesReference(executions);
-        const reference = runReferenceFifoLedger(orderCanonicalExecutions(executions));
+        const reference = runReferenceFor(executions);
         expect(reference.matchedQuantityByExecution.map((item) => item.matchedQuantity)).toEqual([
           "0",
           firstQuantity,
@@ -313,21 +331,19 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
           }),
         ];
         assertProductionMatchesReference(executions);
-        const production = runFifoPositionLedger({ ordering: orderCanonicalExecutions(executions) });
+        const production = runProductionFor(executions);
         expect(production.ledgers[0].reversalEffects[0]).toMatchObject({
           closedQuantity: closeQuantity,
           openedQuantity: remainder,
         });
-        expect(runReferenceFifoLedger(orderCanonicalExecutions(executions)).reversalEffects[0]).toEqual({
+        expect(runReferenceFor(executions).reversalEffects[0]).toEqual({
           sourceExecutionDigest: executions[1].canonicalContentDigest,
           closedDirection: "long",
           closedQuantity: closeQuantity,
           openedDirection: "short",
           openedQuantity: remainder,
         });
-        const effect = runReferenceFifoLedger(
-          orderCanonicalExecutions(executions),
-        ).reversalEffects[0];
+        const effect = runReferenceFor(executions).reversalEffects[0];
         expect(
           formatReferenceDecimal(
             addReferenceDecimals(
@@ -427,7 +443,11 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
         expect(forward.state).toBe("ambiguous_meaningful_order");
         expect(reverse.state).toBe("ambiguous_meaningful_order");
         expect(forward.economicallyOrderedExecutions).toBeNull();
-        expect(reconstructAnalyticalPnl([left, right]).status).toBe("blocked");
+        expect(
+          reconstructAnalyticalPnl(
+            buildSyntheticAnalyticalPnlInput([left, right]),
+          ).status,
+        ).toBe("blocked");
       }),
       { numRuns: 1000, seed: GA0_A2_PROPERTY_TEST_SEEDS.ambiguousOrdering, verbose: 2 },
     );
@@ -493,9 +513,7 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
           }),
         ];
         assertProductionMatchesReference(executions);
-        const effect = runReferenceFifoLedger(
-          orderCanonicalExecutions(executions),
-        ).reversalEffects[0];
+        const effect = runReferenceFor(executions).reversalEffects[0];
         expect(effect).toMatchObject({
           closedDirection: "short",
           closedQuantity: closeQuantity,
@@ -534,9 +552,8 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
             brokerPositionEffectEvidence: "close",
             charges: [],
           });
-          const ordering = orderCanonicalExecutions([execution]);
-          const production = runFifoPositionLedger({ ordering });
-          const reference = runReferenceFifoLedger(ordering);
+          const production = runProductionFor([execution]);
+          const reference = runReferenceFor([execution]);
           expect(production).toMatchObject({
             status: "blocked",
             blockedStates: [
@@ -573,7 +590,9 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
           rawBrokerSymbol: "SYNTHCAD",
           charges: [],
         });
-        const result = reconstructAnalyticalPnl([usd, cad]);
+        const result = reconstructAnalyticalPnl(
+          buildSyntheticAnalyticalPnlInput([usd, cad]),
+        );
         expect(result.status).toBe("completed");
         expect(result.ledgers.map((ledger) => ledger.currency).sort()).toEqual([
           "CAD",
@@ -589,7 +608,7 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
     );
   }, 120_000);
 
-  it("runs 1,000 generated pair-addressed relationship resolution cases", () => {
+  it("runs 1,000 generated exhaustive relationship-resolution cases", () => {
     fc.assert(
       fc.property(positiveCoefficient, (token) => {
         const opening = buildSyntheticCanonicalExecution({
@@ -603,15 +622,18 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
           executionId: `SYNTH-REL-CLOSE-${token.toString()}`,
           charges: [],
         });
-        const relationship = classifyExecutionRelationship(opening, opening);
-        expect(
-          reconstructAnalyticalPnl([opening, opening, close], [relationship]),
-        ).toMatchObject({ status: "completed", ledgers: [{ endingQuantity: "0" }] });
-        expect(reconstructAnalyticalPnl([opening, opening, close])).toMatchObject({
-          status: "blocked",
-          blockedStates: [
-            { code: "ti_v3_reconstruction_duplicate_relationship_missing" },
-          ],
+        const input = buildSyntheticAnalyticalPnlInput([
+          opening,
+          opening,
+          close,
+        ]);
+        expect(input.relationshipResolution.coverageReceipt).toMatchObject({
+          expectedPairCount: 3,
+          classifiedPairCount: 3,
+        });
+        expect(reconstructAnalyticalPnl(input)).toMatchObject({
+          status: "completed",
+          ledgers: [{ endingQuantity: "0" }],
         });
       }),
       {
@@ -624,7 +646,6 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
 
   it("runs 1,000 generated production/reference blocked-state parity cases", () => {
     const blockedCase = fc.constantFrom(
-      "unresolved_instrument" as const,
       "unsupported_security" as const,
       "corporate_action" as const,
       "symbol_change" as const,
@@ -633,13 +654,7 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
       fc.property(blockedCase, positiveCoefficient, (kind, token) => {
         const common = { executionId: `SYNTH-BLOCK-${token.toString()}` };
         const execution =
-          kind === "unresolved_instrument"
-            ? buildSyntheticCanonicalExecution({
-                ...common,
-                instrumentResolutionState: "unresolved",
-                stableInstrumentKey: null,
-              })
-            : kind === "unsupported_security"
+          kind === "unsupported_security"
               ? buildSyntheticCanonicalExecution({
                   ...common,
                   securityType: "preferred_stock",
@@ -653,9 +668,8 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
                     ...common,
                     basisContinuityState: "symbol_change_unresolved",
                   });
-        const ordering = orderCanonicalExecutions([execution]);
-        const production = runFifoPositionLedger({ ordering });
-        const reference = runReferenceFifoLedger(ordering);
+        const production = runProductionFor([execution]);
+        const reference = runReferenceFor([execution]);
         expect(production.status).toBe("blocked");
         expect(reference.status).toBe("blocked");
         expect(production.blockedStates[0].code).toBe(reference.blockedCode);
@@ -663,6 +677,151 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
       {
         numRuns: 1000,
         seed: GA0_A2_PROPERTY_TEST_SEEDS.blockedStates,
+        verbose: 2,
+      },
+    );
+  }, 120_000);
+
+  it("runs 1,000 generated complete relationship-coverage receipts", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 8 }),
+        positiveCoefficient,
+        (count, token) => {
+          const executions = Array.from({ length: count }, (_, index) =>
+            buildSyntheticCanonicalExecution({
+              executionId: `SYNTH-COVERAGE-${token.toString()}-${index}`,
+              brokerExecutionIndex: null,
+              brokerFillSequence: null,
+              originalSourceRowLocator: {
+                kind: "record_key",
+                value: `coverage-${index}`,
+                rowOrderPreserved: false,
+              },
+            }),
+          );
+          const resolution = resolveExecutionRelationships(executions);
+          const expectedPairs = (count * (count - 1)) / 2;
+          expect(resolution.coverageReceipt).toMatchObject({
+            state: "complete",
+            inputExecutionCount: count,
+            expectedPairCount: expectedPairs,
+            classifiedPairCount: expectedPairs,
+          });
+          expect(resolution.coverageReceipt.pairs).toHaveLength(expectedPairs);
+        },
+      ),
+      {
+        numRuns: 1000,
+        seed: GA0_A2_PROPERTY_TEST_SEEDS.completeRelationshipCoverage,
+        verbose: 2,
+      },
+    );
+  }, 120_000);
+
+  it("runs 1,000 generated deterministic duplicate-retention cases", () => {
+    fc.assert(
+      fc.property(fc.boolean(), positiveCoefficient, (validationAgrees, token) => {
+        const common = {
+          executionId: `SYNTH-RETENTION-${token.toString()}`,
+          charges: [],
+        };
+        const accepted = buildSyntheticCanonicalExecution(common);
+        const counterpart = buildSyntheticCanonicalExecution({
+          ...common,
+          validation: validationAgrees
+            ? { state: "accepted", reasonCodes: [] }
+            : {
+                state: "quarantined",
+                reasonCodes: ["ti_v3_synthetic_quarantine"],
+              },
+        });
+        for (const executions of [
+          [accepted, counterpart],
+          [counterpart, accepted],
+        ]) {
+          const resolution = resolveExecutionRelationships(executions);
+          expect(resolution.retainedExecutions).toHaveLength(
+            validationAgrees ? 1 : 2,
+          );
+          expect(resolution.groupBlocks).toHaveLength(
+            validationAgrees ? 0 : 1,
+          );
+        }
+      }),
+      {
+        numRuns: 1000,
+        seed: GA0_A2_PROPERTY_TEST_SEEDS.deterministicDuplicateRetention,
+        verbose: 2,
+      },
+    );
+  }, 120_000);
+
+  it("runs 1,000 generated explicit starting-inventory truth cases", () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom("buy" as const, "sell" as const),
+        positiveCoefficient,
+        (side, token) => {
+          const execution = buildSyntheticCanonicalExecution({
+            side,
+            executionId: `SYNTH-START-${token.toString()}`,
+            charges: [],
+          });
+          expect(
+            reconstructAnalyticalPnl(
+              buildSyntheticAnalyticalPnlInput([execution], "unknown"),
+            ),
+          ).toMatchObject({
+            status: "blocked",
+            blockedStates: [
+              { code: "ti_v3_reconstruction_prior_inventory_required" },
+            ],
+          });
+          expect(
+            reconstructAnalyticalPnl(
+              buildSyntheticAnalyticalPnlInput([execution], "proven_flat"),
+            ),
+          ).toMatchObject({
+            status: "completed",
+            ledgers: [{ startingInventoryState: "proven_flat" }],
+          });
+        },
+      ),
+      {
+        numRuns: 1000,
+        seed: GA0_A2_PROPERTY_TEST_SEEDS.startingInventoryTruth,
+        verbose: 2,
+      },
+    );
+  }, 120_000);
+
+  it("runs 1,000 generated immutable-envelope integrity cases", () => {
+    fc.assert(
+      fc.property(positiveCoefficient, (token) => {
+        const execution = buildSyntheticCanonicalExecution({
+          executionId: `SYNTH-INTEGRITY-${token.toString()}`,
+        });
+        const bytes = execution.canonicalBytes;
+        bytes[0] = 0;
+        expect(verifyCanonicalExecutionEnvelope(execution).ok).toBe(true);
+        const forged = {
+          ...execution,
+          content: { ...execution.content, quantity: "999" },
+        } as CanonicalExecutionEnvelope;
+        expect(verifyCanonicalExecutionEnvelope(forged).ok).toBe(false);
+        expect(resolveExecutionRelationships([forged])).toMatchObject({
+          retainedExecutions: [],
+          globalBlocks: [
+            {
+              code: "ti_v3_reconstruction_execution_envelope_integrity_invalid",
+            },
+          ],
+        });
+      }),
+      {
+        numRuns: 1000,
+        seed: GA0_A2_PROPERTY_TEST_SEEDS.immutableEnvelopeIntegrity,
         verbose: 2,
       },
     );

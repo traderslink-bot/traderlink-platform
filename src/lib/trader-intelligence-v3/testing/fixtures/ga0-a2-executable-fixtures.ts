@@ -3,7 +3,6 @@ import type {
   CanonicalExecutionEnvelope,
   ExecutionRelationshipClassification,
 } from "../../domain";
-import { applyCollisionTestHash } from "../collision-test-hash";
 import {
   buildSyntheticCanonicalExecution,
   syntheticSourceDocumentDigest,
@@ -27,6 +26,7 @@ export interface Ga0A2ExecutableFixture {
   relationships?: readonly ExecutionRelationshipClassification[];
   invalidDecimalInput?: string;
   invalidDraft?: unknown;
+  collisionTestHash?: (bytes: Uint8Array) => string;
 }
 
 function expectation(id: string): Ga0A2SyntheticFixtureExpectation {
@@ -76,12 +76,14 @@ function reconstruction(
 function classification(
   id: string,
   executions: readonly [CanonicalExecutionEnvelope, CanonicalExecutionEnvelope],
+  collisionTestHash?: (bytes: Uint8Array) => string,
 ): Ga0A2ExecutableFixture {
   return {
     expectation: expectation(id),
     mode: "classification",
     executions,
     relationshipPair: [0, 1],
+    collisionTestHash,
   };
 }
 
@@ -118,14 +120,14 @@ export function buildGa0A2ExecutableFixtures(): readonly Ga0A2ExecutableFixture[
     correctionReference: "SYNTH-CORRECTION-1",
   });
   const collisionHash = () => "0".repeat(64);
-  const collisionLeft = applyCollisionTestHash(
-    execution(1, { executionId: "SYNTH-COLLISION-A", price: "1" }),
-    collisionHash,
-  );
-  const collisionRight = applyCollisionTestHash(
-    execution(2, { executionId: "SYNTH-COLLISION-B", price: "2" }),
-    collisionHash,
-  );
+  const collisionLeft = execution(1, {
+    executionId: "SYNTH-COLLISION-A",
+    price: "1",
+  });
+  const collisionRight = execution(2, {
+    executionId: "SYNTH-COLLISION-B",
+    price: "2",
+  });
   const identityBase = buildSyntheticCanonicalExecution();
   const identitySourceChanged = buildSyntheticCanonicalExecution({
     sourceDocumentDigest: syntheticSourceDocumentDigest("changed"),
@@ -395,7 +397,11 @@ export function buildGa0A2ExecutableFixtures(): readonly Ga0A2ExecutableFixture[
     reconstruction("symbol_change_continuity_blocked", [
       execution(1, { basisContinuityState: "symbol_change_unresolved" }),
     ]),
-    classification("digest_collision_simulation", [collisionLeft, collisionRight]),
+    classification(
+      "digest_collision_simulation",
+      [collisionLeft, collisionRight],
+      collisionHash,
+    ),
     {
       expectation: expectation("database_id_identity_independence"),
       mode: "identity",

@@ -27,9 +27,9 @@ export interface CanonicalSerializationFailure {
 }
 
 export interface CanonicalSerialization {
-  value: CanonicalValue;
-  json: string;
-  utf8: Uint8Array;
+  readonly value: CanonicalValue;
+  readonly json: string;
+  readonly utf8: Uint8Array;
 }
 
 export function normalizeCanonicalString(value: string): string {
@@ -107,7 +107,7 @@ function normalizeCanonicalValue(
       }
       values.push(normalized.value);
     }
-    return { ok: true, value: values };
+    return { ok: true, value: Object.freeze(values) };
   }
   const prototype = Object.getPrototypeOf(input);
   if (prototype !== Object.prototype && prototype !== null) {
@@ -128,11 +128,16 @@ function normalizeCanonicalValue(
     }
     normalizedEntries.set(normalizedKey, normalizedValue.value);
   }
-  const result: Record<string, CanonicalValue> = {};
+  const result = Object.create(null) as Record<string, CanonicalValue>;
   for (const key of [...normalizedEntries.keys()].sort(compareUnicodeCodePoints)) {
-    result[key] = normalizedEntries.get(key) as CanonicalValue;
+    Object.defineProperty(result, key, {
+      configurable: false,
+      enumerable: true,
+      value: normalizedEntries.get(key) as CanonicalValue,
+      writable: false,
+    });
   }
-  return { ok: true, value: result };
+  return { ok: true, value: Object.freeze(result) };
 }
 
 function stringifyCanonicalValue(value: CanonicalValue): string {
@@ -161,9 +166,17 @@ export function serializeCanonicalValue(
     return normalized;
   }
   const json = stringifyCanonicalValue(normalized.value);
+  const authoritativeBytes = new TextEncoder().encode(json);
+  const serialization: CanonicalSerialization = Object.freeze({
+    value: normalized.value,
+    json,
+    get utf8(): Uint8Array {
+      return authoritativeBytes.slice();
+    },
+  });
   return {
     ok: true,
-    value: { value: normalized.value, json, utf8: new TextEncoder().encode(json) },
+    value: serialization,
   };
 }
 
@@ -281,7 +294,7 @@ class StrictJsonParser {
 
   private parseObject(path: string): ExactResult<CanonicalValue, CanonicalSerializationFailure> {
     this.index += 1;
-    const value: Record<string, CanonicalValue> = {};
+    const value = Object.create(null) as Record<string, CanonicalValue>;
     const keys = new Set<string>();
     this.skipWhitespace();
     if (this.source[this.index] === "}") {
@@ -311,7 +324,12 @@ class StrictJsonParser {
       if (!child.ok) {
         return child;
       }
-      value[normalizedKey] = child.value;
+      Object.defineProperty(value, normalizedKey, {
+        configurable: true,
+        enumerable: true,
+        value: child.value,
+        writable: true,
+      });
       this.skipWhitespace();
       const token = this.source[this.index];
       if (token === "}") {

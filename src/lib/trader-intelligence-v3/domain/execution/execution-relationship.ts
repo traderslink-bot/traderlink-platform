@@ -1,6 +1,8 @@
 import { serializeCanonicalValue } from "../canonical";
 import { canonicalBytesEqual, type CanonicalExecutionDigest } from "../identity";
-import type {
+import {
+  verifyCanonicalExecutionEnvelope,
+  type CanonicalExecutionIntegrityFailure,
   CanonicalExecutionContent,
   CanonicalExecutionEnvelope,
 } from "./canonical-execution";
@@ -61,7 +63,7 @@ function contentWithoutSourceLocation(
   >;
 }
 
-function allNonLocationContentEqual(
+function allNonLocationFactsEqual(
   left: CanonicalExecutionEnvelope,
   right: CanonicalExecutionEnvelope,
 ): boolean {
@@ -74,12 +76,38 @@ function allNonLocationContentEqual(
   return (
     leftSerialized.ok &&
     rightSerialized.ok &&
-    canonicalBytesEqual(leftSerialized.value.utf8, rightSerialized.value.utf8) &&
+    canonicalBytesEqual(leftSerialized.value.utf8, rightSerialized.value.utf8)
+  );
+}
+
+function validationEqual(
+  left: CanonicalExecutionEnvelope,
+  right: CanonicalExecutionEnvelope,
+): boolean {
+  return (
     left.validation.state === right.validation.state &&
     left.validation.reasonCodes.length === right.validation.reasonCodes.length &&
     left.validation.reasonCodes.every(
       (reason, index) => reason === right.validation.reasonCodes[index],
     )
+  );
+}
+
+function integrityResult(
+  left: CanonicalExecutionEnvelope,
+  right: CanonicalExecutionEnvelope,
+  failures: readonly CanonicalExecutionIntegrityFailure[],
+): ExecutionRelationshipClassification {
+  return result(
+    left,
+    right,
+    "manual_review_required",
+    "conflict",
+    [
+      "ti_v3_relationship_execution_envelope_integrity_invalid",
+      ...failures.map((failure) => failure.code),
+    ].sort(),
+    ["canonical_execution_envelope_integrity"],
   );
 }
 
@@ -103,11 +131,14 @@ function result(
   };
 }
 
-export function classifyExecutionRelationship(
+function classifyVerifiedExecutionRelationship(
   left: CanonicalExecutionEnvelope,
   right: CanonicalExecutionEnvelope,
+  digestEqualOverride?: boolean,
 ): ExecutionRelationshipClassification {
-  const digestEqual = left.canonicalContentDigest === right.canonicalContentDigest;
+  const digestEqual =
+    digestEqualOverride ??
+    left.canonicalContentDigest === right.canonicalContentDigest;
   const bytesEqual = canonicalBytesEqual(left.canonicalBytes, right.canonicalBytes);
   if (digestEqual && !bytesEqual) {
     return result(
@@ -122,12 +153,13 @@ export function classifyExecutionRelationship(
 
   const sameSourceLocation =
     left.content.sourceIdentity === right.content.sourceIdentity &&
+    left.content.sourceDocumentDigest !== null &&
     left.content.sourceDocumentDigest === right.content.sourceDocumentDigest &&
     left.content.originalSourceRowLocator.kind ===
       right.content.originalSourceRowLocator.kind &&
     left.content.originalSourceRowLocator.value ===
       right.content.originalSourceRowLocator.value;
-  if (digestEqual && bytesEqual && sameSourceLocation) {
+  if (digestEqual && bytesEqual && sameSourceLocation && validationEqual(left, right)) {
     return result(
       left,
       right,
@@ -136,6 +168,34 @@ export function classifyExecutionRelationship(
       ["ti_v3_relationship_digest_bytes_and_source_location_equal"],
       ["canonical_digest", "canonical_bytes", "source_identity", "source_row_locator"],
       true,
+    );
+  }
+
+  if (digestEqual && bytesEqual && !validationEqual(left, right)) {
+    return result(
+      left,
+      right,
+      "manual_review_required",
+      "conflict",
+      ["ti_v3_relationship_equal_facts_validation_disagreement"],
+      ["canonical_digest", "canonical_bytes", "validation_state"],
+    );
+  }
+
+  if (
+    digestEqual &&
+    bytesEqual &&
+    left.content.sourceIdentity === right.content.sourceIdentity &&
+    left.content.sourceDocumentDigest === null &&
+    right.content.sourceDocumentDigest === null
+  ) {
+    return result(
+      left,
+      right,
+      "possible_duplicate_ambiguous",
+      "ambiguous",
+      ["ti_v3_relationship_same_source_document_identity_unproven"],
+      ["canonical_digest", "canonical_bytes", "source_document_digest_missing"],
     );
   }
 
@@ -156,8 +216,22 @@ export function classifyExecutionRelationship(
   }
 
   if (stableExecutionScopeEqual(left, right)) {
-    if (allNonLocationContentEqual(left, right)) {
-      if (left.content.sourceDocumentDigest !== right.content.sourceDocumentDigest) {
+    if (allNonLocationFactsEqual(left, right)) {
+      if (!validationEqual(left, right)) {
+        return result(
+          left,
+          right,
+          "manual_review_required",
+          "conflict",
+          ["ti_v3_relationship_stable_execution_validation_disagreement"],
+          ["execution_id", "validation_state"],
+        );
+      }
+      if (
+        left.content.sourceDocumentDigest !== null &&
+        right.content.sourceDocumentDigest !== null &&
+        left.content.sourceDocumentDigest !== right.content.sourceDocumentDigest
+      ) {
         return result(
           left,
           right,
@@ -179,8 +253,8 @@ export function classifyExecutionRelationship(
         right,
         "manual_review_required",
         "ambiguous",
-        ["ti_v3_relationship_stable_execution_id_equal_content_location_changed"],
-        ["execution_id", "source_row_locator"],
+        ["ti_v3_relationship_stable_execution_id_equal_content_document_unproven_or_location_changed"],
+        ["execution_id", "source_document_digest", "source_row_locator"],
       );
     }
     return result(
@@ -211,6 +285,7 @@ export function classifyExecutionRelationship(
     left.content.brokerExecutionIndex !== null &&
     right.content.brokerExecutionIndex !== null &&
     left.content.brokerExecutionIndex !== right.content.brokerExecutionIndex &&
+    left.content.sourceDocumentDigest !== null &&
     left.content.sourceDocumentDigest === right.content.sourceDocumentDigest
   ) {
     return result(
@@ -222,7 +297,7 @@ export function classifyExecutionRelationship(
       ["source_document_digest", "broker_execution_index"],
     );
   }
-  if (allNonLocationContentEqual(left, right)) {
+  if (allNonLocationFactsEqual(left, right) && validationEqual(left, right)) {
     return result(
       left,
       right,
@@ -257,5 +332,61 @@ export function classifyExecutionRelationship(
     "strong",
     ["ti_v3_relationship_distinct_content_no_duplicate_evidence"],
     ["canonical_bytes"],
+  );
+}
+
+
+export function classifyExecutionRelationship(
+  left: CanonicalExecutionEnvelope,
+  right: CanonicalExecutionEnvelope,
+): ExecutionRelationshipClassification {
+  const verifiedLeft = verifyCanonicalExecutionEnvelope(left);
+  const verifiedRight = verifyCanonicalExecutionEnvelope(right);
+  if (!verifiedLeft.ok || !verifiedRight.ok) {
+    return integrityResult(
+      left,
+      right,
+      [
+        ...(verifiedLeft.ok ? [] : [verifiedLeft.error]),
+        ...(verifiedRight.ok ? [] : [verifiedRight.error]),
+      ],
+    );
+  }
+  return classifyVerifiedExecutionRelationship(verifiedLeft.value, verifiedRight.value);
+}
+
+export function classifyExecutionRelationshipWithTestHash(
+  left: CanonicalExecutionEnvelope,
+  right: CanonicalExecutionEnvelope,
+  hashFunction: (bytes: Uint8Array) => string,
+): ExecutionRelationshipClassification {
+  const verifiedLeft = verifyCanonicalExecutionEnvelope(left);
+  const verifiedRight = verifyCanonicalExecutionEnvelope(right);
+  if (!verifiedLeft.ok || !verifiedRight.ok) {
+    return integrityResult(
+      left,
+      right,
+      [
+        ...(verifiedLeft.ok ? [] : [verifiedLeft.error]),
+        ...(verifiedRight.ok ? [] : [verifiedRight.error]),
+      ],
+    );
+  }
+  const leftHash = hashFunction(verifiedLeft.value.canonicalBytes);
+  const rightHash = hashFunction(verifiedRight.value.canonicalBytes);
+  if (!/^[0-9a-f]{64}$/.test(leftHash) || !/^[0-9a-f]{64}$/.test(rightHash)) {
+    return result(
+      verifiedLeft.value,
+      verifiedRight.value,
+      "manual_review_required",
+      "conflict",
+      ["ti_v3_relationship_test_hash_invalid"],
+      ["injected_collision_test_hash"],
+    );
+  }
+  return classifyVerifiedExecutionRelationship(
+    verifiedLeft.value,
+    verifiedRight.value,
+    leftHash === rightHash,
   );
 }

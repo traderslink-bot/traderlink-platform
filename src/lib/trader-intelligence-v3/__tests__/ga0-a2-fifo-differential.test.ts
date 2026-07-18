@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildStartingInventoryContract,
   orderCanonicalExecutions,
   runFifoPositionLedger,
   type CanonicalExecutionDraft,
 } from "../domain";
 import {
   buildSyntheticCanonicalExecution,
+  buildSyntheticFifoLedgerInput,
   runReferenceFifoLedger,
 } from "../testing";
 
@@ -80,8 +82,9 @@ describe("Trader Intelligence v3 production/reference FIFO differential", () => 
     },
   ])("matches independent reference for $name", ({ executions }) => {
     const ordering = orderCanonicalExecutions(executions);
-    const production = runFifoPositionLedger({ ordering });
-    const reference = runReferenceFifoLedger(ordering);
+    const input = buildSyntheticFifoLedgerInput(executions);
+    const production = runFifoPositionLedger(input);
+    const reference = runReferenceFifoLedger(ordering, input.startingInventory);
     expect(production.status).toBe("completed");
     expect(reference.status).toBe("completed");
     const ledger = production.ledgers[0];
@@ -138,16 +141,6 @@ describe("Trader Intelligence v3 production/reference FIFO differential", () => 
       code: "ti_v3_reconstruction_prior_inventory_required",
     },
     {
-      name: "unresolved instrument",
-      executions: [
-        build(0, {
-          instrumentResolutionState: "unresolved",
-          stableInstrumentKey: null,
-        }),
-      ],
-      code: "ti_v3_reconstruction_instrument_unresolved",
-    },
-    {
       name: "unsupported security",
       executions: [build(0, { securityType: "preferred_stock" })],
       code: "ti_v3_reconstruction_security_type_unsupported",
@@ -176,12 +169,79 @@ describe("Trader Intelligence v3 production/reference FIFO differential", () => 
     },
   ])("matches independent blocked-state reference for $name", ({ executions, code }) => {
     const ordering = orderCanonicalExecutions(executions);
-    const production = runFifoPositionLedger({ ordering });
-    const reference = runReferenceFifoLedger(ordering);
+    const input = buildSyntheticFifoLedgerInput(executions);
+    const production = runFifoPositionLedger(input);
+    const reference = runReferenceFifoLedger(ordering, input.startingInventory);
     expect(production).toMatchObject({
       status: "blocked",
       blockedStates: [{ code }],
     });
     expect(reference).toMatchObject({ status: "blocked", blockedCode: code });
   });
+
+  it.each([
+    ["long", "sell", "1.25", "2", "3.75"],
+    ["short", "buy", "2", "1.25", "3.75"],
+  ] as const)(
+    "matches independent reference for accepted prior %s inventory",
+    (direction, side, priorPrice, executionPrice, expectedGross) => {
+      const execution = build(1, {
+        side,
+        quantity: "5",
+        price: executionPrice,
+        brokerPositionEffectEvidence: "close",
+      });
+      const provenance = build(0, {
+        side: direction === "long" ? "buy" : "sell",
+        quantity: "5",
+        price: priorPrice,
+      });
+      const startingInventory = buildStartingInventoryContract({
+        state: "accepted_prior_lots",
+        ledgerIdentity: {
+          canonicalOwnerKey: execution.content.canonicalOwnerKey,
+          canonicalAccountKey: execution.content.canonicalAccountKey,
+          stableInstrumentKey: execution.content.stableInstrumentKey,
+          currency: execution.content.currency,
+        },
+        priorLots: [
+          {
+            lotId: `prior_lot_differential_${direction}`,
+            direction,
+            remainingQuantity: "5",
+            price: priorPrice,
+            canonicalOwnerKey: execution.content.canonicalOwnerKey,
+            canonicalAccountKey: execution.content.canonicalAccountKey,
+            stableInstrumentKey: execution.content.stableInstrumentKey,
+            currency: execution.content.currency,
+            sourceIdentity: provenance.content.sourceIdentity,
+            sourceDocumentDigest: provenance.content.sourceDocumentDigest,
+            originalSourceRowLocator: provenance.content.originalSourceRowLocator,
+            sourceExecutionDigest: provenance.canonicalContentDigest,
+          },
+        ],
+      });
+      expect(startingInventory.ok).toBe(true);
+      if (!startingInventory.ok) return;
+      const ordering = orderCanonicalExecutions([execution]);
+      const input = buildSyntheticFifoLedgerInput(
+        [execution],
+        startingInventory.value,
+      );
+      const production = runFifoPositionLedger(input);
+      const reference = runReferenceFifoLedger(
+        ordering,
+        startingInventory.value,
+      );
+      expect(production).toMatchObject({
+        status: "completed",
+        ledgers: [{ endingQuantity: "0", grossRealizedPnl: expectedGross }],
+      });
+      expect(reference).toMatchObject({
+        status: "completed",
+        endingQuantity: "0",
+        grossRealizedPnl: expectedGross,
+      });
+    },
+  );
 });

@@ -8,3 +8,4 @@ export * from "./route-containment-ast";
 export * from "./typescript-source-analysis";
 export * from "./synthetic-fixture-manifest";
 export * from "./synthetic-execution-builder";
+export * from "./synthetic-accounting-input";

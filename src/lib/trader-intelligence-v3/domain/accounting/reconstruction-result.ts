@@ -7,7 +7,10 @@ import type {
   ExactSignedQuantity,
 } from "../exact";
 import type { CanonicalExecutionDigest } from "../identity";
+import type { CanonicalSourceDocumentDigest } from "../identity";
 import type { ExecutionRelationshipResolutionBlockCode } from "../execution/execution-relationship-resolution";
+import type { CanonicalSourceRowLocator } from "../execution";
+import type { StartingInventoryState } from "./starting-inventory";
 
 export const FIFO_ANALYTICAL_PNL_POLICY_VERSION =
   "ti_v3_fifo_analytical_pnl_v1" as const;
@@ -42,6 +45,12 @@ export interface FifoOpenLot {
   remainingQuantity: ExactQuantity;
   price: ExactPrice;
   sourceExecutionDigest: CanonicalExecutionDigest;
+  sourceProvenance: {
+    readonly kind: "canonical_execution" | "accepted_prior_lot";
+    readonly sourceIdentity: string;
+    readonly sourceDocumentDigest: CanonicalSourceDocumentDigest | null;
+    readonly originalSourceRowLocator: CanonicalSourceRowLocator;
+  };
 }
 
 export interface ReversalEffect {
@@ -77,6 +86,8 @@ export interface AnalyticalLedgerResult {
   canonicalAccountKey: string;
   stableInstrumentKey: string;
   currency: CurrencyCode;
+  startingInventoryState: StartingInventoryState;
+  inputStartingLotIds: readonly string[];
   endingQuantity: ExactSignedQuantity;
   openLots: readonly FifoOpenLot[];
   grossRealizedPnl: ExactMoneyAmount;

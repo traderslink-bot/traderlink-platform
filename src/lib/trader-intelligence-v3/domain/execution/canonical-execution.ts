@@ -80,72 +80,89 @@ export type ExecutionOrderingScope =
   | "source_identity_global";
 
 export interface CanonicalSourceRowLocator {
-  kind: "row_number" | "record_key";
-  value: string;
-  rowOrderPreserved: boolean;
+  readonly kind: "row_number" | "record_key";
+  readonly value: string;
+  readonly rowOrderPreserved: boolean;
 }
 
 export interface CanonicalExecutionCharge {
-  kind: string;
-  amount: ExactCharge;
-  currency: CurrencyCode;
+  readonly kind: string;
+  readonly amount: ExactCharge;
+  readonly currency: CurrencyCode;
 }
 
 export interface CanonicalExecutionContent {
-  schemaVersion: typeof CANONICAL_EXECUTION_SCHEMA_VERSION;
-  canonicalOwnerKey: string;
-  canonicalAccountKey: string;
-  sourceIdentity: string;
-  sourceKind: ExecutionSourceKind;
-  evidenceClass: ExecutionEvidenceClass;
-  sourceSystem: string;
-  brokerCode: string;
-  sourceDocumentDigest: CanonicalSourceDocumentDigest | null;
-  originalSourceRowLocator: CanonicalSourceRowLocator;
-  sourceAggregationState: SourceAggregationState;
-  instrumentResolutionState: InstrumentResolutionState;
-  rawBrokerSymbol: string;
-  stableInstrumentKey: string | null;
-  securityType: string;
-  basisContinuityState: BasisContinuityState;
-  executedAt: CanonicalUtcTimestamp;
-  sourceTimezoneEvidence: string | null;
-  timestampPrecision: TimestampSourcePrecision;
-  side: ExecutionSide;
-  brokerPositionEffectEvidence: BrokerPositionEffectEvidence;
-  shortSaleIndicator: ShortSaleIndicator;
-  quantity: ExactQuantity;
-  price: ExactPrice;
-  currency: CurrencyCode;
-  charges: readonly CanonicalExecutionCharge[];
-  brokerReportedNetCashAmount: ExactMoneyAmount | null;
-  orderId: string | null;
-  executionId: string | null;
-  brokerExecutionIndex: string | null;
-  brokerExecutionIndexOrderingScope: ExecutionOrderingScope;
-  brokerFillSequence: string | null;
-  executionIdOrderingSemantics: "declared" | "not_declared";
-  executionIdOrderingNamespace: string | null;
-  executionIdOrderingScope: ExecutionOrderingScope;
-  correctionState: ExecutionCorrectionState;
-  correctionReference: string | null;
+  readonly schemaVersion: typeof CANONICAL_EXECUTION_SCHEMA_VERSION;
+  readonly canonicalOwnerKey: string;
+  readonly canonicalAccountKey: string;
+  readonly sourceIdentity: string;
+  readonly sourceKind: ExecutionSourceKind;
+  readonly evidenceClass: ExecutionEvidenceClass;
+  readonly sourceSystem: string;
+  readonly brokerCode: string;
+  readonly sourceDocumentDigest: CanonicalSourceDocumentDigest | null;
+  readonly originalSourceRowLocator: CanonicalSourceRowLocator;
+  readonly sourceAggregationState: SourceAggregationState;
+  readonly instrumentResolutionState: InstrumentResolutionState;
+  readonly rawBrokerSymbol: string;
+  readonly stableInstrumentKey: string | null;
+  readonly securityType: string;
+  readonly basisContinuityState: BasisContinuityState;
+  readonly executedAt: CanonicalUtcTimestamp;
+  readonly sourceTimezoneEvidence: string | null;
+  readonly timestampPrecision: TimestampSourcePrecision;
+  readonly side: ExecutionSide;
+  readonly brokerPositionEffectEvidence: BrokerPositionEffectEvidence;
+  readonly shortSaleIndicator: ShortSaleIndicator;
+  readonly quantity: ExactQuantity;
+  readonly price: ExactPrice;
+  readonly currency: CurrencyCode;
+  readonly charges: readonly CanonicalExecutionCharge[];
+  readonly brokerReportedNetCashAmount: ExactMoneyAmount | null;
+  readonly orderId: string | null;
+  readonly executionId: string | null;
+  readonly brokerExecutionIndex: string | null;
+  readonly brokerExecutionIndexOrderingScope: ExecutionOrderingScope;
+  readonly brokerFillSequence: string | null;
+  readonly executionIdOrderingSemantics: "declared" | "not_declared";
+  readonly executionIdOrderingNamespace: string | null;
+  readonly executionIdOrderingScope: ExecutionOrderingScope;
+  readonly correctionState: ExecutionCorrectionState;
+  readonly correctionReference: string | null;
 }
 
 export interface CanonicalExecutionValidation {
-  state: ExecutionValidationState;
-  reasonCodes: readonly string[];
+  readonly state: ExecutionValidationState;
+  readonly reasonCodes: readonly string[];
 }
 
 export interface CanonicalExecutionEnvelope {
-  content: CanonicalExecutionContent;
-  validation: CanonicalExecutionValidation;
-  canonicalBytes: Uint8Array;
-  canonicalContentDigest: CanonicalExecutionDigest;
+  readonly content: CanonicalExecutionContent;
+  readonly validation: CanonicalExecutionValidation;
+  readonly canonicalBytes: Uint8Array;
+  readonly canonicalContentDigest: CanonicalExecutionDigest;
 }
+
+export type CanonicalExecutionIntegrityFailureCode =
+  | "ti_v3_execution_envelope_integrity_input_invalid"
+  | "ti_v3_execution_envelope_integrity_content_invalid"
+  | "ti_v3_execution_envelope_integrity_bytes_mismatch"
+  | "ti_v3_execution_envelope_integrity_digest_mismatch";
+
+export interface CanonicalExecutionIntegrityFailure {
+  readonly code: CanonicalExecutionIntegrityFailureCode;
+  readonly reasonCodes: readonly string[];
+}
+
+const protectedCanonicalExecutionEnvelopes = new WeakSet<CanonicalExecutionEnvelope>();
+
+type MutableCanonicalExecutionContent = {
+  -readonly [Key in keyof CanonicalExecutionContent]: CanonicalExecutionContent[Key];
+};
 
 export interface CanonicalExecutionDraft
   extends Omit<
-    CanonicalExecutionContent,
+    MutableCanonicalExecutionContent,
     | "schemaVersion"
     | "executedAt"
     | "quantity"
@@ -272,6 +289,10 @@ function validSequence(value: unknown): value is string | null {
   return value === null || (typeof value === "string" && /^(?:0|[1-9][0-9]{0,37})$/.test(value));
 }
 
+function validRowNumber(value: unknown): value is string {
+  return typeof value === "string" && /^(?:0|[1-9][0-9]{0,37})$/.test(value);
+}
+
 function compatibleEvidence(source: ExecutionSourceKind, evidence: ExecutionEvidenceClass): boolean {
   if (evidence === "broker_confirmed") {
     return source === "broker_csv" || source === "broker_api";
@@ -305,6 +326,35 @@ function buildFailure(
       code: "ti_v3_canonical_execution_invalid",
       reasonCodes: uniqueSorted(reasonCodes),
     },
+  };
+}
+
+function protectCanonicalExecutionEnvelope(
+  content: CanonicalExecutionContent,
+  validation: CanonicalExecutionValidation,
+  canonicalBytes: Uint8Array,
+  canonicalContentDigest: CanonicalExecutionDigest,
+): CanonicalExecutionEnvelope {
+  const authoritativeBytes = canonicalBytes.slice();
+  const envelope: CanonicalExecutionEnvelope = Object.freeze({
+    content,
+    validation,
+    get canonicalBytes(): Uint8Array {
+      return authoritativeBytes.slice();
+    },
+    canonicalContentDigest,
+  });
+  protectedCanonicalExecutionEnvelopes.add(envelope);
+  return envelope;
+}
+
+function integrityFailure(
+  code: CanonicalExecutionIntegrityFailureCode,
+  reasonCodes: readonly string[] = [],
+): ExactResult<never, CanonicalExecutionIntegrityFailure> {
+  return {
+    ok: false,
+    error: { code, reasonCodes: uniqueSorted(reasonCodes) },
   };
 }
 
@@ -429,13 +479,16 @@ export function buildCanonicalExecution(
   const locator = isRecord(draft.originalSourceRowLocator)
     ? draft.originalSourceRowLocator
     : null;
+  const locatorKind = locator?.kind;
+  const locatorValueIsValid =
+    locatorKind === "row_number"
+      ? validRowNumber(locator?.value)
+      : locatorKind === "record_key"
+        ? validIdentifier(locator?.value) && locator?.value !== null
+        : false;
   if (
     locator === null ||
-    !["row_number", "record_key"].includes(
-      typeof locator.kind === "string" ? locator.kind : "",
-    ) ||
-    !validIdentifier(locator.value) ||
-    locator.value === null ||
+    !locatorValueIsValid ||
     typeof locator.rowOrderPreserved !== "boolean"
   ) {
     reasons.push("ti_v3_execution_row_locator_invalid");
@@ -651,17 +704,59 @@ export function buildCanonicalExecution(
   if (!identity.ok) {
     return buildFailure(["ti_v3_execution_digest_failed"]);
   }
+  const canonicalValidation: CanonicalExecutionValidation = Object.freeze({
+    state: validationState as ExecutionValidationState,
+    reasonCodes: Object.freeze(uniqueSorted(validationReasons as string[])),
+  });
   return {
     ok: true,
-    value: {
-      content: identity.value.canonicalValue as unknown as CanonicalExecutionContent,
-      validation: {
-        state: validationState as ExecutionValidationState,
-        reasonCodes: uniqueSorted(validationReasons as string[]),
-      },
-      canonicalBytes: identity.value.canonicalBytes,
-      canonicalContentDigest:
-        identity.value.identifier as CanonicalExecutionDigest,
-    },
+    value: protectCanonicalExecutionEnvelope(
+      identity.value.canonicalValue as unknown as CanonicalExecutionContent,
+      canonicalValidation,
+      identity.value.canonicalBytes,
+      identity.value.identifier as CanonicalExecutionDigest,
+    ),
   };
+}
+
+export function verifyCanonicalExecutionEnvelope(
+  input: unknown,
+): ExactResult<CanonicalExecutionEnvelope, CanonicalExecutionIntegrityFailure> {
+  if (!isRecord(input)) {
+    return integrityFailure("ti_v3_execution_envelope_integrity_input_invalid");
+  }
+  const candidate = input as Partial<CanonicalExecutionEnvelope>;
+  if (protectedCanonicalExecutionEnvelopes.has(candidate as CanonicalExecutionEnvelope)) {
+    return { ok: true, value: candidate as CanonicalExecutionEnvelope };
+  }
+  if (
+    !isRecord(candidate.content) ||
+    !isRecord(candidate.validation) ||
+    !(candidate.canonicalBytes instanceof Uint8Array) ||
+    typeof candidate.canonicalContentDigest !== "string"
+  ) {
+    return integrityFailure("ti_v3_execution_envelope_integrity_input_invalid");
+  }
+  const rebuilt = buildCanonicalExecution({
+    ...candidate.content,
+    validation: candidate.validation,
+  });
+  if (!rebuilt.ok) {
+    return integrityFailure(
+      "ti_v3_execution_envelope_integrity_content_invalid",
+      rebuilt.error.reasonCodes,
+    );
+  }
+  if (rebuilt.value.canonicalContentDigest !== candidate.canonicalContentDigest) {
+    return integrityFailure("ti_v3_execution_envelope_integrity_digest_mismatch");
+  }
+  const rebuiltBytes = rebuilt.value.canonicalBytes;
+  const candidateBytes = candidate.canonicalBytes;
+  if (
+    rebuiltBytes.length !== candidateBytes.length ||
+    rebuiltBytes.some((byte, index) => byte !== candidateBytes[index])
+  ) {
+    return integrityFailure("ti_v3_execution_envelope_integrity_bytes_mismatch");
+  }
+  return rebuilt;
 }

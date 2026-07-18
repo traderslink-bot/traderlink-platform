@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { classifyExecutionRelationship } from "../domain";
 import {
-  applyCollisionTestHash,
+  classifyExecutionRelationship,
+} from "../domain";
+import {
   buildSyntheticCanonicalExecution,
+  classifyCollisionWithTestHash,
   syntheticSourceDocumentDigest,
 } from "../testing";
 
@@ -14,6 +16,45 @@ describe("Trader Intelligence v3 execution relationship classification", () => {
       state: "exact_duplicate_same_source",
       confidence: "proven",
       suppressionEligible: true,
+    });
+  });
+
+  it("does not suppress equal facts when validation states disagree", () => {
+    const accepted = buildSyntheticCanonicalExecution();
+    const quarantined = buildSyntheticCanonicalExecution({
+      validation: {
+        state: "quarantined",
+        reasonCodes: ["ti_v3_synthetic_quarantine"],
+      },
+    });
+    const forward = classifyExecutionRelationship(accepted, quarantined);
+    const reverse = classifyExecutionRelationship(quarantined, accepted);
+    expect(forward).toMatchObject({
+      state: "manual_review_required",
+      confidence: "conflict",
+      suppressionEligible: false,
+      reasonCodes: ["ti_v3_relationship_equal_facts_validation_disagreement"],
+    });
+    expect(reverse.state).toBe(forward.state);
+    expect(reverse.suppressionEligible).toBe(false);
+  });
+
+  it("does not treat two missing source-document digests as same-source proof", () => {
+    const first = buildSyntheticCanonicalExecution({
+      sourceDocumentDigest: null,
+      brokerExecutionIndexOrderingScope: "source_identity_global",
+    });
+    const second = buildSyntheticCanonicalExecution({
+      sourceDocumentDigest: null,
+      brokerExecutionIndexOrderingScope: "source_identity_global",
+    });
+    expect(classifyExecutionRelationship(first, second)).toMatchObject({
+      state: "possible_duplicate_ambiguous",
+      confidence: "ambiguous",
+      suppressionEligible: false,
+      reasonCodes: [
+        "ti_v3_relationship_same_source_document_identity_unproven",
+      ],
     });
   });
 
@@ -68,15 +109,6 @@ describe("Trader Intelligence v3 execution relationship classification", () => {
       },
     ],
     ["source timezone evidence", { sourceTimezoneEvidence: "UTC" }],
-    [
-      "validation",
-      {
-        validation: {
-          state: "quarantined",
-          reasonCodes: ["ti_v3_synthetic_quarantine"],
-        },
-      },
-    ],
   ] as const)("does not call a re-export equal when %s changes", (_label, overrides) => {
     const original = buildSyntheticCanonicalExecution();
     const changed = buildSyntheticCanonicalExecution({
@@ -150,15 +182,14 @@ describe("Trader Intelligence v3 execution relationship classification", () => {
 
   it("fails closed for an injected digest collision", () => {
     const hash = () => "0".repeat(64);
-    const first = applyCollisionTestHash(
-      buildSyntheticCanonicalExecution({ executionId: "SYNTH-COLLISION-A" }),
-      hash,
-    );
-    const second = applyCollisionTestHash(
-      buildSyntheticCanonicalExecution({ executionId: "SYNTH-COLLISION-B", price: "1.26" }),
-      hash,
-    );
-    expect(classifyExecutionRelationship(first, second)).toMatchObject({
+    const first = buildSyntheticCanonicalExecution({
+      executionId: "SYNTH-COLLISION-A",
+    });
+    const second = buildSyntheticCanonicalExecution({
+      executionId: "SYNTH-COLLISION-B",
+      price: "1.26",
+    });
+    expect(classifyCollisionWithTestHash(first, second, hash)).toMatchObject({
       state: "digest_collision_detected",
       confidence: "conflict",
       suppressionEligible: false,

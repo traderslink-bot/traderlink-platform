@@ -18,6 +18,11 @@ import type {
   CanonicalExecutionEnvelope,
   CanonicalExecutionOrderingResult,
 } from "../execution";
+import {
+  executionLedgerGroupKey,
+  isCompleteExecutionRelationshipResolution,
+  type CompleteExecutionRelationshipResolution,
+} from "../execution";
 import type { CanonicalExecutionDigest } from "../identity";
 import {
   FIFO_ANALYTICAL_PNL_POLICY_VERSION,
@@ -30,6 +35,11 @@ import {
   type ReconstructionBlockedCode,
   type ReversalEffect,
 } from "./reconstruction-result";
+import {
+  isVerifiedStartingInventoryContract,
+  startingInventoryLedgerGroupKey,
+  type StartingInventoryContract,
+} from "./starting-inventory";
 
 const MONEY_BOUNDS = Object.freeze({
   maximumSignificantDigits: 48,
@@ -192,14 +202,54 @@ function finalizeRoundTrip(accumulator: RoundTripAccumulator): FlatToFlatRoundTr
 }
 
 export interface FifoLedgerInput {
-  ordering: CanonicalExecutionOrderingResult;
+  readonly relationshipResolution: CompleteExecutionRelationshipResolution;
+  readonly ledgerGroupKey: string;
+  readonly ordering: CanonicalExecutionOrderingResult;
+  readonly startingInventory: StartingInventoryContract;
 }
 
 export function runFifoPositionLedger(
   input: FifoLedgerInput,
 ): AnalyticalPnlReconstructionResult {
+  if (!isCompleteExecutionRelationshipResolution(input.relationshipResolution)) {
+    return blocked("ti_v3_reconstruction_relationship_coverage_incomplete", null, []);
+  }
+  if (
+    !isVerifiedStartingInventoryContract(input.startingInventory) ||
+    startingInventoryLedgerGroupKey(input.startingInventory.ledgerIdentity) !==
+      input.ledgerGroupKey ||
+    input.startingInventory.state === "unknown"
+  ) {
+    return blocked("ti_v3_reconstruction_prior_inventory_required", null, []);
+  }
+  const relationshipBlock = input.relationshipResolution.groupBlocks.find(
+    (block) => block.groupKey === input.ledgerGroupKey,
+  );
+  if (relationshipBlock !== undefined) {
+    return blocked(
+      relationshipBlock.code,
+      relationshipBlock.executionDigests[0] ?? null,
+      relationshipBlock.executionDigests,
+    );
+  }
+  const resolvedGroupExecutions = input.relationshipResolution.retainedExecutions.filter(
+    (execution) => executionLedgerGroupKey(execution) === input.ledgerGroupKey,
+  );
   const allExecutions = input.ordering.storageOrderedExecutions;
   const allDigests = allExecutions.map((execution) => execution.canonicalContentDigest);
+  const resolvedDigests = resolvedGroupExecutions
+    .map((execution) => execution.canonicalContentDigest)
+    .sort();
+  if (
+    allDigests.length !== resolvedDigests.length ||
+    [...allDigests].sort().some((digest, index) => digest !== resolvedDigests[index])
+  ) {
+    return blocked(
+      "ti_v3_reconstruction_relationship_coverage_incomplete",
+      null,
+      allDigests,
+    );
+  }
   if (input.ordering.state === "ambiguous_meaningful_order") {
     return blocked("ti_v3_reconstruction_order_ambiguous", null, allDigests);
   }
@@ -227,7 +277,19 @@ export function runFifoPositionLedger(
   }
 
   try {
-    const lots: FifoOpenLot[] = [];
+    const lots: FifoOpenLot[] = input.startingInventory.priorLots.map((lot) => ({
+      lotId: lot.lotId,
+      direction: lot.direction,
+      remainingQuantity: lot.remainingQuantity,
+      price: lot.price,
+      sourceExecutionDigest: lot.sourceExecutionDigest,
+      sourceProvenance: {
+        kind: "accepted_prior_lot",
+        sourceIdentity: lot.sourceIdentity,
+        sourceDocumentDigest: lot.sourceDocumentDigest,
+        originalSourceRowLocator: lot.originalSourceRowLocator,
+      },
+    }));
     const roundTrips: FlatToFlatRoundTrip[] = [];
     const reversalEffects: ReversalEffect[] = [];
     const matchedQuantities: ExecutionMatchedQuantity[] = [];
@@ -239,11 +301,11 @@ export function runFifoPositionLedger(
 
     const newRoundTrip = (
       direction: InventoryDirection,
-      execution: CanonicalExecutionEnvelope,
+      sourceExecutionDigest: CanonicalExecutionDigest,
     ): RoundTripAccumulator => {
       roundTripSequence += 1;
       return {
-        id: `ti_v3_round_trip:${execution.canonicalContentDigest}:${roundTripSequence}`,
+        id: `ti_v3_round_trip:${sourceExecutionDigest}:${roundTripSequence}`,
         direction,
         entryQuantity: exactQuantity("0"),
         exitQuantity: exactQuantity("0"),
@@ -255,6 +317,37 @@ export function runFifoPositionLedger(
         executionDigests: new Set(),
       };
     };
+
+    if (input.startingInventory.state === "accepted_prior_lots") {
+      const firstPriorLot = input.startingInventory.priorLots[0];
+      currentRoundTrip = newRoundTrip(
+        firstPriorLot.direction,
+        firstPriorLot.sourceExecutionDigest,
+      );
+      for (const priorLot of input.startingInventory.priorLots) {
+        const priorNotional = multiplyMoney(
+          priorLot.price,
+          priorLot.remainingQuantity,
+        );
+        currentRoundTrip.entryQuantity = addQuantity(
+          currentRoundTrip.entryQuantity,
+          priorLot.remainingQuantity,
+        );
+        currentRoundTrip.entryNotional = addMoney(
+          currentRoundTrip.entryNotional,
+          priorNotional,
+        );
+        currentRoundTrip.cashFlow =
+          priorLot.direction === "short"
+            ? addMoney(currentRoundTrip.cashFlow, priorNotional)
+            : subtractMoney(currentRoundTrip.cashFlow, priorNotional);
+        currentRoundTrip.executionDigests.add(priorLot.sourceExecutionDigest);
+        cashFlow =
+          priorLot.direction === "short"
+            ? addMoney(cashFlow, priorNotional)
+            : subtractMoney(cashFlow, priorNotional);
+      }
+    }
 
     for (const execution of executions) {
       if (execution.validation.state !== "accepted") {
@@ -421,7 +514,10 @@ export function runFifoPositionLedger(
         const openedDirection: InventoryDirection =
           execution.content.side === "buy" ? "long" : "short";
         if (currentRoundTrip === null) {
-          currentRoundTrip = newRoundTrip(openedDirection, execution);
+          currentRoundTrip = newRoundTrip(
+            openedDirection,
+            execution.canonicalContentDigest,
+          );
         }
         if (!chargeAssigned) {
           currentRoundTrip.charges = addMoney(currentRoundTrip.charges, executionCharges);
@@ -455,6 +551,12 @@ export function runFifoPositionLedger(
           remainingQuantity: remaining,
           price: execution.content.price,
           sourceExecutionDigest: execution.canonicalContentDigest,
+          sourceProvenance: {
+            kind: "canonical_execution",
+            sourceIdentity: execution.content.sourceIdentity,
+            sourceDocumentDigest: execution.content.sourceDocumentDigest,
+            originalSourceRowLocator: execution.content.originalSourceRowLocator,
+          },
         });
         if (closedQuantity !== "0" && closedDirection !== null) {
           reversalEffects.push({
@@ -480,6 +582,8 @@ export function runFifoPositionLedger(
       canonicalAccountKey: first.content.canonicalAccountKey,
       stableInstrumentKey: first.content.stableInstrumentKey,
       currency: first.content.currency,
+      startingInventoryState: input.startingInventory.state,
+      inputStartingLotIds: input.startingInventory.priorLots.map((lot) => lot.lotId),
       endingQuantity,
       openLots: lots,
       grossRealizedPnl: gross,

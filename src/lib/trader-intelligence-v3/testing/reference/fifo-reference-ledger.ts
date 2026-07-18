@@ -1,4 +1,5 @@
 import type { CanonicalExecutionOrderingResult } from "../../domain/execution";
+import type { StartingInventoryContract } from "../../domain/accounting/starting-inventory";
 import {
   addReferenceDecimals,
   compareReferenceDecimals,
@@ -141,7 +142,11 @@ function finalizeRoundTrip(
 
 export function runReferenceFifoLedger(
   ordering: CanonicalExecutionOrderingResult,
+  startingInventory: StartingInventoryContract,
 ): ReferenceFifoLedgerResult {
+  if (startingInventory.state === "unknown") {
+    return blocked("ti_v3_reconstruction_prior_inventory_required");
+  }
   if (ordering.state === "ambiguous_meaningful_order") {
     return blocked("ti_v3_reconstruction_order_ambiguous");
   }
@@ -166,7 +171,12 @@ export function runReferenceFifoLedger(
   }
 
   const first = executions[0];
-  const lots: ReferenceLot[] = [];
+  const lots: ReferenceLot[] = startingInventory.priorLots.map((lot) => ({
+    direction: lot.direction,
+    quantity: parseReferenceDecimal(lot.remainingQuantity),
+    price: parseReferenceDecimal(lot.price),
+    sourceExecutionDigest: lot.sourceExecutionDigest,
+  }));
   const matchedQuantityByExecution: {
     executionDigest: string;
     matchedQuantity: string;
@@ -177,6 +187,32 @@ export function runReferenceFifoLedger(
   let gross = zero();
   let charges = zero();
   let cashFlow = zero();
+
+  if (startingInventory.state === "accepted_prior_lots") {
+    currentRoundTrip = newRoundTrip(startingInventory.priorLots[0].direction);
+    for (const priorLot of startingInventory.priorLots) {
+      const quantity = parseReferenceDecimal(priorLot.remainingQuantity);
+      const price = parseReferenceDecimal(priorLot.price);
+      const notional = multiplyReferenceDecimals(price, quantity);
+      currentRoundTrip.entryQuantity = addReferenceDecimals(
+        currentRoundTrip.entryQuantity,
+        quantity,
+      );
+      currentRoundTrip.entryNotional = addReferenceDecimals(
+        currentRoundTrip.entryNotional,
+        notional,
+      );
+      currentRoundTrip.cashFlow =
+        priorLot.direction === "short"
+          ? addReferenceDecimals(currentRoundTrip.cashFlow, notional)
+          : subtractReferenceDecimals(currentRoundTrip.cashFlow, notional);
+      addDigest(currentRoundTrip, priorLot.sourceExecutionDigest);
+      cashFlow =
+        priorLot.direction === "short"
+          ? addReferenceDecimals(cashFlow, notional)
+          : subtractReferenceDecimals(cashFlow, notional);
+    }
+  }
 
   for (const execution of executions) {
     if (execution.validation.state !== "accepted") {

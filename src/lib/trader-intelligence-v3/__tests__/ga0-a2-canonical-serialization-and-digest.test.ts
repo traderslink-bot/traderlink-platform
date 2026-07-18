@@ -54,6 +54,42 @@ describe("Trader Intelligence v3 canonical serialization and digest", () => {
     });
   });
 
+  it.each([
+    ["primitive", '"safe"', '"safe"'],
+    ["object", '{"safe":"value"}', '{"safe":"value"}'],
+    ["null", "null", "null"],
+    ["nested", '{"child":{"safe":"value"}}', '{"child":{"safe":"value"}}'],
+  ])("preserves a __proto__ %s value without prototype mutation", (_case, raw, expected) => {
+    const parsed = parseStrictCanonicalJson(`{"__proto__":${raw}}`);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok || typeof parsed.value !== "object" || parsed.value === null) return;
+    expect(Object.getPrototypeOf(parsed.value)).toBeNull();
+    expect(Object.prototype.hasOwnProperty.call(parsed.value, "__proto__")).toBe(true);
+    expect(serializeCanonicalValue(parsed.value)).toMatchObject({
+      ok: true,
+      value: { json: `{"__proto__":${expected}}` },
+    });
+  });
+
+  it.each(["__proto__", "constructor", "prototype"])(
+    "preserves the direct own key %s without mutating prototypes",
+    (key) => {
+      const input = Object.create(null) as Record<string, unknown>;
+      Object.defineProperty(input, key, {
+        enumerable: true,
+        value: { marker: "synthetic" },
+      });
+      const result = serializeCanonicalValue(input);
+      expect(result.ok).toBe(true);
+      if (!result.ok || typeof result.value.value !== "object" || result.value.value === null) {
+        return;
+      }
+      expect(Object.getPrototypeOf(result.value.value)).toBeNull();
+      expect(Object.prototype.hasOwnProperty.call(result.value.value, key)).toBe(true);
+      expect(result.value.json).toContain(`"${key}":{"marker":"synthetic"}`);
+    },
+  );
+
   it("matches the canonical SHA-256 golden vector", () => {
     const identity = createCanonicalContentIdentity("canonical_content", "v1", {
       decimals: { zero: "0", price: "0.125" },

@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  classifyExecutionRelationship,
+  isCompleteExecutionRelationshipResolution,
   reconstructAnalyticalPnl,
-  type CanonicalExecutionDigest,
+  resolveExecutionRelationships,
+  type AnalyticalPnlReconstructionInput,
+  type CanonicalExecutionEnvelope,
 } from "../domain";
 import {
+  buildSyntheticAnalyticalPnlInput,
   buildSyntheticCanonicalExecution,
   syntheticSourceDocumentDigest,
 } from "../testing";
@@ -28,49 +31,53 @@ function closingExecution() {
 }
 
 describe("Trader Intelligence v3 execution relationship resolution", () => {
-  it("suppresses one occurrence only for a proven pair-addressed exact duplicate", () => {
-    const opening = buildSyntheticCanonicalExecution({ charges: [] });
-    const relationship = classifyExecutionRelationship(opening, opening);
-    const result = reconstructAnalyticalPnl(
-      [opening, opening, closingExecution()],
-      [relationship],
-    );
-    expect(result.status).toBe("completed");
-    expect(result.ledgers[0]).toMatchObject({
-      endingQuantity: "0",
-      grossRealizedPnl: "0",
+  it("creates an opaque exhaustive receipt for every unordered input pair", () => {
+    const executions = [
+      buildSyntheticCanonicalExecution({ executionId: "SYNTH-A" }),
+      buildSyntheticCanonicalExecution({ executionId: "SYNTH-B" }),
+      buildSyntheticCanonicalExecution({ executionId: "SYNTH-C" }),
+    ];
+    const resolution = resolveExecutionRelationships(executions);
+    expect(isCompleteExecutionRelationshipResolution(resolution)).toBe(true);
+    expect(resolution.coverageReceipt).toMatchObject({
+      state: "complete",
+      inputExecutionCount: 3,
+      expectedPairCount: 3,
+      classifiedPairCount: 3,
     });
-    expect(result.ledgers[0].inputExecutionDigests).toHaveLength(2);
+    expect(resolution.coverageReceipt.pairs).toHaveLength(3);
+    expect(Object.isFrozen(resolution)).toBe(true);
+    expect(Object.isFrozen(resolution.coverageReceipt.pairs)).toBe(true);
   });
 
-  it("blocks repeated identical content when the duplicate relationship is absent", () => {
+  it("automatically suppresses only proven exact same-source duplicate occurrences", () => {
     const opening = buildSyntheticCanonicalExecution({ charges: [] });
-    const result = reconstructAnalyticalPnl([opening, opening, closingExecution()]);
+    const input = buildSyntheticAnalyticalPnlInput([
+      opening,
+      opening,
+      closingExecution(),
+    ]);
+    expect(input.relationshipResolution.retainedExecutions).toHaveLength(2);
+    const result = reconstructAnalyticalPnl(input);
     expect(result).toMatchObject({
-      status: "blocked",
-      blockedStates: [
-        { code: "ti_v3_reconstruction_duplicate_relationship_missing" },
-      ],
+      status: "completed",
+      ledgers: [{ endingQuantity: "0", grossRealizedPnl: "0" }],
     });
-    expect(result.ledgers).toHaveLength(0);
   });
 
-  it("requires one proven pair relationship for each suppressed occurrence", () => {
+  it("retains one deterministic occurrence across three exact duplicates", () => {
     const opening = buildSyntheticCanonicalExecution({ charges: [] });
-    const relationship = classifyExecutionRelationship(opening, opening);
-    const result = reconstructAnalyticalPnl(
-      [opening, opening, opening, closingExecution()],
-      [relationship],
-    );
-    expect(result).toMatchObject({
-      status: "blocked",
-      blockedStates: [
-        { code: "ti_v3_reconstruction_duplicate_relationship_missing" },
-      ],
-    });
+    const resolution = resolveExecutionRelationships([opening, opening, opening]);
+    expect(resolution.retainedExecutions).toEqual([opening]);
+    expect(resolution.coverageReceipt.pairs).toHaveLength(3);
+    expect(
+      resolution.coverageReceipt.pairs.every(
+        (pair) => pair.classification.suppressionEligible,
+      ),
+    ).toBe(true);
   });
 
-  it("blocks a re-export instead of silently suppressing it", () => {
+  it("blocks a re-export without caller-supplied relationship data", () => {
     const original = buildSyntheticCanonicalExecution({ charges: [] });
     const reexport = buildSyntheticCanonicalExecution({
       sourceDocumentDigest: syntheticSourceDocumentDigest("resolver-reexport"),
@@ -81,16 +88,16 @@ describe("Trader Intelligence v3 execution relationship resolution", () => {
       },
       charges: [],
     });
-    const result = reconstructAnalyticalPnl(
-      [original, reexport],
-      [classifyExecutionRelationship(original, reexport)],
-    );
-    expect(result.blockedStates).toEqual([
+    expect(
+      reconstructAnalyticalPnl(
+        buildSyntheticAnalyticalPnlInput([original, reexport]),
+      ).blockedStates,
+    ).toEqual([
       expect.objectContaining({ code: "ti_v3_reconstruction_reexport_unresolved" }),
     ]);
   });
 
-  it("prevents a possible duplicate from reaching P/L", () => {
+  it("blocks possible duplicates and manual-review states without optional pairs", () => {
     const first = buildSyntheticCanonicalExecution({
       executionId: null,
       brokerExecutionIndex: null,
@@ -102,7 +109,7 @@ describe("Trader Intelligence v3 execution relationship resolution", () => {
         rowOrderPreserved: false,
       },
     });
-    const second = buildSyntheticCanonicalExecution({
+    const possible = buildSyntheticCanonicalExecution({
       executionId: null,
       brokerExecutionIndex: null,
       brokerFillSequence: null,
@@ -113,18 +120,16 @@ describe("Trader Intelligence v3 execution relationship resolution", () => {
         rowOrderPreserved: false,
       },
     });
-    const relationship = classifyExecutionRelationship(first, second);
-    expect(relationship.state).toBe("possible_duplicate_ambiguous");
-    expect(reconstructAnalyticalPnl([first, second], [relationship])).toMatchObject({
-      status: "blocked",
-      blockedStates: [
-        { code: "ti_v3_reconstruction_possible_duplicate_unresolved" },
-      ],
-    });
-  });
+    expect(
+      reconstructAnalyticalPnl(
+        buildSyntheticAnalyticalPnlInput([first, possible]),
+      ).blockedStates,
+    ).toEqual([
+      expect.objectContaining({
+        code: "ti_v3_reconstruction_possible_duplicate_unresolved",
+      }),
+    ]);
 
-  it("prevents a manual-review relationship from reaching P/L", () => {
-    const first = buildSyntheticCanonicalExecution({ charges: [] });
     const moved = buildSyntheticCanonicalExecution({
       charges: [],
       originalSourceRowLocator: {
@@ -133,14 +138,18 @@ describe("Trader Intelligence v3 execution relationship resolution", () => {
         rowOrderPreserved: true,
       },
     });
-    const relationship = classifyExecutionRelationship(first, moved);
-    expect(relationship.state).toBe("manual_review_required");
-    expect(reconstructAnalyticalPnl([first, moved], [relationship])).toMatchObject({
-      status: "blocked",
-      blockedStates: [
-        { code: "ti_v3_reconstruction_manual_review_required" },
-      ],
-    });
+    expect(
+      reconstructAnalyticalPnl(
+        buildSyntheticAnalyticalPnlInput([
+          buildSyntheticCanonicalExecution({ charges: [] }),
+          moved,
+        ]),
+      ).blockedStates,
+    ).toEqual([
+      expect.objectContaining({
+        code: "ti_v3_reconstruction_manual_review_required",
+      }),
+    ]);
   });
 
   it("retains both legitimate repeated fills", () => {
@@ -166,48 +175,81 @@ describe("Trader Intelligence v3 execution relationship resolution", () => {
         rowOrderPreserved: false,
       },
     });
-    const relationship = classifyExecutionRelationship(first, second);
-    expect(relationship.state).toBe("legitimate_repeated_fill");
-    expect(reconstructAnalyticalPnl([first, second], [relationship])).toMatchObject({
+    expect(
+      reconstructAnalyticalPnl(
+        buildSyntheticAnalyticalPnlInput([first, second]),
+      ),
+    ).toMatchObject({
       status: "completed",
       ledgers: [{ endingQuantity: "20" }],
     });
   });
 
-  it("fails closed for a forged relationship classification", () => {
-    const opening = buildSyntheticCanonicalExecution({ charges: [] });
-    const close = closingExecution();
-    const computed = classifyExecutionRelationship(opening, close);
-    const result = reconstructAnalyticalPnl([opening, close], [
-      { ...computed, state: "exact_duplicate_same_source", suppressionEligible: true },
-    ]);
-    expect(result.blockedStates).toEqual([
-      expect.objectContaining({
-        code: "ti_v3_reconstruction_relationship_classification_mismatch",
-      }),
-    ]);
-  });
-
-  it("fails closed when relationship digests do not identify input executions", () => {
-    const opening = buildSyntheticCanonicalExecution({ charges: [] });
-    const computed = classifyExecutionRelationship(opening, opening);
-    const result = reconstructAnalyticalPnl([opening], [
-      {
-        ...computed,
-        rightExecutionDigest:
-          "ti_v3:canonical_execution:v1:sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" as CanonicalExecutionDigest,
+  it("rejects forged or incomplete relationship coverage at accounting entry", () => {
+    const execution = buildSyntheticCanonicalExecution({ charges: [] });
+    const valid = buildSyntheticAnalyticalPnlInput([execution]);
+    const forgedInput = {
+      ...valid,
+      relationshipResolution: {
+        ...valid.relationshipResolution,
+        coverageReceipt: {
+          ...valid.relationshipResolution.coverageReceipt,
+          state: "complete",
+          expectedPairCount: 1,
+          classifiedPairCount: 0,
+          pairs: [],
+        },
       },
-    ]);
-    expect(result).toMatchObject({
+    } as unknown as AnalyticalPnlReconstructionInput;
+    expect(reconstructAnalyticalPnl(forgedInput)).toMatchObject({
       status: "blocked",
       ledgers: [],
       blockedStates: [
-        { code: "ti_v3_reconstruction_relationship_unknown_execution" },
+        { code: "ti_v3_reconstruction_relationship_coverage_incomplete" },
       ],
     });
   });
 
-  it("blocks only the affected ledger group for correction evidence", () => {
+  it("fails closed when a forged envelope reaches relationship resolution", () => {
+    const execution = buildSyntheticCanonicalExecution({ charges: [] });
+    const forged = {
+      ...execution,
+      content: { ...execution.content, price: "99" },
+    } as CanonicalExecutionEnvelope;
+    const resolution = resolveExecutionRelationships([forged]);
+    expect(resolution).toMatchObject({
+      retainedExecutions: [],
+      coverageReceipt: { state: "blocked_invalid_input" },
+      globalBlocks: [
+        { code: "ti_v3_reconstruction_execution_envelope_integrity_invalid" },
+      ],
+    });
+  });
+
+  it("deterministically retains neither side of a validation disagreement by suppression", () => {
+    const accepted = buildSyntheticCanonicalExecution({ charges: [] });
+    const quarantined = buildSyntheticCanonicalExecution({
+      charges: [],
+      validation: {
+        state: "quarantined",
+        reasonCodes: ["ti_v3_synthetic_quarantine"],
+      },
+    });
+    for (const executions of [
+      [accepted, quarantined],
+      [quarantined, accepted],
+    ]) {
+      const resolution = resolveExecutionRelationships(executions);
+      expect(resolution.retainedExecutions).toHaveLength(2);
+      expect(resolution.groupBlocks).toEqual([
+        expect.objectContaining({
+          code: "ti_v3_reconstruction_manual_review_required",
+        }),
+      ]);
+    }
+  });
+
+  it("blocks only the affected ledger group for changed stable execution facts", () => {
     const original = buildSyntheticCanonicalExecution({ charges: [] });
     const changed = buildSyntheticCanonicalExecution({ price: "1.3", charges: [] });
     const unrelated = buildSyntheticCanonicalExecution({
@@ -217,8 +259,7 @@ describe("Trader Intelligence v3 execution relationship resolution", () => {
       charges: [],
     });
     const result = reconstructAnalyticalPnl(
-      [original, changed, unrelated],
-      [classifyExecutionRelationship(original, changed)],
+      buildSyntheticAnalyticalPnlInput([original, changed, unrelated]),
     );
     expect(result.status).toBe("blocked");
     expect(result.blockedStates).toEqual([
@@ -230,21 +271,21 @@ describe("Trader Intelligence v3 execution relationship resolution", () => {
     );
   });
 
-  it("rejects a relationship that crosses ledger groups", () => {
+  it("keeps distinct currencies covered and separated without a cross-group block", () => {
     const usd = buildSyntheticCanonicalExecution({ charges: [] });
     const cad = buildSyntheticCanonicalExecution({
       currency: "CAD",
-      charges: [],
+      stableInstrumentKey: "instrument_synthetic_cad",
       executionId: "SYNTH-CAD",
+      charges: [],
     });
     const result = reconstructAnalyticalPnl(
-      [usd, cad],
-      [classifyExecutionRelationship(usd, cad)],
+      buildSyntheticAnalyticalPnlInput([usd, cad]),
     );
-    expect(result.blockedStates.map((state) => state.code)).toEqual([
-      "ti_v3_reconstruction_relationship_group_mismatch",
-      "ti_v3_reconstruction_relationship_group_mismatch",
+    expect(result.status).toBe("completed");
+    expect(result.ledgers.map((ledger) => ledger.currency).sort()).toEqual([
+      "CAD",
+      "USD",
     ]);
-    expect(result.ledgers).toHaveLength(0);
   });
 });

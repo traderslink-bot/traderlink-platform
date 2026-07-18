@@ -1,13 +1,19 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  orderCanonicalExecutions,
+  buildStartingInventoryContract,
+  buildStartingInventoryForExecution,
   reconstructAnalyticalPnl,
   runFifoPositionLedger,
   type CanonicalExecutionDraft,
   type CanonicalExecutionEnvelope,
+  type CompleteExecutionRelationshipResolution,
 } from "../domain";
-import { buildSyntheticCanonicalExecution } from "../testing";
+import {
+  buildSyntheticAnalyticalPnlInput,
+  buildSyntheticCanonicalExecution,
+  buildSyntheticFifoLedgerInput,
+} from "../testing";
 
 const TIMESTAMPS = [
   "2026-07-18T13:45:01.000000000Z",
@@ -40,7 +46,7 @@ function execution(
 }
 
 function ledger(executions: readonly CanonicalExecutionEnvelope[]) {
-  const result = runFifoPositionLedger({ ordering: orderCanonicalExecutions(executions) });
+  const result = runFifoPositionLedger(buildSyntheticFifoLedgerInput(executions));
   expect(result.status).toBe("completed");
   expect(result.ledgers).toHaveLength(1);
   return result.ledgers[0];
@@ -173,7 +179,7 @@ describe("Trader Intelligence v3 FIFO analytical P/L", () => {
     ["buy", "ti_v3_reconstruction_prior_inventory_required"],
   ] as const)("blocks missing prior inventory for a declared %s close", (side, code) => {
     const result = runFifoPositionLedger({
-      ordering: orderCanonicalExecutions([
+      ...buildSyntheticFifoLedgerInput([
         execution(0, {
           side,
           brokerPositionEffectEvidence: "close",
@@ -190,29 +196,171 @@ describe("Trader Intelligence v3 FIFO analytical P/L", () => {
     ["resolved", "corporate_action_unresolved", "ti_v3_reconstruction_corporate_action_basis_unresolved"],
     ["resolved", "symbol_change_unresolved", "ti_v3_reconstruction_symbol_continuity_unresolved"],
   ] as const)("blocks unsafe instrument or basis continuity", (instrumentState, basisState, code) => {
-    const result = runFifoPositionLedger({
-      ordering: orderCanonicalExecutions([
-        execution(0, {
+    const executions = [
+      execution(0, {
           instrumentResolutionState: instrumentState,
           stableInstrumentKey: instrumentState === "resolved" ? "instrument_synthetic_equity" : null,
           basisContinuityState: basisState,
-        }),
-      ]),
-    });
+      }),
+    ];
+    const result = reconstructAnalyticalPnl(
+      buildSyntheticAnalyticalPnlInput(executions),
+    );
     expect(result).toMatchObject({ status: "blocked", blockedStates: [{ code }] });
   });
 
   it("keeps USD and CAD in separate ledgers without a cross-currency total", () => {
-    const result = reconstructAnalyticalPnl([
+    const executions = [
       execution(0, { currency: "USD", charges: [] }),
       execution(1, {
         currency: "CAD",
         stableInstrumentKey: "instrument_synthetic_equity_cad",
         charges: [],
       }),
-    ]);
+    ];
+    const result = reconstructAnalyticalPnl(
+      buildSyntheticAnalyticalPnlInput(executions),
+    );
     expect(result.status).toBe("completed");
     expect(result.ledgers.map((item) => item.currency).sort()).toEqual(["CAD", "USD"]);
     expect(result).not.toHaveProperty("netAnalyticalPnl");
+  });
+
+  it.each(["buy", "sell"] as const)(
+    "blocks an unknown starting inventory before interpreting an opening %s",
+    (side) => {
+      const first = execution(0, { side, brokerPositionEffectEvidence: "unknown" });
+      const startingInventory = buildStartingInventoryForExecution(first, "unknown");
+      expect(startingInventory.ok).toBe(true);
+      if (!startingInventory.ok) return;
+      const result = runFifoPositionLedger(
+        buildSyntheticFifoLedgerInput([first], startingInventory.value),
+      );
+      expect(result).toMatchObject({
+        status: "blocked",
+        blockedStates: [{ code: "ti_v3_reconstruction_prior_inventory_required" }],
+      });
+    },
+  );
+
+  it.each([
+    ["long", "sell", "2", "3", "5"],
+    ["short", "buy", "3", "2", "5"],
+  ] as const)(
+    "matches accepted prior %s lots with exact provenance",
+    (direction, side, entryPrice, exitPrice, expectedGross) => {
+      const close = execution(1, {
+        side,
+        quantity: "5",
+        price: exitPrice,
+        brokerPositionEffectEvidence: "close",
+      });
+      const provenance = execution(0, {
+        side: direction === "long" ? "buy" : "sell",
+        quantity: "5",
+        price: entryPrice,
+      });
+      const startingInventory = buildStartingInventoryContract({
+        state: "accepted_prior_lots",
+        ledgerIdentity: {
+          canonicalOwnerKey: close.content.canonicalOwnerKey,
+          canonicalAccountKey: close.content.canonicalAccountKey,
+          stableInstrumentKey: close.content.stableInstrumentKey,
+          currency: close.content.currency,
+        },
+        priorLots: [
+          {
+            lotId: `prior_lot_synthetic_${direction}`,
+            direction,
+            remainingQuantity: "5",
+            price: entryPrice,
+            canonicalOwnerKey: close.content.canonicalOwnerKey,
+            canonicalAccountKey: close.content.canonicalAccountKey,
+            stableInstrumentKey: close.content.stableInstrumentKey,
+            currency: close.content.currency,
+            sourceIdentity: provenance.content.sourceIdentity,
+            sourceDocumentDigest: provenance.content.sourceDocumentDigest,
+            originalSourceRowLocator: provenance.content.originalSourceRowLocator,
+            sourceExecutionDigest: provenance.canonicalContentDigest,
+          },
+        ],
+      });
+      expect(startingInventory.ok).toBe(true);
+      if (!startingInventory.ok) return;
+      const result = runFifoPositionLedger(
+        buildSyntheticFifoLedgerInput([close], startingInventory.value),
+      );
+      expect(result).toMatchObject({
+        status: "completed",
+        ledgers: [
+          {
+            endingQuantity: "0",
+            grossRealizedPnl: expectedGross,
+            startingInventoryState: "accepted_prior_lots",
+            inputStartingLotIds: [`prior_lot_synthetic_${direction}`],
+          },
+        ],
+      });
+    },
+  );
+
+  it("does not allow raw FIFO to bypass opaque relationship coverage", () => {
+    const first = execution(0, { side: "buy" });
+    const input = buildSyntheticFifoLedgerInput([first]);
+    const forgedResolution = {
+      ...input.relationshipResolution,
+    } as CompleteExecutionRelationshipResolution;
+    expect(
+      runFifoPositionLedger({
+        ...input,
+        relationshipResolution: forgedResolution,
+      }),
+    ).toMatchObject({
+      status: "blocked",
+      ledgers: [],
+      blockedStates: [
+        { code: "ti_v3_reconstruction_relationship_coverage_incomplete" },
+      ],
+    });
+  });
+
+  it("rejects accepted prior lots whose ledger identity does not match", () => {
+    const close = execution(1, { side: "sell" });
+    const provenance = execution(0, { side: "buy" });
+    expect(
+      buildStartingInventoryContract({
+        state: "accepted_prior_lots",
+        ledgerIdentity: {
+          canonicalOwnerKey: close.content.canonicalOwnerKey,
+          canonicalAccountKey: close.content.canonicalAccountKey,
+          stableInstrumentKey: close.content.stableInstrumentKey,
+          currency: close.content.currency,
+        },
+        priorLots: [
+          {
+            lotId: "prior_lot_identity_mismatch",
+            direction: "long",
+            remainingQuantity: "5",
+            price: "1",
+            canonicalOwnerKey: close.content.canonicalOwnerKey,
+            canonicalAccountKey: "account_synthetic_other",
+            stableInstrumentKey: close.content.stableInstrumentKey,
+            currency: close.content.currency,
+            sourceIdentity: provenance.content.sourceIdentity,
+            sourceDocumentDigest: provenance.content.sourceDocumentDigest,
+            originalSourceRowLocator: provenance.content.originalSourceRowLocator,
+            sourceExecutionDigest: provenance.canonicalContentDigest,
+          },
+        ],
+      }),
+    ).toEqual({
+      ok: false,
+      error: {
+        code: "ti_v3_starting_inventory_invalid",
+        reasonCodes: [
+          "ti_v3_starting_inventory_prior_lot_identity_mismatch",
+        ],
+      },
+    });
   });
 });
