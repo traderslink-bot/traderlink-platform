@@ -1,7 +1,15 @@
 # Trader Intelligence v3 Legacy Hazard Register
 
-Date: 2026-07-17
-Gate: GA0-A1 containment and architecture boundaries
+Date: 2026-07-18
+Gate: GA0-A2 canonical execution and exact financial truth
+
+GA0-A1 is accepted and complete at
+`4f9e440116258c9548a2d13f7ea057a9075101c6`. GA0-A2 is active on
+`agent/trader-intelligence-v3-ga0-a2-exact-truth`. This slice implements the
+candidate controls for H-005 and H-006 through a new isolated authority;
+legacy behavior remains preserved and non-authoritative until a separately
+accepted adapter/migration phase. The candidate controls do not close either
+hazard before independent GA0-A2 acceptance and later adapter/migration work.
 
 ## Purpose
 
@@ -13,8 +21,8 @@ This register prevents contained prototype behavior from being mistaken for acce
 | H-002 | Import/trade APIs and pages | High | Many routes/pages directly construct `SqliteImportCommitRepository`. | Transport code controls persistence lifetime and can access data before reusable tenancy policy. | GA0-A2/A3 | Handler/page guard executes before construction on reachable data surfaces. | Construction exists only in composition root; v3 ports require owner context. | Pre-handler denial tests plus dependency-boundary scan and repository authorization tests. |
 | H-003 | Local SQLite persistence path | Critical | Legacy optimized startup previously fell back to an OS temporary directory. | Data could disappear, diverge, evade backup, or cross sample/real modes. | GA0-A1 path containment; GA0-A3 backup/restore | Real-owner mode now requires an explicit durable path outside Git and OS temp; sample mode is isolated in-memory; cross-mode open-database reuse is blocked. | GA0-A3 WAL-safe encrypted backup/restore, recovery drill, and reconciliation accepted. | Development/optimized path tests, unsafe-path pre-creation denial, sample/real isolation, and restart persistence. |
 | H-004 | All Intelligence pages/APIs before this branch | Critical | Prototype routes assumed a trusted local user and had no consistent owner boundary. | Private trades, notes, reports, and imports could be read or mutated by an unintended caller. | GA0-A1 | Fail-closed page/API guard, exact owner mapping, diagnostic disablement, and generic private errors. | Intelligence-owned identity/tenancy implementation passes isolation review and replaces the provisional adapter. | Route filesystem completeness, wrong/missing session tests, pre-repository denial, resource non-disclosure tests. |
-| H-005 | Import fingerprints | High | Non-cryptographic 32-bit hash identifies imported content. | Collisions can conflate distinct financial records; serialization and correction identity are insufficient. | GA0-A2 | No change; explicitly non-authoritative and contained. | Canonical serialization, cryptographic digest, version, duplicate/collision/correction states accepted. | Golden digest vectors, property tests, collision-state tests, cross-runtime determinism. |
-| H-006 | Financial fields throughout parser/timeline/repository/analytics | Critical | JavaScript `number` and display rounding represent quantity, price, fees, and P/L. | Binary floating-point and implicit rounding cannot be authoritative financial truth. | GA0-A2 | No new v3 financial calculation is allowed; architecture guard keeps calculation authority out of A1 routes/core. | Exact decimal/integer contracts, currency/scale rules, reconciliation tolerance, and migrations accepted. | Exact arithmetic vectors, broker reconciliation, currency/fee tests, serialization determinism. |
+| H-005 | Import fingerprints | High | Non-cryptographic 32-bit hash identifies imported content. | Collisions can conflate distinct financial records; serialization and correction identity are insufficient. | GA0-A2 | Legacy values are typed `LegacyNonAuthoritativeFingerprint`. Isolated v3 facts use prototype-safe NFC/LF canonical bytes, immutable verified envelopes, versioned domain-separated SHA-256, exhaustive relationship coverage, byte verification, and explicit duplicate/re-export/correction/ambiguity/collision states. Current imports remain unrewired. | Independent GA0-A2 acceptance followed by an explicit legacy adapter/migration that removes the old fingerprint from authoritative decisions. | Golden digest vectors, insertion-order and semantic-change properties, persistence-ID independence, duplicate/dangerous-key rejection, validation/document-aware suppression, injected collision fail-closed, and focused architecture isolation all pass. |
+| H-006 | Financial fields throughout parser/timeline/repository/analytics | Critical | JavaScript `number` and display rounding represent quantity, price, fees, and P/L. | Binary floating-point and implicit rounding cannot be authoritative financial truth. | GA0-A2 | Isolated v3 authority now uses canonical decimal strings, reduced BigInt ratios, exact FIFO, explicit currency, exact charge/rebate conservation, explicit proven-flat/prior-lot/unknown starting inventory, blocked open/basis states, and an independent BigInt reference. Guards prohibit JavaScript-number financial authority and current route/legacy consumption. | Independent GA0-A2 acceptance followed by separately reviewed import/persistence adapters and current-data migration; legacy pages remain non-authoritative until then. | Exact grammar and arithmetic vectors, 35 synthetic fixtures, 19,000 fixed-seed generated cases, 11-test production/reference differential including accepted prior long/short lots, SQLite TEXT round-trip, currency/fee/rebate, reversal, prior/open inventory, and architecture tests all pass. |
 | H-007 | `mark-closed` route and review state | High | A user action can mark a trade closed independently of canonical inventory reconstruction. | Review disposition can overwrite or contradict economic lifecycle truth. | GA0-A2/A3 | Owner/mutation guard prevents unauthorized use; semantics remain visibly legacy. | Lifecycle derives from canonical executions/inventory; review overrides are separately named and audited. | Flip/short/open/prior-inventory tests and review-vs-lifecycle invariants. |
 | H-008 | Client/product selectors and analytical filters | High | Browser-oriented filters cover only a small set of display fields. | Results are not replayable or authoritative and omit date basis, timezone, cutoff, scope, coverage, currency, and capability. | GA0-A3/GA1 | No new analytical claims or filter UI added in A1. | Content-addressed server filter contract and deterministic query services accepted. | Filter digest vectors, timezone/date-boundary tests, server/client parity and replay tests. |
 | H-009 | Current chart builders/types/renderers | High | Labels and JavaScript-number series render without evidence semantics. | Visuals can imply precision without units, manifests, exclusions, coverage, table alternatives, or shared claim truth. | GA0-B/GA1 | Existing visuals remain legacy; no v3 chart code in A1. | Validated series, approved accessible templates, exact tables, evidence drill-down, and text/chart consistency accepted. | Series/claim linkage, accessibility, snapshot replay, visual integrity, and performance tests. |
@@ -32,4 +40,11 @@ This register prevents contained prototype behavior from being mistaken for acce
 
 ## Release interpretation
 
-GA0-A1 may be accepted only as a local containment gate after independent re-review. H-003 path containment, H-004, H-014, H-015, H-016, H-018, and H-019 have concrete controls under remediation in this branch. GA0-A3 still owns WAL-safe backup/restore. All remaining hazards block any production-ready claim. Private-hosted deployment is explicitly non-operational and unauthorized.
+GA0-A1 is accepted as the local containment gate. GA0-A2 has implementation
+candidate controls for H-005 and H-006, but remains unaccepted pending
+independent review; neither hazard is retired because legacy imports, stored
+data, routes, and user-visible calculations are deliberately unrewired. GA0-A3
+still owns bitemporal correction application, manifests, eligibility,
+snapshots, evidence references, query foundations, and WAL-safe backup/restore.
+All remaining hazards block any production-ready claim. Private-hosted
+deployment is explicitly non-operational and unauthorized.

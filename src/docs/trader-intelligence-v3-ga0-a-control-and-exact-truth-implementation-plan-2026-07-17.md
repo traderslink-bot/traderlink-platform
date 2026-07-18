@@ -5,7 +5,7 @@
 **Architecture authority:** `src/docs/trader-intelligence-v3-controlling-architecture-specification-2026-07-17.md`  
 **Operating profile:** `private_owner_alpha`  
 **Only operational hosting mode:** `local_only`
-**Current slice:** GA0-A1 — containment and architecture boundaries  
+**Current slice:** GA0-A2 — canonical execution and exact financial truth
 **Runtime model calls:** forbidden  
 **Analytics tools:** forbidden in GA0-A  
 **Chart rendering:** forbidden in GA0-A  
@@ -337,6 +337,145 @@ Document at least:
 ---
 
 # 6. GA0-A2 — Canonical Execution and Exact Financial Truth
+
+## 6.0 Final focused correction status - 2026-07-18
+
+- Independent re-audit of `c1a1b50379165485d28f0e0a28a21c3917cac820`
+  left one required correction/bust scoping fix. The binding scope is
+  `src/docs/trader-intelligence-v3-ga0-a2-final-correction-scope-2026-07-18.md`.
+- Executable head `8b141633f19e10dfd503e4c1e83f5660e7e4e9b7`
+  requires compatible canonical owner, account, resolved stable instrument,
+  currency, broker, and source-system identity before stable execution IDs or
+  correction references can link a pair. Candidate indexes mirror that exact
+  scope.
+- Intrinsic unresolved correction/bust state still blocks only its own group.
+  No correction application or other GA0-A3 work was added.
+- The owner explicitly prohibited local tests and verification for this final
+  correction. It is an unverified implementation candidate pending independent
+  code review; it is not accepted or claimed regression-safe.
+- Keep draft PR #104 open, draft, unmerged, undeployed, and with independent
+  review threads unresolved.
+
+## 6.0 Current second-remediation status - 2026-07-18
+
+- The independent re-audit of immutable implementation head
+  `88db72e70538e2222ae8467c5245fa4b8eb85600`, recorded at audit-document head
+  `480cb480d4ee80e7fe3626a94a1b5622765dd773`, returned A2-R1 through A2-R7.
+- All seven findings are implemented and fully verified at executable head
+  `9721a2707d936987f3b0e116226dd20de400cf58` on the existing branch and draft
+  PR #104.
+- Relationship resolution is exhaustive and opaque; raw FIFO cannot bypass
+  coverage. Starting inventory is explicit and versioned. Canonical execution
+  envelopes are deeply immutable and integrity-verified. Suppression is
+  validation- and document-proof-aware. Canonical dictionaries are
+  prototype-safe. Unknown timestamp precision cannot create time order.
+  `row_number` is a bounded canonical integer string.
+- The independent BigInt/reference ledger supports exact accepted prior long
+  and short lots without importing production arithmetic or matching helpers.
+- Nineteen fixed seeds (`2026071801` through `2026071819`) run 1,000 cases each.
+  The consolidated gate passed 14 files/263 tests; full Vitest passed 177
+  files/1,763 tests; the 11-test differential, architecture, privacy, Layer 2,
+  Layer 3, and 127-page build passed.
+- No package, lock, route, browser, Next, CI, E2E, generated-contract, database,
+  or persistence file changed. `npm ci` and Playwright were therefore not run.
+- The following closeout commit is documentation-only and receives only the
+  prescribed lightweight documentation-head checks. No heavy executable suite
+  is repeated for Markdown-only changes.
+- GA0-A2 remains unaccepted. Keep PR #104 draft and unmerged, leave independent
+  audit threads unresolved, and stop for independent re-audit. GA0-A3 remains
+  deferred and has not begun.
+
+## 6.0 Implementation status — 2026-07-18
+
+- GA0-A1 is independently accepted and complete. PR #102 merged as
+  `4f9e440116258c9548a2d13f7ea057a9075101c6`.
+- Active branch:
+  `agent/trader-intelligence-v3-ga0-a2-exact-truth`, created from the latest
+  `origin/main` after verifying the accepted GA0-A1 ancestor.
+- The first independent audit reviewed
+  `542992b6a7c54ce871c31bc2831126c850fea04c` and required remediation. All
+  findings are implemented and the complete required local verification
+  matrix is green at
+  `b92b321fab7801212c82125511e58c754e594fea`. GA0-A2 is not yet accepted and
+  must return to independent re-audit.
+- Only `private_owner_alpha + local_only + local_sqlite` remains operational.
+- No hosted mode, database migration, saved-data migration, route/UI change,
+  analytics, chart, AI/model, market-data, support/resistance, manual-entry,
+  reflection, Real Coach/Whop, or deployment work is authorized in this slice.
+- GA0-A3 bitemporal corrections, manifests, eligibility, evidence references,
+  query filters, and backup/restore remain deferred and have not begun.
+- The focused exact-truth verification, repository regressions, private-data
+  and history audit, and build are green. Playwright was not manually rerun
+  because no route, server, Next, browser-facing, or E2E configuration changed.
+  The implementation must remain in draft PR #104 for independent re-review.
+
+### 6.0.1 Implemented authority
+
+- Four binding ADRs define exact decimals, canonical serialization and digest,
+  canonical execution/order/identity, and analytical P/L/reconstruction.
+- `domain/exact` owns the sole approved `decimal.js` import plus opaque exact
+  decimal and BigInt ratio values.
+- `domain/canonical` owns strict nine-digit UTC timestamps, precision
+  intervals, NFC/LF canonical JSON, deterministic code-point key ordering, and
+  duplicate-key-rejecting raw JSON parsing.
+- `domain/identity` owns domain-separated SHA-256 digests and byte equality.
+- `domain/execution` owns canonical provenance/evidence, content identity,
+  storage versus meaningful ordering, ambiguity/conflict evidence, and pure
+  duplicate/re-export/correction/collision classification.
+- `domain/accounting` owns policy-v1 exact FIFO inventory and analytical P/L.
+- `testing/reference` owns the independent BigInt coefficient/scale and FIFO
+  oracle; it shares no production arithmetic or matching helper.
+- Thirty-five executable exact synthetic fixtures and fifteen 1,000-run fixed
+  property suites cover the required long, short, partial, reversal, fee,
+  identity, ordering, currency, prior/open inventory, and fail-closed cases.
+- Architecture guards prohibit decimal imports outside the approved module,
+  JavaScript-number financial authority, direct legacy/route consumption, and
+  use of the isolated engine from current product surfaces.
+
+### 6.0.2 Recorded fixed seeds
+
+- `2026071801` — flat long, 1,000 runs.
+- `2026071802` — flat short, 1,000 runs.
+- `2026071803` — partial fills, 1,000 runs.
+- `2026071804` — reversals, 1,000 runs.
+- `2026071805` — duplicate classification, 1,000 runs.
+- `2026071806` — canonical property order, 1,000 runs.
+- `2026071807` — digest semantics, 1,000 runs.
+- `2026071808` — ambiguous ordering, 1,000 runs.
+
+- `2026071809` — short-to-long reversals, 1,000 runs.
+- `2026071810` — prior inventory, 1,000 runs.
+- `2026071811` — currency isolation, 1,000 runs.
+- `2026071812` — relationship resolution, 1,000 runs.
+- `2026071813` — blocked states, 1,000 runs.
+- `2026071814` — price/quantity scale boundaries, 1,000 runs.
+- `2026071815` — 48-digit precision boundaries, 1,000 runs.
+
+### 6.0.3 Verification summary
+
+- Clean install, TypeScript, changed-path ESLint, and `git diff --check`: pass.
+- GA0-A2 focused gate: 14 files, 231 tests pass.
+- Full Vitest: 177 files, 1,731 tests pass.
+- Independent specialized coverage includes SQLite 2 tests, differential 10
+  tests, and fixed-seed properties 15 tests/15,000 generated cases.
+- Architecture: 371 files, 42 API routes, and 82 classified routes pass.
+- Private-data scan at the implementation head: 23,693 records, including
+  23,590 final-tree records and 103 PR-history blobs, pass.
+- Layer 2 and Layer 3 verification: pass.
+- Optimized build: pass, 127 generated pages; existing Academy/Turbopack
+  notices remain.
+- Playwright was not manually rerun for this remediation because no app route,
+  local server, Next configuration, browser-facing code, or E2E configuration
+  changed. The previous E2E result is historical baseline evidence only.
+- No live model, financial provider, payment, Discord, Vercel, production
+  database, production deployment, or any deployment call occurred.
+
+### 6.0.4 Audit handoff
+
+GA0-A2 stops at a draft PR. Independent audit must validate exactness,
+canonical identity, ordering ambiguity, duplicate suppression, FIFO/reference
+agreement, fixed-seed reproducibility, privacy, and legacy isolation. No GA0-A3
+work may begin until a later explicit acceptance entry is recorded.
 
 ## 6.1 Exact decimal ADR and wrappers
 

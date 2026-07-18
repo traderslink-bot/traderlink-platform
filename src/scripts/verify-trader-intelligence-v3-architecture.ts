@@ -26,7 +26,7 @@ function sourceRecord(path: string) {
 const paths = worktreeFiles();
 const architectureRecords = paths
   .filter((path) =>
-    /^(?:src\/lib\/trader-intelligence-v3\/|app\/api\/.*route\.ts$|src\/lib\/.*(?:coach|coaching).*\.ts$)/i.test(
+    /^(?:src\/lib\/.*\.(?:ts|tsx)$|app\/api\/.*route\.ts$)/i.test(
       path,
     ),
   )

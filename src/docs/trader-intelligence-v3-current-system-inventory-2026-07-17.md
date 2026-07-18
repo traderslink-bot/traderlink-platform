@@ -1,8 +1,40 @@
 # Trader Intelligence v3 Current-System Inventory
 
-Date: 2026-07-17
-Gate: GA0-A1 containment and architecture boundaries
-Branch: `agent/trader-intelligence-v3-ga0-a1-containment`
+Date: 2026-07-18
+Gate: GA0-A2 canonical execution and exact financial truth
+Branch: `agent/trader-intelligence-v3-ga0-a2-exact-truth`
+
+GA0-A1 is accepted and complete at
+`4f9e440116258c9548a2d13f7ea057a9075101c6`. The historical inventory below is
+preserved. GA0-A2 adds an isolated exact-truth domain and testing boundary; it
+does not promote or rewire current routes, saved data, legacy calculations, or
+user-visible output.
+
+Second-remediation implementation head
+`9721a2707d936987f3b0e116226dd20de400cf58` strengthens the isolated boundary
+without wiring a runtime consumer: accounting now requires exhaustive opaque
+relationship coverage and explicit versioned starting inventory; canonical
+execution envelopes are deeply immutable and verified; serializer dictionaries
+are prototype-safe; and unknown precision/row-number evidence fails closed.
+
+## GA0-A2 isolated authority inventory
+
+| Path | Authority added | Runtime consumer | Persistence effect | Verification |
+|---|---|---|---|---|
+| `src/lib/trader-intelligence-v3/domain/exact/**` | Canonical exact decimals, quantities, prices, money, charges, percentages, and reduced BigInt ratios. | None outside the isolated v3 domain. | None; ADR specifies SQLite `TEXT` and future PostgreSQL exact representation. | Grammar/bounds/zero/rounding/ratio tests plus architecture guard. |
+| `src/lib/trader-intelligence-v3/domain/canonical/**` | Strict UTC timestamps and deterministic NFC/LF canonical JSON with duplicate-key rejection, null-prototype dictionaries, and defensive bytes. | Canonical execution and identity builders only. | None. | Timestamp, Unicode, line-ending, insertion-order, array, duplicate-key, dangerous-key, and immutability tests. |
+| `src/lib/trader-intelligence-v3/domain/identity/**` | Domain-separated SHA-256 content identity and byte-equality collision proof. | Canonical execution builder and pure classifier. | None. | Golden vectors, semantic-change, database-ID independence, and injected-collision tests. |
+| `src/lib/trader-intelligence-v3/domain/execution/**` | Versioned deeply immutable canonical execution facts, integrity verification, provenance/evidence validation, storage/economic order, relationship classification, and exhaustive relationship coverage receipts. | Focused GA0-A2 tests only. | None. | Contract, integrity, ordering, ambiguity/conflict, duplicate/re-export/correction/bust/collision/coverage tests. |
+| `src/lib/trader-intelligence-v3/domain/accounting/**` | Policy-v1 exact FIFO inventory and analytical P/L by owner/account/instrument/currency, requiring explicit versioned starting inventory and opaque relationship resolution. | Focused GA0-A2 tests only. | None. | Long/short/partial/reversal/charge/rebate/open/prior-lot/unknown-start/basis/currency tests. |
+| `src/lib/trader-intelligence-v3/testing/reference/**` | Independent BigInt coefficient/scale, rational, and FIFO oracle. | Test code only. | None. | Production/reference exact-output differential tests and fixed-seed properties. |
+| `src/lib/trader-intelligence-v3/testing/fixtures/**` | Thirty-five exact synthetic scenario expectations. | Test code only. | None. | Fixture completeness and golden-digest tests. |
+| `src/lib/trader-intelligence-v3/testing/architecture-boundary-guard.ts` | Direct Decimal, JavaScript-number financial authority, route/legacy import, and engine-consumption prohibitions. | CI and focused tests. | None. | Expanded architecture guard plus 373-file repository scan. |
+
+Legacy import fingerprints are now named `LegacyNonAuthoritativeFingerprint`
+without changing their string representation or current behavior. Legacy CSV,
+timeline, route, repository, analytics, and UI paths remain compatibility and
+migration evidence only. No adapter, current-data migration, schema migration,
+or user-facing number change is part of GA0-A2.
 
 ## Scope and conclusion
 
