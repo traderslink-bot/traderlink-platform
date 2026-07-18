@@ -1,5 +1,102 @@
 # Trader Intelligence v3 GA0-A2 independent-audit handoff
 
+## Remediation addendum — 2026-07-18
+
+This addendum is the current handoff for the independent re-audit. Sections
+1–30 below are preserved as the historical handoff for the originally audited
+head; their disclosed findings, old counts, old golden execution digests, and
+eight-suite property inventory are superseded by this addendum. They must not
+be read as claims about the remediated head.
+
+### Immutable target separation
+
+| Target | Commit | Verification authority |
+| --- | --- | --- |
+| Originally audited head | `542992b6a7c54ce871c31bc2831126c850fea04c` | Independent audit that required A–J remediation |
+| Remediation implementation head | `b92b321fab7801212c82125511e58c754e594fea` | Complete local executable verification matrix listed below |
+| Documentation-only handoff head | Commit containing this addendum; resolve with `git log -1 --format=%H -- src/docs/trader-intelligence-v3-ga0-a2-independent-audit-handoff-2026-07-18.md` and match PR #104 HEAD | Lightweight diff/private-data/evidence/Markdown checks only |
+
+No runtime, test, dependency, package-lock, build configuration, CI
+configuration, route, browser-facing file, E2E configuration, or generated
+contract changes after the implementation-head test run. The documentation
+commit changes only `plan.md` and files below `src/docs/`.
+
+### Audit finding remediation matrix
+
+| Finding | Implementation | Primary tests | Result | Deferred boundary |
+| --- | --- | --- | --- | --- |
+| A. Byte-proven duplicate suppression | `domain/execution/execution-relationship.ts` | `ga0-a2-execution-relationship.test.ts` | Digest, bytes, and same-source location are all mandatory; every omitted factual field has adversarial coverage | A3 correction application remains deferred |
+| B. Pair-addressable relationship resolution | `domain/execution/execution-relationship-resolution.ts`, `domain/accounting/analytical-pnl.ts` | `ga0-a2-execution-relationship-resolution.test.ts`, property seed `2026071812` | Named input membership, recomputation, group scope, one-occurrence suppression, isolated blocking, and forged/unknown failure pass | A3 resolves re-export/correction lifecycle; A2 blocks it |
+| C. Ordering-signal scope | `domain/execution/canonical-execution.ts`, `execution-ordering.ts` | `ga0-a2-execution-ordering.test.ts` | Broker/document/global index scope, order fill scope, execution-ID namespace, row-document scope, restart and cross-import cases pass | Broker-specific adapters remain future work |
+| D. Economic equivalence | `domain/execution/execution-ordering.ts` | `ga0-a2-execution-ordering.test.ts` | Every accounting, validation, charge, position-effect, correction, security, instrument, and basis field is compared | No implicit commutativity claim outside explicit v1 fields |
+| E. Returned canonical content | `domain/execution/canonical-execution.ts` | `ga0-a2-canonical-execution.test.ts` | NFC content is returned from the canonical value and reserializes byte-for-byte; control-bearing identifiers fail structurally | Broader A3 schema evolution deferred |
+| F. 35 executable fixtures | `testing/fixtures/ga0-a2-executable-fixtures.ts` | `ga0-a2-synthetic-fixtures.test.ts` | 35 table-driven synthetic cases execute builder/order/classifier/reconstruction and hard-coded expectations | Real owner/broker data prohibited |
+| G. Raw decimal bound | `domain/exact/exact-decimal.ts` | `ga0-a2-exact-decimal.test.ts`, seeds `2026071814`–`2026071815` | 256-character pre-parser cap and stable no-value reason code pass | Display rounding remains outside authority |
+| H. Total unknown execution input | `domain/execution/canonical-execution.ts` | `ga0-a2-canonical-execution.test.ts` | Malformed arrays, nested objects, locators, enums, sequence and ordering fields return structured failures without throws | General A3 runtime validation not started |
+| I. Deterministic comparator and PostgreSQL correction | `domain/canonical/canonical-serialization.ts`, execution charge builder, architecture guard, exact-decimal ADR | canonical/architecture/decimal tests | Explicit Unicode code-point comparison is shared; locale comparison is guarded; future target is `NUMERIC(72,24)` plus significant-digit constraints | No PostgreSQL migration in A2 |
+| J. Reference and properties | `testing/reference/fifo-reference-ledger.ts`, accounting result/match contracts | `ga0-a2-fifo-differential.test.ts`, `ga0-a2-property-based.test.ts` | Lots, per-execution matches, totals, cash flow, reversals, exact ratios, round trips, block codes, and 15 fixed suites pass | Reference still shares only declared input/output types and fixture documents |
+
+### Exact property seeds and counts
+
+Each suite uses BigInt coefficient/scale generation, `numRuns: 1000`, a fixed
+seed, and `verbose: 2`: `2026071801` flat long, `2026071802` flat short,
+`2026071803` partial fills, `2026071804` long-to-short reversal,
+`2026071805` duplicate classification, `2026071806` canonical property order,
+`2026071807` digest semantics, `2026071808` ambiguous ordering,
+`2026071809` short-to-long reversal, `2026071810` prior inventory,
+`2026071811` currency isolation, `2026071812` relationship resolution,
+`2026071813` blocked states, `2026071814` price/quantity scale boundaries, and
+`2026071815` 48-digit precision boundaries. Total: 15,000 generated cases.
+
+### Complete implementation-head command record
+
+All commands below ran at exact head
+`b92b321fab7801212c82125511e58c754e594fea`:
+
+| Command | Exact result |
+| --- | --- |
+| `git diff --check origin/main...HEAD` | Exit 0 |
+| `npm ci` | Not repeated because no dependency or lock file changed from the already tested audited branch |
+| `npx tsc --noEmit --pretty false` | Exit 0, no output |
+| changed-path `npx eslint` over the 25 remediation TypeScript paths | Exit 0, zero errors and zero warnings |
+| `npm run verify:ti-v3:ga0-a2` | Exit 0; 14 files, 231 tests; architecture 371/42/82; private data 23,693 total, 23,590 final tree, 103 PR-history blobs |
+| `npm test` | Exit 0; 177 files, 1,731 tests; only isolated-test-repository Git line-ending/branch messages |
+| `npm run verify:ti-v3:architecture` | Exit 0; 371 files, 42 API routes, 82 classified routes |
+| `npm run verify:ti-v3:private-data` | Exit 0; 23,693/23,590/103 records |
+| `npm run verify:layer2` | Exit 0; detected 13, expected 13 |
+| `npm run verify:layer3` | Exit 0; canonical regression `PASS` |
+| `npm run build` | Exit 0; Academy registry passed; Next compiled and generated 127 pages; 19 known Academy notices and five pre-existing broad tracing warnings |
+| `npm run test:e2e:level-analysis` | Intentionally not rerun: no app route, server, Next, browser-facing, E2E configuration, or generated browser contract changed |
+
+Focused cadence evidence before the final cycle: A/B 33 tests; C/D plus
+architecture 96 tests in the last focused checkpoint; E/H 30 tests; F 38
+tests; G 20 tests; FIFO/differential 27 tests; J 15 property tests representing
+15,000 runs. The consolidated verifier/full suite above are the authoritative
+implementation-head totals.
+
+### Documentation-head checks
+
+After the documentation-only commit, the implementer ran only:
+
+1. `git diff --check origin/main...HEAD`;
+2. `npm run verify:ti-v3:private-data`;
+3. focused evidence validation for every path, SHA, command, count, and seed in
+   this addendum;
+4. the repository's available lightweight Markdown/documentation checks.
+
+The exact documentation commit SHA, check results, and current GitHub Actions
+runs are pinned in the final remediation comment on draft PR #104. Full local
+Vitest, property, differential, TypeScript, build, and Playwright commands were
+not duplicated after the documentation-only commit.
+
+### Re-audit stop condition
+
+GA0-A2 remains unaccepted. PR #104 remains draft and must not be merged. No
+GA0-A3, analytics, chart, AI, market data, support/resistance, manual entry,
+reflection, Real Coach/Whop, migration, hosted-user, deployment, or production
+work is included. The exact next action is independent re-audit of the current
+PR head against this addendum and the complete `origin/main...HEAD` diff.
+
 ## 1. Document purpose
 
 This is the implementation engineer's evidence-oriented handoff for independent audit of Trader Intelligence v3 GA0-A2. It is not proof that the implementation is correct, it is not architecture authority, and it is not an acceptance decision. The independent auditor must verify every claim against the complete `origin/main...HEAD` diff, Git history, runtime source, tests, local command results, and current-head GitHub Actions evidence.

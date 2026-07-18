@@ -345,8 +345,12 @@ Document at least:
 - Active branch:
   `agent/trader-intelligence-v3-ga0-a2-exact-truth`, created from the latest
   `origin/main` after verifying the accepted GA0-A1 ancestor.
-- GA0-A2 implementation and the complete required local verification matrix
-  are complete as a review candidate. GA0-A2 is not yet accepted.
+- The first independent audit reviewed
+  `542992b6a7c54ce871c31bc2831126c850fea04c` and required remediation. All
+  findings are implemented and the complete required local verification
+  matrix is green at
+  `b92b321fab7801212c82125511e58c754e594fea`. GA0-A2 is not yet accepted and
+  must return to independent re-audit.
 - Only `private_owner_alpha + local_only + local_sqlite` remains operational.
 - No hosted mode, database migration, saved-data migration, route/UI change,
   analytics, chart, AI/model, market-data, support/resistance, manual-entry,
@@ -354,8 +358,9 @@ Document at least:
 - GA0-A3 bitemporal corrections, manifests, eligibility, evidence references,
   query filters, and backup/restore remain deferred and have not begun.
 - The focused exact-truth verification, repository regressions, private-data
-  and history audit, build, and local E2E are green. The implementation must be
-  published as a draft PR and left open for independent review.
+  and history audit, and build are green. Playwright was not manually rerun
+  because no route, server, Next, browser-facing, or E2E configuration changed.
+  The implementation must remain in draft PR #104 for independent re-review.
 
 ### 6.0.1 Implemented authority
 
@@ -373,7 +378,7 @@ Document at least:
 - `domain/accounting` owns policy-v1 exact FIFO inventory and analytical P/L.
 - `testing/reference` owns the independent BigInt coefficient/scale and FIFO
   oracle; it shares no production arithmetic or matching helper.
-- Thirty-five exact synthetic fixture expectations and eight 1,000-run fixed
+- Thirty-five executable exact synthetic fixtures and fifteen 1,000-run fixed
   property suites cover the required long, short, partial, reversal, fee,
   identity, ordering, currency, prior/open inventory, and fail-closed cases.
 - Architecture guards prohibit decimal imports outside the approved module,
@@ -391,23 +396,30 @@ Document at least:
 - `2026071807` — digest semantics, 1,000 runs.
 - `2026071808` — ambiguous ordering, 1,000 runs.
 
+- `2026071809` — short-to-long reversals, 1,000 runs.
+- `2026071810` — prior inventory, 1,000 runs.
+- `2026071811` — currency isolation, 1,000 runs.
+- `2026071812` — relationship resolution, 1,000 runs.
+- `2026071813` — blocked states, 1,000 runs.
+- `2026071814` — price/quantity scale boundaries, 1,000 runs.
+- `2026071815` — 48-digit precision boundaries, 1,000 runs.
+
 ### 6.0.3 Verification summary
 
 - Clean install, TypeScript, changed-path ESLint, and `git diff --check`: pass.
-- GA0-A2 focused gate and explicit replay: 13 files, 117 tests pass.
-- Full Vitest: 176 files, 1,617 tests pass.
-- Independent specialized replays: SQLite 2 tests; differential 4 tests;
-  fixed-seed properties 8 tests/8,000 generated cases; GA0-A1 containment and
-  number-authority guard 141 tests; affected legacy regressions 42 tests.
-- Architecture: 369 files, 42 API routes, and 82 classified routes pass.
-- Private-data scan: 23,659 records pass both against the final staged tree and
-  after the final commit; the post-commit scan covers 23,586 final-tree records
-  and 73 final branch-history blobs.
+- GA0-A2 focused gate: 14 files, 231 tests pass.
+- Full Vitest: 177 files, 1,731 tests pass.
+- Independent specialized coverage includes SQLite 2 tests, differential 10
+  tests, and fixed-seed properties 15 tests/15,000 generated cases.
+- Architecture: 371 files, 42 API routes, and 82 classified routes pass.
+- Private-data scan at the implementation head: 23,693 records, including
+  23,590 final-tree records and 103 PR-history blobs, pass.
 - Layer 2 and Layer 3 verification: pass.
 - Optimized build: pass, 127 generated pages; existing Academy/Turbopack
   notices remain.
-- Local-only level-analysis E2E: 1 Chromium scenario passes with synthetic
-  owner data and isolated SQLite.
+- Playwright was not manually rerun for this remediation because no app route,
+  local server, Next configuration, browser-facing code, or E2E configuration
+  changed. The previous E2E result is historical baseline evidence only.
 - No live model, financial provider, payment, Discord, Vercel, production
   database, production deployment, or any deployment call occurred.
 

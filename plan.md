@@ -136,9 +136,12 @@ GA0-A2 must not include:
 GA0-A2 is active on
 `agent/trader-intelligence-v3-ga0-a2-exact-truth`. No hosted mode is
 operational. GA0-A3 has not begun. GA0-A2 remains unaccepted until independent
-review of its draft PR. The implementation and complete local verification
-matrix are green; this is an implementation candidate, not an acceptance
-decision.
+re-review of its draft PR. The independent audit of head
+`542992b6a7c54ce871c31bc2831126c850fea04c` returned required remediation.
+That remediation is implemented and fully verified at implementation head
+`b92b321fab7801212c82125511e58c754e594fea`; the separate audit-handoff commit
+is documentation only. This remains a remediation candidate, not an
+acceptance decision.
 
 Feature provenance was reconciled against the separate dirty
 `trader-intelligence-v2` worktree. The deterministic import, saved-trade,

@@ -107,6 +107,33 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-07-18 Trader Intelligence v3 GA0-A2 Audit Remediation Handoff
+
+The independent audit of GA0-A2 head
+`542992b6a7c54ce871c31bc2831126c850fea04c` required fixes. The remediation
+implementation is complete and fully tested at
+`b92b321fab7801212c82125511e58c754e594fea` on the existing
+`agent/trader-intelligence-v3-ga0-a2-exact-truth` branch and draft PR #104.
+
+The remediation makes duplicate relationships pair-addressable and
+byte-proven, scopes all relationship and ordering evidence, hardens the
+unknown execution boundary, returns canonical normalized content, bounds raw
+decimal input, replaces locale-sensitive canonical sorting, corrects future
+PostgreSQL exact storage to `NUMERIC(72,24)` plus domain constraints, executes
+all 35 synthetic fixtures, and expands the independent reference/property
+proof to 15 fixed 1,000-run suites.
+
+Implementation-head verification passed: 14 focused files/231 tests; 177
+full-suite files/1,731 tests; 15,000 property cases; 371-file architecture
+scan; private final-tree/history scan; Layer 2; Layer 3; and the 127-page
+optimized build. Playwright was not manually rerun because no route, server,
+Next, browser-facing, or E2E configuration changed. No live external call or
+deployment occurred.
+
+The following commit is documentation-only. Next resume action: independently
+re-audit PR #104 at its exact published head, keep it draft and unmerged, do
+not claim acceptance, and do not begin GA0-A3.
+
 ### 2026-07-18 Trader Intelligence v3 GA0-A2 Exact Truth Audit Handoff
 
 GA0-A1 is independently accepted and complete. PR #102 merged into `main` as

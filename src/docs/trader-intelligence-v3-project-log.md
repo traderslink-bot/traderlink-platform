@@ -44,6 +44,110 @@ This log may record progress and accepted strengthening decisions. It may not si
 
 # Current Resume Point
 
+## 2026-07-18 — GA0-A2 Independent-Audit Remediation Complete; Re-audit Pending
+
+### Immutable heads and status
+
+- Independent-audited head:
+  `542992b6a7c54ce871c31bc2831126c850fea04c`.
+- Fully tested remediation implementation head:
+  `b92b321fab7801212c82125511e58c754e594fea`.
+- Branch and draft PR remain
+  `agent/trader-intelligence-v3-ga0-a2-exact-truth` and PR #104.
+- The commit following the implementation head changes documentation only and
+  records this handoff. No runtime, test, dependency, build, CI, or generated
+  contract file changes after the complete implementation-head test run.
+- GA0-A2 is not accepted. PR #104 must remain draft and unmerged for a new
+  independent audit. GA0-A3 has not begun.
+
+### Required audit remediation delivered
+
+- Duplicate suppression now requires equal canonical digest, equal canonical
+  bytes, and proven equal source identity/document/row evidence. Unequal bytes
+  under a stable execution ID are correction/conflict or review, never an
+  automatically suppressed duplicate.
+- Relationship classifications carry both execution digests. A deterministic
+  pre-group resolver verifies input membership, recomputes the classification,
+  validates ledger-group scope, suppresses one occurrence per proven pair,
+  and scopes unresolved re-export, possible duplicate, manual review,
+  correction, collision, forged, and cross-group states to the correct result.
+- Broker indices, fill sequence, execution-ID ordering, and source row order
+  are restricted to their declared broker/source/document/order namespaces.
+  Economic-equivalence ties compare every accounting and validation field
+  that can change the result.
+- Canonical execution construction is total for `unknown`, validates ordering
+  semantics/scope/namespace and malformed nested shapes, and returns the
+  normalized canonical value represented by its bytes and digest.
+- Exact-decimal input is capped at 256 raw characters before regex/library
+  parsing. The ADR now selects future PostgreSQL `NUMERIC(72,24)` plus domain
+  constraints, because `NUMERIC(48,24)` cannot hold a valid 48-digit integer.
+- Canonical authorities use the explicit Unicode code-point comparator; a new
+  architecture finding rejects locale-sensitive comparison in those modules.
+- All 35 fixture rows now have executable synthetic inputs and a table-driven
+  builder/order/classifier/reconstruction authority test with hard-coded
+  expectations and applicable digest vectors.
+- Production/reference comparison now covers open lots, matched quantity per
+  execution, reversals, exact weighted ratios, round trips, and blocked codes
+  in addition to ending quantity, gross, charges, net, and cash flow.
+
+### Fixed property evidence
+
+Every suite runs 1,000 deterministic cases with `verbose: 2`:
+
+| Suite | Seed |
+| --- | ---: |
+| Flat long | `2026071801` |
+| Flat short | `2026071802` |
+| Partial fills | `2026071803` |
+| Long-to-short reversals | `2026071804` |
+| Duplicate classification | `2026071805` |
+| Canonical property order | `2026071806` |
+| Digest semantics | `2026071807` |
+| Ambiguous ordering | `2026071808` |
+| Short-to-long reversals | `2026071809` |
+| Prior inventory | `2026071810` |
+| Currency isolation | `2026071811` |
+| Relationship resolution | `2026071812` |
+| Blocked states | `2026071813` |
+| Price/quantity scale boundaries | `2026071814` |
+| 48-digit precision boundaries | `2026071815` |
+
+Total: 15 suites and 15,000 fixed-seed cases.
+
+### Complete implementation-head verification
+
+- `git diff --check origin/main...HEAD`: passed.
+- `npm ci`: intentionally not repeated; no dependency or lock file changed
+  after the already tested audited head.
+- `npx tsc --noEmit --pretty false`: passed.
+- changed-path `npx eslint`: passed with zero errors and zero warnings.
+- `npm run verify:ti-v3:ga0-a2`: passed; 14 files and 231 tests. Its
+  architecture scan passed 371 files/42 API routes/82 classified routes; its
+  private-data scan passed 23,693 records, 23,590 final-tree records, and 103
+  PR-history blobs.
+- `npm test`: passed; 177 files and 1,731 tests. Vitest emitted only temporary
+  Git line-ending/branch messages from its isolated test repositories.
+- standalone `npm run verify:ti-v3:architecture`: passed 371/42/82.
+- standalone `npm run verify:ti-v3:private-data`: passed 23,693/23,590/103.
+- `npm run verify:layer2`: passed with 13 expected/detected patterns.
+- `npm run verify:layer3`: passed canonical regression.
+- `npm run build`: passed; Academy registry passed and Next generated 127
+  pages. The pre-existing 19 Academy registry notices and five Turbopack broad
+  tracing warnings remain.
+- `npm run test:e2e:level-analysis`: intentionally not manually rerun because
+  this remediation changed no route, local server, Next configuration,
+  browser-facing code, or E2E configuration.
+- No live model, market/financial provider, SEC/Nasdaq/FINRA, Whop/payment,
+  Discord, Vercel, production database, production deployment, or deployment
+  call occurred.
+
+### Exact next resume point
+
+Independently re-audit the complete `origin/main...HEAD` diff at PR #104,
+using the remediation addendum in the GA0-A2 audit handoff. Keep the PR draft
+and unmerged. Record acceptance separately only if the re-audit warrants it;
+do not begin GA0-A3 from this entry.
+
 ## 2026-07-18 — GA0-A2 Implementation Candidate Complete; Independent Audit Pending
 
 ### Status and scope
