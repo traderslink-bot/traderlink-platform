@@ -414,7 +414,13 @@ function pullbackPlanStateCopy(plan: TradersLinkAiPullbackPlan): string {
   }
 }
 
-function TradersLinkAiReadCard({ card }: { card: LiveWatchlistCardContent }) {
+function TradersLinkAiReadCard({
+  card,
+  dipBuyPlanVisible = true,
+}: {
+  card: LiveWatchlistCardContent;
+  dipBuyPlanVisible?: boolean;
+}) {
   const read = parseTradersLinkAiRead(card.body);
   if (!read) {
     return (
@@ -434,7 +440,7 @@ function TradersLinkAiReadCard({ card }: { card: LiveWatchlistCardContent }) {
     );
   }
   const downsideCheckpoints = read.downsideCheckpoints ?? [];
-  const pullbackPlan = deriveTradersLinkAiPullbackPlan(read);
+  const pullbackPlan = dipBuyPlanVisible ? deriveTradersLinkAiPullbackPlan(read) : null;
 
   return (
     <article
@@ -1186,7 +1192,10 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
         symbol={symbol}
       />
       {symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
-        <TradersLinkAiReadCard card={tradersLinkAiReadCard} />
+        <TradersLinkAiReadCard
+          card={tradersLinkAiReadCard}
+          dipBuyPlanVisible={symbol.tradersLinkAiReadDipBuyPlanVisible !== false}
+        />
       ) : null}
       {recentNewsFilingsCard ? (
         <WatchlistDetailCardArticle

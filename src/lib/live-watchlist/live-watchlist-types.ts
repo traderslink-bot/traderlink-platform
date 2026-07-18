@@ -29,6 +29,7 @@ export type LiveWatchlistCardPatch = {
   firstPostedAt?: number | null;
   potentialGainCardVisible?: boolean;
   tradersLinkAiReadCardVisible?: boolean;
+  tradersLinkAiReadDipBuyPlanVisible?: boolean;
   levelMap?: LiveWatchlistLevelMap | null;
   cards: Partial<Record<LiveWatchlistCardKind, LiveWatchlistCardContent | null>>;
 };
@@ -48,6 +49,7 @@ export type LiveWatchlistTickerDataPatch = {
   marketDataRevision?: number;
   potentialGainCardVisible?: boolean;
   tradersLinkAiReadCardVisible?: boolean;
+  tradersLinkAiReadDipBuyPlanVisible?: boolean;
   latestPrice: number;
   nearestSupport: number | null;
   nearestResistance: number | null;
@@ -336,6 +338,7 @@ export type LiveWatchlistSymbolState = {
   firstPostedAt: number | null;
   potentialGainCardVisible?: boolean;
   tradersLinkAiReadCardVisible?: boolean;
+  tradersLinkAiReadDipBuyPlanVisible?: boolean;
   potentialGain?: LiveWatchlistPotentialGain | null;
   companyName: string | null;
   latestPrice: number | null;
