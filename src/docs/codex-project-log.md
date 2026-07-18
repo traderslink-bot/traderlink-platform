@@ -107,6 +107,24 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-07-18 Trader Intelligence v3 GA0-A2 Last-Run Report Publication
+
+The complete GA0-A2 audit-remediation run is recorded for the independent
+auditor in
+`src/docs/trader-intelligence-v3-ga0-a2-last-run-report-2026-07-18.md`.
+It separates the originally audited head, fully tested remediation
+implementation head, documentation-only handoff head, and report publication
+head; records the A-J remediation, 35 executable fixtures, 15 fixed seeds,
+complete executable command results, lightweight documentation checks, PR
+state, CI evidence, remaining risks, and audit instructions.
+
+This report publication is documentation-only. No runtime, test, dependency,
+lock-file, generated-contract, build, CI, route, browser, or E2E file changed
+after the fully tested implementation head
+`b92b321fab7801212c82125511e58c754e594fea`. Next resume action: independently
+re-audit the exact current head of draft PR #104, keep it unmerged, do not
+claim GA0-A2 acceptance, and do not begin GA0-A3.
+
 ### 2026-07-18 Trader Intelligence v3 GA0-A2 Audit Remediation Handoff
 
 The independent audit of GA0-A2 head
