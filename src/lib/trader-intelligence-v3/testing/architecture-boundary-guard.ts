@@ -15,7 +15,10 @@ export type TraderIntelligenceArchitectureFindingCode =
   | "ti_v3_arch_academy_coupling"
   | "ti_v3_arch_academy_adapter_import_invalid"
   | "ti_v3_arch_legacy_coaching_internal_import"
-  | "ti_v3_arch_route_domain_authority";
+  | "ti_v3_arch_route_domain_authority"
+  | "ti_v3_arch_decimal_import_outside_boundary"
+  | "ti_v3_arch_legacy_exact_truth_import"
+  | "ti_v3_arch_financial_number_authority";
 
 export interface TraderIntelligenceSourceRecord {
   path: string;
@@ -73,6 +76,40 @@ function hasRouteDomainAuthority(path: string, source: string): boolean {
   };
   visit(sourceFile);
   return found;
+}
+
+function financialNumberAuthorityFindings(path: string, source: string): readonly string[] {
+  const isFinancialAuthority =
+    path.startsWith("src/lib/trader-intelligence-v3/domain/exact/") ||
+    path.startsWith("src/lib/trader-intelligence-v3/domain/accounting/") ||
+    path.startsWith("src/lib/trader-intelligence-v3/testing/reference/");
+  if (!isFinancialAuthority) return [];
+  const sourceFile = parseTraderIntelligenceTypeScript(path, source);
+  const findings = new Set<string>();
+  const visit = (node: ts.Node): void => {
+    if (ts.isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.PlusToken) {
+      findings.add("unary_plus");
+    }
+    if (ts.isCallExpression(node)) {
+      if (
+        ts.isIdentifier(node.expression) &&
+        ["Number", "parseFloat", "parseInt"].includes(node.expression.text)
+      ) {
+        findings.add(node.expression.text);
+      }
+      if (ts.isPropertyAccessExpression(node.expression)) {
+        const receiver = node.expression.expression;
+        const name = node.expression.name.text;
+        if (name === "toNumber") findings.add("toNumber");
+        if (ts.isIdentifier(receiver) && receiver.text === "Math") {
+          findings.add(`Math.${name}`);
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return [...findings].sort();
 }
 
 export function scanTraderIntelligenceArchitectureBoundaries(
@@ -168,10 +205,42 @@ export function scanTraderIntelligenceArchitectureBoundaries(
           dependency.specifier,
         );
       }
+      if (
+        isV3Core &&
+        normalizedDependency === "decimal.js" &&
+        path !== "src/lib/trader-intelligence-v3/domain/exact/exact-decimal.ts" &&
+        !/^src\/lib\/trader-intelligence-v3\/__tests__\/ga0-a2-exact-decimal(?:\.|-)/.test(path)
+      ) {
+        pushFinding(
+          findings,
+          "ti_v3_arch_decimal_import_outside_boundary",
+          path,
+          dependency.specifier,
+        );
+      }
+      if (
+        !isV3Core &&
+        /trader-intelligence-v3\/domain(?:\/|$)/.test(normalizedDependency)
+      ) {
+        pushFinding(
+          findings,
+          "ti_v3_arch_legacy_exact_truth_import",
+          path,
+          dependency.specifier,
+        );
+      }
     }
 
     if (hasRouteDomainAuthority(path, record.source)) {
       pushFinding(findings, "ti_v3_arch_route_domain_authority", path, null);
+    }
+    for (const authority of financialNumberAuthorityFindings(path, record.source)) {
+      pushFinding(
+        findings,
+        "ti_v3_arch_financial_number_authority",
+        path,
+        authority,
+      );
     }
   }
 

@@ -28,6 +28,9 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Verify Trader Intelligence v3 GA0-A2 exact truth
+        run: npm run verify:ti-v3:ga0-a2
+
       - name: Verify Trader Intelligence v3 architecture boundaries
         run: npm run verify:ti-v3:architecture
 
