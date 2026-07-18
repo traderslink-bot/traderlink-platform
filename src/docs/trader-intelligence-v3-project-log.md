@@ -44,6 +44,38 @@ This log may record progress and accepted strengthening decisions. It may not si
 
 # Current Resume Point
 
+## 2026-07-18 - GA0-A2 Second Remediation Complete; Independent Re-audit Pending
+
+- Independent re-audit input implementation:
+  `88db72e70538e2222ae8467c5245fa4b8eb85600`.
+- Stable findings/audit-document head:
+  `480cb480d4ee80e7fe3626a94a1b5622765dd773`.
+- Fully tested second-remediation implementation head:
+  `9721a2707d936987f3b0e116226dd20de400cf58`.
+- Branch remains `agent/trader-intelligence-v3-ga0-a2-exact-truth`; draft PR
+  #104 remains unmerged. GA0-A2 is not accepted and GA0-A3 has not begun.
+- A2-R1 through A2-R7 are implemented: exhaustive opaque relationship
+  coverage, explicit versioned starting inventory, deep immutable envelope
+  integrity, conservative validation/document-aware suppression,
+  prototype-safe canonical dictionaries, unknown-precision ambiguity, and
+  canonical bounded row numbers.
+- The exact executable head passed 14 GA0-A2 files/263 tests, 177 full-suite
+  files/1,763 tests, 19 fixed property suites/19,000 generated cases, 11
+  production/reference differential tests, TypeScript, changed-path ESLint,
+  architecture, private-data tree/history, Layer 2, Layer 3, and the 127-page
+  build. No package file changed, so `npm ci` was not repeated. No browser file
+  changed, so Playwright was not manually rerun.
+- The next commit is documentation-only. It must receive only the lightweight
+  documentation-head checks specified in the last-run report. No executable
+  suite is to be duplicated solely for Markdown changes.
+- No hosted mode is operational. No live model, provider, payment, Discord,
+  Vercel, production database, deployment, or production external call
+  occurred.
+- Exact next resume point: independently re-audit current PR #104 at its exact
+  head against the stable A2-R1 through A2-R7 findings and full branch diff.
+  Keep review threads unresolved, the PR draft and unmerged, and do not start
+  GA0-A3.
+
 ## 2026-07-18 — GA0-A2 Independent-Audit Remediation Complete; Re-audit Pending
 
 ### Immutable heads and status

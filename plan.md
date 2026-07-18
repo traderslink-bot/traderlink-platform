@@ -139,9 +139,14 @@ operational. GA0-A3 has not begun. GA0-A2 remains unaccepted until independent
 re-review of its draft PR. The independent audit of head
 `542992b6a7c54ce871c31bc2831126c850fea04c` returned required remediation.
 That remediation is implemented and fully verified at implementation head
-`b92b321fab7801212c82125511e58c754e594fea`; the separate audit-handoff commit
-is documentation only. This remains a remediation candidate, not an
-acceptance decision.
+`b92b321fab7801212c82125511e58c754e594fea`. A later independent re-audit of
+immutable implementation head `88db72e70538e2222ae8467c5245fa4b8eb85600`
+recorded seven required findings at
+`480cb480d4ee80e7fe3626a94a1b5622765dd773`. A2-R1 through A2-R7 are now
+implemented and fully verified at executable head
+`9721a2707d936987f3b0e116226dd20de400cf58`; the following handoff commit is
+documentation only. This remains a remediation candidate, not an acceptance
+decision.
 
 Feature provenance was reconciled against the separate dirty
 `trader-intelligence-v2` worktree. The deterministic import, saved-trade,
@@ -415,8 +420,8 @@ Maintain an exploration ledger so repeated slicing cannot be hidden.
 
 # 12. Current Next Action
 
-1. independently audit the complete GA0-A2 draft PR against the four ADRs and
-   the acceptance standard;
+1. independently re-audit the complete GA0-A2 draft PR against A2-R1 through
+   A2-R7, the four ADRs, and the acceptance standard;
 2. replay the exact-decimal, canonicalization, identity, ordering, duplicate,
    FIFO, independent-reference, fixed-seed property, SQLite, architecture,
    privacy, legacy, build, and local E2E evidence where needed;

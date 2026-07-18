@@ -1,5 +1,65 @@
 # Trader Intelligence v3 GA0-A2 independent-audit handoff
 
+## Second remediation handoff - 2026-07-18
+
+This is the controlling handoff for the next independent re-audit. The older
+remediation addendum and original sections below remain historical evidence.
+
+| Target | Commit |
+| --- | --- |
+| Immutable implementation that was re-audited | `88db72e70538e2222ae8467c5245fa4b8eb85600` |
+| Mandatory re-audit findings/audit-document head | `480cb480d4ee80e7fe3626a94a1b5622765dd773` |
+| Fully tested second-remediation implementation head | `9721a2707d936987f3b0e116226dd20de400cf58` |
+| Documentation-only handoff head | Resolve with `git log -1 --format=%H -- src/docs/trader-intelligence-v3-ga0-a2-independent-audit-handoff-2026-07-18.md` and require it to match PR #104 HEAD |
+
+### A2-R1 through A2-R7 audit matrix
+
+| Finding | Implementation files | Regression tests | Result | Deferred boundary |
+| --- | --- | --- | --- | --- |
+| A2-R1 relationship completeness | `domain/execution/execution-relationship-resolution.ts`, `domain/accounting/analytical-pnl.ts`, `fifo-position-ledger.ts` | `ga0-a2-execution-relationship-resolution.test.ts`, `ga0-a2-fifo-ledger.test.ts`, seeds `2026071812`, `2026071816` | Exhaustive immutable receipt required; raw FIFO rejects forged/incomplete coverage | A3 relationship decisions/correction application remain deferred |
+| A2-R2 starting inventory | new `domain/accounting/starting-inventory.ts`, FIFO and reference ledgers | `ga0-a2-fifo-ledger.test.ts`, `ga0-a2-fifo-differential.test.ts`, seeds `2026071810`, `2026071818` | Explicit proven-flat/prior-lots/unknown policy; unknown blocks; prior lots preserve exact matching provenance | No migration or prior-lot persistence in A2 |
+| A2-R3 envelope integrity | `domain/canonical/canonical-serialization.ts`, `domain/identity/content-digest.ts`, `domain/execution/canonical-execution.ts`, ordering/relationship/accounting boundaries | canonical execution, ordering, relationship-resolution, FIFO tests; seed `2026071819` | Deep frozen content/validation/envelopes, defensive bytes, re-verification and fail-closed boundaries | A3 schema/persistence envelopes deferred |
+| A2-R4 suppression conservatism | `domain/execution/execution-relationship.ts`, exhaustive resolver | relationship and resolution tests; seeds `2026071805`, `2026071817` | Validation disagreement never suppresses; null document identity never proves same source | Manual resolution and correction lifecycle remain A3 |
+| A2-R5 `__proto__` safety | `domain/canonical/canonical-serialization.ts` | `ga0-a2-canonical-serialization-and-digest.test.ts` | Null-prototype dictionaries and explicit own properties preserve primitive/object/null/nested dangerous keys without prototype mutation | No broader schema work |
+| A2-R6 unknown precision | `domain/execution/execution-ordering.ts` | `ga0-a2-execution-ordering.test.ts`, seed `2026071808` | Unknown precision cannot create interval order; explicit scoped sequence remains valid | Broker adapters remain future work |
+| A2-R7 row number | `domain/execution/canonical-execution.ts`, `execution-ordering.ts` | canonical execution and ordering tests | Canonical bounded integer grammar; no exception-leaking BigInt order path | Adapter-specific record keys remain `record_key` |
+
+### Verification authority
+
+The implementation head passed: `git diff --check`; TypeScript; changed-path
+ESLint; `npm run verify:ti-v3:ga0-a2` (14 files/263 tests); `npm test` (177
+files/1,763 tests); architecture (373/42/82); private-data tree/history scan
+(23,730/23,594/136 records); Layer 2; Layer 3; and the 127-page production
+build. The property file contains 19 fixed 1,000-run suites using seeds
+`2026071801` through `2026071819`, for 19,000 generated cases. The independent
+production/reference differential file passed 11 tests, including accepted
+prior long and short inventory.
+
+`npm ci` was not run because package files did not change. Playwright was not
+run because no route, page, server, Next, browser, E2E, or generated browser
+contract changed. Build output retained the known 19 Academy-registry notices
+and five broad Turbopack tracing warnings. See
+`src/docs/trader-intelligence-v3-ga0-a2-last-run-report-2026-07-18.md` for the
+exact commands, focused cadence, file inventory, and results.
+
+### Auditor instructions
+
+1. Check out PR #104's exact head in a clean worktree and verify that
+   `9721a2707d936987f3b0e116226dd20de400cf58` is its executable ancestor.
+2. Read the controlling architecture, active plan, four ADRs, and
+   `trader-intelligence-v3-ga0-a2-independent-reaudit-findings-2026-07-18.md`.
+3. Re-audit A2-R1 through A2-R7 against the matrix above and inspect the full
+   `origin/main...HEAD` diff, not only the second-remediation commit.
+4. Treat the implementation-head command record as local evidence and GitHub
+   Actions as separate automatic evidence. Re-run only what independent audit
+   judgment requires.
+5. Do not resolve the existing review threads, merge PR #104, deploy, mark
+   GA0-A2 accepted, or begin GA0-A3.
+
+No analytics, charts, AI/model calls, market enrichment, support/resistance,
+feature port, owner-data migration, schema migration, hosted-user, or
+deployment work is included.
+
 ## Remediation addendum — 2026-07-18
 
 This addendum is the current handoff for the independent re-audit. Sections

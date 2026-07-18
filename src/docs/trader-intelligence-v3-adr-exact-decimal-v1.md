@@ -143,3 +143,13 @@ The approach is intentionally stricter than legacy V2. Legacy JavaScript-number
 fields and 32-bit fingerprints remain non-authoritative and unchanged. No
 current page, API, saved trade, or migration consumes this new authority in
 GA0-A2.
+
+## Second-remediation clarification - 2026-07-18
+
+The versioned starting-inventory contract uses the same exact quantity, price,
+currency, and digest types as canonical executions. Accepted prior lots cannot
+introduce an alternate numeric representation or arithmetic path: quantities
+and prices are canonical strings, production arithmetic remains behind the
+approved exact-decimal boundary, and the independent reference continues to
+use its own BigInt coefficient/scale implementation. No bound, grammar,
+rounding, SQLite, or future PostgreSQL decision in this ADR changed.

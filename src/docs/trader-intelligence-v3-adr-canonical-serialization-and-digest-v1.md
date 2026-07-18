@@ -88,3 +88,14 @@ all-number rejection, golden byte/digest vectors, object insertion-order
 properties, semantic array-order properties, explicit semantic sorting,
 persistence-ID independence, semantic-change sensitivity, production
 SHA-256 validation, and an injected collision simulation.
+
+## Second-remediation clarification - 2026-07-18
+
+Canonical object construction uses null-prototype dictionaries and explicit
+own-property definition. This applies both to direct canonical values and the
+strict raw-JSON parser, so `__proto__`, `constructor`, and `prototype` are
+preserved as ordinary semantic keys and cannot mutate an object prototype.
+Normalized canonical arrays and objects are recursively frozen. Serialized
+UTF-8 bytes and content-identity bytes are exposed only as defensive copies;
+mutation of a returned `Uint8Array` cannot change authoritative bytes or a
+later digest/integrity decision.

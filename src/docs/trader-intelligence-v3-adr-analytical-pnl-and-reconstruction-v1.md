@@ -121,3 +121,22 @@ separation, manifests, eligibility, snapshots, stable evidence, filters,
 backup/restore, and migration policy. GA0-A2 adds no database repository,
 route, current-data migration, analytics, chart, AI, market-data, or deployment
 behavior.
+
+## Second-remediation clarification - 2026-07-18
+
+Reconstruction accepts an opaque exhaustive relationship-resolution result,
+not raw executions plus an optional relationship list. Raw FIFO also requires
+that receipt and verifies that its ordered group exactly matches retained
+resolved executions. Unknown, incomplete, or forged coverage fails closed.
+
+Each ledger also requires a versioned starting-inventory contract with state
+`proven_flat`, `accepted_prior_lots`, or `unknown`. Missing or `unknown`
+starting inventory returns `prior_inventory_required` before the first
+execution side can imply long or short inventory. Accepted prior lots require
+exact quantity/price, matching owner/account/instrument/currency, non-null
+source-document identity, source identity, original row locator, and canonical
+execution digest. FIFO consumes those lots without inventing executions and
+preserves their provenance. The independent BigInt reference implements the
+same prior-lot policy independently and differential tests cover prior long
+and prior short closure. No persistence, migration, or A3 correction behavior
+is added.

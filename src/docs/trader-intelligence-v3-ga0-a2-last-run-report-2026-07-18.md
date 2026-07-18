@@ -1,5 +1,125 @@
 # Trader Intelligence v3 GA0-A2 last-run report
 
+## Second remediation round - current report (2026-07-18)
+
+This section supersedes the older remediation record below. The older record
+is preserved as historical evidence and must not be mistaken for the current
+implementation or test head. GA0-A2 remains an unaccepted candidate. Draft PR
+#104 must remain unmerged, and GA0-A3 must not begin.
+
+### Commit separation
+
+| Role | Commit | Verification authority |
+| --- | --- | --- |
+| Re-audited implementation input | `88db72e70538e2222ae8467c5245fa4b8eb85600` | Independent re-audit returned A2-R1 through A2-R7 |
+| Re-audit findings/audit-document head | `480cb480d4ee80e7fe3626a94a1b5622765dd773` | Stable mandatory remediation input |
+| Fully tested second-remediation implementation head | `9721a2707d936987f3b0e116226dd20de400cf58` | Received the complete executable verification below |
+| Documentation-only handoff head | Commit containing this section | Resolve with `git log -1 --format=%H -- src/docs/trader-intelligence-v3-ga0-a2-last-run-report-2026-07-18.md`; receives only lightweight documentation-head checks |
+
+No runtime, test, dependency, package, generated contract, build
+configuration, CI configuration, route, browser-facing file, or E2E
+configuration changes after `9721a2707d936987f3b0e116226dd20de400cf58`.
+
+### Required finding outcomes
+
+| Finding | Current outcome |
+| --- | --- |
+| A2-R1 | Relationship resolution classifies every unordered input pair and returns an immutable opaque coverage receipt. Accounting and raw FIFO reject forged/incomplete receipts, so relationship coverage cannot be omitted. |
+| A2-R2 | Every ledger requires a versioned `proven_flat`, `accepted_prior_lots`, or `unknown` starting-inventory contract. Unknown/missing starts block as `prior_inventory_required`; accepted prior lots require exact matching identity and source provenance. |
+| A2-R3 | Canonical facts, nested objects/arrays, validation, and envelopes are deeply frozen. Bytes are defensive copies. Integrity verification re-canonicalizes untrusted envelopes and ordering, relationship, and accounting boundaries fail closed on drift. |
+| A2-R4 | Validation disagreement is never suppression-eligible. Exact same-source suppression requires non-null matching source-document identity; two null document digests remain ambiguous/manual-review visible. |
+| A2-R5 | Canonical objects use null-prototype dictionaries and explicitly defined own properties. Direct and strict-JSON `__proto__`, `constructor`, and `prototype` keys cannot disappear or mutate prototypes. |
+| A2-R6 | Timestamp intervals contribute no economic order when either precision is `unknown`; explicitly scoped broker sequence may still order. Digest order remains storage-only. |
+| A2-R7 | `row_number` accepts only canonical bounded nonnegative integer strings. `record_key` owns arbitrary bounded source keys, and ordering performs no exception-leaking `BigInt` conversion. |
+
+### Executable files changed in the second remediation
+
+The implementation commit changed 25 files: nine focused test files;
+`domain/accounting/analytical-pnl.ts`, `fifo-position-ledger.ts`, `index.ts`,
+`reconstruction-result.ts`, and new `starting-inventory.ts`;
+`domain/canonical/canonical-serialization.ts`;
+`domain/execution/canonical-execution.ts`, `execution-ordering.ts`,
+`execution-relationship.ts`, and `execution-relationship-resolution.ts`;
+`domain/identity/content-digest.ts`; and testing support/reference files
+`collision-test-hash.ts`, `fixtures/ga0-a2-executable-fixtures.ts`, `index.ts`,
+`reference/fifo-reference-ledger.ts`, and new
+`synthetic-accounting-input.ts`.
+
+No package, lock, app, route, Next, CI, browser, Playwright, generated
+contract, or production persistence file changed.
+
+### Fixed property seeds
+
+All suites use BigInt coefficient/scale generation, `numRuns: 1000`, fixed
+seeds, and `verbose: 2`. Existing seeds `2026071801` through `2026071815`
+remain unchanged. The second remediation adds:
+
+| Seed | Property |
+| --- | --- |
+| `2026071816` | Complete exhaustive relationship coverage |
+| `2026071817` | Deterministic duplicate retention under validation agreement/disagreement |
+| `2026071818` | Explicit starting-inventory truth |
+| `2026071819` | Immutable envelope and integrity-boundary behavior |
+
+Total: 19 property families and 19,000 fixed generated cases.
+
+### Focused implementation cadence
+
+| Focused command family | Result |
+| --- | --- |
+| Canonical serializer only | 1 file, 17 tests passed |
+| Canonical execution plus ordering | 2 files, 60 tests passed at the R6/R7 checkpoint; 64 tests passed after integrity coverage |
+| Relationship classification only | 1 file, 23 tests passed |
+| Relationship, exhaustive resolution, and FIFO | 3 files, 51 tests passed |
+| FIFO after opaque-bypass and starting-identity regressions | 1 file, 19 tests passed |
+| Production/reference differential | 1 file, 11 tests passed |
+| Exact synthetic fixtures | 1 file, 38 tests passed |
+| New fixed-seed properties only | 4 passed, 15 skipped; 4,000 generated cases |
+
+### Consolidated executable verification
+
+Every result below belongs to exact implementation head
+`9721a2707d936987f3b0e116226dd20de400cf58`:
+
+| Command | Exact result |
+| --- | --- |
+| `git diff --check` | Exit 0; no output |
+| `npm ci` | Intentionally not run because neither `package.json` nor `package-lock.json` changed |
+| `npx tsc --noEmit --pretty false` | Exit 0; no output |
+| `$files = @(git diff --name-only --diff-filter=ACMR 480cb480d4ee80e7fe3626a94a1b5622765dd773..HEAD -- '*.ts' '*.tsx' '*.js' '*.mjs' '*.cjs'); npx eslint $files` | Exit 0; no errors or warnings |
+| `npm run verify:ti-v3:ga0-a2` | Exit 0; 14 files, 263 tests; all 19 fixed-seed families; architecture 373/42/82; privacy 23,730 total, 23,594 final-tree, 136 PR-history records |
+| `npm test` | Exit 0; 177 files, 1,763 tests; only isolated temporary-Git line-ending/branch messages |
+| `npm run verify:ti-v3:architecture` | Exit 0; 373 architecture files, 42 API routes, 82 classified routes |
+| `npm run verify:ti-v3:private-data` | Exit 0; 23,730 total, 23,594 final-tree, 136 PR-history records |
+| `npm run verify:layer2` | Exit 0; 13 detected and 13 expected |
+| `npm run verify:layer3` | Exit 0; canonical regression `PASS` |
+| `npm run build` | Exit 0; Academy registry passed; Next compiled and generated 127 pages |
+| Playwright E2E | Intentionally not run: no app route/page, server, Next, browser-facing, E2E configuration, or generated browser contract changed |
+
+Build warnings were unchanged and outside this remediation: 19 Academy
+markdown files not represented in the registry and five broad Turbopack file
+tracing warnings. No test was weakened. No live model, market-data, SEC,
+Nasdaq, FINRA, payment, Whop, Discord, Vercel, production database, production
+deployment, or other live external call occurred.
+
+### Documentation-only closeout and next action
+
+After the implementation-head verification, only Markdown documentation is
+changed. The documentation head receives only `git diff --check
+origin/main...HEAD`, `npm run verify:ti-v3:private-data`, focused path/SHA/test
+count/command evidence validation, and any available lightweight Markdown
+validation. TypeScript, full Vitest, property, differential, build, and E2E
+are not duplicated for documentation-only changes.
+
+Remaining limitations are intentional GA0-A2 boundaries: correction
+application and bitemporal persistence, manifests, eligibility, snapshots,
+stable evidence references, query filters, analytics, charts, AI, market
+enrichment, feature ports, data/schema migrations, hosting, and deployment
+remain deferred. Exact next resume point: independently re-audit current draft
+PR #104 against A2-R1 through A2-R7 and the complete `origin/main...HEAD` diff;
+do not resolve the auditor's threads, merge, deploy, accept GA0-A2, or start
+GA0-A3.
+
 ## 1. Purpose and status
 
 This document records the final implementer run for the GA0-A2 independent-audit remediation. It is an evidence handoff, not an acceptance decision. GA0-A2 remains an unaccepted candidate, pull request #104 must remain draft and unmerged, and GA0-A3 must not begin from this handoff.

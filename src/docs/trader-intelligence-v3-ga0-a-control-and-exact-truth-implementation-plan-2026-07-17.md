@@ -338,6 +338,35 @@ Document at least:
 
 # 6. GA0-A2 — Canonical Execution and Exact Financial Truth
 
+## 6.0 Current second-remediation status - 2026-07-18
+
+- The independent re-audit of immutable implementation head
+  `88db72e70538e2222ae8467c5245fa4b8eb85600`, recorded at audit-document head
+  `480cb480d4ee80e7fe3626a94a1b5622765dd773`, returned A2-R1 through A2-R7.
+- All seven findings are implemented and fully verified at executable head
+  `9721a2707d936987f3b0e116226dd20de400cf58` on the existing branch and draft
+  PR #104.
+- Relationship resolution is exhaustive and opaque; raw FIFO cannot bypass
+  coverage. Starting inventory is explicit and versioned. Canonical execution
+  envelopes are deeply immutable and integrity-verified. Suppression is
+  validation- and document-proof-aware. Canonical dictionaries are
+  prototype-safe. Unknown timestamp precision cannot create time order.
+  `row_number` is a bounded canonical integer string.
+- The independent BigInt/reference ledger supports exact accepted prior long
+  and short lots without importing production arithmetic or matching helpers.
+- Nineteen fixed seeds (`2026071801` through `2026071819`) run 1,000 cases each.
+  The consolidated gate passed 14 files/263 tests; full Vitest passed 177
+  files/1,763 tests; the 11-test differential, architecture, privacy, Layer 2,
+  Layer 3, and 127-page build passed.
+- No package, lock, route, browser, Next, CI, E2E, generated-contract, database,
+  or persistence file changed. `npm ci` and Playwright were therefore not run.
+- The following closeout commit is documentation-only and receives only the
+  prescribed lightweight documentation-head checks. No heavy executable suite
+  is repeated for Markdown-only changes.
+- GA0-A2 remains unaccepted. Keep PR #104 draft and unmerged, leave independent
+  audit threads unresolved, and stop for independent re-audit. GA0-A3 remains
+  deferred and has not begun.
+
 ## 6.0 Implementation status — 2026-07-18
 
 - GA0-A1 is independently accepted and complete. PR #102 merged as

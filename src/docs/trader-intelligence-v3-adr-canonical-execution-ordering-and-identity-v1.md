@@ -142,3 +142,26 @@ so reserializing `envelope.content` yields exactly `envelope.canonicalBytes`.
 Legacy 32-bit import fingerprints remain non-authoritative diagnostic and
 migration evidence. Current routes, saved data, imports, and visible numbers
 are not switched to this contract in GA0-A2.
+
+## Second-remediation clarification - 2026-07-18
+
+Canonical execution content, nested charges/locators, validation, and the
+envelope are deeply readonly and runtime-frozen. An integrity verifier
+rebuilds untrusted envelopes, compares canonical bytes and digest, and returns
+a protected envelope. Ordering, relationship resolution, and accounting use
+protected envelopes or fail closed on integrity drift.
+
+`row_number` is a canonical bounded nonnegative integer string
+(`0` or a nonzero-leading value up to 38 digits). Arbitrary bounded adapter
+keys use `record_key`. Ordering never applies `BigInt` to unchecked row or
+sequence evidence. Timestamp-interval evidence is unavailable when either
+source precision is `unknown`; explicitly source-scoped broker sequence may
+still establish order, while digest ordering remains storage-only.
+
+Relationship coverage is exhaustive over every unordered input pair and is
+represented by an immutable opaque receipt. Exact same-source suppression
+requires equal digest, equal bytes, equal validation, matching source identity
+and row, and a non-null matching source-document digest. Validation
+disagreement or missing document proof is conservative and never
+suppression-eligible. A test-only hash injection remains isolated to focused
+collision evidence; production content identity remains SHA-256 only.

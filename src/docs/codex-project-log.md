@@ -107,6 +107,36 @@ Important project rule:
 
 ## Current Resume Point
 
+### 2026-07-18 Trader Intelligence v3 GA0-A2 Second Remediation Handoff
+
+The mandatory second re-audit findings at
+`src/docs/trader-intelligence-v3-ga0-a2-independent-reaudit-findings-2026-07-18.md`
+are implemented on the existing GA0-A2 branch and draft PR #104. The fully
+tested executable implementation head is
+`9721a2707d936987f3b0e116226dd20de400cf58`, following re-audited implementation
+`88db72e70538e2222ae8467c5245fa4b8eb85600` and stable audit-document head
+`480cb480d4ee80e7fe3626a94a1b5622765dd773`.
+
+A2-R1 through A2-R7 now enforce exhaustive opaque relationship coverage,
+explicit proven-flat/prior-lot/unknown starting inventory, deeply immutable
+and verified execution envelopes, validation/document-aware duplicate
+suppression, prototype-safe canonical JSON, unknown-precision ambiguity, and
+bounded canonical row numbers. The independent reference ledger covers
+accepted prior long/short lots. Nineteen fixed 1,000-run suites use seeds
+`2026071801` through `2026071819`.
+
+Implementation-head verification passed: GA0-A2 14 files/263 tests; full
+Vitest 177 files/1,763 tests; differential 11 tests; architecture 373/42/82;
+private final-tree/history scanning; Layer 2; Layer 3; and the 127-page build.
+No package or browser-facing file changed, so `npm ci` and Playwright were not
+run. No deployment or live external call occurred.
+
+The following closeout commit is documentation-only and must not trigger a
+duplicate heavy local run. Next resume action: independently re-audit the exact
+current head of draft PR #104, keep all independent-audit threads unresolved,
+keep the PR draft and unmerged, do not claim GA0-A2 acceptance, and do not
+begin GA0-A3.
+
 ### 2026-07-18 Trader Intelligence v3 GA0-A2 Last-Run Report Publication
 
 The complete GA0-A2 audit-remediation run is recorded for the independent
