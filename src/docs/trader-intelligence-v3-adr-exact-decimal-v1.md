@@ -1,7 +1,7 @@
 # ADR: Trader Intelligence v3 Exact Decimal v1
 
 Date: 2026-07-18 America/Toronto
-Status: Accepted for GA0-A2 implementation; gate acceptance remains pending independent review
+Status: Accepted; GA0-A2 independently accepted and merged through PR #104 at `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`
 Decision key: `ti_v3_exact_decimal_v1`
 
 ## Context and boundary

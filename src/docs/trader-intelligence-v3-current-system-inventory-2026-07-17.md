@@ -1,8 +1,8 @@
 # Trader Intelligence v3 Current-System Inventory
 
 Date: 2026-07-18
-Gate: GA0-A2 canonical execution and exact financial truth
-Branch: `agent/trader-intelligence-v3-ga0-a2-exact-truth`
+Gate: GA0-A3 temporal, manifest, eligibility, and query foundation
+Branch: `agent/trader-intelligence-v3-ga0-a3-manifests`
 
 GA0-A1 is accepted and complete at
 `4f9e440116258c9548a2d13f7ea057a9075101c6`. The historical inventory below is
@@ -16,6 +16,12 @@ without wiring a runtime consumer: accounting now requires exhaustive opaque
 relationship coverage and explicit versioned starting inventory; canonical
 execution envelopes are deeply immutable and verified; serializer dictionaries
 are prototype-safe; and unknown precision/row-number evidence fails closed.
+
+GA0-A2 was independently accepted and merged through PR #104 at
+`e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`. GA0-A3 began only on the branch
+named above from that accepted merge. The GA0-A2 inventory remains the inherited
+factual authority; GA0-A3 extends it without wiring routes, analytics, charts,
+AI, market enrichment, hosted operation, public users, or deployment.
 
 ## GA0-A2 isolated authority inventory
 

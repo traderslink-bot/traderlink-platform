@@ -44,6 +44,28 @@ This log may record progress and accepted strengthening decisions. It may not si
 
 # Current Resume Point
 
+## 2026-07-18 — GA0-A2 Accepted and Merged; GA0-A3 Active
+
+- GA0-A2 received independent acceptance and is complete.
+- PR #104 merged into `main` as
+  `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`.
+- The accepted merge is the base commit for GA0-A3 and was verified as an
+  ancestor before implementation began.
+- GA0-A3 — Temporal, Manifest, Eligibility, and Query Foundation — is the
+  active slice on `agent/trader-intelligence-v3-ga0-a3-manifests`.
+- GA0-A3 began only on that new branch. It does not reopen or modify PR #104.
+- The product priority remains moving next toward visible, owner-testable
+  deterministic analytics and AI functionality after this final factual
+  foundation is independently accepted.
+- Only `private_owner_alpha + local_only + local_sqlite` is operational.
+  Production hosting and public-user security remain deferred.
+- No deployment is authorized. GA0-B, analytics, query UI, charts, AI/model
+  calls, market enrichment, support/resistance, hosted identity, and public
+  accounts remain out of scope.
+- Exact next resume point: implement the complete section 7 GA0-A3 contracts,
+  run the prescribed focused and consolidated verification, publish one draft
+  PR, and stop for independent audit without merge or deployment.
+
 ## 2026-07-18 - GA0-A2 Final Correction Implemented; Untested Re-audit Candidate
 
 - The latest independent re-audit of executable head
@@ -897,8 +919,8 @@ Audit:
 | Gate | Status | Notes |
 |---|---|---|
 | GA0-A1 Containment | Accepted and complete | PR #102 merged as `4f9e440116258c9548a2d13f7ea057a9075101c6` |
-| GA0-A2 Exact truth | In implementation | Dedicated branch; independent review pending after completion |
-| GA0-A3 Temporal/manifests/query foundation | Not started | After A2 review |
+| GA0-A2 Exact truth | Accepted and complete | PR #104 merged as `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a` |
+| GA0-A3 Temporal/manifests/query foundation | In implementation | Dedicated branch; independent audit required before GA0-B |
 | GA0-B Deterministic tools/series | Not started | Weekday and daily-stop |
 | GA0-C Private calibration | Not started | Real-data verification outside Git |
 | GA1 Query/visual evidence | Not started | Accessible deterministic visuals |

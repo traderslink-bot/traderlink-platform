@@ -1,7 +1,7 @@
 # ADR: Trader Intelligence v3 Analytical P/L and Reconstruction v1
 
 Date: 2026-07-18 America/Toronto
-Status: Accepted for GA0-A2 implementation; gate acceptance remains pending independent review
+Status: Accepted; GA0-A2 independently accepted and merged through PR #104 at `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`
 Policy key: `ti_v3_fifo_analytical_pnl_v1`
 
 ## Purpose and authority

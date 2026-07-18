@@ -1660,7 +1660,13 @@ Compare deterministic-only, deterministic-plus-visual, legacy v2, v3 AI, and abs
 
 # 34. Current Next Action
 
-Complete the independent-audit remediation on the existing GA0-A1 branch, run the full verification set, keep PR #102 draft and unmerged, and return the exact revised head for independent re-audit. Keep runtime work loopback-only, internal, model-free, and undeployed. Do not begin GA0-A2.
+GA0-A2 is independently accepted and merged through PR #104 at
+`e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`. Implement GA0-A3 only on
+`agent/trader-intelligence-v3-ga0-a3-manifests`, preserving the isolated exact
+truth boundary and completing the temporal, manifest, eligibility, snapshot,
+evidence, filter, validation, stale-state, backup/restore, and parser-hardening
+foundation. Keep runtime work loopback-only, internal, model-free, and
+undeployed. Stop at a draft PR for independent audit and do not begin GA0-B.
 
 ---
 

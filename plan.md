@@ -6,7 +6,7 @@
 **Only operational hosting mode:** `local_only`
 **Primary domain:** U.S. listed small-cap and micro-cap active trading  
 **Product boundary:** retrospective educational trade review and self-improvement  
-**Current gate:** GA0-A2 — canonical execution and exact financial truth
+**Current gate:** GA0-A3 — temporal, manifest, eligibility, and query foundation
 **Active implementation plan:** `src/docs/trader-intelligence-v3-ga0-a-control-and-exact-truth-implementation-plan-2026-07-17.md`
 
 Start here when resuming Trader Intelligence product, import, analytics, query, visualization, coaching, market context, external sources, persistence, AI, or QA work.
@@ -100,65 +100,38 @@ AI must not become the parser, calculator, database, unrestricted SQL author, ru
 
 ---
 
-# 4. Current Gate — GA0-A2
+# 4. Current Gate — GA0-A3
 
 GA0-A1 is independently accepted and complete. PR #102 merged into `main` at
 commit `4f9e440116258c9548a2d13f7ea057a9075101c6`.
 
+GA0-A2 is independently accepted and complete. PR #104 merged into `main` at
+commit `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`.
+
+GA0-A3 is active on
+`agent/trader-intelligence-v3-ga0-a3-manifests`. It began only after that branch
+was created from the accepted merge commit.
+
 Build now:
 
-- exact decimal domain values and exact rational values;
-- canonical serialization and SHA-256 content identity;
-- canonical execution provenance, validation, ordering, and ambiguity;
-- duplicate, re-export, correction, collision, and review states;
-- exact FIFO analytical P/L and inventory reconstruction;
-- an independent BigInt/rational reference implementation;
-- exact synthetic fixtures, differential/property tests, and architecture guards.
+- append-only bitemporal correction application and replay;
+- factual lifecycle separated from review disposition;
+- retrospective/open-position and cutoff policies;
+- content-addressed dataset and coverage manifests;
+- per-capability eligibility;
+- immutable analysis snapshots and stable evidence references;
+- canonical date/time/query-filter contracts and digests;
+- runtime validation and stale/invalidation propagation;
+- WAL-safe local SQLite backup/restore;
+- focused parser-hardening contracts and severe fail-closed fixes.
 
-GA0-A2 must not include:
-
-- AI/model calls;
-- natural-language query parsing;
-- analytics tools;
-- chart-ready financial series;
-- chart rendering;
-- public feature routes;
-- production multi-user writes;
-- `/coach` redesign;
-- market enrichment;
-- support/resistance consumption;
-- second level detector;
-- setup classification;
-- unrestricted SQL;
-- vector storage;
-- production deployment.
-
-GA0-A2 is active on
-`agent/trader-intelligence-v3-ga0-a2-exact-truth`. No hosted mode is
-operational. GA0-A3 has not begun. GA0-A2 remains unaccepted until independent
-re-review of its draft PR. The independent audit of head
-`542992b6a7c54ce871c31bc2831126c850fea04c` returned required remediation.
-That remediation is implemented and fully verified at implementation head
-`b92b321fab7801212c82125511e58c754e594fea`. A later independent re-audit of
-immutable implementation head `88db72e70538e2222ae8467c5245fa4b8eb85600`
-recorded seven required findings at
-`480cb480d4ee80e7fe3626a94a1b5622765dd773`. A2-R1 through A2-R7 are now
-implemented and fully verified at executable head
-`9721a2707d936987f3b0e116226dd20de400cf58`; the following handoff commit is
-documentation only. This remains a remediation candidate, not an acceptance
-decision.
-
-A later independent re-audit accepted the prior corrections except for one
-remaining correction/bust identity-scope defect. The binding final scope is
-`src/docs/trader-intelligence-v3-ga0-a2-final-correction-scope-2026-07-18.md`
-at documentation head `f3a69ac75979aec992f58c52ce1d652cf4251734`.
-Focused executable head `8b141633f19e10dfd503e4c1e83f5660e7e4e9b7`
-requires matching canonical owner, account, resolved stable instrument,
-currency, broker, and source system for stable execution/correction pairing
-and its candidate indexes. The owner directed that no local tests or
-verification be run for this correction, so it is an unverified candidate
-pending independent code review. GA0-A2 remains unaccepted and GA0-A3 has not
-begun.
+GA0-A3 must not include analytics, query UI, charts, AI/model calls,
+natural-language parsing, market enrichment, support/resistance, public-user
+infrastructure, hosted operation, production migration, deployment, or GA0-B.
+The product priority remains progressing next toward visible, owner-testable
+deterministic analytics and AI functionality after this factual foundation is
+independently accepted. Production hosting and public-user security remain
+deferred.
 
 Feature provenance was reconciled against the separate dirty
 `trader-intelligence-v2` worktree. The deterministic import, saved-trade,
@@ -178,11 +151,11 @@ Post-audit feature preservation sequence, without widening GA0-A1:
 4. adapt Real Coach screens and entitlement behavior with a synthetic local-owner entitlement for app testing, while deferring real Whop, payment, and hosted identity calls to the hosted-support foundation;
 5. keep the committed Academy Discord login separate from future Trader Intelligence identity until an explicit product/auth decision connects or replaces it.
 
-These are preservation and sequencing commitments, not implementation authority on GA0-A2.
+These are preservation and sequencing commitments, not implementation authority on GA0-A3.
 
 Recommended implementation branch:
 
-`agent/trader-intelligence-v3-ga0-a2-exact-truth`
+`agent/trader-intelligence-v3-ga0-a3-manifests`
 
 ---
 
@@ -432,14 +405,14 @@ Maintain an exploration ledger so repeated slicing cannot be hidden.
 
 # 12. Current Next Action
 
-1. independently inspect final focused executable head
-   `8b141633f19e10dfd503e4c1e83f5660e7e4e9b7` against the binding correction
-   scope and complete PR diff;
-2. treat the final correction as unverified because the owner explicitly
-   directed that no local test or verification command be run;
-3. keep PR #104 draft and unmerged, and leave independent review threads
-   unresolved until the independent auditor decides disposition;
-4. do not mark GA0-A2 accepted and do not begin GA0-A3;
+1. implement GA0-A3 on
+   `agent/trader-intelligence-v3-ga0-a3-manifests` from accepted merge commit
+   `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`;
+2. use focused temporal, manifest, eligibility, snapshot, evidence, filter,
+   validation, backup/restore, and parser-hardening tests during development;
+3. complete one consolidated GA0-A3 verification after executable work;
+4. open one draft PR and stop for independent audit without merging or
+   deploying;
 5. keep runtime work internal, loopback-only, model-free, and undeployed.
 
 ---

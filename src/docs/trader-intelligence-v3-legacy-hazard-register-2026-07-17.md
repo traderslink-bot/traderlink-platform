@@ -1,15 +1,15 @@
 # Trader Intelligence v3 Legacy Hazard Register
 
 Date: 2026-07-18
-Gate: GA0-A2 canonical execution and exact financial truth
+Gate: GA0-A3 temporal, manifest, eligibility, and query foundation
 
 GA0-A1 is accepted and complete at
-`4f9e440116258c9548a2d13f7ea057a9075101c6`. GA0-A2 is active on
-`agent/trader-intelligence-v3-ga0-a2-exact-truth`. This slice implements the
-candidate controls for H-005 and H-006 through a new isolated authority;
-legacy behavior remains preserved and non-authoritative until a separately
-accepted adapter/migration phase. The candidate controls do not close either
-hazard before independent GA0-A2 acceptance and later adapter/migration work.
+`4f9e440116258c9548a2d13f7ea057a9075101c6`. GA0-A2 is independently accepted
+and merged through PR #104 at
+`e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`. GA0-A3 is active on
+`agent/trader-intelligence-v3-ga0-a3-manifests`. The accepted isolated GA0-A2
+authority controls H-005 and H-006, but legacy behavior remains preserved and
+non-authoritative until a separately accepted adapter/migration phase.
 
 ## Purpose
 
@@ -40,11 +40,11 @@ This register prevents contained prototype behavior from being mistaken for acce
 
 ## Release interpretation
 
-GA0-A1 is accepted as the local containment gate. GA0-A2 has implementation
-candidate controls for H-005 and H-006, but remains unaccepted pending
-independent review; neither hazard is retired because legacy imports, stored
-data, routes, and user-visible calculations are deliberately unrewired. GA0-A3
-still owns bitemporal correction application, manifests, eligibility,
-snapshots, evidence references, query foundations, and WAL-safe backup/restore.
+GA0-A1 is accepted as the local containment gate and GA0-A2 is accepted as the
+isolated exact-truth gate. H-005 and H-006 are narrowed but not retired because
+legacy imports, stored data, routes, and user-visible calculations remain
+deliberately unrewired. GA0-A3 now owns bitemporal correction application,
+manifests, eligibility, snapshots, evidence references, query foundations, and
+WAL-safe backup/restore.
 All remaining hazards block any production-ready claim. Private-hosted
 deployment is explicitly non-operational and unauthorized.
