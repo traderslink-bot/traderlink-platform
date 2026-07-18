@@ -29,8 +29,10 @@ import {
   reconcileLiveWatchlistSnapshot,
 } from "@/src/lib/live-watchlist/live-watchlist-reconciliation";
 import {
+  deriveTradersLinkAiPullbackPlan,
   formatAiReadSession,
   parseTradersLinkAiRead,
+  type TradersLinkAiPullbackPlan,
 } from "@/src/lib/live-watchlist/traderslink-ai-read";
 
 const watchlistDateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -401,6 +403,17 @@ function DilutionTimingRow({
   );
 }
 
+function pullbackPlanStateCopy(plan: TradersLinkAiPullbackPlan): string {
+  switch (plan.state) {
+    case "watch":
+      return "Price is still above the zone. Wait for a controlled pullback; this is not a chase entry.";
+    case "testing":
+      return `Price is testing the zone. A potential entry requires a lower-price rejection and reclaim of $${formatPrice(plan.reclaimPrice)}; the first touch alone is not confirmation.`;
+    case "reclaim_required":
+      return `Price is below the pullback zone. Do not treat the lower price as an entry until it reclaims $${formatPrice(plan.reclaimPrice)} and holds.`;
+  }
+}
+
 function TradersLinkAiReadCard({ card }: { card: LiveWatchlistCardContent }) {
   const read = parseTradersLinkAiRead(card.body);
   if (!read) {
@@ -421,6 +434,7 @@ function TradersLinkAiReadCard({ card }: { card: LiveWatchlistCardContent }) {
     );
   }
   const downsideCheckpoints = read.downsideCheckpoints ?? [];
+  const pullbackPlan = deriveTradersLinkAiPullbackPlan(read);
 
   return (
     <article
@@ -449,7 +463,10 @@ function TradersLinkAiReadCard({ card }: { card: LiveWatchlistCardContent }) {
 
       <div className="watchlist-ai-read-level-grid">
         <TradersLinkAiReadLevelBlock heading="Needs to hold" level={read.needsToHold} />
-        <TradersLinkAiReadLevelBlock heading="Caution below" level={read.cautionBelow} />
+        <TradersLinkAiReadLevelBlock
+          heading="Pullback needs confirmation below"
+          level={read.cautionBelow}
+        />
         <TradersLinkAiReadLevelBlock heading="Momentum failure" level={read.momentumFailure} />
         <TradersLinkAiReadLevelBlock heading="Must clear" level={read.mustClear} />
         <TradersLinkAiReadLevelBlock
@@ -457,6 +474,30 @@ function TradersLinkAiReadCard({ card }: { card: LiveWatchlistCardContent }) {
           level={read.breakoutContinuation}
         />
       </div>
+
+      {pullbackPlan ? (
+        <section className="watchlist-ai-read-section">
+          <h3>Potential dip-buy plan</h3>
+          <p>
+            Pullback zone: {" "}
+            <strong>
+              ${formatPrice(pullbackPlan.zoneLow)}-${formatPrice(pullbackPlan.zoneHigh)}
+            </strong>.
+          </p>
+          <p>{pullbackPlanStateCopy(pullbackPlan)}</p>
+          <p>
+            Risk boundary: acceptance below ${formatPrice(pullbackPlan.invalidationPrice)} invalidates
+            the original long setup; wait for a new base and reclaim rather than averaging into the
+            failure.
+          </p>
+          {pullbackPlan.firstBounceTarget !== null ? (
+            <p>
+              First bounce objective after a confirmed reclaim: {" "}
+              ${formatPrice(pullbackPlan.firstBounceTarget)}.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       {read.targets.length > 0 ? (
         <section className="watchlist-ai-read-section">

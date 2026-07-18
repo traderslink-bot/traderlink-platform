@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { formatAiReadSession, parseTradersLinkAiRead } from "../traderslink-ai-read";
+import {
+  deriveTradersLinkAiPullbackPlan,
+  formatAiReadSession,
+  parseTradersLinkAiRead,
+} from "../traderslink-ai-read";
 
 function validBody() {
   return JSON.stringify({
@@ -103,6 +107,55 @@ describe("TradersLink AI Read parser", () => {
     expect(read?.usage?.webSearchCostUsd).toBe(0.01);
     expect(read?.sources[0]?.evidence?.filingType).toBe("8-K");
     expect(formatAiReadSession(read!.marketSession)).toBe("Postmarket");
+  });
+
+  it("creates a conditional pullback plan only from distinct grounded boundaries", () => {
+    const value = JSON.parse(validBody());
+    value.needsToHold = {
+      label: "Opening shelf",
+      price: 1.3,
+      rationale: "The shelf held repeated tests.",
+    };
+    value.cautionBelow = {
+      label: "Pullback caution",
+      price: 1.25,
+      rationale: "Acceptance below weakens the shelf.",
+    };
+    value.momentumFailure = {
+      label: "Failure",
+      price: 1.2,
+      rationale: "A clean loss breaks the setup.",
+    };
+    const read = parseTradersLinkAiRead(JSON.stringify(value));
+
+    expect(read).not.toBeNull();
+    expect(deriveTradersLinkAiPullbackPlan(read!)).toEqual({
+      state: "watch",
+      zoneLow: 1.25,
+      zoneHigh: 1.3,
+      reclaimPrice: 1.3,
+      invalidationPrice: 1.2,
+      firstBounceTarget: 1.5,
+    });
+  });
+
+  it("does not label overlapping caution and hold levels as a dip-buy plan", () => {
+    const read = parseTradersLinkAiRead(validBody());
+
+    expect(read).not.toBeNull();
+    expect(deriveTradersLinkAiPullbackPlan(read!)).toBeNull();
+  });
+
+  it("retires the pullback plan after its momentum-failure boundary breaks", () => {
+    const value = JSON.parse(validBody());
+    value.currentPrice = 1.19;
+    value.needsToHold = { label: "Hold", price: 1.3, rationale: "Held shelf." };
+    value.cautionBelow = { label: "Caution", price: 1.25, rationale: "Shelf weakens." };
+    value.momentumFailure = { label: "Failure", price: 1.2, rationale: "Shelf fails." };
+    const read = parseTradersLinkAiRead(JSON.stringify(value));
+
+    expect(read).not.toBeNull();
+    expect(deriveTradersLinkAiPullbackPlan(read!)).toBeNull();
   });
 
   it("rejects malformed payloads and unsafe source URLs", () => {
