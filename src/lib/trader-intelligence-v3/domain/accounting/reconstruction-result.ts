@@ -20,11 +20,15 @@ export type InventoryDirection = "long" | "short";
 export type ReconstructionBlockedCode =
   | "ti_v3_reconstruction_order_ambiguous"
   | "ti_v3_reconstruction_order_conflicting"
+  | "ti_v3_reconstruction_order_integrity_invalid"
   | "ti_v3_reconstruction_execution_not_accepted"
   | "ti_v3_reconstruction_instrument_unresolved"
   | "ti_v3_reconstruction_currency_missing"
   | "ti_v3_reconstruction_currency_changed"
   | "ti_v3_reconstruction_prior_inventory_required"
+  | "ti_v3_reconstruction_prior_inventory_overlap"
+  | "ti_v3_reconstruction_starting_inventory_as_of_violation"
+  | "ti_v3_reconstruction_prior_charge_coverage_incomplete"
   | ExecutionRelationshipResolutionBlockCode
   | "ti_v3_reconstruction_security_type_unsupported"
   | "ti_v3_reconstruction_corporate_action_basis_unresolved"
@@ -45,12 +49,23 @@ export interface FifoOpenLot {
   remainingQuantity: ExactQuantity;
   price: ExactPrice;
   sourceExecutionDigest: CanonicalExecutionDigest;
-  sourceProvenance: {
-    readonly kind: "canonical_execution" | "accepted_prior_lot";
-    readonly sourceIdentity: string;
-    readonly sourceDocumentDigest: CanonicalSourceDocumentDigest | null;
-    readonly originalSourceRowLocator: CanonicalSourceRowLocator;
-  };
+  sourceProvenance:
+    | {
+        readonly kind: "canonical_execution";
+        readonly sourceIdentity: string;
+        readonly sourceDocumentDigest: CanonicalSourceDocumentDigest | null;
+        readonly originalSourceRowLocator: CanonicalSourceRowLocator;
+      }
+    | {
+        readonly kind: "accepted_prior_lot";
+        readonly sourceIdentity: string;
+        readonly sourceDocumentDigest: CanonicalSourceDocumentDigest;
+        readonly originalSourceRowLocator: CanonicalSourceRowLocator;
+        readonly acquiredAt: string;
+        readonly fifoOrdinal: string;
+        readonly basisPolicy: "execution_price_with_explicit_charges";
+        readonly chargeCoverageState: "complete" | "incomplete";
+      };
 }
 
 export interface ReversalEffect {

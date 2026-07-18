@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  EXECUTION_RELATIONSHIP_RESOURCE_LIMITS,
   isCompleteExecutionRelationshipResolution,
   reconstructAnalyticalPnl,
   resolveExecutionRelationships,
@@ -31,23 +32,35 @@ function closingExecution() {
 }
 
 describe("Trader Intelligence v3 execution relationship resolution", () => {
-  it("creates an opaque exhaustive receipt for every unordered input pair", () => {
-    const executions = [
-      buildSyntheticCanonicalExecution({ executionId: "SYNTH-A" }),
-      buildSyntheticCanonicalExecution({ executionId: "SYNTH-B" }),
-      buildSyntheticCanonicalExecution({ executionId: "SYNTH-C" }),
-    ];
+  it("creates an opaque compact completeness receipt without materializing default-distinct pairs", () => {
+    const executions = ["A", "B", "C"].map((token) =>
+      buildSyntheticCanonicalExecution({
+        executionId: `SYNTH-${token}`,
+        originalSourceRowLocator: {
+          kind: "record_key",
+          value: `ordinary-${token.toLowerCase()}`,
+          rowOrderPreserved: false,
+        },
+        brokerExecutionIndex: null,
+        brokerFillSequence: null,
+      }),
+    );
     const resolution = resolveExecutionRelationships(executions);
     expect(isCompleteExecutionRelationshipResolution(resolution)).toBe(true);
     expect(resolution.coverageReceipt).toMatchObject({
       state: "complete",
       inputExecutionCount: 3,
-      expectedPairCount: 3,
-      classifiedPairCount: 3,
+      candidateRelationshipCount: 0,
+      classifiedCandidateCount: 0,
+      defaultDistinctPairCount: "3",
+      defaultDistinctProof: "absence_from_all_conservative_candidate_indexes",
     });
-    expect(resolution.coverageReceipt.pairs).toHaveLength(3);
+    expect(resolution.coverageReceipt.candidateRelationships).toHaveLength(0);
+    expect(resolution.coverageReceipt).not.toHaveProperty("pairs");
     expect(Object.isFrozen(resolution)).toBe(true);
-    expect(Object.isFrozen(resolution.coverageReceipt.pairs)).toBe(true);
+    expect(Object.isFrozen(resolution.coverageReceipt.candidateRelationships)).toBe(
+      true,
+    );
   });
 
   it("automatically suppresses only proven exact same-source duplicate occurrences", () => {
@@ -69,9 +82,9 @@ describe("Trader Intelligence v3 execution relationship resolution", () => {
     const opening = buildSyntheticCanonicalExecution({ charges: [] });
     const resolution = resolveExecutionRelationships([opening, opening, opening]);
     expect(resolution.retainedExecutions).toEqual([opening]);
-    expect(resolution.coverageReceipt.pairs).toHaveLength(3);
+    expect(resolution.coverageReceipt.candidateRelationships).toHaveLength(3);
     expect(
-      resolution.coverageReceipt.pairs.every(
+      resolution.coverageReceipt.candidateRelationships.every(
         (pair) => pair.classification.suppressionEligible,
       ),
     ).toBe(true);
@@ -195,9 +208,9 @@ describe("Trader Intelligence v3 execution relationship resolution", () => {
         coverageReceipt: {
           ...valid.relationshipResolution.coverageReceipt,
           state: "complete",
-          expectedPairCount: 1,
-          classifiedPairCount: 0,
-          pairs: [],
+          candidateRelationshipCount: 1,
+          classifiedCandidateCount: 0,
+          candidateRelationships: [],
         },
       },
     } as unknown as AnalyticalPnlReconstructionInput;
@@ -288,4 +301,128 @@ describe("Trader Intelligence v3 execution relationship resolution", () => {
       "USD",
     ]);
   });
+
+  it.each(["correction", "bust"] as const)(
+    "blocks an unresolved %s only in its own instrument and currency group",
+    (correctionState) => {
+      const affected = buildSyntheticCanonicalExecution({
+        correctionState,
+        correctionReference: "SYNTH-AFFECTED-ORIGINAL",
+        executionId: "SYNTH-AFFECTED-REPLACEMENT",
+        charges: [],
+      });
+      const unrelated = buildSyntheticCanonicalExecution({
+        currency: "CAD",
+        stableInstrumentKey: "instrument_synthetic_cad_unrelated",
+        rawBrokerSymbol: "CADX",
+        executionId: "SYNTH-CAD-UNRELATED",
+        charges: [],
+      });
+      const result = reconstructAnalyticalPnl(
+        buildSyntheticAnalyticalPnlInput([affected, unrelated]),
+      );
+      expect(result.blockedStates).toEqual([
+        expect.objectContaining({
+          code: "ti_v3_reconstruction_correction_unresolved",
+          relatedExecutionDigests: [affected.canonicalContentDigest],
+        }),
+      ]);
+      expect(result.ledgers).toHaveLength(1);
+      expect(result.ledgers[0]).toMatchObject({
+        stableInstrumentKey: "instrument_synthetic_cad_unrelated",
+        currency: "CAD",
+      });
+    },
+  );
+
+  it("produces the same compact receipt and retained facts under caller permutation", () => {
+    const executions = ["A", "B", "C"].map((token) =>
+      buildSyntheticCanonicalExecution({
+        executionId: `SYNTH-PERMUTE-${token}`,
+        originalSourceRowLocator: {
+          kind: "record_key",
+          value: `permute-${token.toLowerCase()}`,
+          rowOrderPreserved: false,
+        },
+      }),
+    );
+    const forward = resolveExecutionRelationships(executions);
+    const reverse = resolveExecutionRelationships([...executions].reverse());
+    expect(reverse.coverageReceipt).toEqual(forward.coverageReceipt);
+    expect(
+      reverse.retainedExecutions.map((execution) => execution.canonicalContentDigest),
+    ).toEqual(
+      forward.retainedExecutions.map((execution) => execution.canonicalContentDigest),
+    );
+  });
+
+  it("fails with a stable resource-limit state for a candidate-heavy partition", () => {
+    const execution = buildSyntheticCanonicalExecution({ charges: [] });
+    const inputCount = 710;
+    const resolution = resolveExecutionRelationships(
+      Array.from({ length: inputCount }, () => execution),
+    );
+    expect(
+      (inputCount * (inputCount - 1)) / 2,
+    ).toBeGreaterThan(EXECUTION_RELATIONSHIP_RESOURCE_LIMITS.maximumCandidatePairs);
+    expect(resolution).toMatchObject({
+      retainedExecutions: [],
+      coverageReceipt: {
+        state: "blocked_resource_limit",
+        candidateRelationships: [],
+      },
+      globalBlocks: [
+        { code: "ti_v3_reconstruction_relationship_resource_limit" },
+      ],
+    });
+    expect(resolution.coverageReceipt).not.toHaveProperty("pairs");
+  });
+
+  it("resolves 10,000 ordinary distinct executions within the declared structural and resource budget", () => {
+    const count = 10_000;
+    const executions = Array.from({ length: count }, (_, index) => {
+      const token = index.toString().padStart(5, "0");
+      return buildSyntheticCanonicalExecution({
+        executionId: `SYNTH-SCALE-${token}`,
+        originalSourceRowLocator: {
+          kind: "record_key",
+          value: `scale-${token}`,
+          rowOrderPreserved: false,
+        },
+        brokerExecutionIndex: null,
+        brokerFillSequence: null,
+        charges: [],
+      });
+    });
+    const before = process.memoryUsage();
+    const startedAt = performance.now();
+    const resolution = resolveExecutionRelationships(executions);
+    const elapsedMilliseconds = Math.ceil(performance.now() - startedAt);
+    const after = process.memoryUsage();
+    const observedRssDeltaBytes = Math.max(0, after.rss - before.rss);
+    console.info(
+      JSON.stringify({
+        event: "ti_v3_ga0_a2_relationship_scale",
+        node: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        inputCount: count,
+        elapsedMilliseconds,
+        observedRssDeltaBytes,
+        elapsedThresholdMilliseconds: 120_000,
+        observedRssDeltaThresholdBytes: 805_306_368,
+      }),
+    );
+    expect(resolution.coverageReceipt).toMatchObject({
+      state: "complete",
+      inputExecutionCount: count,
+      candidateRelationshipCount: 0,
+      classifiedCandidateCount: 0,
+      defaultDistinctPairCount: "49995000",
+    });
+    expect(resolution.coverageReceipt.candidateRelationships).toEqual([]);
+    expect(resolution.coverageReceipt).not.toHaveProperty("pairs");
+    expect(elapsedMilliseconds).toBeLessThan(120_000);
+    expect(observedRssDeltaBytes).toBeLessThan(805_306_368);
+  }, 180_000);
 });

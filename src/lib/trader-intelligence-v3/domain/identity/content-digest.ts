@@ -127,3 +127,16 @@ export function canonicalBytesEqual(left: Uint8Array, right: Uint8Array): boolea
   }
   return true;
 }
+
+export function createCanonicalOccurrenceSetDigest(
+  occurrenceKeys: readonly string[],
+): CanonicalContentDigest {
+  const hash = createHash("sha256");
+  hash.update("ti_v3:execution_relationship_occurrences:v1\n", "utf8");
+  occurrenceKeys.forEach((key) => {
+    hash.update(`${key.length}:`, "utf8");
+    hash.update(key, "utf8");
+    hash.update("\n", "utf8");
+  });
+  return identifier("canonical_content", "v1", hash.digest("hex"));
+}

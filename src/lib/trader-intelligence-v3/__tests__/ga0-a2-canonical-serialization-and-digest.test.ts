@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CANONICAL_SERIALIZATION_LIMITS,
   createCanonicalContentIdentity,
   createCanonicalSourceDocumentDigest,
   parseStrictCanonicalJson,
@@ -89,6 +90,154 @@ describe("Trader Intelligence v3 canonical serialization and digest", () => {
       expect(result.value.json).toContain(`"${key}":{"marker":"synthetic"}`);
     },
   );
+
+  it("rejects accessors without invoking them or leaking their exceptions", () => {
+    let invocationCount = 0;
+    const throwing = Object.create(null) as Record<string, unknown>;
+    Object.defineProperty(throwing, "value", {
+      enumerable: true,
+      get() {
+        invocationCount += 1;
+        throw new Error("synthetic private source value");
+      },
+    });
+    expect(serializeCanonicalValue(throwing)).toEqual({
+      ok: false,
+      error: { code: "ti_v3_canonical_accessor_forbidden", path: "$.value" },
+    });
+    expect(invocationCount).toBe(0);
+
+    const stateful = Object.create(null) as Record<string, unknown>;
+    Object.defineProperty(stateful, "value", {
+      enumerable: true,
+      get() {
+        invocationCount += 1;
+        return invocationCount % 2 === 0 ? "a" : "b";
+      },
+    });
+    expect(serializeCanonicalValue(stateful)).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_canonical_accessor_forbidden" },
+    });
+    expect(invocationCount).toBe(0);
+
+    const setterOnly = Object.create(null) as Record<string, unknown>;
+    Object.defineProperty(setterOnly, "value", {
+      enumerable: true,
+      set() {},
+    });
+    expect(serializeCanonicalValue(setterOnly)).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_canonical_accessor_forbidden" },
+    });
+  });
+
+  it("rejects self and mutual cycles with stable failures", () => {
+    const self = Object.create(null) as Record<string, unknown>;
+    self.self = self;
+    expect(serializeCanonicalValue(self)).toEqual({
+      ok: false,
+      error: { code: "ti_v3_canonical_cycle_forbidden", path: "$.self" },
+    });
+
+    const left = Object.create(null) as Record<string, unknown>;
+    const right = Object.create(null) as Record<string, unknown>;
+    left.right = right;
+    right.left = left;
+    expect(serializeCanonicalValue(left)).toEqual({
+      ok: false,
+      error: { code: "ti_v3_canonical_cycle_forbidden", path: "$.right.left" },
+    });
+  });
+
+  it("enforces deterministic depth boundaries for direct and strict JSON input", () => {
+    let passing: unknown = "leaf";
+    for (let index = 0; index < CANONICAL_SERIALIZATION_LIMITS.maxDepth; index += 1) {
+      passing = [passing];
+    }
+    expect(serializeCanonicalValue(passing).ok).toBe(true);
+
+    const failing = [passing];
+    expect(serializeCanonicalValue(failing)).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_canonical_depth_exceeded" },
+    });
+
+    const rawPassing = `${"[".repeat(CANONICAL_SERIALIZATION_LIMITS.maxDepth)}"leaf"${"]".repeat(CANONICAL_SERIALIZATION_LIMITS.maxDepth)}`;
+    const rawFailing = `[${rawPassing}]`;
+    expect(parseStrictCanonicalJson(rawPassing).ok).toBe(true);
+    expect(parseStrictCanonicalJson(rawFailing)).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_canonical_depth_exceeded" },
+    });
+  });
+
+  it("enforces deterministic node and key count boundaries", () => {
+    expect(
+      serializeCanonicalValue(
+        Array.from({ length: CANONICAL_SERIALIZATION_LIMITS.maxNodeCount - 1 }, () => null),
+      ).ok,
+    ).toBe(true);
+    expect(
+      serializeCanonicalValue(
+        Array.from({ length: CANONICAL_SERIALIZATION_LIMITS.maxNodeCount }, () => null),
+      ),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_canonical_node_count_exceeded" },
+    });
+
+    const atKeyLimit = Object.create(null) as Record<string, string>;
+    for (let index = 0; index < CANONICAL_SERIALIZATION_LIMITS.maxKeyCount; index += 1) {
+      atKeyLimit[`k${index}`] = "v";
+    }
+    expect(serializeCanonicalValue(atKeyLimit).ok).toBe(true);
+    atKeyLimit.extra = "v";
+    expect(serializeCanonicalValue(atKeyLimit)).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_canonical_key_count_exceeded" },
+    });
+  });
+
+  it("enforces individual and aggregate string size boundaries", () => {
+    expect(
+      serializeCanonicalValue("x".repeat(CANONICAL_SERIALIZATION_LIMITS.maxStringCodeUnits)).ok,
+    ).toBe(true);
+    expect(
+      serializeCanonicalValue("x".repeat(CANONICAL_SERIALIZATION_LIMITS.maxStringCodeUnits + 1)),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_canonical_string_size_exceeded" },
+    });
+
+    const nearAggregateLimit = Array.from({ length: 4 }, () =>
+      "x".repeat(CANONICAL_SERIALIZATION_LIMITS.maxStringCodeUnits - 4),
+    );
+    expect(serializeCanonicalValue(nearAggregateLimit).ok).toBe(true);
+    const overAggregateLimit = Array.from({ length: 4 }, () =>
+      "x".repeat(CANONICAL_SERIALIZATION_LIMITS.maxStringCodeUnits),
+    );
+    expect(serializeCanonicalValue(overAggregateLimit)).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_canonical_aggregate_size_exceeded" },
+    });
+  });
+
+  it("rejects symbol and nonenumerable own properties explicitly", () => {
+    const symbolKeyed = { safe: "value" } as Record<string | symbol, unknown>;
+    symbolKeyed[Symbol("synthetic")] = "hidden";
+    expect(serializeCanonicalValue(symbolKeyed)).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_canonical_symbol_key_forbidden" },
+    });
+
+    const nonenumerable = { safe: "value" };
+    Object.defineProperty(nonenumerable, "hidden", { enumerable: false, value: "synthetic" });
+    expect(serializeCanonicalValue(nonenumerable)).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_canonical_nonenumerable_property_forbidden" },
+    });
+  });
 
   it("matches the canonical SHA-256 golden vector", () => {
     const identity = createCanonicalContentIdentity("canonical_content", "v1", {

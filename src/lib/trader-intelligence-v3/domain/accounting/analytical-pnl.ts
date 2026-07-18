@@ -44,8 +44,8 @@ export function reconstructAnalyticalPnl(
   const allDigests = resolution.coverageReceipt.inputExecutionDigests;
   if (
     resolution.coverageReceipt.state !== "complete" ||
-    resolution.coverageReceipt.classifiedPairCount !==
-      resolution.coverageReceipt.expectedPairCount
+    resolution.coverageReceipt.classifiedCandidateCount !==
+      resolution.coverageReceipt.candidateRelationshipCount
   ) {
     return {
       status: "blocked",
@@ -102,7 +102,11 @@ export function reconstructAnalyticalPnl(
   const ledgers = [];
   const blockedStates: ReconstructionBlockedState[] = [];
   const limitations = new Set<string>();
-  const allGroupKeys = new Set([...groups.keys(), ...groupBlocks.keys()]);
+  const allGroupKeys = new Set([
+    ...groups.keys(),
+    ...groupBlocks.keys(),
+    ...startsByGroup.keys(),
+  ]);
   for (const key of [...allGroupKeys].sort()) {
     const blocks = groupBlocks.get(key) ?? [];
     if (blocks.length > 0) {

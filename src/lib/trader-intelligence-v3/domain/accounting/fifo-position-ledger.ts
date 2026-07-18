@@ -20,7 +20,9 @@ import type {
 } from "../execution";
 import {
   executionLedgerGroupKey,
+  isCanonicalExecutionOrderingResult,
   isCompleteExecutionRelationshipResolution,
+  verifyCanonicalExecutionEnvelope,
   type CompleteExecutionRelationshipResolution,
 } from "../execution";
 import type { CanonicalExecutionDigest } from "../identity";
@@ -214,6 +216,9 @@ export function runFifoPositionLedger(
   if (!isCompleteExecutionRelationshipResolution(input.relationshipResolution)) {
     return blocked("ti_v3_reconstruction_relationship_coverage_incomplete", null, []);
   }
+  if (!isCanonicalExecutionOrderingResult(input.ordering)) {
+    return blocked("ti_v3_reconstruction_order_integrity_invalid", null, []);
+  }
   if (
     !isVerifiedStartingInventoryContract(input.startingInventory) ||
     startingInventoryLedgerGroupKey(input.startingInventory.ledgerIdentity) !==
@@ -221,6 +226,9 @@ export function runFifoPositionLedger(
     input.startingInventory.state === "unknown"
   ) {
     return blocked("ti_v3_reconstruction_prior_inventory_required", null, []);
+  }
+  if (input.startingInventory.coverageState === "incomplete_prior_charges") {
+    return blocked("ti_v3_reconstruction_prior_charge_coverage_incomplete", null, []);
   }
   const relationshipBlock = input.relationshipResolution.groupBlocks.find(
     (block) => block.groupKey === input.ledgerGroupKey,
@@ -235,6 +243,19 @@ export function runFifoPositionLedger(
   const resolvedGroupExecutions = input.relationshipResolution.retainedExecutions.filter(
     (execution) => executionLedgerGroupKey(execution) === input.ledgerGroupKey,
   );
+  const priorExecutionDigests = new Set(
+    input.startingInventory.priorLots.map((lot) => lot.sourceExecutionDigest),
+  );
+  const overlap = resolvedGroupExecutions.find((execution) =>
+    priorExecutionDigests.has(execution.canonicalContentDigest),
+  );
+  if (overlap !== undefined) {
+    return blocked(
+      "ti_v3_reconstruction_prior_inventory_overlap",
+      overlap.canonicalContentDigest,
+      [overlap.canonicalContentDigest],
+    );
+  }
   const allExecutions = input.ordering.storageOrderedExecutions;
   const allDigests = allExecutions.map((execution) => execution.canonicalContentDigest);
   const resolvedDigests = resolvedGroupExecutions
@@ -250,25 +271,61 @@ export function runFifoPositionLedger(
       allDigests,
     );
   }
+  const resolvedOccurrences = new Map<CanonicalExecutionEnvelope, number>();
+  for (const execution of resolvedGroupExecutions) {
+    resolvedOccurrences.set(execution, (resolvedOccurrences.get(execution) ?? 0) + 1);
+  }
+  for (const execution of allExecutions) {
+    const remaining = resolvedOccurrences.get(execution) ?? 0;
+    if (remaining === 0) {
+      return blocked("ti_v3_reconstruction_order_integrity_invalid", null, allDigests);
+    }
+    resolvedOccurrences.set(execution, remaining - 1);
+  }
+  if ([...resolvedOccurrences.values()].some((count) => count !== 0)) {
+    return blocked("ti_v3_reconstruction_order_integrity_invalid", null, allDigests);
+  }
+  const economicExecutions = input.ordering.economicallyOrderedExecutions;
+  if (economicExecutions !== null) {
+    const remainingOccurrences = new Map<CanonicalExecutionEnvelope, number>();
+    for (const execution of allExecutions) {
+      const verified = verifyCanonicalExecutionEnvelope(execution);
+      if (!verified.ok || verified.value !== execution) {
+        return blocked(
+          "ti_v3_reconstruction_execution_envelope_integrity_invalid",
+          execution.canonicalContentDigest,
+          allDigests,
+        );
+      }
+      remainingOccurrences.set(execution, (remainingOccurrences.get(execution) ?? 0) + 1);
+    }
+    for (const execution of economicExecutions) {
+      const verified = verifyCanonicalExecutionEnvelope(execution);
+      const remaining = remainingOccurrences.get(execution) ?? 0;
+      if (!verified.ok || verified.value !== execution || remaining === 0) {
+        return blocked("ti_v3_reconstruction_order_integrity_invalid", null, allDigests);
+      }
+      remainingOccurrences.set(execution, remaining - 1);
+    }
+    if (
+      economicExecutions.length !== allExecutions.length ||
+      [...remainingOccurrences.values()].some((count) => count !== 0)
+    ) {
+      return blocked("ti_v3_reconstruction_order_integrity_invalid", null, allDigests);
+    }
+  }
   if (input.ordering.state === "ambiguous_meaningful_order") {
     return blocked("ti_v3_reconstruction_order_ambiguous", null, allDigests);
   }
   if (input.ordering.state === "conflicting_order_evidence") {
     return blocked("ti_v3_reconstruction_order_conflicting", null, allDigests);
   }
-  const executions = input.ordering.economicallyOrderedExecutions ?? [];
-  if (executions.length === 0) {
-    return {
-      status: "completed",
-      policyVersion: FIFO_ANALYTICAL_PNL_POLICY_VERSION,
-      ledgers: [],
-      blockedStates: [],
-      limitations: [],
-      inputExecutionDigests: [],
-    };
+  const executions = economicExecutions ?? [];
+  if (allExecutions.length > 0 && executions.length === 0) {
+    return blocked("ti_v3_reconstruction_order_integrity_invalid", null, allDigests);
   }
-  const first = executions[0];
-  if (first.content.stableInstrumentKey === null) {
+  const first = executions[0] ?? null;
+  if (first !== null && first.content.stableInstrumentKey === null) {
     return blocked(
       "ti_v3_reconstruction_instrument_unresolved",
       first.canonicalContentDigest,
@@ -288,6 +345,10 @@ export function runFifoPositionLedger(
         sourceIdentity: lot.sourceIdentity,
         sourceDocumentDigest: lot.sourceDocumentDigest,
         originalSourceRowLocator: lot.originalSourceRowLocator,
+        acquiredAt: lot.acquiredAt,
+        fifoOrdinal: lot.fifoOrdinal,
+        basisPolicy: lot.basisPolicy,
+        chargeCoverageState: lot.chargeCoverageState,
       },
     }));
     const roundTrips: FlatToFlatRoundTrip[] = [];
@@ -341,15 +402,33 @@ export function runFifoPositionLedger(
           priorLot.direction === "short"
             ? addMoney(currentRoundTrip.cashFlow, priorNotional)
             : subtractMoney(currentRoundTrip.cashFlow, priorNotional);
+        let priorCharges = exactMoney("0");
+        for (const charge of priorLot.signedCharges) {
+          priorCharges = addMoney(priorCharges, charge.amount);
+        }
+        charges = addMoney(charges, priorCharges);
+        currentRoundTrip.charges = addMoney(currentRoundTrip.charges, priorCharges);
+        currentRoundTrip.cashFlow = subtractMoney(
+          currentRoundTrip.cashFlow,
+          priorCharges,
+        );
         currentRoundTrip.executionDigests.add(priorLot.sourceExecutionDigest);
         cashFlow =
           priorLot.direction === "short"
             ? addMoney(cashFlow, priorNotional)
             : subtractMoney(cashFlow, priorNotional);
+        cashFlow = subtractMoney(cashFlow, priorCharges);
       }
     }
 
     for (const execution of executions) {
+      if (execution.content.executedAt < input.startingInventory.asOf) {
+        return blocked(
+          "ti_v3_reconstruction_starting_inventory_as_of_violation",
+          execution.canonicalContentDigest,
+          allDigests,
+        );
+      }
       if (execution.validation.state !== "accepted") {
         return blocked(
           "ti_v3_reconstruction_execution_not_accepted",
@@ -360,9 +439,12 @@ export function runFifoPositionLedger(
       if (
         execution.content.instrumentResolutionState !== "resolved" ||
         execution.content.stableInstrumentKey === null ||
-        execution.content.stableInstrumentKey !== first.content.stableInstrumentKey ||
-        execution.content.canonicalOwnerKey !== first.content.canonicalOwnerKey ||
-        execution.content.canonicalAccountKey !== first.content.canonicalAccountKey
+        execution.content.stableInstrumentKey !==
+          input.startingInventory.ledgerIdentity.stableInstrumentKey ||
+        execution.content.canonicalOwnerKey !==
+          input.startingInventory.ledgerIdentity.canonicalOwnerKey ||
+        execution.content.canonicalAccountKey !==
+          input.startingInventory.ledgerIdentity.canonicalAccountKey
       ) {
         return blocked(
           "ti_v3_reconstruction_instrument_unresolved",
@@ -370,7 +452,7 @@ export function runFifoPositionLedger(
           allDigests,
         );
       }
-      if (execution.content.currency !== first.content.currency) {
+      if (execution.content.currency !== input.startingInventory.ledgerIdentity.currency) {
         return blocked(
           "ti_v3_reconstruction_currency_changed",
           execution.canonicalContentDigest,
@@ -577,11 +659,11 @@ export function runFifoPositionLedger(
     }
     const limitations = lots.length > 0 ? ["ti_v3_open_inventory_remaining"] : [];
     const ledger: AnalyticalLedgerResult = {
-      ledgerKey: `${first.content.canonicalOwnerKey}:${first.content.canonicalAccountKey}:${first.content.stableInstrumentKey}:${first.content.currency}`,
-      canonicalOwnerKey: first.content.canonicalOwnerKey,
-      canonicalAccountKey: first.content.canonicalAccountKey,
-      stableInstrumentKey: first.content.stableInstrumentKey,
-      currency: first.content.currency,
+      ledgerKey: input.ledgerGroupKey,
+      canonicalOwnerKey: input.startingInventory.ledgerIdentity.canonicalOwnerKey,
+      canonicalAccountKey: input.startingInventory.ledgerIdentity.canonicalAccountKey,
+      stableInstrumentKey: input.startingInventory.ledgerIdentity.stableInstrumentKey,
+      currency: input.startingInventory.ledgerIdentity.currency,
       startingInventoryState: input.startingInventory.state,
       inputStartingLotIds: input.startingInventory.priorLots.map((lot) => lot.lotId),
       endingQuantity,

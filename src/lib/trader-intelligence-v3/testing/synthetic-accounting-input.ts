@@ -40,9 +40,16 @@ export function buildSyntheticFifoLedgerInput(
   }
   const relationshipResolution = resolveExecutionRelationships(executions);
   const ledgerGroupKey = executionLedgerGroupKey(executions[0]);
+  const ordering = orderCanonicalExecutions(
+    relationshipResolution.retainedExecutions.filter(
+      (execution) => executionLedgerGroupKey(execution) === ledgerGroupKey,
+    ),
+  );
   let selectedStartingInventory = startingInventory;
   if (selectedStartingInventory === undefined) {
-    const built = buildStartingInventoryForExecution(executions[0], "proven_flat");
+    const firstOrderedExecution =
+      ordering.economicallyOrderedExecutions?.[0] ?? ordering.storageOrderedExecutions[0];
+    const built = buildStartingInventoryForExecution(firstOrderedExecution, "proven_flat");
     if (!built.ok) {
       throw new Error(built.error.reasonCodes.join(","));
     }
@@ -51,11 +58,7 @@ export function buildSyntheticFifoLedgerInput(
   return {
     relationshipResolution,
     ledgerGroupKey,
-    ordering: orderCanonicalExecutions(
-      relationshipResolution.retainedExecutions.filter(
-        (execution) => executionLedgerGroupKey(execution) === ledgerGroupKey,
-      ),
-    ),
+    ordering,
     startingInventory: selectedStartingInventory,
   };
 }

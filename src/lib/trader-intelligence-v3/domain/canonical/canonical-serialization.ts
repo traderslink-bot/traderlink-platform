@@ -2,6 +2,14 @@ import type { ExactResult } from "../exact";
 
 export const CANONICAL_SERIALIZATION_VERSION = "ti_v3_canonical_json_v1" as const;
 
+export const CANONICAL_SERIALIZATION_LIMITS = Object.freeze({
+  maxDepth: 64,
+  maxNodeCount: 4_096,
+  maxKeyCount: 1_024,
+  maxStringCodeUnits: 262_144,
+  maxAggregateCodeUnits: 1_048_576,
+});
+
 export type CanonicalValue =
   | null
   | boolean
@@ -15,6 +23,17 @@ export type CanonicalSerializationFailureCode =
   | "ti_v3_canonical_bigint_forbidden"
   | "ti_v3_canonical_value_type_invalid"
   | "ti_v3_canonical_object_type_invalid"
+  | "ti_v3_canonical_property_descriptor_invalid"
+  | "ti_v3_canonical_accessor_forbidden"
+  | "ti_v3_canonical_symbol_key_forbidden"
+  | "ti_v3_canonical_nonenumerable_property_forbidden"
+  | "ti_v3_canonical_array_property_invalid"
+  | "ti_v3_canonical_cycle_forbidden"
+  | "ti_v3_canonical_depth_exceeded"
+  | "ti_v3_canonical_node_count_exceeded"
+  | "ti_v3_canonical_key_count_exceeded"
+  | "ti_v3_canonical_string_size_exceeded"
+  | "ti_v3_canonical_aggregate_size_exceeded"
   | "ti_v3_canonical_key_collision"
   | "ti_v3_canonical_unicode_invalid"
   | "ti_v3_canonical_raw_json_invalid"
@@ -73,10 +92,95 @@ function failure(
   return { ok: false, error: { code, path } };
 }
 
+interface CanonicalNormalizationContext {
+  readonly activeObjects: WeakSet<object>;
+  nodeCount: number;
+  keyCount: number;
+  aggregateCodeUnits: number;
+}
+
+function consumeNode(
+  context: CanonicalNormalizationContext,
+  path: string,
+  depth: number,
+): ExactResult<true, CanonicalSerializationFailure> {
+  if (depth > CANONICAL_SERIALIZATION_LIMITS.maxDepth) {
+    return failure("ti_v3_canonical_depth_exceeded", path);
+  }
+  context.nodeCount += 1;
+  if (context.nodeCount > CANONICAL_SERIALIZATION_LIMITS.maxNodeCount) {
+    return failure("ti_v3_canonical_node_count_exceeded", path);
+  }
+  return { ok: true, value: true };
+}
+
+function consumeString(
+  context: CanonicalNormalizationContext,
+  value: string,
+  path: string,
+): ExactResult<true, CanonicalSerializationFailure> {
+  if (value.length > CANONICAL_SERIALIZATION_LIMITS.maxStringCodeUnits) {
+    return failure("ti_v3_canonical_string_size_exceeded", path);
+  }
+  context.aggregateCodeUnits += value.length;
+  if (context.aggregateCodeUnits > CANONICAL_SERIALIZATION_LIMITS.maxAggregateCodeUnits) {
+    return failure("ti_v3_canonical_aggregate_size_exceeded", path);
+  }
+  return { ok: true, value: true };
+}
+
+function readOwnDescriptors(
+  input: object,
+  path: string,
+): ExactResult<PropertyDescriptorMap, CanonicalSerializationFailure> {
+  try {
+    return { ok: true, value: Object.getOwnPropertyDescriptors(input) };
+  } catch {
+    return failure("ti_v3_canonical_property_descriptor_invalid", path);
+  }
+}
+
+function readPrototype(
+  input: object,
+  path: string,
+): ExactResult<object | null, CanonicalSerializationFailure> {
+  try {
+    return { ok: true, value: Object.getPrototypeOf(input) as object | null };
+  } catch {
+    return failure("ti_v3_canonical_object_type_invalid", path);
+  }
+}
+
+function validateDescriptorPolicy(
+  descriptors: PropertyDescriptorMap,
+  path: string,
+  allowedNonEnumerableKeys: ReadonlySet<string>,
+): ExactResult<true, CanonicalSerializationFailure> {
+  for (const key of Reflect.ownKeys(descriptors)) {
+    if (typeof key === "symbol") {
+      return failure("ti_v3_canonical_symbol_key_forbidden", path);
+    }
+    const descriptor = descriptors[key];
+    if (descriptor.get !== undefined || descriptor.set !== undefined) {
+      return failure("ti_v3_canonical_accessor_forbidden", `${path}.${key}`);
+    }
+    if (descriptor.enumerable !== true && !allowedNonEnumerableKeys.has(key)) {
+      return failure("ti_v3_canonical_nonenumerable_property_forbidden", `${path}.${key}`);
+    }
+  }
+  return { ok: true, value: true };
+}
+
 function normalizeCanonicalValue(
   input: unknown,
   path: string,
+  context: CanonicalNormalizationContext,
+  depth: number,
 ): ExactResult<CanonicalValue, CanonicalSerializationFailure> {
+  const consumedNode = consumeNode(context, path, depth);
+  if (!consumedNode.ok) {
+    return consumedNode;
+  }
   if (input === null || typeof input === "boolean") {
     return { ok: true, value: input };
   }
@@ -84,7 +188,12 @@ function normalizeCanonicalValue(
     if (hasUnpairedSurrogate(input)) {
       return failure("ti_v3_canonical_unicode_invalid", path);
     }
-    return { ok: true, value: normalizeCanonicalString(input) };
+    const normalized = normalizeCanonicalString(input);
+    const consumedString = consumeString(context, normalized, path);
+    if (!consumedString.ok) {
+      return consumedString;
+    }
+    return { ok: true, value: normalized };
   }
   if (typeof input === "undefined") {
     return failure("ti_v3_canonical_undefined_forbidden", path);
@@ -98,32 +207,118 @@ function normalizeCanonicalValue(
   if (typeof input !== "object") {
     return failure("ti_v3_canonical_value_type_invalid", path);
   }
+  if (context.activeObjects.has(input)) {
+    return failure("ti_v3_canonical_cycle_forbidden", path);
+  }
+  context.activeObjects.add(input);
   if (Array.isArray(input)) {
+    const prototype = readPrototype(input, path);
+    if (!prototype.ok) {
+      context.activeObjects.delete(input);
+      return prototype;
+    }
+    if (prototype.value !== Array.prototype) {
+      context.activeObjects.delete(input);
+      return failure("ti_v3_canonical_object_type_invalid", path);
+    }
+    const descriptors = readOwnDescriptors(input, path);
+    if (!descriptors.ok) {
+      context.activeObjects.delete(input);
+      return descriptors;
+    }
+    const descriptorPolicy = validateDescriptorPolicy(descriptors.value, path, new Set(["length"]));
+    if (!descriptorPolicy.ok) {
+      context.activeObjects.delete(input);
+      return descriptorPolicy;
+    }
+    const lengthDescriptor = descriptors.value.length;
+    const length = lengthDescriptor?.value;
+    if (
+      typeof length !== "number" ||
+      !Number.isSafeInteger(length) ||
+      length < 0 ||
+      length + context.nodeCount > CANONICAL_SERIALIZATION_LIMITS.maxNodeCount
+    ) {
+      context.activeObjects.delete(input);
+      return failure("ti_v3_canonical_node_count_exceeded", path);
+    }
+    for (const key of Object.keys(descriptors.value)) {
+      if (key === "length") continue;
+      if (!/^(0|[1-9][0-9]*)$/.test(key) || BigInt(key) >= BigInt(length)) {
+        context.activeObjects.delete(input);
+        return failure("ti_v3_canonical_array_property_invalid", `${path}.${key}`);
+      }
+    }
     const values: CanonicalValue[] = [];
-    for (let index = 0; index < input.length; index += 1) {
-      const normalized = normalizeCanonicalValue(input[index], `${path}[${index}]`);
+    for (let index = 0; index < length; index += 1) {
+      const descriptor = descriptors.value[String(index)];
+      if (descriptor === undefined) {
+        context.activeObjects.delete(input);
+        return failure("ti_v3_canonical_undefined_forbidden", `${path}[${index}]`);
+      }
+      const normalized = normalizeCanonicalValue(
+        descriptor.value,
+        `${path}[${index}]`,
+        context,
+        depth + 1,
+      );
       if (!normalized.ok) {
+        context.activeObjects.delete(input);
         return normalized;
       }
       values.push(normalized.value);
     }
+    context.activeObjects.delete(input);
     return { ok: true, value: Object.freeze(values) };
   }
-  const prototype = Object.getPrototypeOf(input);
-  if (prototype !== Object.prototype && prototype !== null) {
+  const prototype = readPrototype(input, path);
+  if (!prototype.ok) {
+    context.activeObjects.delete(input);
+    return prototype;
+  }
+  if (prototype.value !== Object.prototype && prototype.value !== null) {
+    context.activeObjects.delete(input);
     return failure("ti_v3_canonical_object_type_invalid", path);
   }
+  const descriptors = readOwnDescriptors(input, path);
+  if (!descriptors.ok) {
+    context.activeObjects.delete(input);
+    return descriptors;
+  }
+  const descriptorPolicy = validateDescriptorPolicy(descriptors.value, path, new Set());
+  if (!descriptorPolicy.ok) {
+    context.activeObjects.delete(input);
+    return descriptorPolicy;
+  }
   const normalizedEntries = new Map<string, CanonicalValue>();
-  for (const [key, value] of Object.entries(input)) {
+  for (const key of Object.keys(descriptors.value)) {
+    context.keyCount += 1;
+    if (context.keyCount > CANONICAL_SERIALIZATION_LIMITS.maxKeyCount) {
+      context.activeObjects.delete(input);
+      return failure("ti_v3_canonical_key_count_exceeded", path);
+    }
     if (hasUnpairedSurrogate(key)) {
+      context.activeObjects.delete(input);
       return failure("ti_v3_canonical_unicode_invalid", path);
     }
     const normalizedKey = normalizeCanonicalString(key);
+    const consumedKey = consumeString(context, normalizedKey, path);
+    if (!consumedKey.ok) {
+      context.activeObjects.delete(input);
+      return consumedKey;
+    }
     if (normalizedEntries.has(normalizedKey)) {
+      context.activeObjects.delete(input);
       return failure("ti_v3_canonical_key_collision", path);
     }
-    const normalizedValue = normalizeCanonicalValue(value, `${path}.${normalizedKey}`);
+    const normalizedValue = normalizeCanonicalValue(
+      descriptors.value[key].value,
+      `${path}.${normalizedKey}`,
+      context,
+      depth + 1,
+    );
     if (!normalizedValue.ok) {
+      context.activeObjects.delete(input);
       return normalizedValue;
     }
     normalizedEntries.set(normalizedKey, normalizedValue.value);
@@ -137,6 +332,7 @@ function normalizeCanonicalValue(
       writable: false,
     });
   }
+  context.activeObjects.delete(input);
   return { ok: true, value: Object.freeze(result) };
 }
 
@@ -161,11 +357,19 @@ function stringifyCanonicalValue(value: CanonicalValue): string {
 export function serializeCanonicalValue(
   input: unknown,
 ): ExactResult<CanonicalSerialization, CanonicalSerializationFailure> {
-  const normalized = normalizeCanonicalValue(input, "$");
+  const normalized = normalizeCanonicalValue(
+    input,
+    "$",
+    { activeObjects: new WeakSet(), aggregateCodeUnits: 0, keyCount: 0, nodeCount: 0 },
+    0,
+  );
   if (!normalized.ok) {
     return normalized;
   }
   const json = stringifyCanonicalValue(normalized.value);
+  if (json.length > CANONICAL_SERIALIZATION_LIMITS.maxAggregateCodeUnits) {
+    return failure("ti_v3_canonical_aggregate_size_exceeded", "$");
+  }
   const authoritativeBytes = new TextEncoder().encode(json);
   const serialization: CanonicalSerialization = Object.freeze({
     value: normalized.value,
@@ -182,11 +386,16 @@ export function serializeCanonicalValue(
 
 class StrictJsonParser {
   private index = 0;
+  private nodeCount = 0;
+  private keyCount = 0;
 
   constructor(private readonly source: string) {}
 
   parse(): ExactResult<CanonicalValue, CanonicalSerializationFailure> {
-    const value = this.parseValue("$");
+    if (this.source.length > CANONICAL_SERIALIZATION_LIMITS.maxAggregateCodeUnits) {
+      return failure("ti_v3_canonical_aggregate_size_exceeded", "$");
+    }
+    const value = this.parseValue("$", 0);
     if (!value.ok) {
       return value;
     }
@@ -203,17 +412,27 @@ class StrictJsonParser {
     }
   }
 
-  private parseValue(path: string): ExactResult<CanonicalValue, CanonicalSerializationFailure> {
+  private parseValue(
+    path: string,
+    depth: number,
+  ): ExactResult<CanonicalValue, CanonicalSerializationFailure> {
+    if (depth > CANONICAL_SERIALIZATION_LIMITS.maxDepth) {
+      return failure("ti_v3_canonical_depth_exceeded", path);
+    }
+    this.nodeCount += 1;
+    if (this.nodeCount > CANONICAL_SERIALIZATION_LIMITS.maxNodeCount) {
+      return failure("ti_v3_canonical_node_count_exceeded", path);
+    }
     this.skipWhitespace();
     const token = this.source[this.index];
     if (token === '"') {
       return this.parseString(path);
     }
     if (token === "{") {
-      return this.parseObject(path);
+      return this.parseObject(path, depth);
     }
     if (token === "[") {
-      return this.parseArray(path);
+      return this.parseArray(path, depth);
     }
     if (this.source.startsWith("true", this.index)) {
       this.index += 4;
@@ -246,6 +465,9 @@ class StrictJsonParser {
           if (hasUnpairedSurrogate(value)) {
             return failure("ti_v3_canonical_unicode_invalid", path);
           }
+          if (value.length > CANONICAL_SERIALIZATION_LIMITS.maxStringCodeUnits) {
+            return failure("ti_v3_canonical_string_size_exceeded", path);
+          }
           return { ok: true, value };
         } catch {
           return failure("ti_v3_canonical_raw_json_invalid", path);
@@ -264,7 +486,10 @@ class StrictJsonParser {
     return failure("ti_v3_canonical_raw_json_invalid", path);
   }
 
-  private parseArray(path: string): ExactResult<CanonicalValue, CanonicalSerializationFailure> {
+  private parseArray(
+    path: string,
+    depth: number,
+  ): ExactResult<CanonicalValue, CanonicalSerializationFailure> {
     this.index += 1;
     const values: CanonicalValue[] = [];
     this.skipWhitespace();
@@ -273,7 +498,7 @@ class StrictJsonParser {
       return { ok: true, value: values };
     }
     while (this.index < this.source.length) {
-      const value = this.parseValue(`${path}[${values.length}]`);
+      const value = this.parseValue(`${path}[${values.length}]`, depth + 1);
       if (!value.ok) {
         return value;
       }
@@ -292,7 +517,10 @@ class StrictJsonParser {
     return failure("ti_v3_canonical_raw_json_invalid", path);
   }
 
-  private parseObject(path: string): ExactResult<CanonicalValue, CanonicalSerializationFailure> {
+  private parseObject(
+    path: string,
+    depth: number,
+  ): ExactResult<CanonicalValue, CanonicalSerializationFailure> {
     this.index += 1;
     const value = Object.create(null) as Record<string, CanonicalValue>;
     const keys = new Set<string>();
@@ -311,6 +539,10 @@ class StrictJsonParser {
         return parsedKey;
       }
       const normalizedKey = normalizeCanonicalString(parsedKey.value);
+      this.keyCount += 1;
+      if (this.keyCount > CANONICAL_SERIALIZATION_LIMITS.maxKeyCount) {
+        return failure("ti_v3_canonical_key_count_exceeded", path);
+      }
       if (keys.has(normalizedKey)) {
         return failure("ti_v3_canonical_duplicate_json_key", path);
       }
@@ -320,7 +552,7 @@ class StrictJsonParser {
         return failure("ti_v3_canonical_raw_json_invalid", path);
       }
       this.index += 1;
-      const child = this.parseValue(`${path}.${normalizedKey}`);
+      const child = this.parseValue(`${path}.${normalizedKey}`, depth + 1);
       if (!child.ok) {
         return child;
       }
@@ -355,6 +587,11 @@ export function parseStrictCanonicalJson(
   if (!parsed.ok) {
     return parsed;
   }
-  const normalized = normalizeCanonicalValue(parsed.value, "$");
+  const normalized = normalizeCanonicalValue(
+    parsed.value,
+    "$",
+    { activeObjects: new WeakSet(), aggregateCodeUnits: 0, keyCount: 0, nodeCount: 0 },
+    0,
+  );
   return normalized;
 }

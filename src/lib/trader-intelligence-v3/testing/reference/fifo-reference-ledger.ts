@@ -95,6 +95,77 @@ function minimum(left: ReferenceDecimal, right: ReferenceDecimal): ReferenceDeci
   return compareReferenceDecimals(left, right) <= 0 ? left : right;
 }
 
+function compareReferenceOrdinal(left: string, right: string): number {
+  return left.length !== right.length
+    ? left.length - right.length
+    : left < right
+      ? -1
+      : left > right
+        ? 1
+        : 0;
+}
+
+function validateReferenceStartingInventory(
+  startingInventory: StartingInventoryContract,
+  executionDigests: ReadonlySet<string>,
+): string | null {
+  if (startingInventory.policyVersion !== "ti_v3_starting_inventory_v2") {
+    return "ti_v3_reconstruction_prior_inventory_required";
+  }
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{9}Z$/.test(startingInventory.asOf)) {
+    return "ti_v3_reconstruction_starting_inventory_as_of_violation";
+  }
+  if (startingInventory.coverageState === "incomplete_prior_charges") {
+    return "ti_v3_reconstruction_prior_charge_coverage_incomplete";
+  }
+  const lotIds = new Set<string>();
+  const sourceDigests = new Set<string>();
+  const ordinals = new Set<string>();
+  let previous: StartingInventoryContract["priorLots"][number] | null = null;
+  for (const lot of startingInventory.priorLots) {
+    if (
+      lot.canonicalOwnerKey !== startingInventory.ledgerIdentity.canonicalOwnerKey ||
+      lot.canonicalAccountKey !== startingInventory.ledgerIdentity.canonicalAccountKey ||
+      lot.stableInstrumentKey !== startingInventory.ledgerIdentity.stableInstrumentKey ||
+      lot.currency !== startingInventory.ledgerIdentity.currency
+    ) {
+      return "ti_v3_reconstruction_instrument_unresolved";
+    }
+    if (lot.acquiredAt >= startingInventory.asOf) {
+      return "ti_v3_reconstruction_starting_inventory_as_of_violation";
+    }
+    if (
+      lotIds.has(lot.lotId) ||
+      sourceDigests.has(lot.sourceExecutionDigest) ||
+      ordinals.has(lot.fifoOrdinal)
+    ) {
+      return "ti_v3_reconstruction_prior_inventory_overlap";
+    }
+    if (executionDigests.has(lot.sourceExecutionDigest)) {
+      return "ti_v3_reconstruction_prior_inventory_overlap";
+    }
+    if (
+      previous !== null &&
+      (lot.acquiredAt < previous.acquiredAt ||
+        (lot.acquiredAt === previous.acquiredAt &&
+          compareReferenceOrdinal(lot.fifoOrdinal, previous.fifoOrdinal) <= 0))
+    ) {
+      return "ti_v3_reconstruction_prior_inventory_required";
+    }
+    if (lot.chargeCoverageState !== "complete") {
+      return "ti_v3_reconstruction_prior_charge_coverage_incomplete";
+    }
+    if (lot.signedCharges.some((charge) => charge.currency !== lot.currency)) {
+      return "ti_v3_reconstruction_currency_changed";
+    }
+    lotIds.add(lot.lotId);
+    sourceDigests.add(lot.sourceExecutionDigest);
+    ordinals.add(lot.fifoOrdinal);
+    previous = lot;
+  }
+  return null;
+}
+
 function addDigest(accumulator: ReferenceRoundTripAccumulator, digest: string): void {
   if (!accumulator.executionDigests.includes(digest)) {
     accumulator.executionDigests.push(digest);
@@ -154,23 +225,14 @@ export function runReferenceFifoLedger(
     return blocked("ti_v3_reconstruction_order_conflicting");
   }
   const executions = ordering.economicallyOrderedExecutions ?? [];
-  if (executions.length === 0) {
-    return {
-      status: "completed",
-      blockedCode: null,
-      endingQuantity: "0",
-      grossRealizedPnl: "0",
-      signedCharges: "0",
-      netAnalyticalPnl: "0",
-      signedCashFlow: "0",
-      openLots: [],
-      matchedQuantityByExecution: [],
-      reversalEffects: [],
-      flatToFlatRoundTrips: [],
-    };
+  const startingInventoryFailure = validateReferenceStartingInventory(
+    startingInventory,
+    new Set(executions.map((execution) => execution.canonicalContentDigest)),
+  );
+  if (startingInventoryFailure !== null) {
+    return blocked(startingInventoryFailure);
   }
 
-  const first = executions[0];
   const lots: ReferenceLot[] = startingInventory.priorLots.map((lot) => ({
     direction: lot.direction,
     quantity: parseReferenceDecimal(lot.remainingQuantity),
@@ -206,28 +268,51 @@ export function runReferenceFifoLedger(
         priorLot.direction === "short"
           ? addReferenceDecimals(currentRoundTrip.cashFlow, notional)
           : subtractReferenceDecimals(currentRoundTrip.cashFlow, notional);
+      let priorCharges = zero();
+      for (const charge of priorLot.signedCharges) {
+        priorCharges = addReferenceDecimals(
+          priorCharges,
+          parseReferenceDecimal(charge.amount),
+        );
+      }
+      charges = addReferenceDecimals(charges, priorCharges);
+      currentRoundTrip.charges = addReferenceDecimals(
+        currentRoundTrip.charges,
+        priorCharges,
+      );
+      currentRoundTrip.cashFlow = subtractReferenceDecimals(
+        currentRoundTrip.cashFlow,
+        priorCharges,
+      );
       addDigest(currentRoundTrip, priorLot.sourceExecutionDigest);
       cashFlow =
         priorLot.direction === "short"
           ? addReferenceDecimals(cashFlow, notional)
           : subtractReferenceDecimals(cashFlow, notional);
+      cashFlow = subtractReferenceDecimals(cashFlow, priorCharges);
     }
   }
 
   for (const execution of executions) {
+    if (execution.content.executedAt < startingInventory.asOf) {
+      return blocked("ti_v3_reconstruction_starting_inventory_as_of_violation");
+    }
     if (execution.validation.state !== "accepted") {
       return blocked("ti_v3_reconstruction_execution_not_accepted");
     }
     if (
       execution.content.instrumentResolutionState !== "resolved" ||
       execution.content.stableInstrumentKey === null ||
-      execution.content.stableInstrumentKey !== first.content.stableInstrumentKey ||
-      execution.content.canonicalOwnerKey !== first.content.canonicalOwnerKey ||
-      execution.content.canonicalAccountKey !== first.content.canonicalAccountKey
+      execution.content.stableInstrumentKey !==
+        startingInventory.ledgerIdentity.stableInstrumentKey ||
+      execution.content.canonicalOwnerKey !==
+        startingInventory.ledgerIdentity.canonicalOwnerKey ||
+      execution.content.canonicalAccountKey !==
+        startingInventory.ledgerIdentity.canonicalAccountKey
     ) {
       return blocked("ti_v3_reconstruction_instrument_unresolved");
     }
-    if (execution.content.currency !== first.content.currency) {
+    if (execution.content.currency !== startingInventory.ledgerIdentity.currency) {
       return blocked("ti_v3_reconstruction_currency_changed");
     }
     if (execution.content.correctionState !== "none") {

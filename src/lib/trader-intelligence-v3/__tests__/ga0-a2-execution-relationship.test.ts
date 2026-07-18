@@ -153,6 +153,41 @@ describe("Trader Intelligence v3 execution relationship classification", () => {
     );
   });
 
+  it.each(["correction", "bust"] as const)(
+    "does not create a %s relationship with an unrelated execution",
+    (correctionState) => {
+      const affected = buildSyntheticCanonicalExecution({
+        correctionState,
+        correctionReference: "SYNTH-ORIGINAL-A",
+        executionId: "SYNTH-REPLACEMENT-A",
+      });
+      const unrelated = buildSyntheticCanonicalExecution({
+        executionId: "SYNTH-UNRELATED-B",
+        stableInstrumentKey: "instrument_synthetic_unrelated",
+        rawBrokerSymbol: "OTHER",
+      });
+      expect(classifyExecutionRelationship(affected, unrelated).state).not.toBe(
+        "broker_correction_or_bust",
+      );
+    },
+  );
+
+  it.each(["correction", "bust"] as const)(
+    "links a %s reference to its named original execution",
+    (correctionState) => {
+      const original = buildSyntheticCanonicalExecution({ executionId: "SYNTH-ORIGINAL-A" });
+      const replacement = buildSyntheticCanonicalExecution({
+        correctionState,
+        correctionReference: "SYNTH-ORIGINAL-A",
+        executionId: "SYNTH-REPLACEMENT-A",
+      });
+      expect(classifyExecutionRelationship(original, replacement)).toMatchObject({
+        state: "broker_correction_or_bust",
+        suppressionEligible: false,
+      });
+    },
+  );
+
   it("treats distinct stable execution IDs as legitimate repeated fills", () => {
     const first = buildSyntheticCanonicalExecution({ executionId: "SYNTH-EXEC-A" });
     const second = buildSyntheticCanonicalExecution({ executionId: "SYNTH-EXEC-B" });

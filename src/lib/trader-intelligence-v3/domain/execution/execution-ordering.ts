@@ -21,11 +21,40 @@ export interface ExecutionPairOrderingDecision {
 }
 
 export interface CanonicalExecutionOrderingResult {
-  state: EconomicOrderingState;
-  storageOrderedExecutions: readonly CanonicalExecutionEnvelope[];
-  economicallyOrderedExecutions: readonly CanonicalExecutionEnvelope[] | null;
-  reasonCodes: readonly string[];
-  evidenceUsed: readonly string[];
+  readonly state: EconomicOrderingState;
+  readonly storageOrderedExecutions: readonly CanonicalExecutionEnvelope[];
+  readonly economicallyOrderedExecutions: readonly CanonicalExecutionEnvelope[] | null;
+  readonly reasonCodes: readonly string[];
+  readonly evidenceUsed: readonly string[];
+}
+
+const canonicalExecutionOrderingResults = new WeakSet<CanonicalExecutionOrderingResult>();
+
+function protectOrderingResult(
+  input: CanonicalExecutionOrderingResult,
+): CanonicalExecutionOrderingResult {
+  const result = Object.freeze({
+    ...input,
+    storageOrderedExecutions: Object.freeze([...input.storageOrderedExecutions]),
+    economicallyOrderedExecutions:
+      input.economicallyOrderedExecutions === null
+        ? null
+        : Object.freeze([...input.economicallyOrderedExecutions]),
+    reasonCodes: Object.freeze([...input.reasonCodes]),
+    evidenceUsed: Object.freeze([...input.evidenceUsed]),
+  });
+  canonicalExecutionOrderingResults.add(result);
+  return result;
+}
+
+export function isCanonicalExecutionOrderingResult(
+  input: unknown,
+): input is CanonicalExecutionOrderingResult {
+  return (
+    typeof input === "object" &&
+    input !== null &&
+    canonicalExecutionOrderingResults.has(input as CanonicalExecutionOrderingResult)
+  );
 }
 
 function compareString(left: string, right: string): -1 | 0 | 1 {
@@ -325,13 +354,13 @@ export function orderCanonicalExecutions(
   for (const execution of executions) {
     const verified = verifyCanonicalExecutionEnvelope(execution);
     if (!verified.ok) {
-      return {
+      return protectOrderingResult({
         state: "conflicting_order_evidence",
         storageOrderedExecutions: [],
         economicallyOrderedExecutions: null,
         reasonCodes: ["ti_v3_order_execution_envelope_integrity_invalid"],
         evidenceUsed: ["canonical_execution_envelope_integrity"],
-      };
+      });
     }
     verifiedExecutions.push(verified.value);
   }
@@ -368,22 +397,22 @@ export function orderCanonicalExecutions(
     }
   }
   if (hasConflict) {
-    return {
+    return protectOrderingResult({
       state: "conflicting_order_evidence",
       storageOrderedExecutions: storage,
       economicallyOrderedExecutions: null,
       reasonCodes: [...reasons].sort(),
       evidenceUsed: [...evidence].sort(),
-    };
+    });
   }
   if (hasAmbiguity) {
-    return {
+    return protectOrderingResult({
       state: "ambiguous_meaningful_order",
       storageOrderedExecutions: storage,
       economicallyOrderedExecutions: null,
       reasonCodes: [...reasons].sort(),
       evidenceUsed: [...evidence].sort(),
-    };
+    });
   }
   const ready = storage.filter((execution) => incoming.get(execution) === 0);
   const ordered: CanonicalExecutionEnvelope[] = [];
@@ -398,19 +427,19 @@ export function orderCanonicalExecutions(
     }
   }
   if (ordered.length !== storage.length) {
-    return {
+    return protectOrderingResult({
       state: "conflicting_order_evidence",
       storageOrderedExecutions: storage,
       economicallyOrderedExecutions: null,
       reasonCodes: [...reasons, "ti_v3_order_evidence_cycle"].sort(),
       evidenceUsed: [...evidence].sort(),
-    };
+    });
   }
-  return {
+  return protectOrderingResult({
     state: hasEquivalentTie ? "tied_but_economically_equivalent" : "ordered",
     storageOrderedExecutions: storage,
     economicallyOrderedExecutions: ordered,
     reasonCodes: [...reasons].sort(),
     evidenceUsed: [...evidence].sort(),
-  };
+  });
 }

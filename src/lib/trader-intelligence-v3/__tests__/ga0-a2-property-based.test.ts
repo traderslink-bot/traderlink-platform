@@ -628,8 +628,9 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
           close,
         ]);
         expect(input.relationshipResolution.coverageReceipt).toMatchObject({
-          expectedPairCount: 3,
-          classifiedPairCount: 3,
+          candidateRelationshipCount: 1,
+          classifiedCandidateCount: 1,
+          defaultDistinctPairCount: "2",
         });
         expect(reconstructAnalyticalPnl(input)).toMatchObject({
           status: "completed",
@@ -705,10 +706,12 @@ describe("Trader Intelligence v3 fixed-seed property and differential suites", (
           expect(resolution.coverageReceipt).toMatchObject({
             state: "complete",
             inputExecutionCount: count,
-            expectedPairCount: expectedPairs,
-            classifiedPairCount: expectedPairs,
+            candidateRelationshipCount: 0,
+            classifiedCandidateCount: 0,
+            defaultDistinctPairCount: expectedPairs.toString(),
           });
-          expect(resolution.coverageReceipt.pairs).toHaveLength(expectedPairs);
+          expect(resolution.coverageReceipt.candidateRelationships).toHaveLength(0);
+          expect(resolution.coverageReceipt).not.toHaveProperty("pairs");
         },
       ),
       {

@@ -46,6 +46,34 @@ function stableExecutionScopeEqual(
   );
 }
 
+function correctionPairLinked(
+  left: CanonicalExecutionEnvelope,
+  right: CanonicalExecutionEnvelope,
+): boolean {
+  if (
+    left.content.correctionState === "none" &&
+    right.content.correctionState === "none" &&
+    left.content.correctionReference === null &&
+    right.content.correctionReference === null
+  ) {
+    return false;
+  }
+  const sameBrokerAccountScope =
+    left.content.brokerCode === right.content.brokerCode &&
+    left.content.sourceSystem === right.content.sourceSystem &&
+    left.content.canonicalAccountKey === right.content.canonicalAccountKey;
+  if (!sameBrokerAccountScope) return false;
+  if (stableExecutionScopeEqual(left, right)) return true;
+  return (
+    (left.content.correctionReference !== null &&
+      left.content.correctionReference === right.content.executionId) ||
+    (right.content.correctionReference !== null &&
+      right.content.correctionReference === left.content.executionId) ||
+    (left.content.correctionReference !== null &&
+      left.content.correctionReference === right.content.correctionReference)
+  );
+}
+
 function contentWithoutSourceLocation(
   content: CanonicalExecutionContent,
 ): Omit<
@@ -199,12 +227,7 @@ function classifyVerifiedExecutionRelationship(
     );
   }
 
-  if (
-    left.content.correctionState !== "none" ||
-    right.content.correctionState !== "none" ||
-    left.content.correctionReference !== null ||
-    right.content.correctionReference !== null
-  ) {
+  if (correctionPairLinked(left, right)) {
     return result(
       left,
       right,
