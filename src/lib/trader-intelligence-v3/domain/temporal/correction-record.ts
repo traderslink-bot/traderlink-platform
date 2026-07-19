@@ -19,6 +19,10 @@ import {
 } from "../execution";
 
 export const CORRECTION_RECORD_VERSION = "ti_v3_correction_record_v1" as const;
+export const CORRECTION_CATALOG_POLICY_VERSION =
+  "ti_v3_correction_catalog_policy_v1" as const;
+export const CORRECTION_LINEAGE_COMPATIBILITY_VERSION =
+  "ti_v3_correction_lineage_compatibility_v1" as const;
 
 export type CorrectionAction = "replace" | "bust" | "delete";
 
@@ -34,7 +38,10 @@ export type CorrectionReasonCode =
   | "ti_v3_correction_record_unverified"
   | "ti_v3_correction_set_oversized"
   | "ti_v3_correction_catalog_unverified"
-  | "ti_v3_correction_lineage_mismatch";
+  | "ti_v3_correction_catalog_execution_not_accepted"
+  | "ti_v3_correction_lineage_mismatch"
+  | "ti_v3_correction_replacement_incompatible"
+  | "ti_v3_correction_supersession_mismatch";
 
 export interface CorrectionTemporalEvidence {
   readonly validEffectiveAt: CanonicalUtcTimestamp;
@@ -298,6 +305,22 @@ export interface CorrectionApplicationResult {
 
 const verifiedCorrectionResults = new WeakSet<CorrectionApplicationResult>();
 
+function executionsAreLineageCompatible(
+  target: CanonicalExecutionEnvelope,
+  replacement: CanonicalExecutionEnvelope,
+): boolean {
+  return (
+    target.content.canonicalOwnerKey === replacement.content.canonicalOwnerKey &&
+    target.content.canonicalAccountKey === replacement.content.canonicalAccountKey &&
+    target.content.brokerCode === replacement.content.brokerCode &&
+    target.content.sourceSystem === replacement.content.sourceSystem &&
+    target.content.stableInstrumentKey === replacement.content.stableInstrumentKey &&
+    target.content.currency === replacement.content.currency &&
+    target.content.securityType === replacement.content.securityType &&
+    target.content.basisContinuityState === replacement.content.basisContinuityState
+  );
+}
+
 function hasCycle(records: readonly CorrectionRecord[]): boolean {
   const parents = new Map(
     records.map((record) => [record.content.correctionKey, record.content.supersedesCorrectionKey]),
@@ -329,18 +352,46 @@ export function applyCorrectionSet(args: {
     return correctionFailure("ti_v3_correction_set_oversized", "$.availableExecutionCatalog");
   }
   const catalogCounts = new Map<CanonicalExecutionDigest, number>();
+  const catalogExecutions = new Map<CanonicalExecutionDigest, CanonicalExecutionEnvelope>();
+  const catalogAuthorityEntries: Array<{
+    readonly executionDigest: CanonicalExecutionDigest;
+    readonly validationState: string;
+    readonly validationReasonCodes: readonly string[];
+  }> = [];
   for (let index = 0; index < args.availableExecutionCatalog.length; index += 1) {
     const execution = verifyCanonicalExecutionEnvelope(args.availableExecutionCatalog[index]);
     if (!execution.ok) {
       return correctionFailure("ti_v3_correction_catalog_unverified", `$.availableExecutionCatalog[${index}]`);
     }
+    if (execution.value.validation.state !== "accepted") {
+      return correctionFailure(
+        "ti_v3_correction_catalog_execution_not_accepted",
+        `$.availableExecutionCatalog[${index}].validation.state`,
+      );
+    }
     const digest = execution.value.canonicalContentDigest;
     catalogCounts.set(digest, (catalogCounts.get(digest) ?? 0) + 1);
+    if (!catalogExecutions.has(digest)) catalogExecutions.set(digest, execution.value);
+    catalogAuthorityEntries.push({
+      executionDigest: digest,
+      validationState: execution.value.validation.state,
+      validationReasonCodes: [...execution.value.validation.reasonCodes].sort(),
+    });
   }
   const availableExecutionDigests = [...catalogCounts.keys()].sort();
   const catalogIdentity = createCanonicalContentIdentity("execution_catalog", "v1", {
     schemaVersion: "ti_v3_execution_catalog_v1",
-    executionDigests: availableExecutionDigests,
+    catalogPolicyVersion: CORRECTION_CATALOG_POLICY_VERSION,
+    lineageCompatibilityVersion: CORRECTION_LINEAGE_COMPATIBILITY_VERSION,
+    executions: catalogAuthorityEntries.sort((left, right) => {
+      const leftKey = `${left.executionDigest}:${left.validationState}:${left.validationReasonCodes.join(",")}`;
+      const rightKey = `${right.executionDigest}:${right.validationState}:${right.validationReasonCodes.join(",")}`;
+      return leftKey < rightKey
+        ? -1
+        : leftKey > rightKey
+          ? 1
+          : 0;
+    }),
   });
   if (!catalogIdentity.ok) return correctionFailure(catalogIdentity.error.code, catalogIdentity.error.path);
 
@@ -384,7 +435,7 @@ export function applyCorrectionSet(args: {
   );
   const reasons = new Set<CorrectionReasonCode>();
   if (excluded.length > 0) reasons.add("ti_v3_correction_outside_snapshot_cutoff");
-  if (hasCycle(inCutoff)) reasons.add("ti_v3_correction_cycle");
+  if (hasCycle(ordered)) reasons.add("ti_v3_correction_cycle");
 
   if ([...digestCounts.values()].some((count) => count > 1)) {
     reasons.add("ti_v3_correction_target_ambiguous");
@@ -399,14 +450,14 @@ export function applyCorrectionSet(args: {
     if (!catalogCounts.has(digest)) reasons.add("ti_v3_correction_target_not_found");
   }
   const byKey = new Map<string, CorrectionRecord>();
-  for (const record of inCutoff) {
+  for (const record of ordered) {
     if (byKey.has(record.content.correctionKey)) {
       reasons.add("ti_v3_correction_target_ambiguous");
     }
     byKey.set(record.content.correctionKey, record);
   }
   const children = new Map<string, CorrectionRecord[]>();
-  for (const record of inCutoff) {
+  for (const record of ordered) {
     if (!catalogCounts.has(record.content.targetExecutionDigest)) {
       reasons.add("ti_v3_correction_target_not_found");
     } else if ((catalogCounts.get(record.content.targetExecutionDigest) ?? 0) !== 1) {
@@ -416,6 +467,15 @@ export function applyCorrectionSet(args: {
       const replacementCount = catalogCounts.get(record.content.replacementExecutionDigest) ?? 0;
       if (replacementCount === 0) reasons.add("ti_v3_correction_target_not_found");
       if (replacementCount > 1) reasons.add("ti_v3_correction_target_ambiguous");
+      const targetExecution = catalogExecutions.get(record.content.targetExecutionDigest);
+      const replacementExecution = catalogExecutions.get(record.content.replacementExecutionDigest);
+      if (
+        targetExecution !== undefined &&
+        replacementExecution !== undefined &&
+        !executionsAreLineageCompatible(targetExecution, replacementExecution)
+      ) {
+        reasons.add("ti_v3_correction_replacement_incompatible");
+      }
     }
     const parent = record.content.supersedesCorrectionKey;
     if (parent !== null) {
@@ -428,8 +488,18 @@ export function applyCorrectionSet(args: {
   if ([...children.values()].some((items) => items.length > 1)) {
     reasons.add("ti_v3_correction_target_ambiguous");
   }
+  for (const record of ordered) {
+    const child = children.get(record.content.correctionKey)?.[0];
+    if (child === undefined) {
+      if (record.content.temporal.supersededAt !== null) {
+        reasons.add("ti_v3_correction_supersession_mismatch");
+      }
+    } else if (record.content.temporal.supersededAt !== child.content.temporal.correctedAt) {
+      reasons.add("ti_v3_correction_supersession_mismatch");
+    }
+  }
   const rootsByTarget = new Map<string, CorrectionRecord[]>();
-  for (const record of inCutoff.filter((item) => item.content.supersedesCorrectionKey === null)) {
+  for (const record of ordered.filter((item) => item.content.supersedesCorrectionKey === null)) {
     const roots = rootsByTarget.get(record.content.targetExecutionDigest) ?? [];
     roots.push(record);
     rootsByTarget.set(record.content.targetExecutionDigest, roots);
@@ -474,8 +544,14 @@ export function applyCorrectionSet(args: {
     }
   }
 
+  const inCutoffKeys = new Set(inCutoff.map((record) => record.content.correctionKey));
+  const inCutoffChildren = new Map<string, CorrectionRecord[]>();
+  for (const [parentKey, items] of children) {
+    const applicable = items.filter((item) => inCutoffKeys.has(item.content.correctionKey));
+    if (applicable.length > 0) inCutoffChildren.set(parentKey, applicable);
+  }
   const active = new Set(baseActiveExecutionDigests);
-  for (const root of roots.sort((a, b) =>
+  for (const root of roots.filter((item) => inCutoffKeys.has(item.content.correctionKey)).sort((a, b) =>
     a.correctionDigest < b.correctionDigest ? -1 : a.correctionDigest > b.correctionDigest ? 1 : 0,
   )) {
     let current: CorrectionRecord | undefined = root;
@@ -491,7 +567,7 @@ export function applyCorrectionSet(args: {
       } else {
         deleted = true;
       }
-      current = children.get(current.content.correctionKey)?.[0];
+      current = inCutoffChildren.get(current.content.correctionKey)?.[0];
     }
   }
 

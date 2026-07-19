@@ -9,6 +9,10 @@ import {
   type FoundationValidationFailure,
 } from "../foundation";
 import type { FactualLifecycleState } from "./lifecycle-review";
+import {
+  createCanonicalContentIdentity,
+  type CanonicalContentDigest,
+} from "../identity";
 
 export const RETROSPECTIVE_POLICY_VERSION = "ti_v3_retrospective_policy_v1" as const;
 
@@ -33,6 +37,7 @@ export interface RetrospectiveAnalysisPolicy {
   readonly includedLifecycleStates: readonly FactualLifecycleState[];
   readonly excludedLifecycleStates: readonly FactualLifecycleState[];
   readonly liveDirectionalGuidanceAllowed: false;
+  readonly policyDigest: CanonicalContentDigest;
 }
 
 const verifiedRetrospectivePolicies = new WeakSet<RetrospectiveAnalysisPolicy>();
@@ -103,7 +108,7 @@ export function buildRetrospectiveAnalysisPolicy(
   ) {
     return { ok: false, error: { code: "ti_v3_validation_input_invalid", path: "$.openPositionPolicy" } };
   }
-  const value = Object.freeze({
+  const content = {
       policyVersion: RETROSPECTIVE_POLICY_VERSION,
       state: state.value,
       analysisCutoffAt: analysis.value,
@@ -112,7 +117,14 @@ export function buildRetrospectiveAnalysisPolicy(
       includedLifecycleStates: canonicalStringSet(included.value) as readonly FactualLifecycleState[],
       excludedLifecycleStates: canonicalStringSet(excluded.value) as readonly FactualLifecycleState[],
       liveDirectionalGuidanceAllowed: false,
-    });
+    };
+  const identity = createCanonicalContentIdentity("retrospective_policy", "v1", content);
+  if (!identity.ok) return identity;
+  const canonical = identity.value.canonicalValue as unknown as Omit<
+    RetrospectiveAnalysisPolicy,
+    "policyDigest"
+  >;
+  const value = Object.freeze({ ...canonical, policyDigest: identity.value.identifier });
   verifiedRetrospectivePolicies.add(value);
   return { ok: true, value };
 }

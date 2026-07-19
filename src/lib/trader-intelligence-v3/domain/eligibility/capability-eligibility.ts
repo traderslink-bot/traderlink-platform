@@ -53,6 +53,7 @@ export interface EligibilitySet {
   readonly analysisCutoffAt: CanonicalUtcTimestamp;
   readonly correctionResultDigest: CanonicalContentDigest;
   readonly retrospectivePolicyVersion: string;
+  readonly retrospectivePolicyDigest: CanonicalContentDigest;
   readonly openPositionPolicy: RetrospectiveAnalysisPolicy["openPositionPolicy"];
   readonly results: readonly CapabilityEligibility[];
   readonly eligibilitySetDigest: CanonicalContentDigest;
@@ -106,7 +107,7 @@ function parseResult(input: unknown, path: string): ExactResult<CapabilityEligib
 }
 
 function buildCalculatedEligibilitySet(input: unknown): ExactResult<EligibilitySet, EligibilityFailure> {
-  const record = validateExactRecord(input, ["manifestDigest", "analysisCutoffAt", "correctionResultDigest", "retrospectivePolicyVersion", "openPositionPolicy", "results"], []);
+  const record = validateExactRecord(input, ["manifestDigest", "analysisCutoffAt", "correctionResultDigest", "retrospectivePolicyVersion", "retrospectivePolicyDigest", "openPositionPolicy", "results"], []);
   if (!record.ok) return record;
   const manifest = validateCanonicalDigest(record.value.manifestDigest, "$.manifestDigest", "dataset_manifest");
   if (!manifest.ok) return manifest;
@@ -115,6 +116,8 @@ function buildCalculatedEligibilitySet(input: unknown): ExactResult<EligibilityS
   const correctionResult = validateCanonicalDigest(record.value.correctionResultDigest, "$.correctionResultDigest", "correction_result");
   if (!correctionResult.ok) return correctionResult;
   if (record.value.retrospectivePolicyVersion !== "ti_v3_retrospective_policy_v1") return failure("ti_v3_eligibility_inconsistent", "$.retrospectivePolicyVersion");
+  const policyDigest = validateCanonicalDigest(record.value.retrospectivePolicyDigest, "$.retrospectivePolicyDigest", "retrospective_policy");
+  if (!policyDigest.ok) return policyDigest;
   if (record.value.openPositionPolicy !== "exclude_from_closed_trade_analytics" && record.value.openPositionPolicy !== "execution_review_only") return failure("ti_v3_eligibility_inconsistent", "$.openPositionPolicy");
   if (!Array.isArray(record.value.results) || record.value.results.length !== CAPABILITIES.size) return failure("ti_v3_validation_array_invalid", "$.results");
   const results: CapabilityEligibility[] = [];
@@ -125,7 +128,7 @@ function buildCalculatedEligibilitySet(input: unknown): ExactResult<EligibilityS
     results.push(parsed.value);
   }
   if (new Set(results.map((result) => result.capability)).size !== CAPABILITIES.size || [...CAPABILITIES].some((capability) => !results.some((result) => result.capability === capability))) return failure("ti_v3_eligibility_inconsistent", "$.results");
-  const content = { schemaVersion: ELIGIBILITY_SET_VERSION, manifestDigest: manifest.value, analysisCutoffAt: cutoff.value, correctionResultDigest: correctionResult.value, retrospectivePolicyVersion: record.value.retrospectivePolicyVersion as EligibilitySet["retrospectivePolicyVersion"], openPositionPolicy: record.value.openPositionPolicy as EligibilitySet["openPositionPolicy"], results: [...results].sort((left, right) => compareUnicodeCodePoints(left.capability, right.capability)) };
+  const content = { schemaVersion: ELIGIBILITY_SET_VERSION, manifestDigest: manifest.value, analysisCutoffAt: cutoff.value, correctionResultDigest: correctionResult.value, retrospectivePolicyVersion: record.value.retrospectivePolicyVersion as EligibilitySet["retrospectivePolicyVersion"], retrospectivePolicyDigest: policyDigest.value, openPositionPolicy: record.value.openPositionPolicy as EligibilitySet["openPositionPolicy"], results: [...results].sort((left, right) => compareUnicodeCodePoints(left.capability, right.capability)) };
   const identity = createCanonicalContentIdentity("eligibility_set", "v1", content);
   if (!identity.ok) return failure(identity.error.code, identity.error.path);
   const set = Object.freeze({ ...content, results: Object.freeze(content.results), eligibilitySetDigest: identity.value.identifier });
@@ -147,28 +150,43 @@ export function calculateManifestEligibility(args: {
   if (!policy.ok) return failure("ti_v3_eligibility_dependency_unverified", "$.retrospectivePolicy");
   if (!correction.ok) return failure("ti_v3_eligibility_dependency_unverified", "$.correctionResult");
   if (policy.value.analysisCutoffAt !== args.analysisCutoffAt || policy.value.correctionCutoffAt !== manifest.value.content.correctionCutoffAt || correction.value.correctionCutoffAt !== manifest.value.content.correctionCutoffAt) return failure("ti_v3_eligibility_inconsistent", "$.analysisCutoffAt");
+  const expectedPolicyVersion = policy.value.policyVersion.replace("ti_v3_retrospective_policy_", "");
+  if (!manifest.value.content.policies.some((reference) =>
+    reference.policyKey === "ti_v3_retrospective_policy" &&
+    reference.policyVersion === expectedPolicyVersion &&
+    reference.policyDigest === policy.value.policyDigest
+  )) return failure("ti_v3_eligibility_inconsistent", "$.retrospectivePolicy");
   if (correction.value.activeExecutionDigests.join("\n") !== manifest.value.content.acceptedExecutionDigests.join("\n") || correction.value.appliedCorrectionDigests.join("\n") !== manifest.value.content.correctionDigests.join("\n")) return failure("ti_v3_eligibility_inconsistent", "$.correctionResult");
   const coverage = new Set(args.manifest.content.coverageStates);
   const unresolved = coverage.has("unresolved_correction_present");
   const incomplete = coverage.has("coverage_gap_detected") || coverage.has("prior_inventory_incomplete") || coverage.has("unknown_coverage") || coverage.has("partial_account_period") || coverage.has("multiple_accounts_partial") || policy.value.state === "incomplete_coverage";
   const deleted = coverage.has("deleted_source_present");
   const open = args.manifest.content.openPositions.length > 0;
+  const pendingCorrection = policy.value.state === "pending_correction";
+  const executionReviewOnly = policy.value.state === "open_position_execution_review_only";
+  const coachingProhibited = policy.value.state === "ineligible_for_coaching";
   const evidence = canonicalStringSet(args.requiredEvidenceReferences) as readonly CanonicalContentDigest[];
   const result = (capability: AnalysisCapability, state: EligibilityState, reasons: readonly string[], failureClass: EligibilityFailureClass): CapabilityEligibility => ({ capability, state, reasonCodes: reasons, manifestDigest: args.manifest.manifestDigest, analysisCutoffAt: args.analysisCutoffAt, evidenceReferences: evidence, failureClass });
-  const reconstructionBlocked = unresolved || incomplete || correction.value.status === "blocked" || args.manifest.content.reconstructionStatus !== "exact";
+  const reconstructionBlocked = unresolved || incomplete || pendingCorrection || correction.value.status === "blocked" || args.manifest.content.reconstructionStatus !== "exact";
+  const closedTradeBlocked = reconstructionBlocked || executionReviewOnly;
+  const policyReason = pendingCorrection
+    ? "ti_v3_eligibility_pending_correction"
+    : executionReviewOnly
+      ? "ti_v3_eligibility_open_positions_execution_review_only"
+      : "ti_v3_eligibility_reconstruction_required";
   const results: CapabilityEligibility[] = [
     result("exact_reconstruction", reconstructionBlocked ? "blocked" : "eligible", reconstructionBlocked ? ["ti_v3_eligibility_exact_reconstruction_unavailable"] : [], reconstructionBlocked ? "pending_additional_evidence" : "none"),
-    result("closed_trade_analytics", reconstructionBlocked ? "blocked" : open ? "limited" : "eligible", reconstructionBlocked ? ["ti_v3_eligibility_reconstruction_required"] : open ? ["ti_v3_eligibility_open_positions_excluded"] : [], reconstructionBlocked || open ? "pending_additional_evidence" : "none"),
-    result("execution_review", unresolved ? "limited" : "eligible", unresolved ? ["ti_v3_eligibility_unresolved_correction_limited"] : [], unresolved ? "pending_additional_evidence" : "none"),
-    result("behavioral_analytics", reconstructionBlocked ? "blocked" : "eligible", reconstructionBlocked ? ["ti_v3_eligibility_reconstruction_required"] : [], reconstructionBlocked ? "pending_additional_evidence" : "none"),
-    result("simulations", reconstructionBlocked ? "blocked" : "eligible", reconstructionBlocked ? ["ti_v3_eligibility_reconstruction_required"] : [], reconstructionBlocked ? "pending_additional_evidence" : "none"),
-    result("coaching", reconstructionBlocked || unresolved ? "blocked" : open ? "limited" : "eligible", reconstructionBlocked || unresolved ? ["ti_v3_eligibility_coaching_truth_incomplete"] : open ? ["ti_v3_eligibility_open_positions_execution_review_only"] : [], reconstructionBlocked || unresolved || open ? "pending_additional_evidence" : "none"),
+    result("closed_trade_analytics", closedTradeBlocked ? "blocked" : open ? "limited" : "eligible", closedTradeBlocked ? [policyReason] : open ? ["ti_v3_eligibility_open_positions_excluded"] : [], closedTradeBlocked || open ? "pending_additional_evidence" : "none"),
+    result("execution_review", unresolved || pendingCorrection ? "limited" : "eligible", unresolved || pendingCorrection ? [pendingCorrection ? "ti_v3_eligibility_pending_correction" : "ti_v3_eligibility_unresolved_correction_limited"] : [], unresolved || pendingCorrection ? "pending_additional_evidence" : "none"),
+    result("behavioral_analytics", reconstructionBlocked ? "blocked" : "eligible", reconstructionBlocked ? [policyReason] : [], reconstructionBlocked ? "pending_additional_evidence" : "none"),
+    result("simulations", reconstructionBlocked || executionReviewOnly ? "blocked" : "eligible", reconstructionBlocked || executionReviewOnly ? [policyReason] : [], reconstructionBlocked || executionReviewOnly ? "pending_additional_evidence" : "none"),
+    result("coaching", reconstructionBlocked || unresolved || executionReviewOnly || coachingProhibited ? "blocked" : open ? "limited" : "eligible", reconstructionBlocked || unresolved || executionReviewOnly || coachingProhibited ? [coachingProhibited ? "ti_v3_eligibility_coaching_policy_prohibited" : "ti_v3_eligibility_coaching_truth_incomplete"] : open ? ["ti_v3_eligibility_open_positions_execution_review_only"] : [], reconstructionBlocked || unresolved || executionReviewOnly || coachingProhibited || open ? "pending_additional_evidence" : "none"),
     result("ai_explanation", reconstructionBlocked ? "limited" : "eligible", reconstructionBlocked ? ["ti_v3_eligibility_ai_explanation_limited_to_available_evidence"] : [], reconstructionBlocked ? "pending_additional_evidence" : "none"),
     result("visual_evidence", deleted ? "limited" : "eligible", deleted ? ["ti_v3_eligibility_deleted_source_retained"] : [], deleted ? "pending_additional_evidence" : "none"),
     result("export", "eligible", [], "none"),
     result("market_enrichment", "pending", ["ti_v3_eligibility_enrichment_not_supplied"], "retryable"),
   ];
-  return buildCalculatedEligibilitySet({ manifestDigest: args.manifest.manifestDigest, analysisCutoffAt: args.analysisCutoffAt, correctionResultDigest: correction.value.correctionResultDigest, retrospectivePolicyVersion: policy.value.policyVersion, openPositionPolicy: policy.value.openPositionPolicy, results });
+  return buildCalculatedEligibilitySet({ manifestDigest: args.manifest.manifestDigest, analysisCutoffAt: args.analysisCutoffAt, correctionResultDigest: correction.value.correctionResultDigest, retrospectivePolicyVersion: policy.value.policyVersion, retrospectivePolicyDigest: policy.value.policyDigest, openPositionPolicy: policy.value.openPositionPolicy, results });
 }
 
 export function verifyEligibilitySet(input: unknown): ExactResult<EligibilitySet, EligibilityFailure> {

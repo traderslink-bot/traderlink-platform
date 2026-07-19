@@ -1,4 +1,5 @@
 import type { CanonicalUtcTimestamp } from "../canonical";
+import { isProxy } from "node:util/types";
 import { compareUnicodeCodePoints, parseCanonicalUtcTimestamp } from "../canonical";
 import type { ExactResult } from "../exact";
 import { parseCanonicalContentDigest, type CanonicalContentDigest } from "../identity";
@@ -46,7 +47,9 @@ interface InspectionContext {
   aggregateStringLength: number;
 }
 
-function inspectUnknown(value: unknown, path: string, context: InspectionContext, depth: number): ExactResult<unknown, FoundationValidationFailure> {
+export type AuthorityFieldVerifier = (value: unknown) => boolean;
+
+function inspectUnknown(value: unknown, path: string, context: InspectionContext, depth: number, rootAuthorities?: ReadonlyMap<string, AuthorityFieldVerifier>): ExactResult<unknown, FoundationValidationFailure> {
   if (depth > FOUNDATION_PAYLOAD_LIMITS.maxDepth) return validationFailure("ti_v3_validation_payload_oversized", path);
   context.nodes += 1;
   if (context.nodes > FOUNDATION_PAYLOAD_LIMITS.maxNodes) return validationFailure("ti_v3_validation_payload_oversized", path);
@@ -56,6 +59,7 @@ function inspectUnknown(value: unknown, path: string, context: InspectionContext
   }
   if (value === null || typeof value === "boolean" || typeof value === "number") return { ok: true, value };
   if (typeof value !== "object") return validationFailure("ti_v3_validation_input_invalid", path);
+  if (isProxy(value)) return validationFailure("ti_v3_validation_input_invalid", path);
   if (context.active.has(value)) return validationFailure("ti_v3_validation_input_invalid", path);
   context.active.add(value);
   let array: boolean;
@@ -113,7 +117,7 @@ function inspectUnknown(value: unknown, path: string, context: InspectionContext
       }
       const child = inspectUnknown(descriptor.value, `${path}[${index}]`, context, depth + 1);
       if (!child.ok) { context.active.delete(value); return child; }
-      output.push(depth === 0 ? descriptor.value : child.value);
+      output.push(child.value);
     }
     context.active.delete(value);
     return { ok: true, value: Object.freeze(output) };
@@ -124,14 +128,28 @@ function inspectUnknown(value: unknown, path: string, context: InspectionContext
     const normalizedKey = normalizedKeys[index];
     const child = inspectUnknown(descriptors[key].value, `${path}.${normalizedKey}`, context, depth + 1);
     if (!child.ok) { context.active.delete(value); return child; }
-    Object.defineProperty(output, normalizedKey, { configurable: false, enumerable: true, writable: false, value: depth === 0 ? descriptors[key].value : child.value });
+    let outputValue = child.value;
+    const authorityVerifier = depth === 0 ? rootAuthorities?.get(normalizedKey) : undefined;
+    if (authorityVerifier !== undefined) {
+      try {
+        if (!authorityVerifier(descriptors[key].value)) {
+          context.active.delete(value);
+          return validationFailure("ti_v3_validation_input_invalid", `${path}.${normalizedKey}`);
+        }
+      } catch {
+        context.active.delete(value);
+        return validationFailure("ti_v3_validation_input_invalid", `${path}.${normalizedKey}`);
+      }
+      outputValue = descriptors[key].value;
+    }
+    Object.defineProperty(output, normalizedKey, { configurable: false, enumerable: true, writable: false, value: outputValue });
   }
   context.active.delete(value);
   return { ok: true, value: Object.freeze(output) };
 }
 
-function inspectRoot(value: unknown, path: string): ExactResult<unknown, FoundationValidationFailure> {
-  return inspectUnknown(value, path, { active: new WeakSet(), nodes: 0, keys: 0, aggregateStringLength: 0 }, 0);
+function inspectRoot(value: unknown, path: string, rootAuthorities?: ReadonlyMap<string, AuthorityFieldVerifier>): ExactResult<unknown, FoundationValidationFailure> {
+  return inspectUnknown(value, path, { active: new WeakSet(), nodes: 0, keys: 0, aggregateStringLength: 0 }, 0, rootAuthorities);
 }
 
 export function isPlainRecord(value: unknown): value is Record<string, unknown> {
@@ -163,6 +181,30 @@ export function validateExactRecord(
   if (missing !== undefined) {
     return validationFailure("ti_v3_validation_required_field_missing", `${path}.${missing}`);
   }
+  return { ok: true, value: safeValue };
+}
+
+export function validateExactRecordWithAuthorities(
+  value: unknown,
+  requiredKeys: readonly string[],
+  optionalKeys: readonly string[],
+  authorityFields: Readonly<Record<string, AuthorityFieldVerifier>>,
+  path = "$",
+): ExactResult<Record<string, unknown>, FoundationValidationFailure> {
+  const authorityMap = new Map(Object.entries(authorityFields));
+  const inspected = inspectRoot(value, path, authorityMap);
+  if (!inspected.ok || typeof inspected.value !== "object" || inspected.value === null || Array.isArray(inspected.value)) {
+    return validationFailure("ti_v3_validation_input_invalid", path);
+  }
+  const safeValue = inspected.value as Record<string, unknown>;
+  const keys = Object.keys(safeValue);
+  const allowed = new Set([...requiredKeys, ...optionalKeys]);
+  const extra = keys.find((key) => !allowed.has(key));
+  if (extra !== undefined) return validationFailure("ti_v3_validation_extra_field", `${path}.${extra}`);
+  const missing = requiredKeys.find((key) => !Object.prototype.hasOwnProperty.call(safeValue, key));
+  if (missing !== undefined) return validationFailure("ti_v3_validation_required_field_missing", `${path}.${missing}`);
+  const undeclaredAuthority = Object.keys(authorityFields).find((key) => !allowed.has(key));
+  if (undeclaredAuthority !== undefined) return validationFailure("ti_v3_validation_input_invalid", `${path}.${undeclaredAuthority}`);
   return { ok: true, value: safeValue };
 }
 

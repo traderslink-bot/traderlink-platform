@@ -71,7 +71,14 @@ function parseStrictRows(text: string, delimiter: "," | ";" | "\t", issues: Pars
     const character = text[index];
     const next = text[index + 1];
     if (character === '"') {
-      if (quoted && next === '"') { cell += '"'; index += 1; }
+      if (quoted && next === '"') {
+        if (cell.length >= MAX_CELL_LENGTH) {
+          issues.push({ code: "ti_v3_parser_oversized_cell", rowIndex: rows.length + 1 });
+          return null;
+        }
+        cell += '"';
+        index += 1;
+      }
       else quoted = !quoted;
       continue;
     }

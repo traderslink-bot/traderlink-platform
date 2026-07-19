@@ -29,6 +29,7 @@ function correction(overrides: Partial<{
   observedAt: string;
   recordedAt: string;
   correctedAt: string;
+  supersededAt: string | null;
 }> = {}): CorrectionRecord {
   const built = buildCorrectionRecord({
     correctionKey: overrides.correctionKey ?? "correction_a",
@@ -44,7 +45,7 @@ function correction(overrides: Partial<{
       observedAt: overrides.observedAt ?? "2026-01-02T14:31:00.000000000Z",
       recordedAt: overrides.recordedAt ?? "2026-01-02T14:32:00.000000000Z",
       correctedAt: overrides.correctedAt ?? "2026-01-02T14:33:00.000000000Z",
-      supersededAt: null,
+      supersededAt: overrides.supersededAt ?? null,
     },
   });
   expect(built.ok).toBe(true);
@@ -54,7 +55,7 @@ function correction(overrides: Partial<{
 
 describe("GA0-A3 temporal correction authority", () => {
   it("replays the same valid correction set deterministically under input permutation", () => {
-    const first = correction();
+    const first = correction({ supersededAt: "2026-01-02T14:34:00.000000000Z" });
     const second = correction({
       correctionKey: "correction_b",
       targetExecutionDigest: executionB,
@@ -94,6 +95,62 @@ describe("GA0-A3 temporal correction authority", () => {
     );
   });
 
+  it("reconciles supersession evidence with the child and honors cutoffs on both sides", () => {
+    const parent = correction({ supersededAt: "2026-01-02T14:34:00.000000000Z" });
+    const child = correction({
+      correctionKey: "correction_b",
+      targetExecutionDigest: executionB,
+      replacementExecutionDigest: executionC,
+      supersedesCorrectionKey: "correction_a",
+      recordedAt: "2026-01-02T14:33:30.000000000Z",
+      correctedAt: "2026-01-02T14:34:00.000000000Z",
+    });
+    const before = applyCorrectionSet({
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: catalog,
+      corrections: [child, parent],
+      correctionCutoffAt: "2026-01-02T14:33:30.000000000Z",
+    });
+    const after = applyCorrectionSet({
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: catalog,
+      corrections: [parent, child],
+      correctionCutoffAt: "2026-01-02T14:34:00.000000000Z",
+    });
+    expect(before.ok && before.value.status).toBe("applied");
+    expect(before.ok && before.value.activeExecutionDigests).toEqual([executionB]);
+    expect(after.ok && after.value.status).toBe("applied");
+    expect(after.ok && after.value.activeExecutionDigests).toEqual([executionC]);
+
+    const missingSupersession = applyCorrectionSet({
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: catalog,
+      corrections: [correction(), child],
+      correctionCutoffAt: "2026-01-02T15:00:00.000000000Z",
+    });
+    const lateSupersession = applyCorrectionSet({
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: catalog,
+      corrections: [
+        correction({ supersededAt: "2026-01-02T14:35:00.000000000Z" }),
+        child,
+      ],
+      correctionCutoffAt: "2026-01-02T15:00:00.000000000Z",
+    });
+    const terminalClaim = applyCorrectionSet({
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: catalog,
+      corrections: [correction({ supersededAt: "2026-01-02T14:35:00.000000000Z" })],
+      correctionCutoffAt: "2026-01-02T15:00:00.000000000Z",
+    });
+    for (const result of [missingSupersession, lateSupersession, terminalClaim]) {
+      expect(result.ok && result.value.status).toBe("blocked");
+      expect(result.ok && result.value.reasonCodes).toContain(
+        "ti_v3_correction_supersession_mismatch",
+      );
+    }
+  });
+
   it("fails closed on contradictory time, cycles, and corrections after deletion", () => {
     const invalid = buildCorrectionRecord({
       correctionKey: "correction_invalid",
@@ -131,6 +188,7 @@ describe("GA0-A3 temporal correction authority", () => {
       correctionKey: "correction_delete",
       action: "delete",
       replacementExecutionDigest: null,
+      supersededAt: "2026-01-02T14:34:00.000000000Z",
     });
     const afterDelete = correction({
       correctionKey: "correction_after_delete",
@@ -151,7 +209,7 @@ describe("GA0-A3 temporal correction authority", () => {
   });
 
   it("fails closed for missing replacement catalog entries and cross-target supersession", () => {
-    const replace = correction();
+    const replace = correction({ supersededAt: "2026-01-02T14:34:00.000000000Z" });
     const missing = applyCorrectionSet({
       baseActiveExecutionDigests: [executionA],
       availableExecutionCatalog: [availableA],
@@ -177,6 +235,77 @@ describe("GA0-A3 temporal correction authority", () => {
     });
     expect(crossed.ok && crossed.value.status).toBe("blocked");
     expect(crossed.ok && crossed.value.reasonCodes).toContain("ti_v3_correction_lineage_mismatch");
+  });
+
+  it("rejects non-accepted and lineage-incompatible replacement executions", () => {
+    const rejected = buildSyntheticCanonicalExecution({
+      executionId: "SYNTH-REJECTED",
+      brokerExecutionIndex: "4",
+      validation: { state: "rejected", reasonCodes: ["ti_v3_synthetic_rejected"] },
+    });
+    const quarantined = buildSyntheticCanonicalExecution({
+      executionId: "SYNTH-QUARANTINED",
+      brokerExecutionIndex: "5",
+      validation: { state: "quarantined", reasonCodes: ["ti_v3_synthetic_quarantined"] },
+    });
+    for (const candidate of [rejected, quarantined]) {
+      const result = applyCorrectionSet({
+        baseActiveExecutionDigests: [executionA],
+        availableExecutionCatalog: [availableA, candidate],
+        corrections: [correction({ replacementExecutionDigest: candidate.canonicalContentDigest })],
+        correctionCutoffAt: "2026-01-02T15:00:00.000000000Z",
+      });
+      expect(result).toMatchObject({
+        ok: false,
+        error: { code: "ti_v3_correction_catalog_execution_not_accepted" },
+      });
+    }
+
+    const incompatibleCandidates = [
+      buildSyntheticCanonicalExecution({
+        canonicalOwnerKey: "owner_synthetic_other",
+        executionId: "SYNTH-OTHER-OWNER",
+        brokerExecutionIndex: "6",
+      }),
+      buildSyntheticCanonicalExecution({
+        canonicalAccountKey: "account_synthetic_other",
+        executionId: "SYNTH-OTHER-ACCOUNT",
+        brokerExecutionIndex: "7",
+      }),
+      buildSyntheticCanonicalExecution({
+        stableInstrumentKey: "instrument_synthetic_other",
+        rawBrokerSymbol: "OTHER",
+        executionId: "SYNTH-OTHER-INSTRUMENT",
+        brokerExecutionIndex: "8",
+      }),
+      buildSyntheticCanonicalExecution({
+        currency: "CAD",
+        charges: [{ kind: "commission", amount: "0.25", currency: "CAD" }],
+        executionId: "SYNTH-OTHER-CURRENCY",
+        brokerExecutionIndex: "9",
+      }),
+    ];
+    for (const candidate of incompatibleCandidates) {
+      const result = applyCorrectionSet({
+        baseActiveExecutionDigests: [executionA],
+        availableExecutionCatalog: [availableA, candidate],
+        corrections: [correction({ replacementExecutionDigest: candidate.canonicalContentDigest })],
+        correctionCutoffAt: "2026-01-02T15:00:00.000000000Z",
+      });
+      expect(result.ok && result.value.status).toBe("blocked");
+      expect(result.ok && result.value.reasonCodes).toContain(
+        "ti_v3_correction_replacement_incompatible",
+      );
+    }
+
+    const compatible = applyCorrectionSet({
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: catalog,
+      corrections: [correction()],
+      correctionCutoffAt: "2026-01-02T15:00:00.000000000Z",
+    });
+    expect(compatible.ok && compatible.value.status).toBe("applied");
+    expect(compatible.ok && compatible.value.activeExecutionDigests).toEqual([executionB]);
   });
 });
 

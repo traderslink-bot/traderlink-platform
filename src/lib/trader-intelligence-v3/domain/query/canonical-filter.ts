@@ -1,6 +1,6 @@
 import type { CanonicalUtcTimestamp } from "../canonical";
 import type { ExactResult } from "../exact";
-import { validateCanonicalDigest, validateCanonicalTimestamp, validateEnum, validateExactRecord, validateStringSet, type FoundationValidationFailure } from "../foundation";
+import { validateCanonicalDigest, validateCanonicalTimestamp, validateEnum, validateExactRecord, validateExactRecordWithAuthorities, validateStringSet, type FoundationValidationFailure } from "../foundation";
 import { createCanonicalContentIdentity, type CanonicalContentDigest } from "../identity";
 import type { OpenPositionPolicy } from "../temporal";
 
@@ -23,6 +23,7 @@ export interface TradingSessionEvidence {
   readonly state: "regular" | "holiday" | "early_close";
   readonly openAt: CanonicalUtcTimestamp | null;
   readonly closeAt: CanonicalUtcTimestamp | null;
+  readonly closureReasonCode: string | null;
 }
 
 export interface DateResolutionReceipt {
@@ -85,6 +86,11 @@ const OUTCOMES = new Set<OutcomeFilter>(["gain", "loss", "flat", "unknown"]);
 const OPEN_POLICIES = new Set<OpenPositionPolicy>(["exclude_from_closed_trade_analytics", "execution_review_only"]);
 const verifiedFilters = new WeakSet<CanonicalQueryFilter>();
 const verifiedDateReceipts = new WeakSet<DateResolutionReceipt>();
+const SESSION_STATES = new Set<TradingSessionEvidence["state"]>([
+  "regular",
+  "holiday",
+  "early_close",
+]);
 
 function failure(code: CanonicalFilterFailure["code"], path: string): ExactResult<never, CanonicalFilterFailure> { return { ok: false, error: { code, path } }; }
 function validateDate(value: unknown, path: string): ExactResult<string, CanonicalFilterFailure> {
@@ -110,6 +116,93 @@ function setupContract(input: unknown): ExactResult<SetupFilterContract | null, 
   return record.value.contractVersion === "v1" && keys.value.length > 0 && (record.value.match === "any" || record.value.match === "all") ? { ok: true, value: { contractVersion: "v1", setupKeys: keys.value, match: record.value.match } } : failure("ti_v3_filter_contradictory", "$.setupFilter");
 }
 
+function localDateAt(timestamp: CanonicalUtcTimestamp, timezone: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(timestamp));
+  const value = (type: "year" | "month" | "day") =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
+function parseSessionEvidence(
+  input: unknown,
+  path: string,
+  timezone: string,
+  requestedStartDate: string,
+  requestedEndDate: string,
+  resolvedStartAt: CanonicalUtcTimestamp,
+  resolvedEndAt: CanonicalUtcTimestamp,
+): ExactResult<TradingSessionEvidence, CanonicalFilterFailure> {
+  const record = validateExactRecord(
+    input,
+    ["sessionDate", "state", "openAt", "closeAt", "closureReasonCode"],
+    [],
+    path,
+  );
+  if (!record.ok) return record;
+  const sessionDate = validateDate(record.value.sessionDate, `${path}.sessionDate`);
+  if (!sessionDate.ok) return sessionDate;
+  const state = validateEnum(record.value.state, SESSION_STATES, `${path}.state`);
+  if (!state.ok) return state;
+  if (
+    sessionDate.value < requestedStartDate ||
+    sessionDate.value > requestedEndDate
+  ) {
+    return failure("ti_v3_filter_range_invalid", `${path}.sessionDate`);
+  }
+  const parseNullable = (
+    value: unknown,
+    itemPath: string,
+  ): ExactResult<CanonicalUtcTimestamp | null, CanonicalFilterFailure> => {
+    if (value === null) return { ok: true, value: null };
+    return validateCanonicalTimestamp(value, itemPath);
+  };
+  const open = parseNullable(record.value.openAt, `${path}.openAt`);
+  if (!open.ok) return open;
+  const close = parseNullable(record.value.closeAt, `${path}.closeAt`);
+  if (!close.ok) return close;
+  const reason = record.value.closureReasonCode;
+  if (
+    reason !== null &&
+    (typeof reason !== "string" || !/^ti_v3_[a-z0-9_]{1,120}$/.test(reason))
+  ) {
+    return failure("ti_v3_validation_string_invalid", `${path}.closureReasonCode`);
+  }
+  if (state.value === "holiday") {
+    if (open.value !== null || close.value !== null || reason === null) {
+      return failure("ti_v3_filter_contradictory", path);
+    }
+  } else {
+    if (
+      open.value === null ||
+      close.value === null ||
+      open.value >= close.value ||
+      open.value < resolvedStartAt ||
+      close.value > resolvedEndAt ||
+      localDateAt(open.value, timezone) !== sessionDate.value ||
+      localDateAt(close.value, timezone) !== sessionDate.value ||
+      (state.value === "regular" && reason !== null) ||
+      (state.value === "early_close" && reason === null)
+    ) {
+      return failure("ti_v3_filter_contradictory", path);
+    }
+  }
+  return {
+    ok: true,
+    value: {
+      sessionDate: sessionDate.value,
+      state: state.value,
+      openAt: open.value,
+      closeAt: close.value,
+      closureReasonCode: reason as string | null,
+    },
+  };
+}
+
 export interface DateResolutionRequest {
   readonly dateBasis: DateBasis;
   readonly timeBasis: TimeBasis;
@@ -133,23 +226,33 @@ export function resolveRelativeDateRange(args: { readonly request: DateResolutio
   if (args.request.timeBasis === "utc" && timezone.value !== "UTC") return failure("ti_v3_filter_contradictory", "$.timezone");
   if ((args.request.relativeRange === null) !== (args.request.requestedStartDate !== null && args.request.requestedEndDate !== null)) return failure("ti_v3_filter_relative_unresolved", "$.request");
   const resolved = args.resolver.resolve({ ...args.request, timezone: timezone.value }, now.value); if (!resolved.ok) return resolved;
-  const startDate = validateDate(resolved.value.requestedStartDate, "$.resolved.requestedStartDate"); if (!startDate.ok) return startDate;
-  const endDate = validateDate(resolved.value.requestedEndDate, "$.resolved.requestedEndDate"); if (!endDate.ok) return endDate;
+  const resolvedRecord = validateExactRecord(resolved.value, ["requestedStartDate", "requestedEndDate", "startAt", "endAt", "calendarPolicyKey", "calendarPolicyVersion", "sessionEvidence"], [], "$.resolved"); if (!resolvedRecord.ok) return resolvedRecord;
+  const startDate = validateDate(resolvedRecord.value.requestedStartDate, "$.resolved.requestedStartDate"); if (!startDate.ok) return startDate;
+  const endDate = validateDate(resolvedRecord.value.requestedEndDate, "$.resolved.requestedEndDate"); if (!endDate.ok) return endDate;
   if (startDate.value > endDate.value || (args.request.requestedStartDate !== null && (startDate.value !== args.request.requestedStartDate || endDate.value !== args.request.requestedEndDate))) return failure("ti_v3_filter_range_invalid", "$.resolved");
-  const startAt = validateCanonicalTimestamp(resolved.value.startAt, "$.resolved.startAt"); if (!startAt.ok) return startAt;
-  const endAt = validateCanonicalTimestamp(resolved.value.endAt, "$.resolved.endAt"); if (!endAt.ok) return endAt;
-  if (startAt.value >= endAt.value || endAt.value > now.value || !/^ti_v3_[a-z0-9_]{1,120}$/.test(resolved.value.calendarPolicyKey) || !/^v[1-9][0-9]*$/.test(resolved.value.calendarPolicyVersion)) return failure("ti_v3_filter_range_invalid", "$.resolved");
-  if (!Array.isArray(resolved.value.sessionEvidence) || resolved.value.sessionEvidence.length > 2_000 || (args.request.calendarBasis === "trading_session" && resolved.value.sessionEvidence.length === 0)) return failure("ti_v3_filter_unverified", "$.resolved.sessionEvidence");
+  const startAt = validateCanonicalTimestamp(resolvedRecord.value.startAt, "$.resolved.startAt"); if (!startAt.ok) return startAt;
+  const endAt = validateCanonicalTimestamp(resolvedRecord.value.endAt, "$.resolved.endAt"); if (!endAt.ok) return endAt;
+  if (startAt.value >= endAt.value || endAt.value > now.value || typeof resolvedRecord.value.calendarPolicyKey !== "string" || !/^ti_v3_[a-z0-9_]{1,120}$/.test(resolvedRecord.value.calendarPolicyKey) || typeof resolvedRecord.value.calendarPolicyVersion !== "string" || !/^v[1-9][0-9]*$/.test(resolvedRecord.value.calendarPolicyVersion)) return failure("ti_v3_filter_range_invalid", "$.resolved");
+  if (!Array.isArray(resolvedRecord.value.sessionEvidence) || resolvedRecord.value.sessionEvidence.length > 2_000 || (args.request.calendarBasis === "trading_session" && resolvedRecord.value.sessionEvidence.length === 0) || (args.request.calendarBasis === "calendar_day" && resolvedRecord.value.sessionEvidence.length > 0)) return failure("ti_v3_filter_unverified", "$.resolved.sessionEvidence");
+  const sessionEvidence: TradingSessionEvidence[] = [];
+  for (let index = 0; index < resolvedRecord.value.sessionEvidence.length; index += 1) {
+    const session = parseSessionEvidence(resolvedRecord.value.sessionEvidence[index], `$.resolved.sessionEvidence[${index}]`, timezone.value, startDate.value, endDate.value, startAt.value, endAt.value);
+    if (!session.ok) return session;
+    sessionEvidence.push(session.value);
+  }
+  if (new Set(sessionEvidence.map((session) => session.sessionDate)).size !== sessionEvidence.length) return failure("ti_v3_filter_contradictory", "$.resolved.sessionEvidence");
+  sessionEvidence.sort((left, right) => left.sessionDate < right.sessionDate ? -1 : left.sessionDate > right.sessionDate ? 1 : 0);
   const relativeDateAnchorAt = args.request.relativeRange === null ? null : now.value;
-  const content = { schemaVersion: DATE_RESOLUTION_RECEIPT_VERSION, dateBasis: args.request.dateBasis, timeBasis: args.request.timeBasis, timezone: timezone.value, requestedStartDate: startDate.value, requestedEndDate: endDate.value, startBoundary: args.request.startBoundary, endBoundary: args.request.endBoundary, calendarBasis: args.request.calendarBasis, relativeDateAnchorAt, fixedClockAt: now.value, resolvedAbsoluteRange: { startAt: startAt.value, endAt: endAt.value }, calendarPolicyKey: resolved.value.calendarPolicyKey, calendarPolicyVersion: resolved.value.calendarPolicyVersion, sessionEvidence: [...resolved.value.sessionEvidence] };
+  const content = { schemaVersion: DATE_RESOLUTION_RECEIPT_VERSION, dateBasis: args.request.dateBasis, timeBasis: args.request.timeBasis, timezone: timezone.value, requestedStartDate: startDate.value, requestedEndDate: endDate.value, startBoundary: args.request.startBoundary, endBoundary: args.request.endBoundary, calendarBasis: args.request.calendarBasis, relativeDateAnchorAt, fixedClockAt: now.value, resolvedAbsoluteRange: { startAt: startAt.value, endAt: endAt.value }, calendarPolicyKey: resolvedRecord.value.calendarPolicyKey, calendarPolicyVersion: resolvedRecord.value.calendarPolicyVersion, sessionEvidence };
   const identity = createCanonicalContentIdentity("date_resolution_receipt", "v1", content); if (!identity.ok) return failure(identity.error.code, identity.error.path);
-  const receipt = Object.freeze({ ...content, sessionEvidence: Object.freeze(content.sessionEvidence), receiptDigest: identity.value.identifier });
+  const canonical = identity.value.canonicalValue as unknown as Omit<DateResolutionReceipt, "receiptDigest">;
+  const receipt = Object.freeze({ ...canonical, receiptDigest: identity.value.identifier });
   verifiedDateReceipts.add(receipt);
   return { ok: true, value: receipt };
 }
 
 export function buildCanonicalQueryFilter(input: unknown): ExactResult<CanonicalQueryFilter, CanonicalFilterFailure> {
-  const record = validateExactRecord(input, ["dateResolutionReceipt", "accountFilters", "instrumentFilters", "directionFilters", "sessionFilters", "lifecycleFilters", "setupFilter", "outcomeFilters", "currencyFilters", "evidenceCapabilityFilters", "openPositionPolicy", "correctionCutoffAt", "analysisCutoffAt", "boundSnapshotDigest"], []); if (!record.ok) return record;
+  const record = validateExactRecordWithAuthorities(input, ["dateResolutionReceipt", "accountFilters", "instrumentFilters", "directionFilters", "sessionFilters", "lifecycleFilters", "setupFilter", "outcomeFilters", "currencyFilters", "evidenceCapabilityFilters", "openPositionPolicy", "correctionCutoffAt", "analysisCutoffAt", "boundSnapshotDigest"], [], { dateResolutionReceipt: (value) => typeof value === "object" && value !== null && verifiedDateReceipts.has(value as DateResolutionReceipt) }); if (!record.ok) return record;
   if (typeof record.value.dateResolutionReceipt !== "object" || record.value.dateResolutionReceipt === null || !verifiedDateReceipts.has(record.value.dateResolutionReceipt as DateResolutionReceipt)) return failure("ti_v3_filter_unverified", "$.dateResolutionReceipt");
   const receipt = record.value.dateResolutionReceipt as DateResolutionReceipt;
   const accounts = validateStringSet(record.value.accountFilters, "$.accountFilters", { pattern: /^account_[a-z0-9][a-z0-9_-]{0,87}$/, maxItems: 128 }); if (!accounts.ok) return accounts;
@@ -169,7 +272,8 @@ export function buildCanonicalQueryFilter(input: unknown): ExactResult<Canonical
   if (record.value.boundSnapshotDigest !== null) { const parsed = validateCanonicalDigest(record.value.boundSnapshotDigest, "$.boundSnapshotDigest", "analysis_snapshot"); if (!parsed.ok) return parsed; boundSnapshot = parsed.value; }
   const content = { schemaVersion: CANONICAL_FILTER_VERSION, dateBasis: receipt.dateBasis, timeBasis: receipt.timeBasis, timezone: receipt.timezone, requestedStartDate: receipt.requestedStartDate, requestedEndDate: receipt.requestedEndDate, startBoundary: receipt.startBoundary, endBoundary: receipt.endBoundary, calendarBasis: receipt.calendarBasis, relativeDateAnchorAt: receipt.relativeDateAnchorAt, resolvedAbsoluteRange: receipt.resolvedAbsoluteRange, dateResolutionReceiptDigest: receipt.receiptDigest, accountFilters: accounts.value, instrumentFilters: instruments.value, directionFilters: directions.value, sessionFilters: sessions.value, lifecycleFilters: lifecycle.value, setupFilter: setup.value, outcomeFilters: outcomes.value, currencyFilters: currencies.value, evidenceCapabilityFilters: capabilities.value, openPositionPolicy: openPolicy.value, correctionCutoffAt: correction.value, analysisCutoffAt: analysis.value, boundSnapshotDigest: boundSnapshot };
   const identity = createCanonicalContentIdentity("canonical_filter", "v1", content); if (!identity.ok) return failure(identity.error.code, identity.error.path);
-  const filter = Object.freeze({ ...content, filterDigest: identity.value.identifier }); verifiedFilters.add(filter); return { ok: true, value: filter };
+  const canonical = identity.value.canonicalValue as unknown as Omit<CanonicalQueryFilter, "filterDigest">;
+  const filter = Object.freeze({ ...canonical, filterDigest: identity.value.identifier }); verifiedFilters.add(filter); return { ok: true, value: filter };
 }
 
 export function verifyCanonicalQueryFilter(input: unknown): ExactResult<CanonicalQueryFilter, CanonicalFilterFailure> {

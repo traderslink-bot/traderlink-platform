@@ -7,6 +7,7 @@ import {
   validateCanonicalTimestamp,
   validateEnum,
   validateExactRecord,
+  validateExactRecordWithAuthorities,
   validateStringSet,
   type FoundationValidationFailure,
 } from "../foundation";
@@ -152,6 +153,25 @@ const OVERLAP_STATES = new Set<ManifestCoverageOverlap["resolutionState"]>([
 ]);
 const verifiedManifests = new WeakSet<DatasetManifest>();
 
+function manifestRangeKey(range: ManifestTimeRange): string {
+  return `${range.startAt}:${range.endAt}:${range.startInclusive}:${range.endInclusive}`;
+}
+
+function rangeContains(container: ManifestTimeRange, candidate: ManifestTimeRange): boolean {
+  const startContained = candidate.startAt > container.startAt ||
+    (candidate.startAt === container.startAt && (!candidate.startInclusive || container.startInclusive));
+  const endContained = candidate.endAt < container.endAt ||
+    (candidate.endAt === container.endAt && (!candidate.endInclusive || container.endInclusive));
+  return startContained && endContained;
+}
+
+function rangesOverlap(left: ManifestTimeRange, right: ManifestTimeRange): boolean {
+  if (left.endAt < right.startAt || right.endAt < left.startAt) return false;
+  if (left.endAt === right.startAt) return left.endInclusive && right.startInclusive;
+  if (right.endAt === left.startAt) return right.endInclusive && left.startInclusive;
+  return true;
+}
+
 function failure(code: DatasetManifestFailure["code"], path: string): ExactResult<never, DatasetManifestFailure> {
   return { ok: false, error: { code, path } };
 }
@@ -207,6 +227,9 @@ function parseSource(input: unknown, path: string): ExactResult<ManifestSourceDo
   if (!sourceKind.ok) return sourceKind;
   const periods = parseArrayItems(record.value.statementPeriods, `${path}.statementPeriods`, parseRange);
   if (!periods.ok) return periods;
+  if (new Set(periods.value.map(manifestRangeKey)).size !== periods.value.length) {
+    return failure("ti_v3_manifest_inconsistent", `${path}.statementPeriods`);
+  }
   const deletion = validateEnum(record.value.deletionState, DELETION_STATES, `${path}.deletionState`);
   if (!deletion.ok) return deletion;
   return {
@@ -214,7 +237,7 @@ function parseSource(input: unknown, path: string): ExactResult<ManifestSourceDo
     value: {
       sourceDocumentDigest: digest.value as CanonicalSourceDocumentDigest,
       sourceKind: sourceKind.value,
-      statementPeriods: periods.value,
+      statementPeriods: canonicalOrder(periods.value, manifestRangeKey),
       deletionState: deletion.value,
     },
   };
@@ -248,7 +271,7 @@ function parseOverlap(input: unknown, path: string): ExactResult<ManifestCoverag
     return parsed.ok ? { ok: true, value: parsed.value as CanonicalSourceDocumentDigest } : parsed;
   });
   if (!digests.ok) return digests;
-  if (digests.value.length < 2) return failure("ti_v3_manifest_inconsistent", `${path}.sourceDocumentDigests`);
+  if (digests.value.length < 2 || new Set(digests.value).size !== digests.value.length) return failure("ti_v3_manifest_inconsistent", `${path}.sourceDocumentDigests`);
   const range = parseRange(record.value.range, `${path}.range`);
   if (!range.ok) return range;
   const state = validateEnum(record.value.resolutionState, OVERLAP_STATES, `${path}.resolutionState`);
@@ -299,7 +322,7 @@ function canonicalOrder<T>(values: readonly T[], key: (value: T) => string): rea
 }
 
 export function buildDatasetManifest(input: unknown): ExactResult<DatasetManifest, DatasetManifestFailure> {
-  const record = validateExactRecord(
+  const record = validateExactRecordWithAuthorities(
     input,
     [
       "canonicalOwnerKey",
@@ -320,6 +343,9 @@ export function buildDatasetManifest(input: unknown): ExactResult<DatasetManifes
       "reconstructionReasonCodes",
     ],
     ["schemaVersion"],
+    {
+      correctionResult: (value) => verifyCorrectionApplicationResult(value).ok,
+    },
   );
   if (!record.ok) return record;
   if (record.value.schemaVersion !== undefined && record.value.schemaVersion !== DATASET_MANIFEST_VERSION) return failure("ti_v3_manifest_unverified", "$.schemaVersion");
@@ -380,8 +406,16 @@ export function buildDatasetManifest(input: unknown): ExactResult<DatasetManifes
   if (executions.value.length > 0 && (sources.value.length === 0 || currencies.value.length === 0)) return failure("ti_v3_manifest_inconsistent", "$.acceptedExecutionDigests");
   const sourceDigests = new Set(sources.value.map((source) => source.sourceDocumentDigest));
   if (overlaps.value.some((entry) => entry.sourceDocumentDigests.some((digest) => !sourceDigests.has(digest)))) return failure("ti_v3_manifest_inconsistent", "$.overlappingPeriods");
-  const rangeKey = (range: ManifestTimeRange) => `${range.startAt}:${range.endAt}:${range.startInclusive}:${range.endInclusive}`;
-  if (duplicate(periods.value, rangeKey) || duplicate(gaps.value, (gap) => `${gap.scopeKey}:${rangeKey(gap.range)}`) || duplicate(overlaps.value, (overlap) => `${overlap.sourceDocumentDigests.join(":")}:${rangeKey(overlap.range)}`)) return failure("ti_v3_manifest_inconsistent", "$.statementPeriods");
+  if (duplicate(periods.value, manifestRangeKey) || duplicate(gaps.value, (gap) => `${gap.scopeKey}:${manifestRangeKey(gap.range)}`) || duplicate(overlaps.value, (overlap) => `${overlap.sourceDocumentDigests.join(":")}:${manifestRangeKey(overlap.range)}`)) return failure("ti_v3_manifest_inconsistent", "$.statementPeriods");
+  const manifestPeriodKeys = new Set(periods.value.map(manifestRangeKey));
+  if (sources.value.some((source) => source.statementPeriods.some((period) => !manifestPeriodKeys.has(manifestRangeKey(period))))) return failure("ti_v3_manifest_inconsistent", "$.sourceDocuments.statementPeriods");
+  if (gaps.value.some((gap) => !periods.value.some((period) => rangeContains(period, gap.range)))) return failure("ti_v3_manifest_inconsistent", "$.knownGaps");
+  const sourcesByDigest = new Map(sources.value.map((source) => [source.sourceDocumentDigest, source]));
+  if (overlaps.value.some((overlap) => overlap.sourceDocumentDigests.some((sourceDigest) => {
+    const source = sourcesByDigest.get(sourceDigest);
+    return source === undefined || !source.statementPeriods.some((period) => rangeContains(period, overlap.range));
+  }))) return failure("ti_v3_manifest_inconsistent", "$.overlappingPeriods");
+  if (gaps.value.some((gap) => overlaps.value.some((overlap) => rangesOverlap(gap.range, overlap.range)))) return failure("ti_v3_manifest_inconsistent", "$.knownGaps");
 
   const coverageSet = new Set(coverage.value);
   if (gaps.value.length > 0) coverageSet.add("coverage_gap_detected");
@@ -395,7 +429,7 @@ export function buildDatasetManifest(input: unknown): ExactResult<DatasetManifes
     schemaVersion: DATASET_MANIFEST_VERSION,
     canonicalOwnerKey: record.value.canonicalOwnerKey,
     canonicalAccountKeys: accounts.value,
-    sourceDocuments: canonicalOrder(sources.value, (value) => value.sourceDocumentDigest),
+    sourceDocuments: canonicalOrder(sources.value, (value) => `${value.sourceDocumentDigest}:${value.sourceKind}:${value.deletionState}:${value.statementPeriods.map(manifestRangeKey).join("|")}`),
     acceptedExecutionDigests: canonicalStringSet(executions.value) as readonly CanonicalExecutionDigest[],
     correctionDigests: correctionResult.value.appliedCorrectionDigests,
     correctionResultDigest: correctionResult.value.correctionResultDigest,

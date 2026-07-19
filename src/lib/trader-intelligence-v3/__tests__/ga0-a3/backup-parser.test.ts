@@ -72,6 +72,19 @@ describe("GA0-A3 parser hardening", () => {
     expect(validateParserHardeningInput(`Date,Symbol,Side,Quantity,Price\n2026-01-01,${"A".repeat(100_001)},Buy,1,10`).issues).toContainEqual(expect.objectContaining({ code: "ti_v3_parser_oversized_cell" }));
   });
 
+  it("enforces the cell limit before every escaped quote-pair append", () => {
+    const row = (pairs: number) => `Date,Symbol,Side,Quantity,Price\n2026-01-01,"${'""'.repeat(pairs)}",Buy,1,10`;
+    const ordinary = validateParserHardeningInput(row(3));
+    const exactLimit = validateParserHardeningInput(row(100_000));
+    const overflow = validateParserHardeningInput(row(100_001));
+    expect(ordinary.ok).toBe(true);
+    expect(exactLimit.ok).toBe(true);
+    expect(overflow).toMatchObject({
+      ok: false,
+      issues: [{ code: "ti_v3_parser_oversized_cell", rowIndex: 2 }],
+    });
+  });
+
   it("terminates immediately at payload and cell limits", () => {
     const oversized = validateParserHardeningInput("Date,Symbol;Side\n" + "A".repeat(10_000_001));
     expect(oversized).toEqual({ ok: false, delimiter: null, issues: [{ code: "ti_v3_parser_payload_oversized" }] });

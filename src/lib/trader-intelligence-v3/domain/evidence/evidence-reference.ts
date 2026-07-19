@@ -1,6 +1,6 @@
 import type { CanonicalUtcTimestamp } from "../canonical";
 import type { ExactResult } from "../exact";
-import { validateCanonicalDigest, validateEnum, validateExactRecord, type FoundationValidationFailure } from "../foundation";
+import { validateCanonicalDigest, validateEnum, validateExactRecordWithAuthorities, type FoundationValidationFailure } from "../foundation";
 import { createCanonicalContentIdentity, type CanonicalContentDigest } from "../identity";
 import { verifyAnalysisSnapshot, type AnalysisSnapshot } from "../snapshot";
 
@@ -43,10 +43,10 @@ function failure(code: EvidenceFailure["code"], path: string): ExactResult<never
 }
 
 export function buildEvidenceReference(input: { readonly snapshot: AnalysisSnapshot; readonly subjectKind: unknown; readonly semanticKey: unknown; readonly correctionDigest: unknown; readonly policyDigest: unknown }): ExactResult<EvidenceReference, EvidenceFailure> {
-  const verifiedSnapshot = verifyAnalysisSnapshot(input.snapshot);
-  if (!verifiedSnapshot.ok) return failure("ti_v3_evidence_unverified", "$.snapshot");
-  const record = validateExactRecord(input, ["snapshot", "subjectKind", "semanticKey", "correctionDigest", "policyDigest"], []);
+  const record = validateExactRecordWithAuthorities(input, ["snapshot", "subjectKind", "semanticKey", "correctionDigest", "policyDigest"], [], { snapshot: (value) => verifyAnalysisSnapshot(value).ok });
   if (!record.ok) return record;
+  const verifiedSnapshot = verifyAnalysisSnapshot(record.value.snapshot);
+  if (!verifiedSnapshot.ok) return failure("ti_v3_evidence_unverified", "$.snapshot");
   const subject = validateEnum(record.value.subjectKind, SUBJECTS, "$.subjectKind");
   if (!subject.ok) return subject;
   if (typeof record.value.semanticKey !== "string" || !/^[a-z0-9][a-z0-9:._-]{0,255}$/.test(record.value.semanticKey)) return failure("ti_v3_validation_string_invalid", "$.semanticKey");
@@ -68,7 +68,7 @@ export function buildEvidenceReference(input: { readonly snapshot: AnalysisSnaps
     subject.value === "canonical_execution"
       ? executions.includes(semanticKey)
       : subject.value === "execution_occurrence"
-        ? executions.some((digest) => semanticKey.startsWith(`${digest}:occurrence:`))
+        ? snapshot.evidenceSubjects.executionOccurrenceKeys.includes(semanticKey)
         : subject.value === "correction_version"
           ? correction.value !== null && semanticKey === correction.value && snapshot.evidenceSubjects.correctionDigests.includes(correction.value)
           : subject.value === "policy_version"
