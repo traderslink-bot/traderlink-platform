@@ -154,6 +154,9 @@ export function scanTraderIntelligenceArchitectureBoundaries(
     const isProvisionalAcademyAdapter =
       path ===
       "src/lib/trader-intelligence-v3/auth/provisional-discord-session-adapter.ts";
+    const isSqliteBackupRestoreAdapter =
+      path ===
+      "src/lib/trader-intelligence-v3/recovery/sqlite-backup-restore-adapter.ts";
 
     for (const dependency of dependencies) {
       const normalizedDependency = dependency.specifier.toLowerCase();
@@ -170,6 +173,7 @@ export function scanTraderIntelligenceArchitectureBoundaries(
       }
       if (
         isV3Core &&
+        !isSqliteBackupRestoreAdapter &&
         /(better-sqlite3|(?:^|\/)sqlite3(?:\/|$)|node:sqlite|@libsql|@neondatabase|(?:^|\/)pg(?:\/|$)|postgres|mysql2?|mariadb|mongodb|mongoose|@prisma\/client|drizzle-orm|typeorm|sequelize|redis|sqlite-import-commit-repository|persistence-storage)/.test(
           normalizedDependency,
         )

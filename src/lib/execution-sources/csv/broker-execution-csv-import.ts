@@ -9,6 +9,7 @@ import {
 } from "../import-fingerprints";
 import { buildSessionTimeContextFromExecutions } from "../../raw-trade-timeline/session/classify-session-time";
 import type { ProviderExecution } from "../types/provider-execution";
+import { validateParserHardeningInput } from "../../trader-intelligence-v3/ingestion";
 
 export type BrokerExecutionCsvFormat =
   | "auto"
@@ -53,7 +54,18 @@ export type BrokerExecutionCsvImportIssueCode =
   | "sell_starting_trade_skipped"
   | "duplicate_trade_in_import"
   | "trade_request_validation_error"
-  | "trade_request_validation_warning";
+  | "trade_request_validation_warning"
+  | "parser_duplicate_raw_header"
+  | "parser_duplicate_normalized_header"
+  | "parser_mapping_collision"
+  | "parser_unclosed_quote"
+  | "parser_inconsistent_row_width"
+  | "parser_unsupported_encoding"
+  | "parser_control_character"
+  | "parser_oversized_cell"
+  | "parser_ambiguous_delimiter"
+  | "parser_conflicting_duplicate_execution_id"
+  | "parser_payload_oversized";
 
 export interface BrokerExecutionCsvImportIssue {
   severity: BrokerExecutionCsvImportIssueSeverity;
@@ -781,6 +793,23 @@ function parseCsvDocument(
       code: "empty_csv",
       message: "CSV text is empty.",
     });
+    return null;
+  }
+
+  const hardening = validateParserHardeningInput(
+    csvText,
+    columnMapping as Readonly<Record<string, string | readonly string[] | undefined>>,
+  );
+  if (!hardening.ok) {
+    for (const issue of hardening.issues) {
+      pushIssue(issues, {
+        severity: "error",
+        code: issue.code.replace(/^ti_v3_/, "") as BrokerExecutionCsvImportIssueCode,
+        message: `CSV input failed closed with ${issue.code}.`,
+        rowIndex: issue.rowIndex,
+        field: issue.field,
+      });
+    }
     return null;
   }
 
