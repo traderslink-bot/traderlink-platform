@@ -125,7 +125,7 @@ function buildCalculatedEligibilitySet(input: unknown): ExactResult<EligibilityS
     results.push(parsed.value);
   }
   if (new Set(results.map((result) => result.capability)).size !== CAPABILITIES.size || [...CAPABILITIES].some((capability) => !results.some((result) => result.capability === capability))) return failure("ti_v3_eligibility_inconsistent", "$.results");
-  const content = { schemaVersion: ELIGIBILITY_SET_VERSION, manifestDigest: manifest.value, analysisCutoffAt: cutoff.value, correctionResultDigest: correctionResult.value, retrospectivePolicyVersion: record.value.retrospectivePolicyVersion, openPositionPolicy: record.value.openPositionPolicy, results: [...results].sort((left, right) => compareUnicodeCodePoints(left.capability, right.capability)) };
+  const content = { schemaVersion: ELIGIBILITY_SET_VERSION, manifestDigest: manifest.value, analysisCutoffAt: cutoff.value, correctionResultDigest: correctionResult.value, retrospectivePolicyVersion: record.value.retrospectivePolicyVersion as EligibilitySet["retrospectivePolicyVersion"], openPositionPolicy: record.value.openPositionPolicy as EligibilitySet["openPositionPolicy"], results: [...results].sort((left, right) => compareUnicodeCodePoints(left.capability, right.capability)) };
   const identity = createCanonicalContentIdentity("eligibility_set", "v1", content);
   if (!identity.ok) return failure(identity.error.code, identity.error.path);
   const set = Object.freeze({ ...content, results: Object.freeze(content.results), eligibilitySetDigest: identity.value.identifier });
