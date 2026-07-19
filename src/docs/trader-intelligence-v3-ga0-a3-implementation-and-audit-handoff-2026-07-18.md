@@ -251,3 +251,24 @@ Read this document first, then:
 10. run the parser abuse corpus and existing broker parser regression pack;
 11. run GitHub CI and distinguish new results from inherited A2 evidence;
 12. report findings without marking GA0-A3 accepted or merging the PR.
+
+## 8. Final delivery state
+
+- Draft PR: https://github.com/traderslink-bot/traderslink-trader-improvement-system/pull/106
+- PR number: #106
+- Base/head: `main` <- `agent/trader-intelligence-v3-ga0-a3-manifests`
+- Executable head: `50d1d9c11883bf6777a0bf9929aef35ebdf2d7d6`
+- Documentation-only head: the final commit containing this section; resolve it
+  with the command in section 1 and require it to equal PR #106 HEAD.
+- Captured GitHub state before this final documentation update: PR open, draft,
+  unmerged; `test-and-verify` in progress in CI run `29667168619`. This is a
+  point-in-time state, not a claim that GitHub CI passed.
+- No deployment occurred and GA0-B did not begin.
+
+This file is the canonical implementation narrative for the independent
+auditor. It explains what was built, why the contracts are bounded as they are,
+which exact commit contains executable behavior, which checks ran locally,
+which commands did not run, what remains limited, and how to perform the audit.
+The auditor should treat the controlling specification and active plan as
+authority, this file as the implementation map, and the code/tests as the final
+evidence.
