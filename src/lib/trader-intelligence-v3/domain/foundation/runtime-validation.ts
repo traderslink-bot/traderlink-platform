@@ -113,7 +113,7 @@ function inspectUnknown(value: unknown, path: string, context: InspectionContext
       }
       const child = inspectUnknown(descriptor.value, `${path}[${index}]`, context, depth + 1);
       if (!child.ok) { context.active.delete(value); return child; }
-      output.push(child.value);
+      output.push(depth === 0 ? descriptor.value : child.value);
     }
     context.active.delete(value);
     return { ok: true, value: Object.freeze(output) };
@@ -124,7 +124,7 @@ function inspectUnknown(value: unknown, path: string, context: InspectionContext
     const normalizedKey = normalizedKeys[index];
     const child = inspectUnknown(descriptors[key].value, `${path}.${normalizedKey}`, context, depth + 1);
     if (!child.ok) { context.active.delete(value); return child; }
-    Object.defineProperty(output, normalizedKey, { configurable: false, enumerable: true, writable: false, value: child.value });
+    Object.defineProperty(output, normalizedKey, { configurable: false, enumerable: true, writable: false, value: depth === 0 ? descriptors[key].value : child.value });
   }
   context.active.delete(value);
   return { ok: true, value: Object.freeze(output) };
