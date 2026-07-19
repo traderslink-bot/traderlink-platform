@@ -22,7 +22,22 @@ export interface AnalyticalPnlReconstructionInput {
   readonly startingInventories: readonly StartingInventoryContract[];
 }
 
-export function reconstructAnalyticalPnl(
+const verifiedAnalyticalPnlReconstructionResults =
+  new WeakSet<AnalyticalPnlReconstructionResult>();
+
+function freezeReconstructionValue<T>(value: T, seen = new WeakSet<object>()): T {
+  if (typeof value !== "object" || value === null || seen.has(value)) return value;
+  seen.add(value);
+  for (const key of Reflect.ownKeys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (descriptor !== undefined && "value" in descriptor) {
+      freezeReconstructionValue(descriptor.value, seen);
+    }
+  }
+  return Object.freeze(value);
+}
+
+function reconstructAnalyticalPnlInternal(
   input: AnalyticalPnlReconstructionInput,
 ): AnalyticalPnlReconstructionResult {
   if (!isCompleteExecutionRelationshipResolution(input.relationshipResolution)) {
@@ -165,4 +180,24 @@ export function reconstructAnalyticalPnl(
     limitations: [...limitations].sort(),
     inputExecutionDigests: allDigests,
   };
+}
+
+export function reconstructAnalyticalPnl(
+  input: AnalyticalPnlReconstructionInput,
+): AnalyticalPnlReconstructionResult {
+  const result = freezeReconstructionValue(reconstructAnalyticalPnlInternal(input));
+  verifiedAnalyticalPnlReconstructionResults.add(result);
+  return result;
+}
+
+export function isVerifiedAnalyticalPnlReconstructionResult(
+  input: unknown,
+): input is AnalyticalPnlReconstructionResult {
+  return (
+    typeof input === "object" &&
+    input !== null &&
+    verifiedAnalyticalPnlReconstructionResults.has(
+      input as AnalyticalPnlReconstructionResult,
+    )
+  );
 }

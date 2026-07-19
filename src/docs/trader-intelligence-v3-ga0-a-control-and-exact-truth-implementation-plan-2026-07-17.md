@@ -5,7 +5,7 @@
 **Architecture authority:** `src/docs/trader-intelligence-v3-controlling-architecture-specification-2026-07-17.md`  
 **Operating profile:** `private_owner_alpha`  
 **Only operational hosting mode:** `local_only`
-**Current slice:** GA0-A2 — canonical execution and exact financial truth
+**Current slice:** GA0-A3 — temporal, manifest, eligibility, and query foundation
 **Runtime model calls:** forbidden  
 **Analytics tools:** forbidden in GA0-A  
 **Chart rendering:** forbidden in GA0-A  
@@ -338,6 +338,18 @@ Document at least:
 
 # 6. GA0-A2 — Canonical Execution and Exact Financial Truth
 
+## 6.0 Accepted completion status — 2026-07-18
+
+- GA0-A2 received independent acceptance and is complete.
+- PR #104 merged into `main` at
+  `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`.
+- The dated implementation and audit sections below remain historical evidence
+  for the heads they name; their former pending-review status is superseded by
+  this accepted completion entry.
+- GA0-A3 is the active slice and began only on
+  `agent/trader-intelligence-v3-ga0-a3-manifests`, created from the accepted
+  merge commit.
+
 ## 6.0 Final focused correction status - 2026-07-18
 
 - Independent re-audit of `c1a1b50379165485d28f0e0a28a21c3917cac820`
@@ -628,6 +640,34 @@ Build an independent exact reference implementation for:
 ---
 
 # 7. GA0-A3 — Temporal, Manifest, Eligibility, and Query Foundation
+
+**Required-fix remediation status, 2026-07-19:** The first independent audit
+returned `accept with required fixes`. A3-R1 through A3-R10 are implemented and
+locally verified at executable head
+`883d62ea009102037626207a96cad31f482ceb4a` on the existing branch and draft PR
+#106. The PR remains draft and unmerged; independent re-audit is the active
+gate. GA0-A3 is not accepted and GA0-B has not begun. The dated entry below
+remains historical evidence for the earlier heads it names.
+
+**Implementation status, 2026-07-18:** Complete as the originally audited implementation candidate
+on `agent/trader-intelligence-v3-ga0-a3-manifests`; independent audit is now the
+active gate. The executable implementation head is `50d1d9c1`. GA0-A3 is not
+accepted, the draft PR must remain unmerged, and GA0-B must not begin from this
+handoff.
+
+## 7.0 Active implementation status — 2026-07-18
+
+- Accepted base:
+  `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a` (GA0-A2 PR #104 merge).
+- Active branch: `agent/trader-intelligence-v3-ga0-a3-manifests`.
+- GA0-A3 began only on this new branch after the accepted ancestor check.
+- Product priority remains progressing after GA0-A3 toward visible,
+  owner-testable analytics and AI functionality.
+- Production hosting, public-user security, deployment, analytics, query UI,
+  charts, AI/model calls, market enrichment, and support/resistance remain
+  deferred.
+- GA0-A3 must stop at one draft PR for independent audit; it must not be marked
+  accepted from the implementation handoff.
 
 ## 7.1 Bitemporal correction contract
 

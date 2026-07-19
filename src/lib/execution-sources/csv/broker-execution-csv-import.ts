@@ -9,6 +9,7 @@ import {
 } from "../import-fingerprints";
 import { buildSessionTimeContextFromExecutions } from "../../raw-trade-timeline/session/classify-session-time";
 import type { ProviderExecution } from "../types/provider-execution";
+import { validateParserHardeningInput, type ParserHardeningResult } from "../../trader-intelligence-v3/ingestion";
 
 export type BrokerExecutionCsvFormat =
   | "auto"
@@ -53,7 +54,18 @@ export type BrokerExecutionCsvImportIssueCode =
   | "sell_starting_trade_skipped"
   | "duplicate_trade_in_import"
   | "trade_request_validation_error"
-  | "trade_request_validation_warning";
+  | "trade_request_validation_warning"
+  | "parser_duplicate_raw_header"
+  | "parser_duplicate_normalized_header"
+  | "parser_mapping_collision"
+  | "parser_unclosed_quote"
+  | "parser_inconsistent_row_width"
+  | "parser_unsupported_encoding"
+  | "parser_control_character"
+  | "parser_oversized_cell"
+  | "parser_ambiguous_delimiter"
+  | "parser_conflicting_duplicate_execution_id"
+  | "parser_payload_oversized";
 
 export interface BrokerExecutionCsvImportIssue {
   severity: BrokerExecutionCsvImportIssueSeverity;
@@ -774,6 +786,7 @@ function parseCsvDocument(
   csvText: string,
   issues: BrokerExecutionCsvImportIssue[],
   columnMapping: BrokerExecutionCsvColumnMapping,
+  hardening: ParserHardeningResult,
 ): ParsedCsvDocument | null {
   if (csvText.trim() === "") {
     pushIssue(issues, {
@@ -781,6 +794,19 @@ function parseCsvDocument(
       code: "empty_csv",
       message: "CSV text is empty.",
     });
+    return null;
+  }
+
+  if (!hardening.ok) {
+    for (const issue of hardening.issues) {
+      pushIssue(issues, {
+        severity: "error",
+        code: issue.code.replace(/^ti_v3_/, "") as BrokerExecutionCsvImportIssueCode,
+        message: `CSV input failed closed with ${issue.code}.`,
+        rowIndex: issue.rowIndex,
+        field: issue.field,
+      });
+    }
     return null;
   }
 
@@ -2277,8 +2303,12 @@ export function parseBrokerExecutionCsv(
     issues,
   );
   const optionsHandling = args.optionsHandling ?? "reject";
-  const fileFingerprint = buildBrokerExecutionCsvFileFingerprint(args.csvText);
-  const document = parseCsvDocument(args.csvText, issues, columnMapping);
+  const hardening = validateParserHardeningInput(args.csvText, columnMapping as Readonly<Record<string, string | readonly string[] | undefined>>);
+  const fingerprintInput = hardening.issues.some((issue) => issue.code === "ti_v3_parser_payload_oversized")
+    ? `ti_v3_rejected_oversized_csv:${args.csvText.length}`
+    : args.csvText;
+  const fileFingerprint = buildBrokerExecutionCsvFileFingerprint(fingerprintInput);
+  const document = parseCsvDocument(args.csvText, issues, columnMapping, hardening);
 
   if (!document) {
     const broker =

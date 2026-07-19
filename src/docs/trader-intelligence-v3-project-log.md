@@ -1,5 +1,51 @@
 # Trader Intelligence v3 Project Log
 
+## 2026-07-19 — GA0-A3 Required-Fix Remediation Complete; Re-audit Required
+
+- The first independent audit verdict was `accept with required fixes`; its
+  immutable findings are in
+  `src/docs/trader-intelligence-v3-ga0-a3-independent-audit-findings-2026-07-19.md`.
+- A3-R1 through A3-R10 are remediated on the existing branch and draft PR #106.
+- Tested executable head:
+  `883d62ea009102037626207a96cad31f482ceb4a`.
+- Correction replay now requires a verified execution catalog and same-lineage
+  supersession. Eligibility, empty enrichment, snapshots, filters, and evidence
+  use opaque verified dependency chains. Manifests enforce referential
+  integrity. Persisted JSON, unknown runtime inputs, and CSV limits fail closed.
+- The consolidated verifier passed 6 files/83 tests. Final TypeScript,
+  changed-path ESLint, architecture guard, private-data guard, and the one build
+  passed. Intermediate timeout, compile, and integration failures are retained
+  in the remediation handoff rather than being described as passes.
+- GA0-A3 remains unaccepted. PR #106 stays draft, unmerged, and undeployed;
+  review threads remain unresolved. GA0-B has not begun.
+- Exact next action: independent re-audit. After acceptance, proceed toward
+  visible owner-testable analytics and AI while production hosting and
+  public-user security remain deferred.
+
+## 2026-07-18 — GA0-A3 Implementation Candidate Complete; Independent Audit Required
+
+- Branch: `agent/trader-intelligence-v3-ga0-a3-manifests`.
+- Accepted base: GA0-A2 merge commit
+  `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a` from merged PR #104.
+- Executable implementation head: `50d1d9c1`.
+- Implemented append-only bitemporal corrections, factual lifecycle separated
+  from review disposition, retrospective/open-position policy, immutable
+  dataset/coverage manifests, independent per-capability eligibility,
+  content-addressed snapshots, semantic evidence references, canonical filters,
+  strict runtime payload validation, stale-state propagation, WAL-consistent
+  SQLite backup/restore, and narrow parser hardening.
+- Open positions remain execution-review only and cannot receive live
+  directional guidance. Legacy mark-closed behavior remains annotation-only.
+- Focused synthetic tests cover replay ordering/cutoffs/cycles, review isolation,
+  equivalent reimport identity, coverage gaps, capability isolation, mixed
+  snapshot/evidence rejection, fixed-clock date resolution, stale propagation,
+  payload rejection, WAL restore truth, and parser ambiguity.
+- No analytics, query UI, charts, AI/model call, natural-language parser,
+  market enrichment, support/resistance, public hosting, migration, deployment,
+  or GA0-B work was added.
+- GA0-A3 is not accepted. Next resume point is independent audit of
+  `src/docs/trader-intelligence-v3-ga0-a3-implementation-and-audit-handoff-2026-07-18.md`.
+
 ## Purpose
 
 This is the active continuity and accepted-decision log for Trader Intelligence v3.
@@ -43,6 +89,28 @@ This log may record progress and accepted strengthening decisions. It may not si
 ---
 
 # Current Resume Point
+
+## 2026-07-18 — GA0-A2 Accepted and Merged; GA0-A3 Active
+
+- GA0-A2 received independent acceptance and is complete.
+- PR #104 merged into `main` as
+  `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`.
+- The accepted merge is the base commit for GA0-A3 and was verified as an
+  ancestor before implementation began.
+- GA0-A3 — Temporal, Manifest, Eligibility, and Query Foundation — is the
+  active slice on `agent/trader-intelligence-v3-ga0-a3-manifests`.
+- GA0-A3 began only on that new branch. It does not reopen or modify PR #104.
+- The product priority remains moving next toward visible, owner-testable
+  deterministic analytics and AI functionality after this final factual
+  foundation is independently accepted.
+- Only `private_owner_alpha + local_only + local_sqlite` is operational.
+  Production hosting and public-user security remain deferred.
+- No deployment is authorized. GA0-B, analytics, query UI, charts, AI/model
+  calls, market enrichment, support/resistance, hosted identity, and public
+  accounts remain out of scope.
+- Exact next resume point: implement the complete section 7 GA0-A3 contracts,
+  run the prescribed focused and consolidated verification, publish one draft
+  PR, and stop for independent audit without merge or deployment.
 
 ## 2026-07-18 - GA0-A2 Final Correction Implemented; Untested Re-audit Candidate
 
@@ -897,8 +965,8 @@ Audit:
 | Gate | Status | Notes |
 |---|---|---|
 | GA0-A1 Containment | Accepted and complete | PR #102 merged as `4f9e440116258c9548a2d13f7ea057a9075101c6` |
-| GA0-A2 Exact truth | In implementation | Dedicated branch; independent review pending after completion |
-| GA0-A3 Temporal/manifests/query foundation | Not started | After A2 review |
+| GA0-A2 Exact truth | Accepted and complete | PR #104 merged as `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a` |
+| GA0-A3 Temporal/manifests/query foundation | Implementation candidate complete | Draft PR; independent audit required before acceptance or GA0-B |
 | GA0-B Deterministic tools/series | Not started | Weekday and daily-stop |
 | GA0-C Private calibration | Not started | Real-data verification outside Git |
 | GA1 Query/visual evidence | Not started | Accessible deterministic visuals |

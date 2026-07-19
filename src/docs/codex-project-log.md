@@ -1,5 +1,16 @@
 # Codex Project Log
 
+### 2026-07-18 Trader Intelligence v3 GA0-A3 Implementation Candidate Complete
+
+GA0-A3 executable work is complete at `50d1d9c1` on
+`agent/trader-intelligence-v3-ga0-a3-manifests`, based on independently accepted
+GA0-A2 merge `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`. The candidate adds temporal
+corrections, lifecycle/review separation, manifests, coverage, eligibility,
+snapshots, evidence, filters, runtime validation, invalidation, WAL-safe local
+recovery, and severe parser fail-closed checks. It adds no runtime analytics,
+AI, charts, levels, hosting, or deployment. Stop at the draft PR for independent
+audit; do not begin GA0-B.
+
 ## Purpose
 
 This file is a compact working log for ongoing collaboration in this repo.
@@ -106,6 +117,25 @@ Important project rule:
 ---
 
 ## Current Resume Point
+
+### 2026-07-18 Trader Intelligence v3 GA0-A3 Started from Accepted GA0-A2
+
+GA0-A2 is independently accepted and complete. PR #104 merged into `main` as
+`e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`.
+
+GA0-A3 is active only on
+`agent/trader-intelligence-v3-ga0-a3-manifests`, created from that accepted
+merge after verifying the ancestor. The active scope is the temporal,
+manifest, coverage, per-capability eligibility, immutable snapshot, stable
+evidence, canonical filter, runtime validation, stale propagation,
+backup/restore, and parser-hardening foundation. It must stop at a draft PR for
+independent audit.
+
+The product priority remains moving next toward visible, owner-testable
+analytics and AI functionality after this factual foundation is accepted.
+Production hosting, public-user security, deployment, GA0-B, analytics, query
+UI, charts, AI/model calls, market enrichment, and support/resistance remain
+deferred.
 
 ### 2026-07-18 Trader Intelligence v3 GA0-A2 Final Focused Correction
 
