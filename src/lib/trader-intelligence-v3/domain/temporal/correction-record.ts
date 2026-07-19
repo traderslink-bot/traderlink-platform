@@ -392,7 +392,7 @@ export function applyCorrectionSet(args: {
   if ([...baseCounts.values()].some((count) => count > 1)) {
     reasons.add("ti_v3_correction_target_ambiguous");
   }
-  for (const [digest, count] of catalogCounts) {
+  for (const count of catalogCounts.values()) {
     if (count !== 1) reasons.add("ti_v3_correction_target_ambiguous");
   }
   for (const digest of baseActiveExecutionDigests) {

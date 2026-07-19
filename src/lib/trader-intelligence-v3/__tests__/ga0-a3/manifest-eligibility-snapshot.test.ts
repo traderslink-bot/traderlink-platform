@@ -18,7 +18,7 @@ import {
   resolveRelativeDateRange,
   type RelativeDateResolver,
 } from "../../domain";
-import type { CanonicalContentDigest, CanonicalExecutionDigest, CanonicalSourceDocumentDigest } from "../../domain/identity";
+import type { CanonicalContentDigest, CanonicalExecutionDigest } from "../../domain/identity";
 import type { CanonicalUtcTimestamp } from "../../domain/canonical";
 import { buildSyntheticCanonicalExecution } from "../../testing/synthetic-execution-builder";
 
@@ -134,6 +134,7 @@ describe("GA0-A3 snapshot and evidence binding", () => {
   it("rejects mixed manifests and resolves semantic evidence after equivalent reimport", () => {
     const first = manifest();
     const equivalent = manifest({ executions: [executionB, executionA] });
+    expect(equivalent.manifestDigest).toBe(first.manifestDigest);
     const eligibility = calculateManifestEligibility({ manifest: first, ...authority(first), analysisCutoffAt, requiredEvidenceReferences: [] });
     const canonicalFilter = filter();
     const enrichment = createEmptyEnrichmentSet(first, analysisCutoffAt);

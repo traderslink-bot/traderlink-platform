@@ -1,6 +1,6 @@
 import type { CanonicalUtcTimestamp } from "../canonical";
 import type { ExactResult } from "../exact";
-import { validateCanonicalDigest, validateCanonicalTimestamp, validateEnum, validateExactRecord, type FoundationValidationFailure } from "../foundation";
+import { validateCanonicalDigest, validateEnum, validateExactRecord, type FoundationValidationFailure } from "../foundation";
 import { createCanonicalContentIdentity, type CanonicalContentDigest } from "../identity";
 import { verifyAnalysisSnapshot, type AnalysisSnapshot } from "../snapshot";
 

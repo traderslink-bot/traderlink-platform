@@ -2,7 +2,7 @@ import type { CanonicalUtcTimestamp } from "../canonical";
 import type { EligibilitySet } from "../eligibility";
 import { verifyEligibilitySet } from "../eligibility";
 import type { ExactResult } from "../exact";
-import { validateCanonicalDigest, validateCanonicalTimestamp, validateExactRecord, type FoundationValidationFailure } from "../foundation";
+import { validateCanonicalTimestamp, validateExactRecord, type FoundationValidationFailure } from "../foundation";
 import { createCanonicalContentIdentity, type CanonicalContentDigest } from "../identity";
 import type { DatasetManifest } from "../manifest";
 import { verifyDatasetManifest } from "../manifest";

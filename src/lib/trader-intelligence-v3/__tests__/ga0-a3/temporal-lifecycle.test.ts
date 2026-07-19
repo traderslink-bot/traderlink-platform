@@ -9,7 +9,6 @@ import {
   reviewDispositionCannotChangeLifecycle,
   type CorrectionRecord,
 } from "../../domain";
-import type { CanonicalExecutionDigest } from "../../domain/identity";
 import { buildSyntheticCanonicalExecution } from "../../testing/synthetic-execution-builder";
 
 const availableA = buildSyntheticCanonicalExecution({ executionId: "SYNTH-EXEC-A", brokerExecutionIndex: "1" });

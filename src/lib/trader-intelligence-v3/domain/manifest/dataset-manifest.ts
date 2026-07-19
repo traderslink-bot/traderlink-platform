@@ -16,7 +16,7 @@ import {
   type CanonicalExecutionDigest,
   type CanonicalSourceDocumentDigest,
 } from "../identity";
-import { verifyCorrectionApplicationResult, type CorrectionApplicationResult } from "../temporal";
+import { verifyCorrectionApplicationResult } from "../temporal";
 
 export const DATASET_MANIFEST_VERSION = "ti_v3_dataset_manifest_v1" as const;
 
