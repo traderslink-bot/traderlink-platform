@@ -1,6 +1,6 @@
 # Trader Intelligence v3 Current-System Inventory
 
-Date: 2026-07-18
+Date: 2026-07-19
 Gate: GA0-A3 temporal, manifest, eligibility, and query foundation
 Branch: `agent/trader-intelligence-v3-ga0-a3-manifests`
 
@@ -23,9 +23,9 @@ named above from that accepted merge. The GA0-A2 inventory remains the inherited
 factual authority; GA0-A3 extends it without wiring routes, analytics, charts,
 AI, market enrichment, hosted operation, public users, or deployment.
 
-GA0-A3 is implemented as an unaccepted audit candidate at executable head
-`50d1d9c1`. Its new authority is isolated and has no App Router or legacy
-analytics consumer.
+GA0-A3 required-fix remediation is an unaccepted re-audit candidate at
+executable head `883d62ea009102037626207a96cad31f482ceb4a`. Its authority is
+isolated and has no App Router or legacy analytics consumer.
 
 ## GA0-A2 isolated authority inventory
 
@@ -44,11 +44,11 @@ analytics consumer.
 
 | Path | Authority added | Runtime consumer | Persistence effect | Verification |
 |---|---|---|---|---|
-| `src/lib/trader-intelligence-v3/domain/temporal/**` | Append-only correction time, deterministic replay/cutoff, lifecycle/review separation, and retrospective/open-position policy. | Focused GA0-A3 tests only. | None. | Permutation, cutoff, contradiction, cycle, deletion, annotation isolation, and open-position tests. |
+| `src/lib/trader-intelligence-v3/domain/temporal/**` | Append-only correction time, verified replacement catalog, same-lineage replay/cutoff, lifecycle/review separation, and retrospective/open-position policy. | Focused GA0-A3 tests only. | None. | Permutation, catalog, lineage, cutoff, contradiction, cycle, deletion, annotation isolation, and open-position tests. |
 | `src/lib/trader-intelligence-v3/domain/manifest/**` | Immutable dataset and coverage manifest over semantic facts, scope, periods, gaps, overlap, inventory, open positions, deletion, currencies, and policy. | Eligibility and snapshot builders only. | None. | Equivalent-reimport, ordering, gap, deletion, prior-inventory, and semantic-change tests. |
-| `src/lib/trader-intelligence-v3/domain/eligibility/**` | Independent capability state, reason, evidence, cutoff, and failure class. | Snapshot builder only. | None. | Blocked/limited/eligible capability-isolation tests. |
-| `src/lib/trader-intelligence-v3/domain/query/**`, `snapshot/**`, and `evidence/**` | Canonical absolute query scope, content-addressed analysis run, and semantic manifest-scoped evidence identity. | Focused tests only. | None. | Fixed-clock, ordering, duplicate, boundary, mixed-manifest, cutoff, stale-policy, and reimport tests. |
-| `src/lib/trader-intelligence-v3/domain/foundation/**` and `state/**` | Strict runtime validation, persisted/adapter/tool envelopes, payload bounds, and deterministic invalidation states. | New GA0-A3 builders and focused tests. | None. | Negative payload corpus, extra-field, digest, version, cutoff, and propagation tests. |
+| `src/lib/trader-intelligence-v3/domain/eligibility/**` | Calculator-authoritative capability state, reason, evidence, cutoff, and failure class bound to verified manifest/policy/correction dependencies. | Snapshot builder only. | None. | Complete capability set, isolation, incomplete coverage, and cloned-authority rejection. |
+| `src/lib/trader-intelligence-v3/domain/query/**`, `snapshot/**`, and `evidence/**` | Verified date receipts, snapshots with verified empty enrichment, and snapshot-derived semantic evidence membership. | Focused tests only. | None. | Fixed-clock, ordering, duplicate, boundary, mixed dependency, foreign subject, cutoff, stale-policy, and reimport tests. |
+| `src/lib/trader-intelligence-v3/domain/foundation/**` and `state/**` | Descriptor-safe unknown-input validation, strict duplicate-key persisted JSON, adapter/tool envelopes, payload bounds, and deterministic invalidation states. | New GA0-A3 builders and focused tests. | None. | Getter/proxy/symbol/non-enumerable, duplicate-key, size, digest, version, cutoff, and propagation tests. |
 | `src/lib/trader-intelligence-v3/recovery/**` | Explicit WAL-consistent SQLite backup and isolated verified restore adapter. | Focused synthetic integration test only. | Creates an explicitly requested backup or isolated restore file outside Git/temp for real data. | WAL backup, integrity check, execution/manifest/snapshot/reconstruction digest comparison, and unsafe-path tests. |
 | `src/lib/trader-intelligence-v3/ingestion/**` | Strict parser preflight for ambiguity capable of changing execution truth. | Existing broker CSV parser preflight. | None. | Synthetic abuse corpus plus all existing broker parser tests. |
 

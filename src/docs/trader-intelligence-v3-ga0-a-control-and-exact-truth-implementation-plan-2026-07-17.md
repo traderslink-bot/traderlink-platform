@@ -641,7 +641,15 @@ Build an independent exact reference implementation for:
 
 # 7. GA0-A3 — Temporal, Manifest, Eligibility, and Query Foundation
 
-**Implementation status, 2026-07-18:** Complete as an implementation candidate
+**Required-fix remediation status, 2026-07-19:** The first independent audit
+returned `accept with required fixes`. A3-R1 through A3-R10 are implemented and
+locally verified at executable head
+`883d62ea009102037626207a96cad31f482ceb4a` on the existing branch and draft PR
+#106. The PR remains draft and unmerged; independent re-audit is the active
+gate. GA0-A3 is not accepted and GA0-B has not begun. The dated entry below
+remains historical evidence for the earlier heads it names.
+
+**Implementation status, 2026-07-18:** Complete as the originally audited implementation candidate
 on `agent/trader-intelligence-v3-ga0-a3-manifests`; independent audit is now the
 active gate. The executable implementation head is `50d1d9c1`. GA0-A3 is not
 accepted, the draft PR must remain unmerged, and GA0-B must not begin from this

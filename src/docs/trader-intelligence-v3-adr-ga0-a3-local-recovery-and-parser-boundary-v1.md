@@ -1,7 +1,7 @@
 # ADR: GA0-A3 Local Recovery and Parser Boundary v1
 
 Date: 2026-07-18
-Status: implementation candidate; independent acceptance required
+Status: required-fix remediation candidate; independent re-audit required
 Branch: `agent/trader-intelligence-v3-ga0-a3-manifests`
 
 ## Decision
@@ -30,6 +30,9 @@ execution-row widths, unsupported encodings, controls, oversized cells,
 ambiguous delimiters, and conflicting duplicate execution IDs. Sectioned
 broker reports retain preambles and non-execution sections; fail-closed width
 checks apply to the execution section that can affect canonical truth.
+Oversized payloads return before delimiter detection or row parsing, UTF-8 size
+is counted without allocating an unnecessary complete encoded copy, and cell
+parsing terminates at the first over-limit character.
 
 ## Consequences
 

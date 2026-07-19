@@ -1,12 +1,12 @@
 # Trader Intelligence Plan Entry Point
 
-**Last updated:** 2026-07-18 America/Toronto
+**Last updated:** 2026-07-19 America/Toronto
 **Active architecture:** Trader Intelligence v3  
 **Operating profile:** `private_owner_alpha`  
 **Only operational hosting mode:** `local_only`
 **Primary domain:** U.S. listed small-cap and micro-cap active trading  
 **Product boundary:** retrospective educational trade review and self-improvement  
-**Current gate:** GA0-A3 independent audit — implementation candidate complete
+**Current gate:** GA0-A3 required-fix remediation complete; independent re-audit required
 **Active implementation plan:** `src/docs/trader-intelligence-v3-ga0-a-control-and-exact-truth-implementation-plan-2026-07-17.md`
 
 Start here when resuming Trader Intelligence product, import, analytics, query, visualization, coaching, market context, external sources, persistence, AI, or QA work.
@@ -108,11 +108,12 @@ commit `4f9e440116258c9548a2d13f7ea057a9075101c6`.
 GA0-A2 is independently accepted and complete. PR #104 merged into `main` at
 commit `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`.
 
-GA0-A3 is implemented as an audit candidate on
-`agent/trader-intelligence-v3-ga0-a3-manifests`. It began only after that branch
-was created from the accepted merge commit.
+The first independent GA0-A3 audit returned `accept with required fixes`.
+A3-R1 through A3-R10 are remediated and locally verified on
+`agent/trader-intelligence-v3-ga0-a3-manifests`. The tested executable head is
+`883d62ea009102037626207a96cad31f482ceb4a`; PR #106 remains draft.
 
-Implemented for independent audit:
+Implemented for independent re-audit:
 
 - append-only bitemporal correction application and replay;
 - factual lifecycle separated from review disposition;
@@ -405,7 +406,8 @@ Maintain an exploration ledger so repeated slicing cannot be hidden.
 
 # 12. Current Next Action
 
-1. independently audit the GA0-A3 implementation and its handoff document;
+1. independently re-audit A3-R1 through A3-R10 using
+   `src/docs/trader-intelligence-v3-ga0-a3-remediation-and-independent-reaudit-handoff-2026-07-19.md`;
 2. keep the PR draft, unmerged, and undeployed until audit findings are resolved;
 3. do not begin GA0-B from this branch or implementation handoff;
 4. after independent acceptance, move next toward visible, owner-testable

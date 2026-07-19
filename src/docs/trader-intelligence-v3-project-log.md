@@ -1,5 +1,27 @@
 # Trader Intelligence v3 Project Log
 
+## 2026-07-19 — GA0-A3 Required-Fix Remediation Complete; Re-audit Required
+
+- The first independent audit verdict was `accept with required fixes`; its
+  immutable findings are in
+  `src/docs/trader-intelligence-v3-ga0-a3-independent-audit-findings-2026-07-19.md`.
+- A3-R1 through A3-R10 are remediated on the existing branch and draft PR #106.
+- Tested executable head:
+  `883d62ea009102037626207a96cad31f482ceb4a`.
+- Correction replay now requires a verified execution catalog and same-lineage
+  supersession. Eligibility, empty enrichment, snapshots, filters, and evidence
+  use opaque verified dependency chains. Manifests enforce referential
+  integrity. Persisted JSON, unknown runtime inputs, and CSV limits fail closed.
+- The consolidated verifier passed 6 files/83 tests. Final TypeScript,
+  changed-path ESLint, architecture guard, private-data guard, and the one build
+  passed. Intermediate timeout, compile, and integration failures are retained
+  in the remediation handoff rather than being described as passes.
+- GA0-A3 remains unaccepted. PR #106 stays draft, unmerged, and undeployed;
+  review threads remain unresolved. GA0-B has not begun.
+- Exact next action: independent re-audit. After acceptance, proceed toward
+  visible owner-testable analytics and AI while production hosting and
+  public-user security remain deferred.
+
 ## 2026-07-18 — GA0-A3 Implementation Candidate Complete; Independent Audit Required
 
 - Branch: `agent/trader-intelligence-v3-ga0-a3-manifests`.
