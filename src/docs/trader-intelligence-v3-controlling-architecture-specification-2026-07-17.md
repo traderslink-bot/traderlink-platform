@@ -1661,12 +1661,13 @@ Compare deterministic-only, deterministic-plus-visual, legacy v2, v3 AI, and abs
 # 34. Current Next Action
 
 GA0-A2 is independently accepted and merged through PR #104 at
-`e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`. Implement GA0-A3 only on
-`agent/trader-intelligence-v3-ga0-a3-manifests`, preserving the isolated exact
-truth boundary and completing the temporal, manifest, eligibility, snapshot,
-evidence, filter, validation, stale-state, backup/restore, and parser-hardening
-foundation. Keep runtime work loopback-only, internal, model-free, and
-undeployed. Stop at a draft PR for independent audit and do not begin GA0-B.
+`e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`. GA0-A3 is implemented as an
+unaccepted candidate at executable head `50d1d9c1` on
+`agent/trader-intelligence-v3-ga0-a3-manifests`. Independently audit the
+temporal, manifest, eligibility, snapshot, evidence, filter, validation,
+stale-state, backup/restore, and parser-hardening foundation. Keep the PR draft,
+unmerged, model-free, and undeployed. Do not begin GA0-B before independent
+acceptance.
 
 ---
 

@@ -1,5 +1,29 @@
 # Trader Intelligence v3 Project Log
 
+## 2026-07-18 — GA0-A3 Implementation Candidate Complete; Independent Audit Required
+
+- Branch: `agent/trader-intelligence-v3-ga0-a3-manifests`.
+- Accepted base: GA0-A2 merge commit
+  `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a` from merged PR #104.
+- Executable implementation head: `50d1d9c1`.
+- Implemented append-only bitemporal corrections, factual lifecycle separated
+  from review disposition, retrospective/open-position policy, immutable
+  dataset/coverage manifests, independent per-capability eligibility,
+  content-addressed snapshots, semantic evidence references, canonical filters,
+  strict runtime payload validation, stale-state propagation, WAL-consistent
+  SQLite backup/restore, and narrow parser hardening.
+- Open positions remain execution-review only and cannot receive live
+  directional guidance. Legacy mark-closed behavior remains annotation-only.
+- Focused synthetic tests cover replay ordering/cutoffs/cycles, review isolation,
+  equivalent reimport identity, coverage gaps, capability isolation, mixed
+  snapshot/evidence rejection, fixed-clock date resolution, stale propagation,
+  payload rejection, WAL restore truth, and parser ambiguity.
+- No analytics, query UI, charts, AI/model call, natural-language parser,
+  market enrichment, support/resistance, public hosting, migration, deployment,
+  or GA0-B work was added.
+- GA0-A3 is not accepted. Next resume point is independent audit of
+  `src/docs/trader-intelligence-v3-ga0-a3-implementation-and-audit-handoff-2026-07-18.md`.
+
 ## Purpose
 
 This is the active continuity and accepted-decision log for Trader Intelligence v3.
@@ -920,7 +944,7 @@ Audit:
 |---|---|---|
 | GA0-A1 Containment | Accepted and complete | PR #102 merged as `4f9e440116258c9548a2d13f7ea057a9075101c6` |
 | GA0-A2 Exact truth | Accepted and complete | PR #104 merged as `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a` |
-| GA0-A3 Temporal/manifests/query foundation | In implementation | Dedicated branch; independent audit required before GA0-B |
+| GA0-A3 Temporal/manifests/query foundation | Implementation candidate complete | Draft PR; independent audit required before acceptance or GA0-B |
 | GA0-B Deterministic tools/series | Not started | Weekday and daily-stop |
 | GA0-C Private calibration | Not started | Real-data verification outside Git |
 | GA1 Query/visual evidence | Not started | Accessible deterministic visuals |

@@ -1,5 +1,16 @@
 # Codex Project Log
 
+### 2026-07-18 Trader Intelligence v3 GA0-A3 Implementation Candidate Complete
+
+GA0-A3 executable work is complete at `50d1d9c1` on
+`agent/trader-intelligence-v3-ga0-a3-manifests`, based on independently accepted
+GA0-A2 merge `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`. The candidate adds temporal
+corrections, lifecycle/review separation, manifests, coverage, eligibility,
+snapshots, evidence, filters, runtime validation, invalidation, WAL-safe local
+recovery, and severe parser fail-closed checks. It adds no runtime analytics,
+AI, charts, levels, hosting, or deployment. Stop at the draft PR for independent
+audit; do not begin GA0-B.
+
 ## Purpose
 
 This file is a compact working log for ongoing collaboration in this repo.

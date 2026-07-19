@@ -6,7 +6,7 @@
 **Only operational hosting mode:** `local_only`
 **Primary domain:** U.S. listed small-cap and micro-cap active trading  
 **Product boundary:** retrospective educational trade review and self-improvement  
-**Current gate:** GA0-A3 — temporal, manifest, eligibility, and query foundation
+**Current gate:** GA0-A3 independent audit — implementation candidate complete
 **Active implementation plan:** `src/docs/trader-intelligence-v3-ga0-a-control-and-exact-truth-implementation-plan-2026-07-17.md`
 
 Start here when resuming Trader Intelligence product, import, analytics, query, visualization, coaching, market context, external sources, persistence, AI, or QA work.
@@ -108,11 +108,11 @@ commit `4f9e440116258c9548a2d13f7ea057a9075101c6`.
 GA0-A2 is independently accepted and complete. PR #104 merged into `main` at
 commit `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`.
 
-GA0-A3 is active on
+GA0-A3 is implemented as an audit candidate on
 `agent/trader-intelligence-v3-ga0-a3-manifests`. It began only after that branch
 was created from the accepted merge commit.
 
-Build now:
+Implemented for independent audit:
 
 - append-only bitemporal correction application and replay;
 - factual lifecycle separated from review disposition;
@@ -125,7 +125,7 @@ Build now:
 - WAL-safe local SQLite backup/restore;
 - focused parser-hardening contracts and severe fail-closed fixes.
 
-GA0-A3 must not include analytics, query UI, charts, AI/model calls,
+GA0-A3 remains unaccepted and must not include analytics, query UI, charts, AI/model calls,
 natural-language parsing, market enrichment, support/resistance, public-user
 infrastructure, hosted operation, production migration, deployment, or GA0-B.
 The product priority remains progressing next toward visible, owner-testable
@@ -405,14 +405,12 @@ Maintain an exploration ledger so repeated slicing cannot be hidden.
 
 # 12. Current Next Action
 
-1. implement GA0-A3 on
-   `agent/trader-intelligence-v3-ga0-a3-manifests` from accepted merge commit
-   `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`;
-2. use focused temporal, manifest, eligibility, snapshot, evidence, filter,
-   validation, backup/restore, and parser-hardening tests during development;
-3. complete one consolidated GA0-A3 verification after executable work;
-4. open one draft PR and stop for independent audit without merging or
-   deploying;
+1. independently audit the GA0-A3 implementation and its handoff document;
+2. keep the PR draft, unmerged, and undeployed until audit findings are resolved;
+3. do not begin GA0-B from this branch or implementation handoff;
+4. after independent acceptance, move next toward visible, owner-testable
+   deterministic analytics and AI functionality while keeping production hosting
+   and public-user security deferred;
 5. keep runtime work internal, loopback-only, model-free, and undeployed.
 
 ---
