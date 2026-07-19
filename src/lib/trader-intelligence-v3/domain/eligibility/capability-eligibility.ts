@@ -1,0 +1,153 @@
+import type { CanonicalUtcTimestamp } from "../canonical";
+import type { ExactResult } from "../exact";
+import {
+  canonicalReasonCodes,
+  canonicalStringSet,
+  validateCanonicalDigest,
+  validateCanonicalTimestamp,
+  validateEnum,
+  validateExactRecord,
+  validateStringSet,
+  type FoundationValidationFailure,
+} from "../foundation";
+import { compareUnicodeCodePoints } from "../canonical";
+import { createCanonicalContentIdentity, type CanonicalContentDigest } from "../identity";
+import type { DatasetManifest } from "../manifest";
+
+export const ELIGIBILITY_SET_VERSION = "ti_v3_eligibility_set_v1" as const;
+
+export type AnalysisCapability =
+  | "exact_reconstruction"
+  | "closed_trade_analytics"
+  | "execution_review"
+  | "behavioral_analytics"
+  | "simulations"
+  | "coaching"
+  | "ai_explanation"
+  | "visual_evidence"
+  | "export"
+  | "market_enrichment";
+
+export type EligibilityState = "eligible" | "limited" | "blocked" | "pending" | "stale";
+export type EligibilityFailureClass = "none" | "terminal" | "retryable" | "stale" | "pending_additional_evidence";
+
+export interface CapabilityEligibility {
+  readonly capability: AnalysisCapability;
+  readonly state: EligibilityState;
+  readonly reasonCodes: readonly string[];
+  readonly manifestDigest: CanonicalContentDigest;
+  readonly analysisCutoffAt: CanonicalUtcTimestamp;
+  readonly evidenceReferences: readonly CanonicalContentDigest[];
+  readonly failureClass: EligibilityFailureClass;
+}
+
+export interface EligibilitySet {
+  readonly schemaVersion: typeof ELIGIBILITY_SET_VERSION;
+  readonly manifestDigest: CanonicalContentDigest;
+  readonly analysisCutoffAt: CanonicalUtcTimestamp;
+  readonly results: readonly CapabilityEligibility[];
+  readonly eligibilitySetDigest: CanonicalContentDigest;
+}
+
+export type EligibilityFailure = FoundationValidationFailure | {
+  readonly code: "ti_v3_eligibility_inconsistent" | "ti_v3_eligibility_unverified";
+  readonly path: string;
+};
+
+const CAPABILITIES = new Set<AnalysisCapability>([
+  "exact_reconstruction", "closed_trade_analytics", "execution_review",
+  "behavioral_analytics", "simulations", "coaching", "ai_explanation",
+  "visual_evidence", "export", "market_enrichment",
+]);
+const STATES = new Set<EligibilityState>(["eligible", "limited", "blocked", "pending", "stale"]);
+const FAILURE_CLASSES = new Set<EligibilityFailureClass>(["none", "terminal", "retryable", "stale", "pending_additional_evidence"]);
+const verifiedSets = new WeakSet<EligibilitySet>();
+
+function failure(code: EligibilityFailure["code"], path: string): ExactResult<never, EligibilityFailure> {
+  return { ok: false, error: { code, path } };
+}
+
+function parseResult(input: unknown, path: string): ExactResult<CapabilityEligibility, EligibilityFailure> {
+  const record = validateExactRecord(input, ["capability", "state", "reasonCodes", "manifestDigest", "analysisCutoffAt", "evidenceReferences", "failureClass"], [], path);
+  if (!record.ok) return record;
+  const capability = validateEnum(record.value.capability, CAPABILITIES, `${path}.capability`);
+  if (!capability.ok) return capability;
+  const state = validateEnum(record.value.state, STATES, `${path}.state`);
+  if (!state.ok) return state;
+  const reasons = validateStringSet(record.value.reasonCodes, `${path}.reasonCodes`, { pattern: /^ti_v3_[a-z0-9_]{1,120}$/, maxItems: 128 });
+  if (!reasons.ok) return reasons;
+  const manifest = validateCanonicalDigest(record.value.manifestDigest, `${path}.manifestDigest`, "dataset_manifest");
+  if (!manifest.ok) return manifest;
+  const cutoff = validateCanonicalTimestamp(record.value.analysisCutoffAt, `${path}.analysisCutoffAt`);
+  if (!cutoff.ok) return cutoff;
+  const evidenceRaw = validateStringSet(record.value.evidenceReferences, `${path}.evidenceReferences`, { maxItems: 1_000 });
+  if (!evidenceRaw.ok) return evidenceRaw;
+  const evidence: CanonicalContentDigest[] = [];
+  for (let index = 0; index < evidenceRaw.value.length; index += 1) {
+    const parsed = validateCanonicalDigest(evidenceRaw.value[index], `${path}.evidenceReferences[${index}]`, "evidence_reference");
+    if (!parsed.ok) return parsed;
+    evidence.push(parsed.value);
+  }
+  const failureClass = validateEnum(record.value.failureClass, FAILURE_CLASSES, `${path}.failureClass`);
+  if (!failureClass.ok) return failureClass;
+  if ((state.value === "eligible") !== (failureClass.value === "none") || (state.value !== "eligible" && reasons.value.length === 0)) {
+    return failure("ti_v3_eligibility_inconsistent", path);
+  }
+  return { ok: true, value: Object.freeze({ capability: capability.value, state: state.value, reasonCodes: canonicalReasonCodes(reasons.value), manifestDigest: manifest.value, analysisCutoffAt: cutoff.value, evidenceReferences: canonicalStringSet(evidence) as readonly CanonicalContentDigest[], failureClass: failureClass.value }) };
+}
+
+export function buildEligibilitySet(input: unknown): ExactResult<EligibilitySet, EligibilityFailure> {
+  const record = validateExactRecord(input, ["manifestDigest", "analysisCutoffAt", "results"], []);
+  if (!record.ok) return record;
+  const manifest = validateCanonicalDigest(record.value.manifestDigest, "$.manifestDigest", "dataset_manifest");
+  if (!manifest.ok) return manifest;
+  const cutoff = validateCanonicalTimestamp(record.value.analysisCutoffAt, "$.analysisCutoffAt");
+  if (!cutoff.ok) return cutoff;
+  if (!Array.isArray(record.value.results) || record.value.results.length > CAPABILITIES.size) return failure("ti_v3_validation_array_invalid", "$.results");
+  const results: CapabilityEligibility[] = [];
+  for (let index = 0; index < record.value.results.length; index += 1) {
+    const parsed = parseResult(record.value.results[index], `$.results[${index}]`);
+    if (!parsed.ok) return parsed;
+    if (parsed.value.manifestDigest !== manifest.value || parsed.value.analysisCutoffAt !== cutoff.value) return failure("ti_v3_eligibility_inconsistent", `$.results[${index}]`);
+    results.push(parsed.value);
+  }
+  if (new Set(results.map((result) => result.capability)).size !== results.length) return failure("ti_v3_eligibility_inconsistent", "$.results");
+  const content = { schemaVersion: ELIGIBILITY_SET_VERSION, manifestDigest: manifest.value, analysisCutoffAt: cutoff.value, results: [...results].sort((left, right) => compareUnicodeCodePoints(left.capability, right.capability)) };
+  const identity = createCanonicalContentIdentity("eligibility_set", "v1", content);
+  if (!identity.ok) return failure(identity.error.code, identity.error.path);
+  const set = Object.freeze({ ...content, results: Object.freeze(content.results), eligibilitySetDigest: identity.value.identifier });
+  verifiedSets.add(set);
+  return { ok: true, value: set };
+}
+
+export function calculateManifestEligibility(args: { readonly manifest: DatasetManifest; readonly analysisCutoffAt: CanonicalUtcTimestamp }): ExactResult<EligibilitySet, EligibilityFailure> {
+  const coverage = new Set(args.manifest.content.coverageStates);
+  const unresolved = coverage.has("unresolved_correction_present");
+  const incomplete = coverage.has("coverage_gap_detected") || coverage.has("prior_inventory_incomplete") || coverage.has("unknown_coverage");
+  const deleted = coverage.has("deleted_source_present");
+  const open = args.manifest.content.openPositions.length > 0;
+  const result = (capability: AnalysisCapability, state: EligibilityState, reasons: readonly string[], failureClass: EligibilityFailureClass): CapabilityEligibility => ({ capability, state, reasonCodes: reasons, manifestDigest: args.manifest.manifestDigest, analysisCutoffAt: args.analysisCutoffAt, evidenceReferences: [], failureClass });
+  const reconstructionBlocked = unresolved || incomplete || args.manifest.content.reconstructionStatus !== "exact";
+  const results: CapabilityEligibility[] = [
+    result("exact_reconstruction", reconstructionBlocked ? "blocked" : "eligible", reconstructionBlocked ? ["ti_v3_eligibility_exact_reconstruction_unavailable"] : [], reconstructionBlocked ? "pending_additional_evidence" : "none"),
+    result("closed_trade_analytics", reconstructionBlocked ? "blocked" : open ? "limited" : "eligible", reconstructionBlocked ? ["ti_v3_eligibility_reconstruction_required"] : open ? ["ti_v3_eligibility_open_positions_excluded"] : [], reconstructionBlocked || open ? "pending_additional_evidence" : "none"),
+    result("execution_review", unresolved ? "limited" : "eligible", unresolved ? ["ti_v3_eligibility_unresolved_correction_limited"] : [], unresolved ? "pending_additional_evidence" : "none"),
+    result("behavioral_analytics", reconstructionBlocked ? "blocked" : "eligible", reconstructionBlocked ? ["ti_v3_eligibility_reconstruction_required"] : [], reconstructionBlocked ? "pending_additional_evidence" : "none"),
+    result("simulations", reconstructionBlocked ? "blocked" : "eligible", reconstructionBlocked ? ["ti_v3_eligibility_reconstruction_required"] : [], reconstructionBlocked ? "pending_additional_evidence" : "none"),
+    result("coaching", reconstructionBlocked || unresolved ? "blocked" : open ? "limited" : "eligible", reconstructionBlocked || unresolved ? ["ti_v3_eligibility_coaching_truth_incomplete"] : open ? ["ti_v3_eligibility_open_positions_execution_review_only"] : [], reconstructionBlocked || unresolved || open ? "pending_additional_evidence" : "none"),
+    result("ai_explanation", reconstructionBlocked ? "limited" : "eligible", reconstructionBlocked ? ["ti_v3_eligibility_ai_explanation_limited_to_available_evidence"] : [], reconstructionBlocked ? "pending_additional_evidence" : "none"),
+    result("visual_evidence", deleted ? "limited" : "eligible", deleted ? ["ti_v3_eligibility_deleted_source_retained"] : [], deleted ? "pending_additional_evidence" : "none"),
+    result("export", "eligible", [], "none"),
+    result("market_enrichment", "pending", ["ti_v3_eligibility_enrichment_not_supplied"], "retryable"),
+  ];
+  return buildEligibilitySet({ manifestDigest: args.manifest.manifestDigest, analysisCutoffAt: args.analysisCutoffAt, results });
+}
+
+export function verifyEligibilitySet(input: unknown): ExactResult<EligibilitySet, EligibilityFailure> {
+  if (typeof input === "object" && input !== null && verifiedSets.has(input as EligibilitySet)) return { ok: true, value: input as EligibilitySet };
+  const record = validateExactRecord(input, ["schemaVersion", "manifestDigest", "analysisCutoffAt", "results", "eligibilitySetDigest"], []);
+  if (!record.ok || record.value.schemaVersion !== ELIGIBILITY_SET_VERSION) return failure("ti_v3_eligibility_unverified", "$.schemaVersion");
+  const rebuilt = buildEligibilitySet({ manifestDigest: record.value.manifestDigest, analysisCutoffAt: record.value.analysisCutoffAt, results: record.value.results });
+  if (!rebuilt.ok || rebuilt.value.eligibilitySetDigest !== record.value.eligibilitySetDigest) return failure("ti_v3_eligibility_unverified", "$.eligibilitySetDigest");
+  return rebuilt;
+}
