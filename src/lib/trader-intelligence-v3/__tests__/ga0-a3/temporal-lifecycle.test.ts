@@ -10,10 +10,15 @@ import {
   type CorrectionRecord,
 } from "../../domain";
 import type { CanonicalExecutionDigest } from "../../domain/identity";
+import { buildSyntheticCanonicalExecution } from "../../testing/synthetic-execution-builder";
 
-const executionA = `ti_v3:canonical_execution:v1:sha256:${"1".repeat(64)}` as CanonicalExecutionDigest;
-const executionB = `ti_v3:canonical_execution:v1:sha256:${"2".repeat(64)}` as CanonicalExecutionDigest;
-const executionC = `ti_v3:canonical_execution:v1:sha256:${"3".repeat(64)}` as CanonicalExecutionDigest;
+const availableA = buildSyntheticCanonicalExecution({ executionId: "SYNTH-EXEC-A", brokerExecutionIndex: "1" });
+const availableB = buildSyntheticCanonicalExecution({ executionId: "SYNTH-EXEC-B", brokerExecutionIndex: "2" });
+const availableC = buildSyntheticCanonicalExecution({ executionId: "SYNTH-EXEC-C", brokerExecutionIndex: "3" });
+const executionA = availableA.canonicalContentDigest;
+const executionB = availableB.canonicalContentDigest;
+const executionC = availableC.canonicalContentDigest;
+const catalog = [availableA, availableB, availableC] as const;
 
 function correction(overrides: Partial<{
   correctionKey: string;
@@ -53,18 +58,21 @@ describe("GA0-A3 temporal correction authority", () => {
     const first = correction();
     const second = correction({
       correctionKey: "correction_b",
+      targetExecutionDigest: executionB,
       replacementExecutionDigest: executionC,
       supersedesCorrectionKey: "correction_a",
       correctedAt: "2026-01-02T14:34:00.000000000Z",
       recordedAt: "2026-01-02T14:33:30.000000000Z",
     });
     const left = applyCorrectionSet({
-      executionDigests: [executionA],
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: catalog,
       corrections: [first, second],
       correctionCutoffAt: "2026-01-02T15:00:00.000000000Z",
     });
     const right = applyCorrectionSet({
-      executionDigests: [executionA],
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: catalog,
       corrections: [second, first],
       correctionCutoffAt: "2026-01-02T15:00:00.000000000Z",
     });
@@ -75,7 +83,8 @@ describe("GA0-A3 temporal correction authority", () => {
 
   it("retains future corrections outside an as-of cutoff without altering the old replay", () => {
     const result = applyCorrectionSet({
-      executionDigests: [executionA],
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: catalog,
       corrections: [correction()],
       correctionCutoffAt: "2026-01-02T14:32:30.000000000Z",
     });
@@ -111,7 +120,8 @@ describe("GA0-A3 temporal correction authority", () => {
     const cycleA = correction({ correctionKey: "correction_cycle_a", supersedesCorrectionKey: "correction_cycle_b" });
     const cycleB = correction({ correctionKey: "correction_cycle_b", supersedesCorrectionKey: "correction_cycle_a" });
     const cycle = applyCorrectionSet({
-      executionDigests: [executionA],
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: catalog,
       corrections: [cycleA, cycleB],
       correctionCutoffAt: "2026-01-02T15:00:00.000000000Z",
     });
@@ -125,18 +135,49 @@ describe("GA0-A3 temporal correction authority", () => {
     });
     const afterDelete = correction({
       correctionKey: "correction_after_delete",
+      targetExecutionDigest: executionA,
       supersedesCorrectionKey: "correction_delete",
       correctedAt: "2026-01-02T14:34:00.000000000Z",
       recordedAt: "2026-01-02T14:33:30.000000000Z",
     });
     const deletedResult = applyCorrectionSet({
-      executionDigests: [executionA],
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: catalog,
       corrections: [deleted, afterDelete],
       correctionCutoffAt: "2026-01-02T15:00:00.000000000Z",
     });
     expect(deletedResult.ok && deletedResult.value.reasonCodes).toContain(
       "ti_v3_correction_after_deletion",
     );
+  });
+
+  it("fails closed for missing replacement catalog entries and cross-target supersession", () => {
+    const replace = correction();
+    const missing = applyCorrectionSet({
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: [availableA],
+      corrections: [replace],
+      correctionCutoffAt: "2026-01-02T15:00:00.000000000Z",
+    });
+    expect(missing.ok && missing.value.status).toBe("blocked");
+    expect(missing.ok && missing.value.reasonCodes).toContain("ti_v3_correction_target_not_found");
+
+    const crossTarget = correction({
+      correctionKey: "correction_cross_target",
+      targetExecutionDigest: executionC,
+      replacementExecutionDigest: executionA,
+      supersedesCorrectionKey: "correction_a",
+      recordedAt: "2026-01-02T14:33:30.000000000Z",
+      correctedAt: "2026-01-02T14:34:00.000000000Z",
+    });
+    const crossed = applyCorrectionSet({
+      baseActiveExecutionDigests: [executionA],
+      availableExecutionCatalog: catalog,
+      corrections: [replace, crossTarget],
+      correctionCutoffAt: "2026-01-02T15:00:00.000000000Z",
+    });
+    expect(crossed.ok && crossed.value.status).toBe("blocked");
+    expect(crossed.ok && crossed.value.reasonCodes).toContain("ti_v3_correction_lineage_mismatch");
   });
 });
 

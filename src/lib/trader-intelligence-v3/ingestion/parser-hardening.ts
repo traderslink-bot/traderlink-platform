@@ -23,8 +23,21 @@ export interface ParserHardeningResult {
   readonly issues: readonly ParserHardeningIssue[];
 }
 
-const MAX_PAYLOAD_BYTES = 10_000_000;
+export const PARSER_MAX_PAYLOAD_BYTES = 10_000_000;
 const MAX_CELL_LENGTH = 100_000;
+
+function exceedsUtf8Limit(text: string): boolean {
+  let bytes = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    if (code <= 0x7f) bytes += 1;
+    else if (code <= 0x7ff) bytes += 2;
+    else if (code >= 0xd800 && code <= 0xdbff && index + 1 < text.length && text.charCodeAt(index + 1) >= 0xdc00 && text.charCodeAt(index + 1) <= 0xdfff) { bytes += 4; index += 1; }
+    else bytes += 3;
+    if (bytes > PARSER_MAX_PAYLOAD_BYTES) return true;
+  }
+  return false;
+}
 
 function normalizeHeader(value: string): string {
   return value.replace(/^\uFEFF/, "").trim().toLowerCase().replace(/[$#]/g, "").replace(/[^a-z0-9]+/g, "");
@@ -49,7 +62,7 @@ function chooseDelimiter(text: string): { readonly delimiter: "," | ";" | "\t" |
   return { delimiter: scored[0].delimiter, ambiguous: scored[1]?.score === scored[0].score };
 }
 
-function parseStrictRows(text: string, delimiter: "," | ";" | "\t", issues: ParserHardeningIssue[]): string[][] {
+function parseStrictRows(text: string, delimiter: "," | ";" | "\t", issues: ParserHardeningIssue[]): string[][] | null {
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = "";
@@ -67,8 +80,11 @@ function parseStrictRows(text: string, delimiter: "," | ";" | "\t", issues: Pars
       if (character === "\r" && next === "\n") index += 1;
       row.push(cell); rows.push(row); row = []; cell = ""; continue;
     }
+    if (cell.length >= MAX_CELL_LENGTH) {
+      issues.push({ code: "ti_v3_parser_oversized_cell", rowIndex: rows.length + 1 });
+      return null;
+    }
     cell += character;
-    if (cell.length === MAX_CELL_LENGTH + 1) issues.push({ code: "ti_v3_parser_oversized_cell", rowIndex: rows.length + 1 });
   }
   if (quoted) issues.push({ code: "ti_v3_parser_unclosed_quote", rowIndex: rows.length + 1 });
   row.push(cell); rows.push(row);
@@ -79,10 +95,14 @@ export function validateParserHardeningInput(input: string | Uint8Array, columnM
   const issues: ParserHardeningIssue[] = [];
   let text: string;
   if (typeof input === "string") {
+    if (input.length > PARSER_MAX_PAYLOAD_BYTES || exceedsUtf8Limit(input)) {
+      return { ok: false, delimiter: null, issues: Object.freeze([{ code: "ti_v3_parser_payload_oversized" }]) };
+    }
     text = input;
-    if (new TextEncoder().encode(text).length > MAX_PAYLOAD_BYTES) issues.push({ code: "ti_v3_parser_payload_oversized" });
   } else {
-    if (input.length > MAX_PAYLOAD_BYTES) issues.push({ code: "ti_v3_parser_payload_oversized" });
+    if (input.length > PARSER_MAX_PAYLOAD_BYTES) {
+      return { ok: false, delimiter: null, issues: Object.freeze([{ code: "ti_v3_parser_payload_oversized" }]) };
+    }
     if ((input[0] === 0xff && input[1] === 0xfe) || (input[0] === 0xfe && input[1] === 0xff)) {
       issues.push({ code: "ti_v3_parser_unsupported_encoding" });
       return { ok: false, delimiter: null, issues: Object.freeze(issues) };
@@ -95,6 +115,7 @@ export function validateParserHardeningInput(input: string | Uint8Array, columnM
   if (selected.ambiguous) issues.push({ code: "ti_v3_parser_ambiguous_delimiter" });
   if (selected.delimiter === null) return { ok: issues.length === 0, delimiter: null, issues: Object.freeze(issues) };
   const rows = parseStrictRows(text, selected.delimiter, issues);
+  if (rows === null) return { ok: false, delimiter: selected.delimiter, issues: Object.freeze(issues) };
   const headerIndex = rows.findIndex((row) => {
     const normalized = row.map(normalizeHeader);
     return normalized.some((value) => ["symbol", "ticker", "instrument", "instrumentcode"].includes(value)) &&

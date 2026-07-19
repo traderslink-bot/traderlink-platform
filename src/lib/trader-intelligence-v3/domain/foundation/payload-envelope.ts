@@ -1,4 +1,5 @@
 import type { ExactResult } from "../exact";
+import { parseStrictCanonicalJson } from "../canonical";
 import { createCanonicalContentIdentity, type CanonicalContentDigest } from "../identity";
 import { validateCanonicalDigest, validateExactRecord, type FoundationValidationFailure } from "./runtime-validation";
 
@@ -56,7 +57,7 @@ export function verifyValidatedPayloadEnvelope(input: unknown): ExactResult<Vali
 
 export function parsePersistedJson(text: string): ExactResult<ValidatedPayloadEnvelope, PayloadEnvelopeFailure> {
   if (typeof text !== "string" || text.length > 1_000_000) return failure("ti_v3_validation_payload_oversized", "$");
-  let parsed: unknown;
-  try { parsed = JSON.parse(text) as unknown; } catch { return failure("ti_v3_payload_json_invalid", "$"); }
-  return verifyValidatedPayloadEnvelope(parsed);
+  const parsed = parseStrictCanonicalJson(text);
+  if (!parsed.ok) return { ok: false, error: parsed.error };
+  return verifyValidatedPayloadEnvelope(parsed.value);
 }

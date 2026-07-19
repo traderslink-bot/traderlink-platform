@@ -2,6 +2,7 @@ import type { CanonicalUtcTimestamp } from "../canonical";
 import type { ExactResult } from "../exact";
 import { validateCanonicalDigest, validateCanonicalTimestamp, validateEnum, validateExactRecord, type FoundationValidationFailure } from "../foundation";
 import { createCanonicalContentIdentity, type CanonicalContentDigest } from "../identity";
+import { verifyAnalysisSnapshot, type AnalysisSnapshot } from "../snapshot";
 
 export const EVIDENCE_REFERENCE_VERSION = "ti_v3_evidence_reference_v1" as const;
 
@@ -22,6 +23,9 @@ export interface EvidenceReference {
   readonly correctionDigest: CanonicalContentDigest | null;
   readonly policyDigest: CanonicalContentDigest | null;
   readonly filterDigest: CanonicalContentDigest;
+  readonly policySetDigest: CanonicalContentDigest;
+  readonly correctionResultDigest: CanonicalContentDigest;
+  readonly evidenceNamespace: string;
   readonly analysisCutoffAt: CanonicalUtcTimestamp;
   readonly evidenceDigest: CanonicalContentDigest;
 }
@@ -38,13 +42,11 @@ function failure(code: EvidenceFailure["code"], path: string): ExactResult<never
   return { ok: false, error: { code, path } };
 }
 
-export function buildEvidenceReference(input: unknown): ExactResult<EvidenceReference, EvidenceFailure> {
-  const record = validateExactRecord(input, ["manifestDigest", "snapshotDigest", "subjectKind", "semanticKey", "correctionDigest", "policyDigest", "filterDigest", "analysisCutoffAt"], []);
+export function buildEvidenceReference(input: { readonly snapshot: AnalysisSnapshot; readonly subjectKind: unknown; readonly semanticKey: unknown; readonly correctionDigest: unknown; readonly policyDigest: unknown }): ExactResult<EvidenceReference, EvidenceFailure> {
+  const verifiedSnapshot = verifyAnalysisSnapshot(input.snapshot);
+  if (!verifiedSnapshot.ok) return failure("ti_v3_evidence_unverified", "$.snapshot");
+  const record = validateExactRecord(input, ["snapshot", "subjectKind", "semanticKey", "correctionDigest", "policyDigest"], []);
   if (!record.ok) return record;
-  const manifest = validateCanonicalDigest(record.value.manifestDigest, "$.manifestDigest", "dataset_manifest");
-  if (!manifest.ok) return manifest;
-  const snapshot = validateCanonicalDigest(record.value.snapshotDigest, "$.snapshotDigest", "analysis_snapshot");
-  if (!snapshot.ok) return snapshot;
   const subject = validateEnum(record.value.subjectKind, SUBJECTS, "$.subjectKind");
   if (!subject.ok) return subject;
   if (typeof record.value.semanticKey !== "string" || !/^[a-z0-9][a-z0-9:._-]{0,255}$/.test(record.value.semanticKey)) return failure("ti_v3_validation_string_invalid", "$.semanticKey");
@@ -57,13 +59,27 @@ export function buildEvidenceReference(input: unknown): ExactResult<EvidenceRefe
   if (!correction.ok) return correction;
   const policy = optionalDigest(record.value.policyDigest, "$.policyDigest");
   if (!policy.ok) return policy;
-  const filter = validateCanonicalDigest(record.value.filterDigest, "$.filterDigest", "canonical_filter");
-  if (!filter.ok) return filter;
-  const cutoff = validateCanonicalTimestamp(record.value.analysisCutoffAt, "$.analysisCutoffAt");
-  if (!cutoff.ok) return cutoff;
   if (subject.value === "correction_version" && correction.value === null) return failure("ti_v3_validation_required_field_missing", "$.correctionDigest");
   if (subject.value === "policy_version" && policy.value === null) return failure("ti_v3_validation_required_field_missing", "$.policyDigest");
-  const content = { schemaVersion: EVIDENCE_REFERENCE_VERSION, manifestDigest: manifest.value, snapshotDigest: snapshot.value, subjectKind: subject.value, semanticKey: record.value.semanticKey, correctionDigest: correction.value, policyDigest: policy.value, filterDigest: filter.value, analysisCutoffAt: cutoff.value };
+  const snapshot = verifiedSnapshot.value;
+  const semanticKey = record.value.semanticKey;
+  const executions = snapshot.evidenceSubjects.executionDigests as readonly string[];
+  const subjectExists =
+    subject.value === "canonical_execution"
+      ? executions.includes(semanticKey)
+      : subject.value === "execution_occurrence"
+        ? executions.some((digest) => semanticKey.startsWith(`${digest}:occurrence:`))
+        : subject.value === "correction_version"
+          ? correction.value !== null && semanticKey === correction.value && snapshot.evidenceSubjects.correctionDigests.includes(correction.value)
+          : subject.value === "policy_version"
+            ? policy.value !== null && semanticKey === policy.value && snapshot.evidenceSubjects.policyDigests.includes(policy.value)
+            : subject.value === "filter_contract"
+              ? semanticKey === snapshot.filterDigest
+              : snapshot.evidenceSubjects.reconstructedRoundTripKeys.includes(semanticKey);
+  if (!subjectExists) return failure("ti_v3_evidence_snapshot_mismatch", "$.semanticKey");
+  if (subject.value !== "correction_version" && correction.value !== null) return failure("ti_v3_evidence_snapshot_mismatch", "$.correctionDigest");
+  if (subject.value !== "policy_version" && policy.value !== null) return failure("ti_v3_evidence_snapshot_mismatch", "$.policyDigest");
+  const content = { schemaVersion: EVIDENCE_REFERENCE_VERSION, manifestDigest: snapshot.manifestDigest, snapshotDigest: snapshot.snapshotDigest, subjectKind: subject.value, semanticKey, correctionDigest: correction.value, policyDigest: policy.value, filterDigest: snapshot.filterDigest, policySetDigest: snapshot.policySetDigest, correctionResultDigest: snapshot.correctionResultDigest, evidenceNamespace: snapshot.evidenceNamespace, analysisCutoffAt: snapshot.analysisCutoffAt };
   const identity = createCanonicalContentIdentity("evidence_reference", "v1", content);
   if (!identity.ok) return failure(identity.error.code, identity.error.path);
   const reference = Object.freeze({ ...content, evidenceDigest: identity.value.identifier });
@@ -73,11 +89,7 @@ export function buildEvidenceReference(input: unknown): ExactResult<EvidenceRefe
 
 export function verifyEvidenceReference(input: unknown): ExactResult<EvidenceReference, EvidenceFailure> {
   if (typeof input === "object" && input !== null && verifiedReferences.has(input as EvidenceReference)) return { ok: true, value: input as EvidenceReference };
-  const record = validateExactRecord(input, ["schemaVersion", "manifestDigest", "snapshotDigest", "subjectKind", "semanticKey", "correctionDigest", "policyDigest", "filterDigest", "analysisCutoffAt", "evidenceDigest"], []);
-  if (!record.ok || record.value.schemaVersion !== EVIDENCE_REFERENCE_VERSION) return failure("ti_v3_evidence_unverified", "$.schemaVersion");
-  const rebuilt = buildEvidenceReference({ manifestDigest: record.value.manifestDigest, snapshotDigest: record.value.snapshotDigest, subjectKind: record.value.subjectKind, semanticKey: record.value.semanticKey, correctionDigest: record.value.correctionDigest, policyDigest: record.value.policyDigest, filterDigest: record.value.filterDigest, analysisCutoffAt: record.value.analysisCutoffAt });
-  if (!rebuilt.ok || rebuilt.value.evidenceDigest !== record.value.evidenceDigest) return failure("ti_v3_evidence_unverified", "$.evidenceDigest");
-  return rebuilt;
+  return failure("ti_v3_evidence_unverified", "$");
 }
 
 export function assertEvidenceScope(reference: EvidenceReference, expected: { readonly manifestDigest: CanonicalContentDigest; readonly snapshotDigest: CanonicalContentDigest }): ExactResult<EvidenceReference, EvidenceFailure> {

@@ -9,7 +9,7 @@ import {
 } from "../import-fingerprints";
 import { buildSessionTimeContextFromExecutions } from "../../raw-trade-timeline/session/classify-session-time";
 import type { ProviderExecution } from "../types/provider-execution";
-import { validateParserHardeningInput } from "../../trader-intelligence-v3/ingestion";
+import { validateParserHardeningInput, type ParserHardeningResult } from "../../trader-intelligence-v3/ingestion";
 
 export type BrokerExecutionCsvFormat =
   | "auto"
@@ -786,6 +786,7 @@ function parseCsvDocument(
   csvText: string,
   issues: BrokerExecutionCsvImportIssue[],
   columnMapping: BrokerExecutionCsvColumnMapping,
+  hardening: ParserHardeningResult,
 ): ParsedCsvDocument | null {
   if (csvText.trim() === "") {
     pushIssue(issues, {
@@ -796,10 +797,6 @@ function parseCsvDocument(
     return null;
   }
 
-  const hardening = validateParserHardeningInput(
-    csvText,
-    columnMapping as Readonly<Record<string, string | readonly string[] | undefined>>,
-  );
   if (!hardening.ok) {
     for (const issue of hardening.issues) {
       pushIssue(issues, {
@@ -2306,8 +2303,12 @@ export function parseBrokerExecutionCsv(
     issues,
   );
   const optionsHandling = args.optionsHandling ?? "reject";
-  const fileFingerprint = buildBrokerExecutionCsvFileFingerprint(args.csvText);
-  const document = parseCsvDocument(args.csvText, issues, columnMapping);
+  const hardening = validateParserHardeningInput(args.csvText, columnMapping as Readonly<Record<string, string | readonly string[] | undefined>>);
+  const fingerprintInput = hardening.issues.some((issue) => issue.code === "ti_v3_parser_payload_oversized")
+    ? `ti_v3_rejected_oversized_csv:${args.csvText.length}`
+    : args.csvText;
+  const fileFingerprint = buildBrokerExecutionCsvFileFingerprint(fingerprintInput);
+  const document = parseCsvDocument(args.csvText, issues, columnMapping, hardening);
 
   if (!document) {
     const broker =

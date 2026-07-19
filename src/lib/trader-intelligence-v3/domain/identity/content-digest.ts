@@ -12,9 +12,12 @@ export type ContentIdentityDomain =
   | "canonical_execution"
   | "canonical_source_document"
   | "correction_record"
+  | "execution_catalog"
+  | "correction_result"
   | "dataset_manifest"
   | "eligibility_set"
   | "canonical_filter"
+  | "date_resolution_receipt"
   | "analysis_snapshot"
   | "evidence_reference"
   | "enrichment_set"
@@ -116,7 +119,7 @@ export function parseCanonicalContentDigest(
 ): ExactResult<CanonicalContentDigest, ContentDigestFailure> {
   if (
     typeof input !== "string" ||
-    !/^ti_v3:(?:canonical_content|canonical_execution|canonical_source_document|correction_record|dataset_manifest|eligibility_set|canonical_filter|analysis_snapshot|evidence_reference|enrichment_set|restore_test_record|payload_envelope):v[1-9][0-9]*:sha256:[0-9a-f]{64}$/.test(
+    !/^ti_v3:(?:canonical_content|canonical_execution|canonical_source_document|correction_record|execution_catalog|correction_result|dataset_manifest|eligibility_set|canonical_filter|date_resolution_receipt|analysis_snapshot|evidence_reference|enrichment_set|restore_test_record|payload_envelope):v[1-9][0-9]*:sha256:[0-9a-f]{64}$/.test(
       input,
     )
   ) {

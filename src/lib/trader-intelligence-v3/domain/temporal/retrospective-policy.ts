@@ -35,6 +35,8 @@ export interface RetrospectiveAnalysisPolicy {
   readonly liveDirectionalGuidanceAllowed: false;
 }
 
+const verifiedRetrospectivePolicies = new WeakSet<RetrospectiveAnalysisPolicy>();
+
 const POLICY_STATES = new Set<RetrospectivePolicyState>([
   "closed_historical_trade",
   "same_day_closed_trade",
@@ -101,9 +103,7 @@ export function buildRetrospectiveAnalysisPolicy(
   ) {
     return { ok: false, error: { code: "ti_v3_validation_input_invalid", path: "$.openPositionPolicy" } };
   }
-  return {
-    ok: true,
-    value: Object.freeze({
+  const value = Object.freeze({
       policyVersion: RETROSPECTIVE_POLICY_VERSION,
       state: state.value,
       analysisCutoffAt: analysis.value,
@@ -112,7 +112,16 @@ export function buildRetrospectiveAnalysisPolicy(
       includedLifecycleStates: canonicalStringSet(included.value) as readonly FactualLifecycleState[],
       excludedLifecycleStates: canonicalStringSet(excluded.value) as readonly FactualLifecycleState[],
       liveDirectionalGuidanceAllowed: false,
-    }),
-  };
+    });
+  verifiedRetrospectivePolicies.add(value);
+  return { ok: true, value };
 }
 
+export function verifyRetrospectiveAnalysisPolicy(
+  input: unknown,
+): ExactResult<RetrospectiveAnalysisPolicy, FoundationValidationFailure> {
+  if (typeof input !== "object" || input === null || !verifiedRetrospectivePolicies.has(input as RetrospectiveAnalysisPolicy)) {
+    return { ok: false, error: { code: "ti_v3_validation_input_invalid", path: "$" } };
+  }
+  return { ok: true, value: input as RetrospectiveAnalysisPolicy };
+}

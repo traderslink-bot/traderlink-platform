@@ -16,6 +16,7 @@ import {
   type CanonicalExecutionDigest,
   type CanonicalSourceDocumentDigest,
 } from "../identity";
+import { verifyCorrectionApplicationResult, type CorrectionApplicationResult } from "../temporal";
 
 export const DATASET_MANIFEST_VERSION = "ti_v3_dataset_manifest_v1" as const;
 
@@ -87,6 +88,7 @@ export interface DatasetManifestContent {
   readonly sourceDocuments: readonly ManifestSourceDocument[];
   readonly acceptedExecutionDigests: readonly CanonicalExecutionDigest[];
   readonly correctionDigests: readonly CanonicalContentDigest[];
+  readonly correctionResultDigest: CanonicalContentDigest;
   readonly correctionCutoffAt: CanonicalUtcTimestamp;
   readonly policies: readonly ManifestPolicyReference[];
   readonly statementPeriods: readonly ManifestTimeRange[];
@@ -304,8 +306,7 @@ export function buildDatasetManifest(input: unknown): ExactResult<DatasetManifes
       "canonicalAccountKeys",
       "sourceDocuments",
       "acceptedExecutionDigests",
-      "correctionDigests",
-      "correctionCutoffAt",
+      "correctionResult",
       "policies",
       "statementPeriods",
       "knownGaps",
@@ -333,10 +334,8 @@ export function buildDatasetManifest(input: unknown): ExactResult<DatasetManifes
     return parsed.ok ? { ok: true, value: parsed.value as CanonicalExecutionDigest } : parsed;
   });
   if (!executions.ok) return executions;
-  const corrections = parseArrayItems(record.value.correctionDigests, "$.correctionDigests", (value, path) => validateCanonicalDigest(value, path, "correction_record"));
-  if (!corrections.ok) return corrections;
-  const cutoff = validateCanonicalTimestamp(record.value.correctionCutoffAt, "$.correctionCutoffAt");
-  if (!cutoff.ok) return cutoff;
+  const correctionResult = verifyCorrectionApplicationResult(record.value.correctionResult);
+  if (!correctionResult.ok) return failure("ti_v3_manifest_unverified", "$.correctionResult");
   const policies = parseArrayItems(record.value.policies, "$.policies", parsePolicy);
   if (!policies.ok) return policies;
   const periods = parseArrayItems(record.value.statementPeriods, "$.statementPeriods", parseRange);
@@ -360,12 +359,37 @@ export function buildDatasetManifest(input: unknown): ExactResult<DatasetManifes
   const reasons = validateStringSet(record.value.reconstructionReasonCodes, "$.reconstructionReasonCodes", { pattern: /^ti_v3_[a-z0-9_]{1,120}$/ });
   if (!reasons.ok) return reasons;
 
+  const duplicate = <T>(values: readonly T[], key: (value: T) => string): boolean => {
+    const keys = values.map(key);
+    return new Set(keys).size !== keys.length;
+  };
+  if (duplicate(sources.value, (source) => source.sourceDocumentDigest)) return failure("ti_v3_manifest_inconsistent", "$.sourceDocuments");
+  if (duplicate(policies.value, (entry) => `${entry.policyKey}:${entry.policyVersion}`) || duplicate(policies.value, (entry) => entry.policyDigest)) return failure("ti_v3_manifest_inconsistent", "$.policies");
+  if (duplicate(executions.value, String)) return failure("ti_v3_manifest_inconsistent", "$.acceptedExecutionDigests");
+  if (duplicate(prior.value, (entry) => entry.ledgerKey)) return failure("ti_v3_manifest_inconsistent", "$.priorInventory");
+  if (duplicate(open.value, (entry) => entry.ledgerKey)) return failure("ti_v3_manifest_inconsistent", "$.openPositions");
+  if (duplicate(exclusions.value, (entry) => entry.evidenceDigest)) return failure("ti_v3_manifest_inconsistent", "$.exclusions");
+  const accepted = new Set(executions.value);
+  if (open.value.some((entry) => entry.executionDigests.some((digest) => !accepted.has(digest)))) return failure("ti_v3_manifest_inconsistent", "$.openPositions");
+  if (correctionResult.value.status !== "applied" || correctionResult.value.activeExecutionDigests.join("\n") !== [...executions.value].sort().join("\n")) return failure("ti_v3_manifest_inconsistent", "$.correctionResult");
+  const validateLedgerScope = (ledgerKey: string): boolean => {
+    const [account, instrument, currency, ...rest] = ledgerKey.split(":");
+    return rest.length === 0 && accounts.value.includes(account) && /^[-a-z0-9_]{1,96}$/.test(instrument ?? "") && currencies.value.includes((currency ?? "").toUpperCase());
+  };
+  if ([...prior.value, ...open.value].some((entry) => !validateLedgerScope(entry.ledgerKey))) return failure("ti_v3_manifest_inconsistent", "$.priorInventory");
+  if (executions.value.length > 0 && (sources.value.length === 0 || currencies.value.length === 0)) return failure("ti_v3_manifest_inconsistent", "$.acceptedExecutionDigests");
+  const sourceDigests = new Set(sources.value.map((source) => source.sourceDocumentDigest));
+  if (overlaps.value.some((entry) => entry.sourceDocumentDigests.some((digest) => !sourceDigests.has(digest)))) return failure("ti_v3_manifest_inconsistent", "$.overlappingPeriods");
+  const rangeKey = (range: ManifestTimeRange) => `${range.startAt}:${range.endAt}:${range.startInclusive}:${range.endInclusive}`;
+  if (duplicate(periods.value, rangeKey) || duplicate(gaps.value, (gap) => `${gap.scopeKey}:${rangeKey(gap.range)}`) || duplicate(overlaps.value, (overlap) => `${overlap.sourceDocumentDigests.join(":")}:${rangeKey(overlap.range)}`)) return failure("ti_v3_manifest_inconsistent", "$.statementPeriods");
+
   const coverageSet = new Set(coverage.value);
   if (gaps.value.length > 0) coverageSet.add("coverage_gap_detected");
   if (sources.value.some((source) => source.deletionState === "deleted")) coverageSet.add("deleted_source_present");
   if (prior.value.some((entry) => entry.state === "unknown")) coverageSet.add("prior_inventory_incomplete");
   if (reasons.value.includes("ti_v3_correction_unresolved")) coverageSet.add("unresolved_correction_present");
   if (overlaps.value.some((overlap) => overlap.resolutionState === "unresolved") && reconstruction.value === "exact") return failure("ti_v3_manifest_inconsistent", "$.reconstructionStatus");
+  if (coverageSet.has("complete_account_period") && (gaps.value.length > 0 || overlaps.value.length > 0 || coverageSet.has("partial_account_period") || coverageSet.has("multiple_accounts_partial") || coverageSet.has("unknown_coverage") || coverageSet.has("prior_inventory_incomplete") || coverageSet.has("unresolved_correction_present"))) return failure("ti_v3_manifest_inconsistent", "$.coverageStates");
 
   const content = {
     schemaVersion: DATASET_MANIFEST_VERSION,
@@ -373,8 +397,9 @@ export function buildDatasetManifest(input: unknown): ExactResult<DatasetManifes
     canonicalAccountKeys: accounts.value,
     sourceDocuments: canonicalOrder(sources.value, (value) => value.sourceDocumentDigest),
     acceptedExecutionDigests: canonicalStringSet(executions.value) as readonly CanonicalExecutionDigest[],
-    correctionDigests: canonicalStringSet(corrections.value) as readonly CanonicalContentDigest[],
-    correctionCutoffAt: cutoff.value,
+    correctionDigests: correctionResult.value.appliedCorrectionDigests,
+    correctionResultDigest: correctionResult.value.correctionResultDigest,
+    correctionCutoffAt: correctionResult.value.correctionCutoffAt,
     policies: canonicalOrder(policies.value, (value) => `${value.policyKey}:${value.policyVersion}:${value.policyDigest}`),
     statementPeriods: canonicalOrder(periods.value, (value) => `${value.startAt}:${value.endAt}:${value.startInclusive}:${value.endInclusive}`),
     knownGaps: canonicalOrder(gaps.value, (value) => `${value.scopeKey}:${value.range.startAt}:${value.reasonCode}`),
@@ -400,9 +425,5 @@ export function buildDatasetManifest(input: unknown): ExactResult<DatasetManifes
 export function verifyDatasetManifest(input: unknown): ExactResult<DatasetManifest, DatasetManifestFailure> {
   if (typeof input !== "object" || input === null) return failure("ti_v3_manifest_unverified", "$");
   if (verifiedManifests.has(input as DatasetManifest)) return { ok: true, value: input as DatasetManifest };
-  const record = validateExactRecord(input, ["content", "manifestDigest"], []);
-  if (!record.ok) return failure("ti_v3_manifest_unverified", record.error.path);
-  const rebuilt = buildDatasetManifest(record.value.content);
-  if (!rebuilt.ok || rebuilt.value.manifestDigest !== record.value.manifestDigest) return failure("ti_v3_manifest_unverified", "$.manifestDigest");
-  return rebuilt;
+  return failure("ti_v3_manifest_unverified", "$");
 }

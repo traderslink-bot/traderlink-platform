@@ -8,6 +8,10 @@ export const FOUNDATION_PAYLOAD_LIMITS = Object.freeze({
   maxObjectKeys: 128,
   maxStringLength: 4_096,
   maxReasonCodes: 128,
+  maxDepth: 64,
+  maxNodes: 4_096,
+  maxAggregateStringLength: 1_048_576,
+  maxTotalKeys: 1_024,
 });
 
 export type FoundationValidationFailureCode =
@@ -35,10 +39,104 @@ export function validationFailure(
   return { ok: false, error: { code, path } };
 }
 
+interface InspectionContext {
+  readonly active: WeakSet<object>;
+  nodes: number;
+  keys: number;
+  aggregateStringLength: number;
+}
+
+function inspectUnknown(value: unknown, path: string, context: InspectionContext, depth: number): ExactResult<unknown, FoundationValidationFailure> {
+  if (depth > FOUNDATION_PAYLOAD_LIMITS.maxDepth) return validationFailure("ti_v3_validation_payload_oversized", path);
+  context.nodes += 1;
+  if (context.nodes > FOUNDATION_PAYLOAD_LIMITS.maxNodes) return validationFailure("ti_v3_validation_payload_oversized", path);
+  if (typeof value === "string") {
+    context.aggregateStringLength += value.length;
+    return context.aggregateStringLength > FOUNDATION_PAYLOAD_LIMITS.maxAggregateStringLength ? validationFailure("ti_v3_validation_payload_oversized", path) : { ok: true, value };
+  }
+  if (value === null || typeof value === "boolean" || typeof value === "number") return { ok: true, value };
+  if (typeof value !== "object") return validationFailure("ti_v3_validation_input_invalid", path);
+  if (context.active.has(value)) return validationFailure("ti_v3_validation_input_invalid", path);
+  context.active.add(value);
+  let array: boolean;
+  let prototype: object | null;
+  let descriptors: PropertyDescriptorMap;
+  try {
+    array = Array.isArray(value);
+    prototype = Object.getPrototypeOf(value) as object | null;
+    Reflect.ownKeys(value);
+    descriptors = Object.getOwnPropertyDescriptors(value);
+  } catch {
+    context.active.delete(value);
+    return validationFailure("ti_v3_validation_input_invalid", path);
+  }
+  if ((array && prototype !== Array.prototype) || (!array && prototype !== Object.prototype && prototype !== null)) {
+    context.active.delete(value);
+    return validationFailure("ti_v3_validation_input_invalid", path);
+  }
+  const keys = Reflect.ownKeys(descriptors);
+  if (keys.some((key) => typeof key === "symbol")) {
+    context.active.delete(value);
+    return validationFailure("ti_v3_validation_input_invalid", path);
+  }
+  const stringKeys = keys as string[];
+  for (const key of stringKeys) {
+    const descriptor = descriptors[key];
+    if (descriptor.get !== undefined || descriptor.set !== undefined || (descriptor.enumerable !== true && !(array && key === "length"))) {
+      context.active.delete(value);
+      return validationFailure("ti_v3_validation_input_invalid", `${path}.${key}`);
+    }
+  }
+  const dataKeys = stringKeys.filter((key) => !(array && key === "length"));
+  context.keys += dataKeys.length;
+  if (dataKeys.length > FOUNDATION_PAYLOAD_LIMITS.maxObjectKeys || context.keys > FOUNDATION_PAYLOAD_LIMITS.maxTotalKeys) {
+    context.active.delete(value);
+    return validationFailure("ti_v3_validation_payload_oversized", path);
+  }
+  const normalizedKeys = dataKeys.map((key) => key.normalize("NFC"));
+  if (new Set(normalizedKeys).size !== normalizedKeys.length) {
+    context.active.delete(value);
+    return validationFailure("ti_v3_validation_input_invalid", path);
+  }
+  if (array) {
+    const length = descriptors.length?.value;
+    if (typeof length !== "number" || !Number.isSafeInteger(length) || length < 0 || length > FOUNDATION_PAYLOAD_LIMITS.maxArrayItems || dataKeys.some((key) => !/^(0|[1-9][0-9]*)$/.test(key) || Number(key) >= length)) {
+      context.active.delete(value);
+      return validationFailure("ti_v3_validation_array_invalid", path);
+    }
+    const output: unknown[] = [];
+    for (let index = 0; index < length; index += 1) {
+      const descriptor = descriptors[String(index)];
+      if (descriptor === undefined) {
+        context.active.delete(value);
+        return validationFailure("ti_v3_validation_array_invalid", `${path}[${index}]`);
+      }
+      const child = inspectUnknown(descriptor.value, `${path}[${index}]`, context, depth + 1);
+      if (!child.ok) { context.active.delete(value); return child; }
+      output.push(child.value);
+    }
+    context.active.delete(value);
+    return { ok: true, value: Object.freeze(output) };
+  }
+  const output = Object.create(null) as Record<string, unknown>;
+  for (let index = 0; index < dataKeys.length; index += 1) {
+    const key = dataKeys[index];
+    const normalizedKey = normalizedKeys[index];
+    const child = inspectUnknown(descriptors[key].value, `${path}.${normalizedKey}`, context, depth + 1);
+    if (!child.ok) { context.active.delete(value); return child; }
+    Object.defineProperty(output, normalizedKey, { configurable: false, enumerable: true, writable: false, value: child.value });
+  }
+  context.active.delete(value);
+  return { ok: true, value: Object.freeze(output) };
+}
+
+function inspectRoot(value: unknown, path: string): ExactResult<unknown, FoundationValidationFailure> {
+  return inspectUnknown(value, path, { active: new WeakSet(), nodes: 0, keys: 0, aggregateStringLength: 0 }, 0);
+}
+
 export function isPlainRecord(value: unknown): value is Record<string, unknown> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
-  const prototype = Object.getPrototypeOf(value) as object | null;
-  return prototype === Object.prototype || prototype === null;
+  const inspected = inspectRoot(value, "$");
+  return inspected.ok && typeof inspected.value === "object" && inspected.value !== null && !Array.isArray(inspected.value);
 }
 
 export function validateExactRecord(
@@ -47,10 +145,12 @@ export function validateExactRecord(
   optionalKeys: readonly string[],
   path = "$",
 ): ExactResult<Record<string, unknown>, FoundationValidationFailure> {
-  if (!isPlainRecord(value)) {
+  const inspected = inspectRoot(value, path);
+  if (!inspected.ok || typeof inspected.value !== "object" || inspected.value === null || Array.isArray(inspected.value)) {
     return validationFailure("ti_v3_validation_input_invalid", path);
   }
-  const keys = Object.keys(value);
+  const safeValue = inspected.value as Record<string, unknown>;
+  const keys = Object.keys(safeValue);
   if (keys.length > FOUNDATION_PAYLOAD_LIMITS.maxObjectKeys) {
     return validationFailure("ti_v3_validation_payload_oversized", path);
   }
@@ -59,11 +159,11 @@ export function validateExactRecord(
   if (extra !== undefined) {
     return validationFailure("ti_v3_validation_extra_field", `${path}.${extra}`);
   }
-  const missing = requiredKeys.find((key) => !Object.prototype.hasOwnProperty.call(value, key));
+  const missing = requiredKeys.find((key) => !Object.prototype.hasOwnProperty.call(safeValue, key));
   if (missing !== undefined) {
     return validationFailure("ti_v3_validation_required_field_missing", `${path}.${missing}`);
   }
-  return { ok: true, value };
+  return { ok: true, value: safeValue };
 }
 
 export function validateBoundedString(
@@ -110,13 +210,14 @@ export function validateArray(
   path: string,
   maxItems: number = FOUNDATION_PAYLOAD_LIMITS.maxArrayItems,
 ): ExactResult<readonly unknown[], FoundationValidationFailure> {
-  if (!Array.isArray(value)) {
+  const inspected = inspectRoot(value, path);
+  if (!inspected.ok || !Array.isArray(inspected.value)) {
     return validationFailure("ti_v3_validation_array_invalid", path);
   }
-  if (value.length > maxItems) {
+  if (inspected.value.length > maxItems) {
     return validationFailure("ti_v3_validation_payload_oversized", path);
   }
-  return { ok: true, value };
+  return { ok: true, value: inspected.value };
 }
 
 export function validateCanonicalTimestamp(

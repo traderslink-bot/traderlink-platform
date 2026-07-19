@@ -72,6 +72,13 @@ describe("GA0-A3 parser hardening", () => {
     expect(validateParserHardeningInput(`Date,Symbol,Side,Quantity,Price\n2026-01-01,${"A".repeat(100_001)},Buy,1,10`).issues).toContainEqual(expect.objectContaining({ code: "ti_v3_parser_oversized_cell" }));
   });
 
+  it("terminates immediately at payload and cell limits", () => {
+    const oversized = validateParserHardeningInput("Date,Symbol;Side\n" + "A".repeat(10_000_001));
+    expect(oversized).toEqual({ ok: false, delimiter: null, issues: [{ code: "ti_v3_parser_payload_oversized" }] });
+    const oversizedCell = validateParserHardeningInput(`Date,Symbol,Side,Quantity,Price\n2026-01-01,"${"A".repeat(100_001)}`);
+    expect(oversizedCell.issues).toEqual([{ code: "ti_v3_parser_oversized_cell", rowIndex: 2 }]);
+  });
+
   it("prevents the existing importer from silently accepting ambiguous truth", () => {
     const result = parseBrokerExecutionCsv({ broker: "generic_execution_csv", csvText: "Date,Symbol,Symbol,Side,Quantity,Price\n2026-01-01,AAPL,MSFT,Buy,1,10" });
     expect(result.executions).toEqual([]);
