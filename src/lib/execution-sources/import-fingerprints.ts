@@ -1,5 +1,7 @@
 import type { UserTradeAnalysisRequest } from "../trade-analysis/request/trade-analysis-request-contract";
 
+export type LegacyNonAuthoritativeFingerprint = string;
+
 function stableHash(value: string): string {
   let hash = 2166136261;
 
@@ -41,7 +43,9 @@ function normalizeTimestamp(value: unknown): string {
   return Number.isNaN(parsed) ? value.trim() : new Date(parsed).toISOString();
 }
 
-export function buildBrokerExecutionCsvFileFingerprint(csvText: string): string {
+export function buildBrokerExecutionCsvFileFingerprint(
+  csvText: string,
+): LegacyNonAuthoritativeFingerprint {
   const normalized = csvText
     .replace(/^\uFEFF/, "")
     .replace(/\r\n/g, "\n")
@@ -56,7 +60,7 @@ export function buildBrokerExecutionCsvFileFingerprint(csvText: string): string 
 
 export function buildTradeAnalysisRequestFingerprint(
   request: UserTradeAnalysisRequest,
-): string {
+): LegacyNonAuthoritativeFingerprint {
   const executionKey = [...request.executions]
     .sort((left, right) => {
       const timeDelta =

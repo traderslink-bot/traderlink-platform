@@ -1,8 +1,62 @@
 # Trader Intelligence v3 Current-System Inventory
 
-Date: 2026-07-17
-Gate: GA0-A1 containment and architecture boundaries
-Branch: `agent/trader-intelligence-v3-ga0-a1-containment`
+Date: 2026-07-19
+Gate: GA0-A3 temporal, manifest, eligibility, and query foundation
+Branch: `agent/trader-intelligence-v3-ga0-a3-manifests`
+
+GA0-A1 is accepted and complete at
+`4f9e440116258c9548a2d13f7ea057a9075101c6`. The historical inventory below is
+preserved. GA0-A2 adds an isolated exact-truth domain and testing boundary; it
+does not promote or rewire current routes, saved data, legacy calculations, or
+user-visible output.
+
+Second-remediation implementation head
+`9721a2707d936987f3b0e116226dd20de400cf58` strengthens the isolated boundary
+without wiring a runtime consumer: accounting now requires exhaustive opaque
+relationship coverage and explicit versioned starting inventory; canonical
+execution envelopes are deeply immutable and verified; serializer dictionaries
+are prototype-safe; and unknown precision/row-number evidence fails closed.
+
+GA0-A2 was independently accepted and merged through PR #104 at
+`e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`. GA0-A3 began only on the branch
+named above from that accepted merge. The GA0-A2 inventory remains the inherited
+factual authority; GA0-A3 extends it without wiring routes, analytics, charts,
+AI, market enrichment, hosted operation, public users, or deployment.
+
+GA0-A3 required-fix remediation is an unaccepted re-audit candidate at
+executable head `883d62ea009102037626207a96cad31f482ceb4a`. Its authority is
+isolated and has no App Router or legacy analytics consumer.
+
+## GA0-A2 isolated authority inventory
+
+| Path | Authority added | Runtime consumer | Persistence effect | Verification |
+|---|---|---|---|---|
+| `src/lib/trader-intelligence-v3/domain/exact/**` | Canonical exact decimals, quantities, prices, money, charges, percentages, and reduced BigInt ratios. | None outside the isolated v3 domain. | None; ADR specifies SQLite `TEXT` and future PostgreSQL exact representation. | Grammar/bounds/zero/rounding/ratio tests plus architecture guard. |
+| `src/lib/trader-intelligence-v3/domain/canonical/**` | Strict UTC timestamps and deterministic NFC/LF canonical JSON with duplicate-key rejection, null-prototype dictionaries, and defensive bytes. | Canonical execution and identity builders only. | None. | Timestamp, Unicode, line-ending, insertion-order, array, duplicate-key, dangerous-key, and immutability tests. |
+| `src/lib/trader-intelligence-v3/domain/identity/**` | Domain-separated SHA-256 content identity and byte-equality collision proof. | Canonical execution builder and pure classifier. | None. | Golden vectors, semantic-change, database-ID independence, and injected-collision tests. |
+| `src/lib/trader-intelligence-v3/domain/execution/**` | Versioned deeply immutable canonical execution facts, integrity verification, provenance/evidence validation, storage/economic order, relationship classification, and exhaustive relationship coverage receipts. | Focused GA0-A2 tests only. | None. | Contract, integrity, ordering, ambiguity/conflict, duplicate/re-export/correction/bust/collision/coverage tests. |
+| `src/lib/trader-intelligence-v3/domain/accounting/**` | Policy-v1 exact FIFO inventory and analytical P/L by owner/account/instrument/currency, requiring explicit versioned starting inventory and opaque relationship resolution. | Focused GA0-A2 tests only. | None. | Long/short/partial/reversal/charge/rebate/open/prior-lot/unknown-start/basis/currency tests. |
+| `src/lib/trader-intelligence-v3/testing/reference/**` | Independent BigInt coefficient/scale, rational, and FIFO oracle. | Test code only. | None. | Production/reference exact-output differential tests and fixed-seed properties. |
+| `src/lib/trader-intelligence-v3/testing/fixtures/**` | Thirty-five exact synthetic scenario expectations. | Test code only. | None. | Fixture completeness and golden-digest tests. |
+| `src/lib/trader-intelligence-v3/testing/architecture-boundary-guard.ts` | Direct Decimal, JavaScript-number financial authority, route/legacy import, and engine-consumption prohibitions. | CI and focused tests. | None. | Expanded architecture guard plus 373-file repository scan. |
+
+## GA0-A3 isolated foundation inventory
+
+| Path | Authority added | Runtime consumer | Persistence effect | Verification |
+|---|---|---|---|---|
+| `src/lib/trader-intelligence-v3/domain/temporal/**` | Append-only correction time, verified replacement catalog, same-lineage replay/cutoff, lifecycle/review separation, and retrospective/open-position policy. | Focused GA0-A3 tests only. | None. | Permutation, catalog, lineage, cutoff, contradiction, cycle, deletion, annotation isolation, and open-position tests. |
+| `src/lib/trader-intelligence-v3/domain/manifest/**` | Immutable dataset and coverage manifest over semantic facts, scope, periods, gaps, overlap, inventory, open positions, deletion, currencies, and policy. | Eligibility and snapshot builders only. | None. | Equivalent-reimport, ordering, gap, deletion, prior-inventory, and semantic-change tests. |
+| `src/lib/trader-intelligence-v3/domain/eligibility/**` | Calculator-authoritative capability state, reason, evidence, cutoff, and failure class bound to verified manifest/policy/correction dependencies. | Snapshot builder only. | None. | Complete capability set, isolation, incomplete coverage, and cloned-authority rejection. |
+| `src/lib/trader-intelligence-v3/domain/query/**`, `snapshot/**`, and `evidence/**` | Verified date receipts, snapshots with verified empty enrichment, and snapshot-derived semantic evidence membership. | Focused tests only. | None. | Fixed-clock, ordering, duplicate, boundary, mixed dependency, foreign subject, cutoff, stale-policy, and reimport tests. |
+| `src/lib/trader-intelligence-v3/domain/foundation/**` and `state/**` | Descriptor-safe unknown-input validation, strict duplicate-key persisted JSON, adapter/tool envelopes, payload bounds, and deterministic invalidation states. | New GA0-A3 builders and focused tests. | None. | Getter/proxy/symbol/non-enumerable, duplicate-key, size, digest, version, cutoff, and propagation tests. |
+| `src/lib/trader-intelligence-v3/recovery/**` | Explicit WAL-consistent SQLite backup and isolated verified restore adapter. | Focused synthetic integration test only. | Creates an explicitly requested backup or isolated restore file outside Git/temp for real data. | WAL backup, integrity check, execution/manifest/snapshot/reconstruction digest comparison, and unsafe-path tests. |
+| `src/lib/trader-intelligence-v3/ingestion/**` | Strict parser preflight for ambiguity capable of changing execution truth. | Existing broker CSV parser preflight. | None. | Synthetic abuse corpus plus all existing broker parser tests. |
+
+Legacy import fingerprints are now named `LegacyNonAuthoritativeFingerprint`
+without changing their string representation or current behavior. Legacy CSV,
+timeline, route, repository, analytics, and UI paths remain compatibility and
+migration evidence only. No adapter, current-data migration, schema migration,
+or user-facing number change is part of GA0-A2.
 
 ## Scope and conclusion
 
@@ -45,7 +99,7 @@ The matrix contains exactly 82 modules:
 | `app/api/import-batches/**` and `app/api/import-dry-run/**` | Preview, inspect, commit, discard, repair, and resume imports. | Route-created SQLite repository plus legacy import services and demo scope. | Contained for one owner; unsafe methods require an approved exact Origin. | `adapt` | Move construction behind an owner-scoped repository/service port in GA0-A2/A3. | Direct repository construction and request-lifecycle work remain. Existing saved-import route tests cover behavior; GA0-A1 tests cover pre-handler denial. |
 | `app/api/trades/**` | Lists, reads, annotates, reviews, and manually closes trades. | Direct SQLite access with `DEMO_USER_ID`. | Contained, not tenant-correct. | `adapt` | Pass internal owner identity into a v3 service and replace lifecycle override semantics. | Demo identity and review/lifecycle coupling remain. Owner and mutation negative tests cover the new boundary. |
 | `app/api/level-analysis/**` and `app/api/admin/level-analysis/**` | Receives and inspects level-delivery and trade-link records for legacy analysis. | Local `levels-system-v2` delivery/link services. | Disabled in private-hosted mode; local compatibility only. | `legacy_provider` | Define a later provider adapter only after the v3 support/resistance gate. | Caller-supplied scope and provider coupling are unsafe for hosted authority. Existing level-analysis tests remain; matrix tests enforce disablement. |
-| `src/lib/execution-sources/csv/broker-execution-csv-import.ts` | Detects and parses IBKR, Moomoo, Webull, Robinhood, Schwab, and generic execution CSVs. Used by preview/import flows and fixtures. | One large heuristic parser using string/number conversion and broker-column mappings. | Preserved behind containment only. | `adapt` | Split broker adapters behind a canonical exact execution ingestion contract in GA0-A2. | Ambiguous formats, locale/timezone behavior, unsafe numeric authority, parser limits, and private-data handling require hardening. Parser fixtures and import tests exist. |
+| `src/lib/execution-sources/csv/broker-execution-csv-import.ts` | Detects and parses IBKR, Moomoo, Webull, Robinhood, Schwab, and generic execution CSVs. Used by preview/import flows and fixtures. | One large heuristic parser using string/number conversion and broker-column mappings, now preceded by the GA0-A3 strict ambiguity preflight. | Preserved behind containment only; still not v3 financial authority. | `adapt` | Split broker adapters behind the accepted canonical exact execution ingestion contract in a later adapter phase. | Duplicate headers, malformed quotes, width, encoding, controls, cell size, delimiter, mapping, and duplicate-ID ambiguity now fail closed; locale/timezone and legacy numeric authority remain. |
 | `src/lib/execution-sources/import-fingerprints.ts` | Produces batch/execution fingerprints for import behavior. | Small non-cryptographic 32-bit stable hash. | Not acceptable as v3 identity. | `retire` | Replace with canonical serialization plus cryptographic digest and explicit collision/duplicate states in GA0-A2. | Collision risk and insufficient identity semantics. Current import tests only preserve legacy behavior. |
 | `src/lib/raw-trade-timeline/**` | Normalizes executions/candles, reconstructs position state, segments timelines, and derives execution/trade signals. Consumed by pattern detection and analysis. | JavaScript numbers and legacy lifecycle/reconstruction policy. | Useful migration evidence, not v3 financial truth. | `adapt` | Rebuild canonical execution, inventory, temporal, and correction layers in GA0-A2/A3; then selectively port deterministic derivations. | Exactness, short/flip handling, prior inventory, corrections, bitemporal truth, and lifecycle authority remain unresolved. Extensive unit/integration coverage exists. |
 | `src/lib/pattern-detection/**` | Detects entry, exit, position, frequency, duration, closure, and scaling patterns from timelines. | Deterministic legacy pattern rules and registry. | Preserved as calibration evidence only. | `adapt` | Rebase eligible patterns on accepted v3 facts/manifests after GA0-A3. | Threshold calibration and evidence capability may overstate meaning. Layer 2 verification guards current behavior. |
@@ -61,7 +115,7 @@ The matrix contains exactly 82 modules:
 | `src/scripts/run-saved-import-calibration.ts` and related calibration/debug scripts | Local calibration and diagnostics using saved/imported data. | Local files, SQLite, demo scope, and operator-provided inputs. | Local-only operational tooling. | `legacy_provider` | Keep real private inputs outside Git; later accept signed manifests or sanitized reports. | Private broker exports, account identifiers, screenshots, and generated artifacts can leak. Private-data guard and ignore rules now provide a minimum repository barrier. |
 | Existing test fixtures and snapshots | Preserve broker parsing, timeline, pattern, repository, level, and UI contracts. | Mostly synthetic data with legacy demo identifiers. | Suitable only where demonstrably synthetic. | `preserve` | Keep narrowly located synthetic fixtures; migrate expected values when new canonical contracts are accepted. | Accidental real exports can resemble fixtures. GA0-A1 private-data scanning uses a narrow allowlist and reports only path/code/line. |
 | `.github/workflows/ci.yml` and package verification scripts | Runs tests and Layer 2/3 guards. | Repository CI with no prior v3 boundary/private-data enforcement. | GA0-A1 adds both guards. | `adapt` | Later add migration, reconciliation, determinism, and deployment-profile suites as their gates arrive. | Build success alone does not prove private-alpha readiness. |
-| `src/lib/trader-intelligence-v3/**` | New deployment contract, route matrix, owner boundary, provisional Discord-session adapter, cache/mutation policy, and architecture/private-data guards. | Server configuration plus exact configured owner; no v3 financial or analytical authority. | GA0-A1 containment candidate pending full verification and review. | `preserve` | Replace the provisional Discord adapter with Intelligence-owned auth when selected; replace legacy handlers incrementally behind stable ports. | Misconfiguration fails closed. This layer deliberately does not calculate trades, analytics, charts, levels, or AI output. Focused tests and CI guards are included. |
+| `src/lib/trader-intelligence-v3/**` | Accepted GA0-A1 containment, accepted GA0-A2 exact execution/accounting authority, and unaccepted GA0-A3 temporal/manifest/query foundation. | New authority remains isolated from routes and legacy analytics; parser preflight and recovery adapter are the only explicit boundary adapters. | GA0-A3 candidate pending independent audit. | `preserve` | Accept GA0-A3 independently, then add separately reviewed persistence/query adapters and visible analytics. | No analytics, chart, AI, levels, public hosting, or deployment authority exists here. Architecture and private-data guards remain mandatory. |
 
 ## External V2 feature-preservation inventory
 

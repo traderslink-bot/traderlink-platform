@@ -1,5 +1,16 @@
 # Codex Project Log
 
+### 2026-07-18 Trader Intelligence v3 GA0-A3 Implementation Candidate Complete
+
+GA0-A3 executable work is complete at `50d1d9c1` on
+`agent/trader-intelligence-v3-ga0-a3-manifests`, based on independently accepted
+GA0-A2 merge `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`. The candidate adds temporal
+corrections, lifecycle/review separation, manifests, coverage, eligibility,
+snapshots, evidence, filters, runtime validation, invalidation, WAL-safe local
+recovery, and severe parser fail-closed checks. It adds no runtime analytics,
+AI, charts, levels, hosting, or deployment. Stop at the draft PR for independent
+audit; do not begin GA0-B.
+
 ## Purpose
 
 This file is a compact working log for ongoing collaboration in this repo.
@@ -106,6 +117,156 @@ Important project rule:
 ---
 
 ## Current Resume Point
+
+### 2026-07-18 Trader Intelligence v3 GA0-A3 Started from Accepted GA0-A2
+
+GA0-A2 is independently accepted and complete. PR #104 merged into `main` as
+`e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a`.
+
+GA0-A3 is active only on
+`agent/trader-intelligence-v3-ga0-a3-manifests`, created from that accepted
+merge after verifying the ancestor. The active scope is the temporal,
+manifest, coverage, per-capability eligibility, immutable snapshot, stable
+evidence, canonical filter, runtime validation, stale propagation,
+backup/restore, and parser-hardening foundation. It must stop at a draft PR for
+independent audit.
+
+The product priority remains moving next toward visible, owner-testable
+analytics and AI functionality after this factual foundation is accepted.
+Production hosting, public-user security, deployment, GA0-B, analytics, query
+UI, charts, AI/model calls, market enrichment, and support/resistance remain
+deferred.
+
+### 2026-07-18 Trader Intelligence v3 GA0-A2 Final Focused Correction
+
+The latest independent re-audit left one correction/bust scoping defect after
+audited executable head `c1a1b50379165485d28f0e0a28a21c3917cac820`.
+The binding scope is
+`src/docs/trader-intelligence-v3-ga0-a2-final-correction-scope-2026-07-18.md`
+at documentation head `f3a69ac75979aec992f58c52ce1d652cf4251734`.
+
+Focused executable head `8b141633f19e10dfd503e4c1e83f5660e7e4e9b7`
+requires canonical owner, account, resolved stable instrument, currency,
+broker, and source-system compatibility for stable execution identity,
+correction-reference pairing, and both candidate indexes. Intrinsic unresolved
+correction/bust state remains limited to its own ledger group. No GA0-A3
+correction application or other later work was added.
+
+The owner explicitly prohibited all local tests and verification for this
+final correction. It is therefore an unverified implementation candidate, not
+accepted or regression-safe. Exact next action: independent code review of
+the focused executable head on draft PR #104. Keep the PR draft, open,
+unmerged, undeployed, with independent review threads unresolved; do not begin
+GA0-A3.
+
+### 2026-07-18 Trader Intelligence v3 GA0-A2 Second Remediation Handoff
+
+The mandatory second re-audit findings at
+`src/docs/trader-intelligence-v3-ga0-a2-independent-reaudit-findings-2026-07-18.md`
+are implemented on the existing GA0-A2 branch and draft PR #104. The fully
+tested executable implementation head is
+`9721a2707d936987f3b0e116226dd20de400cf58`, following re-audited implementation
+`88db72e70538e2222ae8467c5245fa4b8eb85600` and stable audit-document head
+`480cb480d4ee80e7fe3626a94a1b5622765dd773`.
+
+A2-R1 through A2-R7 now enforce exhaustive opaque relationship coverage,
+explicit proven-flat/prior-lot/unknown starting inventory, deeply immutable
+and verified execution envelopes, validation/document-aware duplicate
+suppression, prototype-safe canonical JSON, unknown-precision ambiguity, and
+bounded canonical row numbers. The independent reference ledger covers
+accepted prior long/short lots. Nineteen fixed 1,000-run suites use seeds
+`2026071801` through `2026071819`.
+
+Implementation-head verification passed: GA0-A2 14 files/263 tests; full
+Vitest 177 files/1,763 tests; differential 11 tests; architecture 373/42/82;
+private final-tree/history scanning; Layer 2; Layer 3; and the 127-page build.
+No package or browser-facing file changed, so `npm ci` and Playwright were not
+run. No deployment or live external call occurred.
+
+The following closeout commit is documentation-only and must not trigger a
+duplicate heavy local run. Next resume action: independently re-audit the exact
+current head of draft PR #104, keep all independent-audit threads unresolved,
+keep the PR draft and unmerged, do not claim GA0-A2 acceptance, and do not
+begin GA0-A3.
+
+### 2026-07-18 Trader Intelligence v3 GA0-A2 Last-Run Report Publication
+
+The complete GA0-A2 audit-remediation run is recorded for the independent
+auditor in
+`src/docs/trader-intelligence-v3-ga0-a2-last-run-report-2026-07-18.md`.
+It separates the originally audited head, fully tested remediation
+implementation head, documentation-only handoff head, and report publication
+head; records the A-J remediation, 35 executable fixtures, 15 fixed seeds,
+complete executable command results, lightweight documentation checks, PR
+state, CI evidence, remaining risks, and audit instructions.
+
+This report publication is documentation-only. No runtime, test, dependency,
+lock-file, generated-contract, build, CI, route, browser, or E2E file changed
+after the fully tested implementation head
+`b92b321fab7801212c82125511e58c754e594fea`. Next resume action: independently
+re-audit the exact current head of draft PR #104, keep it unmerged, do not
+claim GA0-A2 acceptance, and do not begin GA0-A3.
+
+### 2026-07-18 Trader Intelligence v3 GA0-A2 Audit Remediation Handoff
+
+The independent audit of GA0-A2 head
+`542992b6a7c54ce871c31bc2831126c850fea04c` required fixes. The remediation
+implementation is complete and fully tested at
+`b92b321fab7801212c82125511e58c754e594fea` on the existing
+`agent/trader-intelligence-v3-ga0-a2-exact-truth` branch and draft PR #104.
+
+The remediation makes duplicate relationships pair-addressable and
+byte-proven, scopes all relationship and ordering evidence, hardens the
+unknown execution boundary, returns canonical normalized content, bounds raw
+decimal input, replaces locale-sensitive canonical sorting, corrects future
+PostgreSQL exact storage to `NUMERIC(72,24)` plus domain constraints, executes
+all 35 synthetic fixtures, and expands the independent reference/property
+proof to 15 fixed 1,000-run suites.
+
+Implementation-head verification passed: 14 focused files/231 tests; 177
+full-suite files/1,731 tests; 15,000 property cases; 371-file architecture
+scan; private final-tree/history scan; Layer 2; Layer 3; and the 127-page
+optimized build. Playwright was not manually rerun because no route, server,
+Next, browser-facing, or E2E configuration changed. No live external call or
+deployment occurred.
+
+The following commit is documentation-only. Next resume action: independently
+re-audit PR #104 at its exact published head, keep it draft and unmerged, do
+not claim acceptance, and do not begin GA0-A3.
+
+### 2026-07-18 Trader Intelligence v3 GA0-A2 Exact Truth Audit Handoff
+
+GA0-A1 is independently accepted and complete. PR #102 merged into `main` as
+`4f9e440116258c9548a2d13f7ea057a9075101c6`. The active clean linked worktree
+is on `agent/trader-intelligence-v3-ga0-a2-exact-truth`, created from that
+latest `origin/main` after the ancestor check passed.
+
+GA0-A2 is implementation-complete as an unaccepted audit candidate. It adds
+isolated canonical decimal/rational authority, deterministic serialization and
+SHA-256 identity, canonical execution provenance, separate storage/economic
+ordering, explicit duplicate/correction/collision states, exact FIFO
+analytical P/L, an independent BigInt reference, 35 synthetic fixtures, eight
+fixed 1,000-run property suites, SQLite TEXT compatibility, and architecture
+and CI guards. Existing routes, saved data, schemas, and user-visible numbers
+remain unchanged and non-authoritative.
+
+The required local matrix is green: 13 focused files/117 tests; 176 full-suite
+files/1,617 tests; 8,000 generated property cases; 4 production/reference
+differential tests; 2 SQLite round-trip tests; 141 GA0-A1 containment/number
+guard tests; 42 affected legacy tests; 369-file architecture scan; private
+final-tree/history scan; Layer 2; Layer 3; 127-page optimized build; and one
+local-only Chromium E2E. No live model, market-data, SEC, Nasdaq, FINRA, Whop,
+payment, Discord, Vercel, production database, or deployment call occurred.
+
+GA0-A3 and every route, UI, migration, analytics, chart, AI, market-data,
+support/resistance, manual-entry, reflection, Real Coach/Whop, hosted, and
+deployment concern remain out of scope. Exact policies, seeds, commands,
+results, limitations, and the 35-fixture inventory are recorded in
+`src/docs/trader-intelligence-v3-project-log.md`.
+
+Next resume action: independently audit the draft GA0-A2 PR, keep it draft and
+unmerged, record a separate acceptance decision if warranted, and do not begin
+GA0-A3 from this handoff.
 
 ### 2026-07-17 Trader Intelligence v3 GA0-A1 Independent-Audit Remediation
 
