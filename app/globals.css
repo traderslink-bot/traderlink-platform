@@ -2977,7 +2977,7 @@ main.bg-zinc-950 .text-zinc-500 {
 .watchlist-table-head,
 .watchlist-row {
   display: grid;
-  grid-template-columns: minmax(8rem, 1fr) minmax(6rem, 0.7fr) minmax(9rem, 0.9fr) minmax(7rem, 0.7fr) minmax(7rem, 0.6fr);
+  grid-template-columns: minmax(8rem, 1fr) minmax(7rem, 0.75fr) minmax(6rem, 0.7fr) minmax(9rem, 0.9fr) minmax(7rem, 0.7fr) minmax(7rem, 0.6fr);
   column-gap: 0.75rem;
   row-gap: 0.75rem;
   align-items: center;
@@ -3037,6 +3037,10 @@ main.bg-zinc-950 .text-zinc-500 {
   padding: 0.3rem 0.48rem;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.watchlist-lifecycle-cell {
+  color: var(--academy-muted);
 }
 
 .watchlist-lifecycle-badge[data-lifecycle-status="active"] {
@@ -4431,6 +4435,10 @@ main.bg-zinc-950 .text-zinc-500 {
 
   .watchlist-mobile-field[data-mobile-label="Price"] {
     order: 1;
+  }
+
+  .watchlist-mobile-field[data-mobile-label="Label"] {
+    order: 2;
   }
 
   .watchlist-mobile-field[data-mobile-label="Level Map"] {
