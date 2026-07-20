@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 
 import type {
   LiveWatchlistArchiveSnapshot,
@@ -63,6 +63,26 @@ const watchlistTimeCellStyle: CSSProperties = {
   lineHeight: 1.35,
 };
 
+const tradingViewExchangePrefixes: Record<string, string> = {
+  AMEX: "AMEX",
+  ARCA: "AMEX",
+  ARCX: "AMEX",
+  NASDAQ: "NASDAQ",
+  NASDAQCAPITALMARKET: "NASDAQ",
+  NASDAQGLOBALMARKET: "NASDAQ",
+  NYSE: "NYSE",
+  NYSEAMERICAN: "AMEX",
+  NYSEARCA: "AMEX",
+  NYSEMKT: "AMEX",
+  OTC: "OTC",
+  OTCMARKETS: "OTC",
+  OTCQB: "OTC",
+  OTCQX: "OTC",
+  XASE: "AMEX",
+  XNAS: "NASDAQ",
+  XNYS: "NYSE",
+};
+
 const detailCardHelpText: Record<string, string> = {
   "Potential Gain":
     "Potential gain compares the ticker's price when tracking began with the highest live price observed afterward. It shows the best observed move, not what every trader captured.",
@@ -98,6 +118,97 @@ function formatPercentPoints(value: number): string {
     return "n/a";
   }
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function buildTradingViewSymbol(symbol: string, exchange: string | null | undefined): string {
+  const normalizedSymbol = symbol.trim().toUpperCase().replace(/[^A-Z0-9.-]/g, "");
+  const normalizedExchange = exchange?.trim().toUpperCase().replace(/[^A-Z0-9]/g, "") ?? "";
+  const exchangePrefix = tradingViewExchangePrefixes[normalizedExchange];
+  return exchangePrefix ? `${exchangePrefix}:${normalizedSymbol}` : normalizedSymbol;
+}
+
+function TradingViewChart({ symbol }: { symbol: LiveWatchlistSymbolState }) {
+  const widgetContainerRef = useRef<HTMLDivElement>(null);
+  const tradingViewSymbol = buildTradingViewSymbol(
+    symbol.symbol,
+    symbol.extendedQuote?.exchange,
+  );
+
+  useEffect(() => {
+    const container = widgetContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    container.replaceChildren();
+
+    const widget = document.createElement("div");
+    widget.className = "tradingview-widget-container__widget";
+    widget.style.width = "100%";
+    widget.style.height = "100%";
+
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    script.async = true;
+    script.textContent = JSON.stringify({
+      allow_symbol_change: false,
+      autosize: true,
+      backgroundColor: "rgba(8, 15, 28, 1)",
+      calendar: false,
+      details: false,
+      gridColor: "rgba(255, 255, 255, 0.06)",
+      hide_legend: false,
+      hide_side_toolbar: false,
+      hide_top_toolbar: false,
+      hide_volume: false,
+      hotlist: false,
+      interval: "5",
+      locale: "en",
+      save_image: false,
+      style: "1",
+      support_host: "https://www.tradingview.com",
+      symbol: tradingViewSymbol,
+      theme: "dark",
+      timezone: "exchange",
+      withdateranges: true,
+    });
+
+    container.append(widget, script);
+
+    return () => {
+      container.replaceChildren();
+    };
+  }, [tradingViewSymbol]);
+
+  return (
+    <section className="academy-card watchlist-tradingview-card" aria-labelledby="tradingview-chart-heading">
+      <div>
+        <p className="academy-eyebrow">Interactive Chart</p>
+        <h2 id="tradingview-chart-heading" className="academy-card-title">
+          {symbol.symbol} chart
+        </h2>
+        <p className="academy-card-text watchlist-tradingview-description">
+          The chart is locked to {symbol.symbol} for this ticker detail page.
+        </p>
+      </div>
+      <div
+        ref={widgetContainerRef}
+        className="tradingview-widget-container watchlist-tradingview-widget"
+        aria-label={`${symbol.symbol} TradingView chart`}
+      />
+      <p className="watchlist-tradingview-attribution">
+        <a
+          href={`https://www.tradingview.com/symbols/${encodeURIComponent(symbol.symbol)}/`}
+          rel="noopener nofollow"
+          target="_blank"
+        >
+          {symbol.symbol} chart
+        </a>{" "}
+        by TradingView
+      </p>
+    </section>
+  );
 }
 
 function stripInternalAtrLevelWording(value: string): string {
@@ -487,7 +598,7 @@ function TradersLinkAiReadCard({
 
       {read.targets.length > 0 ? (
         <section className="watchlist-ai-read-section">
-          <h3>Where the trade could go</h3>
+          <h3>Where the trade could go next</h3>
           <ol className="watchlist-ai-read-targets">
             {read.targets.map((target, index) => (
               <li key={`${target.label}-${target.price ?? index}`}>
@@ -1541,6 +1652,7 @@ export function LiveWatchlistDetailClient({
       </section>
 
       <WatchlistDetailCards symbol={symbol} />
+      <TradingViewChart symbol={symbol} />
     </div>
   );
 }
