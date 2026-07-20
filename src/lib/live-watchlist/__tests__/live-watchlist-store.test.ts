@@ -1229,6 +1229,31 @@ describe("LiveWatchlistStore", () => {
     expect(archives[0]?.state.latestPrice).toBe(3.65);
   });
 
+  it("counts and pages archive snapshots in newest-first order", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    for (const [symbol, timestamp] of [["OLD", 1000], ["MID", 2000], ["NEW", 3000]] as const) {
+      await store.upsertPatch(buildCorePatch(symbol, timestamp));
+      await store.upsertPatch({
+        symbol,
+        status: "deactivated",
+        updatedAt: timestamp + 500,
+        cards: {},
+      });
+    }
+
+    await expect(store.countArchives()).resolves.toBe(3);
+    await expect(store.listArchives({ limit: 2, offset: 0 })).resolves.toMatchObject([
+      { symbol: "NEW", archivedAt: 3500 },
+      { symbol: "MID", archivedAt: 2500 },
+    ]);
+    await expect(store.listArchives({ limit: 2, offset: 2 })).resolves.toMatchObject([
+      { symbol: "OLD", archivedAt: 1500 },
+    ]);
+  });
+
   it("does not archive deactivated tickers until core cards are loaded", async () => {
     process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
     process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";

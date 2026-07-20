@@ -1022,14 +1022,46 @@ export class LiveWatchlistStore {
     };
   }
 
-  async listArchives(): Promise<LiveWatchlistArchiveSnapshot[]> {
+  async countArchives(): Promise<number> {
     if (!shouldUseSqliteFallback()) {
       await ensureNeonSchema();
       const rows = (await getNeonSql()`
-        SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
-        FROM live_watchlist_archives
-        ORDER BY archived_at DESC
-      `) as Array<{
+        SELECT COUNT(*)::int AS count FROM live_watchlist_archives
+      `) as Array<{ count?: unknown }>;
+      return normalizeLiveWatchlistTimestamp(rows[0]?.count) ?? 0;
+    }
+
+    const db = await getSqliteDatabase();
+    const row = db.prepare("SELECT COUNT(*) AS count FROM live_watchlist_archives").get() as
+      | { count?: unknown }
+      | undefined;
+    return normalizeLiveWatchlistTimestamp(row?.count) ?? 0;
+  }
+
+  async listArchives(options?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<LiveWatchlistArchiveSnapshot[]> {
+    const limit = typeof options?.limit === "number" && Number.isFinite(options.limit)
+      ? Math.max(1, Math.min(100, Math.floor(options.limit)))
+      : null;
+    const offset = typeof options?.offset === "number" && Number.isFinite(options.offset)
+      ? Math.max(0, Math.floor(options.offset))
+      : 0;
+    if (!shouldUseSqliteFallback()) {
+      await ensureNeonSchema();
+      const rows = (limit === null
+        ? await getNeonSql()`
+            SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
+            FROM live_watchlist_archives
+            ORDER BY archived_at DESC
+          `
+        : await getNeonSql()`
+            SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
+            FROM live_watchlist_archives
+            ORDER BY archived_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `) as Array<{
         archive_id?: unknown;
         symbol?: unknown;
         archived_at?: unknown;
@@ -1043,15 +1075,14 @@ export class LiveWatchlistStore {
     }
 
     const db = await getSqliteDatabase();
-    const rows = db
-      .prepare(
-        `
+    const query = `
           SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
           FROM live_watchlist_archives
           ORDER BY archived_at DESC
-        `,
-      )
-      .all() as Array<{
+          ${limit === null ? "" : "LIMIT ? OFFSET ?"}
+        `;
+    const statement = db.prepare(query);
+    const rows = (limit === null ? statement.all() : statement.all(limit, offset)) as Array<{
       archive_id?: unknown;
       symbol?: unknown;
       archived_at?: unknown;

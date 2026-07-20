@@ -22,12 +22,18 @@ export const metadata: Metadata = {
   },
 };
 
+const archivePageSize = 25;
+
 export default async function LiveWatchlistArchivePage({
   searchParams,
 }: {
-  searchParams: Promise<{ auth?: string | string[] }>;
+  searchParams: Promise<{
+    auth?: string | string[];
+    page?: string | string[];
+  }>;
 }) {
-  const authStatus = normalizeSearchParam((await searchParams).auth);
+  const resolvedSearchParams = await searchParams;
+  const authStatus = normalizeSearchParam(resolvedSearchParams.auth);
   const session = await getCurrentAcademySession();
   const authBypass = isLocalWatchlistAuthBypassEnabled();
   if ((!session && !authBypass) || (session && !hasPremiumWatchlistAccess(session))) {
@@ -65,11 +71,26 @@ export default async function LiveWatchlistArchivePage({
     );
   }
 
-  const archives = await new LiveWatchlistStore().listArchives();
+  const store = new LiveWatchlistStore();
+  const totalArchives = await store.countArchives();
+  const totalPages = Math.max(1, Math.ceil(totalArchives / archivePageSize));
+  const currentPage = Math.min(
+    normalizePageNumber(normalizeSearchParam(resolvedSearchParams.page)),
+    totalPages,
+  );
+  const archives = await store.listArchives({
+    limit: archivePageSize,
+    offset: (currentPage - 1) * archivePageSize,
+  });
   return (
     <AcademyShell>
       <div className="academy-container">
-        <LiveWatchlistArchiveIndex archives={archives} />
+        <LiveWatchlistArchiveIndex
+          archives={archives}
+          currentPage={currentPage}
+          totalArchives={totalArchives}
+          totalPages={totalPages}
+        />
       </div>
     </AcademyShell>
   );
@@ -77,4 +98,10 @@ export default async function LiveWatchlistArchivePage({
 
 function normalizeSearchParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function normalizePageNumber(value: string | undefined): number {
+  if (!value || !/^\d+$/.test(value)) return 1;
+  const page = Number.parseInt(value, 10);
+  return Number.isSafeInteger(page) && page > 0 ? page : 1;
 }
