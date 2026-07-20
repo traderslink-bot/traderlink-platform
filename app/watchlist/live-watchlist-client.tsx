@@ -7,7 +7,6 @@ import type {
   LiveWatchlistArchiveSnapshot,
   LiveWatchlistCardContent,
   LiveWatchlistLevelMap,
-  LiveWatchlistLevelMapLevel,
   LiveWatchlistMarketDataStatus,
   LiveWatchlistStatePayload,
   LiveWatchlistSymbolState,
@@ -501,22 +500,20 @@ function DilutionTimingRow({
 function pullbackPlanStateCopy(plan: TradersLinkAiPullbackPlan): string {
   switch (plan.state) {
     case "watch":
-      return "Price is still above the deeper recovery zone. The nearby support shelves are not being presented as a meaningful pullback.";
+      return `Price is above this area. A usable pullback requires buyers to defend $${formatPrice(plan.zoneLow)}-$${formatPrice(plan.zoneHigh)}; the first touch alone is not confirmation.`;
     case "testing":
-      return `Price is testing the prior-session base. A new recovery setup requires a rejection and reclaim of $${formatPrice(plan.reclaimPrice)}; the first touch alone is not confirmation.`;
+      return `Price is testing the mapped pullback area. Confirmation requires a rejection of lower prices and a reclaim of $${formatPrice(plan.reclaimPrice)}.`;
     case "reclaim_required":
-      return `Price is below the prior-session base. Do not treat the lower price as an entry until it builds a new base, reclaims $${formatPrice(plan.reclaimPrice)}, and holds.`;
+      return `Price is below the mapped pullback area but has not yet reached momentum failure. The pullback thesis requires a new base, a reclaim of $${formatPrice(plan.reclaimPrice)}, and a hold.`;
   }
 }
 
 function TradersLinkAiReadCard({
   card,
   dipBuyPlanVisible = true,
-  supportLevels = [],
 }: {
   card: LiveWatchlistCardContent;
   dipBuyPlanVisible?: boolean;
-  supportLevels?: LiveWatchlistLevelMapLevel[];
 }) {
   const read = parseTradersLinkAiRead(card.body);
   if (!read) {
@@ -538,7 +535,7 @@ function TradersLinkAiReadCard({
   }
   const downsideCheckpoints = read.downsideCheckpoints ?? [];
   const pullbackPlan = dipBuyPlanVisible
-    ? deriveTradersLinkAiPullbackPlan(read, supportLevels)
+    ? deriveTradersLinkAiPullbackPlan(read)
     : null;
 
   return (
@@ -597,27 +594,25 @@ function TradersLinkAiReadCard({
 
       {pullbackPlan ? (
         <section className="watchlist-ai-read-section">
-          <h3>Potential dip</h3>
+          <h3>Potential pullback</h3>
           <p>
-            Prior-session base: {" "}
+            AI-mapped pullback area: {" "}
             <strong>
               ${formatPrice(pullbackPlan.zoneLow)}-${formatPrice(pullbackPlan.zoneHigh)}
             </strong>.
           </p>
           <p>{pullbackPlanStateCopy(pullbackPlan)}</p>
           <p>
-            This is a separate recovery setup. Losing ${formatPrice(pullbackPlan.reclaimPrice)}
-            retires the original long setup; the lower price matters only if buyers build a base
-            and reclaim it.
+            This area comes from the AI Read&apos;s caution and needs-to-hold boundaries. Acceptance
+            below ${formatPrice(pullbackPlan.zoneLow)} weakens the active pullback thesis.
           </p>
           <p>
-            Recovery risk boundary: acceptance below ${formatPrice(pullbackPlan.invalidationPrice)}
-            invalidates this prior-session base; wait for new structure rather than averaging into
-            the failure.
+            Momentum failure: acceptance below ${formatPrice(pullbackPlan.invalidationPrice)}
+            invalidates the setup; wait for new structure rather than averaging into the failure.
           </p>
           {pullbackPlan.firstBounceTarget !== null ? (
             <p>
-              First bounce objective after a confirmed reclaim: {" "}
+              First objective after a confirmed hold or reclaim: {" "}
               ${formatPrice(pullbackPlan.firstBounceTarget)}.
             </p>
           ) : null}
@@ -1318,7 +1313,6 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
         <TradersLinkAiReadCard
           card={tradersLinkAiReadCard}
           dipBuyPlanVisible={symbol.tradersLinkAiReadDipBuyPlanVisible !== false}
-          supportLevels={symbol.levelMap?.supportLevels ?? []}
         />
       ) : null}
       {recentNewsFilingsCard ? (

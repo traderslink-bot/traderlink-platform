@@ -109,7 +109,7 @@ describe("TradersLink AI Read parser", () => {
     expect(formatAiReadSession(read!.marketSession)).toBe("Postmarket");
   });
 
-  it("creates a conditional pullback plan only from distinct grounded boundaries", () => {
+  it("maps the active pullback area from distinct grounded hold and caution boundaries", () => {
     const value = JSON.parse(validBody());
     value.needsToHold = {
       label: "Opening shelf",
@@ -131,15 +131,15 @@ describe("TradersLink AI Read parser", () => {
     expect(read).not.toBeNull();
     expect(deriveTradersLinkAiPullbackPlan(read!)).toEqual({
       state: "watch",
-      zoneLow: 1.05,
-      zoneHigh: 1.2,
-      reclaimPrice: 1.2,
-      invalidationPrice: 1.05,
-      firstBounceTarget: 1.25,
+      zoneLow: 1.25,
+      zoneHigh: 1.3,
+      reclaimPrice: 1.3,
+      invalidationPrice: 1.2,
+      firstBounceTarget: 1.5,
     });
   });
 
-  it("uses VMAR's Friday regular-session base as the deep pullback recovery zone", () => {
+  it("uses VMAR's active hold band instead of its lower scenario checkpoints", () => {
     const value = JSON.parse(validBody());
     value.symbol = "VMAR";
     value.currentPrice = 1.06;
@@ -155,15 +155,15 @@ describe("TradersLink AI Read parser", () => {
     expect(read).not.toBeNull();
     expect(deriveTradersLinkAiPullbackPlan(read!)).toEqual({
       state: "watch",
-      zoneLow: 0.81,
-      zoneHigh: 0.86,
-      reclaimPrice: 0.86,
-      invalidationPrice: 0.81,
-      firstBounceTarget: 0.95,
+      zoneLow: 0.95,
+      zoneHigh: 1,
+      reclaimPrice: 1,
+      invalidationPrice: 0.86,
+      firstBounceTarget: 1.1,
     });
   });
 
-  it("prefers VMAR's deeper structural support pair over its immediate momentum shelf", () => {
+  it("does not promote unrelated lower ladder supports into a pullback zone", () => {
     const value = JSON.parse(validBody());
     value.symbol = "VMAR";
     value.currentPrice = 1.07;
@@ -178,21 +178,17 @@ describe("TradersLink AI Read parser", () => {
     const read = parseTradersLinkAiRead(JSON.stringify(value));
 
     expect(read).not.toBeNull();
-    expect(deriveTradersLinkAiPullbackPlan(read!, [
-      { side: "support", price: 1, distancePct: -6.5, strengthLabel: "strong", freshness: "stale", label: "$1.00" },
-      { side: "support", price: 0.93, distancePct: -13.1, strengthLabel: "moderate", freshness: "aging", label: "$0.93" },
-      { side: "support", price: 0.86, distancePct: -19.6, strengthLabel: "moderate", freshness: "aging", label: "$0.86" },
-    ])).toEqual({
+    expect(deriveTradersLinkAiPullbackPlan(read!)).toEqual({
       state: "watch",
-      zoneLow: 0.86,
-      zoneHigh: 0.93,
-      reclaimPrice: 0.93,
-      invalidationPrice: 0.86,
-      firstBounceTarget: 1,
+      zoneLow: 1.02,
+      zoneHigh: 1.05,
+      reclaimPrice: 1.05,
+      invalidationPrice: 1,
+      firstBounceTarget: 1.5,
     });
   });
 
-  it("omits the recovery plan without a lower structural checkpoint", () => {
+  it("does not require a lower scenario checkpoint to describe the active pullback", () => {
     const value = JSON.parse(validBody());
     value.currentPrice = 1.06;
     value.needsToHold = { label: "Hold", price: 1, rationale: "Premarket shelf held." };
@@ -202,7 +198,12 @@ describe("TradersLink AI Read parser", () => {
     const read = parseTradersLinkAiRead(JSON.stringify(value));
 
     expect(read).not.toBeNull();
-    expect(deriveTradersLinkAiPullbackPlan(read!)).toBeNull();
+    expect(deriveTradersLinkAiPullbackPlan(read!)).toMatchObject({
+      state: "watch",
+      zoneLow: 0.95,
+      zoneHigh: 1,
+      invalidationPrice: 0.86,
+    });
   });
 
   it("does not label overlapping caution and hold levels as a dip-buy plan", () => {
@@ -212,9 +213,27 @@ describe("TradersLink AI Read parser", () => {
     expect(deriveTradersLinkAiPullbackPlan(read!)).toBeNull();
   });
 
-  it("keeps the recovery watch active below momentum failure while its base still holds", () => {
+  it("requires a reclaim after price loses the caution boundary but remains above failure", () => {
     const value = JSON.parse(validBody());
-    value.currentPrice = 1.19;
+    value.currentPrice = 1.22;
+    value.needsToHold = { label: "Hold", price: 1.3, rationale: "Held shelf." };
+    value.cautionBelow = { label: "Caution", price: 1.25, rationale: "Shelf weakens." };
+    value.momentumFailure = { label: "Failure", price: 1.2, rationale: "Shelf fails." };
+    const read = parseTradersLinkAiRead(JSON.stringify(value));
+
+    expect(read).not.toBeNull();
+    expect(deriveTradersLinkAiPullbackPlan(read!)).toMatchObject({
+      state: "reclaim_required",
+      zoneLow: 1.25,
+      zoneHigh: 1.3,
+      reclaimPrice: 1.3,
+      invalidationPrice: 1.2,
+    });
+  });
+
+  it("marks the pullback as testing while price is inside the hold band", () => {
+    const value = JSON.parse(validBody());
+    value.currentPrice = 1.27;
     value.needsToHold = { label: "Hold", price: 1.3, rationale: "Held shelf." };
     value.cautionBelow = { label: "Caution", price: 1.25, rationale: "Shelf weakens." };
     value.momentumFailure = { label: "Failure", price: 1.2, rationale: "Shelf fails." };
@@ -223,9 +242,48 @@ describe("TradersLink AI Read parser", () => {
     expect(read).not.toBeNull();
     expect(deriveTradersLinkAiPullbackPlan(read!)).toMatchObject({
       state: "testing",
-      zoneLow: 1.05,
-      zoneHigh: 1.2,
-      reclaimPrice: 1.2,
+      zoneLow: 1.25,
+      zoneHigh: 1.3,
+      reclaimPrice: 1.3,
+      invalidationPrice: 1.2,
+    });
+  });
+
+  it("omits the pullback plan once momentum failure is lost", () => {
+    const value = JSON.parse(validBody());
+    value.currentPrice = 1.19;
+    value.needsToHold = { label: "Hold", price: 1.3, rationale: "Held shelf." };
+    value.cautionBelow = { label: "Caution", price: 1.25, rationale: "Shelf weakens." };
+    value.momentumFailure = { label: "Failure", price: 1.2, rationale: "Shelf fails." };
+    const read = parseTradersLinkAiRead(JSON.stringify(value));
+
+    expect(read).not.toBeNull();
+    expect(deriveTradersLinkAiPullbackPlan(read!)).toBeNull();
+  });
+
+  it("maps a ZYBT-style runner to its active hold band, not distant support", () => {
+    const value = JSON.parse(validBody());
+    value.symbol = "ZYBT";
+    value.currentPrice = 4.1;
+    value.needsToHold = { label: "Current-session hold", price: 3.9, rationale: "The latest breakout held here." };
+    value.cautionBelow = { label: "Current-session caution", price: 3.75, rationale: "Losing this shelf weakens momentum." };
+    value.momentumFailure = { label: "Momentum failure", price: 3.51, rationale: "Acceptance below breaks the active structure." };
+    value.mustClear = { label: "High-of-day test", price: 4.1, rationale: "Price must accept above the current high." };
+    value.breakoutContinuation = { label: "Continuation", price: 4.25, rationale: "Acceptance opens higher targets." };
+    value.downsideCheckpoints = [
+      { label: "Distant support", price: 1.79, condition: "Exposed only after momentum failure." },
+      { label: "Outer support", price: 1.51, condition: "A lower scenario checkpoint." },
+    ];
+    const read = parseTradersLinkAiRead(JSON.stringify(value));
+
+    expect(read).not.toBeNull();
+    expect(deriveTradersLinkAiPullbackPlan(read!)).toEqual({
+      state: "watch",
+      zoneLow: 3.75,
+      zoneHigh: 3.9,
+      reclaimPrice: 3.9,
+      invalidationPrice: 3.51,
+      firstBounceTarget: 4.1,
     });
   });
 

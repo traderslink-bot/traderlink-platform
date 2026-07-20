@@ -17,7 +17,6 @@ import type {
   TradersLinkAiReadSource,
   TradersLinkAiReadTarget,
   TradersLinkAiReadUsage,
-  LiveWatchlistLevelMapLevel,
 } from "./live-watchlist-types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -259,69 +258,48 @@ export type TradersLinkAiPullbackPlan = {
 };
 
 /**
- * Builds the optional pullback plan exclusively from independently grounded
- * AI-read boundaries. It intentionally never promotes arbitrary nearby support
- * into a dip-buy call.
+ * Builds a pullback plan from the AI Read's active long-setup boundaries.
+ * The hold-to-caution band is the area the model identified from the tape as
+ * keeping the current setup healthy; momentum failure remains invalidation.
+ * Lower scenario checkpoints and generic ladder supports are deliberately not
+ * promoted into a pullback call.
  */
 export function deriveTradersLinkAiPullbackPlan(
   read: TradersLinkAiReadPayload,
-  supportLevels: LiveWatchlistLevelMapLevel[] = [],
 ): TradersLinkAiPullbackPlan | null {
   const needsToHold = read.needsToHold.price;
   const cautionBelow = read.cautionBelow.price;
   const momentumFailure = read.momentumFailure.price;
-  const structuralSupports = supportLevels
-    .filter((level) =>
-      level.side === "support" &&
-      level.price > 0 &&
-      momentumFailure !== null &&
-      level.price < momentumFailure &&
-      level.freshness !== "stale" &&
-      level.evidenceStatus !== "synthetic_planning" &&
-      level.strengthLabel !== "weak"
-    )
-    .sort((left, right) => right.price - left.price)
-    .filter((level, index, levels) =>
-      index === 0 || Math.abs(level.price - levels[index - 1]!.price) > Math.max(level.price * 0.005, 0.0001)
-    );
-  const structuralPair = structuralSupports.length >= 2
-    ? { zoneHigh: structuralSupports[0]!.price, zoneLow: structuralSupports[1]!.price }
-    : null;
-  const zoneHigh = structuralPair?.zoneHigh ?? momentumFailure;
-  const zoneLow = structuralPair?.zoneLow ?? (read.downsideCheckpoints ?? [])
-    .map((checkpoint) => checkpoint.price)
-    .find((price): price is number => price !== null && zoneHigh !== null && price < zoneHigh) ?? null;
 
   if (
     read.confidence === "low" ||
     (read.bias !== "bullish" && read.bias !== "mixed") ||
     needsToHold === null ||
     cautionBelow === null ||
-    zoneHigh === null ||
-    zoneLow === null ||
-    !(needsToHold > cautionBelow && cautionBelow > zoneHigh && zoneHigh > zoneLow) ||
-    read.currentPrice < zoneLow
+    momentumFailure === null ||
+    !(needsToHold > cautionBelow && cautionBelow > momentumFailure) ||
+    read.currentPrice < momentumFailure
   ) {
     return null;
   }
 
-  const state: TradersLinkAiPullbackPlanState = read.currentPrice >= zoneHigh
+  const state: TradersLinkAiPullbackPlanState = read.currentPrice >= needsToHold
     ? "watch"
-    : read.currentPrice >= zoneLow
+    : read.currentPrice >= cautionBelow
       ? "testing"
       : "reclaim_required";
-  const firstBounceTarget = momentumFailure !== null && momentumFailure > zoneHigh
-    ? momentumFailure
-    : cautionBelow > zoneHigh
-      ? cautionBelow
-      : needsToHold;
+  const firstBounceTarget = [
+    read.mustClear.price,
+    read.breakoutContinuation.price,
+    ...read.targets.map((target) => target.price),
+  ].find((price): price is number => price !== null && price > needsToHold) ?? null;
 
   return {
     state,
-    zoneLow,
-    zoneHigh,
-    reclaimPrice: zoneHigh,
-    invalidationPrice: zoneLow,
+    zoneLow: cautionBelow,
+    zoneHigh: needsToHold,
+    reclaimPrice: needsToHold,
+    invalidationPrice: momentumFailure,
     firstBounceTarget,
   };
 }
