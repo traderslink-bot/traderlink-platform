@@ -1188,6 +1188,47 @@ describe("LiveWatchlistStore", () => {
     await expect(store.getArchive("ABCD-19700101-000002-000")).resolves.toEqual(archives[0]);
   });
 
+  it("archives the last active snapshot when a ticker moves to follow-up", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    await store.upsertPatch(buildCorePatch("BIYA", 1000));
+    await store.upsertTickerData({
+      type: "tickerData",
+      symbol: "BIYA",
+      status: "live",
+      updatedAt: 1500,
+      latestPrice: 3.65,
+      nearestSupport: 3.53,
+      nearestResistance: 3.74,
+    });
+    await store.upsertPatch({
+      symbol: "BIYA",
+      status: "live",
+      updatedAt: 2000,
+      watchlistSlotState: "followup",
+      cards: {},
+    });
+    await store.upsertPatch({
+      symbol: "BIYA",
+      status: "live",
+      updatedAt: 2500,
+      watchlistSlotState: "followup",
+      cards: {},
+    });
+
+    const archives = await store.listArchives();
+    expect(archives).toHaveLength(1);
+    expect(archives[0]?.archiveId).toBe("BIYA-19700101-000002-000");
+    expect(archives[0]?.archivedAt).toBe(2000);
+    expect(archives[0]?.lastActiveUpdatedAt).toBe(2000);
+    expect(archives[0]?.firstPostedAt).toBe(1000);
+    expect(archives[0]?.state.status).toBe("live");
+    expect(archives[0]?.state.watchlistSlotState).toBe("followup");
+    expect(archives[0]?.state.latestPrice).toBe(3.65);
+  });
+
   it("does not archive deactivated tickers until core cards are loaded", async () => {
     process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
     process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
