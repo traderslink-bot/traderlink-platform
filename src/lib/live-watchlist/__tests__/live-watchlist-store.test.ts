@@ -973,15 +973,15 @@ describe("LiveWatchlistStore", () => {
       updatedAt: 1100,
       watchlistLifecycleLabelsVisible: true,
       watchlistLifecycle: {
-        status: "pullback_watch",
-        label: "Pullback Watch",
-        reason: "Holding VWAP and mapped support.",
+        status: "recovery_attempt",
+        label: "Recovery Attempt",
+        reason: "Five-minute structure is attempting a reclaim.",
         updatedAt: 1100,
       },
       cards: {},
     });
     expect(labeled.watchlistLifecycleLabelsVisible).toBe(true);
-    expect(labeled.watchlistLifecycle?.status).toBe("pullback_watch");
+    expect(labeled.watchlistLifecycle?.status).toBe("recovery_attempt");
 
     const preserved = await store.upsertTickerData({
       type: "tickerData",
@@ -992,7 +992,7 @@ describe("LiveWatchlistStore", () => {
       nearestResistance: 0.35,
     });
     expect(preserved.watchlistLifecycleLabelsVisible).toBe(true);
-    expect(preserved.watchlistLifecycle?.label).toBe("Pullback Watch");
+    expect(preserved.watchlistLifecycle?.label).toBe("Recovery Attempt");
 
     const hidden = await store.upsertPatch({
       symbol: "NXXT",
@@ -1001,7 +1001,7 @@ describe("LiveWatchlistStore", () => {
       cards: {},
     });
     expect(hidden.watchlistLifecycleLabelsVisible).toBe(false);
-    expect(hidden.watchlistLifecycle?.status).toBe("pullback_watch");
+    expect(hidden.watchlistLifecycle?.status).toBe("recovery_attempt");
   });
 
   it("allows a new activation patch to reset a stale first posted time", async () => {

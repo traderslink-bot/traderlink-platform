@@ -3057,6 +3057,12 @@ main.bg-zinc-950 .text-zinc-500 {
   color: #1d4ed8;
 }
 
+.watchlist-lifecycle-badge[data-lifecycle-status="recovery_attempt"] {
+  background: rgba(79, 70, 229, 0.12);
+  border-color: rgba(79, 70, 229, 0.38);
+  color: #4338ca;
+}
+
 .watchlist-lifecycle-badge[data-lifecycle-status="setup_fading"] {
   background: rgba(220, 38, 38, 0.1);
   border-color: rgba(220, 38, 38, 0.3);
