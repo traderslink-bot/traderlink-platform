@@ -1280,8 +1280,8 @@ export function LiveWatchlistIndexClient({
   );
   const activeSymbols = symbols.filter((symbol) => symbol.watchlistSlotState !== "followup");
   const followupSymbols = symbols.filter((symbol) => symbol.watchlistSlotState === "followup");
-  const mainSessionSymbols = activeSymbols.filter((symbol) => !isPostmarketAddition(symbol));
-  const postmarketSymbols = activeSymbols.filter(isPostmarketAddition);
+  const mainSessionSymbols = symbols.filter((symbol) => !isPostmarketAddition(symbol));
+  const postmarketSymbols = symbols.filter(isPostmarketAddition);
 
   useEffect(() => {
     let cancelled = false;
@@ -1378,12 +1378,26 @@ export function LiveWatchlistIndexClient({
           <section className="watchlist-session-list" aria-labelledby="watchlist-tickers-heading">
             <div className="watchlist-session-heading">
               <div>
-                <p className="academy-eyebrow">Current day-trading ideas</p>
+                <p className="academy-eyebrow">Premarket + Regular Hours</p>
                 <h2 id="watchlist-tickers-heading">Watchlist</h2>
               </div>
-              <span>{symbols.length}</span>
+              <span>{mainSessionSymbols.length}</span>
             </div>
-            <WatchlistTickerTable ariaLabel="Watchlist tickers" symbols={symbols} />
+            {mainSessionSymbols.length > 0 ? (
+              <WatchlistTickerTable ariaLabel="Premarket and regular-session watchlist tickers" symbols={mainSessionSymbols} />
+            ) : <p className="watchlist-session-empty">No premarket or regular-session tickers are active.</p>}
+          </section>
+          <section className="watchlist-session-list" aria-labelledby="watchlist-postmarket-heading">
+            <div className="watchlist-session-heading">
+              <div>
+                <p className="academy-eyebrow">Added from 4:00-8:00 PM ET</p>
+                <h2 id="watchlist-postmarket-heading">Post-Market</h2>
+              </div>
+              <span>{postmarketSymbols.length}</span>
+            </div>
+            {postmarketSymbols.length > 0 ? (
+              <WatchlistTickerTable ariaLabel="Post-market watchlist tickers" symbols={postmarketSymbols} />
+            ) : <p className="watchlist-session-empty">No post-market tickers are active.</p>}
           </section>
         </div>
       )}
