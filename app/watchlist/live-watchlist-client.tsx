@@ -1032,6 +1032,16 @@ function WatchlistLifecycleBadge({ symbol }: { symbol: LiveWatchlistSymbolState 
   );
 }
 
+function WatchlistLifecycleCell({ symbol }: { symbol: LiveWatchlistSymbolState }) {
+  const hasVisibleLabel =
+    symbol.watchlistLifecycleLabelsVisible === true && Boolean(symbol.watchlistLifecycle);
+  return (
+    <span className="watchlist-mobile-field watchlist-lifecycle-cell" data-mobile-label="Label">
+      {hasVisibleLabel ? <WatchlistLifecycleBadge symbol={symbol} /> : <span aria-label="No status label">—</span>}
+    </span>
+  );
+}
+
 function WatchlistTickerTable({
   ariaLabel,
   symbols,
@@ -1043,6 +1053,7 @@ function WatchlistTickerTable({
     <section className="watchlist-table" aria-label={ariaLabel}>
       <div className="watchlist-table-head">
         <span>Ticker</span>
+        <span>Label</span>
         <span>Price</span>
         <span>Added</span>
         <span>Updated</span>
@@ -1056,8 +1067,8 @@ function WatchlistTickerTable({
         >
           <span className="watchlist-symbol-cell">
             <strong>{symbol.symbol}</strong>
-            <WatchlistLifecycleBadge symbol={symbol} />
           </span>
+          <WatchlistLifecycleCell symbol={symbol} />
           <span className="watchlist-mobile-field" data-mobile-label="Price">
             {formatPrice(symbol.latestPrice)}
           </span>
@@ -1364,45 +1375,16 @@ export function LiveWatchlistIndexClient({
         </section>
       ) : (
         <div className="watchlist-session-lists">
-          <section className="watchlist-session-list" aria-labelledby="watchlist-main-session-heading">
+          <section className="watchlist-session-list" aria-labelledby="watchlist-tickers-heading">
             <div className="watchlist-session-heading">
               <div>
-                <p className="academy-eyebrow">Premarket + Regular Hours</p>
-                <h2 id="watchlist-main-session-heading">Main Session</h2>
+                <p className="academy-eyebrow">Current day-trading ideas</p>
+                <h2 id="watchlist-tickers-heading">Watchlist</h2>
               </div>
-              <span>{mainSessionSymbols.length}</span>
+              <span>{symbols.length}</span>
             </div>
-            {mainSessionSymbols.length > 0 ? (
-              <WatchlistTickerTable ariaLabel="Main-session watchlist tickers" symbols={mainSessionSymbols} />
-            ) : <p className="watchlist-session-empty">No main-session tickers are active.</p>}
+            <WatchlistTickerTable ariaLabel="Watchlist tickers" symbols={symbols} />
           </section>
-          <section className="watchlist-session-list" aria-labelledby="watchlist-postmarket-heading">
-            <div className="watchlist-session-heading">
-              <div>
-                <p className="academy-eyebrow">Added from 4:00-8:00 PM ET</p>
-                <h2 id="watchlist-postmarket-heading">Post-Market</h2>
-              </div>
-              <span>{postmarketSymbols.length}</span>
-            </div>
-            {postmarketSymbols.length > 0 ? (
-              <WatchlistTickerTable ariaLabel="Post-market watchlist tickers" symbols={postmarketSymbols} />
-            ) : <p className="watchlist-session-empty">No post-market tickers are active.</p>}
-          </section>
-          {followupSymbols.length > 0 ? (
-            <section className="watchlist-session-list" aria-labelledby="watchlist-followup-heading">
-              <div className="watchlist-session-heading">
-                <div>
-                  <p className="academy-eyebrow">Does not consume an active slot</p>
-                  <h2 id="watchlist-followup-heading">Follow-up Watch</h2>
-                </div>
-                <span>{followupSymbols.length}</span>
-              </div>
-              <p className="watchlist-session-empty">
-                These tickers remain visible for a valid pullback or recovery, while new runners can still enter the active watchlist.
-              </p>
-              <WatchlistTickerTable ariaLabel="Follow-up watchlist tickers" symbols={followupSymbols} />
-            </section>
-          ) : null}
         </div>
       )}
       <section className="academy-card watchlist-notice-card" aria-label="Watchlist notice">
