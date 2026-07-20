@@ -189,7 +189,7 @@ function normalizeWatchlistLifecycle(
   value: LiveWatchlistSymbolState["watchlistLifecycle"] | undefined,
 ): LiveWatchlistSymbolState["watchlistLifecycle"] {
   if (!value) return null;
-  const statuses = new Set(["monitoring", "active", "pullback_watch", "recovery_watch", "setup_fading", "standby"]);
+  const statuses = new Set(["monitoring", "active", "pullback_watch", "recovery_watch", "recovery_attempt", "setup_fading", "standby"]);
   return statuses.has(value.status) &&
     typeof value.label === "string" &&
     typeof value.reason === "string" &&
