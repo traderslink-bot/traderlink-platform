@@ -905,15 +905,20 @@ export class LiveWatchlistStore {
       : null;
 
     if (!shouldUseSqliteFallback()) {
-      const next = await mutateNeonSymbolState(symbol, (existing) =>
-        applyPatch(
+      let movedToFollowup = false;
+      const next = await mutateNeonSymbolState(symbol, (existing) => {
+        const updated = applyPatch(
           preservedArchiveState
             ? mergeArchivedReactivationContext(existing, preservedArchiveState)
             : existing,
           { ...patch, symbol },
-        ),
-      );
-      if (next.status === "deactivated") {
+        );
+        movedToFollowup =
+          existing?.watchlistSlotState !== "followup" &&
+          updated.watchlistSlotState === "followup";
+        return updated;
+      });
+      if (next.status === "deactivated" || movedToFollowup) {
         await this.createArchiveIfEligible(next);
       }
       return next;
@@ -924,6 +929,9 @@ export class LiveWatchlistStore {
       ? mergeArchivedReactivationContext(current, preservedArchiveState)
       : current;
     const next = applyPatch(existing, { ...patch, symbol });
+    const movedToFollowup =
+      existing?.watchlistSlotState !== "followup" &&
+      next.watchlistSlotState === "followup";
     const db = await getSqliteDatabase();
     db.prepare(
       `
@@ -935,7 +943,7 @@ export class LiveWatchlistStore {
           state_json = excluded.state_json
       `,
     ).run(symbol, next.status, next.updatedAt, JSON.stringify(next));
-    if (next.status === "deactivated") {
+    if (next.status === "deactivated" || movedToFollowup) {
       await this.createArchiveIfEligible(next);
     }
     return next;
