@@ -2998,6 +2998,44 @@ main.bg-zinc-950 .text-zinc-500 {
   grid-template-columns: minmax(8rem, 0.7fr) minmax(10rem, 0.8fr) minmax(10rem, 0.8fr) minmax(18rem, 1.7fr);
 }
 
+.watchlist-archive-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.watchlist-archive-pagination a,
+.watchlist-archive-pagination span {
+  min-width: 5.5rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--academy-border);
+  border-radius: 0.6rem;
+  background: var(--academy-surface);
+  color: var(--academy-text);
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 760;
+}
+
+.watchlist-archive-pagination a:hover,
+.watchlist-archive-pagination a:focus-visible {
+  border-color: var(--academy-primary);
+  color: var(--academy-primary);
+  outline: none;
+}
+
+.watchlist-archive-pagination span[aria-disabled="true"] {
+  color: var(--academy-subtle);
+  opacity: 0.55;
+}
+
+.watchlist-archive-pagination strong {
+  color: var(--academy-muted);
+  font-size: 0.85rem;
+}
+
 .watchlist-row {
   border-top: 1px solid var(--academy-border);
   color: var(--academy-text);

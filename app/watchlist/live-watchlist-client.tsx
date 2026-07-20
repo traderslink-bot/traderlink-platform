@@ -1631,8 +1631,14 @@ export function LiveWatchlistDetailClient({
 
 export function LiveWatchlistArchiveIndex({
   archives,
+  currentPage,
+  totalArchives,
+  totalPages,
 }: {
   archives: LiveWatchlistArchiveSnapshot[];
+  currentPage: number;
+  totalArchives: number;
+  totalPages: number;
 }) {
   return (
     <div className="watchlist-page">
@@ -1649,7 +1655,7 @@ export function LiveWatchlistArchiveIndex({
           </Link>
         </div>
         <div className="watchlist-summary-panel" aria-label="Watchlist archive status">
-          <span>{archives.length} {archives.length === 1 ? "archive" : "archives"}</span>
+          <span>{totalArchives} {totalArchives === 1 ? "archive" : "archives"}</span>
         </div>
       </section>
 
@@ -1658,36 +1664,53 @@ export function LiveWatchlistArchiveIndex({
           <h2>No tickers have been archived yet</h2>
         </section>
       ) : (
-        <section className="watchlist-table" aria-label="Archived watchlist tickers">
-          <div className="watchlist-table-head watchlist-archive-table-head">
-            <span>Ticker</span>
-            <span>Archived</span>
-            <span>Last active update</span>
-            <span>Latest read</span>
-          </div>
-          {archives.map((archive) => (
-            <Link
-              key={archive.archiveId}
-              href={`/watchlist/archive/${archive.archiveId}`}
-              className="watchlist-row watchlist-archive-row"
-            >
-              <span className="watchlist-symbol-cell">
-                <strong>{archive.symbol}</strong>
-              </span>
-              <span className="watchlist-mobile-field" data-mobile-label="Archived">
-                {formatDateTime(archive.archivedAt)}
-              </span>
-              <span className="watchlist-mobile-field" data-mobile-label="Last active update">
-                {formatDateTime(archive.lastActiveUpdatedAt)}
-              </span>
-              <span className="watchlist-read-cell">
-                <span className="watchlist-read-text" style={watchlistReadTextStyle}>
-                  {archive.state.latestTraderReadHeadline ?? "No trader read saved"}
+        <>
+          <section className="watchlist-table" aria-label="Archived watchlist tickers">
+            <div className="watchlist-table-head watchlist-archive-table-head">
+              <span>Ticker</span>
+              <span>Archived</span>
+              <span>Last active update</span>
+              <span>Latest read</span>
+            </div>
+            {archives.map((archive) => (
+              <Link
+                key={archive.archiveId}
+                href={`/watchlist/archive/${archive.archiveId}`}
+                className="watchlist-row watchlist-archive-row"
+              >
+                <span className="watchlist-symbol-cell">
+                  <strong>{archive.symbol}</strong>
                 </span>
-              </span>
-            </Link>
-          ))}
-        </section>
+                <span className="watchlist-mobile-field" data-mobile-label="Archived">
+                  {formatDateTime(archive.archivedAt)}
+                </span>
+                <span className="watchlist-mobile-field" data-mobile-label="Last active update">
+                  {formatDateTime(archive.lastActiveUpdatedAt)}
+                </span>
+                <span className="watchlist-read-cell">
+                  <span className="watchlist-read-text" style={watchlistReadTextStyle}>
+                    {archive.state.latestTraderReadHeadline ?? "No trader read saved"}
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </section>
+          {totalPages > 1 ? (
+            <nav className="watchlist-archive-pagination" aria-label="Archived ticker pages">
+              {currentPage > 1 ? (
+                <Link href={`/watchlist/archive?page=${currentPage - 1}`}>Previous</Link>
+              ) : (
+                <span aria-disabled="true">Previous</span>
+              )}
+              <strong>Page {currentPage} of {totalPages}</strong>
+              {currentPage < totalPages ? (
+                <Link href={`/watchlist/archive?page=${currentPage + 1}`}>Next</Link>
+              ) : (
+                <span aria-disabled="true">Next</span>
+              )}
+            </nav>
+          ) : null}
+        </>
       )}
     </div>
   );
