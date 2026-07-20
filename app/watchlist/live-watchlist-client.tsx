@@ -182,31 +182,14 @@ function TradingViewChart({ symbol }: { symbol: LiveWatchlistSymbolState }) {
   }, [tradingViewSymbol]);
 
   return (
-    <section className="academy-card watchlist-tradingview-card" aria-labelledby="tradingview-chart-heading">
-      <div>
-        <p className="academy-eyebrow">Interactive Chart</p>
-        <h2 id="tradingview-chart-heading" className="academy-card-title">
-          {symbol.symbol} chart
-        </h2>
-        <p className="academy-card-text watchlist-tradingview-description">
-          The chart is locked to {symbol.symbol} for this ticker detail page.
-        </p>
-      </div>
+    <section
+      className="watchlist-tradingview-card"
+      aria-label={`${symbol.symbol} TradingView chart`}
+    >
       <div
         ref={widgetContainerRef}
         className="tradingview-widget-container watchlist-tradingview-widget"
-        aria-label={`${symbol.symbol} TradingView chart`}
       />
-      <p className="watchlist-tradingview-attribution">
-        <a
-          href={`https://www.tradingview.com/symbols/${encodeURIComponent(symbol.symbol)}/`}
-          rel="noopener nofollow"
-          target="_blank"
-        >
-          {symbol.symbol} chart
-        </a>{" "}
-        by TradingView
-      </p>
     </section>
   );
 }
