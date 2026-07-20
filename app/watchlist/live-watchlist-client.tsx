@@ -1126,16 +1126,6 @@ function WatchlistLifecycleBadge({ symbol }: { symbol: LiveWatchlistSymbolState 
   );
 }
 
-function WatchlistLifecycleCell({ symbol }: { symbol: LiveWatchlistSymbolState }) {
-  const hasVisibleLabel =
-    symbol.watchlistLifecycleLabelsVisible === true && Boolean(symbol.watchlistLifecycle);
-  return (
-    <span className="watchlist-mobile-field watchlist-lifecycle-cell" data-mobile-label="Label">
-      {hasVisibleLabel ? <WatchlistLifecycleBadge symbol={symbol} /> : <span aria-label="No status label">—</span>}
-    </span>
-  );
-}
-
 function WatchlistTickerTable({
   ariaLabel,
   symbols,
@@ -1147,7 +1137,6 @@ function WatchlistTickerTable({
     <section className="watchlist-table" aria-label={ariaLabel}>
       <div className="watchlist-table-head">
         <span>Ticker</span>
-        <span>Label</span>
         <span>Price</span>
         <span>Added</span>
         <span>Updated</span>
@@ -1161,8 +1150,8 @@ function WatchlistTickerTable({
         >
           <span className="watchlist-symbol-cell">
             <strong>{symbol.symbol}</strong>
+            <WatchlistLifecycleBadge symbol={symbol} />
           </span>
-          <WatchlistLifecycleCell symbol={symbol} />
           <span className="watchlist-mobile-field" data-mobile-label="Price">
             {formatPrice(symbol.latestPrice)}
           </span>
@@ -1374,8 +1363,8 @@ export function LiveWatchlistIndexClient({
   );
   const activeSymbols = symbols.filter((symbol) => symbol.watchlistSlotState !== "followup");
   const followupSymbols = symbols.filter((symbol) => symbol.watchlistSlotState === "followup");
-  const mainSessionSymbols = symbols.filter((symbol) => !isPostmarketAddition(symbol));
-  const postmarketSymbols = symbols.filter(isPostmarketAddition);
+  const mainSessionSymbols = activeSymbols.filter((symbol) => !isPostmarketAddition(symbol));
+  const postmarketSymbols = activeSymbols.filter(isPostmarketAddition);
 
   useEffect(() => {
     let cancelled = false;
@@ -1469,17 +1458,17 @@ export function LiveWatchlistIndexClient({
         </section>
       ) : (
         <div className="watchlist-session-lists">
-          <section className="watchlist-session-list" aria-labelledby="watchlist-tickers-heading">
+          <section className="watchlist-session-list" aria-labelledby="watchlist-main-session-heading">
             <div className="watchlist-session-heading">
               <div>
                 <p className="academy-eyebrow">Premarket + Regular Hours</p>
-                <h2 id="watchlist-tickers-heading">Watchlist</h2>
+                <h2 id="watchlist-main-session-heading">Main Session</h2>
               </div>
               <span>{mainSessionSymbols.length}</span>
             </div>
             {mainSessionSymbols.length > 0 ? (
-              <WatchlistTickerTable ariaLabel="Premarket and regular-session watchlist tickers" symbols={mainSessionSymbols} />
-            ) : <p className="watchlist-session-empty">No premarket or regular-session tickers are active.</p>}
+              <WatchlistTickerTable ariaLabel="Main-session watchlist tickers" symbols={mainSessionSymbols} />
+            ) : <p className="watchlist-session-empty">No main-session tickers are active.</p>}
           </section>
           <section className="watchlist-session-list" aria-labelledby="watchlist-postmarket-heading">
             <div className="watchlist-session-heading">
