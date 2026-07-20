@@ -3185,16 +3185,27 @@ main.bg-zinc-950 .text-zinc-500 {
 
 .watchlist-tradingview-card {
   min-width: 0;
+  height: clamp(56rem, 105vh, 72rem);
+  min-height: 56rem;
   overflow: hidden;
 }
 
 .watchlist-tradingview-widget {
   width: 100%;
-  height: clamp(42rem, 85vh, 68rem);
+  height: 100% !important;
+  min-height: 100% !important;
   overflow: hidden;
   border: 1px solid var(--academy-border);
   border-radius: 14px;
   background: #080f1c;
+}
+
+.watchlist-tradingview-widget > iframe {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  border: 0;
 }
 
 .watchlist-potential-gain-card {
@@ -4586,8 +4597,9 @@ main.bg-zinc-950 .text-zinc-500 {
     padding-top: 1rem;
   }
 
-  .watchlist-tradingview-widget {
-    height: 36rem;
+  .watchlist-tradingview-card {
+    height: 48rem;
+    min-height: 48rem;
   }
 
   .watchlist-row {
