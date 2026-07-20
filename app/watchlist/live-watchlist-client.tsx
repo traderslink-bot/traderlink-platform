@@ -607,7 +607,7 @@ function TradersLinkAiReadCard({
             below ${formatPrice(pullbackPlan.zoneLow)} weakens the active pullback thesis.
           </p>
           <p>
-            Momentum failure: acceptance below ${formatPrice(pullbackPlan.invalidationPrice)}
+            Momentum failure: acceptance below ${formatPrice(pullbackPlan.invalidationPrice)}{" "}
             invalidates the setup; wait for new structure rather than averaging into the failure.
           </p>
           {pullbackPlan.firstBounceTarget !== null ? (
