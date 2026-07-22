@@ -11,6 +11,8 @@ export function formatMarketDataStatusLabel(status: LiveWatchlistMarketDataStatu
       return "Live Data: STALE";
     case "starting":
       return "Live Data: STARTING";
+    case "closed":
+      return "Live Data: MARKET CLOSED";
     case "offline":
       return "Live Data: OFF";
     default:
@@ -24,6 +26,8 @@ export function formatTickerStatusLabel(status: LiveWatchlistStatus | LiveWatchl
       return "Live Ticker Data: On";
     case "stale":
       return "Live Ticker Data: Stale";
+    case "closed":
+      return "Live Ticker Data: Market Closed";
     case "starting":
     case "offline":
     case "deactivated":
@@ -39,6 +43,7 @@ export function formatTickerStatusTone(status: LiveWatchlistStatus | LiveWatchli
       return "live";
     case "stale":
       return "stale";
+    case "closed":
     case "starting":
     case "offline":
     case "deactivated":
