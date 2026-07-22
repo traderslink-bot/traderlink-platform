@@ -73,7 +73,10 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     })).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_digest_mismatch" } });
     const tamperedAuthority = {
       ...authority,
-      snapshot: { ...authority.snapshot, analysisCutoffAt: "2026-07-19T00:00:00.000000000Z" },
+      snapshot: {
+        ...(authority.snapshot as Record<string, unknown>),
+        analysisCutoffAt: "2026-07-19T00:00:00.000000000Z",
+      },
     };
     expect(readAnalyticalDataset(createSyntheticInMemoryReadOnlySource(tamperedAuthority))).toMatchObject({
       ok: false,

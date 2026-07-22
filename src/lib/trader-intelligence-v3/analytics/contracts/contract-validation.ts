@@ -94,7 +94,7 @@ export function validateContractRecord(
 export function validateContractKey(
   input: unknown,
   path: string,
-  maximumLength = GA0_B1_CONTRACT_LIMITS.maximumKeyLength,
+  maximumLength: number = GA0_B1_CONTRACT_LIMITS.maximumKeyLength,
 ): ExactResult<string, AnalyticalContractFailure> {
   const value = validateBoundedString(
     input,
@@ -271,7 +271,7 @@ export function validateOptionalCurrency(
 export function validateReasonCodes(
   input: unknown,
   path: string,
-  maximumItems = GA0_B1_CONTRACT_LIMITS.maximumReasons,
+  maximumItems: number = GA0_B1_CONTRACT_LIMITS.maximumReasons,
 ): ExactResult<readonly string[], AnalyticalContractFailure> {
   const array = validateArray(input, path, maximumItems);
   if (!array.ok) return contractFailure(array.error.code, array.error.path);
@@ -290,7 +290,7 @@ export function validateReasonCodes(
 export function validateKeyArray(
   input: unknown,
   path: string,
-  maximumItems = GA0_B1_CONTRACT_LIMITS.maximumReferences,
+  maximumItems: number = GA0_B1_CONTRACT_LIMITS.maximumReferences,
   preserveOrder = false,
 ): ExactResult<readonly string[], AnalyticalContractFailure> {
   const array = validateArray(input, path, maximumItems);
@@ -314,7 +314,7 @@ export function validateDigestArray(
   input: unknown,
   path: string,
   expectedDomain?: string,
-  maximumItems = GA0_B1_CONTRACT_LIMITS.maximumReferences,
+  maximumItems: number = GA0_B1_CONTRACT_LIMITS.maximumReferences,
   preserveOrder = false,
 ): ExactResult<readonly CanonicalContentDigest[], AnalyticalContractFailure> {
   const array = validateArray(input, path, maximumItems);
