@@ -1,6 +1,7 @@
 export * from "./architecture-boundary-guard";
 export * from "./collision-test-hash";
 export * from "./fixtures";
+export * from "./ga0-b";
 export * from "./private-data-guard";
 export * from "./private-data-git-scanner";
 export * from "./reference";
