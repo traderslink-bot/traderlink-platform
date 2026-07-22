@@ -161,6 +161,35 @@ describe("LiveWatchlistStore", () => {
     expect(normalizeLiveWatchlistTimestamp("not-a-timestamp")).toBeNull();
   });
 
+  it("stores live volume confirmation independently of the removed trader-read card", () => {
+    const initial = applyPatch(null, {
+      symbol: "ABCD",
+      status: "live",
+      updatedAt: 1_000,
+      liveVolumeContext: {
+        timeframe: "5m",
+        label: "fading",
+        relativeVolumeRatio: 0.64,
+        partial: true,
+        updatedAt: 1_000,
+      },
+      cards: {
+        liveTraderRead: null,
+      },
+    });
+
+    expect(initial.cards.liveTraderRead).toBeUndefined();
+    expect(initial.liveVolumeContext?.label).toBe("fading");
+    expect(initial.liveVolumeContext?.relativeVolumeRatio).toBe(0.64);
+
+    const preserved = applyPatch(initial, {
+      symbol: "ABCD",
+      updatedAt: 2_000,
+      cards: {},
+    });
+    expect(preserved.liveVolumeContext?.updatedAt).toBe(1_000);
+  });
+
   it("replaces only the card section included in a patch", async () => {
     process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
     process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";

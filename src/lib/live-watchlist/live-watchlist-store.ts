@@ -199,6 +199,24 @@ function normalizeWatchlistLifecycle(
     : null;
 }
 
+function normalizeLiveVolumeContext(
+  value: LiveWatchlistSymbolState["liveVolumeContext"] | undefined,
+): LiveWatchlistSymbolState["liveVolumeContext"] {
+  if (!value) return null;
+  const labels = new Set(["unknown", "thin", "normal", "expanding", "strong", "fading"]);
+  return value.timeframe === "5m" &&
+    labels.has(value.label) &&
+    (value.relativeVolumeRatio === null ||
+      (typeof value.relativeVolumeRatio === "number" &&
+        Number.isFinite(value.relativeVolumeRatio) &&
+        value.relativeVolumeRatio >= 0)) &&
+    typeof value.partial === "boolean" &&
+    typeof value.updatedAt === "number" &&
+    Number.isFinite(value.updatedAt)
+    ? value
+    : null;
+}
+
 function parseState(raw: string): LiveWatchlistSymbolState | null {
   try {
     const parsed = JSON.parse(raw) as LiveWatchlistSymbolState;
@@ -508,6 +526,7 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
     potentialGainCardVisible: state.potentialGainCardVisible !== false,
     watchlistLifecycleLabelsVisible: state.watchlistLifecycleLabelsVisible === true,
     watchlistLifecycle: normalizeWatchlistLifecycle(state.watchlistLifecycle),
+    liveVolumeContext: normalizeLiveVolumeContext(state.liveVolumeContext),
     tradersLinkAiReadCardVisible: state.tradersLinkAiReadCardVisible !== false,
     tradersLinkAiReadDipBuyPlanVisible: state.tradersLinkAiReadDipBuyPlanVisible !== false,
     potentialGain: normalizePotentialGain(state.potentialGain),
@@ -569,6 +588,7 @@ function mergeArchivedReactivationContext(
     levelMap: existing.levelMap ?? archived.levelMap,
     volume: existing.volume ?? archived.volume,
     extendedQuote: existing.extendedQuote ?? archived.extendedQuote,
+    liveVolumeContext: existing.liveVolumeContext ?? archived.liveVolumeContext,
     latestTraderReadHeadline:
       existing.latestTraderReadHeadline ?? archived.latestTraderReadHeadline,
     cards: {
@@ -602,6 +622,10 @@ export function applyPatch(
   const patchesLevelMap = Object.prototype.hasOwnProperty.call(patch, "levelMap");
   const patchesFirstPostedAt = Object.prototype.hasOwnProperty.call(patch, "firstPostedAt");
   const patchesLifecycle = Object.prototype.hasOwnProperty.call(patch, "watchlistLifecycle");
+  const patchesLiveVolumeContext = Object.prototype.hasOwnProperty.call(
+    patch,
+    "liveVolumeContext",
+  );
   const preservesTickerPrice = baseExisting?.latestPriceSource === "ticker";
   const recomputesCardPrice = !preservesTickerPrice && patchesPriceCard;
   for (const [kind, card] of Object.entries(patch.cards)) {
@@ -661,6 +685,9 @@ export function applyPatch(
     watchlistLifecycle: patchesLifecycle
       ? normalizeWatchlistLifecycle(patch.watchlistLifecycle ?? null)
       : baseExisting?.watchlistLifecycle ?? null,
+    liveVolumeContext: patchesLiveVolumeContext
+      ? normalizeLiveVolumeContext(patch.liveVolumeContext ?? null)
+      : baseExisting?.liveVolumeContext ?? null,
     tradersLinkAiReadCardVisible:
       typeof patch.tradersLinkAiReadCardVisible === "boolean"
         ? patch.tradersLinkAiReadCardVisible
@@ -742,6 +769,10 @@ function applyTickerDataPatch(
       patch.watchlistLifecycle !== undefined
         ? normalizeWatchlistLifecycle(patch.watchlistLifecycle)
         : existing?.watchlistLifecycle ?? null,
+    liveVolumeContext:
+      patch.liveVolumeContext !== undefined
+        ? normalizeLiveVolumeContext(patch.liveVolumeContext)
+        : existing?.liveVolumeContext ?? null,
     tradersLinkAiReadCardVisible:
       typeof patch.tradersLinkAiReadCardVisible === "boolean"
         ? patch.tradersLinkAiReadCardVisible

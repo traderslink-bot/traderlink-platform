@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   deriveTradersLinkAiPullbackPlan,
+  describeTradersLinkAiLiveVolumeContext,
   formatAiReadSession,
   parseTradersLinkAiRead,
+  resolveTradersLinkAiPullbackScenarioState,
 } from "../traderslink-ai-read";
 
 function validBody() {
@@ -95,6 +97,44 @@ function validBody() {
   });
 }
 
+function validV3Body() {
+  const value = JSON.parse(validBody());
+  value.version = 3;
+  value.generationId = "TGHL-v3-test";
+  value.pullbackPlans = {
+    shallow: {
+      zoneLow: 1.28,
+      zoneHigh: 1.32,
+      confirmationPrice: 1.32,
+      confirmation: "Hold the shelf, form a higher low, and reclaim $1.32.",
+      invalidationPrice: 1.24,
+      firstObjectivePrice: 1.5,
+      rationale: "The one-minute breakout shelf held repeated tests.",
+      evidenceIds: ["1m-breakout-shelf"],
+    },
+    deep: {
+      zoneLow: 1.1,
+      zoneHigh: 1.16,
+      confirmationPrice: 1.16,
+      confirmation: "Build a new base and reclaim $1.16.",
+      invalidationPrice: 1.05,
+      firstObjectivePrice: 1.28,
+      rationale: "The pre-impulse one-minute base is materially lower.",
+      evidenceIds: ["1m-pre-impulse-base"],
+    },
+  };
+  value.failureRecovery = {
+    recoveryZoneLow: 1.02,
+    recoveryZoneHigh: 1.08,
+    firstReclaimPrice: 1.12,
+    setupRestorePrice: 1.25,
+    firstObjectivePrice: 1.32,
+    rationale: "A lower base and two-stage reclaim are required.",
+    evidenceIds: ["5m-acceptance-1"],
+  };
+  return JSON.stringify(value);
+}
+
 describe("TradersLink AI Read parser", () => {
   it("parses the structured card payload", () => {
     const read = parseTradersLinkAiRead(validBody());
@@ -107,6 +147,79 @@ describe("TradersLink AI Read parser", () => {
     expect(read?.usage?.webSearchCostUsd).toBe(0.01);
     expect(read?.sources[0]?.evidence?.filingType).toBe("8-K");
     expect(formatAiReadSession(read!.marketSession)).toBe("Postmarket");
+  });
+
+  it("parses v3 pullback and recovery plans while preserving v2", () => {
+    expect(parseTradersLinkAiRead(validBody())?.version).toBe(2);
+    const read = parseTradersLinkAiRead(validV3Body());
+
+    expect(read?.version).toBe(3);
+    expect(read?.version === 3 ? read.pullbackPlans.deep?.zoneLow : null).toBe(1.1);
+    expect(read?.version === 3 ? read.failureRecovery?.setupRestorePrice : null).toBe(1.25);
+  });
+
+  it("derives every v3 scenario state from the current live price", () => {
+    const read = parseTradersLinkAiRead(validV3Body());
+    expect(read?.version).toBe(3);
+    if (!read || read.version !== 3 || !read.pullbackPlans.shallow) {
+      throw new Error("Expected a parsed v3 shallow scenario.");
+    }
+    const scenario = read.pullbackPlans.shallow;
+    expect(resolveTradersLinkAiPullbackScenarioState(scenario, 1.4)).toBe("Waiting");
+    expect(resolveTradersLinkAiPullbackScenarioState(scenario, 1.3)).toBe("Testing");
+    expect(resolveTradersLinkAiPullbackScenarioState(scenario, 1.26)).toBe("Reclaim required");
+    expect(resolveTradersLinkAiPullbackScenarioState(scenario, 1.24)).toBe("Invalidated");
+  });
+
+  it("translates deterministic live volume in the context of the saved plan", () => {
+    const read = parseTradersLinkAiRead(validV3Body());
+    if (!read) {
+      throw new Error("Expected a parsed v3 read.");
+    }
+    const fadingTest = describeTradersLinkAiLiveVolumeContext({
+      read,
+      livePrice: 1.3,
+      volume: {
+        timeframe: "5m",
+        label: "fading",
+        relativeVolumeRatio: 0.68,
+        partial: false,
+        updatedAt: 4_000,
+      },
+    });
+    expect(fadingTest.headline).toContain("0.68x");
+    expect(fadingTest.detail).toContain("tests the shallow pullback");
+    expect(fadingTest.detail).toContain("published confirmation");
+    expect(fadingTest.tone).toBe("constructive");
+
+    const expandingTest = describeTradersLinkAiLiveVolumeContext({
+      read,
+      livePrice: 1.3,
+      volume: {
+        timeframe: "5m",
+        label: "expanding",
+        relativeVolumeRatio: 1.72,
+        partial: true,
+        updatedAt: 5_000,
+      },
+    });
+    expect(expandingTest.headline).toContain("forming candle");
+    expect(expandingTest.detail).toContain("can belong to either side");
+    expect(expandingTest.tone).toBe("caution");
+
+    const failed = describeTradersLinkAiLiveVolumeContext({
+      read,
+      livePrice: 1.19,
+      volume: {
+        timeframe: "5m",
+        label: "strong",
+        relativeVolumeRatio: 2.4,
+        partial: false,
+        updatedAt: 6_000,
+      },
+    });
+    expect(failed.detail).toContain("Volume alone cannot restore");
+    expect(failed.tone).toBe("caution");
   });
 
   it("maps the active pullback area from distinct grounded hold and caution boundaries", () => {
