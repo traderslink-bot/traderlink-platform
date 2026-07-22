@@ -12,7 +12,7 @@ export type LiveWatchlistCardKind =
 
 export type LiveWatchlistStatus = "live" | "stale" | "deactivated";
 export type LiveWatchlistSlotState = "active" | "followup";
-export type LiveWatchlistMarketDataStatus = "live" | "stale" | "offline" | "starting";
+export type LiveWatchlistMarketDataStatus = "live" | "stale" | "offline" | "starting" | "closed";
 export type LiveWatchlistLifecycleStatus =
   | "monitoring"
   | "active"

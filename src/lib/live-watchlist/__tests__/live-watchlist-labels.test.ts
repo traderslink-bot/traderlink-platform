@@ -14,6 +14,7 @@ describe("live watchlist labels", () => {
     expect(formatMarketDataStatusLabel("stale")).toBe("Live Data: STALE");
     expect(formatMarketDataStatusLabel("offline")).toBe("Live Data: OFF");
     expect(formatMarketDataStatusLabel("starting")).toBe("Live Data: STARTING");
+    expect(formatMarketDataStatusLabel("closed")).toBe("Live Data: MARKET CLOSED");
   });
 
   it("formats ticker status labels without exposing internal stream state", () => {
@@ -21,11 +22,13 @@ describe("live watchlist labels", () => {
     expect(formatTickerStatusLabel("stale")).toBe("Live Ticker Data: Stale");
     expect(formatTickerStatusLabel("offline")).toBe("Live Ticker Data: Off");
     expect(formatTickerStatusLabel("starting")).toBe("Live Ticker Data: Off");
+    expect(formatTickerStatusLabel("closed")).toBe("Live Ticker Data: Market Closed");
     expect(formatTickerStatusLabel("deactivated")).toBe("Live Ticker Data: Off");
     expect(formatTickerStatusTone("live")).toBe("live");
     expect(formatTickerStatusTone("stale")).toBe("stale");
     expect(formatTickerStatusTone("offline")).toBe("off");
     expect(formatTickerStatusTone("starting")).toBe("off");
+    expect(formatTickerStatusTone("closed")).toBe("off");
     expect(formatTickerStatusTone("deactivated")).toBe("off");
   });
 

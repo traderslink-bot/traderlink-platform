@@ -44,7 +44,8 @@ function isHealthPatch(value: unknown): value is LiveWatchlistHealthPatch {
       (value as LiveWatchlistHealthPatch).marketDataStatus === "live" ||
       (value as LiveWatchlistHealthPatch).marketDataStatus === "stale" ||
       (value as LiveWatchlistHealthPatch).marketDataStatus === "offline" ||
-      (value as LiveWatchlistHealthPatch).marketDataStatus === "starting"
+      (value as LiveWatchlistHealthPatch).marketDataStatus === "starting" ||
+      (value as LiveWatchlistHealthPatch).marketDataStatus === "closed"
     ) &&
     isNullableNumber((value as LiveWatchlistHealthPatch).marketDataUpdatedAt)
   );
