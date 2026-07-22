@@ -1,4 +1,5 @@
 import type {
+  LiveWatchlistVolumeContext,
   TradersLinkAiReadBias,
   TradersLinkAiReadCatalystContext,
   TradersLinkAiReadCatalystStatus,
@@ -14,6 +15,8 @@ import type {
   TradersLinkAiReadListingStatus,
   TradersLinkAiReadMarketSession,
   TradersLinkAiReadPayload,
+  TradersLinkAiReadPullbackScenario,
+  TradersLinkAiReadFailureRecoveryPlan,
   TradersLinkAiReadSource,
   TradersLinkAiReadTarget,
   TradersLinkAiReadUsage,
@@ -79,7 +82,9 @@ function isSource(value: unknown): value is TradersLinkAiReadSource {
     typeof value.title === "string" &&
     typeof value.url === "string" &&
     isSafeHttpUrl(value.url) &&
-    (value.sourceType === "press_release_sec_database" || value.sourceType === "web_search") &&
+    (value.sourceType === "press_release_sec_database" ||
+      value.sourceType === "stocktitan_rss" ||
+      value.sourceType === "web_search") &&
     (value.evidence === undefined || isSourceEvidence(value.evidence))
   );
 }
@@ -267,6 +272,9 @@ export type TradersLinkAiPullbackPlan = {
 export function deriveTradersLinkAiPullbackPlan(
   read: TradersLinkAiReadPayload,
 ): TradersLinkAiPullbackPlan | null {
+  if (read.version !== 2) {
+    return null;
+  }
   const needsToHold = read.needsToHold.price;
   const cautionBelow = read.cautionBelow.price;
   const momentumFailure = read.momentumFailure.price;
@@ -304,6 +312,193 @@ export function deriveTradersLinkAiPullbackPlan(
   };
 }
 
+function isEvidenceIds(value: unknown): value is string[] {
+  return Array.isArray(value) &&
+    value.length > 0 &&
+    value.length <= 6 &&
+    value.every((item) => typeof item === "string" && item.trim().length > 0);
+}
+
+function isPositivePrice(value: unknown): value is number {
+  return isFiniteNumber(value) && value > 0;
+}
+
+function isPullbackScenario(value: unknown): value is TradersLinkAiReadPullbackScenario {
+  return isRecord(value) &&
+    isPositivePrice(value.zoneLow) &&
+    isPositivePrice(value.zoneHigh) &&
+    isPositivePrice(value.confirmationPrice) &&
+    typeof value.confirmation === "string" &&
+    isPositivePrice(value.invalidationPrice) &&
+    isNullablePrice(value.firstObjectivePrice) &&
+    typeof value.rationale === "string" &&
+    isEvidenceIds(value.evidenceIds);
+}
+
+function isNullablePullbackScenario(
+  value: unknown,
+): value is TradersLinkAiReadPullbackScenario | null {
+  return value === null || isPullbackScenario(value);
+}
+
+function isFailureRecovery(value: unknown): value is TradersLinkAiReadFailureRecoveryPlan {
+  return isRecord(value) &&
+    isPositivePrice(value.recoveryZoneLow) &&
+    isPositivePrice(value.recoveryZoneHigh) &&
+    isPositivePrice(value.firstReclaimPrice) &&
+    isPositivePrice(value.setupRestorePrice) &&
+    isNullablePrice(value.firstObjectivePrice) &&
+    typeof value.rationale === "string" &&
+    isEvidenceIds(value.evidenceIds);
+}
+
+export type TradersLinkAiPullbackScenarioState =
+  | "Waiting"
+  | "Testing"
+  | "Reclaim required"
+  | "Invalidated";
+
+export function resolveTradersLinkAiPullbackScenarioState(
+  scenario: TradersLinkAiReadPullbackScenario,
+  livePrice: number,
+): TradersLinkAiPullbackScenarioState {
+  if (livePrice <= scenario.invalidationPrice) {
+    return "Invalidated";
+  }
+  if (livePrice < scenario.zoneLow) {
+    return "Reclaim required";
+  }
+  if (livePrice <= scenario.zoneHigh) {
+    return "Testing";
+  }
+  return "Waiting";
+}
+
+export type TradersLinkAiLiveVolumeSummary = {
+  headline: string;
+  detail: string;
+  tone: "neutral" | "constructive" | "caution";
+};
+
+export function describeTradersLinkAiLiveVolumeContext(args: {
+  read: TradersLinkAiReadPayload;
+  livePrice: number;
+  volume: LiveWatchlistVolumeContext;
+}): TradersLinkAiLiveVolumeSummary {
+  const ratio = args.volume.relativeVolumeRatio === null
+    ? ""
+    : " - " + args.volume.relativeVolumeRatio.toFixed(2) + "x recent 5-minute average";
+  const label = args.volume.label === "unknown"
+    ? "Volume unavailable"
+    : args.volume.label.charAt(0).toUpperCase() + args.volume.label.slice(1) + " volume";
+  const headline = label + ratio + (args.volume.partial ? " - forming candle" : "");
+
+  if (args.volume.label === "unknown") {
+    return {
+      headline,
+      detail: "The latest five-minute volume is not reliable enough to use as confirmation.",
+      tone: "neutral",
+    };
+  }
+
+  if (
+    args.read.momentumFailure.price !== null &&
+    args.livePrice <= args.read.momentumFailure.price
+  ) {
+    return {
+      headline,
+      detail:
+        "The original momentum setup is invalid. Volume alone cannot restore it; the published base-and-reclaim sequence is still required.",
+      tone: "caution",
+    };
+  }
+
+  const scenarios: Array<
+    readonly ["shallow" | "deep", TradersLinkAiReadPullbackScenario]
+  > = [];
+  if (args.read.version === 3) {
+    if (args.read.pullbackPlans.shallow) {
+      scenarios.push(["shallow", args.read.pullbackPlans.shallow]);
+    }
+    if (args.read.pullbackPlans.deep) {
+      scenarios.push(["deep", args.read.pullbackPlans.deep]);
+    }
+  }
+  const testing = scenarios.find(
+    ([, scenario]) =>
+      resolveTradersLinkAiPullbackScenarioState(scenario, args.livePrice) === "Testing",
+  );
+  const reclaimRequired = scenarios.find(
+    ([, scenario]) =>
+      resolveTradersLinkAiPullbackScenarioState(scenario, args.livePrice) ===
+      "Reclaim required",
+  );
+
+  if (testing) {
+    const scenarioName = testing[0] === "shallow" ? "shallow pullback" : "deep reset";
+    if (args.volume.label === "fading" || args.volume.label === "thin") {
+      return {
+        headline,
+        detail:
+          "Participation is easing while price tests the " +
+          scenarioName +
+          " area. That is compatible with a controlled pullback, but the published confirmation is still required.",
+        tone: "constructive",
+      };
+    }
+    if (args.volume.label === "expanding" || args.volume.label === "strong") {
+      return {
+        headline,
+        detail:
+          "Participation is elevated while price tests the " +
+          scenarioName +
+          " area. Increased activity can belong to either side, so wait for the published confirmation rather than treating volume alone as a dip-buy signal.",
+        tone: "caution",
+      };
+    }
+    return {
+      headline,
+      detail:
+        "Participation is near its recent baseline while price tests the " +
+        scenarioName +
+        " area. The published price confirmation remains the decision point.",
+      tone: "neutral",
+    };
+  }
+
+  if (reclaimRequired) {
+    return {
+      headline,
+      detail:
+        "Price is below a mapped pullback zone. Regardless of current volume, a new base and the published reclaim are required before that setup becomes usable again.",
+      tone: "caution",
+    };
+  }
+
+  if (args.volume.label === "expanding" || args.volume.label === "strong") {
+    return {
+      headline,
+      detail:
+        "Participation is elevated while price remains outside the pullback entry zones. This supports active momentum, but it is not a pullback-entry confirmation.",
+      tone: "constructive",
+    };
+  }
+  if (args.volume.label === "fading" || args.volume.label === "thin") {
+    return {
+      headline,
+      detail:
+        "Participation is easing while price remains outside the pullback entry zones. Watch whether momentum holds; lower volume by itself is not a dip-buy signal.",
+      tone: "neutral",
+    };
+  }
+  return {
+    headline,
+    detail:
+      "Participation is near its recent baseline. Use the saved price zones and confirmations as the trade decision points.",
+    tone: "neutral",
+  };
+}
+
 export function parseTradersLinkAiRead(body: string): TradersLinkAiReadPayload | null {
   let value: unknown;
   try {
@@ -315,7 +510,7 @@ export function parseTradersLinkAiRead(body: string): TradersLinkAiReadPayload |
     return null;
   }
   if (
-    value.version !== 2 ||
+    (value.version !== 2 && value.version !== 3) ||
     typeof value.symbol !== "string" ||
     !isFiniteNumber(value.generatedAt) ||
     !isFiniteNumber(value.dataAsOf) ||
@@ -345,6 +540,18 @@ export function parseTradersLinkAiRead(body: string): TradersLinkAiReadPayload |
       typeof value.externalResearchEnabled !== "boolean") ||
     typeof value.usedWebSearch !== "boolean" ||
     (value.usage !== undefined && !isUsage(value.usage))
+  ) {
+    return null;
+  }
+
+  if (
+    value.version === 3 &&
+    (
+      !isRecord(value.pullbackPlans) ||
+      !isNullablePullbackScenario(value.pullbackPlans.shallow) ||
+      !isNullablePullbackScenario(value.pullbackPlans.deep) ||
+      (value.failureRecovery !== null && !isFailureRecovery(value.failureRecovery))
+    )
   ) {
     return null;
   }

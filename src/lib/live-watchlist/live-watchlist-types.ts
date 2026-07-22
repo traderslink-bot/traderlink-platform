@@ -29,6 +29,14 @@ export type LiveWatchlistLifecycleRead = {
   updatedAt: number;
 };
 
+export type LiveWatchlistVolumeContext = {
+  timeframe: "5m";
+  label: "unknown" | "thin" | "normal" | "expanding" | "strong" | "fading";
+  relativeVolumeRatio: number | null;
+  partial: boolean;
+  updatedAt: number;
+};
+
 export type LiveWatchlistCardContent = {
   title: string;
   body: string;
@@ -50,6 +58,7 @@ export type LiveWatchlistCardPatch = {
   potentialGainCardVisible?: boolean;
   watchlistLifecycleLabelsVisible?: boolean;
   watchlistLifecycle?: LiveWatchlistLifecycleRead | null;
+  liveVolumeContext?: LiveWatchlistVolumeContext | null;
   tradersLinkAiReadCardVisible?: boolean;
   tradersLinkAiReadDipBuyPlanVisible?: boolean;
   levelMap?: LiveWatchlistLevelMap | null;
@@ -75,6 +84,7 @@ export type LiveWatchlistTickerDataPatch = {
   potentialGainCardVisible?: boolean;
   watchlistLifecycleLabelsVisible?: boolean;
   watchlistLifecycle?: LiveWatchlistLifecycleRead | null;
+  liveVolumeContext?: LiveWatchlistVolumeContext | null;
   tradersLinkAiReadCardVisible?: boolean;
   tradersLinkAiReadDipBuyPlanVisible?: boolean;
   latestPrice: number;
@@ -117,6 +127,27 @@ export type TradersLinkAiReadTarget = {
   condition: string;
 };
 
+export type TradersLinkAiReadPullbackScenario = {
+  zoneLow: number;
+  zoneHigh: number;
+  confirmationPrice: number;
+  confirmation: string;
+  invalidationPrice: number;
+  firstObjectivePrice: number | null;
+  rationale: string;
+  evidenceIds: string[];
+};
+
+export type TradersLinkAiReadFailureRecoveryPlan = {
+  recoveryZoneLow: number;
+  recoveryZoneHigh: number;
+  firstReclaimPrice: number;
+  setupRestorePrice: number;
+  firstObjectivePrice: number | null;
+  rationale: string;
+  evidenceIds: string[];
+};
+
 export type TradersLinkAiReadSourceEvidence = {
   publishedAt: string | null;
   filingType: string | null;
@@ -129,7 +160,7 @@ export type TradersLinkAiReadSourceEvidence = {
 export type TradersLinkAiReadSource = {
   title: string;
   url: string;
-  sourceType: "press_release_sec_database" | "web_search";
+  sourceType: "press_release_sec_database" | "stocktitan_rss" | "web_search";
   evidence?: TradersLinkAiReadSourceEvidence;
 };
 
@@ -227,8 +258,7 @@ export type TradersLinkAiReadListingContext = {
   sourceUrls: string[];
 };
 
-export type TradersLinkAiReadPayload = {
-  version: 2;
+type TradersLinkAiReadPayloadBase = {
   symbol: string;
   generatedAt: number;
   dataAsOf: number;
@@ -254,6 +284,24 @@ export type TradersLinkAiReadPayload = {
   usedWebSearch: boolean;
   usage?: TradersLinkAiReadUsage;
 };
+
+export type TradersLinkAiReadV2Payload = TradersLinkAiReadPayloadBase & {
+  version: 2;
+};
+
+export type TradersLinkAiReadV3Payload = TradersLinkAiReadPayloadBase & {
+  version: 3;
+  generationId?: string;
+  pullbackPlans: {
+    shallow: TradersLinkAiReadPullbackScenario | null;
+    deep: TradersLinkAiReadPullbackScenario | null;
+  };
+  failureRecovery: TradersLinkAiReadFailureRecoveryPlan | null;
+};
+
+export type TradersLinkAiReadPayload =
+  | TradersLinkAiReadV2Payload
+  | TradersLinkAiReadV3Payload;
 
 export type LiveWatchlistExtendedQuote = {
   source: "eodhd_live_v2";
@@ -369,6 +417,7 @@ export type LiveWatchlistSymbolState = {
   potentialGainCardVisible?: boolean;
   watchlistLifecycleLabelsVisible?: boolean;
   watchlistLifecycle?: LiveWatchlistLifecycleRead | null;
+  liveVolumeContext?: LiveWatchlistVolumeContext | null;
   tradersLinkAiReadCardVisible?: boolean;
   tradersLinkAiReadDipBuyPlanVisible?: boolean;
   potentialGain?: LiveWatchlistPotentialGain | null;

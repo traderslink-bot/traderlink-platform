@@ -12,8 +12,10 @@ import type {
   LiveWatchlistMarketDataStatus,
   LiveWatchlistStatePayload,
   LiveWatchlistSymbolState,
+  LiveWatchlistVolumeContext,
   TradersLinkAiReadLevel,
   TradersLinkAiReadPayload,
+  TradersLinkAiReadPullbackScenario,
 } from "@/src/lib/live-watchlist/live-watchlist-types";
 import {
   formatMarketDataStatusLabel,
@@ -36,8 +38,10 @@ import {
 } from "@/src/lib/live-watchlist/live-watchlist-reconciliation";
 import {
   deriveTradersLinkAiPullbackPlan,
+  describeTradersLinkAiLiveVolumeContext,
   formatAiReadSession,
   parseTradersLinkAiRead,
+  resolveTradersLinkAiPullbackScenarioState,
   type TradersLinkAiPullbackPlan,
 } from "@/src/lib/live-watchlist/traderslink-ai-read";
 
@@ -505,11 +509,85 @@ function pullbackPlanStateCopy(plan: TradersLinkAiPullbackPlan): string {
   }
 }
 
+function TradersLinkAiPullbackScenarioBlock({
+  heading,
+  description,
+  scenario,
+  livePrice,
+}: {
+  heading: string;
+  description: string;
+  scenario: TradersLinkAiReadPullbackScenario;
+  livePrice: number;
+}) {
+  const state = resolveTradersLinkAiPullbackScenarioState(scenario, livePrice);
+  return (
+    <div className="watchlist-ai-read-level" data-scenario-state={state.toLowerCase().replaceAll(" ", "-")}>
+      <div className="watchlist-ai-read-section-heading">
+        <h4>{heading}</h4>
+        <span>{state}</span>
+      </div>
+      <p>{description}</p>
+      <dl className="watchlist-ai-read-scenario-items">
+        <div>
+          <dt>Zone</dt>
+          <dd>${formatPrice(scenario.zoneLow)}-${formatPrice(scenario.zoneHigh)}</dd>
+        </div>
+        <div>
+          <dt>Required confirmation</dt>
+          <dd>{scenario.confirmation}</dd>
+        </div>
+        <div>
+          <dt>Invalidation</dt>
+          <dd>${formatPrice(scenario.invalidationPrice)}</dd>
+        </div>
+        <div>
+          <dt>First objective</dt>
+          <dd>
+            {scenario.firstObjectivePrice === null
+              ? "No defensible objective mapped"
+              : `$${formatPrice(scenario.firstObjectivePrice)}`}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
+function TradersLinkAiLiveVolumeSection({
+  read,
+  livePrice,
+  volume,
+}: {
+  read: TradersLinkAiReadPayload;
+  livePrice: number;
+  volume: LiveWatchlistVolumeContext;
+}) {
+  const summary = describeTradersLinkAiLiveVolumeContext({ read, livePrice, volume });
+  return (
+    <section
+      className="watchlist-ai-read-live-confirmation"
+      data-volume-tone={summary.tone}
+    >
+      <div>
+        <h3>Live 5-minute confirmation</h3>
+        <small>Updated {formatTime(volume.updatedAt)} ET</small>
+      </div>
+      <strong>{summary.headline}</strong>
+      <p>{summary.detail}</p>
+    </section>
+  );
+}
+
 function TradersLinkAiReadCard({
   card,
+  livePrice,
+  liveVolumeContext,
   dipBuyPlanVisible = true,
 }: {
   card: LiveWatchlistCardContent;
+  livePrice: number | null;
+  liveVolumeContext?: LiveWatchlistVolumeContext | null;
   dipBuyPlanVisible?: boolean;
 }) {
   const read = parseTradersLinkAiRead(card.body);
@@ -531,6 +609,9 @@ function TradersLinkAiReadCard({
     );
   }
   const downsideCheckpoints = read.downsideCheckpoints ?? [];
+  const currentLivePrice = livePrice ?? read.currentPrice;
+  const momentumSetupFailed = read.momentumFailure.price !== null &&
+    currentLivePrice <= read.momentumFailure.price;
   const pullbackPlan = dipBuyPlanVisible
     ? deriveTradersLinkAiPullbackPlan(read)
     : null;
@@ -558,7 +639,13 @@ function TradersLinkAiReadCard({
       </div>
 
       <p className="watchlist-ai-read-current">{read.currentRead}</p>
-
+      {liveVolumeContext ? (
+        <TradersLinkAiLiveVolumeSection
+          read={read}
+          livePrice={currentLivePrice}
+          volume={liveVolumeContext}
+        />
+      ) : null}
       <div className="watchlist-ai-read-level-grid">
         <TradersLinkAiReadLevelBlock heading="Needs to hold" level={read.needsToHold} />
         <TradersLinkAiReadLevelBlock
@@ -589,7 +676,39 @@ function TradersLinkAiReadCard({
         </section>
       ) : null}
 
-      {pullbackPlan ? (
+      {read.version === 3 && dipBuyPlanVisible ? (
+        <section className="watchlist-ai-read-section">
+          <h3>Pullback entry plans</h3>
+          {momentumSetupFailed ? (
+            <p className="watchlist-ai-read-plan-warning">
+              The original momentum setup is invalid below the momentum-failure boundary. Use the
+              failure and recovery plan; do not treat either pullback zone as active.
+            </p>
+          ) : null}
+          {read.pullbackPlans.shallow || read.pullbackPlans.deep ? (
+            <div className="watchlist-ai-read-scenario-grid">
+              {read.pullbackPlans.shallow ? (
+                <TradersLinkAiPullbackScenarioBlock
+                  heading="Shallow pullback — momentum retest"
+                  description="For traders seeking a controlled retest while momentum remains intact."
+                  scenario={read.pullbackPlans.shallow}
+                  livePrice={currentLivePrice}
+                />
+              ) : null}
+              {read.pullbackPlans.deep ? (
+                <TradersLinkAiPullbackScenarioBlock
+                  heading="Deep pullback — reset setup"
+                  description="For traders waiting for the accelerated move to unwind into its base."
+                  scenario={read.pullbackPlans.deep}
+                  livePrice={currentLivePrice}
+                />
+              ) : null}
+            </div>
+          ) : (
+            <p>No evidence-backed pullback entry plan is available for this read.</p>
+          )}
+        </section>
+      ) : pullbackPlan ? (
         <section className="watchlist-ai-read-section">
           <h3>Potential pullback</h3>
           <p>
@@ -616,7 +735,57 @@ function TradersLinkAiReadCard({
         </section>
       ) : null}
 
-      {downsideCheckpoints.length > 0 ? (
+      {read.version === 3 && (downsideCheckpoints.length > 0 || read.failureRecovery) ? (
+        <section className="watchlist-ai-read-section watchlist-ai-read-downside">
+          <h3>Failure and recovery</h3>
+          <p>
+            The original momentum setup is invalid below {read.momentumFailure.price === null
+              ? "the published momentum-failure boundary"
+              : `$${formatPrice(read.momentumFailure.price)}`}.
+          </p>
+          {downsideCheckpoints.length > 0 ? (
+            <>
+              <p>Lower structural checkpoints exposed after that failure:</p>
+              <ol className="watchlist-ai-read-targets">
+                {downsideCheckpoints.map((checkpoint, index) => (
+                  <li key={`${checkpoint.label}-${checkpoint.price ?? index}`}>
+                    <strong>
+                      {checkpoint.price === null
+                        ? checkpoint.label
+                        : `$${formatPrice(checkpoint.price)}`}
+                    </strong>
+                    <span>{checkpoint.condition}</span>
+                  </li>
+                ))}
+              </ol>
+            </>
+          ) : null}
+          {read.failureRecovery ? (
+            <dl className="watchlist-ai-read-scenario-items">
+              <div>
+                <dt>Recovery-watch area</dt>
+                <dd>${formatPrice(read.failureRecovery.recoveryZoneLow)}-${formatPrice(read.failureRecovery.recoveryZoneHigh)}</dd>
+              </div>
+              <div>
+                <dt>First recovery reclaim</dt>
+                <dd>${formatPrice(read.failureRecovery.firstReclaimPrice)} after a new base forms</dd>
+              </div>
+              <div>
+                <dt>Restores original bullish thesis</dt>
+                <dd>${formatPrice(read.failureRecovery.setupRestorePrice)}</dd>
+              </div>
+              <div>
+                <dt>First recovery objective</dt>
+                <dd>{read.failureRecovery.firstObjectivePrice === null
+                  ? "No defensible objective mapped"
+                  : `$${formatPrice(read.failureRecovery.firstObjectivePrice)}`}</dd>
+              </div>
+            </dl>
+          ) : (
+            <p>A recovery attempt is unavailable until a lower base and explicit reclaim are established.</p>
+          )}
+        </section>
+      ) : downsideCheckpoints.length > 0 ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-downside">
           <h3>If momentum fails</h3>
           <p>Lower structural areas exposed after the momentum-failure level gives way.</p>
@@ -1325,8 +1494,24 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
       {symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
         <TradersLinkAiReadCard
           card={tradersLinkAiReadCard}
+          livePrice={symbol.latestPrice}
+          liveVolumeContext={symbol.liveVolumeContext}
           dipBuyPlanVisible={symbol.tradersLinkAiReadDipBuyPlanVisible !== false}
         />
+      ) : symbol.tradersLinkAiReadCardVisible !== false ? (
+        <article
+          className="academy-card watchlist-content-card watchlist-ai-read-card"
+          data-card-label="TradersLink AI Read"
+        >
+          <div className="academy-card-topline">
+            <WatchlistCardKicker label="TradersLink AI Read" />
+          </div>
+          <h2 className="academy-card-title">Read unavailable</h2>
+          <p className="academy-card-text">
+            No saved AI Read is available for this ticker. No pullback or recovery levels have
+            been manufactured.
+          </p>
+        </article>
       ) : null}
       {recentNewsFilingsCard ? (
         <WatchlistDetailCardArticle
