@@ -1,6 +1,6 @@
 import type { LiveWatchlistSymbolState } from "./live-watchlist-types";
 
-export type LiveWatchlistEntryGroup = "main" | "postmarket";
+export type LiveWatchlistEntryGroup = "top_regular" | "main" | "postmarket";
 
 export function shouldShowReversalWatchlist(visible: boolean, symbolCount: number): boolean {
   return visible && symbolCount > 0;
@@ -14,8 +14,15 @@ const entryTimeFormatter = new Intl.DateTimeFormat("en-US", {
 });
 
 export function getLiveWatchlistEntryGroup(
-  symbol: Pick<LiveWatchlistSymbolState, "firstPostedAt">,
+  symbol: Pick<LiveWatchlistSymbolState, "firstPostedAt" | "watchlistGroup">,
 ): LiveWatchlistEntryGroup {
+  if (
+    symbol.watchlistGroup === "top_regular" ||
+    symbol.watchlistGroup === "main" ||
+    symbol.watchlistGroup === "postmarket"
+  ) {
+    return symbol.watchlistGroup;
+  }
   if (!symbol.firstPostedAt) return "main";
   const parts = Object.fromEntries(
     entryTimeFormatter
