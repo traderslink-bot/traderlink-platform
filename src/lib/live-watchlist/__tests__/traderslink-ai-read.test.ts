@@ -135,6 +135,30 @@ function validV3Body() {
   return JSON.stringify(value);
 }
 
+function validV4Body() {
+  const value = JSON.parse(validV3Body());
+  value.version = 4;
+  value.generationId = "TGHL-v4-test";
+  const horizon = (price: number, basisType: string) => ({
+    available: true,
+    price,
+    condition: "Sustained acceptance keeps this conditional branch active.",
+    basisType,
+    basisSummary: "Derived from supplied tape, impulse, and daily volatility facts.",
+    sourceFacts: ["supplied session range", "supplied realized impulse"],
+    unavailableReasonCode: null,
+    unavailableReason: null,
+  });
+  value.forwardPlan = {
+    nearestRealistic: horizon(1.8, "psychological_boundary"),
+    continuedMomentum: horizon(2, "measured_move"),
+    strongExpansion: horizon(2.25, "volatility_projection"),
+    extremeMomentum: horizon(2.5, "combined"),
+    additionalObservedOutcomes: [],
+  };
+  return JSON.stringify(value);
+}
+
 describe("TradersLink AI Read parser", () => {
   it("parses the structured card payload", () => {
     const read = parseTradersLinkAiRead(validBody());
@@ -156,6 +180,19 @@ describe("TradersLink AI Read parser", () => {
     expect(read?.version).toBe(3);
     expect(read?.version === 3 ? read.pullbackPlans.deep?.zoneLow : null).toBe(1.1);
     expect(read?.version === 3 ? read.failureRecovery?.setupRestorePrice : null).toBe(1.25);
+  });
+
+  it("parses the v4 complete-wide forward plan without weakening v2/v3 compatibility", () => {
+    const read = parseTradersLinkAiRead(validV4Body());
+    expect(read?.version).toBe(4);
+    expect(read?.version === 4 ? read.forwardPlan.strongExpansion.price : null).toBe(2.25);
+    expect(read?.version === 4 ? read.forwardPlan.extremeMomentum.basisType : null).toBe("combined");
+  });
+
+  it("rejects a v4 horizon that claims availability without a price", () => {
+    const value = JSON.parse(validV4Body());
+    value.forwardPlan.extremeMomentum.price = null;
+    expect(parseTradersLinkAiRead(JSON.stringify(value))).toBeNull();
   });
 
   it("derives every v3 scenario state from the current live price", () => {

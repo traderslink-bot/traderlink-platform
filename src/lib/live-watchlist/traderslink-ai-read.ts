@@ -17,6 +17,9 @@ import type {
   TradersLinkAiReadPayload,
   TradersLinkAiReadPullbackScenario,
   TradersLinkAiReadFailureRecoveryPlan,
+  TradersLinkAiReadForwardBasisType,
+  TradersLinkAiReadForwardHorizon,
+  TradersLinkAiReadForwardPlan,
   TradersLinkAiReadSource,
   TradersLinkAiReadTarget,
   TradersLinkAiReadUsage,
@@ -49,6 +52,51 @@ function isTarget(value: unknown): value is TradersLinkAiReadTarget {
     isNullablePrice(value.price) &&
     typeof value.condition === "string"
   );
+}
+
+const FORWARD_BASIS_TYPES = new Set<TradersLinkAiReadForwardBasisType>([
+  "observed_intraday",
+  "observed_prior_session",
+  "observed_daily",
+  "failed_spike",
+  "psychological_boundary",
+  "measured_move",
+  "volatility_projection",
+  "combined",
+  "unavailable",
+]);
+const FORWARD_UNAVAILABLE_REASONS = new Set([
+  "stale_or_incomplete_data",
+  "unresolved_split_adjustment",
+  "corrupt_candle_history",
+  "quote_conflict",
+  "insufficient_history",
+]);
+
+function isForwardHorizon(value: unknown): value is TradersLinkAiReadForwardHorizon {
+  if (!isRecord(value) || typeof value.available !== "boolean" ||
+    !isNullablePrice(value.price) || typeof value.condition !== "string" ||
+    !FORWARD_BASIS_TYPES.has(value.basisType as TradersLinkAiReadForwardBasisType) ||
+    typeof value.basisSummary !== "string" || !Array.isArray(value.sourceFacts) ||
+    !value.sourceFacts.every((fact) => typeof fact === "string")) return false;
+  const reasonCodeValid = value.unavailableReasonCode === null ||
+    FORWARD_UNAVAILABLE_REASONS.has(value.unavailableReasonCode as string);
+  if (!reasonCodeValid || !isNullableString(value.unavailableReason)) return false;
+  return value.available
+    ? value.price !== null && value.basisType !== "unavailable" &&
+        value.unavailableReasonCode === null && value.unavailableReason === null
+    : value.price === null && value.basisType === "unavailable" &&
+        typeof value.unavailableReasonCode === "string" && typeof value.unavailableReason === "string";
+}
+
+function isForwardPlan(value: unknown): value is TradersLinkAiReadForwardPlan {
+  return isRecord(value) &&
+    isForwardHorizon(value.nearestRealistic) &&
+    isForwardHorizon(value.continuedMomentum) &&
+    isForwardHorizon(value.strongExpansion) &&
+    isForwardHorizon(value.extremeMomentum) &&
+    Array.isArray(value.additionalObservedOutcomes) &&
+    value.additionalObservedOutcomes.every(isForwardHorizon);
 }
 
 function isSafeHttpUrl(value: string): boolean {
@@ -416,7 +464,7 @@ export function describeTradersLinkAiLiveVolumeContext(args: {
   const scenarios: Array<
     readonly ["shallow" | "deep", TradersLinkAiReadPullbackScenario]
   > = [];
-  if (args.read.version === 3) {
+  if (args.read.version === 3 || args.read.version === 4) {
     if (args.read.pullbackPlans.shallow) {
       scenarios.push(["shallow", args.read.pullbackPlans.shallow]);
     }
@@ -510,7 +558,7 @@ export function parseTradersLinkAiRead(body: string): TradersLinkAiReadPayload |
     return null;
   }
   if (
-    (value.version !== 2 && value.version !== 3) ||
+    (value.version !== 2 && value.version !== 3 && value.version !== 4) ||
     typeof value.symbol !== "string" ||
     !isFiniteNumber(value.generatedAt) ||
     !isFiniteNumber(value.dataAsOf) ||
@@ -545,13 +593,20 @@ export function parseTradersLinkAiRead(body: string): TradersLinkAiReadPayload |
   }
 
   if (
-    value.version === 3 &&
+    (value.version === 3 || value.version === 4) &&
     (
       !isRecord(value.pullbackPlans) ||
       !isNullablePullbackScenario(value.pullbackPlans.shallow) ||
       !isNullablePullbackScenario(value.pullbackPlans.deep) ||
       (value.failureRecovery !== null && !isFailureRecovery(value.failureRecovery))
     )
+  ) {
+    return null;
+  }
+  if (
+    value.version === 4 &&
+    (typeof value.generationId !== "string" || value.generationId.trim().length === 0 ||
+      !isForwardPlan(value.forwardPlan))
   ) {
     return null;
   }
