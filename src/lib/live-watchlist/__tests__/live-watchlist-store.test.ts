@@ -934,6 +934,34 @@ describe("LiveWatchlistStore", () => {
     expect(promoted.reversalWatchlistVisible).toBe(true);
   });
 
+  it("preserves explicit watchlist membership and top-list visibility across ticker updates", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    const topWatch = await store.upsertPatch({
+      symbol: "TOPS",
+      status: "live",
+      updatedAt: 1000,
+      watchlistGroup: "top_regular",
+      topRegularWatchlistVisible: false,
+      cards: {},
+    });
+    expect(topWatch.watchlistGroup).toBe("top_regular");
+    expect(topWatch.topRegularWatchlistVisible).toBe(false);
+
+    const preserved = await store.upsertTickerData({
+      type: "tickerData",
+      symbol: "TOPS",
+      updatedAt: 2000,
+      latestPrice: 1.2,
+      nearestSupport: null,
+      nearestResistance: null,
+    });
+    expect(preserved.watchlistGroup).toBe("top_regular");
+    expect(preserved.topRegularWatchlistVisible).toBe(false);
+  });
+
   it("rejects older and equal-revision ticker data while accepting a higher revision at the same observation time", async () => {
     process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
     process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";

@@ -11,6 +11,7 @@ export type LiveWatchlistCardKind =
   | "extendedQuote";
 
 export type LiveWatchlistStatus = "live" | "stale" | "deactivated";
+export type LiveWatchlistGroup = "top_regular" | "main" | "postmarket";
 export type TradersLinkAiReadStatus = "analyzing" | "ready" | "failed";
 export type LiveWatchlistSlotState = "active" | "followup";
 export type LiveWatchlistMarketDataStatus = "live" | "stale" | "offline" | "starting" | "closed";
@@ -52,10 +53,12 @@ export type LiveWatchlistCardPatch = {
   status?: LiveWatchlistStatus;
   updatedAt: number;
   firstPostedAt?: number | null;
+  watchlistGroup?: LiveWatchlistGroup;
   watchlistSlotState?: LiveWatchlistSlotState;
   reversalWatchEligible?: boolean;
   reversalWatchAttemptReady?: boolean;
   reversalWatchlistVisible?: boolean;
+  topRegularWatchlistVisible?: boolean;
   preserveExistingOnReactivation?: boolean;
   potentialGainCardVisible?: boolean;
   watchlistLifecycleLabelsVisible?: boolean;
@@ -81,10 +84,12 @@ export type LiveWatchlistTickerDataPatch = {
   updatedAt: number;
   marketDataObservedAt?: number;
   marketDataRevision?: number;
+  watchlistGroup?: LiveWatchlistGroup;
   watchlistSlotState?: LiveWatchlistSlotState;
   reversalWatchEligible?: boolean;
   reversalWatchAttemptReady?: boolean;
   reversalWatchlistVisible?: boolean;
+  topRegularWatchlistVisible?: boolean;
   potentialGainCardVisible?: boolean;
   watchlistLifecycleLabelsVisible?: boolean;
   watchlistLifecycle?: LiveWatchlistLifecycleRead | null;
@@ -464,10 +469,12 @@ export type LiveWatchlistSymbolState = {
   status: LiveWatchlistStatus;
   updatedAt: number;
   firstPostedAt: number | null;
+  watchlistGroup?: LiveWatchlistGroup;
   watchlistSlotState?: LiveWatchlistSlotState;
   reversalWatchEligible?: boolean;
   reversalWatchAttemptReady?: boolean;
   reversalWatchlistVisible?: boolean;
+  topRegularWatchlistVisible?: boolean;
   potentialGainCardVisible?: boolean;
   watchlistLifecycleLabelsVisible?: boolean;
   watchlistLifecycle?: LiveWatchlistLifecycleRead | null;

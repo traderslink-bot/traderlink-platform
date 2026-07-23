@@ -1675,7 +1675,15 @@ export function LiveWatchlistIndexClient({
     reversalWatchlistVisible,
     reversalWatchSymbols.length,
   );
-  const mainSessionSymbols = activeSymbols.filter((symbol) => !isPostmarketAddition(symbol));
+  const topRegularWatchlistVisible = !symbols.some(
+    (symbol) => symbol.topRegularWatchlistVisible === false,
+  );
+  const topRegularSymbols = activeSymbols.filter(
+    (symbol) => getLiveWatchlistEntryGroup(symbol) === "top_regular",
+  );
+  const mainSessionSymbols = activeSymbols.filter(
+    (symbol) => getLiveWatchlistEntryGroup(symbol) === "main",
+  );
   const postmarketSymbols = activeSymbols.filter(isPostmarketAddition);
 
   useEffect(() => {
@@ -1757,7 +1765,10 @@ export function LiveWatchlistIndexClient({
             {activeSymbols.length} active
             {showReversalWatchlist ? ` / ${reversalWatchSymbols.length} reversal watch` : ""}
           </span>
-          <span>{mainSessionSymbols.length} main / {postmarketSymbols.length} post-market</span>
+          <span>
+            {topRegularWatchlistVisible ? `${topRegularSymbols.length} top / ` : ""}
+            {mainSessionSymbols.length} main / {postmarketSymbols.length} post-market
+          </span>
           <span
             data-market-data-status={marketDataStatus}
             title={marketDataUpdatedAt ? `Updated ${formatDateTime(marketDataUpdatedAt)}` : undefined}
@@ -1773,6 +1784,30 @@ export function LiveWatchlistIndexClient({
         </section>
       ) : (
         <div className="watchlist-session-lists">
+          {topRegularWatchlistVisible ? (
+            <section
+              className="watchlist-session-list"
+              aria-labelledby="watchlist-top-regular-heading"
+            >
+              <div className="watchlist-session-heading">
+                <div>
+                  <p className="academy-eyebrow">Manually Curated</p>
+                  <h2 id="watchlist-top-regular-heading">Top Regular Hour Watches</h2>
+                </div>
+                <span>{topRegularSymbols.length}</span>
+              </div>
+              {topRegularSymbols.length > 0 ? (
+                <WatchlistTickerTable
+                  ariaLabel="Top regular hour watchlist tickers"
+                  symbols={topRegularSymbols}
+                />
+              ) : (
+                <p className="watchlist-session-empty">
+                  No top regular-hour watches are active.
+                </p>
+              )}
+            </section>
+          ) : null}
           <section className="watchlist-session-list" aria-labelledby="watchlist-main-session-heading">
             <div className="watchlist-session-heading">
               <div>

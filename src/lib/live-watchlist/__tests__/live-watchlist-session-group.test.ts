@@ -6,6 +6,17 @@ import {
 } from "../live-watchlist-session-group";
 
 describe("getLiveWatchlistEntryGroup", () => {
+  it("uses explicit runtime membership before timestamp inference", () => {
+    expect(getLiveWatchlistEntryGroup({
+      firstPostedAt: Date.parse("2026-07-16T20:00:00Z"),
+      watchlistGroup: "top_regular",
+    })).toBe("top_regular");
+    expect(getLiveWatchlistEntryGroup({
+      firstPostedAt: Date.parse("2026-07-16T20:00:00Z"),
+      watchlistGroup: "main",
+    })).toBe("main");
+  });
+
   it("keeps premarket and regular-hour additions in the main group", () => {
     expect(getLiveWatchlistEntryGroup({ firstPostedAt: Date.parse("2026-07-16T12:00:00Z") })).toBe("main");
     expect(getLiveWatchlistEntryGroup({ firstPostedAt: Date.parse("2026-07-16T19:59:00Z") })).toBe("main");

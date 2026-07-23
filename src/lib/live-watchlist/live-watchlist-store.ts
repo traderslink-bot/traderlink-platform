@@ -200,6 +200,12 @@ function normalizeWatchlistLifecycle(
     : null;
 }
 
+function normalizeWatchlistGroup(value: unknown): "top_regular" | "main" | "postmarket" | undefined {
+  return value === "top_regular" || value === "main" || value === "postmarket"
+    ? value
+    : undefined;
+}
+
 function normalizeLiveVolumeContext(
   value: LiveWatchlistSymbolState["liveVolumeContext"] | undefined,
 ): LiveWatchlistSymbolState["liveVolumeContext"] {
@@ -520,10 +526,12 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
   const inferredLatestPriceSource = state.latestPriceSource ?? "card";
   return {
     ...state,
+    watchlistGroup: normalizeWatchlistGroup(state.watchlistGroup),
     watchlistSlotState: state.watchlistSlotState === "followup" ? "followup" : "active",
     reversalWatchEligible: state.reversalWatchEligible === true,
     reversalWatchAttemptReady: state.reversalWatchAttemptReady === true,
     reversalWatchlistVisible: state.reversalWatchlistVisible !== false,
+    topRegularWatchlistVisible: state.topRegularWatchlistVisible !== false,
     potentialGainCardVisible: state.potentialGainCardVisible !== false,
     watchlistLifecycleLabelsVisible: state.watchlistLifecycleLabelsVisible === true,
     watchlistLifecycle: normalizeWatchlistLifecycle(state.watchlistLifecycle),
@@ -674,6 +682,9 @@ export function applyPatch(
     status: nextStatus,
     updatedAt: Math.max(patch.updatedAt, baseExisting?.updatedAt ?? 0),
     firstPostedAt: nextFirstPostedAt,
+    watchlistGroup:
+      normalizeWatchlistGroup(patch.watchlistGroup) ??
+      normalizeWatchlistGroup(baseExisting?.watchlistGroup),
     watchlistSlotState:
       patch.watchlistSlotState === "followup"
         ? "followup"
@@ -692,6 +703,10 @@ export function applyPatch(
       typeof patch.reversalWatchlistVisible === "boolean"
         ? patch.reversalWatchlistVisible
         : baseExisting?.reversalWatchlistVisible !== false,
+    topRegularWatchlistVisible:
+      typeof patch.topRegularWatchlistVisible === "boolean"
+        ? patch.topRegularWatchlistVisible
+        : baseExisting?.topRegularWatchlistVisible !== false,
     potentialGainCardVisible:
       typeof patch.potentialGainCardVisible === "boolean"
         ? patch.potentialGainCardVisible
@@ -773,6 +788,9 @@ function applyTickerDataPatch(
     status: existing?.status ?? "deactivated",
     updatedAt: Math.max(existing?.updatedAt ?? 0, patch.updatedAt),
     firstPostedAt: existing?.firstPostedAt ?? null,
+    watchlistGroup:
+      normalizeWatchlistGroup(patch.watchlistGroup) ??
+      normalizeWatchlistGroup(existing?.watchlistGroup),
     watchlistSlotState:
       patch.watchlistSlotState === "followup"
         ? "followup"
@@ -791,6 +809,10 @@ function applyTickerDataPatch(
       typeof patch.reversalWatchlistVisible === "boolean"
         ? patch.reversalWatchlistVisible
         : existing?.reversalWatchlistVisible !== false,
+    topRegularWatchlistVisible:
+      typeof patch.topRegularWatchlistVisible === "boolean"
+        ? patch.topRegularWatchlistVisible
+        : existing?.topRegularWatchlistVisible !== false,
     potentialGainCardVisible:
       typeof patch.potentialGainCardVisible === "boolean"
         ? patch.potentialGainCardVisible
