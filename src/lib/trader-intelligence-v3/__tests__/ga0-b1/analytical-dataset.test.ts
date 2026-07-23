@@ -14,6 +14,28 @@ import {
   buildSyntheticGa0B1Authority,
   buildSyntheticGa0B1ClosedExecutions,
 } from "../../testing";
+import { resolveRelativeDateRange, type CanonicalUtcTimestamp, type RelativeDateResolver, type TradingSessionEvidence } from "../../domain";
+
+function newYorkReceipt(sessionEvidence: readonly TradingSessionEvidence[]) {
+  const startDate = sessionEvidence[0].sessionDate;
+  const endDate = sessionEvidence[sessionEvidence.length - 1].sessionDate;
+  const resolver: RelativeDateResolver = { resolve: () => ({
+    ok: true,
+    value: {
+      requestedStartDate: startDate, requestedEndDate: endDate,
+      startAt: `${startDate}T00:00:00.000000000Z` as CanonicalUtcTimestamp,
+      endAt: `${endDate}T23:59:59.999999999Z` as CanonicalUtcTimestamp,
+      calendarPolicyKey: "ti_v3_nyse_calendar", calendarPolicyVersion: "v1", sessionEvidence,
+    },
+  }) };
+  const result = resolveRelativeDateRange({
+    request: { relativeRange: null, requestedStartDate: startDate, requestedEndDate: endDate, dateBasis: "trade_close_date", timeBasis: "exchange_local", startBoundary: "inclusive", endBoundary: "inclusive", timezone: "America/New_York", calendarBasis: "trading_session" },
+    now: "2027-01-01T00:00:00.000000000Z" as CanonicalUtcTimestamp,
+    resolver,
+  });
+  if (!result.ok) throw new Error(result.error.code);
+  return result.value;
+}
 
 describe("GA0-B1 snapshot-bound analytical dataset", () => {
   it("copies exact reconstruction truth into one verified, immutable closed-round-trip row", () => {
@@ -33,7 +55,7 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
         finalExitAt: "2026-07-18T14:45:12.000000000Z",
         sessionDate: "2026-07-18",
         weekday: "saturday",
-        session: "regular",
+        session: "not_applicable",
         sequenceInPartition: "1",
         grossPnl: "5",
         signedCharges: "0.5",
@@ -147,6 +169,14 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
       ...authority,
       reconstruction: foreign.reconstruction,
     }))).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_authority_mismatch", path: "$.reconstruction" } });
+    expect(readAnalyticalDataset(createSyntheticInMemoryReadOnlySource({
+      ...authority,
+      startingInventories: [{ ...authority.startingInventories[0], asOf: "2026-07-17T00:00:00.000000000Z" }],
+    }))).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_authority_unverified", path: "$.startingInventories[0]" } });
+    expect(readAnalyticalDataset(createSyntheticInMemoryReadOnlySource({
+      ...authority,
+      dateResolutionReceipt: { ...authority.dateResolutionReceipt, calendarPolicyVersion: "v2" },
+    }))).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_authority_mismatch", path: "$.dateResolutionReceipt" } });
   });
 
   it("accounts visibly for canonical-filter, missing-inventory, and open-position exclusions", () => {
@@ -223,6 +253,22 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     if (result.ok) expect(result.value.rows.map((row) => row.currency)).toEqual(["CAD", "USD"]);
   });
 
+  it("maps manifest reasons truthfully and counts an overlapping semantic candidate once", () => {
+    const executions = buildSyntheticGa0B1ClosedExecutions();
+    const result = readAnalyticalDataset(createSyntheticInMemoryReadOnlySource(buildSyntheticGa0B1Authority(executions, {
+      manifestExclusions: [{ evidenceDigest: executions[0].canonicalContentDigest, reasonCode: "ti_v3_coverage_source_excluded" }],
+    })));
+    expect(result).toMatchObject({ ok: true, value: {
+      candidateCount: "1", includedCount: "0", excludedCount: "1",
+      excludedCandidates: [{
+        reasonCode: "ti_v3_analytics_reconstruction_blocked",
+        sourceReasonCode: "ti_v3_coverage_source_excluded",
+        reasonMappingPolicyKey: "ti_v3_manifest_exclusion_reason_mapping",
+        reasonMappingPolicyVersion: "v1",
+      }],
+    } });
+  });
+
   it("assigns sequence from meaningful entry order and excludes a whole partition when that order is ambiguous", () => {
     const base = buildSyntheticGa0B1ClosedExecutions();
     const secondTrade = [
@@ -286,12 +332,20 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     } });
   });
 
-  it("resolves UTC/New York overnight and DST edges without locale APIs", () => {
-    expect(resolveSessionFacts("2026-03-08T06:59:59.000000000Z", "America/New_York")).toMatchObject({ ok: true, value: { sessionDate: "2026-03-08", session: "overnight", weekday: "sunday" } });
-    expect(resolveSessionFacts("2026-03-08T07:00:00.000000000Z", "America/New_York")).toMatchObject({ ok: true, value: { sessionDate: "2026-03-08", session: "overnight" } });
-    expect(resolveSessionFacts("2026-11-01T05:30:00.000000000Z", "America/New_York")).toMatchObject({ ok: true, value: { sessionDate: "2026-11-01", session: "overnight" } });
-    expect(resolveSessionFacts("2026-11-01T06:30:00.000000000Z", "America/New_York")).toMatchObject({ ok: true, value: { sessionDate: "2026-11-01", session: "overnight" } });
-    expect(resolveSessionFacts("2026-07-18T02:00:00.000000000Z", "America/New_York")).toMatchObject({ ok: true, value: { sessionDate: "2026-07-17", weekday: "friday", session: "overnight" } });
+  it("separates UTC civil dates from filter-bound New York exchange sessions", () => {
+    expect(resolveSessionFacts("2026-07-18T14:00:00.000000000Z", "UTC")).toMatchObject({ ok: true, value: { sessionDate: "2026-07-18", session: "not_applicable", weekday: "saturday" } });
+    const standard = newYorkReceipt([{ sessionDate: "2026-03-06", state: "regular", openAt: "2026-03-06T14:30:00.000000000Z" as CanonicalUtcTimestamp, closeAt: "2026-03-06T21:00:00.000000000Z" as CanonicalUtcTimestamp, closureReasonCode: null }]);
+    const daylight = newYorkReceipt([{ sessionDate: "2026-03-09", state: "regular", openAt: "2026-03-09T13:30:00.000000000Z" as CanonicalUtcTimestamp, closeAt: "2026-03-09T20:00:00.000000000Z" as CanonicalUtcTimestamp, closureReasonCode: null }]);
+    expect(resolveSessionFacts("2026-03-06T15:00:00.000000000Z", "America/New_York", standard)).toMatchObject({ ok: true, value: { session: "regular", sessionDate: "2026-03-06" } });
+    expect(resolveSessionFacts("2026-03-09T14:00:00.000000000Z", "America/New_York", daylight)).toMatchObject({ ok: true, value: { session: "regular", sessionDate: "2026-03-09" } });
+    const earlyClose = newYorkReceipt([{ sessionDate: "2026-11-27", state: "early_close", openAt: "2026-11-27T14:30:00.000000000Z" as CanonicalUtcTimestamp, closeAt: "2026-11-27T18:00:00.000000000Z" as CanonicalUtcTimestamp, closureReasonCode: "ti_v3_nyse_early_close" }]);
+    expect(resolveSessionFacts("2026-11-27T18:30:00.000000000Z", "America/New_York", earlyClose)).toMatchObject({ ok: true, value: { session: "after_hours" } });
+    const holiday = newYorkReceipt([{ sessionDate: "2026-12-25", state: "holiday", openAt: null, closeAt: null, closureReasonCode: "ti_v3_nyse_holiday" }]);
+    expect(resolveSessionFacts("2026-12-25T15:00:00.000000000Z", "America/New_York", holiday)).toMatchObject({ ok: false });
+    expect(resolveSessionFacts("2026-07-18T15:00:00.000000000Z", "America/New_York", daylight)).toMatchObject({ ok: false });
+    expect(resolveSessionFacts("2006-07-18T15:00:00.000000000Z", "America/New_York", daylight)).toMatchObject({ ok: false, error: { path: "$.timestamp.pre_2007_new_york_unsupported" } });
+    const earliestSupported = newYorkReceipt([{ sessionDate: "2007-03-12", state: "regular", openAt: "2007-03-12T13:30:00.000000000Z" as CanonicalUtcTimestamp, closeAt: "2007-03-12T20:00:00.000000000Z" as CanonicalUtcTimestamp, closureReasonCode: null }]);
+    expect(resolveSessionFacts("2007-03-12T14:00:00.000000000Z", "America/New_York", earliestSupported)).toMatchObject({ ok: true, value: { session: "regular", sessionDate: "2007-03-12" } });
   });
 
   it("keeps the production-shaped bridge read-only and truthfully unavailable without exact v3 authority", () => {

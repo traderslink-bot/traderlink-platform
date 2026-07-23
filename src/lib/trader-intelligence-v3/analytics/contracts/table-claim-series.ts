@@ -1,5 +1,5 @@
 import { compareUnicodeCodePoints } from "../../domain/canonical";
-import { parseCurrencyCode, type CurrencyCode, type ExactResult } from "../../domain/exact";
+import { parseCurrencyCode, subtractExactDecimals, type CanonicalDecimal, type CurrencyCode, type ExactResult } from "../../domain/exact";
 import type { CanonicalContentDigest } from "../../domain/identity";
 import {
   GA0_B1_CONTRACT_LIMITS,
@@ -15,12 +15,12 @@ import {
   validateUnit,
   type AnalyticalContractFailure,
 } from "./contract-validation";
-import { verifyExactMetricValue, type ExactMetricValue } from "./exact-metric";
+import { buildExactMetricValue, exactMetricUnitRequiresCurrency, verifyExactMetricValue, type ExactMetricValue } from "./exact-metric";
 import {
   verifyAnalyticalEvidenceBundle,
   type AnalyticalEvidenceBundle,
 } from "./evidence-diagnostics";
-import { verifyAnalysisRunContext, type AnalysisRunContext } from "./run-context";
+import { getAnalysisRunContextDependencies, verifyAnalysisRunContext, type AnalysisRunContext } from "./run-context";
 
 export const EXACT_TABLE_VERSION = "ti_v3_exact_table_v1" as const;
 export const VALIDATED_CLAIM_VERSION = "ti_v3_validated_claim_v1" as const;
@@ -75,6 +75,13 @@ export interface ValidatedClaim {
   readonly subjectGroupKey: string;
   readonly comparisonGroupKey: string | null;
   readonly metricKey: string;
+  readonly effectDerivation: Readonly<{
+    readonly kind: "table_cell" | "difference";
+    readonly targetRowKey: string;
+    readonly targetColumnKey: string;
+    readonly comparisonRowKey: string | null;
+    readonly comparisonColumnKey: string | null;
+  }>;
   readonly direction: "positive" | "negative" | "flat" | "unavailable";
   readonly exactEffect: ExactMetricValue;
   readonly targetSampleSize: string;
@@ -117,6 +124,7 @@ export interface ChartReadySeries {
   readonly includedCount: string;
   readonly excludedCount: string;
   readonly accessibilitySummaryFacts: readonly ExactMetricValue[];
+  readonly accessibilitySummarySelections: readonly Readonly<{ readonly rowKey: string; readonly columnKey: string }>[];
   readonly pointBudget: string;
   readonly downsamplingPolicy: "none_exact_points_only";
   readonly limitationCodes: readonly string[];
@@ -190,7 +198,13 @@ function parseRows(
       if (cell.value.columnKey !== expectedColumn.columnKey) return contractFailure("ti_v3_analytics_contract_reference_mismatch", `${cellPath}.columnKey`);
       const metric = verifyExactMetricValue(cell.value.metric);
       if (!metric.ok) return contractFailure(metric.error.code, `${cellPath}.metric${metric.error.path.slice(1)}`);
-      if (metric.value.kind !== expectedColumn.valueKind || metric.value.unit !== expectedColumn.unit || (metric.value.currency !== null && metric.value.currency !== currency)) return contractFailure("ti_v3_analytics_contract_unit_mismatch", `${cellPath}.metric`);
+      if (
+        metric.value.kind !== expectedColumn.valueKind ||
+        metric.value.unit !== expectedColumn.unit ||
+        (exactMetricUnitRequiresCurrency(metric.value.unit)
+          ? metric.value.currency !== currency
+          : metric.value.currency !== null)
+      ) return contractFailure("ti_v3_analytics_contract_unit_mismatch", `${cellPath}.metric`);
       cells.push(Object.freeze({ columnKey: expectedColumn.columnKey, metric: metric.value }));
     }
     rows.push(Object.freeze({ rowKey: rowKey.value, cells: Object.freeze(cells), evidenceBundleDigest: evidenceDigest.value }));
@@ -210,7 +224,8 @@ export function buildExactTable(
   ]);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== EXACT_TABLE_VERSION) return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
-  const context = verifyAnalysisRunContext(record.value.runContext);
+  const authorities = input as Record<string, unknown>;
+  const context = verifyAnalysisRunContext(authorities.runContext);
   if (!context.ok) return contractFailure(context.error.code, `$.runContext${context.error.path.slice(1)}`);
   const tableKey = validateContractKey(record.value.tableKey, "$.tableKey");
   const tableVersion = validateContractKey(record.value.tableVersion, "$.tableVersion");
@@ -222,9 +237,18 @@ export function buildExactTable(
   if (!timezone.ok) return timezone; if (!dateBasis.ok) return dateBasis; if (!denominator.ok) return denominator;
   const currency = parseCurrency(record.value.currency, "$.currency");
   if (!currency.ok) return currency;
+  const dependencies = getAnalysisRunContextDependencies(context.value);
+  if (dependencies === null) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.runContext");
+  if (
+    timezone.value !== dependencies.canonicalFilter.timezone ||
+    dateBasis.value !== dependencies.canonicalFilter.dateBasis ||
+    (dependencies.datasetReceipt.currencyPartitions.length === 0
+      ? currency.value !== null
+      : currency.value === null || !dependencies.datasetReceipt.currencyPartitions.includes(currency.value))
+  ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.scope");
   const columns = parseColumns(record.value.columns); if (!columns.ok) return columns;
   if (!Array.isArray(record.value.evidenceBundles)) return contractFailure("ti_v3_analytics_contract_invalid", "$.evidenceBundles");
-  const evidence = evidenceCatalog(record.value.evidenceBundles as readonly AnalyticalEvidenceBundle[], context.value); if (!evidence.ok) return evidence;
+  const evidence = evidenceCatalog(authorities.evidenceBundles as readonly AnalyticalEvidenceBundle[], context.value); if (!evidence.ok) return evidence;
   const rows = parseRows(record.value.rows, "$.rows", columns.value, currency.value, evidence.value); if (!rows.ok) return rows;
   const summaryRows = parseRows(record.value.summaryRows, "$.summaryRows", columns.value, currency.value, evidence.value); if (!summaryRows.ok) return summaryRows;
   if (rows.value.some((row) => summaryRows.value.some((summary) => summary.rowKey === row.rowKey))) return contractFailure("ti_v3_analytics_contract_duplicate_identity", "$.summaryRows");
@@ -233,7 +257,17 @@ export function buildExactTable(
   if (!included.ok) return included; if (!excluded.ok) return excluded;
   if (record.value.coverageEligibilityState !== "eligible" && record.value.coverageEligibilityState !== "limited" && record.value.coverageEligibilityState !== "blocked") return contractFailure("ti_v3_analytics_contract_invalid", "$.coverageEligibilityState");
   const limitations = validateReasonCodes(record.value.limitationCodes, "$.limitationCodes"); if (!limitations.ok) return limitations;
-  if (record.value.coverageEligibilityState === "eligible" && limitations.value.length > 0) return contractFailure("ti_v3_analytics_contract_invalid", "$.limitationCodes");
+  const eligibility = dependencies.snapshotDependencies.eligibilitySet.results.find((result) => result.capability === context.value.requiredEligibilityCapability);
+  const expectedLimitations = [...new Set([
+    ...dependencies.datasetReceipt.limitations,
+    ...(eligibility?.state === "limited" ? eligibility.reasonCodes : []),
+  ])].sort(compareUnicodeCodePoints);
+  if (
+    included.value !== dependencies.datasetReceipt.includedCount ||
+    excluded.value !== dependencies.datasetReceipt.excludedCount ||
+    record.value.coverageEligibilityState !== context.value.eligibilityState ||
+    limitations.value.join("\n") !== expectedLimitations.join("\n")
+  ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.scope");
   return finalizeContentAddressedAuthority("exact_table", {
     schemaVersion: EXACT_TABLE_VERSION, tableKey: tableKey.value, tableVersion: tableVersion.value,
     runContextDigest: context.value.runContextDigest, snapshotDigest: context.value.snapshotDigest,
@@ -271,68 +305,118 @@ export function verifyExactTable(
 export function buildValidatedClaim(input: unknown): ExactResult<ValidatedClaim, AnalyticalContractFailure> {
   const record = validateContractRecord(input, [
     "schemaVersion", "claimKey", "claimVersion", "claimType", "runContext", "table",
-    "subjectGroupKey", "comparisonGroupKey", "metricKey", "direction", "exactEffect",
-    "targetSampleSize", "comparisonSampleSize", "confidenceEvidenceLabel",
-    "outlierSensitivityState", "evidenceBundles", "evidenceBundleDigests",
-    "counterexampleEvidenceBundleDigests", "limitationCodes", "allowedWordingCode",
+    "subjectGroupKey", "comparisonGroupKey", "metricKey", "effectDerivation",
+    "confidenceEvidenceLabel", "outlierSensitivityState", "evidenceBundles",
+    "allowedWordingCode",
   ]);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== VALIDATED_CLAIM_VERSION) return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
-  const context = verifyAnalysisRunContext(record.value.runContext); if (!context.ok) return context;
+  const authorities = input as Record<string, unknown>;
+  const context = verifyAnalysisRunContext(authorities.runContext); if (!context.ok) return context;
   if (!Array.isArray(record.value.evidenceBundles)) return contractFailure("ti_v3_analytics_contract_invalid", "$.evidenceBundles");
-  const bundles = record.value.evidenceBundles as readonly AnalyticalEvidenceBundle[];
-  const table = verifyExactTable(record.value.table, context.value, bundles); if (!table.ok) return table;
+  const bundles = authorities.evidenceBundles as readonly AnalyticalEvidenceBundle[];
+  const table = verifyExactTable(authorities.table, context.value, bundles); if (!table.ok) return table;
   const keys = ["claimKey", "claimVersion", "claimType", "subjectGroupKey", "metricKey", "allowedWordingCode"] as const;
   const parsed = new Map<string, string>();
   for (const key of keys) { const value = validateContractKey(record.value[key], `$.${key}`); if (!value.ok) return value; parsed.set(key, value.value); }
   let comparisonGroupKey: string | null = null;
   if (record.value.comparisonGroupKey !== null) { const value = validateContractKey(record.value.comparisonGroupKey, "$.comparisonGroupKey"); if (!value.ok) return value; comparisonGroupKey = value.value; }
-  if (record.value.direction !== "positive" && record.value.direction !== "negative" && record.value.direction !== "flat" && record.value.direction !== "unavailable") return contractFailure("ti_v3_analytics_contract_invalid", "$.direction");
-  const effect = verifyExactMetricValue(record.value.exactEffect); if (!effect.ok) return effect;
-  if (effect.value.metricKey !== parsed.get("metricKey")) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.exactEffect.metricKey");
-  const target = validateCanonicalCount(record.value.targetSampleSize, "$.targetSampleSize"); const comparison = validateCanonicalCount(record.value.comparisonSampleSize, "$.comparisonSampleSize");
-  if (!target.ok) return target; if (!comparison.ok) return comparison;
+  const derivation = validateContractRecord(record.value.effectDerivation, ["kind", "targetRowKey", "targetColumnKey", "comparisonRowKey", "comparisonColumnKey"], [], "$.effectDerivation");
+  if (!derivation.ok) return derivation;
+  if (derivation.value.kind !== "table_cell" && derivation.value.kind !== "difference") return contractFailure("ti_v3_analytics_contract_invalid", "$.effectDerivation.kind");
+  const targetRowKey = validateContractKey(derivation.value.targetRowKey, "$.effectDerivation.targetRowKey");
+  const targetColumnKey = validateContractKey(derivation.value.targetColumnKey, "$.effectDerivation.targetColumnKey");
+  if (!targetRowKey.ok) return targetRowKey; if (!targetColumnKey.ok) return targetColumnKey;
+  const tableRows = [...table.value.rows, ...table.value.summaryRows];
+  const targetRow = tableRows.find((row) => row.rowKey === targetRowKey.value);
+  const targetCell = targetRow?.cells.find((cell) => cell.columnKey === targetColumnKey.value);
+  if (targetRow === undefined || targetCell === undefined || parsed.get("subjectGroupKey") !== targetRow.rowKey) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.effectDerivation");
+  let comparisonRowKey: string | null = null;
+  let comparisonColumnKey: string | null = null;
+  let comparisonRow: ExactTableRow | undefined;
+  let effect: ExactMetricValue = targetCell.metric;
+  if (derivation.value.kind === "difference") {
+    const rowKey = validateContractKey(derivation.value.comparisonRowKey, "$.effectDerivation.comparisonRowKey");
+    const columnKey = validateContractKey(derivation.value.comparisonColumnKey, "$.effectDerivation.comparisonColumnKey");
+    if (!rowKey.ok) return rowKey; if (!columnKey.ok) return columnKey;
+    comparisonRowKey = rowKey.value; comparisonColumnKey = columnKey.value;
+    comparisonRow = tableRows.find((row) => row.rowKey === comparisonRowKey);
+    const comparisonCell = comparisonRow?.cells.find((cell) => cell.columnKey === comparisonColumnKey);
+    if (
+      comparisonRow === undefined || comparisonCell === undefined || comparisonGroupKey !== comparisonRow.rowKey ||
+      targetCell.metric.kind !== "exact_decimal" || comparisonCell.metric.kind !== "exact_decimal" ||
+      targetCell.metric.unit !== comparisonCell.metric.unit || targetCell.metric.currency !== comparisonCell.metric.currency
+    ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.effectDerivation");
+    const difference = subtractExactDecimals(targetCell.metric.value as CanonicalDecimal, comparisonCell.metric.value as CanonicalDecimal);
+    if (!difference.ok) return contractFailure("ti_v3_analytics_contract_invalid", "$.effectDerivation");
+    const builtEffect = buildExactMetricValue({ schemaVersion: "ti_v3_exact_metric_value_v1", metricKey: parsed.get("metricKey"), kind: "exact_decimal", unit: targetCell.metric.unit, currency: targetCell.metric.currency, value: difference.value });
+    if (!builtEffect.ok) return builtEffect;
+    effect = builtEffect.value;
+  } else if (derivation.value.comparisonRowKey !== null || derivation.value.comparisonColumnKey !== null || comparisonGroupKey !== null) {
+    return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.effectDerivation");
+  }
+  if (effect.metricKey !== parsed.get("metricKey")) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.metricKey");
   if (record.value.confidenceEvidenceLabel !== "insufficient" && record.value.confidenceEvidenceLabel !== "descriptive" && record.value.confidenceEvidenceLabel !== "tentative" && record.value.confidenceEvidenceLabel !== "unavailable") return contractFailure("ti_v3_analytics_contract_invalid", "$.confidenceEvidenceLabel");
   if (record.value.outlierSensitivityState !== "not_evaluated" && record.value.outlierSensitivityState !== "stable" && record.value.outlierSensitivityState !== "sensitive" && record.value.outlierSensitivityState !== "unavailable") return contractFailure("ti_v3_analytics_contract_invalid", "$.outlierSensitivityState");
-  const evidence = validateDigestArray(record.value.evidenceBundleDigests, "$.evidenceBundleDigests", "analytical_evidence_bundle"); const counter = validateDigestArray(record.value.counterexampleEvidenceBundleDigests, "$.counterexampleEvidenceBundleDigests", "analytical_evidence_bundle");
-  if (!evidence.ok) return evidence; if (!counter.ok) return counter;
   const catalog = evidenceCatalog(bundles, context.value); if (!catalog.ok) return catalog;
-  if ([...evidence.value, ...counter.value].some((digest) => !catalog.value.has(digest))) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.evidenceBundleDigests");
-  const limitations = validateReasonCodes(record.value.limitationCodes, "$.limitationCodes"); if (!limitations.ok) return limitations;
+  const targetEvidence = catalog.value.get(targetRow.evidenceBundleDigest);
+  const comparisonEvidence = comparisonRow === undefined ? undefined : catalog.value.get(comparisonRow.evidenceBundleDigest);
+  if (targetEvidence === undefined || (comparisonRow !== undefined && comparisonEvidence === undefined)) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.evidenceBundles");
+  const evidenceDigests = [targetRow.evidenceBundleDigest, ...(comparisonRow === undefined ? [] : [comparisonRow.evidenceBundleDigest])];
+  const counterDigests = comparisonRow === undefined ? [] : [comparisonRow.evidenceBundleDigest];
+  const targetSampleSize = String(targetEvidence.candidateKeys.length);
+  const comparisonSampleSize = String(comparisonEvidence?.candidateKeys.length ?? 0);
+  const limitations = [...new Set([
+    ...table.value.limitationCodes,
+    ...evidenceDigests.flatMap((digest) => catalog.value.get(digest)?.limitationCodes ?? []),
+  ])].sort(compareUnicodeCodePoints);
+  const direction = effect.kind === "unavailable" ? "unavailable" :
+    (effect.kind === "exact_decimal" || effect.kind === "integer")
+      ? effect.value === "0" ? "flat" : effect.value.startsWith("-") ? "negative" : "positive"
+      : "unavailable";
   return finalizeContentAddressedAuthority("validated_claim", {
     schemaVersion: VALIDATED_CLAIM_VERSION, claimKey: parsed.get("claimKey") as string,
     claimVersion: parsed.get("claimVersion") as string, claimType: parsed.get("claimType") as string,
     runContextDigest: context.value.runContextDigest, tableDigest: table.value.tableDigest,
     subjectGroupKey: parsed.get("subjectGroupKey") as string, comparisonGroupKey,
-    metricKey: parsed.get("metricKey") as string, direction: record.value.direction,
-    exactEffect: effect.value, targetSampleSize: target.value, comparisonSampleSize: comparison.value,
+    metricKey: parsed.get("metricKey") as string,
+    effectDerivation: { kind: derivation.value.kind, targetRowKey: targetRowKey.value, targetColumnKey: targetColumnKey.value, comparisonRowKey, comparisonColumnKey },
+    direction, exactEffect: effect, targetSampleSize, comparisonSampleSize,
     confidenceEvidenceLabel: record.value.confidenceEvidenceLabel,
     outlierSensitivityState: record.value.outlierSensitivityState,
-    evidenceBundleDigests: evidence.value, counterexampleEvidenceBundleDigests: counter.value,
-    limitationCodes: limitations.value, allowedWordingCode: parsed.get("allowedWordingCode") as string,
+    evidenceBundleDigests: evidenceDigests, counterexampleEvidenceBundleDigests: counterDigests,
+    limitationCodes: limitations, allowedWordingCode: parsed.get("allowedWordingCode") as string,
   }, "claimDigest") as ExactResult<ValidatedClaim, AnalyticalContractFailure>;
 }
 
 export function verifyValidatedClaim(input: unknown, runContext: AnalysisRunContext, table: ExactTable, evidenceBundles: readonly AnalyticalEvidenceBundle[]): ExactResult<ValidatedClaim, AnalyticalContractFailure> {
-  const record = validateContractRecord(input, ["schemaVersion", "claimKey", "claimVersion", "claimType", "runContextDigest", "tableDigest", "subjectGroupKey", "comparisonGroupKey", "metricKey", "direction", "exactEffect", "targetSampleSize", "comparisonSampleSize", "confidenceEvidenceLabel", "outlierSensitivityState", "evidenceBundleDigests", "counterexampleEvidenceBundleDigests", "limitationCodes", "allowedWordingCode", "claimDigest"]);
+  const record = validateContractRecord(input, ["schemaVersion", "claimKey", "claimVersion", "claimType", "runContextDigest", "tableDigest", "subjectGroupKey", "comparisonGroupKey", "metricKey", "effectDerivation", "direction", "exactEffect", "targetSampleSize", "comparisonSampleSize", "confidenceEvidenceLabel", "outlierSensitivityState", "evidenceBundleDigests", "counterexampleEvidenceBundleDigests", "limitationCodes", "allowedWordingCode", "claimDigest"]);
   if (!record.ok) return record;
   const context = verifyAnalysisRunContext(runContext); if (!context.ok || record.value.runContextDigest !== context.value.runContextDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.runContextDigest");
   const verifiedTable = verifyExactTable(table, context.value, evidenceBundles); if (!verifiedTable.ok || record.value.tableDigest !== verifiedTable.value.tableDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.tableDigest");
   const digest = validateClaimedDigest(record.value.claimDigest, "$.claimDigest", "validated_claim"); if (!digest.ok) return digest;
-  const { claimDigest: _claimDigest, runContextDigest: _runContextDigest, tableDigest: _tableDigest, ...content } = record.value; void _claimDigest; void _runContextDigest; void _tableDigest;
-  const rebuilt = buildValidatedClaim({ ...content, runContext: context.value, table: verifiedTable.value, evidenceBundles });
+  const rebuilt = buildValidatedClaim({
+    schemaVersion: record.value.schemaVersion, claimKey: record.value.claimKey,
+    claimVersion: record.value.claimVersion, claimType: record.value.claimType,
+    runContext: context.value, table: verifiedTable.value, subjectGroupKey: record.value.subjectGroupKey,
+    comparisonGroupKey: record.value.comparisonGroupKey, metricKey: record.value.metricKey,
+    effectDerivation: record.value.effectDerivation, confidenceEvidenceLabel: record.value.confidenceEvidenceLabel,
+    outlierSensitivityState: record.value.outlierSensitivityState, evidenceBundles,
+    allowedWordingCode: record.value.allowedWordingCode,
+  });
   if (!rebuilt.ok || rebuilt.value.claimDigest !== digest.value) return contractFailure("ti_v3_analytics_contract_digest_mismatch", "$.claimDigest");
   return rebuilt;
 }
 
 export function buildChartReadySeries(input: unknown): ExactResult<ChartReadySeries, AnalyticalContractFailure> {
-  const record = validateContractRecord(input, ["schemaVersion", "seriesKey", "seriesVersion", "approvedVisualPurpose", "allowedVisualTemplateKeys", "runContext", "sourceTable", "evidenceBundles", "xDomain", "unit", "currency", "timezone", "dateBasis", "zeroBaselineRequired", "denominatorPolicy", "points", "includedCount", "excludedCount", "accessibilitySummaryFacts", "pointBudget", "downsamplingPolicy", "limitationCodes"]);
+  const record = validateContractRecord(input, ["schemaVersion", "seriesKey", "seriesVersion", "approvedVisualPurpose", "allowedVisualTemplateKeys", "runContext", "sourceTable", "evidenceBundles", "xDomain", "unit", "currency", "timezone", "dateBasis", "zeroBaselineRequired", "denominatorPolicy", "points", "accessibilitySummarySelections", "pointBudget", "downsamplingPolicy"]);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== CHART_READY_SERIES_VERSION) return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
-  const context = verifyAnalysisRunContext(record.value.runContext); if (!context.ok) return context;
+  const authorities = input as Record<string, unknown>;
+  const context = verifyAnalysisRunContext(authorities.runContext); if (!context.ok) return context;
   if (!Array.isArray(record.value.evidenceBundles)) return contractFailure("ti_v3_analytics_contract_invalid", "$.evidenceBundles");
-  const bundles = record.value.evidenceBundles as readonly AnalyticalEvidenceBundle[];
-  const table = verifyExactTable(record.value.sourceTable, context.value, bundles); if (!table.ok) return table;
+  const bundles = authorities.evidenceBundles as readonly AnalyticalEvidenceBundle[];
+  const table = verifyExactTable(authorities.sourceTable, context.value, bundles); if (!table.ok) return table;
   const keys = ["seriesKey", "seriesVersion", "approvedVisualPurpose", "xDomain", "dateBasis", "denominatorPolicy"] as const;
   const parsed = new Map<string, string>(); for (const key of keys) { const value = validateContractKey(record.value[key], `$.${key}`); if (!value.ok) return value; parsed.set(key, value.value); }
   const templates = Array.isArray(record.value.allowedVisualTemplateKeys) ? record.value.allowedVisualTemplateKeys : null; if (templates === null || templates.length > 32) return contractFailure("ti_v3_analytics_contract_invalid", "$.allowedVisualTemplateKeys");
@@ -340,45 +424,70 @@ export function buildChartReadySeries(input: unknown): ExactResult<ChartReadySer
   if (new Set(templateKeys).size !== templateKeys.length) return contractFailure("ti_v3_analytics_contract_duplicate_identity", "$.allowedVisualTemplateKeys");
   const unit = validateUnit(record.value.unit, "$.unit"); const currency = parseCurrency(record.value.currency, "$.currency"); const timezone = validateTimezone(record.value.timezone, "$.timezone");
   if (!unit.ok) return unit; if (!currency.ok) return currency; if (!timezone.ok) return timezone;
+  if (
+    currency.value !== table.value.currency || timezone.value !== table.value.timezone ||
+    parsed.get("dateBasis") !== table.value.dateBasis || parsed.get("denominatorPolicy") !== table.value.denominatorPolicy
+  ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.scope");
   if (typeof record.value.zeroBaselineRequired !== "boolean") return contractFailure("ti_v3_analytics_contract_invalid", "$.zeroBaselineRequired");
   if (!Array.isArray(record.value.points) || record.value.points.length > GA0_B1_CONTRACT_LIMITS.maximumSeriesPoints) return contractFailure("ti_v3_analytics_contract_oversized", "$.points");
   const evidence = evidenceCatalog(bundles, context.value); if (!evidence.ok) return evidence;
   const tableRows = [...table.value.rows, ...table.value.summaryRows]; const points: ChartReadySeriesPoint[] = [];
   for (let index = 0; index < record.value.points.length; index += 1) {
-    const path = `$.points[${index}]`; const point = validateContractRecord(record.value.points[index], ["pointKey", "sourceRowKey", "sourceColumnKey", "semanticOrder", "sampleSize", "evidenceBundleDigest"], [], path); if (!point.ok) return point;
-    const pointKey = validateContractKey(point.value.pointKey, `${path}.pointKey`); const rowKey = validateContractKey(point.value.sourceRowKey, `${path}.sourceRowKey`); const columnKey = validateContractKey(point.value.sourceColumnKey, `${path}.sourceColumnKey`); const order = validateCanonicalCount(point.value.semanticOrder, `${path}.semanticOrder`); const sample = validateCanonicalCount(point.value.sampleSize, `${path}.sampleSize`);
-    if (!pointKey.ok) return pointKey; if (!rowKey.ok) return rowKey; if (!columnKey.ok) return columnKey; if (!order.ok) return order; if (!sample.ok) return sample;
+    const path = `$.points[${index}]`; const point = validateContractRecord(record.value.points[index], ["pointKey", "sourceRowKey", "sourceColumnKey", "semanticOrder", "evidenceBundleDigest"], [], path); if (!point.ok) return point;
+    const pointKey = validateContractKey(point.value.pointKey, `${path}.pointKey`); const rowKey = validateContractKey(point.value.sourceRowKey, `${path}.sourceRowKey`); const columnKey = validateContractKey(point.value.sourceColumnKey, `${path}.sourceColumnKey`); const order = validateCanonicalCount(point.value.semanticOrder, `${path}.semanticOrder`);
+    if (!pointKey.ok) return pointKey; if (!rowKey.ok) return rowKey; if (!columnKey.ok) return columnKey; if (!order.ok) return order;
     const row = tableRows.find((item) => item.rowKey === rowKey.value); const cell = row?.cells.find((item) => item.columnKey === columnKey.value); if (cell === undefined) return contractFailure("ti_v3_analytics_contract_reference_mismatch", path);
-    if (cell.metric.unit !== unit.value || (cell.metric.currency !== null && cell.metric.currency !== currency.value)) return contractFailure("ti_v3_analytics_contract_unit_mismatch", path);
+    if (cell.metric.unit !== unit.value || (exactMetricUnitRequiresCurrency(unit.value) ? cell.metric.currency !== currency.value : cell.metric.currency !== null)) return contractFailure("ti_v3_analytics_contract_unit_mismatch", path);
     const evidenceDigest = validateClaimedDigest(point.value.evidenceBundleDigest, `${path}.evidenceBundleDigest`, "analytical_evidence_bundle"); if (!evidenceDigest.ok || !evidence.value.has(evidenceDigest.value) || row?.evidenceBundleDigest !== evidenceDigest.value) return contractFailure("ti_v3_analytics_contract_reference_mismatch", `${path}.evidenceBundleDigest`);
-    points.push(Object.freeze({ pointKey: pointKey.value, sourceRowKey: rowKey.value, sourceColumnKey: columnKey.value, semanticOrder: order.value, exactValue: cell.metric, sampleSize: sample.value, evidenceBundleDigest: evidenceDigest.value }));
+    const bundle = evidence.value.get(evidenceDigest.value) as AnalyticalEvidenceBundle;
+    points.push(Object.freeze({ pointKey: pointKey.value, sourceRowKey: rowKey.value, sourceColumnKey: columnKey.value, semanticOrder: order.value, exactValue: cell.metric, sampleSize: String(bundle.candidateKeys.length), evidenceBundleDigest: evidenceDigest.value }));
   }
   if (new Set(points.map((point) => point.pointKey)).size !== points.length || new Set(points.map((point) => point.semanticOrder)).size !== points.length) return contractFailure("ti_v3_analytics_contract_duplicate_identity", "$.points");
   points.sort((left, right) => BigInt(left.semanticOrder) < BigInt(right.semanticOrder) ? -1 : BigInt(left.semanticOrder) > BigInt(right.semanticOrder) ? 1 : compareUnicodeCodePoints(left.pointKey, right.pointKey));
-  const included = validateCanonicalCount(record.value.includedCount, "$.includedCount"); const excluded = validateCanonicalCount(record.value.excludedCount, "$.excludedCount"); const pointBudget = validateCanonicalCount(record.value.pointBudget, "$.pointBudget"); if (!included.ok) return included; if (!excluded.ok) return excluded; if (!pointBudget.ok || BigInt(pointBudget.value) < BigInt(points.length)) return contractFailure("ti_v3_analytics_contract_count_invalid", "$.pointBudget");
+  const pointBudget = validateCanonicalCount(record.value.pointBudget, "$.pointBudget"); if (!pointBudget.ok || BigInt(pointBudget.value) < BigInt(points.length)) return contractFailure("ti_v3_analytics_contract_count_invalid", "$.pointBudget");
   if (record.value.downsamplingPolicy !== "none_exact_points_only") return contractFailure("ti_v3_analytics_contract_invalid", "$.downsamplingPolicy");
-  if (!Array.isArray(record.value.accessibilitySummaryFacts) || record.value.accessibilitySummaryFacts.length > 32) return contractFailure("ti_v3_analytics_contract_oversized", "$.accessibilitySummaryFacts");
-  const facts: ExactMetricValue[] = []; for (let index = 0; index < record.value.accessibilitySummaryFacts.length; index += 1) { const fact = verifyExactMetricValue(record.value.accessibilitySummaryFacts[index]); if (!fact.ok) return fact; facts.push(fact.value); }
-  const limitations = validateReasonCodes(record.value.limitationCodes, "$.limitationCodes"); if (!limitations.ok) return limitations;
+  if (!Array.isArray(record.value.accessibilitySummarySelections) || record.value.accessibilitySummarySelections.length > 32) return contractFailure("ti_v3_analytics_contract_oversized", "$.accessibilitySummarySelections");
+  const selections: Array<Readonly<{ rowKey: string; columnKey: string }>> = [];
+  const facts: ExactMetricValue[] = [];
+  for (let index = 0; index < record.value.accessibilitySummarySelections.length; index += 1) {
+    const path = `$.accessibilitySummarySelections[${index}]`;
+    const selection = validateContractRecord(record.value.accessibilitySummarySelections[index], ["rowKey", "columnKey"], [], path);
+    if (!selection.ok) return selection;
+    const rowKey = validateContractKey(selection.value.rowKey, `${path}.rowKey`);
+    const columnKey = validateContractKey(selection.value.columnKey, `${path}.columnKey`);
+    if (!rowKey.ok) return rowKey; if (!columnKey.ok) return columnKey;
+    const cell = tableRows.find((row) => row.rowKey === rowKey.value)?.cells.find((item) => item.columnKey === columnKey.value);
+    if (cell === undefined) return contractFailure("ti_v3_analytics_contract_reference_mismatch", path);
+    selections.push(Object.freeze({ rowKey: rowKey.value, columnKey: columnKey.value }));
+    facts.push(cell.metric);
+  }
   return finalizeContentAddressedAuthority("chart_ready_series", {
     schemaVersion: CHART_READY_SERIES_VERSION, seriesKey: parsed.get("seriesKey") as string, seriesVersion: parsed.get("seriesVersion") as string,
     approvedVisualPurpose: parsed.get("approvedVisualPurpose") as string, allowedVisualTemplateKeys: Object.freeze(templateKeys), runContextDigest: context.value.runContextDigest,
     sourceTableDigest: table.value.tableDigest, xDomain: parsed.get("xDomain") as string, unit: unit.value, currency: currency.value, timezone: timezone.value,
     dateBasis: parsed.get("dateBasis") as string, zeroBaselineRequired: record.value.zeroBaselineRequired,
-    denominatorPolicy: parsed.get("denominatorPolicy") as string, points: Object.freeze(points), includedCount: included.value, excludedCount: excluded.value,
-    accessibilitySummaryFacts: Object.freeze(facts), pointBudget: pointBudget.value, downsamplingPolicy: "none_exact_points_only" as const,
-    limitationCodes: limitations.value, tableAlternativeDigest: table.value.tableDigest,
+    denominatorPolicy: parsed.get("denominatorPolicy") as string, points: Object.freeze(points), includedCount: table.value.includedCount, excludedCount: table.value.excludedCount,
+    accessibilitySummaryFacts: Object.freeze(facts), accessibilitySummarySelections: Object.freeze(selections), pointBudget: pointBudget.value, downsamplingPolicy: "none_exact_points_only" as const,
+    limitationCodes: table.value.limitationCodes, tableAlternativeDigest: table.value.tableDigest,
   }, "seriesDigest") as ExactResult<ChartReadySeries, AnalyticalContractFailure>;
 }
 
 export function verifyChartReadySeries(input: unknown, runContext: AnalysisRunContext, sourceTable: ExactTable, evidenceBundles: readonly AnalyticalEvidenceBundle[]): ExactResult<ChartReadySeries, AnalyticalContractFailure> {
-  const record = validateContractRecord(input, ["schemaVersion", "seriesKey", "seriesVersion", "approvedVisualPurpose", "allowedVisualTemplateKeys", "runContextDigest", "sourceTableDigest", "xDomain", "unit", "currency", "timezone", "dateBasis", "zeroBaselineRequired", "denominatorPolicy", "points", "includedCount", "excludedCount", "accessibilitySummaryFacts", "pointBudget", "downsamplingPolicy", "limitationCodes", "tableAlternativeDigest", "seriesDigest"]); if (!record.ok) return record;
+  const record = validateContractRecord(input, ["schemaVersion", "seriesKey", "seriesVersion", "approvedVisualPurpose", "allowedVisualTemplateKeys", "runContextDigest", "sourceTableDigest", "xDomain", "unit", "currency", "timezone", "dateBasis", "zeroBaselineRequired", "denominatorPolicy", "points", "includedCount", "excludedCount", "accessibilitySummaryFacts", "accessibilitySummarySelections", "pointBudget", "downsamplingPolicy", "limitationCodes", "tableAlternativeDigest", "seriesDigest"]); if (!record.ok) return record;
   const context = verifyAnalysisRunContext(runContext); if (!context.ok || record.value.runContextDigest !== context.value.runContextDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.runContextDigest");
   const table = verifyExactTable(sourceTable, context.value, evidenceBundles); if (!table.ok || record.value.sourceTableDigest !== table.value.tableDigest || record.value.tableAlternativeDigest !== table.value.tableDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.sourceTableDigest");
   const digest = validateClaimedDigest(record.value.seriesDigest, "$.seriesDigest", "chart_ready_series"); if (!digest.ok) return digest;
-  const points = Array.isArray(record.value.points) ? record.value.points.map((point) => { if (typeof point !== "object" || point === null) return point; const { exactValue: _exactValue, ...selection } = point as Record<string, unknown>; void _exactValue; return selection; }) : record.value.points;
-  const { seriesDigest: _seriesDigest, runContextDigest: _runContextDigest, sourceTableDigest: _sourceTableDigest, tableAlternativeDigest: _tableAlternativeDigest, ...content } = record.value; void _seriesDigest; void _runContextDigest; void _sourceTableDigest; void _tableAlternativeDigest;
-  const rebuilt = buildChartReadySeries({ ...content, points, runContext: context.value, sourceTable: table.value, evidenceBundles });
+  const points = Array.isArray(record.value.points) ? record.value.points.map((point) => { if (typeof point !== "object" || point === null) return point; const { exactValue: _exactValue, sampleSize: _sampleSize, ...selection } = point as Record<string, unknown>; void _exactValue; void _sampleSize; return selection; }) : record.value.points;
+  const rebuilt = buildChartReadySeries({
+    schemaVersion: record.value.schemaVersion, seriesKey: record.value.seriesKey,
+    seriesVersion: record.value.seriesVersion, approvedVisualPurpose: record.value.approvedVisualPurpose,
+    allowedVisualTemplateKeys: record.value.allowedVisualTemplateKeys, runContext: context.value,
+    sourceTable: table.value, evidenceBundles, xDomain: record.value.xDomain, unit: record.value.unit,
+    currency: record.value.currency, timezone: record.value.timezone, dateBasis: record.value.dateBasis,
+    zeroBaselineRequired: record.value.zeroBaselineRequired, denominatorPolicy: record.value.denominatorPolicy,
+    points, accessibilitySummarySelections: record.value.accessibilitySummarySelections,
+    pointBudget: record.value.pointBudget, downsamplingPolicy: record.value.downsamplingPolicy,
+  });
   if (!rebuilt.ok || rebuilt.value.seriesDigest !== digest.value) return contractFailure("ti_v3_analytics_contract_digest_mismatch", "$.seriesDigest");
   return rebuilt;
 }

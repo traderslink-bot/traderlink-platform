@@ -12,7 +12,7 @@ import {
   validateReasonCodes,
   type AnalyticalContractFailure,
 } from "./contract-validation";
-import { verifyAnalysisRunContext, type AnalysisRunContext } from "./run-context";
+import { getAnalysisRunContextDependencies, verifyAnalysisRunContext, type AnalysisRunContext } from "./run-context";
 
 export const ANALYTICAL_EVIDENCE_BUNDLE_VERSION = "ti_v3_analytical_evidence_bundle_v1" as const;
 export const ANALYTICAL_DIAGNOSTICS_VERSION = "ti_v3_analytical_diagnostics_v1" as const;
@@ -26,8 +26,10 @@ export interface AnalyticalEvidenceBundle {
   readonly datasetReceiptDigest: CanonicalContentDigest;
   readonly comparisonGroupKey: string | null;
   readonly inclusionState: "included" | "excluded";
+  readonly candidateKeys: readonly string[];
   readonly roundTripKeys: readonly string[];
   readonly occurrenceKeys: readonly string[];
+  readonly exclusionReasonCodes: readonly string[];
   readonly limitationCodes: readonly string[];
   readonly bundleDigest: CanonicalContentDigest;
 }
@@ -51,11 +53,11 @@ export function buildAnalyticalEvidenceBundle(
 ): ExactResult<AnalyticalEvidenceBundle, AnalyticalContractFailure> {
   const record = validateContractRecord(input, [
     "schemaVersion", "evidenceKey", "runContext", "comparisonGroupKey",
-    "inclusionState", "roundTripKeys", "occurrenceKeys", "limitationCodes",
+    "inclusionState", "candidateKeys",
   ]);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== ANALYTICAL_EVIDENCE_BUNDLE_VERSION) return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
-  const context = verifyAnalysisRunContext(record.value.runContext);
+  const context = verifyAnalysisRunContext((input as Record<string, unknown>).runContext);
   if (!context.ok) return contractFailure(context.error.code, `$.runContext${context.error.path.slice(1)}`);
   const evidenceKey = validateContractKey(record.value.evidenceKey, "$.evidenceKey");
   if (!evidenceKey.ok) return evidenceKey;
@@ -66,13 +68,33 @@ export function buildAnalyticalEvidenceBundle(
     comparisonGroupKey = group.value;
   }
   if (record.value.inclusionState !== "included" && record.value.inclusionState !== "excluded") return contractFailure("ti_v3_analytics_contract_invalid", "$.inclusionState");
-  const roundTripKeys = validateKeyArray(record.value.roundTripKeys, "$.roundTripKeys");
-  const occurrenceKeys = validateKeyArray(record.value.occurrenceKeys, "$.occurrenceKeys");
-  const limitations = validateReasonCodes(record.value.limitationCodes, "$.limitationCodes");
-  if (!roundTripKeys.ok) return roundTripKeys;
-  if (!occurrenceKeys.ok) return occurrenceKeys;
-  if (!limitations.ok) return limitations;
-  if (record.value.inclusionState === "excluded" && limitations.value.length === 0) return contractFailure("ti_v3_analytics_contract_invalid", "$.limitationCodes");
+  const candidateKeys = validateKeyArray(record.value.candidateKeys, "$.candidateKeys");
+  if (!candidateKeys.ok || candidateKeys.value.length === 0) return candidateKeys.ok ? contractFailure("ti_v3_analytics_contract_invalid", "$.candidateKeys") : candidateKeys;
+  const dependencies = getAnalysisRunContextDependencies(context.value);
+  if (dependencies === null) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.runContext");
+  const roundTripKeys = new Set<string>();
+  const occurrenceKeys = new Set<string>();
+  const limitationCodes = new Set<string>();
+  const exclusionReasonCodes = new Set<string>();
+  if (record.value.inclusionState === "included") {
+    for (const candidateKey of candidateKeys.value) {
+      const row = dependencies.datasetReceipt.rows.find((item) => item.semanticRoundTripKey === candidateKey);
+      if (row === undefined) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.candidateKeys");
+      roundTripKeys.add(row.semanticRoundTripKey);
+      row.supportingOccurrenceKeys.forEach((key) => occurrenceKeys.add(key));
+      row.limitationCodes.forEach((code) => limitationCodes.add(code));
+    }
+  } else {
+    for (const candidateKey of candidateKeys.value) {
+      const exclusion = dependencies.datasetReceipt.excludedCandidates.find((item) => item.candidateKey === candidateKey);
+      if (exclusion === undefined) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.candidateKeys");
+      if (exclusion.semanticRoundTripKey !== null) roundTripKeys.add(exclusion.semanticRoundTripKey);
+      exclusion.relatedOccurrenceKeys.forEach((key) => occurrenceKeys.add(key));
+      exclusion.limitationCodes.forEach((code) => limitationCodes.add(code));
+      limitationCodes.add(exclusion.reasonCode);
+      exclusionReasonCodes.add(exclusion.reasonCode);
+    }
+  }
   return finalizeContentAddressedAuthority("analytical_evidence_bundle", {
     schemaVersion: ANALYTICAL_EVIDENCE_BUNDLE_VERSION,
     evidenceKey: evidenceKey.value,
@@ -82,9 +104,11 @@ export function buildAnalyticalEvidenceBundle(
     datasetReceiptDigest: context.value.datasetReceiptDigest,
     comparisonGroupKey,
     inclusionState: record.value.inclusionState,
-    roundTripKeys: roundTripKeys.value,
-    occurrenceKeys: occurrenceKeys.value,
-    limitationCodes: limitations.value,
+    candidateKeys: candidateKeys.value,
+    roundTripKeys: [...roundTripKeys].sort(),
+    occurrenceKeys: [...occurrenceKeys].sort(),
+    exclusionReasonCodes: [...exclusionReasonCodes].sort(),
+    limitationCodes: [...limitationCodes].sort(),
   }, "bundleDigest") as ExactResult<AnalyticalEvidenceBundle, AnalyticalContractFailure>;
 }
 
@@ -94,19 +118,22 @@ export function verifyAnalyticalEvidenceBundle(
 ): ExactResult<AnalyticalEvidenceBundle, AnalyticalContractFailure> {
   const record = validateContractRecord(input, [
     "schemaVersion", "evidenceKey", "runContextDigest", "snapshotDigest", "filterDigest",
-    "datasetReceiptDigest", "comparisonGroupKey", "inclusionState", "roundTripKeys",
-    "occurrenceKeys", "limitationCodes", "bundleDigest",
+    "datasetReceiptDigest", "comparisonGroupKey", "inclusionState", "candidateKeys", "roundTripKeys",
+    "occurrenceKeys", "exclusionReasonCodes", "limitationCodes", "bundleDigest",
   ]);
   if (!record.ok) return record;
   const context = verifyAnalysisRunContext(runContext);
   if (!context.ok || record.value.runContextDigest !== context.value.runContextDigest || record.value.snapshotDigest !== context.value.snapshotDigest || record.value.filterDigest !== context.value.filterDigest || record.value.datasetReceiptDigest !== context.value.datasetReceiptDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$");
   const digest = validateClaimedDigest(record.value.bundleDigest, "$.bundleDigest", "analytical_evidence_bundle");
   if (!digest.ok) return digest;
-  const { bundleDigest: _bundleDigest, runContextDigest: _runContextDigest,
-    snapshotDigest: _snapshotDigest, filterDigest: _filterDigest,
-    datasetReceiptDigest: _datasetDigest, ...content } = record.value;
-  void _bundleDigest; void _runContextDigest; void _snapshotDigest; void _filterDigest; void _datasetDigest;
-  const rebuilt = buildAnalyticalEvidenceBundle({ ...content, runContext: context.value });
+  const rebuilt = buildAnalyticalEvidenceBundle({
+    schemaVersion: record.value.schemaVersion,
+    evidenceKey: record.value.evidenceKey,
+    runContext: context.value,
+    comparisonGroupKey: record.value.comparisonGroupKey,
+    inclusionState: record.value.inclusionState,
+    candidateKeys: record.value.candidateKeys,
+  });
   if (!rebuilt.ok || rebuilt.value.bundleDigest !== digest.value) return contractFailure("ti_v3_analytics_contract_digest_mismatch", "$.bundleDigest");
   return rebuilt;
 }
@@ -117,7 +144,7 @@ export function buildAnalyticalDiagnostics(
   const record = validateContractRecord(input, ["schemaVersion", "runContext", "entries"]);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== ANALYTICAL_DIAGNOSTICS_VERSION) return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
-  const context = verifyAnalysisRunContext(record.value.runContext);
+  const context = verifyAnalysisRunContext((input as Record<string, unknown>).runContext);
   if (!context.ok) return contractFailure(context.error.code, `$.runContext${context.error.path.slice(1)}`);
   if (!Array.isArray(record.value.entries) || record.value.entries.length > GA0_B1_CONTRACT_LIMITS.maximumDiagnostics) return contractFailure("ti_v3_analytics_contract_oversized", "$.entries");
   const entries: AnalyticalDiagnosticEntry[] = [];

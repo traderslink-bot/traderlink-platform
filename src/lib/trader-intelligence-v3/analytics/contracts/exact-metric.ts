@@ -20,6 +20,11 @@ import {
 } from "./contract-validation";
 
 export const EXACT_METRIC_VALUE_VERSION = "ti_v3_exact_metric_value_v1" as const;
+const MONETARY_UNITS = new Set(["money", "money_per_trade", "pnl", "charges", "notional"]);
+
+export function exactMetricUnitRequiresCurrency(unit: string): boolean {
+  return MONETARY_UNITS.has(unit);
+}
 
 interface ExactMetricBase {
   readonly schemaVersion: typeof EXACT_METRIC_VALUE_VERSION;
@@ -72,6 +77,9 @@ function parseBase(record: Record<string, unknown>): ExactResult<{
   if (!unit.ok) return unit;
   const currency = validateOptionalCurrency(record.currency, "$.currency");
   if (!currency.ok) return currency;
+  if (exactMetricUnitRequiresCurrency(unit.value) !== (currency.value !== null)) {
+    return contractFailure("ti_v3_analytics_contract_unit_mismatch", "$.currency");
+  }
   return {
     ok: true,
     value: Object.freeze({

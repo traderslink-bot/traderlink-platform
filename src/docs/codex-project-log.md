@@ -1,5 +1,21 @@
 # Codex Project Log
 
+### 2026-07-23 Trader Intelligence v3 GA0-B1 Independent-Audit Remediation Candidate
+
+GA0-B1 remains the active roadmap slice on
+`agent/trader-intelligence-v3-ga0-b1-read-model` and draft PR #133. The
+independent-audit remediation now binds all starting-inventory states to the
+manifest, constructs run/evidence/proof authority from actual verified
+dependencies, derives table/claim/series/receipt facts, preserves mapped
+manifest exclusion reasons with semantic candidate deduplication, and separates
+UTC civil dates from filter-bound New York exchange sessions.
+
+The immediate resume point is the single final executable checkpoint, followed
+by an executable commit/push and current-head CI observation. Only after that
+checkpoint may the required docs-only independent re-audit handoff be written
+and pushed. Keep PR #133 draft and unmerged, leave review threads unresolved,
+do not deploy, and do not begin GA0-B2.
+
 ### 2026-07-18 Trader Intelligence v3 GA0-A3 Implementation Candidate Complete
 
 GA0-A3 executable work is complete at `50d1d9c1` on

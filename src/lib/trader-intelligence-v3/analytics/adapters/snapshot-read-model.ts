@@ -23,7 +23,7 @@ import {
 } from "../../domain/execution";
 import { createCanonicalContentIdentity, type CanonicalContentDigest, type CanonicalExecutionDigest } from "../../domain/identity";
 import { verifyDatasetManifest, type DatasetManifest } from "../../domain/manifest";
-import { verifyCanonicalQueryFilter, type CanonicalQueryFilter } from "../../domain/query";
+import { verifyCanonicalQueryFilter, verifyDateResolutionReceipt, type CanonicalQueryFilter, type DateResolutionReceipt } from "../../domain/query";
 import {
   verifyAnalysisSnapshot,
   type AnalysisSnapshot,
@@ -37,7 +37,8 @@ import {
 } from "../../domain/temporal";
 import {
   isVerifiedAnalyticalPnlReconstructionResult,
-  isVerifiedStartingInventoryContract,
+  startingInventoryManifestLedgerKey,
+  verifyStartingInventoryContract,
   reconstructAnalyticalPnl,
   type AnalyticalLedgerResult,
   type AnalyticalPnlReconstructionResult,
@@ -61,6 +62,7 @@ export const SNAPSHOT_READ_MODEL_ADAPTER_VERSION = "v1" as const;
 export interface SnapshotReadModelAuthority {
   readonly snapshot: unknown;
   readonly snapshotDependencies: AnalysisSnapshotDependencies;
+  readonly dateResolutionReceipt: DateResolutionReceipt;
   readonly correctionAuthority: Readonly<{
     result: CorrectionApplicationResult;
     baseActiveExecutionDigests: readonly CanonicalExecutionDigest[];
@@ -102,6 +104,7 @@ interface VerifiedAuthority {
   readonly dependencies: AnalysisSnapshotDependencies;
   readonly manifest: DatasetManifest;
   readonly filter: CanonicalQueryFilter;
+  readonly dateResolutionReceipt: DateResolutionReceipt;
   readonly correctionResult: CorrectionApplicationResult;
   readonly acceptedExecutions: readonly CanonicalExecutionEnvelope[];
   readonly relationshipResolution: CompleteExecutionRelationshipResolution;
@@ -198,11 +201,12 @@ function validateFilterSupport(
   filter: CanonicalQueryFilter,
   eligibility: AnalysisSnapshotDependencies["eligibilitySet"],
 ): ExactResult<true, SnapshotReadModelFailure> {
-  if (filter.dateBasis !== "trade_close_date" || filter.calendarBasis !== "calendar_day") return failure("ti_v3_analytics_filter_unsupported", "$.canonicalFilter.dateBasis");
+  if (filter.dateBasis !== "trade_close_date") return failure("ti_v3_analytics_filter_unsupported", "$.canonicalFilter.dateBasis");
   if (
     !((filter.timeBasis === "utc" && filter.timezone === "UTC") ||
       ((filter.timeBasis === "exchange_local" || filter.timeBasis === "owner_local") && filter.timezone === "America/New_York"))
   ) return failure("ti_v3_analytics_filter_unsupported", "$.canonicalFilter.timezone");
+  if ((filter.timezone === "UTC" && filter.calendarBasis !== "calendar_day") || (filter.timezone === "America/New_York" && filter.calendarBasis !== "trading_session")) return failure("ti_v3_analytics_filter_unsupported", "$.canonicalFilter.calendarBasis");
   if (filter.setupFilter !== null) return failure("ti_v3_analytics_filter_unsupported", "$.canonicalFilter.setupFilter");
   for (const capability of filter.evidenceCapabilityFilters) {
     if (!eligibility.results.some((result) => result.capability === capability)) return failure("ti_v3_analytics_filter_unsupported", "$.canonicalFilter.evidenceCapabilityFilters");
@@ -215,8 +219,10 @@ function verifyAuthority(input: SnapshotReadModelAuthority): ExactResult<Verifie
   const dependencies = input.snapshotDependencies;
   const manifest = verifyDatasetManifest(dependencies.manifest);
   const filter = verifyCanonicalQueryFilter(dependencies.filter);
+  const dateResolutionReceipt = verifyDateResolutionReceipt(input.dateResolutionReceipt);
   if (!manifest.ok) return failure("ti_v3_analytics_authority_unverified", "$.snapshotDependencies.manifest");
   if (!filter.ok) return failure("ti_v3_analytics_authority_unverified", "$.snapshotDependencies.filter");
+  if (!dateResolutionReceipt.ok || dateResolutionReceipt.value.receiptDigest !== filter.value.dateResolutionReceiptDigest) return failure("ti_v3_analytics_authority_mismatch", "$.dateResolutionReceipt");
   if (!contentIdentityMatches("dataset_manifest", manifest.value.content, manifest.value.manifestDigest)) return failure("ti_v3_analytics_authority_unverified", "$.snapshotDependencies.manifest.manifestDigest");
   const { eligibilitySetDigest: _eligibilityDigest, ...eligibilityContent } = dependencies.eligibilitySet;
   void _eligibilityDigest;
@@ -265,9 +271,22 @@ function verifyAuthority(input: SnapshotReadModelAuthority): ExactResult<Verifie
   if (authorityIdentity(relationshipProjection(rebuiltResolution)) !== authorityIdentity(relationshipProjection(input.relationshipResolution))) return failure("ti_v3_analytics_authority_mismatch", "$.relationshipResolution");
   const startingInventories: StartingInventoryContract[] = [];
   for (let index = 0; index < input.startingInventories.length; index += 1) {
-    if (!isVerifiedStartingInventoryContract(input.startingInventories[index])) return failure("ti_v3_analytics_authority_unverified", `$.startingInventories[${index}]`);
-    startingInventories.push(input.startingInventories[index]);
+    const verifiedInventory = verifyStartingInventoryContract(input.startingInventories[index]);
+    if (!verifiedInventory.ok) return failure("ti_v3_analytics_authority_unverified", `$.startingInventories[${index}]`);
+    startingInventories.push(verifiedInventory.value);
   }
+  const manifestInventories = new Map(manifest.value.content.priorInventory.map((entry) => [entry.ledgerKey, entry]));
+  const suppliedInventoryKeys = startingInventories.map((inventory) => startingInventoryManifestLedgerKey(inventory.ledgerIdentity));
+  if (
+    new Set(suppliedInventoryKeys).size !== suppliedInventoryKeys.length ||
+    suppliedInventoryKeys.length !== manifestInventories.size ||
+    startingInventories.some((inventory) => {
+      const manifestInventory = manifestInventories.get(startingInventoryManifestLedgerKey(inventory.ledgerIdentity));
+      return manifestInventory === undefined ||
+        manifestInventory.state !== inventory.state ||
+        manifestInventory.contractDigest !== inventory.contractDigest;
+    })
+  ) return failure("ti_v3_analytics_authority_mismatch", "$.startingInventories");
   if (!isVerifiedAnalyticalPnlReconstructionResult(input.reconstruction)) return failure("ti_v3_analytics_authority_unverified", "$.reconstruction");
   const rebuiltReconstruction = reconstructAnalyticalPnl({ relationshipResolution: rebuiltResolution, startingInventories });
   if (authorityIdentity(rebuiltReconstruction) !== authorityIdentity(input.reconstruction)) return failure("ti_v3_analytics_authority_mismatch", "$.reconstruction");
@@ -280,7 +299,7 @@ function verifyAuthority(input: SnapshotReadModelAuthority): ExactResult<Verifie
   const rebuiltRoundTrips = buildRoundTripEvidenceInventory(rebuiltReconstruction);
   if (!rebuiltRoundTrips.ok || (dependencies.roundTripInventory !== null && rebuiltRoundTrips.value.inventoryDigest !== dependencies.roundTripInventory.inventoryDigest)) return failure("ti_v3_analytics_authority_mismatch", "$.snapshotDependencies.roundTripInventory");
   return { ok: true, value: Object.freeze({
-    snapshot: snapshot.value, dependencies, manifest: manifest.value, filter: filter.value,
+    snapshot: snapshot.value, dependencies, manifest: manifest.value, filter: filter.value, dateResolutionReceipt: dateResolutionReceipt.value,
     correctionResult: rebuiltCorrection.value,
     acceptedExecutions: Object.freeze([...acceptedExecutions].sort((left, right) => compareUnicodeCodePoints(left.canonicalContentDigest, right.canonicalContentDigest))),
     relationshipResolution: rebuiltResolution, reconstruction: rebuiltReconstruction,
@@ -325,12 +344,29 @@ function exclusion(
   occurrences: readonly string[] = [],
   currency: CurrencyCode | null = null,
   limitations: readonly string[] = [],
+  sourceReasonCode: string | null = null,
 ): ExcludedAnalyticalCandidate {
   return Object.freeze({ candidateKey, semanticRoundTripKey, reasonCode,
+    sourceReasonCode,
+    reasonMappingPolicyKey: "ti_v3_manifest_exclusion_reason_mapping" as const,
+    reasonMappingPolicyVersion: "v1" as const,
     limitationCodes: Object.freeze([...new Set(limitations)].sort(compareUnicodeCodePoints)),
     relatedExecutionDigests: Object.freeze([...new Set(executions)].sort(compareUnicodeCodePoints)),
     relatedOccurrenceKeys: Object.freeze([...new Set(occurrences)].sort(compareUnicodeCodePoints)),
     currency });
+}
+
+function mapManifestExclusionReason(sourceReasonCode: string): string {
+  if (sourceReasonCode.includes("open_position") || sourceReasonCode.includes("lifecycle")) return ANALYTICAL_EXCLUSION_REASONS.openLifecycle;
+  if (sourceReasonCode.includes("correction")) return ANALYTICAL_EXCLUSION_REASONS.eligibilityIncompatible;
+  if (sourceReasonCode.includes("coverage") || sourceReasonCode.includes("reconstruction")) return ANALYTICAL_EXCLUSION_REASONS.blockedReconstruction;
+  return ANALYTICAL_EXCLUSION_REASONS.manifestExcluded;
+}
+
+function semanticExclusionIdentity(candidate: ExcludedAnalyticalCandidate): string {
+  if (candidate.semanticRoundTripKey !== null) return `round_trip:${candidate.semanticRoundTripKey}`;
+  if (candidate.relatedExecutionDigests.length > 0) return `executions:${candidate.relatedExecutionDigests.join(":")}`;
+  return `candidate:${candidate.candidateKey}`;
 }
 
 function outcome(amount: string): "gain" | "loss" | "flat" {
@@ -404,7 +440,7 @@ function deriveDataset(authority: VerifiedAuthority): ExactResult<AnalyticalData
     const firstEntry = ordering.economicallyOrderedExecutions.find((execution) => execution.content.side === entrySide);
     const finalExit = [...ordering.economicallyOrderedExecutions].reverse().find((execution) => execution.content.side === exitSide);
     if (firstEntry === undefined || finalExit === undefined) { exclusions.push(exclusion(key, key, ANALYTICAL_EXCLUSION_REASONS.catalogMismatch, roundTrip.executionDigests, occurrences.flat(), ledger.currency)); continue; }
-    const session = resolveSessionFacts(finalExit.content.executedAt, authority.filter.timezone);
+    const session = resolveSessionFacts(finalExit.content.executedAt, authority.filter.timezone, authority.dateResolutionReceipt);
     if (!session.ok) { exclusions.push(exclusion(key, key, ANALYTICAL_EXCLUSION_REASONS.unprovableSession, roundTrip.executionDigests, occurrences.flat(), ledger.currency)); continue; }
     const symbolChanged = exactExecutions.some((execution) => execution.content.rawBrokerSymbol !== firstEntry.content.rawBrokerSymbol);
     if (!filterIncludesRow(authority.filter, { account: ledger.canonicalAccountKey, instrument: ledger.stableInstrumentKey, symbol: firstEntry.content.rawBrokerSymbol, direction: roundTrip.direction, currency: ledger.currency, finalExitAt: finalExit.content.executedAt, session: session.value, netPnl: roundTrip.netAnalyticalPnl }, authority.dependencies.eligibilitySet)) { exclusions.push(exclusion(key, key, ANALYTICAL_EXCLUSION_REASONS.filterExcluded, roundTrip.executionDigests, occurrences.flat(), ledger.currency)); continue; }
@@ -431,7 +467,16 @@ function deriveDataset(authority: VerifiedAuthority): ExactResult<AnalyticalData
   }
   authority.manifest.content.openPositions.forEach((position) => exclusions.push(exclusion(`open:${position.ledgerKey}`, null, ANALYTICAL_EXCLUSION_REASONS.openLifecycle, position.executionDigests)));
   authority.reconstruction.blockedStates.forEach((blocked, index) => exclusions.push(exclusion(`blocked:${blocked.code}:${blocked.executionDigest ?? "none"}:${String(index + 1)}`, null, blocked.code.includes("order") ? ANALYTICAL_EXCLUSION_REASONS.ambiguousReconstruction : ANALYTICAL_EXCLUSION_REASONS.blockedReconstruction, blocked.relatedExecutionDigests ?? (blocked.executionDigest === null ? [] : [blocked.executionDigest]), [], null, [blocked.code])));
-  authority.manifest.content.exclusions.forEach((item) => exclusions.push(exclusion(`manifest:${item.evidenceDigest}`, null, ANALYTICAL_EXCLUSION_REASONS.openLifecycle, [], [], null, [item.reasonCode])));
+  authority.manifest.content.exclusions.forEach((item) => exclusions.push(exclusion(
+    `manifest:${item.evidenceDigest}`,
+    null,
+    mapManifestExclusionReason(item.reasonCode),
+    String(item.evidenceDigest).startsWith("ti_v3:canonical_execution:") ? [item.evidenceDigest as CanonicalExecutionDigest] : [],
+    [],
+    null,
+    [item.reasonCode],
+    item.reasonCode,
+  )));
   const partitions = new Map<string, PreliminaryRow[]>();
   for (const row of preliminary) {
     const partitionKey = `${String(row.rowInput.canonicalAccountKey)}:${String(row.rowInput.currency)}:${String(row.rowInput.sessionDate)}`;
@@ -454,7 +499,30 @@ function deriveDataset(authority: VerifiedAuthority): ExactResult<AnalyticalData
       rows.push(built.value);
     }
   }
-  if (rows.length + exclusions.length > GA0_B1_CONTRACT_LIMITS.maximumRows) return failure("ti_v3_analytics_input_oversized", "$.candidates");
+  const mappedExclusions = exclusions.map((candidate) => {
+    if (candidate.sourceReasonCode === null || candidate.relatedExecutionDigests.length === 0) return candidate;
+    const row = rows.find((item) => candidate.relatedExecutionDigests.some((digest) => item.supportingExecutionDigests.includes(digest)));
+    return row === undefined ? candidate : exclusion(
+      row.semanticRoundTripKey,
+      row.semanticRoundTripKey,
+      candidate.reasonCode,
+      row.supportingExecutionDigests,
+      row.supportingOccurrenceKeys,
+      row.currency,
+      candidate.limitationCodes,
+      candidate.sourceReasonCode,
+    );
+  });
+  const seenCandidateIdentities = new Set<string>();
+  const deduplicatedExclusions = mappedExclusions.filter((candidate) => {
+    const identity = semanticExclusionIdentity(candidate);
+    if (seenCandidateIdentities.has(identity)) return false;
+    seenCandidateIdentities.add(identity);
+    return true;
+  });
+  const excludedRoundTrips = new Set(deduplicatedExclusions.flatMap((candidate) => candidate.semanticRoundTripKey === null ? [] : [candidate.semanticRoundTripKey]));
+  const includedRows = rows.filter((row) => !excludedRoundTrips.has(row.semanticRoundTripKey));
+  if (includedRows.length + deduplicatedExclusions.length > GA0_B1_CONTRACT_LIMITS.maximumRows) return failure("ti_v3_analytics_input_oversized", "$.candidates");
   const limitations = [...new Set([
     ...authority.manifest.content.reconstructionReasonCodes,
     ...authority.reconstruction.limitations,
@@ -473,7 +541,7 @@ function deriveDataset(authority: VerifiedAuthority): ExactResult<AnalyticalData
     adapterKey: SNAPSHOT_READ_MODEL_ADAPTER_KEY, adapterVersion: SNAPSHOT_READ_MODEL_ADAPTER_VERSION,
     derivationPolicyKey: GA0_B1_DERIVATION_POLICY.policyKey,
     derivationPolicyVersion: GA0_B1_DERIVATION_POLICY.policyVersion,
-    rows, excludedCandidates: exclusions, limitations,
+    rows: includedRows, excludedCandidates: deduplicatedExclusions, limitations,
   });
   return dataset.ok ? dataset : failure("ti_v3_analytics_dataset_construction_failed", dataset.error.path, dataset.error.code);
 }

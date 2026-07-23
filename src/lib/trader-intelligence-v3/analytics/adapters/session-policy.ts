@@ -1,4 +1,5 @@
 import type { ExactResult } from "../../domain/exact";
+import { verifyDateResolutionReceipt, type DateResolutionReceipt } from "../../domain/query";
 import {
   contractFailure,
   validateTimestampValue,
@@ -8,8 +9,8 @@ import {
 export const GA0_B1_DERIVATION_POLICY = Object.freeze({
   policyKey: "ti_v3_closed_round_trip_read_model",
   policyVersion: "v1",
-  sessionPolicyKey: "ti_v3_utc_and_new_york_civil_session",
-  sessionPolicyVersion: "v1",
+  sessionPolicyKey: "ti_v3_filter_bound_civil_and_exchange_session",
+  sessionPolicyVersion: "v2",
   displayedSymbolPolicy:
     "ti_v3_first_economic_entry_symbol_non_authoritative_v1",
   supportedTimezones: Object.freeze(["America/New_York", "UTC"] as const),
@@ -28,7 +29,8 @@ export type CanonicalSession =
   | "premarket"
   | "regular"
   | "after_hours"
-  | "overnight";
+  | "overnight"
+  | "not_applicable";
 
 export interface ResolvedSessionFacts {
   readonly sessionDate: string;
@@ -129,17 +131,10 @@ function shiftUtcToLocal(
   return Object.freeze({ year, month, day, hour, minute });
 }
 
-function classifySession(hour: bigint, minute: bigint): CanonicalSession {
-  const minuteOfDay = hour * BigInt(60) + minute;
-  if (minuteOfDay >= BigInt(240) && minuteOfDay < BigInt(570)) return "premarket";
-  if (minuteOfDay >= BigInt(570) && minuteOfDay < BigInt(960)) return "regular";
-  if (minuteOfDay >= BigInt(960) && minuteOfDay < BigInt(1200)) return "after_hours";
-  return "overnight";
-}
-
 export function resolveSessionFacts(
   timestampInput: unknown,
   timezone: string,
+  dateResolutionReceipt?: DateResolutionReceipt,
 ): ExactResult<ResolvedSessionFacts, AnalyticalContractFailure> {
   const timestamp = validateTimestampValue(timestampInput, "$.timestamp");
   if (!timestamp.ok) return timestamp;
@@ -147,6 +142,9 @@ export function resolveSessionFacts(
     return contractFailure("ti_v3_analytics_contract_invalid", "$.timezone");
   }
   const year = BigInt(timestamp.value.slice(0, 4));
+  if (timezone === "America/New_York" && year < BigInt(2007)) {
+    return contractFailure("ti_v3_analytics_contract_invalid", "$.timestamp.pre_2007_new_york_unsupported");
+  }
   let offset = BigInt(0);
   if (timezone === "America/New_York") {
     const bounds = newYorkDstBounds(year);
@@ -160,12 +158,30 @@ export function resolveSessionFacts(
   if (weekday === undefined) {
     return contractFailure("ti_v3_analytics_contract_invalid", "$.timestamp");
   }
+  const sessionDate = canonicalDate(local.year, local.month, local.day);
+  let session: CanonicalSession = "not_applicable";
+  if (timezone === "America/New_York") {
+    const receipt = verifyDateResolutionReceipt(dateResolutionReceipt);
+    if (
+      !receipt.ok || receipt.value.timezone !== timezone ||
+      receipt.value.calendarBasis !== "trading_session" || receipt.value.timeBasis === "utc"
+    ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.dateResolutionReceipt");
+    const evidence = receipt.value.sessionEvidence.find((item) => item.sessionDate === sessionDate);
+    if (evidence === undefined || evidence.state === "holiday" || evidence.openAt === null || evidence.closeAt === null) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.dateResolutionReceipt.sessionEvidence");
+    if (timestamp.value >= evidence.openAt && timestamp.value < evidence.closeAt) session = "regular";
+    else {
+      const minuteOfDay = local.hour * BigInt(60) + local.minute;
+      if (minuteOfDay >= BigInt(240) && timestamp.value < evidence.openAt) session = "premarket";
+      else if (timestamp.value >= evidence.closeAt && minuteOfDay < BigInt(1200)) session = "after_hours";
+      else session = "overnight";
+    }
+  }
   return {
     ok: true,
     value: Object.freeze({
-      sessionDate: canonicalDate(local.year, local.month, local.day),
+      sessionDate,
       weekday,
-      session: classifySession(local.hour, local.minute),
+      session,
     }),
   };
 }

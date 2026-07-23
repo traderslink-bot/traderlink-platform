@@ -87,7 +87,7 @@ function manifestResult(overrides: ManifestOverrides = {}) {
     statementPeriods: overrides.statementPeriods ?? [{ startAt: "2026-07-01T00:00:00.000000000Z", endAt: "2026-07-18T00:00:00.000000000Z", startInclusive: true, endInclusive: false }],
     knownGaps: overrides.gaps ?? [],
     overlappingPeriods: overrides.overlappingPeriods ?? [], exclusions: [],
-    priorInventory: overrides.priorInventory ?? [{ ledgerKey: "account_primary:aapl:usd", state: "proven_flat", contractDigest: null }],
+    priorInventory: overrides.priorInventory ?? [{ ledgerKey: "owner_local:account_primary:aapl:usd", state: "proven_flat", contractDigest: digest("starting_inventory", "d") }],
     openPositions, currencies: overrides.currencies ?? ["USD"], coverageStates: overrides.coverageStates ?? (overrides.gaps?.length ? ["partial_account_period"] : ["complete_account_period"]),
     reconstructionStatus: overrides.gaps?.length ? "limited" : "exact",
     reconstructionReasonCodes: overrides.gaps?.length ? ["ti_v3_coverage_gap"] : [],
@@ -209,7 +209,7 @@ describe("GA0-A3 manifests and capability eligibility", () => {
     const source = { sourceDocumentDigest: sourceA, sourceKind: "broker_csv", statementPeriods: [{ startAt: "2026-07-01T00:00:00.000000000Z", endAt: "2026-07-18T00:00:00.000000000Z", startInclusive: true, endInclusive: false }], deletionState: "present" };
     expect(manifestResult({ sourceDocuments: [source, source] }).ok).toBe(false);
     expect(manifestResult({ openPositions: [{ ledgerKey: "account_primary:aapl:usd", executionDigests: [digest("canonical_execution", "9")] }] }).ok).toBe(false);
-    expect(manifestResult({ priorInventory: [{ ledgerKey: "account_foreign:aapl:usd", state: "proven_flat", contractDigest: null }] }).ok).toBe(false);
+    expect(manifestResult({ priorInventory: [{ ledgerKey: "owner_local:account_foreign:aapl:usd", state: "proven_flat", contractDigest: digest("starting_inventory", "e") }] }).ok).toBe(false);
     expect(manifestResult({ gaps: [{ scopeKey: "account_primary", range: { startAt: "2026-07-04T00:00:00.000000000Z", endAt: "2026-07-05T00:00:00.000000000Z", startInclusive: true, endInclusive: false }, reasonCode: "ti_v3_source_period_missing" }], coverageStates: ["complete_account_period"] }).ok).toBe(false);
   });
 

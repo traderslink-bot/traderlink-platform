@@ -15,6 +15,14 @@ import {
 
 export const TOOL_REGISTRY_ENTRY_VERSION = "ti_v3_tool_registry_entry_v1" as const;
 export const TOOL_REGISTRY_SNAPSHOT_VERSION = "ti_v3_tool_registry_snapshot_v1" as const;
+export const NORMALIZED_ANALYSIS_ARGUMENTS_VERSION = "ti_v3_normalized_analysis_arguments_v1" as const;
+
+export interface NormalizedAnalysisArguments {
+  readonly schemaVersion: typeof NORMALIZED_ANALYSIS_ARGUMENTS_VERSION;
+  readonly argumentSchemaDigest: CanonicalContentDigest;
+  readonly values: Readonly<Record<string, unknown>>;
+  readonly argumentsDigest: CanonicalContentDigest;
+}
 
 export interface ToolRegistryEntry {
   readonly schemaVersion: typeof TOOL_REGISTRY_ENTRY_VERSION;
@@ -27,6 +35,8 @@ export interface ToolRegistryEntry {
   readonly outputContracts: readonly string[];
   readonly evidencePolicyKey: string;
   readonly evidencePolicyVersion: string;
+  readonly toolPolicyKey: string;
+  readonly toolPolicyVersion: string;
   readonly minimumSamplePolicyState: "deferred_to_tool_slice";
   readonly supportedCurrencies: readonly CurrencyCode[];
   readonly supportedTimezones: readonly string[];
@@ -49,12 +59,13 @@ export function buildToolRegistryEntry(input: unknown): ExactResult<ToolRegistry
     "schemaVersion", "toolKey", "toolVersion", "descriptionCode",
     "requiredEligibilityCapability", "argumentSchemaDigest", "requiredRowFields",
     "outputContracts", "evidencePolicyKey", "evidencePolicyVersion",
+    "toolPolicyKey", "toolPolicyVersion",
     "minimumSamplePolicyState", "supportedCurrencies", "supportedTimezones",
     "deprecationState", "focusedTestKeys", "executableState",
   ]);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== TOOL_REGISTRY_ENTRY_VERSION) return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
-  const keyNames = ["toolKey", "toolVersion", "descriptionCode", "requiredEligibilityCapability", "evidencePolicyKey", "evidencePolicyVersion"] as const;
+  const keyNames = ["toolKey", "toolVersion", "descriptionCode", "requiredEligibilityCapability", "evidencePolicyKey", "evidencePolicyVersion", "toolPolicyKey", "toolPolicyVersion"] as const;
   const parsed = new Map<string, string>();
   for (const key of keyNames) { const value = validateContractKey(record.value[key], `$.${key}`); if (!value.ok) return value; parsed.set(key, value.value); }
   const schemaDigest = validateClaimedDigest(record.value.argumentSchemaDigest, "$.argumentSchemaDigest", "canonical_content"); if (!schemaDigest.ok) return schemaDigest;
@@ -79,6 +90,8 @@ export function buildToolRegistryEntry(input: unknown): ExactResult<ToolRegistry
     argumentSchemaDigest: schemaDigest.value, requiredRowFields: rowFields.value,
     outputContracts: outputs.value, evidencePolicyKey: parsed.get("evidencePolicyKey") as string,
     evidencePolicyVersion: parsed.get("evidencePolicyVersion") as string,
+    toolPolicyKey: parsed.get("toolPolicyKey") as string,
+    toolPolicyVersion: parsed.get("toolPolicyVersion") as string,
     minimumSamplePolicyState: "deferred_to_tool_slice" as const,
     supportedCurrencies: Object.freeze([...currencies].sort(compareUnicodeCodePoints)),
     supportedTimezones: Object.freeze([...timezones].sort(compareUnicodeCodePoints)),
@@ -88,7 +101,7 @@ export function buildToolRegistryEntry(input: unknown): ExactResult<ToolRegistry
 }
 
 export function verifyToolRegistryEntry(input: unknown): ExactResult<ToolRegistryEntry, AnalyticalContractFailure> {
-  const record = validateContractRecord(input, ["schemaVersion", "toolKey", "toolVersion", "descriptionCode", "requiredEligibilityCapability", "argumentSchemaDigest", "requiredRowFields", "outputContracts", "evidencePolicyKey", "evidencePolicyVersion", "minimumSamplePolicyState", "supportedCurrencies", "supportedTimezones", "deprecationState", "focusedTestKeys", "executableState", "entryDigest"]);
+  const record = validateContractRecord(input, ["schemaVersion", "toolKey", "toolVersion", "descriptionCode", "requiredEligibilityCapability", "argumentSchemaDigest", "requiredRowFields", "outputContracts", "evidencePolicyKey", "evidencePolicyVersion", "toolPolicyKey", "toolPolicyVersion", "minimumSamplePolicyState", "supportedCurrencies", "supportedTimezones", "deprecationState", "focusedTestKeys", "executableState", "entryDigest"]);
   if (!record.ok) return record;
   const digest = validateClaimedDigest(record.value.entryDigest, "$.entryDigest", "tool_registry_entry"); if (!digest.ok) return digest;
   const { entryDigest: _entryDigest, ...content } = record.value; void _entryDigest;
@@ -113,5 +126,37 @@ export function verifyToolRegistrySnapshot(input: unknown): ExactResult<ToolRegi
   const digest = validateClaimedDigest(record.value.registryDigest, "$.registryDigest", "tool_registry_snapshot"); if (!digest.ok) return digest;
   const { registryDigest: _registryDigest, ...content } = record.value; void _registryDigest;
   const rebuilt = buildToolRegistrySnapshot(content); if (!rebuilt.ok || rebuilt.value.registryDigest !== digest.value) return contractFailure("ti_v3_analytics_contract_digest_mismatch", "$.registryDigest");
+  return rebuilt;
+}
+
+export function buildNormalizedAnalysisArguments(
+  input: unknown,
+): ExactResult<NormalizedAnalysisArguments, AnalyticalContractFailure> {
+  const record = validateContractRecord(input, ["schemaVersion", "argumentSchemaDigest", "values"]);
+  if (!record.ok) return record;
+  if (record.value.schemaVersion !== NORMALIZED_ANALYSIS_ARGUMENTS_VERSION) return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
+  const schemaDigest = validateClaimedDigest(record.value.argumentSchemaDigest, "$.argumentSchemaDigest", "canonical_content");
+  if (!schemaDigest.ok) return schemaDigest;
+  if (typeof record.value.values !== "object" || record.value.values === null || Array.isArray(record.value.values)) return contractFailure("ti_v3_analytics_contract_invalid", "$.values");
+  return finalizeContentAddressedAuthority("normalized_analysis_arguments", {
+    schemaVersion: NORMALIZED_ANALYSIS_ARGUMENTS_VERSION,
+    argumentSchemaDigest: schemaDigest.value,
+    values: record.value.values as Readonly<Record<string, unknown>>,
+  }, "argumentsDigest") as ExactResult<NormalizedAnalysisArguments, AnalyticalContractFailure>;
+}
+
+export function verifyNormalizedAnalysisArguments(
+  input: unknown,
+): ExactResult<NormalizedAnalysisArguments, AnalyticalContractFailure> {
+  const record = validateContractRecord(input, ["schemaVersion", "argumentSchemaDigest", "values", "argumentsDigest"]);
+  if (!record.ok) return record;
+  const digest = validateClaimedDigest(record.value.argumentsDigest, "$.argumentsDigest", "normalized_analysis_arguments");
+  if (!digest.ok) return digest;
+  const rebuilt = buildNormalizedAnalysisArguments({
+    schemaVersion: record.value.schemaVersion,
+    argumentSchemaDigest: record.value.argumentSchemaDigest,
+    values: record.value.values,
+  });
+  if (!rebuilt.ok || rebuilt.value.argumentsDigest !== digest.value) return contractFailure("ti_v3_analytics_contract_digest_mismatch", "$.argumentsDigest");
   return rebuilt;
 }

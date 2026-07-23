@@ -15,7 +15,9 @@ import {
   type ExactResult,
 } from "../exact";
 import {
+  createCanonicalContentIdentity,
   parseCanonicalContentDigest,
+  type CanonicalContentDigest,
   type CanonicalExecutionDigest,
   type CanonicalSourceDocumentDigest,
 } from "../identity";
@@ -85,6 +87,7 @@ export interface StartingInventoryContract {
   readonly coverageState: StartingInventoryCoverageState;
   readonly ledgerIdentity: StartingInventoryLedgerIdentity;
   readonly priorLots: readonly AcceptedPriorLot[];
+  readonly contractDigest: CanonicalContentDigest;
 }
 
 export type StartingInventoryFailureCode =
@@ -100,6 +103,8 @@ export type StartingInventoryFailureCode =
   | "ti_v3_starting_inventory_prior_lot_duplicate_id"
   | "ti_v3_starting_inventory_prior_lot_duplicate_execution"
   | "ti_v3_starting_inventory_prior_charge_invalid";
+
+const STARTING_INVENTORY_DIGEST_VERSION = "v1" as const;
 
 export interface StartingInventoryFailure {
   readonly code: "ti_v3_starting_inventory_invalid";
@@ -200,14 +205,62 @@ export function startingInventoryLedgerGroupKey(
   ].join(":");
 }
 
+export function startingInventoryManifestLedgerKey(
+  identity: StartingInventoryLedgerIdentity,
+): string {
+  return [
+    identity.canonicalOwnerKey,
+    identity.canonicalAccountKey,
+    identity.stableInstrumentKey,
+    identity.currency.toLowerCase(),
+  ].join(":");
+}
+
 export function isVerifiedStartingInventoryContract(
   input: unknown,
 ): input is StartingInventoryContract {
-  return (
-    typeof input === "object" &&
-    input !== null &&
-    protectedStartingInventories.has(input as StartingInventoryContract)
-  );
+  return verifyStartingInventoryContract(input).ok;
+}
+
+function startingInventoryContent(input: Omit<StartingInventoryContract, "contractDigest">): object {
+  return {
+    policyVersion: input.policyVersion,
+    state: input.state,
+    asOf: input.asOf,
+    coverageState: input.coverageState,
+    ledgerIdentity: input.ledgerIdentity,
+    priorLots: input.priorLots,
+  };
+}
+
+export function verifyStartingInventoryContract(
+  input: unknown,
+): ExactResult<StartingInventoryContract, StartingInventoryFailure> {
+  if (!isRecord(input)) return failure(["ti_v3_starting_inventory_input_invalid"]);
+  const suppliedDigest = parseCanonicalContentDigest(input.contractDigest);
+  if (
+    input.policyVersion !== STARTING_INVENTORY_POLICY_VERSION ||
+    !suppliedDigest.ok ||
+    !String(suppliedDigest.value).startsWith("ti_v3:starting_inventory:v1:")
+  ) return failure(["ti_v3_starting_inventory_input_invalid"]);
+  if (protectedStartingInventories.has(input as StartingInventoryContract)) {
+    const { contractDigest: _digest, ...content } = input as unknown as StartingInventoryContract;
+    const identity = createCanonicalContentIdentity("starting_inventory", STARTING_INVENTORY_DIGEST_VERSION, content);
+    return identity.ok && identity.value.identifier === suppliedDigest.value
+      ? { ok: true, value: input as unknown as StartingInventoryContract }
+      : failure(["ti_v3_starting_inventory_input_invalid"]);
+  }
+  const rebuilt = buildStartingInventoryContract({
+    state: input.state,
+    asOf: input.asOf,
+    coverageState: input.coverageState,
+    ledgerIdentity: input.ledgerIdentity,
+    priorLots: input.priorLots,
+  });
+  if (!rebuilt.ok || rebuilt.value.contractDigest !== suppliedDigest.value) {
+    return failure(["ti_v3_starting_inventory_input_invalid"]);
+  }
+  return rebuilt;
 }
 
 export function buildStartingInventoryContract(
@@ -434,13 +487,23 @@ export function buildStartingInventoryContract(
     stableInstrumentKey: identity.stableInstrumentKey as string,
     currency: currency.value,
   });
-  const contract: StartingInventoryContract = Object.freeze({
+  const content = {
     policyVersion: STARTING_INVENTORY_POLICY_VERSION,
     state: state as StartingInventoryState,
     asOf: asOf.value,
     coverageState: coverageState as StartingInventoryCoverageState,
     ledgerIdentity,
     priorLots: Object.freeze(priorLots),
+  } as const;
+  const identityResult = createCanonicalContentIdentity(
+    "starting_inventory",
+    STARTING_INVENTORY_DIGEST_VERSION,
+    startingInventoryContent(content as Omit<StartingInventoryContract, "contractDigest">),
+  );
+  if (!identityResult.ok) return failure(["ti_v3_starting_inventory_input_invalid"]);
+  const contract: StartingInventoryContract = Object.freeze({
+    ...content,
+    contractDigest: identityResult.value.identifier,
   });
   protectedStartingInventories.add(contract);
   return { ok: true, value: contract };

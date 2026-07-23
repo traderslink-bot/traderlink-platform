@@ -12,6 +12,7 @@ import {
   reconstructAnalyticalPnl,
   resolveRelativeDateRange,
   type CanonicalExecutionEnvelope,
+  type CanonicalContentDigest,
   type CanonicalUtcTimestamp,
   type ManifestOpenPosition,
   type RelativeDateResolver,
@@ -62,6 +63,7 @@ export interface SyntheticGa0B1AuthorityOptions {
   readonly includeOccurrenceInventory?: boolean;
   readonly includeRoundTripInventory?: boolean;
   readonly policyState?: RetrospectivePolicyState;
+  readonly manifestExclusions?: readonly Readonly<{ readonly evidenceDigest: CanonicalContentDigest; readonly reasonCode: string }>[];
   readonly filterOverrides?: Readonly<{
     accountFilters?: readonly string[];
     instrumentFilters?: readonly string[];
@@ -119,14 +121,19 @@ export function buildSyntheticGa0B1Authority(
   const sourceDocuments = [...sourceDocumentMap.values()];
   const accountKeys = [...new Set(executions.map((execution) => execution.content.canonicalAccountKey))];
   const currencies = [...new Set(executions.map((execution) => execution.content.currency))];
+  const accountingInput = buildSyntheticAnalyticalPnlInput(executions);
   const priorInventoryMap = new Map<string, object>();
-  for (const execution of executions) {
-    if (execution.content.stableInstrumentKey === null) continue;
-    const ledgerKey = `${execution.content.canonicalAccountKey}:${execution.content.stableInstrumentKey}:${execution.content.currency.toLowerCase()}`;
+  for (const inventory of accountingInput.startingInventories) {
+    const ledgerKey = [
+      inventory.ledgerIdentity.canonicalOwnerKey,
+      inventory.ledgerIdentity.canonicalAccountKey,
+      inventory.ledgerIdentity.stableInstrumentKey,
+      inventory.ledgerIdentity.currency.toLowerCase(),
+    ].join(":");
     priorInventoryMap.set(ledgerKey, {
       ledgerKey,
-      state: "proven_flat" as const,
-      contractDigest: null,
+      state: inventory.state,
+      contractDigest: inventory.contractDigest,
     });
   }
   const priorInventory = [...priorInventoryMap.values()];
@@ -148,7 +155,7 @@ export function buildSyntheticGa0B1Authority(
     }],
     knownGaps: [],
     overlappingPeriods: [],
-    exclusions: [],
+    exclusions: options.manifestExclusions ?? [],
     priorInventory,
     openPositions: options.openPositions ?? [],
     currencies,
@@ -209,7 +216,6 @@ export function buildSyntheticGa0B1Authority(
     analysisCutoffAt: GA0_B1_SYNTHETIC_ANALYSIS_CUTOFF,
     boundSnapshotDigest: null,
   }));
-  const accountingInput = buildSyntheticAnalyticalPnlInput(executions);
   const reconstruction = reconstructAnalyticalPnl(accountingInput);
   const occurrenceInventory = required(buildExecutionOccurrenceEvidenceInventory(accountingInput.relationshipResolution));
   const roundTripInventory = required(buildRoundTripEvidenceInventory(reconstruction));
@@ -236,6 +242,7 @@ export function buildSyntheticGa0B1Authority(
   return Object.freeze({
     snapshot,
     snapshotDependencies,
+    dateResolutionReceipt: dateReceipt,
     correctionAuthority: Object.freeze({
       result: correctionResult,
       baseActiveExecutionDigests: Object.freeze(executions.map((execution) => execution.canonicalContentDigest)),

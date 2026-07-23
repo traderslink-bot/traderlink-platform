@@ -43,12 +43,16 @@ export const ANALYTICAL_EXCLUSION_REASONS = Object.freeze({
   filterExcluded: "ti_v3_analytics_canonical_filter_excluded",
   duplicateCandidate: "ti_v3_analytics_duplicate_candidate_identity",
   oversizedInput: "ti_v3_analytics_input_oversized",
+  manifestExcluded: "ti_v3_analytics_manifest_excluded",
 } as const);
 
 export interface ExcludedAnalyticalCandidate {
   readonly candidateKey: string;
   readonly semanticRoundTripKey: string | null;
   readonly reasonCode: string;
+  readonly sourceReasonCode: string | null;
+  readonly reasonMappingPolicyKey: "ti_v3_manifest_exclusion_reason_mapping";
+  readonly reasonMappingPolicyVersion: "v1";
   readonly limitationCodes: readonly string[];
   readonly relatedExecutionDigests: readonly CanonicalExecutionDigest[];
   readonly relatedOccurrenceKeys: readonly string[];
@@ -102,7 +106,8 @@ function parseExclusion(
   path: string,
 ): ExactResult<ExcludedAnalyticalCandidate, AnalyticalContractFailure> {
   const record = validateContractRecord(input, [
-    "candidateKey", "semanticRoundTripKey", "reasonCode", "limitationCodes",
+    "candidateKey", "semanticRoundTripKey", "reasonCode", "sourceReasonCode",
+    "reasonMappingPolicyKey", "reasonMappingPolicyVersion", "limitationCodes",
     "relatedExecutionDigests", "relatedOccurrenceKeys", "currency",
   ], [], path);
   if (!record.ok) return record;
@@ -116,6 +121,13 @@ function parseExclusion(
   }
   const reason = validateReasonCode(record.value.reasonCode, `${path}.reasonCode`);
   if (!reason.ok) return reason;
+  let sourceReasonCode: string | null = null;
+  if (record.value.sourceReasonCode !== null) {
+    const sourceReason = validateReasonCode(record.value.sourceReasonCode, `${path}.sourceReasonCode`);
+    if (!sourceReason.ok) return sourceReason;
+    sourceReasonCode = sourceReason.value;
+  }
+  if (record.value.reasonMappingPolicyKey !== "ti_v3_manifest_exclusion_reason_mapping" || record.value.reasonMappingPolicyVersion !== "v1") return contractFailure("ti_v3_analytics_contract_invalid", `${path}.reasonMappingPolicyKey`);
   const limitations = validateReasonCodes(record.value.limitationCodes, `${path}.limitationCodes`);
   if (!limitations.ok) return limitations;
   const executions = validateDigestArray(
@@ -138,6 +150,9 @@ function parseExclusion(
       candidateKey: candidateKey.value,
       semanticRoundTripKey,
       reasonCode: reason.value,
+      sourceReasonCode,
+      reasonMappingPolicyKey: "ti_v3_manifest_exclusion_reason_mapping",
+      reasonMappingPolicyVersion: "v1",
       limitationCodes: limitations.value,
       relatedExecutionDigests: executions.value as readonly CanonicalExecutionDigest[],
       relatedOccurrenceKeys: occurrences.value,

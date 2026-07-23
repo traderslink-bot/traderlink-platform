@@ -89,7 +89,7 @@ const WEEKDAYS = new Set<CanonicalWeekday>([
   "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
 ]);
 const SESSIONS = new Set<CanonicalSession>([
-  "premarket", "regular", "after_hours", "overnight",
+  "premarket", "regular", "after_hours", "overnight", "not_applicable",
 ]);
 
 function parseMoneyFact(
