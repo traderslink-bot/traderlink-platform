@@ -33,6 +33,96 @@ export function isNewerLiveWatchlistSymbolState(
   return incoming.updatedAt >= current.updatedAt;
 }
 
+/**
+ * Reconcile card and quote freshness independently. Card publications can
+ * arrive from a different server instance after the browser has already
+ * received a newer ticker revision. In that case, preserve the newer quote
+ * fields while still accepting newer card content.
+ */
+export function reconcileLiveWatchlistSymbolState(
+  current: LiveWatchlistSymbolState,
+  incoming: LiveWatchlistSymbolState,
+): LiveWatchlistSymbolState {
+  const incomingIsNewer = isNewerLiveWatchlistSymbolState(current, incoming);
+  const preferred = incomingIsNewer ? incoming : current;
+  const currentAiRead = current.cards.tradersLinkAiRead;
+  const incomingAiRead = incoming.cards.tradersLinkAiRead;
+  const currentAiStatusUpdatedAt =
+    current.tradersLinkAiReadStatusUpdatedAt ?? currentAiRead?.updatedAt;
+  const incomingAiStatusUpdatedAt =
+    incoming.tradersLinkAiReadStatusUpdatedAt ?? incomingAiRead?.updatedAt;
+  const cards: LiveWatchlistSymbolState["cards"] = {
+    ...current.cards,
+    ...incoming.cards,
+  };
+
+  for (const kind of new Set([
+    ...Object.keys(current.cards),
+    ...Object.keys(incoming.cards),
+  ])) {
+    const cardKind = kind as keyof LiveWatchlistSymbolState["cards"];
+    const currentCard = current.cards[cardKind];
+    const incomingCard = incoming.cards[cardKind];
+    if (currentCard && incomingCard) {
+      cards[cardKind] =
+        incomingCard.updatedAt >= currentCard.updatedAt ? incomingCard : currentCard;
+    }
+  }
+
+  if (
+    currentAiRead &&
+    !incomingAiRead &&
+    incoming.tradersLinkAiReadStatus !== "ready" &&
+    typeof incomingAiStatusUpdatedAt === "number" &&
+    incomingAiStatusUpdatedAt >= currentAiRead.updatedAt
+  ) {
+    delete cards.tradersLinkAiRead;
+  } else if (
+    incomingAiRead &&
+    !currentAiRead &&
+    current.tradersLinkAiReadStatus !== "ready" &&
+    typeof currentAiStatusUpdatedAt === "number" &&
+    currentAiStatusUpdatedAt >= incomingAiRead.updatedAt
+  ) {
+    delete cards.tradersLinkAiRead;
+  }
+
+  const reconciledAiRead = cards.tradersLinkAiRead;
+  let tradersLinkAiReadStatus = preferred.tradersLinkAiReadStatus;
+  let tradersLinkAiReadStatusUpdatedAt =
+    preferred.tradersLinkAiReadStatusUpdatedAt;
+  if (reconciledAiRead) {
+    if (incomingAiRead && reconciledAiRead === incomingAiRead) {
+      tradersLinkAiReadStatus = incoming.tradersLinkAiReadStatus ?? "ready";
+      tradersLinkAiReadStatusUpdatedAt =
+        incomingAiStatusUpdatedAt ?? incomingAiRead.updatedAt;
+    } else {
+      tradersLinkAiReadStatus = current.tradersLinkAiReadStatus ?? "ready";
+      tradersLinkAiReadStatusUpdatedAt =
+        currentAiStatusUpdatedAt ?? currentAiRead?.updatedAt;
+    }
+  } else {
+    const incomingStatusIsNewer =
+      typeof incomingAiStatusUpdatedAt === "number" &&
+      (typeof currentAiStatusUpdatedAt !== "number" ||
+        incomingAiStatusUpdatedAt >= currentAiStatusUpdatedAt);
+    tradersLinkAiReadStatus = incomingStatusIsNewer
+      ? incoming.tradersLinkAiReadStatus
+      : current.tradersLinkAiReadStatus;
+    tradersLinkAiReadStatusUpdatedAt = incomingStatusIsNewer
+      ? incomingAiStatusUpdatedAt
+      : currentAiStatusUpdatedAt;
+  }
+
+  return {
+    ...preferred,
+    updatedAt: Math.max(current.updatedAt, incoming.updatedAt),
+    cards,
+    tradersLinkAiReadStatus,
+    tradersLinkAiReadStatusUpdatedAt,
+  };
+}
+
 export function reconcileLiveWatchlistSnapshot(input: {
   current: LiveWatchlistSymbolState[];
   incoming: LiveWatchlistSymbolState[];
@@ -42,7 +132,7 @@ export function reconcileLiveWatchlistSnapshot(input: {
   const incomingSymbols = new Set(input.incoming.map((symbol) => symbol.symbol));
   const reconciled = input.incoming.map((incoming) => {
     const current = currentBySymbol.get(incoming.symbol);
-    return current && !isNewerLiveWatchlistSymbolState(current, incoming) ? current : incoming;
+    return current ? reconcileLiveWatchlistSymbolState(current, incoming) : incoming;
   });
 
   // Keep an SSE update that arrived after this polling response began. A later

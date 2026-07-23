@@ -538,6 +538,11 @@ function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbol
         : state.cards.tradersLinkAiRead
           ? "ready"
           : undefined,
+    tradersLinkAiReadStatusUpdatedAt:
+      typeof state.tradersLinkAiReadStatusUpdatedAt === "number" &&
+      Number.isFinite(state.tradersLinkAiReadStatusUpdatedAt)
+        ? state.tradersLinkAiReadStatusUpdatedAt
+        : state.cards.tradersLinkAiRead?.updatedAt,
     potentialGain: normalizePotentialGain(state.potentialGain),
     firstPostedAt:
       state.firstPostedAt ?? (hasCards ? Math.min(...cardTimes) : null),
@@ -715,6 +720,12 @@ export function applyPatch(
       patch.tradersLinkAiReadStatus === "ready"
         ? patch.tradersLinkAiReadStatus
         : baseExisting?.tradersLinkAiReadStatus,
+    tradersLinkAiReadStatusUpdatedAt:
+      patch.tradersLinkAiReadStatus === "analyzing" ||
+      patch.tradersLinkAiReadStatus === "failed" ||
+      patch.tradersLinkAiReadStatus === "ready"
+        ? patch.updatedAt
+        : baseExisting?.tradersLinkAiReadStatusUpdatedAt,
     potentialGain: nextPotentialGain,
     companyName: baseExisting?.companyName ?? null,
     latestPrice: recomputesCardPrice ? null : baseExisting?.latestPrice ?? null,
@@ -805,6 +816,7 @@ function applyTickerDataPatch(
         ? patch.tradersLinkAiReadDipBuyPlanVisible
         : existing?.tradersLinkAiReadDipBuyPlanVisible !== false,
     tradersLinkAiReadStatus: existing?.tradersLinkAiReadStatus,
+    tradersLinkAiReadStatusUpdatedAt: existing?.tradersLinkAiReadStatusUpdatedAt,
     potentialGain: potentialGainFromPrice(
       existing?.potentialGain,
       existing?.firstPostedAt ?? null,

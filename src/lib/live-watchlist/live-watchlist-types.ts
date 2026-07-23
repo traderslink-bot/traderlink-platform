@@ -475,6 +475,7 @@ export type LiveWatchlistSymbolState = {
   tradersLinkAiReadCardVisible?: boolean;
   tradersLinkAiReadDipBuyPlanVisible?: boolean;
   tradersLinkAiReadStatus?: TradersLinkAiReadStatus;
+  tradersLinkAiReadStatusUpdatedAt?: number;
   potentialGain?: LiveWatchlistPotentialGain | null;
   companyName: string | null;
   latestPrice: number | null;
