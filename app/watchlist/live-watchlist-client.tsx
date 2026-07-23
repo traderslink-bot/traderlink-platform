@@ -14,6 +14,7 @@ import type {
   LiveWatchlistSymbolState,
   LiveWatchlistVolumeContext,
   TradersLinkAiReadLevel,
+  TradersLinkAiReadForwardHorizon,
   TradersLinkAiReadPayload,
   TradersLinkAiReadPullbackScenario,
 } from "@/src/lib/live-watchlist/live-watchlist-types";
@@ -460,6 +461,43 @@ function TradersLinkAiReadLevelBlock({
   );
 }
 
+function TradersLinkAiForwardHorizonBlock({
+  heading,
+  horizon,
+  livePrice,
+}: {
+  heading: string;
+  horizon: TradersLinkAiReadForwardHorizon;
+  livePrice: number;
+}) {
+  if (!horizon.available || horizon.price === null) {
+    return (
+      <li data-scenario-state="unavailable">
+        <strong>{heading}: Unavailable</strong>
+        <span>{horizon.unavailableReason ?? "The supplied market data cannot support this branch."}</span>
+        <small>Reason: {formatAiReadTag(horizon.unavailableReasonCode ?? "insufficient_history")}</small>
+      </li>
+    );
+  }
+  const state = livePrice >= horizon.price * 1.005
+    ? "Reached"
+    : livePrice >= horizon.price
+      ? "Testing / above"
+      : livePrice >= horizon.price * 0.995
+        ? "Approaching"
+        : "Ahead";
+  return (
+    <li data-scenario-state={state.toLowerCase().replaceAll(" ", "-")}>
+      <strong>{heading}: ${formatPrice(horizon.price)}</strong>
+      <span>{horizon.condition} {horizon.basisSummary}</span>
+      <small>{state} · Basis: {formatAiReadTag(horizon.basisType)}</small>
+      {horizon.sourceFacts.length > 0 ? (
+        <span>Evidence: {horizon.sourceFacts.join(" · ")}</span>
+      ) : null}
+    </li>
+  );
+}
+
 function formatAiReadTag(value: string): string {
   return value
     .split("_")
@@ -663,7 +701,18 @@ function TradersLinkAiReadCard({
         />
       </div>
 
-      {read.targets.length > 0 ? (
+      {read.version === 4 ? (
+        <section className="watchlist-ai-read-section">
+          <h3>Where the trade could go next</h3>
+          <p>Conditional day-trade paths, not predictions. Each farther branch requires the prior area to hold.</p>
+          <ol className="watchlist-ai-read-targets">
+            <TradersLinkAiForwardHorizonBlock heading="Nearest realistic" horizon={read.forwardPlan.nearestRealistic} livePrice={currentLivePrice} />
+            <TradersLinkAiForwardHorizonBlock heading="Continued momentum" horizon={read.forwardPlan.continuedMomentum} livePrice={currentLivePrice} />
+            <TradersLinkAiForwardHorizonBlock heading="Strong expansion" horizon={read.forwardPlan.strongExpansion} livePrice={currentLivePrice} />
+            <TradersLinkAiForwardHorizonBlock heading="Extreme momentum" horizon={read.forwardPlan.extremeMomentum} livePrice={currentLivePrice} />
+          </ol>
+        </section>
+      ) : read.targets.length > 0 ? (
         <section className="watchlist-ai-read-section">
           <h3>Where the trade could go next</h3>
           <ol className="watchlist-ai-read-targets">
@@ -679,7 +728,7 @@ function TradersLinkAiReadCard({
         </section>
       ) : null}
 
-      {read.version === 3 && dipBuyPlanVisible ? (
+      {(read.version === 3 || read.version === 4) && dipBuyPlanVisible ? (
         <section className="watchlist-ai-read-section">
           <h3>Pullback entry plans</h3>
           {momentumSetupFailed ? (
@@ -738,7 +787,7 @@ function TradersLinkAiReadCard({
         </section>
       ) : null}
 
-      {read.version === 3 && (downsideCheckpoints.length > 0 || read.failureRecovery) ? (
+      {(read.version === 3 || read.version === 4) && (downsideCheckpoints.length > 0 || read.failureRecovery) ? (
         <section className="watchlist-ai-read-section watchlist-ai-read-downside">
           <h3>Failure and recovery</h3>
           <p>

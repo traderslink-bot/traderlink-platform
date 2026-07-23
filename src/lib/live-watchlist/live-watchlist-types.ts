@@ -129,6 +129,43 @@ export type TradersLinkAiReadTarget = {
   condition: string;
 };
 
+export type TradersLinkAiReadForwardBasisType =
+  | "observed_intraday"
+  | "observed_prior_session"
+  | "observed_daily"
+  | "failed_spike"
+  | "psychological_boundary"
+  | "measured_move"
+  | "volatility_projection"
+  | "combined"
+  | "unavailable";
+
+export type TradersLinkAiReadForwardUnavailableReasonCode =
+  | "stale_or_incomplete_data"
+  | "unresolved_split_adjustment"
+  | "corrupt_candle_history"
+  | "quote_conflict"
+  | "insufficient_history";
+
+export type TradersLinkAiReadForwardHorizon = {
+  available: boolean;
+  price: number | null;
+  condition: string;
+  basisType: TradersLinkAiReadForwardBasisType;
+  basisSummary: string;
+  sourceFacts: string[];
+  unavailableReasonCode: TradersLinkAiReadForwardUnavailableReasonCode | null;
+  unavailableReason: string | null;
+};
+
+export type TradersLinkAiReadForwardPlan = {
+  nearestRealistic: TradersLinkAiReadForwardHorizon;
+  continuedMomentum: TradersLinkAiReadForwardHorizon;
+  strongExpansion: TradersLinkAiReadForwardHorizon;
+  extremeMomentum: TradersLinkAiReadForwardHorizon;
+  additionalObservedOutcomes: TradersLinkAiReadForwardHorizon[];
+};
+
 export type TradersLinkAiReadPullbackScenario = {
   zoneLow: number;
   zoneHigh: number;
@@ -301,9 +338,21 @@ export type TradersLinkAiReadV3Payload = TradersLinkAiReadPayloadBase & {
   failureRecovery: TradersLinkAiReadFailureRecoveryPlan | null;
 };
 
+export type TradersLinkAiReadV4Payload = TradersLinkAiReadPayloadBase & {
+  version: 4;
+  generationId: string;
+  forwardPlan: TradersLinkAiReadForwardPlan;
+  pullbackPlans: {
+    shallow: TradersLinkAiReadPullbackScenario | null;
+    deep: TradersLinkAiReadPullbackScenario | null;
+  };
+  failureRecovery: TradersLinkAiReadFailureRecoveryPlan | null;
+};
+
 export type TradersLinkAiReadPayload =
   | TradersLinkAiReadV2Payload
-  | TradersLinkAiReadV3Payload;
+  | TradersLinkAiReadV3Payload
+  | TradersLinkAiReadV4Payload;
 
 export type LiveWatchlistExtendedQuote = {
   source: "eodhd_live_v2";
