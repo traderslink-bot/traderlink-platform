@@ -35,8 +35,8 @@ import {
 import { getWatchlistCountryFlag } from "@/src/lib/live-watchlist/watchlist-country-flag";
 import { buildWatchlistHighRiskWarning } from "@/src/lib/live-watchlist/watchlist-high-risk-warning";
 import {
-  isNewerLiveWatchlistSymbolState,
   reconcileLiveWatchlistSnapshot,
+  reconcileLiveWatchlistSymbolState,
 } from "@/src/lib/live-watchlist/live-watchlist-reconciliation";
 import {
   deriveTradersLinkAiPullbackPlan,
@@ -1331,14 +1331,14 @@ export function mergeSymbol(
   next: LiveWatchlistSymbolState,
 ): LiveWatchlistSymbolState[] {
   const existing = symbols.find((item) => item.symbol === next.symbol);
-  if (existing && !isNewerLiveWatchlistSymbolState(existing, next)) {
-    return symbols;
-  }
+  const reconciled = existing
+    ? reconcileLiveWatchlistSymbolState(existing, next)
+    : next;
   const without = symbols.filter((item) => item.symbol !== next.symbol);
-  if (next.status === "deactivated") {
+  if (reconciled.status === "deactivated") {
     return without;
   }
-  return [next, ...without].sort(sortSymbolsByActivation);
+  return [reconciled, ...without].sort(sortSymbolsByActivation);
 }
 
 function isPostmarketAddition(symbol: LiveWatchlistSymbolState): boolean {
@@ -1870,7 +1870,7 @@ export function LiveWatchlistDetailClient({
       }
       const payload = (await response.json()) as { symbol: LiveWatchlistSymbolState };
       if (!cancelled) {
-        setSymbol((current) => isNewerLiveWatchlistSymbolState(current, payload.symbol) ? payload.symbol : current);
+        setSymbol((current) => reconcileLiveWatchlistSymbolState(current, payload.symbol));
       }
       const stateResponse = await fetch("/api/live-watchlist");
       if (stateResponse.ok && !cancelled) {
@@ -1885,7 +1885,7 @@ export function LiveWatchlistDetailClient({
     stream.addEventListener("symbol", (event) => {
       const next = JSON.parse(event.data) as LiveWatchlistSymbolState;
       if (next.symbol === initialSymbol.symbol) {
-        setSymbol((current) => isNewerLiveWatchlistSymbolState(current, next) ? next : current);
+        setSymbol((current) => reconcileLiveWatchlistSymbolState(current, next));
       }
     });
     stream.addEventListener("health", (event) => {
