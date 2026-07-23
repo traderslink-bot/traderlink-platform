@@ -51,6 +51,17 @@ export interface ExcludedAnalyticalCandidate {
   readonly semanticRoundTripKey: string | null;
   readonly reasonCode: string;
   readonly sourceReasonCode: string | null;
+  readonly secondaryReasonCodes: readonly string[];
+  readonly sourceReasonCodes: readonly string[];
+  readonly reasonLedgerPolicyKey: "ti_v3_analytical_exclusion_reason_ledger";
+  readonly reasonLedgerPolicyVersion: "v1";
+  readonly reasonAuthorities: readonly Readonly<{
+    readonly reasonCode: string;
+    readonly authority: string;
+    readonly sourceReasonCode: string | null;
+    readonly mappingPolicyKey: string | null;
+    readonly mappingPolicyVersion: string | null;
+  }>[];
   readonly reasonMappingPolicyKey: "ti_v3_manifest_exclusion_reason_mapping";
   readonly reasonMappingPolicyVersion: "v1";
   readonly limitationCodes: readonly string[];
@@ -107,6 +118,8 @@ function parseExclusion(
 ): ExactResult<ExcludedAnalyticalCandidate, AnalyticalContractFailure> {
   const record = validateContractRecord(input, [
     "candidateKey", "semanticRoundTripKey", "reasonCode", "sourceReasonCode",
+    "secondaryReasonCodes", "sourceReasonCodes", "reasonLedgerPolicyKey",
+    "reasonLedgerPolicyVersion", "reasonAuthorities",
     "reasonMappingPolicyKey", "reasonMappingPolicyVersion", "limitationCodes",
     "relatedExecutionDigests", "relatedOccurrenceKeys", "currency",
   ], [], path);
@@ -127,6 +140,82 @@ function parseExclusion(
     if (!sourceReason.ok) return sourceReason;
     sourceReasonCode = sourceReason.value;
   }
+  const secondaryReasons = validateReasonCodes(
+    record.value.secondaryReasonCodes,
+    `${path}.secondaryReasonCodes`,
+  );
+  const sourceReasons = validateReasonCodes(
+    record.value.sourceReasonCodes,
+    `${path}.sourceReasonCodes`,
+  );
+  if (!secondaryReasons.ok) return secondaryReasons;
+  if (!sourceReasons.ok) return sourceReasons;
+  if (
+    record.value.reasonLedgerPolicyKey !== "ti_v3_analytical_exclusion_reason_ledger" ||
+    record.value.reasonLedgerPolicyVersion !== "v1" ||
+    !Array.isArray(record.value.reasonAuthorities)
+  ) return contractFailure("ti_v3_analytics_contract_invalid", `${path}.reasonLedgerPolicyKey`);
+  const reasonAuthorities: Array<ExcludedAnalyticalCandidate["reasonAuthorities"][number]> = [];
+  for (let index = 0; index < record.value.reasonAuthorities.length; index += 1) {
+    const authorityPath = `${path}.reasonAuthorities[${index}]`;
+    const authority = validateContractRecord(
+      record.value.reasonAuthorities[index],
+      ["reasonCode", "authority", "sourceReasonCode", "mappingPolicyKey", "mappingPolicyVersion"],
+      [],
+      authorityPath,
+    );
+    if (!authority.ok) return authority;
+    const authorityReason = validateReasonCode(authority.value.reasonCode, `${authorityPath}.reasonCode`);
+    const authorityKey = validateContractKey(authority.value.authority, `${authorityPath}.authority`);
+    if (!authorityReason.ok) return authorityReason;
+    if (!authorityKey.ok) return authorityKey;
+    let authoritySourceReason: string | null = null;
+    if (authority.value.sourceReasonCode !== null) {
+      const parsed = validateReasonCode(
+        authority.value.sourceReasonCode,
+        `${authorityPath}.sourceReasonCode`,
+      );
+      if (!parsed.ok) return parsed;
+      authoritySourceReason = parsed.value;
+    }
+    let mappingPolicyKey: string | null = null;
+    let mappingPolicyVersion: string | null = null;
+    if (
+      (authority.value.mappingPolicyKey === null) !==
+      (authority.value.mappingPolicyVersion === null)
+    ) return contractFailure("ti_v3_analytics_contract_invalid", `${authorityPath}.mappingPolicyKey`);
+    if (authority.value.mappingPolicyKey !== null) {
+      const key = validateContractKey(
+        authority.value.mappingPolicyKey,
+        `${authorityPath}.mappingPolicyKey`,
+      );
+      const version = validateContractKey(
+        authority.value.mappingPolicyVersion,
+        `${authorityPath}.mappingPolicyVersion`,
+      );
+      if (!key.ok) return key;
+      if (!version.ok) return version;
+      mappingPolicyKey = key.value;
+      mappingPolicyVersion = version.value;
+    }
+    reasonAuthorities.push(Object.freeze({
+      reasonCode: authorityReason.value,
+      authority: authorityKey.value,
+      sourceReasonCode: authoritySourceReason,
+      mappingPolicyKey,
+      mappingPolicyVersion,
+    }));
+  }
+  if (
+    sourceReasonCode !== (sourceReasons.value[0] ?? null) ||
+    secondaryReasons.value.includes(reason.value) ||
+    reasonAuthorities.some((authority) =>
+      authority.reasonCode !== reason.value &&
+      !secondaryReasons.value.includes(authority.reasonCode)) ||
+    reasonAuthorities.some((authority) =>
+      authority.sourceReasonCode !== null &&
+      !sourceReasons.value.includes(authority.sourceReasonCode))
+  ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", `${path}.reasonAuthorities`);
   if (record.value.reasonMappingPolicyKey !== "ti_v3_manifest_exclusion_reason_mapping" || record.value.reasonMappingPolicyVersion !== "v1") return contractFailure("ti_v3_analytics_contract_invalid", `${path}.reasonMappingPolicyKey`);
   const limitations = validateReasonCodes(record.value.limitationCodes, `${path}.limitationCodes`);
   if (!limitations.ok) return limitations;
@@ -151,6 +240,11 @@ function parseExclusion(
       semanticRoundTripKey,
       reasonCode: reason.value,
       sourceReasonCode,
+      secondaryReasonCodes: secondaryReasons.value,
+      sourceReasonCodes: sourceReasons.value,
+      reasonLedgerPolicyKey: "ti_v3_analytical_exclusion_reason_ledger",
+      reasonLedgerPolicyVersion: "v1",
+      reasonAuthorities: Object.freeze(reasonAuthorities),
       reasonMappingPolicyKey: "ti_v3_manifest_exclusion_reason_mapping",
       reasonMappingPolicyVersion: "v1",
       limitationCodes: limitations.value,

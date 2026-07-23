@@ -13,6 +13,8 @@ export const GA0_B1_DERIVATION_POLICY = Object.freeze({
   sessionPolicyVersion: "v2",
   displayedSymbolPolicy:
     "ti_v3_first_economic_entry_symbol_non_authoritative_v1",
+  exchangeCalendarPolicyKey: "ti_v3_nyse_calendar",
+  exchangeCalendarPolicyVersion: "v1",
   supportedTimezones: Object.freeze(["America/New_York", "UTC"] as const),
 });
 
@@ -142,9 +144,6 @@ export function resolveSessionFacts(
     return contractFailure("ti_v3_analytics_contract_invalid", "$.timezone");
   }
   const year = BigInt(timestamp.value.slice(0, 4));
-  if (timezone === "America/New_York" && year < BigInt(2007)) {
-    return contractFailure("ti_v3_analytics_contract_invalid", "$.timestamp.pre_2007_new_york_unsupported");
-  }
   let offset = BigInt(0);
   if (timezone === "America/New_York") {
     const bounds = newYorkDstBounds(year);
@@ -153,6 +152,9 @@ export function resolveSessionFacts(
       : BigInt(-5);
   }
   const local = shiftUtcToLocal(timestamp.value, offset);
+  if (timezone === "America/New_York" && local.year < BigInt(2007)) {
+    return contractFailure("ti_v3_analytics_contract_invalid", "$.timestamp.pre_2007_new_york_unsupported");
+  }
   const weekdayIndex = sundayBasedWeekdayIndex(local.year, local.month, local.day);
   const weekday = WEEKDAYS.find((_, index) => BigInt(index) === weekdayIndex);
   if (weekday === undefined) {
@@ -164,10 +166,16 @@ export function resolveSessionFacts(
     const receipt = verifyDateResolutionReceipt(dateResolutionReceipt);
     if (
       !receipt.ok || receipt.value.timezone !== timezone ||
-      receipt.value.calendarBasis !== "trading_session" || receipt.value.timeBasis === "utc"
+      receipt.value.calendarBasis !== "trading_session" || receipt.value.timeBasis === "utc" ||
+      receipt.value.calendarPolicyKey !== GA0_B1_DERIVATION_POLICY.exchangeCalendarPolicyKey ||
+      receipt.value.calendarPolicyVersion !== GA0_B1_DERIVATION_POLICY.exchangeCalendarPolicyVersion
     ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.dateResolutionReceipt");
     const evidence = receipt.value.sessionEvidence.find((item) => item.sessionDate === sessionDate);
-    if (evidence === undefined || evidence.state === "holiday" || evidence.openAt === null || evidence.closeAt === null) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.dateResolutionReceipt.sessionEvidence");
+    if (
+      evidence === undefined || evidence.state === "holiday" ||
+      evidence.openAt === null || evidence.closeAt === null ||
+      weekday === "saturday" || weekday === "sunday"
+    ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.dateResolutionReceipt.sessionEvidence");
     if (timestamp.value >= evidence.openAt && timestamp.value < evidence.closeAt) session = "regular";
     else {
       const minuteOfDay = local.hour * BigInt(60) + local.minute;

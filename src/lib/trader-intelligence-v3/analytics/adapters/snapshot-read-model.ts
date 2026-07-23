@@ -52,12 +52,49 @@ import {
   type AnalyticalDatasetReceipt,
   type ExcludedAnalyticalCandidate,
 } from "../dataset/analytical-dataset";
-import { ANALYTICAL_ROW_VERSION, buildAnalyticalRow, type ExactMoneyFact } from "../dataset/analytical-row";
-import { GA0_B1_CONTRACT_LIMITS } from "../contracts/contract-validation";
+import {
+  ANALYTICAL_ROW_VERSION,
+  buildAnalyticalRow,
+  type AnalyticalRow,
+  type ExactMoneyFact,
+} from "../dataset/analytical-row";
+import {
+  GA0_B1_CONTRACT_LIMITS,
+  finalizeContentAddressedAuthority,
+  validateContractRecord,
+} from "../contracts/contract-validation";
 import { GA0_B1_DERIVATION_POLICY, resolveSessionFacts, type ResolvedSessionFacts } from "./session-policy";
 
 export const SNAPSHOT_READ_MODEL_ADAPTER_KEY = "ti_v3_snapshot_read_model_adapter" as const;
 export const SNAPSHOT_READ_MODEL_ADAPTER_VERSION = "v1" as const;
+export const ANALYTICAL_DATASET_DERIVATION_VERSION =
+  "ti_v3_analytical_dataset_derivation_v1" as const;
+
+export interface AnalyticalDatasetDerivationReceipt {
+  readonly schemaVersion: typeof ANALYTICAL_DATASET_DERIVATION_VERSION;
+  readonly datasetReceiptDigest: CanonicalContentDigest;
+  readonly snapshotDigest: CanonicalContentDigest;
+  readonly manifestDigest: CanonicalContentDigest;
+  readonly filterDigest: CanonicalContentDigest;
+  readonly correctionResultDigest: CanonicalContentDigest;
+  readonly eligibilitySetDigest: CanonicalContentDigest;
+  readonly retrospectivePolicyDigest: CanonicalContentDigest;
+  readonly evidenceNamespace: string;
+  readonly occurrenceInventoryDigest: CanonicalContentDigest | null;
+  readonly roundTripInventoryDigest: CanonicalContentDigest | null;
+  readonly adapterKey: typeof SNAPSHOT_READ_MODEL_ADAPTER_KEY;
+  readonly adapterVersion: typeof SNAPSHOT_READ_MODEL_ADAPTER_VERSION;
+  readonly derivationPolicyKey: typeof GA0_B1_DERIVATION_POLICY.policyKey;
+  readonly derivationPolicyVersion: typeof GA0_B1_DERIVATION_POLICY.policyVersion;
+  readonly exchangeCalendarPolicyKey: typeof GA0_B1_DERIVATION_POLICY.exchangeCalendarPolicyKey;
+  readonly exchangeCalendarPolicyVersion: typeof GA0_B1_DERIVATION_POLICY.exchangeCalendarPolicyVersion;
+  readonly derivationDigest: CanonicalContentDigest;
+}
+
+export interface DerivedAnalyticalDataset {
+  readonly datasetReceipt: AnalyticalDatasetReceipt;
+  readonly derivationReceipt: AnalyticalDatasetDerivationReceipt;
+}
 
 export interface SnapshotReadModelAuthority {
   readonly snapshot: unknown;
@@ -111,6 +148,52 @@ interface VerifiedAuthority {
   readonly reconstruction: AnalyticalPnlReconstructionResult;
   readonly occurrenceInventory: ExecutionOccurrenceEvidenceInventory | null;
   readonly roundTripInventory: RoundTripEvidenceInventory | null;
+}
+
+const verifiedDatasetDerivations =
+  new WeakMap<AnalyticalDatasetDerivationReceipt, AnalyticalDatasetReceipt>();
+
+function finalizeDatasetDerivation(
+  dataset: AnalyticalDatasetReceipt,
+): ExactResult<DerivedAnalyticalDataset, SnapshotReadModelFailure> {
+  const result = finalizeContentAddressedAuthority("analytical_dataset_derivation", {
+    schemaVersion: ANALYTICAL_DATASET_DERIVATION_VERSION,
+    datasetReceiptDigest: dataset.receiptDigest,
+    snapshotDigest: dataset.snapshotDigest,
+    manifestDigest: dataset.manifestDigest,
+    filterDigest: dataset.filterDigest,
+    correctionResultDigest: dataset.correctionResultDigest,
+    eligibilitySetDigest: dataset.eligibilitySetDigest,
+    retrospectivePolicyDigest: dataset.retrospectivePolicyDigest,
+    evidenceNamespace: dataset.evidenceNamespace,
+    occurrenceInventoryDigest: dataset.occurrenceInventoryDigest,
+    roundTripInventoryDigest: dataset.roundTripInventoryDigest,
+    adapterKey: SNAPSHOT_READ_MODEL_ADAPTER_KEY,
+    adapterVersion: SNAPSHOT_READ_MODEL_ADAPTER_VERSION,
+    derivationPolicyKey: GA0_B1_DERIVATION_POLICY.policyKey,
+    derivationPolicyVersion: GA0_B1_DERIVATION_POLICY.policyVersion,
+    exchangeCalendarPolicyKey: GA0_B1_DERIVATION_POLICY.exchangeCalendarPolicyKey,
+    exchangeCalendarPolicyVersion: GA0_B1_DERIVATION_POLICY.exchangeCalendarPolicyVersion,
+  }, "derivationDigest");
+  if (!result.ok) {
+    return failure(
+      "ti_v3_analytics_dataset_construction_failed",
+      "$.derivationReceipt",
+      result.error.code,
+    );
+  }
+  const derivationReceipt = result.value as AnalyticalDatasetDerivationReceipt;
+  verifiedDatasetDerivations.set(derivationReceipt, dataset);
+  return {
+    ok: true,
+    value: Object.freeze({ datasetReceipt: dataset, derivationReceipt }),
+  };
+}
+
+export function getVerifiedDerivedAnalyticalDataset(
+  receipt: AnalyticalDatasetDerivationReceipt,
+): AnalyticalDatasetReceipt | null {
+  return verifiedDatasetDerivations.get(receipt) ?? null;
 }
 
 interface RoundTripCandidate {
@@ -223,6 +306,13 @@ function verifyAuthority(input: SnapshotReadModelAuthority): ExactResult<Verifie
   if (!manifest.ok) return failure("ti_v3_analytics_authority_unverified", "$.snapshotDependencies.manifest");
   if (!filter.ok) return failure("ti_v3_analytics_authority_unverified", "$.snapshotDependencies.filter");
   if (!dateResolutionReceipt.ok || dateResolutionReceipt.value.receiptDigest !== filter.value.dateResolutionReceiptDigest) return failure("ti_v3_analytics_authority_mismatch", "$.dateResolutionReceipt");
+  if (
+    filter.value.timezone === "America/New_York" &&
+    (
+      dateResolutionReceipt.value.calendarPolicyKey !== GA0_B1_DERIVATION_POLICY.exchangeCalendarPolicyKey ||
+      dateResolutionReceipt.value.calendarPolicyVersion !== GA0_B1_DERIVATION_POLICY.exchangeCalendarPolicyVersion
+    )
+  ) return failure("ti_v3_analytics_authority_unverified", "$.dateResolutionReceipt.calendarPolicy");
   if (!contentIdentityMatches("dataset_manifest", manifest.value.content, manifest.value.manifestDigest)) return failure("ti_v3_analytics_authority_unverified", "$.snapshotDependencies.manifest.manifestDigest");
   const { eligibilitySetDigest: _eligibilityDigest, ...eligibilityContent } = dependencies.eligibilitySet;
   void _eligibilityDigest;
@@ -346,8 +436,32 @@ function exclusion(
   limitations: readonly string[] = [],
   sourceReasonCode: string | null = null,
 ): ExcludedAnalyticalCandidate {
+  const authority = sourceReasonCode !== null
+    ? "manifest"
+    : reasonCode === ANALYTICAL_EXCLUSION_REASONS.filterExcluded
+      ? "canonical_filter"
+      : reasonCode === ANALYTICAL_EXCLUSION_REASONS.openLifecycle
+        ? "lifecycle"
+        : reasonCode.includes("reconstruction")
+          ? "reconstruction"
+          : reasonCode.includes("eligibility")
+            ? "eligibility"
+            : "read_model";
   return Object.freeze({ candidateKey, semanticRoundTripKey, reasonCode,
     sourceReasonCode,
+    secondaryReasonCodes: Object.freeze([]),
+    sourceReasonCodes: Object.freeze(sourceReasonCode === null ? [] : [sourceReasonCode]),
+    reasonLedgerPolicyKey: "ti_v3_analytical_exclusion_reason_ledger" as const,
+    reasonLedgerPolicyVersion: "v1" as const,
+    reasonAuthorities: Object.freeze([Object.freeze({
+      reasonCode,
+      authority,
+      sourceReasonCode,
+      mappingPolicyKey: sourceReasonCode === null
+        ? null
+        : "ti_v3_manifest_exclusion_reason_mapping",
+      mappingPolicyVersion: sourceReasonCode === null ? null : "v1",
+    })]),
     reasonMappingPolicyKey: "ti_v3_manifest_exclusion_reason_mapping" as const,
     reasonMappingPolicyVersion: "v1" as const,
     limitationCodes: Object.freeze([...new Set(limitations)].sort(compareUnicodeCodePoints)),
@@ -385,7 +499,13 @@ function filterIncludesRow(
   if (filter.instrumentFilters.length > 0 && !filter.instrumentFilters.includes(input.instrument) && !filter.instrumentFilters.includes(input.symbol)) return false;
   if (filter.directionFilters.length > 0 && !filter.directionFilters.includes(input.direction)) return false;
   if (filter.currencyFilters.length > 0 && !filter.currencyFilters.includes(input.currency)) return false;
-  if (filter.sessionFilters.length > 0 && !filter.sessionFilters.includes(input.session.session)) return false;
+  if (
+    filter.sessionFilters.length > 0 &&
+    (
+      input.session.session === "not_applicable" ||
+      !filter.sessionFilters.includes(input.session.session)
+    )
+  ) return false;
   if (filter.outcomeFilters.length > 0 && !filter.outcomeFilters.includes(outcome(input.netPnl))) return false;
   if (filter.lifecycleFilters.length > 0 && !filter.lifecycleFilters.includes("position_closed")) return false;
   if (filter.evidenceCapabilityFilters.some((capability) => {
@@ -482,7 +602,7 @@ function deriveDataset(authority: VerifiedAuthority): ExactResult<AnalyticalData
     const partitionKey = `${String(row.rowInput.canonicalAccountKey)}:${String(row.rowInput.currency)}:${String(row.rowInput.sessionDate)}`;
     partitions.set(partitionKey, [...(partitions.get(partitionKey) ?? []), row]);
   }
-  const rows = [];
+  const rows: AnalyticalRow[] = [];
   for (const partitionKey of [...partitions.keys()].sort(compareUnicodeCodePoints)) {
     const partition = partitions.get(partitionKey) as PreliminaryRow[];
     const ordering = orderCanonicalExecutions(partition.map((row) => row.firstEntry));
@@ -502,24 +622,99 @@ function deriveDataset(authority: VerifiedAuthority): ExactResult<AnalyticalData
   const mappedExclusions = exclusions.map((candidate) => {
     if (candidate.sourceReasonCode === null || candidate.relatedExecutionDigests.length === 0) return candidate;
     const row = rows.find((item) => candidate.relatedExecutionDigests.some((digest) => item.supportingExecutionDigests.includes(digest)));
-    return row === undefined ? candidate : exclusion(
-      row.semanticRoundTripKey,
-      row.semanticRoundTripKey,
+    const reconstructed = roundTrips.find((item) =>
+      candidate.relatedExecutionDigests.some((digest) =>
+        item.roundTrip.executionDigests.includes(digest)));
+    if (row === undefined && reconstructed === undefined) return candidate;
+    const semanticKey = row?.semanticRoundTripKey ??
+      (reconstructed as RoundTripCandidate).roundTrip.roundTripId;
+    const executionDigests = row?.supportingExecutionDigests ??
+      (reconstructed as RoundTripCandidate).roundTrip.executionDigests;
+    const occurrenceKeys = row?.supportingOccurrenceKeys ??
+      executionDigests.flatMap((digest) => occurrenceByDigest.get(digest) ?? []);
+    return exclusion(
+      semanticKey,
+      semanticKey,
       candidate.reasonCode,
-      row.supportingExecutionDigests,
-      row.supportingOccurrenceKeys,
-      row.currency,
+      executionDigests,
+      occurrenceKeys,
+      row?.currency ?? (reconstructed as RoundTripCandidate).ledger.currency,
       candidate.limitationCodes,
       candidate.sourceReasonCode,
     );
   });
-  const seenCandidateIdentities = new Set<string>();
-  const deduplicatedExclusions = mappedExclusions.filter((candidate) => {
+  const precedence = [
+    ANALYTICAL_EXCLUSION_REASONS.blockedReconstruction,
+    ANALYTICAL_EXCLUSION_REASONS.ambiguousReconstruction,
+    ANALYTICAL_EXCLUSION_REASONS.eligibilityBlocked,
+    ANALYTICAL_EXCLUSION_REASONS.eligibilityPending,
+    ANALYTICAL_EXCLUSION_REASONS.eligibilityStale,
+    ANALYTICAL_EXCLUSION_REASONS.eligibilityIncompatible,
+    ANALYTICAL_EXCLUSION_REASONS.openLifecycle,
+    ANALYTICAL_EXCLUSION_REASONS.filterExcluded,
+    ANALYTICAL_EXCLUSION_REASONS.manifestExcluded,
+  ] as const;
+  const precedenceIndex = (reasonCode: string): number => {
+    const index = precedence.indexOf(reasonCode as typeof precedence[number]);
+    return index < 0 ? precedence.length : index;
+  };
+  const grouped = new Map<string, ExcludedAnalyticalCandidate[]>();
+  for (const candidate of mappedExclusions) {
     const identity = semanticExclusionIdentity(candidate);
-    if (seenCandidateIdentities.has(identity)) return false;
-    seenCandidateIdentities.add(identity);
-    return true;
-  });
+    grouped.set(identity, [...(grouped.get(identity) ?? []), candidate]);
+  }
+  // 2026-07-23 America/Toronto: exclusion identity has one deterministic
+  // primary outcome while retaining every accepted reason and provenance row.
+  const deduplicatedExclusions = [...grouped.values()].map((candidates) => {
+    const ordered = [...candidates].sort((left, right) => {
+      const precedenceDifference =
+        precedenceIndex(left.reasonCode) - precedenceIndex(right.reasonCode);
+      return precedenceDifference !== 0
+        ? precedenceDifference
+        : compareUnicodeCodePoints(left.reasonCode, right.reasonCode);
+    });
+    const primary = ordered[0];
+    const allReasons = [...new Set(ordered.map((candidate) => candidate.reasonCode))]
+      .sort((left, right) => {
+        const difference = precedenceIndex(left) - precedenceIndex(right);
+        return difference !== 0 ? difference : compareUnicodeCodePoints(left, right);
+      });
+    const sourceReasons = [...new Set(
+      ordered.flatMap((candidate) => candidate.sourceReasonCodes),
+    )].sort(compareUnicodeCodePoints);
+    const reasonAuthorities = [...new Map(
+      ordered
+        .flatMap((candidate) => candidate.reasonAuthorities)
+        .map((item) => [
+          `${item.reasonCode}:${item.authority}:${item.sourceReasonCode ?? ""}:${item.mappingPolicyKey ?? ""}:${item.mappingPolicyVersion ?? ""}`,
+          item,
+        ]),
+    ).values()].sort((left, right) =>
+      compareUnicodeCodePoints(
+        `${left.reasonCode}:${left.authority}:${left.sourceReasonCode ?? ""}`,
+        `${right.reasonCode}:${right.authority}:${right.sourceReasonCode ?? ""}`,
+      ));
+    return Object.freeze({
+      ...primary,
+      candidateKey: ordered
+        .map((candidate) => candidate.candidateKey)
+        .sort(compareUnicodeCodePoints)[0],
+      sourceReasonCode: sourceReasons[0] ?? null,
+      secondaryReasonCodes: Object.freeze(allReasons.slice(1)),
+      sourceReasonCodes: Object.freeze(sourceReasons),
+      reasonAuthorities: Object.freeze(reasonAuthorities),
+      limitationCodes: Object.freeze([...new Set(
+        ordered.flatMap((candidate) => candidate.limitationCodes),
+      )].sort(compareUnicodeCodePoints)),
+      relatedExecutionDigests: Object.freeze([...new Set(
+        ordered.flatMap((candidate) => candidate.relatedExecutionDigests),
+      )].sort(compareUnicodeCodePoints)),
+      relatedOccurrenceKeys: Object.freeze([...new Set(
+        ordered.flatMap((candidate) => candidate.relatedOccurrenceKeys),
+      )].sort(compareUnicodeCodePoints)),
+      currency: ordered.find((candidate) => candidate.currency !== null)?.currency ?? null,
+    });
+  }).sort((left, right) => compareUnicodeCodePoints(left.candidateKey, right.candidateKey));
   const excludedRoundTrips = new Set(deduplicatedExclusions.flatMap((candidate) => candidate.semanticRoundTripKey === null ? [] : [candidate.semanticRoundTripKey]));
   const includedRows = rows.filter((row) => !excludedRoundTrips.has(row.semanticRoundTripKey));
   if (includedRows.length + deduplicatedExclusions.length > GA0_B1_CONTRACT_LIMITS.maximumRows) return failure("ti_v3_analytics_input_oversized", "$.candidates");
@@ -549,6 +744,13 @@ function deriveDataset(authority: VerifiedAuthority): ExactResult<AnalyticalData
 export function readAnalyticalDataset(
   source: ReadOnlySnapshotAuthoritySource,
 ): ExactResult<AnalyticalDatasetReceipt, SnapshotReadModelFailure> {
+  const derived = readAnalyticalDatasetWithDerivation(source);
+  return derived.ok ? { ok: true, value: derived.value.datasetReceipt } : derived;
+}
+
+export function readAnalyticalDatasetWithDerivation(
+  source: ReadOnlySnapshotAuthoritySource,
+): ExactResult<DerivedAnalyticalDataset, SnapshotReadModelFailure> {
   let result: ReadOnlyAuthorityResult;
   try {
     result = source.readExactAuthority();
@@ -556,8 +758,38 @@ export function readAnalyticalDataset(
     return failure("ti_v3_analytics_source_unavailable", "$.source", "ti_v3_current_data_read_failed");
   }
   if (result.state === "unavailable") return failure("ti_v3_analytics_source_unavailable", "$.source", result.reasonCode);
-  const authority = verifyAuthority(result.authority);
-  return authority.ok ? deriveDataset(authority.value) : authority;
+  try {
+    const authority = verifyAuthority(result.authority);
+    if (!authority.ok) return authority;
+    const dataset = deriveDataset(authority.value);
+    return dataset.ok ? finalizeDatasetDerivation(dataset.value) : dataset;
+  } catch {
+    return failure("ti_v3_analytics_authority_unverified", "$.source.authority");
+  }
+}
+
+// 2026-07-23 America/Toronto: persisted derivation receipts re-enter only by
+// replaying the exact read-model authority and matching the complete receipt.
+export function rehydrateAnalyticalDatasetDerivation(
+  persisted: unknown,
+  source: ReadOnlySnapshotAuthoritySource,
+): ExactResult<DerivedAnalyticalDataset, SnapshotReadModelFailure> {
+  const replayed = readAnalyticalDatasetWithDerivation(source);
+  if (!replayed.ok) return replayed;
+  const supplied = validateContractRecord(persisted, [
+    "schemaVersion", "datasetReceiptDigest", "snapshotDigest", "manifestDigest",
+    "filterDigest", "correctionResultDigest", "eligibilitySetDigest",
+    "retrospectivePolicyDigest", "evidenceNamespace",
+    "occurrenceInventoryDigest", "roundTripInventoryDigest", "adapterKey",
+    "adapterVersion", "derivationPolicyKey", "derivationPolicyVersion",
+    "exchangeCalendarPolicyKey", "exchangeCalendarPolicyVersion",
+    "derivationDigest",
+  ]);
+  if (
+    !supplied.ok ||
+    supplied.value.derivationDigest !== replayed.value.derivationReceipt.derivationDigest
+  ) return failure("ti_v3_analytics_authority_mismatch", "$.derivationReceipt");
+  return replayed;
 }
 
 export function createSyntheticInMemoryReadOnlySource(

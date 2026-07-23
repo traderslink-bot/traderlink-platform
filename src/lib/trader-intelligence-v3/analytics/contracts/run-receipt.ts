@@ -30,6 +30,8 @@ export interface AnalysisRunReceipt {
   readonly schemaVersion: typeof ANALYSIS_RUN_RECEIPT_VERSION;
   readonly runContextDigest: CanonicalContentDigest;
   readonly runStatus: "completed" | "limited" | "blocked";
+  readonly partitionDigest: CanonicalContentDigest;
+  readonly partitionCurrency: string;
   readonly tableDigests: readonly CanonicalContentDigest[];
   readonly claimDigests: readonly CanonicalContentDigest[];
   readonly seriesDigests: readonly CanonicalContentDigest[];
@@ -113,7 +115,7 @@ export function buildAnalysisRunReceipt(
   ]);
   if (evidence.some((bundle) => !usedEvidence.has(bundle.bundleDigest)) || [...usedEvidence].some((digest) => !evidence.some((bundle) => bundle.bundleDigest === digest))) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.evidenceBundles");
   const limitationCodes = [...new Set([
-    ...dependencies.datasetReceipt.limitations,
+    ...dependencies.partitionReceipt.limitationCodes,
     ...tables.flatMap((item) => item.limitationCodes),
     ...claims.flatMap((item) => item.limitationCodes),
     ...series.flatMap((item) => item.limitationCodes),
@@ -125,16 +127,52 @@ export function buildAnalysisRunReceipt(
     : context.value.eligibilityState === "limited" || limitationCodes.length > 0
       ? "limited"
       : "completed";
+  const declared = new Set(dependencies.registryEntry.outputContracts);
+  const artifactCounts = new Map([
+    ["exact_table_v1", tables.length],
+    ["validated_claim_v1", claims.length],
+    ["chart_ready_series_v1", series.length],
+    ["analytical_evidence_bundle_v1", evidence.length],
+  ]);
+  if (runStatus === "blocked") {
+    if (!diagnostics.value.entries.some((entry) => entry.severity === "blocked")) {
+      return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.diagnostics");
+    }
+    if (
+      dependencies.registryEntry.blockedArtifactPolicy === "diagnostics_only" &&
+      [...artifactCounts.values()].some((count) => count !== 0)
+    ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.artifacts");
+  } else if (
+    [...artifactCounts].some(([contract, count]) =>
+      (declared.has(contract) && count === 0) || (!declared.has(contract) && count !== 0))
+  ) {
+    return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.artifacts");
+  }
+  const graphKeys = new Set<string>([
+    context.value.runContextDigest,
+    context.value.partitionDigest,
+    ...tables.flatMap((item) => [item.tableKey, item.tableDigest]),
+    ...claims.flatMap((item) => [item.claimKey, item.claimDigest]),
+    ...series.flatMap((item) => [item.seriesKey, item.seriesDigest]),
+    ...evidence.flatMap((item) => [item.evidenceKey, item.bundleDigest]),
+  ]);
+  if (
+    diagnostics.value.entries.some((entry) =>
+      entry.affectedKeys.some((key) =>
+        !graphKeys.has(key) && !key.startsWith("non_reference:")))
+  ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.diagnostics.entries.affectedKeys");
   return finalizeContentAddressedAuthority("analysis_run_receipt", {
     schemaVersion: ANALYSIS_RUN_RECEIPT_VERSION,
     runContextDigest: context.value.runContextDigest,
     runStatus,
+    partitionDigest: context.value.partitionDigest,
+    partitionCurrency: context.value.partitionCurrency,
     tableDigests: tables.map((item) => item.tableDigest).sort(compareUnicodeCodePoints),
     claimDigests: claims.map((item) => item.claimDigest).sort(compareUnicodeCodePoints),
     seriesDigests: series.map((item) => item.seriesDigest).sort(compareUnicodeCodePoints),
     evidenceBundleDigests: evidence.map((item) => item.bundleDigest).sort(compareUnicodeCodePoints),
-    includedCount: dependencies.datasetReceipt.includedCount,
-    excludedCount: dependencies.datasetReceipt.excludedCount,
+    includedCount: dependencies.partitionReceipt.includedCount,
+    excludedCount: dependencies.partitionReceipt.excludedCount,
     limitationCodes,
     diagnosticsDigest: diagnostics.value.diagnosticsDigest,
   }, "runDigest") as ExactResult<AnalysisRunReceipt, AnalyticalContractFailure>;
@@ -144,7 +182,7 @@ export function verifyAnalysisRunReceipt(
   input: unknown,
   graph: AnalysisRunArtifactGraph,
 ): ExactResult<AnalysisRunReceipt, AnalyticalContractFailure> {
-  const record = validateContractRecord(input, ["schemaVersion", "runContextDigest", "runStatus", "tableDigests", "claimDigests", "seriesDigests", "evidenceBundleDigests", "includedCount", "excludedCount", "limitationCodes", "diagnosticsDigest", "runDigest"]);
+  const record = validateContractRecord(input, ["schemaVersion", "runContextDigest", "runStatus", "partitionDigest", "partitionCurrency", "tableDigests", "claimDigests", "seriesDigests", "evidenceBundleDigests", "includedCount", "excludedCount", "limitationCodes", "diagnosticsDigest", "runDigest"]);
   if (!record.ok) return record;
   const digest = validateClaimedDigest(record.value.runDigest, "$.runDigest", "analysis_run_receipt");
   if (!digest.ok) return digest;

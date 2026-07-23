@@ -4,6 +4,14 @@ import { verifyAnalysisSnapshot, type AnalysisSnapshot, type AnalysisSnapshotDep
 import { verifyCanonicalQueryFilter, type CanonicalQueryFilter } from "../../domain/query";
 import { verifyAnalyticalDatasetReceipt, type AnalyticalDatasetReceipt } from "../dataset";
 import {
+  verifyAnalyticalPartitionReceipt,
+  type AnalyticalPartitionReceipt,
+} from "../dataset/analytical-partition";
+import {
+  getVerifiedDerivedAnalyticalDataset,
+  type AnalyticalDatasetDerivationReceipt,
+} from "../adapters/snapshot-read-model";
+import {
   verifyNormalizedAnalysisArguments,
   verifyToolRegistryEntry,
   type NormalizedAnalysisArguments,
@@ -31,6 +39,8 @@ export interface AnalysisRunContext {
   readonly snapshotDigest: CanonicalContentDigest;
   readonly filterDigest: CanonicalContentDigest;
   readonly datasetReceiptDigest: CanonicalContentDigest;
+  readonly partitionDigest: CanonicalContentDigest;
+  readonly partitionCurrency: string;
   readonly normalizedArgumentsDigest: CanonicalContentDigest;
   readonly eligibilityState: "eligible" | "limited";
   readonly runContextDigest: CanonicalContentDigest;
@@ -41,6 +51,8 @@ export interface AnalysisRunContextDependencies {
   readonly snapshotDependencies: AnalysisSnapshotDependencies;
   readonly canonicalFilter: CanonicalQueryFilter;
   readonly datasetReceipt: AnalyticalDatasetReceipt;
+  readonly datasetDerivationReceipt: AnalyticalDatasetDerivationReceipt;
+  readonly partitionReceipt: AnalyticalPartitionReceipt;
   readonly normalizedArguments: NormalizedAnalysisArguments;
   readonly registryEntry: ToolRegistryEntry;
 }
@@ -58,7 +70,8 @@ export function buildAnalysisRunContext(
 ): ExactResult<AnalysisRunContext, AnalyticalContractFailure> {
   const record = validateContractRecord(input, [
     "schemaVersion", "snapshot", "snapshotDependencies", "canonicalFilter",
-    "datasetReceipt", "normalizedArguments", "registryEntry",
+    "datasetReceipt", "datasetDerivationReceipt", "partitionReceipt",
+    "normalizedArguments", "registryEntry",
   ]);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== ANALYSIS_RUN_CONTEXT_VERSION) return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
@@ -70,6 +83,23 @@ export function buildAnalysisRunContext(
   if (!filter.ok) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.canonicalFilter");
   const dataset = verifyAnalyticalDatasetReceipt(authorities.datasetReceipt);
   if (!dataset.ok) return contractFailure(dataset.error.code, `$.datasetReceipt${dataset.error.path.slice(1)}`);
+  const derivedDataset = getVerifiedDerivedAnalyticalDataset(
+    authorities.datasetDerivationReceipt as AnalyticalDatasetDerivationReceipt,
+  );
+  if (
+    derivedDataset === null ||
+    derivedDataset.receiptDigest !== dataset.value.receiptDigest
+  ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.datasetDerivationReceipt");
+  const partition = verifyAnalyticalPartitionReceipt(
+    authorities.partitionReceipt,
+    dataset.value,
+  );
+  if (!partition.ok) {
+    return contractFailure(
+      partition.error.code,
+      `$.partitionReceipt${partition.error.path.slice(1)}`,
+    );
+  }
   const normalizedArguments = verifyNormalizedAnalysisArguments(authorities.normalizedArguments);
   if (!normalizedArguments.ok) return contractFailure(normalizedArguments.error.code, `$.normalizedArguments${normalizedArguments.error.path.slice(1)}`);
   const registryEntry = verifyToolRegistryEntry(authorities.registryEntry);
@@ -82,12 +112,20 @@ export function buildAnalysisRunContext(
     dataset.value.manifestDigest !== snapshot.value.manifestDigest ||
     dataset.value.eligibilitySetDigest !== snapshot.value.eligibilitySetDigest ||
     dataset.value.correctionResultDigest !== snapshot.value.correctionResultDigest ||
+    dataset.value.retrospectivePolicyDigest !== snapshot.value.retrospectivePolicyDigest ||
+    dataset.value.evidenceNamespace !== snapshot.value.evidenceNamespace ||
+    dataset.value.occurrenceInventoryDigest !== (dependencies.occurrenceInventory?.inventoryDigest ?? null) ||
+    dataset.value.roundTripInventoryDigest !== (dependencies.roundTripInventory?.inventoryDigest ?? null) ||
+    dataset.value.adapterKey !== "ti_v3_snapshot_read_model_adapter" ||
+    dataset.value.adapterVersion !== "v1" ||
+    dataset.value.derivationPolicyKey !== "ti_v3_closed_round_trip_read_model" ||
+    dataset.value.derivationPolicyVersion !== "v1" ||
     dataset.value.analysisCutoffAt !== snapshot.value.analysisCutoffAt ||
     dataset.value.correctionCutoffAt !== snapshot.value.correctionCutoffAt
   ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.datasetReceipt");
   if (normalizedArguments.value.argumentSchemaDigest !== registryEntry.value.argumentSchemaDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.normalizedArguments.argumentSchemaDigest");
   if (!registryEntry.value.supportedTimezones.includes(filter.value.timezone)) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.canonicalFilter.timezone");
-  if (dataset.value.currencyPartitions.some((currency) => !registryEntry.value.supportedCurrencies.includes(currency))) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.datasetReceipt.currencyPartitions");
+  if (!registryEntry.value.supportedCurrencies.includes(partition.value.currency)) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.partitionReceipt.currency");
   const rowProperty = (field: string): string => field.replace(/_([a-z])/g, (_match, letter: string) => letter.toUpperCase());
   if (registryEntry.value.requiredRowFields.some((field) => dataset.value.rows.some((row) => !(rowProperty(field) in row)))) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.registryEntry.requiredRowFields");
   const eligibility = dependencies.eligibilitySet.results.find((result) => result.capability === registryEntry.value.requiredEligibilityCapability);
@@ -104,6 +142,8 @@ export function buildAnalysisRunContext(
     snapshotDigest: snapshot.value.snapshotDigest,
     filterDigest: filter.value.filterDigest,
     datasetReceiptDigest: dataset.value.receiptDigest,
+    partitionDigest: partition.value.partitionDigest,
+    partitionCurrency: partition.value.currency,
     normalizedArgumentsDigest: normalizedArguments.value.argumentsDigest,
     eligibilityState: eligibility.state,
   }, "runContextDigest") as ExactResult<AnalysisRunContext, AnalyticalContractFailure>;
@@ -113,6 +153,8 @@ export function buildAnalysisRunContext(
     snapshotDependencies: dependencies,
     canonicalFilter: filter.value,
     datasetReceipt: dataset.value,
+    datasetDerivationReceipt: authorities.datasetDerivationReceipt as AnalyticalDatasetDerivationReceipt,
+    partitionReceipt: partition.value,
     normalizedArguments: normalizedArguments.value,
     registryEntry: registryEntry.value,
   }));
@@ -130,7 +172,8 @@ export function verifyAnalysisRunContext(
   if (dependencies === undefined) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.dependencies");
   const record = validateContractRecord(input, [
     "schemaVersion", "toolKey", "toolVersion", "registryEntryDigest", "toolPolicyKey", "toolPolicyVersion", "requiredEligibilityCapability", "argumentSchemaDigest", "snapshotDigest",
-    "filterDigest", "datasetReceiptDigest", "normalizedArgumentsDigest",
+    "filterDigest", "datasetReceiptDigest", "partitionDigest", "partitionCurrency",
+    "normalizedArgumentsDigest",
     "eligibilityState", "runContextDigest",
   ]);
   if (!record.ok) return record;

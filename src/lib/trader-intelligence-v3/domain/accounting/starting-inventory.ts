@@ -28,6 +28,7 @@ import {
   type ExecutionEvidenceClass,
   type ExecutionSourceKind,
 } from "../execution/canonical-execution";
+import { validateExactRecord } from "../foundation";
 
 export const STARTING_INVENTORY_POLICY_VERSION =
   "ti_v3_starting_inventory_v2" as const;
@@ -236,26 +237,37 @@ function startingInventoryContent(input: Omit<StartingInventoryContract, "contra
 export function verifyStartingInventoryContract(
   input: unknown,
 ): ExactResult<StartingInventoryContract, StartingInventoryFailure> {
-  if (!isRecord(input)) return failure(["ti_v3_starting_inventory_input_invalid"]);
-  const suppliedDigest = parseCanonicalContentDigest(input.contractDigest);
+  const record = validateExactRecord(input, [
+    "policyVersion", "state", "asOf", "coverageState", "ledgerIdentity",
+    "priorLots", "contractDigest",
+  ], []);
+  if (!record.ok) return failure(["ti_v3_starting_inventory_input_invalid"]);
+  const suppliedDigest = parseCanonicalContentDigest(record.value.contractDigest);
   if (
-    input.policyVersion !== STARTING_INVENTORY_POLICY_VERSION ||
+    record.value.policyVersion !== STARTING_INVENTORY_POLICY_VERSION ||
     !suppliedDigest.ok ||
     !String(suppliedDigest.value).startsWith("ti_v3:starting_inventory:v1:")
   ) return failure(["ti_v3_starting_inventory_input_invalid"]);
   if (protectedStartingInventories.has(input as StartingInventoryContract)) {
-    const { contractDigest: _digest, ...content } = input as unknown as StartingInventoryContract;
+    const content = {
+      policyVersion: record.value.policyVersion,
+      state: record.value.state,
+      asOf: record.value.asOf,
+      coverageState: record.value.coverageState,
+      ledgerIdentity: record.value.ledgerIdentity,
+      priorLots: record.value.priorLots,
+    };
     const identity = createCanonicalContentIdentity("starting_inventory", STARTING_INVENTORY_DIGEST_VERSION, content);
     return identity.ok && identity.value.identifier === suppliedDigest.value
       ? { ok: true, value: input as unknown as StartingInventoryContract }
       : failure(["ti_v3_starting_inventory_input_invalid"]);
   }
   const rebuilt = buildStartingInventoryContract({
-    state: input.state,
-    asOf: input.asOf,
-    coverageState: input.coverageState,
-    ledgerIdentity: input.ledgerIdentity,
-    priorLots: input.priorLots,
+    state: record.value.state,
+    asOf: record.value.asOf,
+    coverageState: record.value.coverageState,
+    ledgerIdentity: record.value.ledgerIdentity,
+    priorLots: record.value.priorLots,
   });
   if (!rebuilt.ok || rebuilt.value.contractDigest !== suppliedDigest.value) {
     return failure(["ti_v3_starting_inventory_input_invalid"]);
@@ -266,13 +278,26 @@ export function verifyStartingInventoryContract(
 export function buildStartingInventoryContract(
   input: unknown,
 ): ExactResult<StartingInventoryContract, StartingInventoryFailure> {
-  if (!isRecord(input)) {
+  const root = validateExactRecord(
+    input,
+    ["state", "asOf", "coverageState", "ledgerIdentity", "priorLots"],
+    [],
+  );
+  if (!root.ok) {
     return failure(["ti_v3_starting_inventory_input_invalid"]);
   }
+  input = root.value;
   const reasons: StartingInventoryFailureCode[] = [];
-  const identity = isRecord(input.ledgerIdentity) ? input.ledgerIdentity : null;
+  const source = input as Record<string, unknown>;
+  const identityRecord = validateExactRecord(
+    source.ledgerIdentity,
+    ["canonicalOwnerKey", "canonicalAccountKey", "stableInstrumentKey", "currency"],
+    [],
+    "$.ledgerIdentity",
+  );
+  const identity = identityRecord.ok ? identityRecord.value : null;
   const currency = parseCurrencyCode(identity?.currency);
-  const asOf = parseCanonicalUtcTimestamp(input.asOf, "nanosecond");
+  const asOf = parseCanonicalUtcTimestamp(source.asOf, "nanosecond");
   if (!asOf.ok) reasons.push("ti_v3_starting_inventory_as_of_invalid");
   if (
     identity === null ||
@@ -283,19 +308,19 @@ export function buildStartingInventoryContract(
   ) {
     reasons.push("ti_v3_starting_inventory_identity_invalid");
   }
-  const state = input.state;
+  const state = source.state;
   if (!("proven_flat accepted_prior_lots unknown".split(" ") as string[]).includes(
     typeof state === "string" ? state : "",
   )) {
     reasons.push("ti_v3_starting_inventory_state_invalid");
   }
-  const coverageState = input.coverageState;
+  const coverageState = source.coverageState;
   if (!("complete incomplete_prior_charges unknown".split(" ") as string[]).includes(
     typeof coverageState === "string" ? coverageState : "",
   )) {
     reasons.push("ti_v3_starting_inventory_coverage_invalid");
   }
-  if (!Array.isArray(input.priorLots)) {
+  if (!Array.isArray(source.priorLots)) {
     reasons.push("ti_v3_starting_inventory_prior_lots_invalid");
   }
   if (
@@ -303,13 +328,13 @@ export function buildStartingInventoryContract(
     identity === null ||
     !currency.ok ||
     !asOf.ok ||
-    !Array.isArray(input.priorLots)
+    !Array.isArray(source.priorLots)
   ) {
     return failure(reasons);
   }
   if (
-    (state === "accepted_prior_lots" && input.priorLots.length === 0) ||
-    (state !== "accepted_prior_lots" && input.priorLots.length !== 0) ||
+    (state === "accepted_prior_lots" && source.priorLots.length === 0) ||
+    (state !== "accepted_prior_lots" && source.priorLots.length !== 0) ||
     (state === "unknown" && coverageState !== "unknown") ||
     (state === "proven_flat" && coverageState !== "complete") ||
     (state === "accepted_prior_lots" && coverageState === "unknown")
@@ -325,11 +350,25 @@ export function buildStartingInventoryContract(
   const sourceExecutionDigests = new Set<string>();
   const fifoOrdinals = new Set<string>();
   let priorDirection: "long" | "short" | null = null;
-  for (const priorLotInput of input.priorLots) {
-    if (!isRecord(priorLotInput)) {
+  for (const rawPriorLotInput of source.priorLots) {
+    const priorLotRecord = validateExactRecord(rawPriorLotInput, [
+      "lotId", "direction", "acquiredAt", "fifoOrdinal", "remainingQuantity",
+      "price", "basisPolicy", "signedCharges", "chargeCoverageState",
+      "canonicalOwnerKey", "canonicalAccountKey", "stableInstrumentKey",
+      "currency", "sourceIdentity", "sourceKind", "evidenceClass",
+      "sourceDocumentDigest", "originalSourceRowLocator", "sourceExecutionDigest",
+    ], [], "$.priorLots[]");
+    if (!priorLotRecord.ok) {
       reasons.push("ti_v3_starting_inventory_prior_lots_invalid");
       continue;
     }
+    const priorLotInput = priorLotRecord.value;
+    const locator = validateExactRecord(
+      priorLotInput.originalSourceRowLocator,
+      ["kind", "value", "rowOrderPreserved"],
+      [],
+      "$.priorLots[].originalSourceRowLocator",
+    );
     const quantity = parseExactQuantity(priorLotInput.remainingQuantity);
     const price = parseExactPrice(priorLotInput.price);
     const lotCurrency = parseCurrencyCode(priorLotInput.currency);
@@ -359,7 +398,8 @@ export function buildStartingInventoryContract(
       typeof evidenceClass === "string" &&
       EVIDENCE_CLASSES.has(evidenceClass as ExecutionEvidenceClass) &&
       compatibleEvidence(sourceKind as ExecutionSourceKind, evidenceClass as ExecutionEvidenceClass) &&
-      validLocator(priorLotInput.originalSourceRowLocator) &&
+      locator.ok &&
+      validLocator(locator.value) &&
       executionDigest.ok &&
       typeof priorLotInput.sourceExecutionDigest === "string" &&
       priorLotInput.sourceExecutionDigest.startsWith("ti_v3:canonical_execution:") &&
@@ -405,11 +445,18 @@ export function buildStartingInventoryContract(
       continue;
     }
     const signedCharges: AcceptedPriorCharge[] = [];
-    for (const chargeInput of priorLotInput.signedCharges) {
-      if (!isRecord(chargeInput)) {
+    for (const rawChargeInput of priorLotInput.signedCharges) {
+      const chargeRecord = validateExactRecord(
+        rawChargeInput,
+        ["kind", "amount", "currency"],
+        [],
+        "$.priorLots[].signedCharges[]",
+      );
+      if (!chargeRecord.ok) {
         reasons.push("ti_v3_starting_inventory_prior_charge_invalid");
         continue;
       }
+      const chargeInput = chargeRecord.value;
       const amount = parseExactCharge(chargeInput.amount);
       const chargeCurrency = parseCurrencyCode(chargeInput.currency);
       if (
@@ -457,7 +504,7 @@ export function buildStartingInventoryContract(
         evidenceClass: evidenceClass as ExecutionEvidenceClass,
         sourceDocumentDigest: documentDigest.value as CanonicalSourceDocumentDigest,
         originalSourceRowLocator: freezeLocator(
-          priorLotInput.originalSourceRowLocator as CanonicalSourceRowLocator,
+          locator.value as unknown as CanonicalSourceRowLocator,
         ),
         sourceExecutionDigest: executionDigest.value as CanonicalExecutionDigest,
       }),

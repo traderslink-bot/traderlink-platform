@@ -1,5 +1,16 @@
 import { compareUnicodeCodePoints } from "../../domain/canonical";
-import { parseCurrencyCode, subtractExactDecimals, type CanonicalDecimal, type CurrencyCode, type ExactResult } from "../../domain/exact";
+import {
+  addExactRatios,
+  compareExactRatios,
+  createExactRatio,
+  decimalToExactRatio,
+  parseCurrencyCode,
+  subtractExactDecimals,
+  type CanonicalDecimal,
+  type CurrencyCode,
+  type ExactRatio,
+  type ExactResult,
+} from "../../domain/exact";
 import type { CanonicalContentDigest } from "../../domain/identity";
 import {
   GA0_B1_CONTRACT_LIMITS,
@@ -9,7 +20,6 @@ import {
   validateClaimedDigest,
   validateContractKey,
   validateContractRecord,
-  validateDigestArray,
   validateReasonCodes,
   validateTimezone,
   validateUnit,
@@ -50,6 +60,7 @@ export interface ExactTable {
   readonly runContextDigest: CanonicalContentDigest;
   readonly snapshotDigest: CanonicalContentDigest;
   readonly filterDigest: CanonicalContentDigest;
+  readonly partitionDigest: CanonicalContentDigest;
   readonly titlePurposeCode: string;
   readonly currency: CurrencyCode | null;
   readonly timezone: string;
@@ -72,6 +83,7 @@ export interface ValidatedClaim {
   readonly claimType: string;
   readonly runContextDigest: CanonicalContentDigest;
   readonly tableDigest: CanonicalContentDigest;
+  readonly partitionDigest: CanonicalContentDigest;
   readonly subjectGroupKey: string;
   readonly comparisonGroupKey: string | null;
   readonly metricKey: string;
@@ -113,6 +125,7 @@ export interface ChartReadySeries {
   readonly allowedVisualTemplateKeys: readonly string[];
   readonly runContextDigest: CanonicalContentDigest;
   readonly sourceTableDigest: CanonicalContentDigest;
+  readonly partitionDigest: CanonicalContentDigest;
   readonly xDomain: string;
   readonly unit: string;
   readonly currency: CurrencyCode | null;
@@ -136,6 +149,90 @@ function parseCurrency(input: unknown, path: string): ExactResult<CurrencyCode |
   if (input === null) return { ok: true, value: null };
   const currency = parseCurrencyCode(input);
   return currency.ok ? currency : contractFailure("ti_v3_analytics_contract_invalid", path);
+}
+
+// 2026-07-23 America/Toronto: claim arithmetic keeps mixed decimal/ratio
+// comparisons exact by promoting both operands to reduced ratios.
+function metricAsRatio(metric: ExactMetricValue): ExactResult<ExactRatio, AnalyticalContractFailure> {
+  if (metric.kind === "exact_ratio") {
+    const ratio = createExactRatio(metric.numerator, metric.denominator);
+    return ratio.ok ? ratio : contractFailure("ti_v3_analytics_contract_invalid", "$.effectDerivation");
+  }
+  if (metric.kind === "exact_decimal") {
+    const ratio = decimalToExactRatio(metric.value as CanonicalDecimal);
+    return ratio.ok ? ratio : contractFailure("ti_v3_analytics_contract_invalid", "$.effectDerivation");
+  }
+  return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.effectDerivation");
+}
+
+function subtractMetricExactly(
+  target: ExactMetricValue,
+  comparison: ExactMetricValue,
+  metricKey: string,
+): ExactResult<ExactMetricValue, AnalyticalContractFailure> {
+  if (
+    target.unit !== comparison.unit ||
+    target.currency !== comparison.currency ||
+    !["exact_decimal", "exact_ratio"].includes(target.kind) ||
+    !["exact_decimal", "exact_ratio"].includes(comparison.kind)
+  ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.effectDerivation");
+  if (target.kind === "exact_decimal" && comparison.kind === "exact_decimal") {
+    const difference = subtractExactDecimals(
+      target.value as CanonicalDecimal,
+      comparison.value as CanonicalDecimal,
+    );
+    if (!difference.ok) return contractFailure("ti_v3_analytics_contract_invalid", "$.effectDerivation");
+    return buildExactMetricValue({
+      schemaVersion: "ti_v3_exact_metric_value_v1",
+      metricKey,
+      kind: "exact_decimal",
+      unit: target.unit,
+      currency: target.currency,
+      value: difference.value,
+    });
+  }
+  const left = metricAsRatio(target);
+  const right = metricAsRatio(comparison);
+  if (!left.ok) return left;
+  if (!right.ok) return right;
+  const negated = createExactRatio(
+    (-BigInt(right.value.numerator)).toString(),
+    right.value.denominator,
+  );
+  if (!negated.ok) return contractFailure("ti_v3_analytics_contract_invalid", "$.effectDerivation");
+  const difference = addExactRatios(left.value, negated.value);
+  if (!difference.ok) return contractFailure("ti_v3_analytics_contract_invalid", "$.effectDerivation");
+  return buildExactMetricValue({
+    schemaVersion: "ti_v3_exact_metric_value_v1",
+    metricKey,
+    kind: "exact_ratio",
+    unit: target.unit,
+    currency: target.currency,
+    value: null,
+    numerator: difference.value.numerator,
+    denominator: difference.value.denominator,
+  });
+}
+
+function exactMetricDirection(
+  metric: ExactMetricValue,
+): ValidatedClaim["direction"] {
+  if (metric.kind === "unavailable") return "unavailable";
+  if (metric.kind === "exact_ratio") {
+    const ratio = createExactRatio(metric.numerator, metric.denominator);
+    if (!ratio.ok) return "unavailable";
+    const zero = createExactRatio("0", "1");
+    if (!zero.ok) return "unavailable";
+    const compared = compareExactRatios(
+      ratio.value,
+      zero.value,
+    );
+    return compared === 0 ? "flat" : compared < 0 ? "negative" : "positive";
+  }
+  if (metric.kind === "exact_decimal" || metric.kind === "integer") {
+    return metric.value === "0" ? "flat" : metric.value.startsWith("-") ? "negative" : "positive";
+  }
+  return "unavailable";
 }
 
 function evidenceCatalog(
@@ -242,9 +339,7 @@ export function buildExactTable(
   if (
     timezone.value !== dependencies.canonicalFilter.timezone ||
     dateBasis.value !== dependencies.canonicalFilter.dateBasis ||
-    (dependencies.datasetReceipt.currencyPartitions.length === 0
-      ? currency.value !== null
-      : currency.value === null || !dependencies.datasetReceipt.currencyPartitions.includes(currency.value))
+    currency.value !== dependencies.partitionReceipt.currency
   ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.scope");
   const columns = parseColumns(record.value.columns); if (!columns.ok) return columns;
   if (!Array.isArray(record.value.evidenceBundles)) return contractFailure("ti_v3_analytics_contract_invalid", "$.evidenceBundles");
@@ -259,19 +354,20 @@ export function buildExactTable(
   const limitations = validateReasonCodes(record.value.limitationCodes, "$.limitationCodes"); if (!limitations.ok) return limitations;
   const eligibility = dependencies.snapshotDependencies.eligibilitySet.results.find((result) => result.capability === context.value.requiredEligibilityCapability);
   const expectedLimitations = [...new Set([
-    ...dependencies.datasetReceipt.limitations,
+    ...dependencies.partitionReceipt.limitationCodes,
     ...(eligibility?.state === "limited" ? eligibility.reasonCodes : []),
   ])].sort(compareUnicodeCodePoints);
   if (
-    included.value !== dependencies.datasetReceipt.includedCount ||
-    excluded.value !== dependencies.datasetReceipt.excludedCount ||
+    included.value !== dependencies.partitionReceipt.includedCount ||
+    excluded.value !== dependencies.partitionReceipt.excludedCount ||
     record.value.coverageEligibilityState !== context.value.eligibilityState ||
     limitations.value.join("\n") !== expectedLimitations.join("\n")
   ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.scope");
   return finalizeContentAddressedAuthority("exact_table", {
     schemaVersion: EXACT_TABLE_VERSION, tableKey: tableKey.value, tableVersion: tableVersion.value,
     runContextDigest: context.value.runContextDigest, snapshotDigest: context.value.snapshotDigest,
-    filterDigest: context.value.filterDigest, titlePurposeCode: purpose.value, currency: currency.value,
+    filterDigest: context.value.filterDigest, partitionDigest: context.value.partitionDigest,
+    titlePurposeCode: purpose.value, currency: currency.value,
     timezone: timezone.value, dateBasis: dateBasis.value, denominatorPolicy: denominator.value,
     columns: columns.value, rows: rows.value, summaryRows: summaryRows.value,
     includedCount: included.value, excludedCount: excluded.value,
@@ -287,16 +383,16 @@ export function verifyExactTable(
 ): ExactResult<ExactTable, AnalyticalContractFailure> {
   const record = validateContractRecord(input, [
     "schemaVersion", "tableKey", "tableVersion", "runContextDigest", "snapshotDigest",
-    "filterDigest", "titlePurposeCode", "currency", "timezone", "dateBasis",
+    "filterDigest", "partitionDigest", "titlePurposeCode", "currency", "timezone", "dateBasis",
     "denominatorPolicy", "columns", "rows", "summaryRows", "includedCount",
     "excludedCount", "coverageEligibilityState", "limitationCodes", "tableDigest",
   ]);
   if (!record.ok) return record;
   const context = verifyAnalysisRunContext(runContext);
-  if (!context.ok || record.value.runContextDigest !== context.value.runContextDigest || record.value.snapshotDigest !== context.value.snapshotDigest || record.value.filterDigest !== context.value.filterDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$");
+  if (!context.ok || record.value.runContextDigest !== context.value.runContextDigest || record.value.snapshotDigest !== context.value.snapshotDigest || record.value.filterDigest !== context.value.filterDigest || record.value.partitionDigest !== context.value.partitionDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$");
   const digest = validateClaimedDigest(record.value.tableDigest, "$.tableDigest", "exact_table"); if (!digest.ok) return digest;
-  const { tableDigest: _tableDigest, runContextDigest: _contextDigest, snapshotDigest: _snapshotDigest, filterDigest: _filterDigest, ...content } = record.value;
-  void _tableDigest; void _contextDigest; void _snapshotDigest; void _filterDigest;
+  const { tableDigest: _tableDigest, runContextDigest: _contextDigest, snapshotDigest: _snapshotDigest, filterDigest: _filterDigest, partitionDigest: _partitionDigest, ...content } = record.value;
+  void _tableDigest; void _contextDigest; void _snapshotDigest; void _filterDigest; void _partitionDigest;
   const rebuilt = buildExactTable({ ...content, runContext: context.value, evidenceBundles });
   if (!rebuilt.ok || rebuilt.value.tableDigest !== digest.value) return contractFailure("ti_v3_analytics_contract_digest_mismatch", "$.tableDigest");
   return rebuilt;
@@ -344,12 +440,15 @@ export function buildValidatedClaim(input: unknown): ExactResult<ValidatedClaim,
     const comparisonCell = comparisonRow?.cells.find((cell) => cell.columnKey === comparisonColumnKey);
     if (
       comparisonRow === undefined || comparisonCell === undefined || comparisonGroupKey !== comparisonRow.rowKey ||
-      targetCell.metric.kind !== "exact_decimal" || comparisonCell.metric.kind !== "exact_decimal" ||
+      !["exact_decimal", "exact_ratio"].includes(targetCell.metric.kind) ||
+      !["exact_decimal", "exact_ratio"].includes(comparisonCell.metric.kind) ||
       targetCell.metric.unit !== comparisonCell.metric.unit || targetCell.metric.currency !== comparisonCell.metric.currency
     ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.effectDerivation");
-    const difference = subtractExactDecimals(targetCell.metric.value as CanonicalDecimal, comparisonCell.metric.value as CanonicalDecimal);
-    if (!difference.ok) return contractFailure("ti_v3_analytics_contract_invalid", "$.effectDerivation");
-    const builtEffect = buildExactMetricValue({ schemaVersion: "ti_v3_exact_metric_value_v1", metricKey: parsed.get("metricKey"), kind: "exact_decimal", unit: targetCell.metric.unit, currency: targetCell.metric.currency, value: difference.value });
+    const builtEffect = subtractMetricExactly(
+      targetCell.metric,
+      comparisonCell.metric,
+      parsed.get("metricKey") as string,
+    );
     if (!builtEffect.ok) return builtEffect;
     effect = builtEffect.value;
   } else if (derivation.value.comparisonRowKey !== null || derivation.value.comparisonColumnKey !== null || comparisonGroupKey !== null) {
@@ -370,14 +469,12 @@ export function buildValidatedClaim(input: unknown): ExactResult<ValidatedClaim,
     ...table.value.limitationCodes,
     ...evidenceDigests.flatMap((digest) => catalog.value.get(digest)?.limitationCodes ?? []),
   ])].sort(compareUnicodeCodePoints);
-  const direction = effect.kind === "unavailable" ? "unavailable" :
-    (effect.kind === "exact_decimal" || effect.kind === "integer")
-      ? effect.value === "0" ? "flat" : effect.value.startsWith("-") ? "negative" : "positive"
-      : "unavailable";
+  const direction = exactMetricDirection(effect);
   return finalizeContentAddressedAuthority("validated_claim", {
     schemaVersion: VALIDATED_CLAIM_VERSION, claimKey: parsed.get("claimKey") as string,
     claimVersion: parsed.get("claimVersion") as string, claimType: parsed.get("claimType") as string,
     runContextDigest: context.value.runContextDigest, tableDigest: table.value.tableDigest,
+    partitionDigest: context.value.partitionDigest,
     subjectGroupKey: parsed.get("subjectGroupKey") as string, comparisonGroupKey,
     metricKey: parsed.get("metricKey") as string,
     effectDerivation: { kind: derivation.value.kind, targetRowKey: targetRowKey.value, targetColumnKey: targetColumnKey.value, comparisonRowKey, comparisonColumnKey },
@@ -390,9 +487,9 @@ export function buildValidatedClaim(input: unknown): ExactResult<ValidatedClaim,
 }
 
 export function verifyValidatedClaim(input: unknown, runContext: AnalysisRunContext, table: ExactTable, evidenceBundles: readonly AnalyticalEvidenceBundle[]): ExactResult<ValidatedClaim, AnalyticalContractFailure> {
-  const record = validateContractRecord(input, ["schemaVersion", "claimKey", "claimVersion", "claimType", "runContextDigest", "tableDigest", "subjectGroupKey", "comparisonGroupKey", "metricKey", "effectDerivation", "direction", "exactEffect", "targetSampleSize", "comparisonSampleSize", "confidenceEvidenceLabel", "outlierSensitivityState", "evidenceBundleDigests", "counterexampleEvidenceBundleDigests", "limitationCodes", "allowedWordingCode", "claimDigest"]);
+  const record = validateContractRecord(input, ["schemaVersion", "claimKey", "claimVersion", "claimType", "runContextDigest", "tableDigest", "partitionDigest", "subjectGroupKey", "comparisonGroupKey", "metricKey", "effectDerivation", "direction", "exactEffect", "targetSampleSize", "comparisonSampleSize", "confidenceEvidenceLabel", "outlierSensitivityState", "evidenceBundleDigests", "counterexampleEvidenceBundleDigests", "limitationCodes", "allowedWordingCode", "claimDigest"]);
   if (!record.ok) return record;
-  const context = verifyAnalysisRunContext(runContext); if (!context.ok || record.value.runContextDigest !== context.value.runContextDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.runContextDigest");
+  const context = verifyAnalysisRunContext(runContext); if (!context.ok || record.value.runContextDigest !== context.value.runContextDigest || record.value.partitionDigest !== context.value.partitionDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.runContextDigest");
   const verifiedTable = verifyExactTable(table, context.value, evidenceBundles); if (!verifiedTable.ok || record.value.tableDigest !== verifiedTable.value.tableDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.tableDigest");
   const digest = validateClaimedDigest(record.value.claimDigest, "$.claimDigest", "validated_claim"); if (!digest.ok) return digest;
   const rebuilt = buildValidatedClaim({
@@ -464,7 +561,8 @@ export function buildChartReadySeries(input: unknown): ExactResult<ChartReadySer
   return finalizeContentAddressedAuthority("chart_ready_series", {
     schemaVersion: CHART_READY_SERIES_VERSION, seriesKey: parsed.get("seriesKey") as string, seriesVersion: parsed.get("seriesVersion") as string,
     approvedVisualPurpose: parsed.get("approvedVisualPurpose") as string, allowedVisualTemplateKeys: Object.freeze(templateKeys), runContextDigest: context.value.runContextDigest,
-    sourceTableDigest: table.value.tableDigest, xDomain: parsed.get("xDomain") as string, unit: unit.value, currency: currency.value, timezone: timezone.value,
+    sourceTableDigest: table.value.tableDigest, partitionDigest: context.value.partitionDigest,
+    xDomain: parsed.get("xDomain") as string, unit: unit.value, currency: currency.value, timezone: timezone.value,
     dateBasis: parsed.get("dateBasis") as string, zeroBaselineRequired: record.value.zeroBaselineRequired,
     denominatorPolicy: parsed.get("denominatorPolicy") as string, points: Object.freeze(points), includedCount: table.value.includedCount, excludedCount: table.value.excludedCount,
     accessibilitySummaryFacts: Object.freeze(facts), accessibilitySummarySelections: Object.freeze(selections), pointBudget: pointBudget.value, downsamplingPolicy: "none_exact_points_only" as const,
@@ -473,8 +571,8 @@ export function buildChartReadySeries(input: unknown): ExactResult<ChartReadySer
 }
 
 export function verifyChartReadySeries(input: unknown, runContext: AnalysisRunContext, sourceTable: ExactTable, evidenceBundles: readonly AnalyticalEvidenceBundle[]): ExactResult<ChartReadySeries, AnalyticalContractFailure> {
-  const record = validateContractRecord(input, ["schemaVersion", "seriesKey", "seriesVersion", "approvedVisualPurpose", "allowedVisualTemplateKeys", "runContextDigest", "sourceTableDigest", "xDomain", "unit", "currency", "timezone", "dateBasis", "zeroBaselineRequired", "denominatorPolicy", "points", "includedCount", "excludedCount", "accessibilitySummaryFacts", "accessibilitySummarySelections", "pointBudget", "downsamplingPolicy", "limitationCodes", "tableAlternativeDigest", "seriesDigest"]); if (!record.ok) return record;
-  const context = verifyAnalysisRunContext(runContext); if (!context.ok || record.value.runContextDigest !== context.value.runContextDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.runContextDigest");
+  const record = validateContractRecord(input, ["schemaVersion", "seriesKey", "seriesVersion", "approvedVisualPurpose", "allowedVisualTemplateKeys", "runContextDigest", "sourceTableDigest", "partitionDigest", "xDomain", "unit", "currency", "timezone", "dateBasis", "zeroBaselineRequired", "denominatorPolicy", "points", "includedCount", "excludedCount", "accessibilitySummaryFacts", "accessibilitySummarySelections", "pointBudget", "downsamplingPolicy", "limitationCodes", "tableAlternativeDigest", "seriesDigest"]); if (!record.ok) return record;
+  const context = verifyAnalysisRunContext(runContext); if (!context.ok || record.value.runContextDigest !== context.value.runContextDigest || record.value.partitionDigest !== context.value.partitionDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.runContextDigest");
   const table = verifyExactTable(sourceTable, context.value, evidenceBundles); if (!table.ok || record.value.sourceTableDigest !== table.value.tableDigest || record.value.tableAlternativeDigest !== table.value.tableDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.sourceTableDigest");
   const digest = validateClaimedDigest(record.value.seriesDigest, "$.seriesDigest", "chart_ready_series"); if (!digest.ok) return digest;
   const points = Array.isArray(record.value.points) ? record.value.points.map((point) => { if (typeof point !== "object" || point === null) return point; const { exactValue: _exactValue, sampleSize: _sampleSize, ...selection } = point as Record<string, unknown>; void _exactValue; void _sampleSize; return selection; }) : record.value.points;

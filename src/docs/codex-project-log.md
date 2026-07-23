@@ -1,3 +1,37 @@
+# 2026-07-23 - GA0-B1 Second Focused Remediation Executable Checkpoint
+
+- Existing branch `agent/trader-intelligence-v3-ga0-b1-read-model` and draft PR
+  #133 remain the only implementation surface. The immutable original merge
+  base remains `153eaceecfca714a6c28848b513c412ca76b8e57`; current `main` was not
+  merged, rebased, reset, or otherwise introduced.
+- B1-REAUD-R1 through R7 are implemented: replay-bound analytical dataset
+  derivation, one-currency partition receipts, exact ratio/decimal claim
+  arithmetic, registry-governed artifact graphs, complete deterministic
+  exclusion reason ledgers, allowlisted weekday-safe NYSE calendar evidence,
+  and descriptor-first starting-inventory re-entry.
+- Final focused evidence is green: analytical dataset `13/13`, proof contracts
+  `17/17`, direct starting-inventory cluster `83/83`, TypeScript with no
+  diagnostics, ESLint across all 15 changed TypeScript files with no warnings,
+  architecture guard passed, and private-data guard passed. The first
+  private-data invocation was interrupted without a result; no orphan
+  remained, and the clean restart passed.
+- The consolidated 21-file verifier was non-green at `373/378`: the unchanged
+  private Git-history test exceeded its hard-coded 15-second timeout, and four
+  SQLite tests could not load `better_sqlite3.node` from the default linked
+  dependency tree. The affected SQLite files passed `14/14` in an isolated
+  compatible-tree retry. The timeout was not altered or masked.
+- The repository-defined `verify:ti-v3:ga0-a2` command was non-green at
+  `306/308` solely because the same two SQLite round-trip tests could not load
+  the native binding; those tests passed `2/2` in the compatible-tree retry.
+  Its chained guards did not run, so architecture and private-data guards were
+  invoked separately and passed.
+- Package manifests and lockfiles are unchanged. `npm ci`, full `npm test`,
+  Playwright, and `npm run build` were intentionally not run.
+- Exact next action: inspect and commit the executable checkpoint, push it, and
+  observe terminal CI. Only then create and push the required docs-only
+  independent re-audit handoff. No deploy, GA0-B2 work, route/UI work,
+  review-thread resolution, merge, or draft-state change is authorized.
+
 # Codex Project Log
 
 ### 2026-07-23 Trader Intelligence v3 GA0-B1 Independent-Audit Remediation Candidate

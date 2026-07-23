@@ -177,7 +177,10 @@ function parseSessionEvidence(
       return failure("ti_v3_filter_contradictory", path);
     }
   } else {
+    const weekday = new Date(`${sessionDate.value}T00:00:00.000Z`).getUTCDay();
     if (
+      weekday === 0 ||
+      weekday === 6 ||
       open.value === null ||
       close.value === null ||
       open.value >= close.value ||

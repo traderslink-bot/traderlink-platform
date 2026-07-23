@@ -9,7 +9,6 @@ import {
   validateContractRecord,
   validateKeyArray,
   validateReasonCode,
-  validateReasonCodes,
   type AnalyticalContractFailure,
 } from "./contract-validation";
 import { getAnalysisRunContextDependencies, verifyAnalysisRunContext, type AnalysisRunContext } from "./run-context";
@@ -24,12 +23,23 @@ export interface AnalyticalEvidenceBundle {
   readonly snapshotDigest: CanonicalContentDigest;
   readonly filterDigest: CanonicalContentDigest;
   readonly datasetReceiptDigest: CanonicalContentDigest;
+  readonly partitionDigest: CanonicalContentDigest;
+  readonly partitionCurrency: string;
   readonly comparisonGroupKey: string | null;
   readonly inclusionState: "included" | "excluded";
   readonly candidateKeys: readonly string[];
   readonly roundTripKeys: readonly string[];
   readonly occurrenceKeys: readonly string[];
   readonly exclusionReasonCodes: readonly string[];
+  readonly secondaryExclusionReasonCodes: readonly string[];
+  readonly sourceExclusionReasonCodes: readonly string[];
+  readonly exclusionReasonAuthorities: readonly Readonly<{
+    readonly reasonCode: string;
+    readonly authority: string;
+    readonly sourceReasonCode: string | null;
+    readonly mappingPolicyKey: string | null;
+    readonly mappingPolicyVersion: string | null;
+  }>[];
   readonly limitationCodes: readonly string[];
   readonly bundleDigest: CanonicalContentDigest;
 }
@@ -76,8 +86,14 @@ export function buildAnalyticalEvidenceBundle(
   const occurrenceKeys = new Set<string>();
   const limitationCodes = new Set<string>();
   const exclusionReasonCodes = new Set<string>();
+  const secondaryExclusionReasonCodes = new Set<string>();
+  const sourceExclusionReasonCodes = new Set<string>();
+  const exclusionReasonAuthorities = new Map<string, AnalyticalEvidenceBundle["exclusionReasonAuthorities"][number]>();
   if (record.value.inclusionState === "included") {
     for (const candidateKey of candidateKeys.value) {
+      if (!dependencies.partitionReceipt.includedRowKeys.includes(candidateKey)) {
+        return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.candidateKeys");
+      }
       const row = dependencies.datasetReceipt.rows.find((item) => item.semanticRoundTripKey === candidateKey);
       if (row === undefined) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.candidateKeys");
       roundTripKeys.add(row.semanticRoundTripKey);
@@ -86,6 +102,9 @@ export function buildAnalyticalEvidenceBundle(
     }
   } else {
     for (const candidateKey of candidateKeys.value) {
+      if (!dependencies.partitionReceipt.excludedCandidateKeys.includes(candidateKey)) {
+        return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.candidateKeys");
+      }
       const exclusion = dependencies.datasetReceipt.excludedCandidates.find((item) => item.candidateKey === candidateKey);
       if (exclusion === undefined) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.candidateKeys");
       if (exclusion.semanticRoundTripKey !== null) roundTripKeys.add(exclusion.semanticRoundTripKey);
@@ -93,6 +112,14 @@ export function buildAnalyticalEvidenceBundle(
       exclusion.limitationCodes.forEach((code) => limitationCodes.add(code));
       limitationCodes.add(exclusion.reasonCode);
       exclusionReasonCodes.add(exclusion.reasonCode);
+      exclusion.secondaryReasonCodes.forEach((code) =>
+        secondaryExclusionReasonCodes.add(code));
+      exclusion.sourceReasonCodes.forEach((code) =>
+        sourceExclusionReasonCodes.add(code));
+      exclusion.reasonAuthorities.forEach((authority) => {
+        const key = `${authority.reasonCode}:${authority.authority}:${authority.sourceReasonCode ?? ""}:${authority.mappingPolicyKey ?? ""}:${authority.mappingPolicyVersion ?? ""}`;
+        exclusionReasonAuthorities.set(key, authority);
+      });
     }
   }
   return finalizeContentAddressedAuthority("analytical_evidence_bundle", {
@@ -102,12 +129,23 @@ export function buildAnalyticalEvidenceBundle(
     snapshotDigest: context.value.snapshotDigest,
     filterDigest: context.value.filterDigest,
     datasetReceiptDigest: context.value.datasetReceiptDigest,
+    partitionDigest: context.value.partitionDigest,
+    partitionCurrency: context.value.partitionCurrency,
     comparisonGroupKey,
     inclusionState: record.value.inclusionState,
     candidateKeys: candidateKeys.value,
     roundTripKeys: [...roundTripKeys].sort(),
     occurrenceKeys: [...occurrenceKeys].sort(),
     exclusionReasonCodes: [...exclusionReasonCodes].sort(),
+    secondaryExclusionReasonCodes: [...secondaryExclusionReasonCodes].sort(),
+    sourceExclusionReasonCodes: [...sourceExclusionReasonCodes].sort(),
+    exclusionReasonAuthorities: [...exclusionReasonAuthorities.values()].sort(
+      (left, right) => {
+        const leftKey = `${left.reasonCode}:${left.authority}:${left.sourceReasonCode ?? ""}`;
+        const rightKey = `${right.reasonCode}:${right.authority}:${right.sourceReasonCode ?? ""}`;
+        return leftKey < rightKey ? -1 : leftKey > rightKey ? 1 : 0;
+      },
+    ),
     limitationCodes: [...limitationCodes].sort(),
   }, "bundleDigest") as ExactResult<AnalyticalEvidenceBundle, AnalyticalContractFailure>;
 }
@@ -118,12 +156,15 @@ export function verifyAnalyticalEvidenceBundle(
 ): ExactResult<AnalyticalEvidenceBundle, AnalyticalContractFailure> {
   const record = validateContractRecord(input, [
     "schemaVersion", "evidenceKey", "runContextDigest", "snapshotDigest", "filterDigest",
-    "datasetReceiptDigest", "comparisonGroupKey", "inclusionState", "candidateKeys", "roundTripKeys",
-    "occurrenceKeys", "exclusionReasonCodes", "limitationCodes", "bundleDigest",
+    "datasetReceiptDigest", "partitionDigest", "partitionCurrency",
+    "comparisonGroupKey", "inclusionState", "candidateKeys", "roundTripKeys",
+    "occurrenceKeys", "exclusionReasonCodes", "secondaryExclusionReasonCodes",
+    "sourceExclusionReasonCodes", "exclusionReasonAuthorities",
+    "limitationCodes", "bundleDigest",
   ]);
   if (!record.ok) return record;
   const context = verifyAnalysisRunContext(runContext);
-  if (!context.ok || record.value.runContextDigest !== context.value.runContextDigest || record.value.snapshotDigest !== context.value.snapshotDigest || record.value.filterDigest !== context.value.filterDigest || record.value.datasetReceiptDigest !== context.value.datasetReceiptDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$");
+  if (!context.ok || record.value.runContextDigest !== context.value.runContextDigest || record.value.snapshotDigest !== context.value.snapshotDigest || record.value.filterDigest !== context.value.filterDigest || record.value.datasetReceiptDigest !== context.value.datasetReceiptDigest || record.value.partitionDigest !== context.value.partitionDigest || record.value.partitionCurrency !== context.value.partitionCurrency) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$");
   const digest = validateClaimedDigest(record.value.bundleDigest, "$.bundleDigest", "analytical_evidence_bundle");
   if (!digest.ok) return digest;
   const rebuilt = buildAnalyticalEvidenceBundle({

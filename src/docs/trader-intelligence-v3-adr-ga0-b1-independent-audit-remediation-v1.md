@@ -132,6 +132,57 @@ closed.
 
 - B1 artifacts are derived from actual authority objects, not mutually
   consistent-looking claims.
+
+## Second independent re-audit remediation - 2026-07-23
+
+The second independent re-audit identified seven remaining admission and
+provenance gaps. GA0-B1 now applies these additional binding decisions:
+
+- A dataset may enter an analysis run only with
+  `ti_v3_analytical_dataset_derivation_v1`. The in-memory receipt is produced
+  by the snapshot read model after full authority replay. Persisted receipts
+  re-enter only by replaying that same source authority and matching the exact
+  derivation digest. The receipt binds every snapshot, manifest, filter,
+  correction, retrospective-policy, eligibility, evidence-namespace,
+  inventory, adapter, derivation, and calendar-policy dependency.
+- Each run context selects one immutable
+  `ti_v3_analytical_partition_v1`. Its currency, account scope, exact included
+  row keys, exact excluded candidate keys, counts, limitations, dataset,
+  snapshot, and filter are content addressed. Evidence, tables, claims,
+  series, and the terminal receipt retain the partition digest. One run
+  receipt cannot aggregate currencies.
+- Claim arithmetic promotes decimal/ratio comparisons to exact reduced
+  ratios. Decimal/decimal subtraction remains an exact decimal when accepted
+  exact-decimal arithmetic succeeds. Any comparison involving an exact ratio
+  produces a reduced exact-ratio result, including non-terminating results.
+  Ratio sign uses exact comparison and never JavaScript numbers.
+- Registry `outputContracts` are the minimum and allowed artifact graph for a
+  completed or limited run. The registry also declares an explicit blocked
+  artifact policy. Missing, empty, undeclared, foreign, duplicate, and unused
+  artifact classes fail closed. Diagnostic affected keys resolve to supplied
+  graph identities or use the explicit `non_reference:` namespace.
+- Exclusion reconciliation uses
+  `ti_v3_analytical_exclusion_reason_ledger:v1`. One semantic candidate has
+  one precedence-selected primary reason, while all unique secondary reasons,
+  source reasons, authorities, mapping identities, executions, occurrences,
+  and limitations remain content-addressed evidence. Aggregation is
+  independent of source append order.
+- New York classification accepts only `ti_v3_nyse_calendar:v1`, rejects
+  regular or early-close evidence on Saturday/Sunday, and applies the 2007
+  lower bound to the resolved New York local year. UTC remains civil-date
+  authority with `not_applicable` exchange session.
+- Starting-inventory construction and verification use descriptor-first exact
+  record validation at the contract, ledger, lot, charge, and row-locator
+  levels. Unknown fields, accessors, symbols, non-enumerable fields, invalid
+  prototypes, sparse arrays, cycles, proxies, and bounds failures are rejected
+  without invoking hostile accessors. The read-model adapter converts any
+  unexpected verification exception into the stable unverified-authority
+  failure.
+
+These decisions remain structural GA0-B1 proof contracts. They add no
+executable tool runner, weekday analysis, daily-stop simulation, sample
+threshold, conclusion wording, UI, chart renderer, AI, market data, migration,
+hosted behavior, or deployment authority.
 - Persisted/untrusted re-entry still requires identity and graph verification.
 - Focused tests cover authority substitution, invented evidence, free-standing
   effects, currency/scope drift, receipt drift, semantic candidate deduplication,

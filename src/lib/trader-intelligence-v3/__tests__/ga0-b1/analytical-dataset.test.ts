@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ANALYTICAL_PARTITION_VERSION,
   LOCAL_CURRENT_DATA_EXACT_AUTHORITY_UNAVAILABLE,
+  buildAnalyticalPartitionReceipt,
   buildAnalyticalDatasetReceipt,
   createLocalCurrentDataReadOnlyBridge,
   createSyntheticInMemoryReadOnlySource,
@@ -14,7 +16,13 @@ import {
   buildSyntheticGa0B1Authority,
   buildSyntheticGa0B1ClosedExecutions,
 } from "../../testing";
-import { resolveRelativeDateRange, type CanonicalUtcTimestamp, type RelativeDateResolver, type TradingSessionEvidence } from "../../domain";
+import {
+  resolveRelativeDateRange,
+  verifyStartingInventoryContract,
+  type CanonicalUtcTimestamp,
+  type RelativeDateResolver,
+  type TradingSessionEvidence,
+} from "../../domain";
 
 function newYorkReceipt(sessionEvidence: readonly TradingSessionEvidence[]) {
   const startDate = sessionEvidence[0].sessionDate;
@@ -171,7 +179,10 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     }))).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_authority_mismatch", path: "$.reconstruction" } });
     expect(readAnalyticalDataset(createSyntheticInMemoryReadOnlySource({
       ...authority,
-      startingInventories: [{ ...authority.startingInventories[0], asOf: "2026-07-17T00:00:00.000000000Z" }],
+      startingInventories: [{
+        ...authority.startingInventories[0],
+        asOf: "2026-07-17T00:00:00.000000000Z" as CanonicalUtcTimestamp,
+      }],
     }))).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_authority_unverified", path: "$.startingInventories[0]" } });
     expect(readAnalyticalDataset(createSyntheticInMemoryReadOnlySource({
       ...authority,
@@ -250,7 +261,31 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     expect(result).toMatchObject({ ok: true, value: {
       currencyPartitions: ["CAD", "USD"], includedCount: "2",
     } });
-    if (result.ok) expect(result.value.rows.map((row) => row.currency)).toEqual(["CAD", "USD"]);
+    if (result.ok) {
+      expect(result.value.rows.map((row) => row.currency)).toEqual(["CAD", "USD"]);
+      const cadPartition = buildAnalyticalPartitionReceipt({
+        schemaVersion: ANALYTICAL_PARTITION_VERSION,
+        datasetReceipt: result.value,
+        currency: "CAD",
+      });
+      const usdPartition = buildAnalyticalPartitionReceipt({
+        schemaVersion: ANALYTICAL_PARTITION_VERSION,
+        datasetReceipt: result.value,
+        currency: "USD",
+      });
+      expect(cadPartition).toMatchObject({
+        ok: true,
+        value: { currency: "CAD", includedCount: "1", excludedCount: "0" },
+      });
+      expect(usdPartition).toMatchObject({
+        ok: true,
+        value: { currency: "USD", includedCount: "1", excludedCount: "0" },
+      });
+      expect(cadPartition.ok && usdPartition.ok &&
+        cadPartition.value.partitionDigest).not.toBe(
+          usdPartition.ok ? usdPartition.value.partitionDigest : "",
+        );
+    }
   });
 
   it("maps manifest reasons truthfully and counts an overlapping semantic candidate once", () => {
@@ -267,6 +302,33 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
         reasonMappingPolicyVersion: "v1",
       }],
     } });
+  });
+
+  it("retains filter and manifest provenance under deterministic reason precedence", () => {
+    const executions = buildSyntheticGa0B1ClosedExecutions();
+    const result = readAnalyticalDataset(createSyntheticInMemoryReadOnlySource(
+      buildSyntheticGa0B1Authority(executions, {
+        filterOverrides: { outcomeFilters: ["loss"] },
+        manifestExclusions: [{
+          evidenceDigest: executions[0].canonicalContentDigest,
+          reasonCode: "ti_v3_coverage_source_excluded",
+        }],
+      }),
+    ));
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        includedCount: "0",
+        excludedCount: "1",
+        excludedCandidates: [{
+          reasonCode: "ti_v3_analytics_reconstruction_blocked",
+          secondaryReasonCodes: ["ti_v3_analytics_canonical_filter_excluded"],
+          sourceReasonCodes: ["ti_v3_coverage_source_excluded"],
+          reasonLedgerPolicyKey: "ti_v3_analytical_exclusion_reason_ledger",
+          reasonLedgerPolicyVersion: "v1",
+        }],
+      },
+    });
   });
 
   it("assigns sequence from meaningful entry order and excludes a whole partition when that order is ambiguous", () => {
@@ -346,6 +408,64 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     expect(resolveSessionFacts("2006-07-18T15:00:00.000000000Z", "America/New_York", daylight)).toMatchObject({ ok: false, error: { path: "$.timestamp.pre_2007_new_york_unsupported" } });
     const earliestSupported = newYorkReceipt([{ sessionDate: "2007-03-12", state: "regular", openAt: "2007-03-12T13:30:00.000000000Z" as CanonicalUtcTimestamp, closeAt: "2007-03-12T20:00:00.000000000Z" as CanonicalUtcTimestamp, closureReasonCode: null }]);
     expect(resolveSessionFacts("2007-03-12T14:00:00.000000000Z", "America/New_York", earliestSupported)).toMatchObject({ ok: true, value: { session: "regular", sessionDate: "2007-03-12" } });
+  });
+
+  it("rejects weekend New York exchange-session evidence", () => {
+    expect(() => newYorkReceipt([{
+      sessionDate: "2026-07-18",
+      state: "regular",
+      openAt: "2026-07-18T13:30:00.000000000Z" as CanonicalUtcTimestamp,
+      closeAt: "2026-07-18T20:00:00.000000000Z" as CanonicalUtcTimestamp,
+      closureReasonCode: null,
+    }])).toThrow();
+    expect(() => newYorkReceipt([{
+      sessionDate: "2026-07-19",
+      state: "early_close",
+      openAt: "2026-07-19T13:30:00.000000000Z" as CanonicalUtcTimestamp,
+      closeAt: "2026-07-19T17:00:00.000000000Z" as CanonicalUtcTimestamp,
+      closureReasonCode: "ti_v3_synthetic_early_close",
+    }])).toThrow();
+  });
+
+  it("strictly rejects hostile or extended starting-inventory re-entry", () => {
+    const authority = buildSyntheticGa0B1Authority();
+    const inventory = authority.startingInventories[0];
+    expect(verifyStartingInventoryContract({
+      ...inventory,
+      unexpected: "synthetic",
+    })).toMatchObject({ ok: false });
+    expect(verifyStartingInventoryContract({
+      ...inventory,
+      ledgerIdentity: {
+        ...inventory.ledgerIdentity,
+        unexpected: "synthetic",
+      },
+    })).toMatchObject({ ok: false });
+    let calls = 0;
+    const accessor = Object.create(null) as Record<string, unknown>;
+    Object.defineProperty(accessor, "policyVersion", {
+      enumerable: true,
+      get() {
+        calls += 1;
+        throw new Error("must not run");
+      },
+    });
+    expect(verifyStartingInventoryContract(accessor)).toMatchObject({ ok: false });
+    expect(calls).toBe(0);
+    const proxied = new Proxy(inventory, {});
+    expect(verifyStartingInventoryContract(proxied)).toMatchObject({ ok: false });
+    expect(readAnalyticalDataset(createSyntheticInMemoryReadOnlySource({
+      ...authority,
+      startingInventories: [proxied],
+    }))).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_analytics_authority_unverified" },
+    });
+    const persisted = JSON.parse(JSON.stringify(inventory)) as unknown;
+    expect(verifyStartingInventoryContract(persisted)).toMatchObject({
+      ok: true,
+      value: { contractDigest: inventory.contractDigest },
+    });
   });
 
   it("keeps the production-shaped bridge read-only and truthfully unavailable without exact v3 authority", () => {
