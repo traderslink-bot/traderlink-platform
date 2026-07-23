@@ -640,10 +640,7 @@ function TradersLinkAiReadCard({
           <WatchlistCardKicker label="TradersLink AI Read" />
         </div>
         <h2 className="academy-card-title">Read unavailable</h2>
-        <p className="academy-card-text">
-          The latest AI Read could not be displayed. Use the admin refresh control to generate a
-          new one.
-        </p>
+        <p className="academy-card-text">The latest AI Read could not be displayed.</p>
       </article>
     );
   }
@@ -905,16 +902,6 @@ function TradersLinkAiReadCard({
                 <strong>Day-trade impact:</strong> {read.dilutionRisk.dayTradeRelevance}
               </p>
             </section>
-        ) : null}
-        {read.riskSummary.length > 0 ? (
-          <section className="watchlist-ai-read-section">
-            <h3>Risk checks</h3>
-            <ul>
-              {read.riskSummary.map((risk) => (
-                <li key={risk}>{risk}</li>
-              ))}
-            </ul>
-          </section>
         ) : null}
       </div>
 
