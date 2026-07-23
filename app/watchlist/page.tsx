@@ -83,7 +83,9 @@ function WatchlistAccessMessage({
               </div>
             ) : null}
             <Link
-              href={`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}`}
+              href={`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}${
+                authStatus === "join-discord" ? "&prompt=consent" : ""
+              }`}
               className="academy-card-action"
             >
               Log in with Discord
