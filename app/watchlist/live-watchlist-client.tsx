@@ -1003,15 +1003,10 @@ function TradersLinkAiReadStatusCard({
       <div className="academy-card-topline">
         <WatchlistCardKicker label="TradersLink AI Read" />
       </div>
-      <h2 className="academy-card-title">
-        {status === "analyzing"
-          ? "AI is analyzing market data"
-          : "AI analysis is taking longer than expected"}
-      </h2>
       <p className="academy-card-text">
-        {status === "analyzing"
-          ? "The completed trade preparation read will appear here automatically."
-          : "The read will appear here automatically when the next analysis succeeds."}
+        AI analysis appears only when it passes automated quality checks and may not be available
+        for every ticker. In the meantime, refer to the support and resistance levels in the
+        Potential Path card, which are derived from real candlestick market data.
       </p>
     </article>
   );
