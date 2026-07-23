@@ -631,18 +631,7 @@ function TradersLinkAiReadCard({
 }) {
   const read = parseTradersLinkAiRead(card.body);
   if (!read) {
-    return (
-      <article
-        className="academy-card watchlist-content-card watchlist-ai-read-card"
-        data-card-label="TradersLink AI Read"
-      >
-        <div className="academy-card-topline">
-          <WatchlistCardKicker label="TradersLink AI Read" />
-        </div>
-        <h2 className="academy-card-title">Read unavailable</h2>
-        <p className="academy-card-text">The latest AI Read could not be displayed.</p>
-      </article>
-    );
+    return <TradersLinkAiReadStatusCard status="failed" />;
   }
   const downsideCheckpoints = read.downsideCheckpoints ?? [];
   const currentLivePrice = livePrice ?? read.currentPrice;
@@ -1610,19 +1599,7 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
           symbol.tradersLinkAiReadStatus === "failed") ? (
         <TradersLinkAiReadStatusCard status={symbol.tradersLinkAiReadStatus} />
       ) : symbol.tradersLinkAiReadCardVisible !== false ? (
-        <article
-          className="academy-card watchlist-content-card watchlist-ai-read-card"
-          data-card-label="TradersLink AI Read"
-        >
-          <div className="academy-card-topline">
-            <WatchlistCardKicker label="TradersLink AI Read" />
-          </div>
-          <h2 className="academy-card-title">Read unavailable</h2>
-          <p className="academy-card-text">
-            No saved AI Read is available for this ticker. No pullback or recovery levels have
-            been manufactured.
-          </p>
-        </article>
+        <TradersLinkAiReadStatusCard status="failed" />
       ) : null}
       {recentNewsFilingsCard ? (
         <WatchlistDetailCardArticle
