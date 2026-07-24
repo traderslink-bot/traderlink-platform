@@ -1,5 +1,13 @@
 # Trader Intelligence v3 Project Log
 
+## 2026-07-23 — GA0-B2 weekday deterministic proof implemented
+
+GA0-B1 was accepted in merge
+`7d8d8e03826e4b877b22e9a2a68d381bb42e585d`. The current roadmap slice is the
+local-only `analyze_performance_by_weekday:v1` deterministic proof. It is being
+prepared as a draft PR for independent audit; no production deployment or
+GA0-B3 implementation is in scope.
+
 ## 2026-07-19 — GA0-A3 Required-Fix Remediation Complete; Re-audit Required
 
 - The first independent audit verdict was `accept with required fixes`; its

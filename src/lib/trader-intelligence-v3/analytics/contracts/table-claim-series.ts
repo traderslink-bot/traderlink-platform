@@ -39,12 +39,14 @@ export const CHART_READY_SERIES_VERSION = "ti_v3_chart_ready_series_v1" as const
 export interface ExactTableColumn {
   readonly columnKey: string;
   readonly valueKind: ExactMetricValue["kind"];
+  readonly allowedValueKinds?: readonly ExactMetricValue["kind"][];
   readonly unit: string;
 }
 
 export interface ExactTableCell {
   readonly columnKey: string;
   readonly metric: ExactMetricValue;
+  readonly evidenceBundleDigest?: CanonicalContentDigest;
 }
 
 export interface ExactTableRow {
@@ -259,14 +261,51 @@ function parseColumns(input: unknown): ExactResult<readonly ExactTableColumn[], 
   const kinds = new Set<ExactMetricValue["kind"]>(["exact_decimal", "exact_ratio", "integer", "duration", "timestamp", "date", "enum", "unavailable"]);
   for (let index = 0; index < input.length; index += 1) {
     const path = `$.columns[${index}]`;
-    const record = validateContractRecord(input[index], ["columnKey", "valueKind", "unit"], [], path);
+    const record = validateContractRecord(
+      input[index],
+      ["columnKey", "valueKind", "unit"],
+      ["allowedValueKinds"],
+      path,
+    );
     if (!record.ok) return record;
     const key = validateContractKey(record.value.columnKey, `${path}.columnKey`);
     const unit = validateUnit(record.value.unit, `${path}.unit`);
     if (!key.ok) return key;
     if (!unit.ok) return unit;
     if (typeof record.value.valueKind !== "string" || !kinds.has(record.value.valueKind as ExactMetricValue["kind"])) return contractFailure("ti_v3_analytics_contract_invalid", `${path}.valueKind`);
-    columns.push(Object.freeze({ columnKey: key.value, valueKind: record.value.valueKind as ExactMetricValue["kind"], unit: unit.value }));
+    let allowedValueKinds: readonly ExactMetricValue["kind"][] | undefined;
+    if (record.value.allowedValueKinds !== undefined) {
+      if (
+        !Array.isArray(record.value.allowedValueKinds) ||
+        record.value.allowedValueKinds.length === 0 ||
+        record.value.allowedValueKinds.some(
+          (kind) => typeof kind !== "string" ||
+            !kinds.has(kind as ExactMetricValue["kind"]),
+        )
+      ) {
+        return contractFailure(
+          "ti_v3_analytics_contract_invalid",
+          `${path}.allowedValueKinds`,
+        );
+      }
+      const parsedKinds = record.value.allowedValueKinds as ExactMetricValue["kind"][];
+      if (
+        new Set(parsedKinds).size !== parsedKinds.length ||
+        !parsedKinds.includes(record.value.valueKind as ExactMetricValue["kind"])
+      ) {
+        return contractFailure(
+          "ti_v3_analytics_contract_invalid",
+          `${path}.allowedValueKinds`,
+        );
+      }
+      allowedValueKinds = Object.freeze([...parsedKinds]);
+    }
+    columns.push(Object.freeze({
+      columnKey: key.value,
+      valueKind: record.value.valueKind as ExactMetricValue["kind"],
+      ...(allowedValueKinds === undefined ? {} : { allowedValueKinds }),
+      unit: unit.value,
+    }));
   }
   if (new Set(columns.map((column) => column.columnKey)).size !== columns.length) return contractFailure("ti_v3_analytics_contract_duplicate_identity", "$.columns");
   return { ok: true, value: Object.freeze(columns) };
@@ -293,20 +332,51 @@ function parseRows(
     const cells: ExactTableCell[] = [];
     for (let cellIndex = 0; cellIndex < record.value.cells.length; cellIndex += 1) {
       const cellPath = `${rowPath}.cells[${cellIndex}]`;
-      const cell = validateContractRecord(record.value.cells[cellIndex], ["columnKey", "metric"], [], cellPath);
+      const cell = validateContractRecord(
+        record.value.cells[cellIndex],
+        ["columnKey", "metric"],
+        ["evidenceBundleDigest"],
+        cellPath,
+      );
       if (!cell.ok) return cell;
       const expectedColumn = columns[cellIndex];
       if (cell.value.columnKey !== expectedColumn.columnKey) return contractFailure("ti_v3_analytics_contract_reference_mismatch", `${cellPath}.columnKey`);
       const metric = verifyExactMetricValue(cell.value.metric);
       if (!metric.ok) return contractFailure(metric.error.code, `${cellPath}.metric${metric.error.path.slice(1)}`);
       if (
-        metric.value.kind !== expectedColumn.valueKind ||
+        !(expectedColumn.allowedValueKinds ?? [expectedColumn.valueKind]).includes(
+          metric.value.kind,
+        ) ||
         metric.value.unit !== expectedColumn.unit ||
         (exactMetricUnitRequiresCurrency(metric.value.unit)
           ? metric.value.currency !== currency
           : metric.value.currency !== null)
       ) return contractFailure("ti_v3_analytics_contract_unit_mismatch", `${cellPath}.metric`);
-      cells.push(Object.freeze({ columnKey: expectedColumn.columnKey, metric: metric.value }));
+      let cellEvidenceDigest: CanonicalContentDigest | undefined;
+      if (cell.value.evidenceBundleDigest !== undefined) {
+        const parsedEvidenceDigest = validateClaimedDigest(
+          cell.value.evidenceBundleDigest,
+          `${cellPath}.evidenceBundleDigest`,
+          "analytical_evidence_bundle",
+        );
+        if (
+          !parsedEvidenceDigest.ok ||
+          !evidence.has(parsedEvidenceDigest.value)
+        ) {
+          return contractFailure(
+            "ti_v3_analytics_contract_reference_mismatch",
+            `${cellPath}.evidenceBundleDigest`,
+          );
+        }
+        cellEvidenceDigest = parsedEvidenceDigest.value;
+      }
+      cells.push(Object.freeze({
+        columnKey: expectedColumn.columnKey,
+        metric: metric.value,
+        ...(cellEvidenceDigest === undefined
+          ? {}
+          : { evidenceBundleDigest: cellEvidenceDigest }),
+      }));
     }
     rows.push(Object.freeze({ rowKey: rowKey.value, cells: Object.freeze(cells), evidenceBundleDigest: evidenceDigest.value }));
   }
@@ -408,7 +478,7 @@ export function buildValidatedClaim(input: unknown): ExactResult<ValidatedClaim,
     "subjectGroupKey", "comparisonGroupKey", "metricKey", "effectDerivation",
     "confidenceEvidenceLabel", "outlierSensitivityState", "evidenceBundles",
     "allowedWordingCode",
-  ]);
+  ], ["counterexampleEvidenceBundleDigests"]);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== VALIDATED_CLAIM_VERSION) return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
   const authorities = input as Record<string, unknown>;
@@ -466,7 +536,37 @@ export function buildValidatedClaim(input: unknown): ExactResult<ValidatedClaim,
   const comparisonEvidence = comparisonRow === undefined ? undefined : catalog.value.get(comparisonRow.evidenceBundleDigest);
   if (targetEvidence === undefined || (comparisonRow !== undefined && comparisonEvidence === undefined)) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.evidenceBundles");
   const evidenceDigests = [targetRow.evidenceBundleDigest, ...(comparisonRow === undefined ? [] : [comparisonRow.evidenceBundleDigest])];
-  const counterDigests = comparisonRow === undefined ? [] : [comparisonRow.evidenceBundleDigest];
+  const requestedCounterDigests =
+    record.value.counterexampleEvidenceBundleDigests ?? (
+      comparisonRow === undefined ? [] : [comparisonRow.evidenceBundleDigest]
+    );
+  if (!Array.isArray(requestedCounterDigests)) {
+    return contractFailure(
+      "ti_v3_analytics_contract_invalid",
+      "$.counterexampleEvidenceBundleDigests",
+    );
+  }
+  const counterDigests: CanonicalContentDigest[] = [];
+  for (let index = 0; index < requestedCounterDigests.length; index += 1) {
+    const digest = validateClaimedDigest(
+      requestedCounterDigests[index],
+      `$.counterexampleEvidenceBundleDigests[${index}]`,
+      "analytical_evidence_bundle",
+    );
+    if (!digest.ok || !catalog.value.has(digest.value)) {
+      return contractFailure(
+        "ti_v3_analytics_contract_reference_mismatch",
+        `$.counterexampleEvidenceBundleDigests[${index}]`,
+      );
+    }
+    counterDigests.push(digest.value);
+  }
+  if (new Set(counterDigests).size !== counterDigests.length) {
+    return contractFailure(
+      "ti_v3_analytics_contract_duplicate_identity",
+      "$.counterexampleEvidenceBundleDigests",
+    );
+  }
   const targetSampleSize = String(targetEvidence.candidateKeys.length);
   const comparisonSampleSize = String(comparisonEvidence?.candidateKeys.length ?? 0);
   const limitations = [...new Set([
@@ -503,6 +603,8 @@ export function verifyValidatedClaim(input: unknown, runContext: AnalysisRunCont
     comparisonGroupKey: record.value.comparisonGroupKey, metricKey: record.value.metricKey,
     effectDerivation: record.value.effectDerivation, confidenceEvidenceLabel: record.value.confidenceEvidenceLabel,
     outlierSensitivityState: record.value.outlierSensitivityState, evidenceBundles,
+    counterexampleEvidenceBundleDigests:
+      record.value.counterexampleEvidenceBundleDigests,
     allowedWordingCode: record.value.allowedWordingCode,
   });
   if (!rebuilt.ok || rebuilt.value.claimDigest !== digest.value) return contractFailure("ti_v3_analytics_contract_digest_mismatch", "$.claimDigest");
@@ -525,8 +627,11 @@ export function buildChartReadySeries(input: unknown): ExactResult<ChartReadySer
   if (new Set(templateKeys).size !== templateKeys.length) return contractFailure("ti_v3_analytics_contract_duplicate_identity", "$.allowedVisualTemplateKeys");
   const unit = validateUnit(record.value.unit, "$.unit"); const currency = parseCurrency(record.value.currency, "$.currency"); const timezone = validateTimezone(record.value.timezone, "$.timezone");
   if (!unit.ok) return unit; if (!currency.ok) return currency; if (!timezone.ok) return timezone;
+  const expectedSeriesCurrency = exactMetricUnitRequiresCurrency(unit.value)
+    ? table.value.currency
+    : null;
   if (
-    currency.value !== table.value.currency || timezone.value !== table.value.timezone ||
+    currency.value !== expectedSeriesCurrency || timezone.value !== table.value.timezone ||
     parsed.get("dateBasis") !== table.value.dateBasis || parsed.get("denominatorPolicy") !== table.value.denominatorPolicy
   ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.scope");
   if (typeof record.value.zeroBaselineRequired !== "boolean") return contractFailure("ti_v3_analytics_contract_invalid", "$.zeroBaselineRequired");

@@ -10,9 +10,9 @@ export const FOUNDATION_PAYLOAD_LIMITS = Object.freeze({
   maxStringLength: 4_096,
   maxReasonCodes: 128,
   maxDepth: 64,
-  maxNodes: 4_096,
+  maxNodes: 65_536,
   maxAggregateStringLength: 1_048_576,
-  maxTotalKeys: 1_024,
+  maxTotalKeys: 16_384,
 });
 
 export type FoundationValidationFailureCode =

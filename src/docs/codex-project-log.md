@@ -1,3 +1,14 @@
+# 2026-07-23 - GA0-B2 Weekday Deterministic Proof
+
+- Started from accepted GA0-B1 merge
+  `7d8d8e03826e4b877b22e9a2a68d381bb42e585d` in a clean linked worktree.
+- Implemented `analyze_performance_by_weekday:v1`, exact proof artifacts,
+  focused tests, and the controlling B2 ADR.
+- Resume point: complete the executable checkpoint, open one draft PR, record
+  terminal CI, then create the mandatory audit handoff as the final substantive
+  action.
+- Stop boundary: keep the PR draft and unmerged; do not deploy or begin GA0-B3.
+
 # 2026-07-23 - GA0-B1 Third Focused Remediation Executable Checkpoint
 
 - Existing branch `agent/trader-intelligence-v3-ga0-b1-read-model` and draft PR

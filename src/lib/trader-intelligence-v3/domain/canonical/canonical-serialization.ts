@@ -4,8 +4,11 @@ export const CANONICAL_SERIALIZATION_VERSION = "ti_v3_canonical_json_v1" as cons
 
 export const CANONICAL_SERIALIZATION_LIMITS = Object.freeze({
   maxDepth: 64,
-  maxNodeCount: 4_096,
-  maxKeyCount: 1_024,
+  // GA0-B analytical receipts admit up to 64 exact rows. A verified row and
+  // its nested exact facts require more than the original 1,024-key envelope
+  // budget once the accepted 10-target/20-baseline sample is represented.
+  maxNodeCount: 65_536,
+  maxKeyCount: 16_384,
   maxStringCodeUnits: 262_144,
   maxAggregateCodeUnits: 1_048_576,
 });

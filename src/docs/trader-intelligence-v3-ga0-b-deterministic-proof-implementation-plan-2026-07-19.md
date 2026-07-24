@@ -11,6 +11,10 @@
 **Visible chart rendering:** forbidden in GA0-B  
 **Production deployment:** forbidden in GA0-B
 
+**Current slice:** GA0-B2 weekday deterministic proof. GA0-B1 was accepted in
+merge `7d8d8e03826e4b877b22e9a2a68d381bb42e585d`. GA0-B3 must not begin until
+the B2 draft PR is independently audited, accepted, and merged.
+
 ---
 
 # 1. Purpose

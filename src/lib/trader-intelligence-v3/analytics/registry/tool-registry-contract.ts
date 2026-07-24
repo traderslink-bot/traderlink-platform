@@ -38,12 +38,17 @@ export interface ToolRegistryEntry {
   readonly evidencePolicyVersion: string;
   readonly toolPolicyKey: string;
   readonly toolPolicyVersion: string;
-  readonly minimumSamplePolicyState: "deferred_to_tool_slice";
+  readonly minimumSamplePolicyState:
+    | "deferred_to_tool_slice"
+    | "versioned_tool_policy";
+  readonly optionalOutputContractsWhenLimited: readonly string[];
   readonly supportedCurrencies: readonly CurrencyCode[];
   readonly supportedTimezones: readonly string[];
   readonly deprecationState: "active_contract" | "deprecated_contract";
   readonly focusedTestKeys: readonly string[];
-  readonly executableState: "contract_only_no_runner";
+  readonly executableState:
+    | "contract_only_no_runner"
+    | "tool_specific_deterministic_executor";
   readonly entryDigest: CanonicalContentDigest;
 }
 
@@ -63,7 +68,7 @@ export function buildToolRegistryEntry(input: unknown): ExactResult<ToolRegistry
     "toolPolicyKey", "toolPolicyVersion",
     "minimumSamplePolicyState", "supportedCurrencies", "supportedTimezones",
     "deprecationState", "focusedTestKeys", "executableState",
-  ]);
+  ], ["optionalOutputContractsWhenLimited"]);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== TOOL_REGISTRY_ENTRY_VERSION) return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
   const keyNames = ["toolKey", "toolVersion", "descriptionCode", "requiredEligibilityCapability", "evidencePolicyKey", "evidencePolicyVersion", "toolPolicyKey", "toolPolicyVersion"] as const;
@@ -84,7 +89,26 @@ export function buildToolRegistryEntry(input: unknown): ExactResult<ToolRegistry
       record.value.blockedArtifactPolicy !== "declared_artifacts_optional"
     )
   ) return contractFailure("ti_v3_analytics_contract_invalid", "$.outputContracts");
-  if (record.value.minimumSamplePolicyState !== "deferred_to_tool_slice") return contractFailure("ti_v3_analytics_contract_invalid", "$.minimumSamplePolicyState");
+  if (
+    record.value.minimumSamplePolicyState !== "deferred_to_tool_slice" &&
+    record.value.minimumSamplePolicyState !== "versioned_tool_policy"
+  ) return contractFailure("ti_v3_analytics_contract_invalid", "$.minimumSamplePolicyState");
+  const optionalOutputs = validateKeyArray(
+    record.value.optionalOutputContractsWhenLimited ?? [],
+    "$.optionalOutputContractsWhenLimited",
+    32,
+  );
+  if (
+    !optionalOutputs.ok ||
+    optionalOutputs.value.some((output) => !outputs.value.includes(output))
+  ) {
+    return optionalOutputs.ok
+      ? contractFailure(
+          "ti_v3_analytics_contract_reference_mismatch",
+          "$.optionalOutputContractsWhenLimited",
+        )
+      : optionalOutputs;
+  }
   if (!Array.isArray(record.value.supportedCurrencies) || record.value.supportedCurrencies.length > 32) return contractFailure("ti_v3_analytics_contract_invalid", "$.supportedCurrencies");
   const currencies: CurrencyCode[] = [];
   for (let index = 0; index < record.value.supportedCurrencies.length; index += 1) { const currency = parseCurrencyCode(record.value.supportedCurrencies[index]); if (!currency.ok) return contractFailure("ti_v3_analytics_contract_invalid", `$.supportedCurrencies[${index}]`); currencies.push(currency.value); }
@@ -94,7 +118,10 @@ export function buildToolRegistryEntry(input: unknown): ExactResult<ToolRegistry
   for (let index = 0; index < record.value.supportedTimezones.length; index += 1) { const timezone = validateTimezone(record.value.supportedTimezones[index], `$.supportedTimezones[${index}]`); if (!timezone.ok) return timezone; timezones.push(timezone.value); }
   if (new Set(timezones).size !== timezones.length) return contractFailure("ti_v3_analytics_contract_duplicate_identity", "$.supportedTimezones");
   if (record.value.deprecationState !== "active_contract" && record.value.deprecationState !== "deprecated_contract") return contractFailure("ti_v3_analytics_contract_invalid", "$.deprecationState");
-  if (record.value.executableState !== "contract_only_no_runner") return contractFailure("ti_v3_analytics_contract_invalid", "$.executableState");
+  if (
+    record.value.executableState !== "contract_only_no_runner" &&
+    record.value.executableState !== "tool_specific_deterministic_executor"
+  ) return contractFailure("ti_v3_analytics_contract_invalid", "$.executableState");
   return finalizeContentAddressedAuthority("tool_registry_entry", {
     schemaVersion: TOOL_REGISTRY_ENTRY_VERSION,
     toolKey: parsed.get("toolKey") as string, toolVersion: parsed.get("toolVersion") as string,
@@ -107,16 +134,17 @@ export function buildToolRegistryEntry(input: unknown): ExactResult<ToolRegistry
     evidencePolicyVersion: parsed.get("evidencePolicyVersion") as string,
     toolPolicyKey: parsed.get("toolPolicyKey") as string,
     toolPolicyVersion: parsed.get("toolPolicyVersion") as string,
-    minimumSamplePolicyState: "deferred_to_tool_slice" as const,
+    minimumSamplePolicyState: record.value.minimumSamplePolicyState,
+    optionalOutputContractsWhenLimited: optionalOutputs.value,
     supportedCurrencies: Object.freeze([...currencies].sort(compareUnicodeCodePoints)),
     supportedTimezones: Object.freeze([...timezones].sort(compareUnicodeCodePoints)),
     deprecationState: record.value.deprecationState, focusedTestKeys: testKeys.value,
-    executableState: "contract_only_no_runner" as const,
+    executableState: record.value.executableState,
   }, "entryDigest") as ExactResult<ToolRegistryEntry, AnalyticalContractFailure>;
 }
 
 export function verifyToolRegistryEntry(input: unknown): ExactResult<ToolRegistryEntry, AnalyticalContractFailure> {
-  const record = validateContractRecord(input, ["schemaVersion", "toolKey", "toolVersion", "descriptionCode", "requiredEligibilityCapability", "argumentSchemaDigest", "requiredRowFields", "outputContracts", "blockedArtifactPolicy", "evidencePolicyKey", "evidencePolicyVersion", "toolPolicyKey", "toolPolicyVersion", "minimumSamplePolicyState", "supportedCurrencies", "supportedTimezones", "deprecationState", "focusedTestKeys", "executableState", "entryDigest"]);
+  const record = validateContractRecord(input, ["schemaVersion", "toolKey", "toolVersion", "descriptionCode", "requiredEligibilityCapability", "argumentSchemaDigest", "requiredRowFields", "outputContracts", "blockedArtifactPolicy", "evidencePolicyKey", "evidencePolicyVersion", "toolPolicyKey", "toolPolicyVersion", "minimumSamplePolicyState", "optionalOutputContractsWhenLimited", "supportedCurrencies", "supportedTimezones", "deprecationState", "focusedTestKeys", "executableState", "entryDigest"]);
   if (!record.ok) return record;
   const digest = validateClaimedDigest(record.value.entryDigest, "$.entryDigest", "tool_registry_entry"); if (!digest.ok) return digest;
   const { entryDigest: _entryDigest, ...content } = record.value; void _entryDigest;

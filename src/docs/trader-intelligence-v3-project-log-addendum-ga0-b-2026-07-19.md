@@ -1,5 +1,15 @@
 # Trader Intelligence v3 Project Log Addendum — GA0-B Transition
 
+## 2026-07-23 — GA0-B2 weekday proof implementation
+
+- GA0-B1 is accepted at merge
+  `7d8d8e03826e4b877b22e9a2a68d381bb42e585d`.
+- The active slice is `analyze_performance_by_weekday:v1`.
+- The implementation is local-only and preparing an independent-audit draft
+  PR. No deployment or GA0-B3 work is authorized.
+- The controlling B2 decision record is
+  `src/docs/trader-intelligence-v3-adr-ga0-b2-weekday-deterministic-proof-v1.md`.
+
 **Date:** 2026-07-19 America/Toronto  
 **Status:** latest accepted transition decision  
 **Historical log preserved at:** `src/docs/trader-intelligence-v3-project-log.md`
