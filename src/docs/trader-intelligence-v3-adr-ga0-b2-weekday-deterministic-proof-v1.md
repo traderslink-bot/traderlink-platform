@@ -1,7 +1,7 @@
 # ADR: GA0-B2 Weekday Deterministic Proof v1
 
 **Date:** 2026-07-23 America/Toronto
-**Status:** Implemented for independent audit
+**Status:** Remediated for independent re-audit
 **Tool:** `analyze_performance_by_weekday:v1`
 
 ## Decision
@@ -50,9 +50,10 @@ Target and baseline are exhaustive and disjoint over included rows.
 - at least 10 target and 20 baseline trades: `claim_eligible`;
 - all other sample compositions: `descriptive_only`.
 
-Outlier concentration is largest absolute target-trade P/L divided by the sum
-of absolute target-trade P/L and is unsafe only when strictly greater than
-`2/5`. Claims additionally require non-flat target and baseline means,
+Outlier concentration is the conservative maximum of absolute target-trade
+activity concentration and the absolute relevant-net contribution ratios for
+the largest winning and losing trades. It is unsafe only when strictly greater
+than `2/5`. Claims additionally require non-flat target and baseline means,
 mean/median directional agreement, and no leave-one-out direction reversal.
 Limited or ineligible runs retain tables, series, diagnostics, and receipts but
 omit claims. Emitted claims include both supporting and explicit counterexample
@@ -60,14 +61,20 @@ evidence bundles.
 
 ## After-loss, missing data, and currency
 
-An after-loss opportunity uses only the immediately preceding completed trade
-in canonical order within the same owner, account, currency, and session date.
-A prior loss activates the opportunity; a prior win or flat resets it; the
-first trade has no prior state.
+An after-loss opportunity uses the latest trade whose `finalExitAt` is strictly
+before the current row's `firstEntryAt`, within the same owner, account,
+currency, and session date. Same-time completions with one outcome class are
+economically equivalent; conflicting outcome classes fail closed as an
+explicit unavailable state. A prior loss activates the opportunity; a prior
+win or flat resets it; the first trade has no prior state. Open predecessors
+and equal entry/exit timestamps do not count as completed.
 
 Currencies remain independent and are never converted or summed. Missing
-notional or quantity remains explicitly unavailable. Entry-time buckets are
-explicitly unavailable because the accepted B1 row does not prove entry time.
+notional or quantity remains explicitly unavailable, with exact availability
+counts and partial-coverage limitations. Entry-time buckets use the trusted
+row `firstEntryAt` and B1 timezone, with deterministic 30-minute local
+minute-of-day buckets and exact average/median facts; New York conversion
+reuses the B1 DST policy.
 
 ## Evidence, series, receipt, and determinism
 
@@ -91,6 +98,28 @@ valid 30-trade fixture exceeded the former 1,024-total-key ceiling. Bounded
 limits are raised to 65,536 nodes and 16,384 keys. Depth, string length, array
 length, and per-object key limits remain bounded, and over-budget payloads are
 still rejected.
+
+## Independent-audit remediation contracts
+
+The persisted execution now carries a content-addressed authority binding the
+tool/policy identities, normalized arguments, source derivation receipt,
+partition currency, selected rows/exclusions, run context, and complete output
+payload. Re-entry accepts only a strict descriptor-first graph that can be
+replayed from the exact B1 source authority and exact-compared artifact by
+artifact; runtime `WeakMap` caches are not persistence proof.
+
+The limitation projection policy is versioned as
+`ti_v3_weekday_limitation_projection:v1`. All applicable B1 and B2 limitation
+codes are projected into every exact table and source-derived series; claims
+inherit table/evidence limitations; diagnostics expose the same codes; and the
+receipt is the verified union. Intentional filters and partial optional fact
+coverage are informational, while evidence, reconstruction, eligibility,
+stale, authority, sample, direction, and outlier limitations block claims.
+
+Runtime and canonical graph validation now bound raw property keys at 4,096
+code units and charge key code units before NFC normalization. Focused evidence
+measures both the 30-row fixture and an accepted 64-row worst-case fixture
+against the shared node, key, and 1 MiB aggregate ceilings.
 
 ## Consequence
 

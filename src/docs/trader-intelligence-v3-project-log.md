@@ -1,5 +1,21 @@
 # Trader Intelligence v3 Project Log
 
+## 2026-07-24 - GA0-B2 independent-audit remediation executable checkpoint
+
+- Remediated B2-AUD-R1 through R6 on the existing draft PR #150 branch.
+- Executable checkpoint: `07a6827f` (`fix(ti-v3): remediate GA0-B2 weekday audit findings`).
+- Local focused evidence: TypeScript clean; GA0-B2 focused suite `22/22`; replay,
+  decision-time after-loss, limitation propagation, exact decompositions, DST,
+  hostile-key boundaries, and accepted 30/64-row graph measurements pass.
+- GitHub Actions `test-and-verify` passed for executable run `30069784565`,
+  job `89408059973`.
+- ESLint was attempted on every changed TypeScript file but remains blocked by
+  the pre-existing shared junction failure `acorn-jsx/xhtml` missing; no
+  dependency files were changed.
+- The required final docs-only independent re-audit handoff is the next and
+  final substantive repository change. Keep PR #150 draft/open/unmerged,
+  leave review threads unresolved, do not deploy, and do not begin GA0-B3.
+
 ## 2026-07-23 — GA0-B2 weekday deterministic proof implemented
 
 GA0-B1 was accepted in merge
