@@ -11,6 +11,9 @@ import {
   verifyAnalysisRunReceipt,
   verifyWeekdayAnalysisArguments,
   WEEKDAY_ARGUMENT_SCHEMA_DIGEST,
+  ANALYTICAL_EXCLUSION_REASONS,
+  isClaimNeutralAnalyticalExclusion,
+  WEEKDAY_TOOL_KEY,
 } from "../../analytics";
 import {
   CANONICAL_SERIALIZATION_LIMITS,
@@ -411,6 +414,7 @@ describe("GA0-B2 persisted semantic replay authority", () => {
     expect(genuine.value.receipt.runDigest).toBe(
       fixture.result.value.receipt.runDigest,
     );
+    expect(fixture.result.value.executionAuthority.toolKey).toBe(WEEKDAY_TOOL_KEY);
 
     const mutations: Array<(value: any) => void> = [
       (value) => {
@@ -446,6 +450,9 @@ describe("GA0-B2 persisted semantic replay authority", () => {
       (value) => {
         value.receipt.runDigest = value.receipt.diagnosticsDigest;
       },
+      (value) => {
+        value.executionAuthority.toolKey = "weekday_analysis";
+      },
     ];
     for (const mutate of mutations) {
       const candidate = JSON.parse(JSON.stringify(persisted));
@@ -453,6 +460,63 @@ describe("GA0-B2 persisted semantic replay authority", () => {
       expect(rehydrateWeekdayAnalysisExecution(candidate, source).ok).toBe(false);
     }
   }, 120_000);
+});
+
+describe("GA0-B2 complete exclusion-ledger claim policy", () => {
+  const authority = (reasonCode: string, authorityName: string, sourceReasonCode: string | null = null) => ({
+    reasonCode,
+    authority: authorityName,
+    sourceReasonCode,
+    mappingPolicyKey: sourceReasonCode === null ? null : "ti_v3_manifest_exclusion_reason_mapping",
+    mappingPolicyVersion: sourceReasonCode === null ? null : "v1",
+  });
+  const candidate = (overrides: Record<string, unknown> = {}) => ({
+    reasonCode: ANALYTICAL_EXCLUSION_REASONS.filterExcluded,
+    sourceReasonCode: null,
+    secondaryReasonCodes: [],
+    sourceReasonCodes: [],
+    limitationCodes: [],
+    reasonAuthorities: [authority(ANALYTICAL_EXCLUSION_REASONS.filterExcluded, "canonical_filter")],
+    ...overrides,
+  }) as any;
+
+  it("allows only exact neutral filter/lifecycle ledgers and fails closed otherwise", () => {
+    expect(isClaimNeutralAnalyticalExclusion(candidate())).toBe(true);
+    expect(isClaimNeutralAnalyticalExclusion(candidate({
+      reasonCode: ANALYTICAL_EXCLUSION_REASONS.openLifecycle,
+      reasonAuthorities: [authority(ANALYTICAL_EXCLUSION_REASONS.openLifecycle, "lifecycle")],
+    }))).toBe(true);
+    expect(isClaimNeutralAnalyticalExclusion(candidate({
+      reasonCode: ANALYTICAL_EXCLUSION_REASONS.manifestExcluded,
+      sourceReasonCode: "ti_v3_unknown_manifest_reason",
+      sourceReasonCodes: ["ti_v3_unknown_manifest_reason"],
+      reasonAuthorities: [authority(ANALYTICAL_EXCLUSION_REASONS.manifestExcluded, "manifest", "ti_v3_unknown_manifest_reason")],
+    }))).toBe(false);
+    expect(isClaimNeutralAnalyticalExclusion(candidate({
+      reasonCode: ANALYTICAL_EXCLUSION_REASONS.mixedCurrency,
+    }))).toBe(false);
+    expect(isClaimNeutralAnalyticalExclusion(candidate({
+      secondaryReasonCodes: [ANALYTICAL_EXCLUSION_REASONS.blockedReconstruction],
+    }))).toBe(false);
+  });
+
+  it("keeps neutral-ledger classification invariant to ledger ordering", () => {
+    const open = candidate({
+      reasonCode: ANALYTICAL_EXCLUSION_REASONS.openLifecycle,
+      sourceReasonCode: "ti_v3_eligibility_open_positions_excluded",
+      sourceReasonCodes: ["ti_v3_eligibility_open_positions_excluded"],
+      reasonAuthorities: [authority(
+        ANALYTICAL_EXCLUSION_REASONS.openLifecycle,
+        "lifecycle",
+        "ti_v3_eligibility_open_positions_excluded",
+      )],
+    });
+    expect(isClaimNeutralAnalyticalExclusion({
+      ...open,
+      sourceReasonCodes: [...open.sourceReasonCodes].reverse(),
+      reasonAuthorities: [...open.reasonAuthorities].reverse(),
+    })).toBe(isClaimNeutralAnalyticalExclusion(open));
+  });
 });
 
 describe("GA0-B2 decision-time after-loss semantics", () => {

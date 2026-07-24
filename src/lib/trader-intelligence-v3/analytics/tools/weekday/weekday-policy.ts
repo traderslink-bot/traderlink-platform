@@ -18,12 +18,16 @@ import {
   type ToolRegistryEntry,
 } from "../../registry";
 import type { CanonicalWeekday } from "../../adapters/session-policy";
+import {
+  isClaimNeutralAnalyticalExclusion,
+  type ExcludedAnalyticalCandidate,
+} from "../../dataset/analytical-dataset";
 
 export const WEEKDAY_TOOL_KEY = "analyze_performance_by_weekday" as const;
 export const WEEKDAY_TOOL_VERSION = "v1" as const;
 export const WEEKDAY_TOOL_POLICY = Object.freeze({
   key: "ti_v3_weekday_analysis_policy",
-  version: "v2",
+  version: "v3",
   comparisonPolicy: "all_other_represented_weekdays_v1",
   evidenceSamplePolicy: "ti_v3_weekday_conservative_evidence_v1",
   outlierPolicy: "ti_v3_weekday_outlier_contribution_v1",
@@ -45,9 +49,7 @@ export const WEEKDAY_EXCLUSION_CLASSIFICATION_POLICY = Object.freeze({
   policyVersion: "v1",
   intentional_filter: Object.freeze([
     "ti_v3_analytics_canonical_filter_excluded",
-    "ti_v3_analytics_manifest_excluded",
     "ti_v3_analytics_open_or_incomplete_lifecycle",
-    "ti_v3_analytics_mixed_currency",
   ]),
   evidence_coverage: Object.freeze([
     "ti_v3_analytics_round_trip_inventory_missing",
@@ -87,6 +89,7 @@ export const WEEKDAY_LIMITATION_PROJECTION_POLICY = Object.freeze({
   seriesProjection: "exact_source_table_limitation_equality",
   claimProjection: "exact_source_table_plus_evidence_limitation_union",
   receiptProjection: "exact_artifact_limitation_union",
+  claimStatusPolicy: "completed_only_claims_limited_omits_claims_v1",
 } as const);
 
 export type WeekdayExclusionClass =
@@ -117,8 +120,19 @@ export function classifyWeekdayExclusionReason(
   return "unknown";
 }
 
-export function weekdayExclusionBlocksClaim(reasonCode: string): boolean {
-  return classifyWeekdayExclusionReason(reasonCode) !== "intentional_filter";
+export function weekdayExclusionBlocksClaim(
+  candidate: ExcludedAnalyticalCandidate,
+): boolean {
+  return !isClaimNeutralAnalyticalExclusion(candidate);
+}
+
+export function weekdayExclusionDisclosureCode(
+  candidate: ExcludedAnalyticalCandidate,
+): string | null {
+  if (!isClaimNeutralAnalyticalExclusion(candidate)) return null;
+  return candidate.reasonCode === "ti_v3_analytics_canonical_filter_excluded"
+    ? "ti_v3_weekday_neutral_canonical_filter_exclusion"
+    : "ti_v3_weekday_neutral_open_lifecycle_exclusion";
 }
 
 export const WEEKDAY_SEMANTIC_ORDER = Object.freeze([

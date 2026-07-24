@@ -71,7 +71,7 @@ import {
   classifyWeekdayExclusionReason,
   normalizeWeekdayAnalysisArguments,
   verifyWeekdayAnalysisArguments,
-  weekdayExclusionBlocksClaim,
+  weekdayExclusionDisclosureCode,
   type WeekdayAnalysisArguments,
 } from "./weekday-policy";
 import {
@@ -728,6 +728,7 @@ function buildNonBlockedExecution(
   const claimBlockingLimitationCodes = new Set<string>(
     artifactLimitationCodes,
   );
+  const informationalDisclosureCodes = new Set<string>();
   const addLimitation = (code: string, blocksClaim = true): void => {
     artifactLimitationCodes.add(code);
     if (blocksClaim) claimBlockingLimitationCodes.add(code);
@@ -779,11 +780,13 @@ function buildNonBlockedExecution(
     partitionRows.some((row) => row.shareQuantity.state === "unavailable")
   ) addLimitation("ti_v3_weekday_share_quantity_coverage_partial", false);
   for (const exclusion of partitionExclusions) {
-    const classification = classifyWeekdayExclusionReason(exclusion.reasonCode);
-    addLimitation(
-      `ti_v3_weekday_exclusion_${classification}`,
-      weekdayExclusionBlocksClaim(exclusion.reasonCode),
-    );
+    const disclosure = weekdayExclusionDisclosureCode(exclusion);
+    if (disclosure !== null) {
+      informationalDisclosureCodes.add(disclosure);
+    } else {
+      const classification = classifyWeekdayExclusionReason(exclusion.reasonCode);
+      addLimitation(`ti_v3_weekday_exclusion_${classification}`, true);
+    }
   }
   const limitations = [...artifactLimitationCodes].sort(compareUnicodeCodePoints);
   const evidenceBundles: AnalyticalEvidenceBundle[] = [];
@@ -1693,12 +1696,22 @@ function buildNonBlockedExecution(
     severity: "info" | "limitation";
     code: string;
     affectedKeys: readonly string[];
-  }> = limitations.map((code) => ({
-      diagnosticKey: `limitation_${code.replace(/^ti_v3_/, "")}`,
-      severity: claimBlockingLimitationCodes.has(code) ? "limitation" : "info",
+  }> = [
+    ...[...informationalDisclosureCodes].sort(compareUnicodeCodePoints).map((code) => ({
+      diagnosticKey: `disclosure_${code.replace(/^ti_v3_/, "")}`,
+      severity: "info" as const,
       code,
       affectedKeys: [context.partitionDigest],
-    }));
+    })),
+    ...limitations.map((code) => ({
+      diagnosticKey: `limitation_${code.replace(/^ti_v3_/, "")}`,
+      severity: claimBlockingLimitationCodes.has(code)
+        ? ("limitation" as const)
+        : ("info" as const),
+      code,
+      affectedKeys: [context.partitionDigest],
+    })),
+  ];
   const diagnostics = required(
     buildAnalyticalDiagnostics({
       schemaVersion: ANALYTICAL_DIAGNOSTICS_VERSION,
@@ -1716,7 +1729,7 @@ function buildNonBlockedExecution(
     fullDifference !== null &&
     sampleState === "claim_eligible" &&
     context.eligibilityState === "eligible" &&
-    claimBlockingLimitationCodes.size === 0 &&
+    limitations.length === 0 &&
     meanMedianAgree &&
     !winRemovalChangesDirection &&
     !lossRemovalChangesDirection &&

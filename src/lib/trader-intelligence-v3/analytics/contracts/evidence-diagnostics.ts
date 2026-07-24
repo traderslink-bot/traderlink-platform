@@ -12,6 +12,7 @@ import {
   type AnalyticalContractFailure,
 } from "./contract-validation";
 import { getAnalysisRunContextDependencies, verifyAnalysisRunContext, type AnalysisRunContext } from "./run-context";
+import { isClaimNeutralAnalyticalExclusion } from "../dataset/analytical-dataset";
 
 export const ANALYTICAL_EVIDENCE_BUNDLE_VERSION = "ti_v3_analytical_evidence_bundle_v1" as const;
 export const ANALYTICAL_DIAGNOSTICS_VERSION = "ti_v3_analytical_diagnostics_v1" as const;
@@ -109,8 +110,10 @@ export function buildAnalyticalEvidenceBundle(
       if (exclusion === undefined) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.candidateKeys");
       if (exclusion.semanticRoundTripKey !== null) roundTripKeys.add(exclusion.semanticRoundTripKey);
       exclusion.relatedOccurrenceKeys.forEach((key) => occurrenceKeys.add(key));
-      exclusion.limitationCodes.forEach((code) => limitationCodes.add(code));
-      limitationCodes.add(exclusion.reasonCode);
+      if (!isClaimNeutralAnalyticalExclusion(exclusion)) {
+        exclusion.limitationCodes.forEach((code) => limitationCodes.add(code));
+        limitationCodes.add(exclusion.reasonCode);
+      }
       exclusionReasonCodes.add(exclusion.reasonCode);
       exclusion.secondaryReasonCodes.forEach((code) =>
         secondaryExclusionReasonCodes.add(code));

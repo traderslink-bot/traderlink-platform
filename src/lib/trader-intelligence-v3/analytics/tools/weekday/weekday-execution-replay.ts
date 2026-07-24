@@ -21,6 +21,7 @@ import {
   executeWeekdayAnalysis,
   type WeekdayAnalysisExecution,
 } from "./weekday-analysis";
+import { WEEKDAY_TOOL_KEY, WEEKDAY_TOOL_VERSION } from "./weekday-policy";
 
 const EXECUTION_KEYS = Object.freeze([
   "normalizedArguments",
@@ -80,8 +81,8 @@ export function rehydrateWeekdayAnalysisExecution(
   if (
     !authorityRecord.ok ||
     authorityRecord.value.schemaVersion !== WEEKDAY_EXECUTION_AUTHORITY_VERSION ||
-    authorityRecord.value.toolKey !== "weekday_analysis" ||
-    authorityRecord.value.toolVersion !== "v1"
+    authorityRecord.value.toolKey !== WEEKDAY_TOOL_KEY ||
+    authorityRecord.value.toolVersion !== WEEKDAY_TOOL_VERSION
   ) {
     return replayFailure("$.executionAuthority");
   }

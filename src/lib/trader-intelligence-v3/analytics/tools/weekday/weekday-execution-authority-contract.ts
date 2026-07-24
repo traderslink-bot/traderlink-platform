@@ -8,14 +8,15 @@ import {
 import type { AnalyticalDatasetDerivationReceipt } from "../../adapters";
 import type { AnalyticalDatasetReceipt, AnalyticalPartitionReceipt } from "../../dataset";
 import type { WeekdayAnalysisExecutionWithoutAuthority } from "./weekday-analysis";
+import { WEEKDAY_TOOL_KEY, WEEKDAY_TOOL_VERSION } from "./weekday-policy";
 
 export const WEEKDAY_EXECUTION_AUTHORITY_VERSION =
   "ti_v3_weekday_execution_authority_v1" as const;
 
 export interface WeekdayExecutionAuthority {
   readonly schemaVersion: typeof WEEKDAY_EXECUTION_AUTHORITY_VERSION;
-  readonly toolKey: "weekday_analysis";
-  readonly toolVersion: "v1";
+  readonly toolKey: typeof WEEKDAY_TOOL_KEY;
+  readonly toolVersion: typeof WEEKDAY_TOOL_VERSION;
   readonly partitionCurrency: CurrencyCode;
   readonly datasetDerivationReceipt: AnalyticalDatasetDerivationReceipt;
   readonly normalizedArgumentsDigest: CanonicalContentDigest;
@@ -51,8 +52,8 @@ export function buildWeekdayExecutionAuthority(
     "weekday_execution_authority",
     {
       schemaVersion: WEEKDAY_EXECUTION_AUTHORITY_VERSION,
-      toolKey: "weekday_analysis" as const,
-      toolVersion: "v1" as const,
+      toolKey: WEEKDAY_TOOL_KEY,
+      toolVersion: WEEKDAY_TOOL_VERSION,
       partitionCurrency: partitionReceipt.currency,
       datasetDerivationReceipt,
       normalizedArgumentsDigest: execution.normalizedArguments.argumentsDigest,

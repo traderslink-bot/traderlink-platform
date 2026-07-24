@@ -1,7 +1,7 @@
 # ADR: GA0-B2 Weekday Deterministic Proof v1
 
 **Date:** 2026-07-23 America/Toronto
-**Status:** Remediated for independent re-audit
+**Status:** Remediated for second independent re-audit
 **Tool:** `analyze_performance_by_weekday:v1`
 
 ## Decision
@@ -55,9 +55,10 @@ activity concentration and the absolute relevant-net contribution ratios for
 the largest winning and losing trades. It is unsafe only when strictly greater
 than `2/5`. Claims additionally require non-flat target and baseline means,
 mean/median directional agreement, and no leave-one-out direction reversal.
-Limited or ineligible runs retain tables, series, diagnostics, and receipts but
-omit claims. Emitted claims include both supporting and explicit counterexample
-evidence bundles.
+Only an authoritative `completed` run may emit the one tentative tendency
+claim. `limited` runs retain their exact tables, series, diagnostics, evidence,
+and receipt but omit claims; `blocked` runs emit diagnostics only. Emitted
+claims include both supporting and explicit counterexample evidence bundles.
 
 ## After-loss, missing data, and currency
 
@@ -120,6 +121,19 @@ Runtime and canonical graph validation now bound raw property keys at 4,096
 code units and charge key code units before NFC normalization. Focused evidence
 measures both the 30-row fixture and an accepted 64-row worst-case fixture
 against the shared node, key, and 1 MiB aggregate ceilings.
+
+The exclusion ledger claim policy is versioned as
+`ti_v3_claim_neutral_exclusion_ledger:v1`. Only an exact canonical-filter
+exclusion or an exact documented open-lifecycle exclusion may be neutral. The
+complete primary, secondary, source, and authority ledger is evaluated; generic
+manifest reasons, unknown source reasons, mixed currency, and any secondary or
+source reason outside the explicit allowlist block claims. Neutral disclosures
+remain visible in the exclusions table, evidence bundles, and informational
+diagnostics without entering authoritative limitation codes.
+
+The execution authority binds the registered tool key
+`analyze_performance_by_weekday:v1` directly; `weekday_analysis` is not a
+parallel tool alias.
 
 ## Consequence
 
