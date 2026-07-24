@@ -1,6 +1,6 @@
 import type { LiveWatchlistCardContent } from "./live-watchlist-types";
 
-export type WatchlistHighRiskCountry = "China" | "Hong Kong" | "Malaysia";
+export type WatchlistHighRiskCountry = "China" | "Hong Kong" | "Malaysia" | "Singapore";
 
 export type WatchlistHighRiskWarning = {
   countryName: WatchlistHighRiskCountry;
@@ -34,6 +34,9 @@ export function getWatchlistHighRiskCountry(value: unknown): WatchlistHighRiskCo
   }
   if (["malaysia", "my"].includes(country)) {
     return "Malaysia";
+  }
+  if (["singapore", "sg"].includes(country)) {
+    return "Singapore";
   }
   return null;
 }
