@@ -121,6 +121,19 @@ function isTickerDataPatch(value: unknown): value is LiveWatchlistTickerDataPatc
         ((value as LiveWatchlistTickerDataPatch).marketDataRevision ?? -1) >= 0
       )
     ) &&
+    (
+      (value as LiveWatchlistTickerDataPatch).marketDataStatus === undefined ||
+      ["live", "stale", "possible_halt", "halted"].includes((value as LiveWatchlistTickerDataPatch).marketDataStatus ?? "")
+    ) &&
+    (
+      (value as LiveWatchlistTickerDataPatch).marketDataStatusUpdatedAt === undefined ||
+      typeof (value as LiveWatchlistTickerDataPatch).marketDataStatusUpdatedAt === "number"
+    ) &&
+    (
+      (value as LiveWatchlistTickerDataPatch).marketDataStatusReason === undefined ||
+      (value as LiveWatchlistTickerDataPatch).marketDataStatusReason === null ||
+      typeof (value as LiveWatchlistTickerDataPatch).marketDataStatusReason === "string"
+    ) &&
     typeof (value as LiveWatchlistTickerDataPatch).latestPrice === "number" &&
     (
       (value as LiveWatchlistTickerDataPatch).nearestSupport === null ||

@@ -117,6 +117,27 @@ function formatPrice(value: number | null): string {
   return value >= 1 ? value.toFixed(2) : value.toFixed(4);
 }
 
+function aiReadStatusLabel(
+  symbol: LiveWatchlistSymbolState,
+  hasPublishedRead: boolean,
+): string {
+  if (symbol.tradersLinkAiReadStatus === "analyzing") {
+    return "AI Read update: A new read is being prepared from the latest available candles.";
+  }
+  if (symbol.marketDataStatus === "halted") {
+    return hasPublishedRead
+      ? "AI Read update: Trading is halted. This read remains on the last confirmed candle until trading resumes."
+      : "AI Read update: Trading is halted. Waiting for confirmed candles before publishing a read.";
+  }
+  if (symbol.marketDataStatus === "possible_halt") {
+    return "AI Read update: A possible halt was detected. Waiting for confirmation before treating new price action as current.";
+  }
+  if (symbol.marketDataStatus === "stale") {
+    return "AI Read update: Live candle data is stale. The read will update when current-session candles are available.";
+  }
+  return "AI Read update: Monitoring live candles for the next confirmed boundary change.";
+}
+
 function formatPercentPoints(value: number): string {
   if (!Number.isFinite(value)) {
     return "n/a";
@@ -316,6 +337,17 @@ function WatchlistV2PotentialPathCard({
         <header className="watchlist-v2-card-header">
           <div className="watchlist-v2-card-title">
             <h2>{symbol.symbol}</h2>
+            {symbol.marketDataStatus === "halted" || symbol.marketDataStatus === "possible_halt" ? (
+              <span
+                className="watchlist-potential-path-status"
+                data-market-data-status={symbol.marketDataStatus}
+                title={symbol.marketDataStatusReason ?? undefined}
+              >
+                {symbol.marketDataStatus === "halted"
+                  ? "HALTED - Nasdaq confirmed"
+                  : "POSSIBLE HALT - confirmation pending"}
+              </span>
+            ) : null}
             <span>{formatPrice(symbol.latestPrice)}</span>
             <small className="watchlist-price-delay-note">(delayed 15 sec)</small>
           </div>
@@ -622,18 +654,20 @@ function TradersLinkAiLiveVolumeSection({
 
 function TradersLinkAiReadCard({
   card,
+  symbol,
   livePrice,
   liveVolumeContext,
   dipBuyPlanVisible = true,
 }: {
   card: LiveWatchlistCardContent;
+  symbol: LiveWatchlistSymbolState;
   livePrice: number | null;
   liveVolumeContext?: LiveWatchlistVolumeContext | null;
   dipBuyPlanVisible?: boolean;
 }) {
   const read = parseTradersLinkAiRead(card.body);
   if (!read) {
-    return <TradersLinkAiReadStatusCard status="failed" />;
+    return <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />;
   }
   const downsideCheckpoints = read.downsideCheckpoints ?? [];
   const currentLivePrice = livePrice ?? read.currentPrice;
@@ -654,6 +688,9 @@ function TradersLinkAiReadCard({
       <div className="academy-card-topline">
         <WatchlistCardKicker label="TradersLink AI Read" />
       </div>
+      <p className="watchlist-ai-read-status" data-market-data-status={symbol.marketDataStatus}>
+        {aiReadStatusLabel(symbol, true)}
+      </p>
       <div className="watchlist-ai-read-header">
         <div>
           <p className="watchlist-ai-read-eyebrow">
@@ -982,8 +1019,10 @@ function StructuredMarketStructureLines({ body }: { body: string }) {
 
 function TradersLinkAiReadStatusCard({
   status,
+  symbol,
 }: {
   status: "analyzing" | "failed";
+  symbol?: LiveWatchlistSymbolState;
 }) {
   return (
     <article
@@ -994,6 +1033,13 @@ function TradersLinkAiReadStatusCard({
       <div className="academy-card-topline">
         <WatchlistCardKicker label="TradersLink AI Read" />
       </div>
+      {symbol ? (
+        <p className="watchlist-ai-read-status" data-market-data-status={symbol.marketDataStatus}>
+          {status === "analyzing"
+            ? aiReadStatusLabel(symbol, false)
+            : "AI Read update: The latest generation did not pass quality checks; the prior read remains unchanged."}
+        </p>
+      ) : null}
       <p className="academy-card-text">
         AI analysis appears only when it passes automated quality checks and may not be available
         for every ticker. In the meantime, refer to the support and resistance levels in the
@@ -1592,6 +1638,7 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
       {symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
         <TradersLinkAiReadCard
           card={tradersLinkAiReadCard}
+          symbol={symbol}
           livePrice={symbol.latestPrice}
           liveVolumeContext={symbol.liveVolumeContext}
           dipBuyPlanVisible={symbol.tradersLinkAiReadDipBuyPlanVisible !== false}
@@ -1599,9 +1646,9 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
       ) : symbol.tradersLinkAiReadCardVisible !== false &&
         (symbol.tradersLinkAiReadStatus === "analyzing" ||
           symbol.tradersLinkAiReadStatus === "failed") ? (
-        <TradersLinkAiReadStatusCard status={symbol.tradersLinkAiReadStatus} />
+        <TradersLinkAiReadStatusCard status={symbol.tradersLinkAiReadStatus} symbol={symbol} />
       ) : symbol.tradersLinkAiReadCardVisible !== false ? (
-        <TradersLinkAiReadStatusCard status="failed" />
+        <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />
       ) : null}
       {recentNewsFilingsCard ? (
         <WatchlistDetailCardArticle
