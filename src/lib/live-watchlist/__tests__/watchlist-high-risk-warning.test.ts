@@ -32,11 +32,12 @@ function aiReadCard(overrides: Record<string, unknown> = {}): LiveWatchlistCardC
 }
 
 describe("watchlist high-risk warning", () => {
-  it("recognizes China, Hong Kong, and Malaysia aliases with full display names", () => {
+  it("recognizes China, Hong Kong, Malaysia, and Singapore aliases with full display names", () => {
     expect(getWatchlistHighRiskCountry("CN")).toBe("China");
     expect(getWatchlistHighRiskCountry("Hong Kong SAR China")).toBe("Hong Kong");
     expect(getWatchlistHighRiskCountry("my")).toBe("Malaysia");
-    expect(getWatchlistHighRiskCountry("Singapore")).toBeNull();
+    expect(getWatchlistHighRiskCountry("Singapore")).toBe("Singapore");
+    expect(getWatchlistHighRiskCountry("SG")).toBe("Singapore");
   });
 
   it("shows a warning when a covered ticker has no confirmed AI catalyst", () => {
@@ -62,6 +63,14 @@ describe("watchlist high-risk warning", () => {
         referenceTime: REFERENCE_TIME,
       }),
     ).not.toBeNull();
+
+    expect(
+      buildWatchlistHighRiskWarning({
+        country: "Singapore",
+        aiReadCard: undefined,
+        referenceTime: REFERENCE_TIME,
+      }),
+    ).toMatchObject({ countryName: "Singapore" });
   });
 
   it("suppresses the warning only for a confirmed catalyst with same-day source evidence", () => {
