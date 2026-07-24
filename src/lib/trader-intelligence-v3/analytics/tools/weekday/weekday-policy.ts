@@ -23,17 +23,103 @@ export const WEEKDAY_TOOL_KEY = "analyze_performance_by_weekday" as const;
 export const WEEKDAY_TOOL_VERSION = "v1" as const;
 export const WEEKDAY_TOOL_POLICY = Object.freeze({
   key: "ti_v3_weekday_analysis_policy",
-  version: "v1",
+  version: "v2",
   comparisonPolicy: "all_other_represented_weekdays_v1",
   evidenceSamplePolicy: "ti_v3_weekday_conservative_evidence_v1",
   outlierPolicy: "ti_v3_weekday_outlier_contribution_v1",
   outlierMaximumContributionNumerator: "2",
   outlierMaximumContributionDenominator: "5",
   defaultTargetWeekday: "friday",
-  afterLossPolicy: "immediately_prior_completed_trade_same_account_currency_session_v1",
+  outlierConcentrationPolicy:
+    "maximum_of_absolute_activity_and_absolute_relevant_net_contribution_v1",
+  afterLossPolicy:
+    "latest_strictly_completed_before_decision_same_account_currency_session_v2",
+  simultaneousCompletionPolicy:
+    "same_outcome_equivalent_conflicting_outcomes_unavailable_v1",
   flatTradePolicy: "flat_resets_previous_loss_state",
   firstTradePolicy: "first_trade_has_no_prior_completed_trade",
 } as const);
+
+export const WEEKDAY_EXCLUSION_CLASSIFICATION_POLICY = Object.freeze({
+  policyKey: "ti_v3_weekday_exclusion_classification",
+  policyVersion: "v1",
+  intentional_filter: Object.freeze([
+    "ti_v3_analytics_canonical_filter_excluded",
+    "ti_v3_analytics_manifest_excluded",
+    "ti_v3_analytics_open_or_incomplete_lifecycle",
+    "ti_v3_analytics_mixed_currency",
+  ]),
+  evidence_coverage: Object.freeze([
+    "ti_v3_analytics_round_trip_inventory_missing",
+    "ti_v3_analytics_execution_evidence_missing_or_foreign",
+    "ti_v3_analytics_occurrence_evidence_missing_or_foreign",
+    "ti_v3_analytics_exact_financial_fact_unavailable",
+  ]),
+  reconstruction: Object.freeze([
+    "ti_v3_analytics_reconstruction_blocked",
+    "ti_v3_analytics_reconstruction_ambiguous",
+    "ti_v3_analytics_catalog_reconstruction_mismatch",
+  ]),
+  eligibility: Object.freeze([
+    "ti_v3_analytics_eligibility_blocked",
+    "ti_v3_analytics_eligibility_pending",
+    "ti_v3_analytics_eligibility_incompatible",
+  ]),
+  stale: Object.freeze(["ti_v3_analytics_eligibility_stale"]),
+  authority: Object.freeze([
+    "ti_v3_analytics_instrument_unresolved",
+    "ti_v3_analytics_session_unprovable",
+    "ti_v3_analytics_economic_order_unprovable",
+    "ti_v3_analytics_duplicate_candidate_identity",
+    "ti_v3_analytics_input_oversized",
+  ]),
+} as const);
+
+export const WEEKDAY_LIMITATION_PROJECTION_POLICY = Object.freeze({
+  policyKey: "ti_v3_weekday_limitation_projection",
+  policyVersion: "v1",
+  artifactVisible:
+    "all_applicable_b1_and_b2_limitation_codes_on_every_exact_table",
+  claimBlocking:
+    "coverage_reconstruction_eligibility_stale_authority_sample_direction_and_outlier",
+  informational:
+    "intentional_filter_and_partial_optional_decomposition_coverage",
+  seriesProjection: "exact_source_table_limitation_equality",
+  claimProjection: "exact_source_table_plus_evidence_limitation_union",
+  receiptProjection: "exact_artifact_limitation_union",
+} as const);
+
+export type WeekdayExclusionClass =
+  | "intentional_filter"
+  | "evidence_coverage"
+  | "reconstruction"
+  | "eligibility"
+  | "stale"
+  | "authority"
+  | "unknown";
+
+export function classifyWeekdayExclusionReason(
+  reasonCode: string,
+): WeekdayExclusionClass {
+  for (const classification of [
+    "intentional_filter",
+    "evidence_coverage",
+    "reconstruction",
+    "eligibility",
+    "stale",
+    "authority",
+  ] as const) {
+    if (
+      (WEEKDAY_EXCLUSION_CLASSIFICATION_POLICY[classification] as readonly string[])
+        .includes(reasonCode)
+    ) return classification;
+  }
+  return "unknown";
+}
+
+export function weekdayExclusionBlocksClaim(reasonCode: string): boolean {
+  return classifyWeekdayExclusionReason(reasonCode) !== "intentional_filter";
+}
 
 export const WEEKDAY_SEMANTIC_ORDER = Object.freeze([
   "monday",

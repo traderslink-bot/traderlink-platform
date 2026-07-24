@@ -6,10 +6,20 @@ import {
   executeWeekdayAnalysis,
   normalizeWeekdayAnalysisArguments,
   readAnalyticalDatasetWithDerivation,
+  rehydrateWeekdayAnalysisExecution,
+  resolveLocalClockFacts,
   verifyAnalysisRunReceipt,
   verifyWeekdayAnalysisArguments,
   WEEKDAY_ARGUMENT_SCHEMA_DIGEST,
 } from "../../analytics";
+import {
+  CANONICAL_SERIALIZATION_LIMITS,
+  FOUNDATION_PAYLOAD_LIMITS,
+  measureCanonicalGraph,
+  serializeCanonicalValue,
+  validateArray,
+  validateExactRecord,
+} from "../../domain";
 import {
   buildSyntheticCanonicalExecution,
   buildSyntheticGa0B1Authority,
@@ -21,6 +31,8 @@ interface TradeSpec {
   readonly minute: number;
   readonly netPnl: string;
   readonly currency?: "CAD" | "USD";
+  readonly durationMinutes?: number;
+  readonly instrument?: string;
 }
 
 function priceForNetPnl(netPnl: string): string {
@@ -50,10 +62,14 @@ function executionsForTrades(
   orderedSpecs.forEach((spec, index) => {
     const entryIndex = index * 2 + 1;
     const exitIndex = entryIndex + 1;
-    const hour = 14 + ((spec.minute - (spec.minute % 60)) / 60);
-    const minute = spec.minute % 60;
+    const entryTotalMinute = 14 * 60 + spec.minute;
+    const exitTotalMinute = entryTotalMinute + (spec.durationMinutes ?? 1);
+    const hour = Math.floor(entryTotalMinute / 60);
+    const minute = entryTotalMinute % 60;
+    const exitHour = Math.floor(exitTotalMinute / 60);
+    const exitMinuteValue = exitTotalMinute % 60;
     const entryMinute = String(minute).padStart(2, "0");
-    const exitMinute = String(minute + 1).padStart(2, "0");
+    const exitMinute = String(exitMinuteValue).padStart(2, "0");
     const currency = spec.currency ?? "USD";
     const common = {
       currency,
@@ -61,6 +77,8 @@ function executionsForTrades(
       charges: [{ kind: "commission" as const, amount: "0", currency }],
       sourceTimezoneEvidence: "UTC+00:00",
       timestampPrecision: "minute" as const,
+      rawBrokerSymbol: spec.instrument ?? "SYNTH",
+      stableInstrumentKey: `instrument_${(spec.instrument ?? "synthetic_equity").toLowerCase()}`,
     };
     executions.push(
       buildSyntheticCanonicalExecution({
@@ -89,7 +107,7 @@ function executionsForTrades(
           value: String(exitIndex),
           rowOrderPreserved: true,
         },
-        executedAt: `${spec.date}T${String(hour).padStart(2, "0")}:${exitMinute}:00.000000000Z`,
+        executedAt: `${spec.date}T${String(exitHour).padStart(2, "0")}:${exitMinute}:00.000000000Z`,
         side: "sell",
         price: priceForNetPnl(spec.netPnl),
       }),
@@ -350,6 +368,18 @@ describe("GA0-B2 conservative sample and outlier policy", () => {
     expect(
       fixture.result.value.diagnostics.entries.map((entry) => entry.code),
     ).toContain("ti_v3_weekday_target_sample_insufficient");
+    const expected = fixture.result.value.receipt.limitationCodes;
+    expect(expected).toContain("ti_v3_weekday_target_sample_insufficient");
+    expect(
+      fixture.result.value.tables.every(
+        (table) => JSON.stringify(table.limitationCodes) === JSON.stringify(expected),
+      ),
+    ).toBe(true);
+    expect(
+      fixture.result.value.series.every(
+        (series) => JSON.stringify(series.limitationCodes) === JSON.stringify(expected),
+      ),
+    ).toBe(true);
   }, 30_000);
 
   it("labels an outlier-concentrated result and does not promote a tendency claim", () => {
@@ -366,6 +396,256 @@ describe("GA0-B2 conservative sample and outlier policy", () => {
       fixture.result.value.diagnostics.entries.map((entry) => entry.code),
     ).toContain("ti_v3_weekday_outlier_contribution_exceeded");
   }, 30_000);
+});
+
+describe("GA0-B2 persisted semantic replay authority", () => {
+  it("accepts a persisted copy only after exact B1 replay and rejects protected graph mutations", () => {
+    const fixture = executeFixture();
+    if (!fixture.result.ok) throw new Error(fixture.result.error.code);
+    const source = createSyntheticInMemoryReadOnlySource(fixture.authority);
+    const persisted = JSON.parse(JSON.stringify(fixture.result.value));
+    const genuine = rehydrateWeekdayAnalysisExecution(persisted, source);
+    expect(genuine).toMatchObject({ ok: true });
+    if (!genuine.ok) return;
+    expect(genuine.value).not.toBe(persisted);
+    expect(genuine.value.receipt.runDigest).toBe(
+      fixture.result.value.receipt.runDigest,
+    );
+
+    const mutations: Array<(value: any) => void> = [
+      (value) => {
+        const row = value.tables[0].rows.find(
+          (item: any) => item.rowKey === "weekday_friday",
+        );
+        row.cells.find((item: any) => item.columnKey === "net_pnl")
+          .metric.value = "999";
+      },
+      (value) => {
+        value.tables[0].rows.reverse();
+      },
+      (value) => {
+        value.tables.pop();
+      },
+      (value) => {
+        value.tables.push(value.tables[0]);
+      },
+      (value) => {
+        value.evidenceBundles[0] = value.evidenceBundles[1];
+      },
+      (value) => {
+        value.diagnostics.entries.push({
+          diagnosticKey: "fabricated",
+          severity: "info",
+          code: "ti_v3_fabricated",
+          affectedKeys: [value.runContext.partitionDigest],
+        });
+      },
+      (value) => {
+        value.normalizedArguments.values.targetWeekday = "monday";
+      },
+      (value) => {
+        value.receipt.runDigest = value.receipt.diagnosticsDigest;
+      },
+    ];
+    for (const mutate of mutations) {
+      const candidate = JSON.parse(JSON.stringify(persisted));
+      mutate(candidate);
+      expect(rehydrateWeekdayAnalysisExecution(candidate, source).ok).toBe(false);
+    }
+  }, 120_000);
+});
+
+describe("GA0-B2 decision-time after-loss semantics", () => {
+  function stateCount(
+    result: ReturnType<typeof executeFixture>["result"],
+    state: string,
+  ): string {
+    if (!result.ok) throw new Error(result.error.code);
+    const table = result.value.tables.find(
+      (item) => item.tableKey === "target_weekday_distributions",
+    );
+    const row = table?.rows.find((item) =>
+      item.rowKey === `target_friday_after_loss_state_${state}`);
+    const metric = row?.cells.find((item) => item.columnKey === "trade_count")
+      ?.metric;
+    if (metric?.kind !== "integer") return "0";
+    return metric.value;
+  }
+
+  it("uses the latest trade strictly completed before entry and ignores an open earlier trade", () => {
+    const specs: readonly TradeSpec[] = [
+      { date: "2026-07-03", minute: 0, durationMinutes: 20, netPnl: "-1", instrument: "A" },
+      { date: "2026-07-03", minute: 5, durationMinutes: 1, netPnl: "1", instrument: "B" },
+      { date: "2026-07-03", minute: 10, durationMinutes: 1, netPnl: "1", instrument: "C" },
+      { date: "2026-07-03", minute: 25, durationMinutes: 1, netPnl: "1", instrument: "D" },
+      { date: "2026-07-06", minute: 30, netPnl: "1", instrument: "E" },
+    ];
+    const fixture = executeFixture(specs);
+    expect(fixture.result).toMatchObject({ ok: true });
+    expect(stateCount(fixture.result, "first_trade")).toBe("2");
+    expect(stateCount(fixture.result, "not_after_loss")).toBe("1");
+    expect(stateCount(fixture.result, "after_loss")).toBe("1");
+  }, 30_000);
+
+  it("fails closed for conflicting simultaneous completions and treats an equal decision boundary as incomplete", () => {
+    const conflicting = executeFixture([
+      { date: "2026-07-03", minute: 0, durationMinutes: 10, netPnl: "-1", instrument: "A" },
+      { date: "2026-07-03", minute: 1, durationMinutes: 9, netPnl: "1", instrument: "B" },
+      { date: "2026-07-03", minute: 15, netPnl: "1", instrument: "C" },
+      { date: "2026-07-06", minute: 30, netPnl: "1", instrument: "D" },
+    ]);
+    expect(stateCount(
+      conflicting.result,
+      "unavailable_ambiguous_completion_order",
+    )).toBe("1");
+    if (!conflicting.result.ok) return;
+    expect(conflicting.result.value.receipt.limitationCodes).toContain(
+      "ti_v3_weekday_after_loss_completion_order_ambiguous",
+    );
+
+    const equalBoundary = executeFixture([
+      { date: "2026-07-03", minute: 0, durationMinutes: 10, netPnl: "-1", instrument: "A" },
+      { date: "2026-07-03", minute: 10, netPnl: "1", instrument: "B" },
+      { date: "2026-07-06", minute: 30, netPnl: "1", instrument: "C" },
+    ]);
+    expect(stateCount(equalBoundary.result, "first_trade")).toBe("2");
+    expect(stateCount(equalBoundary.result, "after_loss")).toBe("0");
+  }, 30_000);
+});
+
+describe("GA0-B2 exact decomposition and hostile-key budgets", () => {
+  it("uses deterministic UTC/New York entry clocks including the DST transition", () => {
+    expect(resolveLocalClockFacts(
+      "2026-03-08T06:30:00.000000000Z",
+      "America/New_York",
+    )).toMatchObject({
+      ok: true,
+      value: { localDate: "2026-03-08", hour: "1", minuteOfDay: "90" },
+    });
+    expect(resolveLocalClockFacts(
+      "2026-03-08T07:30:00.000000000Z",
+      "America/New_York",
+    )).toMatchObject({
+      ok: true,
+      value: { localDate: "2026-03-08", hour: "3", minuteOfDay: "210" },
+    });
+    expect(resolveLocalClockFacts(
+      "2026-03-08T07:30:00.000000000Z",
+      "UTC",
+    )).toMatchObject({
+      ok: true,
+      value: { hour: "7", minuteOfDay: "450" },
+    });
+  });
+
+  it("emits exact entry-time, notional, quantity, and absolute-P/L decompositions", () => {
+    const fixture = executeFixture();
+    if (!fixture.result.ok) throw new Error(fixture.result.error.code);
+    const comparison = fixture.result.value.tables.find(
+      (table) => table.tableKey === "target_weekday_baseline_summary",
+    );
+    const effects = fixture.result.value.tables.find(
+      (table) => table.tableKey === "target_weekday_comparison_effects",
+    );
+    const distributions = fixture.result.value.tables.find(
+      (table) => table.tableKey === "target_weekday_distributions",
+    );
+    expect(comparison?.columns.map((column) => column.columnKey)).toEqual(
+      expect.arrayContaining([
+        "entry_minute_of_day_average",
+        "entry_minute_of_day_median",
+        "entry_notional_average",
+        "entry_notional_median",
+        "share_quantity_average",
+        "share_quantity_median",
+      ]),
+    );
+    expect(effects?.columns.map((column) => column.columnKey)).toContain(
+      "target_absolute_pnl_activity_share",
+    );
+    expect(distributions?.rows.some((row) =>
+      row.rowKey.includes("entry_time_30_minute_bucket"))).toBe(true);
+    expect(distributions?.rows.some((row) =>
+      row.rowKey.includes("entry_notional_exact_value"))).toBe(true);
+    expect(distributions?.rows.some((row) =>
+      row.rowKey.includes("share_quantity_exact_value"))).toBe(true);
+  }, 30_000);
+
+  it("bounds raw property keys before normalization and charges aggregate keys", () => {
+    const atBoundary = "k".repeat(FOUNDATION_PAYLOAD_LIMITS.maxPropertyKeyLength);
+    expect(validateExactRecord(
+      { [atBoundary]: "v" },
+      [atBoundary],
+      [],
+    ).ok).toBe(true);
+    const overBoundary = "k".repeat(
+      FOUNDATION_PAYLOAD_LIMITS.maxPropertyKeyLength + 1,
+    );
+    expect(validateExactRecord(
+      { [overBoundary]: "v" },
+      [overBoundary],
+      [],
+    ).ok).toBe(false);
+    const aggregateAttack = Array.from({ length: 257 }, (_, index) => ({
+      [`${String(index).padStart(4, "0")}${"k".repeat(4092)}`]: "",
+    }));
+    expect(validateArray(aggregateAttack, "$", 300).ok).toBe(false);
+    expect(serializeCanonicalValue({ [atBoundary]: "v" }).ok).toBe(true);
+    expect(serializeCanonicalValue({ [overBoundary]: "v" })).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_canonical_string_size_exceeded" },
+    });
+    expect(CANONICAL_SERIALIZATION_LIMITS.maxPropertyKeyCodeUnits).toBe(
+      FOUNDATION_PAYLOAD_LIMITS.maxPropertyKeyLength,
+    );
+  });
+
+  it("records the accepted 30-row graph below every shared graph ceiling", () => {
+    const fixture = executeFixture();
+    if (!fixture.result.ok) throw new Error(fixture.result.error.code);
+    const measured = measureCanonicalGraph(fixture.result.value);
+    expect(measured).toMatchObject({ ok: true });
+    if (!measured.ok) return;
+    expect(measured.value.nodeCount).toBeLessThan(
+      CANONICAL_SERIALIZATION_LIMITS.maxNodeCount,
+    );
+    expect(measured.value.keyCount).toBeLessThan(
+      CANONICAL_SERIALIZATION_LIMITS.maxKeyCount,
+    );
+    expect(measured.value.stringAndKeyCodeUnits).toBeLessThan(
+      CANONICAL_SERIALIZATION_LIMITS.maxAggregateCodeUnits,
+    );
+  }, 30_000);
+
+  it("measures an accepted 64-row worst-case weekday graph", () => {
+    const dates = [
+      "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06",
+      "2026-07-07", "2026-07-08", "2026-07-09", "2026-07-10",
+      "2026-07-13", "2026-07-14", "2026-07-15", "2026-07-16",
+      "2026-07-17",
+    ];
+    const largeSpecs = dates.flatMap((date, dateIndex) =>
+      [0, 5, 10, 15].map((minute, index) => ({
+        date,
+        minute,
+        netPnl: (dateIndex + index) % 3 === 0 ? "-1" : "1",
+      })),
+    ).slice(0, 64);
+    const fixture = executeFixture(largeSpecs);
+    if (!fixture.result.ok) throw new Error(fixture.result.error.code);
+    const measured = measureCanonicalGraph(fixture.result.value);
+    expect(measured).toMatchObject({ ok: true });
+    if (!measured.ok) return;
+    expect(measured.value.nodeCount).toBeLessThan(
+      CANONICAL_SERIALIZATION_LIMITS.maxNodeCount,
+    );
+    expect(measured.value.keyCount).toBeLessThan(
+      CANONICAL_SERIALIZATION_LIMITS.maxKeyCount,
+    );
+    expect(measured.value.stringAndKeyCodeUnits).toBeLessThan(
+      CANONICAL_SERIALIZATION_LIMITS.maxAggregateCodeUnits,
+    );
+  }, 60_000);
 });
 
 describe("GA0-B2 deterministic identity and blocked paths", () => {

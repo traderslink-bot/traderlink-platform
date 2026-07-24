@@ -37,6 +37,7 @@ import {
 import type {
   AnalyticalDatasetDerivationReceipt,
 } from "../../adapters/snapshot-read-model";
+import { resolveLocalClockFacts } from "../../adapters/session-policy";
 import {
   verifyAnalyticalDatasetReceipt,
   verifyAnalyticalPartitionReceipt,
@@ -67,10 +68,16 @@ import {
   WEEKDAY_SEMANTIC_ORDER,
   WEEKDAY_TOOL_POLICY,
   buildWeekdayToolRegistryEntry,
+  classifyWeekdayExclusionReason,
   normalizeWeekdayAnalysisArguments,
   verifyWeekdayAnalysisArguments,
+  weekdayExclusionBlocksClaim,
   type WeekdayAnalysisArguments,
 } from "./weekday-policy";
+import {
+  buildWeekdayExecutionAuthority,
+  type WeekdayExecutionAuthority,
+} from "./weekday-execution-authority-contract";
 
 export interface WeekdayAnalysisExecutionInput {
   readonly snapshot: unknown;
@@ -82,7 +89,7 @@ export interface WeekdayAnalysisExecutionInput {
   readonly arguments?: unknown;
 }
 
-export interface WeekdayAnalysisExecution {
+export interface WeekdayAnalysisExecutionWithoutAuthority {
   readonly normalizedArguments: NormalizedAnalysisArguments;
   readonly registryEntry: ToolRegistryEntry;
   readonly runContext: AnalysisRunContext;
@@ -94,7 +101,16 @@ export interface WeekdayAnalysisExecution {
   readonly receipt: AnalysisRunReceipt;
 }
 
-type AfterLossState = "after_loss" | "first_trade" | "not_after_loss";
+export interface WeekdayAnalysisExecution
+  extends WeekdayAnalysisExecutionWithoutAuthority {
+  readonly executionAuthority: WeekdayExecutionAuthority;
+}
+
+type AfterLossState =
+  | "after_loss"
+  | "first_trade"
+  | "not_after_loss"
+  | "unavailable_ambiguous_completion_order";
 
 interface RowState {
   readonly row: AnalyticalRow;
@@ -123,9 +139,11 @@ interface Summary {
   readonly afterLossRate: ExactMetricValue;
   readonly notionalAvailableCount: string;
   readonly notionalTotal: ExactMetricValue;
+  readonly notionalAverage: ExactMetricValue;
   readonly notionalMedian: ExactMetricValue;
   readonly quantityAvailableCount: string;
   readonly quantityTotal: ExactMetricValue;
+  readonly quantityAverage: ExactMetricValue;
   readonly quantityMedian: ExactMetricValue;
   readonly largestWinningContribution: ExactMetricValue;
   readonly largestLosingContribution: ExactMetricValue;
@@ -193,6 +211,38 @@ function exactCountDifference(left: string, right: string): string {
   return (BigInt(left) - BigInt(right)).toString();
 }
 
+function entryMinuteOfDay(row: AnalyticalRow): string {
+  const local = required(
+    resolveLocalClockFacts(row.firstEntryAt, row.timezone),
+    "$.entryTime",
+  );
+  return local.minuteOfDay;
+}
+
+function entryTimeBucket(row: AnalyticalRow): string {
+  const minute = BigInt(entryMinuteOfDay(row));
+  const lower = (minute / BigInt(30)) * BigInt(30);
+  const upper = lower + BigInt(29);
+  return `minute_of_day_${lower.toString().padStart(4, "0")}_to_${upper
+    .toString()
+    .padStart(4, "0")}`;
+}
+
+function exactValueBucket(prefix: string, value: string): string {
+  return `${prefix}_${value
+    .replace("-", "negative_")
+    .replace(".", "_decimal_")}`;
+}
+
+function sumAbsolutePnl(rows: readonly AnalyticalRow[]): string {
+  return required(
+    sumExactDecimals(
+      rows.map((row) => required(absoluteExactDecimal(row.netPnl), "$.absolutePnl")),
+    ),
+    "$.absolutePnlTotal",
+  );
+}
+
 function groupRowsByVerifiedSequence(
   rows: readonly AnalyticalRow[],
 ): readonly RowState[] {
@@ -210,23 +260,43 @@ function groupRowsByVerifiedSequence(
   for (const key of [...sessions.keys()].sort(compareUnicodeCodePoints)) {
     const ordered = [...(sessions.get(key) as AnalyticalRow[])].sort(
       (left, right) => {
-        const leftSequence = BigInt(left.sequenceInPartition);
-        const rightSequence = BigInt(right.sequenceInPartition);
-        return leftSequence < rightSequence
+        return left.firstEntryAt < right.firstEntryAt
           ? -1
-          : leftSequence > rightSequence
+          : left.firstEntryAt > right.firstEntryAt
             ? 1
             : compareRowsByStableEvidence(left, right);
       },
     );
-    ordered.forEach((row, index) => {
-      const previous = index === 0 ? null : ordered[index - 1];
+    ordered.forEach((row) => {
+      const completedBeforeDecision = ordered.filter(
+        (candidate) => candidate.finalExitAt < row.firstEntryAt,
+      );
+      const latestCompletionAt = completedBeforeDecision.reduce<string | null>(
+        (latest, candidate) =>
+          latest === null || candidate.finalExitAt > latest
+            ? candidate.finalExitAt
+            : latest,
+        null,
+      );
+      const latestCompleted = latestCompletionAt === null
+        ? []
+        : completedBeforeDecision.filter(
+            (candidate) => candidate.finalExitAt === latestCompletionAt,
+          );
+      const priorOutcomeClasses = new Set(
+        latestCompleted.map((candidate) =>
+          compareCanonicalDecimals(candidate.netPnl, "0") < 0
+            ? "loss"
+            : "non_loss"),
+      );
       states.push(Object.freeze({
         row,
         afterLossState:
-          previous === null
+          latestCompleted.length === 0
             ? "first_trade"
-            : compareCanonicalDecimals(previous.netPnl, "0") < 0
+            : priorOutcomeClasses.size > 1
+              ? "unavailable_ambiguous_completion_order"
+              : priorOutcomeClasses.has("loss")
               ? "after_loss"
               : "not_after_loss",
       }));
@@ -375,6 +445,21 @@ function summarize(
             currency,
             required(sumExactDecimals(availableNotionals), "$.notionalTotal"),
           ),
+    notionalAverage:
+      availableNotionals.length === 0
+        ? unavailableMetric(
+            "entry_notional_average",
+            "notional",
+            currency,
+            "ti_v3_weekday_exact_notional_unavailable",
+          )
+        : quotientMetric(
+            "entry_notional_average",
+            "notional",
+            currency,
+            required(sumExactDecimals(availableNotionals), "$.notionalAverage"),
+            String(availableNotionals.length),
+          ),
     notionalMedian:
       availableNotionals.length === 0
         ? unavailableMetric(
@@ -403,6 +488,21 @@ function summarize(
             "shares",
             null,
             required(sumExactDecimals(availableQuantities), "$.quantityTotal"),
+          ),
+    quantityAverage:
+      availableQuantities.length === 0
+        ? unavailableMetric(
+            "share_quantity_average",
+            "shares",
+            null,
+            "ti_v3_weekday_exact_quantity_unavailable",
+          )
+        : quotientMetric(
+            "share_quantity_average",
+            "shares",
+            null,
+            required(sumExactDecimals(availableQuantities), "$.quantityAverage"),
+            String(availableQuantities.length),
           ),
     quantityMedian:
       availableQuantities.length === 0
@@ -475,7 +575,7 @@ function buildNonBlockedExecution(
   argumentsValue: WeekdayAnalysisArguments,
   normalizedArguments: NormalizedAnalysisArguments,
   registryEntry: ToolRegistryEntry,
-): WeekdayAnalysisExecution {
+): WeekdayAnalysisExecutionWithoutAuthority {
   const dependencies = getAnalysisRunContextDependencies(context);
   if (dependencies === null) {
     throw new WeekdayConstructionError(
@@ -505,6 +605,187 @@ function buildNonBlockedExecution(
     );
   }
   const rowStates = groupRowsByVerifiedSequence(partitionRows);
+  const targetStates = rowStates.filter(
+    (state) => state.row.weekday === argumentsValue.targetWeekday,
+  );
+  const baselineStates = rowStates.filter(
+    (state) => state.row.weekday !== argumentsValue.targetWeekday,
+  );
+  const targetKeys = new Set(
+    targetStates.map((state) => state.row.semanticRoundTripKey),
+  );
+  const baselineKeys = new Set(
+    baselineStates.map((state) => state.row.semanticRoundTripKey),
+  );
+  if (
+    [...targetKeys].some((key) => baselineKeys.has(key)) ||
+    targetKeys.size + baselineKeys.size !== partitionRows.length
+  ) {
+    throw new WeekdayConstructionError(
+      "ti_v3_weekday_partition_invariant_failed",
+      "$.targetBaseline",
+    );
+  }
+  const targetSummary = targetStates.length === 0
+    ? null
+    : summarize(targetStates, dependencies.partitionReceipt.currency);
+  const baselineSummary = baselineStates.length === 0
+    ? null
+    : summarize(baselineStates, dependencies.partitionReceipt.currency);
+  const fullDifference =
+    targetSummary === null || baselineSummary === null
+      ? null
+      : subtractMetrics(
+          "net_expectancy_difference",
+          targetSummary.expectancy,
+          baselineSummary.expectancy,
+        );
+  const medianDifference =
+    targetSummary === null || baselineSummary === null
+      ? null
+      : subtractMetrics(
+          "median_net_pnl_difference",
+          targetSummary.medianNetPnl,
+          baselineSummary.medianNetPnl,
+        );
+  const fullDirection = fullDifference === null
+    ? "unavailable"
+    : metricDirection(fullDifference);
+  const medianDirection = medianDifference === null
+    ? "unavailable"
+    : metricDirection(medianDifference);
+  const meanMedianAgree =
+    fullDirection !== "unavailable" &&
+    medianDirection !== "unavailable" &&
+    fullDirection === medianDirection;
+  const targetWithoutWinRows = targetSummary === null
+    ? []
+    : removeRow(
+        targetStates.map((state) => state.row),
+        targetSummary.largestWin,
+      );
+  const targetWithoutLossRows = targetSummary === null
+    ? []
+    : removeRow(
+        targetStates.map((state) => state.row),
+        targetSummary.largestLoss,
+      );
+  const removalDirection = (rows: readonly AnalyticalRow[]): string => {
+    if (rows.length === 0 || baselineSummary === null) return "unavailable";
+    return metricDirection(subtractMetrics(
+      "net_expectancy_difference",
+      quotientMetric(
+        "net_expectancy",
+        "money_per_trade",
+        dependencies.partitionReceipt.currency,
+        sumRowPnl(rows),
+        String(rows.length),
+      ),
+      baselineSummary.expectancy,
+    ));
+  };
+  const withoutWinDirection = removalDirection(targetWithoutWinRows);
+  const withoutLossDirection = removalDirection(targetWithoutLossRows);
+  const winRemovalChangesDirection =
+    withoutWinDirection !== "unavailable" &&
+    fullDirection !== "unavailable" &&
+    withoutWinDirection !== fullDirection;
+  const lossRemovalChangesDirection =
+    withoutLossDirection !== "unavailable" &&
+    fullDirection !== "unavailable" &&
+    withoutLossDirection !== fullDirection;
+  const outlierConcentrated =
+    targetSummary !== null &&
+    [
+      targetSummary.maximumAbsoluteTradeConcentration,
+      targetSummary.largestWinningContribution,
+      targetSummary.largestLosingContribution,
+    ].some(ratioGreaterThanPolicy);
+  const sampleState:
+    | "insufficient"
+    | "descriptive_only"
+    | "claim_eligible" =
+      targetStates.length < 5
+        ? "insufficient"
+        : targetStates.length < 10 || baselineStates.length < 20
+          ? "descriptive_only"
+          : "claim_eligible";
+
+  const partitionExclusions = dependencies.partitionReceipt.excludedCandidateKeys
+    .map((key) =>
+      dependencies.datasetReceipt.excludedCandidates.find(
+        (candidate) => candidate.candidateKey === key,
+      ))
+    .filter((candidate): candidate is NonNullable<typeof candidate> =>
+      candidate !== undefined);
+  const eligibility = dependencies.snapshotDependencies.eligibilitySet.results
+    .find((result) =>
+      result.capability === context.requiredEligibilityCapability);
+  const artifactLimitationCodes = new Set<string>([
+    ...dependencies.partitionReceipt.limitationCodes,
+    ...(eligibility?.state === "limited" ? eligibility.reasonCodes : []),
+  ]);
+  const claimBlockingLimitationCodes = new Set<string>(
+    artifactLimitationCodes,
+  );
+  const addLimitation = (code: string, blocksClaim = true): void => {
+    artifactLimitationCodes.add(code);
+    if (blocksClaim) claimBlockingLimitationCodes.add(code);
+  };
+  if (targetStates.length < 5) {
+    addLimitation("ti_v3_weekday_target_sample_insufficient");
+  } else if (targetStates.length < 10) {
+    addLimitation("ti_v3_weekday_target_sample_descriptive_only");
+  }
+  if (baselineStates.length < 20) {
+    addLimitation("ti_v3_weekday_baseline_sample_insufficient");
+  }
+  if (targetSummary === null || baselineSummary === null) {
+    addLimitation("ti_v3_weekday_target_baseline_comparison_unavailable");
+  }
+  if (!meanMedianAgree && fullDifference !== null) {
+    addLimitation("ti_v3_weekday_mean_median_direction_disagree");
+  }
+  if (winRemovalChangesDirection) {
+    addLimitation("ti_v3_weekday_largest_win_changes_direction");
+  }
+  if (lossRemovalChangesDirection) {
+    addLimitation("ti_v3_weekday_largest_loss_changes_direction");
+  }
+  if (outlierConcentrated) {
+    addLimitation("ti_v3_weekday_outlier_contribution_exceeded");
+  }
+  if (fullDirection === "flat") {
+    addLimitation("ti_v3_weekday_no_directional_tendency");
+  }
+  if (
+    targetSummary !== null &&
+    metricDirection(targetSummary.expectancy) === "flat"
+  ) addLimitation("ti_v3_weekday_target_expectancy_flat");
+  if (
+    baselineSummary !== null &&
+    metricDirection(baselineSummary.expectancy) === "flat"
+  ) addLimitation("ti_v3_weekday_baseline_expectancy_flat");
+  if (
+    rowStates.some(
+      (state) =>
+        state.afterLossState === "unavailable_ambiguous_completion_order",
+    )
+  ) addLimitation("ti_v3_weekday_after_loss_completion_order_ambiguous");
+  if (
+    partitionRows.some((row) => row.entryNotional.state === "unavailable")
+  ) addLimitation("ti_v3_weekday_entry_notional_coverage_partial", false);
+  if (
+    partitionRows.some((row) => row.shareQuantity.state === "unavailable")
+  ) addLimitation("ti_v3_weekday_share_quantity_coverage_partial", false);
+  for (const exclusion of partitionExclusions) {
+    const classification = classifyWeekdayExclusionReason(exclusion.reasonCode);
+    addLimitation(
+      `ti_v3_weekday_exclusion_${classification}`,
+      weekdayExclusionBlocksClaim(exclusion.reasonCode),
+    );
+  }
+  const limitations = [...artifactLimitationCodes].sort(compareUnicodeCodePoints);
   const evidenceBundles: AnalyticalEvidenceBundle[] = [];
   const addEvidence = (
     evidenceKey: string,
@@ -549,16 +830,6 @@ function buildNonBlockedExecution(
     evidenceBundles.push(built);
     return built;
   };
-  const limitations = (() => {
-    const eligibility = dependencies.snapshotDependencies.eligibilitySet.results
-      .find((result) =>
-        result.capability === context.requiredEligibilityCapability);
-    return [...new Set([
-      ...dependencies.partitionReceipt.limitationCodes,
-      ...(eligibility?.state === "limited" ? eligibility.reasonCodes : []),
-    ])].sort(compareUnicodeCodePoints);
-  })();
-
   const weekdayGroups = WEEKDAY_SEMANTIC_ORDER
     .map((weekday) => ({
       weekday,
@@ -764,55 +1035,13 @@ function buildNonBlockedExecution(
   );
   tables.push(primaryTable);
 
-  const targetStates = rowStates.filter(
-    (state) => state.row.weekday === argumentsValue.targetWeekday,
-  );
-  const baselineStates = rowStates.filter(
-    (state) => state.row.weekday !== argumentsValue.targetWeekday,
-  );
-  const targetKeys = new Set(
-    targetStates.map((state) => state.row.semanticRoundTripKey),
-  );
-  const baselineKeys = new Set(
-    baselineStates.map((state) => state.row.semanticRoundTripKey),
-  );
-  if (
-    [...targetKeys].some((key) => baselineKeys.has(key)) ||
-    targetKeys.size + baselineKeys.size !== partitionRows.length
-  ) {
-    throw new WeekdayConstructionError(
-      "ti_v3_weekday_partition_invariant_failed",
-      "$.targetBaseline",
-    );
-  }
-
-  let targetSummary: Summary | null = null;
-  let baselineSummary: Summary | null = null;
   let comparisonTable: ExactTable | null = null;
   let effectTable: ExactTable | null = null;
   let distributionTable: ExactTable | null = null;
   let targetEvidence: AnalyticalEvidenceBundle | null = null;
   let baselineEvidence: AnalyticalEvidenceBundle | null = null;
-  let fullDifference: ExactMetricValue | null = null;
-  let medianDifference: ExactMetricValue | null = null;
-  let winRemovalChangesDirection = false;
-  let lossRemovalChangesDirection = false;
-  let meanMedianAgree = false;
-  let outlierConcentrated = false;
-  let sampleState:
-    | "insufficient"
-    | "descriptive"
-    | "eligible_tentative" = "insufficient";
 
-  if (targetStates.length > 0 && baselineStates.length > 0) {
-    targetSummary = summarize(
-      targetStates,
-      dependencies.partitionReceipt.currency,
-    );
-    baselineSummary = summarize(
-      baselineStates,
-      dependencies.partitionReceipt.currency,
-    );
+  if (targetSummary !== null && baselineSummary !== null) {
     targetEvidence = addEvidence(
       `target_${argumentsValue.targetWeekday}`,
       targetStates.map((state) => state.row),
@@ -838,6 +1067,7 @@ function buildNonBlockedExecution(
       },
     ].map(({ rowKey, group, summary, evidence }) => {
       const groupRows = summary.rows.map((state) => state.row);
+      const entryMinutes = groupRows.map(entryMinuteOfDay);
       const largestWinEvidence = summary.largestWin === null
         ? null
         : addEvidence(
@@ -890,6 +1120,25 @@ function buildNonBlockedExecution(
         ),
         cell("after_loss_rate", summary.afterLossRate),
         cell(
+          "entry_minute_of_day_average",
+          quotientMetric(
+            "entry_minute_of_day_average",
+            "minute_of_day",
+            null,
+            required(sumExactDecimals(entryMinutes), "$.entryMinutes.average"),
+            String(entryMinutes.length),
+          ),
+        ),
+        cell(
+          "entry_minute_of_day_median",
+          medianMetric(
+            "entry_minute_of_day_median",
+            "minute_of_day",
+            null,
+            entryMinutes,
+          ),
+        ),
+        cell(
           "entry_notional_available_count",
           integerMetric(
             "entry_notional_available_count",
@@ -898,6 +1147,7 @@ function buildNonBlockedExecution(
           ),
         ),
         cell("entry_notional_total", summary.notionalTotal),
+        cell("entry_notional_average", summary.notionalAverage),
         cell("entry_notional_median", summary.notionalMedian),
         cell(
           "share_quantity_available_count",
@@ -908,6 +1158,7 @@ function buildNonBlockedExecution(
           ),
         ),
         cell("share_quantity_total", summary.quantityTotal),
+        cell("share_quantity_average", summary.quantityAverage),
         cell("share_quantity_median", summary.quantityMedian),
         cell(
           "largest_winning_trade_contribution",
@@ -963,11 +1214,15 @@ function buildNonBlockedExecution(
           { columnKey: "win_rate", valueKind: "exact_ratio", unit: "ratio" },
           { columnKey: "after_loss_count", valueKind: "integer", unit: "trades" },
           { columnKey: "after_loss_rate", valueKind: "exact_ratio", unit: "ratio" },
+          { columnKey: "entry_minute_of_day_average", valueKind: "exact_decimal", allowedValueKinds: ["exact_decimal", "exact_ratio"], unit: "minute_of_day" },
+          { columnKey: "entry_minute_of_day_median", valueKind: "exact_decimal", allowedValueKinds: ["exact_decimal", "exact_ratio"], unit: "minute_of_day" },
           { columnKey: "entry_notional_available_count", valueKind: "integer", unit: "trades" },
           { columnKey: "entry_notional_total", valueKind: "exact_decimal", allowedValueKinds: ["exact_decimal", "unavailable"], unit: "notional" },
+          { columnKey: "entry_notional_average", valueKind: "exact_decimal", allowedValueKinds: ["exact_decimal", "exact_ratio", "unavailable"], unit: "notional" },
           { columnKey: "entry_notional_median", valueKind: "exact_decimal", allowedValueKinds: ["exact_decimal", "exact_ratio", "unavailable"], unit: "notional" },
           { columnKey: "share_quantity_available_count", valueKind: "integer", unit: "trades" },
           { columnKey: "share_quantity_total", valueKind: "exact_decimal", allowedValueKinds: ["exact_decimal", "unavailable"], unit: "shares" },
+          { columnKey: "share_quantity_average", valueKind: "exact_decimal", allowedValueKinds: ["exact_decimal", "exact_ratio", "unavailable"], unit: "shares" },
           { columnKey: "share_quantity_median", valueKind: "exact_decimal", allowedValueKinds: ["exact_decimal", "exact_ratio", "unavailable"], unit: "shares" },
           { columnKey: "largest_winning_trade_contribution", valueKind: "exact_ratio", allowedValueKinds: ["exact_ratio", "unavailable"], unit: "ratio" },
           { columnKey: "largest_losing_trade_contribution", valueKind: "exact_ratio", allowedValueKinds: ["exact_ratio", "unavailable"], unit: "ratio" },
@@ -986,97 +1241,46 @@ function buildNonBlockedExecution(
     );
     tables.push(comparisonTable);
 
-    fullDifference = subtractMetrics(
-      "net_expectancy_difference",
-      targetSummary.expectancy,
-      baselineSummary.expectancy,
-    );
-    medianDifference = subtractMetrics(
-      "median_net_pnl_difference",
-      targetSummary.medianNetPnl,
-      baselineSummary.medianNetPnl,
-    );
-    const fullDirection = metricDirection(fullDifference);
-    const medianDirection = metricDirection(medianDifference);
-    meanMedianAgree =
-      fullDirection !== "unavailable" &&
-      medianDirection !== "unavailable" &&
-      fullDirection === medianDirection;
-    const targetWithoutWinRows = removeRow(
-      targetStates.map((state) => state.row),
-      targetSummary.largestWin,
-    );
-    const targetWithoutLossRows = removeRow(
-      targetStates.map((state) => state.row),
-      targetSummary.largestLoss,
-    );
-    const withoutWinExpectancy =
-      targetWithoutWinRows.length === 0
-        ? unavailableMetric(
-            "net_expectancy",
-            "money_per_trade",
-            dependencies.partitionReceipt.currency,
-            "ti_v3_weekday_zero_sample",
-          )
-        : quotientMetric(
-            "net_expectancy",
-            "money_per_trade",
-            dependencies.partitionReceipt.currency,
-            sumRowPnl(targetWithoutWinRows),
-            String(targetWithoutWinRows.length),
-          );
-    const withoutLossExpectancy =
-      targetWithoutLossRows.length === 0
-        ? unavailableMetric(
-            "net_expectancy",
-            "money_per_trade",
-            dependencies.partitionReceipt.currency,
-            "ti_v3_weekday_zero_sample",
-          )
-        : quotientMetric(
-            "net_expectancy",
-            "money_per_trade",
-            dependencies.partitionReceipt.currency,
-            sumRowPnl(targetWithoutLossRows),
-            String(targetWithoutLossRows.length),
-          );
-    const withoutWinDirection = metricDirection(
-      subtractMetrics(
-        "net_expectancy_difference",
-        withoutWinExpectancy,
-        baselineSummary.expectancy,
-      ),
-    );
-    const withoutLossDirection = metricDirection(
-      subtractMetrics(
-        "net_expectancy_difference",
-        withoutLossExpectancy,
-        baselineSummary.expectancy,
-      ),
-    );
-    winRemovalChangesDirection =
-      withoutWinDirection !== "unavailable" &&
-      fullDirection !== "unavailable" &&
-      withoutWinDirection !== fullDirection;
-    lossRemovalChangesDirection =
-      withoutLossDirection !== "unavailable" &&
-      fullDirection !== "unavailable" &&
-      withoutLossDirection !== fullDirection;
-    outlierConcentrated = ratioGreaterThanPolicy(
-      targetSummary.maximumAbsoluteTradeConcentration,
-    );
-    sampleState =
-      targetStates.length < 5
-        ? "insufficient"
-        : targetStates.length < 10 || baselineStates.length < 20
-          ? "descriptive"
-          : "eligible_tentative";
     const allComparisonEvidence = addEvidence(
       "target_baseline_exact_partition",
       partitionRows,
       "target_baseline_exact_partition",
     );
     const totalNetPnl = sumRowPnl(partitionRows);
+    const targetAbsolutePnl = sumAbsolutePnl(
+      targetStates.map((state) => state.row),
+    );
+    const totalAbsolutePnl = sumAbsolutePnl(partitionRows);
+    const targetEntryMinutes = targetStates.map((state) =>
+      entryMinuteOfDay(state.row));
+    const baselineEntryMinutes = baselineStates.map((state) =>
+      entryMinuteOfDay(state.row));
+    const targetEntryMinuteAverage = quotientMetric(
+      "entry_minute_of_day_average",
+      "minute_of_day",
+      null,
+      required(sumExactDecimals(targetEntryMinutes), "$.targetEntryMinutes"),
+      String(targetEntryMinutes.length),
+    );
+    const baselineEntryMinuteAverage = quotientMetric(
+      "entry_minute_of_day_average",
+      "minute_of_day",
+      null,
+      required(sumExactDecimals(baselineEntryMinutes), "$.baselineEntryMinutes"),
+      String(baselineEntryMinutes.length),
+    );
+    const fullDifferenceMetric = fullDifference ?? unavailableMetric(
+      "net_expectancy_difference",
+      "money_per_trade",
+      dependencies.partitionReceipt.currency,
+      "ti_v3_weekday_comparison_unavailable",
+    );
+    const medianDifferenceMetric = medianDifference ?? unavailableMetric(
+      "median_net_pnl_difference",
+      "money",
+      dependencies.partitionReceipt.currency,
+      "ti_v3_weekday_comparison_unavailable",
+    );
     const effectCells = [
       cell(
         "target_trade_count",
@@ -1113,8 +1317,8 @@ function buildNonBlockedExecution(
           ),
         ),
       ),
-      cell("net_expectancy_difference", fullDifference),
-      cell("median_net_pnl_difference", medianDifference),
+      cell("net_expectancy_difference", fullDifferenceMetric),
+      cell("median_net_pnl_difference", medianDifferenceMetric),
       cell(
         "win_rate_difference",
         subtractMetrics(
@@ -1144,6 +1348,21 @@ function buildNonBlockedExecution(
               "target_total_net_pnl_share",
               targetSummary.netPnl,
               totalNetPnl,
+            ),
+      ),
+      cell(
+        "target_absolute_pnl_activity_share",
+        totalAbsolutePnl === "0"
+          ? unavailableMetric(
+              "target_absolute_pnl_activity_share",
+              "ratio",
+              null,
+              "ti_v3_weekday_absolute_pnl_activity_share_not_meaningful",
+            )
+          : ratioFromDecimals(
+              "target_absolute_pnl_activity_share",
+              targetAbsolutePnl,
+              totalAbsolutePnl,
             ),
       ),
       cell(
@@ -1187,12 +1406,11 @@ function buildNonBlockedExecution(
         ),
       ),
       cell(
-        "entry_time_distribution",
-        unavailableMetric(
-          "entry_time_distribution",
-          "entry_time_distribution",
-          null,
-          "ti_v3_weekday_entry_time_bucket_unavailable",
+        "entry_minute_of_day_average_difference",
+        subtractMetrics(
+          "entry_minute_of_day_average_difference",
+          targetEntryMinuteAverage,
+          baselineEntryMinuteAverage,
         ),
       ),
     ];
@@ -1217,12 +1435,13 @@ function buildNonBlockedExecution(
           { columnKey: "win_rate_difference", valueKind: "exact_ratio", unit: "ratio" },
           { columnKey: "target_trade_count_share", valueKind: "exact_ratio", unit: "ratio" },
           { columnKey: "target_total_net_pnl_share", valueKind: "exact_ratio", allowedValueKinds: ["exact_ratio", "unavailable"], unit: "ratio" },
+          { columnKey: "target_absolute_pnl_activity_share", valueKind: "exact_ratio", allowedValueKinds: ["exact_ratio", "unavailable"], unit: "ratio" },
           { columnKey: "mean_median_direction_agreement", valueKind: "enum", unit: "state" },
           { columnKey: "largest_win_removal_direction_change", valueKind: "enum", unit: "state" },
           { columnKey: "largest_loss_removal_direction_change", valueKind: "enum", unit: "state" },
           { columnKey: "sample_sufficiency", valueKind: "enum", unit: "state" },
           { columnKey: "outlier_sensitivity", valueKind: "enum", unit: "state" },
-          { columnKey: "entry_time_distribution", valueKind: "unavailable", unit: "entry_time_distribution" },
+          { columnKey: "entry_minute_of_day_average_difference", valueKind: "exact_decimal", allowedValueKinds: ["exact_decimal", "exact_ratio"], unit: "minute_of_day" },
         ],
         rows: [{
           rowKey: "target_vs_baseline_effect",
@@ -1281,6 +1500,16 @@ function buildNonBlockedExecution(
       [`target_${argumentsValue.targetWeekday}`, targetStates],
       ["baseline_other_represented_weekdays", baselineStates],
     ] as const) {
+      for (const bucket of [...new Set(
+        states.map((state) => entryTimeBucket(state.row)),
+      )].sort(compareUnicodeCodePoints)) {
+        addDistribution(
+          groupKey,
+          "entry_time_30_minute_bucket",
+          bucket,
+          states.filter((state) => entryTimeBucket(state.row) === bucket),
+        );
+      }
       for (const sequence of [...new Set(
         states.map((state) => state.row.sequenceInPartition),
       )].sort((left, right) =>
@@ -1302,6 +1531,7 @@ function buildNonBlockedExecution(
         "first_trade",
         "after_loss",
         "not_after_loss",
+        "unavailable_ambiguous_completion_order",
       ] as const) {
         addDistribution(
           groupKey,
@@ -1325,6 +1555,40 @@ function buildNonBlockedExecution(
           availability,
           states.filter(
             (state) => state.row.shareQuantity.state === availability,
+          ),
+        );
+      }
+      const notionalValues = [...new Set(states.flatMap((state) =>
+        state.row.entryNotional.state === "available"
+          ? [state.row.entryNotional.amount]
+          : []))]
+        .sort(compareCanonicalDecimals);
+      for (const value of notionalValues) {
+        addDistribution(
+          groupKey,
+          "entry_notional_exact_value",
+          exactValueBucket("notional", value),
+          states.filter(
+            (state) =>
+              state.row.entryNotional.state === "available" &&
+              state.row.entryNotional.amount === value,
+          ),
+        );
+      }
+      const quantityValues = [...new Set(states.flatMap((state) =>
+        state.row.shareQuantity.state === "available"
+          ? [state.row.shareQuantity.quantity]
+          : []))]
+        .sort(compareCanonicalDecimals);
+      for (const value of quantityValues) {
+        addDistribution(
+          groupKey,
+          "share_quantity_exact_value",
+          exactValueBucket("shares", value),
+          states.filter(
+            (state) =>
+              state.row.shareQuantity.state === "available" &&
+              state.row.shareQuantity.quantity === value,
           ),
         );
       }
@@ -1429,71 +1693,12 @@ function buildNonBlockedExecution(
     severity: "info" | "limitation";
     code: string;
     affectedKeys: readonly string[];
-  }> = [];
-  const limit = (key: string, code: string): void => {
-    diagnosticEntries.push({
-      diagnosticKey: key,
-      severity: "limitation",
+  }> = limitations.map((code) => ({
+      diagnosticKey: `limitation_${code.replace(/^ti_v3_/, "")}`,
+      severity: claimBlockingLimitationCodes.has(code) ? "limitation" : "info",
       code,
       affectedKeys: [context.partitionDigest],
-    });
-  };
-  if (targetStates.length < 5) {
-    limit(
-      "target_sample_insufficient",
-      "ti_v3_weekday_target_sample_insufficient",
-    );
-  } else if (targetStates.length < 10) {
-    limit(
-      "target_sample_descriptive_only",
-      "ti_v3_weekday_target_sample_descriptive_only",
-    );
-  }
-  if (baselineStates.length < 20) {
-    limit(
-      "baseline_sample_insufficient",
-      "ti_v3_weekday_baseline_sample_insufficient",
-    );
-  }
-  if (targetStates.length === 0 || baselineStates.length === 0) {
-    limit(
-      "target_baseline_comparison_unavailable",
-      "ti_v3_weekday_target_baseline_comparison_unavailable",
-    );
-  }
-  if (!meanMedianAgree && fullDifference !== null) {
-    limit(
-      "mean_median_direction_disagreement",
-      "ti_v3_weekday_mean_median_direction_disagree",
-    );
-  }
-  if (winRemovalChangesDirection) {
-    limit(
-      "largest_win_changes_direction",
-      "ti_v3_weekday_largest_win_changes_direction",
-    );
-  }
-  if (lossRemovalChangesDirection) {
-    limit(
-      "largest_loss_changes_direction",
-      "ti_v3_weekday_largest_loss_changes_direction",
-    );
-  }
-  if (outlierConcentrated) {
-    limit(
-      "single_trade_concentration_exceeded",
-      "ti_v3_weekday_outlier_contribution_exceeded",
-    );
-  }
-  if (
-    fullDifference !== null &&
-    metricDirection(fullDifference) === "flat"
-  ) {
-    limit(
-      "no_directional_tendency",
-      "ti_v3_weekday_no_directional_tendency",
-    );
-  }
+    }));
   const diagnostics = required(
     buildAnalyticalDiagnostics({
       schemaVersion: ANALYTICAL_DIAGNOSTICS_VERSION,
@@ -1509,13 +1714,17 @@ function buildNonBlockedExecution(
     baselineSummary !== null &&
     comparisonTable !== null &&
     fullDifference !== null &&
-    sampleState === "eligible_tentative" &&
+    sampleState === "claim_eligible" &&
     context.eligibilityState === "eligible" &&
-    limitations.length === 0 &&
+    claimBlockingLimitationCodes.size === 0 &&
     meanMedianAgree &&
     !winRemovalChangesDirection &&
     !lossRemovalChangesDirection &&
     !outlierConcentrated &&
+    metricDirection(targetSummary.expectancy) !== "flat" &&
+    metricDirection(targetSummary.expectancy) !== "unavailable" &&
+    metricDirection(baselineSummary.expectancy) !== "flat" &&
+    metricDirection(baselineSummary.expectancy) !== "unavailable" &&
     metricDirection(fullDifference) !== "flat" &&
     metricDirection(fullDifference) !== "unavailable";
   if (
@@ -1714,6 +1923,24 @@ function buildNonBlockedExecution(
   });
 }
 
+function attachExecutionAuthority(
+  execution: WeekdayAnalysisExecutionWithoutAuthority,
+  input: WeekdayAnalysisExecutionInput,
+  datasetReceipt: AnalyticalDatasetReceipt,
+  partitionReceipt: AnalyticalPartitionReceipt,
+): WeekdayAnalysisExecution {
+  const executionAuthority = required(
+    buildWeekdayExecutionAuthority(
+      execution,
+      input.datasetDerivationReceipt,
+      datasetReceipt,
+      partitionReceipt,
+    ),
+    "$.executionAuthority",
+  );
+  return Object.freeze({ ...execution, executionAuthority });
+}
+
 export function executeWeekdayAnalysis(
   input: WeekdayAnalysisExecutionInput,
 ): ExactResult<WeekdayAnalysisExecution, AnalyticalContractFailure> {
@@ -1787,9 +2014,7 @@ export function executeWeekdayAnalysis(
         }),
         "$.receipt",
       );
-      return {
-        ok: true,
-        value: Object.freeze({
+      const blockedExecution = Object.freeze({
           normalizedArguments,
           registryEntry,
           runContext: context,
@@ -1799,16 +2024,29 @@ export function executeWeekdayAnalysis(
           series: Object.freeze([]),
           diagnostics,
           receipt,
-        }),
+        });
+      return {
+        ok: true,
+        value: attachExecutionAuthority(
+          blockedExecution,
+          input,
+          dataset.value,
+          partition.value,
+        ),
       };
     }
     return {
       ok: true,
-      value: buildNonBlockedExecution(
-        context,
-        verifiedArguments.values,
-        normalizedArguments,
-        registryEntry,
+      value: attachExecutionAuthority(
+        buildNonBlockedExecution(
+          context,
+          verifiedArguments.values,
+          normalizedArguments,
+          registryEntry,
+        ),
+        input,
+        dataset.value,
+        partition.value,
       ),
     };
   } catch (error) {

@@ -9,6 +9,7 @@ export const CANONICAL_SERIALIZATION_LIMITS = Object.freeze({
   // budget once the accepted 10-target/20-baseline sample is represented.
   maxNodeCount: 65_536,
   maxKeyCount: 16_384,
+  maxPropertyKeyCodeUnits: 4_096,
   maxStringCodeUnits: 262_144,
   maxAggregateCodeUnits: 1_048_576,
 });
@@ -52,6 +53,13 @@ export interface CanonicalSerialization {
   readonly value: CanonicalValue;
   readonly json: string;
   readonly utf8: Uint8Array;
+}
+
+export interface CanonicalGraphMeasurement {
+  readonly nodeCount: number;
+  readonly keyCount: number;
+  readonly stringAndKeyCodeUnits: number;
+  readonly serializedCodeUnits: number;
 }
 
 export function normalizeCanonicalString(value: string): string {
@@ -304,12 +312,16 @@ function normalizeCanonicalValue(
       context.activeObjects.delete(input);
       return failure("ti_v3_canonical_unicode_invalid", path);
     }
-    const normalizedKey = normalizeCanonicalString(key);
-    const consumedKey = consumeString(context, normalizedKey, path);
+    if (key.length > CANONICAL_SERIALIZATION_LIMITS.maxPropertyKeyCodeUnits) {
+      context.activeObjects.delete(input);
+      return failure("ti_v3_canonical_string_size_exceeded", path);
+    }
+    const consumedKey = consumeString(context, key, path);
     if (!consumedKey.ok) {
       context.activeObjects.delete(input);
       return consumedKey;
     }
+    const normalizedKey = normalizeCanonicalString(key);
     if (normalizedEntries.has(normalizedKey)) {
       context.activeObjects.delete(input);
       return failure("ti_v3_canonical_key_collision", path);
@@ -384,6 +396,43 @@ export function serializeCanonicalValue(
   return {
     ok: true,
     value: serialization,
+  };
+}
+
+export function measureCanonicalGraph(
+  input: unknown,
+): ExactResult<CanonicalGraphMeasurement, CanonicalSerializationFailure> {
+  const serialized = serializeCanonicalValue(input);
+  if (!serialized.ok) return serialized;
+  let nodeCount = 0;
+  let keyCount = 0;
+  let stringAndKeyCodeUnits = 0;
+  const visit = (value: CanonicalValue): void => {
+    nodeCount += 1;
+    if (typeof value === "string") {
+      stringAndKeyCodeUnits += value.length;
+      return;
+    }
+    if (value === null || typeof value === "boolean") return;
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    for (const [key, child] of Object.entries(value)) {
+      keyCount += 1;
+      stringAndKeyCodeUnits += key.length;
+      visit(child);
+    }
+  };
+  visit(serialized.value.value);
+  return {
+    ok: true,
+    value: Object.freeze({
+      nodeCount,
+      keyCount,
+      stringAndKeyCodeUnits,
+      serializedCodeUnits: serialized.value.json.length,
+    }),
   };
 }
 
@@ -540,6 +589,12 @@ class StrictJsonParser {
       const parsedKey = this.parseString(path);
       if (!parsedKey.ok) {
         return parsedKey;
+      }
+      if (
+        parsedKey.value.length >
+        CANONICAL_SERIALIZATION_LIMITS.maxPropertyKeyCodeUnits
+      ) {
+        return failure("ti_v3_canonical_string_size_exceeded", path);
       }
       const normalizedKey = normalizeCanonicalString(parsedKey.value);
       this.keyCount += 1;

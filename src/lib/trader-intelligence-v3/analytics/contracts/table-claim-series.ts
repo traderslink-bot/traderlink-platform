@@ -435,7 +435,9 @@ export function buildExactTable(
     included.value !== dependencies.partitionReceipt.includedCount ||
     excluded.value !== dependencies.partitionReceipt.excludedCount ||
     record.value.coverageEligibilityState !== context.value.eligibilityState ||
-    limitations.value.join("\n") !== expectedLimitations.join("\n")
+    expectedLimitations.some(
+      (limitation) => !limitations.value.includes(limitation),
+    )
   ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.scope");
   return finalizeContentAddressedAuthority("exact_table", {
     schemaVersion: EXACT_TABLE_VERSION, tableKey: tableKey.value, tableVersion: tableVersion.value,

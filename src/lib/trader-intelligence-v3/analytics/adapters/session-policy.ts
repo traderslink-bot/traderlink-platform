@@ -40,6 +40,14 @@ export interface ResolvedSessionFacts {
   readonly session: CanonicalSession;
 }
 
+export interface ResolvedLocalClockFacts {
+  readonly localDate: string;
+  readonly weekday: CanonicalWeekday;
+  readonly hour: string;
+  readonly minute: string;
+  readonly minuteOfDay: string;
+}
+
 const WEEKDAYS: readonly CanonicalWeekday[] = Object.freeze([
   "sunday",
   "monday",
@@ -138,29 +146,12 @@ export function resolveSessionFacts(
   timezone: string,
   dateResolutionReceipt?: DateResolutionReceipt,
 ): ExactResult<ResolvedSessionFacts, AnalyticalContractFailure> {
+  const clock = resolveLocalClockFacts(timestampInput, timezone);
+  if (!clock.ok) return clock;
   const timestamp = validateTimestampValue(timestampInput, "$.timestamp");
   if (!timestamp.ok) return timestamp;
-  if (timezone !== "UTC" && timezone !== "America/New_York") {
-    return contractFailure("ti_v3_analytics_contract_invalid", "$.timezone");
-  }
-  const year = BigInt(timestamp.value.slice(0, 4));
-  let offset = BigInt(0);
-  if (timezone === "America/New_York") {
-    const bounds = newYorkDstBounds(year);
-    offset = timestamp.value >= bounds.start && timestamp.value < bounds.end
-      ? BigInt(-4)
-      : BigInt(-5);
-  }
-  const local = shiftUtcToLocal(timestamp.value, offset);
-  if (timezone === "America/New_York" && local.year < BigInt(2007)) {
-    return contractFailure("ti_v3_analytics_contract_invalid", "$.timestamp.pre_2007_new_york_unsupported");
-  }
-  const weekdayIndex = sundayBasedWeekdayIndex(local.year, local.month, local.day);
-  const weekday = WEEKDAYS.find((_, index) => BigInt(index) === weekdayIndex);
-  if (weekday === undefined) {
-    return contractFailure("ti_v3_analytics_contract_invalid", "$.timestamp");
-  }
-  const sessionDate = canonicalDate(local.year, local.month, local.day);
+  const sessionDate = clock.value.localDate;
+  const weekday = clock.value.weekday;
   let session: CanonicalSession = "not_applicable";
   if (timezone === "America/New_York") {
     const receipt = verifyDateResolutionReceipt(dateResolutionReceipt);
@@ -178,7 +169,7 @@ export function resolveSessionFacts(
     ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.dateResolutionReceipt.sessionEvidence");
     if (timestamp.value >= evidence.openAt && timestamp.value < evidence.closeAt) session = "regular";
     else {
-      const minuteOfDay = local.hour * BigInt(60) + local.minute;
+      const minuteOfDay = BigInt(clock.value.minuteOfDay);
       if (minuteOfDay >= BigInt(240) && timestamp.value < evidence.openAt) session = "premarket";
       else if (timestamp.value >= evidence.closeAt && minuteOfDay < BigInt(1200)) session = "after_hours";
       else session = "overnight";
@@ -190,6 +181,47 @@ export function resolveSessionFacts(
       sessionDate,
       weekday,
       session,
+    }),
+  };
+}
+
+export function resolveLocalClockFacts(
+  timestampInput: unknown,
+  timezone: string,
+): ExactResult<ResolvedLocalClockFacts, AnalyticalContractFailure> {
+  const timestamp = validateTimestampValue(timestampInput, "$.timestamp");
+  if (!timestamp.ok) return timestamp;
+  if (timezone !== "UTC" && timezone !== "America/New_York") {
+    return contractFailure("ti_v3_analytics_contract_invalid", "$.timezone");
+  }
+  const year = BigInt(timestamp.value.slice(0, 4));
+  let offset = BigInt(0);
+  if (timezone === "America/New_York") {
+    const bounds = newYorkDstBounds(year);
+    offset = timestamp.value >= bounds.start && timestamp.value < bounds.end
+      ? BigInt(-4)
+      : BigInt(-5);
+  }
+  const local = shiftUtcToLocal(timestamp.value, offset);
+  if (timezone === "America/New_York" && local.year < BigInt(2007)) {
+    return contractFailure(
+      "ti_v3_analytics_contract_invalid",
+      "$.timestamp.pre_2007_new_york_unsupported",
+    );
+  }
+  const weekdayIndex = sundayBasedWeekdayIndex(local.year, local.month, local.day);
+  const weekday = WEEKDAYS.find((_, index) => BigInt(index) === weekdayIndex);
+  if (weekday === undefined) {
+    return contractFailure("ti_v3_analytics_contract_invalid", "$.timestamp");
+  }
+  return {
+    ok: true,
+    value: Object.freeze({
+      localDate: canonicalDate(local.year, local.month, local.day),
+      weekday,
+      hour: local.hour.toString(),
+      minute: local.minute.toString(),
+      minuteOfDay: (local.hour * BigInt(60) + local.minute).toString(),
     }),
   };
 }

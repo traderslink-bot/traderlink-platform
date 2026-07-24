@@ -40,7 +40,9 @@ export type ContentIdentityDomain =
   | "tool_registry_entry"
   | "tool_registry_snapshot"
   | "starting_inventory"
-  | "normalized_analysis_arguments";
+  | "normalized_analysis_arguments"
+  | "weekday_execution_payload"
+  | "weekday_execution_authority";
 
 declare const canonicalDigestBrand: unique symbol;
 declare const canonicalExecutionDigestBrand: unique symbol;
