@@ -9,6 +9,9 @@
   PR. No deployment or GA0-B3 work is authorized.
 - The controlling B2 decision record is
   `src/docs/trader-intelligence-v3-adr-ga0-b2-weekday-deterministic-proof-v1.md`.
+- Draft PR #150 is open and unmerged. Executable checkpoint
+  `532f382859b60f19bcf701f4c731b1497c12dac1` passed local verification and
+  GitHub Actions `test-and-verify`.
 
 **Date:** 2026-07-19 America/Toronto  
 **Status:** latest accepted transition decision  

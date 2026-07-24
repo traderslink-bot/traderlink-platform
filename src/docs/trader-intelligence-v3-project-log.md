@@ -8,6 +8,11 @@ local-only `analyze_performance_by_weekday:v1` deterministic proof. It is being
 prepared as a draft PR for independent audit; no production deployment or
 GA0-B3 implementation is in scope.
 
+Draft PR #150 now contains executable checkpoint
+`532f382859b60f19bcf701f4c731b1497c12dac1`; its GitHub Actions
+`test-and-verify` job passed. The PR remains draft and unmerged pending
+independent audit.
+
 ## 2026-07-19 — GA0-A3 Required-Fix Remediation Complete; Re-audit Required
 
 - The first independent audit verdict was `accept with required fixes`; its

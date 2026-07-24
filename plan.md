@@ -6,7 +6,7 @@
 **Operational hosting:** local owner testing  
 **Primary domain:** U.S. listed small-cap and micro-cap active trading  
 **Product boundary:** retrospective educational trade review and self-improvement  
-**Current gate:** GA0-B2 — weekday deterministic proof under independent audit
+**Current gate:** GA0-B2 — draft PR #150 awaiting independent audit
 **Active implementation plan:** `src/docs/trader-intelligence-v3-ga0-b-deterministic-proof-implementation-plan-2026-07-19.md`
 
 Start here when resuming Trader Intelligence product, analytics, simulation,
