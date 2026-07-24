@@ -1,5 +1,23 @@
 # Trader Intelligence v3 Project Log
 
+## 2026-07-24 - GA0-B2 second independent-re-audit remediation checkpoint
+
+- Current re-audit findings head: `baf1952812fcb563b32e4f7e7d19d1efa14b8602`.
+- Final focused executable checkpoint: `1f5ef73615e491c026af930674dcc340f822e9ee`.
+- Closed the two remaining policy gaps: complete exclusion-ledger claim
+  neutrality and strict `completed`-only claim emission. The execution
+  authority now binds `analyze_performance_by_weekday:v1` directly.
+- Local focused evidence: GA0-B2 `24/24`; affected B1/A3 `42/42`; TypeScript
+  clean; architecture and private-data verifiers passed.
+- `verify:ti-v3:ga0-a2` reached `306/308`; only two unchanged SQLite tests
+  failed because the shared dependency junction lacks the `better-sqlite3`
+  native binding. ESLint remains blocked by the separate missing
+  `acorn-jsx/xhtml` junction dependency.
+- Executable CI run `30072623898`, job `89416481209`, passed.
+- Next and final substantive repository change: the second independent
+  re-audit handoff Markdown-only commit. Keep PR #150 draft/open/unmerged,
+  leave threads unresolved, do not deploy, and do not begin GA0-B3.
+
 ## 2026-07-24 - GA0-B2 independent-audit remediation executable checkpoint
 
 - Remediated B2-AUD-R1 through R6 on the existing draft PR #150 branch.
