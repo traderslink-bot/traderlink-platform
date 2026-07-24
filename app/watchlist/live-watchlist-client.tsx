@@ -1034,11 +1034,6 @@ function TradersLinkAiReadStatusCard({
           {aiReadStatusLabel(symbol, false)}
         </p>
       ) : null}
-      <p className="academy-card-text">
-        AI analysis appears only when it passes automated quality checks and may not be available
-        for every ticker. In the meantime, refer to the support and resistance levels in the
-        Potential Path card, which are derived from real candlestick market data.
-      </p>
     </article>
   );
 }
