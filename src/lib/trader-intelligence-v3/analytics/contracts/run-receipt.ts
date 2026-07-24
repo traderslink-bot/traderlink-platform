@@ -122,7 +122,19 @@ export function buildAnalysisRunReceipt(
     ...evidence.flatMap((item) => item.limitationCodes),
     ...diagnostics.value.entries.filter((entry) => entry.severity !== "info").map((entry) => entry.code),
   ])].sort(compareUnicodeCodePoints);
-  const runStatus = diagnostics.value.entries.some((entry) => entry.severity === "blocked")
+  const hasBlockedDiagnostic = diagnostics.value.entries.some(
+    (entry) => entry.severity === "blocked",
+  );
+  if (
+    (context.value.eligibilityState === "blocked" && !hasBlockedDiagnostic) ||
+    (context.value.eligibilityState !== "blocked" && hasBlockedDiagnostic)
+  ) {
+    return contractFailure(
+      "ti_v3_analytics_contract_reference_mismatch",
+      "$.diagnostics",
+    );
+  }
+  const runStatus = context.value.eligibilityState === "blocked"
     ? "blocked"
     : context.value.eligibilityState === "limited" || limitationCodes.length > 0
       ? "limited"
@@ -142,6 +154,17 @@ export function buildAnalysisRunReceipt(
       dependencies.registryEntry.blockedArtifactPolicy === "diagnostics_only" &&
       [...artifactCounts.values()].some((count) => count !== 0)
     ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.artifacts");
+    if (
+      dependencies.registryEntry.blockedArtifactPolicy ===
+        "declared_artifacts_optional" &&
+      [...artifactCounts].some(([contract, count]) =>
+        !declared.has(contract) && count !== 0)
+    ) {
+      return contractFailure(
+        "ti_v3_analytics_contract_reference_mismatch",
+        "$.artifacts",
+      );
+    }
   } else if (
     [...artifactCounts].some(([contract, count]) =>
       (declared.has(contract) && count === 0) || (!declared.has(contract) && count !== 0))

@@ -170,6 +170,99 @@ function proofFixture() {
   return { authority, dataset, derivation: datasetResult.value.derivationReceipt, partition: partitionResult.value, registry: registryResult.value, normalizedArguments: argumentsResult.value, context, evidence, value, table: tableResult.value };
 }
 
+function blockedProofFixture(
+  outputContracts: readonly string[],
+  blockedArtifactPolicy:
+    | "diagnostics_only"
+    | "declared_artifacts_optional",
+) {
+  const authority = buildSyntheticGa0B1Authority(undefined, {
+    filterOverrides: { outcomeFilters: ["loss"] },
+  });
+  const derived = readAnalyticalDatasetWithDerivation(
+    createSyntheticInMemoryReadOnlySource(authority),
+  );
+  if (!derived.ok) throw new Error(derived.error.code);
+  const partition = buildAnalyticalPartitionReceipt({
+    schemaVersion: "ti_v3_analytical_partition_v1",
+    datasetReceipt: derived.value.datasetReceipt,
+    currency: "USD",
+  });
+  if (!partition.ok) throw new Error(partition.error.code);
+  const argumentSchemaDigest = identity(
+    "canonical_content",
+    `blocked_args_${outputContracts.join("_")}_${blockedArtifactPolicy}`,
+  );
+  const registry = buildToolRegistryEntry({
+    schemaVersion: TOOL_REGISTRY_ENTRY_VERSION,
+    toolKey: "blocked_fixture_tool",
+    toolVersion: "v1",
+    descriptionCode: "blocked_fixture",
+    requiredEligibilityCapability: "closed_trade_analytics",
+    argumentSchemaDigest,
+    requiredRowFields: ["net_pnl"],
+    outputContracts,
+    blockedArtifactPolicy,
+    evidencePolicyKey: "conservative_evidence",
+    evidencePolicyVersion: "v1",
+    toolPolicyKey: "blocked_fixture",
+    toolPolicyVersion: "v1",
+    minimumSamplePolicyState: "deferred_to_tool_slice",
+    supportedCurrencies: ["USD"],
+    supportedTimezones: ["UTC"],
+    deprecationState: "active_contract",
+    focusedTestKeys: ["blocked_fixture"],
+    executableState: "contract_only_no_runner",
+  });
+  const normalizedArguments = buildNormalizedAnalysisArguments({
+    schemaVersion: NORMALIZED_ANALYSIS_ARGUMENTS_VERSION,
+    argumentSchemaDigest,
+    values: {},
+  });
+  if (!registry.ok || !normalizedArguments.ok) {
+    throw new Error("ti_v3_blocked_fixture_registry_failed");
+  }
+  const context = buildAnalysisRunContext({
+    schemaVersion: ANALYSIS_RUN_CONTEXT_VERSION,
+    snapshot: authority.snapshot,
+    snapshotDependencies: authority.snapshotDependencies,
+    canonicalFilter: authority.snapshotDependencies.filter,
+    datasetReceipt: derived.value.datasetReceipt,
+    datasetDerivationReceipt: derived.value.derivationReceipt,
+    partitionReceipt: partition.value,
+    normalizedArguments: normalizedArguments.value,
+    registryEntry: registry.value,
+  });
+  if (!context.ok) throw new Error(`${context.error.code}:${context.error.path}`);
+  const candidate = derived.value.datasetReceipt.excludedCandidates[0];
+  const evidence = buildAnalyticalEvidenceBundle({
+    schemaVersion: ANALYTICAL_EVIDENCE_BUNDLE_VERSION,
+    evidenceKey: "blocked_fixture_evidence",
+    runContext: context.value,
+    comparisonGroupKey: null,
+    inclusionState: "excluded",
+    candidateKeys: [candidate.candidateKey],
+  });
+  const diagnostics = buildAnalyticalDiagnostics({
+    schemaVersion: ANALYTICAL_DIAGNOSTICS_VERSION,
+    runContext: context.value,
+    entries: [{
+      diagnosticKey: "blocked_partition",
+      severity: "blocked",
+      code: "ti_v3_analytics_partition_blocked",
+      affectedKeys: [context.value.partitionDigest],
+    }],
+  });
+  if (!evidence.ok || !diagnostics.ok) {
+    throw new Error("ti_v3_blocked_fixture_artifact_failed");
+  }
+  return {
+    context: context.value,
+    evidence: evidence.value,
+    diagnostics: diagnostics.value,
+  };
+}
+
 describe("GA0-B1 exact metric contract", () => {
   it.each([
     [{ kind: "exact_decimal", value: "1.25", unit: "money", currency: "USD" }],
@@ -328,6 +421,9 @@ describe("GA0-B1 acyclic proof artifacts", () => {
     if (!changedRow.ok) return;
     const {
       receiptDigest: _receiptDigest,
+      globalExclusionPolicyKey: _globalExclusionPolicyKey,
+      globalExclusionPolicyVersion: _globalExclusionPolicyVersion,
+      globalExcludedCandidateKeys: _globalExcludedCandidateKeys,
       currencyPartitions: _currencyPartitions,
       candidateCount: _candidateCount,
       includedCount: _includedCount,
@@ -336,6 +432,9 @@ describe("GA0-B1 acyclic proof artifacts", () => {
       ...datasetContent
     } = fixture.dataset;
     void _receiptDigest;
+    void _globalExclusionPolicyKey;
+    void _globalExclusionPolicyVersion;
+    void _globalExcludedCandidateKeys;
     void _currencyPartitions;
     void _candidateCount;
     void _includedCount;
@@ -377,6 +476,54 @@ describe("GA0-B1 acyclic proof artifacts", () => {
         datasetReceipt: { receiptDigest: fixture.dataset.receiptDigest },
       },
     });
+    const corruptPersistedFields: readonly Readonly<Record<string, unknown>>[] = [
+      { datasetReceiptDigest: identity("analytical_dataset", "changed_dataset") },
+      { snapshotDigest: identity("analysis_snapshot", "changed_snapshot") },
+      { manifestDigest: identity("dataset_manifest", "changed_manifest") },
+      { filterDigest: identity("canonical_filter", "changed_filter") },
+      { correctionResultDigest: identity("correction_result", "changed_correction") },
+      { eligibilitySetDigest: identity("eligibility_set", "changed_eligibility") },
+      { retrospectivePolicyDigest: identity("retrospective_policy", "changed_policy") },
+      { evidenceNamespace: "evidence:changed_owner" },
+      { occurrenceInventoryDigest: identity("evidence_inventory", "changed_occurrences") },
+      { roundTripInventoryDigest: identity("evidence_inventory", "changed_round_trips") },
+      { adapterKey: "ti_v3_changed_adapter" },
+      { adapterVersion: "v2" },
+      { derivationPolicyKey: "ti_v3_changed_derivation_policy" },
+      { derivationPolicyVersion: "v2" },
+      { exchangeCalendarPolicyKey: "ti_v3_changed_calendar" },
+      { exchangeCalendarPolicyVersion: "v2" },
+    ];
+    for (const changed of corruptPersistedFields) {
+      expect(rehydrateAnalyticalDatasetDerivation(
+        {
+          ...(persistedReceipt as Record<string, unknown>),
+          ...changed,
+          derivationDigest: fixture.derivation.derivationDigest,
+        },
+        createSyntheticInMemoryReadOnlySource(fixture.authority),
+      )).toMatchObject({ ok: false });
+    }
+    expect(rehydrateAnalyticalDatasetDerivation(
+      {
+        ...(persistedReceipt as Record<string, unknown>),
+        persistenceRowId: "row_999",
+      },
+      createSyntheticInMemoryReadOnlySource(fixture.authority),
+    )).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_analytics_authority_mismatch" },
+    });
+    const reorderedPersistedReceipt = Object.fromEntries(
+      Object.entries(persistedReceipt as Record<string, unknown>).reverse(),
+    );
+    expect(rehydrateAnalyticalDatasetDerivation(
+      reorderedPersistedReceipt,
+      {
+        ...createSyntheticInMemoryReadOnlySource(fixture.authority),
+        sourceKey: "persistence_row_999",
+      },
+    )).toMatchObject({ ok: true });
   });
 
   it("derives exact reduced ratio differences and directions", () => {
@@ -456,6 +603,93 @@ describe("GA0-B1 acyclic proof artifacts", () => {
         },
       },
     });
+  });
+
+  it("rejects difference claims that relabel or mix source metric keys", () => {
+    const { context, evidence } = proofFixture();
+    const buildMetricTable = (
+      targetMetric: ReturnType<typeof metric>,
+      comparisonMetric: ReturnType<typeof metric>,
+    ) => buildExactTable({
+      schemaVersion: EXACT_TABLE_VERSION,
+      tableKey: "metric_key_table",
+      tableVersion: "v1",
+      runContext: context,
+      titlePurposeCode: "metric_key_contract_validation",
+      currency: "USD",
+      timezone: "UTC",
+      dateBasis: "trade_close_date",
+      denominatorPolicy: "all_included_trades",
+      columns: [{
+        columnKey: "effect_value",
+        valueKind: "exact_decimal",
+        unit: "money",
+      }],
+      rows: [
+        {
+          rowKey: "target",
+          cells: [{ columnKey: "effect_value", metric: targetMetric }],
+          evidenceBundleDigest: evidence.bundleDigest,
+        },
+        {
+          rowKey: "comparison",
+          cells: [{ columnKey: "effect_value", metric: comparisonMetric }],
+          evidenceBundleDigest: evidence.bundleDigest,
+        },
+      ],
+      summaryRows: [],
+      includedCount: "1",
+      excludedCount: "0",
+      coverageEligibilityState: "eligible",
+      limitationCodes: [],
+      evidenceBundles: [evidence],
+    });
+    const assertRejectedClaim = (
+      table: ReturnType<typeof buildMetricTable>,
+      metricKey: string,
+    ) => {
+      expect(table).toMatchObject({ ok: true });
+      if (!table.ok) return;
+      expect(buildValidatedClaim({
+        schemaVersion: VALIDATED_CLAIM_VERSION,
+        claimKey: "metric_relabel",
+        claimVersion: "v1",
+        claimType: "contract_fixture_only",
+        runContext: context,
+        table: table.value,
+        subjectGroupKey: "target",
+        comparisonGroupKey: "comparison",
+        metricKey,
+        effectDerivation: {
+          kind: "difference",
+          targetRowKey: "target",
+          targetColumnKey: "effect_value",
+          comparisonRowKey: "comparison",
+          comparisonColumnKey: "effect_value",
+        },
+        confidenceEvidenceLabel: "insufficient",
+        outlierSensitivityState: "not_evaluated",
+        evidenceBundles: [evidence],
+        allowedWordingCode: "contract_only",
+      })).toMatchObject({
+        ok: false,
+        error: { code: "ti_v3_analytics_contract_reference_mismatch" },
+      });
+    };
+    assertRejectedClaim(
+      buildMetricTable(
+        metric("gross_pnl", "5"),
+        metric("gross_pnl", "1"),
+      ),
+      "net_pnl",
+    );
+    assertRejectedClaim(
+      buildMetricTable(
+        metric("gross_pnl", "5"),
+        metric("net_pnl", "1"),
+      ),
+      "gross_pnl",
+    );
   });
 
   it("binds evidence and counts to exactly one currency partition", () => {
@@ -598,6 +832,227 @@ describe("GA0-B1 acyclic proof artifacts", () => {
         path: "$.artifacts",
       },
     });
+  });
+
+  it("enforces declared artifact classes for genuinely blocked partitions", () => {
+    const optional = blockedProofFixture(
+      ["exact_table_v1", "analytical_evidence_bundle_v1"],
+      "declared_artifacts_optional",
+    );
+    expect(optional.context).toMatchObject({
+      eligibilityState: "blocked",
+    });
+    const buildBlockedTable = (
+      fixture: ReturnType<typeof blockedProofFixture>,
+      tableKey: string,
+      includeSummary: boolean,
+    ) => buildExactTable({
+      schemaVersion: EXACT_TABLE_VERSION,
+      tableKey,
+      tableVersion: "v1",
+      runContext: fixture.context,
+      titlePurposeCode: "blocked_partition_contract",
+      currency: "USD",
+      timezone: "UTC",
+      dateBasis: "trade_close_date",
+      denominatorPolicy: "all_partition_candidates",
+      columns: [{
+        columnKey: "net_pnl",
+        valueKind: "exact_decimal",
+        unit: "money",
+      }],
+      rows: [],
+      summaryRows: includeSummary
+        ? [{
+            rowKey: "excluded_partition",
+            cells: [{
+              columnKey: "net_pnl",
+              metric: metric("net_pnl", "0"),
+            }],
+            evidenceBundleDigest: fixture.evidence.bundleDigest,
+          }]
+        : [],
+      includedCount: "0",
+      excludedCount: "1",
+      coverageEligibilityState: "blocked",
+      limitationCodes: [],
+      evidenceBundles: includeSummary ? [fixture.evidence] : [],
+    });
+    const emptyTable = buildBlockedTable(
+      optional,
+      "blocked_empty_table",
+      false,
+    );
+    expect(emptyTable).toMatchObject({ ok: true });
+    if (!emptyTable.ok) return;
+    expect(buildAnalysisRunReceipt({
+      schemaVersion: ANALYSIS_RUN_RECEIPT_VERSION,
+      runContext: optional.context,
+      tables: [emptyTable.value],
+      claims: [],
+      series: [],
+      evidenceBundles: [],
+      diagnostics: optional.diagnostics,
+    })).toMatchObject({
+      ok: true,
+      value: {
+        runStatus: "blocked",
+        includedCount: "0",
+        excludedCount: "1",
+      },
+    });
+    const missingBlockedDiagnostic = buildAnalyticalDiagnostics({
+      schemaVersion: ANALYTICAL_DIAGNOSTICS_VERSION,
+      runContext: optional.context,
+      entries: [],
+    });
+    expect(missingBlockedDiagnostic).toMatchObject({ ok: true });
+    if (!missingBlockedDiagnostic.ok) return;
+    expect(buildAnalysisRunReceipt({
+      schemaVersion: ANALYSIS_RUN_RECEIPT_VERSION,
+      runContext: optional.context,
+      tables: [],
+      claims: [],
+      series: [],
+      evidenceBundles: [],
+      diagnostics: missingBlockedDiagnostic.value,
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "ti_v3_analytics_contract_reference_mismatch",
+        path: "$.diagnostics",
+      },
+    });
+    expect(buildAnalysisRunReceipt({
+      schemaVersion: ANALYSIS_RUN_RECEIPT_VERSION,
+      runContext: optional.context,
+      tables: [],
+      claims: [],
+      series: [],
+      evidenceBundles: [optional.evidence],
+      diagnostics: optional.diagnostics,
+    })).toMatchObject({ ok: false });
+    const referencedTable = buildBlockedTable(
+      optional,
+      "blocked_referenced_table",
+      true,
+    );
+    expect(referencedTable).toMatchObject({ ok: true });
+    if (!referencedTable.ok) return;
+    const blockedClaim = buildValidatedClaim({
+      schemaVersion: VALIDATED_CLAIM_VERSION,
+      claimKey: "blocked_claim",
+      claimVersion: "v1",
+      claimType: "contract_fixture_only",
+      runContext: optional.context,
+      table: referencedTable.value,
+      subjectGroupKey: "excluded_partition",
+      comparisonGroupKey: null,
+      metricKey: "net_pnl",
+      effectDerivation: {
+        kind: "table_cell",
+        targetRowKey: "excluded_partition",
+        targetColumnKey: "net_pnl",
+        comparisonRowKey: null,
+        comparisonColumnKey: null,
+      },
+      confidenceEvidenceLabel: "unavailable",
+      outlierSensitivityState: "unavailable",
+      evidenceBundles: [optional.evidence],
+      allowedWordingCode: "blocked_contract_only",
+    });
+    const blockedSeries = buildChartReadySeries({
+      schemaVersion: CHART_READY_SERIES_VERSION,
+      seriesKey: "blocked_series",
+      seriesVersion: "v1",
+      approvedVisualPurpose: "blocked_contract_only",
+      allowedVisualTemplateKeys: ["exact_table_fallback"],
+      runContext: optional.context,
+      sourceTable: referencedTable.value,
+      evidenceBundles: [optional.evidence],
+      xDomain: "excluded_partition",
+      unit: "money",
+      currency: "USD",
+      timezone: "UTC",
+      dateBasis: "trade_close_date",
+      zeroBaselineRequired: true,
+      denominatorPolicy: "all_partition_candidates",
+      points: [{
+        pointKey: "excluded_partition",
+        sourceRowKey: "excluded_partition",
+        sourceColumnKey: "net_pnl",
+        semanticOrder: "1",
+        evidenceBundleDigest: optional.evidence.bundleDigest,
+      }],
+      accessibilitySummarySelections: [{
+        rowKey: "excluded_partition",
+        columnKey: "net_pnl",
+      }],
+      pointBudget: "1",
+      downsamplingPolicy: "none_exact_points_only",
+    });
+    expect(blockedClaim).toMatchObject({ ok: true });
+    expect(blockedSeries).toMatchObject({ ok: true });
+    if (!blockedClaim.ok || !blockedSeries.ok) return;
+    const blockedGraph = {
+      schemaVersion: ANALYSIS_RUN_RECEIPT_VERSION,
+      runContext: optional.context,
+      tables: [referencedTable.value],
+      evidenceBundles: [optional.evidence],
+      diagnostics: optional.diagnostics,
+    } as const;
+    expect(buildAnalysisRunReceipt({
+      ...blockedGraph,
+      claims: [blockedClaim.value],
+      series: [],
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "ti_v3_analytics_contract_reference_mismatch",
+        path: "$.artifacts",
+      },
+    });
+    expect(buildAnalysisRunReceipt({
+      ...blockedGraph,
+      claims: [],
+      series: [blockedSeries.value],
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "ti_v3_analytics_contract_reference_mismatch",
+        path: "$.artifacts",
+      },
+    });
+
+    const diagnosticsOnly = blockedProofFixture(
+      ["exact_table_v1"],
+      "diagnostics_only",
+    );
+    const diagnosticsOnlyTable = buildBlockedTable(
+      diagnosticsOnly,
+      "blocked_diagnostics_only_table",
+      false,
+    );
+    expect(diagnosticsOnlyTable).toMatchObject({ ok: true });
+    if (!diagnosticsOnlyTable.ok) return;
+    expect(buildAnalysisRunReceipt({
+      schemaVersion: ANALYSIS_RUN_RECEIPT_VERSION,
+      runContext: diagnosticsOnly.context,
+      tables: [],
+      claims: [],
+      series: [],
+      evidenceBundles: [],
+      diagnostics: diagnosticsOnly.diagnostics,
+    })).toMatchObject({ ok: true, value: { runStatus: "blocked" } });
+    expect(buildAnalysisRunReceipt({
+      schemaVersion: ANALYSIS_RUN_RECEIPT_VERSION,
+      runContext: diagnosticsOnly.context,
+      tables: [diagnosticsOnlyTable.value],
+      claims: [],
+      series: [],
+      evidenceBundles: [],
+      diagnostics: diagnosticsOnly.diagnostics,
+    })).toMatchObject({ ok: false });
   });
 
   it("rejects caller-invented run, evidence, table, claim, series, and receipt facts", () => {

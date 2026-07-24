@@ -49,6 +49,10 @@ export const ANALYTICAL_EXCLUSION_REASONS = Object.freeze({
 export interface ExcludedAnalyticalCandidate {
   readonly candidateKey: string;
   readonly semanticRoundTripKey: string | null;
+  readonly scopeState: "ledger_scoped" | "global_unassigned";
+  readonly canonicalOwnerKey: string | null;
+  readonly canonicalAccountKey: string | null;
+  readonly stableInstrumentKey: string | null;
   readonly reasonCode: string;
   readonly sourceReasonCode: string | null;
   readonly secondaryReasonCodes: readonly string[];
@@ -92,6 +96,9 @@ export interface AnalyticalDatasetReceipt {
   readonly adapterVersion: string;
   readonly derivationPolicyKey: string;
   readonly derivationPolicyVersion: string;
+  readonly globalExclusionPolicyKey: "ti_v3_global_exclusion_blocks_currency_partition";
+  readonly globalExclusionPolicyVersion: "v1";
+  readonly globalExcludedCandidateKeys: readonly string[];
   readonly currencyPartitions: readonly CurrencyCode[];
   readonly rows: readonly AnalyticalRow[];
   readonly excludedCandidates: readonly ExcludedAnalyticalCandidate[];
@@ -117,7 +124,8 @@ function parseExclusion(
   path: string,
 ): ExactResult<ExcludedAnalyticalCandidate, AnalyticalContractFailure> {
   const record = validateContractRecord(input, [
-    "candidateKey", "semanticRoundTripKey", "reasonCode", "sourceReasonCode",
+    "candidateKey", "semanticRoundTripKey", "scopeState", "canonicalOwnerKey",
+    "canonicalAccountKey", "stableInstrumentKey", "reasonCode", "sourceReasonCode",
     "secondaryReasonCodes", "sourceReasonCodes", "reasonLedgerPolicyKey",
     "reasonLedgerPolicyVersion", "reasonAuthorities",
     "reasonMappingPolicyKey", "reasonMappingPolicyVersion", "limitationCodes",
@@ -132,6 +140,18 @@ function parseExclusion(
     if (!key.ok) return key;
     semanticRoundTripKey = key.value;
   }
+  const parseNullableScopeKey = (
+    field: "canonicalOwnerKey" | "canonicalAccountKey" | "stableInstrumentKey",
+  ): ExactResult<string | null, AnalyticalContractFailure> => {
+    if (record.value[field] === null) return { ok: true, value: null };
+    return validateContractKey(record.value[field], `${path}.${field}`);
+  };
+  const owner = parseNullableScopeKey("canonicalOwnerKey");
+  const account = parseNullableScopeKey("canonicalAccountKey");
+  const instrument = parseNullableScopeKey("stableInstrumentKey");
+  if (!owner.ok) return owner;
+  if (!account.ok) return account;
+  if (!instrument.ok) return instrument;
   const reason = validateReasonCode(record.value.reasonCode, `${path}.reasonCode`);
   if (!reason.ok) return reason;
   let sourceReasonCode: string | null = null;
@@ -233,11 +253,41 @@ function parseExclusion(
     if (!parsed.ok) return contractFailure("ti_v3_analytics_contract_invalid", `${path}.currency`);
     currency = parsed.value;
   }
+  if (
+    (
+      record.value.scopeState !== "ledger_scoped" &&
+      record.value.scopeState !== "global_unassigned"
+    ) ||
+    (
+      record.value.scopeState === "ledger_scoped" &&
+      (
+        owner.value === null ||
+        account.value === null ||
+        instrument.value === null ||
+        currency === null
+      )
+    ) ||
+    (
+      record.value.scopeState === "global_unassigned" &&
+      (
+        owner.value !== null ||
+        account.value !== null ||
+        instrument.value !== null ||
+        currency !== null
+      )
+    )
+  ) {
+    return contractFailure("ti_v3_analytics_contract_invalid", `${path}.scopeState`);
+  }
   return {
     ok: true,
     value: Object.freeze({
       candidateKey: candidateKey.value,
       semanticRoundTripKey,
+      scopeState: record.value.scopeState,
+      canonicalOwnerKey: owner.value,
+      canonicalAccountKey: account.value,
+      stableInstrumentKey: instrument.value,
       reasonCode: reason.value,
       sourceReasonCode,
       secondaryReasonCodes: secondaryReasons.value,
@@ -352,7 +402,20 @@ export function buildAnalyticalDatasetReceipt(
   const sortedRows = Object.freeze([...rows].sort(compareRows));
   const sortedExclusions = Object.freeze([...exclusions].sort((left, right) => compareUnicodeCodePoints(left.candidateKey, right.candidateKey)));
   const currencyPartitions = Object.freeze(
-    [...new Set(sortedRows.map((row) => row.currency))].sort(compareUnicodeCodePoints),
+    [...new Set([
+      ...sortedRows.map((row) => row.currency),
+      ...sortedExclusions.flatMap((candidate) =>
+        candidate.scopeState === "ledger_scoped" &&
+        candidate.currency !== null
+          ? [candidate.currency]
+          : []),
+    ])].sort(compareUnicodeCodePoints),
+  );
+  const globalExcludedCandidateKeys = Object.freeze(
+    sortedExclusions
+      .filter((candidate) => candidate.scopeState === "global_unassigned")
+      .map((candidate) => candidate.candidateKey)
+      .sort(compareUnicodeCodePoints),
   );
   const includedCount = countFromLength(sortedRows.length, "$.rows.length");
   if (!includedCount.ok) return includedCount;
@@ -392,6 +455,10 @@ export function buildAnalyticalDatasetReceipt(
     adapterVersion: adapterVersion.value,
     derivationPolicyKey: derivationPolicyKey.value,
     derivationPolicyVersion: derivationPolicyVersion.value,
+    globalExclusionPolicyKey:
+      "ti_v3_global_exclusion_blocks_currency_partition" as const,
+    globalExclusionPolicyVersion: "v1" as const,
+    globalExcludedCandidateKeys,
     currencyPartitions,
     rows: sortedRows,
     excludedCandidates: sortedExclusions,
@@ -413,7 +480,9 @@ export function verifyAnalyticalDatasetReceipt(
     "eligibilitySetDigest", "retrospectivePolicyDigest", "evidenceNamespace",
     "occurrenceInventoryDigest", "roundTripInventoryDigest", "adapterKey",
     "adapterVersion", "derivationPolicyKey", "derivationPolicyVersion",
-    "currencyPartitions", "rows", "excludedCandidates", "candidateCount",
+    "globalExclusionPolicyKey", "globalExclusionPolicyVersion",
+    "globalExcludedCandidateKeys", "currencyPartitions", "rows",
+    "excludedCandidates", "candidateCount",
     "includedCount", "excludedCount", "exclusionCountsByReason", "limitations",
     "receiptDigest",
   ]);
@@ -426,19 +495,96 @@ export function verifyAnalyticalDatasetReceipt(
   if (!suppliedCandidateCount.ok) return suppliedCandidateCount;
   if (!suppliedIncludedCount.ok) return suppliedIncludedCount;
   if (!suppliedExcludedCount.ok) return suppliedExcludedCount;
-  const { receiptDigest: _receiptDigest, currencyPartitions: _currencyPartitions,
+  if (
+    record.value.globalExclusionPolicyKey !==
+      "ti_v3_global_exclusion_blocks_currency_partition" ||
+    record.value.globalExclusionPolicyVersion !== "v1"
+  ) {
+    return contractFailure(
+      "ti_v3_analytics_contract_invalid",
+      "$.globalExclusionPolicyKey",
+    );
+  }
+  const suppliedGlobalKeys = validateKeyArray(
+    record.value.globalExcludedCandidateKeys,
+    "$.globalExcludedCandidateKeys",
+  );
+  if (!suppliedGlobalKeys.ok) return suppliedGlobalKeys;
+  if (!Array.isArray(record.value.currencyPartitions)) {
+    return contractFailure(
+      "ti_v3_analytics_contract_invalid",
+      "$.currencyPartitions",
+    );
+  }
+  const suppliedCurrencies: CurrencyCode[] = [];
+  for (let index = 0; index < record.value.currencyPartitions.length; index += 1) {
+    const currency = parseCurrencyCode(record.value.currencyPartitions[index]);
+    if (!currency.ok) {
+      return contractFailure(
+        "ti_v3_analytics_contract_invalid",
+        `$.currencyPartitions[${index}]`,
+      );
+    }
+    suppliedCurrencies.push(currency.value);
+  }
+  if (!Array.isArray(record.value.exclusionCountsByReason)) {
+    return contractFailure(
+      "ti_v3_analytics_contract_invalid",
+      "$.exclusionCountsByReason",
+    );
+  }
+  const suppliedReasonCounts: AnalyticalExclusionCount[] = [];
+  for (let index = 0; index < record.value.exclusionCountsByReason.length; index += 1) {
+    const path = `$.exclusionCountsByReason[${index}]`;
+    const entry = validateContractRecord(
+      record.value.exclusionCountsByReason[index],
+      ["reasonCode", "count"],
+      [],
+      path,
+    );
+    if (!entry.ok) return entry;
+    const reasonCode = validateReasonCode(entry.value.reasonCode, `${path}.reasonCode`);
+    const count = validateCanonicalCount(entry.value.count, `${path}.count`);
+    if (!reasonCode.ok) return reasonCode;
+    if (!count.ok) return count;
+    suppliedReasonCounts.push(Object.freeze({
+      reasonCode: reasonCode.value,
+      count: count.value,
+    }));
+  }
+  const { receiptDigest: _receiptDigest,
+    globalExclusionPolicyKey: _globalExclusionPolicyKey,
+    globalExclusionPolicyVersion: _globalExclusionPolicyVersion,
+    globalExcludedCandidateKeys: _globalExcludedCandidateKeys,
+    currencyPartitions: _currencyPartitions,
     candidateCount: _candidateCount, includedCount: _includedCount,
     excludedCount: _excludedCount, exclusionCountsByReason: _reasonCounts,
     ...buildInput } = record.value;
   void _receiptDigest; void _currencyPartitions; void _candidateCount;
   void _includedCount; void _excludedCount; void _reasonCounts;
+  void _globalExclusionPolicyKey; void _globalExclusionPolicyVersion;
+  void _globalExcludedCandidateKeys;
   const rebuilt = buildAnalyticalDatasetReceipt(buildInput);
+  const sameStrings = (
+    left: readonly string[],
+    right: readonly string[],
+  ): boolean => left.length === right.length &&
+    left.every((value, index) => value === right[index]);
   if (
     !rebuilt.ok ||
     rebuilt.value.receiptDigest !== digest.value ||
     rebuilt.value.candidateCount !== suppliedCandidateCount.value ||
     rebuilt.value.includedCount !== suppliedIncludedCount.value ||
-    rebuilt.value.excludedCount !== suppliedExcludedCount.value
+    rebuilt.value.excludedCount !== suppliedExcludedCount.value ||
+    !sameStrings(
+      rebuilt.value.globalExcludedCandidateKeys,
+      suppliedGlobalKeys.value,
+    ) ||
+    !sameStrings(rebuilt.value.currencyPartitions, suppliedCurrencies) ||
+    rebuilt.value.exclusionCountsByReason.length !== suppliedReasonCounts.length ||
+    rebuilt.value.exclusionCountsByReason.some((entry, index) =>
+      entry.reasonCode !== suppliedReasonCounts[index]?.reasonCode ||
+      entry.count !== suppliedReasonCounts[index]?.count)
   ) {
     return contractFailure("ti_v3_analytics_contract_digest_mismatch", "$.receiptDigest");
   }

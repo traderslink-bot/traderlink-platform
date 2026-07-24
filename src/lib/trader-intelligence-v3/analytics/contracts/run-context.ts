@@ -42,7 +42,7 @@ export interface AnalysisRunContext {
   readonly partitionDigest: CanonicalContentDigest;
   readonly partitionCurrency: string;
   readonly normalizedArgumentsDigest: CanonicalContentDigest;
-  readonly eligibilityState: "eligible" | "limited";
+  readonly eligibilityState: "eligible" | "limited" | "blocked";
   readonly runContextDigest: CanonicalContentDigest;
 }
 
@@ -126,10 +126,30 @@ export function buildAnalysisRunContext(
   if (normalizedArguments.value.argumentSchemaDigest !== registryEntry.value.argumentSchemaDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.normalizedArguments.argumentSchemaDigest");
   if (!registryEntry.value.supportedTimezones.includes(filter.value.timezone)) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.canonicalFilter.timezone");
   if (!registryEntry.value.supportedCurrencies.includes(partition.value.currency)) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.partitionReceipt.currency");
+  const partitionRows = dataset.value.rows.filter((row) =>
+    partition.value.includedRowKeys.includes(row.semanticRoundTripKey));
   const rowProperty = (field: string): string => field.replace(/_([a-z])/g, (_match, letter: string) => letter.toUpperCase());
-  if (registryEntry.value.requiredRowFields.some((field) => dataset.value.rows.some((row) => !(rowProperty(field) in row)))) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.registryEntry.requiredRowFields");
+  if (
+    registryEntry.value.requiredRowFields.some((field) =>
+      partitionRows.some((row) => !(rowProperty(field) in row)))
+  ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.registryEntry.requiredRowFields");
   const eligibility = dependencies.eligibilitySet.results.find((result) => result.capability === registryEntry.value.requiredEligibilityCapability);
-  if (eligibility === undefined || (eligibility.state !== "eligible" && eligibility.state !== "limited")) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.registryEntry.requiredEligibilityCapability");
+  if (
+    eligibility === undefined ||
+    (
+      eligibility.state !== "eligible" &&
+      eligibility.state !== "limited" &&
+      eligibility.state !== "blocked"
+    )
+  ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.registryEntry.requiredEligibilityCapability");
+  const eligibilityState =
+    eligibility.state === "blocked" || partition.value.includedCount === "0"
+      ? "blocked" as const
+      : eligibility.state;
+  if (
+    (eligibility.state === "blocked" && partition.value.includedCount !== "0") ||
+    (eligibilityState === "blocked" && partition.value.excludedCount === "0")
+  ) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.partitionReceipt");
   const result = finalizeContentAddressedAuthority("analysis_run_context", {
     schemaVersion: ANALYSIS_RUN_CONTEXT_VERSION,
     toolKey: registryEntry.value.toolKey,
@@ -145,7 +165,7 @@ export function buildAnalysisRunContext(
     partitionDigest: partition.value.partitionDigest,
     partitionCurrency: partition.value.currency,
     normalizedArgumentsDigest: normalizedArguments.value.argumentsDigest,
-    eligibilityState: eligibility.state,
+    eligibilityState,
   }, "runContextDigest") as ExactResult<AnalysisRunContext, AnalyticalContractFailure>;
   if (!result.ok) return result;
   verifiedRunContextDependencies.set(result.value, Object.freeze({

@@ -170,7 +170,11 @@ function subtractMetricExactly(
   comparison: ExactMetricValue,
   metricKey: string,
 ): ExactResult<ExactMetricValue, AnalyticalContractFailure> {
+  // 2026-07-23 America/Toronto: a difference may compare one semantic metric
+  // only; the claim key cannot relabel compatible source cells.
   if (
+    target.metricKey !== comparison.metricKey ||
+    target.metricKey !== metricKey ||
     target.unit !== comparison.unit ||
     target.currency !== comparison.currency ||
     !["exact_decimal", "exact_ratio"].includes(target.kind) ||

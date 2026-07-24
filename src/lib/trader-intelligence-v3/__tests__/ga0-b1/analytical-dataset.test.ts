@@ -17,12 +17,23 @@ import {
   buildSyntheticGa0B1ClosedExecutions,
 } from "../../testing";
 import {
+  createCanonicalContentIdentity,
   resolveRelativeDateRange,
   verifyStartingInventoryContract,
   type CanonicalUtcTimestamp,
   type RelativeDateResolver,
   type TradingSessionEvidence,
 } from "../../domain";
+
+function identityForGlobalExclusion() {
+  const identity = createCanonicalContentIdentity(
+    "canonical_content",
+    "v1",
+    { exclusion: "global_unassigned" },
+  );
+  if (!identity.ok) throw new Error(identity.error.code);
+  return identity.value.identifier;
+}
 
 function newYorkReceipt(sessionEvidence: readonly TradingSessionEvidence[]) {
   const startDate = sessionEvidence[0].sessionDate;
@@ -120,6 +131,9 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     if (!dataset.ok) return;
     const {
       receiptDigest: _receiptDigest,
+      globalExclusionPolicyKey: _globalExclusionPolicyKey,
+      globalExclusionPolicyVersion: _globalExclusionPolicyVersion,
+      globalExcludedCandidateKeys: _globalExcludedCandidateKeys,
       currencyPartitions: _currencyPartitions,
       candidateCount: _candidateCount,
       includedCount: _includedCount,
@@ -129,6 +143,8 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     } = dataset.value;
     void _receiptDigest; void _currencyPartitions; void _candidateCount;
     void _includedCount; void _excludedCount; void _reasonCounts;
+    void _globalExclusionPolicyKey; void _globalExclusionPolicyVersion;
+    void _globalExcludedCandidateKeys;
     expect(buildAnalyticalDatasetReceipt({
       ...buildInput,
       rows: [dataset.value.rows[0], dataset.value.rows[0]],
@@ -286,6 +302,236 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
           usdPartition.ok ? usdPartition.value.partitionDigest : "",
         );
     }
+  });
+
+  it("retains excluded-only ledger scope and blocks global exclusions explicitly", () => {
+    const excludedOnly = readAnalyticalDataset(
+      createSyntheticInMemoryReadOnlySource(
+        buildSyntheticGa0B1Authority(undefined, {
+          filterOverrides: { outcomeFilters: ["loss"] },
+        }),
+      ),
+    );
+    expect(excludedOnly).toMatchObject({
+      ok: true,
+      value: {
+        currencyPartitions: ["USD"],
+        globalExcludedCandidateKeys: [],
+        includedCount: "0",
+        excludedCount: "1",
+        excludedCandidates: [{
+          scopeState: "ledger_scoped",
+          canonicalOwnerKey: "owner_synthetic_primary",
+          canonicalAccountKey: "account_synthetic_primary",
+          stableInstrumentKey: "instrument_synthetic_equity",
+          currency: "USD",
+        }],
+      },
+    });
+    if (!excludedOnly.ok) return;
+    const excludedPartition = buildAnalyticalPartitionReceipt({
+      schemaVersion: ANALYTICAL_PARTITION_VERSION,
+      datasetReceipt: excludedOnly.value,
+      currency: "USD",
+    });
+    expect(excludedPartition).toMatchObject({
+      ok: true,
+      value: {
+        ownerScope: ["owner_synthetic_primary"],
+        accountScope: ["account_synthetic_primary"],
+        instrumentScope: ["instrument_synthetic_equity"],
+        includedCount: "0",
+        excludedCount: "1",
+        candidateCount: "1",
+      },
+    });
+
+    const executions = buildSyntheticGa0B1ClosedExecutions();
+    const globalExclusion = readAnalyticalDataset(
+      createSyntheticInMemoryReadOnlySource(
+        buildSyntheticGa0B1Authority(executions, {
+          manifestExclusions: [{
+            evidenceDigest: identityForGlobalExclusion(),
+            reasonCode: "ti_v3_global_source_excluded",
+          }],
+        }),
+      ),
+    );
+    expect(globalExclusion).toMatchObject({
+      ok: true,
+      value: {
+        candidateCount: "2",
+        includedCount: "1",
+        excludedCount: "1",
+        globalExclusionPolicyKey:
+          "ti_v3_global_exclusion_blocks_currency_partition",
+        globalExcludedCandidateKeys: [expect.stringContaining("manifest:")],
+        excludedCandidates: [{
+          scopeState: "global_unassigned",
+          canonicalOwnerKey: null,
+          canonicalAccountKey: null,
+          stableInstrumentKey: null,
+          currency: null,
+        }],
+      },
+    });
+    if (!globalExclusion.ok) return;
+    expect(buildAnalyticalPartitionReceipt({
+      schemaVersion: ANALYTICAL_PARTITION_VERSION,
+      datasetReceipt: globalExclusion.value,
+      currency: "USD",
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "ti_v3_analytics_contract_reference_mismatch",
+        path: "$.datasetReceipt.globalExcludedCandidateKeys",
+      },
+    });
+  });
+
+  it("keeps an excluded-only CAD account visible in a separate exact partition", () => {
+    const cad = [
+      buildSyntheticCanonicalExecution({
+        stableInstrumentKey: "instrument_synthetic_cad_equity",
+        rawBrokerSymbol: "CADX",
+        currency: "CAD",
+        charges: [{ kind: "commission", amount: "0.1", currency: "CAD" }],
+        executionId: "CAD-ONLY-BUY",
+        orderId: "CAD-ONLY-ORDER-1",
+        brokerExecutionIndex: "1",
+        brokerFillSequence: "1",
+        executedAt: "2026-07-18T15:00:00.000000000Z",
+        side: "buy",
+        quantity: "4",
+        price: "2",
+      }),
+      buildSyntheticCanonicalExecution({
+        stableInstrumentKey: "instrument_synthetic_cad_equity",
+        rawBrokerSymbol: "CADX",
+        currency: "CAD",
+        charges: [{ kind: "commission", amount: "0.1", currency: "CAD" }],
+        executionId: "CAD-ONLY-SELL",
+        orderId: "CAD-ONLY-ORDER-2",
+        brokerExecutionIndex: "2",
+        brokerFillSequence: "2",
+        originalSourceRowLocator: {
+          kind: "row_number",
+          value: "2",
+          rowOrderPreserved: true,
+        },
+        executedAt: "2026-07-18T16:00:00.000000000Z",
+        side: "sell",
+        quantity: "4",
+        price: "3",
+      }),
+    ];
+    const result = readAnalyticalDataset(
+      createSyntheticInMemoryReadOnlySource(
+        buildSyntheticGa0B1Authority(cad, {
+          filterOverrides: { outcomeFilters: ["loss"] },
+        }),
+      ),
+    );
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        currencyPartitions: ["CAD"],
+        includedCount: "0",
+        excludedCount: "1",
+        excludedCandidates: [{
+          scopeState: "ledger_scoped",
+          canonicalAccountKey: "account_synthetic_primary",
+          stableInstrumentKey: "instrument_synthetic_cad_equity",
+          currency: "CAD",
+        }],
+      },
+    });
+    if (!result.ok) return;
+    expect(buildAnalyticalPartitionReceipt({
+      schemaVersion: ANALYTICAL_PARTITION_VERSION,
+      datasetReceipt: result.value,
+      currency: "CAD",
+    })).toMatchObject({
+      ok: true,
+      value: {
+        accountScope: ["account_synthetic_primary"],
+        instrumentScope: ["instrument_synthetic_cad_equity"],
+        includedCount: "0",
+        excludedCount: "1",
+        candidateCount: "1",
+      },
+    });
+    expect(buildAnalyticalPartitionReceipt({
+      schemaVersion: ANALYTICAL_PARTITION_VERSION,
+      datasetReceipt: result.value,
+      currency: "USD",
+    })).toMatchObject({
+      ok: false,
+      error: {
+        code: "ti_v3_analytics_contract_reference_mismatch",
+        path: "$.currency",
+      },
+    });
+  });
+
+  it("reconciles exact open overlap and rejects partial overlap", () => {
+    const executions = buildSyntheticGa0B1ClosedExecutions();
+    const ledgerKey =
+      "account_synthetic_primary:instrument_synthetic_equity:usd";
+    const exact = readAnalyticalDataset(createSyntheticInMemoryReadOnlySource(
+      buildSyntheticGa0B1Authority(executions, {
+        openPositions: [{
+          ledgerKey,
+          executionDigests: executions.map(
+            (execution) => execution.canonicalContentDigest,
+          ),
+        }],
+      }),
+    ));
+    expect(exact).toMatchObject({
+      ok: true,
+      value: {
+        candidateCount: "1",
+        includedCount: "0",
+        excludedCount: "1",
+        excludedCandidates: [{
+          semanticRoundTripKey: expect.any(String),
+          reasonCode: "ti_v3_analytics_open_or_incomplete_lifecycle",
+          scopeState: "ledger_scoped",
+          relatedExecutionDigests: expect.arrayContaining(
+            executions.map((execution) => execution.canonicalContentDigest),
+          ),
+        }],
+      },
+    });
+    const permuted = readAnalyticalDataset(createSyntheticInMemoryReadOnlySource(
+      buildSyntheticGa0B1Authority(executions, {
+        openPositions: [{
+          ledgerKey,
+          executionDigests: executions
+            .map((execution) => execution.canonicalContentDigest)
+            .reverse(),
+        }],
+      }),
+    ));
+    expect(exact.ok && permuted.ok && permuted.value.receiptDigest).toBe(
+      exact.ok ? exact.value.receiptDigest : "failed",
+    );
+    const partial = readAnalyticalDataset(createSyntheticInMemoryReadOnlySource(
+      buildSyntheticGa0B1Authority(executions, {
+        openPositions: [{
+          ledgerKey,
+          executionDigests: [executions[0].canonicalContentDigest],
+        }],
+      }),
+    ));
+    expect(partial).toMatchObject({
+      ok: false,
+      error: {
+        code: "ti_v3_analytics_authority_mismatch",
+        path: "$.candidateAccounting.partialOverlap",
+      },
+    });
   });
 
   it("maps manifest reasons truthfully and counts an overlapping semantic candidate once", () => {
