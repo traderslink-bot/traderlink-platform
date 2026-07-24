@@ -46,6 +46,21 @@ export const ANALYTICAL_EXCLUSION_REASONS = Object.freeze({
   manifestExcluded: "ti_v3_analytics_manifest_excluded",
 } as const);
 
+export const ANALYTICAL_CLAIM_NEUTRAL_EXCLUSION_POLICY = Object.freeze({
+  policyKey: "ti_v3_claim_neutral_exclusion_ledger",
+  policyVersion: "v1",
+  neutralPrimaryReasons: Object.freeze([
+    ANALYTICAL_EXCLUSION_REASONS.filterExcluded,
+    ANALYTICAL_EXCLUSION_REASONS.openLifecycle,
+  ]),
+  acceptedOpenLifecycleSourceReasons: Object.freeze([
+    "ti_v3_eligibility_open_positions_excluded",
+    "ti_v3_open_inventory_remaining",
+  ]),
+  requiredManifestMappingPolicyKey: "ti_v3_manifest_exclusion_reason_mapping",
+  requiredManifestMappingPolicyVersion: "v1",
+} as const);
+
 export interface ExcludedAnalyticalCandidate {
   readonly candidateKey: string;
   readonly semanticRoundTripKey: string | null;
@@ -77,6 +92,60 @@ export interface ExcludedAnalyticalCandidate {
 export interface AnalyticalExclusionCount {
   readonly reasonCode: string;
   readonly count: string;
+}
+
+export function isClaimNeutralAnalyticalExclusion(
+  candidate: Pick<
+    ExcludedAnalyticalCandidate,
+    | "reasonCode"
+    | "secondaryReasonCodes"
+    | "sourceReasonCode"
+    | "sourceReasonCodes"
+    | "reasonAuthorities"
+    | "limitationCodes"
+  >,
+): boolean {
+  if (
+    candidate.limitationCodes.length > 0 ||
+    candidate.secondaryReasonCodes.length > 0 ||
+    candidate.reasonCode === ANALYTICAL_EXCLUSION_REASONS.mixedCurrency
+  ) return false;
+  if (candidate.reasonCode === ANALYTICAL_EXCLUSION_REASONS.filterExcluded) {
+    return (
+      candidate.sourceReasonCode === null &&
+      candidate.sourceReasonCodes.length === 0 &&
+      candidate.reasonAuthorities.length === 1 &&
+      candidate.reasonAuthorities[0].reasonCode === candidate.reasonCode &&
+      candidate.reasonAuthorities[0].authority === "canonical_filter" &&
+      candidate.reasonAuthorities[0].sourceReasonCode === null &&
+      candidate.reasonAuthorities[0].mappingPolicyKey === null &&
+      candidate.reasonAuthorities[0].mappingPolicyVersion === null
+    );
+  }
+  if (candidate.reasonCode !== ANALYTICAL_EXCLUSION_REASONS.openLifecycle) {
+    return false;
+  }
+  if (
+    candidate.sourceReasonCodes.length > 1 ||
+    (candidate.sourceReasonCodes.length === 1 &&
+      !ANALYTICAL_CLAIM_NEUTRAL_EXCLUSION_POLICY.acceptedOpenLifecycleSourceReasons.includes(
+        candidate.sourceReasonCodes[0] as typeof ANALYTICAL_CLAIM_NEUTRAL_EXCLUSION_POLICY.acceptedOpenLifecycleSourceReasons[number],
+      )) ||
+    candidate.sourceReasonCode !== (candidate.sourceReasonCodes[0] ?? null)
+  ) return false;
+  return candidate.reasonAuthorities.length > 0 && candidate.reasonAuthorities.every(
+    (authority) =>
+      authority.reasonCode === candidate.reasonCode &&
+      authority.authority === "lifecycle" &&
+      authority.sourceReasonCode === candidate.sourceReasonCode &&
+      (candidate.sourceReasonCode === null
+        ? authority.mappingPolicyKey === null &&
+          authority.mappingPolicyVersion === null
+        : authority.mappingPolicyKey ===
+            ANALYTICAL_CLAIM_NEUTRAL_EXCLUSION_POLICY.requiredManifestMappingPolicyKey &&
+          authority.mappingPolicyVersion ===
+            ANALYTICAL_CLAIM_NEUTRAL_EXCLUSION_POLICY.requiredManifestMappingPolicyVersion),
+  );
 }
 
 export interface AnalyticalDatasetReceipt {

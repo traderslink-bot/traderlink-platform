@@ -6,7 +6,7 @@
 **Operational hosting:** local owner testing  
 **Primary domain:** U.S. listed small-cap and micro-cap active trading  
 **Product boundary:** retrospective educational trade review and self-improvement  
-**Current gate:** GA0-B1 — read-only analytical dataset and proof contracts  
+**Current gate:** GA0-B2 — draft PR #150 awaiting independent audit
 **Active implementation plan:** `src/docs/trader-intelligence-v3-ga0-b-deterministic-proof-implementation-plan-2026-07-19.md`
 
 Start here when resuming Trader Intelligence product, analytics, simulation,
@@ -44,6 +44,7 @@ Historical audit handoffs are evidence, not active implementation authority.
 | GA0-A1 containment and architecture | accepted | `4f9e440116258c9548a2d13f7ea057a9075101c6` |
 | GA0-A2 exact execution truth | accepted | `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a` |
 | GA0-A3 temporal, manifest, eligibility, and query foundation | accepted | `72ca53940403dfab63979d403bd6b479539f41db` |
+| GA0-B1 read-only analytical dataset and proof contracts | accepted | `7d8d8e03826e4b877b22e9a2a68d381bb42e585d` |
 
 The accepted foundation provides:
 

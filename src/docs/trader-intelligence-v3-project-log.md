@@ -1,5 +1,52 @@
 # Trader Intelligence v3 Project Log
 
+## 2026-07-24 - GA0-B2 second independent-re-audit remediation checkpoint
+
+- Current re-audit findings head: `baf1952812fcb563b32e4f7e7d19d1efa14b8602`.
+- Final focused executable checkpoint: `1f5ef73615e491c026af930674dcc340f822e9ee`.
+- Closed the two remaining policy gaps: complete exclusion-ledger claim
+  neutrality and strict `completed`-only claim emission. The execution
+  authority now binds `analyze_performance_by_weekday:v1` directly.
+- Local focused evidence: GA0-B2 `24/24`; affected B1/A3 `42/42`; TypeScript
+  clean; architecture and private-data verifiers passed.
+- `verify:ti-v3:ga0-a2` reached `306/308`; only two unchanged SQLite tests
+  failed because the shared dependency junction lacks the `better-sqlite3`
+  native binding. ESLint remains blocked by the separate missing
+  `acorn-jsx/xhtml` junction dependency.
+- Executable CI run `30072623898`, job `89416481209`, passed.
+- Next and final substantive repository change: the second independent
+  re-audit handoff Markdown-only commit. Keep PR #150 draft/open/unmerged,
+  leave threads unresolved, do not deploy, and do not begin GA0-B3.
+
+## 2026-07-24 - GA0-B2 independent-audit remediation executable checkpoint
+
+- Remediated B2-AUD-R1 through R6 on the existing draft PR #150 branch.
+- Executable checkpoint: `07a6827f` (`fix(ti-v3): remediate GA0-B2 weekday audit findings`).
+- Local focused evidence: TypeScript clean; GA0-B2 focused suite `22/22`; replay,
+  decision-time after-loss, limitation propagation, exact decompositions, DST,
+  hostile-key boundaries, and accepted 30/64-row graph measurements pass.
+- GitHub Actions `test-and-verify` passed for executable run `30069784565`,
+  job `89408059973`.
+- ESLint was attempted on every changed TypeScript file but remains blocked by
+  the pre-existing shared junction failure `acorn-jsx/xhtml` missing; no
+  dependency files were changed.
+- The required final docs-only independent re-audit handoff is the next and
+  final substantive repository change. Keep PR #150 draft/open/unmerged,
+  leave review threads unresolved, do not deploy, and do not begin GA0-B3.
+
+## 2026-07-23 — GA0-B2 weekday deterministic proof implemented
+
+GA0-B1 was accepted in merge
+`7d8d8e03826e4b877b22e9a2a68d381bb42e585d`. The current roadmap slice is the
+local-only `analyze_performance_by_weekday:v1` deterministic proof. It is being
+prepared as a draft PR for independent audit; no production deployment or
+GA0-B3 implementation is in scope.
+
+Draft PR #150 now contains executable checkpoint
+`532f382859b60f19bcf701f4c731b1497c12dac1`; its GitHub Actions
+`test-and-verify` job passed. The PR remains draft and unmerged pending
+independent audit.
+
 ## 2026-07-19 — GA0-A3 Required-Fix Remediation Complete; Re-audit Required
 
 - The first independent audit verdict was `accept with required fixes`; its

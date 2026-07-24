@@ -110,6 +110,13 @@ export function buildAnalysisRunReceipt(
   if (!diagnostics.ok) return contractFailure(diagnostics.error.code, `$.diagnostics${diagnostics.error.path.slice(1)}`);
   const usedEvidence = new Set([
     ...tables.flatMap((table) => [...table.rows, ...table.summaryRows].map((row) => row.evidenceBundleDigest)),
+    ...tables.flatMap((table) =>
+      [...table.rows, ...table.summaryRows].flatMap((row) =>
+        row.cells.flatMap((cell) =>
+          cell.evidenceBundleDigest === undefined
+            ? []
+            : [cell.evidenceBundleDigest]),
+      )),
     ...claims.flatMap((claim) => [...claim.evidenceBundleDigests, ...claim.counterexampleEvidenceBundleDigests]),
     ...series.flatMap((item) => item.points.map((point) => point.evidenceBundleDigest)),
   ]);
@@ -166,8 +173,17 @@ export function buildAnalysisRunReceipt(
       );
     }
   } else if (
-    [...artifactCounts].some(([contract, count]) =>
-      (declared.has(contract) && count === 0) || (!declared.has(contract) && count !== 0))
+    [...artifactCounts].some(([contract, count]) => {
+      const optionalWhenLimited =
+        runStatus === "limited" &&
+        dependencies.registryEntry.optionalOutputContractsWhenLimited.includes(
+          contract,
+        );
+      return (
+        (declared.has(contract) && count === 0 && !optionalWhenLimited) ||
+        (!declared.has(contract) && count !== 0)
+      );
+    })
   ) {
     return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.artifacts");
   }
