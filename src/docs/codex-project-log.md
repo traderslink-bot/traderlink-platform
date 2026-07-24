@@ -1,4 +1,91 @@
+# 2026-07-23 - GA0-B1 Third Focused Remediation Executable Checkpoint
+
+- Existing branch `agent/trader-intelligence-v3-ga0-b1-read-model` and draft PR
+  #133 remain the only implementation surface. The third findings head is
+  `5aa58d3b2a4bb735cd4d696d68915ebee0c29605`; the immutable original merge
+  base remains `153eaceecfca714a6c28848b513c412ca76b8e57`, and observed
+  `origin/main` is `8fb9b5a7a400fd26175fcc7fdc7dd6a67d11abed`.
+- B1-THIRD-R1 through R5 are implemented: strict canonical persisted
+  derivation verification plus exact replay equality; excluded-only
+  owner/account/instrument/currency partition scope with an explicit
+  fail-closed global-exclusion policy; exact source/claim metric-key equality;
+  genuine blocked contexts with declared optional artifact enforcement; and
+  deterministic open/blocked/reconstructed candidate reconciliation with
+  partial/ambiguous overlap rejection and complete reason-ledger precedence.
+- Final local evidence is green: TypeScript has no diagnostics; ESLint passed
+  all eight changed TypeScript files; GA0-B1 passed `35/35`; the affected A2 and
+  starting-inventory cluster passed `177/177`; the four A3 authority/recovery
+  files passed `33/33`; architecture/private-data unit guards passed `48/48`;
+  and `verify:ti-v3:ga0-a2` passed `308/308` before its chained architecture
+  and private-data verifiers also passed.
+- The default shared dependency junction was incomplete: the first ESLint
+  attempt could not load `acorn-jsx/xhtml`, a second executable-only attempt
+  reached a missing Next ESLint utility, and the first four-file A3 run was
+  non-green at `31/33` because two backup tests could not load
+  `better_sqlite3.node`. An already-installed package-compatible dependency
+  tree was used for the successful lint, A2/SQLite, A3 backup, and consolidated
+  verifier runs; the original junction was restored and verified after every
+  use.
+- Package manifests and lockfiles are unchanged. `npm ci`, full `npm test`,
+  Playwright, and `npm run build` were intentionally not run; no build-facing
+  file changed.
+- Exact next action: commit and push this executable checkpoint, observe
+  terminal CI, then make the required final substantive repository change by
+  creating the third-remediation independent re-audit handoff as a later
+  Markdown-only commit. Keep PR #133 draft/open/unmerged, leave all review
+  threads unresolved, do not deploy, and do not begin GA0-B2.
+
+# 2026-07-23 - GA0-B1 Second Focused Remediation Executable Checkpoint
+
+- Existing branch `agent/trader-intelligence-v3-ga0-b1-read-model` and draft PR
+  #133 remain the only implementation surface. The immutable original merge
+  base remains `153eaceecfca714a6c28848b513c412ca76b8e57`; current `main` was not
+  merged, rebased, reset, or otherwise introduced.
+- B1-REAUD-R1 through R7 are implemented: replay-bound analytical dataset
+  derivation, one-currency partition receipts, exact ratio/decimal claim
+  arithmetic, registry-governed artifact graphs, complete deterministic
+  exclusion reason ledgers, allowlisted weekday-safe NYSE calendar evidence,
+  and descriptor-first starting-inventory re-entry.
+- Final focused evidence is green: analytical dataset `13/13`, proof contracts
+  `17/17`, direct starting-inventory cluster `83/83`, TypeScript with no
+  diagnostics, ESLint across all 15 changed TypeScript files with no warnings,
+  architecture guard passed, and private-data guard passed. The first
+  private-data invocation was interrupted without a result; no orphan
+  remained, and the clean restart passed.
+- The consolidated 21-file verifier was non-green at `373/378`: the unchanged
+  private Git-history test exceeded its hard-coded 15-second timeout, and four
+  SQLite tests could not load `better_sqlite3.node` from the default linked
+  dependency tree. The affected SQLite files passed `14/14` in an isolated
+  compatible-tree retry. The timeout was not altered or masked.
+- The repository-defined `verify:ti-v3:ga0-a2` command was non-green at
+  `306/308` solely because the same two SQLite round-trip tests could not load
+  the native binding; those tests passed `2/2` in the compatible-tree retry.
+  Its chained guards did not run, so architecture and private-data guards were
+  invoked separately and passed.
+- Package manifests and lockfiles are unchanged. `npm ci`, full `npm test`,
+  Playwright, and `npm run build` were intentionally not run.
+- Exact next action: inspect and commit the executable checkpoint, push it, and
+  observe terminal CI. Only then create and push the required docs-only
+  independent re-audit handoff. No deploy, GA0-B2 work, route/UI work,
+  review-thread resolution, merge, or draft-state change is authorized.
+
 # Codex Project Log
+
+### 2026-07-23 Trader Intelligence v3 GA0-B1 Independent-Audit Remediation Candidate
+
+GA0-B1 remains the active roadmap slice on
+`agent/trader-intelligence-v3-ga0-b1-read-model` and draft PR #133. The
+independent-audit remediation now binds all starting-inventory states to the
+manifest, constructs run/evidence/proof authority from actual verified
+dependencies, derives table/claim/series/receipt facts, preserves mapped
+manifest exclusion reasons with semantic candidate deduplication, and separates
+UTC civil dates from filter-bound New York exchange sessions.
+
+The immediate resume point is the single final executable checkpoint, followed
+by an executable commit/push and current-head CI observation. Only after that
+checkpoint may the required docs-only independent re-audit handoff be written
+and pushed. Keep PR #133 draft and unmerged, leave review threads unresolved,
+do not deploy, and do not begin GA0-B2.
 
 ### 2026-07-18 Trader Intelligence v3 GA0-A3 Implementation Candidate Complete
 

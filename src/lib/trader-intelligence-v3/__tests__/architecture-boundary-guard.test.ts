@@ -85,6 +85,37 @@ describe("Trader Intelligence v3 architecture boundary guard", () => {
     ).toContainEqual(expect.objectContaining({ code }));
   });
 
+  it.each([
+    ['import React from "react";', "ti_v3_arch_react_import"],
+    ['export * from "react-dom/client";', "ti_v3_arch_react_import"],
+    ['const page = require("@/app/intelligence/page");', "ti_v3_arch_domain_app_import"],
+    ['const next = import("next/headers");', "ti_v3_arch_domain_next_import"],
+    ['export { analyze } from "@/src/lib/support-resistance/engine";', "ti_v3_arch_support_resistance_import"],
+    ['const legacy = require("@/src/lib/trader-analytics/legacy-pnl");', "ti_v3_arch_legacy_analytical_authority_import"],
+    ['const coach = import("@/src/lib/coaching/private-engine");', "ti_v3_arch_legacy_coaching_authority_import"],
+    ['export * from "@/src/lib/browser/client-financial-aggregation";', "ti_v3_arch_browser_financial_authority"],
+  ])("protects GA0-B analytical authority from import bypasses: %s", (source, code) => {
+    expect(
+      scanTraderIntelligenceArchitectureBoundaries([{
+        path: "src/lib/trader-intelligence-v3/analytics/contracts/bad.ts",
+        source,
+      }]),
+    ).toContainEqual(expect.objectContaining({ code }));
+  });
+
+  it("applies exact-number and locale-independent ordering rules to GA0-B authority", () => {
+    const findings = scanTraderIntelligenceArchitectureBoundaries([
+      {
+        path: "src/lib/trader-intelligence-v3/analytics/dataset/bad.ts",
+        source: "const amount = Number(raw); const rows = values.sort((a, b) => a.localeCompare(b));",
+      },
+    ]);
+    expect(findings).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "ti_v3_arch_financial_number_authority", dependency: "Number" }),
+      expect.objectContaining({ code: "ti_v3_arch_locale_sensitive_canonical_comparator", dependency: "localeCompare" }),
+    ]));
+  });
+
   it("detects authoritative calculation logic placed in a route", () => {
     expect(
       scanTraderIntelligenceArchitectureBoundaries([

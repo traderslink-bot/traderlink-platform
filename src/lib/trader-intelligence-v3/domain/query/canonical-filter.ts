@@ -177,7 +177,10 @@ function parseSessionEvidence(
       return failure("ti_v3_filter_contradictory", path);
     }
   } else {
+    const weekday = new Date(`${sessionDate.value}T00:00:00.000Z`).getUTCDay();
     if (
+      weekday === 0 ||
+      weekday === 6 ||
       open.value === null ||
       close.value === null ||
       open.value >= close.value ||
@@ -278,4 +281,10 @@ export function buildCanonicalQueryFilter(input: unknown): ExactResult<Canonical
 
 export function verifyCanonicalQueryFilter(input: unknown): ExactResult<CanonicalQueryFilter, CanonicalFilterFailure> {
   return typeof input === "object" && input !== null && verifiedFilters.has(input as CanonicalQueryFilter) ? { ok: true, value: input as CanonicalQueryFilter } : failure("ti_v3_filter_unverified", "$");
+}
+
+export function verifyDateResolutionReceipt(input: unknown): ExactResult<DateResolutionReceipt, CanonicalFilterFailure> {
+  return typeof input === "object" && input !== null && verifiedDateReceipts.has(input as DateResolutionReceipt)
+    ? { ok: true, value: input as DateResolutionReceipt }
+    : failure("ti_v3_filter_unverified", "$");
 }

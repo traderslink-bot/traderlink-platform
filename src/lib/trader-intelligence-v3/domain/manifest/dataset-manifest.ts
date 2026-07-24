@@ -74,7 +74,7 @@ export interface ManifestExclusion {
 export interface ManifestPriorInventory {
   readonly ledgerKey: string;
   readonly state: "proven_flat" | "accepted_prior_lots" | "unknown";
-  readonly contractDigest: CanonicalContentDigest | null;
+  readonly contractDigest: CanonicalContentDigest;
 }
 
 export interface ManifestOpenPosition {
@@ -294,14 +294,9 @@ function parsePrior(input: unknown, path: string): ExactResult<ManifestPriorInve
   if (typeof record.value.ledgerKey !== "string" || !/^[a-z0-9][a-z0-9:_-]{0,255}$/.test(record.value.ledgerKey)) return failure("ti_v3_validation_string_invalid", `${path}.ledgerKey`);
   const state = validateEnum(record.value.state, PRIOR_STATES, `${path}.state`);
   if (!state.ok) return state;
-  let digest: CanonicalContentDigest | null = null;
-  if (record.value.contractDigest !== null) {
-    const parsed = validateCanonicalDigest(record.value.contractDigest, `${path}.contractDigest`);
-    if (!parsed.ok) return parsed;
-    digest = parsed.value;
-  }
-  if ((state.value === "accepted_prior_lots") !== (digest !== null)) return failure("ti_v3_manifest_inconsistent", `${path}.contractDigest`);
-  return { ok: true, value: { ledgerKey: record.value.ledgerKey, state: state.value, contractDigest: digest } };
+  const digest = validateCanonicalDigest(record.value.contractDigest, `${path}.contractDigest`, "starting_inventory");
+  if (!digest.ok) return digest;
+  return { ok: true, value: { ledgerKey: record.value.ledgerKey, state: state.value, contractDigest: digest.value } };
 }
 
 function parseOpenPosition(input: unknown, path: string): ExactResult<ManifestOpenPosition, DatasetManifestFailure> {
@@ -398,11 +393,16 @@ export function buildDatasetManifest(input: unknown): ExactResult<DatasetManifes
   const accepted = new Set(executions.value);
   if (open.value.some((entry) => entry.executionDigests.some((digest) => !accepted.has(digest)))) return failure("ti_v3_manifest_inconsistent", "$.openPositions");
   if (correctionResult.value.status !== "applied" || correctionResult.value.activeExecutionDigests.join("\n") !== [...executions.value].sort().join("\n")) return failure("ti_v3_manifest_inconsistent", "$.correctionResult");
-  const validateLedgerScope = (ledgerKey: string): boolean => {
+  const validateOpenLedgerScope = (ledgerKey: string): boolean => {
     const [account, instrument, currency, ...rest] = ledgerKey.split(":");
     return rest.length === 0 && accounts.value.includes(account) && /^[-a-z0-9_]{1,96}$/.test(instrument ?? "") && currencies.value.includes((currency ?? "").toUpperCase());
   };
-  if ([...prior.value, ...open.value].some((entry) => !validateLedgerScope(entry.ledgerKey))) return failure("ti_v3_manifest_inconsistent", "$.priorInventory");
+  const validatePriorLedgerScope = (ledgerKey: string): boolean => {
+    const [owner, account, instrument, currency, ...rest] = ledgerKey.split(":");
+    return rest.length === 0 && owner === record.value.canonicalOwnerKey && accounts.value.includes(account) && /^[-a-z0-9_]{1,96}$/.test(instrument ?? "") && currencies.value.includes((currency ?? "").toUpperCase());
+  };
+  if (prior.value.some((entry) => !validatePriorLedgerScope(entry.ledgerKey))) return failure("ti_v3_manifest_inconsistent", "$.priorInventory");
+  if (open.value.some((entry) => !validateOpenLedgerScope(entry.ledgerKey))) return failure("ti_v3_manifest_inconsistent", "$.openPositions");
   if (executions.value.length > 0 && (sources.value.length === 0 || currencies.value.length === 0)) return failure("ti_v3_manifest_inconsistent", "$.acceptedExecutionDigests");
   const sourceDigests = new Set(sources.value.map((source) => source.sourceDocumentDigest));
   if (overlaps.value.some((entry) => entry.sourceDocumentDigests.some((digest) => !sourceDigests.has(digest)))) return failure("ti_v3_manifest_inconsistent", "$.overlappingPeriods");

@@ -212,7 +212,7 @@ export function validateBoundedString(
   value: unknown,
   path: string,
   pattern?: RegExp,
-  maxLength = FOUNDATION_PAYLOAD_LIMITS.maxStringLength,
+  maxLength: number = FOUNDATION_PAYLOAD_LIMITS.maxStringLength,
 ): ExactResult<string, FoundationValidationFailure> {
   if (
     typeof value !== "string" ||

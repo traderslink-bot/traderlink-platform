@@ -8,13 +8,18 @@ import {
 export type TraderIntelligenceArchitectureFindingCode =
   | "ti_v3_arch_domain_app_import"
   | "ti_v3_arch_domain_next_import"
+  | "ti_v3_arch_react_import"
   | "ti_v3_arch_database_driver_import"
   | "ti_v3_arch_ai_sdk_import"
   | "ti_v3_arch_levels_system_import"
+  | "ti_v3_arch_support_resistance_import"
   | "ti_v3_arch_market_provider_import"
   | "ti_v3_arch_academy_coupling"
   | "ti_v3_arch_academy_adapter_import_invalid"
   | "ti_v3_arch_legacy_coaching_internal_import"
+  | "ti_v3_arch_legacy_coaching_authority_import"
+  | "ti_v3_arch_browser_financial_authority"
+  | "ti_v3_arch_legacy_analytical_authority_import"
   | "ti_v3_arch_route_domain_authority"
   | "ti_v3_arch_decimal_import_outside_boundary"
   | "ti_v3_arch_legacy_exact_truth_import"
@@ -83,7 +88,10 @@ function financialNumberAuthorityFindings(path: string, source: string): readonl
   const isFinancialAuthority =
     path.startsWith("src/lib/trader-intelligence-v3/domain/exact/") ||
     path.startsWith("src/lib/trader-intelligence-v3/domain/accounting/") ||
-    path.startsWith("src/lib/trader-intelligence-v3/testing/reference/");
+    path.startsWith("src/lib/trader-intelligence-v3/testing/reference/") ||
+    path.startsWith("src/lib/trader-intelligence-v3/analytics/") ||
+    path.startsWith("src/lib/trader-intelligence-v3/simulations/") ||
+    path.startsWith("src/lib/trader-intelligence-v3/evidence/");
   if (!isFinancialAuthority) return [];
   const sourceFile = parseTraderIntelligenceTypeScript(path, source);
   const findings = new Set<string>();
@@ -118,7 +126,10 @@ function hasLocaleSensitiveCanonicalComparator(path: string, source: string): bo
     path.startsWith("src/lib/trader-intelligence-v3/domain/canonical/") ||
     path.startsWith("src/lib/trader-intelligence-v3/domain/identity/") ||
     path.startsWith("src/lib/trader-intelligence-v3/domain/execution/") ||
-    path.startsWith("src/lib/trader-intelligence-v3/domain/accounting/");
+    path.startsWith("src/lib/trader-intelligence-v3/domain/accounting/") ||
+    path.startsWith("src/lib/trader-intelligence-v3/analytics/") ||
+    path.startsWith("src/lib/trader-intelligence-v3/simulations/") ||
+    path.startsWith("src/lib/trader-intelligence-v3/evidence/");
   if (!isCanonicalAuthority) return false;
   const sourceFile = parseTraderIntelligenceTypeScript(path, source);
   let found = false;
@@ -150,7 +161,14 @@ export function scanTraderIntelligenceArchitectureBoundaries(
     const isV3Core = path.startsWith("src/lib/trader-intelligence-v3/");
     const isDomainOrContracts =
       path.startsWith("src/lib/trader-intelligence-v3/domain/") ||
-      path.startsWith("src/lib/trader-intelligence-v3/contracts/");
+      path.startsWith("src/lib/trader-intelligence-v3/contracts/") ||
+      path.startsWith("src/lib/trader-intelligence-v3/analytics/") ||
+      path.startsWith("src/lib/trader-intelligence-v3/simulations/") ||
+      path.startsWith("src/lib/trader-intelligence-v3/evidence/");
+    const isAnalyticalAuthority =
+      path.startsWith("src/lib/trader-intelligence-v3/analytics/") ||
+      path.startsWith("src/lib/trader-intelligence-v3/simulations/") ||
+      path.startsWith("src/lib/trader-intelligence-v3/evidence/");
     const isProvisionalAcademyAdapter =
       path ===
       "src/lib/trader-intelligence-v3/auth/provisional-discord-session-adapter.ts";
@@ -172,6 +190,12 @@ export function scanTraderIntelligenceArchitectureBoundaries(
         pushFinding(findings, "ti_v3_arch_domain_next_import", path, dependency.specifier);
       }
       if (
+        isAnalyticalAuthority &&
+        /^(?:react|react-dom)(?:\/|$)/.test(normalizedDependency)
+      ) {
+        pushFinding(findings, "ti_v3_arch_react_import", path, dependency.specifier);
+      }
+      if (
         isV3Core &&
         !isSqliteBackupRestoreAdapter &&
         /(better-sqlite3|(?:^|\/)sqlite3(?:\/|$)|node:sqlite|@libsql|@neondatabase|(?:^|\/)pg(?:\/|$)|postgres|mysql2?|mariadb|mongodb|mongoose|@prisma\/client|drizzle-orm|typeorm|sequelize|redis|sqlite-import-commit-repository|persistence-storage)/.test(
@@ -190,6 +214,12 @@ export function scanTraderIntelligenceArchitectureBoundaries(
       }
       if (isV3Core && normalizedDependency.includes("levels-system")) {
         pushFinding(findings, "ti_v3_arch_levels_system_import", path, dependency.specifier);
+      }
+      if (
+        isAnalyticalAuthority &&
+        /support[-_/]resistance|support-resistance|resistance-zones?/.test(normalizedDependency)
+      ) {
+        pushFinding(findings, "ti_v3_arch_support_resistance_import", path, dependency.specifier);
       }
       if (isV3Core && normalizedDependency.includes("/academy/")) {
         const exactSymbols = ["ACADEMY_SESSION_COOKIE", "AcademyProgressStore"];
@@ -229,6 +259,40 @@ export function scanTraderIntelligenceArchitectureBoundaries(
         pushFinding(
           findings,
           "ti_v3_arch_legacy_coaching_internal_import",
+          path,
+          dependency.specifier,
+        );
+      }
+      if (
+        isAnalyticalAuthority &&
+        /(?:^|\/)(?:coach|coaching)(?:\/|$)|legacy-coach/.test(normalizedDependency)
+      ) {
+        pushFinding(
+          findings,
+          "ti_v3_arch_legacy_coaching_authority_import",
+          path,
+          dependency.specifier,
+        );
+      }
+      if (
+        isAnalyticalAuthority &&
+        /(?:browser-only|client-financial|client-analytics|\/browser\/)/.test(normalizedDependency)
+      ) {
+        pushFinding(
+          findings,
+          "ti_v3_arch_browser_financial_authority",
+          path,
+          dependency.specifier,
+        );
+      }
+      if (
+        isAnalyticalAuthority &&
+        /(?:^|\/)(?:trader-analytics|trade-analysis|decision-review)(?:\/|$)/.test(normalizedDependency) &&
+        !normalizedDependency.includes("trader-intelligence-v3/")
+      ) {
+        pushFinding(
+          findings,
+          "ti_v3_arch_legacy_analytical_authority_import",
           path,
           dependency.specifier,
         );
