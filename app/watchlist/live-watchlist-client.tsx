@@ -120,10 +120,7 @@ function formatPrice(value: number | null): string {
 function aiReadStatusLabel(
   symbol: LiveWatchlistSymbolState,
   hasPublishedRead: boolean,
-): string {
-  if (symbol.tradersLinkAiReadStatus === "analyzing") {
-    return "AI Read update: A new read is being prepared from the latest available candles.";
-  }
+): string | null {
   if (symbol.marketDataStatus === "halted") {
     return hasPublishedRead
       ? "AI Read update: Trading is halted. This read remains on the last confirmed candle until trading resumes."
@@ -132,10 +129,7 @@ function aiReadStatusLabel(
   if (symbol.marketDataStatus === "possible_halt") {
     return "AI Read update: A possible halt was detected. Waiting for confirmation before treating new price action as current.";
   }
-  if (symbol.marketDataStatus === "stale") {
-    return "AI Read update: Live candle data is stale. The read will update when current-session candles are available.";
-  }
-  return "AI Read update: Monitoring live candles for the next confirmed boundary change.";
+  return null;
 }
 
 function formatPercentPoints(value: number): string {
@@ -688,9 +682,11 @@ function TradersLinkAiReadCard({
       <div className="academy-card-topline">
         <WatchlistCardKicker label="TradersLink AI Read" />
       </div>
-      <p className="watchlist-ai-read-status" data-market-data-status={symbol.marketDataStatus}>
-        {aiReadStatusLabel(symbol, true)}
-      </p>
+      {aiReadStatusLabel(symbol, true) ? (
+        <p className="watchlist-ai-read-status" data-market-data-status={symbol.marketDataStatus}>
+          {aiReadStatusLabel(symbol, true)}
+        </p>
+      ) : null}
       <div className="watchlist-ai-read-header">
         <div>
           <p className="watchlist-ai-read-eyebrow">
@@ -1033,18 +1029,11 @@ function TradersLinkAiReadStatusCard({
       <div className="academy-card-topline">
         <WatchlistCardKicker label="TradersLink AI Read" />
       </div>
-      {symbol ? (
+      {symbol && aiReadStatusLabel(symbol, false) ? (
         <p className="watchlist-ai-read-status" data-market-data-status={symbol.marketDataStatus}>
-          {status === "analyzing"
-            ? aiReadStatusLabel(symbol, false)
-            : "AI Read update: The latest generation did not pass quality checks; the prior read remains unchanged."}
+          {aiReadStatusLabel(symbol, false)}
         </p>
       ) : null}
-      <p className="academy-card-text">
-        AI analysis appears only when it passes automated quality checks and may not be available
-        for every ticker. In the meantime, refer to the support and resistance levels in the
-        Potential Path card, which are derived from real candlestick market data.
-      </p>
     </article>
   );
 }
