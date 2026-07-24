@@ -3335,6 +3335,20 @@ main.bg-zinc-950 .text-zinc-500 {
   font-weight: 880;
 }
 
+.watchlist-potential-path-status {
+  flex-basis: 100%;
+  color: var(--academy-warning);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.watchlist-potential-path-status[data-market-data-status="halted"] {
+  color: var(--academy-negative);
+}
+
 .watchlist-v2-card-title span {
   color: var(--academy-text);
   font-family: var(--font-geist-mono), monospace;
@@ -4146,6 +4160,24 @@ main.bg-zinc-950 .text-zinc-500 {
   font-size: 0.78rem;
   font-weight: 750;
   letter-spacing: 0.02em;
+}
+
+.watchlist-ai-read-status {
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--academy-warning) 35%, var(--academy-border));
+  border-radius: 7px;
+  background: var(--academy-warning-soft);
+  color: var(--academy-warning);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.watchlist-ai-read-status[data-market-data-status="halted"] {
+  border-color: color-mix(in srgb, var(--academy-negative) 38%, var(--academy-border));
+  background: var(--academy-negative-soft);
+  color: var(--academy-negative);
 }
 
 .watchlist-ai-read-header .academy-card-title {

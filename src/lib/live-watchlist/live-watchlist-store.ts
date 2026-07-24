@@ -850,6 +850,13 @@ function applyTickerDataPatch(
     latestPriceSource: "ticker",
     latestPriceObservedAt: observedAt,
     marketDataRevision: incomingRevision,
+    marketDataStatus: patch.marketDataStatus ?? existing?.marketDataStatus ?? "live",
+    marketDataStatusUpdatedAt:
+      patch.marketDataStatusUpdatedAt ?? existing?.marketDataStatusUpdatedAt ?? null,
+    marketDataStatusReason:
+      patch.marketDataStatusReason !== undefined
+        ? patch.marketDataStatusReason
+        : existing?.marketDataStatusReason ?? null,
     nearestSupport: patch.nearestSupport,
     nearestResistance: patch.nearestResistance,
     nearestSupportLabel: patch.nearestSupportLabel ?? null,

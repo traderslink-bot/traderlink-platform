@@ -15,6 +15,7 @@ export type LiveWatchlistGroup = "top_regular" | "main" | "postmarket";
 export type TradersLinkAiReadStatus = "analyzing" | "ready" | "failed";
 export type LiveWatchlistSlotState = "active" | "followup";
 export type LiveWatchlistMarketDataStatus = "live" | "stale" | "offline" | "starting" | "closed";
+export type LiveWatchlistTickerMarketDataStatus = "live" | "stale" | "possible_halt" | "halted";
 export type LiveWatchlistLifecycleStatus =
   | "monitoring"
   | "active"
@@ -84,6 +85,9 @@ export type LiveWatchlistTickerDataPatch = {
   updatedAt: number;
   marketDataObservedAt?: number;
   marketDataRevision?: number;
+  marketDataStatus?: LiveWatchlistTickerMarketDataStatus;
+  marketDataStatusUpdatedAt?: number;
+  marketDataStatusReason?: string | null;
   watchlistGroup?: LiveWatchlistGroup;
   watchlistSlotState?: LiveWatchlistSlotState;
   reversalWatchEligible?: boolean;
@@ -489,6 +493,9 @@ export type LiveWatchlistSymbolState = {
   latestPriceSource?: "ticker" | "card" | null;
   latestPriceObservedAt?: number | null;
   marketDataRevision?: number | null;
+  marketDataStatus?: LiveWatchlistTickerMarketDataStatus;
+  marketDataStatusUpdatedAt?: number | null;
+  marketDataStatusReason?: string | null;
   nearestSupport: number | null;
   nearestResistance: number | null;
   nearestSupportLabel?: string | null;
