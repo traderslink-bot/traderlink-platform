@@ -149,8 +149,8 @@ one shared accumulator pass per emitted group, cached reusable totals,
 classifications, extrema, and sorted value inventories, registry projections,
 canonical group ordering, and bounded evidence. The formerly documented target
 `O(R + G log G + M × G + E)`, aside from accepted authority verification and
-That former linear target is superseded by
-`O(R log R + G log G + M x G + E)`: sorting occurs once per accumulated value
+bounded median projections, is superseded by `O(R log R + G log G + M x G + E)`:
+sorting occurs once per accumulated value
 inventory, not once per selected metric. All contract maxima fail closed at
 max-plus-one.
 
