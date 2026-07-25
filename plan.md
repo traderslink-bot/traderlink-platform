@@ -6,8 +6,8 @@
 **Operational hosting:** local owner testing and private-owner beta  
 **Primary domain:** U.S. listed small-cap and micro-cap active trading  
 **Product boundary:** retrospective educational trade review, historical simulation, and self-improvement  
-**Current gate:** GA0-B4 — deterministic proof closeout is next; GA0-B3 accepted and merged at `e46d9fea331aeefc262a6dc7a187b5c73678b398`  
-**Active implementation plan:** `src/docs/trader-intelligence-v3-ga0-b-deterministic-proof-implementation-plan-2026-07-19.md`  
+**Current gate:** GA1-A — generic deterministic query engine and read-only validated gateway; GA0-B4 accepted through PR #158 at `608f0854d14a70bef1e2220e66f97289c0bcf9be`
+**Active implementation ADR:** `src/docs/trader-intelligence-v3-adr-ga1-a-generic-deterministic-query-gateway-v1.md`
 **Controlling post-B4 direction:** `src/docs/trader-intelligence-v3-post-ga0-b-query-simulation-and-candle-direction-lock-2026-07-25.md`
 
 Start here when resuming Trader Intelligence product, analytics, simulations,
@@ -52,6 +52,7 @@ Historical audit handoffs are evidence, not active implementation authority.
 | GA0-B1 read-only analytical dataset and proof contracts | accepted | `7d8d8e03826e4b877b22e9a2a68d381bb42e585d` |
 | GA0-B2 weekday deterministic proof | accepted | `4338cab7d46b8a0548b22346f81b42db5fec3bf0` |
 | GA0-B3 consecutive-loss daily-stop proof | accepted | `e46d9fea331aeefc262a6dc7a187b5c73678b398` |
+| GA0-B4 deterministic runner proof closeout | accepted | `608f0854d14a70bef1e2220e66f97289c0bcf9be` |
 
 The accepted foundation provides:
 
@@ -371,13 +372,14 @@ without an explicit owner decision.
 
 # 11. Immediate next action
 
-1. Create `agent/trader-intelligence-v3-ga0-b4-proof-closeout` from current
-   accepted `main` at or after B3 merge
-   `e46d9fea331aeefc262a6dc7a187b5c73678b398`.
-2. Implement GA0-B4 only under section 15 of the active GA0-B plan.
-3. Publish one draft B4 PR, tested executable head, later documentation handoff,
-   and complete auditor prompt.
-4. Leave the B4 PR draft and unmerged for independent audit.
-5. Do not add the generic query engine, new tool packs, candles, UI, AI, setup
-   detection, support/resistance, migration, or deployment inside B4.
-6. After B4 acceptance, follow the post-GA0-B direction-lock document.
+1. Complete the independent GA1-A re-audit remediation on existing draft PR
+   #160: verified-execution-only comparisons, comparison reconstruction,
+   truthful declarations, cached accumulator projections, reachable filter
+   capacity, and canonical ordering validation.
+2. Preserve grouped candidate/included/excluded authority, deterministic
+   result-row bounding, evidence binding, the versioned metric registry, shared
+   accumulators, exact comparison, replay, and the final scale proof.
+3. Keep PR #160 draft/open/unmerged and do not deploy.
+4. Stop for independent audit after the final executable and Markdown-only
+   handoff commits. Do not begin GA1-B, UI/model work, simulations, candles,
+   setup, support/resistance, database writes, payment, or auth.

@@ -74,11 +74,38 @@ The foundation was audited one slice at a time because exact truth and the first
 
 ## Immediate next action
 
-1. Begin GA1-A from accepted `main`: generic deterministic trade-query engine and read-only trade-data gateway.
-2. GA1-A does not require candle data and must not expand into the Levels System or EODHD integration.
-3. Preserve the Levels System/EODHD correction for the later market-context and candle-dependent simulation slice.
-4. Before any candle-dependent implementation, prove the bounded Trader Intelligence-to-Levels System request contract, normalized response authority, and unavailable-data UI state.
-5. Do not begin setup detection or support/resistance work unless the owner explicitly supersedes this decision.
+1. Implement GA1-A, the generic deterministic query engine and read-only
+   validated gateway, from accepted `main`.
+2. Keep GA1-A domain-only: no UI, AI/model, simulation, candle, broker,
+   database-write, payment, auth, hosting, or deployment work.
+3. GA1-A does not require candle data and must not expand into the Levels
+   System or EODHD integration.
+4. Publish one draft PR and stop for independent audit.
+5. Preserve the Levels System/EODHD correction for the later market-context
+   and candle-dependent simulation slice.
+6. Before candle-dependent implementation, prove the bounded Trader
+   Intelligence-to-Levels System request, normalized response authority, and
+   unavailable-data UI state.
+7. Do not begin GA1-B, setup detection, or support/resistance work unless the
+   owner explicitly authorizes the next slice.
+
+## GA1-A expanded execution-only statistics authorization
+
+- Continue on existing draft PR #160; keep it open, draft, unmerged, and
+  undeployed.
+- Correct grouped count authority and make `resultRowLimit` a deterministic
+  post-ordering bound while `groupLimit` remains fail closed.
+- Bind emitted row counts to exact evidence group/population identity.
+- Provide a content-addressed execution-only metric registry with at least 55
+  foundational metrics and shared accumulators; the implemented registry
+  contains 86 active v1 declarations with a 64-metric per-plan cap.
+- Add day, share-quantity, and entry-notional filtering/grouping semantics and
+  an exact aggregate comparison envelope.
+- Do not infer exit price: the accepted analytical row has no exact exit-price
+  authority, so that filter remains fail-closed until an upstream contract
+  supplies it.
+- Defer the combined focused suite and 10,000-row proof until the complete
+  executable pass, then run each according to the owner-specified cadence.
 
 ## PR #157 direction-lock closeout
 

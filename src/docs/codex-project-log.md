@@ -1,3 +1,19 @@
+# 2026-07-25 - GA1-A generic deterministic query gateway active
+
+- Started from accepted `main` at
+  `b640ba599a4b9604395d203b6224b45d9de21208` in the isolated Codex worktree;
+  the owner checkout remains untouched.
+- Active branch:
+  `agent/trader-intelligence-v3-ga1-a-generic-query-gateway`.
+- Scope is the closed query-plan DSL, accepted-authority read-only gateway,
+  generic executor, exact metrics, bounded evidence, semantic replay, focused
+  tests, CI verifier, ADR, and independent-audit handoff.
+- Local tests use small deterministic fixtures. At owner direction, the
+  10,000-row proof exists but is deliberately unrun locally; CI is the first
+  authorized scale run.
+- Stop after one draft PR. Do not merge, deploy, resolve audit threads, or
+  begin GA1-B/UI/model/simulation/candle work.
+
 # 2026-07-25 - GA0-B4 deterministic tool-runner proof closeout active
 
 - Started from `origin/main` at accepted B3 merge SHA
@@ -18939,3 +18955,42 @@ Current best next step:
 
 - Await the owner's explicit merge decision. Do not mark ready, merge, deploy,
   resolve existing independent audit threads, or begin GA0-C in this closeout.
+
+# 2026-07-25 GA1-A audit remediation and statistics expansion in progress
+
+- Existing draft PR #160 remains the only delivery boundary.
+- Authorized corrections: grouped candidate/included/excluded authority,
+  deterministic `resultRowLimit` bounding versus fail-closed `groupLimit`, and
+  permutation/evidence-binding coverage.
+- Authorized expansion: a content-addressed execution-only metric registry,
+  shared accumulators, at least 55 foundational metrics, additional
+  execution-only filters/groupings, and exact comparison.
+- Final verification is intentionally deferred until the coherent executable
+  pass is complete: one combined focused GA1-A suite, one authorized 10,000-row
+  scale proof, then architecture and private-data guards once.
+
+Current best next step:
+
+- Finish static contract/test inspection, run the deferred final verification
+  cadence, and publish an executable head plus later Markdown-only handoff.
+  Keep PR #160 draft/open/unmerged/undeployed and do not begin GA1-B.
+
+# 2026-07-25 GA1-A independent re-audit remediation in progress
+
+- PR #160 remains the sole draft, open, unmerged, and undeployed delivery
+  boundary. Existing review threads remain untouched.
+- Remediation scope: executor-issued verified-result capability for comparison,
+  comparison reconstruction verification, result metric-plan/unit/currency
+  binding, explicit metric-declaration families, cached accumulator totals and
+  sorted inventories, 16 reachable canonical filters, and duplicate ordering
+  rejection.
+- Final verification cadence: one combined GA1-A focused suite after the full
+  remediation, then one 10,000-row scale proof, then architecture and
+  private-data guards. Do not duplicate unrelated legacy verification locally.
+
+Current best next step:
+
+- Complete focused remediation verification, the scale proof, and guards; then
+  push one executable remediation commit and a later Markdown-only independent
+  re-audit handoff. Keep PR #160 draft/open/unmerged/undeployed and do not
+  begin GA1-B.

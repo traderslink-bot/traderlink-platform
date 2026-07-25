@@ -5,4 +5,5 @@ export * from "./dataset";
 export * from "./evidence";
 export * from "./registry";
 export * from "./runner";
+export * from "./query";
 export * from "./tools";
