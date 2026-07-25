@@ -76,3 +76,24 @@ The foundation was audited one slice at a time because exact truth and the first
 3. After B4 merge, perform a short private owner-data calibration and prove the read-only data/market-data-relay contracts.
 4. Begin the generic query, evidence, and simulation program under the direction-lock document, applying this addendum's provider-neutral product language and same-day/historical routing correction.
 5. Do not begin setup detection or support/resistance work unless the owner explicitly supersedes this decision.
+
+## PR #157 direction-lock closeout
+
+- PR #158 was merged into `main` at
+  `608f0854d14a70bef1e2220e66f97289c0bcf9be` before this direction-lock
+  closeout.
+- The known direction-lock head remains
+  `06a99685348371acf02c063f86a98e354a903287`. The verified pre-sync PR #157
+  head was `254ebc536a531b86b088b1cc16eb985f5dcc0a25`, a documentation-only
+  descendant containing no executable, test, workflow, package, or
+  configuration changes.
+- Current `main` was merged into the direction-lock branch only because the
+  PR became conflicting after PR #158 merged. The sync merge is
+  `ffc985cca75022e919bab99ca7be5fb80f9a5f30`; its only conflict was a stale
+  `plan.md` header, resolved by preserving this direction-lock branch's
+  approved content.
+- The final PR #157 closeout remains documentation-only, records no feature
+  implementation, and is ready for merge after lightweight documentation
+  checks. The next authorized phase is a separate owner-approved
+  implementation task under this direction lock; no GA0-C or feature work is
+  implied by this closeout.
