@@ -48,6 +48,32 @@ describe("GA1-A audit remediation and metric registry", () => {
     });
   });
 
+  it("composes composite metric dependencies and explicit unavailable conditions", () => {
+    const declaration = (key: string) => {
+      const found = TRADE_QUERY_METRIC_REGISTRY.entries.find((entry) => entry.metricKey === key);
+      if (found === undefined) throw new Error(`missing declaration ${key}`);
+      return found;
+    };
+    expect(declaration("average_winner_holding_time")).toMatchObject({
+      requiredFields: ["firstEntryAt", "finalExitAt", "netPnl"],
+      requiredDerivedSemantics: ["realized_outcome", "completed_holding_duration"],
+      unavailableConditions: ["zero_total_population", "no_winning_trade"],
+    });
+    expect(declaration("median_loser_entry_notional")).toMatchObject({
+      requiredFields: ["entryNotional", "netPnl"],
+      requiredDerivedSemantics: ["realized_outcome", "complete_entry_notional_authority"],
+      unavailableConditions: ["zero_total_population", "no_losing_trade", "incomplete_entry_notional_authority", "zero_entry_notional_denominator"],
+    });
+    expect(declaration("net_pnl_per_100_shares")).toMatchObject({
+      requiredFields: ["shareQuantity", "netPnl"],
+      unavailableConditions: ["zero_total_population", "incomplete_share_quantity_authority", "zero_share_quantity_denominator"],
+    });
+    expect(declaration("return_on_entry_notional")).toMatchObject({
+      requiredFields: ["entryNotional", "netPnl"],
+      unavailableConditions: ["zero_total_population", "incomplete_entry_notional_authority", "zero_entry_notional_denominator", "zero_denominator"],
+    });
+  });
+
   it("binds grouped candidate, included, and excluded authority to evidence", () => {
     const fixture = buildSyntheticQueryFixture(30, false);
     const result = executeTradeQuery({

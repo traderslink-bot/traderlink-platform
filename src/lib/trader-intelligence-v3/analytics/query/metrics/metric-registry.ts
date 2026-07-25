@@ -125,6 +125,7 @@ export interface TradeQueryMetricDeclaration {
   readonly compatibleFilters: readonly string[];
   readonly minimumSample: string;
   readonly unavailablePolicy: string;
+  readonly unavailableConditions: readonly string[];
   readonly limitationCodes: readonly string[];
   readonly evidencePolicy: "group_population_and_bounded_candidates";
   readonly orderingPolicy: "exact_numeric_then_group_identity";
@@ -262,48 +263,54 @@ function unitFor(key: TradeQueryMetricKey): string {
 }
 
 function requiredFieldsFor(key: TradeQueryMetricKey): readonly string[] {
-  if (QUERY_COUNT_KEYS.has(key) || key === "total_trades") return Object.freeze([]);
-  if (key === "unique_account_count") return Object.freeze(["canonicalAccountKey"]);
-  if (key === "unique_symbol_count") return Object.freeze(["stableInstrumentKey"]);
+  const fields: string[] = [];
+  const add = (...values: readonly string[]) => {
+    for (const value of values) if (!fields.includes(value)) fields.push(value);
+  };
+  if (key === "unique_account_count") add("canonicalAccountKey");
+  if (key === "unique_symbol_count") add("stableInstrumentKey");
   if (key === "total_execution_count" || key === "average_executions_per_trade") {
-    return Object.freeze(["supportingExecutionDigests"]);
+    add("supportingExecutionDigests");
   }
-  if (DAILY_KEYS.has(key)) return Object.freeze(["sessionDate", "finalExitAt", "netPnl"]);
-  if (DIRECTION_KEYS.has(key)) return Object.freeze(["direction"]);
+  if (DAILY_KEYS.has(key)) add("sessionDate", "finalExitAt", "netPnl");
+  if (DIRECTION_KEYS.has(key)) add("direction");
   if (REPEAT_KEYS.has(key)) {
-    return Object.freeze(["stableInstrumentKey", "sessionDate", "firstEntryAt", "semanticRoundTripKey"]);
+    add("stableInstrumentKey", "sessionDate", "firstEntryAt", "semanticRoundTripKey");
   }
-  if (SECOND_KEYS.has(key)) return Object.freeze(["firstEntryAt", "finalExitAt"]);
+  if (SECOND_KEYS.has(key)) add("firstEntryAt", "finalExitAt");
   if (SHARE_KEYS.has(key) || key === "net_pnl_per_100_shares") {
-    return Object.freeze(["shareQuantity"]);
+    add("shareQuantity");
   }
   if (key === "average_entry_notional" || key === "median_entry_notional" ||
     key === "maximum_entry_notional" || key === "average_winner_entry_notional" ||
     key === "average_loser_entry_notional" || key === "median_winner_entry_notional" ||
     key === "median_loser_entry_notional" || key === "return_on_entry_notional" ||
     key === "average_position_size" || key === "median_position_size") {
-    return Object.freeze(["entryNotional"]);
+    add("entryNotional");
   }
-  if (GROSS_PNL_KEYS.has(key)) return Object.freeze(["grossPnl"]);
-  if (CHARGE_KEYS.has(key)) return Object.freeze(["signedCharges"]);
+  if (GROSS_PNL_KEYS.has(key)) add("grossPnl");
+  if (CHARGE_KEYS.has(key)) add("signedCharges");
   if (STREAK_KEYS.has(key)) {
-    return Object.freeze(["finalExitAt", "semanticRoundTripKey", "netPnl"]);
+    add("finalExitAt", "semanticRoundTripKey", "netPnl");
   }
-  return NET_PNL_KEYS.has(key) || OUTCOME_KEYS.has(key)
-    ? Object.freeze(["netPnl"])
-    : Object.freeze([]);
+  if (NET_PNL_KEYS.has(key) || OUTCOME_KEYS.has(key)) add("netPnl");
+  return Object.freeze(fields);
 }
 
 function requiredDerivedSemanticsFor(key: TradeQueryMetricKey): readonly string[] {
-  if (QUERY_COUNT_KEYS.has(key)) return Object.freeze(["verified_query_counts"]);
-  if (REPEAT_KEYS.has(key)) return Object.freeze(["canonical_symbol_session_attempt_order"]);
-  if (STREAK_KEYS.has(key)) return Object.freeze(["canonical_completed_trade_order", "realized_outcome"]);
-  if (OUTCOME_KEYS.has(key)) return Object.freeze(["realized_outcome"]);
-  if (DAILY_KEYS.has(key)) return Object.freeze(["canonical_completed_trade_order", "daily_realized_pnl"]);
-  if (SECOND_KEYS.has(key)) return Object.freeze(["completed_holding_duration"]);
-  if (SHARE_KEYS.has(key) || key === "net_pnl_per_100_shares") return Object.freeze(["complete_share_quantity_authority"]);
-  if (key.includes("notional") || key.endsWith("position_size")) return Object.freeze(["complete_entry_notional_authority"]);
-  return Object.freeze([]);
+  const semantics: string[] = [];
+  const add = (...values: readonly string[]) => {
+    for (const value of values) if (!semantics.includes(value)) semantics.push(value);
+  };
+  if (QUERY_COUNT_KEYS.has(key)) add("verified_query_counts");
+  if (REPEAT_KEYS.has(key)) add("canonical_symbol_session_attempt_order");
+  if (STREAK_KEYS.has(key)) add("canonical_completed_trade_order", "realized_outcome");
+  if (OUTCOME_KEYS.has(key)) add("realized_outcome");
+  if (DAILY_KEYS.has(key)) add("canonical_completed_trade_order", "daily_realized_pnl");
+  if (SECOND_KEYS.has(key)) add("completed_holding_duration");
+  if (SHARE_KEYS.has(key) || key === "net_pnl_per_100_shares") add("complete_share_quantity_authority");
+  if (key.includes("notional") || key.endsWith("position_size")) add("complete_entry_notional_authority");
+  return Object.freeze(semantics);
 }
 
 function unavailablePolicyFor(key: TradeQueryMetricKey): string {
@@ -316,6 +323,24 @@ function unavailablePolicyFor(key: TradeQueryMetricKey): string {
   if (key === "largest_loser_contribution" || key === "net_pnl_excluding_largest_loser") return "ti_v3_query_no_losing_trade";
   if (ZERO_SAMPLE_ALLOWED_KEYS.has(key)) return "available_at_zero_population";
   return "ti_v3_query_zero_sample_or_zero_denominator";
+}
+
+function unavailableConditionsFor(key: TradeQueryMetricKey): readonly string[] {
+  const conditions: string[] = [];
+  const add = (...values: readonly string[]) => {
+    for (const value of values) if (!conditions.includes(value)) conditions.push(value);
+  };
+  if (!ZERO_SAMPLE_ALLOWED_KEYS.has(key)) add("zero_total_population");
+  if (key.includes("winner") || key.includes("winning")) add("no_winning_trade");
+  if (key.includes("loser") || key.includes("losing")) add("no_losing_trade");
+  if (SHARE_KEYS.has(key) || key === "net_pnl_per_100_shares") {
+    add("incomplete_share_quantity_authority", "zero_share_quantity_denominator");
+  }
+  if (key.includes("notional") || key.endsWith("position_size")) {
+    add("incomplete_entry_notional_authority", "zero_entry_notional_denominator");
+  }
+  if (RATIO_KEYS.has(key) && key !== "net_pnl_per_100_shares") add("zero_denominator");
+  return Object.freeze(conditions);
 }
 
 function buildDeclaration(key: TradeQueryMetricKey): TradeQueryMetricDeclaration {
@@ -337,6 +362,7 @@ function buildDeclaration(key: TradeQueryMetricKey): TradeQueryMetricDeclaration
     compatibleFilters: ALL_FILTERS,
     minimumSample: ZERO_SAMPLE_ALLOWED_KEYS.has(key) ? "0" : "1",
     unavailablePolicy: unavailablePolicyFor(key),
+    unavailableConditions: unavailableConditionsFor(key),
     limitationCodes: Object.freeze([
       ...(ZERO_SAMPLE_ALLOWED_KEYS.has(key) ? [] : ["ti_v3_query_zero_sample"]),
       ...(requiredDerivedSemanticsFor(key).some((value) => value.startsWith("complete_"))
@@ -396,7 +422,7 @@ export function verifyTradeQueryMetricDeclaration(
     "requiredFields", "requiredDerivedSemantics", "requiredAuthority", "populationRequirement", "unit",
     "currencyBehavior", "calculationPolicy", "aggregationBehavior",
     "compatibleGroupings", "compatibleFilters", "minimumSample",
-    "unavailablePolicy", "limitationCodes", "evidencePolicy",
+    "unavailablePolicy", "unavailableConditions", "limitationCodes", "evidencePolicy",
     "orderingPolicy", "testKeys", "deprecationState", "metricDigest",
   ]);
   if (

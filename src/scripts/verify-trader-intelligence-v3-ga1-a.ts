@@ -22,6 +22,7 @@ const focusedFiles = [
   "src/lib/trader-intelligence-v3/__tests__/ga1-a/query-filters-grouping.test.ts",
   "src/lib/trader-intelligence-v3/__tests__/ga1-a/query-metrics-execution-replay.test.ts",
   "src/lib/trader-intelligence-v3/__tests__/ga1-a/query-audit-remediation-registry.test.ts",
+  "src/lib/trader-intelligence-v3/__tests__/ga1-a/query-completed-streaks.test.ts",
   "src/lib/trader-intelligence-v3/__tests__/ga1-a/query-expanded-statistics.test.ts",
   "src/lib/trader-intelligence-v3/__tests__/ga1-a/query-property-scale.test.ts",
 ] as const;

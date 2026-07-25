@@ -275,7 +275,17 @@ export function buildTradeQueryAccumulator(
       loserHoldingSecondsValues.push(item.holdingSecondsFloor.toString());
     }
   }
-  const streaks = buildStreaks(rows);
+  // Streaks are realized-trade chronology, not entry chronology. Rows remain in
+  // their canonical entry order for the other projections, so derive this one
+  // completion-ordered view at the metric boundary.
+  const completionOrderedRows = Object.freeze([...rows].sort((left, right) =>
+    left.row.finalExitAt < right.row.finalExitAt ? -1 :
+      left.row.finalExitAt > right.row.finalExitAt ? 1 :
+        compareUnicodeCodePoints(
+          left.row.semanticRoundTripKey,
+          right.row.semanticRoundTripKey,
+        )));
+  const streaks = buildStreaks(completionOrderedRows);
   const netValues = Object.freeze(rows.map((item) => item.row.netPnl));
   const grossValues = Object.freeze(rows.map((item) => item.row.grossPnl));
   const chargeValues = Object.freeze(rows.map((item) => item.row.signedCharges));
