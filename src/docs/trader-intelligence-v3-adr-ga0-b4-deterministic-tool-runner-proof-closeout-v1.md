@@ -1,7 +1,7 @@
 # ADR: GA0-B4 Deterministic Tool-Runner Proof Closeout v1
 
 Date: 2026-07-25
-Status: implementation candidate; independent audit required
+Status: independently audited and accepted; owner merge decision required
 Scope: local Trader Intelligence v3 GA0-B4 only
 
 ## Decision
@@ -93,5 +93,22 @@ the same focused verifier; it does not weaken existing gates.
 This ADR adds no UI, App Router route, AI prompt/model call, natural-language
 query parser, market/candle/VWAP/setup/catalyst/level analytics, broker write,
 database persistence, payment/auth change, production deploy, or GA0-C work.
-The clean B4 branch must be independently audited before merge or any later
-production handoff.
+The clean B4 branch has been independently audited; any merge or later
+production handoff still requires an explicit owner decision.
+
+## Independent audit closeout
+
+The independent audit accepted GA0-B4 with no blocking code findings and no
+further executable remediation. The accepted executable head is
+`a3b25b0e4bc1a3b31880a17f20f9fd18dedf2de2`; the accepted documentation head
+before this Markdown-only closeout is
+`b858a725416a49d9ba4077e9adf890f4835f4adf`. GitHub independently confirmed
+successful CI run `30156095897`, job `89674172340`, including GA0-A2,
+architecture, private-data, GA0-B, Layer 2, and Layer 3 steps.
+
+The audit environment could not resolve `github.com`, so no independent local
+rerun was completed. Local command counts in the implementation handoff remain
+implementer-reported evidence supported by CI, not independently reproduced
+counts. Playwright/e2e remained deliberately unrun because no UI or route work
+was in scope. PR #158 remains draft, open, unmerged, and undeployed; GA0-B4 is
+ready for an explicit owner merge decision and was not automatically merged.

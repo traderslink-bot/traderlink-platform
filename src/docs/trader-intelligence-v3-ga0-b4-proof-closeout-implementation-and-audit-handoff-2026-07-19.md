@@ -1,26 +1,56 @@
 # Trader Intelligence v3 GA0-B4 Proof Closeout — Implementation and Audit Handoff
 
 Date: 2026-07-25 America/Toronto
-Status: implementation and executable checkpoint complete; independent audit required
+Status: independent audit completed; accepted with no further code remediation; owner merge decision required
 Branch: `agent/trader-intelligence-v3-ga0-b4-proof-closeout`
 Base: `origin/main` / accepted B3 merge `e46d9fea331aeefc262a6dc7a187b5c73678b398`
 Remediation base: `b7370c77` (`Implement GA0-B4 deterministic tool runner proof`)
-Tested executable head: `a3b25b0e` (`Close GA0-B4 scale and evidence proof gaps`)
-Documentation/current head: this Markdown-only handoff commit; exact SHA is recorded in the PR comment
+Accepted executable head: `a3b25b0e4bc1a3b31880a17f20f9fd18dedf2de2` (`Close GA0-B4 scale and evidence proof gaps`)
+Accepted documentation head before this closeout: `b858a725416a49d9ba4077e9adf890f4835f4adf`
+Documentation/current head: this Markdown-only closeout commit; exact SHA is recorded in the PR comment
 Owner checkout: preserved; implementation is isolated in a clean linked worktree
 Production: not deployed; GA0-C, UI, AI, market data, broker, database, and hosted work are out of scope
 
 ## Stop boundary
 
 Keep the PR draft, open, and unmerged. Do not mark it ready, merge it, deploy it,
-resolve independent-review threads, begin GA0-C, or treat implementer evidence as
-independent acceptance. The next action after this handoff is adversarial audit
-of the exact tested/documented heads.
+resolve independent-review threads, begin GA0-C, or treat this closeout as an
+automatic merge decision. Independent audit is complete with an accepted
+verdict, but the owner must make an explicit merge decision.
 
 The implementation commit is intentionally separate from this handoff. The
 documentation commit remains Markdown-only and is not a reason to repeat the
 expensive executable verifier; only lightweight diff, path, SHA, and
 handoff-content checks are required after it.
+
+## Independent audit closeout
+
+The independent audit completed with verdict `accepted`; it found no blocking
+code findings and required no further executable remediation. The audit accepted
+the exact executable head
+`a3b25b0e4bc1a3b31880a17f20f9fd18dedf2de2` and the prior documentation head
+`b858a725416a49d9ba4077e9adf890f4835f4adf`. This Markdown-only commit records
+the closeout and does not alter those accepted executable facts.
+
+Independently verified evidence and limitations are separated as follows:
+
+- GitHub objects independently confirmed the accepted base, branch, PR #158,
+  draft/open/unmerged state, and successful CI run `30156095897`, job
+  `89674172340` (`test-and-verify`). The CI job succeeded through ordinary
+  tests, GA0-A2, architecture, private-data, GA0-B, Layer 2, and Layer 3.
+- The audit environment could not resolve `github.com`, so the independent
+  local rerun was environmentally blocked before executable commands ran.
+  No fresh local test counts are claimed from that audit environment.
+- The exact local TypeScript, ESLint, Vitest, GA0-B, GA0-A2, architecture,
+  private-data, and build counts recorded below remain implementer-reported
+  evidence, supported by the successful GitHub CI result rather than
+  independently reproduced during this audit.
+- Playwright/e2e remained deliberately unrun because no UI or route work was in
+  scope. No deployment occurred. Owner-checkout preservation was reported in
+  the implementation handoff, but cannot be independently proven from GitHub
+  objects.
+- PR #158 remains draft, open, unmerged, and undeployed. GA0-B4 is ready for an
+  explicit owner merge decision; it was not automatically merged.
 
 ## Requirement-to-file map
 
@@ -118,7 +148,11 @@ Results to record on the tested executable head:
 - Final checkpoint: `git diff --check`, TypeScript, and changed-path ESLint all passed. The resolver now uses maps/sets for candidate, row, partition, and simulation membership lookups; table verification scopes evidence bundles per table, while each artifact remains independently validated. The final focused command was 2 files / 9 tests passed.
 - Playwright/e2e: deliberately not run; no UI or route change is in scope.
 
-## Auditor scope and ready-to-paste prompt
+## Historical auditor scope and prompt
+
+The following records the completed audit scope. It is historical documentation,
+not an instruction to repeat expensive executable checks during this
+Markdown-only closeout.
 
 Audit PR #158 as an independent reviewer. Start from remediation base
 `b7370c77`, exact executable head `a3b25b0e`, and the exact Markdown-only

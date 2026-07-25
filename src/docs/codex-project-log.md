@@ -18915,3 +18915,27 @@ Current best next step:
 - Push the executable and Markdown-only handoff commits, update the existing
   PR #158 top-level handoff with exact heads and CI identifiers, leave it draft,
   open, and unmerged, then stop for independent audit.
+
+# 2026-07-25 GA0-B4 independent acceptance closeout
+
+- Independent audit of existing draft PR #158 completed with verdict accepted;
+  no blocking code findings and no further executable remediation are required.
+- Accepted base remains `e46d9fea331aeefc262a6dc7a187b5c73678b398`;
+  accepted executable head remains
+  `a3b25b0e4bc1a3b31880a17f20f9fd18dedf2de2`; accepted documentation head
+  before this closeout remains `b858a725416a49d9ba4077e9adf890f4835f4adf`.
+- GitHub independently confirmed successful CI run `30156095897`, job
+  `89674172340`, including GA0-A2, architecture, private-data, GA0-B, Layer 2,
+  and Layer 3 steps. The local independent rerun was blocked because its audit
+  environment could not resolve `github.com`; local counts remain implementer
+  evidence supported by CI rather than independently reproduced counts.
+- Playwright/e2e stayed deliberately unrun because no UI or route work was in
+  scope. Owner-checkout preservation is reported in the implementation handoff
+  but cannot be independently proven from GitHub objects.
+- PR #158 remains draft, open, unmerged, and undeployed. GA0-B4 is ready for an
+  explicit owner merge decision, not automatic merge.
+
+Current best next step:
+
+- Await the owner's explicit merge decision. Do not mark ready, merge, deploy,
+  resolve existing independent audit threads, or begin GA0-C in this closeout.
