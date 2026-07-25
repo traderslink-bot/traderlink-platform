@@ -2,6 +2,9 @@
 
 Date: 2026-07-25
 
+Latest follow-up remediation record:
+[`trader-intelligence-v3-ga1-a-independent-reaudit-remediation-addendum-2026-07-25.md`](./trader-intelligence-v3-ga1-a-independent-reaudit-remediation-addendum-2026-07-25.md).
+
 ## Boundary
 
 - Pull request: #160
