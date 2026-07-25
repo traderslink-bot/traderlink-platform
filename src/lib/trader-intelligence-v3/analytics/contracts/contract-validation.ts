@@ -21,15 +21,18 @@ import {
 } from "../../domain/identity";
 
 export const GA0_B1_CONTRACT_LIMITS = Object.freeze({
-  maximumRows: 64,
+  // GA0-B4 scale authority: the accepted service boundary proves 10,000
+  // analytical rows. Artifact tables remain bounded by their tool-specific
+  // shapes; this limit is for the verified source dataset and evidence graph.
+  maximumRows: 10_000,
   maximumColumns: 128,
   maximumClaims: 1_000,
   maximumSeriesPoints: 1_000,
-  maximumEvidenceItems: 1_000,
-  maximumDiagnostics: 1_000,
+  maximumEvidenceItems: 10_000,
+  maximumDiagnostics: 10_000,
   maximumRegistryEntries: 128,
   maximumReasons: 128,
-  maximumReferences: 1_000,
+  maximumReferences: 10_000,
   maximumKeyLength: 256,
   maximumTextCodeLength: 512,
   maximumCountDigits: 38,

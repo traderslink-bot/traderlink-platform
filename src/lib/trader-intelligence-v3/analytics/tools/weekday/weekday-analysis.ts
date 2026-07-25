@@ -234,6 +234,43 @@ function exactValueBucket(prefix: string, value: string): string {
     .replace(".", "_decimal_")}`;
 }
 
+const MAX_EXACT_SEQUENCE_DISTRIBUTION_BUCKETS = 256;
+
+function sequenceDistributionBuckets(
+  states: readonly RowState[],
+): readonly { readonly bucket: string; readonly states: readonly RowState[] }[] {
+  const sequences = [...new Set(
+    states.map((state) => state.row.sequenceInPartition),
+  )].sort((left, right) =>
+    BigInt(left) < BigInt(right)
+      ? -1
+      : BigInt(left) > BigInt(right)
+        ? 1
+        : 0);
+  let bucketSize = 1;
+  while (
+    bucketSize * MAX_EXACT_SEQUENCE_DISTRIBUTION_BUCKETS < sequences.length
+  ) {
+    bucketSize += 1;
+  }
+  const buckets: Array<{
+    readonly bucket: string;
+    readonly states: readonly RowState[];
+  }> = [];
+  for (let start = 0; start < sequences.length; start += bucketSize) {
+    const values = sequences.slice(start, start + bucketSize);
+    const valuesSet = new Set(values);
+    const bucket = sequences.length <= MAX_EXACT_SEQUENCE_DISTRIBUTION_BUCKETS
+      ? `sequence_${values[0]}`
+      : `sequence_${values[0]}_to_${values[values.length - 1]}`;
+    buckets.push({
+      bucket,
+      states: states.filter((state) => valuesSet.has(state.row.sequenceInPartition)),
+    });
+  }
+  return Object.freeze(buckets);
+}
+
 function sumAbsolutePnl(rows: readonly AnalyticalRow[]): string {
   return required(
     sumExactDecimals(
@@ -583,9 +620,10 @@ function buildNonBlockedExecution(
       "$.runContext",
     );
   }
+  const includedRowKeys = new Set(dependencies.partitionReceipt.includedRowKeys);
   const partitionRows = dependencies.datasetReceipt.rows
     .filter((row) =>
-      dependencies.partitionReceipt.includedRowKeys.includes(
+      includedRowKeys.has(
         row.semanticRoundTripKey,
       ))
     .sort((left, right) =>
@@ -843,6 +881,7 @@ function buildNonBlockedExecution(
     weekday: group.weekday,
     summary: summarize(group.states, dependencies.partitionReceipt.currency),
   }));
+  const primaryEvidenceBundles: AnalyticalEvidenceBundle[] = [];
   const primaryRows = weekdaySummaries.map(({ weekday, summary }) => {
     const rows = summary.rows.map((state) => state.row);
     const groupKey = `weekday_${weekday}`;
@@ -875,6 +914,13 @@ function buildNonBlockedExecution(
             retainedWithoutLoss,
             groupKey,
           );
+    primaryEvidenceBundles.push(
+      allEvidence,
+      bestEvidence,
+      worstEvidence,
+      ...(retainedWinEvidence === null ? [] : [retainedWinEvidence]),
+      ...(retainedLossEvidence === null ? [] : [retainedLossEvidence]),
+    );
     return Object.freeze({
       rowKey: groupKey,
       cells: Object.freeze([
@@ -1032,7 +1078,7 @@ function buildNonBlockedExecution(
       excludedCount: dependencies.partitionReceipt.excludedCount,
       coverageEligibilityState: context.eligibilityState,
       limitationCodes: limitations,
-      evidenceBundles,
+      evidenceBundles: primaryEvidenceBundles,
     }),
     "$.tables.weekdaySummary",
   );
@@ -1043,6 +1089,7 @@ function buildNonBlockedExecution(
   let distributionTable: ExactTable | null = null;
   let targetEvidence: AnalyticalEvidenceBundle | null = null;
   let baselineEvidence: AnalyticalEvidenceBundle | null = null;
+  const comparisonEvidenceBundles: AnalyticalEvidenceBundle[] = [];
 
   if (targetSummary !== null && baselineSummary !== null) {
     targetEvidence = addEvidence(
@@ -1055,6 +1102,7 @@ function buildNonBlockedExecution(
       baselineStates.map((state) => state.row),
       "baseline_other_represented_weekdays",
     );
+    comparisonEvidenceBundles.push(targetEvidence, baselineEvidence);
     const comparisonRows = [
       {
         rowKey: `target_${argumentsValue.targetWeekday}`,
@@ -1097,6 +1145,12 @@ function buildNonBlockedExecution(
             withoutLossRows,
             group,
           );
+      comparisonEvidenceBundles.push(
+        ...(largestWinEvidence === null ? [] : [largestWinEvidence]),
+        ...(largestLossEvidence === null ? [] : [largestLossEvidence]),
+        ...(withoutWinEvidence === null ? [] : [withoutWinEvidence]),
+        ...(withoutLossEvidence === null ? [] : [withoutLossEvidence]),
+      );
       return Object.freeze({
         rowKey,
         cells: Object.freeze([
@@ -1238,7 +1292,7 @@ function buildNonBlockedExecution(
         excludedCount: dependencies.partitionReceipt.excludedCount,
         coverageEligibilityState: context.eligibilityState,
         limitationCodes: limitations,
-        evidenceBundles,
+        evidenceBundles: comparisonEvidenceBundles,
       }),
       "$.tables.comparison",
     );
@@ -1456,7 +1510,7 @@ function buildNonBlockedExecution(
         excludedCount: dependencies.partitionReceipt.excludedCount,
         coverageEligibilityState: context.eligibilityState,
         limitationCodes: limitations,
-        evidenceBundles,
+        evidenceBundles: [allComparisonEvidence],
       }),
       "$.tables.effects",
     );
@@ -1467,6 +1521,7 @@ function buildNonBlockedExecution(
       cells: readonly ReturnType<typeof cell>[];
       evidenceBundleDigest: string;
     }> = [];
+    const distributionEvidenceBundles: AnalyticalEvidenceBundle[] = [];
     const addDistribution = (
       groupKey: string,
       dimension: string,
@@ -1479,6 +1534,7 @@ function buildNonBlockedExecution(
         states.map((state) => state.row),
         groupKey,
       );
+      distributionEvidenceBundles.push(evidence);
       distributionRows.push({
         rowKey: `${groupKey}_${dimension}_${bucket}`,
         cells: Object.freeze([
@@ -1513,21 +1569,12 @@ function buildNonBlockedExecution(
           states.filter((state) => entryTimeBucket(state.row) === bucket),
         );
       }
-      for (const sequence of [...new Set(
-        states.map((state) => state.row.sequenceInPartition),
-      )].sort((left, right) =>
-        BigInt(left) < BigInt(right)
-          ? -1
-          : BigInt(left) > BigInt(right)
-            ? 1
-            : 0)) {
+      for (const sequenceBucket of sequenceDistributionBuckets(states)) {
         addDistribution(
           groupKey,
           "trade_sequence",
-          `sequence_${sequence}`,
-          states.filter(
-            (state) => state.row.sequenceInPartition === sequence,
-          ),
+          sequenceBucket.bucket,
+          sequenceBucket.states,
         );
       }
       for (const state of [
@@ -1620,7 +1667,7 @@ function buildNonBlockedExecution(
         excludedCount: dependencies.partitionReceipt.excludedCount,
         coverageEligibilityState: context.eligibilityState,
         limitationCodes: limitations,
-        evidenceBundles,
+        evidenceBundles: distributionEvidenceBundles,
       }),
       "$.tables.distributions",
     );
@@ -1825,7 +1872,7 @@ function buildNonBlockedExecution(
       allowedVisualTemplateKeys: ["weekday_exact_bars"],
       runContext: context,
       sourceTable: primaryTable,
-      evidenceBundles,
+      evidenceBundles: primaryEvidenceBundles,
       xDomain: "semantic_weekday_order",
       unit,
       currency,
@@ -1885,7 +1932,7 @@ function buildNonBlockedExecution(
         allowedVisualTemplateKeys: ["grouped_exact_comparison_bars"],
         runContext: context,
         sourceTable: comparisonTable,
-        evidenceBundles,
+        evidenceBundles: comparisonEvidenceBundles,
         xDomain: "target_and_baseline",
         unit: "money_per_trade",
         currency: dependencies.partitionReceipt.currency,

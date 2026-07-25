@@ -1,8 +1,13 @@
 # Trader Intelligence v3 Current-System Inventory
 
-Date: 2026-07-19
-Gate: GA0-A3 temporal, manifest, eligibility, and query foundation
-Branch: `agent/trader-intelligence-v3-ga0-a3-manifests`
+Date: 2026-07-25
+Gate: GA0-B4 deterministic tool-runner proof closeout
+Branch: `agent/trader-intelligence-v3-ga0-b4-proof-closeout`
+
+GA0-B3 is accepted at merge `e46d9fea331aeefc262a6dc7a187b5c73678b398`.
+The B4 proof service adds no route, persistence, model, market-data, broker,
+or deployment consumer; it closes only the deterministic registry, runner,
+replay, artifact, evidence, diagnostics, and scale-proof boundary.
 
 GA0-A1 is accepted and complete at
 `4f9e440116258c9548a2d13f7ea057a9075101c6`. The historical inventory below is

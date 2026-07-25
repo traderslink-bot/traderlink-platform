@@ -42,11 +42,13 @@ export function buildWeekdayExecutionAuthority(
   if (!payloadIdentity.ok) {
     return contractFailure(payloadIdentity.error.code, payloadIdentity.error.path);
   }
+  const includedRowKeys = new Set(partitionReceipt.includedRowKeys);
+  const excludedCandidateKeys = new Set(partitionReceipt.excludedCandidateKeys);
   const selectedRows = datasetReceipt.rows
-    .filter((row) => partitionReceipt.includedRowKeys.includes(row.semanticRoundTripKey))
+    .filter((row) => includedRowKeys.has(row.semanticRoundTripKey))
     .map((row) => row.semanticRoundTripKey);
   const selectedExclusions = datasetReceipt.excludedCandidates
-    .filter((candidate) => partitionReceipt.excludedCandidateKeys.includes(candidate.candidateKey))
+    .filter((candidate) => excludedCandidateKeys.has(candidate.candidateKey))
     .map((candidate) => candidate.candidateKey);
   const result = finalizeContentAddressedAuthority(
     "weekday_execution_authority",

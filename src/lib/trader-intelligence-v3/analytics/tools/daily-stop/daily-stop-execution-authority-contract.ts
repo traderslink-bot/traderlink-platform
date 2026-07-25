@@ -31,6 +31,8 @@ export function buildDailyStopExecutionAuthority(
 ): ExactResult<DailyStopExecutionAuthority, AnalyticalContractFailure> {
   const payloadIdentity = createCanonicalContentIdentity("daily_stop_execution_payload", "v1", execution);
   if (!payloadIdentity.ok) return contractFailure(payloadIdentity.error.code, payloadIdentity.error.path);
+  const includedRowKeys = new Set(partitionReceipt.includedRowKeys);
+  const excludedCandidateKeys = new Set(partitionReceipt.excludedCandidateKeys);
   return finalizeContentAddressedAuthority("daily_stop_execution_authority", {
     schemaVersion: DAILY_STOP_EXECUTION_AUTHORITY_VERSION,
     toolKey: DAILY_STOP_TOOL_KEY,
@@ -40,8 +42,8 @@ export function buildDailyStopExecutionAuthority(
     normalizedArgumentsDigest: execution.normalizedArguments.argumentsDigest,
     registryEntryDigest: execution.registryEntry.entryDigest,
     runContextDigest: execution.runContext.runContextDigest,
-    selectedRowKeys: datasetReceipt.rows.filter((row) => partitionReceipt.includedRowKeys.includes(row.semanticRoundTripKey)).map((row) => row.semanticRoundTripKey),
-    selectedExclusionKeys: datasetReceipt.excludedCandidates.filter((candidate) => partitionReceipt.excludedCandidateKeys.includes(candidate.candidateKey)).map((candidate) => candidate.candidateKey),
+    selectedRowKeys: datasetReceipt.rows.filter((row) => includedRowKeys.has(row.semanticRoundTripKey)).map((row) => row.semanticRoundTripKey),
+    selectedExclusionKeys: datasetReceipt.excludedCandidates.filter((candidate) => excludedCandidateKeys.has(candidate.candidateKey)).map((candidate) => candidate.candidateKey),
     payloadDigest: payloadIdentity.value.identifier,
   }, "authorityDigest") as ExactResult<DailyStopExecutionAuthority, AnalyticalContractFailure>;
 }

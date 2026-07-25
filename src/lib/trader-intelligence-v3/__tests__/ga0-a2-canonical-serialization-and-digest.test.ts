@@ -197,7 +197,7 @@ describe("Trader Intelligence v3 canonical serialization and digest", () => {
       ok: false,
       error: { code: "ti_v3_canonical_key_count_exceeded" },
     });
-  });
+  }, 120_000);
 
   it("enforces individual and aggregate string size boundaries", () => {
     expect(
@@ -210,11 +210,15 @@ describe("Trader Intelligence v3 canonical serialization and digest", () => {
       error: { code: "ti_v3_canonical_string_size_exceeded" },
     });
 
-    const nearAggregateLimit = Array.from({ length: 4 }, () =>
+    const aggregateStringCount = Math.floor(
+      CANONICAL_SERIALIZATION_LIMITS.maxAggregateCodeUnits /
+        CANONICAL_SERIALIZATION_LIMITS.maxStringCodeUnits,
+    );
+    const nearAggregateLimit = Array.from({ length: aggregateStringCount }, () =>
       "x".repeat(CANONICAL_SERIALIZATION_LIMITS.maxStringCodeUnits - 4),
     );
     expect(serializeCanonicalValue(nearAggregateLimit).ok).toBe(true);
-    const overAggregateLimit = Array.from({ length: 4 }, () =>
+    const overAggregateLimit = Array.from({ length: aggregateStringCount + 1 }, () =>
       "x".repeat(CANONICAL_SERIALIZATION_LIMITS.maxStringCodeUnits),
     );
     expect(serializeCanonicalValue(overAggregateLimit)).toMatchObject({

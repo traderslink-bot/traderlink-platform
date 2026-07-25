@@ -1,7 +1,12 @@
 # Trader Intelligence v3 Legacy Hazard Register
 
-Date: 2026-07-19
-Gate: GA0-A3 temporal, manifest, eligibility, and query foundation
+Date: 2026-07-25
+Gate: GA0-B4 deterministic tool-runner proof closeout
+
+GA0-B3 is accepted at merge `e46d9fea331aeefc262a6dc7a187b5c73678b398`.
+GA0-B4 remains isolated and local-only; it does not retire legacy hazards or
+claim production readiness. The two registered tools are proof-only consumers
+of verified synthetic/B1 authority and are not wired to current routes.
 
 GA0-A1 is accepted and complete at
 `4f9e440116258c9548a2d13f7ea057a9075101c6`. GA0-A2 is independently accepted

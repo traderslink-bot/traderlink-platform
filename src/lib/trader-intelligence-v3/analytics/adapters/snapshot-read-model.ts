@@ -192,6 +192,12 @@ function finalizeDatasetDerivation(
   };
 }
 
+export function buildVerifiedAnalyticalDatasetDerivation(
+  dataset: AnalyticalDatasetReceipt,
+): ExactResult<DerivedAnalyticalDataset, SnapshotReadModelFailure> {
+  return finalizeDatasetDerivation(dataset);
+}
+
 export function getVerifiedDerivedAnalyticalDataset(
   receipt: AnalyticalDatasetDerivationReceipt,
 ): AnalyticalDatasetReceipt | null {

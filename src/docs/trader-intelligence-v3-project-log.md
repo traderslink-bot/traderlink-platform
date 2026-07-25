@@ -1,3 +1,13 @@
+## 2026-07-25 - GA0-B4 deterministic tool-runner proof closeout active
+
+- B3 is accepted at merge SHA `e46d9fea331aeefc262a6dc7a187b5c73678b398`.
+  B4 implementation is isolated from the dirty owner checkout on branch
+  `agent/trader-intelligence-v3-ga0-b4-proof-closeout`.
+- Current work is limited to the final two-tool registry, generic closed runner,
+  persisted semantic replay, artifact/evidence/diagnostic proof, fixed-seed
+  property and scale tests, verifier, and CI. Production and all AI/UI/market
+  surfaces remain deferred.
+
 ## 2026-07-24 - GA0-B3 final focused remediation in progress
 
 - Current re-audit findings head: `f5427b098b5e1f218b666c8c29b8603ad36b38a2`.

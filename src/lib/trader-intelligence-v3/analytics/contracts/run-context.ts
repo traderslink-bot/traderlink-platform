@@ -126,8 +126,9 @@ export function buildAnalysisRunContext(
   if (normalizedArguments.value.argumentSchemaDigest !== registryEntry.value.argumentSchemaDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.normalizedArguments.argumentSchemaDigest");
   if (!registryEntry.value.supportedTimezones.includes(filter.value.timezone)) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.canonicalFilter.timezone");
   if (!registryEntry.value.supportedCurrencies.includes(partition.value.currency)) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.partitionReceipt.currency");
+  const includedRowKeys = new Set(partition.value.includedRowKeys);
   const partitionRows = dataset.value.rows.filter((row) =>
-    partition.value.includedRowKeys.includes(row.semanticRoundTripKey));
+    includedRowKeys.has(row.semanticRoundTripKey));
   const rowProperty = (field: string): string => field.replace(/_([a-z])/g, (_match, letter: string) => letter.toUpperCase());
   if (
     registryEntry.value.requiredRowFields.some((field) =>

@@ -5,15 +5,15 @@ import type { ExactResult } from "../exact";
 import { parseCanonicalContentDigest, type CanonicalContentDigest } from "../identity";
 
 export const FOUNDATION_PAYLOAD_LIMITS = Object.freeze({
-  maxArrayItems: 10_000,
+  maxArrayItems: 25_000,
   maxObjectKeys: 128,
   maxStringLength: 4_096,
   maxPropertyKeyLength: 4_096,
   maxReasonCodes: 128,
   maxDepth: 64,
-  maxNodes: 65_536,
-  maxAggregateStringLength: 1_048_576,
-  maxTotalKeys: 16_384,
+  maxNodes: 2_000_000,
+  maxAggregateStringLength: 16_777_216,
+  maxTotalKeys: 500_000,
 });
 
 export type FoundationValidationFailureCode =
@@ -108,7 +108,7 @@ function inspectUnknown(value: unknown, path: string, context: InspectionContext
     }
   }
   context.keys += dataKeys.length;
-  if (dataKeys.length > FOUNDATION_PAYLOAD_LIMITS.maxObjectKeys || context.keys > FOUNDATION_PAYLOAD_LIMITS.maxTotalKeys) {
+  if ((!array && dataKeys.length > FOUNDATION_PAYLOAD_LIMITS.maxObjectKeys) || context.keys > FOUNDATION_PAYLOAD_LIMITS.maxTotalKeys) {
     context.active.delete(value);
     return validationFailure("ti_v3_validation_payload_oversized", path);
   }

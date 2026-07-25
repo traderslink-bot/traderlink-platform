@@ -539,7 +539,9 @@ function buildNonBlockedExecution(
   dataset: AnalyticalDatasetReceipt,
   partition: AnalyticalPartitionReceipt,
 ): DailyStopAnalysisExecutionWithoutAuthority {
-  const rows = dataset.rows.filter((row) => partition.includedRowKeys.includes(row.semanticRoundTripKey));
+  const includedRowKeys = new Set(partition.includedRowKeys);
+  const excludedCandidateKeys = new Set(partition.excludedCandidateKeys);
+  const rows = dataset.rows.filter((row) => includedRowKeys.has(row.semanticRoundTripKey));
   const groups = groupDailyStopSessions(rows);
   const candidateDecisions = groups.map((group) => simulateDailyStopSession(group, argumentsValue.consecutiveLossThreshold));
   const decisions = candidateDecisions.filter(isIncludedDailyStopSessionDecision);
@@ -548,7 +550,7 @@ function buildNonBlockedExecution(
   const sampleState = dailyStopSampleState(thresholdReached);
   const derivedLimitations = candidateDecisions.flatMap((decision) => decision.limitationCodes);
   const exclusionLimitations = dataset.excludedCandidates
-    .filter((candidate) => partition.excludedCandidateKeys.includes(candidate.candidateKey) && !isClaimNeutralAnalyticalExclusion(candidate))
+    .filter((candidate) => excludedCandidateKeys.has(candidate.candidateKey) && !isClaimNeutralAnalyticalExclusion(candidate))
     .flatMap((candidate) => [candidate.reasonCode, ...candidate.limitationCodes]);
   const sampleLimitations = sampleState === DAILY_STOP_SAMPLE_STATES.insufficient
     ? [DAILY_STOP_LIMITATION_CODES.thresholdSampleInsufficient]
@@ -677,7 +679,7 @@ function buildNonBlockedExecution(
   for (const code of globalLimitations) {
     const affectedDecisions = candidateDecisions.filter((decision) => decision.limitationCodes.includes(code));
     const affectedExclusions = dataset.excludedCandidates
-      .filter((candidate) => partition.excludedCandidateKeys.includes(candidate.candidateKey) && (candidate.reasonCode === code || candidate.limitationCodes.includes(code)))
+      .filter((candidate) => excludedCandidateKeys.has(candidate.candidateKey) && (candidate.reasonCode === code || candidate.limitationCodes.includes(code)))
       .map((candidate) => `daily_stop_excluded_${contentAddressedKey("excluded", { candidateKey: candidate.candidateKey }).slice("excluded_".length)}`);
     const affectedKeys = [...affectedDecisions.map(diagnosticEvidenceKey), ...affectedExclusions];
     diagnosticsEntries.push({
