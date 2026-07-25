@@ -76,8 +76,8 @@ export interface SyntheticGa0B1AuthorityOptions {
   }>;
 }
 
-function required<T>(result: { readonly ok: boolean; readonly value?: T; readonly error?: { readonly code: string } }): T {
-  if (!result.ok || result.value === undefined) throw new Error(result.error?.code ?? "ti_v3_synthetic_b1_fixture_failed");
+function required<T>(result: { readonly ok: boolean; readonly value?: T; readonly error?: { readonly code: string; readonly path?: string } }): T {
+  if (!result.ok || result.value === undefined) throw new Error(`${result.error?.code ?? "ti_v3_synthetic_b1_fixture_failed"}:${result.error?.path ?? "$"}`);
   return result.value;
 }
 
@@ -137,7 +137,7 @@ export function buildSyntheticGa0B1Authority(
     });
   }
   const priorInventory = [...priorInventoryMap.values()];
-  const manifest = required(buildDatasetManifest({
+  const manifestResult = buildDatasetManifest({
     canonicalOwnerKey: executions[0]?.content.canonicalOwnerKey ?? "owner_synthetic_primary",
     canonicalAccountKeys: accountKeys.length === 0 ? ["account_synthetic_primary"] : accountKeys,
     sourceDocuments,
@@ -162,7 +162,9 @@ export function buildSyntheticGa0B1Authority(
     coverageStates: ["complete_account_period"],
     reconstructionStatus: "exact",
     reconstructionReasonCodes: [],
-  }));
+  });
+  if (!manifestResult.ok) throw new Error(`ti_v3_synthetic_manifest_failed:${JSON.stringify(manifestResult.error)}`);
+  const manifest = manifestResult.value;
   const eligibilitySet = required(calculateManifestEligibility({
     manifest,
     retrospectivePolicy,

@@ -583,9 +583,10 @@ function buildNonBlockedExecution(
       "$.runContext",
     );
   }
+  const includedRowKeys = new Set(dependencies.partitionReceipt.includedRowKeys);
   const partitionRows = dependencies.datasetReceipt.rows
     .filter((row) =>
-      dependencies.partitionReceipt.includedRowKeys.includes(
+      includedRowKeys.has(
         row.semanticRoundTripKey,
       ))
     .sort((left, right) =>

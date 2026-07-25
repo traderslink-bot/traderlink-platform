@@ -116,6 +116,14 @@ export function buildAnalyticalEvidenceBundle(
   }
   const dependencies = getAnalysisRunContextDependencies(context.value);
   if (dependencies === null) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.runContext");
+  const includedRowKeys = new Set(dependencies.partitionReceipt.includedRowKeys);
+  const excludedCandidateKeys = new Set(dependencies.partitionReceipt.excludedCandidateKeys);
+  const rowsByKey = new Map(
+    dependencies.datasetReceipt.rows.map((row) => [row.semanticRoundTripKey, row]),
+  );
+  const exclusionsByKey = new Map(
+    dependencies.datasetReceipt.excludedCandidates.map((candidate) => [candidate.candidateKey, candidate]),
+  );
   const roundTripKeys = new Set<string>();
   const occurrenceKeys = new Set<string>();
   const limitationCodes = new Set<string>();
@@ -130,10 +138,10 @@ export function buildAnalyticalEvidenceBundle(
   const exclusionReasonAuthorities = new Map<string, AnalyticalEvidenceBundle["exclusionReasonAuthorities"][number]>();
   if (record.value.inclusionState === "included") {
     for (const candidateKey of candidateKeys.value) {
-      if (!dependencies.partitionReceipt.includedRowKeys.includes(candidateKey)) {
+      if (!includedRowKeys.has(candidateKey)) {
         return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.candidateKeys");
       }
-      const row = dependencies.datasetReceipt.rows.find((item) => item.semanticRoundTripKey === candidateKey);
+      const row = rowsByKey.get(candidateKey);
       if (row === undefined) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.candidateKeys");
       roundTripKeys.add(row.semanticRoundTripKey);
       row.supportingOccurrenceKeys.forEach((key) => occurrenceKeys.add(key));
@@ -141,10 +149,10 @@ export function buildAnalyticalEvidenceBundle(
     }
   } else {
     for (const candidateKey of candidateKeys.value) {
-      if (!dependencies.partitionReceipt.excludedCandidateKeys.includes(candidateKey)) {
+      if (!excludedCandidateKeys.has(candidateKey)) {
         return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.candidateKeys");
       }
-      const exclusion = dependencies.datasetReceipt.excludedCandidates.find((item) => item.candidateKey === candidateKey);
+      const exclusion = exclusionsByKey.get(candidateKey);
       if (exclusion === undefined) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.candidateKeys");
       if (exclusion.semanticRoundTripKey !== null) roundTripKeys.add(exclusion.semanticRoundTripKey);
       exclusion.relatedOccurrenceKeys.forEach((key) => occurrenceKeys.add(key));

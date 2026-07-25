@@ -1,12 +1,12 @@
 # Trader Intelligence Plan Entry Point
 
-**Last updated:** 2026-07-24 America/Toronto
+**Last updated:** 2026-07-25 America/Toronto
 **Active architecture:** Trader Intelligence v3  
 **Operating profile:** `private_owner_alpha`  
 **Operational hosting:** local owner testing  
 **Primary domain:** U.S. listed small-cap and micro-cap active trading  
 **Product boundary:** retrospective educational trade review and self-improvement  
-**Current gate:** GA0-B3 — final focused remediation active on draft PR #156; re-audit findings head `f5427b098b5e1f218b666c8c29b8603ad36b38a2`; B2 accepted and merged as `4338cab7d46b8a0548b22346f81b42db5fec3bf0`
+**Current gate:** GA0-B4 — deterministic tool-runner proof closeout active from B3 merge `e46d9fea331aeefc262a6dc7a187b5c73678b398`; draft PR pending creation from `agent/trader-intelligence-v3-ga0-b4-proof-closeout`
 **Active implementation plan:** `src/docs/trader-intelligence-v3-ga0-b-deterministic-proof-implementation-plan-2026-07-19.md`
 
 Start here when resuming Trader Intelligence product, analytics, simulation,
@@ -105,6 +105,10 @@ live signal engine, or automated broker.
 ---
 
 # 5. GA0-B — Deterministic proof
+
+Current slice: GA0-B4 deterministic tool-runner proof closeout. B3 was accepted
+and merged as `e46d9fea331aeefc262a6dc7a187b5c73678b398`; B4 is isolated from the
+dirty owner checkout and remains local-only until independent audit acceptance.
 
 GA0-B proves the complete deterministic answer path using two questions:
 

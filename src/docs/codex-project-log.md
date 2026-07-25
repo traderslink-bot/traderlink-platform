@@ -1,3 +1,18 @@
+# 2026-07-25 - GA0-B4 deterministic tool-runner proof closeout active
+
+- Started from `origin/main` at accepted B3 merge SHA
+  `e46d9fea331aeefc262a6dc7a187b5c73678b398` in the clean linked worktree
+  `agent/trader-intelligence-v3-ga0-b4-proof-closeout`; the dirty owner checkout
+  remains untouched.
+- Implementing the exact two-tool registry, closed generic runner, persisted
+  replay, cross-artifact consistency validator, evidence resolver, diagnostics,
+  fixed-seed tests, 10,000-row synthetic scale proof, focused verifier, and CI
+  integration. No UI, AI, market-data, broker, database, or deployment work is
+  in scope.
+- Resume point: complete executable verification, commit code/docs in the
+  requested split, push one draft PR, and stop for independent audit. Do not
+  merge, mark ready, resolve audit threads, deploy, or begin GA0-C.
+
 # 2026-07-25 - GA0-B3 final focused corrections active
 
 - Independent re-audit findings head is

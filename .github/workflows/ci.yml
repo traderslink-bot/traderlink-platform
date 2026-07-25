@@ -37,6 +37,9 @@ jobs:
       - name: Verify Trader Intelligence v3 private-data safety
         run: npm run verify:ti-v3:private-data
 
+      - name: Verify Trader Intelligence v3 GA0-B deterministic proof
+        run: npm run verify:ti-v3:ga0-b
+
       - name: Verify Layer 2
         run: npm run verify:layer2
 
