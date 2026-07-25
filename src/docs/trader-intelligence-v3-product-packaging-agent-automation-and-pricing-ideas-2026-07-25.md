@@ -1,11 +1,11 @@
-# Trader Intelligence v3 Product Packaging, Agent Automation, and Pricing Ideas
+# Trader Intelligence v3 Product Packaging, Agents, Simulation Bot, and Pricing Ideas
 
 **Date:** 2026-07-25 America/Toronto  
 **Status:** non-controlling product backlog and pricing hypotheses  
-**Scope:** future product packaging, automation, credits, agents, and launch ideas  
+**Scope:** future product packaging, AI credits, agents, simulation usage, and launch ideas  
 **Related direction:** `src/docs/trader-intelligence-v3-post-ga0-b-query-simulation-and-candle-direction-lock-2026-07-25.md`
 
-This document preserves owner-approved and exploratory product ideas for future reference. It does not change GA0-B4, authorize implementation, lock final prices, or replace later customer research, cost measurement, legal review, or product decisions.
+This document preserves owner-approved and exploratory product ideas for future reference. It does not change GA0-B4, authorize implementation, lock final prices, or replace later customer research, measured costs, legal review, or product decisions.
 
 ---
 
@@ -15,24 +15,24 @@ A practical initial structure is:
 
 1. one free non-AI plan;
 2. two paid plans at launch;
-3. an optional third premium paid plan later, after advanced automation and candle-dependent simulations are proven.
+3. an optional third premium paid plan later, after advanced AI and candle-dependent simulations are proven.
 
-The current working concept is:
+Working concept:
 
 | Plan | Working price | Product purpose |
 | --- | ---: | --- |
 | Free | `$0` | Useful journal, imports, deterministic analytics, and limited simulations without AI explanation |
-| Trader | approximately `$24/month` | AI questions, fuller analytics, evidence, simulations, and a limited automation allowance |
-| Pro | approximately `$49/month` | More AI usage, more automated reviews, more active rules, and deeper reports |
-| Elite, later | approximately `$79/month` | Heavy agent usage, advanced simulations, priority processing, and early access |
+| Trader | approximately `$24/month` | AI analytics questions, Coach access, Simulation Bot access, evidence, and moderate usage allowances |
+| Pro | approximately `$49/month` | More AI usage, more simulation capacity, deeper Coach reviews, more active rules, and richer reports |
+| Elite, later | approximately `$79/month` | Heavy agent and Simulation Bot usage, advanced simulations, priority processing, and early access |
 
-These are hypotheses, not final prices. Annual discounts, trial periods, entitlements, and exact allowances remain open decisions.
+These are hypotheses, not final prices. Annual discounts, trials, account limits, entitlements, overages, and exact allowances remain open decisions.
 
 ---
 
 ## 2. Core pricing principle
 
-> Analytics and deterministic calculations are included product capabilities. Credits pay for AI interpretation and automated AI work.
+> Analytics and deterministic calculations are included product capabilities. Credits pay for AI interpretation, planning, and generated coaching.
 
 Users should not feel charged merely for accessing their own trading records or running exact calculations.
 
@@ -49,8 +49,8 @@ Examples:
 - deterministic trade tags;
 - VWAP, EMA9, EMA20, MFE, MAE, and profit-giveback calculations;
 - evidence retrieval;
-- similar-trade filtering and scoring;
-- historical rule simulations;
+- similar-trade matching;
+- historical rule simulations and backtests over the user's own trades;
 - rule-compliance calculations.
 
 A point-and-click deterministic action can use zero AI credits.
@@ -62,31 +62,28 @@ A natural-language request may use a small model call to understand the question
 AI credits may be used for:
 
 - interpreting a natural-language question;
-- selecting approved query, evidence, analytics, and simulation capabilities;
+- creating a validated query or simulation plan;
+- selecting approved analytics, evidence, and simulation capabilities;
 - explaining deterministic results;
-- comparing several analyses;
-- producing an AI-written trade, session, weekly, or monthly review;
-- generating a concise journal narrative;
+- comparing several analyses or simulations;
+- producing an AI-written Coach review;
 - discussing counterexamples and limitations;
 - suggesting a historical rule candidate or follow-up analysis.
 
 The model does not calculate financial truth from raw rows or candles.
 
-### 2.3 Automation runs
+### 2.3 Simulation usage
 
-Automation runs represent jobs started without the user explicitly asking at that moment.
+Simulation Bot usage should be understandable and separate from ordinary analytics.
 
-Examples:
+Possible policies:
 
-- review an imported trading day;
-- auto-tag an import batch;
-- generate a daily journal entry;
-- generate a weekly or monthly review;
-- check active rule compliance;
-- detect a meaningful behavioral change;
-- run a scheduled deep rule analysis.
+- limited monthly simulations by plan;
+- unlimited simple simulations under fair use;
+- metered advanced target sweeps, multi-rule searches, or candle-heavy simulations;
+- AI credits charged only for natural-language planning and explanation, not for the deterministic simulation calculation itself.
 
-Do not charge one automation run per execution or per trade. One completed import/session review should normally count as one job.
+The exact model remains open until real compute and usage data are measured.
 
 ---
 
@@ -97,250 +94,238 @@ Possible launch allowances:
 | Capability | Free | Trader | Pro |
 | --- | ---: | ---: | ---: |
 | AI credits | none | approximately `500/month` | approximately `2,000/month` |
-| Automation runs | none | approximately `25/month` | approximately `150/month` |
 | Historical simulations | approximately `5/month` | approximately `100/month` | approximately `500/month` or fair-use |
 | Trading accounts | 1 | 2 | several or unlimited |
 | Core deterministic analytics | included | included | included |
 | Evidence-linked results | limited history | full | full |
-| Automatic import review | no | optional or limited | included |
-| Weekly review | no | included | included |
-| Monthly review | no | included | included |
+| Analytics Agent | no | included | included with higher allowance |
+| Coach Agent | no | periodic/on-demand | deeper and more frequent |
+| Simulation Bot | limited point-and-click | full standard library | advanced and higher-volume |
 | Active rule tracking | no or one rule | limited | broader |
 
-Exact credit values require real model-cost measurements and usage observation.
+Exact values require real model-cost and compute measurements.
 
-### 3.1 Possible credit weights
-
-A simple understandable model could be:
+### 3.1 Possible AI credit weights
 
 - simple question and explanation: `1` credit;
-- multi-part analysis: `3` credits;
-- deep trade or session review: `5` credits;
-- weekly AI report: `10` credits;
-- monthly AI report: `20` credits.
+- multi-part analytics request: `3` credits;
+- deep Coach review: `5` credits;
+- weekly Coach review: `10` credits;
+- monthly Coach review: `20` credits;
+- complex Simulation Bot comparison or optimization explanation: `3–10` credits depending on scope.
 
-The product should display cost before unusually expensive jobs.
-
-### 3.2 Possible automation weights
-
-- one imported-day review: `1` run;
-- one automatic batch tagging/review job: `1` run;
-- weekly review: `2` runs;
-- monthly review: `3` runs;
-- deep rule analysis: `3` runs;
-- large multi-rule comparison: `3–5` runs.
-
-These weights remain exploratory.
+The product should display expected cost before unusually expensive jobs.
 
 ---
 
 ## 4. Free-plan concept
 
-The free plan should still be genuinely useful and may include:
+The free plan should remain genuinely useful and may include:
 
 - CSV import and deterministic validation;
 - saved trades and reconstructed round trips;
 - core P/L and performance statistics;
 - basic filters, tables, and charts;
 - deterministic tags;
-- a limited date range or history window;
-- a small number of historical simulations;
-- no AI explanations or automatic AI reviews.
+- limited history or date range;
+- a small number of point-and-click historical simulations;
+- no AI explanations, Coach reviews, or natural-language Simulation Bot planning.
 
-The free plan can demonstrate the quality of the journal without creating significant model cost.
-
----
-
-## 5. Agent ideas
-
-### 5.1 Trade Auto-Tagging Agent
-
-Initial auto-tagging should begin with exact deterministic tags rather than uncertain setup labels.
-
-Possible tags:
-
-- long or short;
-- winner, loser, or flat;
-- weekday;
-- time-of-day bucket;
-- stock price range;
-- first, second, third, or later trade of the day;
-- trade after a completed win or loss;
-- repeated attempt on the same ticker;
-- holding-time range;
-- position size relative to the user's median;
-- above or below VWAP;
-- above or below EMA9 and EMA20;
-- unusually high profit giveback;
-- daily drawdown state;
-- user-defined rule followed or violated.
-
-Later, after setup classification is reliable, tags may include first pullback, high-of-day breakout, VWAP reclaim, failed breakout, and other setup candidates with confidence and user correction.
-
-Deterministic tags should not normally consume AI credits. AI may help explain or organize them.
-
-### 5.2 Import Review Agent
-
-Runs after a trade import or completed trading session.
-
-Possible output:
-
-- imported trade count;
-- exact net P/L and fees;
-- strongest and weakest trades;
-- later-trade performance;
-- repeated ticker attempts;
-- sizing changes after losses;
-- active-rule compliance;
-- data-quality limitations;
-- links to supporting and counterexample trades;
-- one historical simulation worth testing.
-
-The system should avoid claiming emotional intent as fact.
-
-### 5.3 Session Review Agent
-
-Creates an evidence-linked review for a day or session:
-
-- direct summary;
-- two to four strongest findings;
-- one strength to repeat;
-- one behavior or rule to review;
-- representative trades and counterexamples;
-- one suggested historical rule experiment;
-- concise next-session plan.
-
-### 5.4 Weekly Review Agent
-
-Possible sections:
-
-- week-over-week change;
-- strongest and weakest time of day;
-- price-range performance;
-- after-loss behavior;
-- position-size consistency;
-- repeated ticker attempts;
-- one strength;
-- one improvement priority;
-- active-rule progress;
-- one follow-up analysis.
-
-### 5.5 Monthly Review Agent
-
-Possible sections:
-
-- monthly performance and comparison with prior periods;
-- major changes in behavior or results;
-- outlier dependence;
-- setup and market-context breakdowns when available;
-- rule-experiment outcomes;
-- representative evidence;
-- recommended areas for the next month.
-
-### 5.6 Rule Monitor Agent
-
-Users may activate rules such as:
-
-- stop after two losses;
-- maximum three trades per day;
-- reduce size after a loss;
-- wait ten minutes before re-entry;
-- no new trades after a chosen time;
-- maximum attempts per ticker;
-- selected VWAP or EMA entry/exit constraints later.
-
-After each import, the system records:
-
-- whether the rule was applicable;
-- whether it was followed;
-- what trades were affected;
-- historical and prospective outcomes;
-- limitations and counterexamples.
-
-The agent explains the deterministic compliance result but does not invent it.
-
-### 5.7 Similar-Trade Review Agent
-
-Given a selected trade:
-
-- retrieve deterministic similar trades;
-- explain why they matched;
-- summarize outcomes;
-- identify conditions associated with better or worse results;
-- show counterexamples;
-- link to exact evidence.
-
-### 5.8 Rule Lab Agent
-
-Helps users define, run, compare, save, and prospectively track historical rules.
-
-It may:
-
-- translate plain language into a validated simulation plan;
-- compare selected rules;
-- explain days and trades helped or harmed;
-- disclose in-sample optimization;
-- help select one rule for future prospective tracking.
-
-It may not describe historical optimization as a proven future edge.
+The free plan demonstrates the quality of the journal without creating meaningful model cost.
 
 ---
 
-## 6. Automated journaling concept
+## 5. Simplified agent lineup
 
-Automated journaling is broader than automatic broker import. It may include:
+The product should avoid creating many small named agents. The preferred lineup is three clear experiences that share the same deterministic engines and evidence service.
+
+### 5.1 Analytics Agent
+
+Purpose:
+
+> Answer the user's questions about their trading data in plain language.
+
+Possible user questions:
+
+- What times of day am I least profitable?
+- How do I trade after a loss?
+- Show my results in stocks under $5.
+- Do my fourth and later trades perform worse?
+- Compare this month with last month.
+- Find trades similar to this losing trade.
+- Do I perform better above or below VWAP?
+- How do trades above EMA9 and EMA20 perform?
+
+The Analytics Agent:
+
+1. interprets the question;
+2. creates a validated query plan;
+3. calls the generic deterministic trade-query engine;
+4. retrieves exact supporting and counterexample trades;
+5. explains the verified result;
+6. discloses sample size, outlier sensitivity, and limitations.
+
+It must not receive unrestricted SQL or calculate financial truth itself.
+
+### 5.2 Coach Agent
+
+Purpose:
+
+> Proactively identify what deserves the trader's attention, rank it, and help turn evidence into an improvement plan.
+
+The Coach Agent may run after an import, on demand, weekly, or monthly.
+
+Possible responsibilities:
+
+- identify the largest performance leak;
+- identify the strongest repeatable condition;
+- detect whether an issue is improving or worsening;
+- rank findings by historical impact, confidence, recurrence, actionability, and user relevance;
+- show supporting trades and counterexamples;
+- recommend one historical rule worth testing;
+- provide a concise next-session focus;
+- track user feedback on whether a finding was useful.
+
+Initial execution-only Coach detectors may include:
+
+- weak weekday;
+- weak time window;
+- fourth-and-later trades underperform;
+- trades after losses underperform;
+- size increases after losses;
+- repeat ticker attempts underperform;
+- excessive daily trade count;
+- weak price range;
+- holding losers longer than winners;
+- long versus short imbalance;
+- position size outside the user's profitable range;
+- concentration in one ticker or one outlier;
+- strongest current edge.
+
+Later market-context detectors may include:
+
+- entries too far above or below VWAP;
+- performance above versus below VWAP;
+- EMA9/EMA20 context;
+- excessive MAE;
+- excessive MFE giveback;
+- early winner exits;
+- stopped-trade recovery;
+- profit-target or stop-rule opportunities.
+
+The Coach Agent should normally present only the few most useful findings, not every technically true observation.
+
+### 5.3 Simulation Bot
+
+Purpose:
+
+> Let users describe historical trading rules in plain language, run deterministic simulations and backtests, compare results, and save promising rules for prospective tracking.
+
+The user should not need to know internal tool names or construct exact parameters manually.
+
+Example requests:
+
+- What if I stopped after three trades each day?
+- What if I stopped after losing $500?
+- What if I waited ten minutes after a loss?
+- What if I sold half at 10% and moved the rest to break-even?
+- Which fixed profit target would have made March profitable?
+- Compare one full exit at 10% with three partial exits.
+- What if I reduced size by 50% after a loss?
+- What if I avoided entries more than 8% above VWAP?
+- What if I exited when price lost EMA9?
+
+The Simulation Bot:
+
+1. converts the request into a validated, versioned rule plan;
+2. clearly states assumptions before expensive or ambiguous runs;
+3. calls the deterministic counterfactual simulation engine;
+4. compares actual versus simulated results;
+5. shows trades and days helped or harmed;
+6. shows profitable trades removed and losing trades avoided;
+7. discloses exclusions, missing market data, slippage assumptions, and ambiguity;
+8. warns when a target sweep or rule search is in-sample optimization;
+9. lets the user save one rule for prospective tracking.
+
+#### Execution-only Simulation Bot capabilities
+
+- stop after N losses;
+- daily dollar or percentage drawdown limit;
+- stop after giving back part of peak realized daily profit;
+- maximum trades per day;
+- skip fourth-and-later trades;
+- wait after a loss;
+- limit repeat attempts;
+- time-of-day cutoff;
+- fixed or normalized position size;
+- reduce size after losses or drawdown;
+- include/exclude weekdays, price ranges, directions, or trade sequences.
+
+#### Candle-dependent Simulation Bot capabilities
+
+- full or partial exits at percentage targets;
+- multiple profit targets;
+- fixed R-multiple exits when risk authority exists;
+- break-even after target;
+- fixed, trailing, and MFE-based stops;
+- maximum holding time;
+- time-stop while underwater;
+- VWAP, EMA9, or EMA20 exits;
+- MFE giveback exits;
+- entry-distance filters from VWAP or session highs;
+- bounded target sweeps and multi-rule comparisons.
+
+#### Simulation integrity requirements
+
+Every candle-dependent result must disclose and version:
+
+- bar resolution;
+- target/stop intrabar ordering;
+- same-bar ambiguity policy;
+- gap-through behavior;
+- commissions and fees;
+- slippage;
+- liquidity assumptions;
+- partial-fill policy;
+- missing coverage;
+- halt handling where authoritative data exists;
+- excluded trades and quality state.
+
+Historical optimization must never be described as a proven future edge. A saved rule should be tracked prospectively before the product calls it validated for the user.
+
+---
+
+## 6. Shared deterministic foundation
+
+The three experiences should share one underlying architecture:
 
 ```text
-trades imported
-  -> deterministic reconstruction
-  -> deterministic tags
-  -> market context when available
-  -> active-rule checks
-  -> evidence-linked findings
-  -> optional AI narrative
-  -> saved journal entry
+verified trade database
+  -> generic query engine
+  -> evidence and similar-trade service
+  -> counterfactual simulation engine
+  -> Analytics Agent / Coach Agent / Simulation Bot
 ```
 
-### 6.1 Import journal entry
-
-Created for each imported trading day or session:
-
-- exact trade and execution counts;
-- P/L and costs;
-- data-quality state;
-- notable deterministic tags;
-- rule-compliance summary;
-- supporting trade links;
-- optional AI narrative.
-
-### 6.2 User control
-
-Users should be able to:
-
-- turn automatic reviews on or off;
-- choose daily, weekly, or monthly cadence;
-- choose which rules are monitored;
-- edit or delete AI-written journal text;
-- distinguish deterministic facts from AI interpretation;
-- inspect all evidence used.
+Named analytics and simulation tools remain governed presets or specialized semantic modules behind these experiences. Users should not need to know or request internal tool names.
 
 ---
 
-## 7. Suggested launch positioning
+## 7. Product positioning
 
-A possible product promise:
+Possible product promise:
 
-> Import your trades, and the journal organizes, analyzes, reviews, and tests them automatically—then lets you ask follow-up questions in plain English.
+> Ask questions when you want answers, let the Coach show you what deserves attention, and use the Simulation Bot to test what you should do differently.
 
 Potential differentiation:
 
-- broad natural-language questions over verified trade data;
+- natural-language questions over verified trade data;
 - exact evidence links for important conclusions;
-- automatic session and import reviews;
-- deterministic auto-tagging;
-- journal-based historical Rule Lab;
-- prospective rule monitoring;
-- transparent separation between calculations and AI interpretation.
+- a proactive Coach that ranks only the most useful findings;
+- a Simulation Bot for historical rule testing and prospective tracking;
+- deterministic calculations separated from AI explanation;
+- journal-based simulations tied to the user's actual entries and trades;
+- replay-safe market context for VWAP, EMA9, EMA20, MFE, MAE, and exit simulations.
 
 ---
 
@@ -350,10 +335,10 @@ Current rough planning assumption for an early 20-user beta:
 
 - safe AI budget: approximately `$100/month` total;
 - equivalent AI allowance risk: approximately `$5/user/month` at 20 users;
-- server/database/hosting estimate remains a separate future decision;
-- deterministic analytics should remain much cheaper than model-generated interpretation;
+- server, database, hosting, and market-data costs remain separate decisions;
+- deterministic analytics and simulations should remain much cheaper than model-generated interpretation;
 - cache repeated questions and results by dataset, filter, tool, and policy version;
-- use compact verified tool results rather than sending raw trade histories or candle arrays to the model.
+- send compact verified results to the model instead of raw trade histories or candle arrays.
 
 These numbers are not final pricing authority and must be replaced by measured usage.
 
@@ -365,44 +350,69 @@ These numbers are not final pricing authority and must be replaced by measured u
 
 - onboarding checklist and data-quality health screen;
 - saved questions and saved analyses;
-- pinned findings;
+- pinned Coach findings;
 - one-click evidence drill-down;
-- shareable private report export;
-- configurable daily review time;
-- notification when an import review is ready;
+- configurable Coach review cadence;
 - active-rule dashboard;
-- automation history and retry state;
-- user-visible AI/automation allowance meter;
-- admin cost and usage dashboard.
+- saved Simulation Bot scenarios;
+- side-by-side simulation comparisons;
+- prospective rule tracking;
+- user-visible AI and simulation allowance meter;
+- admin cost and usage dashboard;
+- private report export.
 
 ### Later
 
 - user corrections that improve deterministic mapping policies;
 - custom rule templates;
 - multi-account comparisons;
-- cohort or anonymized benchmark products only after explicit privacy design;
 - team or coach collaboration with user-approved evidence sharing;
-- strategy/setup classification after the deferred setup work is accepted;
+- setup classification after deferred setup work is accepted;
 - full market-universe backtesting as a separate advanced product surface;
 - premium report templates and exports;
-- API access for advanced users.
+- API access for advanced users;
+- anonymized benchmarks only after explicit privacy design.
 
 ---
 
-## 10. Open decisions
+## 10. Explicit simplification decision
+
+The product does not currently need separate named agents for:
+
+- journaling;
+- import review;
+- session review;
+- weekly review;
+- monthly review;
+- tagging;
+- rule monitoring;
+- similar-trade review.
+
+Those remain workflows, scheduled jobs, deterministic services, or views inside the Analytics Agent, Coach Agent, and Simulation Bot.
+
+The preferred public lineup is:
+
+1. **Analytics Agent** — answers questions;
+2. **Coach Agent** — proactively finds priorities;
+3. **Simulation Bot** — runs and explains historical simulations and backtests.
+
+---
+
+## 11. Open decisions
 
 Still undecided:
 
 - final plan names and prices;
-- exact credit and automation allowances;
-- whether simulations are unlimited under fair use or separately metered;
+- exact AI and simulation allowances;
+- whether simple simulations are unlimited under fair use;
+- which advanced simulations require higher tiers;
 - annual discounts;
 - overage purchases and credit rollover;
-- whether Trader includes automatic import review or reserves it for Pro;
 - account and broker limits;
 - report retention and export limits;
-- premium agent lineup;
-- final hosting, database, storage, and payment-provider choices;
-- exact model routing and cost controls.
+- whether Coach reviews are on demand, scheduled, or both by plan;
+- final hosting, database, storage, market-data, and payment-provider choices;
+- exact model routing and cost controls;
+- final public names for Analytics Agent, Coach Agent, and Simulation Bot.
 
 Future implementation plans should treat this file as a product-idea backlog, not an accepted technical specification.
