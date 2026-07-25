@@ -1,3 +1,19 @@
+# 2026-07-25 - GA1-A generic deterministic query gateway active
+
+- Started from accepted `main` at
+  `b640ba599a4b9604395d203b6224b45d9de21208` in the isolated Codex worktree;
+  the owner checkout remains untouched.
+- Active branch:
+  `agent/trader-intelligence-v3-ga1-a-generic-query-gateway`.
+- Scope is the closed query-plan DSL, accepted-authority read-only gateway,
+  generic executor, exact metrics, bounded evidence, semantic replay, focused
+  tests, CI verifier, ADR, and independent-audit handoff.
+- Local tests use small deterministic fixtures. At owner direction, the
+  10,000-row proof exists but is deliberately unrun locally; CI is the first
+  authorized scale run.
+- Stop after one draft PR. Do not merge, deploy, resolve audit threads, or
+  begin GA1-B/UI/model/simulation/candle work.
+
 # 2026-07-25 - GA0-B4 deterministic tool-runner proof closeout active
 
 - Started from `origin/main` at accepted B3 merge SHA

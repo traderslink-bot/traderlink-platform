@@ -40,6 +40,9 @@ jobs:
       - name: Verify Trader Intelligence v3 GA0-B deterministic proof
         run: npm run verify:ti-v3:ga0-b
 
+      - name: Verify Trader Intelligence v3 GA1-A generic query gateway
+        run: npm run verify:ti-v3:ga1-a
+
       - name: Verify Layer 2
         run: npm run verify:layer2
 

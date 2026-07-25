@@ -14,8 +14,10 @@ This addendum extends rather than rewrites the historical project log. Read it b
 - GA0-B1 is accepted and merged at `7d8d8e03826e4b877b22e9a2a68d381bb42e585d`.
 - GA0-B2 is accepted and merged at `4338cab7d46b8a0548b22346f81b42db5fec3bf0`.
 - GA0-B3 is accepted and merged through PR #156 at `e46d9fea331aeefc262a6dc7a187b5c73678b398`.
-- GA0-B4 remains the immediate required proof-closeout slice.
-- No B4 branch or PR existed when this direction was recorded.
+- GA0-B4 is accepted through PR #158 at
+  `608f0854d14a70bef1e2220e66f97289c0bcf9be`.
+- The post-B4 direction lock is merged through PR #157 at
+  `b640ba599a4b9604395d203b6224b45d9de21208`.
 
 ## Controlling post-B4 direction
 
@@ -71,11 +73,13 @@ The foundation was audited one slice at a time because exact truth and the first
 
 ## Immediate next action
 
-1. Implement GA0-B4 only from current accepted `main`.
-2. Keep the B4 PR draft and independently audited.
-3. After B4 merge, perform a short private owner-data calibration and prove the read-only data/market-data-relay contracts.
-4. Begin the generic query, evidence, and simulation program under the direction-lock document, applying this addendum's provider-neutral product language and same-day/historical routing correction.
-5. Do not begin setup detection or support/resistance work unless the owner explicitly supersedes this decision.
+1. Implement GA1-A, the generic deterministic query engine and read-only
+   validated gateway, from accepted `main`.
+2. Keep GA1-A domain-only: no UI, AI/model, simulation, candle, broker,
+   database-write, payment, auth, hosting, or deployment work.
+3. Publish one draft PR and stop for independent audit.
+4. Do not begin GA1-B, setup detection, or support/resistance work unless the
+   owner explicitly authorizes the next slice.
 
 ## PR #157 direction-lock closeout
 
