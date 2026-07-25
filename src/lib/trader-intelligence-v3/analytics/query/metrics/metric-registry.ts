@@ -126,6 +126,7 @@ export interface TradeQueryMetricDeclaration {
   readonly minimumSample: string;
   readonly unavailablePolicy: string;
   readonly unavailableConditions: readonly string[];
+  readonly unavailableReasonCodes: readonly string[];
   readonly limitationCodes: readonly string[];
   readonly evidencePolicy: "group_population_and_bounded_candidates";
   readonly orderingPolicy: "exact_numeric_then_group_identity";
@@ -225,10 +226,41 @@ const CHARGE_KEYS = new Set<TradeQueryMetricKey>(["signed_charges"]);
 const STREAK_KEYS = new Set<TradeQueryMetricKey>([
   "longest_winning_trade_streak", "longest_losing_trade_streak",
 ]);
+const WINNER_REQUIRED_KEYS = new Set<TradeQueryMetricKey>([
+  "average_winning_trade", "median_winning_trade", "average_win_loss_ratio",
+  "median_win_loss_ratio", "breakeven_win_rate", "average_winner_holding_time",
+  "median_winner_holding_time", "average_winner_entry_notional",
+  "median_winner_entry_notional", "largest_winner_contribution",
+  "net_pnl_excluding_largest_winner", "net_pnl_excluding_largest_winner_and_loser",
+]);
+const LOSER_REQUIRED_KEYS = new Set<TradeQueryMetricKey>([
+  "average_losing_trade", "median_losing_trade", "average_win_loss_ratio",
+  "median_win_loss_ratio", "breakeven_win_rate", "average_loser_holding_time",
+  "median_loser_holding_time", "average_loser_entry_notional",
+  "median_loser_entry_notional", "largest_loser_contribution",
+  "net_pnl_excluding_largest_loser", "net_pnl_excluding_largest_winner_and_loser",
+]);
+const NOTIONAL_AUTHORITY_KEYS = new Set<TradeQueryMetricKey>([
+  "average_entry_notional", "median_entry_notional", "maximum_entry_notional",
+  "average_winner_entry_notional", "average_loser_entry_notional",
+  "median_winner_entry_notional", "median_loser_entry_notional",
+  "return_on_entry_notional", "average_position_size", "median_position_size",
+]);
+const COUNT_DENOMINATOR_KEYS = new Set<TradeQueryMetricKey>([
+  "inclusion_rate", "exclusion_rate", "average_executions_per_trade",
+  "average_trades_per_trading_day", "long_trade_percentage",
+  "short_trade_percentage", "average_attempts_per_symbol",
+  "repeat_attempt_percentage", "win_rate", "loss_rate", "flat_rate",
+  "profitable_day_percentage", "losing_day_percentage", "flat_day_percentage",
+  "average_pnl", "expectancy", "average_daily_pnl", "average_winning_trade",
+  "average_losing_trade", "average_share_quantity", "average_entry_notional",
+  "average_winner_entry_notional", "average_loser_entry_notional",
+  "average_position_size",
+]);
 const ZERO_SAMPLE_ALLOWED_KEYS = new Set<TradeQueryMetricKey>([
   "candidate_count", "included_count", "excluded_count", "trading_day_count",
   "unique_account_count", "unique_symbol_count", "total_execution_count",
-  "total_trades", "long_trade_count", "short_trade_count",
+  "total_trades", "maximum_trades_per_trading_day", "long_trade_count", "short_trade_count",
   "repeat_attempt_trade_count", "gross_profit", "gross_loss", "gross_pnl",
   "signed_charges", "net_pnl", "win_count", "loss_count", "flat_count",
   "profitable_trading_day_count", "losing_trading_day_count",
@@ -314,15 +346,16 @@ function requiredDerivedSemanticsFor(key: TradeQueryMetricKey): readonly string[
 }
 
 function unavailablePolicyFor(key: TradeQueryMetricKey): string {
-  if (SHARE_KEYS.has(key) || key === "net_pnl_per_100_shares" ||
-    key.includes("notional") || key.endsWith("position_size")) {
-    return "ti_v3_query_required_authority_unavailable_or_zero_sample";
-  }
+  if (STREAK_KEYS.has(key)) return "available_zero_when_no_matching_streak";
   if (key === "profit_factor") return "ti_v3_query_profit_factor_zero_loss_denominator";
-  if (key === "largest_winner_contribution" || key === "net_pnl_excluding_largest_winner") return "ti_v3_query_no_winning_trade";
-  if (key === "largest_loser_contribution" || key === "net_pnl_excluding_largest_loser") return "ti_v3_query_no_losing_trade";
+  if (key === "largest_winner_contribution" || key === "net_pnl_excluding_largest_winner") {
+    return "ti_v3_query_no_winning_trade";
+  }
+  if (key === "largest_loser_contribution" || key === "net_pnl_excluding_largest_loser") {
+    return "ti_v3_query_no_losing_trade";
+  }
   if (ZERO_SAMPLE_ALLOWED_KEYS.has(key)) return "available_at_zero_population";
-  return "ti_v3_query_zero_sample_or_zero_denominator";
+  return "unavailable_with_declared_reason_code";
 }
 
 function unavailableConditionsFor(key: TradeQueryMetricKey): readonly string[] {
@@ -330,17 +363,36 @@ function unavailableConditionsFor(key: TradeQueryMetricKey): readonly string[] {
   const add = (...values: readonly string[]) => {
     for (const value of values) if (!conditions.includes(value)) conditions.push(value);
   };
-  if (!ZERO_SAMPLE_ALLOWED_KEYS.has(key)) add("zero_total_population");
-  if (key.includes("winner") || key.includes("winning")) add("no_winning_trade");
-  if (key.includes("loser") || key.includes("losing")) add("no_losing_trade");
-  if (SHARE_KEYS.has(key) || key === "net_pnl_per_100_shares") {
-    add("incomplete_share_quantity_authority", "zero_share_quantity_denominator");
-  }
-  if (key.includes("notional") || key.endsWith("position_size")) {
-    add("incomplete_entry_notional_authority", "zero_entry_notional_denominator");
-  }
-  if (RATIO_KEYS.has(key) && key !== "net_pnl_per_100_shares") add("zero_denominator");
+  if (!ZERO_SAMPLE_ALLOWED_KEYS.has(key) && !STREAK_KEYS.has(key)) add("zero_total_population");
+  if (WINNER_REQUIRED_KEYS.has(key)) add("no_winning_trade");
+  if (LOSER_REQUIRED_KEYS.has(key)) add("no_losing_trade");
+  if (SHARE_KEYS.has(key) || key === "net_pnl_per_100_shares") add("incomplete_share_quantity_authority");
+  if (NOTIONAL_AUTHORITY_KEYS.has(key)) add("incomplete_entry_notional_authority");
+  if (key === "net_pnl_per_100_shares") add("zero_total_share_quantity_denominator");
+  if (key === "return_on_entry_notional") add("zero_total_entry_notional_denominator");
+  if (key === "profit_factor") add("zero_total_loss_denominator");
   return Object.freeze(conditions);
+}
+
+function unavailableReasonCodesFor(key: TradeQueryMetricKey): readonly string[] {
+  const codes: string[] = [];
+  const add = (...values: readonly string[]) => {
+    for (const value of values) if (!codes.includes(value)) codes.push(value);
+  };
+  if (SHARE_KEYS.has(key) || key === "net_pnl_per_100_shares") add("ti_v3_query_required_authority_unavailable");
+  if (NOTIONAL_AUTHORITY_KEYS.has(key)) add("ti_v3_query_required_authority_unavailable");
+  if (key === "net_pnl_per_100_shares" || key === "return_on_entry_notional") add("ti_v3_query_zero_denominator");
+  if (key === "profit_factor") add("ti_v3_query_profit_factor_zero_loss_denominator");
+  if (key === "largest_winner_contribution" || key === "net_pnl_excluding_largest_winner") add("ti_v3_query_no_winning_trade");
+  if (key === "largest_loser_contribution" || key === "net_pnl_excluding_largest_loser") add("ti_v3_query_no_losing_trade");
+  if (COUNT_DENOMINATOR_KEYS.has(key)) add("ti_v3_weekday_zero_denominator");
+  if (!ZERO_SAMPLE_ALLOWED_KEYS.has(key) && !STREAK_KEYS.has(key) && !COUNT_DENOMINATOR_KEYS.has(key) &&
+    key !== "net_pnl_per_100_shares" && key !== "return_on_entry_notional" && key !== "profit_factor" &&
+    key !== "largest_winner_contribution" && key !== "net_pnl_excluding_largest_winner" &&
+    key !== "largest_loser_contribution" && key !== "net_pnl_excluding_largest_loser") {
+    add("ti_v3_query_zero_sample");
+  }
+  return Object.freeze(codes);
 }
 
 function buildDeclaration(key: TradeQueryMetricKey): TradeQueryMetricDeclaration {
@@ -363,12 +415,8 @@ function buildDeclaration(key: TradeQueryMetricKey): TradeQueryMetricDeclaration
     minimumSample: ZERO_SAMPLE_ALLOWED_KEYS.has(key) ? "0" : "1",
     unavailablePolicy: unavailablePolicyFor(key),
     unavailableConditions: unavailableConditionsFor(key),
-    limitationCodes: Object.freeze([
-      ...(ZERO_SAMPLE_ALLOWED_KEYS.has(key) ? [] : ["ti_v3_query_zero_sample"]),
-      ...(requiredDerivedSemanticsFor(key).some((value) => value.startsWith("complete_"))
-        ? ["ti_v3_query_required_authority_unavailable"]
-        : []),
-    ]),
+    unavailableReasonCodes: unavailableReasonCodesFor(key),
+    limitationCodes: unavailableReasonCodesFor(key),
     evidencePolicy: "group_population_and_bounded_candidates" as const,
     orderingPolicy: "exact_numeric_then_group_identity" as const,
     testKeys: Object.freeze([`ga1_a_metric_${key}`]),
@@ -422,7 +470,7 @@ export function verifyTradeQueryMetricDeclaration(
     "requiredFields", "requiredDerivedSemantics", "requiredAuthority", "populationRequirement", "unit",
     "currencyBehavior", "calculationPolicy", "aggregationBehavior",
     "compatibleGroupings", "compatibleFilters", "minimumSample",
-    "unavailablePolicy", "unavailableConditions", "limitationCodes", "evidencePolicy",
+    "unavailablePolicy", "unavailableConditions", "unavailableReasonCodes", "limitationCodes", "evidencePolicy",
     "orderingPolicy", "testKeys", "deprecationState", "metricDigest",
   ]);
   if (

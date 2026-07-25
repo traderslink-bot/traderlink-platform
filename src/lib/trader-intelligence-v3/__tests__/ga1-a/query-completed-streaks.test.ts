@@ -20,14 +20,14 @@ function metric(row: TradeQueryResultRow, key: string): ExactMetricValue {
   return found;
 }
 
-function buildCompletionChronologyFixture(reverseRows = false) {
+function buildCompletionChronologyFixture(reverseRows = false, reverseTieOrder = false) {
   const base = buildSyntheticQueryFixture();
   const template = base.derived.datasetReceipt.rows[0];
   const trades = [
-    { key: "completion_a", entry: "09:00:00", exit: "12:00:00", pnl: "4", direction: "long" as const },
+    { key: reverseTieOrder ? "completion_z" : "completion_a", entry: "09:00:00", exit: "12:00:00", pnl: "4", direction: "long" as const },
     { key: "completion_b", entry: "10:00:00", exit: "11:00:00", pnl: "-2", direction: "short" as const },
     { key: "completion_c", entry: "10:30:00", exit: "11:30:00", pnl: "-3", direction: "short" as const },
-    { key: "completion_d", entry: "11:15:00", exit: "12:00:00", pnl: "5", direction: "long" as const },
+    { key: reverseTieOrder ? "completion_a" : "completion_d", entry: "11:15:00", exit: "12:00:00", pnl: "-5", direction: "long" as const },
   ];
   const rows: AnalyticalRow[] = trades.map((trade, index) => {
     const { rowDigest: _rowDigest, ...content } = template;
@@ -111,7 +111,7 @@ describe("GA1-A completed-trade streak chronology", () => {
     });
     expect(aggregate, JSON.stringify(aggregate)).toMatchObject({ ok: true });
     if (!aggregate.ok) return;
-    expect(metric(aggregate.value.rows[0], "longest_winning_trade_streak")).toMatchObject({ value: "2" });
+    expect(metric(aggregate.value.rows[0], "longest_winning_trade_streak")).toMatchObject({ value: "1" });
     expect(metric(aggregate.value.rows[0], "longest_losing_trade_streak")).toMatchObject({ value: "2" });
 
     const grouped = executeTradeQuery({
@@ -126,9 +126,26 @@ describe("GA1-A completed-trade streak chronology", () => {
       metric(row, "longest_winning_trade_streak"),
       metric(row, "longest_losing_trade_streak"),
     ])).toMatchObject([
-      ["direction:long", { value: "2" }, { value: "0" }],
+      ["direction:long", { value: "1" }, { value: "1" }],
       ["direction:short", { value: "0" }, { value: "2" }],
     ]);
+  });
+
+  it("uses semantic round-trip keys to resolve mixed-outcome simultaneous exits", () => {
+    const firstKeyWins = buildCompletionChronologyFixture(false, false);
+    const firstKeyLoses = buildCompletionChronologyFixture(false, true);
+    const execute = (fixture: ReturnType<typeof buildCompletionChronologyFixture>) => executeTradeQuery({
+      source: fixture.source,
+      partitionReceipt: fixture.partition,
+      queryPlan: fixture.plan("aggregate"),
+    });
+    const first = execute(firstKeyWins);
+    const second = execute(firstKeyLoses);
+    expect(first, JSON.stringify(first)).toMatchObject({ ok: true });
+    expect(second, JSON.stringify(second)).toMatchObject({ ok: true });
+    if (!first.ok || !second.ok) return;
+    expect(metric(first.value.rows[0], "longest_losing_trade_streak")).toMatchObject({ value: "2" });
+    expect(metric(second.value.rows[0], "longest_losing_trade_streak")).toMatchObject({ value: "3" });
   });
 
   it("is invariant to source permutation for aggregate and grouped execution", () => {
