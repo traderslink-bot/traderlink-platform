@@ -14,16 +14,15 @@ This addendum extends rather than rewrites the historical project log. Read it b
 - GA0-B1 is accepted and merged at `7d8d8e03826e4b877b22e9a2a68d381bb42e585d`.
 - GA0-B2 is accepted and merged at `4338cab7d46b8a0548b22346f81b42db5fec3bf0`.
 - GA0-B3 is accepted and merged through PR #156 at `e46d9fea331aeefc262a6dc7a187b5c73678b398`.
-- GA0-B4 is accepted through PR #158 at
-  `608f0854d14a70bef1e2220e66f97289c0bcf9be`.
-- The post-B4 direction lock is merged through PR #157 at
-  `b640ba599a4b9604395d203b6224b45d9de21208`.
+- GA0-B4 is accepted and merged through PR #158 at `608f0854d14a70bef1e2220e66f97289c0bcf9be`.
+- The post-B4 direction lock is merged through PR #157 at `b640ba599a4b9604395d203b6224b45d9de21208`.
 
 ## Controlling post-B4 direction
 
-The controlling decision is:
+The controlling decisions are, in precedence order:
 
-`src/docs/trader-intelligence-v3-post-ga0-b-query-simulation-and-candle-direction-lock-2026-07-25.md`
+1. `src/docs/trader-intelligence-v3-market-data-source-and-levels-system-correction-2026-07-25.md` for market-data source selection, request routing, and unavailable-data behavior;
+2. `src/docs/trader-intelligence-v3-post-ga0-b-query-simulation-and-candle-direction-lock-2026-07-25.md` for the broader post-B4 query, evidence, simulation, market-context, and AI direction.
 
 After B4 acceptance, do not continue with one narrow named tool per major delivery. Build reusable deterministic engines and coherent capability packs.
 
@@ -35,7 +34,7 @@ The next program prioritizes:
 4. a generic counterfactual simulation engine;
 5. an execution-only rule-simulation pack;
 6. a minimal owner-facing query/evidence experience and owner-only AI explanation layer;
-7. a private-owner market-data relay and normalized candle authority;
+7. a Levels System market-data request boundary and normalized candle authority;
 8. VWAP, EMA9, EMA20, MFE/MAE, profit-giveback, and other replay-safe market-context features;
 9. candle-dependent profit-target, partial-exit, stop, trailing, break-even, and time-exit simulations.
 
@@ -48,18 +47,20 @@ Setup detection and support/resistance redesign are deferred.
 - The model does not receive unrestricted SQL or direct database authority.
 - The model does not calculate from raw rows or candles.
 - The read-only query gateway enforces owner/account scope, bounded query plans, currency separation, and evidence resolution.
-- The normal user-facing product describes this capability simply as **market data**. Users do not need to know which provider, relay, cache, or adapter supplied the candles.
-- Provider choice and relay mechanics are internal implementation details. Provider names may appear only in owner/admin diagnostics where they are useful for setup, coverage, or troubleshooting.
-- For the private beta, Yahoo supplies same-day intraday candles needed for trades analyzed on their execution date.
-- For the private beta, EODHD supplies earlier historical candles after the trading day.
-- Both sources are sufficient for the planned beta market-context features and journal-based simulations when their returned coverage passes the same normalized quality contract.
-- All provider responses pass through one provider-neutral normalization, validation, content-identity, coverage, and no-lookahead boundary before analytics consume them.
-- Provider credentials stay on the owner computer and are never sent to the browser, website database, model, Git, or logs.
-- The website and AI consume provider-neutral market-data status and normalized candle snapshots, not raw provider payloads or provider-specific assumptions.
+- The normal user-facing product describes candle capability simply as **market data**.
+- Trader Intelligence requests required candle data from the existing Levels System app.
+- The Levels System app obtains candle data from EODHD and returns normalized candle data or an explicit unavailable state.
+- Trader Intelligence does not use Yahoo and does not implement a Yahoo fallback.
+- Trader Intelligence does not independently switch between market-data providers.
+- EODHD credentials remain inside the Levels System app or its existing owner-controlled environment and are never sent to the browser, model, Git, logs, or ordinary Trader Intelligence storage.
+- All candle responses must pass one normalized validation, content-identity, coverage, quality, and no-lookahead boundary before analytics consume them.
+- A trade import and execution-only analytics remain available when candle data is delayed or unavailable.
+- When candle data is unavailable, candle-dependent features and simulations remain unavailable for that trade and the UI shows a small non-blocking note such as: “Market data is not available yet. Candle-based analysis will appear when the data becomes available.”
+- The system must not invent, estimate, interpolate, or silently substitute missing candle data.
 - Journal-based counterfactual backtesting over actual owner trades is in scope.
 - Full market-universe strategy backtesting remains a later separate product surface.
 
-This market-data routing decision supersedes any earlier wording that described EODHD as the source for same-day candles or Yahoo only as an optional fallback. It does not change the normalized candle authority, security boundaries, or deferred setup/support-resistance decisions.
+The market-data correction document supersedes every earlier statement that assigned any role to Yahoo, described provider fallback behavior, or placed candle retrieval directly inside Trader Intelligence.
 
 ## Pace decision
 
@@ -77,8 +78,15 @@ The foundation was audited one slice at a time because exact truth and the first
    validated gateway, from accepted `main`.
 2. Keep GA1-A domain-only: no UI, AI/model, simulation, candle, broker,
    database-write, payment, auth, hosting, or deployment work.
-3. Publish one draft PR and stop for independent audit.
-4. Do not begin GA1-B, setup detection, or support/resistance work unless the
+3. GA1-A does not require candle data and must not expand into the Levels
+   System or EODHD integration.
+4. Publish one draft PR and stop for independent audit.
+5. Preserve the Levels System/EODHD correction for the later market-context
+   and candle-dependent simulation slice.
+6. Before candle-dependent implementation, prove the bounded Trader
+   Intelligence-to-Levels System request, normalized response authority, and
+   unavailable-data UI state.
+7. Do not begin GA1-B, setup detection, or support/resistance work unless the
    owner explicitly authorizes the next slice.
 
 ## PR #157 direction-lock closeout
@@ -96,8 +104,8 @@ The foundation was audited one slice at a time because exact truth and the first
   `ffc985cca75022e919bab99ca7be5fb80f9a5f30`; its only conflict was a stale
   `plan.md` header, resolved by preserving this direction-lock branch's
   approved content.
-- The final PR #157 closeout remains documentation-only, records no feature
-  implementation, and is ready for merge after lightweight documentation
-  checks. The next authorized phase is a separate owner-approved
-  implementation task under this direction lock; no GA0-C or feature work is
-  implied by this closeout.
+- PR #157 was merged into `main` at
+  `b640ba599a4b9604395d203b6224b45d9de21208`.
+- The next authorized phase is the separately scoped GA1-A implementation. No
+  market-data, UI, AI/model, simulation-engine, setup, or support/resistance
+  implementation is implied by this documentation correction.
