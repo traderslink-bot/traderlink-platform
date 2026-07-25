@@ -18891,3 +18891,27 @@ Current best next step:
 
 - Open the PR for review, then deploy only after approval by merging to clean
   `main` and using the standard production Vercel workflow.
+
+# 2026-07-25 GA0-B4 remediation proof closeout
+
+- Remediated the existing draft PR #158 on branch
+  `agent/trader-intelligence-v3-ga0-b4-proof-closeout`; remediation base is
+  `b7370c77` and the tested executable head is `a3b25b0e`.
+- The scale proof now executes both registered tools over exactly 10,000
+  selected/analyzed USD rows in one supported partition. A separate two-row
+  mixed-currency fixture proves USD/EUR partitioning without counting either
+  fixture row toward scale.
+- Evidence resolution uses map/set-backed lookups with deterministic immutable
+  results; table evidence is scoped per table and receipt-envelope validation
+  remains independent from per-artifact validation.
+- Final local checkpoint passed: diff check, TypeScript, changed-path ESLint,
+  focused B4 (2 files / 9 tests), GA0-B verifier (7/7), GA0-A2 (14 files / 308
+  tests), architecture (445 files / 43 routes / 82 classified), private-data
+  safety (23,763 / 23,719 / 44), and build. Playwright, deploy, merge, ready,
+  audit-thread mutation, and GA0-C remain deliberately unrun/out of scope.
+
+Current best next step:
+
+- Push the executable and Markdown-only handoff commits, update the existing
+  PR #158 top-level handoff with exact heads and CI identifiers, leave it draft,
+  open, and unmerged, then stop for independent audit.

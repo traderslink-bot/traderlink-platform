@@ -53,20 +53,20 @@ disagreements fail the suite; B4 does not copy either financial algorithm.
 ## Scale proof
 
 The fixed seed is `0x4b344c`. The synthetic scale dataset contains exactly
-10,000 verified analytical rows over 20 UTC session dates with wins, losses,
-flats, charges inherited in the analytical row, and daily threshold-reaching
-patterns. It is a mixed-currency dataset: 100 USD rows form the selected,
-supported USD partition (five rows per date) and 9,900 EUR rows remain verified
-in the unselected second currency partition. This exercises both registered
-tools through the generic runner while keeping the selected proof population
-large enough to span all 20 sessions/weekdays and both daily-stop outcomes.
+10,000 selected/analyzed USD rows over 20 weekday UTC session dates with wins,
+losses, flats, charges inherited in the analytical row, and daily
+threshold-reaching patterns. Both registered tools execute against that same
+10,000-row supported partition. A separate two-row mixed-currency fixture
+proves partition separation: one USD row is included and one EUR row is
+excluded; neither row is counted toward the scale population.
 
 The scale test asserts row count, max-plus-one stable oversized rejection,
 table/row/claim/series/point/evidence/diagnostic bounds, serialized output
 size, and canonical identity stability after row permutation. It uses a
 generous 600-second elapsed-time budget and is not a microbenchmark. The final
-focused verifier measured 301.44 seconds on Node v24.11.0, Windows x64, with
-Vitest 4.1.4. The
+focused verifier scale stage measured 234.29 seconds total (229.48 seconds in
+tests), and the combined focused B4 command measured 301.16 seconds, on Node
+v24.11.0, Windows x64, with Vitest 4.1.4. The
 expensive runner call is made once; the permuted input rebuilds and compares the
 canonical dataset identity without duplicating the full analyzer call in the
 same test.
