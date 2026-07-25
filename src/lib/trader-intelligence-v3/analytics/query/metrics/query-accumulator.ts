@@ -51,6 +51,51 @@ export interface TradeQueryAccumulator {
   readonly daily: readonly QueryDailyAccumulator[];
   readonly winningStreakLengths: readonly string[];
   readonly losingStreakLengths: readonly string[];
+  readonly rowCount: string;
+  readonly netPnl: string;
+  readonly grossPnl: string;
+  readonly grossProfit: string;
+  readonly grossLoss: string;
+  readonly signedCharges: string;
+  readonly winningNetPnl: string;
+  readonly losingNetPnl: string;
+  readonly uniqueAccountCount: string;
+  readonly uniqueSymbolCount: string;
+  readonly dailyPnlValues: readonly string[];
+  readonly profitableDayCount: string;
+  readonly losingDayCount: string;
+  readonly flatDayCount: string;
+  readonly sortedNetValues: readonly string[];
+  readonly sortedWinningNetValues: readonly string[];
+  readonly sortedLosingNetValues: readonly string[];
+  readonly sortedDailyPnlValues: readonly string[];
+  readonly sortedDailyTradeCounts: readonly string[];
+  readonly sortedWinningStreakLengths: readonly string[];
+  readonly sortedLosingStreakLengths: readonly string[];
+  readonly sortedTradesPerSymbol: readonly string[];
+  readonly sortedShareQuantityValues: readonly string[];
+  readonly sortedEntryNotionalValues: readonly string[];
+  readonly sortedWinnerEntryNotionalValues: readonly string[];
+  readonly sortedLoserEntryNotionalValues: readonly string[];
+  readonly sortedHoldingSecondsValues: readonly string[];
+  readonly sortedWinnerHoldingSecondsValues: readonly string[];
+  readonly sortedLoserHoldingSecondsValues: readonly string[];
+  readonly maximumNetPnl: string | null;
+  readonly minimumNetPnl: string | null;
+  readonly maximumDailyPnl: string | null;
+  readonly minimumDailyPnl: string | null;
+  readonly maximumTradesPerDay: string | null;
+  readonly minimumTradesPerDay: string | null;
+  readonly maximumShareQuantity: string | null;
+  readonly maximumEntryNotional: string | null;
+  readonly minimumHoldingSeconds: string | null;
+  readonly maximumHoldingSeconds: string | null;
+  readonly largestWinnerNetPnl: string | null;
+  readonly largestLoserNetPnl: string | null;
+  readonly totalShareQuantity: string;
+  readonly totalEntryNotional: string;
+  readonly winnerEntryNotional: string;
+  readonly loserEntryNotional: string;
 }
 
 function sum(values: readonly string[]): string {
@@ -144,6 +189,18 @@ function buildDaily(rows: readonly QueryRowSemantics[]): readonly QueryDailyAccu
     }));
 }
 
+function ordered(values: readonly string[]): readonly string[] {
+  return Object.freeze([...values].sort(compareCanonicalDecimals));
+}
+
+function first(values: readonly string[]): string | null {
+  return values[0] ?? null;
+}
+
+function last(values: readonly string[]): string | null {
+  return values.at(-1) ?? null;
+}
+
 export function buildTradeQueryAccumulator(
   rowsInput: readonly QueryRowSemantics[],
   counts: QueryMetricCounts,
@@ -165,6 +222,7 @@ export function buildTradeQueryAccumulator(
   const winnerHoldingSecondsValues: string[] = [];
   const loserHoldingSecondsValues: string[] = [];
   const symbolCounts = new Map<string, number>();
+  const accountKeys = new Set<string>();
   let longCount = 0;
   let shortCount = 0;
   let repeatAttemptCount = 0;
@@ -174,6 +232,7 @@ export function buildTradeQueryAccumulator(
   let loserHoldingNanoseconds = BigInt("0");
 
   for (const item of rows) {
+    accountKeys.add(item.row.canonicalAccountKey);
     if (item.outcome === "gain") wins.push(item);
     else if (item.outcome === "loss") losses.push(item);
     else flats.push(item);
@@ -217,6 +276,30 @@ export function buildTradeQueryAccumulator(
     }
   }
   const streaks = buildStreaks(rows);
+  const netValues = Object.freeze(rows.map((item) => item.row.netPnl));
+  const grossValues = Object.freeze(rows.map((item) => item.row.grossPnl));
+  const chargeValues = Object.freeze(rows.map((item) => item.row.signedCharges));
+  const daily = buildDaily(rows);
+  const dailyPnlValues = Object.freeze(daily.map((day) => day.netPnl));
+  const profitableDayCount = daily.filter((day) => compareCanonicalDecimals(day.netPnl, "0") > 0).length;
+  const losingDayCount = daily.filter((day) => compareCanonicalDecimals(day.netPnl, "0") < 0).length;
+  const flatDayCount = daily.length - profitableDayCount - losingDayCount;
+  const tradesPerSymbol = Object.freeze([...symbolCounts.values()].map(String));
+  const sortedNetValues = ordered(netValues);
+  const sortedWinningNetValues = ordered(wins.map((item) => item.row.netPnl));
+  const sortedLosingNetValues = ordered(losses.map((item) => item.row.netPnl));
+  const sortedDailyPnlValues = ordered(dailyPnlValues);
+  const sortedDailyTradeCounts = ordered(daily.map((day) => day.tradeCount));
+  const sortedWinningStreakLengths = ordered(streaks.winning);
+  const sortedLosingStreakLengths = ordered(streaks.losing);
+  const sortedTradesPerSymbol = ordered(tradesPerSymbol);
+  const sortedShareQuantityValues = ordered(shareQuantityValues);
+  const sortedEntryNotionalValues = ordered(entryNotionalValues);
+  const sortedWinnerEntryNotionalValues = ordered(winnerEntryNotionalValues);
+  const sortedLoserEntryNotionalValues = ordered(loserEntryNotionalValues);
+  const sortedHoldingSecondsValues = ordered(holdingSecondsValues);
+  const sortedWinnerHoldingSecondsValues = ordered(winnerHoldingSecondsValues);
+  const sortedLoserHoldingSecondsValues = ordered(loserHoldingSecondsValues);
   return Object.freeze({
     rows,
     counts,
@@ -228,11 +311,11 @@ export function buildTradeQueryAccumulator(
     shortCount: String(shortCount),
     repeatAttemptCount: String(repeatAttemptCount),
     totalExecutionCount: String(totalExecutionCount),
-    netValues: Object.freeze(rows.map((item) => item.row.netPnl)),
-    grossValues: Object.freeze(rows.map((item) => item.row.grossPnl)),
+    netValues,
+    grossValues,
     grossProfitValues: Object.freeze(grossProfitValues),
     grossLossValues: Object.freeze(grossLossValues),
-    chargeValues: Object.freeze(rows.map((item) => item.row.signedCharges)),
+    chargeValues,
     shareQuantityValues: Object.freeze(shareQuantityValues),
     entryNotionalValues: Object.freeze(entryNotionalValues),
     winnerShareQuantityValues: Object.freeze(winnerShareQuantityValues),
@@ -245,9 +328,54 @@ export function buildTradeQueryAccumulator(
     totalHoldingNanoseconds,
     winnerHoldingNanoseconds,
     loserHoldingNanoseconds,
-    tradesPerSymbol: Object.freeze([...symbolCounts.values()].map(String)),
-    daily: buildDaily(rows),
+    tradesPerSymbol,
+    daily,
     winningStreakLengths: streaks.winning,
     losingStreakLengths: streaks.losing,
+    rowCount: String(rows.length),
+    netPnl: sum(netValues),
+    grossPnl: sum(grossValues),
+    grossProfit: sum(grossProfitValues),
+    grossLoss: sum(grossLossValues),
+    signedCharges: sum(chargeValues),
+    winningNetPnl: sum(sortedWinningNetValues),
+    losingNetPnl: sum(sortedLosingNetValues),
+    uniqueAccountCount: String(accountKeys.size),
+    uniqueSymbolCount: String(symbolCounts.size),
+    dailyPnlValues,
+    profitableDayCount: String(profitableDayCount),
+    losingDayCount: String(losingDayCount),
+    flatDayCount: String(flatDayCount),
+    sortedNetValues,
+    sortedWinningNetValues,
+    sortedLosingNetValues,
+    sortedDailyPnlValues,
+    sortedDailyTradeCounts,
+    sortedWinningStreakLengths,
+    sortedLosingStreakLengths,
+    sortedTradesPerSymbol,
+    sortedShareQuantityValues,
+    sortedEntryNotionalValues,
+    sortedWinnerEntryNotionalValues,
+    sortedLoserEntryNotionalValues,
+    sortedHoldingSecondsValues,
+    sortedWinnerHoldingSecondsValues,
+    sortedLoserHoldingSecondsValues,
+    maximumNetPnl: last(sortedNetValues),
+    minimumNetPnl: first(sortedNetValues),
+    maximumDailyPnl: last(sortedDailyPnlValues),
+    minimumDailyPnl: first(sortedDailyPnlValues),
+    maximumTradesPerDay: last(sortedDailyTradeCounts),
+    minimumTradesPerDay: first(sortedDailyTradeCounts),
+    maximumShareQuantity: last(sortedShareQuantityValues),
+    maximumEntryNotional: last(sortedEntryNotionalValues),
+    minimumHoldingSeconds: first(sortedHoldingSecondsValues),
+    maximumHoldingSeconds: last(sortedHoldingSecondsValues),
+    largestWinnerNetPnl: last(sortedWinningNetValues),
+    largestLoserNetPnl: first(sortedLosingNetValues),
+    totalShareQuantity: sum(shareQuantityValues),
+    totalEntryNotional: sum(entryNotionalValues),
+    winnerEntryNotional: sum(winnerEntryNotionalValues),
+    loserEntryNotional: sum(loserEntryNotionalValues),
   });
 }

@@ -121,6 +121,80 @@ describe("GA1-A deterministic query-plan contract", () => {
     });
   });
 
+  it("accepts exactly every canonical filter identity and rejects the seventeenth", () => {
+    const fixture = buildSyntheticQueryFixture();
+    const filters = [
+      { kind: "date_range", startDate: "2026-07-01", endDate: "2026-07-07" },
+      { kind: "account", values: [fixture.authority.partitionReceipt.accountScope[0]] },
+      { kind: "symbol", values: ["instrument_alpha"] },
+      { kind: "direction", values: ["long"] },
+      { kind: "currency", value: fixture.plan().authority.currency },
+      { kind: "realized_outcome", values: ["gain"] },
+      { kind: "weekday", values: ["monday"] },
+      { kind: "entry_time_range", startTime: "09:30:00", endTime: "15:59:59" },
+      { kind: "exit_time_range", startTime: "09:30:00", endTime: "15:59:59" },
+      { kind: "entry_price_range", minimum: "1", maximum: "3" },
+      { kind: "sequence_in_session", minimum: "1", maximum: "99" },
+      { kind: "previous_completed_outcome", values: ["none", "gain", "loss", "flat", "ambiguous"] },
+      { kind: "holding_time_seconds", minimum: "0", maximum: "9999" },
+      { kind: "repeat_attempt", minimum: "1", maximum: "99" },
+      { kind: "share_quantity_range", minimum: "1", maximum: "9999" },
+      { kind: "entry_notional_range", minimum: "1", maximum: "999999" },
+    ] as const;
+    expect(filters).toHaveLength(TRADE_QUERY_LIMITS.maximumFilters);
+    expect(buildTradeQueryPlan(fixture.plan({ filters }), fixture.authority)).toMatchObject({ ok: true });
+    expect(buildTradeQueryPlan(fixture.plan({
+      filters: [...filters, { kind: "currency", value: fixture.plan().authority.currency }],
+    }), fixture.authority)).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_analytics_contract_oversized" },
+    });
+  });
+
+  it("rejects redundant and contradictory ordering targets", () => {
+    const fixture = buildSyntheticQueryFixture();
+    const canonical = buildTradeQueryPlan(fixture.plan({
+      ordering: [
+        { by: "metric", metricKey: "net_pnl", direction: "descending" },
+        { by: "group_identity", metricKey: null, direction: "ascending" },
+      ],
+    }), fixture.authority);
+    const canonicalAgain = buildTradeQueryPlan(fixture.plan({
+      ordering: [
+        { by: "metric", metricKey: "net_pnl", direction: "descending" },
+        { by: "group_identity", metricKey: null, direction: "ascending" },
+      ],
+    }), fixture.authority);
+    expect(canonical).toMatchObject({ ok: true });
+    expect(canonicalAgain).toMatchObject({ ok: true });
+    if (canonical.ok && canonicalAgain.ok) {
+      expect(canonical.value.queryPlanDigest).toBe(canonicalAgain.value.queryPlanDigest);
+    }
+    for (const ordering of [
+      [
+        { by: "metric", metricKey: "net_pnl", direction: "ascending" },
+        { by: "metric", metricKey: "net_pnl", direction: "ascending" },
+      ],
+      [
+        { by: "metric", metricKey: "net_pnl", direction: "ascending" },
+        { by: "metric", metricKey: "net_pnl", direction: "descending" },
+      ],
+      [
+        { by: "group_identity", metricKey: null, direction: "ascending" },
+        { by: "group_identity", metricKey: null, direction: "ascending" },
+      ],
+      [
+        { by: "group_identity", metricKey: null, direction: "ascending" },
+        { by: "group_identity", metricKey: null, direction: "descending" },
+      ],
+    ] as const) {
+      expect(buildTradeQueryPlan(fixture.plan({ ordering }), fixture.authority)).toMatchObject({
+        ok: false,
+        error: { code: "ti_v3_analytics_contract_duplicate_identity" },
+      });
+    }
+  });
+
   it("assigns identical identity to equivalent normalized plans", () => {
     const fixture = buildSyntheticQueryFixture();
     const first = buildTradeQueryPlan(fixture.plan({

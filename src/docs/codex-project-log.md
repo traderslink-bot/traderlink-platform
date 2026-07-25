@@ -18974,3 +18974,23 @@ Current best next step:
 - Finish static contract/test inspection, run the deferred final verification
   cadence, and publish an executable head plus later Markdown-only handoff.
   Keep PR #160 draft/open/unmerged/undeployed and do not begin GA1-B.
+
+# 2026-07-25 GA1-A independent re-audit remediation in progress
+
+- PR #160 remains the sole draft, open, unmerged, and undeployed delivery
+  boundary. Existing review threads remain untouched.
+- Remediation scope: executor-issued verified-result capability for comparison,
+  comparison reconstruction verification, result metric-plan/unit/currency
+  binding, explicit metric-declaration families, cached accumulator totals and
+  sorted inventories, 16 reachable canonical filters, and duplicate ordering
+  rejection.
+- Final verification cadence: one combined GA1-A focused suite after the full
+  remediation, then one 10,000-row scale proof, then architecture and
+  private-data guards. Do not duplicate unrelated legacy verification locally.
+
+Current best next step:
+
+- Complete focused remediation verification, the scale proof, and guards; then
+  push one executable remediation commit and a later Markdown-only independent
+  re-audit handoff. Keep PR #160 draft/open/unmerged/undeployed and do not
+  begin GA1-B.

@@ -4,6 +4,7 @@ import {
   buildSyntheticQueryFixture,
   buildTradeQueryComparison,
   executeTradeQuery,
+  verifyTradeQueryComparison,
   type ExactMetricValue,
   type TradeQueryMetricKey,
   type TradeQueryResult,
@@ -217,9 +218,15 @@ describe("GA1-A expanded execution-only statistics", () => {
       JSON.parse(JSON.stringify(baseline.result)),
       target.fixture.authority,
     )).toMatchObject({
-      ok: true,
-      value: { comparisonDigest: comparison.value.comparisonDigest },
+      ok: false,
+      error: { path: "$.comparison.verifiedExecutions" },
     });
+    expect(verifyTradeQueryComparison(
+      JSON.parse(JSON.stringify(comparison.value)),
+      target.result,
+      baseline.result,
+      target.fixture.authority,
+    )).toMatchObject({ ok: true, value: { comparisonDigest: comparison.value.comparisonDigest } });
     const zeroBaseline = execute(selected, "2026-07-06", "2026-07-06");
     const zeroComparison = buildTradeQueryComparison(
       target.result,

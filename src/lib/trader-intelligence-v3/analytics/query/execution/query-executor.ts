@@ -27,6 +27,7 @@ import {
   metricSortValue,
 } from "../metrics/query-metrics";
 import { buildQueryRowSemantics } from "./row-semantics";
+import { markVerifiedTradeQueryExecution } from "./verified-execution";
 
 export const TRADE_QUERY_EXECUTOR_KEY = "ti_v3_generic_trade_query_executor" as const;
 export const TRADE_QUERY_EXECUTOR_VERSION = "v1" as const;
@@ -244,7 +245,7 @@ export function executeTradeQuery(
     if (BigInt(boundedExcludedKeys.length) >= BigInt(plan.value.limits.totalEvidenceLimit)) break;
     boundedExcludedKeys.push(key);
   }
-  return buildTradeQueryResult({
+  const result = buildTradeQueryResult({
     schemaVersion: "ti_v3_trade_query_result_v1",
     runContext: Object.freeze({
       executorKey: TRADE_QUERY_EXECUTOR_KEY,
@@ -262,4 +263,7 @@ export function executeTradeQuery(
     limitationCodes: Object.freeze(limitationCodes),
     diagnostics: Object.freeze(diagnostics),
   });
+  return result.ok
+    ? { ok: true, value: markVerifiedTradeQueryExecution(result.value) }
+    : result;
 }

@@ -372,8 +372,10 @@ without an explicit owner decision.
 
 # 11. Immediate next action
 
-1. Complete the authorized GA1-A audit remediation and execution-only
-   statistics expansion on existing draft PR #160.
+1. Complete the independent GA1-A re-audit remediation on existing draft PR
+   #160: verified-execution-only comparisons, comparison reconstruction,
+   truthful declarations, cached accumulator projections, reachable filter
+   capacity, and canonical ordering validation.
 2. Preserve grouped candidate/included/excluded authority, deterministic
    result-row bounding, evidence binding, the versioned metric registry, shared
    accumulators, exact comparison, replay, and the final scale proof.

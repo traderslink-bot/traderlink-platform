@@ -37,7 +37,9 @@ export const TRADE_QUERY_PLAN_KEY = "generic_deterministic_trade_query" as const
 export const TRADE_QUERY_PLAN_SEMANTIC_VERSION = "v1" as const;
 
 export const TRADE_QUERY_LIMITS = Object.freeze({
-  maximumFilters: 18,
+  // Aliases normalize to canonical filters, leaving 16 independently
+  // selectable filter identities. The public capacity reflects that inventory.
+  maximumFilters: 16,
   maximumMetrics: 64,
   maximumOrderings: 3,
   maximumGroups: 256,
@@ -546,6 +548,7 @@ function normalizePlanContent(
     return contractFailure("ti_v3_analytics_contract_oversized", "$.ordering");
   }
   const ordering: TradeQueryOrdering[] = [];
+  const orderingTargets = new Set<string>();
   for (let index = 0; index < record.value.ordering.length; index += 1) {
     const path = `$.ordering[${index}]`;
     const item = validateContractRecord(record.value.ordering[index], ["by", "metricKey", "direction"], [], path);
@@ -556,6 +559,13 @@ function normalizePlanContent(
       (item.value.by === "group_identity" && item.value.metricKey !== null) ||
       (item.value.by === "metric" && (typeof item.value.metricKey !== "string" || !metrics.value.includes(item.value.metricKey)))
     ) return failure(path);
+    const orderingTarget = item.value.by === "group_identity"
+      ? "group_identity"
+      : `metric:${item.value.metricKey}`;
+    if (orderingTargets.has(orderingTarget)) {
+      return contractFailure("ti_v3_analytics_contract_duplicate_identity", path);
+    }
+    orderingTargets.add(orderingTarget);
     ordering.push(Object.freeze(item.value as unknown as TradeQueryOrdering));
   }
   const limitsRecord = validateContractRecord(record.value.limits, [

@@ -68,11 +68,14 @@ deterministic, canonical, lower-inclusive and upper-exclusive, with an open
 final bucket. Empty buckets are omitted.
 
 The content-addressed execution-only metric registry contains 86 active v1
-declarations. Every declaration binds purpose, required fields and authority,
-unit/currency behavior, exact calculation and aggregation policy, compatible
-filters/groupings, sample and unavailable policy, limitations, evidence,
-ordering, test keys, deprecation state, and declaration digest. A query may
-select at most 64 metrics.
+declarations. Every declaration binds purpose, exact source fields, required
+derived semantics, authority, unit/currency behavior, exact calculation and
+aggregation policy, compatible canonical filters/groupings, sample and
+unavailable policy, limitations, evidence, ordering, test keys, deprecation
+state, and declaration digest. Declarations use explicit metric families for
+gross P/L, charges, daily paths, direction, repeat chronology, outcome,
+duration, quantity, and notional authority; they are not inferred from a broad
+name fallback. A query may select at most 64 metrics.
 
 The foundational projections cover population/coverage, activity, core
 financials, outcome quality, holding time, share quantity, entry notional,
@@ -104,9 +107,12 @@ adds `ti_v3_query_result_rows_bounded`; it does not silently relabel a rejected
 query.
 
 `ti_v3_trade_query_comparison_v1` compares two separately validated aggregate
-executions over the same partition/currency authority. It preserves both exact
-populations and evidence identities, emits exact differences, and emits
-percentage differences only for a non-zero numeric baseline.
+executions over the same partition/currency authority. A comparison accepts
+only executor-issued verified-execution capabilities, not structurally valid
+or re-digested caller objects. Persisted comparisons reconstruct against those
+two verified executions before their comparison digest is accepted. It preserves
+both exact populations and evidence identities, emits exact differences, and
+emits percentage differences only for a non-zero numeric baseline.
 
 ## Evidence and replay
 
@@ -126,7 +132,7 @@ authorities, evidence, results, policies, receipts, or digests fail.
 
 | Boundary | Maximum |
 | --- | ---: |
-| filters | 18 |
+| canonical filters | 16 |
 | registered metrics | 86 |
 | selected metrics per query | 64 |
 | orderings | 3 |
@@ -139,10 +145,14 @@ authorities, evidence, results, policies, receipts, or digests fail.
 | serialized result | 1,048,576 code units |
 
 The executor uses a session/completion sweep, one filter pass, group assignment,
-one shared accumulator pass per emitted group, registry projections, canonical
-group ordering, and bounded evidence. Target behavior is approximately
+one shared accumulator pass per emitted group, cached reusable totals,
+classifications, extrema, and sorted value inventories, registry projections,
+canonical group ordering, and bounded evidence. The formerly documented target
 `O(R + G log G + M × G + E)`, aside from accepted authority verification and
-bounded median sorts. All contract maxima fail closed at max-plus-one.
+That former linear target is superseded by
+`O(R log R + G log G + M x G + E)`: sorting occurs once per accumulated value
+inventory, not once per selected metric. All contract maxima fail closed at
+max-plus-one.
 
 ## Explicit exclusions and future boundary
 

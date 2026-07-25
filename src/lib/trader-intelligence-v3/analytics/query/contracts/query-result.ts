@@ -20,6 +20,7 @@ import {
   type TradeQueryPlan,
 } from "./query-plan";
 import { TRADE_QUERY_LIMITS } from "./query-plan";
+import { getTradeQueryMetricDeclaration } from "../metrics/metric-registry";
 
 export const TRADE_QUERY_RESULT_VERSION = "ti_v3_trade_query_result_v1" as const;
 export const TRADE_QUERY_EXECUTION_RECEIPT_VERSION = "ti_v3_trade_query_execution_receipt_v1" as const;
@@ -220,9 +221,30 @@ export function verifyTradeQueryResultShape(
       };
     }
     const verifiedMetrics: ExactMetricValue[] = [];
+    if (row.value.metrics.length !== plan.value.metrics.length) {
+      return {
+        ok: false,
+        error: { code: "ti_v3_analytics_contract_reference_mismatch", path: `${path}.metrics` },
+      };
+    }
     for (let metricIndex = 0; metricIndex < row.value.metrics.length; metricIndex += 1) {
       const metric = verifyExactMetricValue(row.value.metrics[metricIndex]);
       if (!metric.ok) return metric;
+      const expectedKey = plan.value.metrics[metricIndex];
+      const declaration = getTradeQueryMetricDeclaration(expectedKey);
+      const expectedCurrency = declaration.currencyBehavior === "selected_partition"
+        ? plan.value.authority.currency
+        : null;
+      if (
+        metric.value.metricKey !== expectedKey ||
+        metric.value.unit !== declaration.unit ||
+        metric.value.currency !== expectedCurrency
+      ) {
+        return {
+          ok: false,
+          error: { code: "ti_v3_analytics_contract_reference_mismatch", path: `${path}.metrics[${metricIndex}]` },
+        };
+      }
       verifiedMetrics.push(metric.value);
     }
     const countMetric = (key: string) => verifiedMetrics.find((metric) =>

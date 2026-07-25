@@ -1,4 +1,7 @@
-import { compareUnicodeCodePoints } from "../../../domain/canonical";
+import {
+  compareUnicodeCodePoints,
+  serializeCanonicalValue,
+} from "../../../domain/canonical";
 import {
   createExactRatio,
   decimalToExactRatio,
@@ -8,6 +11,8 @@ import {
 import type { CanonicalContentDigest } from "../../../domain/identity";
 import {
   finalizeContentAddressedAuthority,
+  validateClaimedDigest,
+  validateContractRecord,
   type AnalyticalContractFailure,
   type ExactMetricValue,
 } from "../../contracts";
@@ -22,6 +27,7 @@ import {
   type TradeQueryResult,
 } from "./query-result";
 import type { TradeQueryAuthority } from "./query-plan";
+import { isVerifiedTradeQueryExecution } from "../execution/verified-execution";
 
 export const TRADE_QUERY_COMPARISON_VERSION =
   "ti_v3_trade_query_comparison_v1" as const;
@@ -158,6 +164,18 @@ export function buildTradeQueryComparison(
   const baseline = verifyTradeQueryResultShape(baselineInput, authority);
   if (!baseline.ok) return baseline;
   if (
+    !isVerifiedTradeQueryExecution(targetInput) ||
+    !isVerifiedTradeQueryExecution(baselineInput)
+  ) {
+    return {
+      ok: false,
+      error: {
+        code: "ti_v3_analytics_contract_reference_mismatch",
+        path: "$.comparison.verifiedExecutions",
+      },
+    };
+  }
+  if (
     target.value.normalizedQueryPlan.authority.partitionDigest !==
       baseline.value.normalizedQueryPlan.authority.partitionDigest ||
     target.value.normalizedQueryPlan.authority.currency !==
@@ -182,9 +200,18 @@ export function buildTradeQueryComparison(
       },
     };
   }
-  const keys = [...targetMetrics.keys()]
-    .filter((key) => baselineMetrics.has(key))
-    .sort(compareUnicodeCodePoints) as TradeQueryMetricKey[];
+  const targetKeys = [...targetMetrics.keys()].sort(compareUnicodeCodePoints);
+  const baselineKeys = [...baselineMetrics.keys()].sort(compareUnicodeCodePoints);
+  if (JSON.stringify(targetKeys) !== JSON.stringify(baselineKeys)) {
+    return {
+      ok: false,
+      error: {
+        code: "ti_v3_analytics_contract_reference_mismatch",
+        path: "$.comparison.metrics",
+      },
+    };
+  }
+  const keys = targetKeys as TradeQueryMetricKey[];
   const metrics = Object.freeze(keys.map((metricKey) => {
     const targetMetric = targetMetrics.get(metricKey);
     const baselineMetric = baselineMetrics.get(metricKey);
@@ -234,4 +261,66 @@ export function buildTradeQueryComparison(
   return addressed.ok
     ? { ok: true, value: addressed.value as TradeQueryComparison }
     : addressed;
+}
+
+export function verifyTradeQueryComparison(
+  input: unknown,
+  targetInput: unknown,
+  baselineInput: unknown,
+  authority: TradeQueryAuthority,
+): { readonly ok: true; readonly value: TradeQueryComparison } | {
+  readonly ok: false; readonly error: AnalyticalContractFailure;
+} {
+  const record = validateComparisonShape(input);
+  if (!record.ok) return record;
+  const rebuilt = buildTradeQueryComparison(targetInput, baselineInput, authority);
+  if (!rebuilt.ok) return rebuilt;
+  const supplied = serializeCanonicalValue(record.value);
+  const accepted = serializeCanonicalValue(rebuilt.value);
+  return supplied.ok && accepted.ok &&
+    supplied.value.json === accepted.value.json &&
+    record.value.comparisonDigest === rebuilt.value.comparisonDigest
+    ? rebuilt
+    : {
+      ok: false,
+      error: {
+        code: "ti_v3_analytics_contract_digest_mismatch",
+        path: "$.comparisonDigest",
+      },
+    };
+}
+
+function validateComparisonShape(
+  input: unknown,
+): { readonly ok: true; readonly value: TradeQueryComparison } | {
+  readonly ok: false; readonly error: AnalyticalContractFailure;
+} {
+  const record = validateContractRecord(input, [
+    "schemaVersion", "comparisonKey", "comparisonVersion", "targetPlanDigest",
+    "baselinePlanDigest", "targetResultDigest", "baselineResultDigest", "currency",
+    "metrics", "targetEvidenceDigests", "baselineEvidenceDigests", "limitationCodes",
+    "comparisonDigest",
+  ]);
+  if (
+    !record.ok ||
+    record.value.schemaVersion !== TRADE_QUERY_COMPARISON_VERSION ||
+    record.value.comparisonKey !== "ti_v3_exact_trade_query_comparison" ||
+    record.value.comparisonVersion !== "v1" ||
+    typeof record.value.currency !== "string" ||
+    !Array.isArray(record.value.metrics) ||
+    !Array.isArray(record.value.targetEvidenceDigests) ||
+    !Array.isArray(record.value.baselineEvidenceDigests) ||
+    !Array.isArray(record.value.limitationCodes)
+  ) {
+    return record.ok
+      ? { ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.comparison" } }
+      : record;
+  }
+  const digest = validateClaimedDigest(
+    record.value.comparisonDigest,
+    "$.comparisonDigest",
+    "trade_query_comparison",
+  );
+  if (!digest.ok) return digest;
+  return { ok: true, value: record.value as unknown as TradeQueryComparison };
 }
