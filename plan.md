@@ -1,38 +1,43 @@
 # Trader Intelligence Plan Entry Point
 
-**Last updated:** 2026-07-24 America/Toronto
+**Last updated:** 2026-07-25 America/Toronto  
 **Active architecture:** Trader Intelligence v3  
 **Operating profile:** `private_owner_alpha`  
-**Operational hosting:** local owner testing  
+**Operational hosting:** local owner testing and private-owner beta  
 **Primary domain:** U.S. listed small-cap and micro-cap active trading  
-**Product boundary:** retrospective educational trade review and self-improvement  
-**Current gate:** GA0-B3 — final focused remediation active on draft PR #156; re-audit findings head `f5427b098b5e1f218b666c8c29b8603ad36b38a2`; B2 accepted and merged as `4338cab7d46b8a0548b22346f81b42db5fec3bf0`
-**Active implementation plan:** `src/docs/trader-intelligence-v3-ga0-b-deterministic-proof-implementation-plan-2026-07-19.md`
+**Product boundary:** retrospective educational trade review, historical simulation, and self-improvement  
+**Current gate:** GA0-B4 — deterministic proof closeout is next; GA0-B3 accepted and merged at `e46d9fea331aeefc262a6dc7a187b5c73678b398`  
+**Active implementation plan:** `src/docs/trader-intelligence-v3-ga0-b-deterministic-proof-implementation-plan-2026-07-19.md`  
+**Controlling post-B4 direction:** `src/docs/trader-intelligence-v3-post-ga0-b-query-simulation-and-candle-direction-lock-2026-07-25.md`
 
-Start here when resuming Trader Intelligence product, analytics, simulation,
-query, visual evidence, AI, coaching, market context, persistence, or QA work.
+Start here when resuming Trader Intelligence product, analytics, simulations,
+query, evidence, AI, market context, persistence, or QA work.
 
 ---
 
 # 1. Controlling read order
 
-1. `src/docs/trader-intelligence-v3-project-log-addendum-ga0-b-2026-07-19.md`
-2. `src/docs/trader-intelligence-v3-project-log.md` for preserved detailed history
-3. `src/docs/trader-intelligence-v3-controlling-architecture-specification-2026-07-17.md`
-4. `src/docs/trader-intelligence-v3-ga0-b-deterministic-proof-implementation-plan-2026-07-19.md`
-5. accepted GA0-A ADRs
-6. detailed v3 QA reviews and master plan when rationale is needed
-7. legacy v1/v2 files only for preserved code, fixtures, routes, education, or migration evidence
+1. `src/docs/trader-intelligence-v3-project-log-addendum-post-ga0-b-direction-2026-07-25.md`
+2. `src/docs/trader-intelligence-v3-post-ga0-b-query-simulation-and-candle-direction-lock-2026-07-25.md`
+3. `src/docs/trader-intelligence-v3-project-log-addendum-ga0-b-2026-07-19.md`
+4. `src/docs/trader-intelligence-v3-project-log.md` for preserved detailed history
+5. `src/docs/trader-intelligence-v3-controlling-architecture-specification-2026-07-17.md`
+6. `src/docs/trader-intelligence-v3-ga0-b-deterministic-proof-implementation-plan-2026-07-19.md`
+7. accepted GA0-A and GA0-B ADRs
+8. detailed v3 QA reviews and master plan when rationale is needed
+9. legacy v1/v2 files only for preserved code, fixtures, routes, education, or migration evidence
 
 Precedence:
 
-1. latest explicit accepted project-log addendum or project-log decision;
+1. latest explicit accepted owner/project-log direction;
 2. controlling architecture specification;
-3. active implementation plan;
+3. active implementation plan for the current slice;
 4. detailed reviews/master plan as rationale;
 5. legacy documents.
 
-The addendum extends rather than replaces the detailed historical project log.
+The post-GA0-B direction lock changes work after B4. It does not weaken or
+expand B4 itself.
+
 Historical audit handoffs are evidence, not active implementation authority.
 
 ---
@@ -45,23 +50,31 @@ Historical audit handoffs are evidence, not active implementation authority.
 | GA0-A2 exact execution truth | accepted | `e6d0183cd03f55fb4b2b396f4f35ac2b2d035a8a` |
 | GA0-A3 temporal, manifest, eligibility, and query foundation | accepted | `72ca53940403dfab63979d403bd6b479539f41db` |
 | GA0-B1 read-only analytical dataset and proof contracts | accepted | `7d8d8e03826e4b877b22e9a2a68d381bb42e585d` |
+| GA0-B2 weekday deterministic proof | accepted | `4338cab7d46b8a0548b22346f81b42db5fec3bf0` |
+| GA0-B3 consecutive-loss daily-stop proof | accepted | `e46d9fea331aeefc262a6dc7a187b5c73678b398` |
 
 The accepted foundation provides:
 
 - deterministic broker CSV ingress and validation;
 - exact canonical financial values;
 - canonical executions and occurrence identity;
-- duplicate/correction handling;
+- duplicate and correction handling;
 - exact FIFO reconstruction;
 - temporal correction replay;
-- coverage and content-addressed dataset manifests;
+- content-addressed dataset manifests;
 - per-capability eligibility;
 - canonical date/filter contracts;
 - immutable snapshots and evidence inventories;
 - runtime validation and stale states;
-- local backup/restore and parser hardening.
+- read-only analytical rows and currency partitions;
+- exact metrics, tables, claims, series, diagnostics, and receipts;
+- persisted semantic replay;
+- deterministic weekday analytics;
+- deterministic consecutive-loss daily-stop simulation;
+- architecture and private-data guards.
 
-GA0-A is complete. Do not reopen its accepted PRs merely to continue product work.
+GA0-A is complete. GA0-B1 through B3 are complete. Do not reopen accepted PRs
+merely to continue product work.
 
 ---
 
@@ -70,22 +83,29 @@ GA0-A is complete. Do not reopen its accepted PRs merely to continue product wor
 ```text
 accepted exact journal truth
   -> deterministic analytics and simulations
-  -> exact tables, claims, evidence, and chart-ready series
-  -> private calibration
+  -> exact tables, evidence, and replay
+  -> B4 reusable two-tool proof service
+  -> short private calibration and data-gateway proof
+  -> generic query, evidence, and simulation engines
   -> owner-facing query and accessible visuals
-  -> owner-only AI explanation and visual selection
-  -> qualified small/micro-cap enrichment
+  -> owner-only AI planning and explanation
+  -> private-owner candle relay and replay-safe market context
+  -> candle-dependent simulations and broader tool packs
   -> usefulness calibration
   -> future public hardening
 ```
 
-The product goal remains an AI-powered trading journal.
+The product goal remains an AI-powered trading journal and historical Rule Lab.
 
-> Code calculates the truth. AI later selects, connects, and explains the truth.
+> Code calculates the truth. AI selects, plans, connects, and explains the truth.
 
 AI must not become the CSV parser, financial calculator, execution grouper,
-database, unrestricted SQL author, chart-value generator, chart-code generator,
+database, unrestricted SQL author, candle calculator, chart-value generator,
 live signal engine, or automated broker.
+
+The user must not need to know internal tool names or ask one exact supported
+sentence. Named tools are governed capabilities and presets behind broad
+natural-language planning.
 
 ---
 
@@ -93,11 +113,14 @@ live signal engine, or automated broker.
 
 - The owner is currently the only tester.
 - The app is not public or multi-user.
-- The owner is not concerned about disposable local test-data exposure.
-- Keep accepted safeguards, but do not expand local privacy/network security as a
-  product feature.
 - Prioritize financial truth, analytical reliability, maintainability, evidence,
-  performance, and progress toward visible AI functionality.
+  performance, and visible usefulness.
+- Keep accepted safeguards, but do not expand local privacy/network security as a
+  product feature unrelated to the private beta.
+- Move faster after B4 by building shared engines and coherent packs rather than
+  one major PR and audit per ordinary question.
+- Audit genuinely distinct semantics deeply; audit governed presets together when
+  they reuse an accepted engine.
 - Production hosting and public-user hardening remain future work.
 - No live buy/sell/hold guidance, current targets, automated orders, guaranteed
   improvement, tax advice, or portfolio-allocation authority is allowed.
@@ -114,13 +137,12 @@ GA0-B proves the complete deterministic answer path using two questions:
 GA0-B includes:
 
 - read-only current-data adapter;
-- verified analytical rows and dataset receipt;
+- verified analytical rows and dataset receipts;
 - exact metrics;
-- tool registry;
+- deterministic tool registry;
 - weekday analytics;
 - consecutive-loss daily-stop simulation;
-- exact tables;
-- validated claims;
+- exact tables and validated claims;
 - included/excluded counts and reasons;
 - stable evidence bundles;
 - validated chart-ready series;
@@ -132,10 +154,9 @@ GA0-B excludes:
 - model calls and prompts;
 - natural-language parsing;
 - query UI;
-- chart rendering;
-- market candles, VWAP, setup, catalyst, level, or support/resistance analytics;
-- broad behavior/coaching labels;
-- manual entry, reflections, Real Coach, or Whop;
+- rendered charts;
+- market candles and market-context enrichment;
+- setup, catalyst, support/resistance, or zone analysis;
 - hosted/public users, migrations, or deployment.
 
 ---
@@ -144,74 +165,24 @@ GA0-B excludes:
 
 ## GA0-B1 — Read-only analytical dataset and proof contracts
 
-Branch:
-
-`agent/trader-intelligence-v3-ga0-b1-read-model`
-
-Deliver:
-
-- snapshot-bound read-only adapter;
-- exact analytical row/dataset receipt;
-- shared metric/run/table/claim/series/evidence contracts;
-- inclusion/exclusion reasons;
-- architecture boundaries and focused tests.
-
-Handoff:
-
-`src/docs/trader-intelligence-v3-ga0-b1-read-model-implementation-and-audit-handoff-2026-07-19.md`
+Accepted and merged at `7d8d8e03826e4b877b22e9a2a68d381bb42e585d`.
 
 ## GA0-B2 — Weekday deterministic proof
 
-Branch:
+Accepted and merged at `4338cab7d46b8a0548b22346f81b42db5fec3bf0`.
 
-`agent/trader-intelligence-v3-ga0-b2-weekday-proof`
+Primary capability:
 
-Deliver:
-
-- `analyze_performance_by_weekday:v1`;
-- target weekday versus explicit baseline;
-- exact weekday table;
-- outlier sensitivity and counterexamples;
-- validated claims and chart-ready series.
-
-Handoff:
-
-`src/docs/trader-intelligence-v3-ga0-b2-weekday-proof-implementation-and-audit-handoff-2026-07-19.md`
+- `analyze_performance_by_weekday:v1`.
 
 ## GA0-B3 — Consecutive-loss daily-stop proof
 
-Branch:
+Accepted and merged through PR #156 at
+`e46d9fea331aeefc262a6dc7a187b5c73678b398`.
 
-`agent/trader-intelligence-v3-ga0-b3-daily-stop-proof`
+Primary capability:
 
-Deliver:
-
-- `simulate_daily_stop_rule:v1`;
-- actual versus simulated day and aggregate tables;
-- days helped/harmed;
-- exact claims/evidence/series;
-- independent reference simulation.
-
-Handoff:
-
-`src/docs/trader-intelligence-v3-ga0-b3-daily-stop-proof-implementation-and-audit-handoff-2026-07-19.md`
-
-Current remediation handoff:
-
-`src/docs/trader-intelligence-v3-ga0-b3-remediation-and-independent-reaudit-handoff-2026-07-24.md`
-
-The B3 audit accepted the implementation with required fixes. The active
-branch remains the existing draft PR #156. Ambiguous sessions are excluded
-from simulation, aggregate, claims, and series with preserved actual evidence;
-claim samples are threshold-reached sessions with explicit sample states and
-counterexample evidence; and excluded-candidate scope is unavailable rather
-than inferred. The final remediation also fails closed on mixed same-time
-loss/non-loss groups, uses verified empty-included aggregate evidence, binds
-classification to complete simulation evidence, accepts source identities
-through the B1 512-character bound, and governs B3 claim sample authority with
-a versioned policy. Stop after the remediation executable and later
-Markdown-only handoff commits for independent re-audit. Do not merge, deploy,
-resolve audit threads, or begin GA0-B4.
+- `simulate_daily_stop_rule:v1`.
 
 ## GA0-B4 — Proof closeout
 
@@ -221,94 +192,192 @@ Branch:
 
 Deliver:
 
-- final two-tool registry and runner;
+- final two-tool registry and deterministic runner;
+- generic persisted replay boundary;
 - cross-artifact consistency validator;
 - evidence resolution and diagnostics;
-- property/differential/10,000-row scale proof;
+- cross-tool property and differential tests;
+- deterministic 10,000-row scale proof;
 - focused GA0-B verifier and CI;
 - final GA0-B audit handoff.
 
-Handoff:
+Required handoff:
 
 `src/docs/trader-intelligence-v3-ga0-b4-proof-closeout-implementation-and-audit-handoff-2026-07-19.md`
 
-Each slice uses one draft PR, independent audit, acceptance, and merge before the
-next slice begins.
+B4 must remain one draft PR until independently accepted. It does not add the
+new generic query engine, additional tool packs, candles, UI, or AI.
 
 ---
 
-# 7. Testing cadence
+# 7. Post-B4 direction lock
+
+After B4 is accepted and merged, do not proceed by building one narrow named tool
+per large delivery.
+
+Build these reusable foundations:
+
+1. generic deterministic trade-query engine;
+2. read-only validated database gateway;
+3. evidence retrieval and similar-trade search;
+4. generic counterfactual simulation engine;
+5. execution-only analytics and simulation packs;
+6. owner-facing query/evidence experience and owner-only AI explanation;
+7. private-owner candle relay;
+8. replay-safe VWAP, EMA9, EMA20, MFE/MAE, giveback, and market-context features;
+9. candle-dependent simulation packs.
+
+The full controlling requirements are in:
+
+`src/docs/trader-intelligence-v3-post-ga0-b-query-simulation-and-candle-direction-lock-2026-07-25.md`
+
+## 7.1 Execution-Only Analytics Pack 1
+
+Build together over the generic query engine:
+
+- `analyze_performance_by_price_range`;
+- `analyze_time_of_day`;
+- `analyze_trade_sequence_performance`;
+- `analyze_after_loss_behavior`;
+- `analyze_after_win_behavior`;
+- `analyze_ticker_repeat_attempts`;
+- `analyze_holding_time`;
+- `analyze_long_vs_short`;
+- `analyze_position_size_performance`;
+- `compare_periods`.
+
+## 7.2 Evidence capabilities
+
+- exact evidence retrieval for every material result;
+- deterministic similar-trade search;
+- supporting and counterexample trades;
+- exact execution, snapshot, filter, dataset, partition, and policy identities.
+
+## 7.3 Execution-only simulation pack
+
+Prioritize:
+
+- daily dollar and percentage drawdown stops;
+- daily peak-realized-profit giveback stops;
+- maximum trades and time cutoffs;
+- wait-after-loss and repeat-attempt rules;
+- fixed or normalized position sizing;
+- reduce size after losses/drawdown;
+- price, weekday, time, sequence, direction, and repeat-attempt exclusion rules.
+
+## 7.4 Candle-dependent work
+
+Use the private-owner beta candle relay for:
+
+- VWAP;
+- EMA9 and EMA20;
+- session/premarket high and low distance;
+- opening range and extension;
+- MFE, MAE, peak unrealized P/L, and profit giveback;
+- percentage/R targets and partial exits;
+- fixed, break-even, trailing, and time stops;
+- VWAP/EMA exits and entry filters.
+
+Setup detection waits. Support/resistance and zone synthesis wait.
+
+---
+
+# 8. Private-owner beta candle decision
+
+For the beta:
+
+- owner-provided EODHD access is the primary historical candle source;
+- candle requests may be fulfilled by a paired service on the owner computer, as
+  the owner’s existing local application already does;
+- Yahoo may be an optional limited same-day/recent fallback where availability,
+  quality, and applicable terms permit;
+- no fixed Yahoo coverage duration is assumed;
+- provider credentials remain on the owner computer;
+- credentials are never placed in the browser, website database, model, Git, or
+  logs;
+- the backend issues bounded, authorized requests;
+- the local relay fetches, normalizes, validates, and uploads content-addressed
+  candle snapshots;
+- deterministic features and simulations consume only verified normalized candle
+  snapshots, never raw provider payloads.
+
+The detailed relay, quality, no-lookahead, and simulation-assumption requirements
+are in the post-B4 direction-lock document.
+
+---
+
+# 9. Testing and delivery cadence
 
 During implementation:
 
-- run only focused tests for the current module;
-- do not run repository-wide TypeScript after every module;
-- run `npx tsc --noEmit --pretty false` once near the executable checkpoint;
-- do not run local `npm test` without a concrete broad-regression reason;
-- do not run Playwright unless browser-facing code changed;
-- do not run a production build repeatedly;
-- do not run `npm ci` unless package or lock files changed;
-- let GitHub CI run the full repository suite and Layer 2/3;
-- never call an interrupted or unrun command a pass.
+- run focused tests for the current module;
+- do not run repository-wide TypeScript after every edit;
+- run one final TypeScript checkpoint per coherent engine or pack;
+- use property and differential tests for shared primitives;
+- use independent references for genuinely distinct simulations;
+- do not run local full repository tests without a concrete broad-regression
+  reason;
+- do not run Playwright unless browser-facing behavior changes;
+- do not repeatedly run production builds;
+- let GitHub CI own broad repository tests and Layer 2/3;
+- never call interrupted or unrun commands passed.
 
-After all executable changes in a slice, run one consolidated focused checkpoint
-as specified in the active GA0-B plan.
+After B4, the normal delivery unit is an engine or coherent pack, not an
+individual ordinary question and not the entire roadmap.
 
-A later Markdown-only handoff commit receives lightweight checks only; do not
-repeat TypeScript, Vitest, build, or browser tests solely for documentation.
+Every Codex implementation or remediation run must still publish a detailed
+Markdown handoff and complete independent-auditor prompt.
 
----
-
-# 8. Mandatory Codex-to-auditor handoff
-
-Every Codex implementation or remediation prompt must require this as the final
-substantive action:
-
-1. create/update the slice handoff Markdown file in the repository;
-2. record exact base, branch, PR, tested executable head, and documentation head;
-3. list changed files and map requirements to code/tests;
-4. report focused tests, one final TypeScript result, build status, CI state,
-   commands not run, failures, fixes, and limitations;
-5. confirm no out-of-scope AI/UI/chart/market/deployment work entered;
-6. include a complete ready-to-paste prompt for the independent auditor;
-7. provide that prompt to the owner in Codex's final response.
-
-The auditor treats the handoff as evidence, not proof, inspects the full diff and
-runtime paths, and returns `accept`, `accept with required fixes`, or `reject`.
-
-Codex does not resolve independent review threads or merge its own PR. The
-independent auditor resolves accepted threads and merges after acceptance.
+Codex does not resolve independent review threads, merge, deploy, or begin the
+next slice without explicit authorization.
 
 ---
 
-# 9. Next phases
+# 10. Revised phase sequence
 
-## GA0-C — Private calibration
+## GA0-C — Short private calibration and gateway proof
 
-Use private owner data outside Git for reconciliation, usefulness, exclusion,
-filter, table/series, simulation, and restore drills. Convert defects into safe
-synthetic regressions.
+- test accepted B1–B4 against owner data outside Git;
+- reconcile exact results, filters, exclusions, evidence, and performance;
+- convert defects into synthetic regressions;
+- prove the read-only trade-data gateway contract;
+- prove the private beta candle-request and normalized snapshot contract;
+- keep this phase narrow.
 
-## GA1 — Query and visual evidence
+## GA1 — Query, Evidence, and Simulation Foundation
 
-Build owner-facing deterministic filters, exact tables, accessible chart
-rendering, and evidence drill-down over accepted GA0-B outputs.
+Recommended coherent sub-slices:
 
-## GA2 — Owner-only AI
+1. generic deterministic query engine and read-only database gateway;
+2. evidence retrieval, similar-trade search, and Execution-Only Analytics Pack 1;
+3. generic counterfactual simulation engine and execution-only simulation pack;
+4. minimal owner-facing query/evidence UI and owner-only AI routing/explanation;
+5. beta candle relay, market-context feature pack, and candle-dependent simulation
+   pack.
 
-Add AI question routing and explanation over approved deterministic tools. AI may
-select tools and approved visual templates and explain validated claims. It may
-not calculate numbers or create chart data/code.
+The exact sub-slice labels may change. The product order and scope do not change
+without an explicit owner decision.
+
+## Later
+
+- setup detection/classification;
+- support/resistance zone synthesis;
+- catalyst enrichment;
+- full market-universe strategy backtesting;
+- broader coaching and reports;
+- public/hosted hardening and production migration.
 
 ---
 
-# 10. Immediate next action
+# 11. Immediate next action
 
-1. Continue `agent/trader-intelligence-v3-ga0-b3-daily-stop-proof` from the
-   accepted B2 merge `4338cab7d46b8a0548b22346f81b42db5fec3bf0`.
-2. Implement and verify `simulate_daily_stop_rule:v1` only under section 14.
-3. Create the controlling B3 ADR and detailed implementation/audit handoff.
-4. Open one draft PR targeting current `main`, leave it unmerged, and stop for
-   independent audit.
-5. Do not deploy, resolve audit threads, begin GA0-B4, or add UI, charts, AI,
-   market enrichment, support/resistance, or hosted work.
+1. Create `agent/trader-intelligence-v3-ga0-b4-proof-closeout` from current
+   accepted `main` at or after B3 merge
+   `e46d9fea331aeefc262a6dc7a187b5c73678b398`.
+2. Implement GA0-B4 only under section 15 of the active GA0-B plan.
+3. Publish one draft B4 PR, tested executable head, later documentation handoff,
+   and complete auditor prompt.
+4. Leave the B4 PR draft and unmerged for independent audit.
+5. Do not add the generic query engine, new tool packs, candles, UI, AI, setup
+   detection, support/resistance, migration, or deployment inside B4.
+6. After B4 acceptance, follow the post-GA0-B direction-lock document.
