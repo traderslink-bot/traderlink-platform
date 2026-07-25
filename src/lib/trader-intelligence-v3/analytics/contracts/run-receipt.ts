@@ -1,4 +1,5 @@
 import { compareUnicodeCodePoints } from "../../domain/canonical";
+import { isProxy } from "node:util/types";
 import type { ExactResult } from "../../domain/exact";
 import type { CanonicalContentDigest } from "../../domain/identity";
 import {
@@ -56,10 +57,45 @@ function unique<T>(values: readonly T[], key: (value: T) => string): boolean {
   return new Set(values.map(key)).size === values.length;
 }
 
+function validateReceiptEnvelope(
+  input: unknown,
+): ExactResult<Record<string, unknown>, AnalyticalContractFailure> {
+  if (typeof input !== "object" || input === null || Array.isArray(input) || isProxy(input)) {
+    return contractFailure("ti_v3_validation_input_invalid", "$");
+  }
+  let descriptors: PropertyDescriptorMap;
+  try {
+    if (Object.getPrototypeOf(input) !== Object.prototype) {
+      return contractFailure("ti_v3_validation_input_invalid", "$");
+    }
+    descriptors = Object.getOwnPropertyDescriptors(input);
+  } catch {
+    return contractFailure("ti_v3_validation_input_invalid", "$");
+  }
+  const keys = Reflect.ownKeys(descriptors);
+  if (keys.some((key) => typeof key !== "string")) {
+    return contractFailure("ti_v3_validation_input_invalid", "$");
+  }
+  for (const key of keys as string[]) {
+    const descriptor = descriptors[key];
+    if (descriptor.get !== undefined || descriptor.set !== undefined || descriptor.enumerable !== true) {
+      return contractFailure("ti_v3_validation_input_invalid", `$.${key}`);
+    }
+  }
+  const required = ["schemaVersion", "runContext", "tables", "claims", "series", "evidenceBundles", "diagnostics"];
+  const allowed = new Set(required);
+  const stringKeys = keys as string[];
+  const extra = stringKeys.find((key) => !allowed.has(key));
+  if (extra !== undefined) return contractFailure("ti_v3_validation_extra_field", `$.${extra}`);
+  const missing = required.find((key) => !Object.prototype.hasOwnProperty.call(input, key));
+  if (missing !== undefined) return contractFailure("ti_v3_validation_required_field_missing", `$.${missing}`);
+  return { ok: true, value: input as Record<string, unknown> };
+}
+
 export function buildAnalysisRunReceipt(
   input: unknown,
 ): ExactResult<AnalysisRunReceipt, AnalyticalContractFailure> {
-  const record = validateContractRecord(input, ["schemaVersion", "runContext", "tables", "claims", "series", "evidenceBundles", "diagnostics"]);
+  const record = validateReceiptEnvelope(input);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== ANALYSIS_RUN_RECEIPT_VERSION) return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
   const authorities = input as Record<string, unknown>;

@@ -38,22 +38,31 @@ export function resolveAnalyticalEvidenceBundle(
   const verified = verifyAnalyticalEvidenceBundle(bundle, context.value);
   if (!verified.ok) return fail("ti_v3_evidence_bundle_invalid", `$.bundle${verified.error.path.slice(1)}`);
   const candidateKeys = verified.value.candidateKeys;
-  if (new Set(candidateKeys).size !== candidateKeys.length) return fail("ti_v3_evidence_duplicate_candidate", "$.bundle.candidateKeys");
+  const evidenceCandidateKeys = new Set(candidateKeys);
+  if (evidenceCandidateKeys.size !== candidateKeys.length) return fail("ti_v3_evidence_duplicate_candidate", "$.bundle.candidateKeys");
   if (verified.value.inclusionState === "included" && verified.value.populationState === "empty_included" && candidateKeys.length !== 0) return fail("ti_v3_evidence_empty_population_not_empty", "$.bundle.candidateKeys");
+  const rowsByRoundTripKey = new Map(
+    dependencies.datasetReceipt.rows.map((row) => [row.semanticRoundTripKey, row]),
+  );
+  const excludedCandidatesByKey = new Map(
+    dependencies.datasetReceipt.excludedCandidates.map((candidate) => [candidate.candidateKey, candidate]),
+  );
+  const includedPartitionRowKeys = new Set(dependencies.partitionReceipt.includedRowKeys);
+  const excludedPartitionCandidateKeys = new Set(dependencies.partitionReceipt.excludedCandidateKeys);
   const includedRows = verified.value.inclusionState === "included"
-    ? candidateKeys.map((key) => dependencies.datasetReceipt.rows.find((row) => row.semanticRoundTripKey === key))
+    ? candidateKeys.map((key) => rowsByRoundTripKey.get(key))
     : [];
   const excludedCandidates = verified.value.inclusionState === "excluded"
-    ? candidateKeys.map((key) => dependencies.datasetReceipt.excludedCandidates.find((candidate) => candidate.candidateKey === key))
+    ? candidateKeys.map((key) => excludedCandidatesByKey.get(key))
     : [];
   if (includedRows.some((row) => row === undefined)) return fail("ti_v3_evidence_included_candidate_missing", "$.bundle.candidateKeys");
   if (excludedCandidates.some((candidate) => candidate === undefined)) return fail("ti_v3_evidence_excluded_candidate_missing", "$.bundle.candidateKeys");
-  if (verified.value.inclusionState === "included" && candidateKeys.some((key) => dependencies.partitionReceipt.excludedCandidateKeys.includes(key))) return fail("ti_v3_evidence_included_candidate_excluded", "$.bundle.candidateKeys");
-  if (verified.value.inclusionState === "excluded" && candidateKeys.some((key) => dependencies.partitionReceipt.includedRowKeys.includes(key))) return fail("ti_v3_evidence_excluded_candidate_included", "$.bundle.candidateKeys");
+  if (verified.value.inclusionState === "included" && candidateKeys.some((key) => excludedPartitionCandidateKeys.has(key))) return fail("ti_v3_evidence_included_candidate_excluded", "$.bundle.candidateKeys");
+  if (verified.value.inclusionState === "excluded" && candidateKeys.some((key) => includedPartitionRowKeys.has(key))) return fail("ti_v3_evidence_excluded_candidate_included", "$.bundle.candidateKeys");
   const simulationCandidateKeys = verified.value.simulationAuthority === undefined
     ? []
     : [...verified.value.simulationAuthority.actualCandidateKeys];
-  if (simulationCandidateKeys.some((key) => !candidateKeys.includes(key))) return fail("ti_v3_evidence_simulation_candidate_foreign", "$.bundle.simulationAuthority");
+  if (simulationCandidateKeys.some((key) => !evidenceCandidateKeys.has(key))) return fail("ti_v3_evidence_simulation_candidate_foreign", "$.bundle.simulationAuthority");
   return {
     ok: true,
     value: Object.freeze({

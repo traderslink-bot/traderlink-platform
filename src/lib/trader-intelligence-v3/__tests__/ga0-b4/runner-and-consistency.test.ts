@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildAnalyticalPartitionReceipt,
+  ANALYTICAL_EVIDENCE_BUNDLE_VERSION,
+  buildAnalyticalEvidenceBundle,
   buildFinalToolRegistrySnapshot,
   buildPersistedRegisteredToolEnvelope,
   createSyntheticInMemoryReadOnlySource,
@@ -65,8 +67,8 @@ function buildExecutions(): readonly CanonicalExecutionEnvelope[] {
   return Object.freeze(executions);
 }
 
-function fixture() {
-  const authority = buildSyntheticGa0B1Authority(buildExecutions());
+function fixture(options: Parameters<typeof buildSyntheticGa0B1Authority>[1] = {}) {
+  const authority = buildSyntheticGa0B1Authority(buildExecutions(), options);
   const derived = readAnalyticalDatasetWithDerivation(createSyntheticInMemoryReadOnlySource(authority));
   if (!derived.ok) throw new Error(`${derived.error.code}:${derived.error.path}`);
   const partition = buildAnalyticalPartitionReceipt({
@@ -188,4 +190,62 @@ describe("GA0-B4 final registry and closed runner", () => {
     });
     expect(tampered).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_reference_mismatch" } });
   });
+
+  it("resolves included, excluded, and simulation evidence without accepting foreign or duplicate candidates", () => {
+    const { request } = fixture();
+    const weekday = executeRegisteredTraderIntelligenceTool({ ...request, toolKey: WEEKDAY_TOOL_KEY, toolVersion: "v1" });
+    const dailyStop = executeRegisteredTraderIntelligenceTool({ ...request, toolKey: DAILY_STOP_TOOL_KEY, toolVersion: "v1" });
+    expect(weekday).toMatchObject({ ok: true });
+    expect(dailyStop).toMatchObject({ ok: true });
+    if (!weekday.ok || !dailyStop.ok) return;
+    const included = weekday.value.execution.evidenceBundles.find((bundle) => bundle.candidateKeys.length > 0);
+    const simulation = dailyStop.value.execution.evidenceBundles.find((bundle) => bundle.simulationAuthority !== undefined);
+    expect(included).toBeDefined();
+    expect(simulation).toBeDefined();
+    if (included === undefined || simulation === undefined) return;
+    const resolvedIncluded = resolveAnalyticalEvidenceBundle(included, weekday.value.execution.runContext);
+    expect(resolvedIncluded).toMatchObject({ ok: true });
+    const resolvedSimulation = resolveAnalyticalEvidenceBundle(simulation, dailyStop.value.execution.runContext);
+    expect(resolvedSimulation).toMatchObject({ ok: true });
+    if (!resolvedSimulation.ok) return;
+    expect(resolvedSimulation.value.simulationCandidateKeys).toEqual(simulation.simulationAuthority?.actualCandidateKeys);
+    expect(Object.isFrozen(resolvedSimulation.value)).toBe(true);
+    expect(Object.isFrozen(resolvedSimulation.value.includedRows)).toBe(true);
+    expect(resolveAnalyticalEvidenceBundle(
+      { ...included, candidateKeys: [...included.candidateKeys, "foreign_candidate"] },
+      weekday.value.execution.runContext,
+    )).toMatchObject({ ok: false });
+    expect(resolveAnalyticalEvidenceBundle(
+      { ...included, candidateKeys: [included.candidateKeys[0], included.candidateKeys[0]] },
+      weekday.value.execution.runContext,
+    )).toMatchObject({ ok: false });
+    expect(resolveAnalyticalEvidenceBundle(
+      { ...included, candidateKeys: ["missing_candidate"] },
+      weekday.value.execution.runContext,
+    )).toMatchObject({ ok: false });
+
+    const filtered = fixture({ filterOverrides: { outcomeFilters: ["gain"] } });
+    const filteredWeekday = executeRegisteredTraderIntelligenceTool({ ...filtered.request, toolKey: WEEKDAY_TOOL_KEY, toolVersion: "v1" });
+    expect(filteredWeekday).toMatchObject({ ok: true });
+    if (!filteredWeekday.ok) return;
+    const excluded = filtered.request.datasetReceipt.excludedCandidates[0];
+    expect(excluded).toBeDefined();
+    if (excluded === undefined) return;
+    const excludedEvidence = buildAnalyticalEvidenceBundle({
+      schemaVersion: ANALYTICAL_EVIDENCE_BUNDLE_VERSION,
+      evidenceKey: "resolver_excluded_candidate",
+      runContext: filteredWeekday.value.execution.runContext,
+      comparisonGroupKey: null,
+      inclusionState: "excluded",
+      candidateKeys: [excluded.candidateKey],
+    });
+    expect(excludedEvidence).toMatchObject({ ok: true });
+    if (!excludedEvidence.ok) return;
+    const resolvedExcluded = resolveAnalyticalEvidenceBundle(excludedEvidence.value, filteredWeekday.value.execution.runContext);
+    expect(resolvedExcluded).toMatchObject({ ok: true, value: { excludedCandidates: [{ candidateKey: excluded.candidateKey }] } });
+    expect(resolveAnalyticalEvidenceBundle(
+      { ...included, candidateKeys: [included.candidateKeys[0], excluded.candidateKey] },
+      weekday.value.execution.runContext,
+    )).toMatchObject({ ok: false });
+  }, 30000);
 });

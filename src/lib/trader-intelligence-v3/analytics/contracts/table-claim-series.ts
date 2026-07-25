@@ -370,6 +370,31 @@ function evidenceCatalog(
   return { ok: true, value: values };
 }
 
+function evidenceBundlesForTable(
+  table: unknown,
+  evidenceBundles: readonly AnalyticalEvidenceBundle[],
+): readonly AnalyticalEvidenceBundle[] {
+  if (typeof table !== "object" || table === null) return [];
+  const record = table as Record<string, unknown>;
+  const rows = [
+    ...(Array.isArray(record.rows) ? record.rows : []),
+    ...(Array.isArray(record.summaryRows) ? record.summaryRows : []),
+  ];
+  const used = new Set<string>();
+  for (const row of rows) {
+    if (typeof row !== "object" || row === null) continue;
+    const rowRecord = row as Record<string, unknown>;
+    if (typeof rowRecord.evidenceBundleDigest === "string") used.add(rowRecord.evidenceBundleDigest);
+    if (!Array.isArray(rowRecord.cells)) continue;
+    for (const cell of rowRecord.cells) {
+      if (typeof cell !== "object" || cell === null) continue;
+      const digest = (cell as Record<string, unknown>).evidenceBundleDigest;
+      if (typeof digest === "string") used.add(digest);
+    }
+  }
+  return Object.freeze(evidenceBundles.filter((bundle) => used.has(bundle.bundleDigest)));
+}
+
 function parseColumns(input: unknown): ExactResult<readonly ExactTableColumn[], AnalyticalContractFailure> {
   if (!Array.isArray(input) || input.length === 0 || input.length > GA0_B1_CONTRACT_LIMITS.maximumColumns) return contractFailure("ti_v3_analytics_contract_oversized", "$.columns");
   const columns: ExactTableColumn[] = [];
@@ -584,8 +609,14 @@ export function verifyExactTable(
   const digest = validateClaimedDigest(record.value.tableDigest, "$.tableDigest", "exact_table"); if (!digest.ok) return digest;
   const { tableDigest: _tableDigest, runContextDigest: _contextDigest, snapshotDigest: _snapshotDigest, filterDigest: _filterDigest, partitionDigest: _partitionDigest, ...content } = record.value;
   void _tableDigest; void _contextDigest; void _snapshotDigest; void _filterDigest; void _partitionDigest;
-  const rebuilt = buildExactTable({ ...content, runContext: context.value, evidenceBundles });
-  if (!rebuilt.ok || rebuilt.value.tableDigest !== digest.value) return contractFailure("ti_v3_analytics_contract_digest_mismatch", "$.tableDigest");
+  const rebuilt = buildExactTable({
+    ...content,
+    runContext: context.value,
+    evidenceBundles: evidenceBundlesForTable(record.value, evidenceBundles),
+  });
+  if (!rebuilt.ok || rebuilt.value.tableDigest !== digest.value) {
+    return contractFailure("ti_v3_analytics_contract_digest_mismatch", "$.tableDigest");
+  }
   return rebuilt;
 }
 
@@ -849,14 +880,15 @@ export function buildChartReadySeries(input: unknown): ExactResult<ChartReadySer
 export function verifyChartReadySeries(input: unknown, runContext: AnalysisRunContext, sourceTable: ExactTable, evidenceBundles: readonly AnalyticalEvidenceBundle[]): ExactResult<ChartReadySeries, AnalyticalContractFailure> {
   const record = validateContractRecord(input, ["schemaVersion", "seriesKey", "seriesVersion", "approvedVisualPurpose", "allowedVisualTemplateKeys", "runContextDigest", "sourceTableDigest", "partitionDigest", "xDomain", "unit", "currency", "timezone", "dateBasis", "zeroBaselineRequired", "denominatorPolicy", "points", "includedCount", "excludedCount", "accessibilitySummaryFacts", "accessibilitySummarySelections", "pointBudget", "downsamplingPolicy", "limitationCodes", "tableAlternativeDigest", "seriesDigest"]); if (!record.ok) return record;
   const context = verifyAnalysisRunContext(runContext); if (!context.ok || record.value.runContextDigest !== context.value.runContextDigest || record.value.partitionDigest !== context.value.partitionDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.runContextDigest");
-  const table = verifyExactTable(sourceTable, context.value, evidenceBundles); if (!table.ok || record.value.sourceTableDigest !== table.value.tableDigest || record.value.tableAlternativeDigest !== table.value.tableDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.sourceTableDigest");
+  const tableEvidenceBundles = evidenceBundlesForTable(sourceTable, evidenceBundles);
+  const table = verifyExactTable(sourceTable, context.value, tableEvidenceBundles); if (!table.ok || record.value.sourceTableDigest !== table.value.tableDigest || record.value.tableAlternativeDigest !== table.value.tableDigest) return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.sourceTableDigest");
   const digest = validateClaimedDigest(record.value.seriesDigest, "$.seriesDigest", "chart_ready_series"); if (!digest.ok) return digest;
   const points = Array.isArray(record.value.points) ? record.value.points.map((point) => { if (typeof point !== "object" || point === null) return point; const { exactValue: _exactValue, sampleSize: _sampleSize, ...selection } = point as Record<string, unknown>; void _exactValue; void _sampleSize; return selection; }) : record.value.points;
   const rebuilt = buildChartReadySeries({
     schemaVersion: record.value.schemaVersion, seriesKey: record.value.seriesKey,
     seriesVersion: record.value.seriesVersion, approvedVisualPurpose: record.value.approvedVisualPurpose,
     allowedVisualTemplateKeys: record.value.allowedVisualTemplateKeys, runContext: context.value,
-    sourceTable: table.value, evidenceBundles, xDomain: record.value.xDomain, unit: record.value.unit,
+    sourceTable: table.value, evidenceBundles: tableEvidenceBundles, xDomain: record.value.xDomain, unit: record.value.unit,
     currency: record.value.currency, timezone: record.value.timezone, dateBasis: record.value.dateBasis,
     zeroBaselineRequired: record.value.zeroBaselineRequired, denominatorPolicy: record.value.denominatorPolicy,
     points, accessibilitySummarySelections: record.value.accessibilitySummarySelections,
