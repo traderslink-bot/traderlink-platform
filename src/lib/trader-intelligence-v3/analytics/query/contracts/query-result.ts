@@ -8,8 +8,15 @@ import {
   type AnalyticalContractFailure,
   type ExactMetricValue,
 } from "../../contracts";
-import type { TradeQueryEvidence } from "../evidence/query-evidence";
-import type { TradeQueryPlan } from "./query-plan";
+import {
+  verifyTradeQueryEvidence,
+  type TradeQueryEvidence,
+} from "../evidence/query-evidence";
+import {
+  verifyTradeQueryPlan,
+  type TradeQueryAuthority,
+  type TradeQueryPlan,
+} from "./query-plan";
 import { TRADE_QUERY_LIMITS } from "./query-plan";
 
 export const TRADE_QUERY_RESULT_VERSION = "ti_v3_trade_query_result_v1" as const;
@@ -110,6 +117,7 @@ export function buildTradeQueryResult(
 
 export function verifyTradeQueryResultShape(
   input: unknown,
+  authority: TradeQueryAuthority,
 ): { readonly ok: true; readonly value: TradeQueryResult } | {
   readonly ok: false; readonly error: AnalyticalContractFailure;
 } {
@@ -123,6 +131,17 @@ export function verifyTradeQueryResultShape(
     return record.ok
       ? { ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.schemaVersion" } }
       : record;
+  }
+  const plan = verifyTradeQueryPlan(record.value.normalizedQueryPlan, authority);
+  if (!plan.ok) return plan;
+  if (!Array.isArray(record.value.evidence)) {
+    return { ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.evidence" } };
+  }
+  const evidence: TradeQueryEvidence[] = [];
+  for (let index = 0; index < record.value.evidence.length; index += 1) {
+    const verified = verifyTradeQueryEvidence(record.value.evidence[index], plan.value);
+    if (!verified.ok) return verified;
+    evidence.push(verified.value);
   }
   if (!Array.isArray(record.value.rows)) {
     return { ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.rows" } };
@@ -150,5 +169,23 @@ export function verifyTradeQueryResultShape(
   if (!receiptDigest.ok || receipt.value.resultDigest !== digest.value) {
     return { ok: false, error: { code: "ti_v3_analytics_contract_digest_mismatch", path: "$.executionReceipt" } };
   }
-  return { ok: true, value: input as TradeQueryResult };
+  const rebuilt = buildTradeQueryResult({
+    schemaVersion: TRADE_QUERY_RESULT_VERSION,
+    runContext: record.value.runContext as TradeQueryResult["runContext"],
+    normalizedQueryPlan: plan.value,
+    rows: record.value.rows as readonly TradeQueryResultRow[],
+    candidateCount: record.value.candidateCount as string,
+    includedCount: record.value.includedCount as string,
+    excludedCount: record.value.excludedCount as string,
+    evidence: Object.freeze(evidence),
+    excludedCandidateKeys: record.value.excludedCandidateKeys as readonly string[],
+    limitationCodes: record.value.limitationCodes as readonly string[],
+    diagnostics: record.value.diagnostics as TradeQueryResult["diagnostics"],
+  });
+  if (
+    !rebuilt.ok ||
+    rebuilt.value.resultDigest !== digest.value ||
+    rebuilt.value.executionReceipt.receiptDigest !== receiptDigest.value
+  ) return { ok: false, error: { code: "ti_v3_analytics_contract_digest_mismatch", path: "$.resultDigest" } };
+  return rebuilt;
 }

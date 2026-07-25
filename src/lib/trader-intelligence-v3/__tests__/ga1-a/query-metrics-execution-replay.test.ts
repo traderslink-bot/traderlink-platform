@@ -5,6 +5,7 @@ import {
   buildSyntheticQueryFixture,
   executeTradeQuery,
   rehydratePersistedTradeQuery,
+  resolveTradeQueryEvidence,
   verifyTradeQueryResultShape,
   type ExactMetricValue,
   type TradeQueryResult,
@@ -30,7 +31,7 @@ function metric(result: TradeQueryResult, key: string): ExactMetricValue {
 
 describe("GA1-A exact metrics, proof queries, and replay", () => {
   it("matches independently calculated exact aggregate expectations", () => {
-    const { result } = execute();
+    const { fixture, result } = execute();
     expect(metric(result, "candidate_count")).toMatchObject({ kind: "integer", value: "30" });
     expect(metric(result, "included_count")).toMatchObject({ kind: "integer", value: "30" });
     expect(metric(result, "excluded_count")).toMatchObject({ kind: "integer", value: "0" });
@@ -53,7 +54,7 @@ describe("GA1-A exact metrics, proof queries, and replay", () => {
     expect(metric(result, "largest_loser_contribution")).toMatchObject({ value: "-5" });
     expect(metric(result, "net_pnl_excluding_largest_winner")).toMatchObject({ value: "11" });
     expect(metric(result, "net_pnl_excluding_largest_loser")).toMatchObject({ value: "20" });
-    expect(verifyTradeQueryResultShape(result)).toMatchObject({ ok: true });
+    expect(verifyTradeQueryResultShape(result, fixture.authority)).toMatchObject({ ok: true });
   }, 30_000);
 
   it("proves required aggregate, weekday, time, price, sequence, after-loss, direction, and comparison queries", () => {
@@ -106,7 +107,7 @@ describe("GA1-A exact metrics, proof queries, and replay", () => {
   });
 
   it("keeps evidence bounded, resolvable, immutable, and stable", () => {
-    const first = execute({ grouping: { kind: "weekday" } }).result;
+    const { fixture, result: first } = execute({ grouping: { kind: "weekday" } });
     const second = execute({ grouping: { kind: "weekday" } }).result;
     expect(first.evidence.map((item) => item.evidenceDigest)).toEqual(
       second.evidence.map((item) => item.evidenceDigest),
@@ -115,6 +116,16 @@ describe("GA1-A exact metrics, proof queries, and replay", () => {
     expect(first.evidence.every((item) =>
       item.candidates.every((candidate) =>
         candidate.executionDigests.length === candidate.occurrenceKeys.length))).toBe(true);
+    expect(resolveTradeQueryEvidence(
+      first.evidence[0],
+      first.normalizedQueryPlan,
+      fixture.derived.datasetReceipt.rows,
+    )).toMatchObject({ ok: true });
+    const tampered = JSON.parse(JSON.stringify(first)) as {
+      evidence: Array<{ groupIdentity: string }>;
+    };
+    tampered.evidence[0].groupIdentity = "relabeled";
+    expect(verifyTradeQueryResultShape(tampered, fixture.authority)).toMatchObject({ ok: false });
     expect(Object.isFrozen(first)).toBe(true);
     expect(Object.isFrozen(first.evidence)).toBe(true);
   });
