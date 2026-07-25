@@ -1,14 +1,14 @@
 # Trader Intelligence v3 GA1-A Generic Query Gateway — Implementation and Independent-Audit Handoff
 
-Date: 2026-07-25 America/Toronto  
-Status: implementation complete; independent audit required  
-Branch: `agent/trader-intelligence-v3-ga1-a-generic-query-gateway`  
-Draft PR: `#160`  
-Exact accepted starting base: `b640ba599a4b9604395d203b6224b45d9de21208`  
-Accepted-main documentation sync: `fee0eed6d745f963db83fd97b93aa118a25ffae7`  
-Executable head: `d8f371153fdb4e8b359584661766dc7f32290e7e`  
-Documentation/current head: this separate Markdown-only commit; record its exact SHA in the PR and final handoff  
-Owner checkout: preserved; all work occurred in the isolated Codex worktree  
+Date: 2026-07-25 America/Toronto
+Status: implementation complete; independent audit required
+Branch: `agent/trader-intelligence-v3-ga1-a-generic-query-gateway`
+Draft PR: `#160`
+Exact accepted starting base: `b640ba599a4b9604395d203b6224b45d9de21208`
+Accepted-main documentation sync: `fee0eed6d745f963db83fd97b93aa118a25ffae7`
+Executable head: `d8f371153fdb4e8b359584661766dc7f32290e7e`
+Documentation/current head: this separate Markdown-only commit; record its exact SHA in the PR and final handoff
+Owner checkout: preserved; all work occurred in the isolated Codex worktree
 Production: not deployed
 
 ## Stop boundary
