@@ -88,11 +88,29 @@ export function tradeQueryGroupAssignment(
     case "trade_sequence":
       facts = [`sequence:${row.sequenceInSession}`, `Trade ${row.sequenceInSession}`, pad(row.sequenceInSession, 20)];
       break;
+    case "trade_sequence_bucket":
+      facts = row.sequenceInSession === BigInt("1")
+        ? ["sequence_bucket:v1:first", "First trade", "1"]
+        : row.sequenceInSession === BigInt("2")
+          ? ["sequence_bucket:v1:second", "Second trade", "2"]
+          : row.sequenceInSession === BigInt("3")
+            ? ["sequence_bucket:v1:third", "Third trade", "3"]
+            : ["sequence_bucket:v1:fourth_or_later", "Fourth and later trades", "4"];
+      break;
     case "previous_completed_outcome":
       facts = [`previous:${row.previousCompletedOutcome}`, row.previousCompletedOutcome, row.previousCompletedOutcome];
       break;
     case "repeat_attempt":
       facts = [`repeat:${row.repeatAttempt}`, `Attempt ${row.repeatAttempt}`, pad(row.repeatAttempt, 20)];
+      break;
+    case "repeat_attempt_bucket":
+      facts = row.repeatAttempt === BigInt("1")
+        ? ["repeat_attempt_bucket:v1:first", "First attempt", "1"]
+        : row.repeatAttempt === BigInt("2")
+          ? ["repeat_attempt_bucket:v1:second", "Second attempt", "2"]
+          : row.repeatAttempt === BigInt("3")
+            ? ["repeat_attempt_bucket:v1:third", "Third attempt", "3"]
+            : ["repeat_attempt_bucket:v1:fourth_or_later", "Fourth and later attempts", "4"];
       break;
     case "holding_time_bucket": {
       const index = grouping.boundariesSeconds.findIndex((boundary) => row.holdingSecondsFloor < BigInt(boundary));

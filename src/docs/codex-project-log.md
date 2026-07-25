@@ -1,3 +1,140 @@
+# 2026-07-25 - GA1-B final closure checkpoint
+
+- Independent audit accepted final executable checkpoint
+  `6ccdd2c65bf762f88ba5e34957705775e96c2825` from GA1-A base
+  `da5f40f5217f0c6501086c8fead55b3dd6ae4c6b`. The audit reviewed direct
+  authority reuse, evidence, similarity verification/replay, all ten presets,
+  bounded sequence and repeat-attempt groupings, read-only boundaries, focused
+  adversarial/permutation coverage, and retained scale evidence.
+- Actions run `30174770237`, job `89721665460`, and its non-sensitive stage
+  artifact confirm the fixed 10,000-row proof completed every stage and preset
+  through `scale_run_completion` in 215,139 ms with conclusion `success`.
+- PR #161 remains draft/open/unmerged/undeployed. It may be marked ready and
+  merged only by a separate owner decision; no GA1-C work was started.
+
+- Final executable authority is `6ccdd2c65bf762f88ba5e34957705775e96c2825`
+  on draft PR #161, from accepted GA1-A base
+  `da5f40f5217f0c6501086c8fead55b3dd6ae4c6b`.
+- GitHub Actions governed proof run `30174770237`, job `89721665460`, passed
+  at that executable head in 215,139 ms. It completed fixture, aggregate,
+  evidence, similarity, all ten presets, and `scale_run_completion`; retained
+  artifact is `ga1-b-governed-scale-stage-records`.
+- Final handoff/ledger/audit prompt supersede the earlier original-checkpoint
+  and unconfirmed-scale notes. The temporary exact-branch Actions trigger was
+  removed; manual dispatch remains. Resume with independent audit only; do not
+  merge, deploy, or begin GA1-C.
+
+# 2026-07-25 - GA1-B similarity policy remediation active
+
+# 2026-07-25 - GA1-B preset authority remediation active
+
+- Continued from `1f90267197236ff692c4b5ccd4a1969a0bd83f16` on the existing
+  GA1-B branch and draft PR #161 with a clean worktree.
+- The 10,000-row diagnostic completed the price-range and time-of-day presets,
+  then stalled at `analyze_trade_sequence_performance`: its one-group-per-
+  sequence plan exceeded the governed group population instead of producing a
+  bounded truthful artifact. The preset now has an explicit aggregate sequence
+  policy rather than an unexecutable unbounded grouping.
+- Presets are reconstructed and canonically verified against accepted GA1-A
+  authority at runtime before execution. Execution now returns a content-
+  addressed artifact binding preset, plans, results, comparison, dataset,
+  derivation, partition, owner/account/currency, counts, evidence, and limits.
+- Focused preset authority tests, the governed focused verifier, TypeScript,
+  changed-path lint, and diff checks pass. The final scale invocation again
+  terminated after Vitest startup without a terminal exit record or worker
+  output, so it is recorded as unconfirmed, not passing. No UI, AI, importer,
+  calibration, deployment, merge, or GA1-C work was performed.
+
+# 2026-07-25 - GA1-B bounded sequence correction active
+
+- Continued from `a922f67fb4f9cee50694c4165f4f96acd9b2eee9` with a clean
+  worktree. Replaced the rejected aggregate sequence substitution with the
+  GA1-A `trade_sequence_bucket` grouping: stable v1 first, second, third, and
+  fourth-or-later identities derived from verified `sequenceInSession`.
+- Preset compilation now validates the outer object through own data
+  descriptors before reading fields, rejecting unknown keys, accessors,
+  class instances, and polluted prototypes.
+- Resume point: complete captured focused and scale terminal evidence, then
+  commit/push only this correction; keep PR #161 draft/open/unmerged.
+- Added direct runtime coverage for sequence-bucket mapping through a much
+  larger valid sequence, bounded identity cardinality, permutation identity,
+  preset policy/plan tampering, and comparison execution-authority tampering.
+- Direct preset coverage passed 14/14. The focused verifier and TypeScript
+  exited cleanly; changed-path ESLint had no errors (one existing unused
+  registry warning). The required scale command again captured only Vitest
+  startup without a terminal result, so scale status remains unconfirmed.
+
+# 2026-07-25 - GA1-B governed scale observability
+
+- Continued from `bab110bdd5520f212ce43c47c13fff72e73ee895` with clean branch
+  state and draft PR #161. Replaced the scale-only forked Vitest harness with
+  a direct single-process runner that invokes the real fixture, GA1-A query,
+  evidence, similarity, and all ten presets, writing bounded stage/preset
+  JSON records with elapsed time and process memory.
+- The 30-row diagnostic captured every required stage and all ten preset
+  completions in 4,827 ms. The final 10,000-row command captured
+  `fixture_construction_started` at 0 ms (RSS 149,712,896; heap used
+  38,581,232) but the terminal transport terminated before fixture completion
+  or a process exit result. This is an environmental failure during fixture
+  construction, not a passing scale proof and not a contract failure.
+- Resume point: use an execution environment that permits the 10,000-row
+  fixture to finish and capture the direct runner's final exit code; do not
+  weaken the proof or skip stages.
+
+# 2026-07-25 - GA1-B GitHub scale-proof dispatch
+
+- Continued from `2ea1ef5c76866d522404d545e7c2ed07dcc766e3`. Added the
+  manual-only `Trader Intelligence v3 GA1-B Governed Scale Proof` workflow:
+  Node 22, `npm ci`, a 45-minute timeout, the exact committed scale-only
+  verifier, and an always-uploaded non-sensitive NDJSON stage-record artifact.
+- Corrected runner observability names: fixture construction now has a start
+  event rather than a false completion status, and terminal success is
+  `scale_run_completion`. The 30-row diagnostic completed all stages and ten
+  presets in 4,716 ms.
+
+# 2026-07-25 - GA1-B bounded repeat-attempt correction
+
+- GitHub scale run `30174336550` reached the governed preset loop and failed
+  at `analyze_ticker_repeat_attempts` with
+  `ti_v3_analytics_contract_oversized` at `$.result.groups`. The raw generic
+  `repeat_attempt` grouping is intentionally unbounded and remains available
+  for GA1-A; only the governed preset now uses `repeat_attempt_bucket`.
+- Verified repeat attempts are one-based (`previousAttempts + 1`) within the
+  existing owner/account/currency/session/symbol semantic partition. The v1
+  grouping maps 1, 2, 3, and 4+ to stable first, second, third, and
+  fourth-or-later identities without fabricating empty buckets.
+
+- Continued the existing branch
+  `agent/trader-intelligence-v3-ga1-b-evidence-analytics-pack` and draft PR
+  #161 at starting HEAD `d145cd4ca72c2708878bed0c825135c588d1e852`;
+  all pre-existing unstaged remediation work was preserved.
+- The current slice strictly validates one compatible plain-data policy per
+  requested similarity dimension and evaluates exact identity, exact numeric,
+  canonical bucket, inclusive range, absolute exact distance, and normalized
+  entry-time bucket policies with exact arithmetic and complete deterministic
+  explanations.
+- The persisted ordering policy is explicitly versioned as
+  `unmatched_then_unavailable_then_dimension_priority_then_exact_distance_vector_then_trade_identity_v1`,
+  matching the executed comparator and rejecting legacy/incomplete plan
+  identities during reconstruction.
+- Similarity results now bind the complete verified plan, upstream dataset and
+  partition authority, unbounded and emitted counts, ordered inventories,
+  exact summary metrics, evidence references, and stable limitations. Closed
+  transported-result verification rebuilds the search and returns only the
+  rebuilt artifact; persisted replay reruns the same authority path and emits
+  stage-specific mismatch diagnostics.
+- Focused similarity tests, adversarial verification/replay tests, and
+  TypeScript pass. The governed GA1-B focused verifier includes the GA1-A
+  registry, evidence/similarity/preset, and similarity verification/replay
+  suites. The explicitly enabled
+  10,000-row test passed its evidence and similarity assertions, then failed in
+  the later preset-execution loop; preset remediation is outside this slice.
+- Resume point after the executable checkpoint: independently review the
+  complete similarity policy, result-verification, and replay diff. Keep PR
+  #161 draft/open/unmerged and do not begin preset authority/execution,
+  `compare_periods`, importer/calibration, final scale remediation, CI wiring,
+  GA1-C, UI/AI, candle work, deployment, or final handoff.
+
 # 2026-07-25 - GA1-A generic deterministic query gateway active
 
 - Started from accepted `main` at
@@ -180,6 +317,20 @@ Keep PR #156 draft/open/unmerged, leave audit threads untouched, do not deploy,
 and do not begin GA0-B4.
 
 # Codex Project Log
+
+### 2026-07-25 Trader Intelligence v3 GA1-B implementation candidate
+
+GA1-A is accepted and merged at `da5f40f5217f0c6501086c8fead55b3dd6ae4c6b`.
+GA1-B is active only on
+`agent/trader-intelligence-v3-ga1-b-evidence-analytics-pack`. It adds a
+GA1-A-bound deterministic evidence-retrieval layer, execution-only
+similar-trade search, ten governed analytics presets, a narrow metric-registry
+metadata correction, and a read-only application adapter. Private-owner CSV
+preflight remains local-only and aggregate-only; full calibration waits for the
+settled GA1-B executable verification. Resume point: run the consolidated
+focused GA1-B suite once, correct only affected failures, then run the final
+10,000-row proof and guards once before committing executable code. Keep the
+future PR draft/open/unmerged and do not deploy.
 
 ### 2026-07-23 Trader Intelligence v3 GA0-B1 Independent-Audit Remediation Candidate
 
