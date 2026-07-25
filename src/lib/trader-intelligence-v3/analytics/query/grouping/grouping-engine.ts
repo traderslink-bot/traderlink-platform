@@ -13,6 +13,12 @@ export interface TradeQueryGroup {
   readonly rows: readonly QueryRowSemantics[];
 }
 
+export interface TradeQueryGroupAssignment {
+  readonly groupIdentity: string;
+  readonly groupLabel: string;
+  readonly canonicalOrder: string;
+}
+
 const WEEKDAY_ORDER: Readonly<Record<string, string>> = Object.freeze({
   monday: "1", tuesday: "2", wednesday: "3", thursday: "4",
   friday: "5", saturday: "6", sunday: "7",
@@ -40,21 +46,31 @@ function bucketForRatio(
   return [`${prefix}:${lower}:${upper}`, `${lower} to < ${upper}`, `1:${lower}:${upper}`];
 }
 
-function groupFacts(row: QueryRowSemantics, grouping: TradeQueryGrouping): readonly [string, string, string] {
+export function tradeQueryGroupAssignment(
+  row: QueryRowSemantics,
+  grouping: TradeQueryGrouping,
+): TradeQueryGroupAssignment {
+  let facts: readonly [string, string, string];
   switch (grouping.kind) {
-    case "aggregate": return ["aggregate:all", "All included trades", "0"];
+    case "aggregate": facts = ["aggregate:all", "All included trades", "0"]; break;
+    case "day":
+      facts = [`day:${row.row.sessionDate}`, row.row.sessionDate, row.row.sessionDate];
+      break;
     case "month": {
       const month = row.row.sessionDate.slice(0, 7);
-      return [`month:${month}`, month, month];
+      facts = [`month:${month}`, month, month];
+      break;
     }
     case "week": {
       const date = row.row.sessionDate;
       const weekday = BigInt(WEEKDAY_ORDER[row.row.weekday]);
       const monday = shiftCanonicalDate(date, -(weekday - BigInt("1")));
-      return [`week:${monday}`, `Week of ${monday}`, monday];
+      facts = [`week:${monday}`, `Week of ${monday}`, monday];
+      break;
     }
     case "weekday":
-      return [`weekday:${row.row.weekday}`, row.row.weekday, WEEKDAY_ORDER[row.row.weekday]];
+      facts = [`weekday:${row.row.weekday}`, row.row.weekday, WEEKDAY_ORDER[row.row.weekday]];
+      break;
     case "time_bucket": {
       const time = grouping.source === "entry" ? row.entryTime : row.exitTime;
       const minutes = BigInt(time.slice(0, 2)) * BigInt("60") + BigInt(time.slice(3, 5));
@@ -62,36 +78,62 @@ function groupFacts(row: QueryRowSemantics, grouping: TradeQueryGrouping): reado
       const start = (minutes / size) * size;
       const end = start + size;
       const display = `${pad(start / BigInt("60"), 2)}:${pad(start % BigInt("60"), 2)}-${pad(end / BigInt("60"), 2)}:${pad(end % BigInt("60"), 2)}`;
-      return [`time:${grouping.source}:${start}:${size}`, display, pad(start, 4)];
+      facts = [`time:${grouping.source}:${start}:${size}`, display, pad(start, 4)];
+      break;
     }
+    case "entry_price_range":
     case "price_range":
-      return bucketForRatio(row, row.entryPrice, grouping.boundaries, "price");
+      facts = bucketForRatio(row, row.entryPrice, grouping.boundaries, "entry_price");
+      break;
     case "trade_sequence":
-      return [`sequence:${row.sequenceInSession}`, `Trade ${row.sequenceInSession}`, pad(row.sequenceInSession, 20)];
+      facts = [`sequence:${row.sequenceInSession}`, `Trade ${row.sequenceInSession}`, pad(row.sequenceInSession, 20)];
+      break;
     case "previous_completed_outcome":
-      return [`previous:${row.previousCompletedOutcome}`, row.previousCompletedOutcome, row.previousCompletedOutcome];
+      facts = [`previous:${row.previousCompletedOutcome}`, row.previousCompletedOutcome, row.previousCompletedOutcome];
+      break;
     case "repeat_attempt":
-      return [`repeat:${row.repeatAttempt}`, `Attempt ${row.repeatAttempt}`, pad(row.repeatAttempt, 20)];
+      facts = [`repeat:${row.repeatAttempt}`, `Attempt ${row.repeatAttempt}`, pad(row.repeatAttempt, 20)];
+      break;
     case "holding_time_bucket": {
       const index = grouping.boundariesSeconds.findIndex((boundary) => row.holdingSecondsFloor < BigInt(boundary));
-      if (index === 0) return [`holding:below:${grouping.boundariesSeconds[0]}`, `< ${grouping.boundariesSeconds[0]}s`, `0:${grouping.boundariesSeconds[0]}`];
+      if (index === 0) {
+        facts = [`holding:below:${grouping.boundariesSeconds[0]}`, `< ${grouping.boundariesSeconds[0]}s`, `0:${grouping.boundariesSeconds[0]}`];
+        break;
+      }
       if (index < 0) {
         const last = grouping.boundariesSeconds[grouping.boundariesSeconds.length - 1];
-        return [`holding:at_or_above:${last}`, `>= ${last}s`, `2:${last}`];
+        facts = [`holding:at_or_above:${last}`, `>= ${last}s`, `2:${last}`];
+        break;
       }
       const lower = grouping.boundariesSeconds[index - 1];
       const upper = grouping.boundariesSeconds[index];
-      return [`holding:${lower}:${upper}`, `${lower}s to < ${upper}s`, `1:${lower}:${upper}`];
+      facts = [`holding:${lower}:${upper}`, `${lower}s to < ${upper}s`, `1:${lower}:${upper}`];
+      break;
     }
+    case "share_quantity_bucket":
+      facts = bucketForRatio(row, row.shareQuantity, grouping.boundaries, "share_quantity");
+      break;
+    case "entry_notional_bucket":
+      facts = bucketForRatio(row, row.entryNotional, grouping.boundaries, "entry_notional");
+      break;
     case "position_size_bucket":
-      return bucketForRatio(row, row.positionSize, grouping.boundaries, "position_size");
+      facts = bucketForRatio(row, row.positionSize, grouping.boundaries, "entry_notional");
+      break;
     case "direction":
-      return [`direction:${row.row.direction}`, row.row.direction, row.row.direction];
+      facts = [`direction:${row.row.direction}`, row.row.direction, row.row.direction];
+      break;
     case "symbol":
-      return [`symbol:${row.row.stableInstrumentKey}`, row.row.displayedSymbol, row.row.stableInstrumentKey];
+      facts = [`symbol:${row.row.stableInstrumentKey}`, row.row.displayedSymbol, row.row.stableInstrumentKey];
+      break;
     case "account":
-      return [`account:${row.row.canonicalAccountKey}`, row.row.canonicalAccountKey, row.row.canonicalAccountKey];
+      facts = [`account:${row.row.canonicalAccountKey}`, row.row.canonicalAccountKey, row.row.canonicalAccountKey];
+      break;
   }
+  return Object.freeze({
+    groupIdentity: facts[0],
+    groupLabel: facts[1],
+    canonicalOrder: facts[2],
+  });
 }
 
 export function groupTradeQueryRows(
@@ -108,10 +150,14 @@ export function groupTradeQueryRows(
   }
   const groups = new Map<string, { label: string; order: string; rows: QueryRowSemantics[] }>();
   for (const row of rows) {
-    const [identity, label, order] = groupFacts(row, grouping);
-    const current = groups.get(identity) ?? { label, order, rows: [] };
+    const assignment = tradeQueryGroupAssignment(row, grouping);
+    const current = groups.get(assignment.groupIdentity) ?? {
+      label: assignment.groupLabel,
+      order: assignment.canonicalOrder,
+      rows: [],
+    };
     current.rows.push(row);
-    groups.set(identity, current);
+    groups.set(assignment.groupIdentity, current);
   }
   return Object.freeze(
     [...groups.entries()]

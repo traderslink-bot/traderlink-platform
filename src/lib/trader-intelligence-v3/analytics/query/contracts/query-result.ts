@@ -2,8 +2,10 @@ import { compareUnicodeCodePoints, serializeCanonicalValue } from "../../../doma
 import type { CanonicalContentDigest } from "../../../domain/identity";
 import {
   finalizeContentAddressedAuthority,
+  validateCanonicalCount,
   validateClaimedDigest,
   validateContractRecord,
+  validateReasonCodes,
   verifyExactMetricValue,
   type AnalyticalContractFailure,
   type ExactMetricValue,
@@ -26,7 +28,9 @@ export interface TradeQueryResultRow {
   readonly groupIdentity: string;
   readonly groupLabel: string;
   readonly canonicalOrder: string;
+  readonly candidateCount: string;
   readonly includedCount: string;
+  readonly excludedCount: string;
   readonly metrics: readonly ExactMetricValue[];
   readonly evidenceDigest: CanonicalContentDigest;
   readonly limitationCodes: readonly string[];
@@ -134,6 +138,35 @@ export function verifyTradeQueryResultShape(
   }
   const plan = verifyTradeQueryPlan(record.value.normalizedQueryPlan, authority);
   if (!plan.ok) return plan;
+  const runContext = validateContractRecord(record.value.runContext, [
+    "executorKey", "executorVersion", "gatewayKey", "gatewayVersion",
+  ], [], "$.runContext");
+  if (
+    !runContext.ok ||
+    runContext.value.executorKey !== "ti_v3_generic_trade_query_executor" ||
+    runContext.value.executorVersion !== "v1" ||
+    runContext.value.gatewayKey !== "ti_v3_read_only_trade_query_gateway" ||
+    runContext.value.gatewayVersion !== "v1"
+  ) {
+    return runContext.ok
+      ? { ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.runContext" } }
+      : runContext;
+  }
+  const candidateCount = validateCanonicalCount(record.value.candidateCount, "$.candidateCount");
+  const includedCount = validateCanonicalCount(record.value.includedCount, "$.includedCount");
+  const excludedCount = validateCanonicalCount(record.value.excludedCount, "$.excludedCount");
+  if (!candidateCount.ok) return candidateCount;
+  if (!includedCount.ok) return includedCount;
+  if (!excludedCount.ok) return excludedCount;
+  if (
+    BigInt(candidateCount.value) !==
+    BigInt(includedCount.value) + BigInt(excludedCount.value)
+  ) {
+    return {
+      ok: false,
+      error: { code: "ti_v3_analytics_contract_count_mismatch", path: "$.counts" },
+    };
+  }
   if (!Array.isArray(record.value.evidence)) {
     return { ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.evidence" } };
   }
@@ -146,15 +179,179 @@ export function verifyTradeQueryResultShape(
   if (!Array.isArray(record.value.rows)) {
     return { ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.rows" } };
   }
+  const rows: TradeQueryResultRow[] = [];
   for (let rowIndex = 0; rowIndex < record.value.rows.length; rowIndex += 1) {
-    const row = record.value.rows[rowIndex] as { readonly metrics?: unknown };
-    if (!Array.isArray(row.metrics)) {
+    const path = `$.rows[${rowIndex}]`;
+    const row = validateContractRecord(record.value.rows[rowIndex], [
+      "groupIdentity", "groupLabel", "canonicalOrder", "candidateCount",
+      "includedCount", "excludedCount", "metrics", "evidenceDigest",
+      "limitationCodes",
+    ], [], path);
+    if (
+      !row.ok ||
+      typeof row.value.groupIdentity !== "string" ||
+      typeof row.value.groupLabel !== "string" ||
+      typeof row.value.canonicalOrder !== "string" ||
+      !Array.isArray(row.value.metrics)
+    ) {
       return { ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: `$.rows[${rowIndex}].metrics` } };
     }
-    for (let metricIndex = 0; metricIndex < row.metrics.length; metricIndex += 1) {
-      const metric = verifyExactMetricValue(row.metrics[metricIndex]);
-      if (!metric.ok) return metric;
+    const candidateCount = validateCanonicalCount(row.value.candidateCount, `${path}.candidateCount`);
+    const includedCount = validateCanonicalCount(row.value.includedCount, `${path}.includedCount`);
+    const excludedCount = validateCanonicalCount(row.value.excludedCount, `${path}.excludedCount`);
+    const evidenceDigest = validateClaimedDigest(
+      row.value.evidenceDigest,
+      `${path}.evidenceDigest`,
+      "trade_query_evidence",
+    );
+    const limitations = validateReasonCodes(row.value.limitationCodes, `${path}.limitationCodes`);
+    if (!candidateCount.ok) return candidateCount;
+    if (!includedCount.ok) return includedCount;
+    if (!excludedCount.ok) return excludedCount;
+    if (!evidenceDigest.ok) return evidenceDigest;
+    if (!limitations.ok) return limitations;
+    if (
+      BigInt(candidateCount.value) !==
+      BigInt(includedCount.value) + BigInt(excludedCount.value)
+    ) {
+      return {
+        ok: false,
+        error: { code: "ti_v3_analytics_contract_count_mismatch", path },
+      };
     }
+    const verifiedMetrics: ExactMetricValue[] = [];
+    for (let metricIndex = 0; metricIndex < row.value.metrics.length; metricIndex += 1) {
+      const metric = verifyExactMetricValue(row.value.metrics[metricIndex]);
+      if (!metric.ok) return metric;
+      verifiedMetrics.push(metric.value);
+    }
+    const countMetric = (key: string) => verifiedMetrics.find((metric) =>
+      metric.metricKey === key);
+    for (const [key, expected] of [
+      ["candidate_count", candidateCount.value],
+      ["included_count", includedCount.value],
+      ["excluded_count", excludedCount.value],
+    ] as const) {
+      const metric = countMetric(key);
+      if (
+        metric !== undefined &&
+        (metric.kind !== "integer" || metric.value !== expected)
+      ) {
+        return {
+          ok: false,
+          error: { code: "ti_v3_analytics_contract_count_mismatch", path: `${path}.metrics` },
+        };
+      }
+    }
+    const rowEvidence = evidence.find((item) =>
+      item.evidenceDigest === evidenceDigest.value);
+    if (
+      rowEvidence === undefined ||
+      rowEvidence.groupIdentity !== row.value.groupIdentity ||
+      rowEvidence.populationCount !== includedCount.value
+    ) {
+      return {
+        ok: false,
+        error: { code: "ti_v3_analytics_contract_reference_mismatch", path: `${path}.evidenceDigest` },
+      };
+    }
+    rows.push(Object.freeze({
+      groupIdentity: row.value.groupIdentity,
+      groupLabel: row.value.groupLabel,
+      canonicalOrder: row.value.canonicalOrder,
+      candidateCount: candidateCount.value,
+      includedCount: includedCount.value,
+      excludedCount: excludedCount.value,
+      metrics: Object.freeze(verifiedMetrics),
+      evidenceDigest: evidenceDigest.value,
+      limitationCodes: limitations.value,
+    }));
+  }
+  if (new Set(rows.map((row) => row.groupIdentity)).size !== rows.length) {
+    return {
+      ok: false,
+      error: { code: "ti_v3_analytics_contract_duplicate_identity", path: "$.rows" },
+    };
+  }
+  if (
+    evidence.length !== rows.length ||
+    new Set(evidence.map((item) => item.evidenceDigest)).size !== evidence.length
+  ) {
+    return {
+      ok: false,
+      error: { code: "ti_v3_analytics_contract_reference_mismatch", path: "$.evidence" },
+    };
+  }
+  if (plan.value.grouping.kind === "aggregate") {
+    if (
+      rows.length !== 1 ||
+      rows[0].candidateCount !== candidateCount.value ||
+      rows[0].includedCount !== includedCount.value ||
+      rows[0].excludedCount !== excludedCount.value
+    ) {
+      return {
+        ok: false,
+        error: { code: "ti_v3_analytics_contract_count_mismatch", path: "$.rows[0]" },
+      };
+    }
+  }
+  if (
+    !Array.isArray(record.value.excludedCandidateKeys) ||
+    BigInt(record.value.excludedCandidateKeys.length) >
+      BigInt(plan.value.limits.totalEvidenceLimit) ||
+    record.value.excludedCandidateKeys.some((key) => typeof key !== "string") ||
+    new Set(record.value.excludedCandidateKeys).size !==
+      record.value.excludedCandidateKeys.length
+  ) {
+    return {
+      ok: false,
+      error: { code: "ti_v3_analytics_contract_invalid", path: "$.excludedCandidateKeys" },
+    };
+  }
+  const resultLimitations = validateReasonCodes(
+    record.value.limitationCodes,
+    "$.limitationCodes",
+  );
+  if (!resultLimitations.ok) return resultLimitations;
+  if (
+    !Array.isArray(record.value.diagnostics) ||
+    BigInt(record.value.diagnostics.length) >
+      BigInt(plan.value.limits.diagnosticLimit)
+  ) {
+    return {
+      ok: false,
+      error: { code: "ti_v3_analytics_contract_oversized", path: "$.diagnostics" },
+    };
+  }
+  const diagnostics: Array<Readonly<{
+    readonly code: string;
+    readonly affectedKeys: readonly string[];
+  }>> = [];
+  for (let index = 0; index < record.value.diagnostics.length; index += 1) {
+    const path = `$.diagnostics[${index}]`;
+    const diagnostic = validateContractRecord(
+      record.value.diagnostics[index],
+      ["code", "affectedKeys"],
+      [],
+      path,
+    );
+    if (
+      !diagnostic.ok ||
+      typeof diagnostic.value.code !== "string" ||
+      !Array.isArray(diagnostic.value.affectedKeys) ||
+      diagnostic.value.affectedKeys.some((key) => typeof key !== "string")
+    ) {
+      return diagnostic.ok
+        ? { ok: false, error: { code: "ti_v3_analytics_contract_invalid", path } }
+        : diagnostic;
+    }
+    diagnostics.push(Object.freeze({
+      code: diagnostic.value.code,
+      affectedKeys: Object.freeze(
+        [...diagnostic.value.affectedKeys as string[]]
+          .sort(compareUnicodeCodePoints),
+      ),
+    }));
   }
   const digest = validateClaimedDigest(record.value.resultDigest, "$.resultDigest", "trade_query_result");
   const receipt = validateContractRecord(record.value.executionReceipt, [
@@ -171,16 +368,24 @@ export function verifyTradeQueryResultShape(
   }
   const rebuilt = buildTradeQueryResult({
     schemaVersion: TRADE_QUERY_RESULT_VERSION,
-    runContext: record.value.runContext as TradeQueryResult["runContext"],
+    runContext: Object.freeze({
+      executorKey: "ti_v3_generic_trade_query_executor",
+      executorVersion: "v1",
+      gatewayKey: "ti_v3_read_only_trade_query_gateway",
+      gatewayVersion: "v1",
+    }),
     normalizedQueryPlan: plan.value,
-    rows: record.value.rows as readonly TradeQueryResultRow[],
-    candidateCount: record.value.candidateCount as string,
-    includedCount: record.value.includedCount as string,
-    excludedCount: record.value.excludedCount as string,
+    rows: Object.freeze(rows),
+    candidateCount: candidateCount.value,
+    includedCount: includedCount.value,
+    excludedCount: excludedCount.value,
     evidence: Object.freeze(evidence),
-    excludedCandidateKeys: record.value.excludedCandidateKeys as readonly string[],
-    limitationCodes: record.value.limitationCodes as readonly string[],
-    diagnostics: record.value.diagnostics as TradeQueryResult["diagnostics"],
+    excludedCandidateKeys: Object.freeze(
+      [...record.value.excludedCandidateKeys as string[]]
+        .sort(compareUnicodeCodePoints),
+    ),
+    limitationCodes: resultLimitations.value,
+    diagnostics: Object.freeze(diagnostics),
   });
   if (
     !rebuilt.ok ||

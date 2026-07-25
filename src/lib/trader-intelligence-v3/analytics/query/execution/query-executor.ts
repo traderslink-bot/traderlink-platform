@@ -18,7 +18,10 @@ import {
   openReadOnlyTradeQueryGateway,
   type VerifiedTradeQueryDatasetSource,
 } from "../gateway/read-only-query-gateway";
-import { groupTradeQueryRows, type TradeQueryGroup } from "../grouping/grouping-engine";
+import {
+  groupTradeQueryRows,
+  type TradeQueryGroup,
+} from "../grouping/grouping-engine";
 import {
   calculateTradeQueryMetrics,
   metricSortValue,
@@ -34,7 +37,21 @@ export interface TradeQueryExecutionRequest {
   readonly queryPlan: unknown;
 }
 
-function metricFor(row: TradeQueryResultRow, key: string): ExactMetricValue | null {
+type OrderableResultRow = Pick<
+  TradeQueryResultRow,
+  "groupIdentity" | "canonicalOrder" | "metrics"
+>;
+
+interface ProjectedGroupRow extends OrderableResultRow {
+  readonly groupLabel: string;
+  readonly candidateCount: string;
+  readonly includedCount: string;
+  readonly excludedCount: string;
+  readonly limitationCodes: readonly string[];
+  readonly group: TradeQueryGroup;
+}
+
+function metricFor(row: OrderableResultRow, key: string): ExactMetricValue | null {
   return row.metrics.find((metric) => metric.metricKey === key) ?? null;
 }
 
@@ -51,7 +68,10 @@ function compareMetrics(left: ExactMetricValue | null, right: ExactMetricValue |
   return comparison < BigInt("0") ? -1 : comparison > BigInt("0") ? 1 : 0;
 }
 
-function orderRows(rows: readonly TradeQueryResultRow[], plan: TradeQueryPlan): readonly TradeQueryResultRow[] {
+function orderRows<T extends OrderableResultRow>(
+  rows: readonly T[],
+  plan: TradeQueryPlan,
+): readonly T[] {
   return Object.freeze([...rows].sort((left, right) => {
     for (const ordering of plan.ordering) {
       const comparison = ordering.by === "group_identity"
@@ -67,8 +87,8 @@ function orderRows(rows: readonly TradeQueryResultRow[], plan: TradeQueryPlan): 
   }));
 }
 
-function boundedRows(rows: readonly TradeQueryResultRow[], maximum: string): readonly TradeQueryResultRow[] {
-  const result: TradeQueryResultRow[] = [];
+function boundedRows<T>(rows: readonly T[], maximum: string): readonly T[] {
+  const result: T[] = [];
   for (const row of rows) {
     if (BigInt(result.length) >= BigInt(maximum)) break;
     result.push(row);
@@ -76,13 +96,20 @@ function boundedRows(rows: readonly TradeQueryResultRow[], maximum: string): rea
   return Object.freeze(result);
 }
 
-function groupCounts(group: TradeQueryGroup): Readonly<{
+function groupCounts(
+  group: TradeQueryGroup,
+  candidateByIdentity: ReadonlyMap<string, TradeQueryGroup>,
+): Readonly<{
   candidateCount: string; includedCount: string; excludedCount: string;
 }> {
+  const candidateCount = candidateByIdentity.get(group.groupIdentity)?.rows.length;
+  if (candidateCount === undefined || candidateCount < group.rows.length) {
+    throw new Error("ti_v3_query_group_count_authority_mismatch");
+  }
   return Object.freeze({
-    candidateCount: String(group.rows.length),
+    candidateCount: String(candidateCount),
     includedCount: String(group.rows.length),
-    excludedCount: "0",
+    excludedCount: String(candidateCount - group.rows.length),
   });
 }
 
@@ -102,11 +129,14 @@ export function executeTradeQuery(
   if (!data.ok) return data;
   const semantics = buildQueryRowSemantics(data.value.rows);
   const filtered = applyTradeQueryFilters(semantics, plan.value.filters);
+  const candidateGroups = groupTradeQueryRows(semantics, plan.value.grouping);
   const groups = groupTradeQueryRows(filtered.included, plan.value.grouping);
-  if (
-    BigInt(groups.length) > BigInt(plan.value.limits.groupLimit) ||
-    BigInt(groups.length) > BigInt(plan.value.limits.resultRowLimit)
-  ) return contractFailure("ti_v3_analytics_contract_oversized", "$.result.groups");
+  if (BigInt(groups.length) > BigInt(plan.value.limits.groupLimit)) {
+    return contractFailure("ti_v3_analytics_contract_oversized", "$.result.groups");
+  }
+  const candidateByIdentity = new Map(
+    candidateGroups.map((group) => [group.groupIdentity, group]),
+  );
 
   const totalCandidateCount = authority.partitionReceipt.candidateCount;
   const includedCount = String(filtered.included.length);
@@ -117,47 +147,81 @@ export function executeTradeQuery(
     return contractFailure("ti_v3_analytics_contract_count_mismatch", "$.result.counts");
   }
 
-  const evidence = [];
-  const rows: TradeQueryResultRow[] = [];
-  let remainingEvidence = BigInt(plan.value.limits.totalEvidenceLimit);
-  for (let index = 0; index < groups.length; index += 1) {
-    const group = groups[index];
-    const groupsRemainingAfter = BigInt(groups.length - index - 1);
-    const availableForGroup = remainingEvidence - groupsRemainingAfter;
-    const perGroup = BigInt(plan.value.limits.evidencePerGroup);
-    const allocation = availableForGroup < perGroup ? availableForGroup : perGroup;
-    const builtEvidence = buildTradeQueryEvidence(
-      plan.value,
-      group.groupIdentity,
-      group.rows,
-      allocation.toString(),
-    );
-    if (!builtEvidence.ok) return builtEvidence;
-    remainingEvidence -= BigInt(builtEvidence.value.candidates.length);
-    evidence.push(builtEvidence.value);
+  const projectedRows: ProjectedGroupRow[] = [];
+  for (const group of groups) {
     const isAggregate = plan.value.grouping.kind === "aggregate";
     const counts = isAggregate
       ? { candidateCount: totalCandidateCount, includedCount, excludedCount }
-      : groupCounts(group);
-    rows.push(Object.freeze({
+      : groupCounts(group, candidateByIdentity);
+    projectedRows.push(Object.freeze({
       groupIdentity: group.groupIdentity,
       groupLabel: group.groupLabel,
       canonicalOrder: group.canonicalOrder,
+      candidateCount: counts.candidateCount,
       includedCount: String(group.rows.length),
+      excludedCount: counts.excludedCount,
       metrics: calculateTradeQueryMetrics(
         plan.value.metrics,
         group.rows,
         counts,
         plan.value.authority.currency,
       ),
-      evidenceDigest: builtEvidence.value.evidenceDigest,
-      limitationCodes: builtEvidence.value.limitationCodes,
+      limitationCodes: Object.freeze([]),
+      group,
     }));
   }
-  const orderedRows = boundedRows(orderRows(rows, plan.value), plan.value.limits.resultRowLimit);
+  const orderedProjectedRows = orderRows(projectedRows, plan.value);
+  const boundedProjectedRows = boundedRows(
+    orderedProjectedRows,
+    plan.value.limits.resultRowLimit,
+  );
+  const resultWasBounded = boundedProjectedRows.length < orderedProjectedRows.length;
+  const sourceExclusionsUnassigned = (
+    plan.value.grouping.kind !== "aggregate" &&
+    data.value.excludedCandidates.length > 0
+  );
+  const evidence = [];
+  const rows: TradeQueryResultRow[] = [];
+  let remainingEvidence = BigInt(plan.value.limits.totalEvidenceLimit);
+  for (let index = 0; index < boundedProjectedRows.length; index += 1) {
+    const projected = boundedProjectedRows[index];
+    const groupsRemainingAfter = BigInt(boundedProjectedRows.length - index - 1);
+    const availableForGroup = remainingEvidence - groupsRemainingAfter;
+    const perGroup = BigInt(plan.value.limits.evidencePerGroup);
+    const allocation = availableForGroup < perGroup ? availableForGroup : perGroup;
+    const builtEvidence = buildTradeQueryEvidence(
+      plan.value,
+      projected.group.groupIdentity,
+      projected.group.rows,
+      allocation.toString(),
+    );
+    if (!builtEvidence.ok) return builtEvidence;
+    remainingEvidence -= BigInt(builtEvidence.value.candidates.length);
+    evidence.push(builtEvidence.value);
+    rows.push(Object.freeze({
+      groupIdentity: projected.groupIdentity,
+      groupLabel: projected.groupLabel,
+      canonicalOrder: projected.canonicalOrder,
+      candidateCount: projected.candidateCount,
+      includedCount: projected.includedCount,
+      excludedCount: projected.excludedCount,
+      metrics: projected.metrics,
+      evidenceDigest: builtEvidence.value.evidenceDigest,
+      limitationCodes: Object.freeze([...new Set([
+        ...builtEvidence.value.limitationCodes,
+        ...(sourceExclusionsUnassigned
+          ? ["ti_v3_query_group_source_exclusions_unassigned"]
+          : []),
+      ])].sort(compareUnicodeCodePoints)),
+    }));
+  }
   const limitationCodes = [...new Set([
     ...authority.partitionReceipt.limitationCodes,
     ...evidence.flatMap((item) => item.limitationCodes),
+    ...(resultWasBounded ? ["ti_v3_query_result_rows_bounded"] : []),
+    ...(sourceExclusionsUnassigned
+      ? ["ti_v3_query_group_source_exclusions_unassigned"]
+      : []),
   ])].sort(compareUnicodeCodePoints);
   const diagnostics = [];
   if (filtered.excluded.length > 0) diagnostics.push(Object.freeze({
@@ -189,7 +253,7 @@ export function executeTradeQuery(
       gatewayVersion: gateway.value.gatewayVersion,
     }),
     normalizedQueryPlan: plan.value,
-    rows: orderedRows,
+    rows: Object.freeze(rows),
     candidateCount: totalCandidateCount,
     includedCount,
     excludedCount,

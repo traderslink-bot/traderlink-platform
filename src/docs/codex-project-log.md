@@ -18955,3 +18955,22 @@ Current best next step:
 
 - Await the owner's explicit merge decision. Do not mark ready, merge, deploy,
   resolve existing independent audit threads, or begin GA0-C in this closeout.
+
+# 2026-07-25 GA1-A audit remediation and statistics expansion in progress
+
+- Existing draft PR #160 remains the only delivery boundary.
+- Authorized corrections: grouped candidate/included/excluded authority,
+  deterministic `resultRowLimit` bounding versus fail-closed `groupLimit`, and
+  permutation/evidence-binding coverage.
+- Authorized expansion: a content-addressed execution-only metric registry,
+  shared accumulators, at least 55 foundational metrics, additional
+  execution-only filters/groupings, and exact comparison.
+- Final verification is intentionally deferred until the coherent executable
+  pass is complete: one combined focused GA1-A suite, one authorized 10,000-row
+  scale proof, then architecture and private-data guards once.
+
+Current best next step:
+
+- Finish static contract/test inspection, run the deferred final verification
+  cadence, and publish an executable head plus later Markdown-only handoff.
+  Keep PR #160 draft/open/unmerged/undeployed and do not begin GA1-B.

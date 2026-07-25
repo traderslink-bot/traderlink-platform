@@ -15,6 +15,8 @@ export interface QueryRowSemantics {
   readonly entryTime: string;
   readonly exitTime: string;
   readonly entryPrice: ExactRatio | null;
+  readonly shareQuantity: ExactRatio | null;
+  readonly entryNotional: ExactRatio | null;
   readonly positionSize: ExactRatio | null;
   readonly holdingNanoseconds: bigint;
   readonly holdingSecondsFloor: bigint;
@@ -152,6 +154,12 @@ export function buildQueryRowSemantics(rowsInput: readonly AnalyticalRow[]): rea
         entryTime: timePart(row.firstEntryAt),
         exitTime: timePart(row.finalExitAt),
         entryPrice: price(row),
+        shareQuantity: row.shareQuantity.state === "available"
+          ? decimalRatio(row.shareQuantity.quantity)
+          : null,
+        entryNotional: row.entryNotional.state === "available"
+          ? decimalRatio(row.entryNotional.amount)
+          : null,
         positionSize: row.entryNotional.state === "available"
           ? decimalRatio(row.entryNotional.amount)
           : null,

@@ -45,6 +45,13 @@ export interface SyntheticQueryPlanOptions {
     metricKey: TradeQueryMetricKey | null;
     direction: "ascending" | "descending";
   }>[];
+  readonly limits?: Readonly<Partial<{
+    groupLimit: string;
+    resultRowLimit: string;
+    evidencePerGroup: string;
+    totalEvidenceLimit: string;
+    diagnosticLimit: string;
+  }>>;
 }
 
 export interface SyntheticRawQueryPlan {
@@ -198,11 +205,11 @@ export function buildSyntheticQueryFixture(
       ],
       ordering: options.ordering ?? [{ by: "group_identity", metricKey: null, direction: "ascending" }],
       limits: {
-        groupLimit: "64",
-        resultRowLimit: "64",
-        evidencePerGroup: "4",
-        totalEvidenceLimit: "128",
-        diagnosticLimit: "16",
+        groupLimit: options.limits?.groupLimit ?? "64",
+        resultRowLimit: options.limits?.resultRowLimit ?? "64",
+        evidencePerGroup: options.limits?.evidencePerGroup ?? "4",
+        totalEvidenceLimit: options.limits?.totalEvidenceLimit ?? "128",
+        diagnosticLimit: options.limits?.diagnosticLimit ?? "16",
       },
       policies: TRADE_QUERY_POLICY,
     }),

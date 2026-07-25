@@ -49,27 +49,64 @@ adapter must stay behind this read-only interface.
 Filters: inclusive date range, account, symbol/instrument, direction, currency,
 gain/loss/flat, weekday, entry/exit time, derived exact entry price,
 owner/account/session sequence, previous strictly completed outcome, holding
-time, repeat ticker attempt, and entry-notional position size.
+time, repeat ticker attempt, exact share quantity, and exact entry notional.
+The legacy `price_range` and `position_size` names normalize to
+`entry_price_range` and `entry_notional_range`, so aliases do not create
+different plan identities. Exit-price filtering fails closed because the
+accepted analytical row does not carry exact exit-price authority; GA1-A does
+not reconstruct or estimate it.
 
 Previous outcome uses the latest completion strictly before entry. Mixed
 outcomes at one latest completion timestamp are `ambiguous`; lexical identity
 is not a temporal tie-breaker.
 
-One grouping is allowed: aggregate, month, Monday-based week, weekday,
-configurable entry/exit time bucket, price range, sequence, previous outcome,
-repeat attempt, holding-time bucket, position-size bucket, direction, symbol,
-or account. Boundaries are deterministic, canonical, lower-inclusive and
-upper-exclusive, with an open final bucket. Empty buckets are omitted.
+One grouping is allowed: aggregate, day, month, Monday-based week, weekday,
+configurable entry/exit time bucket, entry-price range, sequence, previous
+outcome, repeat attempt, holding-time bucket, share-quantity bucket,
+entry-notional bucket, direction, symbol, or account. Boundaries are
+deterministic, canonical, lower-inclusive and upper-exclusive, with an open
+final bucket. Empty buckets are omitted.
 
-Metrics: candidate/included/excluded and win/loss/flat counts; exact gross,
-charges and net P/L; average, median, expectancy, win rate and profit factor;
-average/median size and holding time; largest winner/loser contribution; and
-net P/L excluding either outlier.
+The content-addressed execution-only metric registry contains 86 active v1
+declarations. Every declaration binds purpose, required fields and authority,
+unit/currency behavior, exact calculation and aggregation policy, compatible
+filters/groupings, sample and unavailable policy, limitations, evidence,
+ordering, test keys, deprecation state, and declaration digest. A query may
+select at most 64 metrics.
+
+The foundational projections cover population/coverage, activity, core
+financials, outcome quality, holding time, share quantity, entry notional,
+daily consistency, streaks, and leave-one-out concentration. A single shared
+accumulator scans each included group once and retains daily realized-path
+state for inexpensive follow-on metrics. The executor contains no ordinary
+metric-specific branch; it asks the registry-backed projector for selected
+values.
 
 All financial and ratio calculation uses accepted exact decimal/ratio
 primitives. JavaScript floating point is not financial authority. Profit factor
 is unavailable with a zero exact loss denominator. Size metrics are unavailable
-when accepted notional authority is incomplete.
+when accepted quantity or notional authority is incomplete.
+
+## Audit-remediation semantics
+
+For a grouped result, `candidate_count` is the number of verified gateway rows
+assignable to that group before query filters, `included_count` is the emitted
+group population after filters, and `excluded_count` is their exact difference.
+Source-level excluded candidates without an analytical row cannot be assigned
+to a group and produce an explicit limitation. Result-row count fields,
+count-metric values, evidence group identity, and evidence population count are
+verified together.
+
+`groupLimit` is a fail-closed bound on the included group inventory.
+`resultRowLimit` is a deterministic output bound applied only after canonical
+metric/group ordering. Evidence is generated only for emitted rows. Bounding
+adds `ti_v3_query_result_rows_bounded`; it does not silently relabel a rejected
+query.
+
+`ti_v3_trade_query_comparison_v1` compares two separately validated aggregate
+executions over the same partition/currency authority. It preserves both exact
+populations and evidence identities, emits exact differences, and emits
+percentage differences only for a non-zero numeric baseline.
 
 ## Evidence and replay
 
@@ -89,8 +126,9 @@ authorities, evidence, results, policies, receipts, or digests fail.
 
 | Boundary | Maximum |
 | --- | ---: |
-| filters | 15 |
-| metrics | 22 |
+| filters | 18 |
+| registered metrics | 86 |
+| selected metrics per query | 64 |
 | orderings | 3 |
 | groups / rows | 256 |
 | evidence candidates per group | 16 |
@@ -100,11 +138,11 @@ authorities, evidence, results, policies, receipts, or digests fail.
 | serialized plan | 65,536 code units |
 | serialized result | 1,048,576 code units |
 
-The executor uses a session/completion sweep, one filter pass, one group pass,
-reusable exact accumulators/sorts, canonical group ordering, and bounded
-evidence. Target behavior is approximately `O(R + G log G + E)`, aside from
-accepted authority verification and bounded median sorts. All contract maxima
-fail closed at max-plus-one.
+The executor uses a session/completion sweep, one filter pass, group assignment,
+one shared accumulator pass per emitted group, registry projections, canonical
+group ordering, and bounded evidence. Target behavior is approximately
+`O(R + G log G + M × G + E)`, aside from accepted authority verification and
+bounded median sorts. All contract maxima fail closed at max-plus-one.
 
 ## Explicit exclusions and future boundary
 

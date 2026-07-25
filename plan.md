@@ -372,11 +372,12 @@ without an explicit owner decision.
 
 # 11. Immediate next action
 
-1. Implement GA1-A on
-   `agent/trader-intelligence-v3-ga1-a-generic-query-gateway` from accepted
-   `main` at `b640ba599a4b9604395d203b6224b45d9de21208`.
-2. Deliver only the generic query plan, read-only gateway, executor, exact
-   metrics, bounded evidence, replay, tests, verifier, ADR, and audit handoff.
-3. Keep the PR draft/open/unmerged and do not deploy.
-4. Do not begin GA1-B, UI/model work, simulations, candles, setup,
-   support/resistance, database writes, payment, or auth.
+1. Complete the authorized GA1-A audit remediation and execution-only
+   statistics expansion on existing draft PR #160.
+2. Preserve grouped candidate/included/excluded authority, deterministic
+   result-row bounding, evidence binding, the versioned metric registry, shared
+   accumulators, exact comparison, replay, and the final scale proof.
+3. Keep PR #160 draft/open/unmerged and do not deploy.
+4. Stop for independent audit after the final executable and Markdown-only
+   handoff commits. Do not begin GA1-B, UI/model work, simulations, candles,
+   setup, support/resistance, database writes, payment, or auth.

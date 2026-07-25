@@ -4,6 +4,7 @@ import {
   buildSyntheticQueryFixture,
   buildTradeQueryPlan,
   executeTradeQuery,
+  TRADE_QUERY_METRIC_KEYS,
   TRADE_QUERY_LIMITS,
   verifyTradeQueryPlan,
 } from "../../analytics";
@@ -58,6 +59,10 @@ describe("GA1-A deterministic query-plan contract", () => {
       ...valid,
       filters: [{ kind: "price_range", minimum: "5", maximum: "1" }],
     }, fixture.authority)).toMatchObject({ ok: false });
+    expect(buildTradeQueryPlan({
+      ...valid,
+      filters: [{ kind: "exit_price_range", minimum: "1", maximum: "5" }],
+    }, fixture.authority)).toMatchObject({ ok: false });
     const accessor = Object.create(null) as Record<string, unknown>;
     Object.defineProperties(accessor, {
       ...Object.fromEntries(Object.entries(valid).map(([key, value]) => [
@@ -91,13 +96,29 @@ describe("GA1-A deterministic query-plan contract", () => {
     }, fixture.authority)).toMatchObject({ ok: false });
     expect(buildTradeQueryPlan({
       ...fixture.plan(),
-      metrics: Array.from({ length: TRADE_QUERY_LIMITS.maximumMetrics + 1 }, (_, index) =>
-        `metric_${index}`),
+      metrics: TRADE_QUERY_METRIC_KEYS.slice(0, TRADE_QUERY_LIMITS.maximumMetrics + 1),
     }, fixture.authority)).toMatchObject({ ok: false });
     expect(buildTradeQueryPlan({
       ...fixture.plan(),
       limits: { ...fixture.plan().limits, groupLimit: String(TRADE_QUERY_LIMITS.maximumGroups + 1) },
     }, fixture.authority)).toMatchObject({ ok: false });
+    expect(buildTradeQueryPlan({
+      ...fixture.plan(),
+      limits: {
+        ...fixture.plan().limits,
+        resultRowLimit: String(TRADE_QUERY_LIMITS.maximumResultRows + 1),
+      },
+    }, fixture.authority)).toMatchObject({ ok: false });
+    expect(buildTradeQueryPlan({
+      ...fixture.plan(),
+      filters: Array.from(
+        { length: TRADE_QUERY_LIMITS.maximumFilters + 1 },
+        () => ({ kind: "currency", value: "USD" }),
+      ),
+    }, fixture.authority)).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_analytics_contract_oversized" },
+    });
   });
 
   it("assigns identical identity to equivalent normalized plans", () => {
@@ -119,6 +140,19 @@ describe("GA1-A deterministic query-plan contract", () => {
     expect(first).toMatchObject({ ok: true });
     expect(second).toMatchObject({ ok: true });
     if (first.ok && second.ok) expect(first.value.queryPlanDigest).toBe(second.value.queryPlanDigest);
+    const legacyAlias = buildTradeQueryPlan(fixture.plan({
+      filters: [{ kind: "price_range", minimum: "1", maximum: "3" }],
+      grouping: { kind: "position_size_bucket", boundaries: ["150", "250"] },
+    }), fixture.authority);
+    const canonical = buildTradeQueryPlan(fixture.plan({
+      filters: [{ kind: "entry_price_range", minimum: "1", maximum: "3" }],
+      grouping: { kind: "entry_notional_bucket", boundaries: ["150", "250"] },
+    }), fixture.authority);
+    expect(legacyAlias).toMatchObject({ ok: true });
+    expect(canonical).toMatchObject({ ok: true });
+    if (legacyAlias.ok && canonical.ok) {
+      expect(legacyAlias.value.queryPlanDigest).toBe(canonical.value.queryPlanDigest);
+    }
   });
 
   it("rejects execution with a foreign selected partition", () => {

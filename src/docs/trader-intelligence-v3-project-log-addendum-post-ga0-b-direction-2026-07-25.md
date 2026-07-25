@@ -89,6 +89,24 @@ The foundation was audited one slice at a time because exact truth and the first
 7. Do not begin GA1-B, setup detection, or support/resistance work unless the
    owner explicitly authorizes the next slice.
 
+## GA1-A expanded execution-only statistics authorization
+
+- Continue on existing draft PR #160; keep it open, draft, unmerged, and
+  undeployed.
+- Correct grouped count authority and make `resultRowLimit` a deterministic
+  post-ordering bound while `groupLimit` remains fail closed.
+- Bind emitted row counts to exact evidence group/population identity.
+- Provide a content-addressed execution-only metric registry with at least 55
+  foundational metrics and shared accumulators; the implemented registry
+  contains 86 active v1 declarations with a 64-metric per-plan cap.
+- Add day, share-quantity, and entry-notional filtering/grouping semantics and
+  an exact aggregate comparison envelope.
+- Do not infer exit price: the accepted analytical row has no exact exit-price
+  authority, so that filter remains fail-closed until an upstream contract
+  supplies it.
+- Defer the combined focused suite and 10,000-row proof until the complete
+  executable pass, then run each according to the owner-specified cadence.
+
 ## PR #157 direction-lock closeout
 
 - PR #158 was merged into `main` at

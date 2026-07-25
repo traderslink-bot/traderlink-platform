@@ -27,14 +27,18 @@ import {
   type AnalyticalDatasetReceipt,
   type AnalyticalPartitionReceipt,
 } from "../../dataset";
+import {
+  TRADE_QUERY_METRIC_KEYS,
+  type TradeQueryMetricKey,
+} from "../metrics/metric-registry";
 
 export const TRADE_QUERY_PLAN_VERSION = "ti_v3_trade_query_plan_v1" as const;
 export const TRADE_QUERY_PLAN_KEY = "generic_deterministic_trade_query" as const;
 export const TRADE_QUERY_PLAN_SEMANTIC_VERSION = "v1" as const;
 
 export const TRADE_QUERY_LIMITS = Object.freeze({
-  maximumFilters: 15,
-  maximumMetrics: 22,
+  maximumFilters: 18,
+  maximumMetrics: 64,
   maximumOrderings: 3,
   maximumGroups: 256,
   maximumResultRows: 256,
@@ -80,42 +84,40 @@ export type TradeQueryFilter = Readonly<
   | { readonly kind: "weekday"; readonly values: readonly QueryWeekday[] }
   | { readonly kind: "entry_time_range"; readonly startTime: string; readonly endTime: string }
   | { readonly kind: "exit_time_range"; readonly startTime: string; readonly endTime: string }
+  | { readonly kind: "entry_price_range"; readonly minimum: string | null; readonly maximum: string | null }
   | { readonly kind: "price_range"; readonly minimum: string | null; readonly maximum: string | null }
   | { readonly kind: "sequence_in_session"; readonly minimum: string | null; readonly maximum: string | null }
   | { readonly kind: "previous_completed_outcome"; readonly values: readonly ("none" | QueryOutcome | "ambiguous")[] }
   | { readonly kind: "holding_time_seconds"; readonly minimum: string | null; readonly maximum: string | null }
   | { readonly kind: "repeat_attempt"; readonly minimum: string | null; readonly maximum: string | null }
+  | { readonly kind: "share_quantity_range"; readonly minimum: string | null; readonly maximum: string | null }
+  | { readonly kind: "entry_notional_range"; readonly minimum: string | null; readonly maximum: string | null }
   | { readonly kind: "position_size"; readonly minimum: string | null; readonly maximum: string | null }
 >;
 
 export type TradeQueryGrouping = Readonly<
   | { readonly kind: "aggregate" }
+  | { readonly kind: "day" }
   | { readonly kind: "month" }
   | { readonly kind: "week" }
   | { readonly kind: "weekday" }
   | { readonly kind: "time_bucket"; readonly source: "entry" | "exit"; readonly bucketMinutes: string }
+  | { readonly kind: "entry_price_range"; readonly boundaries: readonly string[] }
   | { readonly kind: "price_range"; readonly boundaries: readonly string[] }
   | { readonly kind: "trade_sequence" }
   | { readonly kind: "previous_completed_outcome" }
   | { readonly kind: "repeat_attempt" }
   | { readonly kind: "holding_time_bucket"; readonly boundariesSeconds: readonly string[] }
+  | { readonly kind: "share_quantity_bucket"; readonly boundaries: readonly string[] }
+  | { readonly kind: "entry_notional_bucket"; readonly boundaries: readonly string[] }
   | { readonly kind: "position_size_bucket"; readonly boundaries: readonly string[] }
   | { readonly kind: "direction" }
   | { readonly kind: "symbol" }
   | { readonly kind: "account" }
 >;
 
-export const TRADE_QUERY_METRIC_KEYS = Object.freeze([
-  "candidate_count", "included_count", "excluded_count",
-  "win_count", "loss_count", "flat_count",
-  "gross_pnl", "signed_charges", "net_pnl",
-  "average_pnl", "median_pnl", "expectancy", "win_rate", "profit_factor",
-  "average_position_size", "median_position_size",
-  "average_holding_time", "median_holding_time",
-  "largest_winner_contribution", "largest_loser_contribution",
-  "net_pnl_excluding_largest_winner", "net_pnl_excluding_largest_loser",
-] as const);
-export type TradeQueryMetricKey = typeof TRADE_QUERY_METRIC_KEYS[number];
+export { TRADE_QUERY_METRIC_KEYS };
+export type { TradeQueryMetricKey };
 
 export interface TradeQueryOrdering {
   readonly by: "group_identity" | "metric";
@@ -163,8 +165,9 @@ export interface TradeQueryAuthority {
 const FILTER_KINDS = new Set([
   "date_range", "account", "symbol", "direction", "currency",
   "realized_outcome", "weekday", "entry_time_range", "exit_time_range",
-  "price_range", "sequence_in_session", "previous_completed_outcome",
-  "holding_time_seconds", "repeat_attempt", "position_size",
+  "entry_price_range", "price_range", "sequence_in_session",
+  "previous_completed_outcome", "holding_time_seconds", "repeat_attempt",
+  "share_quantity_range", "entry_notional_range", "position_size",
 ]);
 const WEEKDAYS = new Set<QueryWeekday>([
   "monday", "tuesday", "wednesday", "thursday",
@@ -174,9 +177,11 @@ const OUTCOMES = new Set<QueryOutcome>(["gain", "loss", "flat"]);
 const PREVIOUS_OUTCOMES = new Set(["none", "gain", "loss", "flat", "ambiguous"]);
 const METRICS = new Set<string>(TRADE_QUERY_METRIC_KEYS);
 const GROUPINGS = new Set([
-  "aggregate", "month", "week", "weekday", "time_bucket", "price_range",
+  "aggregate", "day", "month", "week", "weekday", "time_bucket",
+  "entry_price_range", "price_range",
   "trade_sequence", "previous_completed_outcome", "repeat_attempt",
-  "holding_time_bucket", "position_size_bucket", "direction", "symbol", "account",
+  "holding_time_bucket", "share_quantity_bucket", "entry_notional_bucket",
+  "position_size_bucket", "direction", "symbol", "account",
 ]);
 
 function failure(path: string): ExactResult<never, AnalyticalContractFailure> {
@@ -313,7 +318,13 @@ function normalizeFilter(input: unknown, index: number): ExactResult<TradeQueryF
     if (start.value > end.value) return failure(path);
     return { ok: true, value: Object.freeze({ kind, startTime: start.value, endTime: end.value }) };
   }
-  const rangeKind = kind === "price_range" || kind === "position_size" ? "decimal" : "count";
+  const rangeKind = (
+    kind === "entry_price_range" ||
+    kind === "price_range" ||
+    kind === "share_quantity_range" ||
+    kind === "entry_notional_range" ||
+    kind === "position_size"
+  ) ? "decimal" : "count";
   const exact = validateContractRecord(input, ["kind", "minimum", "maximum"], [], path);
   if (!exact.ok) return exact;
   const minimum = exactBound(exact.value.minimum, `${path}.minimum`, rangeKind);
@@ -322,7 +333,19 @@ function normalizeFilter(input: unknown, index: number): ExactResult<TradeQueryF
   if (!maximum.ok) return maximum;
   const range = validateRange(minimum.value, maximum.value, path, rangeKind);
   if (!range.ok) return range;
-  return { ok: true, value: Object.freeze({ kind, minimum: minimum.value, maximum: maximum.value }) as TradeQueryFilter };
+  const canonicalKind = kind === "price_range"
+    ? "entry_price_range"
+    : kind === "position_size"
+      ? "entry_notional_range"
+      : kind;
+  return {
+    ok: true,
+    value: Object.freeze({
+      kind: canonicalKind,
+      minimum: minimum.value,
+      maximum: maximum.value,
+    }) as TradeQueryFilter,
+  };
 }
 
 function decimalBoundaries(input: unknown, path: string): ExactResult<readonly string[], AnalyticalContractFailure> {
@@ -367,11 +390,30 @@ function normalizeGrouping(input: unknown): ExactResult<TradeQueryGrouping, Anal
     if (!size.ok || BigInt(size.value) < BigInt("1") || BigInt(size.value) > BigInt("1440") || BigInt("1440") % BigInt(size.value) !== BigInt("0")) return failure("$.grouping.bucketMinutes");
     return { ok: true, value: Object.freeze({ kind, source: exact.value.source, bucketMinutes: size.value }) };
   }
-  if (kind === "price_range" || kind === "position_size_bucket") {
+  if (
+    kind === "entry_price_range" ||
+    kind === "price_range" ||
+    kind === "share_quantity_bucket" ||
+    kind === "entry_notional_bucket" ||
+    kind === "position_size_bucket"
+  ) {
     const exact = validateContractRecord(input, ["kind", "boundaries"], [], "$.grouping");
     if (!exact.ok) return exact;
     const boundaries = decimalBoundaries(exact.value.boundaries, "$.grouping.boundaries");
-    return boundaries.ok ? { ok: true, value: Object.freeze({ kind, boundaries: boundaries.value }) } : boundaries;
+    const canonicalKind = kind === "price_range"
+      ? "entry_price_range"
+      : kind === "position_size_bucket"
+        ? "entry_notional_bucket"
+        : kind;
+    return boundaries.ok
+      ? {
+          ok: true,
+          value: Object.freeze({
+            kind: canonicalKind,
+            boundaries: boundaries.value,
+          }) as TradeQueryGrouping,
+        }
+      : boundaries;
   }
   if (kind === "holding_time_bucket") {
     const exact = validateContractRecord(input, ["kind", "boundariesSeconds"], [], "$.grouping");
@@ -531,7 +573,9 @@ function normalizePlanContent(
   if (!totalEvidenceLimit.ok) return totalEvidenceLimit;
   if (!diagnosticLimit.ok) return diagnosticLimit;
   if (BigInt(resultRowLimit.value) > BigInt(groupLimit.value)) return failure("$.limits.resultRowLimit");
-  if (BigInt(totalEvidenceLimit.value) < BigInt(groupLimit.value)) return failure("$.limits.totalEvidenceLimit");
+  if (BigInt(totalEvidenceLimit.value) < BigInt(resultRowLimit.value)) {
+    return failure("$.limits.totalEvidenceLimit");
+  }
   const policies = normalizePolicies(record.value.policies);
   if (!policies.ok) return policies;
   const content = {

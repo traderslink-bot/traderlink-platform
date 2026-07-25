@@ -27,6 +27,7 @@ function matches(row: QueryRowSemantics, filter: TradeQueryFilter): boolean {
       return row.entryTime >= filter.startTime && row.entryTime <= filter.endTime;
     case "exit_time_range":
       return row.exitTime >= filter.startTime && row.exitTime <= filter.endTime;
+    case "entry_price_range":
     case "price_range":
       return row.entryPrice !== null &&
         (filter.minimum === null || compareRatioToDecimal(row.entryPrice, filter.minimum) >= 0) &&
@@ -39,10 +40,17 @@ function matches(row: QueryRowSemantics, filter: TradeQueryFilter): boolean {
       return withinBigInt(row.holdingSecondsFloor, filter.minimum, filter.maximum);
     case "repeat_attempt":
       return withinBigInt(row.repeatAttempt, filter.minimum, filter.maximum);
-    case "position_size":
-      return row.positionSize !== null &&
-        (filter.minimum === null || compareRatioToDecimal(row.positionSize, filter.minimum) >= 0) &&
-        (filter.maximum === null || compareRatioToDecimal(row.positionSize, filter.maximum) <= 0);
+    case "share_quantity_range":
+      return row.shareQuantity !== null &&
+        (filter.minimum === null || compareRatioToDecimal(row.shareQuantity, filter.minimum) >= 0) &&
+        (filter.maximum === null || compareRatioToDecimal(row.shareQuantity, filter.maximum) <= 0);
+    case "entry_notional_range":
+    case "position_size": {
+      const value = filter.kind === "position_size" ? row.positionSize : row.entryNotional;
+      return value !== null &&
+        (filter.minimum === null || compareRatioToDecimal(value, filter.minimum) >= 0) &&
+        (filter.maximum === null || compareRatioToDecimal(value, filter.maximum) <= 0);
+    }
   }
 }
 

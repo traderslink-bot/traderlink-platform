@@ -33,11 +33,14 @@ describe("GA1-A independent filters and deterministic grouping", () => {
     ["entry time", [{ kind: "entry_time_range", startTime: "09:00", endTime: "10:59" }]],
     ["exit time", [{ kind: "exit_time_range", startTime: "09:00", endTime: "11:59" }]],
     ["price bounds", [{ kind: "price_range", minimum: "1", maximum: "2" }]],
+    ["entry price bounds", [{ kind: "entry_price_range", minimum: "1", maximum: "2" }]],
     ["session sequence", [{ kind: "sequence_in_session", minimum: "2", maximum: "3" }]],
     ["previous loss", [{ kind: "previous_completed_outcome", values: ["loss"] }]],
     ["holding bounds", [{ kind: "holding_time_seconds", minimum: "300", maximum: "900" }]],
     ["repeat attempt", [{ kind: "repeat_attempt", minimum: "2", maximum: "9" }]],
     ["position size", [{ kind: "position_size", minimum: "150", maximum: "250" }]],
+    ["share quantity", [{ kind: "share_quantity_range", minimum: "100", maximum: "100" }]],
+    ["entry notional", [{ kind: "entry_notional_range", minimum: "150", maximum: "250" }]],
   ] as const)("%s filter is independently executable", (_label, filters) => {
     const result = run(filters as readonly TradeQueryFilter[]);
     expect(BigInt(result.includedCount)).toBeGreaterThanOrEqual(BigInt("0"));
@@ -47,16 +50,20 @@ describe("GA1-A independent filters and deterministic grouping", () => {
   });
 
   it.each([
+    { kind: "day" },
     { kind: "month" },
     { kind: "week" },
     { kind: "weekday" },
     { kind: "time_bucket", source: "entry", bucketMinutes: "60" },
     { kind: "price_range", boundaries: ["1", "2", "3"] },
+    { kind: "entry_price_range", boundaries: ["1", "2", "3"] },
     { kind: "trade_sequence" },
     { kind: "previous_completed_outcome" },
     { kind: "repeat_attempt" },
     { kind: "holding_time_bucket", boundariesSeconds: ["600", "1200"] },
     { kind: "position_size_bucket", boundaries: ["150", "250"] },
+    { kind: "share_quantity_bucket", boundaries: ["50", "150"] },
+    { kind: "entry_notional_bucket", boundaries: ["150", "250"] },
     { kind: "direction" },
     { kind: "symbol" },
     { kind: "account" },
