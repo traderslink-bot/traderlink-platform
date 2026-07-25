@@ -33,7 +33,7 @@ The next program prioritizes:
 4. a generic counterfactual simulation engine;
 5. an execution-only rule-simulation pack;
 6. a minimal owner-facing query/evidence experience and owner-only AI explanation layer;
-7. a private-owner candle relay using owner-provided EODHD access as the primary beta source and an optional limited Yahoo fallback where available and permitted;
+7. a private-owner market-data relay and normalized candle authority;
 8. VWAP, EMA9, EMA20, MFE/MAE, profit-giveback, and other replay-safe market-context features;
 9. candle-dependent profit-target, partial-exit, stop, trailing, break-even, and time-exit simulations.
 
@@ -46,12 +46,18 @@ Setup detection and support/resistance redesign are deferred.
 - The model does not receive unrestricted SQL or direct database authority.
 - The model does not calculate from raw rows or candles.
 - The read-only query gateway enforces owner/account scope, bounded query plans, currency separation, and evidence resolution.
+- The normal user-facing product describes this capability simply as **market data**. Users do not need to know which provider, relay, cache, or adapter supplied the candles.
+- Provider choice and relay mechanics are internal implementation details. Provider names may appear only in owner/admin diagnostics where they are useful for setup, coverage, or troubleshooting.
+- For the private beta, Yahoo supplies same-day intraday candles needed for trades analyzed on their execution date.
+- For the private beta, EODHD supplies earlier historical candles after the trading day.
+- Both sources are sufficient for the planned beta market-context features and journal-based simulations when their returned coverage passes the same normalized quality contract.
+- All provider responses pass through one provider-neutral normalization, validation, content-identity, coverage, and no-lookahead boundary before analytics consume them.
 - Provider credentials stay on the owner computer and are never sent to the browser, website database, model, Git, or logs.
-- Candle snapshots are normalized, validated, content-addressed, quality-labeled, and no-lookahead-safe before analytics consume them.
-- EODHD is the primary private-beta candle source through the owner-local relay.
-- Yahoo is only an optional limited fallback; no fixed coverage promise is recorded.
+- The website and AI consume provider-neutral market-data status and normalized candle snapshots, not raw provider payloads or provider-specific assumptions.
 - Journal-based counterfactual backtesting over actual owner trades is in scope.
 - Full market-universe strategy backtesting remains a later separate product surface.
+
+This market-data routing decision supersedes any earlier wording that described EODHD as the source for same-day candles or Yahoo only as an optional fallback. It does not change the normalized candle authority, security boundaries, or deferred setup/support-resistance decisions.
 
 ## Pace decision
 
@@ -67,6 +73,6 @@ The foundation was audited one slice at a time because exact truth and the first
 
 1. Implement GA0-B4 only from current accepted `main`.
 2. Keep the B4 PR draft and independently audited.
-3. After B4 merge, perform a short private owner-data calibration and prove the read-only data/candle-relay contracts.
-4. Begin the generic query, evidence, and simulation program under the direction-lock document.
+3. After B4 merge, perform a short private owner-data calibration and prove the read-only data/market-data-relay contracts.
+4. Begin the generic query, evidence, and simulation program under the direction-lock document, applying this addendum's provider-neutral product language and same-day/historical routing correction.
 5. Do not begin setup detection or support/resistance work unless the owner explicitly supersedes this decision.
