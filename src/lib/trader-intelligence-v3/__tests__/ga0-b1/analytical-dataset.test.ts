@@ -151,7 +151,7 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     })).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_duplicate_identity" } });
     expect(buildAnalyticalDatasetReceipt({
       ...buildInput,
-      rows: Array.from({ length: 65 }, () => dataset.value.rows[0]),
+      rows: Array.from({ length: 10_001 }, () => dataset.value.rows[0]),
     })).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_oversized" } });
     expect(verifyAnalyticalDatasetReceipt({
       ...dataset.value,

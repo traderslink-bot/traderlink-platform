@@ -1,7 +1,7 @@
 # Trader Intelligence v3 GA0-B Deterministic Proof Implementation Plan
 
 **Date:** 2026-07-19 America/Toronto  
-**Status:** Active implementation plan after GA0-A3 acceptance  
+**Status:** Active implementation plan for GA0-B4 after accepted B3 merge
 **Accepted GA0-A3 merge:** `72ca53940403dfab63979d403bd6b479539f41db`  
 **Operating profile:** `private_owner_alpha`  
 **Operational hosting:** local owner testing only  
@@ -11,9 +11,9 @@
 **Visible chart rendering:** forbidden in GA0-B  
 **Production deployment:** forbidden in GA0-B
 
-**Current slice:** GA0-B2 weekday deterministic proof. GA0-B1 was accepted in
-merge `7d8d8e03826e4b877b22e9a2a68d381bb42e585d`. GA0-B3 must not begin until
-the B2 draft PR is independently audited, accepted, and merged.
+**Current slice:** GA0-B4 deterministic tool-runner proof closeout. GA0-B1 was
+accepted in merge `7d8d8e03826e4b877b22e9a2a68d381bb42e585d`; B2 and B3 are
+accepted, with B3 merged at `e46d9fea331aeefc262a6dc7a187b5c73678b398`.
 
 ---
 

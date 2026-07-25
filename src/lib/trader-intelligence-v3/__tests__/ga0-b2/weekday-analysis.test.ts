@@ -28,6 +28,17 @@ import {
   buildSyntheticGa0B1Authority,
 } from "../../testing";
 import type { CanonicalExecutionEnvelope } from "../../domain";
+import type { ExcludedAnalyticalCandidate } from "../../analytics/dataset/analytical-dataset";
+
+interface MutableWeekdayMutationGraph {
+  tables: Array<{ rows: Array<{ rowKey: string; cells: Array<{ columnKey: string; metric: { value: string } }> }> }>;
+  evidenceBundles: unknown[];
+  diagnostics: { entries: Array<{ diagnosticKey: string; severity: "info"; code: string; affectedKeys: readonly string[] }> };
+  runContext: { partitionDigest: string };
+  normalizedArguments: { values: { targetWeekday: string } };
+  receipt: { runDigest: string; diagnosticsDigest: string };
+  executionAuthority: { toolKey: string };
+}
 
 interface TradeSpec {
   readonly date: string;
@@ -416,13 +427,15 @@ describe("GA0-B2 persisted semantic replay authority", () => {
     );
     expect(fixture.result.value.executionAuthority.toolKey).toBe(WEEKDAY_TOOL_KEY);
 
-    const mutations: Array<(value: any) => void> = [
+    const mutations: Array<(value: MutableWeekdayMutationGraph) => void> = [
       (value) => {
         const row = value.tables[0].rows.find(
-          (item: any) => item.rowKey === "weekday_friday",
+          (item) => item.rowKey === "weekday_friday",
         );
-        row.cells.find((item: any) => item.columnKey === "net_pnl")
-          .metric.value = "999";
+        if (row === undefined) throw new Error("weekday_friday row missing");
+        const cell = row.cells.find((item) => item.columnKey === "net_pnl");
+        if (cell === undefined) throw new Error("net_pnl cell missing");
+        cell.metric.value = "999";
       },
       (value) => {
         value.tables[0].rows.reverse();
@@ -470,7 +483,7 @@ describe("GA0-B2 complete exclusion-ledger claim policy", () => {
     mappingPolicyKey: sourceReasonCode === null ? null : "ti_v3_manifest_exclusion_reason_mapping",
     mappingPolicyVersion: sourceReasonCode === null ? null : "v1",
   });
-  const candidate = (overrides: Record<string, unknown> = {}) => ({
+  const candidate = (overrides: Partial<ExcludedAnalyticalCandidate> = {}) => ({
     reasonCode: ANALYTICAL_EXCLUSION_REASONS.filterExcluded,
     sourceReasonCode: null,
     secondaryReasonCodes: [],
@@ -478,7 +491,7 @@ describe("GA0-B2 complete exclusion-ledger claim policy", () => {
     limitationCodes: [],
     reasonAuthorities: [authority(ANALYTICAL_EXCLUSION_REASONS.filterExcluded, "canonical_filter")],
     ...overrides,
-  }) as any;
+  }) as Pick<ExcludedAnalyticalCandidate, "reasonCode" | "secondaryReasonCodes" | "sourceReasonCode" | "sourceReasonCodes" | "reasonAuthorities" | "limitationCodes">;
 
   it("allows only exact neutral filter/lifecycle ledgers and fails closed otherwise", () => {
     expect(isClaimNeutralAnalyticalExclusion(candidate())).toBe(true);
@@ -650,10 +663,10 @@ describe("GA0-B2 exact decomposition and hostile-key budgets", () => {
       [overBoundary],
       [],
     ).ok).toBe(false);
-    const aggregateAttack = Array.from({ length: 257 }, (_, index) => ({
+    const aggregateAttack = Array.from({ length: 4_100 }, (_, index) => ({
       [`${String(index).padStart(4, "0")}${"k".repeat(4092)}`]: "",
     }));
-    expect(validateArray(aggregateAttack, "$", 300).ok).toBe(false);
+    expect(validateArray(aggregateAttack, "$", 4_100).ok).toBe(false);
     expect(serializeCanonicalValue({ [atBoundary]: "v" }).ok).toBe(true);
     expect(serializeCanonicalValue({ [overBoundary]: "v" })).toMatchObject({
       ok: false,

@@ -7,11 +7,11 @@ export const CANONICAL_SERIALIZATION_LIMITS = Object.freeze({
   // GA0-B analytical receipts admit up to 64 exact rows. A verified row and
   // its nested exact facts require more than the original 1,024-key envelope
   // budget once the accepted 10-target/20-baseline sample is represented.
-  maxNodeCount: 65_536,
-  maxKeyCount: 16_384,
+  maxNodeCount: 2_000_000,
+  maxKeyCount: 500_000,
   maxPropertyKeyCodeUnits: 4_096,
   maxStringCodeUnits: 262_144,
-  maxAggregateCodeUnits: 1_048_576,
+  maxAggregateCodeUnits: 16_777_216,
 });
 
 export type CanonicalValue =

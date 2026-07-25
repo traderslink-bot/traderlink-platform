@@ -1,3 +1,18 @@
+# 2026-07-25 - GA0-B4 deterministic tool-runner proof closeout active
+
+- Started from `origin/main` at accepted B3 merge SHA
+  `e46d9fea331aeefc262a6dc7a187b5c73678b398` in the clean linked worktree
+  `agent/trader-intelligence-v3-ga0-b4-proof-closeout`; the dirty owner checkout
+  remains untouched.
+- Implementing the exact two-tool registry, closed generic runner, persisted
+  replay, cross-artifact consistency validator, evidence resolver, diagnostics,
+  fixed-seed tests, 10,000-row synthetic scale proof, focused verifier, and CI
+  integration. No UI, AI, market-data, broker, database, or deployment work is
+  in scope.
+- Resume point: complete executable verification, commit code/docs in the
+  requested split, push one draft PR, and stop for independent audit. Do not
+  merge, mark ready, resolve audit threads, deploy, or begin GA0-C.
+
 # 2026-07-25 - GA0-B3 final focused corrections active
 
 - Independent re-audit findings head is
@@ -18876,3 +18891,51 @@ Current best next step:
 
 - Open the PR for review, then deploy only after approval by merging to clean
   `main` and using the standard production Vercel workflow.
+
+# 2026-07-25 GA0-B4 remediation proof closeout
+
+- Remediated the existing draft PR #158 on branch
+  `agent/trader-intelligence-v3-ga0-b4-proof-closeout`; remediation base is
+  `b7370c77` and the tested executable head is `a3b25b0e`.
+- The scale proof now executes both registered tools over exactly 10,000
+  selected/analyzed USD rows in one supported partition. A separate two-row
+  mixed-currency fixture proves USD/EUR partitioning without counting either
+  fixture row toward scale.
+- Evidence resolution uses map/set-backed lookups with deterministic immutable
+  results; table evidence is scoped per table and receipt-envelope validation
+  remains independent from per-artifact validation.
+- Final local checkpoint passed: diff check, TypeScript, changed-path ESLint,
+  focused B4 (2 files / 9 tests), GA0-B verifier (7/7), GA0-A2 (14 files / 308
+  tests), architecture (445 files / 43 routes / 82 classified), private-data
+  safety (23,763 / 23,719 / 44), and build. Playwright, deploy, merge, ready,
+  audit-thread mutation, and GA0-C remain deliberately unrun/out of scope.
+
+Current best next step:
+
+- Push the executable and Markdown-only handoff commits, update the existing
+  PR #158 top-level handoff with exact heads and CI identifiers, leave it draft,
+  open, and unmerged, then stop for independent audit.
+
+# 2026-07-25 GA0-B4 independent acceptance closeout
+
+- Independent audit of existing draft PR #158 completed with verdict accepted;
+  no blocking code findings and no further executable remediation are required.
+- Accepted base remains `e46d9fea331aeefc262a6dc7a187b5c73678b398`;
+  accepted executable head remains
+  `a3b25b0e4bc1a3b31880a17f20f9fd18dedf2de2`; accepted documentation head
+  before this closeout remains `b858a725416a49d9ba4077e9adf890f4835f4adf`.
+- GitHub independently confirmed successful CI run `30156095897`, job
+  `89674172340`, including GA0-A2, architecture, private-data, GA0-B, Layer 2,
+  and Layer 3 steps. The local independent rerun was blocked because its audit
+  environment could not resolve `github.com`; local counts remain implementer
+  evidence supported by CI rather than independently reproduced counts.
+- Playwright/e2e stayed deliberately unrun because no UI or route work was in
+  scope. Owner-checkout preservation is reported in the implementation handoff
+  but cannot be independently proven from GitHub objects.
+- PR #158 remains draft, open, unmerged, and undeployed. GA0-B4 is ready for an
+  explicit owner merge decision, not automatic merge.
+
+Current best next step:
+
+- Await the owner's explicit merge decision. Do not mark ready, merge, deploy,
+  resolve existing independent audit threads, or begin GA0-C in this closeout.

@@ -208,7 +208,10 @@ function parseArrayItems<T>(
   parser: (value: unknown, path: string) => ExactResult<T, DatasetManifestFailure>,
 ): ExactResult<readonly T[], DatasetManifestFailure> {
   if (!Array.isArray(input)) return failure("ti_v3_validation_array_invalid", path);
-  if (input.length > 10_000) return failure("ti_v3_validation_payload_oversized", path);
+  // A 10,000-row analytical proof may carry one accepted entry and one
+  // accepted exit execution per row. Keep the authority ceiling bounded at
+  // 25,000 rather than truncating or silently dropping source identities.
+  if (input.length > 25_000) return failure("ti_v3_validation_payload_oversized", path);
   const values: T[] = [];
   for (let index = 0; index < input.length; index += 1) {
     const parsed = parser(input[index], `${path}[${index}]`);
