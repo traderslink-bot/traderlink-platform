@@ -1,12 +1,12 @@
 # Trader Intelligence Plan Entry Point
 
-**Last updated:** 2026-07-19 America/Toronto  
+**Last updated:** 2026-07-24 America/Toronto
 **Active architecture:** Trader Intelligence v3  
 **Operating profile:** `private_owner_alpha`  
 **Operational hosting:** local owner testing  
 **Primary domain:** U.S. listed small-cap and micro-cap active trading  
 **Product boundary:** retrospective educational trade review and self-improvement  
-**Current gate:** GA0-B2 — draft PR #150 awaiting independent audit
+**Current gate:** GA0-B3 — final focused remediation active on draft PR #156; re-audit findings head `f5427b098b5e1f218b666c8c29b8603ad36b38a2`; B2 accepted and merged as `4338cab7d46b8a0548b22346f81b42db5fec3bf0`
 **Active implementation plan:** `src/docs/trader-intelligence-v3-ga0-b-deterministic-proof-implementation-plan-2026-07-19.md`
 
 Start here when resuming Trader Intelligence product, analytics, simulation,
@@ -196,6 +196,23 @@ Handoff:
 
 `src/docs/trader-intelligence-v3-ga0-b3-daily-stop-proof-implementation-and-audit-handoff-2026-07-19.md`
 
+Current remediation handoff:
+
+`src/docs/trader-intelligence-v3-ga0-b3-remediation-and-independent-reaudit-handoff-2026-07-24.md`
+
+The B3 audit accepted the implementation with required fixes. The active
+branch remains the existing draft PR #156. Ambiguous sessions are excluded
+from simulation, aggregate, claims, and series with preserved actual evidence;
+claim samples are threshold-reached sessions with explicit sample states and
+counterexample evidence; and excluded-candidate scope is unavailable rather
+than inferred. The final remediation also fails closed on mixed same-time
+loss/non-loss groups, uses verified empty-included aggregate evidence, binds
+classification to complete simulation evidence, accepts source identities
+through the B1 512-character bound, and governs B3 claim sample authority with
+a versioned policy. Stop after the remediation executable and later
+Markdown-only handoff commits for independent re-audit. Do not merge, deploy,
+resolve audit threads, or begin GA0-B4.
+
 ## GA0-B4 — Proof closeout
 
 Branch:
@@ -287,11 +304,11 @@ not calculate numbers or create chart data/code.
 
 # 10. Immediate next action
 
-1. Use current `main` containing GA0-A3 merge
-   `72ca53940403dfab63979d403bd6b479539f41db`.
-2. Create `agent/trader-intelligence-v3-ga0-b1-read-model`.
-3. Implement GA0-B1 only under the active detailed plan.
-4. Use focused testing and one final TypeScript run.
-5. Finish by uploading the mandatory B1 handoff and auditor prompt.
-6. Open one draft PR and stop for independent audit.
-7. Do not begin B2, UI, charts, AI, market enrichment, support/resistance, or deployment.
+1. Continue `agent/trader-intelligence-v3-ga0-b3-daily-stop-proof` from the
+   accepted B2 merge `4338cab7d46b8a0548b22346f81b42db5fec3bf0`.
+2. Implement and verify `simulate_daily_stop_rule:v1` only under section 14.
+3. Create the controlling B3 ADR and detailed implementation/audit handoff.
+4. Open one draft PR targeting current `main`, leave it unmerged, and stop for
+   independent audit.
+5. Do not deploy, resolve audit threads, begin GA0-B4, or add UI, charts, AI,
+   market enrichment, support/resistance, or hosted work.

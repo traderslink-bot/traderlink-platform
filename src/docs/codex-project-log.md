@@ -1,3 +1,54 @@
+# 2026-07-25 - GA0-B3 final focused corrections active
+
+- Independent re-audit findings head is
+  `063fb14c67adaa9a8f9269287e2aa0e33c7d3810`. The existing branch and draft
+  PR #156 remain the only implementation surface.
+- Final corrections bind the explicit 512-character allowance only to B3
+  candidate/simulation semantic arrays while preserving 256-character
+  ordinary keys, and replace caller-nominal B3 sample metadata with a
+  content-addressed authority tied to verified session and aggregate tables,
+  exact threshold-reached row keys/count, run context, claim direction, and
+  allowed wording.
+- Resume point: complete final verification, push the executable correction and
+  observe CI, then update the existing final handoff Markdown-only and observe
+  its CI. Keep PR #156 draft/open/unmerged, leave audit threads untouched, do
+  not deploy, and do not begin GA0-B4.
+
+# 2026-07-24 - GA0-B3 independent-audit remediation active
+
+- Independent audit findings head `063fb14c67adaa9a8f9269287e2aa0e33c7d3810`
+  accepted the B3 implementation with required fixes R1-R7.
+- Remediation is confined to the existing branch
+  `agent/trader-intelligence-v3-ga0-b3-daily-stop-proof` and draft PR #156.
+  The B2 merge base remains `4338cab7d46b8a0548b22346f81b42db5fec3bf0`.
+- Current work excludes ambiguous sessions from simulated populations, binds
+  claims to threshold-reached sample cells, preserves row-specific exclusion
+  evidence, strengthens production/reference parity, and projects limitations
+  through evidence, tables, series, claims, diagnostics, and the receipt.
+- Resume point: finish focused verification, commit and push the executable
+  remediation, wait for CI, then make the required later Markdown-only
+  independent re-audit handoff commit. Keep PR #156 draft/open/unmerged, leave
+  audit threads untouched, and do not deploy or begin GA0-B4.
+
+# 2026-07-24 - GA0-B3 Consecutive-Loss Daily-Stop Simulation
+
+- GA0-B2 is independently accepted and merged through PR #150 at exact SHA
+  `4338cab7d46b8a0548b22346f81b42db5fec3bf0`, which is the B3 merge base and
+  current `origin/main`.
+- The active branch is
+  `agent/trader-intelligence-v3-ga0-b3-daily-stop-proof`; work is isolated in
+  a clean linked worktree because the owner checkout contains unrelated dirty
+  UI/Academy work. No deployment occurred.
+- Implemented the B3-specific deterministic executor,
+  `simulate_daily_stop_rule:v1`, with exact session/aggregate artifacts,
+  evidence, series, diagnostics, receipt, authority, semantic replay, and an
+  independent reference simulator.
+- Added the controlling B3 ADR and focused adversarial/differential tests.
+- Resume point: complete the consolidated executable checkpoint, commit the
+  executable slice, create the later Markdown-only audit handoff, open one
+  draft PR, and stop for independent audit. Do not merge, deploy, resolve
+  audit threads, or begin GA0-B4.
+
 # 2026-07-23 - GA0-B2 Weekday Deterministic Proof
 
 - Started from accepted GA0-B1 merge
@@ -82,6 +133,20 @@
   observe terminal CI. Only then create and push the required docs-only
   independent re-audit handoff. No deploy, GA0-B2 work, route/UI work,
   review-thread resolution, merge, or draft-state change is authorized.
+
+### 2026-07-24 - GA0-B3 final focused remediation in progress
+
+The current re-audit findings head is `f5427b098b5e1f218b666c8c29b8603ad36b38a2`.
+The existing branch and draft PR #156 remain the only implementation surface.
+The final executable remediation covers mixed same-time completion ambiguity,
+verified empty-included aggregate evidence, 512-character source identity
+bounds, complete simulation authority for classification, and the versioned B3
+threshold-session sample policy. Focused B3, B1, and B2 suites are green; the
+executable checkpoint, consolidated verification, CI, and final Markdown-only
+independent re-audit handoff remain.
+
+Keep PR #156 draft/open/unmerged, leave audit threads untouched, do not deploy,
+and do not begin GA0-B4.
 
 # Codex Project Log
 

@@ -1,4 +1,63 @@
+## 2026-07-24 - GA0-B3 final focused remediation in progress
+
+- Current re-audit findings head: `f5427b098b5e1f218b666c8c29b8603ad36b38a2`.
+- The existing branch and draft PR #156 remain the only implementation
+  surface. No branch, merge, deployment, review-thread mutation, or GA0-B4
+  work is authorized.
+- Final remediation covers fail-closed mixed same-time completion groups,
+  exact empty-included aggregate authority, 512-character source identities,
+  complete simulation authority for classification, and versioned B3 sample
+  authority bound to threshold-reached sessions.
+- Current resume point: run the complete required verification, checkpoint and
+  push the executable commit, observe CI, then create the required later
+  Markdown-only final independent re-audit handoff and stop.
+
 # Trader Intelligence v3 Project Log
+
+## 2026-07-25 - GA0-B3 final focused corrections active
+
+- The current independent re-audit findings head is
+  `063fb14c67adaa9a8f9269287e2aa0e33c7d3810`; work remains confined to the
+  existing branch and draft PR #156.
+- The executable correction narrows the 512-character key allowance to B3
+  candidate/simulation semantic arrays and makes B3 sample authority
+  content-addressed and verified against the run context, literal v1 source
+  tables, exact threshold-reached session row keys/count, and claim direction
+  and wording.
+- Exact next action: run final checks, push the executable correction and wait
+  for CI, then update the existing handoff as a later Markdown-only commit,
+  wait for docs CI, add the single required top-level PR handoff comment, and
+  stop. No merge, deployment, thread resolution, or GA0-B4.
+
+## 2026-07-24 - GA0-B3 independent-audit remediation active
+
+- Independent audit findings head is
+  `063fb14c67adaa9a8f9269287e2aa0e33c7d3810`; the verdict was accept with
+  required fixes R1-R7.
+- The existing branch and draft PR #156 remain the only implementation
+  surface. Ambiguous sessions are excluded from simulation, aggregate, claims,
+  and series with preserved actual evidence; claims use threshold-reached
+  sample authority; and limitations are projected across the complete graph.
+- Exact next action: complete focused verification, push the executable
+  remediation, then make the required later Markdown-only re-audit handoff and
+stop. No merge, deployment, thread resolution, or GA0-B4.
+
+## 2026-07-24 - GA0-B3 consecutive-loss daily-stop simulation active
+
+- GA0-B2 was independently accepted and merged through PR #150 at
+  `4338cab7d46b8a0548b22346f81b42db5fec3bf0`; this exact SHA is the current
+  `origin/main` and B3 merge base.
+- GA0-B3 is active on
+  `agent/trader-intelligence-v3-ga0-b3-daily-stop-proof` with no deployment.
+  The requested draft PR is not opened yet; it will be the single B3 PR after
+  the executable checkpoint.
+- The current scope is only `simulate_daily_stop_rule:v1`, its controlling ADR,
+  exact proof artifact graph, independent reference differential tests, and
+  audit handoff. The owner checkout's unrelated dirty UI/Academy work remains
+  untouched in a separate linked worktree.
+- The stale B2-awaiting-audit gate is superseded for this active branch. The
+  stop boundary remains draft/unmerged, no audit thread changes, no deployment,
+  and no GA0-B4.
 
 ## 2026-07-24 - GA0-B2 second independent-re-audit remediation checkpoint
 
