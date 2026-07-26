@@ -94,4 +94,63 @@ describe("GA1-D Coach Trading Intelligence Foundation", () => {
       metricTables: [],
     });
   });
+
+  it("returns a trend finding only from the verified current-versus-prior comparison", () => {
+    const fixture = buildSyntheticQueryFixture(28);
+    const result = executeCoachIntent({
+      intentKey: "habit_trend_analysis",
+      source: fixture.source,
+      partitionReceipt: fixture.partition,
+      filters: [{ kind: "date_range", startDate: "2026-07-04", endDate: "2026-07-07" }],
+      baselineFilters: [{ kind: "date_range", startDate: "2026-07-01", endDate: "2026-07-03" }],
+    });
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    const coach = result.value[0];
+    expect(coach).toMatchObject({
+      capabilityKey: "habit_trend_analysis",
+      comparisonType: "current_period_vs_prior_period",
+      primaryFinding: { findingCode: "period_trend" },
+    });
+    expect(coach.comparison?.comparisonDigest).toMatch(/^ti_v3:trade_query_comparison:v1:sha256:/);
+    expect(coach.digestReplayIdentity.comparisonDigest).toBe(coach.comparison?.comparisonDigest);
+    expect(coach.metricTables).toHaveLength(2);
+  });
+
+  it("does not fabricate a trend when no verified prior-period request is supplied", () => {
+    const fixture = buildSyntheticQueryFixture(10);
+    const result = executeCoachIntent({
+      intentKey: "habit_trend_analysis",
+      source: fixture.source,
+      partitionReceipt: fixture.partition,
+    });
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    expect(result.value[0]).toMatchObject({
+      authorityStatus: "unsupported",
+      primaryFinding: null,
+      comparison: null,
+      unsupportedData: { code: "period_comparison_required" },
+    });
+  });
+
+  it("withholds a trend finding when either verified period is below the minimum sample", () => {
+    const fixture = buildSyntheticQueryFixture(5);
+    const result = executeCoachIntent({
+      intentKey: "habit_trend_analysis",
+      source: fixture.source,
+      partitionReceipt: fixture.partition,
+      filters: [{ kind: "date_range", startDate: "2026-07-05", endDate: "2026-07-05" }],
+      baselineFilters: [{ kind: "date_range", startDate: "2026-07-01", endDate: "2026-07-03" }],
+    });
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    expect(result.value[0]).toMatchObject({
+      comparison: { comparisonKey: "ti_v3_exact_trade_query_comparison" },
+      primaryFinding: null,
+      rankedFindingList: [],
+      sampleSizeStatus: "insufficient_sample_size",
+      unsupportedData: { code: "insufficient_sample_size" },
+    });
+  });
 });

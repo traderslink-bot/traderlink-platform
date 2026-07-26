@@ -119,7 +119,7 @@ export const COACH_CAPABILITY_REGISTRY = Object.freeze([
   direct("rule_candidate_ranking", { kind: "trade_sequence_bucket" }, ["trade_sequence_number", "prior_trade_outcome"], "best_rule_candidate", "first_n_vs_later", "stop_after_consecutive_losses"),
   unsupported("setup_tag_performance", ["setup_tags_required"]),
   unsupported("mistake_tag_performance", ["mistake_tags_required"]),
-  unsupported("habit_trend_analysis", ["period_comparison_required"]),
+  preset("habit_trend_analysis", "compare_periods", ["current_period", "prior_period"], "period_trend", "current_period_vs_prior_period"),
 ] as const satisfies readonly CoachCapabilityDefinition[]);
 
 const CAPABILITIES = new Map(COACH_CAPABILITY_REGISTRY.map((item) => [item.capabilityKey, item]));
