@@ -1,3 +1,11 @@
+# 2026-07-26 - GA1-D checkpoint three: Coach Behaviour Analytics Pack started
+
+**Branch:** `agent/trader-intelligence-v3-ga1-d-coach-behaviour-pack`, created clean from merged `main` at `17c299deaee25c7c8d82ebd73ee815f8c1ec6ad7` after accepted checkpoint two.
+
+**Current project focus:** complete the Analytics Engine and one user-facing Coach intelligence path first. Prioritize verified current trade-data analytics, behaviour findings, trends, evidence, limitations, unsupported-data responses, and Coach-ready structured findings. Build only in data-authority order and keep missing-data work deferred or blocked. Simulations are near-term support only for `rules_to_test` or accepted GA1-C functionality. Notifications, market context, candle setup detection, memory/profile, dashboards, and extra agent surfaces remain lower priority until Analytics and Coach intelligence are strong.
+
+**Checkpoint-three completion:** executable commit `d54fa01b45abf2b12054ba711d4908668024c177` adds the deterministic after-win route, explicitly routes first/later and fourth/later sequence analysis, composes a Coach behaviour-leak route and existing behaviour-rule candidates, and withholds findings below the minimum sample. The source inventory's after-two/three-loss and daily green/red requests now return explicit unsupported states because verified filters do not exist. The next step is to push the draft PR and stop for independent audit; do not merge, deploy, begin another GA1-D slice, or start GA1-E.
+
 # 2026-07-26 - GA1-D checkpoint two: deterministic period comparisons started
 
 **Branch:** `agent/trader-intelligence-v3-ga1-d-coach-checkpoint-two`, created clean from merged `main` at `f48a6cb0d89636e57d0ddeb91463c0446a00eba1` after PR #167 merged.
