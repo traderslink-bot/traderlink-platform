@@ -4,13 +4,188 @@
 - Alpaca `FILL` rows and TradeZero `canceled=false` rows are accepted; Alpaca cancellation activities and TradeZero `canceled=true` rows are skipped. Focused preset, persistence, decision-review, parser, and automated QA tests passed; TypeScript, changed-path ESLint, and the production build passed.
 - Resume point: collect anonymized real exports before describing any broker as fully calibrated. Do not broaden into unrelated analytics or watchlist work.
 
+# 2026-07-26 - GA1-C final executable proof complete
+
+- Continued accepted GA1-C semantics from `109d134c`.
+- Added the offline fixed proof harness and serial verifier command for fixture
+  `ti_v3_ga1_c_fixed_seed_20260726_v1`.
+- The proof processes exactly 10,000 rows through generic and all 14 governed
+  simulations, reconstruction, envelope/receipt replay, bounded evidence,
+  max-plus-one rejection, and reversed-storage identity.
+- The proof exposed canonical and runtime-validation graph budgets that stopped
+  declared-valid 10,000-outcome results. Both remain hard bounded and were
+  aligned to the existing contract; no simulation semantics changed.
+- Final proof passed 1 file / 2 tests in 1,003.63 seconds test time.
+- The first CI run found a GA0-B2 hostile-input test still fixed to the former
+  aggregate-string ceiling. It now derives max-plus-one from the exported
+  limit; the CI-equivalent local suite passed 208 files / 2,144 tests.
+
+Current best next step:
+
+- Publish the verified final proof checkpoint to draft PR #162, observe CI, and
+  stop for independent final acceptance. Do not merge, deploy, or begin
+  GA1-D/GA1-E.
+
+# 2026-07-25 - GA1-C fee-authority audit remediation active
+
+- Continued draft PR #162 from synchronized head `636e58b5`.
+- Independent audit found that an unknown/undecomposed fee component could
+  leave resized charge/net authority labeled exact despite null amounts.
+- Resized fee authority is now derived once from row state plus component
+  decomposability. Unknown/legacy undecomposed components force unavailable
+  resized charges/net while preserving exact gross.
+- Summary and exact-net evidence selection also require a non-null exact amount.
+- Added semantic exact broker/account/zero, legacy limitation, reconciliation,
+  evidence, and correctly re-digested result-tamper coverage.
+- Focused remediation verification passes 2 files / 35 tests. The complete
+  required population is 7 files / 94 tests; one unchanged GA1-B test exceeded
+  its fixed five-second timeout under concurrent load and its isolated 15-test
+  file rerun passed. TypeScript, targeted ESLint, architecture, and diff checks
+  pass.
+
+Current best next step:
+
+- Complete focused and affected regression verification, publish one remediation
+  commit to draft PR #162, observe CI, and stop for independent re-audit. Do not
+  merge, deploy, run the final 10,000-row proof, or begin GA1-D/GA1-E.
+
+# 2026-07-25 - GA1-C fee-aware post-loss resize checkpoint active
+
+- Continued draft PR #162 at accepted origin checkpoint `d2fb09c`.
+- Added governed preset `simulate_reduce_size_after_loss`: a retained, strictly
+  completed exact-net loss arms one session-scoped next eligible entry; that
+  entry is resized to floor(50%) whole shares and consumes the arm.
+- The generic engine remains the only executor. It preserves observed trade
+  prices and fills and recalculates gross P/L by the exact post-floor ratio.
+  Fixed/non-scaling charges are retained; quantity/notional/sell-regulatory
+  components scale by that ratio. Net is exact only for explicit-zero or
+  complete declared components. Legacy totals, partial/estimated/missing fees,
+  undecomposed components, and missing/fractional sizing remain explicit rather
+  than guessed.
+- Added exact/limited resize outcomes, rational gross/net/charge evidence,
+  reconciled summaries, bounded evidence buckets, centralized pending/size/fee
+  dependencies, fail-closed later-net chronology, and governed replay coverage.
+- Final local verification passes all GA1-C tests (3 files / 45 tests) plus
+  affected GA0-B3 (21), GA1-A (11), and GA1-B (15): 7 files / 92 tests.
+  TypeScript, targeted ESLint, architecture, and diff checks pass.
+
+Current best next step:
+
+- Inspect the final diff, commit/push one checkpoint to draft PR #162, observe
+  CI, and stop
+  for independent audit. Do not merge, deploy, or run the 10,000-row proof.
+
+# 2026-07-25 - GA1-C governed-preset origin downgrade remediation active
+
+- Recovered interrupted Codex task
+  `019f9b36-2fc2-76c1-8b2b-c989cc9e6b16` and its preserved worktree at
+  `C:\Users\jerac\.codex\worktrees\473e\trader-intelligence-v2`.
+- Continued draft PR #162 from required head
+  `a97ce351ae13f9168e9a0dc3d4a7c218bd34fc2d`.
+- Independent audit found that optional `compiledPreset` allowed governed
+  preset authority and arguments to be discarded by issuing a generic envelope.
+- Added explicit, content-addressed `generic_plan` / `governed_preset` origin to
+  the simulation plan and replay envelope.
+- Generic issuance/replay rejects any preset and requires seven exact ordered
+  artifact references. Governed issuance/replay requires the fully reconstructed
+  preset and eight exact ordered references.
+- Correctly re-digested origin substitution, preset-reference removal, and
+  reference reduction fail semantically because origin is reconstructed from
+  the plan rather than inferred from rule shape.
+- Focused replay development suite passes 1 file / 8 tests. Final verification
+  passes 7 files / 83 tests, TypeScript, targeted ESLint, the architecture guard
+  (487 architecture files, 43 API routes, 82 classified routes), and
+  `git diff --check`. The final 10,000-row proof is deliberately not part of
+  this focused remediation.
+
+Current best next step:
+
+- Publish one focused remediation commit to existing draft PR #162, observe CI,
+  and stop for independent re-audit. Do not mark ready, merge, deploy, begin
+  GA1-D/GA1-E, or run the final 10,000-row proof.
+
+# 2026-07-25 - GA1-C persisted replay envelope checkpoint active
+
+- Continued draft PR #162 from accepted clean synchronized checkpoint-two head
+  `ad3a8597df9fccd60d8eca69d63e082bc755c9b9`.
+- Added versioned content-addressed replay envelope and success receipt
+  contracts. The envelope binds source/query/simulation/result/policy/bound and
+  optional preset identities without granting or replacing execution
+  authority.
+- Replay reopens the accepted read-only source, requires the executor-issued
+  GA1-A query-result capability, reconstructs direct or governed plans, calls
+  the accepted generic simulator and complete result re-execution, and issues a
+  receipt only after success.
+- Added ten bounded deterministic failure stages, seven/eight exact artifact
+  references, max-plus-one rejection, and focused generic/all-thirteen-preset,
+  authority, tamper, receipt, repeat, and permutation coverage.
+- Focused development verification passed 1 file / 7 tests, TypeScript, and
+  targeted ESLint.
+- Final local verification passed 7 files / 82 tests, TypeScript, targeted
+  ESLint, the architecture guard, and `git diff --check`.
+
+Current best next step:
+
+- Commit/push one executable checkpoint, observe PR #162 CI, and stop for
+  independent audit. Do not run the final 10,000-row proof, merge, deploy, or
+  begin sizing/fee work, GA1-D, or GA1-E.
+
+# 2026-07-25 - GA1-C checkpoint-two affected-population correction active
+
+- Continued draft PR #162 from required clean synchronized head
+  `6b7bf67d35fc4b203bc315ab715db81a75566f60`.
+- Corrected `ruleSpecificAffectedCounts` to use the authoritative rule-excluded
+  population instead of every responsible non-unchanged outcome.
+  `unavailable_required_authority` remains conservatively retained with
+  unchanged economics and is separately represented by unavailable count,
+  classification, responsible rule, exact reason, and limitation codes.
+- Added focused single/mixed reconciliation, replay, correctly re-digested
+  affected/unavailable tamper, and permutation coverage. Direct corrected pack
+  verification passed 1 file / 16 tests.
+- Final local verification passed 6 files / 75 tests, TypeScript, targeted
+  ESLint, the architecture guard, and `git diff --check`.
+
+Current best next step:
+
+- Commit and push this one correction, observe draft PR #162 CI, and stop for
+  independent re-audit. Do not run the final 10,000-row proof, merge, deploy,
+  or begin GA1-D/GA1-E.
+
+# 2026-07-25 - GA1-C preserve-or-exclude checkpoint two active
+
+- Continued draft PR #162 from accepted clean synchronized checkpoint-one
+  remediation `b3655471a99af685a86908a5ef8a21936dc60d1f`.
+- Added ten governed presets through the existing generic engine: daily dollar
+  drawdown, realized-profit giveback, fourth-plus exclusion, wait after loss,
+  stable-instrument attempt limit, losing-instrument stop, accepted-timezone
+  cutoff, inclusive entry-price range exclusion, repeat-attempt exclusion, and
+  one-shot after-outcome exclusion.
+- Extended the centralized dependency union and bounded snapshots for realized
+  and peak P/L, cooldown, instrument attempts/losses/stops, prior outcome, and
+  pending one-shot state. Same-time groups fail only when unknown ordering is
+  material to an active dependency.
+- Expanded results with reconciled helped/harmed trade/day counts, retained and
+  removed outcomes, stop/cooldown events, per-rule affected counts, and bounded
+  classification-derived evidence retaining source, execution, and occurrence
+  authority.
+- Added governed preset reconstruction and complete result re-execution
+  verification, including correctly re-digested tamper rejection.
+- Focused GA1-C development verification is green at 2 files / 27 tests;
+  TypeScript and targeted ESLint pass.
+
+Current best next step:
+
+- Finish the directed GA0-B3/GA1-A/GA1-B regressions and documentation review,
+  commit and push one coherent checkpoint, update draft PR #162, and observe
+  terminal CI. Keep proportional resizing, final 10,000-row proof, merge,
+  deployment, GA1-D, and GA1-E out of scope.
+
 # 2026-07-25 - CSV mapping persistence and controlled continuation active
 
 - Started from merged CSV inference PR #164 (`e47b9a1f20394109f7ab61cc44d3e01d9ecc6ee7`) on branch `agent/csv-mapping-persistence-and-commit`.
 - Replaced the mapping-review page's sample workspace with a server-derived owner workspace/account persisted in the existing local SQLite authority. Mapping templates are now versioned, owner/account-scoped rows in that database; browser localStorage is no longer the persistence authority.
 - The review page now creates a controlled import preview only after the server re-infers, validates the reviewed mappings, resolves timezone precedence, normalizes side values, and delegates to the existing import planner. No client execution arrays, fingerprints, counts, or account IDs are accepted as authority.
 - Focused CSV persistence, generic inference, and route-containment tests passed (24/24); TypeScript and changed-path ESLint passed. Broader suite/browser verification remains before any PR is opened.
-
 # 2026-07-25 - GA1-B final closure checkpoint
 
 - Independent audit accepted final executable checkpoint
@@ -19158,3 +19333,53 @@ Current best next step:
   push one executable remediation commit and a later Markdown-only independent
   re-audit handoff. Keep PR #160 draft/open/unmerged/undeployed and do not
   begin GA1-B.
+# 2026-07-25 GA1-C counterfactual simulation first checkpoint in progress
+
+- Confirmed required base, local `main`, and `origin/main` at
+  `183f6d44e1289a646d22fefb82f1d8c589b5e1b4`; fast-forwarded the separate clean
+  local-main worktree and created
+  `agent/trader-intelligence-v3-ga1-c-counterfactual-simulation`.
+- Reviewed the post-GA0-B direction lock, accepted GA0-B3 daily-stop semantics,
+  GA1-A query/gateway/metric authority, and GA1-B reuse boundary.
+- Added the strict content-addressed generic simulation plan and chronological
+  engine skeleton.
+- Added three representative governed preset families:
+  consecutive-loss session stop, maximum executed trades per day, and
+  direction-only exclusion.
+- The engine requires an executor-issued GA1-A result, reopens the accepted
+  read-only gateway, reuses GA1-A filters/row semantics/metrics, preserves exact
+  observed economics, and emits one classification per source analytical row.
+- Full result reconstruction/replay, the remaining preset pack, resize
+  authority, complete affected-population/evidence/outlier contracts, and the
+  final 10,000-row proof remain in the same GA1-C draft PR after checkpoint one.
+
+Current best next step:
+
+- Checkpoint one is published at executable commit `52f86bcc` in draft PR #162.
+  Keep the PR draft, open, unmerged, and undeployed while this architecture
+  checkpoint is independently reviewed; continue the remaining GA1-C pack in
+  the same PR only after that checkpoint boundary is accepted.
+# 2026-07-25 - GA1-C checkpoint-one chronology remediation
+
+- Continued existing draft PR #162 from exact clean synchronized head
+  `21eb0477284cafb7007aa4a8b7dd9afa4eaa5bac`.
+- Root cause: the engine called completion processing for every included
+  candidate, so mixed simultaneous outcomes could reject direction-only and
+  maximum-trades simulations despite neither rule consuming outcome state.
+- Added centralized `ti_v3_rule_state_dependency_policy_v1` declarations and
+  bound the resolved dependency union into the content-addressed plan.
+- Direction-only now initializes no chronological state; maximum-trades
+  initializes executed-entry count only; consecutive-loss initializes
+  completion, loss-streak, completion-time, and session-stop state.
+- Inactive snapshot fields are explicitly `not_evaluated` with null values.
+  Strict-before-entry, skipped-trade isolation, material mixed-tie rejection,
+  and economically equivalent tied-loss acceptance remain intact.
+- Direct remediation coverage and the affected GA0-B3/GA1-A/GA1-B regressions
+  pass together: 5 files / 59 tests. TypeScript, targeted lint, and diff check
+  also pass.
+
+Current best next step:
+
+- Commit and push only this verified remediation to draft PR #162, then retain
+  the draft/open/unmerged/undeployed stop boundary for independent acceptance.
+  Do not begin the remaining preset pack.
