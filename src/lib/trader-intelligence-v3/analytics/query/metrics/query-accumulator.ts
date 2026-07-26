@@ -88,6 +88,8 @@ export interface TradeQueryAccumulator {
   readonly minimumTradesPerDay: string | null;
   readonly maximumShareQuantity: string | null;
   readonly maximumEntryNotional: string | null;
+  readonly maximumIntradayDrawdown: string | null;
+  readonly maximumPeakProfitGiveback: string | null;
   readonly minimumHoldingSeconds: string | null;
   readonly maximumHoldingSeconds: string | null;
   readonly largestWinnerNetPnl: string | null;
@@ -300,6 +302,8 @@ export function buildTradeQueryAccumulator(
   const sortedLosingNetValues = ordered(losses.map((item) => item.row.netPnl));
   const sortedDailyPnlValues = ordered(dailyPnlValues);
   const sortedDailyTradeCounts = ordered(daily.map((day) => day.tradeCount));
+  const sortedIntradayDrawdowns = ordered(daily.map((day) => day.realizedDrawdown));
+  const sortedPeakProfitGivebacks = ordered(daily.map((day) => day.peakProfitGiveback));
   const sortedWinningStreakLengths = ordered(streaks.winning);
   const sortedLosingStreakLengths = ordered(streaks.losing);
   const sortedTradesPerSymbol = ordered(tradesPerSymbol);
@@ -379,6 +383,8 @@ export function buildTradeQueryAccumulator(
     minimumTradesPerDay: first(sortedDailyTradeCounts),
     maximumShareQuantity: last(sortedShareQuantityValues),
     maximumEntryNotional: last(sortedEntryNotionalValues),
+    maximumIntradayDrawdown: first(sortedIntradayDrawdowns),
+    maximumPeakProfitGiveback: last(sortedPeakProfitGivebacks),
     minimumHoldingSeconds: first(sortedHoldingSecondsValues),
     maximumHoldingSeconds: last(sortedHoldingSecondsValues),
     largestWinnerNetPnl: last(sortedWinningNetValues),

@@ -95,6 +95,8 @@ export const TRADE_QUERY_METRIC_KEYS = Object.freeze([
   "profitable_day_percentage",
   "losing_day_percentage",
   "flat_day_percentage",
+  "maximum_intraday_drawdown",
+  "maximum_peak_profit_giveback",
   "longest_winning_trade_streak",
   "longest_losing_trade_streak",
   "net_pnl_excluding_largest_winner",
@@ -155,6 +157,7 @@ const MONEY_KEYS = new Set<TradeQueryMetricKey>([
   "net_pnl_excluding_largest_winner", "net_pnl_excluding_largest_loser",
   "net_pnl_excluding_largest_winner_and_loser", "largest_winner_contribution",
   "largest_loser_contribution", "average_position_size", "median_position_size",
+  "maximum_intraday_drawdown", "maximum_peak_profit_giveback",
   "expectancy",
 ]);
 const RATIO_KEYS = new Set<TradeQueryMetricKey>([
@@ -186,6 +189,7 @@ const DAILY_KEYS = new Set<TradeQueryMetricKey>([
   "best_trading_day", "worst_trading_day", "profitable_trading_day_count",
   "losing_trading_day_count", "flat_trading_day_count",
   "profitable_day_percentage", "losing_day_percentage", "flat_day_percentage",
+  "maximum_intraday_drawdown", "maximum_peak_profit_giveback",
 ]);
 const DIRECTION_KEYS = new Set<TradeQueryMetricKey>([
   "long_trade_count", "short_trade_count", "long_trade_percentage",
@@ -283,7 +287,7 @@ const ALL_GROUPINGS = Object.freeze([
   "entry_price_range", "trade_sequence", "trade_sequence_bucket",
   "previous_completed_outcome", "repeat_attempt", "repeat_attempt_bucket", "holding_time_bucket",
   "share_quantity_bucket", "entry_notional_bucket",
-  "direction", "symbol", "account",
+  "direction", "session", "symbol", "account",
 ]);
 const ALL_FILTERS = Object.freeze([
   "date_range", "account", "symbol", "direction", "currency",

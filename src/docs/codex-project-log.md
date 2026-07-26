@@ -1,3 +1,15 @@
+# 2026-07-26 - GA1-D Coach trading intelligence foundation checkpoint complete
+
+**Branch:** `agent/trader-intelligence-v3-ga1-d-coach-trading-intelligence-foundation`
+
+Delivered GA1-D checkpoint one: the deterministic Coach analytics contract, capability registry and intent mapping, GA1-A/GA1-B authority routing, explicit unsupported responses, evidence/receipt-bearing result digest, and focused contract coverage. The checkpoint also adds the controlling inventory, ADR, capability catalog, intent map, verification ledger, and implementation/audit handoff.
+
+Independent audit remediation: the GA1-D inventory was expanded from a compressed engine summary into the complete itemized Coach-brain control list from the approved specification. Every discrete inventory item now has one explicit status, and the checkpoint-one implementation section points only to the code actually delivered. This is documentation/control remediation only; no product behavior changed.
+
+The only resume blocker was the local dependency tree: the inherited `node_modules` junction made ESLint fail while resolving `acorn-jsx` `./xhtml`. A clean worktree-local `npm ci` restored dependencies, after which targeted ESLint passed with zero errors (two pre-existing GA1-A warnings only).
+
+**Resume point:** draft-PR audit and owner review only. Do not merge, deploy, start GA1-E, or add UI, LLM chat, notifications, or market/candle work without explicit direction.
+
 # 2026-07-26 - Expanded broker CSV presets wired through import boundaries
 
 - The eleven data-driven CSV presets are now selectable in `/intelligence/import-dry-run` and accepted by the save and decision-review server boundaries. They resolve to the hardened generic parser with their explicit mappings, while user mapping corrections retain priority.
