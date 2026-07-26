@@ -1,3 +1,13 @@
+# 2026-07-26 - GA1-D checkpoint two: deterministic period comparisons started
+
+**Branch:** `agent/trader-intelligence-v3-ga1-d-coach-checkpoint-two`, created clean from merged `main` at `f48a6cb0d89636e57d0ddeb91463c0446a00eba1` after PR #167 merged.
+
+**Current project focus:** complete the Analytics Engine and one user-facing Coach intelligence path first. Prioritize verified trade-data analytics, behaviour findings, trends, evidence, limitations, unsupported-data responses, and Coach-ready structured findings. Build only in data-authority order; keep missing-data work deferred or blocked. Simulations are near-term support only for `rules_to_test` or accepted GA1-C functionality. Notifications, market context, candle setup detection, memory/profile, dashboards, and extra agent surfaces remain lower priority until Analytics and Coach intelligence are strong.
+
+Checkpoint two is deliberately limited to governed current-versus-prior comparison integration for Coach. It reuses the existing executor-issued `TradeQueryComparison` contract and enables only the existing `habit_trend_analysis` intent when the structured request supplies compatible current and prior date ranges. No UI, LLM/chat, notifications, memory/profile persistence, simulation reruns, market/candle work, GA1-E, deployment, or merge is in scope.
+
+**Checkpoint-two completion:** `habit_trend_analysis` now routes only through GA1-B `compare_periods` when the structured request supplies compatible current/prior date filters. Coach retains verified comparison identity and withholds `period_trend` unless both samples meet the minimum. The next step is commit/push a draft PR and stop for independent audit; do not merge, deploy, or start another slice.
+
 # 2026-07-26 - GA1-D Coach trading intelligence foundation checkpoint complete
 
 **Branch:** `agent/trader-intelligence-v3-ga1-d-coach-trading-intelligence-foundation`

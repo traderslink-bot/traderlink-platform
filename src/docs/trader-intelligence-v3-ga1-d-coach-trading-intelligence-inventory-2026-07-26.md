@@ -20,6 +20,19 @@ The current code delivers the deterministic Coach foundation and the first selec
 - Session grouping plus maximum intraday drawdown and maximum peak-profit giveback metrics required by the selected capability set.
 - Focused contract coverage: `src/lib/trader-intelligence-v3/__tests__/ga1-d/coach-analytics-foundation.test.ts`.
 
+## Checkpoint Two Exact Status Update
+
+The following existing inventory items are confirmed `implemented_now` by the
+checkpoint-two Coach integration. They require explicit, compatible current and
+prior date-range filters in the structured request; Coach does not infer dates
+or emit a trend finding without a verified comparison and minimum samples in
+both periods. No other inventory status moves are made by this checkpoint-two
+handoff update.
+
+- [implemented_now] this week vs last week
+- [implemented_now] this month vs last month
+- [implemented_now] current period vs baseline
+
 ## Complete controlling inventory
 ## Engine 1 - Analytics Engine
 ### Already available foundation

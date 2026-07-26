@@ -10,6 +10,7 @@ import {
   openReadOnlyTradeQueryGateway,
   type Ga1BPresetKey,
   type TradeQueryFilter,
+  type TradeQueryComparison,
   type TradeQueryMetricKey,
   type TradeQueryResult,
 } from "../query";
@@ -33,6 +34,7 @@ export interface CoachCapabilityRequest {
   readonly source: VerifiedTradeQueryDatasetSource;
   readonly partitionReceipt: AnalyticalPartitionReceipt;
   readonly filters?: readonly TradeQueryFilter[];
+  readonly baselineFilters?: readonly TradeQueryFilter[];
 }
 
 export interface CoachIntentRequest {
@@ -40,6 +42,7 @@ export interface CoachIntentRequest {
   readonly source: VerifiedTradeQueryDatasetSource;
   readonly partitionReceipt: AnalyticalPartitionReceipt;
   readonly filters?: readonly TradeQueryFilter[];
+  readonly baselineFilters?: readonly TradeQueryFilter[];
 }
 
 function netPnl(row: TradeQueryResult["rows"][number]): ExactMetricValue | null {
@@ -85,6 +88,32 @@ function evidenceOmitted(result: TradeQueryResult): string {
   return omitted.toString();
 }
 
+function trendFinding(
+  capabilityKey: CoachCapabilityKey,
+  result: TradeQueryResult,
+  comparison: TradeQueryComparison,
+  baseline: TradeQueryResult,
+): readonly CoachFinding[] {
+  const netPnl = comparison.metrics.find((metric) => metric.metricKey === "net_pnl");
+  if (netPnl === undefined) return Object.freeze([]);
+  const evidence = Object.freeze([
+    ...result.evidence.flatMap((item) => item.candidates),
+    ...baseline.evidence.flatMap((item) => item.candidates),
+  ]);
+  return Object.freeze([Object.freeze({
+    findingCode: "period_trend" as const,
+    capabilityKey,
+    groupIdentity: "comparison:current_vs_prior",
+    groupLabel: "Current period versus prior period",
+    metric: netPnl.difference,
+    sampleSize: result.includedCount,
+    evidence,
+    limitationCodes: comparison.limitationCodes,
+    ruleCandidateKey: null,
+    ruleCandidateStatus: "not_applicable" as const,
+  })]);
+}
+
 function makeUnsupportedResult(
   request: CoachCapabilityRequest,
   requiredData: readonly string[],
@@ -110,7 +139,8 @@ function makeUnsupportedResult(
     metricTables: Object.freeze([]),
     evidenceTradeReferences: Object.freeze([]),
     evidenceOmittedCount: "0",
-    digestReplayIdentity: Object.freeze({ queryPlanDigest: null, queryResultDigest: null, queryExecutionReceiptDigest: null }),
+    comparison: null,
+    digestReplayIdentity: Object.freeze({ queryPlanDigest: null, queryResultDigest: null, queryExecutionReceiptDigest: null, baselineQueryPlanDigest: null, baselineQueryResultDigest: null, comparisonDigest: null }),
     unsupportedData: Object.freeze({ code: requiredData[0] ?? "unsupported_data", requiredData: Object.freeze([...requiredData]) }),
   };
   const built = finalizeContentAddressedAuthority("coach_analytics_result", content, "coachResultDigest");
@@ -121,9 +151,18 @@ function makeUnsupportedResult(
 function buildResult(
   request: CoachCapabilityRequest,
   result: TradeQueryResult,
+  comparison: TradeQueryComparison | null = null,
+  baseline: TradeQueryResult | null = null,
 ): CoachAnalyticsResult {
   const capability = getCoachCapability(request.capabilityKey);
-  const findings = resultFindings(request.capabilityKey, result, capability.findingCode, capability.ruleCandidateKey);
+  const meetsMinimumSample = BigInt(result.includedCount) >= BigInt(capability.minimumSample);
+  const comparisonMeetsMinimumSample = comparison !== null && baseline !== null &&
+    meetsMinimumSample && BigInt(baseline.includedCount) >= BigInt(capability.minimumSample);
+  const findings = comparison !== null && baseline !== null
+    ? comparisonMeetsMinimumSample
+      ? trendFinding(request.capabilityKey, result, comparison, baseline)
+      : Object.freeze([] as CoachFinding[])
+    : resultFindings(request.capabilityKey, result, capability.findingCode, capability.ruleCandidateKey);
   const primary = findings[0] ?? null;
   const evidence = Object.freeze(result.evidence.flatMap((item) => item.candidates));
   const content = {
@@ -138,22 +177,32 @@ function buildResult(
     includedTradeCount: result.includedCount,
     excludedTradeCount: result.excludedCount,
     unavailableTradeCount: "0",
-    sampleSizeStatus: BigInt(result.includedCount) >= BigInt(capability.minimumSample)
+    sampleSizeStatus: meetsMinimumSample && (baseline === null || BigInt(baseline.includedCount) >= BigInt(capability.minimumSample))
       ? "meets_minimum_sample" as const : "insufficient_sample_size" as const,
     authorityStatus: result.limitationCodes.length === 0 ? "verified_execution_only" as const : "limited" as const,
-    limitationCodes: Object.freeze([...result.limitationCodes]),
+    limitationCodes: Object.freeze([...new Set([
+      ...result.limitationCodes,
+      ...(comparison?.limitationCodes ?? []),
+    ])].sort(compareUnicodeCodePoints)),
     primaryFinding: primary,
     secondaryFindings: Object.freeze(findings.slice(1, 4)),
     rankedFindingList: findings,
-    metricTables: Object.freeze([{ sourceQueryResultDigest: result.resultDigest, rows: result.rows }]),
+    metricTables: Object.freeze([
+      { sourceQueryResultDigest: result.resultDigest, rows: result.rows },
+      ...(baseline === null ? [] : [{ sourceQueryResultDigest: baseline.resultDigest, rows: baseline.rows }]),
+    ]),
     evidenceTradeReferences: evidence,
     evidenceOmittedCount: evidenceOmitted(result),
+    comparison,
     digestReplayIdentity: Object.freeze({
       queryPlanDigest: result.normalizedQueryPlan.queryPlanDigest,
       queryResultDigest: result.resultDigest,
       queryExecutionReceiptDigest: result.executionReceipt.receiptDigest,
+      baselineQueryPlanDigest: baseline?.normalizedQueryPlan.queryPlanDigest ?? null,
+      baselineQueryResultDigest: baseline?.resultDigest ?? null,
+      comparisonDigest: comparison?.comparisonDigest ?? null,
     }),
-    unsupportedData: BigInt(result.includedCount) >= BigInt(capability.minimumSample)
+    unsupportedData: meetsMinimumSample && (baseline === null || BigInt(baseline.includedCount) >= BigInt(capability.minimumSample))
       ? null
       : Object.freeze({ code: "insufficient_sample_size", requiredData: Object.freeze(["insufficient_sample_size"]) }),
   };
@@ -173,14 +222,21 @@ export function executeCoachCapability(
   if (!gateway.ok) return gateway;
   const authority = gateway.value.authority;
   if (capability.execution === "ga1_b_preset") {
+    if (capability.presetKey === "compare_periods" && request.baselineFilters === undefined) {
+      return { ok: true, value: makeUnsupportedResult(request, ["period_comparison_required"]) };
+    }
     const preset = compileGa1BPreset({
       presetKey: capability.presetKey as Ga1BPresetKey,
       authority,
       filters: request.filters,
+      baselineFilters: request.baselineFilters,
     });
     if (!preset.ok) return preset;
     const executed = executeGa1BPreset({ source: request.source, partitionReceipt: request.partitionReceipt, preset: preset.value });
-    return executed.ok ? { ok: true, value: buildResult(request, executed.value.primaryResult) } : executed;
+    return executed.ok ? {
+      ok: true,
+      value: buildResult(request, executed.value.primaryResult, executed.value.comparison, executed.value.baselineResult),
+    } : executed;
   }
   const plan = buildTradeQueryPlan({
     schemaVersion: "ti_v3_trade_query_plan_v1",

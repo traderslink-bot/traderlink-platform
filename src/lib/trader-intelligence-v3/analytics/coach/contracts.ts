@@ -2,6 +2,7 @@ import type { CanonicalContentDigest } from "../../domain/identity";
 import type { ExactMetricValue } from "../contracts";
 import type {
   TradeQueryFilter,
+  TradeQueryComparison,
   TradeQueryMetricKey,
   TradeQueryResultRow,
 } from "../query/contracts";
@@ -82,6 +83,7 @@ export type CoachFindingCode =
   | "late_trade_weakness"
   | "large_size_weakness"
   | "best_rule_candidate"
+  | "period_trend"
   | "insufficient_data"
   | "unsupported_data";
 
@@ -124,10 +126,14 @@ export interface CoachAnalyticsResult {
   readonly metricTables: readonly CoachMetricTable[];
   readonly evidenceTradeReferences: readonly TradeQueryEvidenceCandidate[];
   readonly evidenceOmittedCount: string;
+  readonly comparison: TradeQueryComparison | null;
   readonly digestReplayIdentity: Readonly<{
     readonly queryPlanDigest: CanonicalContentDigest | null;
     readonly queryResultDigest: CanonicalContentDigest | null;
     readonly queryExecutionReceiptDigest: CanonicalContentDigest | null;
+    readonly baselineQueryPlanDigest: CanonicalContentDigest | null;
+    readonly baselineQueryResultDigest: CanonicalContentDigest | null;
+    readonly comparisonDigest: CanonicalContentDigest | null;
   }>;
   readonly unsupportedData: Readonly<{
     readonly code: string;
