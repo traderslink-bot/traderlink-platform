@@ -2,6 +2,8 @@
 
 Status: **controlling inventory** for GA1-D and later Coach work. This is the full Coach brain list from the approved GA1-D specification. It is not a shortlist and does not grant discretion to remove future scope.
 
+Authoritative retained source: `src/docs/source-specifications/GA1-D Coach Trading Intelligence Foundation.docx`.
+
 There is one user-facing **Coach** only. A future LLM may identify a structured request, but this deterministic backend validates, executes, calculates, retains evidence/replay identity, and returns limitations or unsupported-data states. Engines calculate; Coach later explains. No trade signals, investment advice, or live buy/sell instructions are permitted.
 
 ## Status key
