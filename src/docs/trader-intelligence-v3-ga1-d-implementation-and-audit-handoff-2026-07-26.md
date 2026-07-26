@@ -26,3 +26,7 @@ The original targeted ESLint checkpoint was blocked by an unhealthy inherited de
 ## Audit focus and stop boundary
 
 Review the capability-to-authority mapping and the explicit unsupported-result behavior, then check that each user-facing conclusion is traceable to the returned deterministic evidence and receipt. This checkpoint stops after the draft pull request. Do not merge, deploy, begin GA1-E, or expand into product-surface work without owner direction.
+
+## Independent-audit control remediation
+
+The controlling inventory has been restored to the full itemized Coach-brain list in the approved GA1-D specification. Each discrete planned stat, object, capability, and engine item now appears individually with one status. The separate checkpoint-one section identifies the code actually delivered, so deferred scope remains visible without being represented as implemented. This remediation changes documentation only.

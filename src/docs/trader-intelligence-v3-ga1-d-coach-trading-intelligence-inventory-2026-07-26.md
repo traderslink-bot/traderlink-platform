@@ -1,124 +1,993 @@
 # GA1-D Coach Trading Intelligence Inventory
 
-Status: controlling inventory for GA1-D and later Coach work. This is one
-user-facing Coach, not a collection of public agents. An LLM may later map a
-question into a request, but only this deterministic backend validates,
-executes, calculates, records evidence, and returns limitations.
+Status: **controlling inventory** for GA1-D and later Coach work. This is the full Coach brain list from the approved GA1-D specification. It is not a shortlist and does not grant discretion to remove future scope.
 
-Status values are deliberately exhaustive: `implemented_now`,
-`deferred_checkpoint`, `blocked_by_missing_data`, `out_of_scope`, and
-`already_available_foundation`. A comma-separated item list in this inventory
-uses the listed status for every item in that row; no omitted item is silently
-treated as implemented.
+There is one user-facing **Coach** only. A future LLM may identify a structured request, but this deterministic backend validates, executes, calculates, retains evidence/replay identity, and returns limitations or unsupported-data states. Engines calculate; Coach later explains. No trade signals, investment advice, or live buy/sell instructions are permitted.
 
+## Status key
+
+Each discrete inventory line has exactly one status: `implemented_now`, `deferred_checkpoint`, `blocked_by_missing_data`, `out_of_scope`, or `already_available_foundation`.
+
+## Checkpoint One Implemented Items
+
+The current code delivers the deterministic Coach foundation and the first selected execution-only pack; it does **not** claim that every deferred or blocked item is implemented.
+
+- Versioned Coach result contract, deterministic digest identity, authority/sample/limitation fields, bounded evidence references, and explicit unsupported-data responses: `src/lib/trader-intelligence-v3/analytics/coach/contracts.ts` and `coach-analytics.ts`.
+- Intent/capability/metric/dimension/comparison/finding routing for the first flexible-question group: `src/lib/trader-intelligence-v3/analytics/coach/registry.ts`.
+- Existing GA1-A query and GA1-B preset authority only; GA1-C links are `rule_to_test` candidates, not simulated-improvement claims.
+- Session grouping plus maximum intraday drawdown and maximum peak-profit giveback metrics required by the selected capability set.
+- Focused contract coverage: `src/lib/trader-intelligence-v3/__tests__/ga1-d/coach-analytics-foundation.test.ts`.
+
+## Complete controlling inventory
 ## Engine 1 - Analytics Engine
-
-| Inventory items | Status | GA1-D handling |
-| --- | --- | --- |
-| verified trade rows, exact analytical rows, owner/account/currency/instrument isolation, source/query/partition authority, bounded result ordering, evidence IDs, replay/digests, tamper/foreign/polluted/re-digested rejection | already_available_foundation | GA0-B through GA1-C authority is reused directly. |
-| gross/net P/L, fee states, trade/win/loss/flat counts and rates, average/median trade, average/median win/loss, profit factor, expectancy, gross-vs-net, fee drag, largest win/loss, daily counts and daily P/L | implemented_now | Query metric registry and Coach core summary. |
-| day/week/month, session/time-window, hold-time, price bucket, direction, ticker, repeat attempt, sequence, prior outcome, position-size performance | implemented_now | Approved Coach capabilities compile to GA1-A/GA1-B only. |
-| green/red/flat day, trades/day, streaks, maximum intraday drawdown, peak-profit giveback | implemented_now | Exact accumulator projections; no floating-point financial math. |
-| current-versus-prior trend, after-win, fee-authority comparison, green-day-versus-red-day, first-N-versus-later comparison | deferred_checkpoint | Registry records the comparison type; a later checkpoint supplies complete governed comparisons. |
-| unrealized P/L, risk-normalized P/L, planned-risk performance | blocked_by_missing_data | Requires open-position or risk-plan authority. |
+### Already available foundation
+- [already_available_foundation] verified trade rows
+- [already_available_foundation] exact analytical rows
+- [already_available_foundation] owner isolation
+- [already_available_foundation] account isolation
+- [already_available_foundation] currency isolation
+- [already_available_foundation] instrument isolation
+- [already_available_foundation] broker/source authority
+- [already_available_foundation] source query authority
+- [already_available_foundation] bounded result authority
+- [already_available_foundation] replayable result structure
+- [already_available_foundation] evidence IDs
+- [already_available_foundation] exact P/L authority
+- [already_available_foundation] gross P/L authority
+- [already_available_foundation] net P/L authority
+- [already_available_foundation] fee authority states
+- [already_available_foundation] missing fee handling
+- [already_available_foundation] unavailable authority handling
+- [already_available_foundation] unsupported calculation rejection
+- [already_available_foundation] similarity result authority
+- [already_available_foundation] similar trade search
+- [already_available_foundation] similarity replay
+- [already_available_foundation] similarity evidence
+- [already_available_foundation] exact count validation
+- [already_available_foundation] bounded/unbounded count handling
+- [already_available_foundation] partition authority
+- [already_available_foundation] query-plan authority
+- [already_available_foundation] deterministic result ordering
+- [already_available_foundation] tamper rejection
+- [already_available_foundation] foreign-authority rejection
+- [already_available_foundation] polluted-prototype rejection
+- [already_available_foundation] re-digested-output rejection
+- [already_available_foundation] weekday analysis
+- [already_available_foundation] daily stop proof
+- [already_available_foundation] GA1-C simulation engine
+- [already_available_foundation] GA1-C replay envelope
+- [already_available_foundation] GA1-C final 10,000-row proof
+### Core P/L stats
+- [implemented_now] total gross P/L
+- [implemented_now] total net P/L
+- [deferred_checkpoint] realized P/L
+- [blocked_by_missing_data] unrealized P/L if supported
+- [implemented_now] average trade P/L
+- [implemented_now] median trade P/L
+- [implemented_now] largest win
+- [implemented_now] largest loss
+- [implemented_now] total wins
+- [implemented_now] total losses
+- [implemented_now] total breakeven trades
+- [implemented_now] win rate
+- [implemented_now] loss rate
+- [implemented_now] breakeven rate
+- [implemented_now] profit factor
+- [implemented_now] expectancy
+- [implemented_now] average win
+- [implemented_now] average loss
+- [implemented_now] median win
+- [implemented_now] median loss
+- [implemented_now] payoff ratio
+- [deferred_checkpoint] average winning day
+- [deferred_checkpoint] average losing day
+- [deferred_checkpoint] best day
+- [deferred_checkpoint] worst day
+- [implemented_now] green days
+- [implemented_now] red days
+- [implemented_now] flat days
+- [implemented_now] green-day percentage
+- [implemented_now] red-day percentage
+- [implemented_now] average daily P/L
+- [implemented_now] median daily P/L
+- [implemented_now] gross vs net difference
+- [implemented_now] fee drag
+- [deferred_checkpoint] commission drag
+- [deferred_checkpoint] regulatory fee drag
+- [deferred_checkpoint] net improvement/degradation from fees
+### Trade count stats
+- [implemented_now] total trades
+- [implemented_now] trades per day
+- [implemented_now] average trades per day
+- [implemented_now] median trades per day
+- [implemented_now] max trades in a day
+- [implemented_now] first trade performance
+- [implemented_now] second trade performance
+- [implemented_now] third trade performance
+- [implemented_now] fourth trade performance
+- [implemented_now] fourth-and-later trade performance
+- [implemented_now] last trade of day performance
+- [deferred_checkpoint] trades after daily goal reached
+- [deferred_checkpoint] trades after max-loss hit
+- [deferred_checkpoint] trades after green-to-red
+- [deferred_checkpoint] trades after red-to-green
+- [deferred_checkpoint] low-volume trading days
+- [deferred_checkpoint] high-volume trading days
+### Sequence stats
+- [implemented_now] trade sequence number
+- [deferred_checkpoint] after-win performance
+- [deferred_checkpoint] after-loss performance
+- [implemented_now] after-breakeven performance
+- [deferred_checkpoint] after-two-losses performance
+- [deferred_checkpoint] after-three-losses performance
+- [deferred_checkpoint] after-big-win performance
+- [deferred_checkpoint] after-big-loss performance
+- [implemented_now] loss streaks
+- [implemented_now] win streaks
+- [implemented_now] max loss streak
+- [implemented_now] max win streak
+- [implemented_now] recovery after loss
+- [implemented_now] recovery after drawdown
+- [implemented_now] first trade after loss
+- [implemented_now] first trade after win
+- [deferred_checkpoint] first trade after break
+- [deferred_checkpoint] next-trade quality
+- [blocked_by_missing_data] revenge-trade risk proxy
+- [deferred_checkpoint] cooldown effectiveness
+### Time stats
+- [implemented_now] premarket performance
+- [implemented_now] regular-hours performance
+- [implemented_now] after-hours performance
+- [deferred_checkpoint] first 1 minute
+- [deferred_checkpoint] first 5 minutes
+- [deferred_checkpoint] first 15 minutes
+- [deferred_checkpoint] first 30 minutes
+- [deferred_checkpoint] first hour
+- [deferred_checkpoint] 9:30 to 10:00
+- [deferred_checkpoint] 10:00 to 10:30
+- [deferred_checkpoint] 10:30 to 11:00
+- [deferred_checkpoint] midday
+- [deferred_checkpoint] lunch period
+- [deferred_checkpoint] power hour
+- [deferred_checkpoint] final 30 minutes
+- [deferred_checkpoint] after 10:00 performance
+- [deferred_checkpoint] after 11:00 performance
+- [implemented_now] time-of-day buckets
+- [deferred_checkpoint] day-of-week performance
+- [deferred_checkpoint] Monday performance
+- [deferred_checkpoint] Tuesday performance
+- [deferred_checkpoint] Wednesday performance
+- [deferred_checkpoint] Thursday performance
+- [deferred_checkpoint] Friday performance
+- [deferred_checkpoint] week-over-week comparison
+- [deferred_checkpoint] month-over-month comparison
+- [deferred_checkpoint] best time window
+- [deferred_checkpoint] worst time window
+- [deferred_checkpoint] most active time window
+- [deferred_checkpoint] least active time window
+### Hold-time stats
+- [implemented_now] average hold time
+- [implemented_now] median hold time
+- [implemented_now] shortest hold time
+- [implemented_now] longest hold time
+- [implemented_now] scalp performance
+- [implemented_now] sub-1-minute performance
+- [implemented_now] 1-to-5-minute performance
+- [implemented_now] 5-to-15-minute performance
+- [implemented_now] 15-to-30-minute performance
+- [implemented_now] 30-to-60-minute performance
+- [implemented_now] 1-hour-plus performance
+- [implemented_now] same-day hold performance
+- [implemented_now] overnight hold performance if supported
+- [implemented_now] winning hold-time range
+- [implemented_now] losing hold-time range
+- [deferred_checkpoint] held-too-long proxy
+- [deferred_checkpoint] exited-too-soon proxy
+### Price-range stats
+- [implemented_now] under $0.50
+- [implemented_now] $0.50 to $1
+- [implemented_now] $1 to $2
+- [implemented_now] $2 to $5
+- [implemented_now] $5 to $10
+- [implemented_now] over $10
+- [implemented_now] under $5
+- [implemented_now] low-priced stock performance
+- [implemented_now] high-priced stock performance
+- [implemented_now] average entry price
+- [implemented_now] median entry price
+- [implemented_now] best price bucket
+- [implemented_now] worst price bucket
+### Direction stats
+- [implemented_now] long performance
+- [implemented_now] short performance
+- [implemented_now] long win rate
+- [implemented_now] short win rate
+- [implemented_now] long average P/L
+- [implemented_now] short average P/L
+- [implemented_now] long profit factor
+- [implemented_now] short profit factor
+- [implemented_now] direction by time of day
+- [implemented_now] direction by price range
+- [implemented_now] direction by ticker
+- [blocked_by_missing_data] direction by setup/tag
+### Ticker stats
+- [implemented_now] ticker performance
+- [implemented_now] best ticker
+- [implemented_now] worst ticker
+- [implemented_now] most traded ticker
+- [implemented_now] repeat ticker attempts
+- [implemented_now] first attempt per ticker
+- [implemented_now] second attempt per ticker
+- [implemented_now] third attempt per ticker
+- [implemented_now] same-ticker revenge attempts
+- [implemented_now] same-ticker win-back attempts
+- [implemented_now] same-ticker loss spiral
+- [implemented_now] ticker concentration
+- [implemented_now] ticker overtrading
+- [implemented_now] ticker-specific profit factor
+- [implemented_now] ticker-specific win rate
+### Size/risk stats
+- [implemented_now] share size performance
+- [implemented_now] dollar size performance
+- [implemented_now] small-size trades
+- [implemented_now] medium-size trades
+- [implemented_now] large-size trades
+- [implemented_now] oversized trade detection
+- [implemented_now] size after win
+- [implemented_now] size after loss
+- [implemented_now] size during drawdown
+- [implemented_now] size while green
+- [implemented_now] size while red
+- [implemented_now] average position size
+- [implemented_now] median position size
+- [implemented_now] largest position
+- [implemented_now] smallest position
+- [implemented_now] size increase after loss
+- [implemented_now] size increase after win
+- [implemented_now] size vs outcome
+- [implemented_now] P/L per share
+- [blocked_by_missing_data] P/L per dollar risk if available
+- [blocked_by_missing_data] risk-per-trade if available
+- [blocked_by_missing_data] planned risk vs actual loss if available
+### Drawdown/giveback stats
+- [implemented_now] max daily drawdown
+- [deferred_checkpoint] max account drawdown in sample
+- [implemented_now] intraday drawdown
+- [deferred_checkpoint] drawdown after first loss
+- [deferred_checkpoint] drawdown after first win
+- [deferred_checkpoint] green-to-red events
+- [deferred_checkpoint] red-to-green events
+- [implemented_now] profit giveback
+- [blocked_by_missing_data] giveback percentage
+- [deferred_checkpoint] giveback after 10:00
+- [deferred_checkpoint] giveback after 3 trades
+- [deferred_checkpoint] giveback after big win
+- [implemented_now] peak daily P/L
+- [implemented_now] end-of-day P/L
+- [implemented_now] peak-to-close difference
+- [implemented_now] drawdown recovery time
+- [implemented_now] trades during drawdown
+- [implemented_now] trades after giveback begins
+### Behaviour stats
+- [implemented_now] overtrading
+- [implemented_now] revenge trading proxy
+- [deferred_checkpoint] chasing proxy
+- [implemented_now] trading after loss
+- [implemented_now] trading after win
+- [deferred_checkpoint] trading while red
+- [implemented_now] trading while green
+- [implemented_now] giving back profits
+- [implemented_now] repeat ticker attempts
+- [implemented_now] cutting winners too early
+- [implemented_now] holding losers too long
+- [implemented_now] oversized losses
+- [implemented_now] small wins / large losses
+- [implemented_now] low-quality late trades
+- [blocked_by_missing_data] rule-break tags
+- [blocked_by_missing_data] mistake tags
+- [blocked_by_missing_data] emotional tags
+- [blocked_by_missing_data] planned vs unplanned trades
+- [blocked_by_missing_data] A+ setup vs non-A+ setup
+- [blocked_by_missing_data] hesitation tag
+- [blocked_by_missing_data] FOMO tag
+- [blocked_by_missing_data] boredom trade tag
+- [blocked_by_missing_data] forcing trade tag
+### Setup/tag stats
+- [blocked_by_missing_data] setup performance
+- [blocked_by_missing_data] tag performance
+- [deferred_checkpoint] strategy performance
+- [blocked_by_missing_data] mistake tag performance
+- [deferred_checkpoint] entry reason performance
+- [deferred_checkpoint] exit reason performance
+- [blocked_by_missing_data] planned trade performance
+- [blocked_by_missing_data] unplanned trade performance
+- [blocked_by_missing_data] breakout tag
+- [blocked_by_missing_data] failed breakout tag
+- [blocked_by_missing_data] VWAP reclaim tag
+- [blocked_by_missing_data] VWAP rejection tag
+- [blocked_by_missing_data] EMA bounce tag
+- [blocked_by_missing_data] opening range break tag
+- [blocked_by_missing_data] first pullback tag
+- [blocked_by_missing_data] higher-low tag
+- [blocked_by_missing_data] lower-high tag
+- [blocked_by_missing_data] liquidity-grab tag
+- [blocked_by_missing_data] support-bounce tag
+- [blocked_by_missing_data] resistance-rejection tag
+- [blocked_by_missing_data] halt-continuation tag
+- [blocked_by_missing_data] gap-and-go tag
+### Comparison stats
+- [implemented_now] this week vs last week
+- [implemented_now] this month vs last month
+- [implemented_now] first half vs second half of day
+- [implemented_now] premarket vs regular hours
+- [implemented_now] long vs short
+- [implemented_now] winners vs losers
+- [implemented_now] early trades vs later trades
+- [implemented_now] first three trades vs fourth-and-later
+- [implemented_now] after-loss vs not-after-loss
+- [implemented_now] repeat ticker vs first attempt
+- [implemented_now] under $5 vs over $5
+- [implemented_now] small size vs large size
+- [implemented_now] tagged setup vs all trades
+- [implemented_now] current period vs baseline
+- [implemented_now] best condition vs worst condition
+### Ranking outputs
+- [implemented_now] best-performing condition
+- [implemented_now] worst-performing condition
+- [implemented_now] biggest positive edge
+- [implemented_now] biggest negative leak
+- [implemented_now] most expensive behaviour
+- [implemented_now] most common mistake
+- [implemented_now] highest-confidence pattern
+- [implemented_now] lowest-confidence pattern
+- [implemented_now] best time window
+- [implemented_now] worst time window
+- [implemented_now] best ticker
+- [implemented_now] worst ticker
+- [implemented_now] best price range
+- [implemented_now] worst price range
+- [implemented_now] best setup/tag
+- [implemented_now] worst setup/tag
+- [implemented_now] best rule candidate
+- [implemented_now] highest-impact coach finding
+### Evidence objects
+- [implemented_now] evidence trade IDs
+- [implemented_now] best examples
+- [implemented_now] worst examples
+- [implemented_now] representative examples
+- [implemented_now] bounded evidence list
+- [implemented_now] omitted evidence count
+- [implemented_now] sample size
+- [implemented_now] included trade count
+- [implemented_now] excluded trade count
+- [implemented_now] unavailable trade count
+- [implemented_now] unsupported-data reason
+- [implemented_now] limitation codes
+- [implemented_now] authority state
+- [implemented_now] query digest
+- [implemented_now] result digest
+- [implemented_now] replay receipt
 
 ## Engine 2 - Simulation Engine
-
-| Inventory items | Status | GA1-D handling |
-| --- | --- | --- |
-| generic counterfactual plan/engine, content-addressed plans, governed-preset/generic origin, replay envelope/receipt, exact reconstruction, bounded evidence, isolation, no-lookahead, ambiguity handling, precedence, actual/simulated outcomes | already_available_foundation | GA1-C remains the sole simulator. |
-| stop-after-losses, max trades, direction-only, daily drawdown, profit giveback, fourth-plus, wait-after-loss, ticker attempt, time cutoff, price exclusion, repeat attempts, after-outcome, reduce-size-after-loss | already_available_foundation | Coach returns these only as `rules_to_test`; it does not run them automatically. |
-| additional stop/win/goal/time/direction/whitelist/size/tag/rule combinations and full counterfactual result inventory | deferred_checkpoint | Preserve GA1-C compiler boundary. |
+### Completed / accepted
+- [already_available_foundation] generic counterfactual simulation plan
+- [already_available_foundation] generic deterministic simulation engine
+- [already_available_foundation] content-addressed simulation plans
+- [already_available_foundation] governed preset plans
+- [already_available_foundation] generic plan origin
+- [already_available_foundation] governed preset origin
+- [already_available_foundation] simulation replay envelope
+- [already_available_foundation] simulation replay receipt
+- [already_available_foundation] exact replay reconstruction
+- [already_available_foundation] foreign-authority rejection
+- [already_available_foundation] tamper rejection
+- [already_available_foundation] bounded evidence
+- [already_available_foundation] owner isolation
+- [already_available_foundation] account isolation
+- [already_available_foundation] currency isolation
+- [already_available_foundation] session isolation
+- [already_available_foundation] stable-instrument isolation
+- [already_available_foundation] strict no-lookahead processing
+- [already_available_foundation] completion-before-entry logic
+- [already_available_foundation] same-time material ambiguity handling
+- [already_available_foundation] source-filtered trade isolation
+- [already_available_foundation] skipped-trade state isolation
+- [already_available_foundation] deterministic rule precedence
+- [already_available_foundation] centralized rule-state dependencies
+- [already_available_foundation] inactive snapshotnot_evaluated
+- [already_available_foundation] actual vs simulated comparison
+- [already_available_foundation] harmful/helpful/unchanged outcomes
+- [already_available_foundation] final 10,000-row proof
+### Completed simulation presets
+- [already_available_foundation] stop after consecutive losses
+- [already_available_foundation] maximum trades per day
+- [already_available_foundation] direction only
+- [already_available_foundation] stop after daily dollar drawdown
+- [already_available_foundation] stop after profit giveback
+- [already_available_foundation] skip fourth and later trades
+- [already_available_foundation] wait after loss
+- [already_available_foundation] maximum attempts per ticker
+- [already_available_foundation] stop after losing ticker attempts
+- [already_available_foundation] no new trades after time
+- [already_available_foundation] exclude price range
+- [already_available_foundation] skip repeat attempts
+- [already_available_foundation] after outcome exclusion
+- [already_available_foundation] reduce size after loss
+### Additional Simulation Engine inventory
+- [deferred_checkpoint] stop after X losses
+- [deferred_checkpoint] stop after X wins
+- [deferred_checkpoint] stop after X total trades
+- [deferred_checkpoint] stop after X losing trades
+- [deferred_checkpoint] stop after X losing dollars
+- [deferred_checkpoint] stop after daily profit target
+- [deferred_checkpoint] stop after giving back X dollars
+- [deferred_checkpoint] stop after giving back X percent
+- [deferred_checkpoint] stop after green-to-red
+- [deferred_checkpoint] stop after first red trade
+- [deferred_checkpoint] stop after first green trade
+- [deferred_checkpoint] trade only before time
+- [deferred_checkpoint] trade only after time
+- [deferred_checkpoint] skip first X minutes
+- [deferred_checkpoint] skip after 10:00
+- [deferred_checkpoint] skip midday
+- [deferred_checkpoint] skip power hour
+- [deferred_checkpoint] long-only
+- [deferred_checkpoint] short-only
+- [deferred_checkpoint] ticker whitelist
+- [deferred_checkpoint] ticker blacklist
+- [deferred_checkpoint] price-range only
+- [deferred_checkpoint] price-range exclude
+- [deferred_checkpoint] max attempts per ticker
+- [deferred_checkpoint] skip repeat ticker attempts
+- [deferred_checkpoint] wait after win
+- [deferred_checkpoint] wait after loss
+- [deferred_checkpoint] wait after breakeven
+- [deferred_checkpoint] reduce size after loss
+- [deferred_checkpoint] reduce size after win
+- [deferred_checkpoint] increase size after win if allowed
+- [deferred_checkpoint] fixed size simulation
+- [deferred_checkpoint] max size simulation
+- [deferred_checkpoint] minimum size simulation
+- [deferred_checkpoint] remove oversized trades
+- [deferred_checkpoint] remove trades after loss streak
+- [deferred_checkpoint] remove trades during drawdown
+- [deferred_checkpoint] remove trades while red
+- [deferred_checkpoint] remove trades while green
+- [deferred_checkpoint] remove fourth-and-later trades
+- [deferred_checkpoint] remove revenge-trade proxies
+- [deferred_checkpoint] remove low-quality tags
+- [deferred_checkpoint] only take tagged setups
+- [deferred_checkpoint] skip tagged mistakes
+- [deferred_checkpoint] compare baseline vs rule
+- [deferred_checkpoint] helped trades
+- [deferred_checkpoint] harmed trades
+- [deferred_checkpoint] unchanged trades
+- [deferred_checkpoint] profitable trades removed
+- [deferred_checkpoint] losing trades avoided
+- [deferred_checkpoint] winners retained
+- [deferred_checkpoint] losses retained
+- [deferred_checkpoint] day-level impact
+- [deferred_checkpoint] trade-level impact
+- [deferred_checkpoint] exact gross simulation
+- [deferred_checkpoint] exact net simulation
+- [deferred_checkpoint] incomplete net simulation
+- [deferred_checkpoint] unavailable net simulation
+- [deferred_checkpoint] estimated net simulation
+- [deferred_checkpoint] fee-aware resize
+- [deferred_checkpoint] zero-size exclusion
+- [deferred_checkpoint] unavailable quantity exclusion
+- [deferred_checkpoint] replayable simulation result
+- [deferred_checkpoint] bounded simulation evidence
 
 ## Engine 3 - Evidence and Replay Engine
-
-| Inventory items | Status | GA1-D handling |
-| --- | --- | --- |
-| source/query/plan/result/replay/receipt/evidence digests; semantic row/execution/occurrence identity; bounded evidence; emitted/omitted counts; deterministic ordering; reconciliation; privacy boundary proof | already_available_foundation | Coach result references accepted GA1-A receipts and bounded evidence. |
-| Coach result digest and evidence-to-finding linkage | implemented_now | Versioned result object is content-addressed. |
-| replay of a persisted Coach envelope | deferred_checkpoint | Query and simulation replay remain the trusted replay mechanisms. |
+- [already_available_foundation] source authority
+- [already_available_foundation] query authority
+- [already_available_foundation] plan authority
+- [already_available_foundation] result authority
+- [already_available_foundation] partition authority
+- [already_available_foundation] account authority
+- [already_available_foundation] owner authority
+- [already_available_foundation] broker/source authority
+- [already_available_foundation] execution digest
+- [already_available_foundation] query digest
+- [already_available_foundation] plan digest
+- [already_available_foundation] result digest
+- [already_available_foundation] replay digest
+- [already_available_foundation] receipt digest
+- [already_available_foundation] evidence digest
+- [already_available_foundation] source row IDs
+- [already_available_foundation] semantic row keys
+- [already_available_foundation] stable execution identity
+- [already_available_foundation] correction reference identity
+- [already_available_foundation] bounded evidence objects
+- [already_available_foundation] evidence category
+- [already_available_foundation] evidence count
+- [already_available_foundation] emitted evidence count
+- [already_available_foundation] omitted evidence count
+- [already_available_foundation] deterministic evidence ordering
+- [already_available_foundation] truncation state
+- [already_available_foundation] replay envelope
+- [already_available_foundation] replay receipt
+- [already_available_foundation] replay reconstruction
+- [already_available_foundation] generic replay
+- [already_available_foundation] governed preset replay
+- [already_available_foundation] tamper rejection
+- [already_available_foundation] re-digested plan tamper rejection
+- [already_available_foundation] re-digested result tamper rejection
+- [already_available_foundation] re-digested receipt tamper rejection
+- [already_available_foundation] foreign authority rejection
+- [already_available_foundation] cloned authority rejection
+- [already_available_foundation] unsupported schema rejection
+- [already_available_foundation] unsupported semantic version rejection
+- [already_available_foundation] limitation codes
+- [already_available_foundation] authority limitation codes
+- [already_available_foundation] unavailable-data reason
+- [already_available_foundation] not-evaluated reason
+- [already_available_foundation] exact-result proof
+- [already_available_foundation] summary reconciliation proof
+- [already_available_foundation] evidence-to-result reconciliation
+- [already_available_foundation] source-to-result traceability
+- [already_available_foundation] privacy/account boundary proof
 
 ## Engine 4 - Import and Data Quality Engine
-
-Generic CSV import, broker detection/format registry, mappings, normalization,
-partial fills, round-trip reconstruction, duplicate/correction/cancellation
-handling, fee classification, confidence/errors/warnings, preview/confirmation,
-audit receipt, and manual-entry validation are `already_available_foundation`
-where already governed by GA0/import work. New broker adapters, migrations, and
-importer changes are `out_of_scope` for GA1-D.
+- [already_available_foundation] generic CSV importer
+- [already_available_foundation] broker CSV detection
+- [already_available_foundation] broker format registry
+- [already_available_foundation] column mapping
+- [already_available_foundation] header normalization
+- [already_available_foundation] symbol normalization
+- [already_available_foundation] date normalization
+- [already_available_foundation] time normalization
+- [already_available_foundation] timezone handling
+- [already_available_foundation] trade side normalization
+- [already_available_foundation] quantity normalization
+- [already_available_foundation] price normalization
+- [already_available_foundation] gross P/L normalization
+- [already_available_foundation] net P/L normalization
+- [already_available_foundation] fee normalization
+- [already_available_foundation] commission normalization
+- [already_available_foundation] regulatory fee normalization
+- [already_available_foundation] execution ID handling
+- [already_available_foundation] order ID handling
+- [already_available_foundation] trade ID handling
+- [already_available_foundation] partial-fill grouping
+- [already_available_foundation] multi-leg trade grouping
+- [already_available_foundation] open trade detection
+- [already_available_foundation] close trade detection
+- [already_available_foundation] round-trip reconstruction
+- [already_available_foundation] duplicate row detection
+- [already_available_foundation] duplicate trade detection
+- [already_available_foundation] correction detection
+- [already_available_foundation] cancelled trade detection
+- [already_available_foundation] rejected row handling
+- [already_available_foundation] unsupported row handling
+- [already_available_foundation] missing required column handling
+- [already_available_foundation] missing optional column handling
+- [already_available_foundation] missing fee detection
+- [already_available_foundation] fee authority classification
+- [already_available_foundation] explicitly zero fee detection
+- [already_available_foundation] broker-reported complete fee detection
+- [already_available_foundation] broker-reported partial fee detection
+- [already_available_foundation] estimated fee detection
+- [already_available_foundation] unavailable fee detection
+- [already_available_foundation] unknown undecomposed fee detection
+- [already_available_foundation] account policy calculated fee support
+- [already_available_foundation] import confidence score
+- [already_available_foundation] mapping confidence score
+- [already_available_foundation] row error report
+- [already_available_foundation] row warning report
+- [already_available_foundation] import summary
+- [already_available_foundation] import preview
+- [already_available_foundation] user confirmation requirements
+- [already_available_foundation] safe default rejection
+- [already_available_foundation] import replay receipt
+- [already_available_foundation] import audit trail
+- [already_available_foundation] manual trade entry validation
+- [already_available_foundation] manual fee warning
+- [already_available_foundation] manual missing fee warning
+- [already_available_foundation] manual correction flow
+- [deferred_checkpoint] broker-specific adapters
+- [deferred_checkpoint] generic fallback adapter
 
 ## Engine 5 - Trade Behaviour Engine
-
-| Inventory items | Status | GA1-D handling |
-| --- | --- | --- |
-| after-loss, repeat ticker, fourth-and-later, overtrading proxy, giveback, large-size weakness, ranked leaks/strengths | implemented_now | Deterministic findings use observed execution-only segments and bounded evidence. |
-| after-win/breakeven, streak/green-red behaviour, chasing, late-entry, held-too-long, cut-winner, rule compliance/reminder response, discipline scores | deferred_checkpoint | No emotional or causal assertions are inferred. |
-| planned/unplanned, rule-break, emotional, FOMO, boredom, forcing, hesitation tags | blocked_by_missing_data | Requires explicit validated tag authority. |
+- [implemented_now] overtrading detection
+- [implemented_now] revenge-trade proxy
+- [implemented_now] after-loss behaviour
+- [implemented_now] after-win behaviour
+- [implemented_now] after-breakeven behaviour
+- [implemented_now] loss-streak behaviour
+- [implemented_now] win-streak behaviour
+- [implemented_now] giveback behaviour
+- [implemented_now] green-to-red behaviour
+- [implemented_now] red-to-green behaviour
+- [implemented_now] repeat ticker behaviour
+- [implemented_now] fourth-and-later behaviour
+- [implemented_now] same-ticker spiral
+- [deferred_checkpoint] chasing proxy
+- [deferred_checkpoint] late-entry proxy
+- [deferred_checkpoint] cutting winners early
+- [deferred_checkpoint] holding losers too long
+- [implemented_now] oversized loss behaviour
+- [implemented_now] size-up-after-loss behaviour
+- [implemented_now] size-up-after-win behaviour
+- [implemented_now] trading while red
+- [implemented_now] trading while green
+- [implemented_now] trading after daily target
+- [implemented_now] trading after max loss
+- [implemented_now] trading outside best window
+- [implemented_now] trading during worst window
+- [deferred_checkpoint] breaking saved rule
+- [deferred_checkpoint] ignoring prior Coach reminder
+- [deferred_checkpoint] responding to Coach reminder
+- [deferred_checkpoint] pause-after-loss compliance
+- [deferred_checkpoint] max-trade rule compliance
+- [deferred_checkpoint] cooldown compliance
+- [deferred_checkpoint] daily discipline score
+- [deferred_checkpoint] weekly discipline score
+- [implemented_now] behaviour leak ranking
+- [implemented_now] behaviour improvement ranking
+- [implemented_now] recurring mistake detection
+- [implemented_now] recurring strength detection
 
 ## Engine 6 - Risk Engine
-
-Execution-only size/quantity/notional, loss distribution, maximum intraday
-drawdown, giveback, and size-after-loss candidate are `implemented_now` or
-`already_available_foundation`. Risk-per-trade, account-risk percentage,
-planned-versus-actual loss, stops, slippage, liquidity/float/dilution risk, and
-lockout thresholds are `blocked_by_missing_data` because no validated risk plan
-or market/quote authority exists.
+- [deferred_checkpoint] risk per trade
+- [deferred_checkpoint] account risk percentage if available
+- [deferred_checkpoint] position size risk
+- [deferred_checkpoint] share size risk
+- [implemented_now] dollar size risk
+- [implemented_now] oversized trade detection
+- [implemented_now] max loss
+- [implemented_now] average loss
+- [implemented_now] median loss
+- [implemented_now] loss distribution
+- [implemented_now] largest loss outlier
+- [implemented_now] risk/reward if available
+- [implemented_now] planned risk if available
+- [implemented_now] actual risk if available
+- [implemented_now] planned vs actual loss
+- [implemented_now] stop-loss hit rate
+- [implemented_now] stop-loss slippage if available
+- [implemented_now] max daily drawdown
+- [implemented_now] max weekly drawdown
+- [implemented_now] intraday drawdown
+- [implemented_now] drawdown duration
+- [implemented_now] drawdown recovery
+- [implemented_now] loss streak risk
+- [implemented_now] giveback risk
+- [implemented_now] risk after win
+- [implemented_now] risk after loss
+- [implemented_now] risk during red day
+- [implemented_now] risk during green day
+- [implemented_now] risk by time window
+- [implemented_now] risk by ticker
+- [implemented_now] risk by setup/tag
+- [implemented_now] risk by price range
+- [implemented_now] fee-adjusted risk
+- [deferred_checkpoint] liquidity risk if available
+- [deferred_checkpoint] float risk if available
+- [deferred_checkpoint] dilution risk if available
+- [implemented_now] unsupported risk authority state
+- [deferred_checkpoint] risk alert thresholds
+- [deferred_checkpoint] max-loss guardrails
+- [deferred_checkpoint] daily lockout candidates
+- [implemented_now] risk reduction rule candidates
 
 ## Engine 7 - Rule Engine
-
-Rule-candidate ranking, candidate-to-GA1-C-preset links, rule evidence, and
-`rule_to_test` status are `implemented_now`. User-saved/active rules, conflicts,
-compliance, reminders, hard lockouts, review history, and prospective rule
-effectiveness are `deferred_checkpoint`. No candidate is a claim of improved
-performance unless a separate GA1-C simulation executes it.
+- [deferred_checkpoint] user saved rules
+- [deferred_checkpoint] Coach suggested rules
+- [deferred_checkpoint] simulation-tested rules
+- [deferred_checkpoint] active rules
+- [deferred_checkpoint] inactive rules
+- [deferred_checkpoint] rule versioning
+- [deferred_checkpoint] rule authority
+- [deferred_checkpoint] rule trigger conditions
+- [deferred_checkpoint] rule scope
+- [deferred_checkpoint] rule precedence
+- [deferred_checkpoint] rule conflicts
+- [deferred_checkpoint] rule compliance
+- [deferred_checkpoint] rule violations
+- [deferred_checkpoint] rule reminders
+- [implemented_now] rule backtest result
+- [implemented_now] rule simulation result
+- [implemented_now] rule evidence
+- [implemented_now] rule effectiveness
+- [implemented_now] rule helped count
+- [implemented_now] rule harmed count
+- [implemented_now] rule unchanged count
+- [implemented_now] rule avoided loss count
+- [implemented_now] rule removed profit count
+- [implemented_now] rule confidence
+- [implemented_now] rule limitation codes
+- [implemented_now] stop-after-loss rule
+- [implemented_now] wait-after-loss rule
+- [implemented_now] max-trades rule
+- [implemented_now] max-loss rule
+- [implemented_now] giveback rule
+- [implemented_now] no-new-trades-after-time rule
+- [implemented_now] repeat-ticker rule
+- [implemented_now] price-range rule
+- [implemented_now] direction-only rule
+- [implemented_now] setup-only rule
+- [implemented_now] avoid-tag rule
+- [implemented_now] reduce-size rule
+- [deferred_checkpoint] cooldown rule
+- [deferred_checkpoint] reminder-only rule
+- [deferred_checkpoint] hard-lockout rule
+- [deferred_checkpoint] soft-warning rule
+- [deferred_checkpoint] rule review history
+- [implemented_now] rule recommendation ranking
 
 ## Engine 8 - Pattern and Setup Engine
-
-Manual/imported setup tags and tag-performance capability are
-`blocked_by_missing_data` until tag authority is exposed. Candle setup labels,
-VWAP/EMA/opening-range/breakout/pullback/halt/support/resistance patterns,
-market-context grouping, and automated detection are `out_of_scope` for this
-execution-only checkpoint.
+- [blocked_by_missing_data] manual setup tags
+- [blocked_by_missing_data] imported setup tags
+- [out_of_scope] Coach setup labels
+- [out_of_scope] candle-based setup labels if available
+- [implemented_now] setup performance
+- [implemented_now] setup win rate
+- [implemented_now] setup profit factor
+- [implemented_now] setup expectancy
+- [implemented_now] setup average win
+- [implemented_now] setup average loss
+- [implemented_now] setup hold time
+- [implemented_now] setup by time of day
+- [implemented_now] setup by ticker
+- [implemented_now] setup by price range
+- [implemented_now] setup by direction
+- [implemented_now] setup by market context
+- [out_of_scope] breakout
+- [out_of_scope] failed breakout
+- [out_of_scope] VWAP reclaim
+- [out_of_scope] VWAP rejection
+- [out_of_scope] VWAP bounce
+- [out_of_scope] VWAP loss
+- [out_of_scope] EMA bounce
+- [out_of_scope] EMA rejection
+- [out_of_scope] opening range break
+- [out_of_scope] opening range fail
+- [out_of_scope] gap-and-go
+- [out_of_scope] gap-fill
+- [out_of_scope] first pullback
+- [out_of_scope] higher low
+- [out_of_scope] lower high
+- [out_of_scope] liquidity grab
+- [out_of_scope] support bounce
+- [out_of_scope] resistance rejection
+- [out_of_scope] halt continuation
+- [out_of_scope] halt fail
+- [out_of_scope] premarket high break
+- [out_of_scope] premarket high reject
+- [out_of_scope] previous high break
+- [out_of_scope] previous close reclaim
+- [out_of_scope] previous close rejection
+- [out_of_scope] base breakout
+- [out_of_scope] wedge break
+- [out_of_scope] bull flag
+- [out_of_scope] bear flag
+- [out_of_scope] parabolic extension
+- [out_of_scope] backside fade
+- [out_of_scope] reversal attempt
+- [out_of_scope] consolidation break
+- [out_of_scope] range break
+- [out_of_scope] fakeout
+- [implemented_now] setup authority state
+- [implemented_now] unsupported candle-data state
+- [implemented_now] manual-tag-only state
+- [implemented_now] setup evidence trades
+- [implemented_now] best setup
+- [implemented_now] worst setup
+- [implemented_now] avoid setup candidates
+- [implemented_now] focus setup candidates
 
 ## Engine 9 - Market Context Engine
-
-Ticker metadata, float/market-cap/volume/gap/range/catalyst/filing/sector
-facts, micro-cap flags, EODHD authority, and stale/missing provider handling
-are `blocked_by_missing_data` or `out_of_scope` for GA1-D. No market fact,
-candle fact, liquidity claim, or live trading instruction is inferred here.
+- [implemented_now] ticker metadata
+- [implemented_now] price at entry
+- [out_of_scope] market cap if available
+- [out_of_scope] float if available
+- [out_of_scope] relative volume if available
+- [out_of_scope] volume if available
+- [out_of_scope] gap percent if available
+- [out_of_scope] premarket high if available
+- [out_of_scope] premarket low if available
+- [out_of_scope] high of day if available
+- [out_of_scope] low of day if available
+- [out_of_scope] previous close if available
+- [out_of_scope] previous high if available
+- [out_of_scope] previous low if available
+- [out_of_scope] daily range if available
+- [out_of_scope] intraday range if available
+- [implemented_now] volume bucket
+- [implemented_now] relative-volume bucket
+- [implemented_now] gap bucket
+- [implemented_now] float bucket
+- [implemented_now] market-cap bucket
+- [implemented_now] price bucket
+- [out_of_scope] catalyst type if available
+- [out_of_scope] PR catalyst
+- [out_of_scope] earnings catalyst
+- [out_of_scope] FDA catalyst
+- [out_of_scope] offering filing
+- [out_of_scope] dilution filing
+- [out_of_scope] 13D/13G filing
+- [out_of_scope] Form 4 filing
+- [out_of_scope] split/news catalyst
+- [out_of_scope] sector/theme if available
+- [out_of_scope] low-float flag
+- [out_of_scope] micro-cap flag
+- [implemented_now] sub-$5 flag
+- [out_of_scope] high-dilution-risk flag
+- [blocked_by_missing_data] missing-market-data state
+- [blocked_by_missing_data] stale-market-data state
+- [blocked_by_missing_data] candle-data unavailable state
+- [blocked_by_missing_data] EODHD candle authority
+- [blocked_by_missing_data] unsupported provider state
 
 ## Engine 10 - Guardrails and Notification Engine
-
-Check-ins, push/in-app/email notifications, alerts, cooldown/mute/quiet-hour
-settings, reminder history, and reminder-outcome tracking are `out_of_scope`.
-The deterministic findings can later be inputs to an internal guardrails worker,
-but GA1-D creates no notification or UI surface.
+- [out_of_scope] Coach check-ins
+- [out_of_scope] push notifications
+- [out_of_scope] in-app notifications
+- [out_of_scope] email notifications if used
+- [out_of_scope] saved-rule alerts
+- [out_of_scope] max-trade warning
+- [out_of_scope] after-loss warning
+- [out_of_scope] loss-streak warning
+- [out_of_scope] overtrading warning
+- [out_of_scope] repeat-ticker warning
+- [out_of_scope] giveback-window warning
+- [out_of_scope] green-day protection warning
+- [out_of_scope] red-day protection warning
+- [out_of_scope] daily max-loss warning
+- [out_of_scope] daily goal reached reminder
+- [out_of_scope] wait-after-loss reminder
+- [out_of_scope] cooldown reminder
+- [out_of_scope] no-new-trades-after-time reminder
+- [out_of_scope] oversized trade warning
+- [out_of_scope] trading-worst-window warning
+- [out_of_scope] import completed alert
+- [out_of_scope] import failed alert
+- [out_of_scope] import needs review alert
+- [out_of_scope] candle data available alert
+- [out_of_scope] weekly review ready alert
+- [out_of_scope] daily review ready alert
+- [out_of_scope] simulation complete alert
+- [out_of_scope] rule triggered alert
+- [out_of_scope] Coach reminder history
+- [out_of_scope] notification eligibility
+- [out_of_scope] notification priority
+- [out_of_scope] notification cooldown
+- [out_of_scope] notification mute settings
+- [out_of_scope] user opt-in state
+- [out_of_scope] quiet hours
+- [out_of_scope] trading-session schedule
+- [out_of_scope] notification evidence link
+- [out_of_scope] privacy-safe message text
+- [out_of_scope] no-P/L-in-push default
+- [out_of_scope] reminder outcome tracking
+- [out_of_scope] ignored reminder tracking
+- [out_of_scope] followed reminder tracking
 
 ## Engine 11 - Coach Insight Layer
-
-Structured Coach-ready findings, evidence, sample-size/authority/limitation and
-unsupported-data responses are `implemented_now`. Plain-English personality,
-daily/weekly/monthly recaps, marketing copy, memory, and LLM explanation are
-`deferred_checkpoint`. The product boundary is fixed: no trade signals,
-investment advice, or live buy/sell instructions.
+- [deferred_checkpoint] plain-English summaries
+- [deferred_checkpoint] Coach tone
+- [deferred_checkpoint] supportive wording
+- [deferred_checkpoint] non-judgmental wording
+- [deferred_checkpoint] no-hype wording
+- [implemented_now] no-signal wording
+- [deferred_checkpoint] daily recap
+- [deferred_checkpoint] weekly recap
+- [deferred_checkpoint] monthly recap
+- [deferred_checkpoint] session review
+- [implemented_now] biggest leak
+- [implemented_now] biggest improvement
+- [implemented_now] best strength
+- [implemented_now] worst weakness
+- [implemented_now] rule suggestion
+- [implemented_now] simulation suggestion
+- [implemented_now] next focus
+- [implemented_now] habit warning
+- [implemented_now] behaviour explanation
+- [implemented_now] stat explanation
+- [implemented_now] sample-size warning
+- [implemented_now] limitation explanation
+- [implemented_now] unavailable-data explanation
+- [implemented_now] evidence summary
+- [implemented_now] trade example summary
+- [implemented_now] user-facing finding
+- [implemented_now] Coach check-in wording
+- [implemented_now] Coach reminder wording
+- [implemented_now] Coach review wording
+- [implemented_now] confidence wording
+- [implemented_now] not-enough-data response
+- [implemented_now] data-unavailable response
+- [implemented_now] needs-candle-data response
+- [implemented_now] needs-fee-data response
+- [implemented_now] needs-setup-tags response
+- [implemented_now] ask-me-after-more-trades response
+- [deferred_checkpoint] marketing line
+- [deferred_checkpoint] Coach personality
+- [deferred_checkpoint] Coach memory summary
+- [deferred_checkpoint] Coach preference handling
 
 ## Engine 12 - Coach Memory and Profile Engine
-
-Trading profile, preferences, goals, saved/active rules, mistake/strength
-history, reminder preferences, broker accounts, and Coach memory are
-`deferred_checkpoint`. Persistent profile storage and public multi-user
-hardening are `out_of_scope` for this private execution-only foundation.
+- [deferred_checkpoint] user trading profile
+- [deferred_checkpoint] preferred trading style
+- [deferred_checkpoint] preferred markets
+- [deferred_checkpoint] price-range focus
+- [deferred_checkpoint] low-float preference
+- [deferred_checkpoint] max trade preference
+- [deferred_checkpoint] risk tolerance
+- [deferred_checkpoint] preferred reminder types
+- [deferred_checkpoint] muted reminder types
+- [deferred_checkpoint] saved rules
+- [deferred_checkpoint] active rules
+- [deferred_checkpoint] inactive rules
+- [deferred_checkpoint] personal goals
+- [deferred_checkpoint] daily goal
+- [deferred_checkpoint] weekly goal
+- [deferred_checkpoint] max loss
+- [deferred_checkpoint] max trades
+- [deferred_checkpoint] common mistakes
+- [deferred_checkpoint] known strengths
+- [deferred_checkpoint] known weaknesses
+- [deferred_checkpoint] preferred Coach tone
+- [deferred_checkpoint] Coach check-in preferences
+- [deferred_checkpoint] notification preferences
+- [deferred_checkpoint] trading schedule
+- [already_available_foundation] broker accounts
+- [already_available_foundation] account boundaries
+- [already_available_foundation] imported broker history
+- [deferred_checkpoint] last Coach finding
+- [deferred_checkpoint] last weekly review
+- [deferred_checkpoint] last simulation run
+- [deferred_checkpoint] last accepted rule
+- [deferred_checkpoint] ignored rules
+- [deferred_checkpoint] adopted rules
+- [deferred_checkpoint] improvement history
+- [deferred_checkpoint] recurring focus areas
 
 ## Engine 13 - Reporting and Dashboard Engine
+- [out_of_scope] daily report
+- [out_of_scope] weekly report
+- [out_of_scope] monthly report
+- [out_of_scope] session report
+- [out_of_scope] trade report
+- [out_of_scope] ticker report
+- [out_of_scope] setup report
+- [out_of_scope] behaviour report
+- [out_of_scope] risk report
+- [out_of_scope] fee report
+- [out_of_scope] import report
+- [out_of_scope] simulation report
+- [out_of_scope] Coach review
+- [implemented_now] best/worst table
+- [implemented_now] evidence table
+- [implemented_now] comparison table
+- [out_of_scope] trend chart data
+- [out_of_scope] bar chart data
+- [out_of_scope] pie chart data
+- [out_of_scope] line chart data
+- [out_of_scope] heatmap data
+- [out_of_scope] time-window chart
+- [out_of_scope] price-range chart
+- [out_of_scope] setup-performance chart
+- [out_of_scope] trade-sequence chart
+- [out_of_scope] drawdown chart
+- [out_of_scope] giveback chart
+- [out_of_scope] cumulative P/L chart
+- [out_of_scope] gross vs net chart
+- [out_of_scope] fee impact chart
+- [out_of_scope] exportable summary
+- [out_of_scope] shareable report if allowed
+- [out_of_scope] printable report if needed
 
-Metric/evidence tables in the deterministic result are `implemented_now`.
-Daily/weekly/monthly dashboards, charts, exports, printable/shareable reports,
-and UI cards are `out_of_scope`.
+## Core agent-to-engine map
 
-## Agent-to-engine map
+- [implemented_now] **User-facing Coach** — the only user-facing agent; it may use approved internal engine workers.
+- [deferred_checkpoint] **Internal Import Helper** — uses Import and Data Quality, Evidence and Replay, and Coach Insight.
+- [deferred_checkpoint] **Internal Guardrails Worker** — uses Guardrails and Notification, Rule, Trade Behaviour, Risk, Analytics, Coach Memory and Profile, and Coach Insight.
+- [deferred_checkpoint] **Internal Report Worker** — uses Reporting and Dashboard, Analytics, Simulation, Evidence and Replay, Trade Behaviour, Risk, Pattern and Setup, and Coach Insight.
+- [out_of_scope] **Internal Market Data Worker** — uses Market Context, Pattern and Setup, Import and Data Quality, and Evidence and Replay.
+- [out_of_scope] Do not expose separate Analytics Agent, Simulation Bot, Risk Agent, Import Agent, or Market Agent as user-facing products.
 
-Only **Coach** is user-facing. It may later call the Analytics, Simulation,
-Evidence/Replay, Import, Behaviour, Risk, Rule, Pattern, Market Context,
-Guardrails, Insight, Memory, and Reporting engines through approved internal
-workers. Separate Analytics Agent, Simulation Bot, Risk Agent, Import Agent,
-or Market Agent must never be exposed as user-facing products.
+## Control boundary
+
+Checkpoint boundaries decide what is implemented now; they never erase the remaining plan. Future work must update individual statuses rather than replace detailed items with summaries.
