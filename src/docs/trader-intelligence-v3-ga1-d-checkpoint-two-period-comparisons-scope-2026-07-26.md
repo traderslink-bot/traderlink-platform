@@ -4,6 +4,14 @@
 
 Turn the existing exact `TradeQueryComparison` authority into a bounded Coach capability for current-versus-prior periods. This is the smallest deferred GA1-D slice that enables a truthful response to the existing `habit_trend_analysis` intent without adding an LLM, UI, memory, notifications, or market data.
 
+## Current project focus
+
+- Complete the Analytics Engine and one user-facing Coach intelligence path first; do not distribute effort across incomplete public agents or half-built engines.
+- Expand Coach through capabilities that current verified trade data can support truthfully: analytics, behaviour findings, trends, evidence, limitations, unsupported-data responses, and Coach-ready structured findings.
+- Build capabilities in data-authority order. Missing-data work remains deferred or blocked; it is never approximated or faked.
+- Simulations are near-term support only for `rules_to_test` or already accepted GA1-C functionality.
+- Notifications, market context, candle setup detection, memory/profile, dashboards, and extra agent surfaces remain lower priority until the Analytics Engine and Coach intelligence layer are strong.
+
 ## Selected scope
 
 - Accept explicit deterministic current and prior date-range filters from the structured request; callers may supply weekly or monthly windows, but Coach does not infer dates from natural language.
@@ -17,6 +25,7 @@ Turn the existing exact `TradeQueryComparison` authority into a bounded Coach ca
 - No free-form date interpretation, LLM mapping, UI, charts, notifications, saved memory/profile data, simulations, or market/candle integrations.
 - No causal habit claim: the result reports observed metric movement, sample sizes, evidence, and limitations.
 - No comparison across owner/account/currency partitions, and no comparison of unverified, grouped, or mismatched-metric results.
+- No attempt to advance another GA1-D slice as part of this checkpoint handoff.
 
 ## Authority boundary
 

@@ -26,7 +26,8 @@ The following existing inventory items are confirmed `implemented_now` by the
 checkpoint-two Coach integration. They require explicit, compatible current and
 prior date-range filters in the structured request; Coach does not infer dates
 or emit a trend finding without a verified comparison and minimum samples in
-both periods.
+both periods. No other inventory status moves are made by this checkpoint-two
+handoff update.
 
 - [implemented_now] this week vs last week
 - [implemented_now] this month vs last month

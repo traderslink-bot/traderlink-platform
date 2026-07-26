@@ -13,6 +13,21 @@ existing deterministic Coach boundary. It reuses GA1-B `compare_periods` and
 the existing verified `TradeQueryComparison`; it adds no analytics engine or
 new financial calculation.
 
+## Current project focus
+
+The project priority is to complete the Analytics Engine and the one
+user-facing Coach intelligence path before spreading work across incomplete
+agents or engines. Coach should expand only through verified-data capabilities:
+analytics, behaviour findings, trends, evidence, limitations,
+unsupported-data responses, and Coach-ready structured findings.
+
+Capabilities are ordered by what current verified trade data can truthfully
+support. Missing-data work stays deferred or blocked rather than being faked.
+Simulation remains near-term support only for `rules_to_test` or accepted
+GA1-C functionality. Notifications, market context, candle setup detection,
+memory/profile, dashboards, and extra agent surfaces are lower priority until
+Analytics and Coach intelligence are strong.
+
 ## Delivered capability
 
 `habit_trend_analysis` now accepts explicit current and prior date-range
