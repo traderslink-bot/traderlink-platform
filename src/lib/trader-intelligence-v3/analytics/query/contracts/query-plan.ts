@@ -116,6 +116,7 @@ export type TradeQueryGrouping = Readonly<
   | { readonly kind: "entry_notional_bucket"; readonly boundaries: readonly string[] }
   | { readonly kind: "position_size_bucket"; readonly boundaries: readonly string[] }
   | { readonly kind: "direction" }
+  | { readonly kind: "session" }
   | { readonly kind: "symbol" }
   | { readonly kind: "account" }
 >;
@@ -185,7 +186,7 @@ const GROUPINGS = new Set([
   "entry_price_range", "price_range",
   "trade_sequence", "trade_sequence_bucket", "previous_completed_outcome", "repeat_attempt", "repeat_attempt_bucket",
   "holding_time_bucket", "share_quantity_bucket", "entry_notional_bucket",
-  "position_size_bucket", "direction", "symbol", "account",
+  "position_size_bucket", "direction", "session", "symbol", "account",
 ]);
 
 function failure(path: string): ExactResult<never, AnalyticalContractFailure> {

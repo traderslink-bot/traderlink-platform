@@ -580,6 +580,10 @@ function metricFor(
       return ratioFromCounts(key, a.losingDayCount, String(a.daily.length));
     case "flat_day_percentage":
       return ratioFromCounts(key, a.flatDayCount, String(a.daily.length));
+    case "maximum_intraday_drawdown":
+      return decimalOrUnavailable(key, "money", a.currency, a.maximumIntradayDrawdown);
+    case "maximum_peak_profit_giveback":
+      return decimalOrUnavailable(key, "money", a.currency, a.maximumPeakProfitGiveback);
     case "longest_winning_trade_streak":
       return integerMetric(
         key,

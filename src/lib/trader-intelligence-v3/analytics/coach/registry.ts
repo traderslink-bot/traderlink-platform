@@ -1,0 +1,163 @@
+import type { TradeQueryGrouping, TradeQueryMetricKey } from "../query/contracts";
+import type {
+  CoachCapabilityKey,
+  CoachComparisonType,
+  CoachFindingCode,
+  CoachIntentKey,
+} from "./contracts";
+
+export interface CoachCapabilityDefinition {
+  readonly capabilityKey: CoachCapabilityKey;
+  readonly execution: "direct_query" | "ga1_b_preset" | "unsupported";
+  readonly dimensions: readonly string[];
+  readonly metrics: readonly TradeQueryMetricKey[];
+  readonly comparisonType: CoachComparisonType;
+  readonly minimumSample: string;
+  readonly grouping: TradeQueryGrouping | null;
+  readonly presetKey: string | null;
+  readonly unsupportedData: readonly string[];
+  readonly findingCode: CoachFindingCode;
+  readonly ruleCandidateKey: string | null;
+}
+
+const CORE_METRICS = Object.freeze([
+  "candidate_count", "included_count", "excluded_count", "gross_pnl", "net_pnl",
+  "signed_charges", "average_pnl", "median_pnl", "win_count", "loss_count",
+  "flat_count", "win_rate", "loss_rate", "flat_rate", "average_winning_trade",
+  "average_losing_trade", "profit_factor", "expectancy", "trading_day_count",
+  "profitable_trading_day_count", "losing_trading_day_count", "average_daily_pnl",
+  "median_daily_pnl", "average_trades_per_trading_day",
+  "median_trades_per_trading_day", "maximum_trades_per_trading_day",
+  "longest_winning_trade_streak", "longest_losing_trade_streak",
+  "average_holding_time", "median_holding_time", "average_position_size",
+  "median_position_size", "maximum_intraday_drawdown",
+  "maximum_peak_profit_giveback", "repeat_attempt_trade_count",
+] as const satisfies readonly TradeQueryMetricKey[]);
+
+function direct(
+  capabilityKey: CoachCapabilityKey,
+  grouping: TradeQueryGrouping,
+  dimensions: readonly string[],
+  findingCode: CoachFindingCode,
+  comparisonType: CoachComparisonType = "group_vs_baseline",
+  ruleCandidateKey: string | null = null,
+): CoachCapabilityDefinition {
+  return Object.freeze({
+    capabilityKey,
+    execution: "direct_query",
+    dimensions: Object.freeze(dimensions),
+    metrics: CORE_METRICS,
+    comparisonType,
+    minimumSample: "3",
+    grouping,
+    presetKey: null,
+    unsupportedData: Object.freeze([]),
+    findingCode,
+    ruleCandidateKey,
+  });
+}
+
+function preset(
+  capabilityKey: CoachCapabilityKey,
+  presetKey: string,
+  dimensions: readonly string[],
+  findingCode: CoachFindingCode,
+  comparisonType: CoachComparisonType = "group_vs_baseline",
+  ruleCandidateKey: string | null = null,
+): CoachCapabilityDefinition {
+  return Object.freeze({
+    capabilityKey,
+    execution: "ga1_b_preset",
+    dimensions: Object.freeze(dimensions),
+    metrics: CORE_METRICS,
+    comparisonType,
+    minimumSample: "3",
+    grouping: null,
+    presetKey,
+    unsupportedData: Object.freeze([]),
+    findingCode,
+    ruleCandidateKey,
+  });
+}
+
+function unsupported(
+  capabilityKey: CoachCapabilityKey,
+  requiredData: readonly string[],
+): CoachCapabilityDefinition {
+  return Object.freeze({
+    capabilityKey,
+    execution: "unsupported",
+    dimensions: Object.freeze([]),
+    metrics: Object.freeze([]),
+    comparisonType: "none",
+    minimumSample: "0",
+    grouping: null,
+    presetKey: null,
+    unsupportedData: Object.freeze(requiredData),
+    findingCode: "unsupported_data",
+    ruleCandidateKey: null,
+  });
+}
+
+export const COACH_CAPABILITY_REGISTRY = Object.freeze([
+  direct("core_performance_summary", { kind: "aggregate" }, ["date"], "biggest_positive_strength", "gross_vs_net"),
+  direct("daily_performance", { kind: "day" }, ["date"], "biggest_negative_leak"),
+  direct("weekly_performance", { kind: "week" }, ["week"], "biggest_negative_leak", "current_period_vs_prior_period"),
+  direct("monthly_performance", { kind: "month" }, ["month"], "biggest_negative_leak", "current_period_vs_prior_period"),
+  direct("session_performance", { kind: "session" }, ["session"], "worst_time_window"),
+  preset("time_window_performance", "analyze_time_of_day", ["time_window"], "worst_time_window"),
+  preset("price_range_performance", "analyze_performance_by_price_range", ["price_bucket"], "weak_price_range", "best_vs_worst_group", "exclude_price_range"),
+  direct("ticker_performance", { kind: "symbol" }, ["ticker"], "weak_ticker", "best_vs_worst_group"),
+  preset("trade_sequence_performance", "analyze_trade_sequence_performance", ["trade_sequence_number"], "late_trade_weakness", "first_n_vs_later", "skip_fourth_and_later_trades"),
+  preset("prior_outcome_performance", "analyze_after_loss_behavior", ["prior_trade_outcome"], "after_loss_weakness", "after_loss_vs_not_after_loss", "wait_after_loss"),
+  preset("repeat_ticker_attempts", "analyze_ticker_repeat_attempts", ["ticker", "repeat_ticker_attempt"], "repeat_ticker_weakness", "repeat_ticker_vs_first_attempt", "skip_repeat_attempts"),
+  preset("hold_time_performance", "analyze_holding_time", ["hold_time_bucket"], "biggest_negative_leak"),
+  preset("direction_performance", "analyze_long_vs_short", ["direction"], "biggest_negative_leak"),
+  preset("position_size_performance", "analyze_position_size_performance", ["position_size_bucket"], "large_size_weakness", "best_vs_worst_group", "reduce_size_after_loss"),
+  direct("profit_giveback_analysis", { kind: "day" }, ["date"], "giveback_detected", "green_day_vs_red_day", "stop_after_profit_giveback"),
+  direct("overtrading_analysis", { kind: "trade_sequence_bucket" }, ["trade_sequence_number"], "overtrading_detected", "first_n_vs_later", "maximum_trades_per_day"),
+  direct("rule_candidate_ranking", { kind: "trade_sequence_bucket" }, ["trade_sequence_number", "prior_trade_outcome"], "best_rule_candidate", "first_n_vs_later", "stop_after_consecutive_losses"),
+  unsupported("setup_tag_performance", ["setup_tags_required"]),
+  unsupported("mistake_tag_performance", ["mistake_tags_required"]),
+  unsupported("habit_trend_analysis", ["period_comparison_required"]),
+] as const satisfies readonly CoachCapabilityDefinition[]);
+
+const CAPABILITIES = new Map(COACH_CAPABILITY_REGISTRY.map((item) => [item.capabilityKey, item]));
+
+export function getCoachCapability(key: CoachCapabilityKey): CoachCapabilityDefinition {
+  const capability = CAPABILITIES.get(key);
+  if (capability === undefined) throw new Error(`unregistered coach capability: ${key}`);
+  return capability;
+}
+
+export const COACH_INTENT_CAPABILITY_MAP: Readonly<Record<CoachIntentKey, readonly CoachCapabilityKey[]>> = Object.freeze({
+  rank_negative_performance_drivers: ["time_window_performance", "price_range_performance", "ticker_performance", "trade_sequence_performance", "position_size_performance"],
+  rank_positive_performance_drivers: ["time_window_performance", "price_range_performance", "ticker_performance", "direction_performance"],
+  time_window_performance: ["time_window_performance"],
+  session_performance: ["session_performance"],
+  prior_outcome_performance: ["prior_outcome_performance"],
+  overtrading_analysis: ["overtrading_analysis", "trade_sequence_performance"],
+  profit_giveback_analysis: ["profit_giveback_analysis"],
+  price_range_performance: ["price_range_performance"],
+  ticker_performance_ranking: ["ticker_performance", "repeat_ticker_attempts"],
+  trade_sequence_performance: ["trade_sequence_performance"],
+  position_size_performance: ["position_size_performance"],
+  habit_trend_analysis: ["habit_trend_analysis"],
+  rule_candidate_ranking: ["rule_candidate_ranking", "prior_outcome_performance", "profit_giveback_analysis", "repeat_ticker_attempts"],
+  setup_tag_performance: ["setup_tag_performance"],
+  mistake_tag_performance: ["mistake_tag_performance"],
+});
+
+export const COACH_INTENT_SYNONYMS: Readonly<Record<string, CoachIntentKey>> = Object.freeze({
+  "what_is_hurting_me_most": "rank_negative_performance_drivers",
+  "when_do_i_trade_worst": "time_window_performance",
+  "do_i_trade_worse_after_losses": "prior_outcome_performance",
+  "am_i_overtrading": "overtrading_analysis",
+  "do_i_give_back_profits": "profit_giveback_analysis",
+  "which_price_range_is_weakest": "price_range_performance",
+  "which_tickers_hurt_me": "ticker_performance_ranking",
+  "are_my_later_trades_worse": "trade_sequence_performance",
+  "are_my_larger_trades_worse": "position_size_performance",
+  "which_habits_are_improving": "habit_trend_analysis",
+  "which_rules_should_i_test_next": "rule_candidate_ranking",
+});
