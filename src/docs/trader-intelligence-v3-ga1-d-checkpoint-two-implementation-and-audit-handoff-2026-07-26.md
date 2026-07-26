@@ -4,7 +4,7 @@
 
 - Branch: `agent/trader-intelligence-v3-ga1-d-coach-checkpoint-two`
 - Starting main commit: `f48a6cb0d89636e57d0ddeb91463c0446a00eba1`
-- Final executable commit: pending checkpoint commit; recorded below before the draft PR is opened.
+- Final executable commit: `15976788bf77840ad45856f0e7e23502259d7237`
 
 ## Selected slice
 
