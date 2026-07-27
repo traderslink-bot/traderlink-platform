@@ -24,6 +24,16 @@ const DATA_QUALITY_METRICS = Object.freeze([
   "missing_entry_notional_authority_count", "unavailable_source_authority_trade_count",
 ] as const satisfies readonly TradeQueryMetricKey[]);
 
+const REVIEW_METRICS = Object.freeze([
+  "candidate_count", "included_count", "excluded_count", "net_pnl", "gross_pnl", "win_rate", "expectancy", "profit_factor",
+  "best_trading_day", "worst_trading_day", "green_to_red_day_count", "red_to_green_day_count",
+] as const satisfies readonly TradeQueryMetricKey[]);
+
+const STREAK_METRICS = Object.freeze([
+  "candidate_count", "included_count", "excluded_count", "net_pnl", "longest_winning_trade_streak", "longest_losing_trade_streak",
+  "current_winning_trade_streak", "current_losing_trade_streak",
+] as const satisfies readonly TradeQueryMetricKey[]);
+
 interface PlanDefinition {
   readonly capabilityKey: string;
   readonly execution: "direct" | "preset";
@@ -31,6 +41,8 @@ interface PlanDefinition {
   readonly metrics?: readonly TradeQueryMetricKey[];
   readonly filters?: readonly TradeQueryFilter[];
   readonly presetKey?: Ga1BPresetKey;
+  readonly requiresDateRange?: boolean;
+  readonly ranking?: "ascending" | "descending";
 }
 
 function exactScope(values: readonly string[]): readonly string[] {
@@ -69,6 +81,28 @@ function definition(resolution: AnalyticsAgentIntentResolution): PlanDefinition 
       return { capabilityKey: "ticker_price_size_hold_direction", execution: "preset", presetKey: "analyze_position_size_performance" };
     case "period_comparison":
       return { capabilityKey: "daily_and_period_performance", execution: "preset", presetKey: "compare_periods" };
+    case "daily_review":
+      return { capabilityKey: "daily_and_period_performance", execution: "direct", grouping: { kind: "day" }, metrics: REVIEW_METRICS, filters: [], requiresDateRange: true };
+    case "weekly_review":
+      return { capabilityKey: "daily_and_period_performance", execution: "direct", grouping: { kind: "week" }, metrics: REVIEW_METRICS, filters: [], requiresDateRange: true };
+    case "monthly_review":
+      return { capabilityKey: "daily_and_period_performance", execution: "direct", grouping: { kind: "month" }, metrics: REVIEW_METRICS, filters: [], requiresDateRange: true };
+    case "prior_streak_behavior":
+      return { capabilityKey: "sequencing_and_behavior", execution: "direct", grouping: { kind: "aggregate" }, metrics: CORE_METRICS, filters: resolution.priorStreak === null ? [] : [{ kind: "prior_completed_streak", outcome: resolution.priorStreak.outcome, minimum: resolution.priorStreak.minimum, maximum: null }] };
+    case "streak_summary":
+      return { capabilityKey: "sequencing_and_behavior", execution: "direct", grouping: { kind: "aggregate" }, metrics: STREAK_METRICS, filters: [] };
+    case "pre_entry_daily_state_behavior":
+      return { capabilityKey: "pre_entry_daily_state", execution: "direct", grouping: { kind: "aggregate" }, metrics: CORE_METRICS, filters: resolution.preEntryDailyState === null ? [] : [{ kind: "pre_entry_daily_state", values: [resolution.preEntryDailyState] }] };
+    case "pre_entry_daily_path_behavior":
+      return { capabilityKey: "pre_entry_daily_state", execution: "direct", grouping: { kind: "aggregate" }, metrics: CORE_METRICS, filters: resolution.preEntryDailyPath === null ? [] : [{ kind: "pre_entry_daily_path", values: [resolution.preEntryDailyPath] }] };
+    case "daily_transition_summary":
+      return { capabilityKey: "giveback_and_drawdown", execution: "direct", grouping: { kind: "aggregate" }, metrics: ["candidate_count", "included_count", "excluded_count", "net_pnl", "green_to_red_day_count", "red_to_green_day_count", "maximum_peak_profit_giveback"], filters: [] };
+    case "best_worst_day":
+      return { capabilityKey: "daily_and_period_performance", execution: "direct", grouping: { kind: "day" }, metrics: CORE_METRICS, filters: [], ranking: resolution.ranking ?? "ascending" };
+    case "best_worst_price_range":
+      return { capabilityKey: "ticker_price_size_hold_direction", execution: "direct", grouping: { kind: "entry_price_range", boundaries: ["1", "2", "5", "10"] }, metrics: CORE_METRICS, filters: [], ranking: resolution.ranking ?? "ascending" };
+    case "limited_category_summary":
+      return { capabilityKey: "limited_ticker_pnl_summary", execution: "direct", grouping: { kind: "symbol" }, metrics: CORE_METRICS, filters: [], ranking: resolution.ranking ?? "ascending" };
     case "giveback_drawdown":
       return { capabilityKey: "giveback_and_drawdown", execution: "direct", grouping: { kind: "day" }, metrics: ["candidate_count", "included_count", "excluded_count", "net_pnl", "maximum_intraday_drawdown", "maximum_peak_profit_giveback"], filters: [] };
     case "fee_impact":
@@ -91,6 +125,7 @@ export function buildAnalyticsAgentPlan(
   if (!sameScope(request.ownerScope, request.partitionReceipt.ownerScope) || !sameScope(request.accountScope, request.partitionReceipt.accountScope)) {
     return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.analyticsAgent.scope");
   }
+  if (selected.requiresDateRange && request.dateRange === undefined) return contractFailure("ti_v3_analytics_contract_invalid", "$.analyticsAgent.dateRange");
   const filters: TradeQueryFilter[] = [
     ...(selected.filters ?? []),
     ...(request.dateRange === undefined ? [] : [{ kind: "date_range" as const, ...request.dateRange }]),
@@ -123,7 +158,7 @@ export function buildAnalyticsAgentPlan(
   }
   if (selected.grouping === undefined || selected.metrics === undefined) return contractFailure("ti_v3_analytics_contract_invalid", "$.analyticsAgent.intent");
   const ordering = selected.metrics.includes("net_pnl")
-    ? [{ by: "metric" as const, metricKey: "net_pnl" as const, direction: "ascending" as const }]
+    ? [{ by: "metric" as const, metricKey: "net_pnl" as const, direction: (selected.ranking ?? "ascending") }]
     : [{ by: "group_identity" as const, metricKey: null, direction: "ascending" as const }];
   const authority = gateway.value.authority;
   const plan = buildTradeQueryPlan({

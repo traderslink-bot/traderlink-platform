@@ -48,6 +48,39 @@ describe("Analytics Agent v1 Foundation", () => {
     }
   });
 
+  it("routes Pack B execution questions deterministically", () => {
+    const expected = [
+      ["How did I do today?", "daily_review"], ["Review this week.", "weekly_review"], ["How was my trading month?", "monthly_review"],
+      ["What happens after two losses?", "prior_streak_behavior"], ["What happens after three losses?", "prior_streak_behavior"],
+      ["What happens after two wins?", "prior_streak_behavior"], ["What happens after three wins?", "prior_streak_behavior"],
+      ["What is my longest losing streak?", "streak_summary"], ["Do I trade worse when already red?", "pre_entry_daily_state_behavior"],
+      ["How do I trade when I am already green?", "pre_entry_daily_state_behavior"], ["How do I trade after first win?", "pre_entry_daily_path_behavior"],
+      ["How do I trade after first loss?", "pre_entry_daily_path_behavior"], ["Do I go green then red?", "daily_transition_summary"],
+      ["Do I go red then green?", "daily_transition_summary"], ["What was my best day?", "best_worst_day"],
+      ["What was my worst day?", "best_worst_day"], ["What price range is best for me?", "best_worst_price_range"],
+      ["What price range is worst for me?", "best_worst_price_range"], ["What is my biggest weakness?", "limited_category_summary"],
+      ["What is my biggest strength?", "limited_category_summary"],
+    ] as const;
+    for (const [question, intent] of expected) expect(resolveAnalyticsAgentIntent(question).intent).toBe(intent);
+    expect(resolveAnalyticsAgentIntent("What happens after three losses?").priorStreak).toEqual({ outcome: "loss", minimum: "3" });
+    expect(resolveAnalyticsAgentIntent("How do I trade when I am already red?").preEntryDailyState).toBe("red");
+  });
+
+  it("requires explicit dates for Pack B reviews and retains verified execution identities for supported Pack B questions", () => {
+    const input = request("How did I do today?");
+    const missing = executeAnalyticsAgent(input.request);
+    expect(missing).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.analyticsAgent.dateRange" } });
+    for (const question of ["How did I do today?", "Review this week.", "How was my trading month?", "What happens after two losses?", "What is my longest winning streak?", "Do I trade worse when already red?", "How do I trade after first loss?", "Do I go green then red?", "What was my best day?", "What price range is worst for me?", "What is my biggest weakness?"]) {
+      const requestWithRange = { ...input.request, question, dateRange: { startDate: "2026-07-01", endDate: "2026-07-07" } };
+      const result = executeAnalyticsAgent(requestWithRange);
+      expect(result.ok, question).toBe(true);
+      if (!result.ok) continue;
+      expect(result.value.enginePlanDigest).toMatch(/^ti_v3:trade_query_plan:v1:sha256:/);
+      expect(result.value.resultDigest).toMatch(/^ti_v3:trade_query_result:v1:sha256:/);
+      expect(result.value.executionReceiptDigest).toMatch(/^ti_v3:trade_query_execution_receipt:v1:sha256:/);
+    }
+  });
+
   it("builds an engine-backed core-performance answer with bounded evidence and replay identity", () => {
     const input = request("How am I doing overall?");
     const result = executeAnalyticsAgent(input.request);

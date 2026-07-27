@@ -1,3 +1,20 @@
+# 2026-07-27 - Analytics Agent v1 Execution Coverage Pack B started
+
+**Branch:** `agent/analytics-agent-v1-execution-coverage-pack-b`, created clean
+from merged Pack A at `c0fff0255fd6751ad7a496eb9527b64f2ac945dc`.
+
+Pack B is limited to deterministic execution-agent coverage using existing
+query-engine filters, groupings, metrics, and governed presets. The current
+authority audit confirms prior completed streak, pre-entry daily state/path,
+daily realized-path, streak, and daily-period contracts exist. Do not add UI,
+Coach, market/candle, simulation, ingestion, deployment, or merge work.
+
+Implemented coverage is explicit-range daily/weekly/monthly review, prior
+two/three win/loss streak behavior, streak metrics, pre-entry green/red and
+first-win/loss/giveback paths, realized green-to-red/red-to-green summaries,
+best/worst day and price range, plus a ticker-P/L-only limited category summary.
+The agent does not infer calendar ranges or rank incomparable categories.
+
 # 2026-07-27 - Analytics Agent v1 Stage 2 execution-question coverage active
 
 **Branch:** `agent/analytics-agent-v1-execution-question-coverage`, created
