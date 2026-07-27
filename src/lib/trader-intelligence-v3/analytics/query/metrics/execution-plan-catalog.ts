@@ -127,7 +127,7 @@ export const EXECUTION_PLAN_CATALOG = Object.freeze([
     "realized_drawdown_and_giveback",
     "implemented",
     [
-      "maximum_intraday_realized_drawdown", "maximum_intraday_realized_recovery_from_trough", "maximum_peak_profit_giveback",
+      "maximum_intraday_drawdown", "maximum_intraday_realized_drawdown", "maximum_intraday_realized_recovery_from_trough", "maximum_peak_profit_giveback",
       "average_peak_profit_giveback", "median_peak_profit_giveback",
       "days_with_peak_profit_giveback", "days_with_realized_drawdown",
       "green_to_red_day_count", "red_to_green_day_count",

@@ -739,6 +739,8 @@ function metricFor(
         a.currency,
         a.sortedLosingDailyPnlValues,
       );
+    case "maximum_intraday_drawdown":
+      return decimalOrUnavailable(key, "money", a.currency, a.maximumIntradayDrawdown);
     case "maximum_intraday_realized_drawdown":
       return decimalOrUnavailable(
         key,

@@ -19443,3 +19443,22 @@ Current best next step:
 
 - Review the draft PR boundary and result-contract details. A later PR may
   migrate dashboard consumers after this engine contract is accepted.
+
+# 2026-07-27 Trade Execution Analytics Engine v1 CI compatibility repair
+
+- Repaired the review branch's compatibility fixtures and metric-catalog
+  declaration without adding a second engine or changing the dashboard boundary.
+- FIFO fixture overrides that provide only an aggregate charge now explicitly
+  declare unknown charge-kind coverage, so they cannot claim a stale complete
+  allocation or invent commission attribution.
+- Updated the GA0-A2 round-trip contract and identity golden values for the
+  intentional charge-kind fields, and restored the pre-existing
+  `maximum_intraday_drawdown` query key used by evidence consumers.
+- The affected GA0-A2, GA1-B, GA1-C, and GA1-D compatibility tests pass locally.
+  No Coach behavior, simulation implementation, dashboard, candle, market-data,
+  deployment, or merge work was performed.
+
+Current best next step:
+
+- Push this scoped repair to draft PR #173 and let GitHub CI rerun; keep the PR
+  draft, review-only, unmerged, and undeployed.

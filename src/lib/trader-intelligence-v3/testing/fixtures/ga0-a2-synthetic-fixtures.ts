@@ -17,13 +17,13 @@ export interface Ga0A2SyntheticFixtureExpectation {
 }
 
 const BASE_DIGEST =
-  "ti_v3:canonical_execution:v1:sha256:41374c811d4ad4145ebc0478411230d2c31ded99f22ca1f5d2a129d8ef3efc46";
+  "ti_v3:canonical_execution:v1:sha256:ef615db2fcb1655823281c2e73fd62e0ec53fdb697e000d1ddd10dc2a42fb464";
 const SOURCE_CHANGED_DIGEST =
-  "ti_v3:canonical_execution:v1:sha256:2024c02ef5bb9f0caffb73e3cce071996823cc623a43307680551de2320457d0";
+  "ti_v3:canonical_execution:v1:sha256:5dbd232e7945a30cbf21686c0b0e4c195963e3e79329c506c84ae6487f9811b5";
 const ECONOMIC_CHANGED_DIGEST =
-  "ti_v3:canonical_execution:v1:sha256:3ebf893d47060765817c13f08974bedb030391b9a22e4bb35036060aba1fe4c5";
+  "ti_v3:canonical_execution:v1:sha256:42494d2432922dbba75e322027cf9c6029cae1472caed5c724c03d15067c5d3f";
 const EXACT_DUPLICATE_DIGEST =
-  "ti_v3:canonical_execution:v1:sha256:a3a53380da7ec1cfefda1c9fc2185fd04c2a51d22722a1f2a5535bc678ff0639";
+  "ti_v3:canonical_execution:v1:sha256:7cfff8ad2c1b7d43fb9a5b0755c45a8ba4a64740956435c5224498ece78da37a";
 
 export const GA0_A2_SYNTHETIC_FIXTURE_EXPECTATIONS: readonly Ga0A2SyntheticFixtureExpectation[] = [
   { id: "simple_long_round_trip", purpose: "One long entry and one complete FIFO exit.", expectedOrderingState: "ordered", expectedDuplicateState: "distinct_execution", expectedEndingInventory: "0", expectedGrossPnl: "5", expectedCharges: "0", expectedNetPnl: "5", expectedBlockedOrLimitationState: null, expectedCanonicalDigests: [] },
