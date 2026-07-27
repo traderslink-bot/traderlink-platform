@@ -54,6 +54,7 @@ describe("GA1-A independent filters and deterministic grouping", () => {
     { kind: "month" },
     { kind: "week" },
     { kind: "weekday" },
+    { kind: "session" },
     { kind: "time_bucket", source: "entry", bucketMinutes: "60" },
     { kind: "price_range", boundaries: ["1", "2", "3"] },
     { kind: "entry_price_range", boundaries: ["1", "2", "3"] },
@@ -67,6 +68,8 @@ describe("GA1-A independent filters and deterministic grouping", () => {
     { kind: "direction" },
     { kind: "symbol" },
     { kind: "account" },
+    { kind: "source_kind" },
+    { kind: "charge_coverage" },
   ] as const)("assigns stable, ordered $kind groups", (grouping) => {
     const first = run([], grouping as TradeQueryGrouping);
     const second = run([], grouping as TradeQueryGrouping);

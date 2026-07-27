@@ -121,12 +121,16 @@ describe("GA1-A deterministic query-plan contract", () => {
     });
   });
 
-  it("accepts exactly every canonical filter identity and rejects the seventeenth", () => {
+  it("accepts one unique max-size supported filter set and rejects the next filter", () => {
     const fixture = buildSyntheticQueryFixture();
     const filters = [
       { kind: "date_range", startDate: "2026-07-01", endDate: "2026-07-07" },
       { kind: "account", values: [fixture.authority.partitionReceipt.accountScope[0]] },
       { kind: "symbol", values: ["instrument_alpha"] },
+      { kind: "source_identity", values: ["source_synthetic_broker_csv"] },
+      { kind: "broker_code", values: ["synthetic_broker"] },
+      { kind: "source_kind", values: ["broker_csv"] },
+      { kind: "charge_coverage", value: "complete" },
       { kind: "direction", values: ["long"] },
       { kind: "currency", value: fixture.plan().authority.currency },
       { kind: "realized_outcome", values: ["gain"] },

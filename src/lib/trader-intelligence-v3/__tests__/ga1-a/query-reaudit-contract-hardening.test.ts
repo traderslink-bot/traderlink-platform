@@ -8,6 +8,7 @@ import {
   executeTradeQuery,
   getTradeQueryMetricDeclaration,
   TRADE_QUERY_METRIC_KEYS,
+  TRADE_QUERY_METRIC_REGISTRY,
   verifyTradeQueryComparison,
   verifyTradeQueryResultShape,
   type TradeQueryMetricKey,
@@ -155,6 +156,12 @@ describe("GA1-A independent re-audit contract hardening", () => {
     expect(getTradeQueryMetricDeclaration("signed_charges")).toMatchObject({
       requiredFields: ["signedCharges"], unit: "money",
     });
+    expect(getTradeQueryMetricDeclaration("fees_as_percentage_of_gross_profit")).toMatchObject({
+      unit: "ratio", currencyBehavior: "currency_independent",
+    });
+    expect(getTradeQueryMetricDeclaration("fees_as_percentage_of_gross_loss")).toMatchObject({
+      unit: "ratio", currencyBehavior: "currency_independent",
+    });
     expect(getTradeQueryMetricDeclaration("unique_account_count")).toMatchObject({
       requiredFields: ["canonicalAccountKey"], unit: "accounts",
     });
@@ -174,6 +181,14 @@ describe("GA1-A independent re-audit contract hardening", () => {
           declaration.currencyBehavior === "selected_partition" ? "USD" : null,
         );
       }
+    }
+  });
+
+  it("keeps registry grouping compatibility aligned with source and charge grouping support", () => {
+    for (const declaration of TRADE_QUERY_METRIC_REGISTRY.entries) {
+      expect(declaration.compatibleGroupings, declaration.metricKey).toEqual(
+        expect.arrayContaining(["source_kind", "charge_coverage"]),
+      );
     }
   });
 });

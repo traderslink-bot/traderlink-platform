@@ -187,7 +187,6 @@ const MONEY_KEYS = new Set<TradeQueryMetricKey>([
   "signed_charges", "average_signed_charges",
   "median_signed_charges", "commission_signed_charges", "average_commission_signed_charges",
   "median_commission_signed_charges", "gross_net_difference", "net_pnl",
-  "fees_as_percentage_of_gross_profit", "fees_as_percentage_of_gross_loss",
   "average_pnl", "median_pnl", "average_daily_pnl", "median_daily_pnl",
   "best_trade", "worst_trade", "best_trading_day", "worst_trading_day",
   "average_winning_trade", "median_winning_trade", "average_losing_trade",
@@ -375,7 +374,8 @@ const ALL_GROUPINGS = Object.freeze([
   "previous_completed_outcome", "prior_completed_streak_bucket", "pre_entry_daily_state",
   "repeat_attempt", "repeat_attempt_bucket", "holding_time_bucket",
   "share_quantity_bucket", "entry_notional_bucket", "position_size_bucket",
-  "direction", "symbol", "account", "source_identity", "broker_code", "compound",
+  "direction", "symbol", "account", "source_identity", "broker_code", "source_kind",
+  "charge_coverage", "compound",
 ]);
 const ALL_FILTERS = Object.freeze([
   "date_range", "account", "symbol", "source_identity", "broker_code", "direction", "session", "currency",
@@ -387,7 +387,11 @@ const ALL_FILTERS = Object.freeze([
 ]);
 
 function unitFor(key: TradeQueryMetricKey): string {
-  if (key === "trading_day_count" || key.endsWith("trading_day_count") || key.endsWith("day_count")) return "days";
+  if (
+    key === "trading_day_count" || key.endsWith("trading_day_count") || key.endsWith("day_count") ||
+    key === "days_with_peak_profit_giveback" || key === "days_with_realized_drawdown" ||
+    key === "green_to_red_day_count" || key === "red_to_green_day_count"
+  ) return "days";
   if (key === "unique_account_count") return "accounts";
   if (key === "unique_symbol_count") return "symbols";
   if (key === "total_execution_count") return "executions";

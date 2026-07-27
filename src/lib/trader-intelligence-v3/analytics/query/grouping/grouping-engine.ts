@@ -181,9 +181,6 @@ export function tradeQueryGroupAssignment(
     case "direction":
       facts = [`direction:${row.row.direction}`, row.row.direction, row.row.direction];
       break;
-    case "session":
-      facts = [`session:${row.row.session}`, row.row.session, row.row.session];
-      break;
     case "symbol":
       facts = [`symbol:${row.row.stableInstrumentKey}`, row.row.displayedSymbol, row.row.stableInstrumentKey];
       break;
