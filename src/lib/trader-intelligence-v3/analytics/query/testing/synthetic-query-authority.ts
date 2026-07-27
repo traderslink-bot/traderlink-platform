@@ -134,6 +134,8 @@ function buildRows(count: number): readonly AnalyticalRow[] {
       sequenceInPartition: String(index + 1),
       grossPnl: pnl,
       signedCharges: "0",
+      signedChargesByKind: [],
+      chargeKindCoverageState: "complete",
       netPnl: pnl,
       entryNotional: { state: "available", amount: String(100 + (index % 5) * 50), currency: "USD" },
       shareQuantity: { state: "available", quantity: "100" },

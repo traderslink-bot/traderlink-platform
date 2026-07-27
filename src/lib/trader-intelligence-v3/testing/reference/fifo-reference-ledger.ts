@@ -26,6 +26,8 @@ interface ReferenceRoundTripAccumulator {
   exitNotional: ReferenceDecimal;
   gross: ReferenceDecimal;
   charges: ReferenceDecimal;
+  chargesByKind: Map<string, ReferenceDecimal>;
+  chargeKindCoverageState: "complete" | "unknown";
   cashFlow: ReferenceDecimal;
   executionDigests: string[];
 }
@@ -38,6 +40,8 @@ export interface ReferenceRoundTrip {
   weightedAverageExitPrice: ReferenceRatio;
   grossRealizedPnl: string;
   signedCharges: string;
+  signedChargesByKind: readonly { readonly kind: string; readonly amount: string }[];
+  chargeKindCoverageState: "complete" | "unknown";
   netAnalyticalPnl: string;
   signedCashFlowNetPnl: string;
   executionDigests: readonly string[];
@@ -172,6 +176,18 @@ function addDigest(accumulator: ReferenceRoundTripAccumulator, digest: string): 
   }
 }
 
+function assignChargeKinds(
+  accumulator: ReferenceRoundTripAccumulator,
+  execution: CanonicalExecutionOrderingResult["economicallyOrderedExecutions"][number],
+): void {
+  for (const charge of execution.content.charges) {
+    accumulator.chargesByKind.set(
+      charge.kind,
+      addReferenceDecimals(accumulator.chargesByKind.get(charge.kind) ?? zero(), parseReferenceDecimal(charge.amount)),
+    );
+  }
+}
+
 function newRoundTrip(direction: "long" | "short"): ReferenceRoundTripAccumulator {
   return {
     direction,
@@ -181,6 +197,8 @@ function newRoundTrip(direction: "long" | "short"): ReferenceRoundTripAccumulato
     exitNotional: zero(),
     gross: zero(),
     charges: zero(),
+    chargesByKind: new Map(),
+    chargeKindCoverageState: "complete",
     cashFlow: zero(),
     executionDigests: [],
   };
@@ -205,6 +223,10 @@ function finalizeRoundTrip(
     ),
     grossRealizedPnl: formatReferenceDecimal(accumulator.gross),
     signedCharges: formatReferenceDecimal(accumulator.charges),
+    signedChargesByKind: [...accumulator.chargesByKind.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([kind, amount]) => ({ kind, amount: formatReferenceDecimal(amount) })),
+    chargeKindCoverageState: accumulator.chargeKindCoverageState,
     netAnalyticalPnl: formatReferenceDecimal(net),
     signedCashFlowNetPnl: formatReferenceDecimal(accumulator.cashFlow),
     executionDigests: accumulator.executionDigests,
@@ -280,6 +302,9 @@ export function runReferenceFifoLedger(
         currentRoundTrip.charges,
         priorCharges,
       );
+      if (compareReferenceDecimals(priorCharges, zero()) !== 0) {
+        currentRoundTrip.chargeKindCoverageState = "unknown";
+      }
       currentRoundTrip.cashFlow = subtractReferenceDecimals(
         currentRoundTrip.cashFlow,
         priorCharges,
@@ -362,6 +387,7 @@ export function runReferenceFifoLedger(
         currentRoundTrip.charges,
         executionCharges,
       );
+      assignChargeKinds(currentRoundTrip, execution);
       currentRoundTrip.cashFlow = subtractReferenceDecimals(
         currentRoundTrip.cashFlow,
         executionCharges,
@@ -444,6 +470,7 @@ export function runReferenceFifoLedger(
           currentRoundTrip.charges,
           executionCharges,
         );
+        assignChargeKinds(currentRoundTrip, execution);
         currentRoundTrip.cashFlow = subtractReferenceDecimals(
           currentRoundTrip.cashFlow,
           executionCharges,

@@ -31,7 +31,7 @@ import type {
   CanonicalWeekday,
 } from "../adapters/session-policy";
 
-export const ANALYTICAL_ROW_VERSION = "ti_v3_analytical_row_v2" as const;
+export const ANALYTICAL_ROW_VERSION = "ti_v3_analytical_row_v1" as const;
 
 export type ExactMoneyFact = Readonly<
   | {
@@ -50,40 +50,35 @@ export type ExactQuantityFact = Readonly<
   | { readonly state: "unavailable"; readonly reasonCode: string }
 >;
 
-/** Fee evidence intentionally travels with the analytical row.  A numeric
- * signedCharges value alone is not evidence that a hypothetical resize can
- * recompute charges (in particular, zero is not silently treated as free). */
-export type SimulationFeeComponentKind =
-  | "fixed"
-  | "quantity_variable"
-  | "notional_variable"
-  | "sell_side_regulatory"
-  | "non_scaling"
-  | "unknown_undecomposed";
+export interface AnalyticalChargeKindAmount {
+  readonly kind: string;
+  readonly amount: string;
+}
 
-export type SimulationFeeAuthority = Readonly<
+/**
+ * A completed round trip may be attributed to a source only when every
+ * supporting execution carries the same source identity. This prevents a
+ * broker/import query from silently assigning a mixed-source trade to one of
+ * its inputs.
+ */
+export type AnalyticalSourceAuthority = Readonly<
   | {
-      readonly state:
-        | "broker_reported_complete"
-        | "account_policy_calculated";
-      readonly components: readonly Readonly<{
-        readonly kind: SimulationFeeComponentKind;
-        readonly signedAmount: string;
-      }>[];
+      readonly state: "available";
+      readonly sourceIdentity: string;
+      readonly sourceKind: "broker_csv" | "broker_api" | "owner_manual" | "paper_trade" | "legacy_migration";
+      readonly sourceSystem: string;
+      readonly brokerCode: string;
+      readonly evidenceClass: "broker_confirmed" | "owner_reported" | "hypothetical" | "migrated_unverified";
     }
   | {
-      readonly state: "broker_reported_partial" | "estimated";
-      readonly components: readonly Readonly<{
-        readonly kind: SimulationFeeComponentKind;
-        readonly signedAmount: string;
-      }>[];
+      readonly state: "unavailable";
       readonly reasonCode: string;
     }
-  | { readonly state: "explicitly_zero" }
-  | {
-      readonly state: "not_included" | "unavailable";
-      readonly reasonCode: string;
-    }
+>;
+
+type AvailableAnalyticalSourceAuthority = Extract<
+  AnalyticalSourceAuthority,
+  { readonly state: "available" }
 >;
 
 export interface AnalyticalRow {
@@ -99,6 +94,7 @@ export interface AnalyticalRow {
     | "non_authoritative_stable_symbol"
     | "non_authoritative_symbol_changed_first_entry_selected";
   readonly direction: "long" | "short";
+  readonly sourceAuthority: AnalyticalSourceAuthority;
   readonly currency: CurrencyCode;
   readonly firstEntryAt: string;
   readonly finalExitAt: string;
@@ -110,10 +106,11 @@ export interface AnalyticalRow {
   readonly sequenceInPartition: string;
   readonly grossPnl: string;
   readonly signedCharges: string;
+  readonly signedChargesByKind: readonly AnalyticalChargeKindAmount[];
+  readonly chargeKindCoverageState: "complete" | "unknown";
   readonly netPnl: string;
   readonly entryNotional: ExactMoneyFact;
   readonly shareQuantity: ExactQuantityFact;
-  readonly feeAuthority: SimulationFeeAuthority;
   readonly lifecycleState: "closed_flat_to_flat";
   readonly coverageState: "exact" | "limited";
   readonly evidenceQuality:
@@ -123,139 +120,61 @@ export interface AnalyticalRow {
   readonly rowDigest: CanonicalContentDigest;
 }
 
-function parseFeeAuthority(
-  input: unknown,
-  signedCharges: string,
-): ExactResult<SimulationFeeAuthority, AnalyticalContractFailure> {
-  // Older analytical rows did not establish a fee-resizing authority. Preserve
-  // their factual charges, but fail closed for a counterfactual resize.
-  if (input === undefined) {
-    return {
-      ok: true,
-      value: Object.freeze({
-        state: "not_included",
-        reasonCode: "ti_v3_fee_authority_not_included",
-      }),
-    };
-  }
-  const record = validateContractRecord(
-    input,
-    ["state"],
-    ["components", "reasonCode"],
-    "$.feeAuthority",
-  );
-  if (!record.ok) return record;
-  if (record.value.state === "explicitly_zero") {
-    if (
-      Object.keys(record.value).length !== 1 ||
-      signedCharges !== "0"
-    ) {
-      return contractFailure(
-        "ti_v3_analytics_contract_invalid",
-        "$.feeAuthority",
-      );
-    }
-    return {
-      ok: true,
-      value: Object.freeze({ state: "explicitly_zero" }),
-    };
-  }
-  if (record.value.state === "not_included" || record.value.state === "unavailable") {
-    if (Object.keys(record.value).length !== 2) return contractFailure("ti_v3_analytics_contract_invalid", "$.feeAuthority");
-    const reason = validateReasonCode(record.value.reasonCode, "$.feeAuthority.reasonCode");
-    return reason.ok ? { ok: true, value: Object.freeze({ state: record.value.state, reasonCode: reason.value }) } : reason;
-  }
-  if (
-    ![
-      "broker_reported_complete",
-      "account_policy_calculated",
-      "broker_reported_partial",
-      "estimated",
-    ].includes(String(record.value.state)) ||
-    !Array.isArray(record.value.components)
-  ) {
-    return contractFailure(
-      "ti_v3_analytics_contract_invalid",
-      "$.feeAuthority",
-    );
-  }
-  const components: Array<Readonly<{ readonly kind: SimulationFeeComponentKind; readonly signedAmount: string }>> = [];
-  let total = "0";
-  for (let index = 0; index < record.value.components.length; index += 1) {
-    const component = validateContractRecord(record.value.components[index], ["kind", "signedAmount"], [], `$.feeAuthority.components[${index}]`);
-    if (!component.ok || !["fixed", "quantity_variable", "notional_variable", "sell_side_regulatory", "non_scaling", "unknown_undecomposed"].includes(String(component.value.kind))) return contractFailure("ti_v3_analytics_contract_invalid", `$.feeAuthority.components[${index}]`);
-    const amount = parseExactMoneyAmount(component.value.signedAmount);
-    if (!amount.ok) return contractFailure("ti_v3_analytics_contract_invalid", `$.feeAuthority.components[${index}].signedAmount`);
-    const current = parseExactMoneyAmount(total);
-    if (!current.ok) {
-      return contractFailure(
-        "ti_v3_analytics_contract_invalid",
-        "$.feeAuthority.components",
-      );
-    }
-    const next = addExactDecimals(current.value, amount.value);
-    if (!next.ok) return contractFailure("ti_v3_analytics_contract_invalid", `$.feeAuthority.components[${index}].signedAmount`);
-    total = next.value;
-    components.push(Object.freeze({ kind: component.value.kind as SimulationFeeComponentKind, signedAmount: amount.value }));
-  }
-  const state = record.value.state as
-    | "broker_reported_complete"
-    | "account_policy_calculated"
-    | "broker_reported_partial"
-    | "estimated";
-  if (
-    (state === "broker_reported_complete" ||
-      state === "account_policy_calculated") &&
-    total !== signedCharges
-  ) {
-    return contractFailure(
-      "ti_v3_analytics_contract_reference_mismatch",
-      "$.feeAuthority.components",
-    );
-  }
-  if (state === "broker_reported_partial" || state === "estimated") {
-    const reason = validateReasonCode(
-      record.value.reasonCode,
-      "$.feeAuthority.reasonCode",
-    );
-    if (!reason.ok || Object.keys(record.value).length !== 3) {
-      return reason.ok
-        ? contractFailure(
-            "ti_v3_analytics_contract_invalid",
-            "$.feeAuthority",
-          )
-        : reason;
-    }
-    return {
-      ok: true,
-      value: Object.freeze({
-        state,
-        components: Object.freeze(components),
-        reasonCode: reason.value,
-      }),
-    };
-  }
-  if (Object.keys(record.value).length !== 2) {
-    return contractFailure(
-      "ti_v3_analytics_contract_invalid",
-      "$.feeAuthority",
-    );
-  }
-  return {
-    ok: true,
-    value: Object.freeze({
-      state,
-      components: Object.freeze(components),
-    }),
-  };
-}
-
 const WEEKDAYS = new Set<CanonicalWeekday>([
   "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
 ]);
 const SESSIONS = new Set<CanonicalSession>([
   "premarket", "regular", "after_hours", "overnight", "not_applicable",
 ]);
+const SOURCE_KINDS = new Set<AvailableAnalyticalSourceAuthority["sourceKind"]>([
+  "broker_csv", "broker_api", "owner_manual", "paper_trade", "legacy_migration",
+]);
+const EVIDENCE_CLASSES = new Set<AvailableAnalyticalSourceAuthority["evidenceClass"]>([
+  "broker_confirmed", "owner_reported", "hypothetical", "migrated_unverified",
+]);
+const MONEY_BOUNDS = Object.freeze({
+  maximumSignificantDigits: 48,
+  maximumScale: 24,
+  allowNegative: true,
+  allowZero: true,
+});
+
+function parseChargeKinds(
+  input: unknown,
+  signedCharges: string,
+  coverageState: "complete" | "unknown",
+  path: string,
+): ExactResult<readonly AnalyticalChargeKindAmount[], AnalyticalContractFailure> {
+  if (!Array.isArray(input) || input.length > 64) {
+    return contractFailure("ti_v3_analytics_contract_invalid", path);
+  }
+  const values: AnalyticalChargeKindAmount[] = [];
+  for (let index = 0; index < input.length; index += 1) {
+    const entry = validateContractRecord(input[index], ["kind", "amount"], [], `${path}[${index}]`);
+    if (!entry.ok || typeof entry.value.kind !== "string" || !/^[a-z][a-z0-9_]{1,63}$/.test(entry.value.kind)) {
+      return contractFailure("ti_v3_analytics_contract_invalid", `${path}[${index}]`);
+    }
+    const amount = parseExactMoneyAmount(entry.value.amount);
+    if (!amount.ok) return contractFailure("ti_v3_analytics_contract_invalid", `${path}[${index}].amount`);
+    values.push(Object.freeze({ kind: entry.value.kind, amount: amount.value }));
+  }
+  const ordered = [...values].sort((left, right) => left.kind.localeCompare(right.kind));
+  if (new Set(ordered.map((entry) => entry.kind)).size !== ordered.length) {
+    return contractFailure("ti_v3_analytics_contract_duplicate_identity", path);
+  }
+  if (coverageState === "complete") {
+    let total = "0";
+    for (const entry of ordered) {
+      const summed = addExactDecimals(total, entry.amount, MONEY_BOUNDS);
+      if (!summed.ok) return contractFailure("ti_v3_analytics_contract_invalid", path);
+      total = summed.value;
+    }
+    if (total !== signedCharges) {
+      return contractFailure("ti_v3_analytics_contract_reference_mismatch", path);
+    }
+  }
+  return { ok: true, value: Object.freeze(ordered) };
+}
 
 function parseMoneyFact(
   input: unknown,
@@ -323,18 +242,65 @@ function parseQuantityFact(
   return contractFailure("ti_v3_analytics_contract_invalid", `${path}.state`);
 }
 
+function parseSourceAuthority(
+  input: unknown,
+  path: string,
+): ExactResult<AnalyticalSourceAuthority, AnalyticalContractFailure> {
+  const record = validateContractRecord(
+    input,
+    ["state"],
+    ["sourceIdentity", "sourceKind", "sourceSystem", "brokerCode", "evidenceClass", "reasonCode"],
+    path,
+  );
+  if (!record.ok) return record;
+  if (record.value.state === "unavailable") {
+    if (Object.keys(record.value).length !== 2) {
+      return contractFailure("ti_v3_analytics_contract_invalid", path);
+    }
+    const reason = validateReasonCode(record.value.reasonCode, `${path}.reasonCode`);
+    return reason.ok
+      ? { ok: true, value: Object.freeze({ state: "unavailable", reasonCode: reason.value }) }
+      : reason;
+  }
+  if (record.value.state !== "available" || Object.keys(record.value).length !== 6) {
+    return contractFailure("ti_v3_analytics_contract_invalid", path);
+  }
+  const sourceIdentity = validateContractKey(record.value.sourceIdentity, `${path}.sourceIdentity`);
+  const sourceSystem = validateContractKey(record.value.sourceSystem, `${path}.sourceSystem`);
+  const brokerCode = validateContractKey(record.value.brokerCode, `${path}.brokerCode`);
+  if (
+    !sourceIdentity.ok || !sourceIdentity.value.startsWith("source_") ||
+    !sourceSystem.ok || !brokerCode.ok ||
+    typeof record.value.sourceKind !== "string" || !SOURCE_KINDS.has(record.value.sourceKind as AvailableAnalyticalSourceAuthority["sourceKind"]) ||
+    typeof record.value.evidenceClass !== "string" || !EVIDENCE_CLASSES.has(record.value.evidenceClass as AvailableAnalyticalSourceAuthority["evidenceClass"])
+  ) {
+    return contractFailure("ti_v3_analytics_contract_invalid", path);
+  }
+  return {
+    ok: true,
+    value: Object.freeze({
+      state: "available",
+      sourceIdentity: sourceIdentity.value,
+      sourceKind: record.value.sourceKind as AvailableAnalyticalSourceAuthority["sourceKind"],
+      sourceSystem: sourceSystem.value,
+      brokerCode: brokerCode.value,
+      evidenceClass: record.value.evidenceClass as AvailableAnalyticalSourceAuthority["evidenceClass"],
+    }),
+  };
+}
+
 export function buildAnalyticalRow(
   input: unknown,
 ): ExactResult<AnalyticalRow, AnalyticalContractFailure> {
   const record = validateContractRecord(input, [
     "schemaVersion", "semanticRoundTripKey", "supportingExecutionDigests",
     "supportingOccurrenceKeys", "canonicalOwnerKey", "canonicalAccountKey",
-    "stableInstrumentKey", "displayedSymbol", "displayedSymbolStatus", "direction",
+    "stableInstrumentKey", "displayedSymbol", "displayedSymbolStatus", "direction", "sourceAuthority",
     "currency", "firstEntryAt", "finalExitAt", "timezone", "dateBasis",
     "sessionDate", "weekday", "session", "sequenceInPartition", "grossPnl",
     "signedCharges", "netPnl", "entryNotional", "shareQuantity", "lifecycleState",
     "coverageState", "evidenceQuality", "limitationCodes",
-  ], ["feeAuthority"]);
+  ], ["signedChargesByKind", "chargeKindCoverageState"]);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== ANALYTICAL_ROW_VERSION) {
     return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
@@ -378,6 +344,8 @@ export function buildAnalyticalRow(
   if (record.value.direction !== "long" && record.value.direction !== "short") {
     return contractFailure("ti_v3_analytics_contract_invalid", "$.direction");
   }
+  const sourceAuthority = parseSourceAuthority(record.value.sourceAuthority, "$.sourceAuthority");
+  if (!sourceAuthority.ok) return sourceAuthority;
   const currency = parseCurrencyCode(record.value.currency);
   if (!currency.ok) return contractFailure("ti_v3_analytics_contract_invalid", "$.currency");
   const firstEntryAt = validateTimestampValue(record.value.firstEntryAt, "$.firstEntryAt");
@@ -408,12 +376,23 @@ export function buildAnalyticalRow(
   if (!gross.ok) return contractFailure("ti_v3_analytics_contract_invalid", "$.grossPnl");
   if (!charges.ok) return contractFailure("ti_v3_analytics_contract_invalid", "$.signedCharges");
   if (!net.ok) return contractFailure("ti_v3_analytics_contract_invalid", "$.netPnl");
+  const chargeKindCoverageState = record.value.chargeKindCoverageState === undefined
+    ? "unknown"
+    : record.value.chargeKindCoverageState;
+  if (chargeKindCoverageState !== "complete" && chargeKindCoverageState !== "unknown") {
+    return contractFailure("ti_v3_analytics_contract_invalid", "$.chargeKindCoverageState");
+  }
+  const signedChargesByKind = parseChargeKinds(
+    record.value.signedChargesByKind === undefined ? [] : record.value.signedChargesByKind,
+    charges.value,
+    chargeKindCoverageState,
+    "$.signedChargesByKind",
+  );
+  if (!signedChargesByKind.ok) return signedChargesByKind;
   const entryNotional = parseMoneyFact(record.value.entryNotional, currency.value, "$.entryNotional");
   if (!entryNotional.ok) return entryNotional;
   const shareQuantity = parseQuantityFact(record.value.shareQuantity, "$.shareQuantity");
   if (!shareQuantity.ok) return shareQuantity;
-  const feeAuthority = parseFeeAuthority(record.value.feeAuthority, charges.value);
-  if (!feeAuthority.ok) return feeAuthority;
   if (record.value.lifecycleState !== "closed_flat_to_flat") return contractFailure("ti_v3_analytics_contract_invalid", "$.lifecycleState");
   if (record.value.coverageState !== "exact" && record.value.coverageState !== "limited") return contractFailure("ti_v3_analytics_contract_invalid", "$.coverageState");
   if (record.value.evidenceQuality !== "verified_exact" && record.value.evidenceQuality !== "verified_exact_with_limitations") return contractFailure("ti_v3_analytics_contract_invalid", "$.evidenceQuality");
@@ -433,6 +412,7 @@ export function buildAnalyticalRow(
     displayedSymbol: record.value.displayedSymbol,
     displayedSymbolStatus,
     direction: record.value.direction,
+    sourceAuthority: sourceAuthority.value,
     currency: currency.value,
     firstEntryAt: firstEntryAt.value,
     finalExitAt: finalExitAt.value,
@@ -444,10 +424,11 @@ export function buildAnalyticalRow(
     sequenceInPartition: sequence.value,
     grossPnl: gross.value,
     signedCharges: charges.value,
+    signedChargesByKind: signedChargesByKind.value,
+    chargeKindCoverageState,
     netPnl: net.value,
     entryNotional: entryNotional.value,
     shareQuantity: shareQuantity.value,
-    feeAuthority: feeAuthority.value,
     lifecycleState: "closed_flat_to_flat" as const,
     coverageState: record.value.coverageState,
     evidenceQuality: record.value.evidenceQuality,
@@ -462,11 +443,12 @@ export function verifyAnalyticalRow(
   const record = validateContractRecord(input, [
     "schemaVersion", "semanticRoundTripKey", "supportingExecutionDigests",
     "supportingOccurrenceKeys", "canonicalOwnerKey", "canonicalAccountKey",
-    "stableInstrumentKey", "displayedSymbol", "displayedSymbolStatus", "direction",
+    "stableInstrumentKey", "displayedSymbol", "displayedSymbolStatus", "direction", "sourceAuthority",
     "currency", "firstEntryAt", "finalExitAt", "timezone", "dateBasis",
     "sessionDate", "weekday", "session", "sequenceInPartition", "grossPnl",
-    "signedCharges", "netPnl", "entryNotional", "shareQuantity", "feeAuthority", "lifecycleState",
+    "signedCharges", "netPnl", "entryNotional", "shareQuantity", "lifecycleState",
     "coverageState", "evidenceQuality", "limitationCodes", "rowDigest",
+    "signedChargesByKind", "chargeKindCoverageState",
   ]);
   if (!record.ok) return record;
   const digest = validateClaimedDigest(record.value.rowDigest, "$.rowDigest", "analytical_row");

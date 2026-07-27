@@ -28,6 +28,14 @@ export const TRADE_QUERY_METRIC_KEYS = Object.freeze([
   "unique_symbol_count",
   "total_execution_count",
   "average_executions_per_trade",
+  "limited_analytical_trade_count",
+  "missing_charge_coverage_trade_count",
+  "missing_share_quantity_authority_count",
+  "missing_entry_notional_authority_count",
+  "unavailable_source_authority_trade_count",
+  "manual_entry_trade_count",
+  "broker_import_trade_count",
+  "legacy_migration_trade_count",
   "total_trades",
   "average_trades_per_trading_day",
   "median_trades_per_trading_day",
@@ -44,7 +52,17 @@ export const TRADE_QUERY_METRIC_KEYS = Object.freeze([
   "gross_profit",
   "gross_loss",
   "gross_pnl",
+  "average_gross_pnl",
+  "median_gross_pnl",
   "signed_charges",
+  "average_signed_charges",
+  "median_signed_charges",
+  "commission_signed_charges",
+  "average_commission_signed_charges",
+  "median_commission_signed_charges",
+  "gross_net_difference",
+  "fees_as_percentage_of_gross_profit",
+  "fees_as_percentage_of_gross_loss",
   "net_pnl",
   "average_pnl",
   "median_pnl",
@@ -64,6 +82,8 @@ export const TRADE_QUERY_METRIC_KEYS = Object.freeze([
   "median_winning_trade",
   "average_losing_trade",
   "median_losing_trade",
+  "total_winning_net_pnl",
+  "total_losing_net_pnl",
   "average_win_loss_ratio",
   "median_win_loss_ratio",
   "profit_factor",
@@ -80,6 +100,10 @@ export const TRADE_QUERY_METRIC_KEYS = Object.freeze([
   "average_share_quantity",
   "median_share_quantity",
   "maximum_share_quantity",
+  "average_winner_share_quantity",
+  "median_winner_share_quantity",
+  "average_loser_share_quantity",
+  "median_loser_share_quantity",
   "average_entry_notional",
   "median_entry_notional",
   "maximum_entry_notional",
@@ -95,10 +119,14 @@ export const TRADE_QUERY_METRIC_KEYS = Object.freeze([
   "profitable_day_percentage",
   "losing_day_percentage",
   "flat_day_percentage",
-  "maximum_intraday_drawdown",
-  "maximum_peak_profit_giveback",
+  "average_green_day_pnl",
+  "median_green_day_pnl",
+  "average_red_day_pnl",
+  "median_red_day_pnl",
   "longest_winning_trade_streak",
   "longest_losing_trade_streak",
+  "current_winning_trade_streak",
+  "current_losing_trade_streak",
   "net_pnl_excluding_largest_winner",
   "net_pnl_excluding_largest_loser",
   "net_pnl_excluding_largest_winner_and_loser",
@@ -106,6 +134,15 @@ export const TRADE_QUERY_METRIC_KEYS = Object.freeze([
   "largest_loser_contribution",
   "average_position_size",
   "median_position_size",
+  "maximum_intraday_realized_drawdown",
+  "maximum_peak_profit_giveback",
+  "maximum_intraday_realized_recovery_from_trough",
+  "average_peak_profit_giveback",
+  "median_peak_profit_giveback",
+  "days_with_peak_profit_giveback",
+  "days_with_realized_drawdown",
+  "green_to_red_day_count",
+  "red_to_green_day_count",
 ] as const);
 
 export type TradeQueryMetricKey = typeof TRADE_QUERY_METRIC_KEYS[number];
@@ -146,19 +183,26 @@ export interface TradeQueryMetricRegistry {
 }
 
 const MONEY_KEYS = new Set<TradeQueryMetricKey>([
-  "gross_profit", "gross_loss", "gross_pnl", "signed_charges", "net_pnl",
+  "gross_profit", "gross_loss", "gross_pnl", "average_gross_pnl", "median_gross_pnl",
+  "signed_charges", "average_signed_charges",
+  "median_signed_charges", "commission_signed_charges", "average_commission_signed_charges",
+  "median_commission_signed_charges", "gross_net_difference", "net_pnl",
+  "fees_as_percentage_of_gross_profit", "fees_as_percentage_of_gross_loss",
   "average_pnl", "median_pnl", "average_daily_pnl", "median_daily_pnl",
   "best_trade", "worst_trade", "best_trading_day", "worst_trading_day",
   "average_winning_trade", "median_winning_trade", "average_losing_trade",
-  "median_losing_trade", "average_entry_notional", "median_entry_notional",
+  "median_losing_trade", "total_winning_net_pnl", "total_losing_net_pnl",
+  "average_entry_notional", "median_entry_notional",
   "maximum_entry_notional", "average_winner_entry_notional",
   "average_loser_entry_notional", "median_winner_entry_notional",
   "median_loser_entry_notional", "net_pnl_per_100_shares",
   "net_pnl_excluding_largest_winner", "net_pnl_excluding_largest_loser",
   "net_pnl_excluding_largest_winner_and_loser", "largest_winner_contribution",
   "largest_loser_contribution", "average_position_size", "median_position_size",
-  "maximum_intraday_drawdown", "maximum_peak_profit_giveback",
-  "expectancy",
+  "expectancy", "average_green_day_pnl", "median_green_day_pnl",
+  "average_red_day_pnl", "median_red_day_pnl", "maximum_intraday_realized_drawdown", "maximum_peak_profit_giveback",
+  "average_peak_profit_giveback", "median_peak_profit_giveback",
+  "maximum_intraday_realized_recovery_from_trough",
 ]);
 const RATIO_KEYS = new Set<TradeQueryMetricKey>([
   "inclusion_rate", "exclusion_rate", "average_executions_per_trade",
@@ -167,7 +211,9 @@ const RATIO_KEYS = new Set<TradeQueryMetricKey>([
   "repeat_attempt_percentage", "win_rate", "loss_rate", "flat_rate",
   "average_win_loss_ratio", "median_win_loss_ratio", "profit_factor",
   "breakeven_win_rate", "return_on_entry_notional",
+  "fees_as_percentage_of_gross_profit", "fees_as_percentage_of_gross_loss",
   "profitable_day_percentage", "losing_day_percentage", "flat_day_percentage",
+  "average_green_day_pnl", "median_green_day_pnl", "average_red_day_pnl", "median_red_day_pnl",
 ]);
 const SECOND_KEYS = new Set<TradeQueryMetricKey>([
   "average_holding_time", "median_holding_time", "minimum_holding_time",
@@ -177,6 +223,8 @@ const SECOND_KEYS = new Set<TradeQueryMetricKey>([
 ]);
 const SHARE_KEYS = new Set<TradeQueryMetricKey>([
   "average_share_quantity", "median_share_quantity", "maximum_share_quantity",
+  "average_winner_share_quantity", "median_winner_share_quantity",
+  "average_loser_share_quantity", "median_loser_share_quantity",
 ]);
 const QUERY_COUNT_KEYS = new Set<TradeQueryMetricKey>([
   "candidate_count", "included_count", "excluded_count", "inclusion_rate",
@@ -189,7 +237,12 @@ const DAILY_KEYS = new Set<TradeQueryMetricKey>([
   "best_trading_day", "worst_trading_day", "profitable_trading_day_count",
   "losing_trading_day_count", "flat_trading_day_count",
   "profitable_day_percentage", "losing_day_percentage", "flat_day_percentage",
-  "maximum_intraday_drawdown", "maximum_peak_profit_giveback",
+  "average_green_day_pnl", "median_green_day_pnl", "average_red_day_pnl", "median_red_day_pnl",
+  "maximum_intraday_realized_drawdown", "maximum_peak_profit_giveback", "maximum_intraday_realized_recovery_from_trough",
+  "maximum_intraday_realized_recovery_from_trough",
+  "average_peak_profit_giveback", "median_peak_profit_giveback",
+  "days_with_peak_profit_giveback", "days_with_realized_drawdown",
+  "green_to_red_day_count", "red_to_green_day_count",
 ]);
 const DIRECTION_KEYS = new Set<TradeQueryMetricKey>([
   "long_trade_count", "short_trade_count", "long_trade_percentage",
@@ -209,6 +262,12 @@ const DAILY_PNL_KEYS = new Set<TradeQueryMetricKey>([
   "average_daily_pnl", "median_daily_pnl", "best_trading_day", "worst_trading_day",
   "profitable_trading_day_count", "losing_trading_day_count", "flat_trading_day_count",
   "profitable_day_percentage", "losing_day_percentage", "flat_day_percentage",
+  "average_green_day_pnl", "median_green_day_pnl", "average_red_day_pnl", "median_red_day_pnl",
+  "maximum_intraday_realized_drawdown", "maximum_peak_profit_giveback",
+  "maximum_intraday_realized_recovery_from_trough",
+  "average_peak_profit_giveback", "median_peak_profit_giveback",
+  "days_with_peak_profit_giveback", "days_with_realized_drawdown",
+  "green_to_red_day_count", "red_to_green_day_count",
 ]);
 const OUTCOME_KEYS = new Set<TradeQueryMetricKey>([
   "win_count", "loss_count", "flat_count", "win_rate", "loss_rate", "flat_rate",
@@ -219,9 +278,12 @@ const OUTCOME_KEYS = new Set<TradeQueryMetricKey>([
   "median_loser_holding_time", "average_winner_entry_notional",
   "average_loser_entry_notional", "median_winner_entry_notional",
   "median_loser_entry_notional", "longest_winning_trade_streak",
-  "longest_losing_trade_streak", "net_pnl_excluding_largest_winner",
+  "average_winner_share_quantity", "median_winner_share_quantity",
+  "average_loser_share_quantity", "median_loser_share_quantity",
+  "longest_losing_trade_streak", "current_winning_trade_streak",
+  "current_losing_trade_streak", "net_pnl_excluding_largest_winner",
   "net_pnl_excluding_largest_loser", "net_pnl_excluding_largest_winner_and_loser",
-  "largest_winner_contribution", "largest_loser_contribution",
+  "largest_winner_contribution", "largest_loser_contribution", "total_winning_net_pnl", "total_losing_net_pnl",
 ]);
 const NET_PNL_KEYS = new Set<TradeQueryMetricKey>([
   "net_pnl", "average_pnl", "median_pnl", "average_daily_pnl",
@@ -232,20 +294,41 @@ const NET_PNL_KEYS = new Set<TradeQueryMetricKey>([
   "breakeven_win_rate", "net_pnl_per_100_shares", "return_on_entry_notional",
   "net_pnl_excluding_largest_winner", "net_pnl_excluding_largest_loser",
   "net_pnl_excluding_largest_winner_and_loser", "largest_winner_contribution",
-  "largest_loser_contribution",
+  "largest_loser_contribution", "total_winning_net_pnl", "total_losing_net_pnl",
+  "average_winner_share_quantity", "median_winner_share_quantity",
+  "average_loser_share_quantity", "median_loser_share_quantity",
+  "average_green_day_pnl", "median_green_day_pnl", "average_red_day_pnl", "median_red_day_pnl",
+  "profitable_trading_day_count", "losing_trading_day_count", "flat_trading_day_count",
+  "profitable_day_percentage", "losing_day_percentage", "flat_day_percentage",
+  "maximum_intraday_realized_drawdown", "maximum_peak_profit_giveback",
+  "average_peak_profit_giveback", "median_peak_profit_giveback",
+  "days_with_peak_profit_giveback", "days_with_realized_drawdown",
+  "green_to_red_day_count", "red_to_green_day_count",
 ]);
 const GROSS_PNL_KEYS = new Set<TradeQueryMetricKey>([
-  "gross_profit", "gross_loss", "gross_pnl",
+  "gross_profit", "gross_loss", "gross_pnl", "average_gross_pnl", "median_gross_pnl",
 ]);
-const CHARGE_KEYS = new Set<TradeQueryMetricKey>(["signed_charges"]);
+const CHARGE_KEYS = new Set<TradeQueryMetricKey>([
+  "signed_charges", "average_signed_charges", "median_signed_charges", "gross_net_difference",
+  "fees_as_percentage_of_gross_profit", "fees_as_percentage_of_gross_loss",
+  "commission_signed_charges", "average_commission_signed_charges", "median_commission_signed_charges",
+]);
+const COMMISSION_KEYS = new Set<TradeQueryMetricKey>([
+  "commission_signed_charges", "average_commission_signed_charges", "median_commission_signed_charges",
+]);
+const FEE_PERCENT_KEYS = new Set<TradeQueryMetricKey>([
+  "fees_as_percentage_of_gross_profit", "fees_as_percentage_of_gross_loss",
+]);
 const STREAK_KEYS = new Set<TradeQueryMetricKey>([
   "longest_winning_trade_streak", "longest_losing_trade_streak",
+  "current_winning_trade_streak", "current_losing_trade_streak",
 ]);
 const WINNER_REQUIRED_KEYS = new Set<TradeQueryMetricKey>([
   "average_winning_trade", "median_winning_trade", "average_win_loss_ratio",
   "median_win_loss_ratio", "breakeven_win_rate", "average_winner_holding_time",
   "median_winner_holding_time", "average_winner_entry_notional",
   "median_winner_entry_notional", "largest_winner_contribution",
+  "average_winner_share_quantity", "median_winner_share_quantity",
   "net_pnl_excluding_largest_winner", "net_pnl_excluding_largest_winner_and_loser",
 ]);
 const LOSER_REQUIRED_KEYS = new Set<TradeQueryMetricKey>([
@@ -253,6 +336,7 @@ const LOSER_REQUIRED_KEYS = new Set<TradeQueryMetricKey>([
   "median_win_loss_ratio", "breakeven_win_rate", "average_loser_holding_time",
   "median_loser_holding_time", "average_loser_entry_notional",
   "median_loser_entry_notional", "largest_loser_contribution",
+  "average_loser_share_quantity", "median_loser_share_quantity",
   "net_pnl_excluding_largest_loser", "net_pnl_excluding_largest_winner_and_loser",
 ]);
 const NOTIONAL_AUTHORITY_KEYS = new Set<TradeQueryMetricKey>([
@@ -270,35 +354,44 @@ const COUNT_DENOMINATOR_KEYS = new Set<TradeQueryMetricKey>([
   "average_pnl", "expectancy", "average_daily_pnl", "average_winning_trade",
   "average_losing_trade", "average_share_quantity", "average_entry_notional",
   "average_winner_entry_notional", "average_loser_entry_notional",
-  "average_position_size",
+  "average_position_size", "average_signed_charges", "average_peak_profit_giveback",
+  "average_gross_pnl", "average_green_day_pnl", "average_red_day_pnl",
+  "fees_as_percentage_of_gross_profit", "fees_as_percentage_of_gross_loss",
 ]);
 const ZERO_SAMPLE_ALLOWED_KEYS = new Set<TradeQueryMetricKey>([
   "candidate_count", "included_count", "excluded_count", "trading_day_count",
   "unique_account_count", "unique_symbol_count", "total_execution_count",
+  "limited_analytical_trade_count", "missing_charge_coverage_trade_count", "missing_share_quantity_authority_count",
+  "missing_entry_notional_authority_count", "unavailable_source_authority_trade_count",
+  "manual_entry_trade_count", "broker_import_trade_count", "legacy_migration_trade_count",
   "total_trades", "maximum_trades_per_trading_day", "long_trade_count", "short_trade_count",
   "repeat_attempt_trade_count", "gross_profit", "gross_loss", "gross_pnl",
   "signed_charges", "net_pnl", "win_count", "loss_count", "flat_count",
   "profitable_trading_day_count", "losing_trading_day_count",
   "flat_trading_day_count", "longest_winning_trade_streak",
-  "longest_losing_trade_streak",
+  "longest_losing_trade_streak", "current_winning_trade_streak",
+  "current_losing_trade_streak", "days_with_peak_profit_giveback",
+  "days_with_realized_drawdown", "green_to_red_day_count", "red_to_green_day_count",
 ]);
 const ALL_GROUPINGS = Object.freeze([
-  "aggregate", "day", "week", "month", "weekday", "time_bucket",
-  "entry_price_range", "trade_sequence", "trade_sequence_bucket",
-  "previous_completed_outcome", "repeat_attempt", "repeat_attempt_bucket", "holding_time_bucket",
-  "share_quantity_bucket", "entry_notional_bucket",
-  "direction", "session", "symbol", "account",
+  "aggregate", "day", "week", "month", "weekday", "year", "session", "time_bucket",
+  "entry_price_range", "price_range", "trade_sequence", "trade_sequence_bucket",
+  "previous_completed_outcome", "prior_completed_streak_bucket", "pre_entry_daily_state",
+  "repeat_attempt", "repeat_attempt_bucket", "holding_time_bucket",
+  "share_quantity_bucket", "entry_notional_bucket", "position_size_bucket",
+  "direction", "symbol", "account", "source_identity", "broker_code", "compound",
 ]);
 const ALL_FILTERS = Object.freeze([
-  "date_range", "account", "symbol", "direction", "currency",
+  "date_range", "account", "symbol", "source_identity", "broker_code", "direction", "session", "currency",
   "realized_outcome", "weekday", "entry_time_range", "exit_time_range",
   "entry_price_range", "sequence_in_session",
-  "previous_completed_outcome", "holding_time_seconds", "repeat_attempt",
+  "previous_completed_outcome", "prior_completed_streak", "pre_entry_daily_state", "pre_entry_daily_path",
+  "holding_time_seconds", "repeat_attempt",
   "share_quantity_range", "entry_notional_range",
 ]);
 
 function unitFor(key: TradeQueryMetricKey): string {
-  if (key === "trading_day_count" || key.endsWith("trading_day_count")) return "days";
+  if (key === "trading_day_count" || key.endsWith("trading_day_count") || key.endsWith("day_count")) return "days";
   if (key === "unique_account_count") return "accounts";
   if (key === "unique_symbol_count") return "symbols";
   if (key === "total_execution_count") return "executions";
@@ -319,6 +412,17 @@ function requiredFieldsFor(key: TradeQueryMetricKey): readonly string[] {
   if (key === "total_execution_count" || key === "average_executions_per_trade") {
     add("supportingExecutionDigests");
   }
+  if (key === "limited_analytical_trade_count" || key === "missing_charge_coverage_trade_count") {
+    add("coverageState", "limitationCodes");
+  }
+  if (key === "missing_share_quantity_authority_count") add("shareQuantity");
+  if (key === "missing_entry_notional_authority_count") add("entryNotional");
+  if (
+    key === "unavailable_source_authority_trade_count" ||
+    key === "manual_entry_trade_count" ||
+    key === "broker_import_trade_count" ||
+    key === "legacy_migration_trade_count"
+  ) add("sourceAuthority");
   if (DAILY_KEYS.has(key)) add("sessionDate");
   if (DAILY_PNL_KEYS.has(key)) add("netPnl");
   if (DIRECTION_KEYS.has(key)) add("direction");
@@ -340,6 +444,8 @@ function requiredFieldsFor(key: TradeQueryMetricKey): readonly string[] {
   }
   if (GROSS_PNL_KEYS.has(key)) add("grossPnl");
   if (CHARGE_KEYS.has(key)) add("signedCharges");
+  if (COMMISSION_KEYS.has(key)) add("signedChargesByKind", "chargeKindCoverageState");
+  if (FEE_PERCENT_KEYS.has(key)) add("grossPnl");
   if (STREAK_KEYS.has(key)) {
     add("finalExitAt", "semanticRoundTripKey", "netPnl");
   }
@@ -391,6 +497,8 @@ function unavailableConditionsFor(key: TradeQueryMetricKey): readonly string[] {
   if (key === "net_pnl_per_100_shares") add("zero_total_share_quantity_denominator");
   if (key === "return_on_entry_notional") add("zero_total_entry_notional_denominator");
   if (key === "profit_factor") add("zero_total_loss_denominator");
+  if (key === "fees_as_percentage_of_gross_profit") add("zero_total_gross_profit_denominator");
+  if (key === "fees_as_percentage_of_gross_loss") add("zero_total_gross_loss_denominator");
   return Object.freeze(conditions);
 }
 
@@ -402,7 +510,14 @@ function unavailableReasonCodesFor(key: TradeQueryMetricKey): readonly string[] 
   if (SHARE_KEYS.has(key) || key === "net_pnl_per_100_shares") add("ti_v3_query_required_authority_unavailable");
   if (NOTIONAL_AUTHORITY_KEYS.has(key)) add("ti_v3_query_required_authority_unavailable");
   if (key === "net_pnl_per_100_shares" || key === "return_on_entry_notional") add("ti_v3_query_zero_denominator");
+  if (FEE_PERCENT_KEYS.has(key)) add("ti_v3_query_zero_denominator");
+  if (COMMISSION_KEYS.has(key)) add("ti_v3_query_charge_kind_coverage_unknown");
   if (key === "profit_factor") add("ti_v3_query_profit_factor_zero_loss_denominator");
+  if (NET_PNL_KEYS.has(key) || OUTCOME_KEYS.has(key) || CHARGE_KEYS.has(key) ||
+    key.includes("drawdown") || key.includes("giveback") ||
+    key === "green_to_red_day_count" || key === "red_to_green_day_count") {
+    add("ti_v3_query_charge_coverage_unknown");
+  }
   if (key === "largest_winner_contribution" || key === "net_pnl_excluding_largest_winner") add("ti_v3_query_no_winning_trade");
   if (key === "largest_loser_contribution" || key === "net_pnl_excluding_largest_loser") add("ti_v3_query_no_losing_trade");
   if (COUNT_DENOMINATOR_KEYS.has(key)) add("ti_v3_weekday_zero_denominator");

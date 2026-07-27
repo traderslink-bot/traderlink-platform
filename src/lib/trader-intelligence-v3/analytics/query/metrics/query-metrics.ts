@@ -47,6 +47,10 @@ function sum(values: readonly string[]): string {
   return result.value;
 }
 
+function orderedChargeValues(values: readonly string[]): readonly string[] {
+  return Object.freeze([...values].sort(compareCanonicalDecimals));
+}
+
 function decimalOrUnavailable(
   key: TradeQueryMetricKey,
   unit: string,
@@ -150,6 +154,19 @@ function availableAverageFromTotal(
       );
 }
 
+function availableOutcomeAverageFromTotal(
+  key: TradeQueryMetricKey,
+  unit: string,
+  currency: string | null,
+  total: string,
+  availableValues: readonly string[],
+  expectedCount: string,
+): ExactMetricValue {
+  return expectedCount === "0"
+    ? unavailableMetric(key, unit, currency, "ti_v3_query_zero_sample")
+    : availableAverageFromTotal(key, unit, currency, total, availableValues, expectedCount);
+}
+
 function subtractDecimal(left: string, right: string): string {
   const parsed = validateExactDecimal(right);
   if (!parsed.ok) throw new Error(parsed.error.code);
@@ -175,7 +192,31 @@ function metricFor(
   key: TradeQueryMetricKey,
   a: TradeQueryAccumulator,
 ): ExactMetricValue {
-  getTradeQueryMetricDeclaration(key);
+  const declaration = getTradeQueryMetricDeclaration(key);
+  const chargeCoverageUnknown = a.rows.some((row) =>
+    row.row.limitationCodes.includes("ti_v3_analytics_charge_coverage_unknown"));
+  const chargeCoverageDependent = declaration.unavailableReasonCodes.includes(
+    "ti_v3_query_charge_coverage_unknown",
+  );
+  if (chargeCoverageUnknown && chargeCoverageDependent) {
+    return unavailableMetric(
+      key,
+      declaration.unit,
+      declaration.currencyBehavior === "selected_partition" ? a.currency : null,
+      "ti_v3_query_charge_coverage_unknown",
+    );
+  }
+  const chargeKindCoverageDependent = declaration.unavailableReasonCodes.includes(
+    "ti_v3_query_charge_kind_coverage_unknown",
+  );
+  if (chargeKindCoverageDependent && a.rows.some((row) => row.row.chargeKindCoverageState !== "complete")) {
+    return unavailableMetric(
+      key,
+      declaration.unit,
+      declaration.currencyBehavior === "selected_partition" ? a.currency : null,
+      "ti_v3_query_charge_kind_coverage_unknown",
+    );
+  }
   const rowCount = a.rowCount;
   const net = a.netPnl;
   const grossProfit = a.grossProfit;
@@ -210,6 +251,22 @@ function metricFor(
       return integerMetric(key, "executions", a.totalExecutionCount);
     case "average_executions_per_trade":
       return ratioFromCounts(key, a.totalExecutionCount, rowCount);
+    case "limited_analytical_trade_count":
+      return integerMetric(key, "trades", a.limitedAnalyticalTradeCount);
+    case "missing_charge_coverage_trade_count":
+      return integerMetric(key, "trades", a.missingChargeCoverageTradeCount);
+    case "missing_share_quantity_authority_count":
+      return integerMetric(key, "trades", a.missingShareQuantityAuthorityCount);
+    case "missing_entry_notional_authority_count":
+      return integerMetric(key, "trades", a.missingEntryNotionalAuthorityCount);
+    case "unavailable_source_authority_trade_count":
+      return integerMetric(key, "trades", a.unavailableSourceAuthorityTradeCount);
+    case "manual_entry_trade_count":
+      return integerMetric(key, "trades", a.manualEntryTradeCount);
+    case "broker_import_trade_count":
+      return integerMetric(key, "trades", a.brokerImportTradeCount);
+    case "legacy_migration_trade_count":
+      return integerMetric(key, "trades", a.legacyMigrationTradeCount);
     case "total_trades":
       return integerMetric(key, "trades", rowCount);
     case "average_trades_per_trading_day":
@@ -248,8 +305,42 @@ function metricFor(
       return decimalMetric(key, "money", a.currency, grossLoss);
     case "gross_pnl":
       return decimalMetric(key, "money", a.currency, a.grossPnl);
+    case "average_gross_pnl":
+      return quotientMetric(key, "money", a.currency, a.grossPnl, rowCount);
+    case "median_gross_pnl":
+      return medianFromSorted(key, "money", a.currency, a.sortedGrossValues);
     case "signed_charges":
       return decimalMetric(key, "money", a.currency, a.signedCharges);
+    case "average_signed_charges":
+      return quotientMetric(key, "money", a.currency, a.signedCharges, rowCount);
+    case "median_signed_charges":
+      return medianFromSorted(key, "money", a.currency, orderedChargeValues(a.chargeValues));
+    case "commission_signed_charges":
+      return decimalMetric(key, "money", a.currency, a.commissionSignedCharges);
+    case "average_commission_signed_charges":
+      return quotientMetric(key, "money", a.currency, a.commissionSignedCharges, rowCount);
+    case "median_commission_signed_charges":
+      return medianFromSorted(key, "money", a.currency, a.sortedCommissionChargeValues);
+    case "gross_net_difference":
+      return decimalMetric(
+        key,
+        "money",
+        a.currency,
+        subtractDecimal(a.grossPnl, a.netPnl),
+      );
+    case "fees_as_percentage_of_gross_profit": {
+      const charges = absoluteExactDecimal(a.signedCharges);
+      return !charges.ok
+        ? unavailableMetric(key, "ratio", null, "ti_v3_query_zero_denominator")
+        : ratioFromDecimals(key, charges.value, a.grossProfit);
+    }
+    case "fees_as_percentage_of_gross_loss": {
+      const charges = absoluteExactDecimal(a.signedCharges);
+      const grossLossMagnitude = absoluteExactDecimal(a.grossLoss);
+      return !charges.ok || !grossLossMagnitude.ok
+        ? unavailableMetric(key, "ratio", null, "ti_v3_query_zero_denominator")
+        : ratioFromDecimals(key, charges.value, grossLossMagnitude.value);
+    }
     case "net_pnl":
       return decimalMetric(key, "money", a.currency, net);
     case "average_pnl":
@@ -311,6 +402,10 @@ function metricFor(
         a.currency,
         a.sortedLosingNetValues,
       );
+    case "total_winning_net_pnl":
+      return decimalMetric(key, "money", a.currency, a.winningNetPnl);
+    case "total_losing_net_pnl":
+      return decimalMetric(key, "money", a.currency, a.losingNetPnl);
     case "average_win_loss_ratio": {
       if (a.wins.length === 0 || a.losses.length === 0) {
         return unavailableMetric(key, "ratio", null, "ti_v3_query_zero_sample");
@@ -470,6 +565,40 @@ function metricFor(
             null,
             "ti_v3_query_required_authority_unavailable",
           );
+    case "average_winner_share_quantity":
+      return availableOutcomeAverageFromTotal(
+        key,
+        "shares",
+        null,
+        sum(a.winnerShareQuantityValues),
+        a.winnerShareQuantityValues,
+        String(a.wins.length),
+      );
+    case "median_winner_share_quantity":
+      return availableMedian(
+        key,
+        "shares",
+        null,
+        orderedChargeValues(a.winnerShareQuantityValues),
+        String(a.wins.length),
+      );
+    case "average_loser_share_quantity":
+      return availableOutcomeAverageFromTotal(
+        key,
+        "shares",
+        null,
+        sum(a.loserShareQuantityValues),
+        a.loserShareQuantityValues,
+        String(a.losses.length),
+      );
+    case "median_loser_share_quantity":
+      return availableMedian(
+        key,
+        "shares",
+        null,
+        orderedChargeValues(a.loserShareQuantityValues),
+        String(a.losses.length),
+      );
     case "average_entry_notional":
     case "average_position_size":
       return availableAverageFromTotal(
@@ -580,10 +709,80 @@ function metricFor(
       return ratioFromCounts(key, a.losingDayCount, String(a.daily.length));
     case "flat_day_percentage":
       return ratioFromCounts(key, a.flatDayCount, String(a.daily.length));
-    case "maximum_intraday_drawdown":
-      return decimalOrUnavailable(key, "money", a.currency, a.maximumIntradayDrawdown);
+    case "average_green_day_pnl":
+      return quotientMetric(
+        key,
+        "money",
+        a.currency,
+        sum(a.profitableDailyPnlValues),
+        String(a.profitableDailyPnlValues.length),
+      );
+    case "median_green_day_pnl":
+      return medianFromSorted(
+        key,
+        "money",
+        a.currency,
+        a.sortedProfitableDailyPnlValues,
+      );
+    case "average_red_day_pnl":
+      return quotientMetric(
+        key,
+        "money",
+        a.currency,
+        sum(a.losingDailyPnlValues),
+        String(a.losingDailyPnlValues.length),
+      );
+    case "median_red_day_pnl":
+      return medianFromSorted(
+        key,
+        "money",
+        a.currency,
+        a.sortedLosingDailyPnlValues,
+      );
+    case "maximum_intraday_realized_drawdown":
+      return decimalOrUnavailable(
+        key,
+        "money",
+        a.currency,
+        a.sortedDailyRealizedDrawdownMagnitudeValues.at(-1) ?? null,
+      );
     case "maximum_peak_profit_giveback":
-      return decimalOrUnavailable(key, "money", a.currency, a.maximumPeakProfitGiveback);
+      return decimalOrUnavailable(
+        key,
+        "money",
+        a.currency,
+        a.sortedDailyPeakProfitGivebackValues.at(-1) ?? null,
+      );
+    case "maximum_intraday_realized_recovery_from_trough":
+      return decimalOrUnavailable(
+        key,
+        "money",
+        a.currency,
+        a.sortedDailyRealizedRecoveryValues.at(-1) ?? null,
+      );
+    case "average_peak_profit_giveback":
+      return quotientMetric(
+        key,
+        "money",
+        a.currency,
+        sum(a.dailyPeakProfitGivebackValues),
+        String(a.daily.length),
+      );
+    case "median_peak_profit_giveback":
+      return medianFromSorted(
+        key,
+        "money",
+        a.currency,
+        a.sortedDailyPeakProfitGivebackValues,
+      );
+    case "days_with_peak_profit_giveback":
+      return integerMetric(key, "days", a.dayWithPeakProfitGivebackCount);
+    case "days_with_realized_drawdown":
+      return integerMetric(key, "days", a.dayWithRealizedDrawdownCount);
+    case "green_to_red_day_count":
+      return integerMetric(key, "days", a.greenToRedDayCount);
+    case "red_to_green_day_count":
+      return integerMetric(key, "days", a.redToGreenDayCount);
     case "longest_winning_trade_streak":
       return integerMetric(
         key,
@@ -596,6 +795,10 @@ function metricFor(
         "trades",
         a.sortedLosingStreakLengths.at(-1) ?? "0",
       );
+    case "current_winning_trade_streak":
+      return integerMetric(key, "trades", a.currentWinningStreakLength);
+    case "current_losing_trade_streak":
+      return integerMetric(key, "trades", a.currentLosingStreakLength);
     case "largest_winner_contribution":
       return a.largestWinnerNetPnl === null
         ? unavailableMetric(key, "money", a.currency, "ti_v3_query_no_winning_trade")

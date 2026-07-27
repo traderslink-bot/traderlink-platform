@@ -1,5 +1,7 @@
 import { compareUnicodeCodePoints } from "../../../domain/canonical";
 import {
+  addExactDecimals,
+  compareExactDecimals,
   compareExactRatios,
   createExactRatio,
   decimalToExactRatio,
@@ -23,6 +25,16 @@ export interface QueryRowSemantics {
   readonly sequenceInSession: bigint;
   readonly repeatAttempt: bigint;
   readonly previousCompletedOutcome: "none" | QueryOutcome | "ambiguous";
+  readonly priorCompletedStreakOutcome: "none" | "gain" | "loss" | "ambiguous";
+  readonly priorCompletedStreakLength: bigint | null;
+  readonly preEntryDailyPnl: string;
+  readonly preEntryDailyState: "green" | "red" | "flat";
+  readonly preEntryDailyPathState: "verified" | "ambiguous";
+  readonly preEntryHasCompletedGain: boolean;
+  readonly preEntryHasCompletedLoss: boolean;
+  readonly preEntryHasPeakProfitGiveback: boolean;
+  readonly preEntryHasGreenToRedTransition: boolean;
+  readonly preEntryHasRedToGreenTransition: boolean;
 }
 
 const NANOS_PER_SECOND = BigInt("1000000000");
@@ -127,6 +139,16 @@ export function buildQueryRowSemantics(rowsInput: readonly AnalyticalRow[]): rea
           compareUnicodeCodePoints(left.semanticRoundTripKey, right.semanticRoundTripKey));
     let completionIndex = 0;
     let lastCompletedOutcome: QueryRowSemantics["previousCompletedOutcome"] = "none";
+    let priorCompletedStreakOutcome: QueryRowSemantics["priorCompletedStreakOutcome"] = "none";
+    let priorCompletedStreakLength: bigint | null = BigInt("0");
+    let realizedPnl = "0";
+    let peakRealizedPnl = "0";
+    let hasCompletedGain = false;
+    let hasCompletedLoss = false;
+    let hasPeakProfitGiveback = false;
+    let hasGreenToRedTransition = false;
+    let hasRedToGreenTransition = false;
+    let dailyPathIsVerified = true;
     const attemptBySymbol = new Map<string, bigint>();
     for (let index = 0; index < ordered.length; index += 1) {
       const row = ordered[index];
@@ -137,15 +159,62 @@ export function buildQueryRowSemantics(rowsInput: readonly AnalyticalRow[]): rea
         completions[completionIndex].finalExitAt < row.firstEntryAt
       ) {
         const timestamp = completions[completionIndex].finalExitAt;
+        const completedAtTimestamp: AnalyticalRow[] = [];
         const outcomes = new Set<QueryOutcome>();
         while (
           completionIndex < completions.length &&
           completions[completionIndex].finalExitAt === timestamp
         ) {
-          outcomes.add(outcome(completions[completionIndex]));
+          const completed = completions[completionIndex];
+          outcomes.add(outcome(completed));
+          completedAtTimestamp.push(completed);
           completionIndex += 1;
         }
         lastCompletedOutcome = outcomes.size === 1 ? [...outcomes][0] : "ambiguous";
+        if (outcomes.size !== 1) {
+          priorCompletedStreakOutcome = "ambiguous";
+          priorCompletedStreakLength = null;
+        } else {
+          const completedOutcome = [...outcomes][0];
+          if (completedOutcome === "flat") {
+            priorCompletedStreakOutcome = "none";
+            priorCompletedStreakLength = BigInt("0");
+          } else if (
+            priorCompletedStreakOutcome === completedOutcome &&
+            priorCompletedStreakLength !== null
+          ) {
+            priorCompletedStreakLength += BigInt(completedAtTimestamp.length);
+          } else if (priorCompletedStreakOutcome !== "ambiguous") {
+            priorCompletedStreakOutcome = completedOutcome;
+            priorCompletedStreakLength = BigInt(completedAtTimestamp.length);
+          }
+        }
+        if (outcomes.size !== 1) dailyPathIsVerified = false;
+        for (const completed of completedAtTimestamp) {
+          const parsed = validateExactDecimal(completed.netPnl);
+          if (!parsed.ok) throw new Error(parsed.error.code);
+          const before = realizedPnl;
+          const next = addExactDecimals(realizedPnl, parsed.value);
+          if (!next.ok) throw new Error(next.error.code);
+          realizedPnl = next.value;
+          if (compareExactDecimals(parsed.value, "0") > 0) hasCompletedGain = true;
+          if (compareExactDecimals(parsed.value, "0") < 0) hasCompletedLoss = true;
+          if (!dailyPathIsVerified) continue;
+          if (compareExactDecimals(before, "0") > 0 && compareExactDecimals(realizedPnl, "0") < 0) {
+            hasGreenToRedTransition = true;
+          }
+          if (compareExactDecimals(before, "0") < 0 && compareExactDecimals(realizedPnl, "0") > 0) {
+            hasRedToGreenTransition = true;
+          }
+          if (compareExactDecimals(realizedPnl, peakRealizedPnl) > 0) {
+            peakRealizedPnl = realizedPnl;
+          } else if (
+            compareExactDecimals(peakRealizedPnl, "0") > 0 &&
+            compareExactDecimals(realizedPnl, peakRealizedPnl) < 0
+          ) {
+            hasPeakProfitGiveback = true;
+          }
+        }
       }
       const holdingNanoseconds = timestampNanoseconds(row.finalExitAt) - timestampNanoseconds(row.firstEntryAt);
       result.push(Object.freeze({
@@ -168,6 +237,18 @@ export function buildQueryRowSemantics(rowsInput: readonly AnalyticalRow[]): rea
         sequenceInSession: BigInt(index + 1),
         repeatAttempt: previousAttempts + BigInt("1"),
         previousCompletedOutcome: lastCompletedOutcome,
+        priorCompletedStreakOutcome,
+        priorCompletedStreakLength,
+        preEntryDailyPnl: realizedPnl,
+        preEntryDailyState: compareExactDecimals(realizedPnl, "0") > 0
+          ? "green"
+          : compareExactDecimals(realizedPnl, "0") < 0 ? "red" : "flat",
+        preEntryDailyPathState: dailyPathIsVerified ? "verified" : "ambiguous",
+        preEntryHasCompletedGain: dailyPathIsVerified && hasCompletedGain,
+        preEntryHasCompletedLoss: dailyPathIsVerified && hasCompletedLoss,
+        preEntryHasPeakProfitGiveback: dailyPathIsVerified && hasPeakProfitGiveback,
+        preEntryHasGreenToRedTransition: dailyPathIsVerified && hasGreenToRedTransition,
+        preEntryHasRedToGreenTransition: dailyPathIsVerified && hasRedToGreenTransition,
       }));
     }
   }

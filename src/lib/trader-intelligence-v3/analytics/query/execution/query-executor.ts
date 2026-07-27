@@ -26,6 +26,7 @@ import {
   calculateTradeQueryMetrics,
   metricSortValue,
 } from "../metrics/query-metrics";
+import { getTradeQueryMetricDeclaration } from "../metrics/metric-registry";
 import { buildQueryRowSemantics } from "./row-semantics";
 import { markVerifiedTradeQueryExecution } from "./verified-execution";
 
@@ -97,6 +98,34 @@ function boundedRows<T>(rows: readonly T[], maximum: string): readonly T[] {
   return Object.freeze(result);
 }
 
+const OUTCOME_DEPENDENT_FILTERS = new Set([
+  "realized_outcome",
+  "previous_completed_outcome",
+  "prior_completed_streak",
+  "pre_entry_daily_state",
+  "pre_entry_daily_path",
+]);
+
+const OUTCOME_DEPENDENT_GROUPINGS = new Set([
+  "previous_completed_outcome",
+  "prior_completed_streak_bucket",
+  "pre_entry_daily_state",
+]);
+
+function groupingRequiresChargeCoverage(grouping: TradeQueryPlan["grouping"]): boolean {
+  if (grouping.kind === "compound") {
+    return grouping.dimensions.some((dimension) => groupingRequiresChargeCoverage(dimension));
+  }
+  return OUTCOME_DEPENDENT_GROUPINGS.has(grouping.kind);
+}
+
+function planRequiresChargeCoverage(plan: TradeQueryPlan): boolean {
+  return plan.metrics.some((key) => getTradeQueryMetricDeclaration(key)
+    .unavailableReasonCodes.includes("ti_v3_query_charge_coverage_unknown")) ||
+    plan.filters.some((filter) => OUTCOME_DEPENDENT_FILTERS.has(filter.kind)) ||
+    groupingRequiresChargeCoverage(plan.grouping);
+}
+
 function groupCounts(
   group: TradeQueryGroup,
   candidateByIdentity: ReadonlyMap<string, TradeQueryGroup>,
@@ -130,6 +159,14 @@ export function executeTradeQuery(
   if (!data.ok) return data;
   const semantics = buildQueryRowSemantics(data.value.rows);
   const filtered = applyTradeQueryFilters(semantics, plan.value.filters);
+  if (
+    filtered.included.some((row) => row.row.limitationCodes.includes("ti_v3_analytics_charge_coverage_unknown")) &&
+    planRequiresChargeCoverage(plan.value)
+  ) return contractFailure("ti_v3_analytics_charge_coverage_unknown", "$.queryPlan.chargeCoverage");
+  const sourceFilterRequested = plan.value.filters.some((filter) =>
+    filter.kind === "source_identity" || filter.kind === "broker_code" || filter.kind === "source_kind");
+  const sourceAuthorityUnavailable = sourceFilterRequested && semantics.some((item) =>
+    item.row.sourceAuthority.state === "unavailable");
   const candidateGroups = groupTradeQueryRows(semantics, plan.value.grouping);
   const groups = groupTradeQueryRows(filtered.included, plan.value.grouping);
   if (BigInt(groups.length) > BigInt(plan.value.limits.groupLimit)) {
@@ -219,6 +256,9 @@ export function executeTradeQuery(
   const limitationCodes = [...new Set([
     ...authority.partitionReceipt.limitationCodes,
     ...evidence.flatMap((item) => item.limitationCodes),
+    ...(sourceAuthorityUnavailable
+      ? ["ti_v3_query_source_authority_unavailable"]
+      : []),
     ...(resultWasBounded ? ["ti_v3_query_result_rows_bounded"] : []),
     ...(sourceExclusionsUnassigned
       ? ["ti_v3_query_group_source_exclusions_unassigned"]
@@ -232,6 +272,10 @@ export function executeTradeQuery(
   if (data.value.excludedCandidates.length > 0) diagnostics.push(Object.freeze({
     code: "ti_v3_query_source_exclusions_present",
     affectedKeys: Object.freeze([plan.value.authority.partitionDigest]),
+  }));
+  if (sourceAuthorityUnavailable) diagnostics.push(Object.freeze({
+    code: "ti_v3_query_source_filter_partial_authority",
+    affectedKeys: Object.freeze([plan.value.queryPlanDigest]),
   }));
   if (BigInt(diagnostics.length) > BigInt(plan.value.limits.diagnosticLimit)) {
     return contractFailure("ti_v3_analytics_contract_oversized", "$.result.diagnostics");

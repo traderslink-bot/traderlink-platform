@@ -48,7 +48,8 @@ export type AnalyticalContractFailure = FoundationValidationFailure | {
     | "ti_v3_analytics_contract_currency_mismatch"
     | "ti_v3_analytics_contract_unit_mismatch"
     | "ti_v3_analytics_contract_reference_mismatch"
-    | "ti_v3_analytics_contract_oversized";
+    | "ti_v3_analytics_contract_oversized"
+    | "ti_v3_analytics_charge_coverage_unknown";
   readonly path: string;
 };
 

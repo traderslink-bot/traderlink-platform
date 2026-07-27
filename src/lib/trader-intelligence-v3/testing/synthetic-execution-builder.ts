@@ -44,6 +44,7 @@ export function buildSyntheticCanonicalExecution(
     price: "1.25",
     currency: "USD",
     charges: [{ kind: "commission", amount: "0.25", currency: "USD" }],
+    chargeCoverageState: "complete",
     brokerReportedNetCashAmount: null,
     orderId: "SYNTH-ORDER-0001",
     executionId: "SYNTH-EXEC-0001",

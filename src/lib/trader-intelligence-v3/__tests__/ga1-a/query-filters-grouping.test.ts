@@ -78,6 +78,52 @@ describe("GA1-A independent filters and deterministic grouping", () => {
       .toBe(BigInt(first.includedCount));
   });
 
+  it("supports bounded, deterministic compound grouping without nested or duplicate dimensions", () => {
+    const grouping: TradeQueryGrouping = {
+      kind: "compound",
+      dimensions: [
+        { kind: "session" },
+        { kind: "trade_sequence_bucket" },
+      ],
+    };
+    const first = run([], grouping);
+    const second = run([], grouping);
+    expect(first.rows.map((row) => row.groupIdentity)).toEqual(
+      second.rows.map((row) => row.groupIdentity),
+    );
+    expect(first.rows.every((row) => row.groupIdentity.startsWith("compound:"))).toBe(true);
+    expect(first.rows.reduce((total, row) => total + BigInt(row.includedCount), BigInt("0")))
+      .toBe(BigInt(first.includedCount));
+
+    const fixture = buildSyntheticQueryFixture();
+    const invalid = executeTradeQuery({
+      source: fixture.source,
+      partitionReceipt: fixture.partition,
+      queryPlan: fixture.plan({
+        grouping: {
+          kind: "compound",
+          dimensions: [{ kind: "session" }, { kind: "session" }],
+        },
+      }),
+    });
+    expect(invalid).toMatchObject({ ok: false, error: { path: "$.grouping.dimensions" } });
+
+    const nested = executeTradeQuery({
+      source: fixture.source,
+      partitionReceipt: fixture.partition,
+      queryPlan: fixture.plan({
+        grouping: {
+          kind: "compound",
+          dimensions: [
+            { kind: "compound", dimensions: [{ kind: "session" }, { kind: "direction" }] },
+            { kind: "trade_sequence_bucket" },
+          ],
+        } as unknown as TradeQueryGrouping,
+      }),
+    });
+    expect(nested).toMatchObject({ ok: false, error: { path: "$.grouping.dimensions[0].kind" } });
+  });
+
   it("is permutation invariant and keeps same-time mixed completions ambiguous", () => {
     const first = buildSyntheticQueryFixture(30, false);
     const reversed = buildSyntheticQueryFixture(30, true);

@@ -15,8 +15,23 @@ function matches(row: QueryRowSemantics, filter: TradeQueryFilter): boolean {
     case "symbol":
       return filter.values.includes(row.row.stableInstrumentKey) ||
         filter.values.includes(row.row.displayedSymbol);
+    case "source_identity":
+      return row.row.sourceAuthority.state === "available" &&
+        filter.values.includes(row.row.sourceAuthority.sourceIdentity);
+    case "broker_code":
+      return row.row.sourceAuthority.state === "available" &&
+        filter.values.includes(row.row.sourceAuthority.brokerCode);
+    case "source_kind":
+      return row.row.sourceAuthority.state === "available" &&
+        filter.values.includes(row.row.sourceAuthority.sourceKind);
+    case "charge_coverage": {
+      const unknown = row.row.limitationCodes.includes("ti_v3_analytics_charge_coverage_unknown");
+      return filter.value === "unknown" ? unknown : !unknown;
+    }
     case "direction":
       return filter.values.includes(row.row.direction);
+    case "session":
+      return filter.values.includes(row.row.session);
     case "currency":
       return row.row.currency === filter.value;
     case "realized_outcome":
@@ -36,6 +51,20 @@ function matches(row: QueryRowSemantics, filter: TradeQueryFilter): boolean {
       return withinBigInt(row.sequenceInSession, filter.minimum, filter.maximum);
     case "previous_completed_outcome":
       return filter.values.includes(row.previousCompletedOutcome);
+    case "prior_completed_streak":
+      return row.priorCompletedStreakOutcome === filter.outcome &&
+        row.priorCompletedStreakLength !== null &&
+        withinBigInt(row.priorCompletedStreakLength, filter.minimum, filter.maximum);
+    case "pre_entry_daily_state":
+      return filter.values.includes(row.preEntryDailyState);
+      case "pre_entry_daily_path":
+        return row.preEntryDailyPathState === "verified" && (
+          filter.values.includes("after_first_win") && row.preEntryHasCompletedGain ||
+          filter.values.includes("after_first_loss") && row.preEntryHasCompletedLoss ||
+          filter.values.includes("after_peak_profit_giveback") && row.preEntryHasPeakProfitGiveback ||
+        filter.values.includes("after_green_to_red") && row.preEntryHasGreenToRedTransition ||
+        filter.values.includes("after_red_to_green") && row.preEntryHasRedToGreenTransition
+      );
     case "holding_time_seconds":
       return withinBigInt(row.holdingSecondsFloor, filter.minimum, filter.maximum);
     case "repeat_attempt":

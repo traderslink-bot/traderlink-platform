@@ -26,7 +26,9 @@ function metric(row: TradeQueryResultRow, key: string): ExactMetricValue {
 }
 
 function directMetrics(
-  overrides: Partial<Pick<AnalyticalRow, "entryNotional" | "shareQuantity">>,
+  overrides: Partial<Pick<AnalyticalRow,
+    "entryNotional" | "shareQuantity" | "limitationCodes" | "coverageState" | "evidenceQuality"
+  >>,
   keys: readonly TradeQueryMetricKey[],
 ): readonly ExactMetricValue[] {
   const template = buildSyntheticQueryFixture().derived.datasetReceipt.rows[0];
@@ -87,23 +89,38 @@ describe("GA1-A audit remediation and metric registry", () => {
       requiredFields: ["firstEntryAt", "finalExitAt", "netPnl"],
       requiredDerivedSemantics: ["realized_outcome", "completed_holding_duration"],
       unavailableConditions: ["zero_total_population", "no_winning_trade"],
-      unavailableReasonCodes: ["ti_v3_query_zero_sample"],
+      unavailableReasonCodes: expect.arrayContaining([
+        "ti_v3_query_charge_coverage_unknown",
+        "ti_v3_query_zero_sample",
+      ]),
     });
     expect(declaration("median_loser_entry_notional")).toMatchObject({
       requiredFields: ["entryNotional", "netPnl"],
       requiredDerivedSemantics: ["realized_outcome", "complete_entry_notional_authority"],
       unavailableConditions: ["zero_total_population", "no_losing_trade", "incomplete_entry_notional_authority"],
-      unavailableReasonCodes: ["ti_v3_query_required_authority_unavailable", "ti_v3_query_zero_sample"],
+      unavailableReasonCodes: expect.arrayContaining([
+        "ti_v3_query_charge_coverage_unknown",
+        "ti_v3_query_required_authority_unavailable",
+        "ti_v3_query_zero_sample",
+      ]),
     });
     expect(declaration("net_pnl_per_100_shares")).toMatchObject({
       requiredFields: ["shareQuantity", "netPnl"],
       unavailableConditions: ["zero_total_population", "incomplete_share_quantity_authority", "zero_total_share_quantity_denominator"],
-      unavailableReasonCodes: ["ti_v3_query_required_authority_unavailable", "ti_v3_query_zero_denominator"],
+      unavailableReasonCodes: expect.arrayContaining([
+        "ti_v3_query_charge_coverage_unknown",
+        "ti_v3_query_required_authority_unavailable",
+        "ti_v3_query_zero_denominator",
+      ]),
     });
     expect(declaration("return_on_entry_notional")).toMatchObject({
       requiredFields: ["entryNotional", "netPnl"],
       unavailableConditions: ["zero_total_population", "incomplete_entry_notional_authority", "zero_total_entry_notional_denominator"],
-      unavailableReasonCodes: ["ti_v3_query_required_authority_unavailable", "ti_v3_query_zero_denominator"],
+      unavailableReasonCodes: expect.arrayContaining([
+        "ti_v3_query_charge_coverage_unknown",
+        "ti_v3_query_required_authority_unavailable",
+        "ti_v3_query_zero_denominator",
+      ]),
     });
     expect(declaration("average_share_quantity")).toMatchObject({
       unavailableConditions: ["zero_total_population", "incomplete_share_quantity_authority"],
@@ -114,7 +131,7 @@ describe("GA1-A audit remediation and metric registry", () => {
     expect(declaration("longest_winning_trade_streak")).toMatchObject({
       unavailablePolicy: "available_zero_when_no_matching_streak",
       unavailableConditions: [],
-      unavailableReasonCodes: [],
+      unavailableReasonCodes: ["ti_v3_query_charge_coverage_unknown"],
     });
     expect(declaration("maximum_trades_per_trading_day")).toMatchObject({
       unavailablePolicy: "available_at_zero_population",
@@ -189,6 +206,23 @@ describe("GA1-A audit remediation and metric registry", () => {
       { entryNotional: { state: "available", amount: "0", currency: "USD" as AnalyticalRow["currency"] } },
       ["average_entry_notional", "median_entry_notional", "maximum_entry_notional"],
     ).every((value) => value.kind !== "unavailable")).toBe(true);
+    const unknownChargeCoverage = directMetrics(
+      {
+        limitationCodes: ["ti_v3_analytics_charge_coverage_unknown"],
+        coverageState: "limited",
+        evidenceQuality: "verified_exact_with_limitations",
+      },
+      ["gross_pnl", "total_trades", "trading_day_count", "signed_charges", "net_pnl", "win_count"],
+    );
+    for (const key of ["gross_pnl", "total_trades", "trading_day_count"] as const) {
+      expect(unknownChargeCoverage.find((value) => value.metricKey === key)?.kind).not.toBe("unavailable");
+    }
+    for (const key of ["signed_charges", "net_pnl", "win_count"] as const) {
+      expect(unknownChargeCoverage.find((value) => value.metricKey === key)).toMatchObject({
+        kind: "unavailable",
+        reasonCode: "ti_v3_query_charge_coverage_unknown",
+      });
+    }
   });
 
   it("binds grouped candidate, included, and excluded authority to evidence", () => {

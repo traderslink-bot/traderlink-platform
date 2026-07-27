@@ -90,6 +90,9 @@ export interface FlatToFlatRoundTrip {
   weightedAverageExitPrice: ExactRatio;
   grossRealizedPnl: ExactMoneyAmount;
   signedCharges: ExactMoneyAmount;
+  readonly signedChargesByKind: readonly Readonly<{ readonly kind: string; readonly amount: ExactMoneyAmount }>[];
+  /** Whether the per-kind amounts reconcile to signedCharges for this trade. */
+  readonly chargeKindCoverageState: "complete" | "unknown";
   netAnalyticalPnl: ExactMoneyAmount;
   signedCashFlowNetPnl: ExactMoneyAmount;
   executionDigests: readonly CanonicalExecutionDigest[];
