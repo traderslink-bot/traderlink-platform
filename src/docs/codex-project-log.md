@@ -18,7 +18,9 @@ direction.
 
 **CI trigger policy:** the shared `test-and-verify` workflow runs after pushes
 to `main` and when a pull request is marked ready for review. Draft PR creation
-and draft branch updates do not run the full repository verification job.
+and draft branch updates do not run the full repository verification job. This
+reduces CI usage during draft Codex iteration without disabling main-branch or
+ready-for-review verification.
 
 # 2026-07-27 - Analytics Agent v1 Foundation complete
 

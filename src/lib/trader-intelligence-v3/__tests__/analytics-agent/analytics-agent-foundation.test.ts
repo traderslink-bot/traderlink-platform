@@ -35,7 +35,17 @@ describe("Analytics Agent v1 Foundation", () => {
     expect(resolveAnalyticsAgentIntent("Does hold time affect my performance?").intent).toBe("holding_time_performance");
     expect(resolveAnalyticsAgentIntent("Show long vs short performance.").intent).toBe("direction_performance");
     expect(resolveAnalyticsAgentIntent("Does position size affect my results?").intent).toBe("position_size_performance");
-    expect(resolveAnalyticsAgentIntent("Compare this period with last period.").intent).toBe("period_comparison");
+    for (const question of [
+      "Compare this period with last period.",
+      "Compare this month with last month.",
+      "Compare this week with last week.",
+      "Compare this month to last month.",
+      "Compare this week to last week.",
+      "This month compared with last month.",
+      "This week compared with last week.",
+    ]) {
+      expect(resolveAnalyticsAgentIntent(question).intent).toBe("period_comparison");
+    }
   });
 
   it("builds an engine-backed core-performance answer with bounded evidence and replay identity", () => {
