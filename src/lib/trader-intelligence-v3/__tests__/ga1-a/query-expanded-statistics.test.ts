@@ -40,17 +40,25 @@ describe("GA1-A expanded execution-only statistics", () => {
     const { result } = execute([
       "candidate_count", "included_count", "excluded_count", "inclusion_rate",
       "trading_day_count", "unique_account_count", "unique_symbol_count",
-      "total_trades", "average_trades_per_trading_day",
+      "total_trades", "limited_analytical_trade_count",
+      "missing_charge_coverage_trade_count",
+      "missing_share_quantity_authority_count", "missing_entry_notional_authority_count",
+      "unavailable_source_authority_trade_count", "manual_entry_trade_count",
+      "broker_import_trade_count", "legacy_migration_trade_count",
+      "average_trades_per_trading_day",
       "median_trades_per_trading_day", "maximum_trades_per_trading_day",
       "minimum_trades_per_trading_day", "long_trade_count", "short_trade_count",
       "long_trade_percentage", "short_trade_percentage",
       "average_attempts_per_symbol", "median_attempts_per_symbol",
       "repeat_attempt_trade_count", "repeat_attempt_percentage",
-      "gross_profit", "gross_loss", "gross_pnl", "signed_charges", "net_pnl",
+      "gross_profit", "gross_loss", "gross_pnl", "average_gross_pnl", "median_gross_pnl",
+      "signed_charges", "fees_as_percentage_of_gross_profit",
+      "fees_as_percentage_of_gross_loss", "net_pnl",
       "average_pnl", "median_pnl", "average_daily_pnl", "median_daily_pnl",
       "best_trade", "worst_trade", "best_trading_day", "worst_trading_day",
       "win_count", "loss_count", "flat_count", "win_rate", "loss_rate",
       "flat_rate", "average_winning_trade", "average_losing_trade",
+      "total_winning_net_pnl", "total_losing_net_pnl",
       "average_win_loss_ratio", "profit_factor", "breakeven_win_rate",
     ]);
     expect(metric(result, "candidate_count")).toMatchObject({ value: "30" });
@@ -64,6 +72,14 @@ describe("GA1-A expanded execution-only statistics", () => {
     expect(metric(result, "unique_account_count")).toMatchObject({ value: "1" });
     expect(metric(result, "unique_symbol_count")).toMatchObject({ value: "3" });
     expect(metric(result, "total_trades")).toMatchObject({ value: "30" });
+    expect(metric(result, "limited_analytical_trade_count")).toMatchObject({ value: "0" });
+    expect(metric(result, "missing_charge_coverage_trade_count")).toMatchObject({ value: "0" });
+    expect(metric(result, "missing_share_quantity_authority_count")).toMatchObject({ value: "0" });
+    expect(metric(result, "missing_entry_notional_authority_count")).toMatchObject({ value: "0" });
+    expect(metric(result, "unavailable_source_authority_trade_count")).toMatchObject({ value: "0" });
+    expect(metric(result, "manual_entry_trade_count")).toMatchObject({ value: "0" });
+    expect(metric(result, "broker_import_trade_count")).toMatchObject({ value: "30" });
+    expect(metric(result, "legacy_migration_trade_count")).toMatchObject({ value: "0" });
     expect(metric(result, "average_trades_per_trading_day")).toMatchObject({
       numerator: "30",
       denominator: "7",
@@ -94,7 +110,17 @@ describe("GA1-A expanded execution-only statistics", () => {
     expect(metric(result, "gross_profit")).toMatchObject({ value: "45" });
     expect(metric(result, "gross_loss")).toMatchObject({ value: "-30" });
     expect(metric(result, "gross_pnl")).toMatchObject({ value: "15" });
+    expect(metric(result, "average_gross_pnl")).toMatchObject({ value: "0.5" });
+    expect(metric(result, "median_gross_pnl")).toMatchObject({ value: "1" });
     expect(metric(result, "signed_charges")).toMatchObject({ value: "0" });
+    expect(metric(result, "fees_as_percentage_of_gross_profit")).toMatchObject({
+      numerator: "0",
+      denominator: "1",
+    });
+    expect(metric(result, "fees_as_percentage_of_gross_loss")).toMatchObject({
+      numerator: "0",
+      denominator: "1",
+    });
     expect(metric(result, "net_pnl")).toMatchObject({ value: "15" });
     expect(metric(result, "average_pnl")).toMatchObject({ value: "0.5" });
     expect(metric(result, "median_pnl")).toMatchObject({ value: "1" });
@@ -115,6 +141,8 @@ describe("GA1-A expanded execution-only statistics", () => {
     expect(metric(result, "flat_rate")).toMatchObject({ numerator: "1", denominator: "5" });
     expect(metric(result, "average_winning_trade")).toMatchObject({ value: "2.5" });
     expect(metric(result, "average_losing_trade")).toMatchObject({ value: "-5" });
+    expect(metric(result, "total_winning_net_pnl")).toMatchObject({ value: "45" });
+    expect(metric(result, "total_losing_net_pnl")).toMatchObject({ value: "-30" });
     expect(metric(result, "average_win_loss_ratio")).toMatchObject({
       numerator: "1",
       denominator: "2",
@@ -134,12 +162,17 @@ describe("GA1-A expanded execution-only statistics", () => {
       "average_holding_time", "median_holding_time", "minimum_holding_time",
       "maximum_holding_time", "average_share_quantity", "median_share_quantity",
       "maximum_share_quantity", "average_entry_notional",
+      "average_winner_share_quantity", "median_winner_share_quantity",
+      "average_loser_share_quantity", "median_loser_share_quantity",
       "median_entry_notional", "maximum_entry_notional",
       "net_pnl_per_100_shares", "return_on_entry_notional",
       "profitable_trading_day_count", "losing_trading_day_count",
       "flat_trading_day_count", "profitable_day_percentage",
       "losing_day_percentage", "flat_day_percentage",
+      "average_green_day_pnl", "median_green_day_pnl",
+      "average_red_day_pnl", "median_red_day_pnl",
       "longest_winning_trade_streak", "longest_losing_trade_streak",
+      "current_winning_trade_streak", "current_losing_trade_streak",
       "net_pnl_excluding_largest_winner",
       "net_pnl_excluding_largest_loser",
       "net_pnl_excluding_largest_winner_and_loser",
@@ -154,6 +187,10 @@ describe("GA1-A expanded execution-only statistics", () => {
     expect(metric(result, "average_share_quantity")).toMatchObject({ value: "100" });
     expect(metric(result, "median_share_quantity")).toMatchObject({ value: "100" });
     expect(metric(result, "maximum_share_quantity")).toMatchObject({ value: "100" });
+    expect(metric(result, "average_winner_share_quantity")).toMatchObject({ value: "100" });
+    expect(metric(result, "median_winner_share_quantity")).toMatchObject({ value: "100" });
+    expect(metric(result, "average_loser_share_quantity")).toMatchObject({ value: "100" });
+    expect(metric(result, "median_loser_share_quantity")).toMatchObject({ value: "100" });
     expect(metric(result, "average_entry_notional")).toMatchObject({ value: "200" });
     expect(metric(result, "median_entry_notional")).toMatchObject({ value: "200" });
     expect(metric(result, "maximum_entry_notional")).toMatchObject({ value: "300" });
@@ -180,8 +217,14 @@ describe("GA1-A expanded execution-only statistics", () => {
       numerator: "1",
       denominator: "7",
     });
+    expect(metric(result, "average_green_day_pnl")).toMatchObject({ value: "3.2" });
+    expect(metric(result, "median_green_day_pnl")).toMatchObject({ value: "2" });
+    expect(metric(result, "average_red_day_pnl")).toMatchObject({ value: "-1" });
+    expect(metric(result, "median_red_day_pnl")).toMatchObject({ value: "-1" });
     expect(metric(result, "longest_winning_trade_streak")).toMatchObject({ value: "4" });
     expect(metric(result, "longest_losing_trade_streak")).toMatchObject({ value: "1" });
+    expect(metric(result, "current_winning_trade_streak")).toMatchObject({ value: "1" });
+    expect(metric(result, "current_losing_trade_streak")).toMatchObject({ value: "0" });
     expect(metric(result, "net_pnl_excluding_largest_winner")).toMatchObject({ value: "11" });
     expect(metric(result, "net_pnl_excluding_largest_loser")).toMatchObject({ value: "20" });
     expect(metric(result, "net_pnl_excluding_largest_winner_and_loser"))

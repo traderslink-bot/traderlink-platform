@@ -172,6 +172,11 @@ describe("Trader Intelligence v3 FIFO analytical P/L", () => {
       netAnalyticalPnl: "4.925",
       signedCashFlow: "4.925",
     });
+    expect(result.flatToFlatRoundTrips[0].signedChargesByKind).toEqual([
+      { kind: "commission", amount: "0.1" },
+      { kind: "liquidity_rebate", amount: "-0.025" },
+    ]);
+    expect(result.flatToFlatRoundTrips[0].chargeKindCoverageState).toBe("complete");
   });
 
   it("handles long-to-short reversal without fabricating executions", () => {

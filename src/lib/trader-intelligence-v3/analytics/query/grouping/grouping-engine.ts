@@ -28,6 +28,10 @@ function pad(value: bigint, width: number): string {
   return value.toString().padStart(width, "0");
 }
 
+function compoundIdentityPart(value: string): string {
+  return `${value.length}:${value}`;
+}
+
 function bucketForRatio(
   row: QueryRowSemantics,
   value: QueryRowSemantics["entryPrice"],
@@ -52,6 +56,17 @@ export function tradeQueryGroupAssignment(
 ): TradeQueryGroupAssignment {
   let facts: readonly [string, string, string];
   switch (grouping.kind) {
+    case "compound": {
+      const dimensions = grouping.dimensions.map((dimension) =>
+        tradeQueryGroupAssignment(row, dimension),
+      );
+      facts = [
+        `compound:${dimensions.map((dimension) => compoundIdentityPart(dimension.groupIdentity)).join("|")}`,
+        dimensions.map((dimension) => dimension.groupLabel).join(" × "),
+        dimensions.map((dimension) => compoundIdentityPart(dimension.canonicalOrder)).join("|"),
+      ];
+      break;
+    }
     case "aggregate": facts = ["aggregate:all", "All included trades", "0"]; break;
     case "day":
       facts = [`day:${row.row.sessionDate}`, row.row.sessionDate, row.row.sessionDate];
@@ -59,6 +74,11 @@ export function tradeQueryGroupAssignment(
     case "month": {
       const month = row.row.sessionDate.slice(0, 7);
       facts = [`month:${month}`, month, month];
+      break;
+    }
+    case "year": {
+      const year = row.row.sessionDate.slice(0, 4);
+      facts = [`year:${year}`, year, year];
       break;
     }
     case "week": {
@@ -70,6 +90,9 @@ export function tradeQueryGroupAssignment(
     }
     case "weekday":
       facts = [`weekday:${row.row.weekday}`, row.row.weekday, WEEKDAY_ORDER[row.row.weekday]];
+      break;
+    case "session":
+      facts = [`session:${row.row.session}`, row.row.session, row.row.session];
       break;
     case "time_bucket": {
       const time = grouping.source === "entry" ? row.entryTime : row.exitTime;
@@ -99,6 +122,24 @@ export function tradeQueryGroupAssignment(
       break;
     case "previous_completed_outcome":
       facts = [`previous:${row.previousCompletedOutcome}`, row.previousCompletedOutcome, row.previousCompletedOutcome];
+      break;
+    case "prior_completed_streak_bucket":
+      facts = row.priorCompletedStreakLength === null
+        ? ["prior_streak:ambiguous", "Ambiguous prior completed-trade streak", "z"]
+        : row.priorCompletedStreakOutcome === "gain" || row.priorCompletedStreakOutcome === "loss"
+          ? [
+              `prior_streak:${row.priorCompletedStreakOutcome}:${row.priorCompletedStreakLength}`,
+              `After ${row.priorCompletedStreakLength} prior ${row.priorCompletedStreakOutcome === "gain" ? "win" : "loss"}${row.priorCompletedStreakLength === BigInt("1") ? "" : "es"}`,
+              `${row.priorCompletedStreakOutcome}:${pad(row.priorCompletedStreakLength, 20)}`,
+            ]
+          : ["prior_streak:none", "No prior win/loss streak", "0"];
+      break;
+    case "pre_entry_daily_state":
+      facts = [
+        `pre_entry_daily_state:${row.preEntryDailyState}`,
+        `Already ${row.preEntryDailyState} before entry`,
+        row.preEntryDailyState,
+      ];
       break;
     case "repeat_attempt":
       facts = [`repeat:${row.repeatAttempt}`, `Attempt ${row.repeatAttempt}`, pad(row.repeatAttempt, 20)];
@@ -140,15 +181,42 @@ export function tradeQueryGroupAssignment(
     case "direction":
       facts = [`direction:${row.row.direction}`, row.row.direction, row.row.direction];
       break;
-    case "session":
-      facts = [`session:${row.row.session}`, row.row.session, row.row.session];
-      break;
     case "symbol":
       facts = [`symbol:${row.row.stableInstrumentKey}`, row.row.displayedSymbol, row.row.stableInstrumentKey];
       break;
     case "account":
       facts = [`account:${row.row.canonicalAccountKey}`, row.row.canonicalAccountKey, row.row.canonicalAccountKey];
       break;
+    case "source_identity":
+      facts = row.row.sourceAuthority.state === "available"
+        ? [
+            `source:${row.row.sourceAuthority.sourceIdentity}`,
+            row.row.sourceAuthority.sourceIdentity,
+            row.row.sourceAuthority.sourceIdentity,
+          ]
+        : ["source:unavailable", "Source authority unavailable", "z"];
+      break;
+    case "broker_code":
+      facts = row.row.sourceAuthority.state === "available"
+        ? [
+            `broker:${row.row.sourceAuthority.brokerCode}`,
+            row.row.sourceAuthority.brokerCode,
+            row.row.sourceAuthority.brokerCode,
+          ]
+        : ["broker:unavailable", "Broker authority unavailable", "z"];
+      break;
+    case "source_kind":
+      facts = row.row.sourceAuthority.state === "available"
+        ? [`source_kind:${row.row.sourceAuthority.sourceKind}`, row.row.sourceAuthority.sourceKind, row.row.sourceAuthority.sourceKind]
+        : ["source_kind:unavailable", "Source kind unavailable", "z"];
+      break;
+    case "charge_coverage": {
+      const unknown = row.row.limitationCodes.includes("ti_v3_analytics_charge_coverage_unknown");
+      facts = unknown
+        ? ["charge_coverage:unknown", "Charge coverage unknown", "unknown"]
+        : ["charge_coverage:complete", "Charge coverage complete", "complete"];
+      break;
+    }
   }
   return Object.freeze({
     groupIdentity: facts[0],

@@ -7,6 +7,7 @@ import {
   type ExactResult,
 } from "../../../domain/exact";
 import type { CanonicalContentDigest } from "../../../domain/identity";
+import type { ExecutionSourceKind } from "../../../domain/execution/canonical-execution";
 import {
   getVerifiedDerivedAnalyticalDataset,
   type AnalyticalDatasetDerivationReceipt,
@@ -39,13 +40,15 @@ export const TRADE_QUERY_PLAN_SEMANTIC_VERSION = "v1" as const;
 export const TRADE_QUERY_LIMITS = Object.freeze({
   // Aliases normalize to canonical filters, leaving 16 independently
   // selectable filter identities. The public capacity reflects that inventory.
-  maximumFilters: 16,
+  maximumFilters: 20,
   maximumMetrics: 64,
   maximumOrderings: 3,
+  maximumGroupingDepth: 3,
   maximumGroups: 256,
   maximumResultRows: 256,
   maximumEvidencePerGroup: 16,
   maximumEvidenceTotal: 512,
+  maximumDistributionBuckets: 32,
   maximumDiagnostics: 128,
   maximumPlanCodeUnits: 65_536,
   maximumResultCodeUnits: 1_048_576,
@@ -80,7 +83,12 @@ export type TradeQueryFilter = Readonly<
   | { readonly kind: "date_range"; readonly startDate: string; readonly endDate: string }
   | { readonly kind: "account"; readonly values: readonly string[] }
   | { readonly kind: "symbol"; readonly values: readonly string[] }
+  | { readonly kind: "source_identity"; readonly values: readonly string[] }
+  | { readonly kind: "broker_code"; readonly values: readonly string[] }
+  | { readonly kind: "source_kind"; readonly values: readonly ExecutionSourceKind[] }
+  | { readonly kind: "charge_coverage"; readonly value: "complete" | "unknown" }
   | { readonly kind: "direction"; readonly values: readonly ("long" | "short")[] }
+  | { readonly kind: "session"; readonly values: readonly ("premarket" | "regular" | "after_hours" | "overnight" | "not_applicable")[] }
   | { readonly kind: "currency"; readonly value: CurrencyCode }
   | { readonly kind: "realized_outcome"; readonly values: readonly QueryOutcome[] }
   | { readonly kind: "weekday"; readonly values: readonly QueryWeekday[] }
@@ -90,6 +98,9 @@ export type TradeQueryFilter = Readonly<
   | { readonly kind: "price_range"; readonly minimum: string | null; readonly maximum: string | null }
   | { readonly kind: "sequence_in_session"; readonly minimum: string | null; readonly maximum: string | null }
   | { readonly kind: "previous_completed_outcome"; readonly values: readonly ("none" | QueryOutcome | "ambiguous")[] }
+  | { readonly kind: "prior_completed_streak"; readonly outcome: "gain" | "loss"; readonly minimum: string | null; readonly maximum: string | null }
+  | { readonly kind: "pre_entry_daily_state"; readonly values: readonly ("green" | "red" | "flat")[] }
+  | { readonly kind: "pre_entry_daily_path"; readonly values: readonly ("after_first_win" | "after_first_loss" | "after_peak_profit_giveback" | "after_green_to_red" | "after_red_to_green")[] }
   | { readonly kind: "holding_time_seconds"; readonly minimum: string | null; readonly maximum: string | null }
   | { readonly kind: "repeat_attempt"; readonly minimum: string | null; readonly maximum: string | null }
   | { readonly kind: "share_quantity_range"; readonly minimum: string | null; readonly maximum: string | null }
@@ -97,18 +108,22 @@ export type TradeQueryFilter = Readonly<
   | { readonly kind: "position_size"; readonly minimum: string | null; readonly maximum: string | null }
 >;
 
-export type TradeQueryGrouping = Readonly<
+export type TradeQueryGroupingDimension = Readonly<
   | { readonly kind: "aggregate" }
   | { readonly kind: "day" }
   | { readonly kind: "month" }
   | { readonly kind: "week" }
   | { readonly kind: "weekday" }
+  | { readonly kind: "year" }
+  | { readonly kind: "session" }
   | { readonly kind: "time_bucket"; readonly source: "entry" | "exit"; readonly bucketMinutes: string }
   | { readonly kind: "entry_price_range"; readonly boundaries: readonly string[] }
   | { readonly kind: "price_range"; readonly boundaries: readonly string[] }
   | { readonly kind: "trade_sequence" }
   | { readonly kind: "trade_sequence_bucket" }
   | { readonly kind: "previous_completed_outcome" }
+  | { readonly kind: "prior_completed_streak_bucket" }
+  | { readonly kind: "pre_entry_daily_state" }
   | { readonly kind: "repeat_attempt" }
   | { readonly kind: "repeat_attempt_bucket" }
   | { readonly kind: "holding_time_bucket"; readonly boundariesSeconds: readonly string[] }
@@ -116,10 +131,18 @@ export type TradeQueryGrouping = Readonly<
   | { readonly kind: "entry_notional_bucket"; readonly boundaries: readonly string[] }
   | { readonly kind: "position_size_bucket"; readonly boundaries: readonly string[] }
   | { readonly kind: "direction" }
-  | { readonly kind: "session" }
   | { readonly kind: "symbol" }
   | { readonly kind: "account" }
+  | { readonly kind: "source_identity" }
+  | { readonly kind: "broker_code" }
+  | { readonly kind: "source_kind" }
+  | { readonly kind: "charge_coverage" }
 >;
+
+export type TradeQueryGrouping = TradeQueryGroupingDimension | Readonly<{
+  readonly kind: "compound";
+  readonly dimensions: readonly TradeQueryGroupingDimension[];
+}>;
 
 export { TRADE_QUERY_METRIC_KEYS };
 export type { TradeQueryMetricKey };
@@ -168,10 +191,11 @@ export interface TradeQueryAuthority {
 }
 
 const FILTER_KINDS = new Set([
-  "date_range", "account", "symbol", "direction", "currency",
+  "date_range", "account", "symbol", "source_identity", "broker_code", "source_kind", "charge_coverage", "direction", "session", "currency",
   "realized_outcome", "weekday", "entry_time_range", "exit_time_range",
   "entry_price_range", "price_range", "sequence_in_session",
-  "previous_completed_outcome", "holding_time_seconds", "repeat_attempt",
+  "previous_completed_outcome", "prior_completed_streak", "pre_entry_daily_state", "pre_entry_daily_path",
+  "holding_time_seconds", "repeat_attempt",
   "share_quantity_range", "entry_notional_range", "position_size",
 ]);
 const WEEKDAYS = new Set<QueryWeekday>([
@@ -180,13 +204,19 @@ const WEEKDAYS = new Set<QueryWeekday>([
 ]);
 const OUTCOMES = new Set<QueryOutcome>(["gain", "loss", "flat"]);
 const PREVIOUS_OUTCOMES = new Set(["none", "gain", "loss", "flat", "ambiguous"]);
+const SESSIONS = new Set(["premarket", "regular", "after_hours", "overnight", "not_applicable"]);
+const PRE_ENTRY_DAILY_STATES = new Set(["green", "red", "flat"]);
+const PRE_ENTRY_DAILY_PATHS = new Set([
+  "after_first_win", "after_first_loss", "after_peak_profit_giveback", "after_green_to_red", "after_red_to_green",
+]);
 const METRICS = new Set<string>(TRADE_QUERY_METRIC_KEYS);
 const GROUPINGS = new Set([
-  "aggregate", "day", "month", "week", "weekday", "time_bucket",
+  "aggregate", "day", "month", "week", "weekday", "year", "session", "time_bucket",
   "entry_price_range", "price_range",
-  "trade_sequence", "trade_sequence_bucket", "previous_completed_outcome", "repeat_attempt", "repeat_attempt_bucket",
+  "trade_sequence", "trade_sequence_bucket", "previous_completed_outcome", "prior_completed_streak_bucket", "pre_entry_daily_state", "repeat_attempt", "repeat_attempt_bucket",
   "holding_time_bucket", "share_quantity_bucket", "entry_notional_bucket",
-  "position_size_bucket", "direction", "session", "symbol", "account",
+  "position_size_bucket", "direction", "symbol", "account", "source_identity", "broker_code", "source_kind", "charge_coverage",
+  "compound",
 ]);
 
 function failure(path: string): ExactResult<never, AnalyticalContractFailure> {
@@ -252,7 +282,7 @@ function canonicalTime(input: unknown, path: string): ExactResult<string, Analyt
 function normalizeFilter(input: unknown, index: number): ExactResult<TradeQueryFilter, AnalyticalContractFailure> {
   const path = `$.filters[${index}]`;
   const base = validateContractRecord(input, ["kind"], [
-    "startDate", "endDate", "values", "value", "startTime", "endTime", "minimum", "maximum",
+    "startDate", "endDate", "values", "value", "startTime", "endTime", "outcome", "minimum", "maximum",
   ], path);
   if (!base.ok || typeof base.value.kind !== "string" || !FILTER_KINDS.has(base.value.kind)) return failure(`${path}.kind`);
   const kind = base.value.kind;
@@ -266,14 +296,28 @@ function normalizeFilter(input: unknown, index: number): ExactResult<TradeQueryF
     if (start.value > end.value) return failure(path);
     return { ok: true, value: Object.freeze({ kind, startDate: start.value, endDate: end.value }) };
   }
-  if (kind === "account") {
+  if (kind === "account" || kind === "source_identity" || kind === "broker_code") {
     const exact = validateContractRecord(input, ["kind", "values"], [], path);
     if (!exact.ok) return exact;
     const values = validateKeyArray(exact.value.values, `${path}.values`, {
       maximumItems: TRADE_QUERY_LIMITS.maximumSelectedValues,
     });
     if (!values.ok || values.value.length === 0) return values.ok ? failure(`${path}.values`) : values;
-    return { ok: true, value: Object.freeze({ kind, values: values.value }) };
+    if (
+      (kind === "source_identity" && values.value.some((value) => !value.startsWith("source_"))) ||
+      (kind === "broker_code" && values.value.some((value) => value.startsWith("source_")))
+    ) return failure(`${path}.values`);
+    return { ok: true, value: Object.freeze({ kind, values: values.value }) as TradeQueryFilter };
+  }
+  if (kind === "source_kind") {
+    const exact = validateContractRecord(input, ["kind", "values"], [], path);
+    if (!exact.ok) return exact;
+    const values = exactArray(exact.value.values, new Set([
+      "broker_csv", "broker_api", "owner_manual", "paper_trade", "legacy_migration",
+    ]), `${path}.values`);
+    return values.ok
+      ? { ok: true, value: Object.freeze({ kind, values: values.value as readonly ExecutionSourceKind[] }) }
+      : values;
   }
   if (kind === "symbol") {
     const exact = validateContractRecord(input, ["kind", "values"], [], path);
@@ -293,14 +337,26 @@ function normalizeFilter(input: unknown, index: number): ExactResult<TradeQueryF
     }
     return { ok: true, value: Object.freeze({ kind, values: [...values].sort(compareUnicodeCodePoints) }) };
   }
-  if (kind === "direction" || kind === "realized_outcome" || kind === "weekday" || kind === "previous_completed_outcome") {
+  if (
+    kind === "direction" || kind === "session" || kind === "realized_outcome" ||
+    kind === "weekday" || kind === "previous_completed_outcome" ||
+    kind === "pre_entry_daily_state" || kind === "pre_entry_daily_path"
+  ) {
     const exact = validateContractRecord(input, ["kind", "values"], [], path);
     if (!exact.ok) return exact;
     const allowed = kind === "direction"
       ? new Set(["long", "short"])
+      : kind === "session"
+        ? SESSIONS
       : kind === "realized_outcome"
         ? OUTCOMES
-        : kind === "weekday" ? WEEKDAYS : PREVIOUS_OUTCOMES;
+        : kind === "weekday"
+          ? WEEKDAYS
+          : kind === "previous_completed_outcome"
+            ? PREVIOUS_OUTCOMES
+            : kind === "pre_entry_daily_state"
+              ? PRE_ENTRY_DAILY_STATES
+              : PRE_ENTRY_DAILY_PATHS;
     const values = exactArray(exact.value.values, allowed, `${path}.values`);
     if (!values.ok) return values;
     return { ok: true, value: Object.freeze({ kind, values: values.value }) as TradeQueryFilter };
@@ -313,6 +369,11 @@ function normalizeFilter(input: unknown, index: number): ExactResult<TradeQueryF
       ? { ok: true, value: Object.freeze({ kind, value: currency.value }) }
       : failure(`${path}.value`);
   }
+  if (kind === "charge_coverage") {
+    const exact = validateContractRecord(input, ["kind", "value"], [], path);
+    if (!exact.ok || (exact.value.value !== "complete" && exact.value.value !== "unknown")) return failure(`${path}.value`);
+    return { ok: true, value: Object.freeze({ kind, value: exact.value.value }) };
+  }
   if (kind === "entry_time_range" || kind === "exit_time_range") {
     const exact = validateContractRecord(input, ["kind", "startTime", "endTime"], [], path);
     if (!exact.ok) return exact;
@@ -322,6 +383,22 @@ function normalizeFilter(input: unknown, index: number): ExactResult<TradeQueryF
     if (!end.ok) return end;
     if (start.value > end.value) return failure(path);
     return { ok: true, value: Object.freeze({ kind, startTime: start.value, endTime: end.value }) };
+  }
+  if (kind === "prior_completed_streak") {
+    const exact = validateContractRecord(input, ["kind", "outcome", "minimum", "maximum"], [], path);
+    if (!exact.ok || (exact.value.outcome !== "gain" && exact.value.outcome !== "loss")) {
+      return failure(`${path}.outcome`);
+    }
+    const minimum = exactBound(exact.value.minimum, `${path}.minimum`, "count");
+    const maximum = exactBound(exact.value.maximum, `${path}.maximum`, "count");
+    if (!minimum.ok) return minimum;
+    if (!maximum.ok) return maximum;
+    const range = validateRange(minimum.value, maximum.value, path, "count");
+    if (!range.ok || (minimum.value !== null && BigInt(minimum.value) < BigInt("1"))) return failure(path);
+    return {
+      ok: true,
+      value: Object.freeze({ kind, outcome: exact.value.outcome, minimum: minimum.value, maximum: maximum.value }),
+    };
   }
   const rangeKind = (
     kind === "entry_price_range" ||
@@ -384,15 +461,45 @@ function countBoundaries(input: unknown, path: string): ExactResult<readonly str
   return { ok: true, value: Object.freeze(sorted) };
 }
 
-function normalizeGrouping(input: unknown): ExactResult<TradeQueryGrouping, AnalyticalContractFailure> {
-  const base = validateContractRecord(input, ["kind"], ["source", "bucketMinutes", "boundaries", "boundariesSeconds"], "$.grouping");
-  if (!base.ok || typeof base.value.kind !== "string" || !GROUPINGS.has(base.value.kind)) return failure("$.grouping.kind");
+function normalizeGrouping(
+  input: unknown,
+  path = "$.grouping",
+  allowCompound = true,
+): ExactResult<TradeQueryGrouping, AnalyticalContractFailure> {
+  const base = validateContractRecord(input, ["kind"], ["source", "bucketMinutes", "boundaries", "boundariesSeconds", "dimensions"], path);
+  if (!base.ok || typeof base.value.kind !== "string" || !GROUPINGS.has(base.value.kind)) return failure(`${path}.kind`);
   const kind = base.value.kind;
+  if (kind === "compound" && !allowCompound) return failure(`${path}.kind`);
+  if (kind === "compound") {
+    const exact = validateContractRecord(input, ["kind", "dimensions"], [], path);
+    if (!exact.ok || !Array.isArray(exact.value.dimensions) ||
+      exact.value.dimensions.length < 2 ||
+      exact.value.dimensions.length > TRADE_QUERY_LIMITS.maximumGroupingDepth
+    ) return failure(`${path}.dimensions`);
+    const dimensions: TradeQueryGroupingDimension[] = [];
+    for (let index = 0; index < exact.value.dimensions.length; index += 1) {
+      const dimension = normalizeGrouping(
+        exact.value.dimensions[index],
+        `${path}.dimensions[${index}]`,
+        false,
+      );
+      if (!dimension.ok || dimension.value.kind === "compound" || dimension.value.kind === "aggregate") {
+        return dimension.ok ? failure(`${path}.dimensions[${index}].kind`) : dimension;
+      }
+      dimensions.push(dimension.value);
+    }
+    const serializedDimensions = dimensions.map((dimension) => serializeCanonicalValue(dimension));
+    if (!serializedDimensions.every((dimension) => dimension.ok)) return failure(`${path}.dimensions`);
+    if (new Set(serializedDimensions.map((dimension) => dimension.ok ? dimension.value.json : "")).size !== dimensions.length) {
+      return contractFailure("ti_v3_analytics_contract_duplicate_identity", `${path}.dimensions`);
+    }
+    return { ok: true, value: Object.freeze({ kind, dimensions: Object.freeze(dimensions) }) };
+  }
   if (kind === "time_bucket") {
-    const exact = validateContractRecord(input, ["kind", "source", "bucketMinutes"], [], "$.grouping");
-    if (!exact.ok || (exact.value.source !== "entry" && exact.value.source !== "exit")) return failure("$.grouping.source");
-    const size = validateCanonicalCount(exact.value.bucketMinutes, "$.grouping.bucketMinutes");
-    if (!size.ok || BigInt(size.value) < BigInt("1") || BigInt(size.value) > BigInt("1440") || BigInt("1440") % BigInt(size.value) !== BigInt("0")) return failure("$.grouping.bucketMinutes");
+    const exact = validateContractRecord(input, ["kind", "source", "bucketMinutes"], [], path);
+    if (!exact.ok || (exact.value.source !== "entry" && exact.value.source !== "exit")) return failure(`${path}.source`);
+    const size = validateCanonicalCount(exact.value.bucketMinutes, `${path}.bucketMinutes`);
+    if (!size.ok || BigInt(size.value) < BigInt("1") || BigInt(size.value) > BigInt("1440") || BigInt("1440") % BigInt(size.value) !== BigInt("0")) return failure(`${path}.bucketMinutes`);
     return { ok: true, value: Object.freeze({ kind, source: exact.value.source, bucketMinutes: size.value }) };
   }
   if (
@@ -402,9 +509,9 @@ function normalizeGrouping(input: unknown): ExactResult<TradeQueryGrouping, Anal
     kind === "entry_notional_bucket" ||
     kind === "position_size_bucket"
   ) {
-    const exact = validateContractRecord(input, ["kind", "boundaries"], [], "$.grouping");
+    const exact = validateContractRecord(input, ["kind", "boundaries"], [], path);
     if (!exact.ok) return exact;
-    const boundaries = decimalBoundaries(exact.value.boundaries, "$.grouping.boundaries");
+    const boundaries = decimalBoundaries(exact.value.boundaries, `${path}.boundaries`);
     const canonicalKind = kind === "price_range"
       ? "entry_price_range"
       : kind === "position_size_bucket"
@@ -421,13 +528,13 @@ function normalizeGrouping(input: unknown): ExactResult<TradeQueryGrouping, Anal
       : boundaries;
   }
   if (kind === "holding_time_bucket") {
-    const exact = validateContractRecord(input, ["kind", "boundariesSeconds"], [], "$.grouping");
+    const exact = validateContractRecord(input, ["kind", "boundariesSeconds"], [], path);
     if (!exact.ok) return exact;
-    const boundaries = countBoundaries(exact.value.boundariesSeconds, "$.grouping.boundariesSeconds");
+    const boundaries = countBoundaries(exact.value.boundariesSeconds, `${path}.boundariesSeconds`);
     return boundaries.ok ? { ok: true, value: Object.freeze({ kind, boundariesSeconds: boundaries.value }) } : boundaries;
   }
-  const exact = validateContractRecord(input, ["kind"], [], "$.grouping");
-  return exact.ok ? { ok: true, value: Object.freeze({ kind }) as TradeQueryGrouping } : exact;
+  const exact = validateContractRecord(input, ["kind"], [], path);
+  return exact.ok ? { ok: true, value: Object.freeze({ kind }) as TradeQueryGroupingDimension } : exact;
 }
 
 function authorityFromAccepted(input: TradeQueryAuthority): ExactResult<TradeQueryPlanAuthority, AnalyticalContractFailure> {

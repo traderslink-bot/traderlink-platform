@@ -17,6 +17,9 @@ export interface QueryDailyAccumulator {
   readonly peakRealizedPnl: string;
   readonly realizedDrawdown: string;
   readonly peakProfitGiveback: string;
+  readonly maximumRecoveryFromRealizedTrough: string;
+  readonly crossedGreenToRed: boolean;
+  readonly crossedRedToGreen: boolean;
 }
 
 export interface TradeQueryAccumulator {
@@ -30,11 +33,20 @@ export interface TradeQueryAccumulator {
   readonly shortCount: string;
   readonly repeatAttemptCount: string;
   readonly totalExecutionCount: string;
+  readonly limitedAnalyticalTradeCount: string;
+  readonly missingChargeCoverageTradeCount: string;
+  readonly missingShareQuantityAuthorityCount: string;
+  readonly missingEntryNotionalAuthorityCount: string;
+  readonly unavailableSourceAuthorityTradeCount: string;
+  readonly manualEntryTradeCount: string;
+  readonly brokerImportTradeCount: string;
+  readonly legacyMigrationTradeCount: string;
   readonly netValues: readonly string[];
   readonly grossValues: readonly string[];
   readonly grossProfitValues: readonly string[];
   readonly grossLossValues: readonly string[];
   readonly chargeValues: readonly string[];
+  readonly commissionChargeValues: readonly string[];
   readonly shareQuantityValues: readonly string[];
   readonly entryNotionalValues: readonly string[];
   readonly winnerShareQuantityValues: readonly string[];
@@ -51,24 +63,33 @@ export interface TradeQueryAccumulator {
   readonly daily: readonly QueryDailyAccumulator[];
   readonly winningStreakLengths: readonly string[];
   readonly losingStreakLengths: readonly string[];
+  readonly currentWinningStreakLength: string;
+  readonly currentLosingStreakLength: string;
   readonly rowCount: string;
   readonly netPnl: string;
   readonly grossPnl: string;
   readonly grossProfit: string;
   readonly grossLoss: string;
   readonly signedCharges: string;
+  readonly commissionSignedCharges: string;
   readonly winningNetPnl: string;
   readonly losingNetPnl: string;
   readonly uniqueAccountCount: string;
   readonly uniqueSymbolCount: string;
   readonly dailyPnlValues: readonly string[];
+  readonly profitableDailyPnlValues: readonly string[];
+  readonly losingDailyPnlValues: readonly string[];
   readonly profitableDayCount: string;
   readonly losingDayCount: string;
   readonly flatDayCount: string;
   readonly sortedNetValues: readonly string[];
+  readonly sortedGrossValues: readonly string[];
+  readonly sortedCommissionChargeValues: readonly string[];
   readonly sortedWinningNetValues: readonly string[];
   readonly sortedLosingNetValues: readonly string[];
   readonly sortedDailyPnlValues: readonly string[];
+  readonly sortedProfitableDailyPnlValues: readonly string[];
+  readonly sortedLosingDailyPnlValues: readonly string[];
   readonly sortedDailyTradeCounts: readonly string[];
   readonly sortedWinningStreakLengths: readonly string[];
   readonly sortedLosingStreakLengths: readonly string[];
@@ -98,6 +119,16 @@ export interface TradeQueryAccumulator {
   readonly totalEntryNotional: string;
   readonly winnerEntryNotional: string;
   readonly loserEntryNotional: string;
+  readonly dailyPeakProfitGivebackValues: readonly string[];
+  readonly dailyRealizedRecoveryValues: readonly string[];
+  readonly dailyRealizedDrawdownMagnitudeValues: readonly string[];
+  readonly sortedDailyPeakProfitGivebackValues: readonly string[];
+  readonly sortedDailyRealizedRecoveryValues: readonly string[];
+  readonly sortedDailyRealizedDrawdownMagnitudeValues: readonly string[];
+  readonly dayWithPeakProfitGivebackCount: string;
+  readonly dayWithRealizedDrawdownCount: string;
+  readonly greenToRedDayCount: string;
+  readonly redToGreenDayCount: string;
 }
 
 function sum(values: readonly string[]): string {
@@ -146,6 +177,23 @@ function buildStreaks(
   });
 }
 
+function currentStreak(
+  rows: readonly QueryRowSemantics[],
+): Readonly<{ winning: string; losing: string }> {
+  const latest = rows.at(-1);
+  if (latest === undefined || (latest.outcome !== "gain" && latest.outcome !== "loss")) {
+    return Object.freeze({ winning: "0", losing: "0" });
+  }
+  let length = 0;
+  for (let index = rows.length - 1; index >= 0; index -= 1) {
+    if (rows[index].outcome !== latest.outcome) break;
+    length += 1;
+  }
+  return latest.outcome === "gain"
+    ? Object.freeze({ winning: String(length), losing: "0" })
+    : Object.freeze({ winning: "0", losing: String(length) });
+}
+
 function buildDaily(rows: readonly QueryRowSemantics[]): readonly QueryDailyAccumulator[] {
   const byDate = new Map<string, QueryRowSemantics[]>();
   for (const row of rows) {
@@ -165,10 +213,24 @@ function buildDaily(rows: readonly QueryRowSemantics[]): readonly QueryDailyAccu
             ));
       let realized = "0";
       let peak = "0";
+      let trough = "0";
       let maximumDrawdown = "0";
+      let maximumRecovery = "0";
+      let crossedGreenToRed = false;
+      let crossedRedToGreen = false;
       for (const row of ordered) {
+        const before = realized;
         realized = sum([realized, row.row.netPnl]);
+        if (compareCanonicalDecimals(before, "0") > 0 && compareCanonicalDecimals(realized, "0") < 0) {
+          crossedGreenToRed = true;
+        }
+        if (compareCanonicalDecimals(before, "0") < 0 && compareCanonicalDecimals(realized, "0") > 0) {
+          crossedRedToGreen = true;
+        }
         if (compareCanonicalDecimals(realized, peak) > 0) peak = realized;
+        if (compareCanonicalDecimals(realized, trough) < 0) trough = realized;
+        const recovery = sum([realized, negate(trough)]);
+        if (compareCanonicalDecimals(recovery, maximumRecovery) > 0) maximumRecovery = recovery;
         const drawdown = sum([realized, negate(peak)]);
         if (compareCanonicalDecimals(drawdown, maximumDrawdown) < 0) {
           maximumDrawdown = drawdown;
@@ -187,6 +249,9 @@ function buildDaily(rows: readonly QueryRowSemantics[]): readonly QueryDailyAccu
         peakProfitGiveback: compareCanonicalDecimals(giveback, "0") > 0
           ? giveback
           : "0",
+        maximumRecoveryFromRealizedTrough: maximumRecovery,
+        crossedGreenToRed,
+        crossedRedToGreen,
       });
     }));
 }
@@ -229,6 +294,14 @@ export function buildTradeQueryAccumulator(
   let shortCount = 0;
   let repeatAttemptCount = 0;
   let totalExecutionCount = 0;
+  let limitedAnalyticalTradeCount = 0;
+  let missingChargeCoverageTradeCount = 0;
+  let missingShareQuantityAuthorityCount = 0;
+  let missingEntryNotionalAuthorityCount = 0;
+  let unavailableSourceAuthorityTradeCount = 0;
+  let manualEntryTradeCount = 0;
+  let brokerImportTradeCount = 0;
+  let legacyMigrationTradeCount = 0;
   let totalHoldingNanoseconds = BigInt("0");
   let winnerHoldingNanoseconds = BigInt("0");
   let loserHoldingNanoseconds = BigInt("0");
@@ -247,6 +320,16 @@ export function buildTradeQueryAccumulator(
     else shortCount += 1;
     if (item.repeatAttempt > BigInt("1")) repeatAttemptCount += 1;
     totalExecutionCount += item.row.supportingExecutionDigests.length;
+    if (item.row.coverageState === "limited" || item.row.limitationCodes.length > 0) limitedAnalyticalTradeCount += 1;
+    if (item.row.limitationCodes.includes("ti_v3_analytics_charge_coverage_unknown")) {
+      missingChargeCoverageTradeCount += 1;
+    }
+    if (item.row.shareQuantity.state === "unavailable") missingShareQuantityAuthorityCount += 1;
+    if (item.row.entryNotional.state === "unavailable") missingEntryNotionalAuthorityCount += 1;
+    if (item.row.sourceAuthority.state === "unavailable") unavailableSourceAuthorityTradeCount += 1;
+    else if (item.row.sourceAuthority.sourceKind === "owner_manual") manualEntryTradeCount += 1;
+    else if (item.row.sourceAuthority.sourceKind === "broker_csv" || item.row.sourceAuthority.sourceKind === "broker_api") brokerImportTradeCount += 1;
+    else if (item.row.sourceAuthority.sourceKind === "legacy_migration") legacyMigrationTradeCount += 1;
     totalHoldingNanoseconds += item.holdingNanoseconds;
     holdingSecondsValues.push(item.holdingSecondsFloor.toString());
     symbolCounts.set(
@@ -288,19 +371,42 @@ export function buildTradeQueryAccumulator(
           right.row.semanticRoundTripKey,
         )));
   const streaks = buildStreaks(completionOrderedRows);
+  const current = currentStreak(completionOrderedRows);
   const netValues = Object.freeze(rows.map((item) => item.row.netPnl));
   const grossValues = Object.freeze(rows.map((item) => item.row.grossPnl));
   const chargeValues = Object.freeze(rows.map((item) => item.row.signedCharges));
+  const commissionChargeValues = Object.freeze(rows.map((item) =>
+    item.row.signedChargesByKind.find((charge) => charge.kind === "commission")?.amount ?? "0"));
   const daily = buildDaily(rows);
   const dailyPnlValues = Object.freeze(daily.map((day) => day.netPnl));
+  const profitableDailyPnlValues = Object.freeze(daily
+    .filter((day) => compareCanonicalDecimals(day.netPnl, "0") > 0)
+    .map((day) => day.netPnl));
+  const losingDailyPnlValues = Object.freeze(daily
+    .filter((day) => compareCanonicalDecimals(day.netPnl, "0") < 0)
+    .map((day) => day.netPnl));
+  const dailyPeakProfitGivebackValues = Object.freeze(daily.map((day) => day.peakProfitGiveback));
+  const dailyRealizedRecoveryValues = Object.freeze(daily.map((day) => day.maximumRecoveryFromRealizedTrough));
+  const dailyRealizedDrawdownMagnitudeValues = Object.freeze(daily.map((day) => negate(day.realizedDrawdown)));
+  const dayWithPeakProfitGivebackCount = daily.filter((day) => compareCanonicalDecimals(day.peakProfitGiveback, "0") > 0).length;
+  const dayWithRealizedDrawdownCount = daily.filter((day) => compareCanonicalDecimals(day.realizedDrawdown, "0") < 0).length;
+  const greenToRedDayCount = daily.filter((day) => day.crossedGreenToRed).length;
+  const redToGreenDayCount = daily.filter((day) => day.crossedRedToGreen).length;
   const profitableDayCount = daily.filter((day) => compareCanonicalDecimals(day.netPnl, "0") > 0).length;
   const losingDayCount = daily.filter((day) => compareCanonicalDecimals(day.netPnl, "0") < 0).length;
   const flatDayCount = daily.length - profitableDayCount - losingDayCount;
   const tradesPerSymbol = Object.freeze([...symbolCounts.values()].map(String));
   const sortedNetValues = ordered(netValues);
+  const sortedGrossValues = ordered(grossValues);
+  const sortedCommissionChargeValues = ordered(commissionChargeValues);
   const sortedWinningNetValues = ordered(wins.map((item) => item.row.netPnl));
   const sortedLosingNetValues = ordered(losses.map((item) => item.row.netPnl));
   const sortedDailyPnlValues = ordered(dailyPnlValues);
+  const sortedProfitableDailyPnlValues = ordered(profitableDailyPnlValues);
+  const sortedLosingDailyPnlValues = ordered(losingDailyPnlValues);
+  const sortedDailyPeakProfitGivebackValues = ordered(dailyPeakProfitGivebackValues);
+  const sortedDailyRealizedRecoveryValues = ordered(dailyRealizedRecoveryValues);
+  const sortedDailyRealizedDrawdownMagnitudeValues = ordered(dailyRealizedDrawdownMagnitudeValues);
   const sortedDailyTradeCounts = ordered(daily.map((day) => day.tradeCount));
   const sortedIntradayDrawdowns = ordered(daily.map((day) => day.realizedDrawdown));
   const sortedPeakProfitGivebacks = ordered(daily.map((day) => day.peakProfitGiveback));
@@ -325,11 +431,20 @@ export function buildTradeQueryAccumulator(
     shortCount: String(shortCount),
     repeatAttemptCount: String(repeatAttemptCount),
     totalExecutionCount: String(totalExecutionCount),
+    limitedAnalyticalTradeCount: String(limitedAnalyticalTradeCount),
+    missingChargeCoverageTradeCount: String(missingChargeCoverageTradeCount),
+    missingShareQuantityAuthorityCount: String(missingShareQuantityAuthorityCount),
+    missingEntryNotionalAuthorityCount: String(missingEntryNotionalAuthorityCount),
+    unavailableSourceAuthorityTradeCount: String(unavailableSourceAuthorityTradeCount),
+    manualEntryTradeCount: String(manualEntryTradeCount),
+    brokerImportTradeCount: String(brokerImportTradeCount),
+    legacyMigrationTradeCount: String(legacyMigrationTradeCount),
     netValues,
     grossValues,
     grossProfitValues: Object.freeze(grossProfitValues),
     grossLossValues: Object.freeze(grossLossValues),
     chargeValues,
+    commissionChargeValues,
     shareQuantityValues: Object.freeze(shareQuantityValues),
     entryNotionalValues: Object.freeze(entryNotionalValues),
     winnerShareQuantityValues: Object.freeze(winnerShareQuantityValues),
@@ -346,24 +461,33 @@ export function buildTradeQueryAccumulator(
     daily,
     winningStreakLengths: streaks.winning,
     losingStreakLengths: streaks.losing,
+    currentWinningStreakLength: current.winning,
+    currentLosingStreakLength: current.losing,
     rowCount: String(rows.length),
     netPnl: sum(netValues),
     grossPnl: sum(grossValues),
     grossProfit: sum(grossProfitValues),
     grossLoss: sum(grossLossValues),
     signedCharges: sum(chargeValues),
+    commissionSignedCharges: sum(commissionChargeValues),
     winningNetPnl: sum(sortedWinningNetValues),
     losingNetPnl: sum(sortedLosingNetValues),
     uniqueAccountCount: String(accountKeys.size),
     uniqueSymbolCount: String(symbolCounts.size),
     dailyPnlValues,
+    profitableDailyPnlValues,
+    losingDailyPnlValues,
     profitableDayCount: String(profitableDayCount),
     losingDayCount: String(losingDayCount),
     flatDayCount: String(flatDayCount),
     sortedNetValues,
+    sortedGrossValues,
+    sortedCommissionChargeValues,
     sortedWinningNetValues,
     sortedLosingNetValues,
     sortedDailyPnlValues,
+    sortedProfitableDailyPnlValues,
+    sortedLosingDailyPnlValues,
     sortedDailyTradeCounts,
     sortedWinningStreakLengths,
     sortedLosingStreakLengths,
@@ -393,5 +517,15 @@ export function buildTradeQueryAccumulator(
     totalEntryNotional: sum(entryNotionalValues),
     winnerEntryNotional: sum(winnerEntryNotionalValues),
     loserEntryNotional: sum(loserEntryNotionalValues),
+    dailyPeakProfitGivebackValues,
+    dailyRealizedRecoveryValues,
+    dailyRealizedDrawdownMagnitudeValues,
+    sortedDailyPeakProfitGivebackValues,
+    sortedDailyRealizedRecoveryValues,
+    sortedDailyRealizedDrawdownMagnitudeValues,
+    dayWithPeakProfitGivebackCount: String(dayWithPeakProfitGivebackCount),
+    dayWithRealizedDrawdownCount: String(dayWithRealizedDrawdownCount),
+    greenToRedDayCount: String(greenToRedDayCount),
+    redToGreenDayCount: String(redToGreenDayCount),
   });
 }

@@ -75,6 +75,12 @@ function row(template: AnalyticalRow, index: number, input: RowInput) {
     sequenceInPartition: String(index),
     grossPnl: input.grossPnl ?? input.netPnl,
     signedCharges: input.signedCharges ?? "0",
+    ...(input.signedCharges === undefined
+      ? {}
+      : {
+          signedChargesByKind: [],
+          chargeKindCoverageState: "unknown" as const,
+        }),
     netPnl: input.netPnl,
     entryNotional: input.entryPrice === null
       ? {

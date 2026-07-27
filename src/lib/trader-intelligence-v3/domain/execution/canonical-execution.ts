@@ -118,6 +118,7 @@ export interface CanonicalExecutionContent {
   readonly price: ExactPrice;
   readonly currency: CurrencyCode;
   readonly charges: readonly CanonicalExecutionCharge[];
+  readonly chargeCoverageState: "complete" | "unknown";
   readonly brokerReportedNetCashAmount: ExactMoneyAmount | null;
   readonly orderId: string | null;
   readonly executionId: string | null;
@@ -169,6 +170,7 @@ export interface CanonicalExecutionDraft
     | "price"
     | "currency"
     | "charges"
+    | "chargeCoverageState"
     | "brokerReportedNetCashAmount"
     | "sourceDocumentDigest"
   > {
@@ -177,6 +179,7 @@ export interface CanonicalExecutionDraft
   price: string;
   currency: string;
   charges: readonly { kind: string; amount: string; currency: string }[];
+  chargeCoverageState?: "complete" | "unknown";
   brokerReportedNetCashAmount: string | null;
   sourceDocumentDigest: string | null;
   validation: CanonicalExecutionValidation;
@@ -603,6 +606,10 @@ export function buildCanonicalExecution(
       `${right.kind}:${right.currency}:${right.amount}`,
     ),
   );
+  const chargeCoverageState = draft.chargeCoverageState ?? "unknown";
+  if (chargeCoverageState !== "complete" && chargeCoverageState !== "unknown") {
+    reasons.push("ti_v3_execution_charge_invalid");
+  }
 
   let netCash: ExactMoneyAmount | null = null;
   if (draft.brokerReportedNetCashAmount !== null) {
@@ -680,6 +687,7 @@ export function buildCanonicalExecution(
     price: price.value,
     currency: currency.value,
     charges,
+    chargeCoverageState,
     brokerReportedNetCashAmount: netCash,
     orderId: draft.orderId as string | null,
     executionId: draft.executionId as string | null,

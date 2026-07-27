@@ -54,6 +54,7 @@ describe("GA1-A independent filters and deterministic grouping", () => {
     { kind: "month" },
     { kind: "week" },
     { kind: "weekday" },
+    { kind: "session" },
     { kind: "time_bucket", source: "entry", bucketMinutes: "60" },
     { kind: "price_range", boundaries: ["1", "2", "3"] },
     { kind: "entry_price_range", boundaries: ["1", "2", "3"] },
@@ -67,6 +68,8 @@ describe("GA1-A independent filters and deterministic grouping", () => {
     { kind: "direction" },
     { kind: "symbol" },
     { kind: "account" },
+    { kind: "source_kind" },
+    { kind: "charge_coverage" },
   ] as const)("assigns stable, ordered $kind groups", (grouping) => {
     const first = run([], grouping as TradeQueryGrouping);
     const second = run([], grouping as TradeQueryGrouping);
@@ -76,6 +79,52 @@ describe("GA1-A independent filters and deterministic grouping", () => {
     expect(new Set(first.rows.map((row) => row.groupIdentity)).size).toBe(first.rows.length);
     expect(first.rows.reduce((total, row) => total + BigInt(row.includedCount), BigInt("0")))
       .toBe(BigInt(first.includedCount));
+  });
+
+  it("supports bounded, deterministic compound grouping without nested or duplicate dimensions", () => {
+    const grouping: TradeQueryGrouping = {
+      kind: "compound",
+      dimensions: [
+        { kind: "session" },
+        { kind: "trade_sequence_bucket" },
+      ],
+    };
+    const first = run([], grouping);
+    const second = run([], grouping);
+    expect(first.rows.map((row) => row.groupIdentity)).toEqual(
+      second.rows.map((row) => row.groupIdentity),
+    );
+    expect(first.rows.every((row) => row.groupIdentity.startsWith("compound:"))).toBe(true);
+    expect(first.rows.reduce((total, row) => total + BigInt(row.includedCount), BigInt("0")))
+      .toBe(BigInt(first.includedCount));
+
+    const fixture = buildSyntheticQueryFixture();
+    const invalid = executeTradeQuery({
+      source: fixture.source,
+      partitionReceipt: fixture.partition,
+      queryPlan: fixture.plan({
+        grouping: {
+          kind: "compound",
+          dimensions: [{ kind: "session" }, { kind: "session" }],
+        },
+      }),
+    });
+    expect(invalid).toMatchObject({ ok: false, error: { path: "$.grouping.dimensions" } });
+
+    const nested = executeTradeQuery({
+      source: fixture.source,
+      partitionReceipt: fixture.partition,
+      queryPlan: fixture.plan({
+        grouping: {
+          kind: "compound",
+          dimensions: [
+            { kind: "compound", dimensions: [{ kind: "session" }, { kind: "direction" }] },
+            { kind: "trade_sequence_bucket" },
+          ],
+        } as unknown as TradeQueryGrouping,
+      }),
+    });
+    expect(nested).toMatchObject({ ok: false, error: { path: "$.grouping.dimensions[0].kind" } });
   });
 
   it("is permutation invariant and keeps same-time mixed completions ambiguous", () => {

@@ -14,6 +14,7 @@ import {
   type ExactRatio,
   type ExactSignedQuantity,
 } from "../exact";
+import { compareUnicodeCodePoints } from "../canonical";
 import type {
   CanonicalExecutionEnvelope,
   CanonicalExecutionOrderingResult,
@@ -140,6 +141,8 @@ interface RoundTripAccumulator {
   exitNotional: ExactMoneyAmount;
   gross: ExactMoneyAmount;
   charges: ExactMoneyAmount;
+  chargesByKind: Map<string, ExactMoneyAmount>;
+  chargeKindCoverageState: "complete" | "unknown";
   cashFlow: ExactMoneyAmount;
   executionDigests: Set<CanonicalExecutionDigest>;
 }
@@ -177,6 +180,15 @@ function totalCharges(execution: CanonicalExecutionEnvelope): ExactMoneyAmount {
   return total;
 }
 
+function assignChargeKinds(accumulator: RoundTripAccumulator, execution: CanonicalExecutionEnvelope): void {
+  for (const charge of execution.content.charges) {
+    accumulator.chargesByKind.set(
+      charge.kind,
+      addMoney(accumulator.chargesByKind.get(charge.kind) ?? exactMoney("0"), charge.amount),
+    );
+  }
+}
+
 function finalizeRoundTrip(accumulator: RoundTripAccumulator): FlatToFlatRoundTrip {
   const net = subtractMoney(accumulator.gross, accumulator.charges);
   if (net !== accumulator.cashFlow) {
@@ -197,6 +209,10 @@ function finalizeRoundTrip(accumulator: RoundTripAccumulator): FlatToFlatRoundTr
     ),
     grossRealizedPnl: accumulator.gross,
     signedCharges: accumulator.charges,
+    signedChargesByKind: Object.freeze([...accumulator.chargesByKind.entries()]
+      .sort((left, right) => compareUnicodeCodePoints(left[0], right[0]))
+      .map(([kind, amount]) => Object.freeze({ kind, amount }))),
+    chargeKindCoverageState: accumulator.chargeKindCoverageState,
     netAnalyticalPnl: net,
     signedCashFlowNetPnl: accumulator.cashFlow,
     executionDigests: [...accumulator.executionDigests],
@@ -374,6 +390,8 @@ export function runFifoPositionLedger(
         exitNotional: exactMoney("0"),
         gross: exactMoney("0"),
         charges: exactMoney("0"),
+        chargesByKind: new Map(),
+        chargeKindCoverageState: "complete",
         cashFlow: exactMoney("0"),
         executionDigests: new Set(),
       };
@@ -408,6 +426,7 @@ export function runFifoPositionLedger(
         }
         charges = addMoney(charges, priorCharges);
         currentRoundTrip.charges = addMoney(currentRoundTrip.charges, priorCharges);
+        if (priorCharges !== "0") currentRoundTrip.chargeKindCoverageState = "unknown";
         currentRoundTrip.cashFlow = subtractMoney(
           currentRoundTrip.cashFlow,
           priorCharges,
@@ -518,6 +537,7 @@ export function runFifoPositionLedger(
       let chargeAssigned = false;
       if (currentRoundTrip !== null) {
         currentRoundTrip.charges = addMoney(currentRoundTrip.charges, executionCharges);
+        assignChargeKinds(currentRoundTrip, execution);
         currentRoundTrip.cashFlow = subtractMoney(
           currentRoundTrip.cashFlow,
           executionCharges,
@@ -603,6 +623,7 @@ export function runFifoPositionLedger(
         }
         if (!chargeAssigned) {
           currentRoundTrip.charges = addMoney(currentRoundTrip.charges, executionCharges);
+          assignChargeKinds(currentRoundTrip, execution);
           currentRoundTrip.cashFlow = subtractMoney(
             currentRoundTrip.cashFlow,
             executionCharges,

@@ -146,6 +146,8 @@ function assertProductionMatchesReference(
       weightedAverageExitPrice: roundTrip.weightedAverageExitPrice,
       grossRealizedPnl: roundTrip.grossRealizedPnl,
       signedCharges: roundTrip.signedCharges,
+      signedChargesByKind: roundTrip.signedChargesByKind,
+      chargeKindCoverageState: roundTrip.chargeKindCoverageState,
       netAnalyticalPnl: roundTrip.netAnalyticalPnl,
       signedCashFlowNetPnl: roundTrip.signedCashFlowNetPnl,
       executionDigests: roundTrip.executionDigests,
