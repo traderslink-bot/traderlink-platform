@@ -52,6 +52,10 @@ export function resolveAnalyticsAgentIntent(
   if (hasAny(normalized, ["give back", "giving back", "giveback", "drawdown", "green then red", "red then green"])) return result("giveback_drawdown");
   if (hasAny(normalized, ["after a loss", "after loss", "revenge trade"])) return result("prior_outcome_behavior", "loss");
   if (hasAny(normalized, ["after a win", "after win", "after wins"])) return result("prior_outcome_behavior", "gain");
+  if (hasAny(normalized, ["compare periods", "compare this period", "versus last period", "vs last period", "this week vs", "this month vs", "period over period"])) return result("period_comparison");
+  if (hasAny(normalized, ["hold time", "holding time", "how long do i hold", "quick trades", "scalps", "longer holds"])) return result("holding_time_performance");
+  if (hasAny(normalized, ["long vs short", "long versus short", "shorts versus longs", "short vs long", "direction performance"])) return result("direction_performance");
+  if (hasAny(normalized, ["position size", "share size", "size performance", "sizing performance", "large size", "small size"])) return result("position_size_performance");
   if (hasAny(normalized, ["fourth", "later trades", "first trade", "trade sequence", "stop after three"])) return result("trade_sequence_behavior");
   if (hasAny(normalized, ["repeat attempt", "same ticker", "same symbol", "overtrade"])) return result("repeat_attempt_behavior");
   const range = priceRange(normalized);

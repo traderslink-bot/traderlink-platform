@@ -1,3 +1,20 @@
+# 2026-07-27 - Analytics Agent v1 Stage 2 execution-question coverage active
+
+**Branch:** `agent/analytics-agent-v1-execution-question-coverage`, created
+clean from merged Foundation PR #174 at
+`471590b5ef6044e2edb54260e0380ae6c7f0568e`.
+
+The current bounded slice adds only existing GA1-B preset authority for
+holding-time, long-versus-short, position-size, and explicit period-comparison
+questions. The agent retains the preset, preset-execution, baseline-plan,
+baseline-result, and comparison digests in addition to its existing engine
+plan/result/receipt/evidence references. A comparison requires explicit primary
+and baseline ranges; it does not infer dates from the question.
+
+No dashboard/chat integration, Coach work, market/candle authority, simulation
+expansion, deployment, or other new data authority is in scope. The next step
+is focused validation of this agent coverage before requesting a review branch.
+
 # 2026-07-27 - Analytics Agent v1 Foundation complete
 
 **Branch:** `agent/analytics-agent-v1-foundation`, created from merged PR #173
