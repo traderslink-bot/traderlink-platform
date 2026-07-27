@@ -32,8 +32,8 @@ infer market/candle/setup/exit-quality/planned-risk claims.
 - Every supported intent issues a content-addressed query plan to the existing
   read-only engine. The answer packet preserves plan, result, and execution
   receipt identities plus bounded evidence.
-- The caller owner scope must exactly match the partition authority, and the
-  caller account scope must be a non-empty partition subset.
+- The caller owner scope and account scope must each exactly match the
+  partition authority. Foundation does not silently narrow a broader partition.
 - Market/setup, exit-quality, planned-risk, and unknown questions return a
   structured unsupported packet with the required data and a safe alternative.
 - Fewer than three completed matching trades return `insufficient_sample` and
@@ -41,6 +41,10 @@ infer market/candle/setup/exit-quality/planned-risk claims.
 
 ## Current resume point
 
-Foundation is complete and ready for review. The next product slice is broader
-execution-question coverage; UI, chat/model routing, reports, market/candle
-authority, and Coach behavior remain out of scope.
+Stage 2 execution-question coverage is in progress on
+`agent/analytics-agent-v1-execution-question-coverage`. The governed
+holding-time, direction, position-size, and period-comparison presets are the
+current coverage slice. Period comparisons require explicit primary and
+baseline date ranges; the agent does not infer either range from prose. UI,
+chat/model routing, reports, market/candle authority, and Coach behavior
+remain out of scope.

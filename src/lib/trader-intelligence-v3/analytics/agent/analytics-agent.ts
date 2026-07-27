@@ -1,6 +1,6 @@
 import type { ExactResult } from "../../domain/exact";
 import type { AnalyticalContractFailure } from "../contracts";
-import { executeTradeQuery } from "../query";
+import { executeGa1BPreset, executeTradeQuery } from "../query";
 import {
   buildAnalyticsAgentAnswer,
   buildUnsupportedAnalyticsAgentAnswer,
@@ -46,6 +46,32 @@ export function executeAnalyticsAgent(
   }
   const plan = buildAnalyticsAgentPlan(request, resolution);
   if (!plan.ok) return plan;
+  if (plan.value.preset !== null) {
+    const executed = executeGa1BPreset({
+      source: request.source,
+      partitionReceipt: request.partitionReceipt,
+      preset: plan.value.preset,
+    });
+    return executed.ok
+      ? {
+        ok: true,
+        value: buildAnalyticsAgentAnswer(
+          request,
+          resolution,
+          plan.value.capabilityKey,
+          executed.value.primaryResult,
+          {
+            presetDigest: executed.value.presetDigest,
+            presetExecutionDigest: executed.value.executionResultDigest,
+            baselinePlanDigest: executed.value.baselinePlanDigest,
+            baselineResultDigest: executed.value.baselineResultDigest,
+            comparisonDigest: executed.value.comparisonDigest,
+          },
+        ),
+      }
+      : executed;
+  }
+  if (plan.value.plan === null) return { ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.analyticsAgent.plan" } };
   const executed = executeTradeQuery({
     source: request.source,
     partitionReceipt: request.partitionReceipt,

@@ -20,6 +20,10 @@ export type AnalyticsAgentIntent =
   | "prior_outcome_behavior"
   | "trade_sequence_behavior"
   | "repeat_attempt_behavior"
+  | "holding_time_performance"
+  | "direction_performance"
+  | "position_size_performance"
+  | "period_comparison"
   | "giveback_drawdown"
   | "fee_impact"
   | "data_quality"
@@ -49,6 +53,8 @@ export interface AnalyticsAgentQuestionRequest {
   readonly accountScope: readonly string[];
   readonly question: string;
   readonly dateRange?: Readonly<{ readonly startDate: string; readonly endDate: string }>;
+  /** The verified baseline range used only with the governed period-comparison preset. */
+  readonly comparisonDateRange?: Readonly<{ readonly startDate: string; readonly endDate: string }>;
   readonly selectedTradeId?: string;
   readonly symbol?: string;
   readonly filters?: readonly TradeQueryFilter[];
@@ -76,6 +82,11 @@ export interface AnalyticsAgentAnswerPacket {
   readonly enginePlanDigest: CanonicalContentDigest | null;
   readonly resultDigest: CanonicalContentDigest | null;
   readonly executionReceiptDigest: CanonicalContentDigest | null;
+  readonly presetDigest: CanonicalContentDigest | null;
+  readonly presetExecutionDigest: CanonicalContentDigest | null;
+  readonly baselinePlanDigest: CanonicalContentDigest | null;
+  readonly baselineResultDigest: CanonicalContentDigest | null;
+  readonly comparisonDigest: CanonicalContentDigest | null;
   readonly headline: string;
   readonly supportingMetrics: readonly ExactMetricValue[];
   readonly rankedRows: readonly TradeQueryResultRow[];

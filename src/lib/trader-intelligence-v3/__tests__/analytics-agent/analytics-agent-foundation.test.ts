@@ -31,6 +31,23 @@ describe("Analytics Agent v1 Foundation", () => {
     expect(resolveAnalyticsAgentIntent("Did I buy the VWAP reclaim?").intent).toBe("unsupported_market_or_setup");
   });
 
+  it("routes Stage 2 preset-backed execution questions deterministically without a model", () => {
+    expect(resolveAnalyticsAgentIntent("Does hold time affect my performance?").intent).toBe("holding_time_performance");
+    expect(resolveAnalyticsAgentIntent("Show long vs short performance.").intent).toBe("direction_performance");
+    expect(resolveAnalyticsAgentIntent("Does position size affect my results?").intent).toBe("position_size_performance");
+    for (const question of [
+      "Compare this period with last period.",
+      "Compare this month with last month.",
+      "Compare this week with last week.",
+      "Compare this month to last month.",
+      "Compare this week to last week.",
+      "This month compared with last month.",
+      "This week compared with last week.",
+    ]) {
+      expect(resolveAnalyticsAgentIntent(question).intent).toBe("period_comparison");
+    }
+  });
+
   it("builds an engine-backed core-performance answer with bounded evidence and replay identity", () => {
     const input = request("How am I doing overall?");
     const result = executeAnalyticsAgent(input.request);
@@ -72,6 +89,72 @@ describe("Analytics Agent v1 Foundation", () => {
       expect(result.value.resultDigest).toMatch(/^ti_v3:trade_query_result:v1:sha256:/);
       expect(result.value.rankedRows.length).toBeGreaterThan(0);
     }
+  });
+
+  it("uses governed presets for holding time, direction, and position-size performance", () => {
+    for (const [question, presetKey] of [
+      ["Does hold time affect my performance?", "analyze_holding_time"],
+      ["Show long vs short performance.", "analyze_long_vs_short"],
+      ["Does position size affect my results?", "analyze_position_size_performance"],
+    ] as const) {
+      const input = request(question);
+      const planned = buildAnalyticsAgentPlan(input.request, resolveAnalyticsAgentIntent(question));
+      expect(planned).toMatchObject({ ok: true });
+      if (!planned.ok) continue;
+      expect(planned.value).toMatchObject({ plan: null, preset: { presetKey } });
+      const result = executeAnalyticsAgent(input.request);
+      expect(result).toMatchObject({ ok: true });
+      if (!result.ok) continue;
+      expect(result.value).toMatchObject({
+        resolvedIntent: resolveAnalyticsAgentIntent(question).intent,
+        presetDigest: expect.stringMatching(/^ti_v3:trade_query_preset:v1:sha256:/),
+        presetExecutionDigest: expect.stringMatching(/^ti_v3:trade_query_preset_execution:v1:sha256:/),
+        baselinePlanDigest: null,
+        baselineResultDigest: null,
+        comparisonDigest: null,
+      });
+      expect(result.value.enginePlanDigest).toMatch(/^ti_v3:trade_query_plan:v1:sha256:/);
+      expect(result.value.resultDigest).toMatch(/^ti_v3:trade_query_result:v1:sha256:/);
+    }
+  });
+
+  it("executes a period comparison only with explicit primary and baseline date ranges", () => {
+    const input = request("Compare this period with last period.");
+    const requestWithRanges = {
+      ...input.request,
+      dateRange: { startDate: "2026-07-01", endDate: "2026-07-03" },
+      comparisonDateRange: { startDate: "2026-07-04", endDate: "2026-07-06" },
+    };
+    const planned = buildAnalyticsAgentPlan(requestWithRanges, resolveAnalyticsAgentIntent(input.request.question));
+    expect(planned).toMatchObject({ ok: true, value: { plan: null, preset: { presetKey: "compare_periods" } } });
+    if (planned.ok) {
+      expect(planned.value.preset?.primaryPlan.filters).toEqual(expect.arrayContaining([
+        { kind: "date_range", startDate: "2026-07-01", endDate: "2026-07-03" },
+      ]));
+      expect(planned.value.preset?.baselinePlan?.filters).toEqual(expect.arrayContaining([
+        { kind: "date_range", startDate: "2026-07-04", endDate: "2026-07-06" },
+      ]));
+    }
+    const result = executeAnalyticsAgent(requestWithRanges);
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    expect(result.value).toMatchObject({
+      resolvedIntent: "period_comparison",
+      presetDigest: expect.stringMatching(/^ti_v3:trade_query_preset:v1:sha256:/),
+      presetExecutionDigest: expect.stringMatching(/^ti_v3:trade_query_preset_execution:v1:sha256:/),
+      baselinePlanDigest: expect.stringMatching(/^ti_v3:trade_query_plan:v1:sha256:/),
+      baselineResultDigest: expect.stringMatching(/^ti_v3:trade_query_result:v1:sha256:/),
+      comparisonDigest: expect.stringMatching(/^ti_v3:trade_query_comparison:v1:sha256:/),
+    });
+  });
+
+  it("fails closed when a period-comparison baseline is not explicitly supplied", () => {
+    const input = request("Compare this period with last period.");
+    const result = executeAnalyticsAgent({
+      ...input.request,
+      dateRange: { startDate: "2026-07-01", endDate: "2026-07-03" },
+    });
+    expect(result).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.analyticsAgent.comparisonDateRange" } });
   });
 
   it("returns structured unsupported boundaries for market, exit-quality, and planned-risk claims", () => {
@@ -120,7 +203,7 @@ describe("Analytics Agent v1 Foundation", () => {
       symbol: "SYN1",
     }, resolveAnalyticsAgentIntent(input.request.question));
     expect(planned).toMatchObject({ ok: true });
-    if (!planned.ok) return;
+    if (!planned.ok || planned.value.plan === null) return;
     expect(planned.value.plan.filters).toEqual(expect.arrayContaining([
       { kind: "date_range", startDate: "2026-07-01", endDate: "2026-07-03" },
       { kind: "symbol", values: ["SYN1"] },

@@ -11,6 +11,22 @@ import type {
 
 const MINIMUM_SAMPLE = BigInt("3");
 
+interface PresetExecutionReferences {
+  readonly presetDigest: AnalyticsAgentAnswerPacket["presetDigest"];
+  readonly presetExecutionDigest: AnalyticsAgentAnswerPacket["presetExecutionDigest"];
+  readonly baselinePlanDigest: AnalyticsAgentAnswerPacket["baselinePlanDigest"];
+  readonly baselineResultDigest: AnalyticsAgentAnswerPacket["baselineResultDigest"];
+  readonly comparisonDigest: AnalyticsAgentAnswerPacket["comparisonDigest"];
+}
+
+const NO_PRESET_EXECUTION_REFERENCES: PresetExecutionReferences = Object.freeze({
+  presetDigest: null,
+  presetExecutionDigest: null,
+  baselinePlanDigest: null,
+  baselineResultDigest: null,
+  comparisonDigest: null,
+});
+
 function metric(result: TradeQueryResult, key: string): ExactMetricValue | null {
   return result.rows[0]?.metrics.find((item) => item.metricKey === key) ?? null;
 }
@@ -86,6 +102,7 @@ export function buildUnsupportedAnalyticsAgentAnswer(
     enginePlanDigest: null,
     resultDigest: null,
     executionReceiptDigest: null,
+    ...NO_PRESET_EXECUTION_REFERENCES,
     headline: "This cannot be proven from completed trade execution data alone.",
     supportingMetrics: Object.freeze([]),
     rankedRows: Object.freeze([]),
@@ -109,6 +126,7 @@ export function buildAnalyticsAgentAnswer(
   resolution: AnalyticsAgentIntentResolution,
   capabilityKey: string,
   result: TradeQueryResult,
+  presetExecutionReferences: PresetExecutionReferences = NO_PRESET_EXECUTION_REFERENCES,
 ): AnalyticsAgentAnswerPacket {
   const noData = result.rows.length === 0 || result.includedCount === "0";
   const insufficient = !noData && BigInt(result.includedCount) < MINIMUM_SAMPLE;
@@ -136,6 +154,7 @@ export function buildAnalyticsAgentAnswer(
     enginePlanDigest: result.normalizedQueryPlan.queryPlanDigest,
     resultDigest: result.resultDigest,
     executionReceiptDigest: result.executionReceipt.receiptDigest,
+    ...presetExecutionReferences,
     headline: headline(status, result, resolution),
     supportingMetrics: metrics,
     rankedRows: result.rows,
