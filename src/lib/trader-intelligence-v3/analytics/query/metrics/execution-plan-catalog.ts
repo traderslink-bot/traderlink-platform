@@ -127,7 +127,7 @@ export const EXECUTION_PLAN_CATALOG = Object.freeze([
     "realized_drawdown_and_giveback",
     "implemented",
     [
-      "maximum_intraday_realized_drawdown", "maximum_peak_profit_giveback",
+      "maximum_intraday_realized_drawdown", "maximum_intraday_realized_recovery_from_trough", "maximum_peak_profit_giveback",
       "average_peak_profit_giveback", "median_peak_profit_giveback",
       "days_with_peak_profit_giveback", "days_with_realized_drawdown",
       "green_to_red_day_count", "red_to_green_day_count",
@@ -142,6 +142,7 @@ export const EXECUTION_PLAN_CATALOG = Object.freeze([
     [
       "signed_charges", "average_signed_charges", "median_signed_charges", "gross_net_difference",
       "fees_as_percentage_of_gross_profit", "fees_as_percentage_of_gross_loss",
+      "commission_signed_charges", "average_commission_signed_charges", "median_commission_signed_charges",
     ],
     ["date_range", "entry_price_range", "entry_notional_range", "source_identity", "broker_code"],
     ["symbol", "entry_price_range", "entry_notional_bucket", "source_identity", "broker_code"],
@@ -162,11 +163,11 @@ export const EXECUTION_PLAN_CATALOG = Object.freeze([
   ),
   entry(
     "commission_only_round_trip_analytics",
-    "requires_execution_field",
+    "implemented",
+    ["commission_signed_charges", "average_commission_signed_charges", "median_commission_signed_charges"],
     [],
     [],
-    [],
-    "Canonical executions retain charge kinds, but the FIFO round-trip ledger currently allocates only combined signed charges.",
+    "Requires complete FIFO charge-kind allocation. Unknown charge kinds remain unavailable rather than being inferred as commissions.",
   ),
   entry(
     "market_setup_risk_and_exit_quality",

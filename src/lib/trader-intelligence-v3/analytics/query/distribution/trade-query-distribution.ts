@@ -16,7 +16,7 @@ import {
   type ExactMetricValue,
 } from "../../contracts";
 import type { AnalyticalPartitionReceipt } from "../../dataset";
-import { absoluteExactDecimal, compareCanonicalDecimals, decimalMetric, integerMetric, ratioFromDecimals, ratioMetric, sumExactDecimals, unavailableMetric } from "../../tools/weekday";
+import { absoluteExactDecimal, compareCanonicalDecimals, decimalMetric, ratioFromDecimals, ratioMetric, sumExactDecimals, unavailableMetric } from "../../tools/weekday";
 import { buildTradeQueryEvidence, type TradeQueryEvidence } from "../evidence/query-evidence";
 import { applyTradeQueryFilters } from "../filters/filter-engine";
 import { openReadOnlyTradeQueryGateway, type VerifiedTradeQueryDatasetSource } from "../gateway";

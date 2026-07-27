@@ -1,4 +1,4 @@
-import { compareUnicodeCodePoints, serializeCanonicalValue } from "../../../domain/canonical";
+import { serializeCanonicalValue } from "../../../domain/canonical";
 import type { CanonicalContentDigest } from "../../../domain/identity";
 import { contractFailure, finalizeContentAddressedAuthority, validateCanonicalCount, validateContractRecord, type AnalyticalContractFailure } from "../../contracts";
 import { TRADE_QUERY_LIMITS, type TradeQueryResult, type TradeQueryResultRow } from "../contracts";

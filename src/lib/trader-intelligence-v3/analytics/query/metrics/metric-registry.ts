@@ -248,10 +248,6 @@ const DIRECTION_KEYS = new Set<TradeQueryMetricKey>([
   "long_trade_count", "short_trade_count", "long_trade_percentage",
   "short_trade_percentage",
 ]);
-const REPEAT_KEYS = new Set<TradeQueryMetricKey>([
-  "average_attempts_per_symbol", "median_attempts_per_symbol",
-  "repeat_attempt_trade_count", "repeat_attempt_percentage",
-]);
 const ATTEMPTS_PER_SYMBOL_KEYS = new Set<TradeQueryMetricKey>([
   "average_attempts_per_symbol", "median_attempts_per_symbol",
 ]);
@@ -355,7 +351,7 @@ const COUNT_DENOMINATOR_KEYS = new Set<TradeQueryMetricKey>([
   "average_losing_trade", "average_share_quantity", "average_entry_notional",
   "average_winner_entry_notional", "average_loser_entry_notional",
   "average_position_size", "average_signed_charges", "average_peak_profit_giveback",
-  "average_gross_pnl", "average_green_day_pnl", "average_red_day_pnl",
+  "average_gross_pnl", "average_signed_charges", "average_commission_signed_charges", "average_green_day_pnl", "average_red_day_pnl",
   "fees_as_percentage_of_gross_profit", "fees_as_percentage_of_gross_loss",
 ]);
 const ZERO_SAMPLE_ALLOWED_KEYS = new Set<TradeQueryMetricKey>([

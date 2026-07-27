@@ -53,7 +53,7 @@ The data-quality catalog now reports, from canonical analytical rows, limited-au
 | Realized drawdown, giveback, and green/red transitions | implemented | Ordered daily realized-P/L accumulator and day grouping/ranking |
 | Combined charges and fee impact | implemented when charge coverage is complete | Explicit charge-coverage state, charge metrics, source/size/price groupings |
 | Rejected-row timestamp/price/quantity/direction facts | implemented outside financial rows | Persisted raw-ingestion quality report; rejected rows never become trades |
-| Commission-only results | requires-execution-field | FIFO round-trip allocation currently retains only combined signed charges |
+| Commission-only results | implemented when per-kind allocation is complete | FIFO round-trip allocation preserves charge kinds; unknown or incomplete charge-kind coverage fails closed |
 | Market/setup/VWAP/optimal-exit or planned-risk results | not-execution-derived | Belongs to later market, setup, or risk-plan authority |
 
 The machine-readable lock is `analytics/query/metrics/execution-plan-catalog.ts`. Its focused test requires every registered metric to be assigned to one implemented plan family and rejects duplicate family keys or duplicate metric assignments within a family. The two zero-metric entries are intentional, explicit boundaries rather than omissions.
@@ -63,7 +63,10 @@ The machine-readable lock is `analytics/query/metrics/execution-plan-catalog.ts`
 - Map every plan metric wording to a canonical key or a genuine omission. Existing generic groupings may satisfy outputs such as fees by ticker or size-bucket P/L without a second dedicated metric.
 - Determine which data-quality counts require source-document rejection/coverage authority rather than a completed canonical execution row. These must be exposed from the ingestion/coverage layer rather than fabricated by the query accumulator.
 - Completed ingestion-quality authority: every raw CSV import now persists a non-financial receipt with attempted/accepted/rejected counts, issue codes, and affected fields. The read-only aggregate report covers accepted and rejected documents without granting rejected rows financial authority.
-- Determine whether commission-only metrics are possible from the current canonical `signedCharges` field. If a broker does not separate commissions from other charges, the engine must expose only the combined charge fact and mark commission-only results unavailable.
+- Commission-only metrics are available only when canonical executions carry a
+  complete reconciled per-kind charge allocation. A broker export with only a
+  combined charge field exposes combined charges and marks named commission
+  results unavailable.
 
 ## Audit Method
 

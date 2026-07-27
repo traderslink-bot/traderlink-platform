@@ -11,7 +11,6 @@ import {
 import {
   verifyTradeQueryResultShape,
   type TradeQueryAuthority,
-  type TradeQueryResult,
   type TradeQueryResultRow,
 } from "../contracts/query-result";
 

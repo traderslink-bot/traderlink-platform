@@ -31,7 +31,7 @@ import type {
   CanonicalWeekday,
 } from "../adapters/session-policy";
 
-export const ANALYTICAL_ROW_VERSION = "ti_v3_analytical_row_v1" as const;
+export const ANALYTICAL_ROW_VERSION = "ti_v3_analytical_row_v3" as const;
 
 export type ExactMoneyFact = Readonly<
   | {
@@ -48,6 +48,39 @@ export type ExactMoneyFact = Readonly<
 export type ExactQuantityFact = Readonly<
   | { readonly state: "available"; readonly quantity: string }
   | { readonly state: "unavailable"; readonly reasonCode: string }
+>;
+
+/**
+ * Counterfactual resize simulations require a separate, fail-closed fee
+ * authority. It remains part of the row contract so the execution analytics
+ * extension does not regress the existing simulation boundary.
+ */
+export type SimulationFeeComponentKind =
+  | "fixed"
+  | "quantity_variable"
+  | "notional_variable"
+  | "sell_side_regulatory"
+  | "non_scaling"
+  | "unknown_undecomposed";
+
+export type SimulationFeeAuthority = Readonly<
+  | {
+      readonly state: "broker_reported_complete" | "account_policy_calculated";
+      readonly components: readonly Readonly<{
+        readonly kind: SimulationFeeComponentKind;
+        readonly signedAmount: string;
+      }>[];
+    }
+  | {
+      readonly state: "broker_reported_partial" | "estimated";
+      readonly components: readonly Readonly<{
+        readonly kind: SimulationFeeComponentKind;
+        readonly signedAmount: string;
+      }>[];
+      readonly reasonCode: string;
+    }
+  | { readonly state: "explicitly_zero" }
+  | { readonly state: "not_included" | "unavailable"; readonly reasonCode: string }
 >;
 
 export interface AnalyticalChargeKindAmount {
@@ -111,6 +144,7 @@ export interface AnalyticalRow {
   readonly netPnl: string;
   readonly entryNotional: ExactMoneyFact;
   readonly shareQuantity: ExactQuantityFact;
+  readonly feeAuthority: SimulationFeeAuthority;
   readonly lifecycleState: "closed_flat_to_flat";
   readonly coverageState: "exact" | "limited";
   readonly evidenceQuality:
@@ -174,6 +208,55 @@ function parseChargeKinds(
     }
   }
   return { ok: true, value: Object.freeze(ordered) };
+}
+
+function parseFeeAuthority(
+  input: unknown,
+  signedCharges: string,
+): ExactResult<SimulationFeeAuthority, AnalyticalContractFailure> {
+  if (input === undefined) {
+    return { ok: true, value: Object.freeze({ state: "not_included", reasonCode: "ti_v3_fee_authority_not_included" }) };
+  }
+  const record = validateContractRecord(input, ["state"], ["components", "reasonCode"], "$.feeAuthority");
+  if (!record.ok) return record;
+  if (record.value.state === "explicitly_zero") {
+    return Object.keys(record.value).length === 1 && signedCharges === "0"
+      ? { ok: true, value: Object.freeze({ state: "explicitly_zero" }) }
+      : contractFailure("ti_v3_analytics_contract_invalid", "$.feeAuthority");
+  }
+  if (record.value.state === "not_included" || record.value.state === "unavailable") {
+    if (Object.keys(record.value).length !== 2) return contractFailure("ti_v3_analytics_contract_invalid", "$.feeAuthority");
+    const reason = validateReasonCode(record.value.reasonCode, "$.feeAuthority.reasonCode");
+    return reason.ok ? { ok: true, value: Object.freeze({ state: record.value.state, reasonCode: reason.value }) } : reason;
+  }
+  const state = record.value.state;
+  if (
+    !["broker_reported_complete", "account_policy_calculated", "broker_reported_partial", "estimated"].includes(String(state)) ||
+    !Array.isArray(record.value.components)
+  ) return contractFailure("ti_v3_analytics_contract_invalid", "$.feeAuthority");
+  let total = "0";
+  const components: Array<Readonly<{ readonly kind: SimulationFeeComponentKind; readonly signedAmount: string }>> = [];
+  for (let index = 0; index < record.value.components.length; index += 1) {
+    const component = validateContractRecord(record.value.components[index], ["kind", "signedAmount"], [], `$.feeAuthority.components[${index}]`);
+    if (!component.ok || !["fixed", "quantity_variable", "notional_variable", "sell_side_regulatory", "non_scaling", "unknown_undecomposed"].includes(String(component.value.kind))) return contractFailure("ti_v3_analytics_contract_invalid", `$.feeAuthority.components[${index}]`);
+    const amount = parseExactMoneyAmount(component.value.signedAmount);
+    if (!amount.ok) return contractFailure("ti_v3_analytics_contract_invalid", `$.feeAuthority.components[${index}].signedAmount`);
+    const summed = addExactDecimals(total, amount.value, MONEY_BOUNDS);
+    if (!summed.ok) return contractFailure("ti_v3_analytics_contract_invalid", `$.feeAuthority.components[${index}].signedAmount`);
+    total = summed.value;
+    components.push(Object.freeze({ kind: component.value.kind as SimulationFeeComponentKind, signedAmount: amount.value }));
+  }
+  if ((state === "broker_reported_complete" || state === "account_policy_calculated") && total !== signedCharges) {
+    return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.feeAuthority.components");
+  }
+  if (state === "broker_reported_partial" || state === "estimated") {
+    const reason = validateReasonCode(record.value.reasonCode, "$.feeAuthority.reasonCode");
+    if (!reason.ok || Object.keys(record.value).length !== 3) return reason.ok ? contractFailure("ti_v3_analytics_contract_invalid", "$.feeAuthority") : reason;
+    return { ok: true, value: Object.freeze({ state, components: Object.freeze(components), reasonCode: reason.value }) };
+  }
+  return Object.keys(record.value).length === 2
+    ? { ok: true, value: Object.freeze({ state: state as "broker_reported_complete" | "account_policy_calculated", components: Object.freeze(components) }) }
+    : contractFailure("ti_v3_analytics_contract_invalid", "$.feeAuthority");
 }
 
 function parseMoneyFact(
@@ -300,7 +383,7 @@ export function buildAnalyticalRow(
     "sessionDate", "weekday", "session", "sequenceInPartition", "grossPnl",
     "signedCharges", "netPnl", "entryNotional", "shareQuantity", "lifecycleState",
     "coverageState", "evidenceQuality", "limitationCodes",
-  ], ["signedChargesByKind", "chargeKindCoverageState"]);
+  ], ["signedChargesByKind", "chargeKindCoverageState", "feeAuthority"]);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== ANALYTICAL_ROW_VERSION) {
     return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
@@ -393,6 +476,8 @@ export function buildAnalyticalRow(
   if (!entryNotional.ok) return entryNotional;
   const shareQuantity = parseQuantityFact(record.value.shareQuantity, "$.shareQuantity");
   if (!shareQuantity.ok) return shareQuantity;
+  const feeAuthority = parseFeeAuthority(record.value.feeAuthority, charges.value);
+  if (!feeAuthority.ok) return feeAuthority;
   if (record.value.lifecycleState !== "closed_flat_to_flat") return contractFailure("ti_v3_analytics_contract_invalid", "$.lifecycleState");
   if (record.value.coverageState !== "exact" && record.value.coverageState !== "limited") return contractFailure("ti_v3_analytics_contract_invalid", "$.coverageState");
   if (record.value.evidenceQuality !== "verified_exact" && record.value.evidenceQuality !== "verified_exact_with_limitations") return contractFailure("ti_v3_analytics_contract_invalid", "$.evidenceQuality");
@@ -429,6 +514,7 @@ export function buildAnalyticalRow(
     netPnl: net.value,
     entryNotional: entryNotional.value,
     shareQuantity: shareQuantity.value,
+    feeAuthority: feeAuthority.value,
     lifecycleState: "closed_flat_to_flat" as const,
     coverageState: record.value.coverageState,
     evidenceQuality: record.value.evidenceQuality,
@@ -446,7 +532,7 @@ export function verifyAnalyticalRow(
     "stableInstrumentKey", "displayedSymbol", "displayedSymbolStatus", "direction", "sourceAuthority",
     "currency", "firstEntryAt", "finalExitAt", "timezone", "dateBasis",
     "sessionDate", "weekday", "session", "sequenceInPartition", "grossPnl",
-    "signedCharges", "netPnl", "entryNotional", "shareQuantity", "lifecycleState",
+    "signedCharges", "netPnl", "entryNotional", "shareQuantity", "feeAuthority", "lifecycleState",
     "coverageState", "evidenceQuality", "limitationCodes", "rowDigest",
     "signedChargesByKind", "chargeKindCoverageState",
   ]);

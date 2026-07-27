@@ -19427,3 +19427,19 @@ Current best next step:
 **Current project focus:** complete the Analytics Engine and one user-facing Coach intelligence path first. Prioritize verified current trade-data analytics, behaviour findings, trends, evidence, limitations, unsupported-data responses, and Coach-ready structured findings. Build only in data-authority order and keep missing-data work deferred or blocked. Simulations are near-term support only for `rules_to_test` or accepted GA1-C functionality. Notifications, market context, candle setup detection, memory/profile, dashboards, and extra agent surfaces remain lower priority until Analytics and Coach intelligence are strong.
 
 **Checkpoint-five completion:** executable commit `8949b80b2b97a477bf9409d73dde3ce6a7c0ad9a` adds a deterministic, content-addressed Coach summary composition over existing executor-issued results. It ranks at most three verified P/L leaks and strengths without cross-metric comparison; retains giveback, drawdown, and day-consistency findings separately; selects categorical confidence, weak sources, limitations, evidence coverage, unsupported-data grouping, next focus, and existing rule-to-test candidates. Unsupported or insufficient source findings remain non-actionable. The next step is to push the draft PR and stop for independent audit; do not merge, deploy, begin checkpoint six, or start GA1-E.
+
+# 2026-07-27 Trade Execution Analytics Engine v1 review PR
+
+- Branch `agent/trade-execution-analytics-engine-v1-completion` starts from
+  clean current `main` and keeps the v3 query engine as the single
+  execution-analytics source of truth.
+- This review-only delivery adds execution metric catalog coverage, deterministic
+  result/evidence/finding/attribution/distribution packets, FIFO charge-kind
+  allocation, raw broker CSV receipts, and focused execution-only tests.
+- It deliberately excludes dashboard migration, Coach changes, candle or
+  market-data analytics, simulation expansion, deployment, and merge.
+
+Current best next step:
+
+- Review the draft PR boundary and result-contract details. A later PR may
+  migrate dashboard consumers after this engine contract is accepted.

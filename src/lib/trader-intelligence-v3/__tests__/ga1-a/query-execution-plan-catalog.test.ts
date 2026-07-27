@@ -25,12 +25,16 @@ describe("execution plan catalog lock", () => {
     }
   });
 
-  it("keeps source-field and non-execution boundaries explicit instead of inventing a metric", () => {
+  it("keeps charge-allocation and non-execution boundaries explicit instead of inventing a metric", () => {
     expect(EXECUTION_PLAN_CATALOG).toEqual(expect.arrayContaining([
       expect.objectContaining({
         planFamilyKey: "commission_only_round_trip_analytics",
-        state: "requires_execution_field",
-        metricKeys: [],
+        state: "implemented",
+        metricKeys: expect.arrayContaining([
+          "commission_signed_charges",
+          "average_commission_signed_charges",
+          "median_commission_signed_charges",
+        ]),
       }),
       expect.objectContaining({
         planFamilyKey: "market_setup_risk_and_exit_quality",

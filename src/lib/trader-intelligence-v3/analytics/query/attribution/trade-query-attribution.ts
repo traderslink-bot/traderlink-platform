@@ -11,7 +11,6 @@ import {
   absoluteExactDecimal,
   compareCanonicalDecimals,
   decimalMetric,
-  integerMetric,
   quotientMetric,
   ratioFromCounts,
   ratioFromDecimals,
