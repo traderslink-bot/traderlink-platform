@@ -75,6 +75,8 @@ export const TRADE_QUERY_POLICY = Object.freeze({
 } as const);
 
 export type QueryOutcome = "gain" | "loss" | "flat";
+export type QuerySession = "premarket" | "regular" | "after_hours" | "overnight" | "not_applicable";
+export type QuerySessionTransition = `${QuerySession}_to_${QuerySession}`;
 export type QueryWeekday =
   | "monday" | "tuesday" | "wednesday" | "thursday"
   | "friday" | "saturday" | "sunday";
@@ -88,7 +90,10 @@ export type TradeQueryFilter = Readonly<
   | { readonly kind: "source_kind"; readonly values: readonly ExecutionSourceKind[] }
   | { readonly kind: "charge_coverage"; readonly value: "complete" | "unknown" }
   | { readonly kind: "direction"; readonly values: readonly ("long" | "short")[] }
-  | { readonly kind: "session"; readonly values: readonly ("premarket" | "regular" | "after_hours" | "overnight" | "not_applicable")[] }
+  | { readonly kind: "session"; readonly values: readonly QuerySession[] }
+  | { readonly kind: "entry_session"; readonly values: readonly QuerySession[] }
+  | { readonly kind: "exit_session"; readonly values: readonly QuerySession[] }
+  | { readonly kind: "session_transition"; readonly values: readonly QuerySessionTransition[] }
   | { readonly kind: "currency"; readonly value: CurrencyCode }
   | { readonly kind: "realized_outcome"; readonly values: readonly QueryOutcome[] }
   | { readonly kind: "weekday"; readonly values: readonly QueryWeekday[] }
@@ -116,6 +121,9 @@ export type TradeQueryGroupingDimension = Readonly<
   | { readonly kind: "weekday" }
   | { readonly kind: "year" }
   | { readonly kind: "session" }
+  | { readonly kind: "entry_session" }
+  | { readonly kind: "exit_session" }
+  | { readonly kind: "session_transition" }
   | { readonly kind: "time_bucket"; readonly source: "entry" | "exit"; readonly bucketMinutes: string }
   | { readonly kind: "entry_price_range"; readonly boundaries: readonly string[] }
   | { readonly kind: "price_range"; readonly boundaries: readonly string[] }
@@ -191,7 +199,7 @@ export interface TradeQueryAuthority {
 }
 
 const FILTER_KINDS = new Set([
-  "date_range", "account", "symbol", "source_identity", "broker_code", "source_kind", "charge_coverage", "direction", "session", "currency",
+  "date_range", "account", "symbol", "source_identity", "broker_code", "source_kind", "charge_coverage", "direction", "session", "entry_session", "exit_session", "session_transition", "currency",
   "realized_outcome", "weekday", "entry_time_range", "exit_time_range",
   "entry_price_range", "price_range", "sequence_in_session",
   "previous_completed_outcome", "prior_completed_streak", "pre_entry_daily_state", "pre_entry_daily_path",
@@ -204,14 +212,17 @@ const WEEKDAYS = new Set<QueryWeekday>([
 ]);
 const OUTCOMES = new Set<QueryOutcome>(["gain", "loss", "flat"]);
 const PREVIOUS_OUTCOMES = new Set(["none", "gain", "loss", "flat", "ambiguous"]);
-const SESSIONS = new Set(["premarket", "regular", "after_hours", "overnight", "not_applicable"]);
+const SESSIONS = new Set<QuerySession>(["premarket", "regular", "after_hours", "overnight", "not_applicable"]);
+const SESSION_TRANSITIONS = new Set<QuerySessionTransition>(
+  [...SESSIONS].flatMap((entry) => [...SESSIONS].map((exit) => `${entry}_to_${exit}` as QuerySessionTransition)),
+);
 const PRE_ENTRY_DAILY_STATES = new Set(["green", "red", "flat"]);
 const PRE_ENTRY_DAILY_PATHS = new Set([
   "after_first_win", "after_first_loss", "after_peak_profit_giveback", "after_green_to_red", "after_red_to_green",
 ]);
 const METRICS = new Set<string>(TRADE_QUERY_METRIC_KEYS);
 const GROUPINGS = new Set([
-  "aggregate", "day", "month", "week", "weekday", "year", "session", "time_bucket",
+  "aggregate", "day", "month", "week", "weekday", "year", "session", "entry_session", "exit_session", "session_transition", "time_bucket",
   "entry_price_range", "price_range",
   "trade_sequence", "trade_sequence_bucket", "previous_completed_outcome", "prior_completed_streak_bucket", "pre_entry_daily_state", "repeat_attempt", "repeat_attempt_bucket",
   "holding_time_bucket", "share_quantity_bucket", "entry_notional_bucket",
@@ -338,7 +349,7 @@ function normalizeFilter(input: unknown, index: number): ExactResult<TradeQueryF
     return { ok: true, value: Object.freeze({ kind, values: [...values].sort(compareUnicodeCodePoints) }) };
   }
   if (
-    kind === "direction" || kind === "session" || kind === "realized_outcome" ||
+    kind === "direction" || kind === "session" || kind === "entry_session" || kind === "exit_session" || kind === "session_transition" || kind === "realized_outcome" ||
     kind === "weekday" || kind === "previous_completed_outcome" ||
     kind === "pre_entry_daily_state" || kind === "pre_entry_daily_path"
   ) {
@@ -346,8 +357,10 @@ function normalizeFilter(input: unknown, index: number): ExactResult<TradeQueryF
     if (!exact.ok) return exact;
     const allowed = kind === "direction"
       ? new Set(["long", "short"])
-      : kind === "session"
+      : kind === "session" || kind === "entry_session" || kind === "exit_session"
         ? SESSIONS
+      : kind === "session_transition"
+        ? SESSION_TRANSITIONS
       : kind === "realized_outcome"
         ? OUTCOMES
         : kind === "weekday"

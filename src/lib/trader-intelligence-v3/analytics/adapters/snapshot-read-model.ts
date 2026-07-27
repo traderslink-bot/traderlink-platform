@@ -780,8 +780,9 @@ function deriveDataset(authority: VerifiedAuthority): ExactResult<AnalyticalData
     const firstEntry = ordering.economicallyOrderedExecutions.find((execution) => execution.content.side === entrySide);
     const finalExit = [...ordering.economicallyOrderedExecutions].reverse().find((execution) => execution.content.side === exitSide);
     if (firstEntry === undefined || finalExit === undefined) { exclusions.push(exclusion(key, key, ANALYTICAL_EXCLUSION_REASONS.catalogMismatch, roundTrip.executionDigests, occurrences.flat(), ledgerScope)); continue; }
-    const session = resolveSessionFacts(finalExit.content.executedAt, authority.filter.timezone, authority.dateResolutionReceipt);
-    if (!session.ok) { exclusions.push(exclusion(key, key, ANALYTICAL_EXCLUSION_REASONS.unprovableSession, roundTrip.executionDigests, occurrences.flat(), ledgerScope)); continue; }
+    const entrySession = resolveSessionFacts(firstEntry.content.executedAt, authority.filter.timezone, authority.dateResolutionReceipt);
+    const exitSession = resolveSessionFacts(finalExit.content.executedAt, authority.filter.timezone, authority.dateResolutionReceipt);
+    if (!entrySession.ok || !exitSession.ok) { exclusions.push(exclusion(key, key, ANALYTICAL_EXCLUSION_REASONS.unprovableSession, roundTrip.executionDigests, occurrences.flat(), ledgerScope)); continue; }
     const symbolChanged = exactExecutions.some((execution) => execution.content.rawBrokerSymbol !== firstEntry.content.rawBrokerSymbol);
     const firstSource = exactExecutions[0].content;
     const uniformSourceAuthority = exactExecutions.every((execution) =>
@@ -804,7 +805,7 @@ function deriveDataset(authority: VerifiedAuthority): ExactResult<AnalyticalData
           state: "unavailable" as const,
           reasonCode: "ti_v3_analytics_mixed_source_authority",
         };
-    if (!filterIncludesRow(authority.filter, { account: ledger.canonicalAccountKey, instrument: ledger.stableInstrumentKey, symbol: firstEntry.content.rawBrokerSymbol, direction: roundTrip.direction, currency: ledger.currency, finalExitAt: finalExit.content.executedAt, session: session.value, netPnl: roundTrip.netAnalyticalPnl }, authority.dependencies.eligibilitySet)) { exclusions.push(exclusion(key, key, ANALYTICAL_EXCLUSION_REASONS.filterExcluded, roundTrip.executionDigests, occurrences.flat(), ledgerScope)); continue; }
+    if (!filterIncludesRow(authority.filter, { account: ledger.canonicalAccountKey, instrument: ledger.stableInstrumentKey, symbol: firstEntry.content.rawBrokerSymbol, direction: roundTrip.direction, currency: ledger.currency, finalExitAt: finalExit.content.executedAt, session: exitSession.value, netPnl: roundTrip.netAnalyticalPnl }, authority.dependencies.eligibilitySet)) { exclusions.push(exclusion(key, key, ANALYTICAL_EXCLUSION_REASONS.filterExcluded, roundTrip.executionDigests, occurrences.flat(), ledgerScope)); continue; }
     const limitations = [...new Set([...(closedEligibility.state === "limited" ? closedEligibility.reasonCodes : []), ...ledger.limitations])].sort(compareUnicodeCodePoints);
     const notional = entryNotional(roundTrip, ledger.currency);
     if (notional.state === "unavailable") limitations.push(notional.reasonCode);
@@ -827,8 +828,9 @@ function deriveDataset(authority: VerifiedAuthority): ExactResult<AnalyticalData
       displayedSymbolStatus: symbolChanged ? "non_authoritative_symbol_changed_first_entry_selected" : "non_authoritative_stable_symbol",
       direction: roundTrip.direction, sourceAuthority, currency: ledger.currency, firstEntryAt: firstEntry.content.executedAt,
       finalExitAt: finalExit.content.executedAt, timezone: authority.filter.timezone,
-      dateBasis: "trade_close_date", sessionDate: session.value.sessionDate, weekday: session.value.weekday,
-      session: session.value.session, sequenceInPartition: "0", grossPnl: roundTrip.grossRealizedPnl,
+      dateBasis: "trade_close_date", sessionDate: exitSession.value.sessionDate, weekday: exitSession.value.weekday,
+      entrySession: entrySession.value.session, exitSession: exitSession.value.session,
+      session: exitSession.value.session, sequenceInPartition: "0", grossPnl: roundTrip.grossRealizedPnl,
       signedCharges: roundTrip.signedCharges,
       signedChargesByKind: roundTrip.signedChargesByKind,
       chargeKindCoverageState: roundTrip.chargeKindCoverageState,

@@ -370,7 +370,7 @@ const ZERO_SAMPLE_ALLOWED_KEYS = new Set<TradeQueryMetricKey>([
   "days_with_realized_drawdown", "green_to_red_day_count", "red_to_green_day_count",
 ]);
 const ALL_GROUPINGS = Object.freeze([
-  "aggregate", "day", "week", "month", "weekday", "year", "session", "time_bucket",
+  "aggregate", "day", "week", "month", "weekday", "year", "session", "entry_session", "exit_session", "session_transition", "time_bucket",
   "entry_price_range", "price_range", "trade_sequence", "trade_sequence_bucket",
   "previous_completed_outcome", "prior_completed_streak_bucket", "pre_entry_daily_state",
   "repeat_attempt", "repeat_attempt_bucket", "holding_time_bucket",
@@ -379,7 +379,7 @@ const ALL_GROUPINGS = Object.freeze([
   "charge_coverage", "compound",
 ]);
 const ALL_FILTERS = Object.freeze([
-  "date_range", "account", "symbol", "source_identity", "broker_code", "direction", "session", "currency",
+  "date_range", "account", "symbol", "source_identity", "broker_code", "source_kind", "charge_coverage", "direction", "session", "entry_session", "exit_session", "session_transition", "currency",
   "realized_outcome", "weekday", "entry_time_range", "exit_time_range",
   "entry_price_range", "sequence_in_session",
   "previous_completed_outcome", "prior_completed_streak", "pre_entry_daily_state", "pre_entry_daily_path",
