@@ -34,6 +34,12 @@ const STREAK_METRICS = Object.freeze([
   "current_winning_trade_streak", "current_losing_trade_streak",
 ] as const satisfies readonly TradeQueryMetricKey[]);
 
+const MAX_COMPOSITION_FILTERS = 6;
+const MAX_COMPOSITION_METRICS = 16;
+const IMMUTABLE_COMPOSITION_FILTERS = new Set<TradeQueryFilter["kind"]>([
+  "account", "currency", "date_range",
+]);
+
 interface PlanDefinition {
   readonly capabilityKey: string;
   readonly execution: "direct" | "preset";
@@ -53,6 +59,23 @@ function sameScope(left: readonly string[], right: readonly string[]): boolean {
   const a = exactScope(left);
   const b = exactScope(right);
   return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+function validateComposition(
+  request: AnalyticsAgentExecutionRequest,
+): { readonly ok: true } | { readonly ok: false; readonly error: AnalyticalContractFailure } {
+  const composition = request.composition;
+  if (composition === undefined) return { ok: true };
+  if (composition.filters.length > MAX_COMPOSITION_FILTERS) {
+    return contractFailure("ti_v3_analytics_contract_oversized", "$.analyticsAgent.composition.filters");
+  }
+  if (composition.metrics !== undefined && composition.metrics.length > MAX_COMPOSITION_METRICS) {
+    return contractFailure("ti_v3_analytics_contract_oversized", "$.analyticsAgent.composition.metrics");
+  }
+  if (composition.filters.some((filter) => IMMUTABLE_COMPOSITION_FILTERS.has(filter.kind))) {
+    return contractFailure("ti_v3_analytics_contract_invalid", "$.analyticsAgent.composition.filters");
+  }
+  return { ok: true };
 }
 
 function definition(resolution: AnalyticsAgentIntentResolution): PlanDefinition | null {
@@ -103,6 +126,8 @@ function definition(resolution: AnalyticsAgentIntentResolution): PlanDefinition 
       return { capabilityKey: "ticker_price_size_hold_direction", execution: "direct", grouping: { kind: "entry_price_range", boundaries: ["1", "2", "5", "10"] }, metrics: CORE_METRICS, filters: [], ranking: resolution.ranking ?? "ascending" };
     case "limited_category_summary":
       return { capabilityKey: "limited_ticker_pnl_summary", execution: "direct", grouping: { kind: "symbol" }, metrics: CORE_METRICS, filters: [], ranking: resolution.ranking ?? "ascending" };
+    case "composed_execution_query":
+      return { capabilityKey: "composed_execution_query", execution: "direct", grouping: { kind: "aggregate" }, metrics: CORE_METRICS, filters: [] };
     case "giveback_drawdown":
       return { capabilityKey: "giveback_and_drawdown", execution: "direct", grouping: { kind: "day" }, metrics: ["candidate_count", "included_count", "excluded_count", "net_pnl", "maximum_intraday_drawdown", "maximum_peak_profit_giveback"], filters: [] };
     case "fee_impact":
@@ -118,16 +143,23 @@ export function buildAnalyticsAgentPlan(
   request: AnalyticsAgentExecutionRequest,
   resolution: AnalyticsAgentIntentResolution,
 ): { readonly ok: true; readonly value: Readonly<{ readonly capabilityKey: string; readonly plan: TradeQueryPlan | null; readonly preset: Ga1BPreset | null }> } | { readonly ok: false; readonly error: AnalyticalContractFailure } {
-  const selected = definition(resolution);
+  const effectiveResolution = request.composition === undefined
+    ? resolution
+    : Object.freeze({ ...resolution, intent: "composed_execution_query" as const });
+  const selected = definition(effectiveResolution);
   if (selected === null) return contractFailure("ti_v3_analytics_contract_invalid", "$.analyticsAgent.intent");
   const gateway = openReadOnlyTradeQueryGateway(request.source, request.partitionReceipt);
   if (!gateway.ok) return gateway;
   if (!sameScope(request.ownerScope, request.partitionReceipt.ownerScope) || !sameScope(request.accountScope, request.partitionReceipt.accountScope)) {
     return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.analyticsAgent.scope");
   }
+  const compositionValidation = validateComposition(request);
+  if (!compositionValidation.ok) return compositionValidation;
   if (selected.requiresDateRange && request.dateRange === undefined) return contractFailure("ti_v3_analytics_contract_invalid", "$.analyticsAgent.dateRange");
+  const composition = request.composition;
   const filters: TradeQueryFilter[] = [
     ...(selected.filters ?? []),
+    ...(composition?.filters ?? []),
     ...(request.dateRange === undefined ? [] : [{ kind: "date_range" as const, ...request.dateRange }]),
     ...(request.symbol === undefined ? [] : [{ kind: "symbol" as const, values: [request.symbol] }]),
     ...(request.filters ?? []),
@@ -156,9 +188,11 @@ export function buildAnalyticsAgentPlan(
       ? { ok: true, value: Object.freeze({ capabilityKey: selected.capabilityKey, plan: null, preset: compiled.value }) }
       : compiled;
   }
-  if (selected.grouping === undefined || selected.metrics === undefined) return contractFailure("ti_v3_analytics_contract_invalid", "$.analyticsAgent.intent");
-  const ordering = selected.metrics.includes("net_pnl")
-    ? [{ by: "metric" as const, metricKey: "net_pnl" as const, direction: (selected.ranking ?? "ascending") }]
+  const grouping = composition?.grouping ?? selected.grouping;
+  const metrics = composition?.metrics ?? selected.metrics;
+  if (grouping === undefined || metrics === undefined) return contractFailure("ti_v3_analytics_contract_invalid", "$.analyticsAgent.intent");
+  const ordering = metrics.includes("net_pnl")
+    ? [{ by: "metric" as const, metricKey: "net_pnl" as const, direction: (composition?.ranking ?? selected.ranking ?? "ascending") }]
     : [{ by: "group_identity" as const, metricKey: null, direction: "ascending" as const }];
   const authority = gateway.value.authority;
   const plan = buildTradeQueryPlan({
@@ -176,11 +210,11 @@ export function buildAnalyticsAgentPlan(
       accountScope: authority.partitionReceipt.accountScope,
     },
     filters,
-    grouping: selected.grouping,
-    metrics: selected.metrics,
+    grouping,
+    metrics,
     ordering,
     limits: { groupLimit: "64", resultRowLimit: "64", evidencePerGroup: "8", totalEvidenceLimit: "128", diagnosticLimit: "32" },
     policies: TRADE_QUERY_POLICY,
   }, authority);
-  return plan.ok ? { ok: true, value: Object.freeze({ capabilityKey: selected.capabilityKey, plan: plan.value, preset: null }) } : plan;
+  return plan.ok ? { ok: true, value: Object.freeze({ capabilityKey: composition === undefined ? selected.capabilityKey : "composed_execution_query", plan: plan.value, preset: null }) } : plan;
 }

@@ -1,3 +1,25 @@
+# 2026-07-27 - Analytics Agent v1 full deterministic completion started
+
+**Branch:** `agent/analytics-agent-v1-completion`, created clean from merged
+Pack B at `3362bd46dc43e92672e01ebc1d306522580c26fa`.
+
+This is one integrated agent-only completion run. It will add a typed,
+engine-validated composition contract; deterministic clarification for missing
+context; answer/evidence quality and drill-down contracts; a bounded scorecard;
+and fixture-backed golden questions. It must not introduce an LLM parser,
+dashboard/chat UI, Coach, market/candle authority, simulations, notifications,
+deployment, or new ingestion authority. The engine's existing filter/grouping
+validation remains the final authority for every composable request.
+
+**Implementation checkpoint:** composition is bounded to six non-authority
+filters and sixteen metrics; it cannot inject account, currency, or date
+filters. Missing explicit review/comparison ranges return digest-bearing
+clarification packets. Answer packets now preserve supporting and
+counterexample evidence separately, explicit not-proven boundaries,
+deterministic drill-down contracts, and can be converted into a digest-bound
+review scorecard. Representative golden coverage is the final local
+verification checkpoint before this branch is published as a draft PR.
+
 # 2026-07-27 - Analytics Agent v1 Execution Coverage Pack B started
 
 **Branch:** `agent/analytics-agent-v1-execution-coverage-pack-b`, created clean
