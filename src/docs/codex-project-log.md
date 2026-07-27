@@ -1,3 +1,23 @@
+# 2026-07-27 - Analytics Agent v1 Foundation complete
+
+**Branch:** `agent/analytics-agent-v1-foundation`, created from merged PR #173
+at `599436a435fefcad322ebaec7293a19d7d8d3ab0`.
+
+Completed the first Analytics Agent v1 consumer layer under
+`src/lib/trader-intelligence-v3/analytics/agent`. It has a deterministic,
+model-free question router; account/owner scope checks against the query
+partition; capability-specific query-plan construction; result/receipt/evidence
+preservation; content-addressed answer packets; sample-size withholding; and
+explicit market/setup, exit-quality, planned-risk, and unknown-question
+boundaries. It does not read raw trades, calculate analytics, add UI/chat, or
+reuse Coach as an authority path.
+
+The initial supported inventory is core performance, time of day, tickers,
+price range, after-win/loss execution behavior, trade sequence, repeat attempt,
+realized giveback/drawdown, fees, and data quality. The next step is broader
+execution-question coverage; do not begin dashboard/chat, reports, market/candle
+authority, or Coach changes as part of this branch.
+
 # 2026-07-26 - GA1-D checkpoint three: Coach Behaviour Analytics Pack started
 
 **Branch:** `agent/trader-intelligence-v3-ga1-d-coach-behaviour-pack`, created clean from merged `main` at `17c299deaee25c7c8d82ebd73ee815f8c1ec6ad7` after accepted checkpoint two.
