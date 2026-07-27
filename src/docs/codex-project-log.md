@@ -13,7 +13,12 @@ and baseline ranges; it does not infer dates from the question.
 
 No dashboard/chat integration, Coach work, market/candle authority, simulation
 expansion, deployment, or other new data authority is in scope. The next step
-is focused validation of this agent coverage before requesting a review branch.
+is draft PR #175 review; do not mark it ready, merge, or deploy without owner
+direction.
+
+**CI trigger policy:** the shared `test-and-verify` workflow runs after pushes
+to `main` and when a pull request is marked ready for review. Draft PR creation
+and draft branch updates do not run the full repository verification job.
 
 # 2026-07-27 - Analytics Agent v1 Foundation complete
 
