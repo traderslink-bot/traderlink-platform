@@ -19462,3 +19462,21 @@ Current best next step:
 
 - Push this scoped repair to draft PR #173 and let GitHub CI rerun; keep the PR
   draft, review-only, unmerged, and undeployed.
+
+# 2026-07-27 Trade Execution Analytics Engine v1 architecture-guard repair
+
+- CI confirmed the GA0-A2 test suite passed (308 tests); its architecture guard
+  then rejected a locale-dependent charge-kind comparator and generic numeric
+  helpers in new query distribution and pagination code.
+- Replaced them with the existing Unicode code-point comparator and exact
+  integer/count logic. This preserves the nearest-rank, median, and pagination
+  contracts while keeping financial authority deterministic.
+- The architecture and private-data guards pass locally, along with the
+  affected GA1-A pagination/distribution and analytical-dataset tests. The
+  full local GA0-A2 command is otherwise blocked only by the ignored native
+  `better-sqlite3` install; CI installs that dependency on Linux.
+
+Current best next step:
+
+- Let the fresh draft PR #173 CI run complete. Do not migrate dashboard
+  consumers, change Coach behavior, deploy, or merge.
