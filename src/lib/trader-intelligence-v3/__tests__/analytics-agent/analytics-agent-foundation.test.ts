@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildAnalyticsAgentPlan,
   executeAnalyticsAgent,
   resolveAnalyticsAgentIntent,
 } from "../../analytics/agent";
@@ -108,6 +109,40 @@ describe("Analytics Agent v1 Foundation", () => {
   it("fails closed when the caller owner scope does not match the engine partition", () => {
     const input = request("How am I doing overall?");
     const result = executeAnalyticsAgent({ ...input.request, ownerScope: ["another-owner"] });
+    expect(result).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_reference_mismatch", path: "$.analyticsAgent.scope" } });
+  });
+
+  it("requires exact owner and account scope while preserving explicit date and symbol filters without an account-narrowing filter", () => {
+    const input = request("How am I doing overall?");
+    const planned = buildAnalyticsAgentPlan({
+      ...input.request,
+      dateRange: { startDate: "2026-07-01", endDate: "2026-07-03" },
+      symbol: "SYN1",
+    }, resolveAnalyticsAgentIntent(input.request.question));
+    expect(planned).toMatchObject({ ok: true });
+    if (!planned.ok) return;
+    expect(planned.value.plan.filters).toEqual(expect.arrayContaining([
+      { kind: "date_range", startDate: "2026-07-01", endDate: "2026-07-03" },
+      { kind: "symbol", values: ["SYN1"] },
+    ]));
+    expect(planned.value.plan.filters.some((filter) => filter.kind === "account")).toBe(false);
+  });
+
+  it("fails closed for an account-scope subset instead of narrowing the partition", () => {
+    const input = request("How am I doing overall?");
+    const result = executeAnalyticsAgent({ ...input.request, accountScope: input.fixture.partition.accountScope.slice(0, -1) });
+    expect(result).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_reference_mismatch", path: "$.analyticsAgent.scope" } });
+  });
+
+  it("fails closed for an account-scope superset", () => {
+    const input = request("How am I doing overall?");
+    const result = executeAnalyticsAgent({ ...input.request, accountScope: [...input.fixture.partition.accountScope, "extra-account"] });
+    expect(result).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_reference_mismatch", path: "$.analyticsAgent.scope" } });
+  });
+
+  it("fails closed for a nonmatching account scope", () => {
+    const input = request("How am I doing overall?");
+    const result = executeAnalyticsAgent({ ...input.request, accountScope: ["different-account"] });
     expect(result).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_reference_mismatch", path: "$.analyticsAgent.scope" } });
   });
 

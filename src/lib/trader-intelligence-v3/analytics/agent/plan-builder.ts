@@ -38,11 +38,6 @@ function sameScope(left: readonly string[], right: readonly string[]): boolean {
   return a.length === b.length && a.every((value, index) => value === b[index]);
 }
 
-function scopeIsSubset(requested: readonly string[], allowed: readonly string[]): boolean {
-  const permitted = new Set(allowed);
-  return requested.length > 0 && requested.every((value) => permitted.has(value));
-}
-
 function definition(resolution: AnalyticsAgentIntentResolution): PlanDefinition | null {
   switch (resolution.intent) {
     case "core_performance":
@@ -80,13 +75,12 @@ export function buildAnalyticsAgentPlan(
   if (selected === null) return contractFailure("ti_v3_analytics_contract_invalid", "$.analyticsAgent.intent");
   const gateway = openReadOnlyTradeQueryGateway(request.source, request.partitionReceipt);
   if (!gateway.ok) return gateway;
-  if (!sameScope(request.ownerScope, request.partitionReceipt.ownerScope) || !scopeIsSubset(request.accountScope, request.partitionReceipt.accountScope)) {
+  if (!sameScope(request.ownerScope, request.partitionReceipt.ownerScope) || !sameScope(request.accountScope, request.partitionReceipt.accountScope)) {
     return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.analyticsAgent.scope");
   }
   const filters: TradeQueryFilter[] = [
     ...selected.filters,
     ...(request.dateRange === undefined ? [] : [{ kind: "date_range" as const, ...request.dateRange }]),
-    ...(sameScope(request.accountScope, request.partitionReceipt.accountScope) ? [] : [{ kind: "account" as const, values: exactScope(request.accountScope) }]),
     ...(request.symbol === undefined ? [] : [{ kind: "symbol" as const, values: [request.symbol] }]),
     ...(request.filters ?? []),
   ];
