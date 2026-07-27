@@ -41,10 +41,35 @@ infer market/candle/setup/exit-quality/planned-risk claims.
 
 ## Current resume point
 
-Stage 2 execution-question coverage is in progress on
-`agent/analytics-agent-v1-execution-question-coverage`. The governed
-holding-time, direction, position-size, and period-comparison presets are the
-current coverage slice. Period comparisons require explicit primary and
-baseline date ranges; the agent does not infer either range from prose. UI,
-chat/model routing, reports, market/candle authority, and Coach behavior
-remain out of scope.
+## 2026-07-27 integrated completion record
+
+Foundation and the complete supported execution-question inventory are now
+implemented across the merged Foundation, Coverage Pack A, Coverage Pack B,
+and this integrated completion branch. The supported deterministic inventory
+includes performance, time/session, ticker, price, prior outcomes and streaks,
+sequence/repeat behavior, holding time, direction, size, explicit period
+comparison, daily/weekly/monthly review, pre-entry daily state/path, daily
+transitions, best/worst day and price range, a limited ticker P/L summary,
+drawdown, fees, and data quality.
+
+The completion branch adds a typed composition contract for caller-supplied
+execution filters, groupings, metrics, and P/L ranking. It is bounded and may
+not inject account, currency, or date filters: owner/account authority stays
+exact, dates remain explicit request context, and the existing engine validates
+every final query plan. Missing primary or comparison ranges return a
+content-addressed `needs_clarification` packet rather than inferred dates.
+
+Answer packets now expose supporting and counterexample evidence separately,
+explicit execution-only not-proven boundaries, deterministic drill-down
+contracts, replay identities, and a digest-bound review scorecard. Focused
+golden questions protect the deterministic intent and plan behavior.
+
+Dashboard/chat UI, model parsing, Coach, candle/market authority, simulations,
+reports/scheduling, notifications, ingestion, deployment, and financial advice
+remain deliberately outside this completed engine-consumer boundary.
+
+The previous Stage 2 wording below is superseded by the integrated completion
+record above. Period comparison still requires explicit primary and baseline
+date ranges; the agent does not infer either range from prose. UI, chat/model
+routing, reports, market/candle authority, and Coach behavior remain out of
+scope.

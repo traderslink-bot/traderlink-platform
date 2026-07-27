@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   buildAnalyticsAgentPlan,
+  buildAnalyticsAgentScorecard,
   executeAnalyticsAgent,
+  ANALYTICS_AGENT_QUESTION_TEMPLATES,
   resolveAnalyticsAgentIntent,
 } from "../../analytics/agent";
 import { buildSyntheticQueryFixture } from "../../analytics/query";
@@ -69,7 +71,7 @@ describe("Analytics Agent v1 Foundation", () => {
   it("requires explicit dates for Pack B reviews and retains verified execution identities for supported Pack B questions", () => {
     const input = request("How did I do today?");
     const missing = executeAnalyticsAgent(input.request);
-    expect(missing).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.analyticsAgent.dateRange" } });
+    expect(missing).toMatchObject({ ok: true, value: { status: "needs_clarification", clarification: { code: "date_range_required", requiredContext: ["dateRange"] }, enginePlanDigest: null } });
     for (const question of ["How did I do today?", "Review this week.", "How was my trading month?", "What happens after two losses?", "What is my longest winning streak?", "Do I trade worse when already red?", "How do I trade after first loss?", "Do I go green then red?", "What was my best day?", "What price range is worst for me?", "What is my biggest weakness?"]) {
       const requestWithRange = { ...input.request, question, dateRange: { startDate: "2026-07-01", endDate: "2026-07-07" } };
       const result = executeAnalyticsAgent(requestWithRange);
@@ -226,7 +228,85 @@ describe("Analytics Agent v1 Foundation", () => {
       ...input.request,
       dateRange: { startDate: "2026-07-01", endDate: "2026-07-03" },
     });
-    expect(result).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.analyticsAgent.comparisonDateRange" } });
+    expect(result).toMatchObject({ ok: true, value: { status: "needs_clarification", clarification: { code: "comparison_date_range_required", requiredContext: ["dateRange", "comparisonDateRange"] }, enginePlanDigest: null } });
+  });
+
+  it("builds one bounded, engine-validated composed execution plan without changing partition scope", () => {
+    const input = request("How were my shorts after two losses?");
+    const composed = {
+      ...input.request,
+      dateRange: { startDate: "2026-07-01", endDate: "2026-07-07" },
+      composition: {
+        filters: [
+          { kind: "direction" as const, values: ["short" as const] },
+          { kind: "prior_completed_streak" as const, outcome: "loss" as const, minimum: "2", maximum: null },
+        ],
+        grouping: { kind: "symbol" as const },
+        metrics: ["candidate_count", "included_count", "net_pnl", "win_rate"] as const,
+        ranking: "ascending" as const,
+      },
+    };
+    const planned = buildAnalyticsAgentPlan(composed, resolveAnalyticsAgentIntent(composed.question));
+    expect(planned).toMatchObject({ ok: true, value: { capabilityKey: "composed_execution_query" } });
+    if (!planned.ok || planned.value.plan === null) return;
+    expect(planned.value.plan.grouping).toEqual({ kind: "symbol" });
+    expect(planned.value.plan.metrics).toEqual(["candidate_count", "included_count", "net_pnl", "win_rate"]);
+    expect(planned.value.plan.ordering).toEqual([{ by: "metric", metricKey: "net_pnl", direction: "ascending" }]);
+    expect(planned.value.plan.filters).toEqual(expect.arrayContaining([
+      { kind: "date_range", startDate: "2026-07-01", endDate: "2026-07-07" },
+      { kind: "direction", values: ["short"] },
+      { kind: "prior_completed_streak", outcome: "loss", minimum: "2", maximum: null },
+    ]));
+    expect(planned.value.plan.filters.some((filter) => filter.kind === "account")).toBe(false);
+    const executed = executeAnalyticsAgent(composed);
+    expect(executed).toMatchObject({ ok: true, value: { resolvedIntent: "composed_execution_query", capabilityKeys: ["composed_execution_query"] } });
+  });
+
+  it("fails closed when a composition attempts to change the exact partition or date authority", () => {
+    const input = request("How were my shorts?");
+    for (const filter of [
+      { kind: "account" as const, values: input.fixture.partition.accountScope },
+      { kind: "date_range" as const, startDate: "2026-07-01", endDate: "2026-07-07" },
+      { kind: "currency" as const, value: input.fixture.partition.currency },
+    ]) {
+      const result = executeAnalyticsAgent({
+        ...input.request,
+        composition: { filters: [filter], grouping: { kind: "aggregate" } },
+      });
+      expect(result).toMatchObject({ ok: false, error: { code: "ti_v3_analytics_contract_invalid", path: "$.analyticsAgent.composition.filters" } });
+    }
+  });
+
+  it("preserves supporting and counterexample evidence, explicit boundaries, and a replay-bound scorecard", () => {
+    const input = request("What tickers hurt me most?");
+    const result = executeAnalyticsAgent(input.request);
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    expect(result.value.evidenceSummary.supportingTradeReferences.every((item) => item.role === "supporting")).toBe(true);
+    expect(result.value.evidenceSummary.counterexampleTradeReferences.every((item) => item.role === "counterexample")).toBe(true);
+    expect(result.value.notProven).toContain("market_or_candle_setup_quality");
+    expect(result.value.drillDowns).toEqual(expect.arrayContaining([
+      expect.objectContaining({ purpose: "evidence_review" }),
+      expect.objectContaining({ purpose: "data_quality" }),
+    ]));
+    const first = buildAnalyticsAgentScorecard(result.value);
+    const second = buildAnalyticsAgentScorecard(result.value);
+    expect(first).toMatchObject({ answerDigest: result.value.answerDigest, resultDigest: result.value.resultDigest, readiness: "review_ready" });
+    expect(first.scorecardDigest).toBe(second.scorecardDigest);
+  });
+
+  it("keeps representative golden questions deterministic and exposes explicit-context templates", () => {
+    for (const [question, intent] of [
+      ["How did I trade after two losses?", "prior_streak_behavior"],
+      ["How did longs compare with shorts?", "direction_performance"],
+      ["What was my best price range?", "best_worst_price_range"],
+      ["Show my top leaks.", "limited_category_summary"],
+      ["Compare this month with last month.", "period_comparison"],
+    ] as const) expect(resolveAnalyticsAgentIntent(question).intent).toBe(intent);
+    expect(ANALYTICS_AGENT_QUESTION_TEMPLATES).toEqual(expect.arrayContaining([
+      expect.objectContaining({ templateKey: "period_comparison", requiredContext: ["dateRange", "comparisonDateRange"] }),
+      expect.objectContaining({ templateKey: "execution_review", requiredContext: ["dateRange"] }),
+    ]));
   });
 
   it("returns structured unsupported boundaries for market, exit-quality, and planned-risk claims", () => {

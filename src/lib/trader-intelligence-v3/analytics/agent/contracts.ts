@@ -4,6 +4,7 @@ import type { AnalyticalPartitionReceipt } from "../dataset";
 import type {
   TradeQueryEvidenceCandidate,
   TradeQueryFilter,
+  TradeQueryGrouping,
   TradeQueryMetricKey,
   TradeQueryResultRow,
 } from "../query";
@@ -35,6 +36,7 @@ export type AnalyticsAgentIntent =
   | "best_worst_day"
   | "best_worst_price_range"
   | "limited_category_summary"
+  | "composed_execution_query"
   | "giveback_drawdown"
   | "fee_impact"
   | "data_quality"
@@ -46,9 +48,45 @@ export type AnalyticsAgentIntent =
 export type AnalyticsAgentAnswerStatus =
   | "answered"
   | "partially_answered"
+  | "needs_clarification"
   | "unsupported"
   | "insufficient_sample"
   | "data_unavailable";
+
+export interface AnalyticsAgentClarification {
+  readonly code: "date_range_required" | "comparison_date_range_required";
+  readonly requiredContext: readonly ("dateRange" | "comparisonDateRange")[];
+  readonly prompt: string;
+}
+
+export interface AnalyticsAgentEvidenceSummary {
+  readonly supportingTradeReferences: readonly TradeQueryEvidenceCandidate[];
+  readonly counterexampleTradeReferences: readonly TradeQueryEvidenceCandidate[];
+  readonly omittedCount: string;
+}
+
+export interface AnalyticsAgentDrillDown {
+  readonly question: string;
+  readonly supportedIntent: AnalyticsAgentIntent;
+  readonly purpose: "evidence_review" | "segmentation" | "comparison" | "data_quality";
+}
+
+export interface AnalyticsAgentQuestionTemplate {
+  readonly templateKey: string;
+  readonly question: string;
+  readonly requiredContext: readonly ("dateRange" | "comparisonDateRange")[];
+}
+
+/**
+ * Deterministic starters for callers. Dates are deliberately supplied as
+ * structured context rather than inferred from prose.
+ */
+export const ANALYTICS_AGENT_QUESTION_TEMPLATES: readonly AnalyticsAgentQuestionTemplate[] = Object.freeze([
+  Object.freeze({ templateKey: "execution_review", question: "How did I perform in this period?", requiredContext: Object.freeze(["dateRange"] as const) }),
+  Object.freeze({ templateKey: "period_comparison", question: "Compare this period with another period.", requiredContext: Object.freeze(["dateRange", "comparisonDateRange"] as const) }),
+  Object.freeze({ templateKey: "loss_streak_behavior", question: "How did I trade after two losses?", requiredContext: Object.freeze(["dateRange"] as const) }),
+  Object.freeze({ templateKey: "direction_breakdown", question: "How did longs compare with shorts?", requiredContext: Object.freeze(["dateRange"] as const) }),
+]);
 
 export interface AnalyticsAgentIntentResolution {
   readonly intent: AnalyticsAgentIntent;
@@ -73,6 +111,17 @@ export interface AnalyticsAgentQuestionRequest {
   readonly selectedTradeId?: string;
   readonly symbol?: string;
   readonly filters?: readonly TradeQueryFilter[];
+  /**
+   * A caller-supplied, engine-validated composition. This is deliberately not
+   * a free-form parser: all filters and grouping are still validated by the
+   * Trade Execution Analytics Engine before execution.
+   */
+  readonly composition?: Readonly<{
+    readonly filters: readonly TradeQueryFilter[];
+    readonly grouping: TradeQueryGrouping;
+    readonly metrics?: readonly TradeQueryMetricKey[];
+    readonly ranking?: "ascending" | "descending";
+  }>;
   readonly intentHint?: AnalyticsAgentIntent;
   readonly outputMode?: "answer" | "table" | "chart";
 }
@@ -106,12 +155,17 @@ export interface AnalyticsAgentAnswerPacket {
   readonly supportingMetrics: readonly ExactMetricValue[];
   readonly rankedRows: readonly TradeQueryResultRow[];
   readonly evidenceTradeReferences: readonly TradeQueryEvidenceCandidate[];
+  readonly evidenceSummary: AnalyticsAgentEvidenceSummary;
   readonly evidenceOmittedCount: string;
   readonly sampleSize: string;
   readonly dateRange: Readonly<{ readonly startDate: string; readonly endDate: string }> | null;
   readonly limitationCodes: readonly string[];
+  /** Claims this execution-only agent intentionally does not establish. */
+  readonly notProven: readonly string[];
   readonly unsupportedReason: AnalyticsAgentUnsupportedReason | null;
+  readonly clarification: AnalyticsAgentClarification | null;
   readonly followUpSuggestions: readonly string[];
+  readonly drillDowns: readonly AnalyticsAgentDrillDown[];
   readonly renderHints: readonly ("metric_cards" | "table" | "bar_chart" | "evidence_list")[];
   readonly answerDigest: CanonicalContentDigest;
 }

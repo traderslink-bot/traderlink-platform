@@ -3,6 +3,7 @@ import type { AnalyticalContractFailure } from "../contracts";
 import { executeGa1BPreset, executeTradeQuery } from "../query";
 import {
   buildAnalyticsAgentAnswer,
+  buildClarificationAnalyticsAgentAnswer,
   buildUnsupportedAnalyticsAgentAnswer,
 } from "./answer-builder";
 import type {
@@ -39,13 +40,28 @@ const UNSUPPORTED: Readonly<Record<string, AnalyticsAgentUnsupportedReason>> = O
 export function executeAnalyticsAgent(
   request: AnalyticsAgentExecutionRequest,
 ): ExactResult<AnalyticsAgentAnswerPacket, AnalyticalContractFailure> {
-  const resolution = resolveAnalyticsAgentIntent(request.question, request.intentHint);
+  const routed = resolveAnalyticsAgentIntent(request.question, request.intentHint);
+  const resolution = request.composition === undefined
+    ? routed
+    : Object.freeze({ ...routed, intent: "composed_execution_query" as const });
   const unsupported = UNSUPPORTED[resolution.intent];
   if (unsupported !== undefined) {
     return { ok: true, value: buildUnsupportedAnalyticsAgentAnswer(request, resolution, unsupported) };
   }
   const plan = buildAnalyticsAgentPlan(request, resolution);
-  if (!plan.ok) return plan;
+  if (!plan.ok) {
+    if (plan.error.path === "$.analyticsAgent.dateRange" || plan.error.path === "$.analyticsAgent.comparisonDateRange") {
+      return {
+        ok: true,
+        value: buildClarificationAnalyticsAgentAnswer(
+          request,
+          resolution,
+          plan.error.path === "$.analyticsAgent.comparisonDateRange" ? "comparison_date_range_required" : "date_range_required",
+        ),
+      };
+    }
+    return plan;
+  }
   if (plan.value.preset !== null) {
     const executed = executeGa1BPreset({
       source: request.source,
