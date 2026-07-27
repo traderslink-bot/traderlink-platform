@@ -81,6 +81,45 @@ describe("Analytics Agent v1 Foundation", () => {
     }
   });
 
+  it("builds the exact engine plans for Pack B streak, pre-entry, ranking, and limited-summary intents", () => {
+    const planFor = (question: string) => {
+      const input = request(question);
+      const planned = buildAnalyticsAgentPlan(input.request, resolveAnalyticsAgentIntent(question));
+      expect(planned).toMatchObject({ ok: true });
+      if (!planned.ok || planned.value.plan === null) throw new Error(`missing direct plan for ${question}`);
+      return { capabilityKey: planned.value.capabilityKey, plan: planned.value.plan };
+    };
+    for (const [question, filter] of [
+      ["What happens after two losses?", { kind: "prior_completed_streak", outcome: "loss", minimum: "2", maximum: null }],
+      ["What happens after three losses?", { kind: "prior_completed_streak", outcome: "loss", minimum: "3", maximum: null }],
+      ["What happens after two wins?", { kind: "prior_completed_streak", outcome: "gain", minimum: "2", maximum: null }],
+      ["What happens after three wins?", { kind: "prior_completed_streak", outcome: "gain", minimum: "3", maximum: null }],
+      ["Do I trade worse when already red?", { kind: "pre_entry_daily_state", values: ["red"] }],
+      ["How do I trade when I am already green?", { kind: "pre_entry_daily_state", values: ["green"] }],
+      ["How do I trade after first win?", { kind: "pre_entry_daily_path", values: ["after_first_win"] }],
+      ["How do I trade after first loss?", { kind: "pre_entry_daily_path", values: ["after_first_loss"] }],
+      ["How do I trade after giving back profit?", { kind: "pre_entry_daily_path", values: ["after_peak_profit_giveback"] }],
+    ] as const) expect(planFor(question).plan.filters).toContainEqual(filter);
+
+    for (const [question, grouping, direction] of [
+      ["What was my best day?", { kind: "day" }, "descending"],
+      ["What was my worst day?", { kind: "day" }, "ascending"],
+      ["What price range is best for me?", { kind: "entry_price_range", boundaries: ["1", "2", "5", "10"] }, "descending"],
+      ["What price range is worst for me?", { kind: "entry_price_range", boundaries: ["1", "2", "5", "10"] }, "ascending"],
+    ] as const) {
+      const built = planFor(question).plan;
+      expect(built.grouping).toEqual(grouping);
+      expect(built.ordering).toEqual([{ by: "metric", metricKey: "net_pnl", direction }]);
+    }
+
+    for (const [question, direction] of [["What is my biggest weakness?", "ascending"], ["Show my top leaks.", "ascending"], ["What is my biggest strength?", "descending"], ["Show my top strengths.", "descending"]] as const) {
+      const built = planFor(question);
+      expect(built.capabilityKey).toBe("limited_ticker_pnl_summary");
+      expect(built.plan.grouping).toEqual({ kind: "symbol" });
+      expect(built.plan.ordering).toEqual([{ by: "metric", metricKey: "net_pnl", direction }]);
+    }
+  });
+
   it("builds an engine-backed core-performance answer with bounded evidence and replay identity", () => {
     const input = request("How am I doing overall?");
     const result = executeAnalyticsAgent(input.request);
