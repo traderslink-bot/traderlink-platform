@@ -25,8 +25,12 @@ function result(
   intent: AnalyticsAgentIntent,
   previousOutcome: "gain" | "loss" | null = null,
   range: AnalyticsAgentIntentResolution["priceRange"] = null,
+  priorStreak: AnalyticsAgentIntentResolution["priorStreak"] = null,
+  preEntryDailyState: AnalyticsAgentIntentResolution["preEntryDailyState"] = null,
+  preEntryDailyPath: AnalyticsAgentIntentResolution["preEntryDailyPath"] = null,
+  ranking: AnalyticsAgentIntentResolution["ranking"] = null,
 ): AnalyticsAgentIntentResolution {
-  return Object.freeze({ intent, previousOutcome, priceRange: range });
+  return Object.freeze({ intent, previousOutcome, priceRange: range, priorStreak, preEntryDailyState, preEntryDailyPath, ranking });
 }
 
 /**
@@ -49,6 +53,25 @@ export function resolveAnalyticsAgentIntent(
     return result("unsupported_planned_risk");
   }
   if (hasAny(normalized, ["fee", "fees", "commission", "gross vs net", "gross versus net"])) return result("fee_impact");
+  if (hasAny(normalized, ["green to red", "green then red", "red to green", "red then green", "recover from red days"])) return result("daily_transition_summary");
+  if (hasAny(normalized, ["after two losses", "after 2 losses"])) return result("prior_streak_behavior", null, null, { outcome: "loss", minimum: "2" });
+  if (hasAny(normalized, ["after three losses", "after 3 losses"])) return result("prior_streak_behavior", null, null, { outcome: "loss", minimum: "3" });
+  if (hasAny(normalized, ["after two wins", "after 2 wins"])) return result("prior_streak_behavior", null, null, { outcome: "gain", minimum: "2" });
+  if (hasAny(normalized, ["after three wins", "after 3 wins"])) return result("prior_streak_behavior", null, null, { outcome: "gain", minimum: "3" });
+  if (hasAny(normalized, ["longest losing streak", "longest winning streak", "current streak", "show my streaks", "streaks affect"])) return result("streak_summary");
+  if (hasAny(normalized, ["already red", "when i am already red"])) return result("pre_entry_daily_state_behavior", null, null, null, "red");
+  if (hasAny(normalized, ["already green", "when i am already green"])) return result("pre_entry_daily_state_behavior", null, null, null, "green");
+  if (hasAny(normalized, ["after first win"])) return result("pre_entry_daily_path_behavior", null, null, null, null, "after_first_win");
+  if (hasAny(normalized, ["after first loss"])) return result("pre_entry_daily_path_behavior", null, null, null, null, "after_first_loss");
+  if (hasAny(normalized, ["after giving back profit"])) return result("pre_entry_daily_path_behavior", null, null, null, null, "after_peak_profit_giveback");
+  if (hasAny(normalized, ["best trading day", "best day"])) return result("best_worst_day", null, null, null, null, null, "descending");
+  if (hasAny(normalized, ["worst trading day", "worst day"])) return result("best_worst_day", null, null, null, null, null, "ascending");
+  if (hasAny(normalized, ["best price range", "price range is best", "price range works best"])) return result("best_worst_price_range", null, null, null, null, null, "descending");
+  if (hasAny(normalized, ["worst price range", "price range is worst", "price range works worst"])) return result("best_worst_price_range", null, null, null, null, null, "ascending");
+  if (hasAny(normalized, ["biggest weakness", "top leaks", "losing the most money", "biggest strength", "top strengths", "what should i review next"])) return result("limited_category_summary", null, null, null, null, null, hasAny(normalized, ["strength", "strengths"]) ? "descending" : "ascending");
+  if (hasAny(normalized, ["how did i do today", "review today", "daily review", "what happened today", "trading day"])) return result("daily_review");
+  if (hasAny(normalized, ["how did i do this week", "review this week", "weekly review", "what changed this week", "trading week"])) return result("weekly_review");
+  if (hasAny(normalized, ["how did i do this month", "review this month", "monthly review", "what changed this month", "trading month"])) return result("monthly_review");
   if (hasAny(normalized, ["give back", "giving back", "giveback", "drawdown", "green then red", "red then green"])) return result("giveback_drawdown");
   if (hasAny(normalized, ["after a loss", "after loss", "revenge trade"])) return result("prior_outcome_behavior", "loss");
   if (hasAny(normalized, ["after a win", "after win", "after wins"])) return result("prior_outcome_behavior", "gain");

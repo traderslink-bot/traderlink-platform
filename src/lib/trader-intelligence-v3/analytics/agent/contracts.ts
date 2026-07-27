@@ -24,6 +24,17 @@ export type AnalyticsAgentIntent =
   | "direction_performance"
   | "position_size_performance"
   | "period_comparison"
+  | "daily_review"
+  | "weekly_review"
+  | "monthly_review"
+  | "prior_streak_behavior"
+  | "streak_summary"
+  | "pre_entry_daily_state_behavior"
+  | "pre_entry_daily_path_behavior"
+  | "daily_transition_summary"
+  | "best_worst_day"
+  | "best_worst_price_range"
+  | "limited_category_summary"
   | "giveback_drawdown"
   | "fee_impact"
   | "data_quality"
@@ -46,6 +57,10 @@ export interface AnalyticsAgentIntentResolution {
     readonly minimum: string | null;
     readonly maximum: string | null;
   }> | null;
+  readonly priorStreak: Readonly<{ readonly outcome: "gain" | "loss"; readonly minimum: string }> | null;
+  readonly preEntryDailyState: "green" | "red" | null;
+  readonly preEntryDailyPath: "after_first_win" | "after_first_loss" | "after_peak_profit_giveback" | null;
+  readonly ranking: "ascending" | "descending" | null;
 }
 
 export interface AnalyticsAgentQuestionRequest {
