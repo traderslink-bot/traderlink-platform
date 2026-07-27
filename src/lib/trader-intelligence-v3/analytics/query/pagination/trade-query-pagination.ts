@@ -62,7 +62,12 @@ export function paginateTradeQueryResult(
   if (!offset.ok) return offset;
   if (BigInt(offset.value) > BigInt(source.rows.length)) return contractFailure("ti_v3_analytics_contract_invalid", "$.pagination.continuation.nextOffset");
   const rows: TradeQueryResultRow[] = [];
-  for (let index = BigInt(offset.value); index < BigInt(source.rows.length) && BigInt(rows.length) < BigInt(pageSize.value); index += BigInt("1")) rows.push(source.rows[Number(index)]);
+  let sourceIndex = BigInt("0");
+  for (const row of source.rows) {
+    if (sourceIndex >= BigInt(offset.value) && BigInt(rows.length) < BigInt(pageSize.value)) rows.push(row);
+    sourceIndex += BigInt("1");
+    if (BigInt(rows.length) === BigInt(pageSize.value)) break;
+  }
   const rowEvidence = new Set(rows.map((row) => row.evidenceDigest));
   const evidence = Object.freeze(source.evidence.filter((item) => rowEvidence.has(item.evidenceDigest)));
   const nextOffset = BigInt(offset.value) + BigInt(rows.length);

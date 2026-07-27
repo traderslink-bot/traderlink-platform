@@ -167,12 +167,17 @@ function valuesFor(measure: TradeQueryDistributionMeasure, rows: readonly QueryR
 }
 
 function nearestRank(values: readonly string[], numerator: number): string | null {
-  return values.length === 0 ? null : values[Math.ceil((values.length * numerator) / 4) - 1];
+  if (values.length === 0) return null;
+  const scaledRank = values.length * numerator;
+  const rank = scaledRank % 4 === 0
+    ? scaledRank / 4
+    : ((scaledRank - (scaledRank % 4)) / 4) + 1;
+  return values[rank - 1];
 }
 
 function median(values: readonly string[], unit: "money" | "seconds" | "shares", currency: string | null): ExactMetricValue {
   if (values.length === 0) return unavailableMetric("median", unit, currency, "ti_v3_query_zero_sample");
-  const middle = Math.floor(values.length / 2);
+  const middle = (values.length - (values.length % 2)) / 2;
   if (values.length % 2 === 1) return decimalMetric("median", unit, currency, values[middle]);
   const ratio = createExactRatio(sum([values[middle - 1], values[middle]]), "2");
   if (!ratio.ok) throw new Error(ratio.error.code);

@@ -6,6 +6,7 @@ import {
   type CurrencyCode,
   type ExactResult,
 } from "../../domain/exact";
+import { compareUnicodeCodePoints } from "../../domain/canonical";
 import type {
   CanonicalContentDigest,
   CanonicalExecutionDigest,
@@ -192,7 +193,7 @@ function parseChargeKinds(
     if (!amount.ok) return contractFailure("ti_v3_analytics_contract_invalid", `${path}[${index}].amount`);
     values.push(Object.freeze({ kind: entry.value.kind, amount: amount.value }));
   }
-  const ordered = [...values].sort((left, right) => left.kind.localeCompare(right.kind));
+  const ordered = [...values].sort((left, right) => compareUnicodeCodePoints(left.kind, right.kind));
   if (new Set(ordered.map((entry) => entry.kind)).size !== ordered.length) {
     return contractFailure("ti_v3_analytics_contract_duplicate_identity", path);
   }
