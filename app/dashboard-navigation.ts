@@ -116,6 +116,11 @@ export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
       label: "Trading Rules",
       icon: "rules" as const,
     }),
+    Object.freeze({
+      href: "/charts",
+      label: "Market Charts",
+      icon: "analytics" as const,
+    }),
   ]);
 
 export const DASHBOARD_DATA_NAVIGATION_GROUP: DashboardNavigationGroup =
@@ -150,6 +155,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics/timing": "Timing",
     "/analytics/execution": "Execution",
     "/analytics/lab": "Analytics Lab",
+    "/charts": "Market Charts",
     "/reflection-loop": "Reflection Loop",
     "/rules": "Trading Rules",
     "/imports": "Import Trades",
