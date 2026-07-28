@@ -19908,3 +19908,11 @@ Current best next step:
 - Complete owner visual review on `/rules`. After owner acceptance, attach
   governed live evaluations and then add Day Session/ticker/trade rule
   projections. Do not start AI-assisted rule creation.
+
+# Dashboard Agent Coordination Note (2026-07-28)
+
+- The approved Trader Intelligence design baseline is the light, Material-style dashboard on `/workspace`.
+- The current review instance uses `http://127.0.0.1:3010/workspace`.
+- Parallel dashboard agents must use separate Git worktrees, branches, and ports. Port `3010` belongs to the baseline worktree and may be inspected read-only by other agents.
+- Parallel tasks should be divided by isolated pages or feature areas. Agents must coordinate before modifying shared shell, theme, routing/configuration, or dashboard planning files.
+- Work completed elsewhere must be merged or cherry-picked into the baseline worktree before it will appear on `3010`, followed by integrated verification.

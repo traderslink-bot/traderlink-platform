@@ -14,6 +14,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Only pause for user confirmation when a choice would materially affect architecture, contracts, safety, or destructive filesystem or git actions.
 - When resuming cold, first read `src/docs/codex-project-log.md`, then consult the behavior audit and pattern catalog before making new roadmap decisions.
 
+## Trader Intelligence Dashboard Baseline And Parallel Work
+
+- The current approved design baseline is the light, Material-style dashboard on the `/workspace` route. Preserve that visual language and shell unless the user explicitly approves a replacement.
+- The active review instance is commonly `http://127.0.0.1:3010/workspace`. Treat port `3010` as belonging to the worktree that started it; do not stop, restart, or replace that process from another worktree without coordinating first.
+- Agents may inspect the `3010` instance read-only. An agent making parallel dashboard changes must use its own Git worktree, branch, and port such as `3011`.
+- Divide parallel work by isolated pages or feature areas. Coordinate before editing shared shell or configuration files, especially `app/dashboard-shell.tsx`, `app/mui-theme.ts`, `app/mui-provider.tsx`, `next.config.ts`, or the main dashboard plan and progress documents.
+- Changes made in another worktree do not automatically appear on the `3010` instance. Merge or cherry-pick the completed branch into the dashboard baseline worktree, resolve shared-file changes deliberately, then verify the integrated result on `3010`.
+- Do not treat older `/intelligence` pages, a server on port `3000`, or the production website as the approved visual baseline for this dashboard.
+
 ## Academy Progress Preservation
 
 - Academy progress is production user data. Do not reset, truncate, recreate, or switch the production progress database unless the user explicitly asks for a migration.
