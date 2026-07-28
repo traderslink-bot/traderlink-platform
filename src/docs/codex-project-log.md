@@ -19654,3 +19654,28 @@ Current best next step:
 - Focused persisted-authority, server-adapter, and raw-import service tests and
   the whole-project TypeScript check passed. Milestone 3 is next: client-safe
   packet/view-model contracts only.
+
+# 2026-07-27 Trade Execution Analytics v3 operationalization — Milestone 3 dashboard contract
+
+- Expanded the existing server-only v3 adapter with period-series,
+  distribution, attribution, period-comparison attribution, bounded
+  evidence-page, and deterministic findings operations. Each remains bound to
+  the verified v3 source and currency partition; no raw source, owner selector,
+  persistence handle, SQLite fallback, or browser calculation was introduced.
+- Added content-addressed, client-safe dashboard packets and a bounded fixture.
+  Packets keep exact metric strings, result/query/evidence identities, sample
+  counts, and limitations, while omitting execution digests, occurrence keys,
+  excluded candidates, and raw broker rows.
+- Added formatting-only table, distribution-chart, limitation, and evidence
+  view models. They make labels and display strings only, and preserve every
+  unavailable or limited state from the governed packet.
+- Focused M3 adapter/contract and engine operation tests completed successfully,
+  and the whole-project TypeScript check passed.
+
+Current best next step:
+
+- Milestone 4: build normal dashboard panels from these packets only, starting
+  with overview, period performance, limitations, and evidence drill-down.
+  First inspect and preserve the local light Material `/workspace` baseline;
+  do not add Coach, candle, market-data, AI, legacy SQLite, deployment, or
+  browser-side analytics behavior.

@@ -2,7 +2,7 @@
 
 ## Status
 
-Milestones 0 through 2 were completed locally on 2026-07-27. Milestone 1 persists a
+Milestones 0 through 3 were completed locally on 2026-07-27. Milestone 1 persists a
 content-verified raw source document and binds it
 to one owner-guarded, local-only v3 import route. The route derives owner scope,
 account, private storage, and instrument declarations on the server; it accepts
@@ -192,12 +192,20 @@ or raw-row API.
 
 Exit: server code can render core execution analytics from v3 only.
 
-### Milestone 3 — Stable dashboard contract and formatting-only view models
+### Milestone 3 — Stable dashboard contract and formatting-only view models — complete
 
-- Add period series, distributions, attribution, evidence pagination, and
-  findings operations.
-- Add typed client-safe contracts, fixtures, and formatting-only table/chart/
-  limitation/evidence view models.
+- The server-only adapter now exposes the existing verified v3 period-series,
+  distribution, within-period attribution, period-comparison attribution,
+  bounded evidence-page, and finding-packet operations. These calls preserve
+  the resolver's owner/account/currency authority and return the existing
+  governed result types; they do not calculate, widen, or recover data.
+- Typed client-safe packets project only bounded rows, exact metric values,
+  limitation codes, and bounded evidence references. They intentionally omit
+  raw execution digests, occurrence keys, excluded candidates, parser inputs,
+  persistence handles, and legacy data paths.
+- The dashboard fixture reaches the engine only through that server adapter.
+  Formatting-only table, chart, limitation, and evidence view models preserve
+  exact values as strings and make no numeric, currency, or P/L calculation.
 
 Exit: dashboard work can proceed without touching v3 internals.
 

@@ -2,6 +2,7 @@ export * from "./adapters";
 export * from "./consistency";
 export * from "./contracts";
 export * from "./dataset";
+export * from "./dashboard";
 export * from "./evidence";
 export * from "./registry";
 export * from "./runner";
