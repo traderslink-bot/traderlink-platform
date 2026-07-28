@@ -19584,3 +19584,52 @@ Current best next step:
   boundary plus a focused restart-identity proof. Do not migrate legacy SQLite
   rows, switch dashboard consumers, build Coach/AI chat, deploy, or begin
   market-data work.
+
+# 2026-07-27 Trade Execution Analytics v3 operationalization — Milestone 1 source authority batch
+
+- Added a v3-only local file store for raw broker-source authority. It persists
+  raw bytes, explicit mapping/timezone/charge declarations, accepted canonical
+  executions, rejected-row receipts, and a content-addressed receipt digest.
+- A focused proof writes a disposable CSV, constructs a fresh store instance,
+  rehydrates the exact source/execution identities, replays the raw parser, and
+  rejects a foreign owner read. The implementation has no SQLite driver,
+  legacy importer, dashboard, Coach/AI, market-data, or deployment dependency.
+- Added `POST /api/intelligence/execution-import/v1`, a v3 owner-guarded,
+  Origin-protected, real-owner-data-only entrypoint. It accepts bounded raw CSV
+  Base64 plus explicit broker declarations, then derives canonical owner scope
+  from authenticated server context, canonical account scope from server
+  configuration, and its directory from the validated private persistence path.
+  Instrument keys come only from an optional server-held map; unknown symbols
+  are retained as explicitly unresolved. The route does not import legacy data
+  or call a legacy SQLite importer.
+- A fresh server-scoped service instance now rehydrates a persisted source by
+  its content digest with the same derived owner/account scope. The proof also
+  retains foreign-owner denial; no browser-selected scope or legacy fallback is
+  introduced.
+- Source selection is now bounded and deterministic: it rehydrates multiple
+  selected receipts in digest order, rejects duplicate selections, and keeps
+  USD/EUR source authority distinct rather than converting or netting it.
+- Owner-confirmed safe default for incomplete statements: preserve an open or
+  unresolved position without requiring user verification. Missing opening
+  basis or correction authority may block affected realized-P/L analytics, but
+  cannot be turned into implied unrealized P/L without market-price authority.
+- Added the persisted-source lifecycle projection and focused proof: it derives
+  net-quantity open/closed state from the selected broker receipts, retains an
+  unresolved-instrument limitation, and automatically clears only the open
+  marker after later broker-confirmed offsetting fills. It makes no P/L claim.
+- Completed the safe-default persisted-source resolver and restart proof. With
+  no attached opening-inventory, correction, or statement-period authority it
+  produces a content-addressed unavailable readiness receipt, preserving source
+  and lifecycle identities while deliberately issuing no dataset, partition, or
+  query identity. A later closing fill removes only the open-position reason.
+  This completes Milestone 1 without fabricating a P/L claim.
+- Focused verification passed: `server-raw-broker-csv-import`,
+  `persisted-raw-broker-csv-import`, and route-containment tests (14 assertions
+  total), plus `git diff --check`.
+
+Current best next step:
+
+- Milestone 2: attach explicit opening-inventory, correction, and
+  statement-period authority to resolve a verified dataset/partition from the
+  persisted v3 source. Keep corrections and multi-currency coverage explicit
+  and fail closed.

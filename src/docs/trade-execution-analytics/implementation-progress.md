@@ -7,10 +7,10 @@ together before changing this tracker.
 
 ## Current work
 
-- Status: dashboard operationalization Milestone 0 complete
-- Work item: Trade Execution Analytics Engine v3 operationalization
+- Status: dashboard operationalization Milestone 1 complete; Milestone 2 next
+- Work item: safe v3 dataset/partition resolver foundation
 - Goal: keep one shared, deterministic source of truth for execution analytics;
-  build durable v3 import/persistence before any dashboard migration.
+  attach explicit financial authority before any dashboard migration.
 - Constraint: do not route financial values through the legacy number-based CSV
   importer or make migration data look broker-authoritative. The raw parser
   accepts only explicit UTC timestamps; local-time broker exports remain
@@ -41,11 +41,49 @@ together before changing this tracker.
   and recorded the disposable-data reset procedure. The legacy store remains
   untouched until v3 import-to-dashboard proof; it has no conversion or
   fallback role.
+- Started operationalization Milestone 1 with a v3-only local source-document
+  store. It persists content-verified raw CSV bytes, declared parser authority,
+  canonical accepted executions, rejected-row receipts, and a receipt digest;
+  a newly constructed store rehydrates and replays the same identities without
+  accessing the legacy SQLite importer.
+- Added the first controlled local import entrypoint at
+  `POST /api/intelligence/execution-import/v1`. It is v3 owner-guarded and
+  real-data-mode restricted; owner scope, canonical account key, private
+  storage directory, and optional instrument declarations are server-held.
+  Browser submissions cannot select those authorities, and unmapped symbols are
+  retained as explicitly unresolved rather than guessed.
+- The server-scoped v3 import service can now rehydrate a persisted receipt by
+  digest after reconstruction while deriving the same owner/account scope; a
+  foreign owner remains unable to read it. Dataset/partition authority remains
+  a separate next phase rather than being inferred from raw-source storage.
+- Source selection now accepts a bounded set of persisted receipt digests,
+  returns them in deterministic order, and rejects duplicates. USD and EUR
+  source records remain distinct evidence; no conversion, mixed-currency
+  aggregate, correction, or opening-inventory claim is inferred.
+- Owner-confirmed safe default: an incomplete statement may retain an open or
+  unresolved position without a user-verification requirement. Missing starting
+basis or correction authority blocks only affected realized-P/L analytics;
+it does not authorize an implied unrealized P/L without market-price data.
+The open-position review marker will be lifecycle-derived and automatically
+cleared when later broker-confirmed data closes that position; it is not a
+sticky verification requirement.
+- Implemented that lifecycle projection over the selected persisted receipts:
+  it reports open/closed net-quantity state without making a P/L claim, keeps
+  unresolved-instrument limitations explicit, and removes only the open-position
+  marker when later broker-confirmed fills return the position to zero.
+- Completed the Milestone 1 safe-default resolver. It produces a
+  content-addressed unavailable readiness receipt from the selected persisted
+  source documents, retaining source/execution/lifecycle identities while
+  returning no dataset, currency partition, or query identity until explicit
+  opening-inventory, correction, and statement-period authority is attached.
+  A new service instance returns the same receipt after restart; a later close
+  removes only the open-position reason.
 
 ## Next queue
 
-1. Implement the smallest Milestone 1 batch: durable v3 source-document and
-   canonical-execution persistence plus a focused restart-identity proof.
+1. In Milestone 2, attach explicit opening-inventory, correction, and
+   statement-period authority to resolve a verified v3 dataset/partition; do
+   not route through the legacy SQLite importer.
 2. Preserve complete charge-kind authority requirements; do not manufacture
    exchange/regulatory/borrow labels from combined charges.
 3. When the original May 2026 IBKR export is available, import its raw bytes
