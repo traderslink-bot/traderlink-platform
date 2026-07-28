@@ -1,5 +1,5 @@
 import {
-  addExactDecimals,
+  addExactMoneyAmounts,
   parseCurrencyCode,
   parseExactMoneyAmount,
   parseExactQuantity,
@@ -181,13 +181,6 @@ const SOURCE_KINDS = new Set<AvailableAnalyticalSourceAuthority["sourceKind"]>([
 const EVIDENCE_CLASSES = new Set<AvailableAnalyticalSourceAuthority["evidenceClass"]>([
   "broker_confirmed", "owner_reported", "hypothetical", "migrated_unverified",
 ]);
-const MONEY_BOUNDS = Object.freeze({
-  maximumSignificantDigits: 48,
-  maximumScale: 24,
-  allowNegative: true,
-  allowZero: true,
-});
-
 function parseChargeKinds(
   input: unknown,
   signedCharges: string,
@@ -212,9 +205,13 @@ function parseChargeKinds(
     return contractFailure("ti_v3_analytics_contract_duplicate_identity", path);
   }
   if (coverageState === "complete") {
-    let total = "0";
+    const zero = parseExactMoneyAmount("0");
+    if (!zero.ok) return contractFailure("ti_v3_analytics_contract_invalid", path);
+    let total = zero.value;
     for (const entry of ordered) {
-      const summed = addExactDecimals(total, entry.amount, MONEY_BOUNDS);
+      const amount = parseExactMoneyAmount(entry.amount);
+      if (!amount.ok) return contractFailure("ti_v3_analytics_contract_invalid", path);
+      const summed = addExactMoneyAmounts(total, amount.value);
       if (!summed.ok) return contractFailure("ti_v3_analytics_contract_invalid", path);
       total = summed.value;
     }
@@ -249,14 +246,16 @@ function parseFeeAuthority(
     !["broker_reported_complete", "account_policy_calculated", "broker_reported_partial", "estimated"].includes(String(state)) ||
     !Array.isArray(record.value.components)
   ) return contractFailure("ti_v3_analytics_contract_invalid", "$.feeAuthority");
-  let total = "0";
+  const zero = parseExactMoneyAmount("0");
+  if (!zero.ok) return contractFailure("ti_v3_analytics_contract_invalid", "$.feeAuthority.components");
+  let total = zero.value;
   const components: Array<Readonly<{ readonly kind: SimulationFeeComponentKind; readonly signedAmount: string }>> = [];
   for (let index = 0; index < record.value.components.length; index += 1) {
     const component = validateContractRecord(record.value.components[index], ["kind", "signedAmount"], [], `$.feeAuthority.components[${index}]`);
     if (!component.ok || !["fixed", "quantity_variable", "notional_variable", "sell_side_regulatory", "non_scaling", "unknown_undecomposed"].includes(String(component.value.kind))) return contractFailure("ti_v3_analytics_contract_invalid", `$.feeAuthority.components[${index}]`);
     const amount = parseExactMoneyAmount(component.value.signedAmount);
     if (!amount.ok) return contractFailure("ti_v3_analytics_contract_invalid", `$.feeAuthority.components[${index}].signedAmount`);
-    const summed = addExactDecimals(total, amount.value, MONEY_BOUNDS);
+    const summed = addExactMoneyAmounts(total, amount.value);
     if (!summed.ok) return contractFailure("ti_v3_analytics_contract_invalid", `$.feeAuthority.components[${index}].signedAmount`);
     total = summed.value;
     components.push(Object.freeze({ kind: component.value.kind as SimulationFeeComponentKind, signedAmount: amount.value }));

@@ -606,10 +606,11 @@ export function buildCanonicalExecution(
       `${right.kind}:${right.currency}:${right.amount}`,
     ),
   );
-  const chargeCoverageState = draft.chargeCoverageState ?? "unknown";
-  if (chargeCoverageState !== "complete" && chargeCoverageState !== "unknown") {
+  const declaredChargeCoverageState = draft.chargeCoverageState;
+  if (declaredChargeCoverageState !== undefined && declaredChargeCoverageState !== "complete" && declaredChargeCoverageState !== "unknown") {
     reasons.push("ti_v3_execution_charge_invalid");
   }
+  const chargeCoverageState: "complete" | "unknown" = declaredChargeCoverageState === "complete" ? "complete" : "unknown";
 
   let netCash: ExactMoneyAmount | null = null;
   if (draft.brokerReportedNetCashAmount !== null) {

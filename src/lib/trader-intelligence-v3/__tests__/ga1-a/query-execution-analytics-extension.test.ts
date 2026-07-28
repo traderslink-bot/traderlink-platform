@@ -45,7 +45,7 @@ describe("GA1-A execution analytics extension", () => {
     const verifiedPacket = verifyTradeQueryFindingPacket(first.value, executed.value, fixture.authority);
     expect(verifiedPacket, JSON.stringify(verifiedPacket))
       .toMatchObject({ ok: true, value: { packetDigest: first.value.packetDigest } });
-    const tampered = structuredClone(first.value) as { findings: Array<{ ruleToTest: string | null }> };
+    const tampered = structuredClone(first.value) as unknown as { findings: Array<{ ruleToTest: string | null }> };
     tampered.findings[0].ruleToTest = "causal_claim_not_allowed";
     expect(verifyTradeQueryFindingPacket(tampered, executed.value, fixture.authority)).toMatchObject({ ok: false });
   });

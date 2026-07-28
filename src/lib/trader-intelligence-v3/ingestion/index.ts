@@ -5,3 +5,4 @@ export * from "./local-execution-source-document-store";
 export * from "./server-raw-broker-csv-import";
 export * from "./persisted-execution-lifecycle-projection";
 export * from "./persisted-execution-analytics-readiness";
+export * from "./persisted-execution-analytics-authority";

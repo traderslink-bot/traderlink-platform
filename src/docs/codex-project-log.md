@@ -19633,3 +19633,24 @@ Current best next step:
   statement-period authority to resolve a verified dataset/partition from the
   persisted v3 source. Keep corrections and multi-currency coverage explicit
   and fail closed.
+
+# 2026-07-27 Trade Execution Analytics v3 operationalization — Milestone 2 resolver and server adapter
+
+- Added a server-held authority attachment for persisted v3 broker receipts.
+  It binds source documents to declared statement periods, an explicit
+  correction set, and verified starting-inventory contracts before constructing
+  the existing exact dataset/snapshot authority.
+- A missing or unknown starting inventory, incomplete coverage declaration, or
+  dataset reconstruction block returns an unavailable source; no P/L dataset,
+  currency partition, or query is fabricated from the CSV alone.
+- The resolver accepts only one `complete_account_period` coverage declaration
+  with no recorded gaps or overlaps. Partial statements keep their raw lifecycle
+  receipt but remain unavailable for realized-P/L querying until complete
+  server-held authority is attached.
+- Added the server-only v3 adapter for the existing capability catalog, currency
+  partition receipt, aggregate overview, and generic grouped breakdown query.
+  It accepts only a verified read-only source and exposes no parser, raw rows,
+  owner selector, SQLite path, or browser-side calculation.
+- Focused persisted-authority, server-adapter, and raw-import service tests and
+  the whole-project TypeScript check passed. Milestone 3 is next: client-safe
+  packet/view-model contracts only.
