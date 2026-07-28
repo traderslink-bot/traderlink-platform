@@ -419,7 +419,7 @@ const templates = Object.freeze([
     templateId: "reduce_next_trade_size_after_loss",
     label: "Reduce the next trade to half size after a loss",
     description:
-      "Builds the governed v1 analysis that resizes one next eligible trade to fifty percent after a completed loss.",
+      "After a losing trade, make your next trade half your usual size.",
     category: "size",
     scope: "trade_sequence",
     evaluatorFamily: "size_adjustment",
@@ -432,7 +432,7 @@ const templates = Object.freeze([
     ],
     comparisonUnit: "affected_trade",
     limitationSummary:
-      "Requires complete size and fee authority; the initial v1 multiplier is fixed at fifty percent.",
+      "Uses a fixed half-size rule. The app needs complete size and fee data before it can evaluate it.",
   }),
 ].sort((left, right) =>
   compareUnicodeCodePoints(left.templateId, right.templateId)

@@ -383,8 +383,7 @@ export function RulesClient({
             Rules you chose to follow
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-            Start with a few rules that matter to you. Add only the ones you
-            want to follow.
+            Start with a few rules that matter to you.
           </Typography>
         </Box>
         <Stack direction="row" spacing={1}>
@@ -643,13 +642,12 @@ export function RulesClient({
             Create custom rule
           </Button>
         }
-        eyebrow="MANUAL COMMITMENTS"
+        eyebrow="CUSTOM COMMITMENTS"
         title="Rules you track yourself"
       >
         <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
           Use this for a rule that matters to you but cannot be confirmed from
-          trade data alone. These rules will be available for optional check-ins
-          when the Day Session review is added.
+          trade data alone.
         </Typography>
         {view.manualRules.length === 0 ? (
           <Box
@@ -664,8 +662,7 @@ export function RulesClient({
             <Typography variant="h3">No custom rules yet</Typography>
             <Typography color="text.secondary" sx={{ mt: 0.75 }}>
               Write a commitment in your own words, such as “Wait for
-              confirmation before entering.” It stays manual until you choose
-              to check in on it later.
+              confirmation before entering.”
             </Typography>
           </Box>
         ) : (
@@ -925,7 +922,16 @@ export function RulesClient({
               <Typography color="text.secondary" sx={{ mt: 0.5 }}>
                 {editor.template.description}
               </Typography>
-              <Stack spacing={2} sx={{ mt: 2.5 }}>
+              {editor.template.parameters.length === 0 ? (
+                <Alert severity="info" sx={{ mt: 2.5 }}>
+                  No extra settings are needed. This rule is already set to use
+                  half your usual size after a loss.
+                </Alert>
+              ) : null}
+              <Stack
+                spacing={2}
+                sx={{ mt: editor.template.parameters.length === 0 ? 0 : 2.5 }}
+              >
                 {editor.template.parameters.map((parameter) =>
                   parameter.kind === "enum" ? (
                     <FormControl fullWidth key={parameter.key}>
@@ -1019,8 +1025,7 @@ export function RulesClient({
             </DialogTitle>
             <DialogContent>
               <Typography color="text.secondary">
-                Write this rule in your own words. It stays a manual commitment;
-                the app will not try to judge it from your trade data.
+                Create your own rule and track it in your day sessions.
               </Typography>
               <Stack spacing={2} sx={{ mt: 2.5 }}>
                 <TextField
@@ -1103,10 +1108,6 @@ export function RulesClient({
                   label="Make this a Focus Rule"
                 />
               </Stack>
-              <Alert severity="info" sx={{ mt: 2.5 }}>
-                Day Session and trade check-ins will be added separately. This
-                rule does not affect automatic analytics today.
-              </Alert>
             </DialogContent>
             <DialogActions>
               <Button onClick={() => setManualEditor(null)}>Cancel</Button>
