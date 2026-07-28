@@ -19875,3 +19875,36 @@ Current best next step:
   baseline, then add the local durable action/repository adapter needed for
   edits to survive reloads. Do not build the UI against an older engine
   worktree layout.
+
+# 2026-07-28 Trading Rules Phase 1 Material dashboard integration
+
+- Reconciled the approved dashboard runtime to the Milestone 4 worktree served
+  at `http://127.0.0.1:3010`.
+- Added `/rules` to the existing light, full-width Material dashboard and its
+  collapsible navigation.
+- Added a searchable 12-preset rule library, configured activation, immutable
+  prospective revisions, pause/resume, and terminal retirement controls.
+- Kept every current-rule card behind the content-addressed client-safe packet.
+  The browser receives no owner/account authority, trade keys, execution
+  identities, or dataset/query/simulation authority.
+- Added a local SQLite command-log repository outside the source checkout.
+  Reopening the repository replays create, revise, pause, and resume commands
+  through the same verified Rules contracts.
+- Added the owner-guarded, Origin-protected, private/no-store mutation route.
+- Kept live adherence explicitly unavailable until an eligible governed
+  analytics evaluation exists.
+- Targeted Rules, restart-persistence, and route-containment verification
+  passed: 7 files and 38 tests.
+- Whole-project TypeScript validation passed.
+- The optimized Next.js build passed with the same eight existing non-fatal
+  broad filesystem-tracing warnings.
+- Restarted the local owner-safe dashboard at `127.0.0.1:3010`. `/workspace`
+  and `/rules` returned private 200 responses, the Workspace HTML contained the
+  Trading Rules navigation item, and the Rules HTML contained the page heading
+  and automatic preset library. The running server reported no request errors.
+
+Current best next step:
+
+- Complete owner visual review on `/rules`. After owner acceptance, attach
+  governed live evaluations and then add Day Session/ticker/trade rule
+  projections. Do not start AI-assisted rule creation.

@@ -199,10 +199,45 @@ duplicate rule identities before projection.
 
 After this Phase 1 checkpoint:
 
-1. Integrate the safe packet into the approved light Material dashboard
-   baseline for owner review.
-2. Add local/durable repository and server-action adapters so dashboard changes
-   survive reloads; production auth/storage remains required before outside
-   users.
+1. Owner-review the integrated `/rules` page on the approved light Material
+   dashboard.
+2. Attach governed live evaluations to the existing client-safe packet after
+   the eligible execution-analytics population is available.
 3. Add narrower Day Session/ticker/trade evaluation projections.
 4. Do not start AI-assisted rule creation.
+
+## Material Dashboard And Durable Local Actions
+
+The sixth checkpoint integrates the Rules system into the approved v3 dashboard
+running locally on port 3010:
+
+- `/rules` uses the existing TradersLink logo, collapsible navigation,
+  full-width Material layout, and compact application header;
+- the navigation exposes Trading Rules as a first-class dashboard destination;
+- current active, paused, and retired rules render only from the client-safe
+  Rules packet;
+- the searchable 12-preset library creates configured rules without evaluating
+  financial facts in the browser;
+- adjusting a rule creates a prospective immutable version;
+- pause, resume, and terminal retirement use the guarded lifecycle contract;
+- the local SQLite adapter persists an append-only command log outside the
+  repository and reconstructs the verified reference repository after restart;
+- mutation routes derive owner/workspace scope on the server and use the
+  existing owner, Origin, private-cache, and route-containment boundaries; and
+- evaluation cards remain explicitly waiting until a governed eligible
+  analytics run exists.
+
+This local persistence adapter is not production authentication or managed
+multi-tenant storage. Outside users still require the production identity and
+storage foundation recorded in the main plan.
+
+Verification for this checkpoint:
+
+- targeted Rules, restart-persistence, and route-containment verification:
+  7 files and 38 tests passed;
+- `npx tsc --noEmit --pretty false` passed;
+- the Next.js 16.2.6 optimized production build passed with the same eight
+  existing non-fatal broad filesystem-tracing warnings; and
+- the restarted `127.0.0.1:3010` runtime returned private 200 responses for
+  `/workspace` and `/rules`, exposed Trading Rules in navigation, rendered the
+  Rules heading and preset library, and reported no request errors.

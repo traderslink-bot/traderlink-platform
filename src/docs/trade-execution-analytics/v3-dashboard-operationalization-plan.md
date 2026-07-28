@@ -245,6 +245,18 @@ whole-project TypeScript check, production build, 15-route HTTP smoke, and
 desktop/mobile browser checks pass. No financial card reads legacy SQLite,
 calculates in the browser, or substitutes fixture values.
 
+Checkpoint 4B complete: the deterministic Trading Rules Phase 1 surface is now
+part of the same Material dashboard at `/rules`. The page receives only the
+content-addressed client-safe Rules packet, provides a searchable 12-preset
+library, creates prospective configured rules, creates immutable revisions,
+and supports guarded pause, resume, and terminal retirement. Local changes are
+stored as an append-only SQLite command log outside the repository and replay
+through the verified Rules contracts after restart. The page does not invent
+adherence or P/L; it reports that evaluations are waiting until governed
+eligible analytics results exist. Production user identity and managed
+multi-tenant storage remain a later prerequisite, not a claim of this local
+checkpoint.
+
 Exit: every execution value is traceable to a v3 packet and the owner has
 tested and accepted the design.
 

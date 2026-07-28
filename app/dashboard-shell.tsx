@@ -8,6 +8,7 @@ import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
@@ -65,6 +66,12 @@ const reflectionItem: NavigationItem = {
   href: "/reflection-loop",
   label: "Reflection Loop",
   icon: <NoteAltRoundedIcon />,
+};
+
+const rulesItem: NavigationItem = {
+  href: "/rules",
+  label: "Trading Rules",
+  icon: <GavelRoundedIcon />,
 };
 
 const navigationGroups: readonly NavigationGroup[] = [
@@ -164,6 +171,7 @@ const routeTitles: Readonly<Record<string, string>> = {
   "/analytics/execution": "Execution",
   "/analytics/lab": "Analytics Lab",
   "/reflection-loop": "Reflection Loop",
+  "/rules": "Trading Rules",
   "/imports": "Import Trades",
   "/manual-entry": "Manual Entry",
 };
@@ -368,6 +376,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <NavigationLink
               collapsed={compact}
               item={reflectionItem}
+              onNavigate={closeMobile}
+              pathname={pathname}
+            />
+            <NavigationLink
+              collapsed={compact}
+              item={rulesItem}
               onNavigate={closeMobile}
               pathname={pathname}
             />

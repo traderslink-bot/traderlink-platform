@@ -18,6 +18,7 @@ const privateTraderIntelligenceRoutes = [
   "/trades/:path*",
   "/analytics/:path*",
   "/reflection-loop",
+  "/rules",
   "/imports/:path*",
   "/manual-entry",
 ] as const;
