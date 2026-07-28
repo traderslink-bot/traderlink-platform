@@ -2,7 +2,7 @@
 
 ## Status
 
-Milestones 0 and 1 were completed on 2026-07-27. Milestone 1 persists a
+Milestones 0 through 2 were completed locally on 2026-07-27. Milestone 1 persists a
 content-verified raw source document and binds it
 to one owner-guarded, local-only v3 import route. The route derives owner scope,
 account, private storage, and instrument declarations on the server; it accepts
@@ -169,7 +169,7 @@ Exit: fresh broker data is durable v3 source authority readable without legacy
 data, with restart-stable safe-default readiness that cannot manufacture an
 unsupported dataset, partition, or query.
 
-### Milestone 2 — Dataset/partition resolver and server-only adapter foundation
+### Milestone 2 — Dataset/partition resolver and server-only adapter foundation — complete
 
 - Implement the owner/account/currency/date resolver.
 - Accept explicit correction and opening-inventory authority before claiming a
@@ -179,6 +179,16 @@ unsupported dataset, partition, or query.
 - Implement capabilities, overview, and generic grouped breakdowns.
 - Return client-safe, identity-bound packets and cover authorization, invalid
   requests, empty data, unsupported metrics, and bounded limits.
+
+Implemented boundary: a server-held authority attachment binds selected
+persisted receipts to statement periods, corrections (including an explicit
+empty set), and verified starting inventory. It constructs the existing v3
+dataset/snapshot authority only when those facts are complete; otherwise the
+source remains unavailable. The server-only adapter exposes the existing
+content-addressed capability catalog, currency partition resolver, overview,
+and generic breakdown operations over the verified read-only query gateway.
+It has no browser owner selector, parser, persistence handle, SQLite fallback,
+or raw-row API.
 
 Exit: server code can render core execution analytics from v3 only.
 

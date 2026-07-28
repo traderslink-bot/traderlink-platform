@@ -123,6 +123,8 @@ function sessionKey(row: AnalyticalRow): string {
 
 export function buildQueryRowSemantics(rowsInput: readonly AnalyticalRow[]): readonly QueryRowSemantics[] {
   const rows = [...rowsInput].sort(compareEntry);
+  const zero = validateExactDecimal("0");
+  if (!zero.ok) throw new Error(zero.error.code);
   const bySession = new Map<string, AnalyticalRow[]>();
   for (const row of rows) {
     const key = sessionKey(row);
@@ -141,8 +143,8 @@ export function buildQueryRowSemantics(rowsInput: readonly AnalyticalRow[]): rea
     let lastCompletedOutcome: QueryRowSemantics["previousCompletedOutcome"] = "none";
     let priorCompletedStreakOutcome: QueryRowSemantics["priorCompletedStreakOutcome"] = "none";
     let priorCompletedStreakLength: bigint | null = BigInt("0");
-    let realizedPnl = "0";
-    let peakRealizedPnl = "0";
+    let realizedPnl = zero.value;
+    let peakRealizedPnl = zero.value;
     let hasCompletedGain = false;
     let hasCompletedLoss = false;
     let hasPeakProfitGiveback = false;
@@ -197,19 +199,19 @@ export function buildQueryRowSemantics(rowsInput: readonly AnalyticalRow[]): rea
           const next = addExactDecimals(realizedPnl, parsed.value);
           if (!next.ok) throw new Error(next.error.code);
           realizedPnl = next.value;
-          if (compareExactDecimals(parsed.value, "0") > 0) hasCompletedGain = true;
-          if (compareExactDecimals(parsed.value, "0") < 0) hasCompletedLoss = true;
+          if (compareExactDecimals(parsed.value, zero.value) > 0) hasCompletedGain = true;
+          if (compareExactDecimals(parsed.value, zero.value) < 0) hasCompletedLoss = true;
           if (!dailyPathIsVerified) continue;
-          if (compareExactDecimals(before, "0") > 0 && compareExactDecimals(realizedPnl, "0") < 0) {
+          if (compareExactDecimals(before, zero.value) > 0 && compareExactDecimals(realizedPnl, zero.value) < 0) {
             hasGreenToRedTransition = true;
           }
-          if (compareExactDecimals(before, "0") < 0 && compareExactDecimals(realizedPnl, "0") > 0) {
+          if (compareExactDecimals(before, zero.value) < 0 && compareExactDecimals(realizedPnl, zero.value) > 0) {
             hasRedToGreenTransition = true;
           }
           if (compareExactDecimals(realizedPnl, peakRealizedPnl) > 0) {
             peakRealizedPnl = realizedPnl;
           } else if (
-            compareExactDecimals(peakRealizedPnl, "0") > 0 &&
+            compareExactDecimals(peakRealizedPnl, zero.value) > 0 &&
             compareExactDecimals(realizedPnl, peakRealizedPnl) < 0
           ) {
             hasPeakProfitGiveback = true;
@@ -240,9 +242,9 @@ export function buildQueryRowSemantics(rowsInput: readonly AnalyticalRow[]): rea
         priorCompletedStreakOutcome,
         priorCompletedStreakLength,
         preEntryDailyPnl: realizedPnl,
-        preEntryDailyState: compareExactDecimals(realizedPnl, "0") > 0
+        preEntryDailyState: compareExactDecimals(realizedPnl, zero.value) > 0
           ? "green"
-          : compareExactDecimals(realizedPnl, "0") < 0 ? "red" : "flat",
+          : compareExactDecimals(realizedPnl, zero.value) < 0 ? "red" : "flat",
         preEntryDailyPathState: dailyPathIsVerified ? "verified" : "ambiguous",
         preEntryHasCompletedGain: dailyPathIsVerified && hasCompletedGain,
         preEntryHasCompletedLoss: dailyPathIsVerified && hasCompletedLoss,

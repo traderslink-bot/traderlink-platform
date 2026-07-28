@@ -10,9 +10,9 @@ import {
 } from "../../contracts";
 import {
   verifyTradeQueryResultShape,
-  type TradeQueryAuthority,
   type TradeQueryResultRow,
 } from "../contracts/query-result";
+import type { TradeQueryAuthority } from "../contracts/query-plan";
 
 export const TRADE_QUERY_FINDING_PACKET_VERSION = "ti_v3_trade_query_finding_packet_v1" as const;
 

@@ -134,7 +134,7 @@ export function buildPersistedExecutionAnalyticsReadiness(
     selectedPersistenceDigests,
     selectedSourceDocumentDigests,
     selectedExecutionDigests,
-    lifecycleProjection,
+      lifecycleProjection: lifecycleProjection.value,
     datasetState: "unavailable" as const,
     datasetReceiptDigest: null,
     partitionReceiptDigests: Object.freeze([]),

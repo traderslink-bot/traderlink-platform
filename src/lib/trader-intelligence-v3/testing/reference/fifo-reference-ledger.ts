@@ -1,4 +1,4 @@
-import type { CanonicalExecutionOrderingResult } from "../../domain/execution";
+import type { CanonicalExecutionEnvelope, CanonicalExecutionOrderingResult } from "../../domain/execution";
 import type { StartingInventoryContract } from "../../domain/accounting/starting-inventory";
 import {
   addReferenceDecimals,
@@ -178,7 +178,7 @@ function addDigest(accumulator: ReferenceRoundTripAccumulator, digest: string): 
 
 function assignChargeKinds(
   accumulator: ReferenceRoundTripAccumulator,
-  execution: CanonicalExecutionOrderingResult["economicallyOrderedExecutions"][number],
+  execution: CanonicalExecutionEnvelope,
 ): void {
   for (const charge of execution.content.charges) {
     accumulator.chargesByKind.set(

@@ -7,8 +7,8 @@ together before changing this tracker.
 
 ## Current work
 
-- Status: dashboard operationalization Milestone 1 complete; Milestone 2 next
-- Work item: safe v3 dataset/partition resolver foundation
+- Status: dashboard operationalization Milestone 2 complete; Milestone 3 next
+- Work item: stable dashboard contract and formatting-only view models
 - Goal: keep one shared, deterministic source of truth for execution analytics;
   attach explicit financial authority before any dashboard migration.
 - Constraint: do not route financial values through the legacy number-based CSV
@@ -78,12 +78,20 @@ sticky verification requirement.
   opening-inventory, correction, and statement-period authority is attached.
   A new service instance returns the same receipt after restart; a later close
   removes only the open-position reason.
+- Completed Milestone 2. Selected persisted receipts can now become the
+  existing exact v3 dataset/snapshot authority only when server-held statement
+  periods, correction authority, and verified starting inventories are supplied.
+  A server-only adapter then exposes the capability catalog, currency partition,
+  overview, and generic breakdown operations through the existing read-only
+  query gateway. Missing authority remains unavailable rather than becoming a
+  partial or invented P/L result. The final focused tests and whole-project
+  TypeScript check pass.
 
 ## Next queue
 
-1. In Milestone 2, attach explicit opening-inventory, correction, and
-   statement-period authority to resolve a verified v3 dataset/partition; do
-   not route through the legacy SQLite importer.
+1. In Milestone 3, add typed client-safe packet contracts, fixtures, and
+   formatting-only table/chart/limitation/evidence view models. Do not route
+   through the legacy SQLite importer or calculate values in browser code.
 2. Preserve complete charge-kind authority requirements; do not manufacture
    exchange/regulatory/borrow labels from combined charges.
 3. When the original May 2026 IBKR export is available, import its raw bytes

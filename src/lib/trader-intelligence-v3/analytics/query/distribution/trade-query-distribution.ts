@@ -97,6 +97,12 @@ function sum(values: readonly string[]): string {
   return result.value;
 }
 
+function exact(value: string) {
+  const parsed = validateExactDecimal(value);
+  if (!parsed.ok) throw new Error(parsed.error.code);
+  return parsed.value;
+}
+
 function normalizeSpec(input: unknown): { readonly ok: true; readonly value: DistributionSpec } | {
   readonly ok: false; readonly error: AnalyticalContractFailure;
 } {
@@ -189,9 +195,9 @@ function statistics(values: readonly string[], unit: "money" | "seconds" | "shar
     .map((key) => unavailableMetric(key, unit, currency, "ti_v3_query_zero_sample")));
   const q1 = nearestRank(values, 1) as string;
   const q3 = nearestRank(values, 3) as string;
-  const negated = negateExactDecimal(q1);
+  const negated = negateExactDecimal(exact(q1));
   if (!negated.ok) throw new Error(negated.error.code);
-  const iqr = addExactDecimals(q3, negated.value);
+  const iqr = addExactDecimals(exact(q3), negated.value);
   if (!iqr.ok) throw new Error(iqr.error.code);
   return Object.freeze([
     decimalMetric("minimum", unit, currency, values[0]),
@@ -211,11 +217,11 @@ function bucketFor(value: string, boundaries: readonly string[]): number {
 }
 
 function fences(q1: string, q3: string): Readonly<{ lower: ExactRatio; upper: ExactRatio }> {
-  const first = decimalToExactRatio(q1);
-  const third = decimalToExactRatio(q3);
-  const negativeFirst = negateExactDecimal(q1);
+  const first = decimalToExactRatio(exact(q1));
+  const third = decimalToExactRatio(exact(q3));
+  const negativeFirst = negateExactDecimal(exact(q1));
   if (!first.ok || !third.ok || !negativeFirst.ok) throw new Error("ti_v3_query_distribution_fence_invalid");
-  const iqr = addExactDecimals(q3, negativeFirst.value);
+  const iqr = addExactDecimals(exact(q3), negativeFirst.value);
   if (!iqr.ok) throw new Error(iqr.error.code);
   const spread = decimalToExactRatio(iqr.value);
   if (!spread.ok) throw new Error(spread.error.code);

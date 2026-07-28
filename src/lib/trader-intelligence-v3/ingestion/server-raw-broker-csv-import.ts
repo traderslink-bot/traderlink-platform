@@ -26,6 +26,11 @@ import {
   type PersistedExecutionAnalyticsReadiness,
   type PersistedExecutionAnalyticsReadinessFailure,
 } from "./persisted-execution-analytics-readiness";
+import {
+  createPersistedExecutionAnalyticsAuthoritySource,
+  type PersistedExecutionAnalyticsAuthorityAttachment,
+} from "./persisted-execution-analytics-authority";
+import type { ReadOnlySnapshotAuthoritySource } from "../analytics";
 import type {
   RawBrokerCsvColumnMapping,
   RawBrokerCsvIngestionRequest,
@@ -92,6 +97,10 @@ export interface ServerRawBrokerCsvImportService {
     PersistedExecutionAnalyticsReadiness,
     ServerRawBrokerCsvImportFailure
   >;
+  readonly createAnalyticsAuthoritySource: (
+    persistenceDigests: readonly CanonicalContentDigest[],
+    attachment: PersistedExecutionAnalyticsAuthorityAttachment,
+  ) => ExactResult<ReadOnlySnapshotAuthoritySource, ServerRawBrokerCsvImportFailure>;
 }
 
 export interface ServerRawBrokerCsvImportAuthority {
@@ -241,7 +250,7 @@ export function createServerRawBrokerCsvImportService(
           if (!record.ok) return failure(record.error.code, record.error.path);
           records.push(record.value);
         }
-        return { ok: true, value: Object.freeze(records) };
+        return { ok: true as const, value: Object.freeze(records) };
       },
       projectLifecycles: (persistenceDigests: readonly CanonicalContentDigest[]) => {
         const selected = Object.freeze([...persistenceDigests].sort((left, right) =>
@@ -294,6 +303,24 @@ export function createServerRawBrokerCsvImportService(
         }
         const readiness = buildPersistedExecutionAnalyticsReadiness(records);
         return readiness.ok ? readiness : failure(readiness.error.code, readiness.error.path);
+      },
+      createAnalyticsAuthoritySource: (
+        persistenceDigests: readonly CanonicalContentDigest[],
+        attachment: PersistedExecutionAnalyticsAuthorityAttachment,
+      ) => {
+        const selected = [...persistenceDigests].sort((left, right) =>
+          left < right ? -1 : left > right ? 1 : 0,
+        );
+        if (selected.length === 0) return failure("ti_v3_server_import_source_selection_empty", "$.persistenceDigests");
+        if (selected.length > MAX_SOURCE_SELECTION_DOCUMENTS) return failure("ti_v3_server_import_source_selection_oversized", "$.persistenceDigests");
+        if (selected.some((digest, index) => digest === selected[index - 1])) return failure("ti_v3_server_import_source_selection_duplicate", "$.persistenceDigests");
+        const records: PersistedRawBrokerCsvImport[] = [];
+        for (const persistenceDigest of selected) {
+          const record = authority.sourceStore.read({ canonicalOwnerKey, canonicalAccountKey: authority.canonicalAccountKey, persistenceDigest });
+          if (!record.ok) return failure(record.error.code, record.error.path);
+          records.push(record.value);
+        }
+        return { ok: true as const, value: createPersistedExecutionAnalyticsAuthoritySource({ records, attachment }) };
       },
     }),
   };
