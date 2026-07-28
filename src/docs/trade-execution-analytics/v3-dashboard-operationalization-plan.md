@@ -2,11 +2,12 @@
 
 ## Status
 
-Milestone 0 was completed locally on 2026-07-27. The direction lock, legacy
-runtime inventory, and disposable-data reset procedure are recorded here and in
-[the Milestone 0 inventory](./v3-legacy-execution-runtime-inventory.md). No
-legacy route, database, import, or dashboard consumer was changed. Milestone 1
-is the next implementation milestone.
+Milestones 0 and 1 were completed on 2026-07-27. Milestone 1 persists a
+content-verified raw source document and binds it
+to one owner-guarded, local-only v3 import route. The route derives owner scope,
+account, private storage, and instrument declarations on the server; it accepts
+only raw CSV bytes and explicit broker parsing declarations. No legacy route,
+database, import, or dashboard consumer was changed.
 
 ## Decision
 
@@ -14,6 +15,27 @@ The Trade Execution Analytics Engine v3 is the only planned authority for
 execution-derived analytics. The existing SQLite saved-trade/analytics store is
 disposable test data. Do not migrate it, convert it to v3, preserve it as a
 fallback, or use it to fill a missing v3 result.
+
+### Safe default for incomplete statements
+
+An imported broker statement may end with an open position or omit the prior
+history needed to establish its cost basis. Preserve those executions and show
+the resulting position as open or unresolved; do not require the trader to
+verify it before keeping it. The dataset builder must exclude only unsupported
+realized-P/L analytics, disclose the missing basis or correction authority, and
+must not call a value `unrealized P/L` without separate current-market-price
+authority. For the current safe-default resolver, those missing authorities
+keep the execution-analytics dataset, currency partitions, and queries
+unavailable instead of manufacturing a partial P/L result. The raw lifecycle
+remains available and disclosed. A later resolver may narrow an exclusion only
+after explicit opening-inventory, correction, and statement-period authority
+has been attached.
+
+The open-position review marker is derived from current position lifecycle, not
+stored as a sticky user task. When a later broker-confirmed execution closes the
+position, the marker automatically clears. A separate missing-basis or
+correction limitation may remain if the close does not establish an exact
+realized result.
 
 The eventual runtime has one path:
 
@@ -112,20 +134,48 @@ Milestone 4 dashboard design.
 Exit: v3 is the documented future execution-analytics owner; the legacy SQLite
 path is explicitly temporary and has no migration/fallback role.
 
-### Milestone 1 — v3 import, persistence, and restart proof
+### Milestone 1 — v3 import, persistence, and restart proof — complete
 
-- Connect an import entrypoint to v3 parsing and durable v3 authority.
-- Import a disposable broker CSV through v3, restart, and resolve the same
-  dataset/partition/query identities.
+- Complete the controlled v3 import entrypoint over the persisted source
+  document boundary; it must not call the legacy SQLite importer.
+- The initial controlled entrypoint is `POST /api/intelligence/execution-import/v1`.
+  It is owner-guarded, Origin-protected, requires real-owner data mode, limits
+  raw CSV bytes, and stores only under the validated private persistence parent.
+  It derives canonical owner/account scope and uses a server-held instrument map;
+  unknown symbols remain explicitly unresolved rather than acquiring browser
+  supplied instrument authority.
+- The initial persistence batch records raw source bytes, declared mapping and
+  timezone/charge settings, accepted canonical executions, rejected-row
+  receipts, and a content-addressed persistence digest. A fresh local store
+  rehydrates and replays the identical source receipt and execution digests.
+  The server-scoped service also reads that same digest after reconstruction,
+  using only its derived owner/account scope.
+- Source selection is bounded, deterministic, and owner/account scoped. It
+  rejects duplicate receipt digests and retains each selected source's currency
+  and charge-coverage declarations without netting or converting currencies.
+- Selected receipts now produce a lifecycle-only projection: an incomplete
+  statement can remain open without a required user-verification task, and a
+  later broker-confirmed offsetting fill automatically clears the open marker.
+  This is intentionally not a realized or unrealized P/L calculation.
+- The persisted-source resolver now produces a content-addressed unavailable
+  receipt when opening-inventory, correction, or statement-period authority is
+  absent. It intentionally returns no dataset, partition, or query identity;
+  a fresh service instance produces the same receipt and source/lifecycle
+  identities after restart.
 - Cover corrections, rejected receipts, charge coverage, owner/account
   isolation, and multi-currency behavior.
 
 Exit: fresh broker data is durable v3 source authority readable without legacy
-data.
+data, with restart-stable safe-default readiness that cannot manufacture an
+unsupported dataset, partition, or query.
 
 ### Milestone 2 — Dataset/partition resolver and server-only adapter foundation
 
 - Implement the owner/account/currency/date resolver.
+- Accept explicit correction and opening-inventory authority before claiming a
+  realized-P/L dataset. Until it is attached, preserve raw lifecycle but keep
+  the safe-default dataset/query unavailable. Once attached, exclude only an
+  affected realized analytic rather than requiring user verification.
 - Implement capabilities, overview, and generic grouped breakdowns.
 - Return client-safe, identity-bound packets and cover authorization, invalid
   requests, empty data, unsupported metrics, and bounded limits.
