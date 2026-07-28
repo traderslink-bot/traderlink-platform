@@ -199,10 +199,17 @@ Exit: server code can render core execution analytics from v3 only.
   bounded evidence-page, and finding-packet operations. These calls preserve
   the resolver's owner/account/currency authority and return the existing
   governed result types; they do not calculate, widen, or recover data.
+- Every adapter operation returns a content-addressed governed-result envelope
+  that binds its exact result and limitation codes to owner/account scope,
+  currency, snapshot, dataset, derivation, and partition identities. Packet
+  builders accept only that envelope: they have no currency, limitation-code,
+  owner, account, source, or partition arguments, and rebuild the envelope
+  identity before projection.
 - Typed client-safe packets project only bounded rows, exact metric values,
-  limitation codes, and bounded evidence references. They intentionally omit
-  raw execution digests, occurrence keys, excluded candidates, parser inputs,
-  persistence handles, and legacy data paths.
+  authority digest/partition identity, limitation codes, and bounded evidence
+  references. They intentionally omit owner/account scopes, raw execution
+  digests, occurrence keys, excluded candidates, parser inputs, persistence
+  handles, and legacy data paths.
 - The dashboard fixture reaches the engine only through that server adapter.
   Formatting-only table, chart, limitation, and evidence view models preserve
   exact values as strings and make no numeric, currency, or P/L calculation.

@@ -65,14 +65,10 @@ export function buildExecutionAnalyticsDashboardFixture(): ExecutionAnalyticsDas
   return Object.freeze({
     overview: buildDashboardQueryPacket(overview),
     periodSeries: buildDashboardQueryPacket(periodSeries),
-    evidencePage: buildDashboardEvidencePagePacket(
-      evidencePage,
-      "USD",
-      periodSeries.limitationCodes,
-    ),
+    evidencePage: buildDashboardEvidencePagePacket(evidencePage),
     distribution: buildDashboardDistributionPacket(distribution),
-    attribution: buildDashboardAttributionPacket(attribution, "USD"),
-    periodAttribution: buildDashboardPeriodAttributionPacket(periodAttribution, "USD"),
-    findings: buildDashboardFindingsPacket(findings, "USD"),
+    attribution: buildDashboardAttributionPacket(attribution),
+    periodAttribution: buildDashboardPeriodAttributionPacket(periodAttribution),
+    findings: buildDashboardFindingsPacket(findings),
   });
 }

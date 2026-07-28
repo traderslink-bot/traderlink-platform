@@ -1,5 +1,9 @@
-import { finalizeContentAddressedAuthority, type ExactMetricValue } from "../contracts";
 import type { CanonicalContentDigest } from "../../../domain/identity";
+import { finalizeContentAddressedAuthority, type ExactMetricValue } from "../contracts";
+import {
+  verifyServerExecutionAnalyticsGovernedResult,
+  type ServerExecutionAnalyticsGovernedResult,
+} from "../adapters";
 import type {
   TradeQueryAttributionResult,
   TradeQueryDistributionResult,
@@ -11,6 +15,12 @@ import type {
 
 export const EXECUTION_ANALYTICS_DASHBOARD_PACKET_VERSION =
   "ti_v3_execution_analytics_dashboard_packet_v1" as const;
+
+export interface DashboardPacketAuthority {
+  readonly currency: string;
+  readonly partitionDigest: CanonicalContentDigest;
+  readonly authorityDigest: CanonicalContentDigest;
+}
 
 export interface DashboardEvidenceCandidate {
   readonly semanticRoundTripKey: string;
@@ -39,7 +49,7 @@ export interface DashboardMetricRow {
 
 interface DashboardPacketBase {
   readonly schemaVersion: typeof EXECUTION_ANALYTICS_DASHBOARD_PACKET_VERSION;
-  readonly currency: string;
+  readonly authority: DashboardPacketAuthority;
   readonly limitationCodes: readonly string[];
   readonly packetDigest: CanonicalContentDigest;
 }
@@ -175,12 +185,35 @@ function packet<T extends Omit<DashboardPacketBase, "packetDigest">>(
   return built.value as T & Readonly<{ readonly packetDigest: CanonicalContentDigest }>;
 }
 
-/** Projects verified engine results into a bounded browser-safe dashboard contract. */
-export function buildDashboardQueryPacket(result: TradeQueryResult): DashboardQueryPacket {
+function bound<T>(
+  input: ServerExecutionAnalyticsGovernedResult<T>,
+): T {
+  if (!verifyServerExecutionAnalyticsGovernedResult(input)) {
+    throw new Error("ti_v3_dashboard_packet_authority_mismatch");
+  }
+  return input.result;
+}
+
+function packetAuthority<T>(input: ServerExecutionAnalyticsGovernedResult<T>): DashboardPacketAuthority {
+  return Object.freeze({
+    currency: input.authority.currency,
+    partitionDigest: input.authority.partitionDigest,
+    authorityDigest: input.authority.authorityDigest,
+  });
+}
+
+/** Projects only a verified server-bound query result into a browser-safe packet. */
+export function buildDashboardQueryPacket(
+  input: ServerExecutionAnalyticsGovernedResult<TradeQueryResult>,
+): DashboardQueryPacket {
+  const result = bound(input);
+  if (input.sourceResultDigest !== result.resultDigest) {
+    throw new Error("ti_v3_dashboard_packet_source_result_mismatch");
+  }
   return packet("execution_analytics_dashboard_query_packet", {
     schemaVersion: EXECUTION_ANALYTICS_DASHBOARD_PACKET_VERSION,
     kind: "query" as const,
-    currency: result.normalizedQueryPlan.authority.currency,
+    authority: packetAuthority(input),
     queryPlanDigest: result.normalizedQueryPlan.queryPlanDigest,
     resultDigest: result.resultDigest,
     executionReceiptDigest: result.executionReceipt.receiptDigest,
@@ -189,19 +222,21 @@ export function buildDashboardQueryPacket(result: TradeQueryResult): DashboardQu
     excludedCount: result.excludedCount,
     rows: metricRows(result.rows),
     evidence: evidenceReferences(result.evidence),
-    limitationCodes: result.limitationCodes,
+    limitationCodes: input.limitationCodes,
   });
 }
 
 export function buildDashboardEvidencePagePacket(
-  page: TradeQueryPage,
-  currency: string,
-  limitationCodes: readonly string[],
+  input: ServerExecutionAnalyticsGovernedResult<TradeQueryPage>,
 ): DashboardEvidencePagePacket {
+  const page = bound(input);
+  if (page.sourceResultDigest !== input.sourceResultDigest) {
+    throw new Error("ti_v3_dashboard_packet_source_result_mismatch");
+  }
   return packet("execution_analytics_dashboard_evidence_page_packet", {
     schemaVersion: EXECUTION_ANALYTICS_DASHBOARD_PACKET_VERSION,
     kind: "evidence_page" as const,
-    currency,
+    authority: packetAuthority(input),
     sourceResultDigest: page.sourceResultDigest,
     queryPlanDigest: page.queryPlanDigest,
     pageDigest: page.pageDigest,
@@ -216,17 +251,21 @@ export function buildDashboardEvidencePagePacket(
       continuationDigest: page.continuation.continuationDigest,
       nextOffset: page.continuation.nextOffset,
     }),
-    limitationCodes,
+    limitationCodes: input.limitationCodes,
   });
 }
 
 export function buildDashboardDistributionPacket(
-  result: TradeQueryDistributionResult,
+  input: ServerExecutionAnalyticsGovernedResult<TradeQueryDistributionResult>,
 ): DashboardDistributionPacket {
+  const result = bound(input);
+  if (input.sourceResultDigest !== result.resultDigest) {
+    throw new Error("ti_v3_dashboard_packet_source_result_mismatch");
+  }
   return packet("execution_analytics_dashboard_distribution_packet", {
     schemaVersion: EXECUTION_ANALYTICS_DASHBOARD_PACKET_VERSION,
     kind: "distribution" as const,
-    currency: result.currency ?? "",
+    authority: packetAuthority(input),
     queryPlanDigest: result.queryPlanDigest,
     resultDigest: result.resultDigest,
     measure: result.measure,
@@ -238,18 +277,21 @@ export function buildDashboardDistributionPacket(
     findings: result.findings,
     buckets: result.buckets,
     evidence: evidenceReferences(result.evidence),
-    limitationCodes: result.limitationCodes,
+    limitationCodes: input.limitationCodes,
   });
 }
 
 export function buildDashboardAttributionPacket(
-  result: TradeQueryAttributionResult,
-  currency: string,
+  input: ServerExecutionAnalyticsGovernedResult<TradeQueryAttributionResult>,
 ): DashboardAttributionPacket {
+  const result = bound(input);
+  if (input.sourceResultDigest !== result.resultDigest) {
+    throw new Error("ti_v3_dashboard_packet_source_result_mismatch");
+  }
   return packet("execution_analytics_dashboard_attribution_packet", {
     schemaVersion: EXECUTION_ANALYTICS_DASHBOARD_PACKET_VERSION,
     kind: "attribution" as const,
-    currency,
+    authority: packetAuthority(input),
     queryPlanDigest: result.queryPlanDigest,
     resultDigest: result.resultDigest,
     candidateCount: result.candidateCount,
@@ -258,18 +300,21 @@ export function buildDashboardAttributionPacket(
     authorityState: result.authorityState,
     segments: result.segments,
     evidence: evidenceReferences(result.evidence),
-    limitationCodes: result.limitationCodes,
+    limitationCodes: input.limitationCodes,
   });
 }
 
 export function buildDashboardPeriodAttributionPacket(
-  result: TradeQueryPeriodAttributionResult,
-  currency: string,
+  input: ServerExecutionAnalyticsGovernedResult<TradeQueryPeriodAttributionResult>,
 ): DashboardPeriodAttributionPacket {
+  const result = bound(input);
+  if (input.sourceResultDigest !== result.resultDigest) {
+    throw new Error("ti_v3_dashboard_packet_source_result_mismatch");
+  }
   return packet("execution_analytics_dashboard_period_attribution_packet", {
     schemaVersion: EXECUTION_ANALYTICS_DASHBOARD_PACKET_VERSION,
     kind: "period_attribution" as const,
-    currency,
+    authority: packetAuthority(input),
     baselineQueryPlanDigest: result.baselineQueryPlanDigest,
     comparisonQueryPlanDigest: result.comparisonQueryPlanDigest,
     resultDigest: result.resultDigest,
@@ -284,24 +329,27 @@ export function buildDashboardPeriodAttributionPacket(
     reconciliationDifference: result.reconciliationDifference,
     segments: result.segments,
     evidence: evidenceReferences(result.evidence),
-    limitationCodes: result.limitationCodes,
+    limitationCodes: input.limitationCodes,
   });
 }
 
 export function buildDashboardFindingsPacket(
-  result: TradeQueryFindingPacket,
-  currency: string,
+  input: ServerExecutionAnalyticsGovernedResult<TradeQueryFindingPacket>,
 ): DashboardFindingsPacket {
+  const result = bound(input);
+  if (input.sourceResultDigest !== result.queryResultDigest) {
+    throw new Error("ti_v3_dashboard_packet_source_result_mismatch");
+  }
   return packet("execution_analytics_dashboard_findings_packet", {
     schemaVersion: EXECUTION_ANALYTICS_DASHBOARD_PACKET_VERSION,
     kind: "findings" as const,
-    currency,
+    authority: packetAuthority(input),
     queryResultDigest: result.queryResultDigest,
     queryPlanDigest: result.queryPlanDigest,
     findingPacketDigest: result.packetDigest,
     dimension: result.dimension,
     minimumSample: result.minimumSample,
     findings: result.findings,
-    limitationCodes: result.limitationCodes,
+    limitationCodes: input.limitationCodes,
   });
 }

@@ -20,7 +20,16 @@ describe("server execution analytics adapter", () => {
     const overview = adapter.getOverview("USD", fixture.plan());
     expect(overview.ok).toBe(true);
     if (!overview.ok) return;
-    expect(overview.value.rows).toHaveLength(1);
+    expect(overview.value.result.rows).toHaveLength(1);
+    expect(overview.value.authority).toMatchObject({
+      currency: "USD",
+      ownerScope: partition.value.ownerScope,
+      accountScope: partition.value.accountScope,
+      partitionDigest: partition.value.partitionDigest,
+    });
+    expect(overview.value.governedResultDigest).toMatch(
+      /^ti_v3:server_execution_analytics_governed_result:v1:sha256:/,
+    );
     expect(adapter.resolveCurrencyPartition("EUR")).toMatchObject({
       ok: false,
       error: { code: "ti_v3_server_analytics_partition_invalid" },

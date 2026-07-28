@@ -19672,10 +19672,26 @@ Current best next step:
 - Focused M3 adapter/contract and engine operation tests completed successfully,
   and the whole-project TypeScript check passed.
 
+# 2026-07-27 Trade Execution Analytics v3 operationalization — Milestone 3 authority binding remediation
+
+- Corrected the dashboard contract so client-safe packet builders accept only
+  a content-addressed server-governed envelope. Each envelope binds the exact
+  result and its limitation codes to verified owner/account scope, currency,
+  snapshot, dataset, derivation, and partition identities.
+- The server-only adapter now returns this envelope for overview/breakdown,
+  period series, distribution, attribution, period attribution, evidence page,
+  and findings operations. Evidence pages retain the originating result digest
+  and query-plan digest; invalid distribution and pagination inputs retain the
+  narrow adapter failure contract.
+- Packet projection rebuilds both authority and governed-result identities
+  before use. Currency and limitations can no longer be passed separately or
+  substituted by the caller; browser packets expose only currency plus safe
+  authority/partition digests, not owner/account scope or raw execution data.
+
 Current best next step:
 
-- Milestone 4: build normal dashboard panels from these packets only, starting
-  with overview, period performance, limitations, and evidence drill-down.
-  First inspect and preserve the local light Material `/workspace` baseline;
-  do not add Coach, candle, market-data, AI, legacy SQLite, deployment, or
-  browser-side analytics behavior.
+- Keep PR #183 draft for review and let CI validate the authority-binding
+  remediation. After acceptance, Milestone 4 may build normal panels from
+  packets only while preserving the local light Material `/workspace` baseline;
+  no Coach, candle, market-data, AI, legacy SQLite, deployment, or browser-side
+  analytics work is in scope.
