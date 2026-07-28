@@ -109,17 +109,34 @@ describe("persisted raw broker CSV import", () => {
     if (!restored.ok) return;
     expect(restored.value.persistenceDigest).toBe(record.value.persistenceDigest);
     expect(restored.value.sourceDocumentDigest).toBe(record.value.sourceDocumentDigest);
+    expect(restored.value.canonicalOwnerKey).toBe(input.canonicalOwnerKey);
+    expect(restored.value.canonicalAccountKey).toBe(input.canonicalAccountKey);
     expect(restored.value.acceptedExecutions.map((entry) => entry.canonicalContentDigest))
       .toEqual(record.value.acceptedExecutions.map((entry) => entry.canonicalContentDigest));
+    expect(restored.value.acceptedExecutions.map((entry) => entry.content.rawBrokerSymbol))
+      .toEqual(["TEST", "TEST"]);
+    expect(restored.value.rejectedRowCount).toBe("1");
+    expect(restored.value.issues).toEqual(record.value.issues);
 
     const replay = replayPersistedRawBrokerCsvImport(
       restored.value,
       input.resolveInstrument,
     );
     expect(replay.ok).toBe(true);
+    if (!replay.ok) return;
+    expect(replay.value.acceptedExecutions).toHaveLength(2);
+    expect(replay.value.issues).toEqual(restored.value.issues);
     expect(restartedStore.value.read({
       canonicalOwnerKey: "owner_foreign",
       canonicalAccountKey: input.canonicalAccountKey,
+      persistenceDigest: record.value.persistenceDigest,
+    })).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_execution_source_store_not_found" },
+    });
+    expect(restartedStore.value.read({
+      canonicalOwnerKey: input.canonicalOwnerKey,
+      canonicalAccountKey: "account_foreign",
       persistenceDigest: record.value.persistenceDigest,
     })).toMatchObject({
       ok: false,
