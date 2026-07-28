@@ -2,8 +2,9 @@
 
 import { alpha, createTheme } from "@mui/material/styles";
 
-const brandNavy = "#06265f";
-const brandBlue = "#0b57d0";
+export const traderIntelligencePrimaryAction = "#011E56";
+const brandNavy = traderIntelligencePrimaryAction;
+const brandBlue = traderIntelligencePrimaryAction;
 const success = "#137333";
 const danger = "#b3261e";
 
@@ -78,10 +79,51 @@ export const traderMaterialTheme = createTheme({
       },
       styleOverrides: {
         root: {
-          borderRadius: 10,
+          borderRadius: 8,
           minHeight: 40,
+          boxShadow: "none",
+          fontWeight: 700,
+          textTransform: "none",
+          "&:hover": {
+            boxShadow: "none",
+          },
+          "&:active": {
+            boxShadow: "none",
+          },
         },
       },
+      variants: [
+        {
+          props: { color: "primary", variant: "contained" },
+          style: {
+            backgroundColor: traderIntelligencePrimaryAction,
+            color: "#ffffff",
+            "&:hover": {
+              backgroundColor: "#001744",
+            },
+          },
+        },
+        {
+          props: { color: "primary", variant: "outlined" },
+          style: {
+            borderColor: traderIntelligencePrimaryAction,
+            color: traderIntelligencePrimaryAction,
+            "&:hover": {
+              borderColor: traderIntelligencePrimaryAction,
+              backgroundColor: alpha(traderIntelligencePrimaryAction, 0.05),
+            },
+          },
+        },
+        {
+          props: { color: "primary", variant: "text" },
+          style: {
+            color: traderIntelligencePrimaryAction,
+            "&:hover": {
+              backgroundColor: alpha(traderIntelligencePrimaryAction, 0.05),
+            },
+          },
+        },
+      ],
     },
     MuiCard: {
       styleOverrides: {

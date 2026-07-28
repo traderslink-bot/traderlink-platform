@@ -40,141 +40,42 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
+import {
+  DASHBOARD_DATA_NAVIGATION_GROUP,
+  DASHBOARD_HOME_ITEM,
+  DASHBOARD_MAIN_NAVIGATION_GROUPS,
+  DASHBOARD_ROUTE_TITLES,
+  DASHBOARD_STANDALONE_ITEMS,
+  type DashboardNavigationGroup,
+  type DashboardNavigationIconKey,
+  type DashboardNavigationItem,
+} from "./dashboard-navigation";
+
 const expandedWidth = 272;
 const collapsedWidth = 76;
 
-type NavigationItem = Readonly<{
-  href: string;
-  label: string;
-  icon: ReactNode;
-}>;
-
-type NavigationGroup = Readonly<{
-  id: "trades" | "analytics" | "data";
-  label: string;
-  icon: ReactNode;
-  items: readonly NavigationItem[];
-}>;
-
-const workspaceItem: NavigationItem = {
-  href: "/workspace",
-  label: "Workspace",
-  icon: <DashboardRoundedIcon />,
-};
-
-const reflectionItem: NavigationItem = {
-  href: "/reflection-loop",
-  label: "Reflection Loop",
-  icon: <NoteAltRoundedIcon />,
-};
-
-const rulesItem: NavigationItem = {
-  href: "/rules",
-  label: "Trading Rules",
-  icon: <GavelRoundedIcon />,
-};
-
-const navigationGroups: readonly NavigationGroup[] = [
-  {
-    id: "trades",
-    label: "Trades",
-    icon: <SwapVertRoundedIcon />,
-    items: [
-      {
-        href: "/trades/roundtrips",
-        label: "Round Trips",
-        icon: <TableRowsRoundedIcon />,
-      },
-      {
-        href: "/trades/day-sessions",
-        label: "Day Sessions",
-        icon: <CalendarMonthRoundedIcon />,
-      },
-      {
-        href: "/trades/ticker",
-        label: "Trades by Ticker",
-        icon: <TrendingUpRoundedIcon />,
-      },
-      {
-        href: "/trades/open",
-        label: "Open Positions",
-        icon: <ViewDayRoundedIcon />,
-      },
-    ],
-  },
-  {
-    id: "analytics",
-    label: "Analytics",
-    icon: <AnalyticsRoundedIcon />,
-    items: [
-      {
-        href: "/analytics",
-        label: "Overview",
-        icon: <SpaceDashboardRoundedIcon />,
-      },
-      {
-        href: "/analytics/performance",
-        label: "Performance",
-        icon: <ShowChartRoundedIcon />,
-      },
-      {
-        href: "/analytics/results",
-        label: "Results",
-        icon: <QueryStatsRoundedIcon />,
-      },
-      {
-        href: "/analytics/timing",
-        label: "Timing",
-        icon: <TimelineRoundedIcon />,
-      },
-      {
-        href: "/analytics/execution",
-        label: "Execution",
-        icon: <InsightsRoundedIcon />,
-      },
-      {
-        href: "/analytics/lab",
-        label: "Analytics Lab",
-        icon: <ScienceRoundedIcon />,
-      },
-    ],
-  },
-  {
-    id: "data",
-    label: "Data",
-    icon: <CloudUploadRoundedIcon />,
-    items: [
-      {
-        href: "/imports",
-        label: "Import Trades",
-        icon: <CloudUploadRoundedIcon />,
-      },
-      {
-        href: "/manual-entry",
-        label: "Manual Entry",
-        icon: <NoteAltRoundedIcon />,
-      },
-    ],
-  },
-];
-
-const routeTitles: Readonly<Record<string, string>> = {
-  "/workspace": "Workspace",
-  "/trades/roundtrips": "Round Trips",
-  "/trades/day-sessions": "Day Sessions",
-  "/trades/ticker": "Trades by Ticker",
-  "/trades/open": "Open Positions",
-  "/analytics": "Analytics Overview",
-  "/analytics/performance": "Performance",
-  "/analytics/results": "Results",
-  "/analytics/timing": "Timing",
-  "/analytics/execution": "Execution",
-  "/analytics/lab": "Analytics Lab",
-  "/reflection-loop": "Reflection Loop",
-  "/rules": "Trading Rules",
-  "/imports": "Import Trades",
-  "/manual-entry": "Manual Entry",
-};
+function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
+  const icons: Record<DashboardNavigationIconKey, ReactNode> = {
+    analytics: <AnalyticsRoundedIcon />,
+    calendar: <CalendarMonthRoundedIcon />,
+    data: <ViewDayRoundedIcon />,
+    execution: <InsightsRoundedIcon />,
+    import: <CloudUploadRoundedIcon />,
+    lab: <ScienceRoundedIcon />,
+    manualEntry: <NoteAltRoundedIcon />,
+    overview: <SpaceDashboardRoundedIcon />,
+    performance: <ShowChartRoundedIcon />,
+    reflection: <NoteAltRoundedIcon />,
+    results: <QueryStatsRoundedIcon />,
+    rules: <GavelRoundedIcon />,
+    ticker: <TrendingUpRoundedIcon />,
+    timing: <TimelineRoundedIcon />,
+    tradeGroup: <SwapVertRoundedIcon />,
+    trades: <TableRowsRoundedIcon />,
+    workspace: <DashboardRoundedIcon />,
+  };
+  return icons[icon];
+}
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/analytics") {
@@ -184,11 +85,11 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 function pageTitle(pathname: string): string {
-  const exact = routeTitles[pathname];
+  const exact = DASHBOARD_ROUTE_TITLES[pathname];
   if (exact) {
     return exact;
   }
-  const match = Object.entries(routeTitles)
+  const match = Object.entries(DASHBOARD_ROUTE_TITLES)
     .sort(([left], [right]) => right.length - left.length)
     .find(([href]) => pathname.startsWith(`${href}/`));
   return match?.[1] ?? "Trader Intelligence";
@@ -201,7 +102,7 @@ function NavigationLink({
   pathname,
 }: {
   collapsed: boolean;
-  item: NavigationItem;
+  item: DashboardNavigationItem;
   onNavigate: () => void;
   pathname: string;
 }) {
@@ -234,7 +135,7 @@ function NavigationLink({
           justifyContent: "center",
         }}
       >
-        {item.icon}
+        {navigationIcon(item.icon)}
       </ListItemIcon>
       {collapsed ? null : (
         <ListItemText
@@ -261,7 +162,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<
-    Readonly<Record<NavigationGroup["id"], boolean>>
+    Readonly<Record<DashboardNavigationGroup["id"], boolean>>
   >({
     trades: pathname.startsWith("/trades"),
     analytics: pathname.startsWith("/analytics"),
@@ -319,11 +220,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <List disablePadding>
             <NavigationLink
               collapsed={compact}
-              item={workspaceItem}
+              item={DASHBOARD_HOME_ITEM}
               onNavigate={closeMobile}
               pathname={pathname}
             />
-            {navigationGroups.slice(0, 2).map((group) => {
+            {DASHBOARD_MAIN_NAVIGATION_GROUPS.map((group) => {
               const open = expandedGroups[group.id];
               return (
                 <Box key={group.id}>
@@ -339,7 +240,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                       sx={{ borderRadius: 2, minHeight: 40, mx: 1, mt: 0.75 }}
                     >
                       <ListItemIcon sx={{ minWidth: 38 }}>
-                        {group.icon}
+                        {navigationIcon(group.icon)}
                       </ListItemIcon>
                       <ListItemText
                         primary={group.label}
@@ -373,19 +274,16 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               );
             })}
             <Divider sx={{ my: 1.25 }} />
-            <NavigationLink
-              collapsed={compact}
-              item={reflectionItem}
-              onNavigate={closeMobile}
-              pathname={pathname}
-            />
-            <NavigationLink
-              collapsed={compact}
-              item={rulesItem}
-              onNavigate={closeMobile}
-              pathname={pathname}
-            />
-            {navigationGroups.slice(2).map((group) => {
+            {DASHBOARD_STANDALONE_ITEMS.map((item) => (
+              <NavigationLink
+                collapsed={compact}
+                item={item}
+                key={item.href}
+                onNavigate={closeMobile}
+                pathname={pathname}
+              />
+            ))}
+            {[DASHBOARD_DATA_NAVIGATION_GROUP].map((group) => {
               const open = expandedGroups[group.id];
               return (
                 <Box key={group.id}>
@@ -401,7 +299,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                       sx={{ borderRadius: 2, minHeight: 40, mx: 1, mt: 0.75 }}
                     >
                       <ListItemIcon sx={{ minWidth: 38 }}>
-                        {group.icon}
+                        {navigationIcon(group.icon)}
                       </ListItemIcon>
                       <ListItemText
                         primary={group.label}
@@ -532,7 +430,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               >
                 Trader Intelligence
               </Typography>
-              <Typography component="h1" noWrap sx={{ fontWeight: 720 }} variant="h6">
+              <Typography
+                component="h1"
+                noWrap
+                sx={{ fontWeight: 720 }}
+                variant="h6"
+              >
                 {pageTitle(pathname)}
               </Typography>
             </Box>

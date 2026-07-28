@@ -19928,3 +19928,32 @@ Current best next step:
 - The next Rules work should not add AI scoring or free-text automatic
   evaluation. First design the complete optional Day Session check-in surface
   with the owner, then attach it to these persisted custom rules.
+
+# v3 Dashboard Template Checkpoint (2026-07-28)
+
+- The approved light Material `/workspace` design is now the explicit reusable
+  v3 dashboard template contract rather than an informal visual reference.
+- `app/(dashboard)/layout.tsx` applies `V3DashboardTemplate` to every dashboard
+  route. The shell remains the only owner of the header, TradersLink logo,
+  responsive collapsible sidebar, and full-width main page container.
+- Navigation groups, destinations, icon keys, and route titles now have one
+  configuration source. Canonical page, card, status, and action components are
+  exposed through the template boundary.
+- The primary-action standard is deep navy `#011E56`, white text, 8px radius,
+  40px minimum height, bold sentence-case labels, and no shadow. Secondary
+  actions use the same navy as an outline.
+- `AGENTS.md` and the dashboard template contract direct future Codex tasks to
+  use the shared structure. A focused architecture test rejects local dashboard
+  shells and missing configured pages.
+
+- Focused template enforcement passed with 7 tests. Whole-project TypeScript
+  validation and the optimized Next.js build also passed; the build retained
+  only the same eight existing non-fatal broad filesystem-tracing warnings.
+- The rebuilt local dashboard is running at `127.0.0.1:3010`. `/workspace`,
+  `/rules`, `/analytics`, and `/trades/roundtrips` returned private/no-store 200
+  responses with the shared logo and `#011E56` theme token.
+
+Current best next step:
+
+- Complete owner visual review of the shared template and button treatment,
+  then continue Day Session check-in planning.

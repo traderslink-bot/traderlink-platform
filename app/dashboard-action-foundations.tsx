@@ -12,13 +12,14 @@ import Typography from "@mui/material/Typography";
 
 import {
   DashboardDataScopeChip,
+  DashboardPage,
   DashboardPanel,
   DashboardUnavailableState,
-} from "./dashboard-ui";
+} from "./dashboard-template";
 
 export function ImportTradesFoundation() {
   return (
-    <Stack spacing={2}>
+    <DashboardPage>
       <Alert severity="info">
         Trade imports continue to use the governed CSV validation and repair
         flow while its screens are migrated into this Material dashboard.
@@ -64,13 +65,13 @@ export function ImportTradesFoundation() {
           </Stack>
         </DashboardPanel>
       </Box>
-    </Stack>
+    </DashboardPage>
   );
 }
 
 export function ManualEntryFoundation() {
   return (
-    <Stack spacing={2}>
+    <DashboardPage>
       <Alert severity="info">
         The complete execution form is laid out below. Saving remains disabled
         until the v3 manual-entry mutation contract is accepted.
@@ -177,13 +178,13 @@ export function ManualEntryFoundation() {
           </Stack>
         </Box>
       </DashboardPanel>
-    </Stack>
+    </DashboardPage>
   );
 }
 
 export function ReflectionLoopFoundation() {
   return (
-    <Stack spacing={2}>
+    <DashboardPage>
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={1}
@@ -205,6 +206,6 @@ export function ReflectionLoopFoundation() {
           title="Reflection Loop is ready for redesign"
         />
       </DashboardPanel>
-    </Stack>
+    </DashboardPage>
   );
 }

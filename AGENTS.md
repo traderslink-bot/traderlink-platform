@@ -17,6 +17,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Trader Intelligence Dashboard Baseline And Parallel Work
 
 - The current approved design baseline is the light, Material-style dashboard on the `/workspace` route. Preserve that visual language and shell unless the user explicitly approves a replacement.
+- Every Trader Intelligence dashboard page must live under `app/(dashboard)` and inherit `app/(dashboard)/layout.tsx`. That layout must render `V3DashboardTemplate`; pages must not rebuild the application frame locally.
+- `app/dashboard-template.tsx` is the public dashboard UI contract. Import `DashboardPage`, `DashboardPanel`, `DashboardMetricCard`, `DashboardPrimaryAction`, and `DashboardSecondaryAction` from it instead of creating local page containers, card conventions, or action styles.
+- `app/dashboard-shell.tsx` exclusively owns the header, TradersLink logo, responsive collapsible sidebar, and full-width page container. Dashboard pages must not create or import their own `AppBar`, `Toolbar`, `Drawer`, logo, `<main>`, or `DashboardShell`.
+- `app/dashboard-navigation.ts` exclusively owns dashboard navigation groups, links, icon keys, and route titles. Add or change dashboard navigation there rather than duplicating navigation arrays in pages or the shell.
+- The primary-action contract is deep navy `#011E56`, white text, 8px radius, 40px minimum height, bold sentence-case labels, and no elevation or shadow. Secondary actions use the same navy as an outlined treatment. These styles belong in `app/mui-theme.ts`, not page-level `sx`.
+- Run `npm run verify:ti-v3:dashboard-template` after adding or structurally changing a dashboard page. The architecture test rejects local shell reconstruction and missing configured routes.
+- Read `src/docs/trade-execution-analytics/v3-dashboard-template-contract.md` before creating or redesigning a Trader Intelligence dashboard page.
 - The active review instance is commonly `http://127.0.0.1:3010/workspace`. Treat port `3010` as belonging to the worktree that started it; do not stop, restart, or replace that process from another worktree without coordinating first.
 - Agents may inspect the `3010` instance read-only. An agent making parallel dashboard changes must use its own Git worktree, branch, and port such as `3011`.
 - Divide parallel work by isolated pages or feature areas. Coordinate before editing shared shell or configuration files, especially `app/dashboard-shell.tsx`, `app/mui-theme.ts`, `app/mui-provider.tsx`, `next.config.ts`, or the main dashboard plan and progress documents.

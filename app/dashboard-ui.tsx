@@ -8,6 +8,36 @@ import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { ReactNode } from "react";
+import type { ButtonProps } from "@mui/material/Button";
+
+export function DashboardPage({ children }: { children: ReactNode }) {
+  return (
+    <Stack
+      data-v3-dashboard-page
+      spacing={2.5}
+      sx={{ minWidth: 0, width: "100%" }}
+    >
+      {children}
+    </Stack>
+  );
+}
+
+type DashboardActionProps = Omit<
+  ButtonProps,
+  "color" | "disableElevation" | "variant"
+>;
+
+export function DashboardPrimaryAction(props: DashboardActionProps) {
+  return (
+    <Button {...props} color="primary" disableElevation variant="contained" />
+  );
+}
+
+export function DashboardSecondaryAction(props: DashboardActionProps) {
+  return (
+    <Button {...props} color="primary" disableElevation variant="outlined" />
+  );
+}
 
 export function DashboardMetricCard({
   caption,
@@ -19,7 +49,7 @@ export function DashboardMetricCard({
   value: string;
 }) {
   return (
-    <Card sx={{ minWidth: 0 }}>
+    <Card data-v3-dashboard-card="metric" sx={{ minWidth: 0 }}>
       <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
         <Typography color="text.secondary" noWrap variant="caption">
           {label}
@@ -32,7 +62,12 @@ export function DashboardMetricCard({
         >
           {value}
         </Typography>
-        <Typography color="text.secondary" noWrap sx={{ mt: 0.5 }} variant="caption">
+        <Typography
+          color="text.secondary"
+          noWrap
+          sx={{ mt: 0.5 }}
+          variant="caption"
+        >
           {caption}
         </Typography>
       </CardContent>
@@ -52,8 +87,13 @@ export function DashboardPanel({
   title: string;
 }) {
   return (
-    <Card sx={{ height: "100%", minWidth: 0 }}>
-      <CardContent sx={{ p: { xs: 2, sm: 2.5 }, "&:last-child": { pb: { xs: 2, sm: 2.5 } } }}>
+    <Card data-v3-dashboard-card="panel" sx={{ height: "100%", minWidth: 0 }}>
+      <CardContent
+        sx={{
+          p: { xs: 2, sm: 2.5 },
+          "&:last-child": { pb: { xs: 2, sm: 2.5 } },
+        }}
+      >
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={1}
@@ -64,7 +104,11 @@ export function DashboardPanel({
         >
           <Box>
             {eyebrow ? (
-              <Typography color="primary.main" sx={{ fontWeight: 700 }} variant="caption">
+              <Typography
+                color="primary.main"
+                sx={{ fontWeight: 700 }}
+                variant="caption"
+              >
                 {eyebrow}
               </Typography>
             ) : null}
@@ -97,7 +141,7 @@ export function DashboardUnavailableState({
     <Stack
       sx={{
         alignItems: compact ? "flex-start" : "center",
-        bgcolor: "rgba(11, 87, 208, 0.035)",
+        bgcolor: "rgba(1, 30, 86, 0.035)",
         border: 1,
         borderColor: "divider",
         borderRadius: 2,

@@ -32,8 +32,9 @@ import Typography from "@mui/material/Typography";
 
 import {
   DashboardMetricCard,
+  DashboardPage,
   DashboardPanel,
-} from "../../dashboard-ui";
+} from "../../dashboard-template";
 import type {
   TradingRulesDashboardView,
   TradingRulesTemplateView,
@@ -361,7 +362,7 @@ export function RulesClient({
   }
 
   return (
-    <Stack spacing={2.5}>
+    <DashboardPage>
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={2}
@@ -1182,6 +1183,6 @@ export function RulesClient({
           </Button>
         </DialogActions>
       </Dialog>
-    </Stack>
+    </DashboardPage>
   );
 }

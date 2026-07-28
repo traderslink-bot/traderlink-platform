@@ -24,9 +24,10 @@ import TextField from "@mui/material/TextField";
 import {
   DashboardDataScopeChip,
   DashboardMetricCard,
+  DashboardPage,
   DashboardPanel,
   DashboardUnavailableState,
-} from "./dashboard-ui";
+} from "./dashboard-template";
 
 const emptyMetric = (label: string, caption: string) => ({
   label,
@@ -85,7 +86,7 @@ export function AnalyticsPageFoundation({
   supportingTitle: string;
 }) {
   return (
-    <Stack spacing={2.5}>
+    <DashboardPage>
       <ScopeToolbar savedViews />
       <Box
         sx={{
@@ -126,7 +127,7 @@ export function AnalyticsPageFoundation({
           />
         </DashboardPanel>
       </Box>
-    </Stack>
+    </DashboardPage>
   );
 }
 
@@ -140,7 +141,7 @@ export function TradeTableFoundation({
   unavailableDescription: string;
 }) {
   return (
-    <Stack spacing={2}>
+    <DashboardPage>
       <Stack
         direction={{ xs: "column", lg: "row" }}
         spacing={1}
@@ -209,13 +210,13 @@ export function TradeTableFoundation({
           </TableBody>
         </Table>
       </TableContainer>
-    </Stack>
+    </DashboardPage>
   );
 }
 
 export function DaySessionsFoundation() {
   return (
-    <Stack spacing={2}>
+    <DashboardPage>
       <Stack
         direction={{ xs: "column", md: "row" }}
         spacing={1}
@@ -243,13 +244,13 @@ export function DaySessionsFoundation() {
           description="Calendar and list views will use the same verified day-session data. Selecting a day will open its P/L, note, ticker cards, and round trips."
         />
       </DashboardPanel>
-    </Stack>
+    </DashboardPage>
   );
 }
 
 export function AnalyticsLabFoundation() {
   return (
-    <Stack spacing={2}>
+    <DashboardPage>
       <Stack
         direction={{ xs: "column", lg: "row" }}
         spacing={1}
@@ -325,6 +326,6 @@ export function AnalyticsLabFoundation() {
           />
         </DashboardPanel>
       </Box>
-    </Stack>
+    </DashboardPage>
   );
 }

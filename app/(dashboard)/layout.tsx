@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 
-import { DashboardShell } from "../dashboard-shell";
+import { V3DashboardTemplate } from "../dashboard-template";
 import { requireTraderIntelligenceOwnerPageAccess } from "@/src/lib/trader-intelligence-v3/auth";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,7 @@ export default async function DashboardLayout({
     <Suspense
       fallback={<DashboardFrameFallback>{children}</DashboardFrameFallback>}
     >
-      <DashboardShell>{children}</DashboardShell>
+      <V3DashboardTemplate>{children}</V3DashboardTemplate>
     </Suspense>
   );
 }

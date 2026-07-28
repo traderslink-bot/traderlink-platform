@@ -40,6 +40,7 @@
     "verify:ti-v3:private-data": "tsx src/scripts/verify-trader-intelligence-v3-private-data.ts",
     "verify:ti-v3:private-data:local": "tsx src/scripts/verify-trader-intelligence-v3-private-data.ts --local-only",
     "verify:ti-v3:private-data:history": "tsx src/scripts/verify-trader-intelligence-v3-private-data.ts --history-only",
+    "verify:ti-v3:dashboard-template": "vitest run src/lib/trader-intelligence-v3/__tests__/dashboard-template-enforcement.test.ts --reporter=dot",
     "verify:ti-v3:ga0-a1": "npm run verify:ti-v3:architecture && npm run verify:ti-v3:private-data",
     "verify:ti-v3:ga0-a2": "vitest run src/lib/trader-intelligence-v3/__tests__/ga0-a2 src/lib/trader-intelligence-v3/__tests__/architecture-boundary-guard.test.ts --reporter=dot && npm run verify:ti-v3:architecture && npm run verify:ti-v3:private-data",
     "verify:ti-v3:ga0-b": "tsx src/scripts/verify-trader-intelligence-v3-ga0-b.ts",

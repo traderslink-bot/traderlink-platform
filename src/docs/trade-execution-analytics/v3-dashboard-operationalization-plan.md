@@ -257,6 +257,22 @@ eligible analytics results exist. Production user identity and managed
 multi-tenant storage remain a later prerequisite, not a claim of this local
 checkpoint.
 
+Checkpoint 4C complete: the approved `/workspace` application frame is now
+formalized as the reusable v3 dashboard template. The `(dashboard)` route-group
+layout owns template application; one configuration owns navigation and route
+titles; canonical page, card, and action components are exported through the
+template boundary; and an architecture test rejects page-local headers,
+sidebars, logos, main containers, or duplicated shell configuration. The
+shared primary action is deep navy `#011E56` with white text, an 8px radius,
+40px minimum height, bold sentence-case labels, and no elevation. Secondary
+actions use the matching navy outline.
+
+Focused template enforcement (7 tests), whole-project TypeScript validation,
+and the optimized Next.js build pass. The build retains the same eight existing
+non-fatal broad filesystem-tracing warnings. After restart, `/workspace`,
+`/rules`, `/analytics`, and `/trades/roundtrips` return private/no-store 200
+responses with the shared logo and navy theme token.
+
 Exit: every execution value is traceable to a v3 packet and the owner has
 tested and accepted the design.
 

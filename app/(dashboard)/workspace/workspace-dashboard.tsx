@@ -15,9 +15,10 @@ import Typography from "@mui/material/Typography";
 import {
   DashboardDataScopeChip,
   DashboardMetricCard,
+  DashboardPage,
   DashboardPanel,
   DashboardUnavailableState,
-} from "../../dashboard-ui";
+} from "../../dashboard-template";
 
 const unavailableMetrics = [
   {
@@ -56,7 +57,7 @@ const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
 export function WorkspaceDashboard() {
   return (
-    <Stack spacing={2.5}>
+    <DashboardPage>
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={1}
@@ -222,6 +223,6 @@ export function WorkspaceDashboard() {
           />
         </Stack>
       </DashboardPanel>
-    </Stack>
+    </DashboardPage>
   );
 }
