@@ -255,3 +255,17 @@ Verification for this checkpoint:
   `3010` runtime returned a private 200 response for `/rules` with a saved
   rule, the new wording, dollar examples, and no user-facing `partition`
   wording.
+
+### Manual Custom Rules Dashboard Checkpoint
+
+- Added a separate, durable Manual Custom Rule path on `/rules` for
+  trader-authored commitments that cannot truthfully be evaluated from trade
+  executions.
+- Each custom rule has a title, plain-language statement, category, future
+  check-in scope, optional Focus Rule status, prospective immutable versions,
+  and active/paused/retired lifecycle controls.
+- Custom rules are explicitly presented as manual commitments. Day Session and
+  trade check-ins, adherence results, P/L comparisons, AI interpretation, and
+  automatic free-text evaluation remain deferred.
+- Local persistence uses dedicated owner-scoped SQLite tables with immutable
+  version and lifecycle rows; the client receives no owner identifiers.

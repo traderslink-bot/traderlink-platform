@@ -39,7 +39,7 @@ function sameOwner(
   );
 }
 
-function resolveConfiguredDatabasePath(): string {
+export function resolveTradingRulesDatabasePath(): string {
   const configuredPath =
     process.env.TRADER_INTELLIGENCE_RULES_DB_PATH?.trim() ||
     process.env.TRADER_INTELLIGENCE_DB_PATH?.trim();
@@ -112,7 +112,7 @@ function parseCommand(source: string): StoredRuleCommand {
 export class SqliteExecutionRuleRepository {
   readonly #database: Database.Database;
 
-  constructor(databasePath = resolveConfiguredDatabasePath()) {
+  constructor(databasePath = resolveTradingRulesDatabasePath()) {
     this.#database = new Database(databasePath);
     this.#database.pragma("journal_mode = WAL");
     this.#database.pragma("foreign_keys = ON");
@@ -267,4 +267,3 @@ export class SqliteExecutionRuleRepository {
     return this.#replay(owner).listLifecycleEvents(owner, ruleInstanceId);
   }
 }
-

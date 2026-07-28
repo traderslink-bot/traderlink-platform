@@ -15,6 +15,13 @@ import {
 import type { TraderIntelligenceOwnerContext } from "@/src/lib/trader-intelligence-v3/domain";
 
 import { SqliteExecutionRuleRepository } from "./sqlite-execution-rule-repository";
+import {
+  SqliteManualCustomRuleRepository,
+  type ManualCustomRuleCategory,
+  type ManualCustomRuleRecord,
+  type ManualCustomRuleReviewScope,
+  type ManualCustomRuleStatus,
+} from "./manual-custom-rule-repository";
 
 export interface TradingRulesTemplateView {
   readonly templateId: ExecutionRuleTemplateId;
@@ -30,6 +37,7 @@ export interface TradingRulesTemplateView {
 export interface TradingRulesDashboardView {
   readonly packet: ExecutionRuleDashboardPacket;
   readonly templates: readonly TradingRulesTemplateView[];
+  readonly manualRules: readonly ManualCustomRuleRecord[];
 }
 
 export type TradingRulesMutation =
@@ -48,6 +56,30 @@ export type TradingRulesMutation =
       ruleInstanceId: string;
       expectedCurrentStatus: ExecutionRuleLifecycleStatus;
       newStatus: ExecutionRuleLifecycleStatus;
+    }>
+  | Readonly<{
+      action: "create_manual";
+      title: string;
+      statement: string;
+      category: ManualCustomRuleCategory;
+      reviewScope: ManualCustomRuleReviewScope;
+      isFocus: boolean;
+    }>
+  | Readonly<{
+      action: "revise_manual";
+      ruleId: string;
+      expectedVersionOrdinal: string;
+      title: string;
+      statement: string;
+      category: ManualCustomRuleCategory;
+      reviewScope: ManualCustomRuleReviewScope;
+      isFocus: boolean;
+    }>
+  | Readonly<{
+      action: "transition_manual";
+      ruleId: string;
+      expectedCurrentStatus: ManualCustomRuleStatus;
+      newStatus: ManualCustomRuleStatus;
     }>;
 
 function ownerScope(
@@ -102,6 +134,10 @@ function openRepository(): SqliteExecutionRuleRepository {
   return new SqliteExecutionRuleRepository();
 }
 
+function openManualRepository(): SqliteManualCustomRuleRepository {
+  return new SqliteManualCustomRuleRepository();
+}
+
 function clientSafeDashboardView(
   view: TradingRulesDashboardView,
 ): TradingRulesDashboardView {
@@ -112,6 +148,7 @@ export function readTradingRulesDashboard(
   owner: TraderIntelligenceOwnerContext,
 ): TradingRulesDashboardView {
   const repository = openRepository();
+  const manualRepository = openManualRepository();
   try {
     const scope = ownerScope(owner);
     const snapshots = repository.list(scope);
@@ -134,9 +171,11 @@ export function readTradingRulesDashboard(
     return clientSafeDashboardView(Object.freeze({
       packet: packet.value,
       templates: safeTemplates(),
+      manualRules: manualRepository.list(scope),
     }));
   } finally {
     repository.close();
+    manualRepository.close();
   }
 }
 
@@ -145,6 +184,44 @@ export function mutateTradingRulesDashboard(
   mutation: TradingRulesMutation,
 ): TradingRulesDashboardView {
   const scope = ownerScope(owner);
+  if (
+    mutation.action === "create_manual" ||
+    mutation.action === "revise_manual" ||
+    mutation.action === "transition_manual"
+  ) {
+    const manualRepository = openManualRepository();
+    try {
+      if (mutation.action === "create_manual") {
+        manualRepository.create({
+          ...mutation,
+          ruleId: `manual-rule-${randomUUID()}`,
+          owner: scope,
+          effectiveFrom: nextTimestamp(),
+        });
+      } else if (mutation.action === "revise_manual") {
+        const current = manualRepository.list(scope).find(
+          (rule) => rule.ruleId === mutation.ruleId,
+        );
+        manualRepository.revise({
+          ...mutation,
+          owner: scope,
+          effectiveFrom: nextTimestamp(current?.updatedAt),
+        });
+      } else {
+        const current = manualRepository.list(scope).find(
+          (rule) => rule.ruleId === mutation.ruleId,
+        );
+        manualRepository.transition({
+          ...mutation,
+          owner: scope,
+          effectiveAt: nextTimestamp(current?.updatedAt),
+        });
+      }
+    } finally {
+      manualRepository.close();
+    }
+    return readTradingRulesDashboard(owner);
+  }
   const repository = openRepository();
   try {
     if (mutation.action === "create") {

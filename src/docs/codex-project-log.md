@@ -19916,3 +19916,15 @@ Current best next step:
 - Parallel dashboard agents must use separate Git worktrees, branches, and ports. Port `3010` belongs to the baseline worktree and may be inspected read-only by other agents.
 - Parallel tasks should be divided by isolated pages or feature areas. Agents must coordinate before modifying shared shell, theme, routing/configuration, or dashboard planning files.
 - Work completed elsewhere must be merged or cherry-picked into the baseline worktree before it will appear on `3010`, followed by integrated verification.
+
+# Manual Custom Rules Checkpoint (2026-07-28)
+
+- `/rules` now has a durable Manual Custom Rule path beside the automatic
+  preset library. It is for trader-authored commitments only and never claims
+  automatic trade-data verification.
+- The current review scope is creating, revising, focusing, pausing, resuming,
+  and retiring custom rules. Day Session/trade check-ins and all manual-rule
+  analytics are intentionally a later design phase.
+- The next Rules work should not add AI scoring or free-text automatic
+  evaluation. First design the complete optional Day Session check-in surface
+  with the owner, then attach it to these persisted custom rules.

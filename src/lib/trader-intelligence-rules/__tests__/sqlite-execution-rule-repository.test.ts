@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { ExecutionRuleOwnerScope } from "@/src/lib/trader-intelligence-v3/analytics/rules";
 
 import { SqliteExecutionRuleRepository } from "../sqlite-execution-rule-repository";
+import { SqliteManualCustomRuleRepository } from "../manual-custom-rule-repository";
 
 const temporaryDirectories: string[] = [];
 const owner: ExecutionRuleOwnerScope = Object.freeze({
@@ -103,5 +104,55 @@ describe("SqliteExecutionRuleRepository", () => {
       repository.list({ ...owner, userId: "different-owner" }),
     ).toEqual([]);
     repository.close();
+  });
+});
+
+describe("SqliteManualCustomRuleRepository", () => {
+  it("keeps manual rule revisions and lifecycle state after restart", () => {
+    const databasePath = temporaryDatabasePath();
+    const first = new SqliteManualCustomRuleRepository(databasePath);
+    first.create({
+      ruleId: "manual-rule-one",
+      owner,
+      title: "Wait for confirmation",
+      statement: "I wait for confirmation before I enter a trade.",
+      category: "process",
+      reviewScope: "day_session",
+      isFocus: true,
+      effectiveFrom: "2026-07-28T16:00:00.000000000Z",
+    });
+    first.revise({
+      ruleId: "manual-rule-one",
+      owner,
+      expectedVersionOrdinal: "1",
+      title: "Wait for confirmation",
+      statement: "I wait for my full confirmation before I enter a trade.",
+      category: "process",
+      reviewScope: "both",
+      isFocus: false,
+      effectiveFrom: "2026-07-28T16:01:00.000000000Z",
+    });
+    first.transition({
+      ruleId: "manual-rule-one",
+      owner,
+      expectedCurrentStatus: "active",
+      newStatus: "paused",
+      effectiveAt: "2026-07-28T16:02:00.000000000Z",
+    });
+    first.close();
+
+    const restarted = new SqliteManualCustomRuleRepository(databasePath);
+    expect(restarted.list(owner)).toEqual([
+      expect.objectContaining({
+        ruleId: "manual-rule-one",
+        status: "paused",
+        versionOrdinal: "2",
+        statement: "I wait for my full confirmation before I enter a trade.",
+        reviewScope: "both",
+        isFocus: false,
+      }),
+    ]);
+    expect(restarted.list({ ...owner, userId: "different-owner" })).toEqual([]);
+    restarted.close();
   });
 });

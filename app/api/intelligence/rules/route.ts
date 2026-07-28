@@ -52,6 +52,61 @@ function parseMutation(input: unknown): TradingRulesMutation | null {
       newStatus: candidate.newStatus,
     };
   }
+  const validManualDefinition =
+    typeof candidate.title === "string" &&
+    typeof candidate.statement === "string" &&
+    (candidate.category === "process" ||
+      candidate.category === "setup" ||
+      candidate.category === "mindset" ||
+      candidate.category === "review") &&
+    (candidate.reviewScope === "day_session" ||
+      candidate.reviewScope === "trade" ||
+      candidate.reviewScope === "both") &&
+    typeof candidate.isFocus === "boolean";
+  if (candidate.action === "create_manual" && validManualDefinition) {
+    return {
+      action: "create_manual",
+      title: candidate.title as string,
+      statement: candidate.statement as string,
+      category: candidate.category as "process" | "setup" | "mindset" | "review",
+      reviewScope: candidate.reviewScope as "day_session" | "trade" | "both",
+      isFocus: candidate.isFocus as boolean,
+    };
+  }
+  if (
+    candidate.action === "revise_manual" &&
+    typeof candidate.ruleId === "string" &&
+    typeof candidate.expectedVersionOrdinal === "string" &&
+    validManualDefinition
+  ) {
+    return {
+      action: "revise_manual",
+      ruleId: candidate.ruleId,
+      expectedVersionOrdinal: candidate.expectedVersionOrdinal,
+      title: candidate.title as string,
+      statement: candidate.statement as string,
+      category: candidate.category as "process" | "setup" | "mindset" | "review",
+      reviewScope: candidate.reviewScope as "day_session" | "trade" | "both",
+      isFocus: candidate.isFocus as boolean,
+    };
+  }
+  if (
+    candidate.action === "transition_manual" &&
+    typeof candidate.ruleId === "string" &&
+    (candidate.expectedCurrentStatus === "active" ||
+      candidate.expectedCurrentStatus === "paused" ||
+      candidate.expectedCurrentStatus === "retired") &&
+    (candidate.newStatus === "active" ||
+      candidate.newStatus === "paused" ||
+      candidate.newStatus === "retired")
+  ) {
+    return {
+      action: "transition_manual",
+      ruleId: candidate.ruleId,
+      expectedCurrentStatus: candidate.expectedCurrentStatus,
+      newStatus: candidate.newStatus,
+    };
+  }
   return null;
 }
 

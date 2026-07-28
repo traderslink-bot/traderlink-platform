@@ -19,12 +19,14 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
+import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
@@ -35,6 +37,8 @@ import {
 import type {
   TradingRulesDashboardView,
   TradingRulesTemplateView,
+  ManualCustomRuleRecord,
+  ManualCustomRuleStatus,
 } from "@/src/lib/trader-intelligence-rules";
 import type {
   ExecutionRuleDashboardCard,
@@ -45,6 +49,19 @@ type RuleEditorState = Readonly<{
   mode: "create" | "revise";
   template: TradingRulesTemplateView;
   rule: ExecutionRuleDashboardCard | null;
+}>;
+
+type ManualRuleEditorState = Readonly<{
+  mode: "create" | "revise";
+  rule: ManualCustomRuleRecord | null;
+}>;
+
+type ManualRuleValues = Readonly<{
+  title: string;
+  statement: string;
+  category: ManualCustomRuleRecord["category"];
+  reviewScope: ManualCustomRuleRecord["reviewScope"];
+  isFocus: boolean;
 }>;
 
 type MutationResponse =
@@ -68,6 +85,27 @@ const scopeLabels = {
   day_session: "Day session",
   trade_sequence: "Trade sequence",
 } as const;
+
+const manualCategoryLabels = {
+  process: "Process",
+  setup: "Setup",
+  mindset: "Mindset",
+  review: "Review",
+} as const;
+
+const manualReviewScopeLabels = {
+  day_session: "Day session",
+  trade: "Individual trade",
+  both: "Day session and trade",
+} as const;
+
+const defaultManualRuleValues: ManualRuleValues = {
+  title: "",
+  statement: "",
+  category: "process",
+  reviewScope: "day_session",
+  isFocus: true,
+};
 
 function formatDate(value: string): string {
   const timestamp = Date.parse(value);
@@ -148,6 +186,12 @@ export function RulesClient({
   const [editorValues, setEditorValues] = useState<Record<string, string>>({});
   const [retireRule, setRetireRule] =
     useState<ExecutionRuleDashboardCard | null>(null);
+  const [manualEditor, setManualEditor] =
+    useState<ManualRuleEditorState | null>(null);
+  const [manualValues, setManualValues] =
+    useState<ManualRuleValues>(defaultManualRuleValues);
+  const [retireManualRule, setRetireManualRule] =
+    useState<ManualCustomRuleRecord | null>(null);
 
   const activeRules = view.packet.rules.filter(
     (rule) => rule.status === "active",
@@ -161,6 +205,15 @@ export function RulesClient({
   const evaluatedCount = view.packet.rules.filter(
     (rule) => rule.latestEvaluation !== null,
   ).length;
+  const activeManualRules = view.manualRules.filter(
+    (rule) => rule.status === "active",
+  );
+  const pausedManualRules = view.manualRules.filter(
+    (rule) => rule.status === "paused",
+  );
+  const retiredManualRules = view.manualRules.filter(
+    (rule) => rule.status === "retired",
+  );
 
   const filteredTemplates = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase();
@@ -258,6 +311,55 @@ export function RulesClient({
     );
   }
 
+  function openCreateManual(): void {
+    setManualValues(defaultManualRuleValues);
+    setManualEditor({ mode: "create", rule: null });
+  }
+
+  function openReviseManual(rule: ManualCustomRuleRecord): void {
+    setManualValues({
+      title: rule.title,
+      statement: rule.statement,
+      category: rule.category,
+      reviewScope: rule.reviewScope,
+      isFocus: rule.isFocus,
+    });
+    setManualEditor({ mode: "revise", rule });
+  }
+
+  async function saveManualEditor(): Promise<void> {
+    if (!manualEditor) return;
+    const mutation =
+      manualEditor.mode === "create"
+        ? { action: "create_manual", ...manualValues }
+        : {
+            action: "revise_manual",
+            ...manualValues,
+            ruleId: manualEditor.rule!.ruleId,
+            expectedVersionOrdinal: manualEditor.rule!.versionOrdinal,
+          };
+    const saved = await submitMutation(
+      mutation,
+      manualEditor.rule ? `manual-${manualEditor.rule.ruleId}` : "create-manual",
+    );
+    if (saved) setManualEditor(null);
+  }
+
+  async function transitionManual(
+    rule: ManualCustomRuleRecord,
+    newStatus: ManualCustomRuleStatus,
+  ): Promise<void> {
+    await submitMutation(
+      {
+        action: "transition_manual",
+        expectedCurrentStatus: rule.status,
+        newStatus,
+        ruleId: rule.ruleId,
+      },
+      `manual-${rule.ruleId}`,
+    );
+  }
+
   return (
     <Stack spacing={2.5}>
       <Stack
@@ -284,17 +386,25 @@ export function RulesClient({
             want to follow.
           </Typography>
         </Box>
-        <Button
-          onClick={() =>
-            document
-              .getElementById("rule-library")
-              ?.scrollIntoView({ behavior: "smooth", block: "start" })
-          }
-          startIcon={<AddRoundedIcon />}
-          variant="contained"
-        >
-          Add a rule
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button
+            onClick={() =>
+              document
+                .getElementById("rule-library")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+            variant="outlined"
+          >
+            Browse presets
+          </Button>
+          <Button
+            onClick={openCreateManual}
+            startIcon={<AddRoundedIcon />}
+            variant="contained"
+          >
+            Create custom rule
+          </Button>
+        </Stack>
       </Stack>
 
       {error ? (
@@ -316,7 +426,7 @@ export function RulesClient({
         <DashboardMetricCard
           caption="Currently in force"
           label="Active rules"
-          value={String(activeRules.length)}
+          value={String(activeRules.length + activeManualRules.length)}
         />
         <DashboardMetricCard
           caption="Available to check against your trades"
@@ -518,6 +628,157 @@ export function RulesClient({
                 </Card>
               );
             })}
+          </Box>
+        )}
+      </DashboardPanel>
+
+      <DashboardPanel
+        action={
+          <Button
+            onClick={openCreateManual}
+            size="small"
+            startIcon={<AddRoundedIcon />}
+          >
+            Create custom rule
+          </Button>
+        }
+        eyebrow="MANUAL COMMITMENTS"
+        title="Rules you track yourself"
+      >
+        <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
+          Use this for a rule that matters to you but cannot be confirmed from
+          trade data alone. These rules will be available for optional check-ins
+          when the Day Session review is added.
+        </Typography>
+        {view.manualRules.length === 0 ? (
+          <Box
+            sx={{
+              bgcolor: "background.default",
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 2,
+              p: { xs: 2, sm: 3 },
+            }}
+          >
+            <Typography variant="h3">No custom rules yet</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+              Write a commitment in your own words, such as “Wait for
+              confirmation before entering.” It stays manual until you choose
+              to check in on it later.
+            </Typography>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: "grid",
+              gap: 1.5,
+              gridTemplateColumns: {
+                xs: "1fr",
+                xl: "repeat(2, minmax(0, 1fr))",
+              },
+            }}
+          >
+            {[...activeManualRules, ...pausedManualRules, ...retiredManualRules].map(
+              (rule) => (
+                <Card key={rule.ruleId} variant="outlined">
+                  <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+                    <Stack
+                      direction="row"
+                      spacing={2}
+                      sx={{
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Box sx={{ minWidth: 0 }}>
+                        <Stack direction="row" spacing={0.75} sx={{ mb: 1 }}>
+                          <Chip
+                            color={statusColor(rule.status)}
+                            label={rule.status}
+                            size="small"
+                          />
+                          <Chip label="Manual" size="small" variant="outlined" />
+                          {rule.isFocus ? <Chip color="primary" label="Focus" size="small" /> : null}
+                        </Stack>
+                        <Typography component="h3" variant="h3">
+                          {rule.title}
+                        </Typography>
+                      </Box>
+                      <Typography color="text.secondary" variant="caption">
+                        v{rule.versionOrdinal}
+                      </Typography>
+                    </Stack>
+                    <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">
+                      {rule.statement}
+                    </Typography>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
+                      <Chip label={manualCategoryLabels[rule.category]} size="small" />
+                      <Chip label={manualReviewScopeLabels[rule.reviewScope]} size="small" variant="outlined" />
+                    </Box>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={1.5}
+                      sx={{
+                        alignItems: { xs: "flex-start", sm: "center" },
+                        justifyContent: "space-between",
+                        mt: 1.5,
+                      }}
+                    >
+                      <Box>
+                        <Typography color="text.secondary" variant="caption">
+                          Check-ins
+                        </Typography>
+                        <Typography sx={{ fontWeight: 650 }} variant="body2">
+                          Available with the future Day Session review
+                        </Typography>
+                      </Box>
+                      {busyId === `manual-${rule.ruleId}` ? (
+                        <Skeleton height={40} width={152} />
+                      ) : rule.status === "retired" ? null : (
+                        <Stack direction="row" spacing={0.75}>
+                          {rule.status === "active" ? (
+                            <Button
+                              onClick={() => openReviseManual(rule)}
+                              size="small"
+                              startIcon={<EditRoundedIcon />}
+                            >
+                              Edit
+                            </Button>
+                          ) : null}
+                          <Button
+                            onClick={() =>
+                              void transitionManual(
+                                rule,
+                                rule.status === "active" ? "paused" : "active",
+                              )
+                            }
+                            size="small"
+                            startIcon={
+                              rule.status === "active" ? (
+                                <PauseRoundedIcon />
+                              ) : (
+                                <PlayArrowRoundedIcon />
+                              )
+                            }
+                            variant="outlined"
+                          >
+                            {rule.status === "active" ? "Pause" : "Resume"}
+                          </Button>
+                          <Button
+                            aria-label={`Retire ${rule.title}`}
+                            color="inherit"
+                            onClick={() => setRetireManualRule(rule)}
+                            size="small"
+                          >
+                            <ArchiveRoundedIcon fontSize="small" />
+                          </Button>
+                        </Stack>
+                      )}
+                    </Stack>
+                  </CardContent>
+                </Card>
+              ),
+            )}
           </Box>
         )}
       </DashboardPanel>
@@ -743,6 +1004,130 @@ export function RulesClient({
       </Dialog>
 
       <Dialog
+        fullWidth
+        maxWidth="sm"
+        onClose={() => setManualEditor(null)}
+        open={manualEditor !== null}
+      >
+        {manualEditor ? (
+          <>
+            <DialogTitle>
+              {manualEditor.mode === "create"
+                ? "Create custom rule"
+                : "Edit custom rule"}
+            </DialogTitle>
+            <DialogContent>
+              <Typography color="text.secondary">
+                Write this rule in your own words. It stays a manual commitment;
+                the app will not try to judge it from your trade data.
+              </Typography>
+              <Stack spacing={2} sx={{ mt: 2.5 }}>
+                <TextField
+                  autoFocus
+                  fullWidth
+                  label="Rule name"
+                  onChange={(event) =>
+                    setManualValues((current) => ({
+                      ...current,
+                      title: event.target.value,
+                    }))
+                  }
+                  placeholder="Wait for confirmation"
+                  slotProps={{ htmlInput: { maxLength: 100 } }}
+                  value={manualValues.title}
+                />
+                <TextField
+                  fullWidth
+                  label="Rule in your own words"
+                  minRows={4}
+                  multiline
+                  onChange={(event) =>
+                    setManualValues((current) => ({
+                      ...current,
+                      statement: event.target.value,
+                    }))
+                  }
+                  placeholder="I wait for my confirmation before entering a trade."
+                  slotProps={{ htmlInput: { maxLength: 1000 } }}
+                  value={manualValues.statement}
+                />
+                <FormControl fullWidth>
+                  <InputLabel id="manual-rule-category-label">Category</InputLabel>
+                  <Select
+                    label="Category"
+                    labelId="manual-rule-category-label"
+                    onChange={(event) =>
+                      setManualValues((current) => ({
+                        ...current,
+                        category: event.target.value as ManualRuleValues["category"],
+                      }))
+                    }
+                    value={manualValues.category}
+                  >
+                    {Object.entries(manualCategoryLabels).map(([value, label]) => (
+                      <MenuItem key={value} value={value}>{label}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel id="manual-rule-scope-label">Review it with</InputLabel>
+                  <Select
+                    label="Review it with"
+                    labelId="manual-rule-scope-label"
+                    onChange={(event) =>
+                      setManualValues((current) => ({
+                        ...current,
+                        reviewScope: event.target.value as ManualRuleValues["reviewScope"],
+                      }))
+                    }
+                    value={manualValues.reviewScope}
+                  >
+                    {Object.entries(manualReviewScopeLabels).map(([value, label]) => (
+                      <MenuItem key={value} value={value}>{label}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={manualValues.isFocus}
+                      onChange={(event) =>
+                        setManualValues((current) => ({
+                          ...current,
+                          isFocus: event.target.checked,
+                        }))
+                      }
+                    />
+                  }
+                  label="Make this a Focus Rule"
+                />
+              </Stack>
+              <Alert severity="info" sx={{ mt: 2.5 }}>
+                Day Session and trade check-ins will be added separately. This
+                rule does not affect automatic analytics today.
+              </Alert>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setManualEditor(null)}>Cancel</Button>
+              <Button
+                disabled={
+                  busyId !== null ||
+                  !manualValues.title.trim() ||
+                  !manualValues.statement.trim()
+                }
+                onClick={() => void saveManualEditor()}
+                variant="contained"
+              >
+                {manualEditor.mode === "create"
+                  ? "Save custom rule"
+                  : "Save new version"}
+              </Button>
+            </DialogActions>
+          </>
+        ) : null}
+      </Dialog>
+
+      <Dialog
         onClose={() => setRetireRule(null)}
         open={retireRule !== null}
       >
@@ -766,6 +1151,34 @@ export function RulesClient({
             variant="contained"
           >
             Retire rule
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        onClose={() => setRetireManualRule(null)}
+        open={retireManualRule !== null}
+      >
+        <DialogTitle>Retire this custom rule?</DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary">
+            Retirement is permanent. The rule history remains available, but
+            this custom rule cannot be resumed.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRetireManualRule(null)}>Cancel</Button>
+          <Button
+            color="error"
+            onClick={() => {
+              if (!retireManualRule) return;
+              void transitionManual(retireManualRule, "retired").then(() =>
+                setRetireManualRule(null),
+              );
+            }}
+            variant="contained"
+          >
+            Retire custom rule
           </Button>
         </DialogActions>
       </Dialog>
