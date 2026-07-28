@@ -32,6 +32,13 @@ function matches(row: QueryRowSemantics, filter: TradeQueryFilter): boolean {
       return filter.values.includes(row.row.direction);
     case "session":
       return filter.values.includes(row.row.session);
+    case "entry_session":
+      return row.row.entrySession !== null && filter.values.includes(row.row.entrySession);
+    case "exit_session":
+      return row.row.exitSession !== null && filter.values.includes(row.row.exitSession);
+    case "session_transition":
+      return row.row.entrySession !== null && row.row.exitSession !== null &&
+        filter.values.includes(`${row.row.entrySession}_to_${row.row.exitSession}`);
     case "currency":
       return row.row.currency === filter.value;
     case "realized_outcome":

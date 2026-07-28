@@ -11,6 +11,12 @@ import {
   resolveSessionFacts,
   verifyAnalyticalDatasetReceipt,
 } from "../../analytics";
+import { applyTradeQueryFilters } from "../../analytics/query/filters/filter-engine";
+import { tradeQueryGroupAssignment } from "../../analytics/query/grouping/grouping-engine";
+import { buildQueryRowSemantics } from "../../analytics/query/execution/row-semantics";
+import { buildAnalyticalRow } from "../../analytics/dataset/analytical-row";
+import { buildCanonicalQueryFilter } from "../../domain/query/canonical-filter";
+import { buildAnalysisSnapshot } from "../../domain/snapshot/analysis-snapshot";
 import {
   buildSyntheticCanonicalExecution,
   buildSyntheticGa0B1Authority,
@@ -35,7 +41,10 @@ function identityForGlobalExclusion() {
   return identity.value.identifier;
 }
 
-function newYorkReceipt(sessionEvidence: readonly TradingSessionEvidence[]) {
+function newYorkReceipt(
+  sessionEvidence: readonly TradingSessionEvidence[],
+  now: CanonicalUtcTimestamp = "2027-01-01T00:00:00.000000000Z" as CanonicalUtcTimestamp,
+) {
   const startDate = sessionEvidence[0].sessionDate;
   const endDate = sessionEvidence[sessionEvidence.length - 1].sessionDate;
   const resolver: RelativeDateResolver = { resolve: () => ({
@@ -49,14 +58,145 @@ function newYorkReceipt(sessionEvidence: readonly TradingSessionEvidence[]) {
   }) };
   const result = resolveRelativeDateRange({
     request: { relativeRange: null, requestedStartDate: startDate, requestedEndDate: endDate, dateBasis: "trade_close_date", timeBasis: "exchange_local", startBoundary: "inclusive", endBoundary: "inclusive", timezone: "America/New_York", calendarBasis: "trading_session" },
-    now: "2027-01-01T00:00:00.000000000Z" as CanonicalUtcTimestamp,
+    now,
     resolver,
   });
   if (!result.ok) throw new Error(result.error.code);
   return result.value;
 }
 
+function readNewYorkRoundTrip(entryAt: CanonicalUtcTimestamp, exitAt: CanonicalUtcTimestamp) {
+  const executions = [
+    buildSyntheticCanonicalExecution({
+      executionId: "SESSION-ENTRY-1",
+      orderId: "SESSION-ORDER-1",
+      brokerExecutionIndex: "1",
+      brokerFillSequence: "1",
+      executedAt: entryAt,
+      timestampPrecision: "second",
+      side: "buy",
+      quantity: "10",
+      price: "1.25",
+      charges: [{ kind: "commission", amount: "0.25", currency: "USD" }],
+    }),
+    buildSyntheticCanonicalExecution({
+      executionId: "SESSION-EXIT-1",
+      orderId: "SESSION-ORDER-2",
+      brokerExecutionIndex: "2",
+      brokerFillSequence: "2",
+      originalSourceRowLocator: { kind: "row_number", value: "2", rowOrderPreserved: true },
+      executedAt: exitAt,
+      timestampPrecision: "second",
+      side: "sell",
+      quantity: "10",
+      price: "1.75",
+      charges: [{ kind: "commission", amount: "0.25", currency: "USD" }],
+    }),
+  ] as const;
+  const base = buildSyntheticGa0B1Authority(executions);
+  const dateResolutionReceipt = newYorkReceipt([{
+    sessionDate: "2026-07-20",
+    state: "regular",
+    openAt: "2026-07-20T13:30:00.000000000Z" as CanonicalUtcTimestamp,
+    closeAt: "2026-07-20T20:00:00.000000000Z" as CanonicalUtcTimestamp,
+    closureReasonCode: null,
+  }], "2026-07-20T23:59:59.999999999Z" as CanonicalUtcTimestamp);
+  const filter = buildCanonicalQueryFilter({
+    dateResolutionReceipt,
+    accountFilters: [],
+    instrumentFilters: [],
+    directionFilters: [],
+    sessionFilters: [],
+    lifecycleFilters: ["position_closed"],
+    setupFilter: null,
+    outcomeFilters: [],
+    currencyFilters: [],
+    evidenceCapabilityFilters: ["closed_trade_analytics"],
+    openPositionPolicy: "exclude_from_closed_trade_analytics",
+    correctionCutoffAt: "2026-07-20T23:59:59.999999999Z" as CanonicalUtcTimestamp,
+    analysisCutoffAt: "2026-07-20T23:59:59.999999999Z" as CanonicalUtcTimestamp,
+    boundSnapshotDigest: null,
+  });
+  expect(filter, JSON.stringify(filter)).toMatchObject({ ok: true });
+  if (!filter.ok) throw new Error(filter.error.code);
+  const snapshot = buildAnalysisSnapshot({
+    manifest: base.snapshotDependencies.manifest,
+    eligibilitySet: base.snapshotDependencies.eligibilitySet,
+    enrichmentSet: base.snapshotDependencies.enrichmentSet,
+    intentRuleCutoffAt: "2026-07-20T23:59:59.999999999Z" as CanonicalUtcTimestamp,
+    analysisCutoffAt: "2026-07-20T23:59:59.999999999Z" as CanonicalUtcTimestamp,
+    filter: filter.value,
+    evidenceNamespace: "evidence:owner_synthetic_primary",
+    occurrenceInventory: base.snapshotDependencies.occurrenceInventory,
+    roundTripInventory: base.snapshotDependencies.roundTripInventory,
+  });
+  expect(snapshot).toMatchObject({ ok: true });
+  if (!snapshot.ok) throw new Error(snapshot.error.code);
+  const result = readAnalyticalDataset(createSyntheticInMemoryReadOnlySource({
+    ...base,
+    snapshot: snapshot.value,
+    snapshotDependencies: { ...base.snapshotDependencies, filter: filter.value },
+    dateResolutionReceipt,
+  }));
+  expect(result).toMatchObject({ ok: true });
+  if (!result.ok) throw new Error(`${result.error.code}:${result.error.path}`);
+  expect(result.value.rows).toHaveLength(1);
+  return result.value.rows[0];
+}
+
 describe("GA0-B1 snapshot-bound analytical dataset", () => {
+  it("derives a premarket entry and regular exit while retaining session as the exit alias", () => {
+    const row = readNewYorkRoundTrip(
+      "2026-07-20T12:00:00.000000000Z" as CanonicalUtcTimestamp,
+      "2026-07-20T14:00:00.000000000Z" as CanonicalUtcTimestamp,
+    );
+    expect(row).toMatchObject({
+      entrySession: "premarket",
+      exitSession: "regular",
+      session: "regular",
+    });
+  });
+
+  it("derives a regular entry and after-hours exit", () => {
+    const row = readNewYorkRoundTrip(
+      "2026-07-20T14:00:00.000000000Z" as CanonicalUtcTimestamp,
+      "2026-07-20T20:30:00.000000000Z" as CanonicalUtcTimestamp,
+    );
+    expect(row).toMatchObject({
+      entrySession: "regular",
+      exitSession: "after_hours",
+      session: "after_hours",
+    });
+  });
+
+  it("groups and filters a premarket-to-regular trade by the correct entry, exit, transition, and legacy session facts", () => {
+    const row = readNewYorkRoundTrip(
+      "2026-07-20T12:00:00.000000000Z" as CanonicalUtcTimestamp,
+      "2026-07-20T14:00:00.000000000Z" as CanonicalUtcTimestamp,
+    );
+    const semantics = buildQueryRowSemantics([row]);
+    expect(semantics).toHaveLength(1);
+    const trade = semantics[0];
+    expect(tradeQueryGroupAssignment(trade, { kind: "entry_session" })).toMatchObject({ groupIdentity: "entry_session:premarket" });
+    expect(tradeQueryGroupAssignment(trade, { kind: "exit_session" })).toMatchObject({ groupIdentity: "exit_session:regular" });
+    expect(tradeQueryGroupAssignment(trade, { kind: "session_transition" })).toMatchObject({ groupIdentity: "session_transition:premarket_to_regular" });
+    expect(applyTradeQueryFilters([trade], [{ kind: "session", values: ["regular"] }]).included).toHaveLength(1);
+    expect(applyTradeQueryFilters([trade], [{ kind: "session", values: ["premarket"] }]).included).toHaveLength(0);
+  });
+
+  it("rejects an exit-session value that disagrees with the legacy exit-session alias", () => {
+    const row = readNewYorkRoundTrip(
+      "2026-07-20T12:00:00.000000000Z" as CanonicalUtcTimestamp,
+      "2026-07-20T14:00:00.000000000Z" as CanonicalUtcTimestamp,
+    );
+    const { rowDigest: _rowDigest, ...content } = row;
+    void _rowDigest;
+    expect(buildAnalyticalRow({ ...content, exitSession: "premarket", session: "regular" })).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_analytics_contract_reference_mismatch", path: "$.exitSession" },
+    });
+  });
+
   it("copies exact reconstruction truth into one verified, immutable closed-round-trip row", () => {
     const authority = buildSyntheticGa0B1Authority();
     const result = readAnalyticalDataset(createSyntheticInMemoryReadOnlySource(authority));
@@ -74,6 +214,8 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
         finalExitAt: "2026-07-18T14:45:12.000000000Z",
         sessionDate: "2026-07-18",
         weekday: "saturday",
+        entrySession: "not_applicable",
+        exitSession: "not_applicable",
         session: "not_applicable",
         sequenceInPartition: "1",
         grossPnl: "5",

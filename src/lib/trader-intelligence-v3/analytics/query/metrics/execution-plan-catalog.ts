@@ -77,9 +77,9 @@ export const EXECUTION_PLAN_CATALOG = Object.freeze([
       "losing_day_percentage", "flat_day_percentage", "average_green_day_pnl", "median_green_day_pnl",
       "average_red_day_pnl", "median_red_day_pnl",
     ],
-    ["date_range", "entry_time_range", "exit_time_range", "session", "weekday"],
-    ["day", "week", "month", "year", "weekday", "session", "time_bucket"],
-    "Requires verified timestamps, deterministic session classification, and complete charge coverage for realized P/L outcomes.",
+    ["date_range", "entry_time_range", "exit_time_range", "session", "entry_session", "exit_session", "session_transition", "weekday"],
+    ["day", "week", "month", "year", "weekday", "session", "entry_session", "exit_session", "session_transition", "time_bucket"],
+    "Requires verified entry/exit timestamps, deterministic entry/exit session classification, and complete charge coverage for realized P/L outcomes.",
   ),
   entry(
     "behavior_streak_and_pre_entry_state",

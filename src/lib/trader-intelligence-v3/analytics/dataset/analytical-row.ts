@@ -136,6 +136,10 @@ export interface AnalyticalRow {
   readonly dateBasis: "trade_close_date";
   readonly sessionDate: string;
   readonly weekday: CanonicalWeekday;
+  /** Session facts are persisted by the read-model authority, never inferred by a consumer. */
+  readonly entrySession: CanonicalSession | null;
+  readonly exitSession: CanonicalSession | null;
+  /** Historical close-session alias retained for backward-compatible session queries. */
   readonly session: CanonicalSession;
   readonly sequenceInPartition: string;
   readonly grossPnl: string;
@@ -161,6 +165,16 @@ const WEEKDAYS = new Set<CanonicalWeekday>([
 const SESSIONS = new Set<CanonicalSession>([
   "premarket", "regular", "after_hours", "overnight", "not_applicable",
 ]);
+
+function parseOptionalSession(
+  input: unknown,
+  path: string,
+): ExactResult<CanonicalSession | null, AnalyticalContractFailure> {
+  if (input === undefined || input === null) return { ok: true, value: null };
+  return typeof input === "string" && SESSIONS.has(input as CanonicalSession)
+    ? { ok: true, value: input as CanonicalSession }
+    : contractFailure("ti_v3_analytics_contract_invalid", path);
+}
 const SOURCE_KINDS = new Set<AvailableAnalyticalSourceAuthority["sourceKind"]>([
   "broker_csv", "broker_api", "owner_manual", "paper_trade", "legacy_migration",
 ]);
@@ -384,7 +398,7 @@ export function buildAnalyticalRow(
     "sessionDate", "weekday", "session", "sequenceInPartition", "grossPnl",
     "signedCharges", "netPnl", "entryNotional", "shareQuantity", "lifecycleState",
     "coverageState", "evidenceQuality", "limitationCodes",
-  ], ["signedChargesByKind", "chargeKindCoverageState", "feeAuthority"]);
+  ], ["entrySession", "exitSession", "signedChargesByKind", "chargeKindCoverageState", "feeAuthority"]);
   if (!record.ok) return record;
   if (record.value.schemaVersion !== ANALYTICAL_ROW_VERSION) {
     return contractFailure("ti_v3_analytics_contract_invalid", "$.schemaVersion");
@@ -452,6 +466,13 @@ export function buildAnalyticalRow(
   if (typeof record.value.session !== "string" || !SESSIONS.has(record.value.session as CanonicalSession)) {
     return contractFailure("ti_v3_analytics_contract_invalid", "$.session");
   }
+  const entrySession = parseOptionalSession(record.value.entrySession, "$.entrySession");
+  if (!entrySession.ok) return entrySession;
+  const exitSession = parseOptionalSession(record.value.exitSession, "$.exitSession");
+  if (!exitSession.ok) return exitSession;
+  if (exitSession.value !== null && exitSession.value !== record.value.session) {
+    return contractFailure("ti_v3_analytics_contract_reference_mismatch", "$.exitSession");
+  }
   const sequence = validateCanonicalCount(record.value.sequenceInPartition, "$.sequenceInPartition");
   if (!sequence.ok || sequence.value === "0") return sequence.ok ? contractFailure("ti_v3_analytics_contract_invalid", "$.sequenceInPartition") : sequence;
   const gross = parseExactMoneyAmount(record.value.grossPnl);
@@ -506,6 +527,8 @@ export function buildAnalyticalRow(
     dateBasis: "trade_close_date" as const,
     sessionDate: sessionDate.value,
     weekday: record.value.weekday as CanonicalWeekday,
+    entrySession: entrySession.value,
+    exitSession: exitSession.value,
     session: record.value.session as CanonicalSession,
     sequenceInPartition: sequence.value,
     grossPnl: gross.value,
@@ -532,7 +555,7 @@ export function verifyAnalyticalRow(
     "supportingOccurrenceKeys", "canonicalOwnerKey", "canonicalAccountKey",
     "stableInstrumentKey", "displayedSymbol", "displayedSymbolStatus", "direction", "sourceAuthority",
     "currency", "firstEntryAt", "finalExitAt", "timezone", "dateBasis",
-    "sessionDate", "weekday", "session", "sequenceInPartition", "grossPnl",
+    "sessionDate", "weekday", "entrySession", "exitSession", "session", "sequenceInPartition", "grossPnl",
     "signedCharges", "netPnl", "entryNotional", "shareQuantity", "feeAuthority", "lifecycleState",
     "coverageState", "evidenceQuality", "limitationCodes", "rowDigest",
     "signedChargesByKind", "chargeKindCoverageState",

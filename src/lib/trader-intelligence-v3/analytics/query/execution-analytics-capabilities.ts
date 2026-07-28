@@ -69,10 +69,10 @@ const capabilities = Object.freeze([
   capability(
     "time_and_session_performance",
     "available_with_exact_execution_authority",
-    ["verified entry/exit timestamp", "verified session classification"],
-    ["entry/exit time filter", "minute bucket grouping", "session filter and grouping"],
+    ["verified entry/exit timestamp", "verified entry/exit session classification"],
+    ["entry/exit time filter", "minute bucket grouping", "entry, exit, and entry-to-exit session filters/groupings"],
     [],
-    "Time-of-day and canonical session performance without market-data inference.",
+    "Time-of-day plus canonical entry/exit session-transition performance without market-data inference.",
   ),
   capability(
     "sequencing_and_behavior",

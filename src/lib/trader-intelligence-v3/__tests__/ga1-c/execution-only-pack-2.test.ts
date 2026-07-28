@@ -71,6 +71,8 @@ function row(template: AnalyticalRow, index: number, input: RowInput) {
     finalExitAt: input.exitAt,
     sessionDate: input.sessionDate ?? input.exitAt.slice(0, 10),
     weekday: "wednesday",
+    entrySession: input.session ?? "regular",
+    exitSession: input.session ?? "regular",
     session: input.session ?? "regular",
     sequenceInPartition: String(index),
     grossPnl: input.grossPnl ?? input.netPnl,

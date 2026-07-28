@@ -94,6 +94,25 @@ export function tradeQueryGroupAssignment(
     case "session":
       facts = [`session:${row.row.session}`, row.row.session, row.row.session];
       break;
+    case "entry_session":
+      facts = row.row.entrySession === null
+        ? ["entry_session:unavailable", "Entry session unavailable", "z"]
+        : [`entry_session:${row.row.entrySession}`, `Entry: ${row.row.entrySession}`, row.row.entrySession];
+      break;
+    case "exit_session":
+      facts = row.row.exitSession === null
+        ? ["exit_session:unavailable", "Exit session unavailable", "z"]
+        : [`exit_session:${row.row.exitSession}`, `Exit: ${row.row.exitSession}`, row.row.exitSession];
+      break;
+    case "session_transition":
+      facts = row.row.entrySession === null || row.row.exitSession === null
+        ? ["session_transition:unavailable", "Entry-to-exit session unavailable", "z"]
+        : [
+            `session_transition:${row.row.entrySession}_to_${row.row.exitSession}`,
+            `${row.row.entrySession} to ${row.row.exitSession}`,
+            `${row.row.entrySession}:${row.row.exitSession}`,
+          ];
+      break;
     case "time_bucket": {
       const time = grouping.source === "entry" ? row.entryTime : row.exitTime;
       const minutes = BigInt(time.slice(0, 2)) * BigInt("60") + BigInt(time.slice(3, 5));
