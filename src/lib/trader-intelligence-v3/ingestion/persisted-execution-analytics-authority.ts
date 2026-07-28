@@ -17,7 +17,6 @@ import {
   verifyStartingInventoryContract,
   type CanonicalContentDigest,
   type CanonicalExecutionEnvelope,
-  type CanonicalSourceDocumentDigest,
   type CanonicalUtcTimestamp,
   type CorrectionRecord,
   type CoverageState,
@@ -162,7 +161,7 @@ export function buildPersistedExecutionAnalyticsAuthority(args: {
   const active = catalog.filter((execution) => correction.value.activeExecutionDigests.includes(execution.canonicalContentDigest));
   const relationships = resolveExecutionRelationships(active);
   const inventories = args.attachment.startingInventories;
-  if (inventories.some((inventory) => !verifyStartingInventoryContract(inventory).ok || inventory.ledgerIdentity.canonicalOwnerKey !== owner || inventory.ledgerIdentity.canonicalAccountKey !== account || inventory.state === "unknown")) {
+  if (inventories.length === 0 || inventories.some((inventory) => !verifyStartingInventoryContract(inventory).ok || inventory.ledgerIdentity.canonicalOwnerKey !== owner || inventory.ledgerIdentity.canonicalAccountKey !== account || inventory.state === "unknown")) {
     return failure("ti_v3_persisted_analytics_authority_attachment_incomplete", "$.attachment.startingInventories");
   }
   const reconstruction = reconstructAnalyticalPnl({ relationshipResolution: relationships, startingInventories: inventories });

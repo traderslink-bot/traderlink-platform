@@ -26,4 +26,18 @@ describe("server execution analytics adapter", () => {
       error: { code: "ti_v3_server_analytics_partition_invalid" },
     });
   });
+
+  it("rejects invalid query plans without exposing persistence internals", () => {
+    const fixture = buildSyntheticQueryFixture();
+    const result = createServerExecutionAnalyticsAdapter(fixture.source)
+      .getOverview("USD", { unsupported: "query_plan" });
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: "ti_v3_server_analytics_query_invalid", path: "$.queryPlan" },
+    });
+    if (result.ok) return;
+    expect(Object.keys(result.error).sort()).toEqual(["code", "path"]);
+    expect(JSON.stringify(result.error)).not.toMatch(/csv|raw|sourceDocument|persistence/i);
+  });
 });
