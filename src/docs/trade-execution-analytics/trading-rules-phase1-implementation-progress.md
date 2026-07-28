@@ -241,3 +241,17 @@ Verification for this checkpoint:
 - the restarted `127.0.0.1:3010` runtime returned private 200 responses for
   `/workspace` and `/rules`, exposed Trading Rules in navigation, rendered the
   Rules heading and preset library, and reported no request errors.
+
+### Rules Language And Saved-Rule Rendering Follow-up
+
+- Replaced internal wording in the Rules library with trader-facing language:
+  rules are described as checks against trade data, and dollar values display
+  with `$` rather than internal data terminology.
+- Added an explicit example for the fixed half-size-after-loss rule.
+- Normalized the dashboard packet to plain JSON data before it crosses from
+  the server page to the client page, preventing a saved rule from causing a
+  React Server Component serialization error.
+- Verification: 28 focused Rules tests and TypeScript passed; the optimized
+  `3010` runtime returned a private 200 response for `/rules` with a saved
+  rule, the new wording, dollar examples, and no user-facing `partition`
+  wording.

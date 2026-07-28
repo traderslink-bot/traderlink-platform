@@ -93,15 +93,45 @@ function configurationLabel(
   return template.parameters
     .map((parameter) => {
       const value = configuration[parameter.key] ?? "—";
+      if (parameter.unit === "$") {
+        return `${parameter.label}: $${value}`;
+      }
+      if (parameter.unit === "$ per share") {
+        return `${parameter.label}: $${value} per share`;
+      }
       return `${parameter.label}: ${value}${parameter.unit ? ` ${parameter.unit}` : ""}`;
     })
     .join(" · ");
 }
 
+function exampleLabel(template: TradingRulesTemplateView): string {
+  const configuration = configurationLabel(
+    template,
+    template.exampleConfiguration,
+  );
+  return configuration || "After a loss, the next trade uses 50% of its normal size.";
+}
+
+function parameterHelperText(parameter: TradingRulesTemplateView["parameters"][number]): string {
+  if (parameter.unit === "$") {
+    return parameter.maximum
+      ? `Enter a dollar amount. Maximum: ${parameter.maximum}.`
+      : "Enter a dollar amount.";
+  }
+  if (parameter.unit === "$ per share") {
+    return parameter.maximum
+      ? `Enter a price in dollars per share. Maximum: ${parameter.maximum}.`
+      : "Enter a price in dollars per share.";
+  }
+  return parameter.maximum
+    ? `Unit: ${parameter.unit}. Maximum: ${parameter.maximum}.`
+    : `Unit: ${parameter.unit}.`;
+}
+
 function latestResultLabel(rule: ExecutionRuleDashboardCard): string {
   return rule.latestEvaluation
     ? rule.latestEvaluation.status.replaceAll("_", " ")
-    : "Waiting for an eligible analytics run";
+    : "Ready when trade analytics are available";
 }
 
 export function RulesClient({
@@ -250,8 +280,8 @@ export function RulesClient({
             Rules you chose to follow
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-            Start with a small set of meaningful rules. Nothing is activated
-            automatically, and missing data never becomes a violation.
+            Start with a few rules that matter to you. Add only the ones you
+            want to follow.
           </Typography>
         </Box>
         <Button
@@ -289,14 +319,14 @@ export function RulesClient({
           value={String(activeRules.length)}
         />
         <DashboardMetricCard
-          caption="Automatically evaluated presets"
+          caption="Available to check against your trades"
           label="Rule library"
           value={String(view.templates.length)}
         />
         <DashboardMetricCard
           caption={
             view.packet.rules.length
-              ? "Updated after eligible analytics runs"
+              ? "Updated when trade analytics are available"
               : "Add a rule to begin"
           }
           label="Latest evaluations"
@@ -503,11 +533,12 @@ export function RulesClient({
           PRESET LIBRARY
         </Typography>
         <Typography component="h2" sx={{ mt: 0.25 }} variant="h2">
-          Automatically evaluated rules
+          Rules that can be checked against your trades
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
-          Each preset is mapped to a deterministic v3 analysis. The library is
-          searchable, but only the rules you activate become commitments.
+          Each preset connects to a specific part of your trade data, such as
+          an individual trade, a ticker, or a day session. Browse the library,
+          then turn on only the rules you want to follow.
         </Typography>
         <Stack
           direction={{ xs: "column", sm: "row" }}
@@ -597,10 +628,7 @@ export function RulesClient({
                   variant="caption"
                 >
                   Example:{" "}
-                  {configurationLabel(
-                    template,
-                    template.exampleConfiguration,
-                  )}
+                  {exampleLabel(template)}
                 </Typography>
                 <Button
                   disabled={busyId === template.templateId}
@@ -616,12 +644,6 @@ export function RulesClient({
           ))}
         </Box>
       </Box>
-
-      <Alert severity="info" variant="outlined">
-        A rule receives a result only after the engine has an eligible, verified
-        execution population. Incomplete authority is reported as unavailable
-        or insufficient data—not as a broken rule.
-      </Alert>
 
       <Dialog
         fullWidth
@@ -669,11 +691,7 @@ export function RulesClient({
                   ) : (
                     <TextField
                       fullWidth
-                      helperText={
-                        parameter.maximum
-                          ? `Unit: ${parameter.unit}. Maximum: ${parameter.maximum}.`
-                          : `Unit: ${parameter.unit}.`
-                      }
+                      helperText={parameterHelperText(parameter)}
                       key={parameter.key}
                       label={parameter.label}
                       onChange={(event) =>
@@ -754,4 +772,3 @@ export function RulesClient({
     </Stack>
   );
 }
-

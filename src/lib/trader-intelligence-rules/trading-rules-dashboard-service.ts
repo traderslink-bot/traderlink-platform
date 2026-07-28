@@ -102,6 +102,12 @@ function openRepository(): SqliteExecutionRuleRepository {
   return new SqliteExecutionRuleRepository();
 }
 
+function clientSafeDashboardView(
+  view: TradingRulesDashboardView,
+): TradingRulesDashboardView {
+  return JSON.parse(JSON.stringify(view)) as TradingRulesDashboardView;
+}
+
 export function readTradingRulesDashboard(
   owner: TraderIntelligenceOwnerContext,
 ): TradingRulesDashboardView {
@@ -125,10 +131,10 @@ export function readTradingRulesDashboard(
     if (!packet.ok) {
       throw new Error(`${packet.error.code}:${packet.error.path}`);
     }
-    return Object.freeze({
+    return clientSafeDashboardView(Object.freeze({
       packet: packet.value,
       templates: safeTemplates(),
-    });
+    }));
   } finally {
     repository.close();
   }
