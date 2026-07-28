@@ -19755,3 +19755,123 @@ Current best next step:
   packets only while preserving the local light Material `/workspace` baseline;
   no Coach, candle, market-data, AI, legacy SQLite, deployment, or browser-side
   analytics work is in scope.
+
+# 2026-07-28 Trading Rules Phase 1 deterministic preset foundation
+
+- Started `codex/trading-rules-phase1` from merged `origin/main`.
+- Added a typed, content-addressed catalog for the first 12 Trading Rule
+  templates already backed by governed v3 execution-only simulation presets.
+- Added a compiler boundary that accepts only registered templates and delegates
+  all parameter validation and rule-plan construction to existing v3 preset
+  compilers.
+- Kept natural-language parsing, persistence, UI, full Rule Analytics, Analytics
+  Agent explanations, and AI Trading Review integration out of Phase 1.
+- Added focused catalog/compiler coverage and a dedicated implementation
+  progress document.
+- Repaired missing npm command links with `npm rebuild` after the clean
+  worktree's initial dependency install omitted `node_modules/.bin`.
+- Focused Trading Rules verification passed: 1 file and 4 tests.
+- Whole-project TypeScript validation passed with `npx tsc --noEmit --pretty
+  false`.
+
+Current best next step:
+
+- Continue to persisted rule instance/version contracts while keeping
+  activation prospective and historical definitions immutable.
+
+# 2026-07-28 Trading Rules Phase 1 owned version records
+
+- Added explicit `userId`, `workspaceId`, and optional `tradingAccountId`
+  ownership to the v3 Trading Rules record boundary.
+- Added immutable, content-addressed rule versions and prospective revisions.
+  Revisions require a strictly later effective timestamp and the expected
+  current version, preventing silent stale overwrites.
+- Kept workspace-wide rules distinct from rules scoped to one trading account.
+- Added fail-closed configuration validation for exact template parameters,
+  unexpected keys, canonical integers/decimals, times, enums, and price-range
+  ordering.
+- Added a persistence-neutral in-memory reference repository. It proves
+  isolation and version semantics but does not claim to be the production
+  database or authentication system.
+- Focused record verification passed: 1 file and 5 tests.
+- Whole-project TypeScript validation passed with `npx tsc --noEmit --pretty
+  false`.
+
+Current best next step:
+
+- Add source-linked rule evaluation records from governed v3 classification
+  evidence, then lifecycle history. Durable storage and dashboard UI follow
+  after those contracts stabilize.
+
+# 2026-07-28 Trading Rules Phase 1 governed evaluation records
+
+- Added immutable, content-addressed historical evaluation records bound to the
+  selected rule version and the exact governed query/simulation result chain.
+- Bound every record to snapshot, dataset, derivation, partition, currency,
+  owner, and account authority plus affected trade/execution evidence.
+- Added conservative status semantics: rule-responsible trades are `broken`,
+  missing authority is `insufficient_data`, a real trigger without a violation
+  is `followed`, and no trigger is `not_triggered` rather than followed.
+- Kept the half-size-after-loss preset unavailable for adherence because the
+  current counterfactual simulation does not independently measure the
+  trader's intended baseline size.
+- Added persisted rule-version digest verification before an evaluation can
+  run and fail-closed owner/account matching against the v3 partition.
+- The whole-project TypeScript checkpoint exposed one new timestamp typing
+  issue and four existing server/dashboard identity integration issues. After
+  owner authorization, all five were repaired without broader refactoring.
+- Targeted combined verification passed: 5 files and 21 tests.
+- Whole-project TypeScript validation passed with `npx tsc --noEmit --pretty
+  false`.
+
+Current best next step:
+
+- Add immutable pause/resume/retire lifecycle history, followed by a client-safe
+  Rules packet. Build the dashboard Rules page only from that safe packet.
+
+# 2026-07-28 Trading Rules Phase 1 immutable lifecycle history
+
+- Added content-addressed activation, pause, resume, and retirement events.
+- Events bind owner scope, sequence, previous event, prior/new status, and exact
+  effective time. Status transitions are prospective and optimistic.
+- Made retired rules terminal and fail closed for stale status, invalid
+  transitions, duplicate event IDs, cross-user access, and retroactive events.
+- Rule revisions now must occur after the latest lifecycle or version change,
+  preventing a revision from being inserted before a later resume.
+- Added an evaluation effective-window guard: included trades that predate the
+  selected rule version now fail closed instead of being scored against a rule
+  that did not yet exist.
+- Focused lifecycle/effective-window verification passed: 2 files and 12 tests.
+- Whole-project TypeScript validation passed.
+
+Current best next step:
+
+- Build the client-safe Rules packet and bind evaluations to lifecycle-active
+  intervals before adding the Rules management page to the dashboard.
+
+# 2026-07-28 Trading Rules Phase 1 client-safe dashboard boundary
+
+- Rule instances now identify their latest lifecycle event, allowing the server
+  to prove that supplied lifecycle history is complete even when an omitted
+  pause/resume pair would otherwise end in the same active status.
+- Governed evaluation now requires every included trade to fall inside both the
+  selected rule-version effective window and a verified active lifecycle
+  interval. Paused or retired intervals fail closed.
+- Added persisted evaluation digest verification before any dashboard
+  projection.
+- Added a content-addressed client-safe Rules packet containing only
+  user-facing template, configuration, lifecycle, status, count, currency,
+  reason, and limitation fields.
+- The packet omits raw owner/account authority, trade keys, execution and
+  occurrence evidence, and snapshot/dataset/query/simulation authority.
+- Focused lifecycle-active evaluation and packet verification passed, followed
+  by a final bounded Rules plus affected server/dashboard contract run: 7 files
+  and 32 tests.
+- Whole-project TypeScript validation passed.
+
+Current best next step:
+
+- Integrate the packet into the separate approved light Material dashboard
+  baseline, then add the local durable action/repository adapter needed for
+  edits to survive reloads. Do not build the UI against an older engine
+  worktree layout.

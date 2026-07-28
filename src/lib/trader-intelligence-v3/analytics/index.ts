@@ -7,5 +7,6 @@ export * from "./evidence";
 export * from "./registry";
 export * from "./runner";
 export * from "./query";
+export * from "./rules";
 export * from "./simulation";
 export * from "./tools";

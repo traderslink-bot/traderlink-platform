@@ -1,4 +1,7 @@
-import { compareUnicodeCodePoints } from "../../domain/canonical";
+import {
+  compareUnicodeCodePoints,
+  type CanonicalUtcTimestamp,
+} from "../../domain/canonical";
 import {
   createExactRatio,
   parseCurrencyCode,
@@ -352,7 +355,7 @@ export function validateDigestArray(
 export function validateTimestampValue(
   input: unknown,
   path: string,
-): ExactResult<string, AnalyticalContractFailure> {
+): ExactResult<CanonicalUtcTimestamp, AnalyticalContractFailure> {
   const value = validateCanonicalTimestamp(input, path);
   return value.ok ? value : contractFailure(value.error.code, value.error.path);
 }
