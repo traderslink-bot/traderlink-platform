@@ -1,24 +1,34 @@
 import type { NextConfig } from "next";
 
+const privateNoStoreHeaders: { key: string; value: string }[] = [
+  {
+    key: "Cache-Control",
+    value: "private, no-store, max-age=0",
+  },
+  { key: "CDN-Cache-Control", value: "no-store" },
+  { key: "Vercel-CDN-Cache-Control", value: "no-store" },
+  { key: "Pragma", value: "no-cache" },
+  { key: "Expires", value: "0" },
+  { key: "Vary", value: "Cookie" },
+];
+
+const privateTraderIntelligenceRoutes = [
+  "/intelligence/:path*",
+  "/workspace/:path*",
+  "/trades/:path*",
+  "/analytics/:path*",
+  "/reflection-loop",
+  "/imports/:path*",
+  "/manual-entry",
+] as const;
+
 const nextConfig: NextConfig = {
   serverExternalPackages: ["levels-system-v2"],
   async headers() {
-    return [
-      {
-        source: "/intelligence/:path*",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "private, no-store, max-age=0",
-          },
-          { key: "CDN-Cache-Control", value: "no-store" },
-          { key: "Vercel-CDN-Cache-Control", value: "no-store" },
-          { key: "Pragma", value: "no-cache" },
-          { key: "Expires", value: "0" },
-          { key: "Vary", value: "Cookie" },
-        ],
-      },
-    ];
+    return privateTraderIntelligenceRoutes.map((source) => ({
+      source,
+      headers: privateNoStoreHeaders,
+    }));
   },
   async redirects() {
     return [
@@ -34,28 +44,8 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: "/workspace",
-        destination: "/intelligence",
-        permanent: true,
-      },
-      {
         source: "/workspace/admin",
         destination: "/intelligence/admin",
-        permanent: true,
-      },
-      {
-        source: "/analytics/:path*",
-        destination: "/intelligence/analytics/:path*",
-        permanent: true,
-      },
-      {
-        source: "/trades/:path*",
-        destination: "/intelligence/trades/:path*",
-        permanent: true,
-      },
-      {
-        source: "/imports/:path*",
-        destination: "/intelligence/imports/:path*",
         permanent: true,
       },
       {

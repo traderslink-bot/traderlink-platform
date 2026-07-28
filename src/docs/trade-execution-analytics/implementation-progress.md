@@ -7,17 +7,37 @@ together before changing this tracker.
 
 ## Current work
 
-- Status: dashboard operationalization Milestone 2 complete; Milestone 3 next
-- Work item: stable dashboard contract and formatting-only view models
+- Status: dashboard operationalization Milestones 0-3 complete; Milestone 4
+  foundation checkpoint complete and packet wiring next
+- Work item: connect the accepted Material routes to the server-issued v3
+  dashboard packets without introducing a legacy or browser-calculation path
 - Goal: keep one shared, deterministic source of truth for execution analytics;
-  attach explicit financial authority before any dashboard migration.
+  attach explicit financial authority before rendering analytics, and give
+  Workspace, Trades, Analytics, and Analytics Lab one professional design
+  system.
 - Constraint: do not route financial values through the legacy number-based CSV
   importer or make migration data look broker-authoritative. The raw parser
   accepts only explicit UTC timestamps; local-time broker exports remain
   unavailable until their timezone conversion has explicit DST policy.
+- Product contract:
+  [v3-dashboard-product-design-contract.md](./v3-dashboard-product-design-contract.md)
 
 ## Completed
 
+- Owner-approved Milestone 4 product contract covering the light/full-width
+  Material shell, route ownership, Workspace, Trades drill-down hierarchy,
+  curated Analytics pages, Analytics Lab, saved views, and legacy-component
+  redesign rules.
+- Milestone 4 foundation checkpoint: implemented the light Material theme,
+  full-width desktop shell, compact app bar, collapsible desktop/mobile
+  navigation, retained TradersLink logo, compact Workspace, and consistent
+  Trades, Analytics, Analytics Lab, Import, Manual Entry, and Reflection Loop
+  foundations. The product routes are owner-guarded and private/no-store, and
+  unavailable financial states do not use legacy SQLite or synthetic values.
+- Closed the pre-existing dashboard build blockers by registering the accepted
+  server/dashboard content-identity domains, correcting the dashboard packet
+  identity import, and keeping the browser-safe CSV parser from importing the
+  Node-only v3 ingestion barrel.
 - v3 deterministic execution query extension and capability catalog.
 - Controlling plan and future-agent compatibility appendix co-located and cross-linked.
 - Raw v3 broker CSV parser with source-document digest, explicit column mapping, exact decimals, canonical executions, and focused authority-boundary tests.
@@ -89,11 +109,18 @@ sticky verification requirement.
 
 ## Next queue
 
-1. In Milestone 3, add typed client-safe packet contracts, fixtures, and
-   formatting-only table/chart/limitation/evidence view models. Do not route
-   through the legacy SQLite importer or calculate values in browser code.
-2. Preserve complete charge-kind authority requirements; do not manufacture
+1. Continue Milestone 4 by connecting Workspace metrics and period-series
+   panels to server-issued dashboard packets. Preserve the current unavailable
+   state whenever statement, opening-inventory, correction, or partition
+   authority is absent.
+2. Add packet-backed Round Trips, Day Sessions, Trades by Ticker, and Open
+   Positions read models and drill-down routes without duplicating those
+   destinations inside Analytics.
+3. Connect Analytics pages and Analytics Lab to registry-derived compatible
+   controls, saved query definitions, exact evidence drill-down, and bounded
+   comparison attribution. Do not calculate financial values in browser code.
+4. Preserve complete charge-kind authority requirements; do not manufacture
    exchange/regulatory/borrow labels from combined charges.
-3. When the original May 2026 IBKR export is available, import its raw bytes
-   through the v3 parser and the new v3 persistence boundary; do not relabel a
-   legacy SQLite conversion as raw broker evidence.
+5. When the original May 2026 IBKR export is available, import its raw bytes
+   through the v3 parser and persistence boundary; do not relabel a legacy
+   SQLite conversion as raw broker evidence.

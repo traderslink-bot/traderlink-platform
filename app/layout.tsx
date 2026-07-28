@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "./google-analytics";
+import { MuiProviders } from "./mui-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,8 +35,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
-        <GoogleAnalytics />
+        <MuiProviders>
+          {children}
+          <GoogleAnalytics />
+        </MuiProviders>
       </body>
     </html>
   );

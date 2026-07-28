@@ -2,12 +2,13 @@
 
 ## Status
 
-Milestones 0 through 3 were completed locally on 2026-07-27. Milestone 1 persists a
-content-verified raw source document and binds it
-to one owner-guarded, local-only v3 import route. The route derives owner scope,
-account, private storage, and instrument declarations on the server; it accepts
-only raw CSV bytes and explicit broker parsing declarations. No legacy route,
-database, import, or dashboard consumer was changed.
+Milestones 0 through 3 were completed locally on 2026-07-27. Milestone 4 is
+active, with its owner-approved product contract and Material application
+foundation completed locally on 2026-07-28. The new `/workspace`, `/trades`,
+`/analytics`, `/imports`, `/manual-entry`, and `/reflection-loop` route tree is
+owner-guarded and private/no-store. Financial panels currently render honest
+unavailable states rather than legacy or synthetic values; v3 packet wiring
+remains the next Milestone 4 increment.
 
 ## Decision
 
@@ -218,9 +219,31 @@ Exit: dashboard work can proceed without touching v3 internals.
 
 ### Milestone 4 — Normal dashboard panels
 
+- Implement the owner-approved information architecture and visual contract in
+  [v3-dashboard-product-design-contract.md](./v3-dashboard-product-design-contract.md).
+- Establish the shared light Material application frame, full-width desktop
+  layout, collapsible left navigation, compact app bar, and retained
+  TradersLink logo before porting page-level panels.
 - Build overview, period chart, ticker/time/session views, limitations, and
   evidence drill-down first; add remaining execution-only panels incrementally.
+- Keep `/workspace`, `/trades`, and `/analytics` as the visible product routes.
+  Avoid duplicating Day Sessions, Trades by Ticker, Round Trips, or analytics
+  drill-down as competing pages.
+- Treat Analytics Lab as a governed query builder over registries and dashboard
+  packets. It may save versioned query definitions and drill into existing
+  trade destinations, but it must not evaluate arbitrary expressions or
+  calculate financial values in the browser.
 - Keep candle and Coach panels behind their own providers.
+
+Checkpoint 4A complete: the light/full-width Material frame, desktop and mobile
+navigation, compact Workspace, Trades and Analytics route foundations,
+Analytics Lab builder foundation, Import and Manual Entry launch surfaces, and
+the preserved Reflection Loop route are implemented. Legacy root redirects no
+longer replace these product routes. All new routes inherit the v3 owner guard
+and private/no-store response policy. A focused route-containment proof,
+whole-project TypeScript check, production build, 15-route HTTP smoke, and
+desktop/mobile browser checks pass. No financial card reads legacy SQLite,
+calculates in the browser, or substitutes fixture values.
 
 Exit: every execution value is traceable to a v3 packet and the owner has
 tested and accepted the design.

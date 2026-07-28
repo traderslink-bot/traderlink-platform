@@ -1,4 +1,7 @@
-import type { CanonicalContentDigest } from "../../../domain/identity";
+import type {
+  CanonicalContentDigest,
+  ContentIdentityDomain,
+} from "../../domain/identity";
 import { finalizeContentAddressedAuthority, type ExactMetricValue } from "../contracts";
 import {
   verifyServerExecutionAnalyticsGovernedResult,
@@ -177,7 +180,7 @@ function metricRows(rows: readonly TradeQueryResult["rows"][number][]): readonly
 }
 
 function packet<T extends Omit<DashboardPacketBase, "packetDigest">>(
-  type: string,
+  type: ContentIdentityDomain,
   body: T,
 ): T & Readonly<{ readonly packetDigest: CanonicalContentDigest }> {
   const built = finalizeContentAddressedAuthority(type, body, "packetDigest");

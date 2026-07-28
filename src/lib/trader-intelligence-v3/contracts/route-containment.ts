@@ -39,6 +39,21 @@ export interface TraderIntelligenceRouteContainmentEntry {
 }
 
 const OWNER_PAGE_MODULES = [
+  "app/(dashboard)/analytics/execution/page.tsx",
+  "app/(dashboard)/analytics/lab/page.tsx",
+  "app/(dashboard)/analytics/page.tsx",
+  "app/(dashboard)/analytics/performance/page.tsx",
+  "app/(dashboard)/analytics/results/page.tsx",
+  "app/(dashboard)/analytics/timing/page.tsx",
+  "app/(dashboard)/imports/page.tsx",
+  "app/(dashboard)/manual-entry/page.tsx",
+  "app/(dashboard)/reflection-loop/page.tsx",
+  "app/(dashboard)/trades/day-sessions/page.tsx",
+  "app/(dashboard)/trades/open/page.tsx",
+  "app/(dashboard)/trades/page.tsx",
+  "app/(dashboard)/trades/roundtrips/page.tsx",
+  "app/(dashboard)/trades/ticker/page.tsx",
+  "app/(dashboard)/workspace/page.tsx",
   "app/intelligence/analytics/behavior/page.tsx",
   "app/intelligence/analytics/chart-evidence/page.tsx",
   "app/intelligence/analytics/details/page.tsx",
@@ -144,6 +159,7 @@ const LEGACY_PROVIDER_API_ROUTES = [
 function routePathFromModule(modulePath: string): string {
   return modulePath
     .replace(/^app/, "")
+    .replace(/\/\([^/]+\)/g, "")
     .replace(/\/(?:page|route)\.tsx?$/, "") || "/";
 }
 

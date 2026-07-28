@@ -1,3 +1,63 @@
+# 2026-07-28 - Execution Analytics Dashboard Milestone 4 foundation verified
+
+**Branch:** `codex/trade-execution-v3-m4-dashboard-panels`.
+
+Completed the first executable Milestone 4 checkpoint. The owner-approved light
+Material system now provides a full-width shell, compact app bar, retained
+TradersLink logo, collapsible desktop/mobile navigation, and root product
+routes for Workspace, Trades, Analytics, Analytics Lab, Import, Manual Entry,
+and Reflection Loop. Workspace contains compact performance placeholders,
+performance and manual-entry actions, and the Day Sessions calendar foundation.
+Every financial placeholder is an honest unavailable state; no legacy SQLite
+value, fixture value, or browser calculation is used.
+
+The new route tree is protected by the existing v3 owner boundary and
+private/no-store headers. The checkpoint also repaired inherited M3
+content-identity registrations and the dashboard packet identity import, then
+removed a browser-to-Node bundle leak by importing parser hardening directly
+instead of through the full ingestion barrel.
+
+Verification passed:
+
+- focused route-containment test: 10/10;
+- focused dashboard/adapter identity tests: 6/6;
+- focused CSV/parser tests: 45/45;
+- focused ESLint and `git diff --check`;
+- whole-project `tsc --noEmit`;
+- Next.js 16.2.6 production build (with eight existing non-fatal broad
+  filesystem-tracing warnings);
+- optimized local 15-route smoke on `127.0.0.1:3010`;
+- desktop Workspace, Analytics Lab, and Manual Entry browser checks;
+- mobile Workspace and navigation-drawer browser check;
+- no browser console errors or Next.js error overlays.
+
+Milestone 4 remains active. The next increment is packet-backed Workspace
+metrics and period series, followed by packet-backed Trades and Analytics
+destinations. Keep the current unavailable state whenever the required v3
+financial authority is absent.
+
+# 2026-07-28 - Execution Analytics Dashboard Milestone 4 started
+
+**Branch:** `codex/trade-execution-v3-m4-dashboard-panels`, created from merged
+PR #183 at `a1d293d488cc764a6b7c9dd7f89ce671b8869096`.
+
+The owner approved a complete light Material dashboard direction and the
+Milestone 4 product contract now lives at
+`src/docs/trade-execution-analytics/v3-dashboard-product-design-contract.md`.
+The visible product routes remain `/workspace`, `/trades`, and `/analytics`.
+The contract makes Workspace a compact performance/calendar home, preserves
+Trades as the factual round-trip/day-session/ticker/open-position system, and
+adds curated Analytics pages plus a governed Analytics Lab. Reflection Loop
+remains linked; Coach and Progress are deferred.
+
+The UI migration reuses verified data logic and v3 packets but redesigns legacy
+visual components unless they already match the professional Material system.
+The first executable step is the full-width application shell with the existing
+TradersLink logo, compact app bar, collapsible left navigation, and no
+page-title hero cards. The first financial panel must render only v3 packets or
+an honest unavailable state; it must not use the legacy SQLite store or
+synthetic fixture at runtime.
+
 # 2026-07-27 - Analytics Agent v1 full deterministic completion started
 
 **Branch:** `agent/analytics-agent-v1-completion`, created clean from merged

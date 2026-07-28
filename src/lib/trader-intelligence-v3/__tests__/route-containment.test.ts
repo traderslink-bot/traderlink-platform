@@ -36,17 +36,25 @@ function allApiRouteRecords() {
 }
 
 function intelligenceClientRecords() {
-  return records(
-    findFiles(
+  return records([
+    ...findFiles(
       join(process.cwd(), "app", "intelligence"),
       (name) => /\.(?:ts|tsx)$/.test(name),
     ),
-  );
+    ...findFiles(
+      join(process.cwd(), "app", "(dashboard)"),
+      (name) => /\.(?:ts|tsx)$/.test(name),
+    ),
+  ]);
 }
 
 describe("Trader Intelligence route containment matrix", () => {
   it("classifies every Intelligence page and discovered API exactly once", () => {
     const actualRoutes = [
+      ...findFiles(
+        join(process.cwd(), "app", "(dashboard)"),
+        (name) => name === "page.tsx",
+      ),
       ...findFiles(
         join(process.cwd(), "app", "intelligence"),
         (name) => name === "page.tsx",
@@ -62,7 +70,7 @@ describe("Trader Intelligence route containment matrix", () => {
 
     expect(new Set(classifiedRoutes).size).toBe(classifiedRoutes.length);
     expect(classifiedRoutes).toEqual(actualRoutes);
-    expect(classifiedRoutes).toHaveLength(88);
+    expect(classifiedRoutes).toHaveLength(103);
   });
 
   it("uses AST inspection to require exact wrapper paths and complete method coverage", () => {
@@ -166,12 +174,24 @@ describe("Trader Intelligence route containment matrix", () => {
 
   it("forces the Intelligence route tree to dynamic private rendering", () => {
     const layoutSource = readFileSync("app/intelligence/layout.tsx", "utf8");
+    const dashboardLayoutSource = readFileSync(
+      "app/(dashboard)/layout.tsx",
+      "utf8",
+    );
     const nextConfigSource = readFileSync("next.config.ts", "utf8");
 
     expect(layoutSource).toContain('dynamic = "force-dynamic"');
     expect(layoutSource).toContain('fetchCache = "force-no-store"');
     expect(layoutSource).toContain("requireTraderIntelligenceOwnerPageAccess");
-    expect(nextConfigSource).toContain('source: "/intelligence/:path*"');
+    expect(dashboardLayoutSource).toContain('dynamic = "force-dynamic"');
+    expect(dashboardLayoutSource).toContain('fetchCache = "force-no-store"');
+    expect(dashboardLayoutSource).toContain(
+      "requireTraderIntelligenceOwnerPageAccess",
+    );
+    expect(nextConfigSource).toContain('"/intelligence/:path*"');
+    expect(nextConfigSource).toContain('"/workspace/:path*"');
+    expect(nextConfigSource).toContain('"/trades/:path*"');
+    expect(nextConfigSource).toContain('"/analytics/:path*"');
     expect(nextConfigSource).toContain('value: "private, no-store, max-age=0"');
   });
 });
