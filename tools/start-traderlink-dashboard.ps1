@@ -22,8 +22,8 @@ try {
 
   $listener = Get-NetTCPConnection -LocalPort 3010 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
   if ($null -ne $listener) {
-    Show-LauncherMessage "Port 3010 is already in use. Close that dashboard before starting the canonical main dashboard."
-    exit 1
+    Start-Process $dashboardUrl
+    exit 0
   }
 
   $tsxPath = Join-Path $projectPath "node_modules\.bin\tsx.cmd"
