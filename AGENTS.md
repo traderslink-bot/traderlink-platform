@@ -3,6 +3,40 @@
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
+
+## Canonical App Rule — main is the only complete app
+
+`C:\Users\jerac\Documents\TraderLink\traderslink.pro` on branch `main` is the
+complete approved TraderLink app.
+
+- `main` is the complete approved integration app and the normal dashboard the
+  user returns to between feature reviews.
+- Build new or unfinished features on an isolated `codex/*` branch or
+  worktree unless the user explicitly authorizes work directly on `main`.
+- Review an unfinished feature only from its clearly identified isolated
+  branch/worktree. After the user approves it, intentionally bring only that
+  approved work into `main` before it becomes part of the normal app.
+- Before starting any local dashboard or claiming a feature is ready to
+  review, verify and state the repository path, branch, and port. Never
+  present a feature-branch preview as the `main` app.
+- `codex/v3-journal-preview` is only for the isolated Vercel Preview and its
+  separate Neon test data. It does not replace `main` as the complete app.
+
+## Documentation Home Rule — one folder for all new documents
+
+`C:\Users\jerac\Documents\TraderLink\traderslink.pro\docs` is the single
+home for all new human-readable project documents.
+
+- Create every new plan, progress tracker, project log, feature brief,
+  handoff, decision record, and implementation document in `docs/`.
+- Do not create new project documents in `src/docs/`, `app/`, the repository
+  root, a feature folder, a worktree-only folder, or any other location.
+- Existing documents outside `docs/` are legacy documents. They may be read
+  and linked when useful, but must not be moved, renamed, copied, or
+  reorganized unless the user explicitly asks.
+- When adding a new document, use a clear filename and link it from the
+  relevant document in `docs/`.
+
 ## Codex Autonomy Rules
 
 - Continue with the highest-value next implementation step unless blocked by meaningful ambiguity, architectural risk, or a destructive operation.
