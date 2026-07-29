@@ -73,4 +73,18 @@ describe("raw broker CSV ingestion", () => {
       { code: "ti_v3_raw_csv_row_invalid", rowNumber: "2" },
     ]);
   });
+
+  it("accepts broker executions when optional order and execution identifiers are blank", () => {
+    const result = ingestRawBrokerExecutionCsv(request([
+      "Symbol,ExecutedAt,Side,Quantity,Price,Currency,Commission,Fees,Net,OrderId,ExecutionId",
+      "TEST,2026-07-26T13:45:00.123456789Z,buy,2,1.25,USD,0.25,,, ,",
+    ].join("\n")));
+
+    expect(result.issues).toEqual([]);
+    expect(result.rejectedRowCount).toBe("0");
+    expect(result.acceptedExecutions).toHaveLength(1);
+    expect(result.acceptedExecutions[0].content.orderId).toBeNull();
+    expect(result.acceptedExecutions[0].content.executionId).toBeNull();
+    expect(result.acceptedExecutions[0].content.executionIdOrderingSemantics).toBe("not_declared");
+  });
 });

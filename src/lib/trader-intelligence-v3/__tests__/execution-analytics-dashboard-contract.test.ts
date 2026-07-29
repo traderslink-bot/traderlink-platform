@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildDashboardAttributionPacket,
+  buildDashboardComparisonPacket,
+  buildDashboardComparisonViewModel,
   buildDashboardDistributionChartViewModel,
   buildDashboardDistributionPacket,
   buildDashboardEvidencePagePacket,
@@ -14,6 +16,7 @@ import {
   buildExecutionAnalyticsDashboardFixture,
   buildSyntheticQueryFixture,
   createServerExecutionAnalyticsAdapter,
+  createServerExecutionAnalyticsDashboardAdapter,
 } from "../analytics";
 
 describe("execution analytics dashboard contract", () => {
@@ -104,6 +107,37 @@ describe("execution analytics dashboard contract", () => {
     expect(buildDashboardPeriodAttributionPacket(periodAttribution.value).reconciliationDifference)
       .toMatchObject({ numerator: "0", denominator: "1" });
 
+    const comparison = adapter.getComparison(
+      "USD",
+      fixture.plan({
+        filters: [{ kind: "date_range", startDate: "2026-07-04", endDate: "2026-07-07" }],
+        grouping: { kind: "aggregate" },
+      }),
+      fixture.plan({
+        filters: [{ kind: "date_range", startDate: "2026-07-01", endDate: "2026-07-03" }],
+        grouping: { kind: "aggregate" },
+      }),
+    );
+    expect(comparison, JSON.stringify(comparison)).toMatchObject({ ok: true });
+    if (!comparison.ok) return;
+    const comparisonPacket = buildDashboardComparisonPacket(comparison.value);
+    expect(comparisonPacket).toMatchObject({
+      kind: "comparison",
+      comparisonDigest: comparison.value.result.comparisonDigest,
+      limitationCodes: comparison.value.limitationCodes,
+    });
+    expect(comparisonPacket.packetDigest)
+      .toMatch(/^ti_v3:execution_analytics_dashboard_comparison_packet:v1:sha256:/);
+    expect(buildDashboardComparisonViewModel(comparisonPacket).metrics)
+      .toContainEqual(expect.objectContaining({
+        metricKey: "net_pnl",
+        target: expect.objectContaining({ availability: "available" }),
+        baseline: expect.objectContaining({ availability: "available" }),
+        difference: expect.objectContaining({ availability: "available" }),
+      }));
+    expect(JSON.stringify(comparisonPacket))
+      .not.toMatch(/executionDigests|occurrenceKeys|ownerScope|accountScope/);
+
     const findings = adapter.getFindings("USD", directionPlan, "direction", "2");
     expect(findings, JSON.stringify(findings)).toMatchObject({ ok: true });
     if (!findings.ok) return;
@@ -187,5 +221,39 @@ describe("execution analytics dashboard contract", () => {
     expect(fixture.periodAttribution.kind).toBe("period_attribution");
     expect(fixture.findings.kind).toBe("findings");
     expect(JSON.stringify(fixture)).not.toMatch(/executionDigests|occurrenceKeys|rawCsv|sqlite|persistence|ownerScope|accountScope/i);
+  });
+
+  it("exposes every execution-derived engine result through one packet-only dashboard adapter", () => {
+    const fixture = buildSyntheticQueryFixture(14);
+    const adapter = createServerExecutionAnalyticsDashboardAdapter(fixture.source);
+    const aggregate = fixture.plan({ grouping: { kind: "aggregate" } });
+    const days = fixture.plan({ grouping: { kind: "day" } });
+    const directions = fixture.plan({ grouping: { kind: "direction" } });
+    const baseline = fixture.plan({
+      filters: [{ kind: "date_range", startDate: "2026-07-01", endDate: "2026-07-03" }],
+      grouping: { kind: "aggregate" },
+    });
+    const target = fixture.plan({
+      filters: [{ kind: "date_range", startDate: "2026-07-04", endDate: "2026-07-07" }],
+      grouping: { kind: "aggregate" },
+    });
+
+    expect(adapter.getCapabilities().capabilities.length).toBeGreaterThanOrEqual(10);
+    expect(adapter.getOverview("USD", aggregate)).toMatchObject({ ok: true, value: { kind: "query" } });
+    expect(adapter.getBreakdown("USD", directions)).toMatchObject({ ok: true, value: { kind: "query" } });
+    expect(adapter.getPerformanceSeries("USD", days)).toMatchObject({ ok: true, value: { kind: "query" } });
+    expect(adapter.getDistribution("USD", aggregate, {
+      measure: "net_pnl",
+      bucketBoundaries: ["-5", "0", "5"],
+    })).toMatchObject({ ok: true, value: { kind: "distribution" } });
+    expect(adapter.getAttribution("USD", directions)).toMatchObject({ ok: true, value: { kind: "attribution" } });
+    expect(adapter.getPeriodAttribution("USD", directions, directions))
+      .toMatchObject({ ok: true, value: { kind: "period_attribution" } });
+    expect(adapter.getComparison("USD", target, baseline))
+      .toMatchObject({ ok: true, value: { kind: "comparison" } });
+    expect(adapter.getEvidencePage("USD", days, { pageSize: "2" }))
+      .toMatchObject({ ok: true, value: { kind: "evidence_page" } });
+    expect(adapter.getFindings("USD", directions, "direction", "2"))
+      .toMatchObject({ ok: true, value: { kind: "findings" } });
   });
 });

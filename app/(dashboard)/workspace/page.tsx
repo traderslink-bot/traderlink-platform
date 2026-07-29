@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { WorkspaceDashboard } from "./workspace-dashboard";
+import { requireTraderIntelligenceOwnerPageAccess } from "@/src/lib/trader-intelligence-v3/auth";
 
 export const metadata: Metadata = {
   title: "Workspace | Trader Intelligence",
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function WorkspacePage() {
+export default async function WorkspacePage() {
+  await requireTraderIntelligenceOwnerPageAccess();
   return <WorkspaceDashboard />;
 }

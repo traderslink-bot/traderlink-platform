@@ -929,13 +929,23 @@ function deriveDataset(authority: VerifiedAuthority): ExactResult<AnalyticalData
   }
   const mappedExclusions: ExcludedAnalyticalCandidate[] = [];
   for (const candidate of exclusions) {
+    if (candidate.semanticRoundTripKey === null) {
+      mappedExclusions.push(candidate);
+      continue;
+    }
     if (candidate.relatedExecutionDigests.length === 0) {
       mappedExclusions.push(candidate);
       continue;
     }
-    const overlappingRoundTrips = roundTrips.filter((item) =>
-      candidate.relatedExecutionDigests.some((digest) =>
-        item.roundTrip.executionDigests.includes(digest)));
+    const keyedRoundTrips = roundTrips.filter(
+      (item) =>
+        item.roundTrip.roundTripId === candidate.semanticRoundTripKey,
+    );
+    const overlappingRoundTrips = keyedRoundTrips.length > 0
+      ? keyedRoundTrips
+      : roundTrips.filter((item) =>
+          candidate.relatedExecutionDigests.some((digest) =>
+            item.roundTrip.executionDigests.includes(digest)));
     if (overlappingRoundTrips.length === 0) {
       mappedExclusions.push(candidate);
       continue;

@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
@@ -20,7 +24,18 @@ import {
   DashboardUnavailableState,
 } from "../../dashboard-template";
 
-const unavailableMetrics = [
+export type WorkspaceMetric = Readonly<{
+  label: string;
+  value: string;
+  caption: string;
+}>;
+
+type WorkspaceAnalyticsResponse = Readonly<{
+  status: "ready" | "unavailable";
+  metrics?: readonly WorkspaceMetric[];
+}>;
+
+const unavailableMetrics: readonly WorkspaceMetric[] = [
   {
     label: "Net realized P/L",
     value: "—",
@@ -32,9 +47,9 @@ const unavailableMetrics = [
     caption: "Before trading costs",
   },
   {
-    label: "Unrealized P/L",
+    label: "Expectancy",
     value: "—",
-    caption: "Requires current prices",
+    caption: "Per completed trade",
   },
   {
     label: "Win rate",
@@ -51,11 +66,51 @@ const unavailableMetrics = [
     value: "—",
     caption: "Selected period",
   },
-] as const;
+];
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
-export function WorkspaceDashboard() {
+export function WorkspaceDashboard({
+  analyticsMetrics: initialAnalyticsMetrics,
+}: {
+  analyticsMetrics?: readonly WorkspaceMetric[];
+}) {
+  const [analyticsMetrics, setAnalyticsMetrics] = useState(initialAnalyticsMetrics);
+  const [analyticsStatus, setAnalyticsStatus] = useState<
+    "loading" | "ready" | "unavailable"
+  >(initialAnalyticsMetrics ? "ready" : "loading");
+
+  useEffect(() => {
+    if (initialAnalyticsMetrics) return;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 20_000);
+
+    void fetch("/api/intelligence/dashboard/overview", {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json()) as WorkspaceAnalyticsResponse;
+      })
+      .then((response) => {
+        if (response?.status === "ready" && response.metrics) {
+          setAnalyticsMetrics(response.metrics);
+          setAnalyticsStatus("ready");
+          return;
+        }
+        setAnalyticsStatus("unavailable");
+      })
+      .catch(() => setAnalyticsStatus("unavailable"))
+      .finally(() => window.clearTimeout(timeout));
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [initialAnalyticsMetrics]);
+
+  const metrics = analyticsMetrics ?? unavailableMetrics;
   return (
     <DashboardPage>
       <Stack
@@ -87,7 +142,7 @@ export function WorkspaceDashboard() {
           },
         }}
       >
-        {unavailableMetrics.map((metric) => (
+        {metrics.map((metric) => (
           <DashboardMetricCard key={metric.label} {...metric} />
         ))}
       </Box>
@@ -115,11 +170,32 @@ export function WorkspaceDashboard() {
           eyebrow="Account performance"
           title="Performance over time"
         >
-          <DashboardUnavailableState
-            actionHref="/imports"
-            actionLabel="Import trades"
-            description="Performance will appear when the selected account period has complete, verified execution authority. No legacy or estimated values are substituted."
-          />
+          {analyticsStatus === "ready" && analyticsMetrics ? (
+            <Stack spacing={1}>
+              <Typography color="success.main" sx={{ fontWeight: 700 }}>
+                Verified v3 execution analytics are attached.
+              </Typography>
+              <Typography color="text.secondary" variant="body2">
+                Open Performance details for exact daily, drawdown, streak,
+                outlier, and period packets.
+              </Typography>
+            </Stack>
+          ) : analyticsStatus === "loading" ? (
+            <Stack spacing={1}>
+              <Typography sx={{ fontWeight: 700 }}>
+                Calculating analytics
+              </Typography>
+              <Typography color="text.secondary" variant="body2">
+                Your dashboard is ready. Verified performance figures will fill in here as soon as the saved trading history finishes loading.
+              </Typography>
+            </Stack>
+          ) : (
+            <DashboardUnavailableState
+              actionHref="/imports"
+              actionLabel="Import trades"
+              description="Performance will appear when the selected account period has complete, verified execution authority. No legacy or estimated values are substituted."
+            />
+          )}
         </DashboardPanel>
 
         <Card sx={{ height: "100%" }}>

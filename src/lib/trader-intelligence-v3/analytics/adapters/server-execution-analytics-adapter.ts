@@ -6,6 +6,7 @@ import {
   type AnalyticalPartitionReceipt,
 } from "../dataset";
 import {
+  buildTradeQueryComparison,
   buildTradeQueryFindingPacket,
   executeTradeQueryAttribution,
   executeTradeQueryDistribution,
@@ -13,6 +14,7 @@ import {
   paginateTradeQueryResult,
   type TradeQueryAttributionResult,
   type TradeQueryAuthority,
+  type TradeQueryComparison,
   type TradeQueryDistributionResult,
   type TradeQueryFindingDimension,
   type TradeQueryFindingPacket,
@@ -94,6 +96,11 @@ export interface ServerExecutionAnalyticsAdapter {
     baselineQueryPlan: unknown,
     comparisonQueryPlan: unknown,
   ) => ExactResult<ServerExecutionAnalyticsGovernedResult<TradeQueryPeriodAttributionResult>, ServerExecutionAnalyticsAdapterFailure>;
+  readonly getComparison: (
+    currency: string,
+    targetQueryPlan: unknown,
+    baselineQueryPlan: unknown,
+  ) => ExactResult<ServerExecutionAnalyticsGovernedResult<TradeQueryComparison>, ServerExecutionAnalyticsAdapterFailure>;
   readonly getEvidencePage: (
     currency: string,
     queryPlan: unknown,
@@ -292,6 +299,35 @@ export function createServerExecutionAnalyticsAdapter(
       ? bindGovernedResult(resolved.value.authority, result.value, result.value.limitationCodes, result.value.resultDigest)
       : failure("ti_v3_server_analytics_query_invalid", "$.periodAttribution");
   };
+  const comparison = (
+    currency: string,
+    targetQueryPlan: unknown,
+    baselineQueryPlan: unknown,
+  ): ExactResult<ServerExecutionAnalyticsGovernedResult<TradeQueryComparison>, ServerExecutionAnalyticsAdapterFailure> => {
+    const target = executeQuery(currency, targetQueryPlan);
+    if (!target.ok) return target;
+    const baseline = executeQuery(currency, baselineQueryPlan);
+    if (!baseline.ok) return baseline;
+    if (
+      target.value.resolved.authority.authorityDigest !==
+      baseline.value.resolved.authority.authorityDigest
+    ) {
+      return failure("ti_v3_server_analytics_query_invalid", "$.comparison.authority");
+    }
+    const result = buildTradeQueryComparison(
+      target.value.result,
+      baseline.value.result,
+      target.value.resolved.queryAuthority,
+    );
+    return result.ok
+      ? bindGovernedResult(
+          target.value.resolved.authority,
+          result.value,
+          result.value.limitationCodes,
+          result.value.comparisonDigest,
+        )
+      : failure("ti_v3_server_analytics_query_invalid", "$.comparison");
+  };
   const evidencePage = (
     currency: string,
     queryPlan: unknown,
@@ -342,6 +378,7 @@ export function createServerExecutionAnalyticsAdapter(
     getDistribution: distribution,
     getAttribution: attribution,
     getPeriodAttribution: periodAttribution,
+    getComparison: comparison,
     getEvidencePage: evidencePage,
     getFindings: findings,
   });

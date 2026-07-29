@@ -19957,3 +19957,61 @@ Current best next step:
 
 - Complete owner visual review of the shared template and button treatment,
   then continue Day Session check-in planning.
+
+# 2026-07-28 v3 dashboard analytics adapter completion
+
+- Continued from the approved light Material `/workspace` dashboard on the
+  isolated `codex/v3-dashboard-adapter-wiring` branch.
+- Closed the missing comparison contract: the server adapter now executes
+  exact target/baseline queries and emits target, baseline, difference, and
+  percentage-difference values through a content-addressed client-safe packet.
+- Added one complete packet-only dashboard adapter covering capabilities,
+  overview, breakdown, performance series, distributions, attribution, period
+  attribution, exact comparisons, evidence pagination, and findings.
+- Added the server-only fixed-local-source resolver. It reads a governed v3
+  authority binding outside the repository, injects owner/account/dataset
+  authority into query plans, and never permits browser-selected authority.
+- Replaced the placeholder Analytics Overview, Performance, Results, Timing,
+  Execution, and Lab pages with server-rendered v3 packet consumers. Analytics
+  Lab exposes the full metric registry, governed grouping presets, ticker and
+  direction filters, and exact target-versus-baseline date comparisons.
+- Connected `/workspace` summary cards to the same v3 packet path while
+  retaining explicit unavailable states when no verified binding exists.
+- Focused adapter and dashboard-template verification passed: 2 files and 12
+  tests. Whole-project TypeScript and targeted lint passed. The optimized
+  webpack build compiled successfully and completed its TypeScript phase, then
+  the local machine exited during page-data collection without a code
+  diagnostic after reporting Windows/Node memory pressure. A dev-server smoke
+  retry was likewise blocked before application startup by
+  `uv_os_get_passwd` returning `ENOMEM`.
+
+Current best next step:
+
+- After local memory pressure clears, rerun the dev-server smoke check, then
+  create or select the first real local `current-authority.json` binding
+  through the governed v3 import flow. Do not substitute legacy SQLite or
+  infer statement coverage or starting inventory from executions.
+
+# 2026-07-28 v3 broker importer recovery
+
+- Recovered the missing importer requirements from the earlier Codex task
+  history after the original uncommitted files and local execution data were
+  lost.
+- Rebuilt the broker CSV importer directly on `/imports`; the dashboard no
+  longer redirects to the legacy `/intelligence/upload-csv` route.
+- The importer supports automatic detection, 16 named broker formats, and
+  saved custom column mappings. Accepted executions are normalized into the v3
+  raw execution contract and persisted through the configured local v3 source.
+- A successful import now creates the fixed `current-authority.json` binding
+  consumed by the dashboard analytics adapter. Import history is read from the
+  same v3 local source, and only actionable rejected rows are shown.
+- Restored the private local owner configuration for port 3012 and the original
+  local SQLite path. No synthetic trades or legacy analytics values were
+  substituted.
+- TypeScript validation, 15 focused authority/containment tests, targeted lint,
+  and live `/imports` plus import-history endpoint checks passed.
+
+Current best next step:
+
+- Re-import the owner's real broker CSV through `/imports`, then verify the
+  resulting workspace and analytics packets against that execution dataset.

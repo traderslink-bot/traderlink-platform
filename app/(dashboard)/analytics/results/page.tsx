@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
 
-import { AnalyticsPageFoundation } from "../../../dashboard-route-foundations";
+import { AnalyticsServerPage } from "../../../analytics-server-page";
 
 export const metadata: Metadata = {
   title: "Results | Trader Intelligence",
 };
 
 export default function ResultsPage() {
-  return (
-    <AnalyticsPageFoundation
-      chartTitle="Trade result distribution"
-      supportingTitle="Winner and loser profile"
-    />
-  );
+  return <AnalyticsServerPage page="results" />;
 }

@@ -1,5 +1,6 @@
 import type { ExactMetricValue } from "../contracts";
 import type {
+  DashboardComparisonPacket,
   DashboardDistributionPacket,
   DashboardEvidencePagePacket,
   DashboardEvidenceReference,
@@ -62,6 +63,19 @@ export interface DashboardEvidenceViewModel {
     readonly rowDigest: string;
     readonly role: "supporting" | "counterexample";
   }>[];
+  readonly limitationCodes: readonly string[];
+}
+
+export interface DashboardComparisonMetricViewModel {
+  readonly metricKey: string;
+  readonly target: DashboardMetricViewModel;
+  readonly baseline: DashboardMetricViewModel;
+  readonly difference: DashboardMetricViewModel;
+  readonly percentageDifference: DashboardMetricViewModel;
+}
+
+export interface DashboardComparisonViewModel {
+  readonly metrics: readonly DashboardComparisonMetricViewModel[];
   readonly limitationCodes: readonly string[];
 }
 
@@ -149,6 +163,22 @@ export function buildDashboardLimitationViewModel(
   return Object.freeze({
     codes: packet.limitationCodes,
     hasLimitations: packet.limitationCodes.length > 0,
+  });
+}
+
+/** Formats only the exact comparison values issued by the governed packet. */
+export function buildDashboardComparisonViewModel(
+  packet: DashboardComparisonPacket,
+): DashboardComparisonViewModel {
+  return Object.freeze({
+    metrics: Object.freeze(packet.metrics.map((metric) => Object.freeze({
+      metricKey: metric.metricKey,
+      target: formatDashboardMetric(metric.target),
+      baseline: formatDashboardMetric(metric.baseline),
+      difference: formatDashboardMetric(metric.difference),
+      percentageDifference: formatDashboardMetric(metric.percentageDifference),
+    }))),
+    limitationCodes: packet.limitationCodes,
   });
 }
 

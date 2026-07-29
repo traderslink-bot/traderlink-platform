@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
 
-import { AnalyticsPageFoundation } from "../../../dashboard-route-foundations";
+import { AnalyticsServerPage } from "../../../analytics-server-page";
 
 export const metadata: Metadata = {
   title: "Execution | Trader Intelligence",
 };
 
 export default function ExecutionPage() {
-  return (
-    <AnalyticsPageFoundation
-      chartTitle="Execution profile"
-      supportingTitle="Costs and position size"
-    />
-  );
+  return <AnalyticsServerPage page="execution" />;
 }

@@ -61,6 +61,7 @@ export type ContentIdentityDomain =
   | "execution_analytics_dashboard_distribution_packet"
   | "execution_analytics_dashboard_attribution_packet"
   | "execution_analytics_dashboard_period_attribution_packet"
+  | "execution_analytics_dashboard_comparison_packet"
   | "execution_analytics_dashboard_findings_packet"
   | "trade_query_attribution_result"
   | "trade_query_period_attribution_result"

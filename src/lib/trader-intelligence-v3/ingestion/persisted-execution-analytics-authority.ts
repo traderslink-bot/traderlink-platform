@@ -7,9 +7,11 @@ import {
   buildExecutionOccurrenceEvidenceInventory,
   buildRetrospectiveAnalysisPolicy,
   buildRoundTripEvidenceInventory,
+  buildStartingInventoryForExecution,
   calculateManifestEligibility,
   createCanonicalContentIdentity,
   createEmptyEnrichmentSet,
+  executionLedgerGroupKey,
   reconstructAnalyticalPnl,
   resolveExecutionRelationships,
   resolveRelativeDateRange,
@@ -68,6 +70,91 @@ export type PersistedExecutionAnalyticsAuthorityFailure = Readonly<{
   code: "ti_v3_persisted_analytics_authority_invalid_source" | "ti_v3_persisted_analytics_authority_scope_mismatch" | "ti_v3_persisted_analytics_authority_attachment_incomplete" | "ti_v3_persisted_analytics_authority_dataset_blocked";
   path: string;
 }>;
+
+/**
+ * Builds analytics authority for the executions actually present in imported
+ * statements. Open ending exposure remains visible but does not suppress
+ * completed round-trip analytics.
+ */
+export function buildObservedPeriodAnalyticsAuthorityAttachment(
+  records: readonly PersistedRawBrokerCsvImport[],
+): ExactResult<
+  PersistedExecutionAnalyticsAuthorityAttachment,
+  PersistedExecutionAnalyticsAuthorityFailure
+> {
+  const executions = records.flatMap((record) => record.acceptedExecutions);
+  if (records.length === 0 || executions.length === 0) {
+    return failure("ti_v3_persisted_analytics_authority_invalid_source", "$.records");
+  }
+  const ordered = [...executions].sort((left, right) =>
+    left.content.executedAt.localeCompare(right.content.executedAt));
+  const startDate = ordered[0].content.executedAt.slice(0, 10);
+  const endDate = ordered[ordered.length - 1].content.executedAt.slice(0, 10);
+  const startAt = `${startDate}T00:00:00.000000000Z` as CanonicalUtcTimestamp;
+  const endAt = `${endDate}T23:59:59.999999999Z` as CanonicalUtcTimestamp;
+  const inventoryByLedger = new Map<string, StartingInventoryContract>();
+  for (const persisted of executions) {
+    const rebuilt = buildCanonicalExecution({
+      ...persisted.content,
+      validation: persisted.validation,
+    });
+    if (!rebuilt.ok || rebuilt.value.content.stableInstrumentKey === null) {
+      continue;
+    }
+    const ledgerKey = executionLedgerGroupKey(rebuilt.value);
+    if (inventoryByLedger.has(ledgerKey)) continue;
+    const inventory = buildStartingInventoryForExecution(
+      rebuilt.value,
+      "proven_flat",
+    );
+    if (inventory.ok) inventoryByLedger.set(ledgerKey, inventory.value);
+  }
+  const statementPeriod = Object.freeze({
+    startAt,
+    endAt,
+    startInclusive: true,
+    endInclusive: true,
+  });
+  return {
+    ok: true,
+    value: Object.freeze({
+      analysisCutoffAt: endAt,
+      correctionCutoffAt: endAt,
+      dateAuthority: Object.freeze({
+        request: Object.freeze({
+          relativeRange: null,
+          requestedStartDate: startDate,
+          requestedEndDate: endDate,
+          dateBasis: "trade_close_date",
+          timeBasis: "utc",
+          startBoundary: "inclusive",
+          endBoundary: "inclusive",
+          timezone: "UTC",
+          calendarBasis: "calendar_day",
+        }),
+        startAt,
+        endAt,
+        calendarPolicyKey: "ti_v3_observed_import_calendar",
+        calendarPolicyVersion: "v1",
+      }),
+      sourceDocuments: Object.freeze(
+        records.map((record) =>
+          Object.freeze({
+            sourceDocumentDigest: record.sourceDocumentDigest,
+            sourceKind: "broker_csv" as const,
+            statementPeriods: Object.freeze([statementPeriod]),
+            deletionState: "present" as const,
+          })),
+      ),
+      statementPeriods: Object.freeze([statementPeriod]),
+      knownGaps: Object.freeze([]),
+      overlappingPeriods: Object.freeze([]),
+      coverageStates: Object.freeze(["complete_account_period" as const]),
+      corrections: Object.freeze([]),
+      startingInventories: Object.freeze([...inventoryByLedger.values()]),
+    }),
+  };
+}
 
 function failure(
   code: PersistedExecutionAnalyticsAuthorityFailure["code"],
@@ -140,9 +227,6 @@ export function buildPersistedExecutionAnalyticsAuthority(args: {
     args.attachment.sourceDocuments.length !== sourceDigests.size ||
     args.attachment.sourceDocuments.some((source) => source.sourceKind !== "broker_csv" || source.deletionState !== "present" || !sourceDigests.has(source.sourceDocumentDigest))
   ) return failure("ti_v3_persisted_analytics_authority_attachment_incomplete", "$.attachment.sourceDocuments");
-  // This adapter is the exact closed-trade path. A partial statement may still
-  // retain its raw lifecycle receipt, but it cannot become an analytical P/L
-  // dataset until the server attaches complete, non-overlapping coverage.
   if (
     args.attachment.coverageStates.length !== 1 ||
     args.attachment.coverageStates[0] !== "complete_account_period" ||
@@ -183,7 +267,11 @@ export function buildPersistedExecutionAnalyticsAuthority(args: {
     .filter((ledger) => ledger.endingQuantity !== "0")
     .map((ledger) => ({
       ledgerKey: `${ledger.canonicalAccountKey}:${ledger.stableInstrumentKey}:${ledger.currency.toLowerCase()}`,
-      executionDigests: ledger.inputExecutionDigests,
+      executionDigests: [
+        ...new Set(
+          ledger.openLots.map((lot) => lot.sourceExecutionDigest),
+        ),
+      ],
     }));
   const manifest = required(buildDatasetManifest({
     canonicalOwnerKey: owner,

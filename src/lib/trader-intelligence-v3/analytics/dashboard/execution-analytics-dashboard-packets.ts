@@ -9,6 +9,7 @@ import {
 } from "../adapters";
 import type {
   TradeQueryAttributionResult,
+  TradeQueryComparison,
   TradeQueryDistributionResult,
   TradeQueryFindingPacket,
   TradeQueryPage,
@@ -132,6 +133,18 @@ export interface DashboardPeriodAttributionPacket extends DashboardPacketBase {
   readonly evidence: readonly DashboardEvidenceReference[];
 }
 
+export interface DashboardComparisonPacket extends DashboardPacketBase {
+  readonly kind: "comparison";
+  readonly targetPlanDigest: CanonicalContentDigest;
+  readonly baselinePlanDigest: CanonicalContentDigest;
+  readonly targetResultDigest: CanonicalContentDigest;
+  readonly baselineResultDigest: CanonicalContentDigest;
+  readonly comparisonDigest: CanonicalContentDigest;
+  readonly metrics: TradeQueryComparison["metrics"];
+  readonly targetEvidenceDigests: readonly CanonicalContentDigest[];
+  readonly baselineEvidenceDigests: readonly CanonicalContentDigest[];
+}
+
 export interface DashboardFindingsPacket extends DashboardPacketBase {
   readonly kind: "findings";
   readonly queryResultDigest: CanonicalContentDigest;
@@ -148,6 +161,7 @@ export type ExecutionAnalyticsDashboardPacket =
   | DashboardDistributionPacket
   | DashboardAttributionPacket
   | DashboardPeriodAttributionPacket
+  | DashboardComparisonPacket
   | DashboardFindingsPacket;
 
 function evidenceReferences(
@@ -332,6 +346,29 @@ export function buildDashboardPeriodAttributionPacket(
     reconciliationDifference: result.reconciliationDifference,
     segments: result.segments,
     evidence: evidenceReferences(result.evidence),
+    limitationCodes: input.limitationCodes,
+  });
+}
+
+export function buildDashboardComparisonPacket(
+  input: ServerExecutionAnalyticsGovernedResult<TradeQueryComparison>,
+): DashboardComparisonPacket {
+  const result = bound(input);
+  if (input.sourceResultDigest !== result.comparisonDigest) {
+    throw new Error("ti_v3_dashboard_packet_source_result_mismatch");
+  }
+  return packet("execution_analytics_dashboard_comparison_packet", {
+    schemaVersion: EXECUTION_ANALYTICS_DASHBOARD_PACKET_VERSION,
+    kind: "comparison" as const,
+    authority: packetAuthority(input),
+    targetPlanDigest: result.targetPlanDigest,
+    baselinePlanDigest: result.baselinePlanDigest,
+    targetResultDigest: result.targetResultDigest,
+    baselineResultDigest: result.baselineResultDigest,
+    comparisonDigest: result.comparisonDigest,
+    metrics: result.metrics,
+    targetEvidenceDigests: result.targetEvidenceDigests,
+    baselineEvidenceDigests: result.baselineEvidenceDigests,
     limitationCodes: input.limitationCodes,
   });
 }

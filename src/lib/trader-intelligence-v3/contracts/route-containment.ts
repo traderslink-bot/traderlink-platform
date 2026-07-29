@@ -45,6 +45,7 @@ const OWNER_PAGE_MODULES = [
   "app/(dashboard)/analytics/performance/page.tsx",
   "app/(dashboard)/analytics/results/page.tsx",
   "app/(dashboard)/analytics/timing/page.tsx",
+  "app/(dashboard)/charts/page.tsx",
   "app/(dashboard)/imports/page.tsx",
   "app/(dashboard)/manual-entry/page.tsx",
   "app/(dashboard)/reflection-loop/page.tsx",
@@ -115,7 +116,10 @@ const LOCAL_PAGE_MODULES = [
 const OWNER_API_ROUTES = [
   ["app/api/analytics/latest/route.ts", ["GET"], "owner_read"],
   ["app/api/coach/latest/route.ts", ["GET"], "owner_read"],
+  ["app/api/intelligence/dashboard/overview/route.ts", ["GET"], "owner_read"],
   ["app/api/csv-mapping-review/continue/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/intelligence/broker-csv-import/v1/history/route.ts", ["GET"], "owner_read"],
+  ["app/api/intelligence/broker-csv-import/v1/route.ts", ["POST"], "owner_mutation"],
   ["app/api/intelligence/execution-import/v1/route.ts", ["POST"], "owner_mutation"],
   ["app/api/intelligence/rules/route.ts", ["POST"], "owner_mutation"],
   ["app/api/csv-mapping-templates/[templateId]/route.ts", ["PATCH", "DELETE"], "owner_mutation"],
@@ -221,6 +225,7 @@ function apiEntry(
     realOwnerDataMethods:
       modulePath === "app/api/import-batches/preview/route.ts" ||
       modulePath === "app/api/csv-mapping-review/continue/route.ts" ||
+      modulePath === "app/api/intelligence/broker-csv-import/v1/route.ts" ||
       modulePath === "app/api/intelligence/execution-import/v1/route.ts" ||
       modulePath === "app/api/csv-mapping-templates/route.ts" ||
       modulePath === "app/api/csv-mapping-templates/[templateId]/route.ts" ||

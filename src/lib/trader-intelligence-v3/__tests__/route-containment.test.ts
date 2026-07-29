@@ -70,7 +70,7 @@ describe("Trader Intelligence route containment matrix", () => {
 
     expect(new Set(classifiedRoutes).size).toBe(classifiedRoutes.length);
     expect(classifiedRoutes).toEqual(actualRoutes);
-    expect(classifiedRoutes).toHaveLength(105);
+    expect(classifiedRoutes).toHaveLength(108);
   });
 
   it("uses AST inspection to require exact wrapper paths and complete method coverage", () => {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
-import { ImportTradesFoundation } from "../../dashboard-action-foundations";
+import { BrokerCsvImportClient } from "../../broker-csv-import-client";
+import { DashboardPage } from "../../dashboard-template";
 
 export const metadata: Metadata = {
   title: "Import Trades | Trader Intelligence",
@@ -9,5 +10,9 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default function ImportsPage() {
-  return <ImportTradesFoundation />;
+  return (
+    <DashboardPage>
+      <BrokerCsvImportClient />
+    </DashboardPage>
+  );
 }

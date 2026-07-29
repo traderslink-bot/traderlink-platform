@@ -88,7 +88,12 @@ async function main(): Promise<void> {
   const listenerToken = randomBytes(32).toString("base64url");
   process.env[TRADER_INTELLIGENCE_LOCAL_LISTENER_TOKEN_ENV] = listenerToken;
 
-  const application = next({ dev, hostname, port });
+  const application = next({
+    dev,
+    hostname,
+    port,
+    turbopack: !process.argv.includes("--webpack"),
+  });
   const handler = application.getRequestHandler();
   await application.prepare();
 

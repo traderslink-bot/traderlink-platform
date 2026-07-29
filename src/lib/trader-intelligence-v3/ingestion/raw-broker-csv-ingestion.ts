@@ -203,6 +203,10 @@ function field(
   return index === undefined ? null : row[index]?.trim() ?? null;
 }
 
+function optionalIdentifier(value: string | null): string | null {
+  return value === null || value === "" ? null : value;
+}
+
 /**
  * Converts explicit, UTF-8 broker CSV mappings straight into canonical v3
  * executions. It deliberately rejects local timestamps and inferred mappings:
@@ -309,7 +313,8 @@ export function ingestRawBrokerExecutionCsv(
       issues.push(issue("ti_v3_raw_csv_row_invalid", rowNumber, "Broker net cash amount is not an exact decimal.", ["net_cash_amount"]));
       continue;
     }
-    const executionId = field(row, indexes, "executionId");
+    const orderId = optionalIdentifier(field(row, indexes, "orderId"));
+    const executionId = optionalIdentifier(field(row, indexes, "executionId"));
     const built = buildCanonicalExecution({
       canonicalOwnerKey: request.canonicalOwnerKey,
       canonicalAccountKey: request.canonicalAccountKey,
@@ -338,7 +343,7 @@ export function ingestRawBrokerExecutionCsv(
       charges: parsedCharges,
       chargeCoverageState: request.chargeCoverageState ?? "unknown",
       brokerReportedNetCashAmount: net,
-      orderId: field(row, indexes, "orderId"),
+      orderId,
       executionId,
       brokerExecutionIndex: rowNumber,
       brokerExecutionIndexOrderingScope: "source_document",
