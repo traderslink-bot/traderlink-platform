@@ -40,9 +40,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Whole Site Source Of Truth
 
 - The permanent local source-of-truth repo is `C:\Users\jerac\Documents\TraderLink\traderslink.pro`.
+- Work on branches inside this repository. Do not make a sibling folder or a Codex visualization preview the active application just to work on a feature.
+- Codex visualization folders and extra worktrees are temporary review copies only. Before relying on, restarting, or deleting one, save its intended changes to a GitHub branch and bring that branch back into this repository.
+- Run the local dashboard from this repository once its branch has been integrated. Do not leave the user dependent on a temporary preview server or its private `.env.local` file.
+- Before removing any duplicate project folder, show the user the exact folder, confirm its intended changes are safely on GitHub or already in this repository, and receive explicit approval.
 - Do not deploy from the parent folder or stale siblings such as `website`, `trader-intelligence-v2`, `trader-intelligence-v2-svg-qa`, or `deploy-candidates/*` unless explicitly reconciled against this repo and production.
 - Current source branch: `main`, tracking `origin/main`.
-- Remote: `git@github.com:traderslink-bot/traderslink-trader-improvement-system.git`.
+- Remote: `https://github.com/traderslink-bot/traderslink-trader-improvement-system.git`.
 - On 2026-05-26, production Vercel deployment `dpl_H1tehMKTuB3uSxCHHkVk73WabBD8` was deployed from clean `main` at commit `48f0fb8178ff513e229a16eb7ebd7d446aa40a6a`.
 - The Vercel project is `vercel-landing` (`prj_TFzKcdj4dS6BHv2maWsy7M5AEv2a`, org/team `team_D1yNeyNl1qTvK0pAWMu5nTWY`) with production aliases `traderslink.pro` and `www.traderslink.pro`.
 - Production deploys must come from a completely clean `main` checkout synchronized exactly with `origin/main`. Dirty or uncommitted production deploys are forbidden even when the requested change is path-scoped, because Vercel publishes the entire application snapshot.
