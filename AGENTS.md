@@ -16,6 +16,10 @@ complete approved TraderLink app.
 - Review an unfinished feature only from its clearly identified isolated
   branch/worktree. After the user approves it, intentionally bring only that
   approved work into `main` before it becomes part of the normal app.
+- A temporary feature workspace must not run the normal dashboard. Once its
+  approved work is in `main` and its preservation is confirmed, remove that
+  temporary workspace. Keep a feature branch only while it is still needed for
+  active work, review, or recovery; otherwise remove it deliberately.
 - Before starting any local dashboard or claiming a feature is ready to
   review, verify and state the repository path, branch, and port. Never
   present a feature-branch preview as the `main` app.
