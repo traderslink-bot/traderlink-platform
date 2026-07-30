@@ -29,6 +29,9 @@ authority.
 - Data source labels: `Broker executions` for the governed trade timestamps and
   prices, `Yahoo candles (experimental)` for the market replay, and the candle
   interval/window used for every finding.
+- Completed Round Trips receive a compact `Candle review` status/link. The
+  detailed review owns the single `Analyze this trade` action; imports never
+  invoke Yahoo analysis automatically.
 
 ## Evidence contract
 
@@ -186,6 +189,9 @@ volume, pattern completeness, location, and observed follow-through.
    review; preserve `No feedback` whenever their required lookback is absent.
 4. **Read-only connection:** Connect selected governed completed round trips to
    the server-only Yahoo adapter; preserve no-feedback states.
+   Cache the derived result per completed trade and analysis version, enforce a
+   per-owner cooldown/concurrency boundary, and offer a deliberate refresh only
+   after the cooldown. Do not persist raw provider responses.
 5. **Acceptance:** Run targeted checks only at the completed slice boundary,
    then present the isolated route for review. Do not merge or deploy without
    explicit approval.
