@@ -99,6 +99,23 @@ function TradeTagEditor({
     setBusy(true);
     setError("");
     try {
+      if (designPreview) {
+        const normalizedName = newName.trim();
+        const created: DaySessionTradeTag = {
+          assignmentCount: 0,
+          name: normalizedName,
+          revision: "design-preview",
+          tagId: `design-${normalizedName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
+        };
+        onCatalogChange(
+          [...availableTags, created].sort((a, b) =>
+            a.name.localeCompare(b.name),
+          ),
+        );
+        setSelectedIds((current) => [...current, created.tagId]);
+        setNewName("");
+        return;
+      }
       const created = await api<DaySessionTradeTag>("/api/intelligence/trade-tags", {
         body: JSON.stringify({ name: newName }),
         method: "POST",
@@ -117,6 +134,25 @@ function TradeTagEditor({
     setBusy(true);
     setError("");
     try {
+      if (designPreview) {
+        const saved = availableTags.filter((tag) =>
+          selectedIds.includes(tag.tagId),
+        );
+        const previousIds = new Set(tags.map((tag) => tag.tagId));
+        const nextIds = new Set(saved.map((tag) => tag.tagId));
+        onCatalogChange(
+          availableTags.map((tag) => ({
+            ...tag,
+            assignmentCount:
+              tag.assignmentCount +
+              (nextIds.has(tag.tagId) && !previousIds.has(tag.tagId) ? 1 : 0) -
+              (previousIds.has(tag.tagId) && !nextIds.has(tag.tagId) ? 1 : 0),
+          })),
+        );
+        onTagsChange(saved);
+        setOpen(false);
+        return;
+      }
       const saved = await api<DaySessionTradeTag[]>(
         `/api/intelligence/trades/${encodeURIComponent(roundTrip.roundTripKey)}/tags`,
         {
@@ -149,7 +185,6 @@ function TradeTagEditor({
       <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
         {tags.map((tag) => <Chip key={tag.tagId} label={tag.name} size="small" />)}
         <Button
-          disabled={designPreview}
           onClick={showEditor}
           size="small"
           variant="outlined"

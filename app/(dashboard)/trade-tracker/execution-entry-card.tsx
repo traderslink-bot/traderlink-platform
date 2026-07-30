@@ -207,7 +207,10 @@ export function ExecutionEntryCard({
               label="Time"
               onChange={(event) => update(row.id, "time", event.target.value)}
               size="small"
-              slotProps={{ htmlInput: { step: 1 } }}
+              slotProps={{
+                htmlInput: { step: 1 },
+                inputLabel: { shrink: true },
+              }}
               type="time"
               value={row.time}
             />

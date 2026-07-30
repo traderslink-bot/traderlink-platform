@@ -39,6 +39,11 @@ of the experience.
 - On desktop, place ticker facts on the left and completed round trips on the
   wider right. Stack those regions on mobile.
 - Keep ticker facts limited to ticker P/L and trade count.
+- Show each completed round trip's gain or loss percentage using governed net
+  P/L divided by its governed entry capital.
+- Show each ticker's combined gain or loss percentage for the day using total
+  ticker net P/L divided by total governed entry capital across that ticker's
+  completed round trips. Never add per-trade percentages together.
 - Attach tags, technical notes, and rule status to individual trades or round
   trips, never to tickers. Screenshot saving is not part of Day Session.
 - Keep mobile trade cards compact by default. Show key trade facts immediately
