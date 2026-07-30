@@ -2,7 +2,7 @@
 
 Plan: [day-session-page-plan.md](./day-session-page-plan.md)
 
-Status: visual design checkpoint in progress
+Status: visual design approved for main; persistence contract awaiting approval
 
 ## Workspace
 
@@ -20,14 +20,26 @@ Status: visual design checkpoint in progress
 - Kept the design fixture separate from governed account data.
 - Removed screenshot saving from the Day Session design.
 - Tightened desktop round-trip details and made mobile trade notes expandable.
+- Preserved the approved visual slice in commit `3bcaa4bd`.
+- Moved the feature branch into an isolated worktree so canonical `main` can
+  remain on port `3010`.
+- Audited the existing V3 rule authorities and legacy saved-trade note route.
+- Defined the proposed owner-scoped Day Session persistence records, revision
+  behavior, and `Tomorrow's focus` carry-forward rule.
+- Added a current-week tracker design that includes only traded days, compact
+  per-day stats, combined weekly stats, direct day selection, previous/next
+  traded-day controls, and a return to the current traded day.
+- Received UI approval on 2026-07-29.
+- Removed the visible design-preview banner before main integration.
 
-## In progress
+## Awaiting approval
 
-- Build the canonical dashboard detail page and present it for UI approval.
+- Approve or revise the persistence contract in the linked plan before schema,
+  API, or storage implementation begins.
 
-## Deferred until approval
+## Deferred until contract approval
 
 - Governed account-data projection
-- Note, rule, tag, and screenshot persistence
-- `Tomorrow's focus` carry-forward behavior
+- Note, rule-review, and tag persistence
+- `Tomorrow's focus` carry-forward implementation
 - Tests, browser automation, and final verification

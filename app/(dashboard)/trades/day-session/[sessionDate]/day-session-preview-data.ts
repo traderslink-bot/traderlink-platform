@@ -1,6 +1,15 @@
 import type { DaySessionData } from "./day-session-types";
 
+function shiftDate(date: string, days: number): string {
+  const value = new Date(`${date}T12:00:00.000Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
 export function getDaySessionDesignPreview(date: string): DaySessionData {
+  const previousTradeDate = shiftDate(date, -1);
+  const currentSessionDate = shiftDate(date, 1);
+
   return {
     currency: "USD",
     date,
@@ -116,5 +125,31 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
         ],
       },
     ],
+    week: {
+      currentSessionDate,
+      days: [
+        {
+          date: previousTradeDate,
+          netPnl: -126,
+          tickerCount: 1,
+          tradeCount: 2,
+        },
+        {
+          date,
+          netPnl: 842.5,
+          tickerCount: 2,
+          tradeCount: 5,
+        },
+        {
+          date: currentSessionDate,
+          netPnl: 318,
+          tickerCount: 2,
+          tradeCount: 3,
+        },
+      ],
+      netPnl: 1034.5,
+      tickerCount: 5,
+      tradeCount: 10,
+    },
   };
 }

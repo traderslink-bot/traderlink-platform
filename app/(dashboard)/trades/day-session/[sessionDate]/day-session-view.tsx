@@ -1,17 +1,17 @@
 "use client";
 
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
   Box,
   Card,
-  CardContent,
   Chip,
   Divider,
   Stack,
@@ -31,6 +31,7 @@ import type {
   DaySessionData,
   DaySessionRoundTrip,
   DaySessionRule,
+  DaySessionWeekDay,
 } from "./day-session-types";
 
 function money(value: number, currency: string): string {
@@ -51,6 +52,15 @@ function dateLabel(date: string): string {
     timeZone: "UTC",
     weekday: "long",
     year: "numeric",
+  });
+}
+
+function shortDayLabel(date: string): string {
+  return new Date(`${date}T12:00:00.000Z`).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+    weekday: "short",
   });
 }
 
@@ -260,27 +270,169 @@ function TradeReview({
   );
 }
 
+function WeekDayCard({
+  currency,
+  day,
+  selected,
+}: {
+  currency: string;
+  day: DaySessionWeekDay;
+  selected: boolean;
+}) {
+  return (
+    <Box
+      aria-current={selected ? "date" : undefined}
+      component={Link}
+      href={`/trades/day-session/${day.date}?preview=design`}
+      sx={{
+        bgcolor: selected ? "rgba(1, 30, 86, 0.08)" : "background.paper",
+        border: 1,
+        borderColor: selected ? "primary.main" : "divider",
+        borderRadius: 1.5,
+        color: "inherit",
+        flex: "0 0 154px",
+        p: 1.5,
+        textDecoration: "none",
+        "&:hover": {
+          borderColor: "primary.main",
+        },
+      }}
+    >
+      <Typography
+        color={selected ? "primary.main" : "text.primary"}
+        sx={{ fontWeight: 850 }}
+        variant="body2"
+      >
+        {shortDayLabel(day.date)}
+      </Typography>
+      <Typography
+        color={pnlColor(day.netPnl)}
+        sx={{
+          fontFamily: "var(--font-geist-mono)",
+          fontWeight: 850,
+          mt: 0.75,
+        }}
+        variant="body1"
+      >
+        {money(day.netPnl, currency)}
+      </Typography>
+      <Typography color="text.secondary" sx={{ mt: 0.25 }} variant="caption">
+        {day.tradeCount} trade{day.tradeCount === 1 ? "" : "s"} ·{" "}
+        {day.tickerCount} ticker{day.tickerCount === 1 ? "" : "s"}
+      </Typography>
+    </Box>
+  );
+}
+
 export function DaySessionView({ data }: { data: DaySessionData }) {
   const tradeCount = data.tickers.reduce(
     (count, ticker) => count + ticker.roundTrips.length,
     0,
   );
+  const selectedIndex = data.week.days.findIndex((day) => day.date === data.date);
+  const previousDay =
+    selectedIndex > 0 ? data.week.days[selectedIndex - 1] : null;
+  const nextDay =
+    selectedIndex >= 0 && selectedIndex < data.week.days.length - 1
+      ? data.week.days[selectedIndex + 1]
+      : null;
+  const reviewingPastDay = data.date !== data.week.currentSessionDate;
 
   return (
     <DashboardPage>
-      <Alert severity="info">
-        Design preview only — sample trades and notes are not account data.
-      </Alert>
+      <DashboardPanel title="This week">
+        <Box
+          sx={{
+            alignItems: { md: "center" },
+            display: "grid",
+            gap: 2,
+            gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) auto" },
+            mt: 1.5,
+          }}
+        >
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              minWidth: 0,
+              overflowX: "auto",
+              pb: 0.75,
+            }}
+          >
+            {data.week.days.map((day) => (
+              <WeekDayCard
+                currency={data.currency}
+                day={day}
+                key={day.date}
+                selected={day.date === data.date}
+              />
+            ))}
+          </Stack>
+          <Box
+            sx={{
+              bgcolor: "rgba(1, 30, 86, 0.035)",
+              borderRadius: 1.5,
+              minWidth: { md: 220 },
+              p: 1.75,
+            }}
+          >
+            <Typography color="text.secondary" variant="caption">
+              Week total
+            </Typography>
+            <Typography
+              color={pnlColor(data.week.netPnl)}
+              sx={{
+                fontFamily: "var(--font-geist-mono)",
+                fontWeight: 900,
+                mt: 0.25,
+              }}
+              variant="h5"
+            >
+              {money(data.week.netPnl, data.currency)}
+            </Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.35 }} variant="caption">
+              {data.week.tradeCount} trades · {data.week.tickerCount} tickers ·{" "}
+              {data.week.days.length} traded days
+            </Typography>
+          </Box>
+        </Box>
+      </DashboardPanel>
 
       <DashboardPanel
         action={
-          <DashboardSecondaryAction
-            component={Link}
-            href="/trades/day-sessions"
-            startIcon={<ArrowBackRoundedIcon />}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ flexWrap: "wrap", gap: 1 }}
           >
-            Day Sessions
-          </DashboardSecondaryAction>
+            {previousDay ? (
+              <DashboardSecondaryAction
+                component={Link}
+                href={`/trades/day-session/${previousDay.date}?preview=design`}
+                startIcon={<ArrowBackRoundedIcon />}
+              >
+                Previous day
+              </DashboardSecondaryAction>
+            ) : null}
+            {reviewingPastDay ? (
+              <DashboardPrimaryAction
+                component={Link}
+                href={`/trades/day-session/${data.week.currentSessionDate}?preview=design`}
+                startIcon={<TodayRoundedIcon />}
+              >
+                Current day
+              </DashboardPrimaryAction>
+            ) : null}
+            {nextDay ? (
+              <DashboardSecondaryAction
+                component={Link}
+                endIcon={<ArrowForwardRoundedIcon />}
+                href={`/trades/day-session/${nextDay.date}?preview=design`}
+              >
+                Next day
+              </DashboardSecondaryAction>
+            ) : null}
+          </Stack>
         }
         eyebrow="Trading day"
         title={dateLabel(data.date)}

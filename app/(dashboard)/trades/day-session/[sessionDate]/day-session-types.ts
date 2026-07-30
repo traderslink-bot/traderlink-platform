@@ -29,10 +29,26 @@ export type DaySessionRule = {
   status: "followed" | "broken" | "not-reviewed";
 };
 
+export type DaySessionWeekDay = {
+  date: string;
+  netPnl: number;
+  tickerCount: number;
+  tradeCount: number;
+};
+
+export type DaySessionWeek = {
+  currentSessionDate: string;
+  days: DaySessionWeekDay[];
+  netPnl: number;
+  tickerCount: number;
+  tradeCount: number;
+};
+
 export type DaySessionData = {
   currency: string;
   date: string;
   netPnl: number;
   rules: DaySessionRule[];
   tickers: DaySessionTicker[];
+  week: DaySessionWeek;
 };
