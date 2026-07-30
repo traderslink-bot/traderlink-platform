@@ -321,12 +321,19 @@ export function createPersistedExecutionAnalyticsAuthoritySource(args: {
   readonly records: readonly PersistedRawBrokerCsvImport[];
   readonly attachment: PersistedExecutionAnalyticsAuthorityAttachment;
 }): ReadOnlySnapshotAuthoritySource {
-  const built = buildPersistedExecutionAnalyticsAuthority(args);
+  let built: ReturnType<typeof buildPersistedExecutionAnalyticsAuthority> | null = null;
+  const activity = Object.freeze(
+    args.records.flatMap((record) => record.acceptedExecutions),
+  );
   return Object.freeze({
     sourceKey: PERSISTED_EXECUTION_ANALYTICS_AUTHORITY_VERSION,
     sourceVersion: "v1",
-    readExactAuthority: () => built.ok
+    readAcceptedExecutionActivity: () => activity,
+    readExactAuthority: () => {
+      built ??= buildPersistedExecutionAnalyticsAuthority(args);
+      return built.ok
       ? Object.freeze({ state: "available" as const, authority: built.value })
-      : Object.freeze({ state: "unavailable" as const, reasonCode: built.error.code }),
+      : Object.freeze({ state: "unavailable" as const, reasonCode: built.error.code });
+    },
   });
 }

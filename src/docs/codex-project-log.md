@@ -20088,3 +20088,24 @@ Current best next step:
   then complete the complete-row inventory and possible-open-position signal.
   Resolve the shared analytics-authority unavailable result so accepted
   executions appear through the one dashboard path.
+
+# 2026-07-30 V3 execution activity restoration
+
+- The configured dashboard resolver now exposes accepted broker execution
+  activity from the same fixed snapshot authority and derives currency scope
+  from accepted executions rather than the closed-round-trip subset. The
+  activity projection is available before the expensive P/L reconstruction;
+  reconstruction remains lazy and continues to govern all P/L claims.
+- `/trades/roundtrips` is the first connected activity surface. Its table is
+  titled **Accepted executions**, displays separate Date and Time values, and
+  does not represent every row as a completed trade or assign P/L.
+- The resolver reuses one verified dataset derivation inside each request,
+  avoiding repeated statement reconstruction while a page plans and executes
+  an analytics packet, and reuses its immutable binding while statement digests
+  and correction attachment are unchanged. Focused lint and whitespace checks
+  passed, and the updated local slice compiled successfully.
+
+Current best next step:
+
+- Extend the same authority scope to Workspace and execution analytics, then
+  distinguish verified numeric results from activity-only broker executions.

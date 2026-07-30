@@ -124,6 +124,12 @@ export interface ReadOnlySnapshotAuthoritySource {
   readonly sourceKey: string;
   readonly sourceVersion: string;
   readonly readExactAuthority: () => ReadOnlyAuthorityResult;
+  /**
+   * Optional compact activity projection from the same fixed authority source.
+   * It exposes accepted broker facts only; analytical P/L still requires
+   * readExactAuthority and the verified reconstruction path.
+   */
+  readonly readAcceptedExecutionActivity?: () => readonly CanonicalExecutionEnvelope[];
 }
 
 export interface SnapshotReadModelFailure {

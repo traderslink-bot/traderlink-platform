@@ -65,6 +65,12 @@ This work will keep the import records and their rebuild binding correct, while
 the shared-authority repair restores those accepted executions to Workspace,
 Trades, and Analytics.
 
+The first restoration surface is **Trades / Round Trips**: it shows accepted
+broker executions as activity facts from that same authority. This does not
+rename them as round trips or assign P/L. The visual checkpoint is a compact
+latest-activity table; only after approval should the activity presentation be
+expanded to the remaining dashboard views.
+
 The confirmed failure is not a missing binding: the current reconstruction
 blocks the entire dataset when any statement begins with an already-open
 position. The shared-path repair must preserve every accepted execution and
@@ -105,4 +111,6 @@ it does not require a second analytics data source or a new financial value.
 - Sorting and bulk selection work without changing unselected rows.
 - Date and Time are separate columns and preserve the exact broker timestamp.
 - Valid closed stock executions continue through the one shared V3 authority.
+- Accepted execution activity is visible in Trades even when only a subset can
+  support verified closed-trade P/L.
 - No source row is silently dropped and no missing financial value is invented.

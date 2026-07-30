@@ -47,6 +47,25 @@ export interface ConfiguredDashboardAnalytics {
   readonly source: VerifiedTradeQueryDatasetSource;
   readonly adapter: ServerExecutionAnalyticsDashboardAdapter;
   readonly currencies: readonly string[];
+  /**
+   * Accepted broker executions from the same fixed V3 authority that powers
+   * analytics. These are activity facts, not a claim that every execution can
+   * be paired into a completed round trip or a realized P/L result.
+   */
+  readonly executionActivity: readonly DashboardExecutionActivityRow[];
+}
+
+export interface DashboardExecutionActivityRow {
+  readonly executionDigest: string;
+  readonly executedAt: string;
+  readonly date: string;
+  readonly time: string;
+  readonly symbol: string;
+  readonly side: "buy" | "sell";
+  readonly quantity: string;
+  readonly price: string;
+  readonly currency: string;
+  readonly chargeCoverageState: "complete" | "unknown";
 }
 
 export interface DashboardQueryPlanSelection {
@@ -60,6 +79,11 @@ type BindingDocument = Readonly<{
   persistenceDigests: readonly CanonicalContentDigest[];
   attachment: PersistedExecutionAnalyticsAuthorityAttachment;
 }>;
+
+let cachedAnalytics: Readonly<{
+  key: string;
+  value: ConfiguredDashboardAnalytics;
+}> | null = null;
 
 function failure(
   code: ConfiguredDashboardAnalyticsFailure["code"],
@@ -123,6 +147,15 @@ export function resolveConfiguredDashboardAnalytics(args: {
   if (path === null) return failure("ti_v3_dashboard_analytics_binding_invalid", "$.bindingPath");
   const binding = readBinding(path);
   if (binding === null) return failure("ti_v3_dashboard_analytics_binding_missing", "$.binding");
+  const cacheKey = JSON.stringify({
+    ownerId: args.owner.identity.ownerId,
+    bindingPath: path,
+    persistenceDigests: binding.persistenceDigests,
+    attachment: binding.attachment,
+  });
+  if (cachedAnalytics?.key === cacheKey) {
+    return { ok: true, value: cachedAnalytics.value };
+  }
   const imports = resolveConfiguredServerRawBrokerCsvImportService(args);
   if (!imports.ok) return failure("ti_v3_dashboard_analytics_source_unavailable", imports.error.path);
   const authority = imports.value.createAnalyticsAuthoritySource(
@@ -130,23 +163,51 @@ export function resolveConfiguredDashboardAnalytics(args: {
     binding.attachment,
   );
   if (!authority.ok) return failure("ti_v3_dashboard_analytics_source_unavailable", authority.error.path);
-  const source = createSnapshotTradeQueryDatasetSource(authority.value);
-  const verified = source.readVerifiedDataset();
-  if (!verified.ok) return failure("ti_v3_dashboard_analytics_source_unavailable", "$.source");
+  const baseSource = createSnapshotTradeQueryDatasetSource(authority.value);
+  let derivedDataset: ReturnType<typeof baseSource.readVerifiedDataset> | null = null;
+  const source: VerifiedTradeQueryDatasetSource = Object.freeze({
+    ...baseSource,
+    readVerifiedDataset: () => {
+      derivedDataset ??= baseSource.readVerifiedDataset();
+      return derivedDataset;
+    },
+  });
+  const acceptedExecutions = authority.value.readAcceptedExecutionActivity?.();
+  if (acceptedExecutions === undefined || acceptedExecutions.length === 0) {
+    return failure("ti_v3_dashboard_analytics_source_unavailable", "$.source");
+  }
   const currencies = Object.freeze(
-    [...new Set(verified.value.datasetReceipt.rows.map((row) => row.currency))].sort(),
+    [...new Set(acceptedExecutions.map((execution) => execution.content.currency))].sort(),
   );
   if (currencies.length === 0) {
     return failure("ti_v3_dashboard_analytics_source_unavailable", "$.currencies");
   }
-  return {
-    ok: true,
-    value: Object.freeze({
+  const executionActivity = Object.freeze(
+    [...acceptedExecutions]
+      .sort((left, right) =>
+        right.content.executedAt.localeCompare(left.content.executedAt) ||
+        right.canonicalContentDigest.localeCompare(left.canonicalContentDigest))
+      .map((execution) => Object.freeze({
+        executionDigest: execution.canonicalContentDigest,
+        executedAt: execution.content.executedAt,
+        date: execution.content.executedAt.slice(0, 10),
+        time: `${execution.content.executedAt.slice(11, 19)} UTC`,
+        symbol: execution.content.rawBrokerSymbol,
+        side: execution.content.side,
+        quantity: execution.content.quantity,
+        price: execution.content.price,
+        currency: execution.content.currency,
+        chargeCoverageState: execution.content.chargeCoverageState,
+      })),
+  );
+  const value = Object.freeze({
       source,
       adapter: createServerExecutionAnalyticsDashboardAdapter(source),
       currencies,
-    }),
-  };
+      executionActivity,
+  });
+  cachedAnalytics = Object.freeze({ key: cacheKey, value });
+  return { ok: true, value };
 }
 
 /** Injects exact server authority into a safe dashboard query selection. */

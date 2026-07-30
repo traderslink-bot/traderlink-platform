@@ -42,6 +42,9 @@ Status: implementation in progress
 6. Shared dashboard repair: make accepted executions visible through the one
    authority even when opening inventory limits some completed-trade metrics.
    Do not infer the missing opening position or fabricate P/L.
+7. After owner approval of the Trades activity table, carry the same shared
+   execution scope into Workspace and execution-oriented analytics, then
+   review the remaining closed-trade limitations.
 
 ## Active shared-authority change
 
@@ -51,6 +54,33 @@ statements and blocks the entire dashboard when an imported statement starts
 mid-position. The active repair will retain row-level restrictions while
 allowing usable execution and closed-trade results through the one shared
 authority.
+
+## 2026-07-30 shared-authority activity restoration
+
+- The shared resolver now reads accepted executions from the already-bound V3
+  snapshot authority. It does not create a browser-owned dashboard source or
+  bypass the verified authority.
+- Currency scope is now derived from accepted execution records rather than
+  from the smaller closed-round-trip result set. A statement with accepted
+  executions but no provable closed results therefore remains available to
+  dashboard activity views.
+- The snapshot authority now exposes a compact accepted-execution activity
+  projection before the expensive analytical reconstruction. The reconstruction
+  is lazy and remains the sole authority for verified P/L analytics.
+- The resolver memoizes its verified analytical derivation during a request so
+  planning and packet execution do not rebuild the same large statement twice.
+- The current immutable binding is reused in memory while its statement
+  digests and correction attachment remain unchanged. A new import, correction,
+  reset, or statement deletion changes that binding key automatically.
+- `/trades/roundtrips` now has an **Accepted executions** activity table with
+  separate Date and Time columns, symbol, side, quantity, price, and fee
+  coverage. It initially shows the latest 100 rows for local responsiveness;
+  the full source inventory remains in Data Decisions.
+- Focused ESLint and whitespace checks passed for the changed files. The
+  updated local server slice compiled successfully, and the owner confirmed
+  that `/trades/roundtrips` successfully displays the activity view: 1,765
+  accepted executions across the configured account scope, including 575 from
+  the April statement. Numeric dashboard restoration is the current checkpoint.
 
 ## Implemented in this slice
 
