@@ -81,6 +81,9 @@ authority.
   that `/trades/roundtrips` successfully displays the activity view: 1,765
   accepted executions across the configured account scope, including 575 from
   the April statement. Numeric dashboard restoration is the current checkpoint.
+- Repaired an Analytics Lab median calculation that crashed when an even-sized
+  result set had decimal or negative P/L values. The fix retains exact decimal
+  arithmetic and does not alter the underlying execution or P/L facts.
 
 ## Implemented in this slice
 

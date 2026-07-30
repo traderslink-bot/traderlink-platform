@@ -185,7 +185,12 @@ function median(values: readonly string[], unit: "money" | "seconds" | "shares",
   if (values.length === 0) return unavailableMetric("median", unit, currency, "ti_v3_query_zero_sample");
   const middle = (values.length - (values.length % 2)) / 2;
   if (values.length % 2 === 1) return decimalMetric("median", unit, currency, values[middle]);
-  const ratio = createExactRatio(sum([values[middle - 1], values[middle]]), "2");
+  const summed = decimalToExactRatio(exact(sum([values[middle - 1], values[middle]])));
+  if (!summed.ok) throw new Error(summed.error.code);
+  const ratio = createExactRatio(
+    summed.value.numerator,
+    (BigInt(summed.value.denominator) * BigInt(2)).toString(),
+  );
   if (!ratio.ok) throw new Error(ratio.error.code);
   return ratioMetric("median", unit, currency, ratio.value);
 }

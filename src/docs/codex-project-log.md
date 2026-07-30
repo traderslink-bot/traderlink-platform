@@ -20104,6 +20104,10 @@ Current best next step:
   an analytics packet, and reuses its immutable binding while statement digests
   and correction attachment are unchanged. Focused lint and whitespace checks
   passed, and the updated local slice compiled successfully.
+- Corrected Analytics Lab's exact median conversion for even decimal or
+  negative P/L samples. It now converts the decimal sum into an exact signed
+  ratio before dividing by two, rather than treating a decimal string as an
+  integer numerator.
 
 Current best next step:
 
