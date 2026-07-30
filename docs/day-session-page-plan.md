@@ -1,6 +1,6 @@
 # Day Session Page Plan
 
-Status: visual design approved; persistence contract awaiting approval
+Status: visual design integrated into main; persistence contract awaiting approval
 
 Progress tracker: [day-session-page-progress.md](./day-session-page-progress.md)
 
@@ -134,7 +134,7 @@ the new day until the trader saves that day's notes.
 
 ## Checkpoints
 
-1. **Visual design — approved for main**
+1. **Visual design — complete on main**
    - Reconcile the prototype with the canonical shell.
    - Render the full day header, ticker cards, compact trade-level journal
      details, Rules, and Notes.
@@ -144,6 +144,7 @@ the new day until the trader saves that day's notes.
    - Approval received on 2026-07-29 after the weekly tracker review.
    - Remove the visible design-preview banner before integration while keeping
      fixture access gated to non-production `preview=design`.
+   - Integrated into canonical `main` on 2026-07-29.
 2. **Data and persistence — awaiting contract approval**
    - Add exact contract validators for the three trader-authored record types.
    - Add isolated storage and schema migration for the approved V3 journal

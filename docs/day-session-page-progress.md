@@ -2,7 +2,7 @@
 
 Plan: [day-session-page-plan.md](./day-session-page-plan.md)
 
-Status: visual design approved for main; persistence contract awaiting approval
+Status: visual checkpoint complete on main; persistence contract awaiting approval
 
 ## Workspace
 
@@ -31,6 +31,8 @@ Status: visual design approved for main; persistence contract awaiting approval
   traded-day controls, and a return to the current traded day.
 - Received UI approval on 2026-07-29.
 - Removed the visible design-preview banner before main integration.
+- Integrated the approved Day Session route into canonical `main` in commits
+  `4773cd9c` and `c6ead001`.
 
 ## Awaiting approval
 
