@@ -7,13 +7,6 @@ import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import {
-  CandlestickSeries,
-  ColorType,
-  LineStyle,
-  createChart,
-  type UTCTimestamp,
-} from "lightweight-charts";
 import { useEffect, useRef } from "react";
 
 import {
@@ -26,25 +19,88 @@ type PreviewCandle = {
   high: number;
   low: number;
   open: number;
-  time: UTCTimestamp;
+  time: number;
 };
 
 const PREVIEW_CANDLES: readonly PreviewCandle[] = [
-  { time: 1718376600 as UTCTimestamp, open: 1.06, high: 1.1, low: 1.04, close: 1.09 },
-  { time: 1718376900 as UTCTimestamp, open: 1.09, high: 1.14, low: 1.08, close: 1.12 },
-  { time: 1718377200 as UTCTimestamp, open: 1.12, high: 1.2, low: 1.1, close: 1.18 },
-  { time: 1718377500 as UTCTimestamp, open: 1.18, high: 1.24, low: 1.16, close: 1.22 },
-  { time: 1718377800 as UTCTimestamp, open: 1.22, high: 1.3, low: 1.2, close: 1.27 },
-  { time: 1718378100 as UTCTimestamp, open: 1.27, high: 1.38, low: 1.25, close: 1.34 },
-  { time: 1718378400 as UTCTimestamp, open: 1.34, high: 1.43, low: 1.31, close: 1.4 },
-  { time: 1718378700 as UTCTimestamp, open: 1.4, high: 1.51, low: 1.37, close: 1.48 },
-  { time: 1718379000 as UTCTimestamp, open: 1.48, high: 1.58, low: 1.44, close: 1.52 },
-  { time: 1718379300 as UTCTimestamp, open: 1.52, high: 1.55, low: 1.46, close: 1.49 },
-  { time: 1718379600 as UTCTimestamp, open: 1.49, high: 1.6, low: 1.47, close: 1.57 },
-  { time: 1718379900 as UTCTimestamp, open: 1.57, high: 1.68, low: 1.54, close: 1.64 },
-  { time: 1718380200 as UTCTimestamp, open: 1.64, high: 1.66, low: 1.56, close: 1.59 },
-  { time: 1718380500 as UTCTimestamp, open: 1.59, high: 1.62, low: 1.5, close: 1.53 },
+  { time: 1718376600, open: 1.06, high: 1.1, low: 1.04, close: 1.09 },
+  { time: 1718376900, open: 1.09, high: 1.14, low: 1.08, close: 1.12 },
+  { time: 1718377200, open: 1.12, high: 1.2, low: 1.1, close: 1.18 },
+  { time: 1718377500, open: 1.18, high: 1.24, low: 1.16, close: 1.22 },
+  { time: 1718377800, open: 1.22, high: 1.3, low: 1.2, close: 1.27 },
+  { time: 1718378100, open: 1.27, high: 1.38, low: 1.25, close: 1.34 },
+  { time: 1718378400, open: 1.34, high: 1.43, low: 1.31, close: 1.4 },
+  { time: 1718378700, open: 1.4, high: 1.51, low: 1.37, close: 1.48 },
+  { time: 1718379000, open: 1.48, high: 1.58, low: 1.44, close: 1.52 },
+  { time: 1718379300, open: 1.52, high: 1.55, low: 1.46, close: 1.49 },
+  { time: 1718379600, open: 1.49, high: 1.6, low: 1.47, close: 1.57 },
+  { time: 1718379900, open: 1.57, high: 1.68, low: 1.54, close: 1.64 },
+  { time: 1718380200, open: 1.64, high: 1.66, low: 1.56, close: 1.59 },
+  { time: 1718380500, open: 1.59, high: 1.62, low: 1.5, close: 1.53 },
 ];
+
+type LightweightChartsApi = {
+  CandlestickSeries: unknown;
+  ColorType: { Solid: string };
+  LineStyle: { Dashed: number; Dotted: number };
+  createChart: (
+    container: HTMLDivElement,
+    options: Record<string, unknown>,
+  ) => {
+    addSeries: (
+      series: unknown,
+      options: Record<string, unknown>,
+    ) => {
+      createPriceLine: (options: Record<string, unknown>) => void;
+      setData: (candles: readonly PreviewCandle[]) => void;
+    };
+    remove: () => void;
+    timeScale: () => { fitContent: () => void };
+  };
+};
+
+declare global {
+  interface Window {
+    LightweightCharts?: LightweightChartsApi;
+  }
+}
+
+function loadLightweightCharts(): Promise<LightweightChartsApi> {
+  if (window.LightweightCharts) {
+    return Promise.resolve(window.LightweightCharts);
+  }
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[data-trade-candle-chart-library="true"]',
+    );
+    if (existing) {
+      existing.addEventListener("load", () => {
+        if (window.LightweightCharts) resolve(window.LightweightCharts);
+      });
+      existing.addEventListener("error", () =>
+        reject(new Error("trade_candle_chart_library_unavailable")),
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.dataset.tradeCandleChartLibrary = "true";
+    script.src =
+      "https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js";
+    script.onload = () => {
+      if (window.LightweightCharts) {
+        resolve(window.LightweightCharts);
+      } else {
+        reject(new Error("trade_candle_chart_library_unavailable"));
+      }
+    };
+    script.onerror = () =>
+      reject(new Error("trade_candle_chart_library_unavailable"));
+    document.head.appendChild(script);
+  });
+}
 
 function TradeCandleChart() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -52,62 +108,71 @@ function TradeCandleChart() {
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    let active = true;
+    let chart: ReturnType<LightweightChartsApi["createChart"]> | null = null;
 
-    const chart = createChart(container, {
-      attributionLogo: true,
-      autoSize: true,
-      grid: {
-        horzLines: { color: "#e7ebf2" },
-        vertLines: { color: "#f1f3f7" },
-      },
-      handleScroll: { mouseWheel: true, pressedMouseMove: true, vertTouchDrag: true },
-      handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
-      layout: {
-        attributionLogo: true,
-        background: { type: ColorType.Solid, color: "#ffffff" },
-        textColor: "#526176",
-      },
-      localization: { priceFormatter: (price) => `$${price.toFixed(2)}` },
-      rightPriceScale: { borderColor: "#dfe5ef" },
-      timeScale: { borderColor: "#dfe5ef", timeVisible: true },
-    });
-    const candles = chart.addSeries(CandlestickSeries, {
-      borderDownColor: "#ca4b5b",
-      borderUpColor: "#15825a",
-      downColor: "#ca4b5b",
-      upColor: "#15825a",
-      wickDownColor: "#ca4b5b",
-      wickUpColor: "#15825a",
-    });
+    void loadLightweightCharts()
+      .then((library) => {
+        if (!active) return;
+        chart = library.createChart(container, {
+          attributionLogo: true,
+          autoSize: true,
+          grid: {
+            horzLines: { color: "#e7ebf2" },
+            vertLines: { color: "#f1f3f7" },
+          },
+          handleScroll: { mouseWheel: true, pressedMouseMove: true, vertTouchDrag: true },
+          handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
+          layout: {
+            attributionLogo: true,
+            background: { type: library.ColorType.Solid, color: "#ffffff" },
+            textColor: "#526176",
+          },
+          localization: { priceFormatter: (price: number) => `$${price.toFixed(2)}` },
+          rightPriceScale: { borderColor: "#dfe5ef" },
+          timeScale: { borderColor: "#dfe5ef", timeVisible: true },
+        });
+        const candles = chart.addSeries(library.CandlestickSeries, {
+          borderDownColor: "#ca4b5b",
+          borderUpColor: "#15825a",
+          downColor: "#ca4b5b",
+          upColor: "#15825a",
+          wickDownColor: "#ca4b5b",
+          wickUpColor: "#15825a",
+        });
+        candles.setData(PREVIEW_CANDLES);
+        candles.createPriceLine({
+          axisLabelVisible: true,
+          color: "#137333",
+          lineStyle: library.LineStyle.Dashed,
+          lineWidth: 2,
+          price: 1.1,
+          title: "Entry $1.10",
+        });
+        candles.createPriceLine({
+          axisLabelVisible: true,
+          color: "#b3261e",
+          lineStyle: library.LineStyle.Dashed,
+          lineWidth: 2,
+          price: 1.34,
+          title: "Exit $1.34",
+        });
+        candles.createPriceLine({
+          axisLabelVisible: true,
+          color: "#00639b",
+          lineStyle: library.LineStyle.Dotted,
+          lineWidth: 1,
+          price: 1.58,
+          title: "30m high $1.58",
+        });
+        chart.timeScale().fitContent();
+      })
+      .catch(() => undefined);
 
-    candles.setData(PREVIEW_CANDLES);
-    candles.createPriceLine({
-      axisLabelVisible: true,
-      color: "#137333",
-      lineStyle: LineStyle.Dashed,
-      lineWidth: 2,
-      price: 1.1,
-      title: "Entry $1.10",
-    });
-    candles.createPriceLine({
-      axisLabelVisible: true,
-      color: "#b3261e",
-      lineStyle: LineStyle.Dashed,
-      lineWidth: 2,
-      price: 1.34,
-      title: "Exit $1.34",
-    });
-    candles.createPriceLine({
-      axisLabelVisible: true,
-      color: "#00639b",
-      lineStyle: LineStyle.Dotted,
-      lineWidth: 1,
-      price: 1.58,
-      title: "30m high $1.58",
-    });
-    chart.timeScale().fitContent();
-
-    return () => chart.remove();
+    return () => {
+      active = false;
+      chart?.remove();
+    };
   }, []);
 
   return (
