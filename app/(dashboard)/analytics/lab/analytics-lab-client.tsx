@@ -859,6 +859,9 @@ export default function AnalyticsLabClient({
       >
         Save view
       </Button>
+      <Button href="/analytics/lab/trade-candle-analysis" variant="outlined">
+        Trade candle analysis
+      </Button>
     </>
   );
 
@@ -1214,5 +1217,4 @@ export default function AnalyticsLabClient({
     </DashboardPage>
   );
 }
-
 

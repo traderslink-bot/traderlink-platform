@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -21,6 +22,8 @@ import { requireTraderIntelligenceOwnerPageAccess } from "@/src/lib/trader-intel
 import { resolveConfiguredDashboardAnalytics } from "@/src/lib/trader-intelligence-v3/analytics/dashboard/configured-dashboard-analytics";
 import { formatDashboardDecimal } from "@/src/lib/trader-intelligence-v3/analytics/dashboard/execution-analytics-dashboard-view-models";
 import { validateTraderIntelligenceDeployment } from "@/src/lib/trader-intelligence-v3/deployment";
+import { resolveCompletedCandleReviewTrade } from "@/src/lib/trade-candle-analysis/completed-trade";
+import { readStoredTradeCandleReview } from "@/src/lib/trade-candle-analysis/review-store";
 
 export const metadata: Metadata = {
   title: "Round Trips | Trader Intelligence",
@@ -54,6 +57,26 @@ export default async function RoundTripsPage() {
   }
 
   const rows = analytics.value.executionActivity.slice(0, ACTIVITY_ROW_LIMIT);
+  const completedReviews = analytics.value.source.readVerifiedDataset();
+  const completedRows = completedReviews.ok && deployment.ok && deployment.config.persistence.kind === "file"
+    ? completedReviews.value.datasetReceipt.rows
+        .flatMap((row) => {
+          const trade = resolveCompletedCandleReviewTrade({
+            analytics: analytics.value,
+            semanticRoundTripKey: row.semanticRoundTripKey,
+          });
+          return trade === null ? [] : [trade];
+        })
+        .sort((left, right) => right.exitTime - left.exitTime)
+        .slice(0, 24)
+        .map((trade) => ({
+          review: readStoredTradeCandleReview({
+            parentPath: deployment.config.persistence.parentPath,
+            trade,
+          }),
+          trade,
+        }))
+    : [];
   return (
     <DashboardPage>
       <Box>
@@ -71,6 +94,47 @@ export default async function RoundTripsPage() {
       <Alert severity="info">
         {analytics.value.executionActivity.length} accepted broker executions are available. Rows with incomplete opening-history evidence remain visible as activity and do not contribute an unverified P/L result.
       </Alert>
+      <DashboardPanel
+        action={<Chip label={`${completedRows.length} available`} size="small" variant="outlined" />}
+        title="Completed trades"
+      >
+        {completedRows.length === 0 ? (
+          <Typography color="text.secondary" variant="body2">
+            No completed round trips with usable entry and exit prices are available for candle review.
+          </Typography>
+        ) : (
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Symbol</TableCell>
+                  <TableCell>Direction</TableCell>
+                  <TableCell>Exit</TableCell>
+                  <TableCell>Candle review</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {completedRows.map(({ review, trade }) => (
+                  <TableRow key={trade.semanticRoundTripKey}>
+                    <TableCell>{trade.symbol}</TableCell>
+                    <TableCell sx={{ textTransform: "capitalize" }}>{trade.direction}</TableCell>
+                    <TableCell>{formatDashboardDecimal(String(trade.exitPrice))} {trade.currency ?? "USD"}</TableCell>
+                    <TableCell>
+                      <Button
+                        href={`/trades/candle-review?trade=${encodeURIComponent(trade.semanticRoundTripKey)}`}
+                        size="small"
+                        variant="text"
+                      >
+                        {review === null ? "Analyze this trade" : review.status === "ready" ? "View review" : "No coverage"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </DashboardPanel>
       <DashboardPanel
         action={<Chip label={`${rows.length} shown`} size="small" variant="outlined" />}
         title="Accepted executions"

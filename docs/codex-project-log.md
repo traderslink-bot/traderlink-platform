@@ -1,5 +1,18 @@
 # TradersLink Codex Project Log
 
+## 2026-07-30 Trade Candle Analyzer experiment proposed
+
+- Created the isolated `codex/trade-candle-analyzer-experiment` worktree.
+- The proposed experiment is documented in
+  [trade-candle-analyzer-experiment-plan.md](./trade-candle-analyzer-experiment-plan.md)
+  with its linked progress tracker.
+- It uses broker facts plus Yahoo candles as experimental read-only context for
+  evidence-gated profit-giveback, exit-timing, and entry-timing feedback. It
+  must say `No feedback` when the candle evidence is incomplete, and it must
+  not alter governed P/L or execution authority.
+- Next: obtain owner approval of the plan and fixture layout before coding the
+  dashboard UI.
+
 ## 2026-05-26 Main Source-Of-Truth Alignment
 
 - Merged PR #10, `Align main with live TradersLink website`, into `main`.
