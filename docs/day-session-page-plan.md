@@ -36,6 +36,15 @@ of the experience.
 - Previous and next navigation skip calendar days without trades. The
   current-day action returns to the latest governed traded day.
 - Show full-width ticker cards below the header.
+- When governed reconstruction retains unmatched inventory, show a separate
+  `Open position` ticker card with remaining quantity, direction, average
+  entry, opened time, and Open status.
+- Open positions do not contribute unrealized P/L to completed daily or weekly
+  P/L and do not count as completed trades.
+- Overnight or swing intent is never inferred from an open lifecycle. The
+  trader may explicitly label the position plan as Day trade, Swing, or Other.
+- Open positions may receive their own tags. Those assignments remain separate
+  from completed round-trip tags if the position later closes.
 - On desktop, place ticker facts on the left and completed round trips on the
   wider right. Stack those regions on mobile.
 - Keep ticker facts limited to ticker P/L and trade count.
@@ -141,12 +150,39 @@ The selected applicability must be allowed by the referenced rule definition.
 Custom rules are not copied into Day Session; the review points back to the
 versioned custom-rule authority.
 
+Trade-applicable rules are reviewed inside the completed round-trip card.
+Preset results occupy the rule-review position and will be populated by the
+governed automatic rule evaluator. Saved custom trade rules are selected by
+name and marked followed, broken, or not reviewed beside that result. Day
+rules remain in the full-width Rules section above Daily Notes. The UI must
+not imitate or infer automatic preset results before the evaluator supplies
+them.
+
 ### Tomorrow's focus carry-forward
 
 When opening a later trading day with no saved `Tomorrow's focus`, the read
 model finds the closest earlier dated daily note for the same owner/account and
 returns its focus as a suggested carry-forward value. It is not persisted onto
 the new day until the trader saves that day's notes.
+
+### Cross-day open-position reconciliation
+
+Manual executions must join the governed FIFO ledger across trading dates.
+They are partitioned by owner, brokerage account, stable instrument identity,
+and currency before timestamp ordering and lot matching. The working-day
+browser must not infer prior inventory from a same-day submission.
+
+- A sell smaller than an existing long position partially closes the oldest
+  governed long lots and leaves the exact remaining quantity open.
+- A sell equal to the remaining long quantity completes the position.
+- A sell larger than the remaining long quantity closes the long position and
+  opens only the excess quantity as a new short position.
+- Executions for other tickers remain separate ledger partitions even when
+  submitted in the same Trade Tracker form.
+- A sell with no verified prior inventory must remain unresolved rather than
+  being silently classified as a new short.
+- Open-position intent remains trader-labelled as Day trade, Swing, or Other;
+  factual inventory matching never infers intent.
 
 ### API and failure behavior
 
@@ -188,6 +224,12 @@ the new day until the trader saves that day's notes.
    - Add the expandable manual execution composer and in-place populated state.
    - UI approval received with the time-label and interactive-preview-tag
      refinements.
+   - Keep successful manual entry on the date-free working-day canvas and
+     populate it immediately from the accepted executions; do not redirect to
+     the governed historical-day route before stable closed-trade keys exist.
+   - Load active preset and custom rule definitions into the working day.
+     Trade-scoped rules remain inside completed-trade cards, while day-session
+     rules remain in the full-width Rules card.
 4. **Trader-authored persistence — implemented in feature branch**
    - Trade tags are complete through the linked Trade Tag System Plan,
      including local webpage verification.
@@ -198,9 +240,16 @@ the new day until the trader saves that day's notes.
    - Connected manual executions through the governed V3 import service.
    - Added governed entry/exit prices and exact gain/loss percentages for
      individual round trips and daily ticker aggregates.
-5. **Acceptance**
+   - Add the approved open-position visual card and preview reconstruction
+     before connecting its trader-labelled plan to persistence.
+5. **Original main-page acceptance — complete**
    - Run the focused checks required by the final implementation.
    - Run broader verification only at the explicit acceptance boundary.
+   - Final UI approval received on 2026-07-30 for the Trade Tracker main-page
+     objective.
+   - Governed rules evaluation, cross-day inventory reconciliation, and stable
+     trade-writing persistence remain documented follow-up integrations and do
+     not reopen the approved original page design.
 
 ## Explicitly deferred
 

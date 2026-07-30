@@ -5,6 +5,7 @@ import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 import {
   Accordion,
@@ -71,24 +72,35 @@ function TradeTagEditor({
   availableTags,
   designPreview,
   onCatalogChange,
+  onManageTags,
   onTagsChange,
-  roundTrip,
   sessionDate,
   tags,
+  targetKey,
+  targetKind,
 }: {
   availableTags: DaySessionTradeTag[];
   designPreview: boolean;
   onCatalogChange: (tags: DaySessionTradeTag[]) => void;
+  onManageTags?: () => void;
   onTagsChange: (tags: DaySessionTradeTag[]) => void;
-  roundTrip: DaySessionRoundTrip;
   sessionDate: string;
   tags: DaySessionTradeTag[];
+  targetKey: string;
+  targetKind: "round-trip" | "open-position";
 }) {
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>(tags.map((tag) => tag.tagId));
   const [newName, setNewName] = useState("");
+  const [previewCreatedTags, setPreviewCreatedTags] = useState<
+    DaySessionTradeTag[]
+  >([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const catalog = [...availableTags, ...previewCreatedTags].filter(
+    (tag, index, tags) =>
+      tags.findIndex((candidate) => candidate.tagId === tag.tagId) === index,
+  );
 
   function showEditor(): void {
     setSelectedIds(tags.map((tag) => tag.tagId));
@@ -109,8 +121,9 @@ function TradeTagEditor({
           revision: "design-preview",
           tagId: `design-${normalizedName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
         };
+        setPreviewCreatedTags((current) => [...current, created]);
         onCatalogChange(
-          [...availableTags, created].sort((a, b) =>
+          [...catalog, created].sort((a, b) =>
             a.name.localeCompare(b.name),
           ),
         );
@@ -137,13 +150,13 @@ function TradeTagEditor({
     setError("");
     try {
       if (designPreview) {
-        const saved = availableTags.filter((tag) =>
+        const saved = catalog.filter((tag) =>
           selectedIds.includes(tag.tagId),
         );
         const previousIds = new Set(tags.map((tag) => tag.tagId));
         const nextIds = new Set(saved.map((tag) => tag.tagId));
         onCatalogChange(
-          availableTags.map((tag) => ({
+          catalog.map((tag) => ({
             ...tag,
             assignmentCount:
               tag.assignmentCount +
@@ -155,8 +168,11 @@ function TradeTagEditor({
         setOpen(false);
         return;
       }
+      if (targetKind === "open-position") {
+        throw new Error("Open-position tag persistence is not connected yet.");
+      }
       const saved = await api<DaySessionTradeTag[]>(
-        `/api/intelligence/trades/${encodeURIComponent(roundTrip.roundTripKey)}/tags`,
+        `/api/intelligence/trades/${encodeURIComponent(targetKey)}/tags`,
         {
           body: JSON.stringify({ sessionDate, tagIds: selectedIds }),
           method: "PUT",
@@ -201,12 +217,12 @@ function TradeTagEditor({
             Select or create your own tags
           </Typography>
           <Stack sx={{ maxHeight: 260, overflowY: "auto" }}>
-            {availableTags.length === 0 ? (
+            {catalog.length === 0 ? (
               <Typography color="text.secondary" sx={{ py: 1 }} variant="body2">
                 No tags created yet.
               </Typography>
             ) : null}
-            {availableTags.map((tag) => (
+            {catalog.map((tag) => (
               <FormControlLabel
                 control={
                   <Checkbox
@@ -247,6 +263,17 @@ function TradeTagEditor({
           {error ? <Typography color="error" sx={{ mt: 1.5 }} variant="body2">{error}</Typography> : null}
         </DialogContent>
         <DialogActions>
+          {onManageTags ? (
+            <Button
+              onClick={() => {
+                setOpen(false);
+                onManageTags();
+              }}
+            >
+              Manage tags
+            </Button>
+          ) : null}
+          <Box sx={{ flex: 1 }} />
           <Button onClick={() => setOpen(false)}>Cancel</Button>
           <Button disabled={busy || selectedIds.length > 10} onClick={() => void save()} variant="contained">
             Save tags
@@ -385,7 +412,12 @@ function ManageTagsDialog({
 }
 
 function money(value: string, currency: string): string {
-  const match = /^(-?)(\d+)(?:\.(\d+))?$/.exec(value);
+  const normalizedValue = value.startsWith(".")
+    ? `0${value}`
+    : value.startsWith("-.")
+      ? `-0${value.slice(1)}`
+      : value;
+  const match = /^(-?)(\d+)(?:\.(\d+))?$/.exec(normalizedValue);
   if (!match) return "Unavailable";
   const symbol =
     new Intl.NumberFormat("en-US", {
@@ -447,6 +479,14 @@ function pnlColor(value: string): "success.main" | "error.main" | "text.primary"
   return "success.main";
 }
 
+function pnlBackground(value: string): string {
+  if (/^-/.test(value) && !/^-0(?:\.0+)?$/.test(value)) {
+    return "rgba(211, 47, 47, 0.10)";
+  }
+  if (/^0(?:\.0+)?$/.test(value)) return "rgba(1, 30, 86, 0.05)";
+  return "rgba(46, 125, 50, 0.11)";
+}
+
 function statusPresentation(
   status: DaySessionRule["status"],
 ): {
@@ -480,22 +520,95 @@ function TradeReview({
   currency,
   designPreview,
   onCatalogChange,
+  onManageTags,
+  onRuleStatusChange,
   onTagsChange,
+  onTechnicalNoteChange,
   roundTrip,
   sessionDate,
   tags,
+  tradeRules,
 }: {
   availableTags: DaySessionTradeTag[];
   currency: string;
   designPreview: boolean;
   onCatalogChange: (tags: DaySessionTradeTag[]) => void;
+  onManageTags?: () => void;
+  onRuleStatusChange: (
+    rule: DaySessionRule,
+    status: DaySessionRule["status"],
+  ) => Promise<void>;
   onTagsChange: (tags: DaySessionTradeTag[]) => void;
+  onTechnicalNoteChange: (value: string) => void;
   roundTrip: DaySessionRoundTrip;
   sessionDate: string;
   tags: DaySessionTradeTag[];
+  tradeRules: DaySessionRule[];
 }) {
-  const status = statusPresentation(roundTrip.journal.ruleStatus);
+  const presetRules = tradeRules.filter((rule) => !rule.custom);
+  const [selectedPresetRuleId, setSelectedPresetRuleId] = useState(
+    presetRules[0]?.ruleId ?? "",
+  );
+  const selectedPresetRule =
+    presetRules.find((rule) => rule.ruleId === selectedPresetRuleId) ??
+    presetRules[0];
+  const status = statusPresentation(
+    selectedPresetRule?.status ?? roundTrip.journal.ruleStatus,
+  );
   const StatusIcon = status.icon;
+  const customRules = tradeRules.filter((rule) => rule.custom);
+  const [selectedCustomRuleId, setSelectedCustomRuleId] = useState(
+    customRules[0]?.ruleId ?? "",
+  );
+  const selectedCustomRule =
+    customRules.find((rule) => rule.ruleId === selectedCustomRuleId) ??
+    customRules[0];
+  const ruleControls = (
+    <Box
+      sx={{
+        display: "grid",
+        gap: 1.25,
+        gridTemplateColumns: { xs: "1fr", sm: "minmax(180px, 280px) 140px" },
+      }}
+    >
+      <TextField
+        disabled={customRules.length === 0}
+        label="Custom rule"
+        onChange={(event) => setSelectedCustomRuleId(event.target.value)}
+        select
+        size="small"
+        value={selectedCustomRule?.ruleId ?? ""}
+      >
+        {customRules.length === 0 ? (
+          <MenuItem value="">No trade rules</MenuItem>
+        ) : null}
+        {customRules.map((rule) => (
+          <MenuItem key={rule.ruleId} value={rule.ruleId}>
+            {rule.label}
+          </MenuItem>
+        ))}
+      </TextField>
+      <TextField
+        disabled={!selectedCustomRule}
+        label="Result"
+        onChange={(event) => {
+          if (selectedCustomRule) {
+            void onRuleStatusChange(
+              selectedCustomRule,
+              event.target.value as DaySessionRule["status"],
+            );
+          }
+        }}
+        select
+        size="small"
+        value={selectedCustomRule?.status ?? "not-reviewed"}
+      >
+        <MenuItem value="not-reviewed">Not reviewed</MenuItem>
+        <MenuItem value="followed">Followed</MenuItem>
+        <MenuItem value="broken">Broken</MenuItem>
+      </TextField>
+    </Box>
+  );
 
   return (
     <Box sx={{ px: { xs: 2, md: 2.5 }, py: 2 }}>
@@ -505,8 +618,8 @@ function TradeReview({
           display: "grid",
           gap: 1.5,
           gridTemplateColumns: {
-            xs: "minmax(0, 1fr) auto",
-            md: "minmax(150px, 1fr) 80px 120px",
+            xs: "minmax(0, 1fr)",
+            md: "minmax(150px, 1fr) 132px",
           },
         }}
       >
@@ -520,18 +633,17 @@ function TradeReview({
             {price(roundTrip.exitPrice, currency)}
           </Typography>
         </Box>
-        <Chip
-          label={roundTrip.direction === "long" ? "Long" : "Short"}
-          size="small"
-          variant="outlined"
-        />
         <Typography
           color={pnlColor(roundTrip.netPnl)}
           sx={{
+            bgcolor: pnlBackground(roundTrip.netPnl),
+            borderRadius: 1,
             fontFamily: "var(--font-geist-mono)",
             fontWeight: 850,
-            gridColumn: { xs: "1 / -1", md: "auto" },
-            textAlign: { md: "right" },
+            justifySelf: { md: "end" },
+            px: 1,
+            py: 0.4,
+            textAlign: "right",
           }}
           variant="body1"
         >
@@ -540,10 +652,16 @@ function TradeReview({
         <Typography
           color={pnlColor(roundTrip.gainLossPercent ?? "0")}
           sx={{
+            bgcolor: pnlBackground(roundTrip.gainLossPercent ?? "0"),
+            borderRadius: 1,
+            fontSize: { xs: "0.8rem", md: "1rem" },
             fontFamily: "var(--font-geist-mono)",
-            fontWeight: 750,
-            gridColumn: { xs: "1 / -1", md: "3" },
-            textAlign: { md: "right" },
+            fontWeight: 850,
+            gridColumn: { md: "2" },
+            justifySelf: { md: "end" },
+            px: 1,
+            py: 0.35,
+            textAlign: "right",
           }}
           variant="caption"
         >
@@ -555,10 +673,12 @@ function TradeReview({
         availableTags={availableTags}
         designPreview={designPreview}
         onCatalogChange={onCatalogChange}
+        onManageTags={onManageTags}
         onTagsChange={onTagsChange}
-        roundTrip={roundTrip}
         sessionDate={sessionDate}
         tags={tags}
+        targetKey={roundTrip.roundTripKey}
+        targetKind="round-trip"
       />
 
       <Box
@@ -567,42 +687,100 @@ function TradeReview({
           borderRadius: 1.5,
           display: { xs: "none", md: "grid" },
           gap: 1.5,
-          gridTemplateColumns: "minmax(0, 1.45fr) minmax(220px, 0.75fr)",
+          gridTemplateColumns: "minmax(0, 380px) minmax(0, 430px)",
+          justifyContent: "start",
           mt: 1.5,
           p: 1.5,
         }}
       >
-        <Box>
-          <Typography color="text.secondary" variant="caption">
-            Technical notes
-          </Typography>
-          <Typography sx={{ mt: 0.4 }} variant="body2">
-            {roundTrip.journal.technicalNote}
-          </Typography>
-        </Box>
-        <Box>
-          <Typography color="text.secondary" variant="caption">
-            Rule review
-          </Typography>
-          <Stack
-            direction="row"
-            spacing={0.75}
-            sx={{ alignItems: "flex-start", mt: 0.5 }}
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            color="text.secondary"
+            display="block"
+            sx={{ mb: 0.75 }}
+            variant="caption"
           >
-            <StatusIcon
-              color={status.color === "default" ? "disabled" : status.color}
-              fontSize="small"
-            />
-            <Box>
-              <Typography sx={{ fontWeight: 750 }} variant="body2">
-                {status.label}
-              </Typography>
-              <Typography color="text.secondary" variant="caption">
-                {roundTrip.journal.ruleSummary}
-              </Typography>
+            Preset rules
+          </Typography>
+          {presetRules.length > 0 ? (
+            <Box
+              sx={{
+                alignItems: "center",
+                display: "grid",
+                gap: 1,
+                gridTemplateColumns: "minmax(0, 1fr) auto",
+              }}
+            >
+              <TextField
+                label="Preset rule"
+                onChange={(event) => setSelectedPresetRuleId(event.target.value)}
+                select
+                size="small"
+                sx={{ minWidth: 0 }}
+                value={selectedPresetRule?.ruleId ?? ""}
+              >
+                {presetRules.map((rule) => (
+                  <MenuItem key={rule.ruleId} value={rule.ruleId}>
+                    {rule.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Chip
+                color={status.color}
+                icon={<StatusIcon />}
+                label={status.label}
+                size="small"
+                variant={status.color === "default" ? "outlined" : "filled"}
+              />
             </Box>
-          </Stack>
+          ) : (
+            <Button
+              component={Link}
+              fullWidth
+              href="/rules"
+              rel="noopener noreferrer"
+              size="small"
+              startIcon={<OpenInNewRoundedIcon />}
+              sx={{ minHeight: 40, justifyContent: "flex-start" }}
+              target="_blank"
+              variant="outlined"
+            >
+              Choose preset rules
+            </Button>
+          )}
         </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            color="text.secondary"
+            display="block"
+            sx={{ mb: 0.75 }}
+            variant="caption"
+          >
+            Custom rules
+          </Typography>
+          {ruleControls}
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          bgcolor: "rgba(1, 30, 86, 0.035)",
+          borderRadius: 1.5,
+          display: { xs: "none", md: "block" },
+          minHeight: 104,
+          mt: 1.5,
+          p: 1.5,
+        }}
+      >
+        <TextField
+          fullWidth
+          label="Technical notes"
+          minRows={3}
+          multiline
+          onChange={(event) => onTechnicalNoteChange(event.target.value)}
+          placeholder="Add setup, entry, exit, or execution observations."
+          value={roundTrip.journal.technicalNote}
+        />
       </Box>
 
       <Accordion
@@ -636,12 +814,15 @@ function TradeReview({
             p: 1.5,
           }}
         >
-          <Typography color="text.secondary" variant="caption">
-            Technical notes
-          </Typography>
-          <Typography sx={{ mt: 0.4 }} variant="body2">
-            {roundTrip.journal.technicalNote}
-          </Typography>
+          <TextField
+            fullWidth
+            label="Technical notes"
+            minRows={3}
+            multiline
+            onChange={(event) => onTechnicalNoteChange(event.target.value)}
+            placeholder="Add setup, entry, exit, or execution observations."
+            value={roundTrip.journal.technicalNote}
+          />
           <Divider sx={{ my: 1.5 }} />
           <Typography color="text.secondary" variant="caption">
             Rule review
@@ -659,6 +840,7 @@ function TradeReview({
               {status.label}: {roundTrip.journal.ruleSummary}
             </Typography>
           </Stack>
+          <Box sx={{ mt: 1.5 }}>{ruleControls}</Box>
         </AccordionDetails>
       </Accordion>
     </Box>
@@ -682,9 +864,9 @@ function WeekDayCard({
       component={Link}
       href={`/trade-tracker/${day.date}${designPreview ? "?preview=design" : ""}`}
       sx={{
-        bgcolor: selected ? "rgba(1, 30, 86, 0.08)" : "background.paper",
+        bgcolor: pnlBackground(day.netPnl),
         border: 1,
-        borderColor: selected ? "primary.main" : "divider",
+        borderColor: selected ? pnlColor(day.netPnl) : "divider",
         borderRadius: 1.5,
         color: "inherit",
         flex: "0 0 154px",
@@ -696,7 +878,7 @@ function WeekDayCard({
       }}
     >
       <Typography
-        color={selected ? "primary.main" : "text.primary"}
+        color="text.primary"
         sx={{ fontWeight: 850 }}
         variant="body2"
       >
@@ -724,10 +906,12 @@ function WeekDayCard({
 export function DaySessionView({
   data,
   designPreview = false,
+  pendingExecutions = false,
   topContent,
 }: {
   data: DaySessionData;
   designPreview?: boolean;
+  pendingExecutions?: boolean;
   topContent?: ReactNode;
 }) {
   const [availableTags, setAvailableTags] = useState<DaySessionTradeTag[]>(data.availableTags);
@@ -744,7 +928,40 @@ export function DaySessionView({
   );
   const [manageTagsOpen, setManageTagsOpen] = useState(false);
   const [rules, setRules] = useState(data.rules);
+  const [selectedDayPresetRuleId, setSelectedDayPresetRuleId] = useState(
+    data.rules.find(
+      (rule) => rule.applicability === "day" && !rule.custom,
+    )?.ruleId ?? "",
+  );
+  const [selectedDayCustomRuleId, setSelectedDayCustomRuleId] = useState(
+    data.rules.find(
+      (rule) => rule.applicability === "day" && rule.custom,
+    )?.ruleId ?? "",
+  );
+  const [customDayRuleOpen, setCustomDayRuleOpen] = useState(false);
+  const [customDayRuleName, setCustomDayRuleName] = useState("");
+  const [customDayRuleStatement, setCustomDayRuleStatement] = useState("");
+  const [customDayRuleState, setCustomDayRuleState] = useState<
+    "idle" | "saving" | "error"
+  >("idle");
   const [dailyNote, setDailyNote] = useState(data.dailyNote);
+  const [openPositionPlans, setOpenPositionPlans] = useState<
+    Record<string, "not-set" | "day-trade" | "swing" | "other">
+  >({});
+  const [openPositionTags, setOpenPositionTags] = useState<
+    Record<string, DaySessionTradeTag[]>
+  >({});
+  const [technicalNotes, setTechnicalNotes] = useState<Record<string, string>>(
+    () =>
+      Object.fromEntries(
+        data.tickers.flatMap((ticker) =>
+          ticker.roundTrips.map((roundTrip) => [
+            roundTrip.roundTripKey,
+            roundTrip.journal.technicalNote,
+          ]),
+        ),
+      ),
+  );
   const [notesState, setNotesState] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
@@ -752,13 +969,86 @@ export function DaySessionView({
     (count, ticker) => count + ticker.roundTrips.length,
     0,
   );
+  const tickerCount = new Set([
+    ...data.tickers.map((ticker) => ticker.stableInstrumentKey),
+    ...data.openPositions.map((position) => position.stableInstrumentKey),
+  ]).size;
   const reviewingPastDay = data.date !== data.week.currentSessionDate;
+  const dayPresetRules = rules.filter(
+    (rule) => rule.applicability === "day" && !rule.custom,
+  );
+  const dayCustomRules = rules.filter(
+    (rule) => rule.applicability === "day" && rule.custom,
+  );
+  const selectedDayPresetRule =
+    dayPresetRules.find((rule) => rule.ruleId === selectedDayPresetRuleId) ??
+    dayPresetRules[0];
+  const selectedDayCustomRule =
+    dayCustomRules.find((rule) => rule.ruleId === selectedDayCustomRuleId) ??
+    dayCustomRules[0];
+
+  async function createCustomDayRule(): Promise<void> {
+    if (!customDayRuleName.trim() || !customDayRuleStatement.trim()) return;
+    setCustomDayRuleState("saving");
+    try {
+      const dashboard = await api<{
+        manualRules: Array<{
+          reviewScope: "day_session" | "trade" | "both";
+          ruleId: string;
+          status: "active" | "paused" | "retired";
+          title: string;
+          versionOrdinal: string;
+        }>;
+      }>("/api/intelligence/rules", {
+        body: JSON.stringify({
+          action: "create_manual",
+          category: "process",
+          isFocus: true,
+          reviewScope: "day_session",
+          statement: customDayRuleStatement.trim(),
+          title: customDayRuleName.trim(),
+        }),
+        method: "POST",
+      });
+      const created = [...dashboard.manualRules]
+        .reverse()
+        .find(
+          (rule) =>
+            rule.status === "active" &&
+            rule.reviewScope === "day_session" &&
+            rule.title === customDayRuleName.trim(),
+        );
+      if (!created) throw new Error("The custom day rule was not returned.");
+      const dayRule: DaySessionRule = {
+        applicability: "day",
+        custom: true,
+        label: created.title,
+        revision: null,
+        ruleId: created.ruleId,
+        ruleVersion: created.versionOrdinal,
+        status: "not-reviewed",
+        targetLabel: null,
+        targetRoundTripKey: null,
+      };
+      setRules((current) => [...current, dayRule]);
+      setSelectedDayCustomRuleId(dayRule.ruleId);
+      setCustomDayRuleName("");
+      setCustomDayRuleStatement("");
+      setCustomDayRuleState("idle");
+      setCustomDayRuleOpen(false);
+    } catch {
+      setCustomDayRuleState("error");
+    }
+  }
 
   async function saveRuleStatus(
     selectedRule: DaySessionRule,
     status: DaySessionRule["status"],
   ): Promise<void> {
-    if (designPreview) {
+    if (
+      designPreview ||
+      (pendingExecutions && selectedRule.applicability === "trade")
+    ) {
       setRules((current) =>
         current.map((rule) =>
           rule.ruleId === selectedRule.ruleId &&
@@ -854,7 +1144,7 @@ export function DaySessionView({
           </Stack>
           <Box
             sx={{
-              bgcolor: "rgba(1, 30, 86, 0.035)",
+              bgcolor: pnlBackground(data.week.netPnl),
               borderRadius: 1.5,
               minWidth: { md: 220 },
               p: 1.75,
@@ -889,11 +1179,6 @@ export function DaySessionView({
             spacing={1}
             sx={{ flexWrap: "wrap", gap: 1 }}
           >
-            {!designPreview ? (
-              <DashboardSecondaryAction onClick={() => setManageTagsOpen(true)}>
-                Manage tags
-              </DashboardSecondaryAction>
-            ) : null}
             {data.previousSessionDate ? (
               <DashboardSecondaryAction
                 component={Link}
@@ -940,7 +1225,7 @@ export function DaySessionView({
           {[
             ["Net P/L", money(data.netPnl, data.currency), pnlColor(data.netPnl)],
             ["Trades", String(tradeCount), "text.primary"],
-            ["Tickers", String(data.tickers.length), "text.primary"],
+            ["Tickers", String(tickerCount), "text.primary"],
             [
               "Rules broken",
               String(rules.filter((rule) => rule.status === "broken").length),
@@ -981,7 +1266,7 @@ export function DaySessionView({
             >
               <Box
                 sx={{
-                  bgcolor: "rgba(1, 30, 86, 0.035)",
+                  bgcolor: pnlBackground(ticker.netPnl),
                   borderBottom: { xs: 1, md: 0 },
                   borderColor: "divider",
                   borderRight: { md: 1 },
@@ -994,47 +1279,94 @@ export function DaySessionView({
                 <Typography
                   color={pnlColor(ticker.netPnl)}
                   sx={{
+                    bgcolor: pnlBackground(ticker.netPnl),
+                    borderRadius: 1,
                     fontFamily: "var(--font-geist-mono)",
                     fontWeight: 850,
+                    px: 1,
+                    py: 0.4,
+                    width: "fit-content",
                     mt: 1,
                   }}
                   variant="h6"
                 >
                   {money(ticker.netPnl, data.currency)}
                 </Typography>
-                <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
-                  {ticker.roundTrips.length} trade
-                  {ticker.roundTrips.length === 1 ? "" : "s"}
-                </Typography>
                 <Typography
                   color={pnlColor(ticker.gainLossPercent ?? "0")}
                   sx={{
+                    bgcolor: pnlBackground(ticker.gainLossPercent ?? "0"),
+                    borderRadius: 1,
+                    fontSize: { xs: "0.875rem", md: "1.15rem" },
                     fontFamily: "var(--font-geist-mono)",
-                    fontWeight: 800,
+                    fontWeight: 900,
                     mt: 0.5,
+                    px: 1,
+                    py: 0.35,
+                    width: "fit-content",
                   }}
                   variant="body2"
                 >
                   {percentage(ticker.gainLossPercent)}
                 </Typography>
+                <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">
+                  {ticker.roundTrips.length} trade
+                  {ticker.roundTrips.length === 1 ? "" : "s"}
+                </Typography>
+                <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
+                  {[...new Set(ticker.roundTrips.map((trade) => trade.direction))].map(
+                    (direction) => (
+                      <Chip
+                        key={direction}
+                        label={direction === "long" ? "Long" : "Short"}
+                        size="small"
+                        variant="outlined"
+                      />
+                    ),
+                  )}
+                </Stack>
               </Box>
               <Stack divider={<Divider flexItem />}>
                 {ticker.roundTrips.map((roundTrip) => (
                   <TradeReview
                     availableTags={availableTags}
                     currency={data.currency}
-                    designPreview={designPreview}
+                    designPreview={designPreview || pendingExecutions}
                     key={roundTrip.roundTripKey}
                     onCatalogChange={setAvailableTags}
+                    onManageTags={
+                      designPreview
+                        ? undefined
+                        : () => setManageTagsOpen(true)
+                    }
+                    onRuleStatusChange={saveRuleStatus}
                     onTagsChange={(tags) =>
                       setTradeTags((current) => ({
                         ...current,
                         [roundTrip.roundTripKey]: tags,
                       }))
                     }
-                    roundTrip={roundTrip}
+                    onTechnicalNoteChange={(technicalNote) =>
+                      setTechnicalNotes((current) => ({
+                        ...current,
+                        [roundTrip.roundTripKey]: technicalNote,
+                      }))
+                    }
+                    roundTrip={{
+                      ...roundTrip,
+                      journal: {
+                        ...roundTrip.journal,
+                        technicalNote:
+                          technicalNotes[roundTrip.roundTripKey] ?? "",
+                      },
+                    }}
                     sessionDate={data.date}
                     tags={tradeTags[roundTrip.roundTripKey] ?? []}
+                    tradeRules={rules.filter(
+                      (rule) =>
+                        rule.applicability === "trade" &&
+                        rule.targetRoundTripKey === roundTrip.roundTripKey,
+                    )}
                   />
                 ))}
               </Stack>
@@ -1043,14 +1375,345 @@ export function DaySessionView({
         ))}
       </Stack>
 
+      {data.openPositions.length > 0 ? (
+        <Stack spacing={2}>
+          {data.openPositions.map((position) => (
+            <Card
+              key={position.positionKey}
+              sx={{ borderColor: "warning.light" }}
+              variant="outlined"
+            >
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    md: "240px minmax(0, 1fr)",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    bgcolor: "rgba(237, 108, 2, 0.09)",
+                    borderBottom: { xs: 1, md: 0 },
+                    borderColor: "divider",
+                    borderRight: { md: 1 },
+                    p: { xs: 2, md: 2.5 },
+                  }}
+                >
+                  <Stack
+                    direction="row"
+                    sx={{
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 1,
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Typography sx={{ fontWeight: 900 }} variant="h4">
+                      {position.symbol}
+                    </Typography>
+                    <Chip color="warning" label="Open" size="small" />
+                  </Stack>
+                  <Typography
+                    color="text.secondary"
+                    sx={{ mt: 1 }}
+                    variant="body2"
+                  >
+                    Open position
+                  </Typography>
+                  <Chip
+                    label={position.direction === "long" ? "Long" : "Short"}
+                    size="small"
+                    sx={{ mt: 1.25 }}
+                    variant="outlined"
+                  />
+                </Box>
+                <Box sx={{ p: { xs: 2, md: 2.5 } }}>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gap: 2,
+                      gridTemplateColumns: {
+                        xs: "repeat(2, minmax(0, 1fr))",
+                        md: "repeat(3, minmax(150px, 1fr))",
+                      },
+                    }}
+                  >
+                    <Box>
+                      <Typography color="text.secondary" variant="caption">
+                        Remaining quantity
+                      </Typography>
+                      <Typography sx={{ fontWeight: 850, mt: 0.35 }} variant="h6">
+                        {position.remainingQuantity} shares
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography color="text.secondary" variant="caption">
+                        Average entry
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontFamily: "var(--font-geist-mono)",
+                          fontWeight: 850,
+                          mt: 0.35,
+                        }}
+                        variant="h6"
+                      >
+                        {price(position.averageEntryPrice, data.currency)}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ gridColumn: { xs: "1 / -1", md: "auto" } }}>
+                      <Typography color="text.secondary" variant="caption">
+                        Opened
+                      </Typography>
+                      <Typography sx={{ fontWeight: 750, mt: 0.35 }} variant="body1">
+                        {timeLabel(position.openedAt, position.timezone)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <TradeTagEditor
+                    availableTags={availableTags}
+                    designPreview={designPreview || pendingExecutions}
+                    onCatalogChange={setAvailableTags}
+                    onManageTags={
+                      designPreview
+                        ? undefined
+                        : () => setManageTagsOpen(true)
+                    }
+                    onTagsChange={(tags) =>
+                      setOpenPositionTags((current) => ({
+                        ...current,
+                        [position.positionKey]: tags,
+                      }))
+                    }
+                    sessionDate={data.date}
+                    tags={openPositionTags[position.positionKey] ?? []}
+                    targetKey={position.positionKey}
+                    targetKind="open-position"
+                  />
+                  <Divider sx={{ my: 2 }} />
+                  <TextField
+                    helperText="Select open position type"
+                    label="Position plan"
+                    onChange={(event) =>
+                      setOpenPositionPlans((current) => ({
+                        ...current,
+                        [position.positionKey]: event.target.value as
+                          | "not-set"
+                          | "day-trade"
+                          | "swing"
+                          | "other",
+                      }))
+                    }
+                    select
+                    size="small"
+                    sx={{ maxWidth: 320, width: "100%" }}
+                    value={openPositionPlans[position.positionKey] ?? "not-set"}
+                  >
+                    <MenuItem value="not-set">Not set</MenuItem>
+                    <MenuItem value="day-trade">Day trade</MenuItem>
+                    <MenuItem value="swing">Swing</MenuItem>
+                    <MenuItem value="other">Other</MenuItem>
+                  </TextField>
+                </Box>
+              </Box>
+            </Card>
+          ))}
+        </Stack>
+      ) : null}
+
       <DashboardPanel title="Rules">
-        <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>
-          {rules.length === 0 ? (
+        <Box
+          sx={{
+            display: "grid",
+            gap: 2,
+            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+            mt: 1.5,
+          }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              color="text.secondary"
+              display="block"
+              sx={{ mb: 0.75 }}
+              variant="caption"
+            >
+              Preset day rules
+            </Typography>
+            {dayPresetRules.length > 0 ? (
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                <TextField
+                  fullWidth
+                  label="Preset day rule"
+                  onChange={(event) =>
+                    setSelectedDayPresetRuleId(event.target.value)
+                  }
+                  select
+                  size="small"
+                  value={selectedDayPresetRule?.ruleId ?? ""}
+                >
+                  {dayPresetRules.map((rule) => (
+                    <MenuItem key={rule.ruleId} value={rule.ruleId}>
+                      {rule.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <Chip
+                  color={
+                    selectedDayPresetRule?.status === "followed"
+                      ? "success"
+                      : selectedDayPresetRule?.status === "broken"
+                        ? "error"
+                        : "default"
+                  }
+                  label={
+                    selectedDayPresetRule?.status === "followed"
+                      ? "Followed"
+                      : selectedDayPresetRule?.status === "broken"
+                        ? "Broken"
+                        : "Not evaluated"
+                  }
+                  sx={{ alignSelf: { sm: "center" }, minWidth: 118 }}
+                  variant={
+                    selectedDayPresetRule?.status === "not-reviewed"
+                      ? "outlined"
+                      : "filled"
+                  }
+                />
+              </Stack>
+            ) : (
+              <Button
+                component={Link}
+                fullWidth
+                href="/rules"
+                rel="noopener noreferrer"
+                sx={{ justifyContent: "flex-start", minHeight: 40 }}
+                target="_blank"
+                variant="outlined"
+              >
+                Choose preset day rules
+              </Button>
+            )}
+          </Box>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              color="text.secondary"
+              display="block"
+              sx={{ mb: 0.75 }}
+              variant="caption"
+            >
+              Custom day rules
+            </Typography>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <TextField
+                fullWidth
+                label="Custom day rule"
+                onChange={(event) =>
+                  setSelectedDayCustomRuleId(event.target.value)
+                }
+                select
+                size="small"
+                value={selectedDayCustomRule?.ruleId ?? ""}
+              >
+                {dayCustomRules.length === 0 ? (
+                  <MenuItem value="">No custom day rules</MenuItem>
+                ) : null}
+                {dayCustomRules.map((rule) => (
+                  <MenuItem key={rule.ruleId} value={rule.ruleId}>
+                    {rule.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                disabled={!selectedDayCustomRule}
+                label="Result"
+                onChange={(event) => {
+                  if (selectedDayCustomRule) {
+                    void saveRuleStatus(
+                      selectedDayCustomRule,
+                      event.target.value as DaySessionRule["status"],
+                    );
+                  }
+                }}
+                select
+                size="small"
+                sx={{ minWidth: 145 }}
+                value={selectedDayCustomRule?.status ?? "not-reviewed"}
+              >
+                <MenuItem value="not-reviewed">Not reviewed</MenuItem>
+                <MenuItem value="followed">Followed</MenuItem>
+                <MenuItem value="broken">Broken</MenuItem>
+              </TextField>
+            </Stack>
+            <Button
+              onClick={() => {
+                setCustomDayRuleState("idle");
+                setCustomDayRuleOpen(true);
+              }}
+              size="small"
+              sx={{ mt: 1 }}
+            >
+              Add custom day rule
+            </Button>
+          </Box>
+        </Box>
+        <Dialog
+          fullWidth
+          maxWidth="sm"
+          onClose={() => setCustomDayRuleOpen(false)}
+          open={customDayRuleOpen}
+        >
+          <DialogTitle>Add custom day rule</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <TextField
+                fullWidth
+                label="Rule name"
+                onChange={(event) => setCustomDayRuleName(event.target.value)}
+                value={customDayRuleName}
+              />
+              <TextField
+                fullWidth
+                label="Rule in your own words"
+                minRows={4}
+                multiline
+                onChange={(event) =>
+                  setCustomDayRuleStatement(event.target.value)
+                }
+                value={customDayRuleStatement}
+              />
+              {customDayRuleState === "error" ? (
+                <Typography color="error.main" variant="body2">
+                  The custom day rule could not be saved.
+                </Typography>
+              ) : null}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCustomDayRuleOpen(false)}>Cancel</Button>
+            <Button
+              disabled={
+                customDayRuleState === "saving" ||
+                !customDayRuleName.trim() ||
+                !customDayRuleStatement.trim()
+              }
+              onClick={() => void createCustomDayRule()}
+              variant="contained"
+            >
+              {customDayRuleState === "saving" ? "Saving..." : "Save rule"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Stack divider={<Divider flexItem />} sx={{ display: "none" }}>
+          {rules.filter((rule) => rule.applicability === "day").length === 0 ? (
             <Typography color="text.secondary" sx={{ py: 1.5 }} variant="body2">
               No rule reviews recorded for this trading day.
             </Typography>
           ) : null}
-          {rules.map((rule) => {
+          {rules
+            .filter((rule) => rule.applicability === "day")
+            .map((rule) => {
             return (
               <Box
                 key={`${rule.ruleId}:${rule.targetRoundTripKey ?? "day"}`}
@@ -1092,7 +1755,7 @@ export function DaySessionView({
                 </TextField>
               </Box>
             );
-          })}
+            })}
         </Stack>
       </DashboardPanel>
 

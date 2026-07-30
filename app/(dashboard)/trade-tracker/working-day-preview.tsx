@@ -7,6 +7,7 @@ import { DashboardPage } from "../../dashboard-template";
 import { getDaySessionDesignPreview } from "./[sessionDate]/day-session-preview-data";
 import { DaySessionView } from "./[sessionDate]/day-session-view";
 import { ExecutionEntryCard } from "./execution-entry-card";
+import type { ExecutionDraft } from "./execution-entry-card";
 
 export function TradeTrackerWorkingDayPreview({
   sessionDate,
@@ -15,11 +16,18 @@ export function TradeTrackerWorkingDayPreview({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [submittedCount, setSubmittedCount] = useState<number | null>(null);
+  const [submittedExecutions, setSubmittedExecutions] = useState<
+    ExecutionDraft[]
+  >([]);
   const executionEntry = (
     <ExecutionEntryCard
       collapsed={collapsed}
+      initialExecutions={submittedExecutions}
       onCollapsedChange={setCollapsed}
-      onSubmitted={setSubmittedCount}
+      onSubmitted={(count, executions) => {
+        setSubmittedCount(count);
+        setSubmittedExecutions(executions);
+      }}
       sessionDate={sessionDate}
       submittedCount={submittedCount}
     />
@@ -31,7 +39,7 @@ export function TradeTrackerWorkingDayPreview({
 
   return (
     <DaySessionView
-      data={getDaySessionDesignPreview(sessionDate)}
+      data={getDaySessionDesignPreview(sessionDate, submittedExecutions)}
       designPreview
       topContent={executionEntry}
     />

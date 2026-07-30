@@ -451,7 +451,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </Button>
             <Button
               component={Link}
-              href="/manual-entry"
+              href="/trade-tracker"
               startIcon={<NoteAltRoundedIcon />}
               variant="contained"
             >

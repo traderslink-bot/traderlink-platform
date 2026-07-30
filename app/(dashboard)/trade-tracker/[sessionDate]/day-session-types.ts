@@ -33,6 +33,17 @@ export type DaySessionTicker = {
   symbol: string;
 };
 
+export type DaySessionOpenPosition = {
+  averageEntryPrice: string;
+  direction: "long" | "short";
+  openedAt: string;
+  positionKey: string;
+  remainingQuantity: string;
+  stableInstrumentKey: string;
+  symbol: string;
+  timezone: string;
+};
+
 export type DaySessionRule = {
   applicability: "day" | "trade";
   custom: boolean;
@@ -76,6 +87,7 @@ export type DaySessionData = {
   date: string;
   netPnl: string;
   nextSessionDate: string | null;
+  openPositions: DaySessionOpenPosition[];
   previousSessionDate: string | null;
   rules: DaySessionRule[];
   tickers: DaySessionTicker[];

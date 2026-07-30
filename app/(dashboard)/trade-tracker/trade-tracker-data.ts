@@ -22,7 +22,9 @@ import {
 
 import type {
   DaySessionData,
+  DaySessionRule,
   DaySessionTicker,
+  DaySessionTradeTag,
   DaySessionWeekDay,
 } from "./[sessionDate]/day-session-types";
 
@@ -30,6 +32,65 @@ type GovernedTradeRows = {
   currency: string;
   rows: readonly AnalyticalRow[];
 };
+
+export type WorkingDayReviewConfiguration = {
+  availableTags: DaySessionTradeTag[];
+  rules: Array<
+    Omit<DaySessionRule, "targetLabel" | "targetRoundTripKey">
+  >;
+};
+
+export function getWorkingDayReviewConfiguration(
+  owner: TraderIntelligenceOwnerContext,
+): WorkingDayReviewConfiguration {
+  const definitions = readTradingRulesDashboard(owner);
+  const availableTags = readTradeTagCatalog(owner).map((tag) => ({
+    assignmentCount: tag.assignmentCount,
+    name: tag.name,
+    revision: tag.revision,
+    tagId: tag.tagId,
+  }));
+  const presetRules = definitions.packet.rules
+    .filter((rule) => rule.status === "active")
+    .map((rule) => ({
+      applicability:
+        rule.template.scope === "trade" ? ("trade" as const) : ("day" as const),
+      custom: false,
+      label: rule.template.label,
+      revision: null,
+      ruleId: rule.ruleInstanceId,
+      ruleVersion: rule.currentVersion.versionOrdinal,
+      status: "not-reviewed" as const,
+    }));
+  const customRules = definitions.manualRules
+    .filter((rule) => rule.status === "active")
+    .flatMap((rule) => {
+      const shared = {
+        custom: true,
+        label: rule.title,
+        revision: null,
+        ruleId: rule.ruleId,
+        ruleVersion: rule.versionOrdinal,
+        status: "not-reviewed" as const,
+      };
+      if (rule.reviewScope === "both") {
+        return [
+          { ...shared, applicability: "day" as const },
+          { ...shared, applicability: "trade" as const },
+        ];
+      }
+      return [
+        {
+          ...shared,
+          applicability:
+            rule.reviewScope === "trade"
+              ? ("trade" as const)
+              : ("day" as const),
+        },
+      ];
+    });
+  return { availableTags, rules: [...presetRules, ...customRules] };
+}
 
 function exactSum(values: readonly string[]): string {
   const result = sumExactDecimals(values);
@@ -96,16 +157,18 @@ function roundTripPrices(row: AnalyticalRow): {
     row.grossPnl,
     row.direction === "long" ? "add" : "subtract",
   );
+  const entryPrice = exactDivision(
+    row.entryNotional.amount,
+    row.shareQuantity.quantity,
+    4,
+  );
+  const exitPrice =
+    exitNotional === null
+      ? null
+      : exactDivision(exitNotional, row.shareQuantity.quantity, 4);
   return {
-    entryPrice: exactDivision(
-      row.entryNotional.amount,
-      row.shareQuantity.quantity,
-      4,
-    ),
-    exitPrice:
-      exitNotional === null
-        ? null
-        : exactDivision(exitNotional, row.shareQuantity.quantity, 4),
+    entryPrice: entryPrice === null || exitPrice === null ? null : entryPrice,
+    exitPrice: entryPrice === null || exitPrice === null ? null : exitPrice,
     gainLossPercent: exactDivision(
       row.netPnl,
       row.entryNotional.amount,
@@ -263,7 +326,10 @@ export async function getGovernedDaySession(
   );
   const dayRules = [
     ...(ruleDefinitions?.packet.rules
-      .filter((rule) => rule.status === "active")
+      .filter(
+        (rule) =>
+          rule.status === "active" && rule.template.scope !== "trade",
+      )
       .map((rule) => ({
         applicability: "day" as const,
         custom: false,
@@ -289,8 +355,24 @@ export async function getGovernedDaySession(
         targetRoundTripKey: null,
       })) ?? []),
   ];
-  const tradeRules =
-    ruleDefinitions?.manualRules
+  const tradeRules = [
+    ...(ruleDefinitions?.packet.rules
+      .filter(
+        (rule) =>
+          rule.status === "active" && rule.template.scope === "trade",
+      )
+      .flatMap((rule) =>
+        dayRows.map((row) => ({
+          applicability: "trade" as const,
+          custom: false,
+          label: rule.template.label,
+          ruleId: rule.ruleInstanceId,
+          ruleVersion: rule.currentVersion.versionOrdinal,
+          targetLabel: `${row.displayedSymbol} completed trade`,
+          targetRoundTripKey: row.semanticRoundTripKey,
+        })),
+      ) ?? []),
+    ...(ruleDefinitions?.manualRules
       .filter(
         (rule) =>
           rule.status === "active" &&
@@ -306,7 +388,8 @@ export async function getGovernedDaySession(
           targetLabel: `${row.displayedSymbol} completed trade`,
           targetRoundTripKey: row.semanticRoundTripKey,
         })),
-      ) ?? [];
+      ) ?? []),
+  ];
   const rules = [...dayRules, ...tradeRules].map((definition) => {
     const review = reviewMap.get(
       `${definition.ruleId}:${definition.targetRoundTripKey ?? ""}`,
@@ -346,6 +429,7 @@ export async function getGovernedDaySession(
         },
     netPnl: exactSum(dayRows.map((row) => row.netPnl)),
     nextSessionDate: allDates[selectedIndex + 1] ?? null,
+    openPositions: [],
     previousSessionDate: allDates[selectedIndex - 1] ?? null,
     rules,
     tickers,

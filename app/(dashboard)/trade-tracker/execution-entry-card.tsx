@@ -12,7 +12,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   DashboardPanel,
@@ -20,7 +20,7 @@ import {
   DashboardSecondaryAction,
 } from "../../dashboard-template";
 
-type ExecutionDraft = {
+export type ExecutionDraft = {
   fees: string;
   id: number;
   price: string;
@@ -42,8 +42,16 @@ function newExecution(id: number, side: "BUY" | "SELL"): ExecutionDraft {
   };
 }
 
+function normalizedDecimal(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.startsWith(".")) return `0${trimmed}`;
+  if (trimmed.startsWith("-.")) return `-0${trimmed.slice(1)}`;
+  return trimmed;
+}
+
 export function ExecutionEntryCard({
   collapsed,
+  initialExecutions = [],
   onCollapsedChange,
   onSubmitted,
   persist = false,
@@ -51,23 +59,33 @@ export function ExecutionEntryCard({
   submittedCount,
 }: {
   collapsed: boolean;
+  initialExecutions?: ExecutionDraft[];
   onCollapsedChange: (collapsed: boolean) => void;
-  onSubmitted: (count: number) => void;
+  onSubmitted: (count: number, executions: ExecutionDraft[]) => void;
   persist?: boolean;
   sessionDate: string;
   submittedCount: number | null;
 }) {
   const [nextId, setNextId] = useState(3);
-  const [rows, setRows] = useState<ExecutionDraft[]>([
-    newExecution(1, "BUY"),
-    newExecution(2, "SELL"),
-  ]);
+  const [rows, setRows] = useState<ExecutionDraft[]>(() =>
+    initialExecutions.length > 0
+      ? initialExecutions
+      : [newExecution(1, "BUY"), newExecution(2, "SELL")],
+  );
   const [state, setState] = useState<
     | { kind: "idle" }
     | { kind: "saving" }
     | { kind: "saved"; count: number }
     | { kind: "error"; message: string }
   >({ kind: "idle" });
+
+  useEffect(() => {
+    if (initialExecutions.length === 0) return;
+    setRows(initialExecutions);
+    setNextId(
+      Math.max(...initialExecutions.map((execution) => execution.id)) + 1,
+    );
+  }, [initialExecutions]);
 
   function update(
     id: number,
@@ -110,7 +128,6 @@ export function ExecutionEntryCard({
     if (!complete || state.kind === "saving") return;
     setState({ kind: "saving" });
     try {
-      let acceptedCount = rows.length;
       if (persist) {
         const response = await fetch(
           "/api/intelligence/day-session-executions/v1",
@@ -118,9 +135,9 @@ export function ExecutionEntryCard({
             body: JSON.stringify({
               date: sessionDate,
               executions: rows.map((row) => ({
-                fees: row.fees,
-                price: row.price,
-                quantity: row.quantity,
+                fees: normalizedDecimal(row.fees),
+                price: normalizedDecimal(row.price),
+                quantity: normalizedDecimal(row.quantity),
                 side: row.side,
                 symbol: row.symbol.trim().toUpperCase(),
                 time: row.time,
@@ -139,10 +156,19 @@ export function ExecutionEntryCard({
             result.error?.message ?? "The executions could not be saved.",
           );
         }
-        acceptedCount = result.acceptedExecutionCount;
       }
-      setState({ kind: "saved", count: acceptedCount });
-      onSubmitted(acceptedCount);
+      const recordedCount = rows.length;
+      setState({ kind: "saved", count: recordedCount });
+      onSubmitted(
+        recordedCount,
+        rows.map((row) => ({
+          ...row,
+          fees: normalizedDecimal(row.fees),
+          price: normalizedDecimal(row.price),
+          quantity: normalizedDecimal(row.quantity),
+          symbol: row.symbol.trim().toUpperCase(),
+        })),
+      );
       onCollapsedChange(true);
     } catch (error) {
       setState({
@@ -193,8 +219,7 @@ export function ExecutionEntryCard({
       title="Enter trades"
     >
       <Typography color="text.secondary" variant="body2">
-        Add every buy and sell from this trading day. Completed trades and P/L
-        are reconstructed after saving.
+        Completed trades and P/L are reconstructed after saving.
       </Typography>
 
       <Stack spacing={1.5} sx={{ mt: 2.5 }}>
@@ -314,15 +339,21 @@ export function ExecutionEntryCard({
         }}
       >
         <Typography color="text.secondary" variant="body2">
-          Times use Eastern Time. P/L and round trips are never entered
-          manually.
+          Times use Eastern Time.
         </Typography>
-        <DashboardPrimaryAction
-          disabled={!complete || state.kind === "saving"}
-          onClick={() => void saveExecutions()}
-        >
-          {submittedCount === null ? "Submit executions" : "Update executions"}
-        </DashboardPrimaryAction>
+        <Stack direction="row" spacing={1}>
+          {submittedCount !== null ? (
+            <DashboardSecondaryAction onClick={() => onCollapsedChange(true)}>
+              Close
+            </DashboardSecondaryAction>
+          ) : null}
+          <DashboardPrimaryAction
+            disabled={!complete || state.kind === "saving"}
+            onClick={() => void saveExecutions()}
+          >
+            {submittedCount === null ? "Submit executions" : "Update executions"}
+          </DashboardPrimaryAction>
+        </Stack>
       </Box>
       {state.kind === "error" ? (
         <Typography color="error.main" sx={{ mt: 1.5 }} variant="body2">

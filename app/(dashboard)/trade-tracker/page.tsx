@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { requireTraderIntelligenceOwnerPageAccess } from "@/src/lib/trader-intelligence-v3/auth";
+
+import { getWorkingDayReviewConfiguration } from "./trade-tracker-data";
 import { TradeTrackerWorkingDay } from "./working-day";
 import { TradeTrackerWorkingDayPreview } from "./working-day-preview";
 
@@ -43,5 +46,13 @@ export default async function TradeTrackerPage({
     );
   }
 
-  return <TradeTrackerWorkingDay sessionDate={currentNewYorkDate()} />;
+  const owner = await requireTraderIntelligenceOwnerPageAccess(
+    "app/(dashboard)/trade-tracker/page.tsx",
+  );
+  return (
+    <TradeTrackerWorkingDay
+      reviewConfiguration={getWorkingDayReviewConfiguration(owner)}
+      sessionDate={currentNewYorkDate()}
+    />
+  );
 }
