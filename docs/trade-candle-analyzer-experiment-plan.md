@@ -142,6 +142,38 @@ complete. It must not imply that a different entry was certainly achievable.
   have complete-window/no-feedback behaviour and the fixture design is
   approved.
 
+## Approved micro-cap candle vocabulary
+
+Only these five pattern families are eligible for the first execution-context
+layer. Each event must use complete, active-volume candles and be labelled as
+an observed structure, never a trade signal.
+
+1. **Expansion / continuation:** a wide real body relative to recent bodies,
+   closing near its high for a long move or near its low for a short move. A
+   consecutive expansion requires the next active candle to continue in the
+   same direction. This is the momentum-candle family.
+2. **Engulfing shift:** a bullish or bearish real body that fully contains the
+   preceding opposite-direction real body. It is relevant only near an
+   execution zone and is described as a short-term control shift.
+3. **Rejection wick:** hammer, shooting-star, or comparable asymmetric wick.
+   The dominant wick must materially exceed its real body and the opposite wick;
+   it is surfaced only near a local extreme, execution, or key price zone.
+4. **Compression / break:** an inside bar or tight-range sequence contained by
+   a prior range, followed by a later active-volume break of that range. The
+   detector records the compression and the observed break separately.
+5. **High-volume exhaustion:** not a standalone candle name. It requires an
+   extended directional move, unusually high relative volume versus the prior
+   active bars, and evidence of stalling (a rejection wick, close-away-from-
+   extreme, failed break, or immediate reversal). High volume alone is never
+   called exhaustion.
+
+Eligibility rules: score only events within the entry zone (10 minutes before
+through 15 minutes after entry), exit zone (10 minutes before through 30
+minutes after exit), or the observed held-position peak zone. Deduplicate
+overlapping labels on the same structure and present at most three highest-
+relevance observations. Relevance combines execution proximity, relative
+volume, pattern completeness, location, and observed follow-through.
+
 ## Delivery checkpoints
 
 1. **Design review:** Build the isolated fixture-backed route and chart layout;
