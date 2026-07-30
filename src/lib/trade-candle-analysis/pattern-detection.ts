@@ -2,6 +2,8 @@ import type { TradeCandle } from "./candle-analysis";
 
 export type CandlePatternKind =
   | "compression"
+  | "compression_break_bearish"
+  | "compression_break_bullish"
   | "engulfing_bearish"
   | "engulfing_bullish"
   | "expansion_bearish"
@@ -13,6 +15,19 @@ export type CandlePatternKind =
 export type CandlePatternEvent = {
   kind: CandlePatternKind;
   time: number;
+};
+
+export const MICRO_CAP_PATTERN_DEFINITIONS: Readonly<Record<CandlePatternKind, string>> = {
+  compression: "An inside bar or tight range contained by the prior range. It is a pause, not a directional signal.",
+  compression_break_bearish: "Price broke below the prior compressed range on an active candle.",
+  compression_break_bullish: "Price broke above the prior compressed range on an active candle.",
+  engulfing_bearish: "A bearish real body contained the preceding bullish body, an observed short-term control shift.",
+  engulfing_bullish: "A bullish real body contained the preceding bearish body, an observed short-term control shift.",
+  expansion_bearish: "A wide bearish body closed near its low relative to recent active candles.",
+  expansion_bullish: "A wide bullish body closed near its high relative to recent active candles.",
+  high_volume_exhaustion: "An extended move met unusually high volume and stalled; high volume alone is never classified as exhaustion.",
+  rejection_lower: "A dominant lower wick showed price rejection near the candle low.",
+  rejection_upper: "A dominant upper wick showed price rejection near the candle high.",
 };
 
 function body(candle: TradeCandle): number {
@@ -54,10 +69,28 @@ export function detectMicroCapCandlePatterns(
     if (lowerWick >= candleBody * 2 && lowerWick > upperWick * 1.5) events.push({ kind: "rejection_lower", time: candle.time });
     if (upperWick >= candleBody * 2 && upperWick > lowerWick * 1.5) events.push({ kind: "rejection_upper", time: candle.time });
     if (candle.high <= previous.high && candle.low >= previous.low) events.push({ kind: "compression", time: candle.time });
+    if (index >= 2) {
+      const compressed = candles[index - 1];
+      const container = candles[index - 2];
+      if (active(compressed) && active(container) && compressed.high <= container.high && compressed.low >= container.low) {
+        if (candle.close > container.high) events.push({ kind: "compression_break_bullish", time: candle.time });
+        if (candle.close < container.low) events.push({ kind: "compression_break_bearish", time: candle.time });
+      }
+    }
     const priorVolumes = candles.slice(Math.max(0, index - 20), index).filter(active).map((item) => item.volume);
     const averageVolume = priorVolumes.reduce((sum, value) => sum + value, 0) / priorVolumes.length;
     const stalled = (bullish && !closeNearHigh) || (!bullish && !closeNearLow) || upperWick >= candleBody || lowerWick >= candleBody;
-    if (averageVolume > 0 && candle.volume >= averageVolume * 3 && stalled) events.push({ kind: "high_volume_exhaustion", time: candle.time });
+    const priorMove = candles.slice(Math.max(0, index - 5), index).filter(active);
+    const priorRange = priorMove.reduce((sum, item) => sum + range(item), 0) / priorMove.length;
+    const directionalMove = priorMove.length >= 3
+      ? previous.close - priorMove[0]!.open
+      : 0;
+    const extendedMove = priorRange > 0 && Math.abs(directionalMove) >= priorRange * 1.5;
+    const isAgainstPriorMove = (directionalMove > 0 && (!bullish || !closeNearHigh)) ||
+      (directionalMove < 0 && (bullish || !closeNearLow));
+    if (averageVolume > 0 && candle.volume >= averageVolume * 3 && extendedMove && isAgainstPriorMove && stalled) {
+      events.push({ kind: "high_volume_exhaustion", time: candle.time });
+    }
   }
   return events;
 }

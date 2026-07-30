@@ -1,6 +1,6 @@
 # Trade Candle Analyzer Experiment Plan
 
-**Status:** Design fixture in progress; live Yahoo connection not started  
+**Status:** Manual completed-trade connection in progress; acceptance review pending  
 **Branch:** `codex/trade-candle-analyzer-experiment`  
 **Progress:** [trade-candle-analyzer-experiment-progress.md](./trade-candle-analyzer-experiment-progress.md)
 
@@ -189,9 +189,10 @@ volume, pattern completeness, location, and observed follow-through.
    review; preserve `No feedback` whenever their required lookback is absent.
 4. **Read-only connection:** Connect selected governed completed round trips to
    the server-only Yahoo adapter; preserve no-feedback states.
-   Cache the derived result per completed trade and analysis version, enforce a
-   per-owner cooldown/concurrency boundary, and offer a deliberate refresh only
-   after the cooldown. Do not persist raw provider responses.
+   Save the derived result per completed trade and analysis version. Yahoo is
+   called only by the explicit `Analyze this trade` or `Refresh candle review`
+   action; a deliberate refresh is available after a one-minute per-trade
+   guard. Do not persist raw provider responses.
 5. **Acceptance:** Run targeted checks only at the completed slice boundary,
    then present the isolated route for review. Do not merge or deploy without
    explicit approval.

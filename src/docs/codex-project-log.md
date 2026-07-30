@@ -1,3 +1,22 @@
+# 2026-07-30 - Trade Candle Analyzer manual-review experiment
+
+**Branch:** `codex/trade-candle-analyzer-experiment` (isolated; not merged).
+
+- The completed-round-trip page now offers the explicit statuses `Analyze this
+  trade`, `View review`, and `No coverage`; raw execution rows are never
+  analyzed as if they were a completed trade.
+- The detail route resolves the selected V3 trade server-side, requests Yahoo
+  only after the trader presses the action, stores only derived feedback, and
+  applies a one-minute per-trade refresh guard. A Yahoo availability failure
+  saves nothing.
+- The saved review includes evidence-gated profit giveback, exit timing, entry
+  timing, execution-zone candle structures, and informational EMA/RSI/VWAP/
+  MACD/ATR/ADR context. It does not persist raw Yahoo candle responses or
+  alter broker P/L.
+- Focused ESLint and TypeScript checks pass. The final isolated dashboard
+  visual review is deferred until its protected runtime can be started on an
+  unused feature-worktree port; do not alter the shared main port 3010.
+
 # 2026-07-30 - Calendar week real-data refinement
 
 - The approved Calendar is now integrated on `main`. For the five-day Week

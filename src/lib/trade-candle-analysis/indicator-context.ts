@@ -2,6 +2,11 @@ import type { TradeCandle } from "./candle-analysis";
 
 export type IndicatorPoint = { atr14: number | null; ema9: number | null; ema20: number | null; macd: number | null; macdHistogram: number | null; macdSignal: number | null; rsi14: number | null; time: number; vwap: number | null };
 
+export type IndicatorSnapshot = Omit<IndicatorPoint, "time"> & {
+  adr20: number | null;
+  phase: "entry" | "exit";
+};
+
 export function calculateIndicatorPoints(candles: readonly TradeCandle[]): readonly IndicatorPoint[] {
   let ema9: number | null = null, ema12: number | null = null, ema20: number | null = null, ema26: number | null = null, macdSignal: number | null = null, atr14: number | null = null, gain = 0, loss = 0, volumeTotal = 0, priceVolumeTotal = 0;
   return candles.map((candle, index) => {
@@ -21,4 +26,26 @@ export function calculateIndicatorPoints(candles: readonly TradeCandle[]): reado
 export function calculateAdr20(dailyHighLowRanges: readonly number[]): number | null {
   const eligible = dailyHighLowRanges.filter((range) => Number.isFinite(range) && range > 0).slice(-20);
   return eligible.length === 20 ? eligible.reduce((sum, range) => sum + range, 0) / 20 : null;
+}
+
+export function indicatorSnapshot(args: {
+  adr20: number | null;
+  phase: "entry" | "exit";
+  points: readonly IndicatorPoint[];
+  time: number;
+}): IndicatorSnapshot | null {
+  const point = [...args.points].reverse().find((candidate) => candidate.time <= args.time);
+  if (!point) return null;
+  return Object.freeze({
+    adr20: args.adr20,
+    atr14: point.atr14,
+    ema9: point.ema9,
+    ema20: point.ema20,
+    macd: point.macd,
+    macdHistogram: point.macdHistogram,
+    macdSignal: point.macdSignal,
+    phase: args.phase,
+    rsi14: point.rsi14,
+    vwap: point.vwap,
+  });
 }
