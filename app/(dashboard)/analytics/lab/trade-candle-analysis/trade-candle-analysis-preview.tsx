@@ -351,6 +351,8 @@ export function TradeCandleAnalysisPreview() {
           exitTime: formatEasternTime(liveResult.simulatedTrade.exitTime),
         }
       : scenario;
+  const liveFindings =
+    liveResult?.status === "ready" ? liveResult.results : null;
 
   useEffect(() => {
     let active = true;
@@ -496,17 +498,21 @@ export function TradeCandleAnalysisPreview() {
         <DashboardPanel title="Profit giveback">
           <Stack spacing={1.25}>
             <Typography sx={{ fontWeight: 700 }}>
-              {hasExitContinuation
+              {liveFindings
+                ? liveFindings.profitGiveback.title
+                : hasExitContinuation
                 ? `The simulated exit retained a gain from the ${formatPrice(scenario.entryPrice)} entry.`
                 : "No qualifying profitable early-exit simulation was found."}
             </Typography>
             <Typography color="text.secondary" variant="body2">
-              {hasExitContinuation
+              {liveFindings
+                ? liveFindings.profitGiveback.detail
+                : hasExitContinuation
                 ? "This demonstrates an exit path, not a broker-fill reconstruction. A live profit-giveback result needs complete held-position candles."
                 : scenario.noFeedbackReason}
             </Typography>
             <Chip
-              label={hasExitContinuation ? "Simulated gain retained" : "No feedback"}
+              label={liveFindings?.profitGiveback.title ?? (hasExitContinuation ? "Simulated gain retained" : "No feedback")}
               size="small"
               variant="outlined"
             />
@@ -516,18 +522,22 @@ export function TradeCandleAnalysisPreview() {
         <DashboardPanel title="Exit timing">
           <Stack spacing={1.25}>
             <Typography sx={{ fontWeight: 700 }}>
-              {hasExitContinuation
+              {liveFindings
+                ? liveFindings.exitTiming.title
+                : hasExitContinuation
                 ? "Price continued higher after the simulated exit."
                 : "No missed-profit conclusion."}
             </Typography>
             <Typography color="text.secondary" variant="body2">
-              {hasExitContinuation && scenario.exitPrice && scenario.primaryHigh
+              {liveFindings
+                ? liveFindings.exitTiming.detail
+                : hasExitContinuation && scenario.exitPrice && scenario.primaryHigh
                 ? `The observed high reached ${formatPrice(scenario.primaryHigh.price)} at ${scenario.primaryHigh.time}, within 30 minutes of the ${formatPrice(scenario.exitPrice)} simulated exit.`
                 : scenario.noFeedbackReason}
             </Typography>
             <Chip
-              color={hasExitContinuation ? "info" : "default"}
-              label={hasExitContinuation ? "Primary window complete" : "No feedback"}
+              color={liveFindings?.exitTiming.title.includes("continued") || hasExitContinuation ? "info" : "default"}
+              label={liveFindings?.exitTiming.title ?? (hasExitContinuation ? "Primary window complete" : "No feedback")}
               size="small"
               variant="outlined"
             />
@@ -537,15 +547,18 @@ export function TradeCandleAnalysisPreview() {
         <DashboardPanel title="Entry timing">
           <Stack spacing={1.25}>
             <Typography sx={{ fontWeight: 700 }}>
-              {hasExitContinuation
+              {liveFindings
+                ? liveFindings.entryTiming.title
+                : hasExitContinuation
                 ? `The simulation begins at the observed ${formatPrice(scenario.entryPrice)} open.`
                 : "No alternate entry is inferred."}
             </Typography>
             <Typography color="text.secondary" variant="body2">
-              Entry timing stays separate from the exit example. The live analyzer
-              will report only what complete pre- and post-entry candle windows support.
+              {liveFindings
+                ? liveFindings.entryTiming.detail
+                : "Entry timing stays separate from the exit example. The live analyzer will report only what complete pre- and post-entry candle windows support."}
             </Typography>
-            <Chip label="Evidence-gated" size="small" variant="outlined" />
+            <Chip label={liveFindings?.entryTiming.title ?? "Evidence-gated"} size="small" variant="outlined" />
           </Stack>
         </DashboardPanel>
       </Box>
