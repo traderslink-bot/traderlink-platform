@@ -18,10 +18,13 @@ Status: implementation in progress
   The importer itself supports separate source Date and Time fields; the UI
   presentation must be separated without weakening the canonical timestamp.
 - The import history confirms 575 accepted stock executions for the April
-  statement. The dashboard's shared analytics-authority endpoint is currently
-  returning its explicit unavailable state. This is a separate shared-path
-  repair: Import Repair will not add a second dashboard source or bypass the
-  verified authority.
+  statement. The shared dashboard authority locates the binding, then blocks
+  the whole source because it finds open inventory remaining and a starting-
+  inventory-as-of violation. This is too broad: it suppresses the accepted
+  execution history and any independently usable completed-trade result.
+  The repair must keep one shared authority and disclose the limitation only
+  on metrics that require the missing opening history; Import Repair must not
+  add a second dashboard source or bypass verification.
 
 ## Next implementation steps
 
@@ -36,6 +39,18 @@ Status: implementation in progress
    repair tasks.
 5. Present the revised table for owner review before any bulk persistence
    workflow is used against the active statement.
+6. Shared dashboard repair: make accepted executions visible through the one
+   authority even when opening inventory limits some completed-trade metrics.
+   Do not infer the missing opening position or fabricate P/L.
+
+## Active shared-authority change
+
+The existing all-or-nothing reconstruction gate is being replaced. Its current
+assumption that every ledger begins flat is invalid for ordinary broker
+statements and blocks the entire dashboard when an imported statement starts
+mid-position. The active repair will retain row-level restrictions while
+allowing usable execution and closed-trade results through the one shared
+authority.
 
 ## Implemented in this slice
 

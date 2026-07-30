@@ -18,6 +18,10 @@ errors to correct or exclude.
 ## Product decisions
 
 - Keep every original broker row visible in Data Decisions.
+- Do not use an all-or-nothing statement gate. A row or metric is restricted
+  only when its own required evidence is missing; valid executions and
+  independently provable closed trades remain available elsewhere in the
+  dashboard.
 - Separate **Needs review** from **Automatically set aside**. Only the first
   group contributes to the review count or gets a row action.
 - Automatically set aside recognized headings, report sections, non-stock
@@ -60,6 +64,29 @@ must not introduce a second dashboard data source or bypass that authority.
 This work will keep the import records and their rebuild binding correct, while
 the shared-authority repair restores those accepted executions to Workspace,
 Trades, and Analytics.
+
+The confirmed failure is not a missing binding: the current reconstruction
+blocks the entire dataset when any statement begins with an already-open
+position. The shared-path repair must preserve every accepted execution and
+permit analytics that do not require the unavailable opening inventory, while
+marking dependent P/L claims unavailable with a plain-language limitation.
+
+## Strictness replacement rule
+
+The dashboard must never disappear because one statement row cannot establish
+all account history. Treat broker data in these levels:
+
+1. **Visible source record:** every original row remains in Data Decisions.
+2. **Usable execution:** a complete stock execution may appear in execution
+   and activity views even if no completed-trade P/L can yet be proven.
+3. **Usable closed trade:** a round trip appears when its own opening and
+   closing executions establish its result.
+4. **Restricted result:** only the affected row, position, or metric stays in
+   Data Decisions with its broker row and reason. It cannot suppress unrelated
+   executions, closed trades, or dashboard navigation.
+
+Missing financial facts remain missing. The system may disclose a limitation;
+it may not fill in an opening cost, fee, inventory, or P/L.
 
 ## Date and time presentation decision
 
