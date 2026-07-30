@@ -46,12 +46,14 @@ export function ExecutionEntryCard({
   collapsed,
   onCollapsedChange,
   onSubmitted,
+  persist = false,
   sessionDate,
   submittedCount,
 }: {
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
   onSubmitted: (count: number) => void;
+  persist?: boolean;
   sessionDate: string;
   submittedCount: number | null;
 }) {
@@ -64,6 +66,7 @@ export function ExecutionEntryCard({
     | { kind: "idle" }
     | { kind: "saving" }
     | { kind: "saved"; count: number }
+    | { kind: "error"; message: string }
   >({ kind: "idle" });
 
   function update(
@@ -103,12 +106,53 @@ export function ExecutionEntryCard({
       (row.fees === "" || Number(row.fees) >= 0),
   );
 
-  function saveExecutions() {
+  async function saveExecutions() {
     if (!complete || state.kind === "saving") return;
     setState({ kind: "saving" });
-    setState({ kind: "saved", count: rows.length });
-    onSubmitted(rows.length);
-    onCollapsedChange(true);
+    try {
+      let acceptedCount = rows.length;
+      if (persist) {
+        const response = await fetch(
+          "/api/intelligence/day-session-executions/v1",
+          {
+            body: JSON.stringify({
+              date: sessionDate,
+              executions: rows.map((row) => ({
+                fees: row.fees,
+                price: row.price,
+                quantity: row.quantity,
+                side: row.side,
+                symbol: row.symbol.trim().toUpperCase(),
+                time: row.time,
+              })),
+            }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
+          },
+        );
+        const result = (await response.json()) as {
+          acceptedExecutionCount?: number;
+          error?: { message?: string };
+        };
+        if (!response.ok || result.acceptedExecutionCount === undefined) {
+          throw new Error(
+            result.error?.message ?? "The executions could not be saved.",
+          );
+        }
+        acceptedCount = result.acceptedExecutionCount;
+      }
+      setState({ kind: "saved", count: acceptedCount });
+      onSubmitted(acceptedCount);
+      onCollapsedChange(true);
+    } catch (error) {
+      setState({
+        kind: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "The executions could not be saved.",
+      });
+    }
   }
 
   if (collapsed && submittedCount !== null) {
@@ -275,11 +319,16 @@ export function ExecutionEntryCard({
         </Typography>
         <DashboardPrimaryAction
           disabled={!complete || state.kind === "saving"}
-          onClick={saveExecutions}
+          onClick={() => void saveExecutions()}
         >
           {submittedCount === null ? "Submit executions" : "Update executions"}
         </DashboardPrimaryAction>
       </Box>
+      {state.kind === "error" ? (
+        <Typography color="error.main" sx={{ mt: 1.5 }} variant="body2">
+          {state.message}
+        </Typography>
+      ) : null}
     </DashboardPanel>
   );
 }

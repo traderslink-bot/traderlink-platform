@@ -4,7 +4,7 @@ Plan: [day-session-page-plan.md](./day-session-page-plan.md)
 
 Trade-tag plan: [trade-tag-system-plan.md](./trade-tag-system-plan.md)
 
-Status: trade tags implemented; working-day execution canvas visual checkpoint in progress
+Status: complete Trade Tracker functional slice implemented in isolated branch
 
 ## Workspace
 
@@ -56,13 +56,18 @@ Status: trade tags implemented; working-day execution canvas visual checkpoint i
 
 ## Awaiting approval
 
-- Date-free blank working-day canvas and manual execution composer.
-- Collapsed post-submission execution summary and correction affordance.
-- Approve or revise the persistence contract in the linked plan before schema,
-  API, or storage implementation begins.
+- Integrated functional page review before main integration.
 
-## Deferred until contract approval
+## Completed after visual approval
 
-- Note and rule-review persistence
+- Manual execution submission through governed V3 ingestion.
+- Dynamic symbols, multiple round trips per ticker, prices, P/L, counts, and
+  weekly facts from governed authority.
+- Exact per-trade and per-ticker gain/loss percentages.
+- Active preset/custom rule review with saved revision-protected statuses.
+- Editable, saved, revision-protected Daily Notes.
+
+## Deferred
+
 - `Tomorrow's focus` carry-forward implementation
 - Tests, browser automation, and final verification

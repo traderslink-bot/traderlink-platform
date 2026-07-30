@@ -24,6 +24,14 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
     ],
     currency: "USD",
     date,
+    dailyNote: {
+      anythingElse: "",
+      revision: null,
+      technicalRecap: "",
+      tomorrowsFocus: "",
+      whatNeedsWork: "",
+      whatWorked: "",
+    },
     netPnl: "842.5",
     nextSessionDate: currentSessionDate,
     previousSessionDate: previousTradeDate,
@@ -32,23 +40,39 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
         applicability: "day",
         custom: false,
         label: "Maximum daily loss respected",
+        revision: null,
+        ruleId: "preview-maximum-daily-loss",
+        ruleVersion: "preview-1",
         status: "followed",
+        targetLabel: null,
+        targetRoundTripKey: null,
       },
       {
         applicability: "day",
         custom: true,
         label: "Do not trade after 11:30 AM",
+        revision: null,
+        ruleId: "preview-cutoff",
+        ruleVersion: "preview-1",
         status: "broken",
+        targetLabel: null,
+        targetRoundTripKey: null,
       },
       {
         applicability: "trade",
         custom: true,
         label: "Wait for entry confirmation",
+        revision: null,
+        ruleId: "preview-entry-confirmation",
+        ruleVersion: "preview-1",
         status: "broken",
+        targetLabel: "NVDA 1:26 PM",
+        targetRoundTripKey: "preview_nvda_3",
       },
     ],
     tickers: [
       {
+        gainLossPercent: "2.41",
         netPnl: "610",
         stableInstrumentKey: "preview_nvda",
         symbol: "NVDA",
@@ -56,7 +80,10 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
           {
             direction: "long",
             entryAt: `${date}T13:42:00.000Z`,
+            entryPrice: "142.20",
             exitAt: `${date}T13:58:00.000Z`,
+            exitPrice: "144.04",
+            gainLossPercent: "1.29",
             journal: {
               ruleStatus: "followed",
               ruleSummary: "Waited for confirmation",
@@ -74,7 +101,10 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
           {
             direction: "long",
             entryAt: `${date}T14:18:00.000Z`,
+            entryPrice: "143.10",
             exitAt: `${date}T14:46:00.000Z`,
+            exitPrice: "145.72",
+            gainLossPercent: "1.83",
             journal: {
               ruleStatus: "followed",
               ruleSummary: "Position size within plan",
@@ -92,7 +122,10 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
           {
             direction: "long",
             entryAt: `${date}T17:26:00.000Z`,
+            entryPrice: "145.60",
             exitAt: `${date}T17:39:00.000Z`,
+            exitPrice: "146.41",
+            gainLossPercent: "0.56",
             journal: {
               ruleStatus: "broken",
               ruleSummary: "Traded after the personal cutoff",
@@ -109,6 +142,7 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
         ],
       },
       {
+        gainLossPercent: "1.18",
         netPnl: "232.5",
         stableInstrumentKey: "preview_tsla",
         symbol: "TSLA",
@@ -116,7 +150,10 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
           {
             direction: "short",
             entryAt: `${date}T14:06:00.000Z`,
+            entryPrice: "318.40",
             exitAt: `${date}T14:24:00.000Z`,
+            exitPrice: "314.82",
+            gainLossPercent: "1.12",
             journal: {
               ruleStatus: "followed",
               ruleSummary: "Risk defined before entry",
@@ -134,7 +171,10 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
           {
             direction: "short",
             entryAt: `${date}T15:51:00.000Z`,
+            entryPrice: "316.20",
             exitAt: `${date}T16:09:00.000Z`,
+            exitPrice: "316.88",
+            gainLossPercent: "-0.22",
             journal: {
               ruleStatus: "broken",
               ruleSummary: "Entered before confirmation",

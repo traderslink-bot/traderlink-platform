@@ -1,12 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-
-import {
-  DashboardPage,
-  DashboardUnavailableState,
-} from "../../dashboard-template";
-
-import { getLatestGovernedSessionDate } from "./trade-tracker-data";
+import { TradeTrackerWorkingDay } from "./working-day";
 import { TradeTrackerWorkingDayPreview } from "./working-day-preview";
 
 export const metadata: Metadata = {
@@ -18,6 +11,21 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const DESIGN_PREVIEW_SESSION_DATE = "2026-07-28";
+
+function currentNewYorkDate(): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "America/New_York",
+    year: "numeric",
+  }).formatToParts(new Date());
+  const value = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+  return `${value.year}-${value.month}-${value.day}`;
+}
 
 export default async function TradeTrackerPage({
   searchParams,
@@ -35,17 +43,5 @@ export default async function TradeTrackerPage({
     );
   }
 
-  const latestSessionDate = await getLatestGovernedSessionDate();
-  if (latestSessionDate) {
-    redirect(`/trade-tracker/${latestSessionDate}`);
-  }
-
-  return (
-    <DashboardPage>
-      <DashboardUnavailableState
-        description="Trade Tracker needs verified closed-trade data before it can select your latest traded day."
-        title="No verified traded day is available"
-      />
-    </DashboardPage>
-  );
+  return <TradeTrackerWorkingDay sessionDate={currentNewYorkDate()} />;
 }

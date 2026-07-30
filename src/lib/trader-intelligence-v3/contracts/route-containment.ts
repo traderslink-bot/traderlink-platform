@@ -118,6 +118,9 @@ const LOCAL_PAGE_MODULES = [
 const OWNER_API_ROUTES = [
   ["app/api/analytics/latest/route.ts", ["GET"], "owner_read"],
   ["app/api/coach/latest/route.ts", ["GET"], "owner_read"],
+  ["app/api/intelligence/day-session/[sessionDate]/notes/route.ts", ["PUT"], "owner_mutation"],
+  ["app/api/intelligence/day-session/[sessionDate]/rule-reviews/route.ts", ["PUT"], "owner_mutation"],
+  ["app/api/intelligence/day-session-executions/v1/route.ts", ["POST"], "owner_mutation"],
   ["app/api/intelligence/dashboard/overview/route.ts", ["GET"], "owner_read"],
   ["app/api/csv-mapping-review/continue/route.ts", ["POST"], "owner_mutation"],
   ["app/api/intelligence/broker-csv-import/v1/history/route.ts", ["GET"], "owner_read"],

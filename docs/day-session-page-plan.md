@@ -182,23 +182,22 @@ the new day until the trader saves that day's notes.
    - Projected verified closed round trips and exact-decimal totals into the
      approved view without changing its visual hierarchy.
    - Retired the old Day Sessions list behind compatibility redirects.
-3. **Working-day execution canvas — active visual checkpoint**
+3. **Working-day execution canvas — approved and implemented in feature branch**
    - Preserve the approved Day Session design as the populated state.
    - Design the blank date-free entry state at `/trade-tracker`.
    - Add the expandable manual execution composer and in-place populated state.
-   - Stop for UI approval before connecting mutations or reconstruction.
-4. **Trader-authored persistence — awaiting contract approval**
+   - UI approval received with the time-label and interactive-preview-tag
+     refinements.
+4. **Trader-authored persistence — implemented in feature branch**
    - Trade tags are complete through the linked Trade Tag System Plan,
      including local webpage verification.
-   - Add exact contract validators for the three trader-authored record types.
-   - Add isolated storage and schema migration for the approved V3 journal
-     database.
-   - Project governed V3 round-trip facts into the approved view model.
-   - Join trader-authored writing only after owner/day/key validation.
-   - Add private read and mutation endpoints with revision conflicts.
-   - Connect the approved page without changing its visual hierarchy.
-   - Present saved fixture writing and the mobile expansion behavior for the
-     next UI review gate.
+   - Added owner-scoped daily notes and rule reviews to the journal database.
+   - Added private note and rule-review mutations with revision conflicts.
+   - Joined active preset/custom rules and saved reviews into the day view.
+   - Connected editable Daily Notes without changing the approved hierarchy.
+   - Connected manual executions through the governed V3 import service.
+   - Added governed entry/exit prices and exact gain/loss percentages for
+     individual round trips and daily ticker aggregates.
 5. **Acceptance**
    - Run the focused checks required by the final implementation.
    - Run broader verification only at the explicit acceptance boundary.

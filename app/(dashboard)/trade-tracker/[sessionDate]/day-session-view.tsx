@@ -21,6 +21,7 @@ import {
   DialogTitle,
   Divider,
   FormControlLabel,
+  MenuItem,
   Stack,
   TextField,
   Typography,
@@ -38,6 +39,7 @@ import {
 
 import type {
   DaySessionData,
+  DaySessionDailyNote,
   DaySessionRoundTrip,
   DaySessionRule,
   DaySessionTradeTag,
@@ -413,6 +415,15 @@ function dateLabel(date: string): string {
   });
 }
 
+function price(value: string | null, currency: string): string {
+  return value === null ? "Unavailable" : money(value, currency).replace(/^\+/, "");
+}
+
+function percentage(value: string | null): string {
+  if (value === null) return "Unavailable";
+  return `${value.startsWith("-") ? "" : "+"}${value}%`;
+}
+
 function shortDayLabel(date: string): string {
   return new Date(`${date}T12:00:00.000Z`).toLocaleDateString("en-US", {
     day: "numeric",
@@ -505,7 +516,8 @@ function TradeReview({
             {timeLabel(roundTrip.exitAt, roundTrip.timezone)}
           </Typography>
           <Typography color="text.secondary" variant="caption">
-            Completed round trip
+            {price(roundTrip.entryPrice, currency)} →{" "}
+            {price(roundTrip.exitPrice, currency)}
           </Typography>
         </Box>
         <Chip
@@ -524,6 +536,18 @@ function TradeReview({
           variant="body1"
         >
           {money(roundTrip.netPnl, currency)}
+        </Typography>
+        <Typography
+          color={pnlColor(roundTrip.gainLossPercent ?? "0")}
+          sx={{
+            fontFamily: "var(--font-geist-mono)",
+            fontWeight: 750,
+            gridColumn: { xs: "1 / -1", md: "3" },
+            textAlign: { md: "right" },
+          }}
+          variant="caption"
+        >
+          {percentage(roundTrip.gainLossPercent)}
         </Typography>
       </Box>
 
@@ -719,11 +743,82 @@ export function DaySessionView({
       ),
   );
   const [manageTagsOpen, setManageTagsOpen] = useState(false);
+  const [rules, setRules] = useState(data.rules);
+  const [dailyNote, setDailyNote] = useState(data.dailyNote);
+  const [notesState, setNotesState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
   const tradeCount = data.tickers.reduce(
     (count, ticker) => count + ticker.roundTrips.length,
     0,
   );
   const reviewingPastDay = data.date !== data.week.currentSessionDate;
+
+  async function saveRuleStatus(
+    selectedRule: DaySessionRule,
+    status: DaySessionRule["status"],
+  ): Promise<void> {
+    if (designPreview) {
+      setRules((current) =>
+        current.map((rule) =>
+          rule.ruleId === selectedRule.ruleId &&
+          rule.targetRoundTripKey === selectedRule.targetRoundTripKey
+            ? { ...rule, status }
+            : rule,
+        ),
+      );
+      return;
+    }
+    const saved = await api<{
+      revision: string;
+      status: DaySessionRule["status"];
+    }>(
+      `/api/intelligence/day-session/${encodeURIComponent(data.date)}/rule-reviews`,
+      {
+        body: JSON.stringify({
+          applicability: selectedRule.applicability,
+          expectedRevision: selectedRule.revision,
+          ruleId: selectedRule.ruleId,
+          ruleVersion: selectedRule.ruleVersion,
+          status,
+          targetRoundTripKey: selectedRule.targetRoundTripKey,
+        }),
+        method: "PUT",
+      },
+    );
+    setRules((current) =>
+      current.map((rule) =>
+        rule.ruleId === selectedRule.ruleId &&
+        rule.targetRoundTripKey === selectedRule.targetRoundTripKey
+          ? { ...rule, revision: saved.revision, status: saved.status }
+          : rule,
+      ),
+    );
+  }
+
+  async function saveDailyNotes(): Promise<void> {
+    setNotesState("saving");
+    if (designPreview) {
+      setNotesState("saved");
+      return;
+    }
+    try {
+      const saved = await api<DaySessionDailyNote>(
+        `/api/intelligence/day-session/${encodeURIComponent(data.date)}/notes`,
+        {
+          body: JSON.stringify({
+            ...dailyNote,
+            expectedRevision: dailyNote.revision,
+          }),
+          method: "PUT",
+        },
+      );
+      setDailyNote(saved);
+      setNotesState("saved");
+    } catch {
+      setNotesState("error");
+    }
+  }
 
   return (
     <DashboardPage>
@@ -848,7 +943,7 @@ export function DaySessionView({
             ["Tickers", String(data.tickers.length), "text.primary"],
             [
               "Rules broken",
-              String(data.rules.filter((rule) => rule.status === "broken").length),
+              String(rules.filter((rule) => rule.status === "broken").length),
               "error.main",
             ],
           ].map(([label, value, color]) => (
@@ -911,6 +1006,17 @@ export function DaySessionView({
                   {ticker.roundTrips.length} trade
                   {ticker.roundTrips.length === 1 ? "" : "s"}
                 </Typography>
+                <Typography
+                  color={pnlColor(ticker.gainLossPercent ?? "0")}
+                  sx={{
+                    fontFamily: "var(--font-geist-mono)",
+                    fontWeight: 800,
+                    mt: 0.5,
+                  }}
+                  variant="body2"
+                >
+                  {percentage(ticker.gainLossPercent)}
+                </Typography>
               </Box>
               <Stack divider={<Divider flexItem />}>
                 {ticker.roundTrips.map((roundTrip) => (
@@ -939,16 +1045,15 @@ export function DaySessionView({
 
       <DashboardPanel title="Rules">
         <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>
-          {data.rules.length === 0 ? (
+          {rules.length === 0 ? (
             <Typography color="text.secondary" sx={{ py: 1.5 }} variant="body2">
               No rule reviews recorded for this trading day.
             </Typography>
           ) : null}
-          {data.rules.map((rule) => {
-            const status = statusPresentation(rule.status);
+          {rules.map((rule) => {
             return (
               <Box
-                key={rule.label}
+                key={`${rule.ruleId}:${rule.targetRoundTripKey ?? "day"}`}
                 sx={{
                   alignItems: { sm: "center" },
                   display: "flex",
@@ -965,14 +1070,26 @@ export function DaySessionView({
                   <Typography color="text.secondary" variant="caption">
                     {rule.custom ? "Custom" : "Preset"} ·{" "}
                     {rule.applicability === "day" ? "Day rule" : "Trade rule"}
+                    {rule.targetLabel ? ` · ${rule.targetLabel}` : ""}
                   </Typography>
                 </Box>
-                <Chip
-                  color={status.color}
-                  label={status.label}
+                <TextField
+                  aria-label={`Review ${rule.label}`}
+                  onChange={(event) =>
+                    void saveRuleStatus(
+                      rule,
+                      event.target.value as DaySessionRule["status"],
+                    )
+                  }
+                  select
                   size="small"
-                  variant={status.color === "default" ? "outlined" : "filled"}
-                />
+                  sx={{ minWidth: 145 }}
+                  value={rule.status}
+                >
+                  <MenuItem value="not-reviewed">Not reviewed</MenuItem>
+                  <MenuItem value="followed">Followed</MenuItem>
+                  <MenuItem value="broken">Broken</MenuItem>
+                </TextField>
               </Box>
             );
           })}
@@ -992,36 +1109,93 @@ export function DaySessionView({
             label="What worked"
             minRows={4}
             multiline
+            onChange={(event) => {
+              setDailyNote((current) => ({
+                ...current,
+                whatWorked: event.target.value,
+              }));
+              setNotesState("idle");
+            }}
             placeholder="What did you execute well today?"
+            value={dailyNote.whatWorked}
           />
           <TextField
             label="What needs work"
             minRows={4}
             multiline
+            onChange={(event) => {
+              setDailyNote((current) => ({
+                ...current,
+                whatNeedsWork: event.target.value,
+              }));
+              setNotesState("idle");
+            }}
             placeholder="What should you improve next time?"
+            value={dailyNote.whatNeedsWork}
           />
           <TextField
             label="Technical recap (optional)"
             minRows={4}
             multiline
+            onChange={(event) => {
+              setDailyNote((current) => ({
+                ...current,
+                technicalRecap: event.target.value,
+              }));
+              setNotesState("idle");
+            }}
             placeholder="Setup, stop, target, or execution observations across the day."
+            value={dailyNote.technicalRecap}
           />
           <TextField
             label="Tomorrow's focus"
             minRows={4}
             multiline
+            onChange={(event) => {
+              setDailyNote((current) => ({
+                ...current,
+                tomorrowsFocus: event.target.value,
+              }));
+              setNotesState("idle");
+            }}
             placeholder="What will you carry into the next trading day?"
+            value={dailyNote.tomorrowsFocus}
           />
           <TextField
             label="Anything else"
             minRows={4}
             multiline
+            onChange={(event) => {
+              setDailyNote((current) => ({
+                ...current,
+                anythingElse: event.target.value,
+              }));
+              setNotesState("idle");
+            }}
             placeholder="Write anything else you want to remember."
             sx={{ gridColumn: { md: "1 / -1" } }}
+            value={dailyNote.anythingElse}
           />
         </Box>
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-          <DashboardPrimaryAction disabled>Save Notes</DashboardPrimaryAction>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            {notesState === "saved" ? (
+              <Typography color="success.main" variant="body2">
+                Notes saved
+              </Typography>
+            ) : null}
+            {notesState === "error" ? (
+              <Typography color="error.main" variant="body2">
+                Notes could not be saved
+              </Typography>
+            ) : null}
+            <DashboardPrimaryAction
+              disabled={notesState === "saving"}
+              onClick={() => void saveDailyNotes()}
+            >
+              {notesState === "saving" ? "Saving Notes..." : "Save Notes"}
+            </DashboardPrimaryAction>
+          </Stack>
         </Box>
       </DashboardPanel>
       <ManageTagsDialog
