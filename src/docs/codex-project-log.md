@@ -16,6 +16,23 @@ authority or adapters. Next: commit the complete 15-file slice, publish the PR,
 use CI as the final safety gate, then verify the merged clean `main` app alone
 on port 3010.
 
+# 2026-07-29 - Calendar dashboard review approved
+
+- Added the approved Material Calendar as the `/calendar` dashboard route on
+  `main`, with navigation owned by the shared dashboard configuration.
+- The route uses the V3 configured dashboard adapter server-side for daily and
+  day-plus-ticker performance packets. The browser receives a bounded view
+  model only; no legacy SQLite query or sample P/L is used.
+- The approved surface includes the packed Monday-Friday month grid, large
+  five-day week view, daily P/L and up to four ticker P/L rows, dark calendar
+  separators, URL-backed filters, saved views, and a day detail drawer.
+- The owner approved the design at `127.0.0.1:3011/calendar?review=layout`.
+  The development-only review URL renders empty cells and dashes when local V3
+  authority is unavailable; the normal `/calendar` route remains V3-backed.
+
+- Next: validate the V3 authority against the Calendar's week controls,
+  prioritising comparable weeks and retaining only filters with trader value.
+
 # 2026-07-28 - Execution Analytics Dashboard Milestone 4 foundation verified
 
 **Branch:** `codex/trade-execution-v3-m4-dashboard-panels`.

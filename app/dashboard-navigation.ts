@@ -44,6 +44,11 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       icon: "tradeGroup" as const,
       items: Object.freeze([
         Object.freeze({
+          href: "/calendar",
+          label: "Calendar",
+          icon: "calendar" as const,
+        }),
+        Object.freeze({
           href: "/trade-tracker",
           label: "Trade Tracker",
           icon: "calendar" as const,
@@ -150,6 +155,7 @@ export const DASHBOARD_DATA_NAVIGATION_GROUP: DashboardNavigationGroup =
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
   Object.freeze({
     "/workspace": "Workspace",
+    "/calendar": "Calendar",
     "/trades/roundtrips": "Round Trips",
     "/trade-tracker": "Trade Tracker",
     "/trades/ticker": "Trades by Ticker",
