@@ -102,22 +102,49 @@ complete. It must not imply that a different entry was certainly achievable.
 - Do not add this experimental candle feed to configured V3 dashboard analytics
   or the existing level-analysis authority.
 
+## Chart, indicator, and candle-detection references
+
+- [TradingView Lightweight Charts](https://github.com/tradingview/lightweight-charts)
+  is the canonical chart API and integration reference. Follow its current v5
+  conventions, client-only lifecycle, and required attribution when the chart
+  is visible.
+- [lightweight-charts-indicators](https://github.com/deepentropy/lightweight-charts-indicators/tree/main)
+  is a research reference for reusable indicator calculations and chart
+  presentation. Before adopting any calculation, verify its formula, licence,
+  compatibility with the installed chart version, and behaviour on incomplete
+  candle windows.
+- Future indicator and candle-pattern detection work belongs in a separate,
+  optional observation layer. It may annotate a completed replay with such
+  things as trend, momentum, volatility, or observed candle structures, but it
+  must never manufacture coverage, replace broker-execution facts, or present
+  a trading signal or recommendation.
+- The first evidence-engine slice remains price-path based. Indicators and
+  candle detections are deliberately deferred until the three core analyzers
+  have complete-window/no-feedback behaviour and the fixture design is
+  approved.
+
 ## Delivery checkpoints
 
 1. **Design review:** Build the isolated fixture-backed route and chart layout;
    request owner visual approval before live Yahoo integration.
 2. **Evidence engine:** Add typed candle normalization, coverage checks, and the
    three deterministic analyzers using focused fixtures.
-3. **Read-only connection:** Connect selected governed completed round trips to
+3. **Optional observation layer:** Evaluate selected indicator and
+   candle-detection candidates against complete normalized candles. Add only
+   explainable, non-predictive annotations that pass formula and licence
+   review; preserve `No feedback` whenever their required lookback is absent.
+4. **Read-only connection:** Connect selected governed completed round trips to
    the server-only Yahoo adapter; preserve no-feedback states.
-4. **Acceptance:** Run targeted checks only at the completed slice boundary,
+5. **Acceptance:** Run targeted checks only at the completed slice boundary,
    then present the isolated route for review. Do not merge or deploy without
    explicit approval.
 
 ## Explicit non-goals
 
-- Real-time quotes, orders, trading from the chart, indicators, drawing tools,
+- Real-time quotes, orders, trading from the chart, drawing tools,
   predictions, alerts, automated coaching, or production data persistence.
+- Indicators or candle-pattern annotations in the first evidence-engine slice;
+  they require the optional observation-layer checkpoint above.
 - Exact intrabar fill claims, because Yahoo OHLC candles only establish observed
   range movement at their available granularity.
 - Feedback where the requisite candle window does not exist.
