@@ -20108,6 +20108,10 @@ Current best next step:
   negative P/L samples. It now converts the decimal sum into an exact signed
   ratio before dividing by two, rather than treating a decimal string as an
   integer numerator.
+- Workspace now keeps its overview request active beyond the former 20-second
+  client timeout, so a larger verified account can populate its existing metric
+  cards rather than incorrectly switching to unavailable while the server is
+  still calculating.
 
 Current best next step:
 

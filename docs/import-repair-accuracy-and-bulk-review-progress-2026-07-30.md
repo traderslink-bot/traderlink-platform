@@ -84,6 +84,10 @@ authority.
 - Repaired an Analytics Lab median calculation that crashed when an even-sized
   result set had decimal or negative P/L values. The fix retains exact decimal
   arithmetic and does not alter the underlying execution or P/L facts.
+- Workspace no longer aborts its verified overview request after 20 seconds.
+  It retains its existing calculating state until the shared authority finishes
+  or the trader leaves the page, avoiding a false unavailable result on larger
+  statement histories.
 
 ## Implemented in this slice
 

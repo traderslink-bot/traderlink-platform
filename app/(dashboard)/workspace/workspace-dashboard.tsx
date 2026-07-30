@@ -83,7 +83,6 @@ export function WorkspaceDashboard({
   useEffect(() => {
     if (initialAnalyticsMetrics) return;
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 20_000);
 
     void fetch("/api/intelligence/dashboard/overview", {
       cache: "no-store",
@@ -101,11 +100,9 @@ export function WorkspaceDashboard({
         }
         setAnalyticsStatus("unavailable");
       })
-      .catch(() => setAnalyticsStatus("unavailable"))
-      .finally(() => window.clearTimeout(timeout));
+      .catch(() => setAnalyticsStatus("unavailable"));
 
     return () => {
-      window.clearTimeout(timeout);
       controller.abort();
     };
   }, [initialAnalyticsMetrics]);
