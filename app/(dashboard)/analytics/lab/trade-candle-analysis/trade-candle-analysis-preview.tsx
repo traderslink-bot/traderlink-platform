@@ -37,6 +37,18 @@ type SimulationCase = {
   volumeLabel: string;
 };
 
+type LiveSimulationResult =
+  | {
+      results: {
+        entryTiming: { detail: string; title: string };
+        exitTiming: { detail: string; title: string };
+        profitGiveback: { detail: string; title: string };
+      };
+      status: "ready";
+      symbol: string;
+    }
+  | { reason: string; status: "no_feedback"; symbol: string };
+
 const SIMULATION_CASES: readonly SimulationCase[] = [
   {
     id: "cycu",
@@ -312,6 +324,34 @@ export function TradeCandleAnalysisPreview() {
     SIMULATION_CASES.find((item) => item.id === selectedScenarioId) ??
     DEFAULT_SIMULATION_CASE;
   const hasExitContinuation = Boolean(scenario.exitPrice && scenario.primaryHigh);
+  const [liveResult, setLiveResult] = useState<LiveSimulationResult | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setLiveResult(null);
+    void fetch(`/api/intelligence/trade-candle-analysis/simulations?symbol=${scenario.symbol}`, {
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json()) as LiveSimulationResult;
+      })
+      .then((result) => {
+        if (active) setLiveResult(result);
+      })
+      .catch(() => {
+        if (active) {
+          setLiveResult({
+            status: "no_feedback",
+            symbol: scenario.symbol,
+            reason: "Live Yahoo analysis is unavailable right now. The snapshot remains available for review.",
+          });
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [scenario.symbol]);
 
   return (
     <DashboardPage>
@@ -342,6 +382,22 @@ export function TradeCandleAnalysisPreview() {
         candles. One-minute coverage determines whether feedback is allowed. The first
         30 minutes after exit are primary; the next 30 minutes add context.
       </Alert>
+
+      {liveResult ? (
+        <Alert severity={liveResult.status === "ready" ? "success" : "info"}>
+          {liveResult.status === "ready" ? (
+            <Stack spacing={0.5}>
+              <Typography sx={{ fontWeight: 700 }} variant="body2">
+                Current Yahoo result for {liveResult.symbol}
+              </Typography>
+              <Typography variant="body2">{liveResult.results.exitTiming.title}</Typography>
+              <Typography variant="body2">{liveResult.results.exitTiming.detail}</Typography>
+            </Stack>
+          ) : (
+            `No live feedback for ${liveResult.symbol}: ${liveResult.reason}`
+          )}
+        </Alert>
+      ) : null}
 
       <DashboardPanel
         action={
