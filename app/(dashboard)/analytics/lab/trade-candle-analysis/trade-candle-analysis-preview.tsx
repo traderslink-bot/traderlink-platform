@@ -39,6 +39,7 @@ type SimulationCase = {
 
 type LiveSimulationResult =
   | {
+      replay: readonly PreviewCandle[];
       results: {
         entryTiming: { detail: string; title: string };
         exitTiming: { detail: string; title: string };
@@ -46,6 +47,12 @@ type LiveSimulationResult =
       };
       status: "ready";
       symbol: string;
+      simulatedTrade: {
+        entryPrice: number;
+        entryTime: number;
+        exitPrice: number;
+        exitTime: number;
+      };
     }
   | { reason: string; status: "no_feedback"; symbol: string };
 
@@ -213,6 +220,14 @@ function formatPrice(price: number): string {
   return `$${price.toFixed(4)}`;
 }
 
+function formatEasternTime(time: number): string {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/New_York",
+  }).format(new Date(time * 1000));
+}
+
 function TradeCandleChart({ scenario }: { scenario: SimulationCase }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -325,6 +340,17 @@ export function TradeCandleAnalysisPreview() {
     DEFAULT_SIMULATION_CASE;
   const hasExitContinuation = Boolean(scenario.exitPrice && scenario.primaryHigh);
   const [liveResult, setLiveResult] = useState<LiveSimulationResult | null>(null);
+  const displayedScenario =
+    liveResult?.status === "ready"
+      ? {
+          ...scenario,
+          candles: liveResult.replay,
+          entryPrice: liveResult.simulatedTrade.entryPrice,
+          entryTime: formatEasternTime(liveResult.simulatedTrade.entryTime),
+          exitPrice: liveResult.simulatedTrade.exitPrice,
+          exitTime: formatEasternTime(liveResult.simulatedTrade.exitTime),
+        }
+      : scenario;
 
   useEffect(() => {
     let active = true;
@@ -420,7 +446,7 @@ export function TradeCandleAnalysisPreview() {
             />
           ))}
         </Stack>
-        <TradeCandleChart scenario={scenario} />
+        <TradeCandleChart scenario={displayedScenario} />
         <Stack
           direction={{ xs: "column", md: "row" }}
           divider={<Divider flexItem orientation="vertical" />}
@@ -428,15 +454,19 @@ export function TradeCandleAnalysisPreview() {
           sx={{ mt: 2 }}
         >
           <Observation label="Simulated entry">
-            {scenario.entryTime} · {formatPrice(scenario.entryPrice)}
+            {displayedScenario.entryTime} · {formatPrice(displayedScenario.entryPrice)}
           </Observation>
           <Observation label="Simulated exit">
-            {scenario.exitTime && scenario.exitPrice
-              ? `${scenario.exitTime} · ${formatPrice(scenario.exitPrice)}`
+            {displayedScenario.exitTime && displayedScenario.exitPrice
+              ? `${displayedScenario.exitTime} · ${formatPrice(displayedScenario.exitPrice)}`
               : "No qualifying exit"}
           </Observation>
           <Observation label="Primary review">First 30 minutes after exit</Observation>
-          <Observation label="Volume context">{scenario.volumeLabel}</Observation>
+          <Observation label="Volume context">
+            {liveResult?.status === "ready"
+              ? "Live Yahoo active-volume coverage"
+              : scenario.volumeLabel}
+          </Observation>
         </Stack>
         <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", mt: 2 }}>
           <OpenInNewRoundedIcon color="primary" fontSize="small" />
