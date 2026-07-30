@@ -17,6 +17,15 @@ of the experience.
 
 ## Controlling product requirements
 
+- The shared `Trade Tracker` navigation link opens a date-free working-day
+  canvas, not an already completed historical journal.
+- Place a manual execution composer at the top of that working canvas. The
+  trader can enter multiple buys and sells without leaving the page.
+- After executions are accepted and reconstructed, populate the approved Day
+  Session design in place.
+- Collapse the execution composer after submission into a compact summary that
+  can be reopened for additions or corrections.
+- Keep dated routes for historical traded-day navigation inside Trade Tracker.
 - Summarize the whole trading day in the header.
 - Place a current-week tracker above the day header.
 - Show only days in the week that contain trades. Do not render empty weekdays.
@@ -168,7 +177,12 @@ the new day until the trader saves that day's notes.
    - Projected verified closed round trips and exact-decimal totals into the
      approved view without changing its visual hierarchy.
    - Retired the old Day Sessions list behind compatibility redirects.
-3. **Trader-authored persistence — awaiting contract approval**
+3. **Working-day execution canvas — active visual checkpoint**
+   - Preserve the approved Day Session design as the populated state.
+   - Design the blank date-free entry state at `/trade-tracker`.
+   - Add the expandable manual execution composer and in-place populated state.
+   - Stop for UI approval before connecting mutations or reconstruction.
+4. **Trader-authored persistence — awaiting contract approval**
    - Trade tags are complete through the linked Trade Tag System Plan,
      including local webpage verification.
    - Add exact contract validators for the three trader-authored record types.
@@ -180,7 +194,7 @@ the new day until the trader saves that day's notes.
    - Connect the approved page without changing its visual hierarchy.
    - Present saved fixture writing and the mobile expansion behavior for the
      next UI review gate.
-4. **Acceptance**
+5. **Acceptance**
    - Run the focused checks required by the final implementation.
    - Run broader verification only at the explicit acceptance boundary.
 

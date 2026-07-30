@@ -26,6 +26,7 @@ import {
   Typography,
 } from "@mui/material";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useState } from "react";
 
 import {
@@ -664,9 +665,11 @@ function WeekDayCard({
 export function DaySessionView({
   data,
   designPreview = false,
+  topContent,
 }: {
   data: DaySessionData;
   designPreview?: boolean;
+  topContent?: ReactNode;
 }) {
   const [availableTags, setAvailableTags] = useState<DaySessionTradeTag[]>(data.availableTags);
   const [tradeTags, setTradeTags] = useState<Record<string, DaySessionTradeTag[]>>(
@@ -689,6 +692,7 @@ export function DaySessionView({
 
   return (
     <DashboardPage>
+      {topContent}
       <DashboardPanel title="This week">
         <Box
           sx={{

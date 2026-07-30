@@ -4,12 +4,12 @@ Plan: [day-session-page-plan.md](./day-session-page-plan.md)
 
 Trade-tag plan: [trade-tag-system-plan.md](./trade-tag-system-plan.md)
 
-Status: approved visual preserved; direct Trade Tracker route and trade tags implemented
+Status: trade tags implemented; working-day execution canvas visual checkpoint in progress
 
 ## Workspace
 
 - Repository: `C:\Users\jerac\Documents\TraderLink\traderslink.pro`
-- Feature branch: `codex/trade-tracker-route`
+- Feature branch: `codex/trade-tracker-complete`
 - Active dashboard port: `3010`
 - Direct route: `/trade-tracker`
 - Dated route: `/trade-tracker/[sessionDate]`
@@ -56,6 +56,8 @@ Status: approved visual preserved; direct Trade Tracker route and trade tags imp
 
 ## Awaiting approval
 
+- Date-free blank working-day canvas and manual execution composer.
+- Collapsed post-submission execution summary and correction affordance.
 - Approve or revise the persistence contract in the linked plan before schema,
   API, or storage implementation begins.
 

@@ -7,6 +7,7 @@ import {
 } from "../../dashboard-template";
 
 import { getLatestGovernedSessionDate } from "./trade-tracker-data";
+import { TradeTrackerWorkingDayPreview } from "./working-day-preview";
 
 export const metadata: Metadata = {
   description: "Review the latest governed trading day.",
@@ -27,8 +28,10 @@ export default async function TradeTrackerPage({
     process.env.NODE_ENV !== "production" &&
     (await searchParams).preview === "design";
   if (designPreview) {
-    redirect(
-      `/trade-tracker/${DESIGN_PREVIEW_SESSION_DATE}?preview=design`,
+    return (
+      <TradeTrackerWorkingDayPreview
+        sessionDate={DESIGN_PREVIEW_SESSION_DATE}
+      />
     );
   }
 
