@@ -139,6 +139,11 @@ export const DASHBOARD_DATA_NAVIGATION_GROUP: DashboardNavigationGroup =
         label: "Manual Entry",
         icon: "manualEntry" as const,
       }),
+      Object.freeze({
+        href: "/data-decisions",
+        label: "Data Decisions",
+        icon: "data" as const,
+      }),
     ]),
   });
 
@@ -160,6 +165,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/rules": "Trading Rules",
     "/imports": "Import Trades",
     "/manual-entry": "Manual Entry",
+    "/data-decisions": "Data Decisions",
   });
 
 export const DASHBOARD_NAVIGATION_HREFS: readonly string[] = Object.freeze([
