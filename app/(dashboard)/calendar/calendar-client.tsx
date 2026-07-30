@@ -238,9 +238,8 @@ export function CalendarClient({ initialData, initialFilters, initialView }: {
         </Typography>
       </Stack>
 
-      <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" } }}>
+      <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(1, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" } }}>
         <DashboardMetricCard caption="Selected period" label="Net P/L" value={initialData.status === "ready" ? money(initialData.summary.netPnl) : "—"} />
-        <DashboardMetricCard caption="Selected period" label="Trading days" value={initialData.status === "ready" ? String(initialData.summary.tradingDays) : "—"} />
         <DashboardMetricCard caption="Selected period" label="Trades" value={initialData.status === "ready" ? String(initialData.summary.trades) : "—"} />
         <DashboardMetricCard caption="Selected period" label="Win rate" value={initialData.status === "ready" && initialData.summary.winRate !== null ? `${Math.round(initialData.summary.winRate * 100)}%` : "—"} />
       </Box>

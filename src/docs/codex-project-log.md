@@ -1,3 +1,17 @@
+# 2026-07-30 - Calendar week real-data refinement
+
+- The approved Calendar is now integrated on `main`. For the five-day Week
+  view, retain the useful Net P/L, Trades, and Win rate result cards; remove
+  only Trading days because the five visible columns already establish it.
+- Day P/L, ticker P/L, trades, and win rate are backed by the V3 configured
+  dashboard adapter. Date-range and week-to-week comparison are supported by
+  the authority. Session is a completed trade's closing session, so it should
+  not be presented as a primary Week control.
+- A focused real-data screen check remains pending: the existing main preview
+  is overloaded and an isolated preview stalled before opening its port.
+- Tags, rules, and notes require a separate V3 authority audit before adding
+  day tallies; do not derive or invent those counts in the browser.
+
 # 2026-07-30 - Import Repair connected interface approved
 
 **Branch:** `codex/import-repair-main-integration`.
