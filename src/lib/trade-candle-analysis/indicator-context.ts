@@ -1,9 +1,9 @@
 import type { TradeCandle } from "./candle-analysis";
 
-export type IndicatorPoint = { ema9: number | null; ema20: number | null; macd: number | null; macdHistogram: number | null; macdSignal: number | null; rsi14: number | null; time: number; vwap: number | null };
+export type IndicatorPoint = { atr14: number | null; ema9: number | null; ema20: number | null; macd: number | null; macdHistogram: number | null; macdSignal: number | null; rsi14: number | null; time: number; vwap: number | null };
 
 export function calculateIndicatorPoints(candles: readonly TradeCandle[]): readonly IndicatorPoint[] {
-  let ema9: number | null = null, ema12: number | null = null, ema20: number | null = null, ema26: number | null = null, macdSignal: number | null = null, gain = 0, loss = 0, volumeTotal = 0, priceVolumeTotal = 0;
+  let ema9: number | null = null, ema12: number | null = null, ema20: number | null = null, ema26: number | null = null, macdSignal: number | null = null, atr14: number | null = null, gain = 0, loss = 0, volumeTotal = 0, priceVolumeTotal = 0;
   return candles.map((candle, index) => {
     const typical = (candle.high + candle.low + candle.close) / 3;
     volumeTotal += candle.volume; priceVolumeTotal += typical * candle.volume;
@@ -12,8 +12,13 @@ export function calculateIndicatorPoints(candles: readonly TradeCandle[]): reado
     ema20 = ema20 === null ? candle.close : candle.close * (2 / 21) + ema20 * (19 / 21);
     ema26 = ema26 === null ? candle.close : candle.close * (2 / 27) + ema26 * (25 / 27);
     const macd = ema12 - ema26; macdSignal = macdSignal === null ? macd : macd * .2 + macdSignal * .8;
-    if (index > 0) { const change = candle.close - candles[index - 1].close; gain = (gain * 13 + Math.max(change, 0)) / 14; loss = (loss * 13 + Math.max(-change, 0)) / 14; }
+    if (index > 0) { const priorClose = candles[index - 1].close; const change = candle.close - priorClose; const trueRange = Math.max(candle.high - candle.low, Math.abs(candle.high - priorClose), Math.abs(candle.low - priorClose)); atr14 = atr14 === null ? trueRange : (atr14 * 13 + trueRange) / 14; gain = (gain * 13 + Math.max(change, 0)) / 14; loss = (loss * 13 + Math.max(-change, 0)) / 14; }
     const rsi14 = index < 14 || loss === 0 ? null : 100 - 100 / (1 + gain / loss);
-    return { time: candle.time, ema9, ema20, macd, macdSignal, macdHistogram: macd - macdSignal, rsi14, vwap: volumeTotal > 0 ? priceVolumeTotal / volumeTotal : null };
+    return { time: candle.time, atr14, ema9, ema20, macd, macdSignal, macdHistogram: macd - macdSignal, rsi14, vwap: volumeTotal > 0 ? priceVolumeTotal / volumeTotal : null };
   });
+}
+
+export function calculateAdr20(dailyHighLowRanges: readonly number[]): number | null {
+  const eligible = dailyHighLowRanges.filter((range) => Number.isFinite(range) && range > 0).slice(-20);
+  return eligible.length === 20 ? eligible.reduce((sum, range) => sum + range, 0) / 20 : null;
 }
