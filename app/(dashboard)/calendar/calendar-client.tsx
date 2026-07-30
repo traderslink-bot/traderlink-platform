@@ -52,7 +52,7 @@ const weekdayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 function money(value: number | null): string {
   if (value === null) return "—";
   return `${value >= 0 ? "+" : "−"}$${Math.abs(value).toLocaleString("en-US", {
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
   })}`;
 }
 

@@ -19,6 +19,7 @@ import {
 } from "../../../dashboard-template";
 import { requireTraderIntelligenceOwnerPageAccess } from "@/src/lib/trader-intelligence-v3/auth";
 import { resolveConfiguredDashboardAnalytics } from "@/src/lib/trader-intelligence-v3/analytics/dashboard/configured-dashboard-analytics";
+import { formatDashboardDecimal } from "@/src/lib/trader-intelligence-v3/analytics/dashboard/execution-analytics-dashboard-view-models";
 import { validateTraderIntelligenceDeployment } from "@/src/lib/trader-intelligence-v3/deployment";
 
 export const metadata: Metadata = {
@@ -99,8 +100,8 @@ export default async function RoundTripsPage() {
                   <TableCell>{row.time}</TableCell>
                   <TableCell>{row.symbol}</TableCell>
                   <TableCell sx={{ textTransform: "capitalize" }}>{row.side}</TableCell>
-                  <TableCell align="right">{row.quantity}</TableCell>
-                  <TableCell align="right">{row.price} {row.currency}</TableCell>
+                  <TableCell align="right">{formatDashboardDecimal(row.quantity)}</TableCell>
+                  <TableCell align="right">{formatDashboardDecimal(row.price)} {row.currency}</TableCell>
                   <TableCell>{row.chargeCoverageState === "complete" ? "Verified" : "Needs review"}</TableCell>
                 </TableRow>
               ))}

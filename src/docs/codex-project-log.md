@@ -20112,6 +20112,10 @@ Current best next step:
   client timeout, so a larger verified account can populate its existing metric
   cards rather than incorrectly switching to unavailable while the server is
   still calculating.
+- Dashboard presentation now caps decimal display at two places through the
+  shared analytics formatter, accepted-execution table, Calendar, Analytics
+  Lab, and Day Session renderers. It is display-only; Data Decisions retains
+  exact editable broker fields and every stored V3 fact stays exact.
 
 Current best next step:
 

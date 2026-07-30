@@ -101,6 +101,14 @@ broker timestamp as separate Date and Time columns. The canonical timestamp
 remains the identity and ordering authority. This is a display requirement;
 it does not require a second analytics data source or a new financial value.
 
+## Decimal presentation decision
+
+Trader-facing dashboard values display no more than two decimal places. This
+is a visual rounding rule only: V3 source records, canonical values, exact
+analytics contracts, and Data Decisions editable broker fields retain their
+complete original precision. Counts, dates, times, IDs, and statement-row
+evidence are not reformatted as decimals.
+
 ## Acceptance criteria
 
 - The April statement does not claim that its heading/FX/summary block is a

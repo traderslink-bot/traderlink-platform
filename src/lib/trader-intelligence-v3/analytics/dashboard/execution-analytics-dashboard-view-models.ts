@@ -17,6 +17,28 @@ export interface DashboardMetricViewModel {
   readonly reasonCode: string | null;
 }
 
+/**
+ * Trader-facing numeric presentation only. Exact source values and analytical
+ * contracts remain unchanged; this avoids leaking long decimal tails into the
+ * dashboard while keeping broker-row editing lossless in Data Decisions.
+ */
+export function formatDashboardDecimal(value: string): string {
+  const match = /^(-?)(\d+)(?:\.(\d+))?$/.exec(value);
+  if (match === null) return value;
+  const [, sign, whole, fraction = ""] = match;
+  if (fraction.length <= 2) {
+    const visible = fraction.replace(/0+$/, "");
+    const normalizedSign = whole === "0" && visible.length === 0 ? "" : sign;
+    return `${normalizedSign}${whole}${visible.length > 0 ? `.${visible}` : ""}`;
+  }
+  const cents = BigInt(`${whole}${fraction.slice(0, 2).padEnd(2, "0")}`);
+  const roundedMagnitude = cents + (fraction[2] >= "5" ? BigInt(1) : BigInt(0));
+  const roundedWhole = roundedMagnitude / BigInt(100);
+  const roundedFraction = (roundedMagnitude % BigInt(100)).toString().padStart(2, "0").replace(/0+$/, "");
+  const normalizedSign = roundedMagnitude === BigInt(0) ? "" : sign;
+  return `${normalizedSign}${roundedWhole.toString()}${roundedFraction.length > 0 ? `.${roundedFraction}` : ""}`;
+}
+
 export interface DashboardTableRowViewModel {
   readonly groupIdentity: string;
   readonly groupLabel: string;
@@ -97,7 +119,9 @@ export function formatDashboardMetric(metric: ExactMetricValue): DashboardMetric
       ? `${metric.nanoseconds} ns`
       : metric.kind === "timestamp" || metric.kind === "date"
         ? metric.value
-        : `${currencyPrefix}${metric.value}`;
+        : `${currencyPrefix}${metric.kind === "exact_decimal"
+          ? formatDashboardDecimal(metric.value)
+          : metric.value}`;
   return Object.freeze({
     metricKey: metric.metricKey,
     displayValue,

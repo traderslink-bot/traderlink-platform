@@ -88,6 +88,12 @@ authority.
   It retains its existing calculating state until the shared authority finishes
   or the trader leaves the page, avoiding a false unavailable result on larger
   statement histories.
+- Added the two-decimal dashboard display rule to the shared analytics metric
+  formatter and accepted-execution activity table. It rounds display only;
+  Data Decisions retains exact editable broker values by design.
+- Dashboard-only numeric-renderer audit completed: Analytics Lab and Day
+  Session already cap display at two decimals; Calendar P/L now retains up to
+  two decimal places instead of dropping cents.
 
 ## Handoff note: current facts, fixes, and limits
 
