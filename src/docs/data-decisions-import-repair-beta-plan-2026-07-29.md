@@ -219,9 +219,9 @@ approved the Import Repair table design. No broad tests are run at this gate.
 Progress is tracked in
 `src/docs/data-decisions-import-repair-beta-progress-2026-07-29.md`.
 
-Current gate: the clean main-based integration branch has passed focused
-lint/type/mutation/build checks and isolated browser/runtime proof for
-correction, reset, shared-authority rebuild, and deletion. The connected table
-now requires trader approval before the pull request and final `main`/3010
-acceptance. The analytics language handoff, final inventory, PR/CI, and
-post-merge verification remain active.
+Current gate: the approved complete slice is integrated into canonical `main`
+at commit `015560ba`. Focused lint passed from `main`, and the protected local
+server on port 3010 returned HTTP 200 for `/data-decisions` with Import Repair
+present. Final cross-page acceptance for importing, Trades, Analytics, and
+Analytics Lab, plus GitHub push/CI, remains active. Temporary workspace removal
+still requires explicit user approval.

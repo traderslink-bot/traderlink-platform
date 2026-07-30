@@ -1,6 +1,6 @@
 # Data Decisions Import Repair Beta Progress — 2026-07-29
 
-Status: steps 1-4 implemented and isolated-runtime verified; connected UI approval pending
+Status: approved complete slice integrated into canonical main; final cross-page acceptance pending
 
 ## Completed
 
@@ -191,10 +191,11 @@ Still active:
 3. [Complete] Focused ESLint, repository TypeScript, `git diff --check`, and
    the final production build passed. The complete integration slice was
    committed on `codex/import-repair-main-integration`.
-4. Open the pull request, allow GitHub CI to be the final safety gate, and
-   integrate only this reviewed feature into `main`.
-5. Start only clean `main` on port 3010 and verify Data Decisions, importing,
-   Trades, Analytics, and Analytics Lab from that one app.
+4. [Complete locally] Integrated only the complete reviewed Import Repair slice
+   into canonical `main` at `015560ba`. GitHub push/CI remains pending.
+5. [In progress] Canonical `main` is serving port 3010. `/data-decisions`
+   returned HTTP 200 with Import Repair present; importing, Trades, Analytics,
+   and Analytics Lab still require the final cross-page acceptance pass.
 6. Remove the temporary workspaces only after integrated confirmation and
    explicit approval.
 
@@ -228,7 +229,9 @@ Current external blocker:
 - Isolated-data action verification: correction, reset, statement selection,
   and deletion complete; forced-failure rollback remains for final acceptance.
 - Complete required-file inventory: complete; listed below.
-- Integrated verification from `main` on port 3010: not started.
+- Integrated verification from `main` on port 3010: Data Decisions HTTP/render
+  smoke check passed; final importing, Trades, Analytics, and Analytics Lab
+  acceptance remains.
 - Temporary-workspace removal: blocked until integration is confirmed and the
   user approves removal.
 
