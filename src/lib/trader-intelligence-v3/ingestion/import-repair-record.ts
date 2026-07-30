@@ -104,7 +104,7 @@ function plainLanguageIssueMessage(args: Readonly<{
   fallback: string;
 }>): string {
   if (args.code === "non_trade_row_skipped") {
-    return "This broker row is not a completed stock execution. It remains visible here but is not sent to Trades or Analytics.";
+    return "This row was automatically set aside because it is not an imported stock execution. It may be a statement heading, cash or FX entry, or another non-stock record. It remains visible here and needs no repair decision.";
   }
   if (args.code === "non_filled_order_skipped") {
     return "This order was not filled. It remains visible here but is not treated as a trade, and no correction is needed.";

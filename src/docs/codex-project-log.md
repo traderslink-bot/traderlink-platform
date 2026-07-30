@@ -20050,3 +20050,27 @@ Current best next step:
 
 - Re-import the owner's real broker CSV through `/imports`, then verify the
   resulting workspace and analytics packets against that execution dataset.
+
+# 2026-07-30 Import Repair accuracy and bulk-review continuation
+
+- Confirmed the April V3 statement contains 575 accepted stock executions and
+  344 deterministic skipped broker rows. The prior Data Decisions table
+  incorrectly presented every skipped row with a warning as a trader repair
+  task.
+- Import Repair now separates deterministic non-execution rows into an
+  automatic-set-aside table. They remain visible with their statement row and
+  explanation, but do not inflate the review count or require exclusion.
+- Added separate Date and Time editing, statement/symbol/time sorting, and
+  multi-row Keep, Exclude, and Reset marking. Bulk correction is deliberately
+  unavailable because the application must not invent values.
+- The 575 accepted executions remain unavailable to Workspace, Trades, and
+  Analytics because the shared dashboard authority returns its explicit
+  unavailable state. This is a shared-path dependency; Import Repair does not
+  create a second dashboard data source or bypass the verified binding.
+
+Current best next step:
+
+- Visually review the revised April statement in canonical `/data-decisions`,
+  then complete the complete-row inventory and possible-open-position signal.
+  Resolve the shared analytics-authority unavailable result so accepted
+  executions appear through the one dashboard path.
