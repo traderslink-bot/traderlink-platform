@@ -7,7 +7,7 @@ import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   DashboardPage,
@@ -20,24 +20,119 @@ type PreviewCandle = {
   low: number;
   open: number;
   time: number;
+  volume: number;
 };
 
-const PREVIEW_CANDLES: readonly PreviewCandle[] = [
-  { time: 1718376600, open: 1.06, high: 1.1, low: 1.04, close: 1.09 },
-  { time: 1718376900, open: 1.09, high: 1.14, low: 1.08, close: 1.12 },
-  { time: 1718377200, open: 1.12, high: 1.2, low: 1.1, close: 1.18 },
-  { time: 1718377500, open: 1.18, high: 1.24, low: 1.16, close: 1.22 },
-  { time: 1718377800, open: 1.22, high: 1.3, low: 1.2, close: 1.27 },
-  { time: 1718378100, open: 1.27, high: 1.38, low: 1.25, close: 1.34 },
-  { time: 1718378400, open: 1.34, high: 1.43, low: 1.31, close: 1.4 },
-  { time: 1718378700, open: 1.4, high: 1.51, low: 1.37, close: 1.48 },
-  { time: 1718379000, open: 1.48, high: 1.58, low: 1.44, close: 1.52 },
-  { time: 1718379300, open: 1.52, high: 1.55, low: 1.46, close: 1.49 },
-  { time: 1718379600, open: 1.49, high: 1.6, low: 1.47, close: 1.57 },
-  { time: 1718379900, open: 1.57, high: 1.68, low: 1.54, close: 1.64 },
-  { time: 1718380200, open: 1.64, high: 1.66, low: 1.56, close: 1.59 },
-  { time: 1718380500, open: 1.59, high: 1.62, low: 1.5, close: 1.53 },
+type SimulationCase = {
+  candles: readonly PreviewCandle[];
+  entryPrice: number;
+  entryTime: string;
+  exitPrice?: number;
+  exitTime?: string;
+  id: "cycu" | "gctk" | "nuwe";
+  noFeedbackReason?: string;
+  primaryHigh?: { price: number; time: string };
+  symbol: string;
+  title: string;
+  volumeLabel: string;
+};
+
+const SIMULATION_CASES: readonly SimulationCase[] = [
+  {
+    id: "cycu",
+    symbol: "CYCU",
+    title: "Early exit continuation",
+    entryTime: "9:30 AM",
+    entryPrice: 0.321,
+    exitTime: "9:39 AM",
+    exitPrice: 0.335,
+    primaryHigh: { time: "10:14 AM", price: 0.54 },
+    volumeLabel: "Active regular-hours volume",
+    candles: [
+      { time: 1785418200, open: 0.321, high: 0.358, low: 0.3199, close: 0.3229, volume: 31607047 },
+      { time: 1785418500, open: 0.3221, high: 0.35, low: 0.32, close: 0.335, volume: 2005489 },
+      { time: 1785418800, open: 0.3344, high: 0.378, low: 0.3344, close: 0.3689, volume: 5871386 },
+      { time: 1785419100, open: 0.3693, high: 0.4, low: 0.3557, close: 0.3754, volume: 6939330 },
+      { time: 1785419400, open: 0.3755, high: 0.397, low: 0.36, close: 0.3676, volume: 5640748 },
+      { time: 1785419700, open: 0.3675, high: 0.4, low: 0.36, close: 0.385, volume: 5785419 },
+      { time: 1785420000, open: 0.385, high: 0.47, low: 0.3759, close: 0.4542, volume: 14158727 },
+      { time: 1785420300, open: 0.4539, high: 0.4999, low: 0.4415, close: 0.4802, volume: 16739866 },
+      { time: 1785420600, open: 0.48, high: 0.54, low: 0.444, close: 0.5107, volume: 18624476 },
+      { time: 1785420900, open: 0.5107, high: 0.5195, low: 0.4728, close: 0.4794, volume: 14864836 },
+      { time: 1785421200, open: 0.4813, high: 0.5106, low: 0.475, close: 0.481, volume: 12275817 },
+      { time: 1785421500, open: 0.481, high: 0.5496, low: 0.4633, close: 0.5167, volume: 14473405 },
+      { time: 1785421800, open: 0.5167, high: 0.5175, low: 0.4455, close: 0.4507, volume: 12071148 },
+      { time: 1785422100, open: 0.4509, high: 0.467, low: 0.4344, close: 0.4436, volume: 7814899 },
+      { time: 1785422400, open: 0.4442, high: 0.465, low: 0.428, close: 0.451, volume: 5906215 },
+      { time: 1785422700, open: 0.4511, high: 0.4586, low: 0.43, close: 0.4399, volume: 3864413 },
+      { time: 1785423000, open: 0.4394, high: 0.4395, low: 0.412, close: 0.4331, volume: 4054928 },
+      { time: 1785423300, open: 0.433, high: 0.4483, low: 0.4252, close: 0.4471, volume: 2723995 },
+    ],
+  },
+  {
+    id: "nuwe",
+    symbol: "NUWE",
+    title: "Early exit continuation",
+    entryTime: "9:30 AM",
+    entryPrice: 5.6846,
+    exitTime: "9:39 AM",
+    exitPrice: 5.9101,
+    primaryHigh: { time: "9:42 AM", price: 6.3999 },
+    volumeLabel: "Active regular-hours volume",
+    candles: [
+      { time: 1785418200, open: 5.6846, high: 6.2199, low: 5.25, close: 5.6351, volume: 58357379 },
+      { time: 1785418500, open: 5.63, high: 6.33, low: 5.46, close: 5.9101, volume: 6867265 },
+      { time: 1785418800, open: 5.9184, high: 6.3999, low: 5.3601, close: 5.475, volume: 3936349 },
+      { time: 1785419100, open: 5.5, high: 6, low: 5.31, close: 5.9599, volume: 2559402 },
+      { time: 1785419400, open: 5.9577, high: 6.0399, low: 5.6, close: 5.8901, volume: 2411373 },
+      { time: 1785419700, open: 5.885, high: 5.91, low: 5.47, close: 5.5531, volume: 1721850 },
+      { time: 1785420000, open: 5.57, high: 5.57, low: 4.5201, close: 4.6499, volume: 3548266 },
+      { time: 1785420300, open: 4.6201, high: 4.87, low: 4.6011, close: 4.8699, volume: 1239414 },
+      { time: 1785420600, open: 4.8692, high: 4.87, low: 4.3901, close: 4.391, volume: 1044526 },
+      { time: 1785420900, open: 4.391, high: 4.6999, low: 4.36, close: 4.585, volume: 860263 },
+      { time: 1785421200, open: 4.585, high: 4.69, low: 4.2, close: 4.3091, volume: 1343171 },
+      { time: 1785421500, open: 4.3, high: 4.425, low: 4.26, close: 4.3375, volume: 507933 },
+      { time: 1785421800, open: 4.3218, high: 4.3218, low: 3.86, close: 3.9391, volume: 1550713 },
+      { time: 1785422100, open: 3.9316, high: 4.16, low: 3.81, close: 4.12, volume: 1297707 },
+      { time: 1785422400, open: 4.121, high: 4.32, low: 3.96, close: 4.29, volume: 1067815 },
+      { time: 1785422700, open: 4.28, high: 4.33, low: 4.1304, close: 4.21, volume: 885228 },
+      { time: 1785423000, open: 4.2199, high: 4.45, low: 4.07, close: 4.42, volume: 1059235 },
+      { time: 1785423300, open: 4.41, high: 4.58, low: 4.32, close: 4.57, volume: 1492756 },
+    ],
+  },
+  {
+    id: "gctk",
+    symbol: "GCTK",
+    title: "No qualifying early-exit simulation",
+    entryTime: "9:30 AM",
+    entryPrice: 0.4081,
+    noFeedbackReason:
+      "No profitable simulated exit between 9:35 and 10:00 AM was followed by a higher observed price in the 60-minute context.",
+    volumeLabel: "Regular-hours volume available",
+    candles: [
+      { time: 1785418200, open: 0.4081, high: 0.4081, low: 0.37, close: 0.3819, volume: 43353509 },
+      { time: 1785418500, open: 0.3802, high: 0.385, low: 0.363, close: 0.3745, volume: 1767296 },
+      { time: 1785418800, open: 0.3745, high: 0.3786, low: 0.3644, close: 0.3712, volume: 989262 },
+      { time: 1785419100, open: 0.3713, high: 0.3746, low: 0.3558, close: 0.3561, volume: 1112129 },
+      { time: 1785419400, open: 0.3562, high: 0.3619, low: 0.3431, close: 0.3547, volume: 1263500 },
+      { time: 1785419700, open: 0.3547, high: 0.359, low: 0.3522, close: 0.3563, volume: 320269 },
+      { time: 1785420000, open: 0.356, high: 0.356, low: 0.3365, close: 0.3429, volume: 827337 },
+      { time: 1785420300, open: 0.3429, high: 0.3555, low: 0.3428, close: 0.3545, volume: 593594 },
+      { time: 1785420600, open: 0.3522, high: 0.36, low: 0.3503, close: 0.3552, volume: 419812 },
+      { time: 1785420900, open: 0.3554, high: 0.3564, low: 0.35, close: 0.3541, volume: 184178 },
+      { time: 1785421200, open: 0.3541, high: 0.3632, low: 0.354, close: 0.3607, volume: 477622 },
+      { time: 1785421500, open: 0.3607, high: 0.369, low: 0.35, close: 0.3595, volume: 757745 },
+      { time: 1785421800, open: 0.358, high: 0.3653, low: 0.3541, close: 0.3552, volume: 228441 },
+      { time: 1785422100, open: 0.3551, high: 0.36, low: 0.3536, close: 0.3551, volume: 363875 },
+      { time: 1785422400, open: 0.3549, high: 0.369, low: 0.3549, close: 0.3669, volume: 240141 },
+      { time: 1785422700, open: 0.3664, high: 0.3766, low: 0.3586, close: 0.3703, volume: 512428 },
+      { time: 1785423000, open: 0.3702, high: 0.38, low: 0.37, close: 0.3756, volume: 456918 },
+      { time: 1785423300, open: 0.3765, high: 0.3799, low: 0.3651, close: 0.3661, volume: 589120 },
+    ],
+  },
 ];
+
+const DEFAULT_SIMULATION_CASE = SIMULATION_CASES[0]!;
 
 type LightweightChartsApi = {
   CandlestickSeries: unknown;
@@ -102,7 +197,11 @@ function loadLightweightCharts(): Promise<LightweightChartsApi> {
   });
 }
 
-function TradeCandleChart() {
+function formatPrice(price: number): string {
+  return `$${price.toFixed(4)}`;
+}
+
+function TradeCandleChart({ scenario }: { scenario: SimulationCase }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -128,7 +227,7 @@ function TradeCandleChart() {
             background: { type: library.ColorType.Solid, color: "#ffffff" },
             textColor: "#526176",
           },
-          localization: { priceFormatter: (price: number) => `$${price.toFixed(2)}` },
+          localization: { priceFormatter: formatPrice },
           rightPriceScale: { borderColor: "#dfe5ef" },
           timeScale: { borderColor: "#dfe5ef", timeVisible: true },
         });
@@ -140,31 +239,35 @@ function TradeCandleChart() {
           wickDownColor: "#ca4b5b",
           wickUpColor: "#15825a",
         });
-        candles.setData(PREVIEW_CANDLES);
+        candles.setData(scenario.candles);
         candles.createPriceLine({
           axisLabelVisible: true,
           color: "#137333",
           lineStyle: library.LineStyle.Dashed,
           lineWidth: 2,
-          price: 1.1,
-          title: "Entry $1.10",
+          price: scenario.entryPrice,
+          title: `Entry ${formatPrice(scenario.entryPrice)}`,
         });
-        candles.createPriceLine({
-          axisLabelVisible: true,
-          color: "#b3261e",
-          lineStyle: library.LineStyle.Dashed,
-          lineWidth: 2,
-          price: 1.34,
-          title: "Exit $1.34",
-        });
-        candles.createPriceLine({
-          axisLabelVisible: true,
-          color: "#00639b",
-          lineStyle: library.LineStyle.Dotted,
-          lineWidth: 1,
-          price: 1.58,
-          title: "30m high $1.58",
-        });
+        if (scenario.exitPrice) {
+          candles.createPriceLine({
+            axisLabelVisible: true,
+            color: "#b3261e",
+            lineStyle: library.LineStyle.Dashed,
+            lineWidth: 2,
+            price: scenario.exitPrice,
+            title: `Simulated exit ${formatPrice(scenario.exitPrice)}`,
+          });
+        }
+        if (scenario.primaryHigh) {
+          candles.createPriceLine({
+            axisLabelVisible: true,
+            color: "#00639b",
+            lineStyle: library.LineStyle.Dotted,
+            lineWidth: 1,
+            price: scenario.primaryHigh.price,
+            title: `30m high ${formatPrice(scenario.primaryHigh.price)}`,
+          });
+        }
         chart.timeScale().fitContent();
       })
       .catch(() => undefined);
@@ -173,7 +276,7 @@ function TradeCandleChart() {
       active = false;
       chart?.remove();
     };
-  }, []);
+  }, [scenario]);
 
   return (
     <Box
@@ -202,6 +305,14 @@ function Observation({
 }
 
 export function TradeCandleAnalysisPreview() {
+  const [selectedScenarioId, setSelectedScenarioId] = useState<SimulationCase["id"]>(
+    "cycu",
+  );
+  const scenario =
+    SIMULATION_CASES.find((item) => item.id === selectedScenarioId) ??
+    DEFAULT_SIMULATION_CASE;
+  const hasExitContinuation = Boolean(scenario.exitPrice && scenario.primaryHigh);
+
   return (
     <DashboardPage>
       <Stack spacing={0.75}>
@@ -221,36 +332,55 @@ export function TradeCandleAnalysisPreview() {
           <Chip color="warning" label="Design preview" size="small" />
         </Stack>
         <Typography color="text.secondary" variant="body2">
-          Fixture data only. Yahoo candles and verified broker executions are not connected yet.
+          Simulated trades over normalized Yahoo regular-hours snapshots from July 30,
+          2026. They are not broker executions and do not update trader P/L.
         </Typography>
       </Stack>
 
       <Alert severity="info">
-        Feedback appears only when the required candle window is complete. The first
-        30 minutes after exit are the primary review; the next 30 minutes provide
-        context without changing that first finding.
+        The replay covers 9:30–11:00 AM ET with volume-aware five-minute display
+        candles. One-minute coverage determines whether feedback is allowed. The first
+        30 minutes after exit are primary; the next 30 minutes add context.
       </Alert>
 
       <DashboardPanel
         action={
           <Stack direction="row" spacing={0.75}>
-            <Chip label="5-minute candles" size="small" variant="outlined" />
-            <Chip label="Long" size="small" variant="outlined" />
+            <Chip label="5-minute replay" size="small" variant="outlined" />
+            <Chip label="Simulated long" size="small" variant="outlined" />
           </Stack>
         }
         title="Candle replay"
       >
-        <TradeCandleChart />
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} sx={{ mb: 2 }}>
+          {SIMULATION_CASES.map((item) => (
+            <Chip
+              color={item.id === scenario.id ? "primary" : "default"}
+              key={item.id}
+              label={`${item.symbol} · ${item.title}`}
+              onClick={() => setSelectedScenarioId(item.id)}
+              size="small"
+              variant={item.id === scenario.id ? "filled" : "outlined"}
+            />
+          ))}
+        </Stack>
+        <TradeCandleChart scenario={scenario} />
         <Stack
           direction={{ xs: "column", md: "row" }}
           divider={<Divider flexItem orientation="vertical" />}
           spacing={2}
           sx={{ mt: 2 }}
         >
-          <Observation label="Entry">9:40 AM · $1.10</Observation>
-          <Observation label="Final exit">10:05 AM · $1.34</Observation>
+          <Observation label="Simulated entry">
+            {scenario.entryTime} · {formatPrice(scenario.entryPrice)}
+          </Observation>
+          <Observation label="Simulated exit">
+            {scenario.exitTime && scenario.exitPrice
+              ? `${scenario.exitTime} · ${formatPrice(scenario.exitPrice)}`
+              : "No qualifying exit"}
+          </Observation>
           <Observation label="Primary review">First 30 minutes after exit</Observation>
-          <Observation label="Context">Up to 60 minutes after exit</Observation>
+          <Observation label="Volume context">{scenario.volumeLabel}</Observation>
         </Stack>
         <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", mt: 2 }}>
           <OpenInNewRoundedIcon color="primary" fontSize="small" />
@@ -280,41 +410,56 @@ export function TradeCandleAnalysisPreview() {
         <DashboardPanel title="Profit giveback">
           <Stack spacing={1.25}>
             <Typography sx={{ fontWeight: 700 }}>
-              Observed peak was $1.51 while the trade was open.
+              {hasExitContinuation
+                ? `The simulated exit retained a gain from the ${formatPrice(scenario.entryPrice)} entry.`
+                : "No qualifying profitable early-exit simulation was found."}
             </Typography>
             <Typography color="text.secondary" variant="body2">
-              Final exit at $1.34 came after the fixture trade reached its observed
-              high. The live analyzer will stay quiet if the held-position candles
-              are incomplete.
+              {hasExitContinuation
+                ? "This demonstrates an exit path, not a broker-fill reconstruction. A live profit-giveback result needs complete held-position candles."
+                : scenario.noFeedbackReason}
             </Typography>
-            <Chip label="Complete trade window" size="small" variant="outlined" />
+            <Chip
+              label={hasExitContinuation ? "Simulated gain retained" : "No feedback"}
+              size="small"
+              variant="outlined"
+            />
           </Stack>
         </DashboardPanel>
 
         <DashboardPanel title="Exit timing">
           <Stack spacing={1.25}>
             <Typography sx={{ fontWeight: 700 }}>
-              Price continued higher after exit.
+              {hasExitContinuation
+                ? "Price continued higher after the simulated exit."
+                : "No missed-profit conclusion."}
             </Typography>
             <Typography color="text.secondary" variant="body2">
-              The observed high reached $1.58 in the first 30 minutes after the
-              $1.34 exit. Price later reached $1.68 in the 60-minute context.
+              {hasExitContinuation && scenario.exitPrice && scenario.primaryHigh
+                ? `The observed high reached ${formatPrice(scenario.primaryHigh.price)} at ${scenario.primaryHigh.time}, within 30 minutes of the ${formatPrice(scenario.exitPrice)} simulated exit.`
+                : scenario.noFeedbackReason}
             </Typography>
-            <Chip color="info" label="Primary window complete" size="small" variant="outlined" />
+            <Chip
+              color={hasExitContinuation ? "info" : "default"}
+              label={hasExitContinuation ? "Primary window complete" : "No feedback"}
+              size="small"
+              variant="outlined"
+            />
           </Stack>
         </DashboardPanel>
 
         <DashboardPanel title="Entry timing">
           <Stack spacing={1.25}>
             <Typography sx={{ fontWeight: 700 }}>
-              Price held above the $1.10 entry.
+              {hasExitContinuation
+                ? `The simulation begins at the observed ${formatPrice(scenario.entryPrice)} open.`
+                : "No alternate entry is inferred."}
             </Typography>
             <Typography color="text.secondary" variant="body2">
-              The fixture shows immediate continuation after entry. The live
-              analyzer will report only what the observed pre- and post-entry
-              candle windows support.
+              Entry timing stays separate from the exit example. The live analyzer
+              will report only what complete pre- and post-entry candle windows support.
             </Typography>
-            <Chip label="Complete entry windows" size="small" variant="outlined" />
+            <Chip label="Evidence-gated" size="small" variant="outlined" />
           </Stack>
         </DashboardPanel>
       </Box>

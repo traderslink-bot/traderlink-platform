@@ -37,15 +37,34 @@ The experiment is deliberately conservative about when it speaks:
 - It only analyzes a completed, one-symbol round trip with first-entry and
   final-exit timestamps, a direction, and usable prices.
 - It asks Yahoo for a bounded candle range around the trade, including up to 60
-  minutes after exit, normalizes only complete OHLC bars, and records the
-  primary 30-minute coverage separately from later context.
+  minutes after exit, normalizes complete OHLCV bars, and records the primary
+  30-minute coverage separately from later context. Volume is retained as
+  market-activity context for micro-cap names so the product can distinguish a
+  populated trading bar from a quiet placeholder minute.
 - If a requested review window is incomplete, has missing/invalid candles, or
   cannot be aligned confidently to the trade timestamps, the related analyzer
   returns `No feedback` with a plain-language reason.
 - No browser calculation may replace or alter V3 P/L, execution prices, or
   quantity. Candle-derived observations remain separate, read-only experimental
   context.
+- A zero- or missing-volume interval never creates a conclusion by itself.
+  Coverage remains a per-window decision over valid, time-aligned candle data;
+  the interface must say `No feedback` rather than imply a continuous market
+  path across absent/invalid candle intervals.
 - No raw Yahoo response is persisted in the first experiment slice.
+
+## Initial Yahoo validation set
+
+- Use the owner-provided regular-hours symbols `CYCU`, `GCTK`, and `NUWE` for
+  the first read-only Yahoo candle checks. They are experimental fixtures, not
+  a watchlist, recommendation, or supported-symbol commitment.
+- Validate every selected trade against its own actual candle coverage. A
+  symbol that has usable continuous candles on one session can be sparse on a
+  prior session; the analyzer must therefore decide from the requested trade
+  window rather than from a symbol-level quality label.
+- Use the set to prove both paths: a complete 30-minute primary window (and,
+  where available, its 60-minute context), plus sparse/null-bar windows that
+  correctly return `No feedback`.
 
 ## Analyzer definitions
 
@@ -92,7 +111,7 @@ complete. It must not imply that a different entry was certainly achievable.
   Trading Platform libraries.
 - Add a server-only Yahoo candle adapter and owner-protected route/action. It
   validates a supported symbol and fixed bounded range, uses `no-store`, and
-  returns a small typed candle packet without exposing provider internals.
+  returns a small typed OHLCV candle packet without exposing provider internals.
 - Build one pure, typed analyzer module that accepts broker-trade facts plus a
   normalized candle packet and produces the three feedback states. This keeps
   chart rendering separate from evidence judgement.
