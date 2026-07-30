@@ -53,6 +53,11 @@ type LiveSimulationResult =
         exitPrice: number;
         exitTime: number;
       };
+      patternObservations: readonly {
+        kind: string;
+        time: number;
+        zone: "entry" | "exit" | "held_peak";
+      }[];
     }
   | { reason: string; status: "no_feedback"; symbol: string };
 
@@ -425,6 +430,18 @@ export function TradeCandleAnalysisPreview() {
             `No live feedback for ${liveResult.symbol}: ${liveResult.reason}`
           )}
         </Alert>
+      ) : null}
+
+      {liveResult?.status === "ready" && liveResult.patternObservations.length > 0 ? (
+        <DashboardPanel title="Execution context">
+          <Stack spacing={1}>
+            {liveResult.patternObservations.map((observation) => (
+              <Typography key={`${observation.zone}-${observation.kind}-${observation.time}`} variant="body2">
+                {observation.zone === "held_peak" ? "Near the held-position peak" : `Near ${observation.zone}`}: {observation.kind.replaceAll("_", " ")} at {formatEasternTime(observation.time)}.
+              </Typography>
+            ))}
+          </Stack>
+        </DashboardPanel>
       ) : null}
 
       <DashboardPanel
