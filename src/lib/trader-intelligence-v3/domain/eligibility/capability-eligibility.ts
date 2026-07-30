@@ -167,7 +167,8 @@ export function calculateManifestEligibility(args: {
   const coachingProhibited = policy.value.state === "ineligible_for_coaching";
   const evidence = canonicalStringSet(args.requiredEvidenceReferences) as readonly CanonicalContentDigest[];
   const result = (capability: AnalysisCapability, state: EligibilityState, reasons: readonly string[], failureClass: EligibilityFailureClass): CapabilityEligibility => ({ capability, state, reasonCodes: reasons, manifestDigest: args.manifest.manifestDigest, analysisCutoffAt: args.analysisCutoffAt, evidenceReferences: evidence, failureClass });
-  const reconstructionBlocked = unresolved || incomplete || pendingCorrection || correction.value.status === "blocked" || args.manifest.content.reconstructionStatus !== "exact";
+  const reconstructionBlocked = unresolved || incomplete || pendingCorrection || correction.value.status === "blocked" || args.manifest.content.reconstructionStatus === "blocked";
+  const reconstructionLimited = args.manifest.content.reconstructionStatus === "limited";
   const closedTradeBlocked = reconstructionBlocked || executionReviewOnly;
   const policyReason = pendingCorrection
     ? "ti_v3_eligibility_pending_correction"
@@ -175,8 +176,8 @@ export function calculateManifestEligibility(args: {
       ? "ti_v3_eligibility_open_positions_execution_review_only"
       : "ti_v3_eligibility_reconstruction_required";
   const results: CapabilityEligibility[] = [
-    result("exact_reconstruction", reconstructionBlocked ? "blocked" : "eligible", reconstructionBlocked ? ["ti_v3_eligibility_exact_reconstruction_unavailable"] : [], reconstructionBlocked ? "pending_additional_evidence" : "none"),
-    result("closed_trade_analytics", closedTradeBlocked ? "blocked" : open ? "limited" : "eligible", closedTradeBlocked ? [policyReason] : open ? ["ti_v3_eligibility_open_positions_excluded"] : [], closedTradeBlocked || open ? "pending_additional_evidence" : "none"),
+    result("exact_reconstruction", reconstructionBlocked || reconstructionLimited ? "blocked" : "eligible", reconstructionBlocked || reconstructionLimited ? ["ti_v3_eligibility_exact_reconstruction_unavailable"] : [], reconstructionBlocked || reconstructionLimited ? "pending_additional_evidence" : "none"),
+    result("closed_trade_analytics", closedTradeBlocked ? "blocked" : open || reconstructionLimited ? "limited" : "eligible", closedTradeBlocked ? [policyReason] : reconstructionLimited ? ["ti_v3_eligibility_reconstruction_limited_to_verified_ledgers"] : open ? ["ti_v3_eligibility_open_positions_excluded"] : [], closedTradeBlocked || open || reconstructionLimited ? "pending_additional_evidence" : "none"),
     result("execution_review", unresolved || pendingCorrection ? "limited" : "eligible", unresolved || pendingCorrection ? [pendingCorrection ? "ti_v3_eligibility_pending_correction" : "ti_v3_eligibility_unresolved_correction_limited"] : [], unresolved || pendingCorrection ? "pending_additional_evidence" : "none"),
     result("behavioral_analytics", reconstructionBlocked ? "blocked" : "eligible", reconstructionBlocked ? [policyReason] : [], reconstructionBlocked ? "pending_additional_evidence" : "none"),
     result("simulations", reconstructionBlocked || executionReviewOnly ? "blocked" : "eligible", reconstructionBlocked || executionReviewOnly ? [policyReason] : [], reconstructionBlocked || executionReviewOnly ? "pending_additional_evidence" : "none"),

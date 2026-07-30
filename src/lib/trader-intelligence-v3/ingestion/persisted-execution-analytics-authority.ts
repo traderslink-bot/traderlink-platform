@@ -249,7 +249,9 @@ export function buildPersistedExecutionAnalyticsAuthority(args: {
     return failure("ti_v3_persisted_analytics_authority_attachment_incomplete", "$.attachment.startingInventories");
   }
   const reconstruction = reconstructAnalyticalPnl({ relationshipResolution: relationships, startingInventories: inventories });
-  if (reconstruction.status !== "completed") return failure("ti_v3_persisted_analytics_authority_dataset_blocked", "$.reconstruction");
+  if (reconstruction.status !== "completed" && reconstruction.ledgers.length === 0) {
+    return failure("ti_v3_persisted_analytics_authority_dataset_blocked", "$.reconstruction");
+  }
   const policyIdentity = required(createCanonicalContentIdentity("canonical_content", "v1", {
     policyKey: "ti_v3_fifo_analytical_pnl", policyVersion: "v1",
   }), "$.fifoPolicy");
@@ -291,8 +293,8 @@ export function buildPersistedExecutionAnalyticsAuthority(args: {
     openPositions,
     currencies: [...new Set(active.map((execution) => execution.content.currency))],
     coverageStates: args.attachment.coverageStates,
-    reconstructionStatus: "exact",
-    reconstructionReasonCodes: [],
+    reconstructionStatus: reconstruction.status === "completed" ? "exact" : "limited",
+    reconstructionReasonCodes: reconstruction.limitations,
   }), "$.manifest");
   if (!manifest.ok) return manifest;
   const eligibility = required(calculateManifestEligibility({ manifest: manifest.value, retrospectivePolicy: retrospective.value, correctionResult: correction.value, analysisCutoffAt: args.attachment.analysisCutoffAt, requiredEvidenceReferences: [] }), "$.eligibility");
