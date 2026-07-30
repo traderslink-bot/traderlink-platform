@@ -2,7 +2,9 @@
 
 Plan: [day-session-page-plan.md](./day-session-page-plan.md)
 
-Status: approved visual preserved; direct Trade Tracker route implemented
+Trade-tag plan: [trade-tag-system-plan.md](./trade-tag-system-plan.md)
+
+Status: approved visual preserved; direct Trade Tracker route and trade tags implemented
 
 ## Workspace
 
@@ -59,6 +61,6 @@ Status: approved visual preserved; direct Trade Tracker route implemented
 
 ## Deferred until contract approval
 
-- Note, rule-review, and tag persistence
+- Note and rule-review persistence
 - `Tomorrow's focus` carry-forward implementation
 - Tests, browser automation, and final verification

@@ -1,7 +1,14 @@
+export type DaySessionTradeTag = {
+  assignmentCount: number;
+  name: string;
+  revision: string;
+  tagId: string;
+};
+
 export type DaySessionTradeJournal = {
   ruleStatus: "followed" | "broken" | "not-reviewed";
   ruleSummary: string;
-  tags: string[];
+  tags: DaySessionTradeTag[];
   technicalNote: string;
 };
 
@@ -45,6 +52,7 @@ export type DaySessionWeek = {
 };
 
 export type DaySessionData = {
+  availableTags: DaySessionTradeTag[];
   currency: string;
   date: string;
   netPnl: string;

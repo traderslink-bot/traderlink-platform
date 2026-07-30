@@ -11,14 +11,22 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  Button,
   Card,
+  Checkbox,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
+  FormControlLabel,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import Link from "next/link";
+import { useState } from "react";
 
 import {
   DashboardPage,
@@ -31,8 +39,312 @@ import type {
   DaySessionData,
   DaySessionRoundTrip,
   DaySessionRule,
+  DaySessionTradeTag,
   DaySessionWeekDay,
 } from "./day-session-types";
+
+type ApiResult<T> = {
+  data?: T;
+  error?: { assignmentCount?: number; code?: string; message?: string };
+};
+
+async function api<T>(url: string, init: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...init.headers },
+  });
+  const result = (await response.json()) as ApiResult<T>;
+  if (!response.ok || result.data === undefined) {
+    const error = new Error(result.error?.message ?? "The tag change failed.") as
+      Error & { assignmentCount?: number; status?: number };
+    error.assignmentCount = result.error?.assignmentCount;
+    error.status = response.status;
+    throw error;
+  }
+  return result.data;
+}
+
+function TradeTagEditor({
+  availableTags,
+  designPreview,
+  onCatalogChange,
+  onTagsChange,
+  roundTrip,
+  sessionDate,
+  tags,
+}: {
+  availableTags: DaySessionTradeTag[];
+  designPreview: boolean;
+  onCatalogChange: (tags: DaySessionTradeTag[]) => void;
+  onTagsChange: (tags: DaySessionTradeTag[]) => void;
+  roundTrip: DaySessionRoundTrip;
+  sessionDate: string;
+  tags: DaySessionTradeTag[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>(tags.map((tag) => tag.tagId));
+  const [newName, setNewName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  function showEditor(): void {
+    setSelectedIds(tags.map((tag) => tag.tagId));
+    setError("");
+    setOpen(true);
+  }
+
+  async function createTag(): Promise<void> {
+    if (!newName.trim()) return;
+    setBusy(true);
+    setError("");
+    try {
+      const created = await api<DaySessionTradeTag>("/api/intelligence/trade-tags", {
+        body: JSON.stringify({ name: newName }),
+        method: "POST",
+      });
+      onCatalogChange([...availableTags, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setSelectedIds((current) => [...current, created.tagId]);
+      setNewName("");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The tag could not be created.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function save(): Promise<void> {
+    setBusy(true);
+    setError("");
+    try {
+      const saved = await api<DaySessionTradeTag[]>(
+        `/api/intelligence/trades/${encodeURIComponent(roundTrip.roundTripKey)}/tags`,
+        {
+          body: JSON.stringify({ sessionDate, tagIds: selectedIds }),
+          method: "PUT",
+        },
+      );
+      const previousIds = new Set(tags.map((tag) => tag.tagId));
+      const nextIds = new Set(saved.map((tag) => tag.tagId));
+      onCatalogChange(
+        availableTags.map((tag) => ({
+          ...tag,
+          assignmentCount:
+            tag.assignmentCount +
+            (nextIds.has(tag.tagId) && !previousIds.has(tag.tagId) ? 1 : 0) -
+            (previousIds.has(tag.tagId) && !nextIds.has(tag.tagId) ? 1 : 0),
+        })),
+      );
+      onTagsChange(saved);
+      setOpen(false);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The tags could not be saved.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
+        {tags.map((tag) => <Chip key={tag.tagId} label={tag.name} size="small" />)}
+        <Button
+          disabled={designPreview}
+          onClick={showEditor}
+          size="small"
+          variant="outlined"
+        >
+          {tags.length === 0 ? "Add tags" : "Edit tags"}
+        </Button>
+      </Stack>
+      <Dialog fullWidth maxWidth="sm" onClose={() => setOpen(false)} open={open}>
+        <DialogTitle>Tags</DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
+            Select every tag that belongs to this individual trade.
+          </Typography>
+          <Stack sx={{ maxHeight: 260, overflowY: "auto" }}>
+            {availableTags.length === 0 ? (
+              <Typography color="text.secondary" sx={{ py: 1 }} variant="body2">
+                No tags created yet.
+              </Typography>
+            ) : null}
+            {availableTags.map((tag) => (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={selectedIds.includes(tag.tagId)}
+                    onChange={(_, checked) =>
+                      setSelectedIds((current) =>
+                        checked
+                          ? [...current, tag.tagId]
+                          : current.filter((tagId) => tagId !== tag.tagId),
+                      )
+                    }
+                  />
+                }
+                key={tag.tagId}
+                label={tag.name}
+              />
+            ))}
+          </Stack>
+          <Divider sx={{ my: 2 }} />
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+            <TextField
+              fullWidth
+              label="Create tag"
+              onChange={(event) => setNewName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void createTag();
+                }
+              }}
+              size="small"
+              value={newName}
+            />
+            <Button disabled={busy || !newName.trim()} onClick={() => void createTag()} variant="outlined">
+              Create
+            </Button>
+          </Stack>
+          {error ? <Typography color="error" sx={{ mt: 1.5 }} variant="body2">{error}</Typography> : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button disabled={busy || selectedIds.length > 10} onClick={() => void save()} variant="contained">
+            Save tags
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}
+
+function ManageTagsDialog({
+  onChange,
+  onClose,
+  open,
+  tags,
+}: {
+  onChange: (tags: DaySessionTradeTag[]) => void;
+  onClose: () => void;
+  open: boolean;
+  tags: DaySessionTradeTag[];
+}) {
+  const [names, setNames] = useState<Record<string, string>>({});
+  const [error, setError] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function rename(tag: DaySessionTradeTag): Promise<void> {
+    const name = names[tag.tagId] ?? tag.name;
+    setBusyId(tag.tagId);
+    setError("");
+    try {
+      const revised = await api<DaySessionTradeTag>(
+        `/api/intelligence/trade-tags/${encodeURIComponent(tag.tagId)}`,
+        {
+          body: JSON.stringify({ expectedRevision: tag.revision, name }),
+          method: "PATCH",
+        },
+      );
+      onChange(tags.map((candidate) => candidate.tagId === tag.tagId ? revised : candidate));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The tag could not be renamed.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function remove(tag: DaySessionTradeTag, confirmed = false): Promise<void> {
+    if (
+      !confirmed &&
+      tag.assignmentCount > 0 &&
+      window.confirm(
+        `Delete “${tag.name}” and remove it from ${tag.assignmentCount} trade${tag.assignmentCount === 1 ? "" : "s"}?`,
+      )
+    ) {
+      await remove(tag, true);
+      return;
+    }
+    if (!confirmed && tag.assignmentCount > 0) return;
+    setBusyId(tag.tagId);
+    setError("");
+    try {
+      await api<{ removedAssignmentCount: number }>(
+        `/api/intelligence/trade-tags/${encodeURIComponent(tag.tagId)}`,
+        {
+          body: JSON.stringify({
+            confirmAssignedDeletion: confirmed,
+            expectedRevision: tag.revision,
+          }),
+          method: "DELETE",
+        },
+      );
+      onChange(tags.filter((candidate) => candidate.tagId !== tag.tagId));
+    } catch (caught) {
+      const typed = caught as Error & { assignmentCount?: number; status?: number };
+      if (
+        !confirmed &&
+        typed.status === 409 &&
+        typed.assignmentCount &&
+        window.confirm(
+          `Delete “${tag.name}” and remove it from ${typed.assignmentCount} trade${typed.assignmentCount === 1 ? "" : "s"}?`,
+        )
+      ) {
+        setBusyId(null);
+        await remove(tag, true);
+        return;
+      }
+      setError(typed.message);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <Dialog fullWidth maxWidth="sm" onClose={onClose} open={open}>
+      <DialogTitle>Manage tags</DialogTitle>
+      <DialogContent>
+        <Stack divider={<Divider flexItem />} spacing={0}>
+          {tags.length === 0 ? (
+            <Typography color="text.secondary" sx={{ py: 2 }} variant="body2">
+              Create your first tag from an individual trade.
+            </Typography>
+          ) : null}
+          {tags.map((tag) => (
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              key={tag.tagId}
+              spacing={1}
+              sx={{ alignItems: { sm: "center" }, py: 1.25 }}
+            >
+              <TextField
+                fullWidth
+                onChange={(event) =>
+                  setNames((current) => ({ ...current, [tag.tagId]: event.target.value }))
+                }
+                size="small"
+                value={names[tag.tagId] ?? tag.name}
+              />
+              <Typography color="text.secondary" sx={{ minWidth: 70 }} variant="caption">
+                {tag.assignmentCount} trade{tag.assignmentCount === 1 ? "" : "s"}
+              </Typography>
+              <Button disabled={busyId === tag.tagId} onClick={() => void rename(tag)} size="small">
+                Save
+              </Button>
+              <Button color="error" disabled={busyId === tag.tagId} onClick={() => void remove(tag)} size="small">
+                Delete
+              </Button>
+            </Stack>
+          ))}
+        </Stack>
+        {error ? <Typography color="error" sx={{ mt: 1.5 }} variant="body2">{error}</Typography> : null}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Done</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
 
 function money(value: string, currency: string): string {
   const match = /^(-?)(\d+)(?:\.(\d+))?$/.exec(value);
@@ -117,11 +429,23 @@ function statusPresentation(
 }
 
 function TradeReview({
+  availableTags,
   currency,
+  designPreview,
+  onCatalogChange,
+  onTagsChange,
   roundTrip,
+  sessionDate,
+  tags,
 }: {
+  availableTags: DaySessionTradeTag[];
   currency: string;
+  designPreview: boolean;
+  onCatalogChange: (tags: DaySessionTradeTag[]) => void;
+  onTagsChange: (tags: DaySessionTradeTag[]) => void;
   roundTrip: DaySessionRoundTrip;
+  sessionDate: string;
+  tags: DaySessionTradeTag[];
 }) {
   const status = statusPresentation(roundTrip.journal.ruleStatus);
   const StatusIcon = status.icon;
@@ -167,15 +491,15 @@ function TradeReview({
         </Typography>
       </Box>
 
-      <Stack
-        direction="row"
-        spacing={0.75}
-        sx={{ flexWrap: "wrap", gap: 0.75, mt: 1.5 }}
-      >
-        {roundTrip.journal.tags.map((tag) => (
-          <Chip key={tag} label={tag} size="small" />
-        ))}
-      </Stack>
+      <TradeTagEditor
+        availableTags={availableTags}
+        designPreview={designPreview}
+        onCatalogChange={onCatalogChange}
+        onTagsChange={onTagsChange}
+        roundTrip={roundTrip}
+        sessionDate={sessionDate}
+        tags={tags}
+      />
 
       <Box
         sx={{
@@ -344,6 +668,19 @@ export function DaySessionView({
   data: DaySessionData;
   designPreview?: boolean;
 }) {
+  const [availableTags, setAvailableTags] = useState<DaySessionTradeTag[]>(data.availableTags);
+  const [tradeTags, setTradeTags] = useState<Record<string, DaySessionTradeTag[]>>(
+    () =>
+      Object.fromEntries(
+        data.tickers.flatMap((ticker) =>
+          ticker.roundTrips.map((roundTrip) => [
+            roundTrip.roundTripKey,
+            roundTrip.journal.tags,
+          ]),
+        ),
+      ),
+  );
+  const [manageTagsOpen, setManageTagsOpen] = useState(false);
   const tradeCount = data.tickers.reduce(
     (count, ticker) => count + ticker.roundTrips.length,
     0,
@@ -418,6 +755,11 @@ export function DaySessionView({
             spacing={1}
             sx={{ flexWrap: "wrap", gap: 1 }}
           >
+            {!designPreview ? (
+              <DashboardSecondaryAction onClick={() => setManageTagsOpen(true)}>
+                Manage tags
+              </DashboardSecondaryAction>
+            ) : null}
             {data.previousSessionDate ? (
               <DashboardSecondaryAction
                 component={Link}
@@ -534,9 +876,20 @@ export function DaySessionView({
               <Stack divider={<Divider flexItem />}>
                 {ticker.roundTrips.map((roundTrip) => (
                   <TradeReview
+                    availableTags={availableTags}
                     currency={data.currency}
+                    designPreview={designPreview}
                     key={roundTrip.roundTripKey}
+                    onCatalogChange={setAvailableTags}
+                    onTagsChange={(tags) =>
+                      setTradeTags((current) => ({
+                        ...current,
+                        [roundTrip.roundTripKey]: tags,
+                      }))
+                    }
                     roundTrip={roundTrip}
+                    sessionDate={data.date}
+                    tags={tradeTags[roundTrip.roundTripKey] ?? []}
                   />
                 ))}
               </Stack>
@@ -632,6 +985,25 @@ export function DaySessionView({
           <DashboardPrimaryAction disabled>Save Notes</DashboardPrimaryAction>
         </Box>
       </DashboardPanel>
+      <ManageTagsDialog
+        onChange={(tags) => {
+          const validIds = new Set(tags.map((tag) => tag.tagId));
+          setAvailableTags(tags);
+          setTradeTags((current) =>
+            Object.fromEntries(
+              Object.entries(current).map(([key, values]) => [
+                key,
+                values
+                  .filter((tag) => validIds.has(tag.tagId))
+                  .map((tag) => tags.find((candidate) => candidate.tagId === tag.tagId) ?? tag),
+              ]),
+            ),
+          );
+        }}
+        onClose={() => setManageTagsOpen(false)}
+        open={manageTagsOpen}
+        tags={availableTags}
+      />
     </DashboardPage>
   );
 }

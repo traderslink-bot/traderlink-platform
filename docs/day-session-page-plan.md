@@ -4,6 +4,9 @@ Status: visual design approved; direct Trade Tracker route slice implemented
 
 Progress tracker: [day-session-page-progress.md](./day-session-page-progress.md)
 
+Trade-tag subsystem:
+[trade-tag-system-plan.md](./trade-tag-system-plan.md)
+
 ## Goal
 
 Build the factual single-day journal as the `Trade Tracker` experience inside
@@ -166,6 +169,8 @@ the new day until the trader saves that day's notes.
      approved view without changing its visual hierarchy.
    - Retired the old Day Sessions list behind compatibility redirects.
 3. **Trader-authored persistence — awaiting contract approval**
+   - Trade tags are complete through the linked Trade Tag System Plan,
+     including local webpage verification.
    - Add exact contract validators for the three trader-authored record types.
    - Add isolated storage and schema migration for the approved V3 journal
      database.

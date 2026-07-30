@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { requireTraderIntelligenceOwnerPageAccess } from "@/src/lib/trader-intelligence-v3/auth";
 
 import {
   DashboardPage,
@@ -40,7 +41,10 @@ export default async function TradeTrackerDayPage({
     );
   }
 
-  const data = await getGovernedDaySession(sessionDate);
+  const owner = await requireTraderIntelligenceOwnerPageAccess(
+    "app/(dashboard)/trade-tracker/[sessionDate]/page.tsx",
+  );
+  const data = await getGovernedDaySession(sessionDate, owner);
   if (data) return <DaySessionView data={data} />;
 
   return (

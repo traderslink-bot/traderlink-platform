@@ -3,6 +3,11 @@ import "server-only";
 import { resolveAnalyticsLabRuntime } from "../analytics/lab/lab-runtime";
 import type { AnalyticalRow } from "../../../src/lib/trader-intelligence-v3/analytics/dataset/analytical-row";
 import { sumExactDecimals } from "../../../src/lib/trader-intelligence-v3/analytics/tools/weekday";
+import type { TraderIntelligenceOwnerContext } from "../../../src/lib/trader-intelligence-v3/domain";
+import {
+  readTradeTagCatalog,
+  readTradeTagsByRoundTripKeys,
+} from "../../../src/lib/trader-intelligence-tags";
 
 import type {
   DaySessionData,
@@ -37,7 +42,7 @@ function weekBounds(sessionDate: string): { end: string; start: string } {
   };
 }
 
-async function readGovernedTradeRows(): Promise<GovernedTradeRows | null> {
+export async function readGovernedTradeRows(): Promise<GovernedTradeRows | null> {
   try {
     const runtime = await resolveAnalyticsLabRuntime();
     if (runtime.dataMode !== "persisted") return null;
@@ -66,6 +71,7 @@ export async function getLatestGovernedSessionDate(): Promise<string | null> {
 
 export async function getGovernedDaySession(
   sessionDate: string,
+  owner?: TraderIntelligenceOwnerContext,
 ): Promise<DaySessionData | null> {
   const governed = await readGovernedTradeRows();
   if (!governed) return null;
@@ -77,6 +83,10 @@ export async function getGovernedDaySession(
   const dayRows = governed.rows.filter(
     (row) => row.sessionDate === sessionDate,
   );
+  const tagsByRoundTrip = owner
+    ? readTradeTagsByRoundTripKeys(owner, dayRows)
+    : {};
+  const availableTags = owner ? readTradeTagCatalog(owner) : [];
   const byTicker = new Map<string, AnalyticalRow[]>();
   for (const row of dayRows) {
     const current = byTicker.get(row.stableInstrumentKey) ?? [];
@@ -97,7 +107,12 @@ export async function getGovernedDaySession(
           journal: {
             ruleStatus: "not-reviewed" as const,
             ruleSummary: "No rule review recorded",
-            tags: [],
+            tags: (tagsByRoundTrip[row.semanticRoundTripKey] ?? []).map((tag) => ({
+              assignmentCount: tag.assignmentCount,
+              name: tag.name,
+              revision: tag.revision,
+              tagId: tag.tagId,
+            })),
             technicalNote: "No technical note added.",
           },
           netPnl: row.netPnl,
@@ -124,6 +139,12 @@ export async function getGovernedDaySession(
   });
 
   return {
+    availableTags: availableTags.map((tag) => ({
+      assignmentCount: tag.assignmentCount,
+      name: tag.name,
+      revision: tag.revision,
+      tagId: tag.tagId,
+    })),
     currency: governed.currency,
     date: sessionDate,
     netPnl: exactSum(dayRows.map((row) => row.netPnl)),
@@ -141,4 +162,27 @@ export async function getGovernedDaySession(
       tradeCount: weekRows.length,
     },
   };
+}
+
+export async function getGovernedTradeTagTarget(
+  sessionDate: string,
+  semanticRoundTripKey: string,
+): Promise<Pick<
+  AnalyticalRow,
+  "canonicalAccountKey" | "semanticRoundTripKey" | "sessionDate"
+> | null> {
+  const governed = await readGovernedTradeRows();
+  if (!governed) return null;
+  const row = governed.rows.find(
+    (candidate) =>
+      candidate.sessionDate === sessionDate &&
+      candidate.semanticRoundTripKey === semanticRoundTripKey,
+  );
+  return row
+    ? {
+        canonicalAccountKey: row.canonicalAccountKey,
+        semanticRoundTripKey: row.semanticRoundTripKey,
+        sessionDate: row.sessionDate,
+      }
+    : null;
 }

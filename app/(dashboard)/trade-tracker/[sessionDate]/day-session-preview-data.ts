@@ -11,6 +11,17 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
   const currentSessionDate = shiftDate(date, 1);
 
   return {
+    availableTags: [
+      { assignmentCount: 1, name: "A setup", revision: "preview-1", tagId: "preview-a-setup" },
+      { assignmentCount: 1, name: "Clean exit", revision: "preview-2", tagId: "preview-clean-exit" },
+      { assignmentCount: 1, name: "Early entry", revision: "preview-3", tagId: "preview-early-entry" },
+      { assignmentCount: 1, name: "Failed breakout", revision: "preview-4", tagId: "preview-failed-breakout" },
+      { assignmentCount: 1, name: "First pullback", revision: "preview-5", tagId: "preview-first-pullback" },
+      { assignmentCount: 1, name: "Late trade", revision: "preview-6", tagId: "preview-late-trade" },
+      { assignmentCount: 1, name: "Opening range", revision: "preview-7", tagId: "preview-opening-range" },
+      { assignmentCount: 1, name: "Patient entry", revision: "preview-8", tagId: "preview-patient-entry" },
+      { assignmentCount: 1, name: "Rule break", revision: "preview-9", tagId: "preview-rule-break" },
+    ],
     currency: "USD",
     date,
     netPnl: "842.5",
@@ -49,7 +60,10 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
             journal: {
               ruleStatus: "followed",
               ruleSummary: "Waited for confirmation",
-              tags: ["Opening range", "A setup"],
+              tags: [
+                { assignmentCount: 1, name: "Opening range", revision: "preview-7", tagId: "preview-opening-range" },
+                { assignmentCount: 1, name: "A setup", revision: "preview-1", tagId: "preview-a-setup" },
+              ],
               technicalNote:
                 "Entered after the reclaim held. Stop stayed below the failed breakdown.",
             },
@@ -64,7 +78,10 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
             journal: {
               ruleStatus: "followed",
               ruleSummary: "Position size within plan",
-              tags: ["First pullback", "Patient entry"],
+              tags: [
+                { assignmentCount: 1, name: "First pullback", revision: "preview-5", tagId: "preview-first-pullback" },
+                { assignmentCount: 1, name: "Patient entry", revision: "preview-8", tagId: "preview-patient-entry" },
+              ],
               technicalNote:
                 "Added only after the higher low formed and reduced into strength.",
             },
@@ -79,7 +96,9 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
             journal: {
               ruleStatus: "broken",
               ruleSummary: "Traded after the personal cutoff",
-              tags: ["Late trade"],
+              tags: [
+                { assignmentCount: 1, name: "Late trade", revision: "preview-6", tagId: "preview-late-trade" },
+              ],
               technicalNote:
                 "The setup worked, but this trade was outside the planned trading window.",
             },
@@ -101,7 +120,10 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
             journal: {
               ruleStatus: "followed",
               ruleSummary: "Risk defined before entry",
-              tags: ["Failed breakout", "Clean exit"],
+              tags: [
+                { assignmentCount: 1, name: "Failed breakout", revision: "preview-4", tagId: "preview-failed-breakout" },
+                { assignmentCount: 1, name: "Clean exit", revision: "preview-2", tagId: "preview-clean-exit" },
+              ],
               technicalNote:
                 "Entry followed the failed push. Covered at the planned support area.",
             },
@@ -116,7 +138,10 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
             journal: {
               ruleStatus: "broken",
               ruleSummary: "Entered before confirmation",
-              tags: ["Early entry", "Rule break"],
+              tags: [
+                { assignmentCount: 1, name: "Early entry", revision: "preview-3", tagId: "preview-early-entry" },
+                { assignmentCount: 1, name: "Rule break", revision: "preview-9", tagId: "preview-rule-break" },
+              ],
               technicalNote:
                 "Anticipated the rejection instead of waiting for price to confirm it.",
             },
