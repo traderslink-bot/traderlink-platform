@@ -13,7 +13,9 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
   return {
     currency: "USD",
     date,
-    netPnl: 842.5,
+    netPnl: "842.5",
+    nextSessionDate: currentSessionDate,
+    previousSessionDate: previousTradeDate,
     rules: [
       {
         applicability: "day",
@@ -36,7 +38,7 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
     ],
     tickers: [
       {
-        netPnl: 610,
+        netPnl: "610",
         stableInstrumentKey: "preview_nvda",
         symbol: "NVDA",
         roundTrips: [
@@ -51,7 +53,7 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
               technicalNote:
                 "Entered after the reclaim held. Stop stayed below the failed breakdown.",
             },
-            netPnl: 184,
+            netPnl: "184",
             roundTripKey: "preview_nvda_1",
             timezone: "America/New_York",
           },
@@ -66,7 +68,7 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
               technicalNote:
                 "Added only after the higher low formed and reduced into strength.",
             },
-            netPnl: 348,
+            netPnl: "348",
             roundTripKey: "preview_nvda_2",
             timezone: "America/New_York",
           },
@@ -81,14 +83,14 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
               technicalNote:
                 "The setup worked, but this trade was outside the planned trading window.",
             },
-            netPnl: 78,
+            netPnl: "78",
             roundTripKey: "preview_nvda_3",
             timezone: "America/New_York",
           },
         ],
       },
       {
-        netPnl: 232.5,
+        netPnl: "232.5",
         stableInstrumentKey: "preview_tsla",
         symbol: "TSLA",
         roundTrips: [
@@ -103,7 +105,7 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
               technicalNote:
                 "Entry followed the failed push. Covered at the planned support area.",
             },
-            netPnl: 286.5,
+            netPnl: "286.5",
             roundTripKey: "preview_tsla_1",
             timezone: "America/New_York",
           },
@@ -118,7 +120,7 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
               technicalNote:
                 "Anticipated the rejection instead of waiting for price to confirm it.",
             },
-            netPnl: -54,
+            netPnl: "-54",
             roundTripKey: "preview_tsla_2",
             timezone: "America/New_York",
           },
@@ -130,24 +132,24 @@ export function getDaySessionDesignPreview(date: string): DaySessionData {
       days: [
         {
           date: previousTradeDate,
-          netPnl: -126,
+          netPnl: "-126",
           tickerCount: 1,
           tradeCount: 2,
         },
         {
           date,
-          netPnl: 842.5,
+          netPnl: "842.5",
           tickerCount: 2,
           tradeCount: 5,
         },
         {
           date: currentSessionDate,
-          netPnl: 318,
+          netPnl: "318",
           tickerCount: 2,
           tradeCount: 3,
         },
       ],
-      netPnl: 1034.5,
+      netPnl: "1034.5",
       tickerCount: 5,
       tradeCount: 10,
     },

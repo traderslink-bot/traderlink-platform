@@ -247,7 +247,7 @@ export function WorkspaceDashboard({
         action={
           <ButtonGroup aria-label="Day session view" size="small">
             <Button variant="contained">Calendar</Button>
-            <Button href="/trades/day-sessions" variant="outlined">
+            <Button href="/trade-tracker" variant="outlined">
               List
             </Button>
           </ButtonGroup>

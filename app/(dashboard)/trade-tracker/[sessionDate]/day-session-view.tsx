@@ -25,7 +25,7 @@ import {
   DashboardPanel,
   DashboardPrimaryAction,
   DashboardSecondaryAction,
-} from "../../../../dashboard-template";
+} from "../../../dashboard-template";
 
 import type {
   DaySessionData,
@@ -34,15 +34,25 @@ import type {
   DaySessionWeekDay,
 } from "./day-session-types";
 
-function money(value: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", {
-    currency,
-    currencyDisplay: "narrowSymbol",
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 2,
-    signDisplay: "always",
-    style: "currency",
-  }).format(value);
+function money(value: string, currency: string): string {
+  const match = /^(-?)(\d+)(?:\.(\d+))?$/.exec(value);
+  if (!match) return "Unavailable";
+  const symbol =
+    new Intl.NumberFormat("en-US", {
+      currency,
+      currencyDisplay: "narrowSymbol",
+      style: "currency",
+    })
+      .formatToParts(0)
+      .find((part) => part.type === "currency")?.value ?? currency;
+  const sign = match[1] === "-" ? "-" : "+";
+  const whole = match[2].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const suppliedFraction = match[3] ?? "";
+  const fraction =
+    suppliedFraction.length >= 2
+      ? suppliedFraction
+      : suppliedFraction.padEnd(2, "0");
+  return `${sign}${symbol}${whole}.${fraction}`;
 }
 
 function dateLabel(date: string): string {
@@ -72,9 +82,10 @@ function timeLabel(value: string, timezone: string): string {
   });
 }
 
-function pnlColor(value: number): "success.main" | "error.main" | "text.primary" {
-  if (value === 0) return "text.primary";
-  return value > 0 ? "success.main" : "error.main";
+function pnlColor(value: string): "success.main" | "error.main" | "text.primary" {
+  if (/^-/.test(value) && !/^-0(?:\.0+)?$/.test(value)) return "error.main";
+  if (/^0(?:\.0+)?$/.test(value)) return "text.primary";
+  return "success.main";
 }
 
 function statusPresentation(
@@ -273,17 +284,19 @@ function TradeReview({
 function WeekDayCard({
   currency,
   day,
+  designPreview,
   selected,
 }: {
   currency: string;
   day: DaySessionWeekDay;
+  designPreview: boolean;
   selected: boolean;
 }) {
   return (
     <Box
       aria-current={selected ? "date" : undefined}
       component={Link}
-      href={`/trades/day-session/${day.date}?preview=design`}
+      href={`/trade-tracker/${day.date}${designPreview ? "?preview=design" : ""}`}
       sx={{
         bgcolor: selected ? "rgba(1, 30, 86, 0.08)" : "background.paper",
         border: 1,
@@ -324,18 +337,17 @@ function WeekDayCard({
   );
 }
 
-export function DaySessionView({ data }: { data: DaySessionData }) {
+export function DaySessionView({
+  data,
+  designPreview = false,
+}: {
+  data: DaySessionData;
+  designPreview?: boolean;
+}) {
   const tradeCount = data.tickers.reduce(
     (count, ticker) => count + ticker.roundTrips.length,
     0,
   );
-  const selectedIndex = data.week.days.findIndex((day) => day.date === data.date);
-  const previousDay =
-    selectedIndex > 0 ? data.week.days[selectedIndex - 1] : null;
-  const nextDay =
-    selectedIndex >= 0 && selectedIndex < data.week.days.length - 1
-      ? data.week.days[selectedIndex + 1]
-      : null;
   const reviewingPastDay = data.date !== data.week.currentSessionDate;
 
   return (
@@ -363,6 +375,7 @@ export function DaySessionView({ data }: { data: DaySessionData }) {
               <WeekDayCard
                 currency={data.currency}
                 day={day}
+                designPreview={designPreview}
                 key={day.date}
                 selected={day.date === data.date}
               />
@@ -405,10 +418,10 @@ export function DaySessionView({ data }: { data: DaySessionData }) {
             spacing={1}
             sx={{ flexWrap: "wrap", gap: 1 }}
           >
-            {previousDay ? (
+            {data.previousSessionDate ? (
               <DashboardSecondaryAction
                 component={Link}
-                href={`/trades/day-session/${previousDay.date}?preview=design`}
+                href={`/trade-tracker/${data.previousSessionDate}${designPreview ? "?preview=design" : ""}`}
                 startIcon={<ArrowBackRoundedIcon />}
               >
                 Previous day
@@ -417,17 +430,17 @@ export function DaySessionView({ data }: { data: DaySessionData }) {
             {reviewingPastDay ? (
               <DashboardPrimaryAction
                 component={Link}
-                href={`/trades/day-session/${data.week.currentSessionDate}?preview=design`}
+                href={`/trade-tracker/${data.week.currentSessionDate}${designPreview ? "?preview=design" : ""}`}
                 startIcon={<TodayRoundedIcon />}
               >
                 Current day
               </DashboardPrimaryAction>
             ) : null}
-            {nextDay ? (
+            {data.nextSessionDate ? (
               <DashboardSecondaryAction
                 component={Link}
                 endIcon={<ArrowForwardRoundedIcon />}
-                href={`/trades/day-session/${nextDay.date}?preview=design`}
+                href={`/trade-tracker/${data.nextSessionDate}${designPreview ? "?preview=design" : ""}`}
               >
                 Next day
               </DashboardSecondaryAction>
@@ -534,6 +547,11 @@ export function DaySessionView({ data }: { data: DaySessionData }) {
 
       <DashboardPanel title="Rules">
         <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>
+          {data.rules.length === 0 ? (
+            <Typography color="text.secondary" sx={{ py: 1.5 }} variant="body2">
+              No rule reviews recorded for this trading day.
+            </Typography>
+          ) : null}
           {data.rules.map((rule) => {
             const status = statusPresentation(rule.status);
             return (

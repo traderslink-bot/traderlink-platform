@@ -1,13 +1,6 @@
-import type { Metadata } from "next";
-import TradesPage from "../../page";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Day Session | Trader Intelligence",
-};
-
-export const dynamic = "force-dynamic";
-
-export default async function DaySessionPage({
+export default async function LegacyDaySessionCompatibilityPage({
   params,
 }: {
   params: Promise<{
@@ -16,10 +9,5 @@ export default async function DaySessionPage({
 }) {
   const { sessionDate } = await params;
 
-  return TradesPage({
-    searchParams: Promise.resolve({
-      session: decodeURIComponent(sessionDate),
-      view: "session_stories",
-    }),
-  });
+  redirect(`/trade-tracker/${encodeURIComponent(sessionDate)}`);
 }
