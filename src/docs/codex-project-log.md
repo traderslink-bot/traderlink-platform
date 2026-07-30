@@ -20117,3 +20117,18 @@ Current best next step:
 
 - Extend the same authority scope to Workspace and execution analytics, then
   distinguish verified numeric results from activity-only broker executions.
+
+# 2026-07-30 Import Repair and dashboard handoff
+
+- The active, committed recovery chain is `bc039ceb`, `445cd712`, `2f616baf`,
+  and `f5396e73`. It preserves the one fixed V3 authority: accepted executions
+  are activity facts; closed-trade P/L remains gated by verified reconstruction
+  evidence.
+- The owner confirmed `/trades/roundtrips` shows 1,765 accepted executions.
+  The latest-100 cap is intentional for local responsiveness; Data Decisions
+  remains the complete source-row inventory.
+- Workspace no longer gives up after 20 seconds. It must be allowed to finish
+  the first shared overview calculation before judging numerical availability.
+- See `docs/import-repair-accuracy-and-bulk-review-progress-2026-07-30.md`,
+  **Handoff note: current facts, fixes, and limits**, for the full diagnosis,
+  verification boundary, untracked-file warning, and exact safe next steps.

@@ -89,6 +89,74 @@ authority.
   or the trader leaves the page, avoiding a false unavailable result on larger
   statement histories.
 
+## Handoff note: current facts, fixes, and limits
+
+### What the imported data contains
+
+- The configured account currently has **1,765 accepted broker executions**
+  across its attached statements. The April statement contributes 575 of those
+  executions; it is not the whole account history.
+- The April statement has 919 retained rows: 575 accepted stock executions and
+  344 non-execution rows. The 266-row block beginning at statement row 877 is
+  recognized heading, FX, summary, and other non-stock content, not a request
+  for a trader to repair 266 missing trades.
+- No re-import is required for the accepted execution activity already visible
+  in `/trades/roundtrips`.
+
+### Why the dashboard was blank
+
+- The old shared-authority path rejected the *entire* dataset when a statement
+  began while a position was already open. Its blocked reasons were open ending
+  inventory and a starting-inventory-as-of violation.
+- That approach was too strict for ordinary broker statements: it made valid
+  executions disappear even where only a specific P/L conclusion lacked prior
+  position evidence.
+- Workspace additionally abandoned its overview request after 20 seconds, so
+  a long-running but valid verified calculation was shown as unavailable.
+
+### Changes now in `main`
+
+- `bc039ceb` allows verified reconstruction ledgers to remain usable when other
+  ledgers are limited, and marks the affected closed-trade capability limited
+  instead of blocking unrelated execution activity.
+- `445cd712` adds the accepted-execution activity projection to the existing
+  fixed V3 authority, makes P/L reconstruction lazy, memoizes the immutable
+  authority for an unchanged binding, and connects `/trades/roundtrips`.
+  The page shows the latest 100 rows for responsiveness with separate Date and
+  Time, Symbol, Side, Quantity, Price, and fee coverage. It intentionally does
+  not label every execution a completed trade or show unverified P/L.
+- `2f616baf` fixes Analytics Lab median math for decimal and negative values.
+- `f5396e73` removes Workspace's premature 20-second overview timeout.
+
+### Verification and remaining risk
+
+- Focused ESLint and whitespace checks passed for each changed slice. The local
+  server compiled the accepted-execution view, and the owner confirmed that
+  `/trades/roundtrips` displays the 1,765 accepted executions.
+- No broad test suite, production build, full regression, or production deploy
+  was run. Local source-data and server-log files are intentionally untracked
+  and must not be added to Git.
+- The first numerical analytics calculation can still be slow on this machine;
+  the activity path is intentionally separate and fast. Let Workspace finish
+  once without refreshing. Subsequent requests reuse the unchanged binding in
+  memory. Do not report all numerical analytics as verified until Workspace and
+  the Analytics views have been visually checked with this account.
+- A previous Analytics Lab median crash is fixed, but the repaired result needs
+  a fresh browser visit before it is claimed as runtime-verified.
+
+### Safe next steps
+
+1. Visually confirm `/workspace` populates its existing metric cards after its
+   first calculation, then check `/analytics`, `/analytics/results`, and
+   `/analytics/execution` for numbers and clear limitation disclosure.
+2. Investigate any remaining slow first-run calculation before expanding table
+   size or adding extra analytics calls. Do not make the browser calculate P/L.
+3. Continue the planned Import Repair work: possible-open-position signal,
+   complete accepted-row discoverability in Data Decisions, then owner review
+   before exercising bulk persistence against real statements.
+4. At the integration checkpoint, run the planned focused and broader checks
+   from canonical `main`; do not use this note as proof of production readiness.
+
 ## Implemented in this slice
 
 - A skipped row is now an automatic set-aside when every recorded issue is a
