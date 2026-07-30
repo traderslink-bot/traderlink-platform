@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdirSync } from "node:fs";
-import { homedir } from "node:os";
+import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 
 import Database from "better-sqlite3";
@@ -87,11 +86,7 @@ export function resolveTradeTagDatabasePath(
     }
     return resolve(configured);
   }
-  const privateRoot =
-    environment.LOCALAPPDATA?.trim() ||
-    environment.APPDATA?.trim() ||
-    join(homedir(), ".traderlink");
-  return join(privateRoot, "TraderLink", "trade-journal-v1.sqlite");
+  return join(process.cwd(), "data", "private", "trade-journal-v1.sqlite");
 }
 
 function record(row: TagRow): TradeTagDefinition {
@@ -110,7 +105,22 @@ export class SqliteTradeTagRepository {
   readonly #database: Database.Database;
 
   constructor(databasePath = resolveTradeTagDatabasePath()) {
-    if (databasePath !== ":memory:") mkdirSync(dirname(databasePath), { recursive: true });
+    if (databasePath !== ":memory:") {
+      mkdirSync(dirname(databasePath), { recursive: true });
+      const legacyRoot =
+        process.env.LOCALAPPDATA?.trim() || process.env.APPDATA?.trim();
+      const legacyPath = legacyRoot
+        ? join(legacyRoot, "TraderLink", "trade-journal-v1.sqlite")
+        : null;
+      if (
+        !existsSync(databasePath) &&
+        legacyPath &&
+        legacyPath !== databasePath &&
+        existsSync(legacyPath)
+      ) {
+        copyFileSync(legacyPath, databasePath);
+      }
+    }
     this.#database = new Database(databasePath);
     this.#database.pragma("journal_mode = WAL");
     this.#database.pragma("foreign_keys = ON");

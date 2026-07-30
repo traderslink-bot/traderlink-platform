@@ -178,10 +178,11 @@ Supporting indexes cover tag lists and all assignments for a trade. SQLite
 foreign keys are enabled and mutations affecting definitions plus assignments
 run transactionally.
 
-The proposed configuration key is
-`TRADER_INTELLIGENCE_JOURNAL_DB_PATH`. Real-owner mode fails closed when its
-private path is missing or unsafe. Sample/design-preview mode never opens or
-writes this database.
+The optional configuration key is
+`TRADER_INTELLIGENCE_JOURNAL_DB_PATH`. Without it, the local dashboard stores
+the database under the repository's ignored `data/private` persistence area.
+The earlier AppData database location is migrated once when present.
+Sample/design-preview mode never opens or writes this database.
 
 ## Mutation behavior
 

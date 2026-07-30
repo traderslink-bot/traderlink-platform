@@ -27,6 +27,9 @@ individual completed trades.
 - Added a one-time starter catalog covering common setups and execution
   behaviors. Presets remain editable and deletable and do not return after
   deletion.
+- Corrected local persistence to use the repository's ignored `data/private`
+  area so SQLite can create its WAL/SHM files under workspace-only execution.
+  Existing AppData tag storage is migrated once when present.
 - Added private SQLite persistence outside the repository by default.
 - Added case-insensitive unique tag names, revision-safe rename and deletion,
   assignment counts, 200-tag owner limit, and 10-tag trade limit.
