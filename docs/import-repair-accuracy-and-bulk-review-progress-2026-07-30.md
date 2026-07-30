@@ -47,3 +47,7 @@ Status: implementation in progress
 - Review rows now have separate editable Date and Time fields, statement-row,
   symbol A–Z/Z–A, and oldest/newest sorting, plus multi-select actions for
   keep, exclude, and reset. Bulk correction remains intentionally unavailable.
+- Decision recorded: the shared analytics packet should expose lossless broker
+  Date and Time components alongside the exact canonical timestamp. This is a
+  presentation and query convenience, not an invented value or a replacement
+  for timestamp authority.

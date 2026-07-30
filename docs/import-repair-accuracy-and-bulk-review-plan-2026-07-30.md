@@ -26,8 +26,10 @@ errors to correct or exclude.
 - Keep truly ambiguous, malformed, unsupported, or incomplete stock rows in
   Needs review. Never invent missing values.
 - Show Date and Time as separate visible and editable columns. The persisted
-  V3 execution remains one exact timestamp; the client combines the two only
-  when the trader saves a correction.
+  V3 execution retains its exact timestamp and also exposes its exact broker
+  Date and Time components to dashboard consumers. Those components are a
+  reversible projection of the broker value, not an inferred or invented
+  value. The client recombines them only when the trader saves a correction.
 - Add table sorting: Symbol A–Z/Z–A and Date/Time oldest/newest.
 - Add row checkboxes, select-all-visible, and bulk action controls. Bulk
   actions may set **Exclude row**, **Keep as imported**, or **Reset to source**
@@ -59,6 +61,14 @@ must not introduce a second dashboard data source or bypass that authority.
 This work will keep the import records and their rebuild binding correct, while
 the shared-authority repair restores those accepted executions to Workspace,
 Trades, and Analytics.
+
+## Date and time presentation decision
+
+Trader-facing views should receive Date and Time as distinct fields whenever
+the broker supplied an exact timestamp. The canonical timestamp remains the
+identity and ordering authority; Date and Time are its lossless, display-ready
+components. Analytics must expose and use those components through the shared
+authority path rather than asking the browser to reconstruct them.
 
 ## Acceptance criteria
 
