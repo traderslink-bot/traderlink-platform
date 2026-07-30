@@ -3,6 +3,8 @@ import {
   compactCandlesToFiveMinutes,
   type TradeCandle,
 } from "@/src/lib/trade-candle-analysis/candle-analysis";
+import { selectExecutionRelevantPatterns } from "@/src/lib/trade-candle-analysis/execution-relevance";
+import { detectMicroCapCandlePatterns } from "@/src/lib/trade-candle-analysis/pattern-detection";
 import { fetchYahooOneMinuteCandles } from "@/src/lib/trade-candle-analysis/yahoo-candles";
 import {
   withTraderIntelligenceOwnerRoute,
@@ -124,6 +126,17 @@ async function GETHandler(request: Request): Promise<Response> {
       exitTime: candidate.exit.time,
     },
     results: candidate.result,
+    patternObservations: selectExecutionRelevantPatterns({
+      candles: yahoo.candles,
+      events: detectMicroCapCandlePatterns(yahoo.candles),
+      trade: {
+        direction: "long",
+        entryPrice: entry.open,
+        entryTime: entry.time,
+        exitPrice: candidate.exit.close,
+        exitTime: candidate.exit.time,
+      },
+    }),
   });
 }
 
