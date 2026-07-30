@@ -7,8 +7,8 @@ Status: visual checkpoint complete on main; persistence contract awaiting approv
 ## Workspace
 
 - Repository: `C:\Users\jerac\Documents\TraderLink\traderslink.pro`
-- Branch: `codex/day-session-visual-review`
-- Intended preview port: `3011`
+- Branch: `main`
+- Active dashboard port: `3010`
 - Route: `/trades/day-session/[sessionDate]`
 
 ## Completed
@@ -33,6 +33,9 @@ Status: visual checkpoint complete on main; persistence contract awaiting approv
 - Removed the visible design-preview banner before main integration.
 - Integrated the approved Day Session route into canonical `main` in commits
   `4773cd9c` and `c6ead001`.
+- Recorded the integration in commit `b3a7eb7a`.
+- Added `Trade Tracker` as the first link in the shared `Trades` navigation
+  group. It points to `/trades/day-sessions`, directly above `Round Trips`.
 
 ## Awaiting approval
 

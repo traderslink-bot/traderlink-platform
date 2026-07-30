@@ -39,6 +39,9 @@ and final verification are later checkpoints.
 
 - The route implementation lives under `app/(dashboard)` and inherits
   `V3DashboardTemplate` through the route-group layout.
+- The Day Sessions index is exposed in the shared dashboard navigation as
+  `Trade Tracker`. It is the first link in the `Trades` group, immediately
+  above `Round Trips`, and points to `/trades/day-sessions`.
 - Page composition uses the public exports from `app/dashboard-template.tsx`.
 - The mistaken V2 prototype is a reference for layout and domain vocabulary,
   not a source of shell, navigation, or governed-data authority.
@@ -145,6 +148,8 @@ the new day until the trader saves that day's notes.
    - Remove the visible design-preview banner before integration while keeping
      fixture access gated to non-production `preview=design`.
    - Integrated into canonical `main` on 2026-07-29.
+   - Added the `Trade Tracker` shared-navigation entry as the first item in the
+     `Trades` group.
 2. **Data and persistence — awaiting contract approval**
    - Add exact contract validators for the three trader-authored record types.
    - Add isolated storage and schema migration for the approved V3 journal
