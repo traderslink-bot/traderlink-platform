@@ -2,14 +2,15 @@
 
 Plan: [day-session-page-plan.md](./day-session-page-plan.md)
 
-Status: visual checkpoint complete on main; persistence contract awaiting approval
+Status: approved visual preserved; direct Trade Tracker route implemented
 
 ## Workspace
 
 - Repository: `C:\Users\jerac\Documents\TraderLink\traderslink.pro`
-- Branch: `main`
+- Feature branch: `codex/trade-tracker-route`
 - Active dashboard port: `3010`
-- Route: `/trades/day-session/[sessionDate]`
+- Direct route: `/trade-tracker`
+- Dated route: `/trade-tracker/[sessionDate]`
 
 ## Completed
 
@@ -35,7 +36,21 @@ Status: visual checkpoint complete on main; persistence contract awaiting approv
   `4773cd9c` and `c6ead001`.
 - Recorded the integration in commit `b3a7eb7a`.
 - Added `Trade Tracker` as the first link in the shared `Trades` navigation
-  group. It points to `/trades/day-sessions`, directly above `Round Trips`.
+  group, directly above `Round Trips`.
+- Corrected `Trade Tracker` to open the experience directly at
+  `/trade-tracker`; there is no Day Sessions index/list in front of it.
+- Added governed latest-day resolution. The direct route selects only the
+  latest traded date supplied by persisted verified authority and otherwise
+  fails closed without inventing a date or using preview data.
+- Added normal-data projection for verified completed round trips, exact P/L,
+  ticker totals, traded days, and weekly totals.
+- Kept previous, next, and current navigation inside the experience. Navigation
+  follows the governed traded-date sequence and skips dates without trades.
+- Retained `preview=design` only as an explicit non-production review fixture.
+- Converted `/trades/day-sessions`, `/trades/day-session/[sessionDate]`, and
+  their older `/intelligence` counterparts to compatibility redirects.
+- Route/navigation integration follows approved commits `4773cd9c`,
+  `c6ead001`, `b3a7eb7a`, and `c98ce5fc`.
 
 ## Awaiting approval
 
@@ -44,7 +59,6 @@ Status: visual checkpoint complete on main; persistence contract awaiting approv
 
 ## Deferred until contract approval
 
-- Governed account-data projection
 - Note, rule-review, and tag persistence
 - `Tomorrow's focus` carry-forward implementation
 - Tests, browser automation, and final verification

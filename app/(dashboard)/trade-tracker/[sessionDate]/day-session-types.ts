@@ -10,13 +10,13 @@ export type DaySessionRoundTrip = {
   entryAt: string;
   exitAt: string;
   journal: DaySessionTradeJournal;
-  netPnl: number;
+  netPnl: string;
   roundTripKey: string;
   timezone: string;
 };
 
 export type DaySessionTicker = {
-  netPnl: number;
+  netPnl: string;
   roundTrips: DaySessionRoundTrip[];
   stableInstrumentKey: string;
   symbol: string;
@@ -31,7 +31,7 @@ export type DaySessionRule = {
 
 export type DaySessionWeekDay = {
   date: string;
-  netPnl: number;
+  netPnl: string;
   tickerCount: number;
   tradeCount: number;
 };
@@ -39,7 +39,7 @@ export type DaySessionWeekDay = {
 export type DaySessionWeek = {
   currentSessionDate: string;
   days: DaySessionWeekDay[];
-  netPnl: number;
+  netPnl: string;
   tickerCount: number;
   tradeCount: number;
 };
@@ -47,7 +47,9 @@ export type DaySessionWeek = {
 export type DaySessionData = {
   currency: string;
   date: string;
-  netPnl: number;
+  netPnl: string;
+  nextSessionDate: string | null;
+  previousSessionDate: string | null;
   rules: DaySessionRule[];
   tickers: DaySessionTicker[];
   week: DaySessionWeek;

@@ -1,6 +1,19 @@
 # TradersLink Route Map
 
-Last audited: 2026-05-25.
+Last audited: 2026-07-30.
+
+## V3 Dashboard Routes
+
+- `/trade-tracker`: direct Trade Tracker entry. Resolves to the latest traded
+  day supplied by governed persisted authority; no separate index is shown.
+- `/trade-tracker/[sessionDate]`: factual review of one governed traded day,
+  including in-page previous, next, current, and current-week navigation.
+- `/trades/day-sessions`: compatibility redirect to `/trade-tracker`.
+- `/trades/day-session/[sessionDate]`: compatibility redirect to the matching
+  dated Trade Tracker route.
+
+Days without trades are skipped by Trade Tracker navigation. In non-production
+review only, `preview=design` activates the explicitly separated design fixture.
 
 ## Canonical Public Routes
 
@@ -27,7 +40,8 @@ Important subroutes include:
 - `/intelligence/trades`
 - `/intelligence/trades/[tradeId]`
 - `/intelligence/trades/calendar`
-- `/intelligence/trades/day-session/[sessionDate]`
+- `/intelligence/trades/day-session/[sessionDate]` (compatibility redirect to
+  the matching `/trade-tracker/[sessionDate]`)
 - `/intelligence/review`
 - `/intelligence/analytics`
 - `/intelligence/coach`
@@ -65,7 +79,8 @@ Redirects live in `next.config.ts`. Keep old links redirecting rather than resto
 
 ## Route Rules
 
-- New Trader Intelligence pages go under `app/intelligence`.
+- New V3 dashboard pages go under `app/(dashboard)` and inherit its shared
+  `V3DashboardTemplate` layout.
 - New News pages go under `app/news`.
 - New Academy pages go under `app/academy`.
 - Shared layout/navigation changes go through `src/components/site/site-shell.tsx`.

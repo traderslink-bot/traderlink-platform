@@ -1,15 +1,16 @@
 # Day Session Page Plan
 
-Status: visual design integrated into main; persistence contract awaiting approval
+Status: visual design approved; direct Trade Tracker route slice implemented
 
 Progress tracker: [day-session-page-progress.md](./day-session-page-progress.md)
 
 ## Goal
 
-Build the factual single-day journal at `/trades/day-session/[sessionDate]`
-inside the approved V3 dashboard shell. The first checkpoint is a fixture-only
-visual review. Persistence, governed account-data projection, weekly AI review,
-and final verification are later checkpoints.
+Build the factual single-day journal as the `Trade Tracker` experience inside
+the approved V3 dashboard shell. `/trade-tracker` opens the latest traded day
+supplied by governed authority; `/trade-tracker/[sessionDate]` displays a
+specific governed traded day. There is no Day Sessions index or list in front
+of the experience.
 
 ## Controlling product requirements
 
@@ -20,6 +21,8 @@ and final verification are later checkpoints.
   combined P/L, trades, tickers, and traded-day count for the week.
 - Allow direct selection of a traded day, previous/next traded-day navigation,
   and a clear return to the current traded day when reviewing history.
+- Previous and next navigation skip calendar days without trades. The
+  current-day action returns to the latest governed traded day.
 - Show full-width ticker cards below the header.
 - On desktop, place ticker facts on the left and completed round trips on the
   wider right. Stack those regions on mobile.
@@ -39,15 +42,20 @@ and final verification are later checkpoints.
 
 - The route implementation lives under `app/(dashboard)` and inherits
   `V3DashboardTemplate` through the route-group layout.
-- The Day Sessions index is exposed in the shared dashboard navigation as
-  `Trade Tracker`. It is the first link in the `Trades` group, immediately
-  above `Round Trips`, and points to `/trades/day-sessions`.
+- `Trade Tracker` is the first shared-navigation link in the `Trades` group,
+  immediately above `Round Trips`, and points directly to `/trade-tracker`.
+- `/trade-tracker` resolves only from persisted governed closed-trade
+  authority. It redirects to the latest supplied traded date, or fails closed
+  honestly when no governed traded day is available.
+- `/trade-tracker/[sessionDate]` owns the approved weekly tracker and
+  previous/next/current traded-day navigation. Days without trades are absent.
+- The obsolete `/trades/day-sessions` list and the prior singular dated route
+  are compatibility redirects; neither exposes a separate index page.
 - Page composition uses the public exports from `app/dashboard-template.tsx`.
 - The mistaken V2 prototype is a reference for layout and domain vocabulary,
   not a source of shell, navigation, or governed-data authority.
-- The visual checkpoint uses an explicitly non-production `preview=design`
-  fixture. The normal route fails closed until the canonical data projection is
-  implemented in a later checkpoint.
+- The explicitly non-production `preview=design` fixture remains separated
+  from normal data. The normal route never selects a fixture or invents a date.
 - Imported executions, reconstructed round trips, P/L, timestamps, direction,
   and ticker identity remain governed V3 facts. Day Session persistence must
   never copy or recalculate those values.
@@ -150,7 +158,14 @@ the new day until the trader saves that day's notes.
    - Integrated into canonical `main` on 2026-07-29.
    - Added the `Trade Tracker` shared-navigation entry as the first item in the
      `Trades` group.
-2. **Data and persistence — awaiting contract approval**
+2. **Direct route and governed facts — complete in feature branch**
+   - Made `/trade-tracker` the direct entry to the latest governed traded day.
+   - Kept dated navigation within `/trade-tracker/[sessionDate]`, skipping
+     dates without trades and supporting return to the latest traded day.
+   - Projected verified closed round trips and exact-decimal totals into the
+     approved view without changing its visual hierarchy.
+   - Retired the old Day Sessions list behind compatibility redirects.
+3. **Trader-authored persistence — awaiting contract approval**
    - Add exact contract validators for the three trader-authored record types.
    - Add isolated storage and schema migration for the approved V3 journal
      database.
@@ -160,7 +175,7 @@ the new day until the trader saves that day's notes.
    - Connect the approved page without changing its visual hierarchy.
    - Present saved fixture writing and the mobile expansion behavior for the
      next UI review gate.
-3. **Acceptance**
+4. **Acceptance**
    - Run the focused checks required by the final implementation.
    - Run broader verification only at the explicit acceptance boundary.
 

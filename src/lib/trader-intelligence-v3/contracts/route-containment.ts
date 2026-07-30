@@ -50,6 +50,8 @@ const OWNER_PAGE_MODULES = [
   "app/(dashboard)/manual-entry/page.tsx",
   "app/(dashboard)/reflection-loop/page.tsx",
   "app/(dashboard)/rules/page.tsx",
+  "app/(dashboard)/trade-tracker/[sessionDate]/page.tsx",
+  "app/(dashboard)/trade-tracker/page.tsx",
   "app/(dashboard)/trades/day-sessions/page.tsx",
   "app/(dashboard)/trades/open/page.tsx",
   "app/(dashboard)/trades/page.tsx",
