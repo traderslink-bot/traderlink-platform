@@ -9,6 +9,30 @@ export const TRADE_TAG_NAME_MAXIMUM = 40;
 export const TRADE_TAG_OWNER_MAXIMUM = 200;
 export const TRADE_TAGS_PER_TRADE_MAXIMUM = 10;
 
+export const PRESET_TRADE_TAG_NAMES = Object.freeze([
+  "A+ setup",
+  "Gap and go",
+  "Opening range breakout",
+  "First pullback",
+  "Breakout",
+  "VWAP reclaim",
+  "Red to green",
+  "Failed breakout",
+  "Parabolic short",
+  "Bounce",
+  "Patient entry",
+  "Early entry",
+  "Late entry",
+  "Chased",
+  "Good risk control",
+  "Oversized",
+  "Clean exit",
+  "Held too long",
+  "Cut loss",
+  "Added to winner",
+  "Added to loser",
+] as const);
+
 export type TradeTagOwnerScope = Readonly<{
   userId: string;
   workspaceId: string;
@@ -115,6 +139,13 @@ export class SqliteTradeTagRepository {
           semantic_round_trip_key, tag_id
         )
       );
+      CREATE TABLE IF NOT EXISTS ti_v3_trade_tag_seed_state (
+        user_id TEXT NOT NULL,
+        workspace_id TEXT NOT NULL,
+        seed_version TEXT NOT NULL,
+        seeded_at TEXT NOT NULL,
+        PRIMARY KEY (user_id, workspace_id)
+      );
       CREATE INDEX IF NOT EXISTS ti_v3_trade_tags_owner
         ON ti_v3_trade_tags (user_id, workspace_id, normalized_name);
       CREATE INDEX IF NOT EXISTS ti_v3_trade_tag_assignments_trade
@@ -129,6 +160,7 @@ export class SqliteTradeTagRepository {
   }
 
   list(owner: TradeTagOwnerScope): readonly TradeTagDefinition[] {
+    this.#seedPresets(owner);
     const rows = this.#database.prepare(`
       SELECT t.tag_id, t.name, t.created_at, t.updated_at, t.revision,
              COUNT(a.tag_id) AS assignment_count
@@ -139,6 +171,43 @@ export class SqliteTradeTagRepository {
       ORDER BY t.normalized_name, t.tag_id
     `).all(owner.userId, owner.workspaceId) as TagRow[];
     return Object.freeze(rows.map(record));
+  }
+
+  #seedPresets(owner: TradeTagOwnerScope): void {
+    const seeded = this.#database.prepare(`
+      SELECT seed_version
+      FROM ti_v3_trade_tag_seed_state
+      WHERE user_id = ? AND workspace_id = ?
+    `).get(owner.userId, owner.workspaceId) as { seed_version: string } | undefined;
+    if (seeded) return;
+
+    const now = timestamp();
+    this.#database.transaction(() => {
+      const insert = this.#database.prepare(`
+        INSERT OR IGNORE INTO ti_v3_trade_tags (
+          tag_id, user_id, workspace_id, name, normalized_name,
+          revision, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      for (const presetName of PRESET_TRADE_TAG_NAMES) {
+        const { name, normalizedName } = normalizeTradeTagName(presetName);
+        insert.run(
+          `trade-tag-${randomUUID()}`,
+          owner.userId,
+          owner.workspaceId,
+          name,
+          normalizedName,
+          randomUUID(),
+          now,
+          now,
+        );
+      }
+      this.#database.prepare(`
+        INSERT INTO ti_v3_trade_tag_seed_state (
+          user_id, workspace_id, seed_version, seeded_at
+        ) VALUES (?, ?, 'v1', ?)
+      `).run(owner.userId, owner.workspaceId, now);
+    })();
   }
 
   create(owner: TradeTagOwnerScope, rawName: unknown): TradeTagDefinition {

@@ -24,6 +24,9 @@ individual completed trades.
 ## Implemented
 
 - Added the owner-scoped tag definition and assignment contracts.
+- Added a one-time starter catalog covering common setups and execution
+  behaviors. Presets remain editable and deletable and do not return after
+  deletion.
 - Added private SQLite persistence outside the repository by default.
 - Added case-insensitive unique tag names, revision-safe rename and deletion,
   assignment counts, 200-tag owner limit, and 10-tag trade limit.

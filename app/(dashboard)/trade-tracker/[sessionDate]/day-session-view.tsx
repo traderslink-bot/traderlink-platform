@@ -160,7 +160,7 @@ function TradeTagEditor({
         <DialogTitle>Tags</DialogTitle>
         <DialogContent>
           <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
-            Select every tag that belongs to this individual trade.
+            Select or create your own tags
           </Typography>
           <Stack sx={{ maxHeight: 260, overflowY: "auto" }}>
             {availableTags.length === 0 ? (

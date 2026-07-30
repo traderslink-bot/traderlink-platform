@@ -329,6 +329,8 @@ source execution identities, but it must never guess silently.
 Completed on branch `codex/trade-tags`:
 
 - durable owner-scoped tag definitions and trade assignments;
+- one-time starter catalog of setup and execution tags that can be renamed or
+  deleted like trader-created tags;
 - create, list, rename, replace-assignment, unassign, and confirmed-delete
   behavior;
 - private V3 tag APIs and route containment;
