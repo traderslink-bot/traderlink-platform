@@ -85,10 +85,12 @@ function indicatorValue(value: number | null): string {
 
 function easternTime(value: number): string {
   return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
+    day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    month: "short",
     timeZone: "America/New_York",
+    year: "numeric",
   }).format(new Date(value * 1000));
 }
 
