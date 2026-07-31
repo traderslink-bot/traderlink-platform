@@ -170,7 +170,7 @@ export function TradeCandleReviewClient({
           <Typography color="text.secondary" variant="body2">
             Yahoo one-minute candles are requested only when you use this action. The first 30 minutes after exit are the primary review; the following 30 minutes are context. Raw provider candles are not saved.
           </Typography>
-          <Stack direction="row" flexWrap="wrap" gap={1}>
+          <Stack direction="row" gap={1} sx={{ flexWrap: "wrap" }}>
             <Chip label={`${trade.direction === "long" ? "Long" : "Short"} ${trade.symbol}`} size="small" />
             <Chip label={`Entry ${price(trade.entryPrice)} · ${easternTime(trade.entryTime)}`} size="small" variant="outlined" />
             <Chip label={`Exit ${price(trade.exitPrice)} · ${easternTime(trade.exitTime)}`} size="small" variant="outlined" />
@@ -218,7 +218,7 @@ export function TradeCandleReviewClient({
           </Box>
           {review.observations.length > 0 ? (
             <DashboardPanel title="Execution context">
-              <Stack direction="row" flexWrap="wrap" gap={1}>
+              <Stack direction="row" gap={1} sx={{ flexWrap: "wrap" }}>
                 {review.observations.map((observation) => (
                   <Chip
                     key={`${observation.zone}-${observation.kind}-${observation.time}`}
