@@ -33,8 +33,9 @@ authority.
   detailed review retains `Analyze this trade` for an existing round trip. When
   the trader explicitly presses `Submit executions` in Trade Tracker manual
   entry, the app automatically reviews only completed round trips created by
-  that submission. It does not auto-review bulk imports, open positions, or
-  unrelated saved trades.
+  that submission and exposes direct `View candle review` link(s) in the
+  submitted-executions result. It does not auto-review bulk imports, open
+  positions, or unrelated saved trades.
 
 ## Evidence contract
 

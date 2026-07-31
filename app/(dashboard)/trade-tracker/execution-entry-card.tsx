@@ -75,7 +75,12 @@ export function ExecutionEntryCard({
   const [state, setState] = useState<
     | { kind: "idle" }
     | { kind: "saving" }
-    | { kind: "saved"; count: number; candleReviewMessage: string | null }
+    | {
+        kind: "saved";
+        count: number;
+        candleReviewKeys: readonly string[];
+        candleReviewMessage: string | null;
+      }
     | { kind: "error"; message: string }
   >({ kind: "idle" });
 
@@ -130,6 +135,7 @@ export function ExecutionEntryCard({
     try {
       let candleReviews: {
         completedTradeCount?: number;
+        completedTradeKeys?: readonly string[];
         noCoverageCount?: number;
         providerUnavailableCount?: number;
         saveFailedCount?: number;
@@ -158,6 +164,7 @@ export function ExecutionEntryCard({
           acceptedExecutionCount?: number;
           candleReviews?: {
             completedTradeCount?: number;
+            completedTradeKeys?: readonly string[];
             noCoverageCount?: number;
             providerUnavailableCount?: number;
             saveFailedCount?: number;
@@ -179,7 +186,12 @@ export function ExecutionEntryCard({
         : review.completedTradeCount === 0
           ? "No completed round trip was created yet, so no Yahoo candle review was requested."
           : `${review.savedCount ?? 0} completed trade${review.savedCount === 1 ? "" : "s"} analyzed automatically${(review.noCoverageCount ?? 0) > 0 ? `; ${review.noCoverageCount} had no usable candle coverage` : ""}${(review.providerUnavailableCount ?? 0) > 0 ? `; Yahoo was unavailable for ${review.providerUnavailableCount}` : ""}${(review.saveFailedCount ?? 0) > 0 ? `; ${review.saveFailedCount} could not be saved` : ""}.`;
-      setState({ kind: "saved", count: recordedCount, candleReviewMessage });
+      setState({
+        kind: "saved",
+        candleReviewKeys: review?.completedTradeKeys ?? [],
+        candleReviewMessage,
+        count: recordedCount,
+      });
       onSubmitted(
         recordedCount,
         rows.map((row) => ({
@@ -228,12 +240,24 @@ export function ExecutionEntryCard({
               </Typography>
             ) : null}
           </Box>
-          <DashboardSecondaryAction
-            onClick={() => onCollapsedChange(false)}
-            startIcon={<EditRoundedIcon />}
-          >
-            Add or correct executions
-          </DashboardSecondaryAction>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+            {state.kind === "saved"
+              ? state.candleReviewKeys.map((key, index) => (
+                  <DashboardSecondaryAction
+                    href={`/trades/candle-review?trade=${encodeURIComponent(key)}`}
+                    key={key}
+                  >
+                    View candle review{state.candleReviewKeys.length > 1 ? ` ${index + 1}` : ""}
+                  </DashboardSecondaryAction>
+                ))
+              : null}
+            <DashboardSecondaryAction
+              onClick={() => onCollapsedChange(false)}
+              startIcon={<EditRoundedIcon />}
+            >
+              Add or correct executions
+            </DashboardSecondaryAction>
+          </Stack>
         </Stack>
       </Card>
     );

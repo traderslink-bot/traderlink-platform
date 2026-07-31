@@ -13,6 +13,9 @@
 - A Yahoo response that explicitly says a requested historical intraday window
   is unavailable is saved as an evidence-gated `No feedback` review. A true
   Yahoo connection failure saves nothing and remains retryable.
+- When manual submission creates a completed trade, its collapsed Executions
+  result now exposes a direct `View candle review` action rather than requiring
+  the trader to locate it again from Round Trips.
 - The manual-entry trigger retains the one-minute per-trade review reuse guard,
   persists derived review data only, and does not change broker executions,
   P/L, or raw Yahoo response storage.

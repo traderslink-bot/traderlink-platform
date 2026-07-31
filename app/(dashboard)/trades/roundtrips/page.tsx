@@ -125,7 +125,11 @@ export default async function RoundTripsPage() {
                         size="small"
                         variant="text"
                       >
-                        {review === null ? "Analyze this trade" : review.status === "ready" ? "View review" : "No coverage"}
+                          {review === null
+                            ? "Analyze this trade"
+                            : review.status === "ready"
+                              ? "View review"
+                              : "View no-coverage review"}
                       </Button>
                     </TableCell>
                   </TableRow>

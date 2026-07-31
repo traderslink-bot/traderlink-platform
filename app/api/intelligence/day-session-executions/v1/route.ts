@@ -25,6 +25,7 @@ const MAX_EXECUTIONS = 200;
 
 type AutomaticCandleReviewSummary = {
   completedTradeCount: number;
+  completedTradeKeys: string[];
   noCoverageCount: number;
   providerUnavailableCount: number;
   saveFailedCount: number;
@@ -38,6 +39,7 @@ async function triggerCompletedTradeCandleReviews(args: {
 }): Promise<AutomaticCandleReviewSummary> {
   const empty = (): AutomaticCandleReviewSummary => ({
     completedTradeCount: 0,
+    completedTradeKeys: [],
     noCoverageCount: 0,
     providerUnavailableCount: 0,
     saveFailedCount: 0,
@@ -62,13 +64,14 @@ async function triggerCompletedTradeCandleReviews(args: {
     .map((row) => row.semanticRoundTripKey);
   const distinctKeys = [...new Set(keys)];
   const summary = empty();
-  summary.completedTradeCount = distinctKeys.length;
   for (const semanticRoundTripKey of distinctKeys) {
     const trade = resolveCompletedCandleReviewTrade({
       analytics: analytics.value,
       semanticRoundTripKey,
     });
     if (!trade) continue;
+    summary.completedTradeCount += 1;
+    summary.completedTradeKeys.push(trade.semanticRoundTripKey);
     const review = await runTradeCandleReview({
       parentPath: args.config.persistence.parentPath,
       trade,
@@ -247,6 +250,7 @@ async function POSTHandler(request: Request): Promise<Response> {
       })
     : {
         completedTradeCount: 0,
+        completedTradeKeys: [],
         noCoverageCount: 0,
         providerUnavailableCount: 0,
         saveFailedCount: 0,
