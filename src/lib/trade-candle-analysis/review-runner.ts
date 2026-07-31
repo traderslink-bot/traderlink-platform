@@ -26,6 +26,26 @@ export type TradeCandleReviewRunResult =
   | { readonly kind: "provider_unavailable" }
   | { readonly kind: "save_failed" };
 
+function recordForUnavailableCoverage(args: {
+  analyzedAt: string;
+  parentPath: string;
+  trade: CompletedCandleReviewTrade;
+}): TradeCandleReviewRunResult {
+  const record: StoredTradeCandleReview = Object.freeze({
+    analysis: analyzeTradeCandles({ candles: [], trade: args.trade }),
+    analysisVersion: TRADE_CANDLE_REVIEW_VERSION,
+    analyzedAt: args.analyzedAt,
+    indicators: [],
+    observations: [],
+    refreshAvailableAt: new Date(Date.now() + REFRESH_COOLDOWN_MS).toISOString(),
+    status: "no_coverage",
+    trade: args.trade,
+  });
+  return writeStoredTradeCandleReview({ parentPath: args.parentPath, record })
+    ? { kind: "saved", record }
+    : { kind: "save_failed" };
+}
+
 /** Runs one owner-resolved review. It never accepts browser prices, times, or symbols. */
 export async function runTradeCandleReview(args: {
   parentPath: string;
@@ -40,7 +60,15 @@ export async function runTradeCandleReview(args: {
     startTime: args.trade.entryTime - 30 * 60,
     endTime: args.trade.exitTime + 60 * 60,
   });
-  if (!yahoo.ok) return { kind: "provider_unavailable" };
+  if (!yahoo.ok) {
+    return yahoo.code === "coverage_unavailable"
+      ? recordForUnavailableCoverage({
+          analyzedAt,
+          parentPath: args.parentPath,
+          trade: args.trade,
+        })
+      : { kind: "provider_unavailable" };
+  }
 
   const daily = await fetchYahooDailyCandles({
     symbol: args.trade.symbol,

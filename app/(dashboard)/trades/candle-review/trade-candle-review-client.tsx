@@ -15,6 +15,11 @@ import {
 
 type Feedback = { detail: string; title: string };
 
+type ReviewError = {
+  error?: { message?: unknown };
+  message?: unknown;
+};
+
 type Review = {
   analysis: {
     entryTiming: Feedback;
@@ -105,6 +110,15 @@ function refreshLabel(value: string): string {
     : "later";
 }
 
+function reviewErrorMessage(value: unknown): string | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return null;
+  }
+  const error = value as ReviewError;
+  if (typeof error.message === "string") return error.message;
+  return typeof error.error?.message === "string" ? error.error.message : null;
+}
+
 export function TradeCandleReviewClient({
   initialReview,
   trade,
@@ -127,12 +141,12 @@ export function TradeCandleReviewClient({
       });
       const body: unknown = await response.json();
       if (!response.ok || typeof body !== "object" || body === null || Array.isArray(body)) {
-        setError("Candle review could not be completed. Try again later.");
+        setError(reviewErrorMessage(body) ?? "Candle review could not be completed. Try again later.");
         return;
       }
-      const record = body as Partial<Review> & { message?: string };
+      const record = body as Partial<Review> & ReviewError;
       if (!record.analysis || !record.status || !record.analyzedAt || !record.refreshAvailableAt) {
-        setError(record.message ?? "Candle review could not be completed. Try again later.");
+        setError(reviewErrorMessage(record) ?? "Candle review could not be completed. Try again later.");
         return;
       }
       setReview({

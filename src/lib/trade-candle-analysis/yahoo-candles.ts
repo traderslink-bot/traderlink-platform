@@ -26,7 +26,13 @@ type YahooChartPayload = {
 
 export type YahooCandleResult =
   | { ok: true; candles: readonly TradeCandle[] }
-  | { ok: false; code: "invalid_request" | "provider_unavailable" };
+  | {
+      ok: false;
+      code:
+        | "coverage_unavailable"
+        | "invalid_request"
+        | "provider_unavailable";
+    };
 
 function isSupportedSymbol(symbol: string): boolean {
   return /^[A-Z][A-Z0-9.-]{0,9}$/.test(symbol);
@@ -84,9 +90,13 @@ async function fetchYahooCandles(args: {
   } catch {
     return { ok: false, code: "provider_unavailable" };
   }
-  if (!response.ok) return { ok: false, code: "provider_unavailable" };
   try {
-    const candles = normalizeYahooCandles((await response.json()) as YahooChartPayload);
+    const payload = (await response.json()) as YahooChartPayload;
+    if (payload.chart?.error) {
+      return { ok: false, code: "coverage_unavailable" };
+    }
+    if (!response.ok) return { ok: false, code: "provider_unavailable" };
+    const candles = normalizeYahooCandles(payload);
     return candles === null ? { ok: false, code: "provider_unavailable" } : { ok: true, candles };
   } catch {
     return { ok: false, code: "provider_unavailable" };

@@ -50,6 +50,10 @@ The experiment is deliberately conservative about when it speaks:
 - If a requested review window is incomplete, has missing/invalid candles, or
   cannot be aligned confidently to the trade timestamps, the related analyzer
   returns `No feedback` with a plain-language reason.
+- If Yahoo explicitly reports that the requested intraday window is unavailable,
+  the review saves the same `No feedback` state without storing raw provider
+  data. A true temporary provider connection failure remains a retryable error
+  and saves nothing.
 - No browser calculation may replace or alter V3 P/L, execution prices, or
   quantity. Candle-derived observations remain separate, read-only experimental
   context.

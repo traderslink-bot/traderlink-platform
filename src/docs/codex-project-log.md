@@ -10,6 +10,9 @@
   round trip make no Yahoo request. Provider failures, unavailable coverage,
   and save failures are reported beside the submitted execution count without
   blocking the successful manual import.
+- A Yahoo response that explicitly says a requested historical intraday window
+  is unavailable is saved as an evidence-gated `No feedback` review. A true
+  Yahoo connection failure saves nothing and remains retryable.
 - The manual-entry trigger retains the one-minute per-trade review reuse guard,
   persists derived review data only, and does not change broker executions,
   P/L, or raw Yahoo response storage.

@@ -75,7 +75,10 @@ async function POSTHandler(request: Request): Promise<Response> {
     trade,
   });
   if (review.kind === "provider_unavailable") {
-    return unavailable("Yahoo candles are unavailable for this completed trade. Nothing was saved.", 503);
+    return unavailable(
+      "Yahoo could not be reached for this completed trade. Nothing was saved; try again shortly.",
+      503,
+    );
   }
   if (review.kind === "save_failed") {
     return unavailable("The candle review could not be saved. Try again shortly.", 503);
